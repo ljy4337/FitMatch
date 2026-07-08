@@ -199,7 +199,7 @@ private struct ScreenshotHomeView: View {
                     GridRow {
                         SmallInfoCard(title: "내 옷장", value: "2개", systemImage: "tshirt") {
                             Divider()
-                            Text("대표 옷")
+                            Text("기준 옷")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                             Text("UNIQLO Daily Oxford Shirt")
@@ -340,14 +340,12 @@ private struct ScreenshotClosetCard: View {
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 6) {
-                        Label(isRepresentative ? "대표옷" : "대표 지정", systemImage: isRepresentative ? "heart.fill" : "heart")
+                        Label(isRepresentative ? "기준 옷" : "기준 옷 설정", systemImage: isRepresentative ? "heart.fill" : "heart")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(isRepresentative ? .red : .primary)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(.primary.opacity(0.08), in: Capsule())
-                        Label("5", systemImage: "star.fill")
-                            .font(.subheadline.weight(.semibold))
                     }
                 }
                 Text("어깨 48cm · 가슴단면 57cm · 총장 75cm · 소매 62cm")
@@ -397,11 +395,6 @@ private struct ScreenshotAddClosetView: View {
                 LabeledContent("핏", value: "정핏")
                 Text(isFilled ? "정핏에 가까운 셔츠 기준" : "핏 메모")
                     .foregroundStyle(isFilled ? .primary : .secondary)
-                HStack {
-                    ForEach(0..<5, id: \.self) { index in
-                        Image(systemName: index < (isFilled ? 5 : 4) ? "star.fill" : "star")
-                    }
-                }
             }
         }
         .navigationTitle("기준 옷")

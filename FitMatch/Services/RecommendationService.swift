@@ -1,5 +1,11 @@
 import Foundation
 
+struct FitMatchCandidate: Identifiable {
+    var id: UUID { userFit.id }
+    let userFit: UserFit
+    let matchRate: Int
+}
+
 struct RecommendationService {
     func recommend(
         product: Product,
@@ -52,22 +58,59 @@ struct RecommendationService {
         userFits.contains { $0.detailCategory == productDetailCategory }
     }
 
+    func hasDetailCategoryBasis(
+        productDetailCategory: ClosetDetailCategory,
+        userFits: [UserFit]
+    ) -> Bool {
+        userFits.contains { $0.detailCategory == productDetailCategory && $0.isRepresentative }
+    }
+
     func temporaryComparisonCandidates(
         product: Product,
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> [UserFit] {
-        userFits.sorted { lhs, rhs in
-            let lhsScore = temporaryCandidateScore(lhs, product: product, productDetailCategory: productDetailCategory)
-            let rhsScore = temporaryCandidateScore(rhs, product: product, productDetailCategory: productDetailCategory)
-            if lhsScore != rhsScore {
-                return lhsScore > rhsScore
+        let sameDetail = userFits.filter { $0.detailCategory == productDetailCategory }
+        if !sameDetail.isEmpty {
+            return sameDetail.sorted { lhs, rhs in
+                rankedCandidateScore(lhs, product: product, productDetailCategory: productDetailCategory) >
+                    rankedCandidateScore(rhs, product: product, productDetailCategory: productDetailCategory)
             }
-            if lhs.isRepresentative != rhs.isRepresentative {
-                return lhs.isRepresentative
-            }
-            return lhs.updatedAt > rhs.updatedAt
         }
+
+        return rankedFitMatches(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        )
+        .prefix(3)
+        .map(\.userFit)
+    }
+
+    func rankedFitMatches(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        userFits: [UserFit]
+    ) -> [FitMatchCandidate] {
+        userFits
+            .map { item in
+                FitMatchCandidate(
+                    userFit: item,
+                    matchRate: rankedCandidateScore(item, product: product, productDetailCategory: productDetailCategory)
+                )
+            }
+            .sorted { lhs, rhs in
+                if lhs.matchRate != rhs.matchRate {
+                    return lhs.matchRate > rhs.matchRate
+                }
+                if lhs.userFit.detailCategory == productDetailCategory && rhs.userFit.detailCategory != productDetailCategory {
+                    return true
+                }
+                if lhs.userFit.isRepresentative != rhs.userFit.isRepresentative {
+                    return lhs.userFit.isRepresentative
+                }
+                return lhs.userFit.updatedAt > rhs.userFit.updatedAt
+            }
     }
 
     private func sortCandidates(_ userFits: [UserFit]) -> [UserFit] {
@@ -182,40 +225,18 @@ struct RecommendationService {
                     && item.detailCategory == productDetailCategory
                     && item.isRepresentative
             }),
-            ("같은 플랫폼/브랜드/세부카테고리 기준 비교", 0, { item in
-                matchesSource(item, product: product)
-                    && matchesBrand(item, product: product)
-                    && item.detailCategory == productDetailCategory
-            }),
             ("같은 브랜드 기준 비교", 0, { item in
                 matchesBrand(item, product: product)
-                    && item.detailCategory == productDetailCategory
-                    && item.isRepresentative
-            }),
-            ("같은 브랜드 기준 비교", 0, { item in
-                matchesBrand(item, product: product)
-                    && item.detailCategory == productDetailCategory
-            }),
-            ("같은 플랫폼 기준 비교", 0, { item in
-                matchesSource(item, product: product)
                     && item.detailCategory == productDetailCategory
                     && item.isRepresentative
             }),
             ("같은 플랫폼 기준 비교", 0, { item in
                 matchesSource(item, product: product)
                     && item.detailCategory == productDetailCategory
+                    && item.isRepresentative
             }),
             ("같은 세부카테고리 기준 비교", 0, { item in
                 item.detailCategory == productDetailCategory && item.isRepresentative
-            }),
-            ("같은 세부카테고리 기준 비교", 0, { item in
-                item.detailCategory == productDetailCategory
-            }),
-            ("같은 대분류 기준 비교", 8, { item in
-                item.category.serviceGroup == product.category.serviceGroup && item.isRepresentative
-            }),
-            ("같은 대분류 기준 비교", 8, { item in
-                item.category.serviceGroup == product.category.serviceGroup
             })
         ]
 
@@ -230,6 +251,22 @@ struct RecommendationService {
             }
         }
 
+        if allowsGlobalFallback {
+            let candidates = temporaryComparisonCandidates(
+                product: product,
+                productDetailCategory: productDetailCategory,
+                userFits: userFits
+            )
+            if !candidates.isEmpty {
+                return RecommendationBasis(
+                    userFits: candidates,
+                    methodText: "전체 fallback 비교",
+                    scorePenalty: 15,
+                    fallbackReason: "\(productDetailCategory.rawValue) 기준 옷이 없어 유사도가 높은 옷과 비교했습니다."
+                )
+            }
+        }
+
         return RecommendationBasis(userFits: [], methodText: "사용자 선택 임시 비교", scorePenalty: 12)
     }
 
@@ -238,34 +275,62 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        userFits.contains {
-            ($0.detailCategory == productDetailCategory)
-                || ($0.category.serviceGroup == product.category.serviceGroup)
-        }
+        userFits.contains { $0.detailCategory == productDetailCategory && $0.isRepresentative }
     }
 
-    private func temporaryCandidateScore(
+    private func rankedCandidateScore(
         _ item: UserFit,
         product: Product,
         productDetailCategory: ClosetDetailCategory
     ) -> Int {
         var score = 0
         if item.category.serviceGroup == product.category.serviceGroup {
-            score += 100
+            score += 16
         }
         if item.isRepresentative {
-            score += 40
+            score += 4
         }
         if matchesSource(item, product: product) {
-            score += 30
+            score += 4
         }
         if matchesBrand(item, product: product) {
-            score += 30
+            score += 4
         }
         if item.detailCategory == productDetailCategory {
-            score += 25
+            score += 12
         }
-        return score
+
+        let bestWeightedDifference = product.sizes
+            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .map { size in
+                let differences = GarmentMeasurements(
+                    shoulder: abs(size.measurements.shoulder - item.measurements.shoulder),
+                    chest: abs(size.measurements.chest - item.measurements.chest),
+                    totalLength: abs(size.measurements.totalLength - item.measurements.totalLength),
+                    sleeveLength: abs(size.measurements.sleeveLength - item.measurements.sleeveLength),
+                    waist: abs(size.measurements.waist - item.measurements.waist),
+                    hip: abs(size.measurements.hip - item.measurements.hip),
+                    thigh: abs(size.measurements.thigh - item.measurements.thigh),
+                    rise: abs(size.measurements.rise - item.measurements.rise),
+                    hem: abs(size.measurements.hem - item.measurements.hem),
+                    footLength: abs(size.measurements.footLength - item.measurements.footLength),
+                    underBust: abs(size.measurements.underBust - item.measurements.underBust)
+                )
+                let weights = measurementWeights(
+                    productCategory: product.category,
+                    productDetailCategory: productDetailCategory,
+                    referenceDetailCategory: item.detailCategory,
+                    comparisonMethod: item.detailCategory == productDetailCategory ? "같은 세부카테고리 기준 비교" : "사용자 선택 임시 비교"
+                )
+                return weightedDifference(differences: differences, weights: weights)
+            }
+            .min() ?? .greatestFiniteMagnitude
+
+        if bestWeightedDifference.isFinite {
+            score += max(0, min(60, Int((60 - bestWeightedDifference * 3).rounded())))
+        }
+
+        return max(0, min(100, score))
     }
 
     private func matchesSource(_ item: UserFit, product: Product) -> Bool {

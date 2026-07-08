@@ -5,6 +5,9 @@ struct MyClosetView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
     @State private var isShowingAddClosetItem = false
+    @State private var pendingBasisItem: UserFit?
+    @State private var existingBasisItem: UserFit?
+    @State private var isShowingBasisChangeAlert = false
 
     var body: some View {
         Group {
@@ -23,7 +26,7 @@ struct MyClosetView: View {
                                 toggleRepresentative(item)
                             } label: {
                                 Label(
-                                    item.isRepresentative ? "대표 해제" : "대표 지정",
+                                    item.isRepresentative ? "기준 옷 해제" : "기준 옷으로 설정",
                                     systemImage: item.isRepresentative ? "heart.slash" : "heart.fill"
                                 )
                             }
@@ -60,12 +63,94 @@ struct MyClosetView: View {
                 }
             }
         }
+        .alert(basisAlertTitle, isPresented: $isShowingBasisChangeAlert) {
+            Button("취소", role: .cancel) {
+                pendingBasisItem = nil
+                existingBasisItem = nil
+            }
+            Button(existingBasisItem == nil ? "기준 옷으로 설정" : "변경") {
+                applyPendingBasisChange()
+            }
+        } message: {
+            Text(basisAlertMessage)
+        }
     }
 
     private func toggleRepresentative(_ item: UserFit) {
-        item.isRepresentative.toggle()
-        item.updatedAt = Date()
+        if item.isRepresentative {
+            item.isRepresentative = false
+            item.updatedAt = Date()
+            try? modelContext.save()
+            return
+        }
+
+        pendingBasisItem = item
+        existingBasisItem = userFits.first {
+            $0.id != item.id
+                && $0.detailCategory == item.detailCategory
+                && $0.isRepresentative
+        }
+        isShowingBasisChangeAlert = true
+    }
+
+    private var basisAlertTitle: String {
+        guard let pendingBasisItem else {
+            return "기준 옷 설정"
+        }
+
+        if existingBasisItem == nil {
+            return "이 옷을 기준 옷으로 설정할까요?"
+        }
+
+        return "\(pendingBasisItem.detailCategory.rawValue) 기준 옷은 1개만 설정할 수 있습니다."
+    }
+
+    private var basisAlertMessage: String {
+        guard let pendingBasisItem else {
+            return ""
+        }
+
+        if let existingBasisItem {
+            return """
+            현재 기준 옷:
+            \(existingBasisItem.displayName)
+
+            새 기준 옷:
+            \(pendingBasisItem.displayName)
+
+            기존 기준 옷이 해제되고 새 기준 옷으로 변경됩니다.
+            """
+        }
+
+        return """
+        기준 옷은 같은 카테고리 상품을 비교할 때 자동으로 우선 비교됩니다.
+
+        언제든 다른 옷으로 변경할 수 있습니다.
+        """
+    }
+
+    private func applyPendingBasisChange() {
+        guard let pendingBasisItem else {
+            return
+        }
+
+        userFits
+            .filter {
+                $0.id != pendingBasisItem.id
+                    && $0.detailCategory == pendingBasisItem.detailCategory
+                    && $0.isRepresentative
+            }
+            .forEach {
+                $0.isRepresentative = false
+                $0.updatedAt = Date()
+            }
+
+        pendingBasisItem.isRepresentative = true
+        pendingBasisItem.updatedAt = Date()
         try? modelContext.save()
+
+        self.pendingBasisItem = nil
+        existingBasisItem = nil
     }
 
     private func deleteItems(at offsets: IndexSet) {
@@ -131,7 +216,7 @@ private struct ClosetItemCard: View {
                     VStack(alignment: .trailing, spacing: 4) {
                         Button(action: onToggleRepresentative) {
                             Label(
-                                item.isRepresentative ? "대표옷" : "대표 지정",
+                                item.isRepresentative ? "기준 옷" : "기준 옷 설정",
                                 systemImage: item.isRepresentative ? "heart.fill" : "heart"
                             )
                             .font(.caption.weight(.bold))
@@ -148,10 +233,6 @@ private struct ClosetItemCard: View {
                             .padding(.vertical, 5)
                             .background(.primary.opacity(0.08), in: Capsule())
 
-                        Label("\(item.satisfaction)", systemImage: "star.fill")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .labelStyle(.titleAndIcon)
                     }
                 }
 

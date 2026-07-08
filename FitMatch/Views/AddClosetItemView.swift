@@ -126,7 +126,6 @@ struct AddClosetItemView: View {
                 }
                 TextField("핏 메모", text: $viewModel.fitMemo, axis: .vertical)
                     .lineLimit(3...5)
-                SatisfactionPicker(value: $viewModel.satisfaction)
             }
         }
         .navigationTitle("기준 옷")

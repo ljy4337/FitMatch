@@ -110,7 +110,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Divider()
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("대표 옷")
+                        Text("기준 옷")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                         Text(representativeItem?.displayName ?? "등록 필요")

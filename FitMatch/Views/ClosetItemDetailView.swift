@@ -3,6 +3,7 @@ import SwiftData
 
 struct ClosetItemDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     @State private var isShowingEdit = false
 
     let item: UserFit
@@ -16,7 +17,10 @@ struct ClosetItemDetailView: View {
                 LabeledContent("제품명", value: item.productName)
                 LabeledContent("카테고리", value: item.category.rawValue)
                 LabeledContent("사이즈", value: item.sizeName)
-                LabeledContent("만족도", value: "\(item.satisfaction) / 5")
+                LabeledContent("핏", value: item.fitPreference.rawValue)
+                if item.isRepresentative {
+                    LabeledContent("기준 옷", value: "\(item.detailCategory.rawValue) 기준")
+                }
             }
 
             Section("실측값") {
@@ -63,6 +67,18 @@ struct ClosetItemDetailView: View {
         item.fitPreference = editedItem.fitPreference
         item.satisfaction = editedItem.satisfaction
         item.isRepresentative = editedItem.isRepresentative
+        if item.isRepresentative {
+            userFits
+                .filter {
+                    $0.id != item.id
+                        && $0.detailCategory == item.detailCategory
+                        && $0.isRepresentative
+                }
+                .forEach {
+                    $0.isRepresentative = false
+                    $0.updatedAt = Date()
+                }
+        }
         item.updatedAt = Date()
         try? modelContext.save()
     }

@@ -18,6 +18,7 @@ struct RecommendationResultView: View {
                 heroCard
                 productInfoCard
                 referenceFitCard
+                fitMatchRankingCard
                 measurementDifferenceCard
                 reasonCard
                 fitRecommendationCard
@@ -32,7 +33,9 @@ struct RecommendationResultView: View {
             NavigationStack {
                 ResultReferencePickerView(
                     userFits: userFits,
-                    currentUserFit: currentResult.userFit
+                    currentUserFit: currentResult.userFit,
+                    productDetailCategory: currentResult.productDetailCategory,
+                    productCategory: currentResult.product.category
                 ) { item in
                     compare(with: item)
                     isShowingReferencePicker = false
@@ -108,11 +111,50 @@ struct RecommendationResultView: View {
 
                 HStack(spacing: 8) {
                     if currentResult.userFit.isRepresentative {
-                        ResultBadge(title: "대표핏", systemImage: "heart.fill")
+                        ResultBadge(title: "기준 옷", systemImage: "heart.fill")
                     }
                     ResultBadge(title: currentResult.comparisonMethod, systemImage: comparisonIcon)
                 }
                 .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var fitMatchRankingCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(title: "내 옷장 Fit Match 순위")
+
+                if fitMatchRanking.isEmpty {
+                    Text("비교할 수 있는 옷장 데이터가 부족합니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    VStack(spacing: 10) {
+                        ForEach(Array(fitMatchRanking.enumerated()), id: \.element.id) { index, candidate in
+                            FitMatchRankRow(
+                                rank: index + 1,
+                                candidate: candidate,
+                                isCurrent: candidate.userFit.id == currentResult.userFit.id
+                            )
+                        }
+                    }
+
+                    if let betterCandidate {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("현재 상품은 ‘\(betterCandidate.userFit.displayName)’이 더 가까운 기준 옷으로 보입니다.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            SecondaryButton(title: "이번 비교에서 이 옷으로 보기", systemImage: "arrow.triangle.2.circlepath") {
+                                compare(with: betterCandidate.userFit)
+                            }
+                        }
+                        .padding(14)
+                        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                }
             }
         }
     }
@@ -294,6 +336,28 @@ struct RecommendationResultView: View {
                 currentResult.recommendedSize.measurements.value(for: $0) > 0
                     && currentResult.userFit.measurements.value(for: $0) > 0
             }
+    }
+
+    private var fitMatchRanking: [FitMatchCandidate] {
+        Array(
+            RecommendationService()
+                .rankedFitMatches(
+                    product: currentResult.product,
+                    productDetailCategory: currentResult.productDetailCategory,
+                    userFits: userFits
+                )
+                .prefix(3)
+        )
+    }
+
+    private var betterCandidate: FitMatchCandidate? {
+        guard currentResult.userFit.isRepresentative,
+              let first = fitMatchRanking.first,
+              first.userFit.id != currentResult.userFit.id else {
+            return nil
+        }
+
+        return first
     }
 
     private func openShoppingMall() {
@@ -654,10 +718,67 @@ private struct MeasurementDifferenceStatus {
     }
 }
 
+private struct FitMatchRankRow: View {
+    let rank: Int
+    let candidate: FitMatchCandidate
+    let isCurrent: Bool
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Text("\(rank)")
+                .font(.headline.weight(.black))
+                .foregroundStyle(.white)
+                .frame(width: 30, height: 30)
+                .background(.primary, in: Circle())
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(candidate.userFit.displayName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+
+                Text("\(candidate.userFit.brandName) · \(candidate.userFit.sizeName) · \(candidate.userFit.category.rawValue) / \(candidate.userFit.detailCategory.rawValue)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+
+                HStack(spacing: 6) {
+                    if candidate.userFit.isRepresentative {
+                        Text("기준 옷")
+                            .font(.caption2.weight(.bold))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(.primary.opacity(0.08), in: Capsule())
+                    }
+                    if isCurrent {
+                        Text("현재 비교 중")
+                            .font(.caption2.weight(.bold))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(.blue.opacity(0.12), in: Capsule())
+                            .foregroundStyle(.blue)
+                    }
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            Text("\(candidate.matchRate)%")
+                .font(.headline.weight(.black))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+        }
+        .padding(14)
+        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
 private struct ResultReferencePickerView: View {
     @Environment(\.dismiss) private var dismiss
     let userFits: [UserFit]
     let currentUserFit: UserFit
+    let productDetailCategory: ClosetDetailCategory
+    let productCategory: ClothingCategory
     let onSelect: (UserFit) -> Void
 
     var body: some View {
@@ -679,7 +800,7 @@ private struct ResultReferencePickerView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                             if item.isRepresentative {
-                                Text("대표옷")
+                                Text("기준 옷")
                                     .font(.caption.weight(.bold))
                                     .foregroundStyle(.blue)
                             }
@@ -700,7 +821,20 @@ private struct ResultReferencePickerView: View {
     }
 
     private var selectableFits: [UserFit] {
-        userFits.filter { $0.id != currentUserFit.id }
+        userFits
+            .filter { $0.id != currentUserFit.id }
+            .sorted { lhs, rhs in
+                if lhs.detailCategory == productDetailCategory && rhs.detailCategory != productDetailCategory {
+                    return true
+                }
+                if lhs.category.serviceGroup == productCategory.serviceGroup && rhs.category.serviceGroup != productCategory.serviceGroup {
+                    return true
+                }
+                if lhs.isRepresentative != rhs.isRepresentative {
+                    return lhs.isRepresentative
+                }
+                return lhs.updatedAt > rhs.updatedAt
+            }
     }
 }
 

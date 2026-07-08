@@ -152,7 +152,7 @@ struct ShoppingProductFormView: View {
             return "내 옷장에 등록된 기준 옷이 없습니다. 정확한 추천을 위해 먼저 기준 옷을 등록해주세요."
         }
 
-        return "내 옷장에 이 상품과 같은 기준 옷이 없습니다. 어떤 옷과 비교할까요?"
+        return "내 옷장에 \(viewModel.detailCategory.rawValue) 기준 옷이 없습니다. 비교할 옷을 직접 선택해주세요."
     }
 
     @ViewBuilder
@@ -342,9 +342,15 @@ private struct TemporaryReferencePickerView: View {
                             dismiss()
                         } label: {
                             VStack(alignment: .leading, spacing: 6) {
-                                Text(item.displayName)
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
+                                HStack(alignment: .firstTextBaseline) {
+                                    Text(item.displayName)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    Text("\(estimatedMatchRate(for: item))%")
+                                        .font(.headline.weight(.black))
+                                        .foregroundStyle(.primary)
+                                }
                                 Text("출처: \(item.sourceName) · 브랜드: \(item.brandName)")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -352,7 +358,7 @@ private struct TemporaryReferencePickerView: View {
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                 if item.isRepresentative {
-                                    Text("대표옷")
+                                    Text("기준 옷")
                                         .font(.caption.weight(.bold))
                                         .foregroundStyle(.red)
                                 }
@@ -376,6 +382,18 @@ private struct TemporaryReferencePickerView: View {
                 }
             }
         }
+    }
+
+    private func estimatedMatchRate(for item: UserFit) -> Int {
+        if item.detailCategory == productDetailCategory {
+            return item.isRepresentative ? 96 : 91
+        }
+
+        if item.category.serviceGroup == productCategory.serviceGroup {
+            return item.isRepresentative ? 84 : 78
+        }
+
+        return item.isRepresentative ? 68 : 62
     }
 }
 
