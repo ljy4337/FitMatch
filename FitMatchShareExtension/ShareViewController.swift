@@ -11,11 +11,16 @@ final class ShareViewController: UIViewController {
         static let pendingProductURLCreatedAt = "pendingProductURLCreatedAt"
     }
 
+    private enum DeepLink {
+        static let compareURLString = "fitmatch://compare"
+    }
+
     private let titleLabel = UILabel()
     private let messageLabel = UILabel()
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let openButton = UIButton(type: .system)
     private let closeButton = UIButton(type: .system)
+    private var isAttemptingOpen = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -124,6 +129,7 @@ final class ShareViewController: UIViewController {
         let defaults = UserDefaults(suiteName: AppGroup.identifier)
         defaults?.set(url.absoluteString, forKey: Key.pendingProductURL)
         defaults?.set(Date(), forKey: Key.pendingProductURLCreatedAt)
+        print("[FitMatchShareExtension] saved pending URL: \(url.absoluteString)")
     }
 
     private func completeRequest() {
@@ -136,6 +142,7 @@ final class ShareViewController: UIViewController {
         messageLabel.text = "보러가기를 누르면 비교 화면에서 바로 사이즈를 계산합니다."
         openButton.isHidden = false
         closeButton.isHidden = false
+        closeButton.setTitle("닫기", for: .normal)
     }
 
     private func showFailureState() {
@@ -151,6 +158,7 @@ final class ShareViewController: UIViewController {
         openButton.isEnabled = false
         openButton.setTitle("FitMatch 여는 중", for: .normal)
         messageLabel.text = "FitMatch 앱으로 이동하고 있습니다."
+        isAttemptingOpen = true
         openContainingApp()
     }
 
@@ -160,70 +168,69 @@ final class ShareViewController: UIViewController {
     }
 
     private func openContainingApp() {
-        guard let url = URL(string: "fitmatch://compare") else {
-            completeRequest()
+        guard let url = URL(string: DeepLink.compareURLString) else {
+            showManualContinuationState()
             return
         }
 
-        extensionContext?.open(url) { [weak self] didOpen in
-            guard let self else {
-                return
-            }
+        print("[FitMatchShareExtension] try responder chain open: \(url.absoluteString)")
 
-            if didOpen {
+        let didRequestOpen = openURLUsingResponderChain(url)
+
+        if didRequestOpen {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                 self.completeRequest()
-                return
             }
-
-            let didRequestOpen = self.openURLUsingApplication(url) || self.openURLUsingResponderChain(url)
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                self.openButton.isEnabled = true
-                self.openButton.setTitle("다시 보러가기", for: .normal)
-                self.messageLabel.text = didRequestOpen
-                    ? "FitMatch 앱 열기를 요청했습니다. 이동하지 않으면 FitMatch 앱을 직접 열어주세요."
-                    : "앱 열기 요청이 차단됐습니다. FitMatch 앱을 직접 열면 비교 화면에서 이어서 진행됩니다."
-            }
+        } else {
+            showManualContinuationState()
         }
-    }
-
-    @discardableResult
-    private func openURLUsingApplication(_ url: URL) -> Bool {
-        guard let applicationClass = NSClassFromString("UIApplication") as? NSObject.Type else {
-            return false
-        }
-
-        let sharedApplicationSelector = NSSelectorFromString("sharedApplication")
-        guard applicationClass.responds(to: sharedApplicationSelector),
-              let application = applicationClass.perform(sharedApplicationSelector)?.takeUnretainedValue() as? NSObject
-        else {
-            return false
-        }
-
-        let openURLSelector = NSSelectorFromString("openURL:")
-        guard application.responds(to: openURLSelector) else {
-            return false
-        }
-
-        application.perform(openURLSelector, with: url)
-        return true
     }
 
     @discardableResult
     private func openURLUsingResponderChain(_ url: URL) -> Bool {
-        let selector = NSSelectorFromString("openURL:")
-        var responder: UIResponder? = view
+        var responder: UIResponder? = self
 
         while let currentResponder = responder {
-            if currentResponder.responds(to: selector) {
-                currentResponder.perform(selector, with: url)
+            print("[FitMatchShareExtension] responder: \(type(of: currentResponder))")
+
+            if let application = currentResponder as? UIApplication {
+                print("[FitMatchShareExtension] UIApplication found, opening URL")
+                application.open(url, options: [:]) { success in
+                    print("[FitMatchShareExtension] UIApplication.open success: \(success)")
+                }
                 return true
             }
 
             responder = currentResponder.next
         }
 
+        print("[FitMatchShareExtension] UIApplication not found in responder chain")
         return false
     }
 
+    private func waitForManualContinuationAfterFallback(_ didRequestOpen: Bool) {
+        print("[FitMatchShareExtension] responderChain didRequestOpen: \(didRequestOpen)")
+
+        activityIndicator.startAnimating()
+        titleLabel.text = "FitMatch 앱을 여는 중..."
+        messageLabel.text = "앱으로 이동하지 않으면 FitMatch 앱을 직접 열어주세요."
+        openButton.isHidden = true
+        closeButton.isHidden = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.showManualContinuationState()
+        }
+    }
+
+    private func showManualContinuationState() {
+        isAttemptingOpen = false
+        activityIndicator.stopAnimating()
+        titleLabel.text = "FitMatch에 저장했어요"
+        messageLabel.text = "FitMatch 앱을 열면 공유한 상품으로 바로 비교를 이어갈 수 있어요."
+        openButton.isEnabled = false
+        openButton.setTitle("FitMatch 앱을 직접 열어주세요", for: .normal)
+        openButton.isHidden = false
+        closeButton.setTitle("확인", for: .normal)
+        closeButton.isHidden = false
+    }
 }

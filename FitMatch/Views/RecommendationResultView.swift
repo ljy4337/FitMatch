@@ -13,34 +13,42 @@ struct RecommendationResultView: View {
     }
 
     var body: some View {
-        ScrollView(.vertical) {
-            VStack(spacing: 18) {
-                heroCard
-                productInfoCard
-                referenceFitCard
-                fitMatchRankingCard
-                measurementDifferenceCard
-                comparisonCoverageCard
-                reasonCard
-                fitRecommendationCard
-                actionCard
+        ScrollViewReader { proxy in
+            ScrollView(.vertical) {
+                VStack(spacing: 18) {
+                    heroCard
+                        .id("resultTop")
+                    productInfoCard
+                    referenceFitCard
+                    fitMatchRankingCard
+                    measurementDifferenceCard
+                    comparisonCoverageCard
+                    reasonCard
+                    fitRecommendationCard
+                    actionCard
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity)
-        }
-        .background(Color(.systemBackground))
-        .navigationTitle("추천 결과")
-        .hidesTabBarOnScroll()
-        .sheet(isPresented: $isShowingReferencePicker) {
-            NavigationStack {
-                ResultReferencePickerView(
-                    userFits: userFits,
-                    currentUserFit: currentResult.userFit,
-                    productDetailCategory: currentResult.productDetailCategory,
-                    productCategory: currentResult.product.category
-                ) { item in
-                    compare(with: item)
-                    isShowingReferencePicker = false
+            .background(Color(.systemBackground))
+            .navigationTitle("추천 결과")
+            .hidesTabBarOnScroll()
+            .sheet(isPresented: $isShowingReferencePicker) {
+                NavigationStack {
+                    ResultReferencePickerView(
+                        userFits: userFits,
+                        currentUserFit: currentResult.userFit,
+                        productDetailCategory: currentResult.productDetailCategory,
+                        productCategory: currentResult.product.category
+                    ) { item in
+                        compare(with: item)
+                        isShowingReferencePicker = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                proxy.scrollTo("resultTop", anchor: .top)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -153,6 +161,7 @@ struct RecommendationResultView: View {
                             FitMatchRankRow(
                                 rank: index + 1,
                                 candidate: candidate,
+                                recommendedSizeName: recommendedSizeName(for: candidate.userFit),
                                 isCurrent: candidate.userFit.id == currentResult.userFit.id
                             )
                         }
@@ -456,29 +465,30 @@ struct RecommendationResultView: View {
 
     private func naturalReason(for kind: MeasurementKind, difference: Double) -> String {
         let subject = naturalSubject(for: kind)
+        let subjectParticle = subject.hasFinalConsonant ? "은" : "는"
         let absoluteDifference = abs(difference)
 
         if absoluteDifference <= 1 {
-            return "\(subject)은 거의 비슷합니다."
+            return "\(subject)\(subjectParticle) 거의 비슷합니다."
         }
 
         if absoluteDifference <= 2 {
-            return "\(subject)은 안정적인 차이입니다."
+            return "\(subject)\(subjectParticle) 안정적인 차이입니다."
         }
 
         if absoluteDifference < 5 {
             if kind == .totalLength || kind == .sleeveLength {
                 return difference > 0
-                    ? "\(subject)은 약간 길게 느껴질 수 있습니다."
-                    : "\(subject)은 약간 짧게 느껴질 수 있습니다."
+                    ? "\(subject)\(subjectParticle) 약간 길게 느껴질 수 있습니다."
+                    : "\(subject)\(subjectParticle) 약간 짧게 느껴질 수 있습니다."
             }
 
             return difference > 0
-                ? "\(subject)은 약간 여유 있게 느껴질 수 있습니다."
-                : "\(subject)은 조금 더 타이트하게 느껴질 수 있습니다."
+                ? "\(subject)\(subjectParticle) 약간 여유 있게 느껴질 수 있습니다."
+                : "\(subject)\(subjectParticle) 조금 더 타이트하게 느껴질 수 있습니다."
         }
 
-        return "\(subject)은 차이가 커서 핏이 달라질 수 있습니다."
+        return "\(subject)\(subjectParticle) 차이가 커서 핏이 달라질 수 있습니다."
     }
 
     private func naturalSubject(for kind: MeasurementKind) -> String {
@@ -494,6 +504,18 @@ struct RecommendationResultView: View {
         default:
             return kind.title
         }
+    }
+
+    private func recommendedSizeName(for userFit: UserFit) -> String {
+        RecommendationService()
+            .recommend(
+                product: currentResult.product,
+                selectedReferenceItem: userFit,
+                productDetailCategory: currentResult.productDetailCategory
+            )?
+            .recommendedSize
+            .name
+            .displaySizeName ?? "-"
     }
 }
 
@@ -823,6 +845,7 @@ private struct MeasurementDifferenceStatus {
 private struct FitMatchRankRow: View {
     let rank: Int
     let candidate: FitMatchCandidate
+    let recommendedSizeName: String
     let isCurrent: Bool
 
     var body: some View {
@@ -847,6 +870,12 @@ private struct FitMatchRankRow: View {
                     .truncationMode(.tail)
 
                 HStack(spacing: 6) {
+                    Text("추천 \(recommendedSizeName)")
+                        .font(.caption2.weight(.bold))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(.primary.opacity(0.08), in: Capsule())
+
                     if candidate.userFit.isRepresentative {
                         Text("기준 옷")
                             .font(.caption2.weight(.bold))
@@ -956,6 +985,20 @@ private extension String {
             .last
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             ?? value
+    }
+
+    var hasFinalConsonant: Bool {
+        guard let scalar = unicodeScalars.last?.value else {
+            return false
+        }
+
+        let base: UInt32 = 0xAC00
+        let end: UInt32 = 0xD7A3
+        guard scalar >= base && scalar <= end else {
+            return false
+        }
+
+        return (scalar - base) % 28 != 0
     }
 }
 

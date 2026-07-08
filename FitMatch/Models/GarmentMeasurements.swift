@@ -66,10 +66,10 @@ enum MeasurementKind: CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .shoulder: return "어깨"
+        case .shoulder: return "어깨너비"
         case .chest: return "가슴단면"
         case .totalLength: return "총장"
-        case .sleeveLength: return "소매"
+        case .sleeveLength: return "소매길이"
         case .waist: return "허리단면"
         case .hip: return "엉덩이단면"
         case .thigh: return "허벅지단면"
@@ -101,7 +101,7 @@ extension ClothingCategory {
     var measurementKinds: [MeasurementKind] {
         switch serviceGroup {
         case .top, .outer:
-            return [.shoulder, .chest, .totalLength, .sleeveLength]
+            return [.totalLength, .shoulder, .chest, .sleeveLength]
         case .bottom:
             return [.totalLength, .waist, .hip, .thigh, .rise, .hem]
         case .dress:

@@ -44,8 +44,8 @@ struct ContentView: View {
                 openPendingSharedURLIfNeeded()
             }
         }
-        .onOpenURL { _ in
-            openPendingSharedURLIfNeeded()
+        .onOpenURL { url in
+            handleDeepLink(url)
         }
     }
 
@@ -76,14 +76,73 @@ struct ContentView: View {
         }
     }
 
-    private func openPendingSharedURLIfNeeded() {
-        guard let urlString = sharedURLStore.consumePendingProductURL() else {
+    private func handleDeepLink(_ url: URL) {
+        print("[FitMatch] onOpenURL: \(url.absoluteString)")
+
+        guard isSupportedDeepLink(url) else {
+            print("[FitMatch] unsupported deep link: \(url.absoluteString)")
             return
         }
 
+        switch deepLinkRoute(from: url) {
+        case "compare":
+            openCompareFromDeepLink()
+        default:
+            _ = openPendingSharedURLIfNeeded()
+        }
+    }
+
+    private func isSupportedDeepLink(_ url: URL) -> Bool {
+        switch url.scheme?.lowercased() {
+        case "fitmatch":
+            return true
+        case "https":
+            return url.host?.lowercased() == "fitmatch.app"
+        default:
+            return false
+        }
+    }
+
+    private func deepLinkRoute(from url: URL) -> String {
+        if url.scheme?.lowercased() == "fitmatch", let host = url.host, !host.isEmpty {
+            return host.lowercased()
+        }
+
+        let pathComponents = url.path
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            .split(separator: "/")
+            .map(String.init)
+
+        return pathComponents.first?
+            .lowercased()
+            ?? ""
+    }
+
+    private func openCompareFromDeepLink() {
+        if openPendingSharedURLIfNeeded() {
+            return
+        }
+
+        print("[FitMatch] opening compare tab from deep link without pending URL")
+        isLoggedIn = true
+        pendingCompareURL = nil
+        compareViewID = UUID()
+        selectedTab = .compare
+    }
+
+    @discardableResult
+    private func openPendingSharedURLIfNeeded() -> Bool {
+        guard let urlString = sharedURLStore.consumePendingProductURL() else {
+            print("[FitMatch] no pending shared URL")
+            return false
+        }
+
+        print("[FitMatch] consumed pending shared URL: \(urlString)")
+        isLoggedIn = true
         pendingCompareURL = urlString
         compareViewID = UUID()
         selectedTab = .compare
+        return true
     }
 }
 
