@@ -88,7 +88,7 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
             return nil
         }
 
-        return ParsedProductSize(name: size.name, measurements: measurements)
+        return ParsedProductSize(name: size.name.normalizedMusinsaSizeName, measurements: measurements)
     }
 
     private func number(matching columns: [MusinsaActualSizeColumn], in valuesByName: [String: String]) -> Double? {
@@ -229,5 +229,18 @@ private extension String {
             .lowercased()
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "\n", with: "")
+    }
+
+    var normalizedMusinsaSizeName: String {
+        let value = trimmed
+        guard value.contains("/") else {
+            return value
+        }
+
+        return value
+            .split(separator: "/")
+            .last
+            .map { String($0).trimmed }
+            ?? value
     }
 }

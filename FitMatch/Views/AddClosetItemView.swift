@@ -32,7 +32,7 @@ struct AddClosetItemView: View {
 
     var body: some View {
         Form {
-            Section("상품 출처") {
+            Section("1. 상품 출처") {
                 Picker("출처 유형", selection: $viewModel.sourceType) {
                     ForEach(ProductSourceType.allCases) { type in
                         Text(type.displayName).tag(type)
@@ -68,7 +68,7 @@ struct AddClosetItemView: View {
                 }
             }
 
-            Section("분류") {
+            Section("2. 분류") {
                 Picker("성별", selection: $viewModel.gender) {
                     ForEach(inputGenders) { gender in
                         Text(gender.rawValue).tag(gender)
@@ -94,11 +94,11 @@ struct AddClosetItemView: View {
                 }
             }
 
-            Section("상품") {
+            Section("3. 상품 정보") {
                 TextField("상품명", text: $viewModel.productName)
             }
 
-            Section("실측값") {
+            Section("4. 실측값") {
                 if measurementKinds.isEmpty {
                     Text("선택한 카테고리는 실측 입력 없이 저장할 수 있습니다.")
                         .font(.subheadline)
@@ -117,7 +117,7 @@ struct AddClosetItemView: View {
                 }
             }
 
-            Section("핏 기록") {
+            Section("5. 핏 기록") {
                 Picker("핏", selection: $viewModel.fitPreference) {
                     ForEach(FitPreference.allCases) { fit in
                         Text(fit.rawValue).tag(fit)
@@ -125,6 +125,14 @@ struct AddClosetItemView: View {
                 }
                 TextField("핏 메모", text: $viewModel.fitMemo, axis: .vertical)
                     .lineLimit(3...5)
+            }
+
+            if let saveGuideText {
+                Section {
+                    Label(saveGuideText, systemImage: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .navigationTitle("기준 옷")
@@ -163,6 +171,26 @@ struct AddClosetItemView: View {
 
     private var inputGenders: [UserGender] {
         [.men, .women]
+    }
+
+    private var saveGuideText: String? {
+        if viewModel.canSave {
+            return nil
+        }
+
+        if viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "브랜드명을 입력하면 저장할 수 있습니다."
+        }
+
+        if viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "상품명을 입력하면 저장할 수 있습니다."
+        }
+
+        if viewModel.measurements == nil {
+            return "필수 실측값을 숫자로 입력해 주세요."
+        }
+
+        return nil
     }
 
     private func normalizeInputSelection() {

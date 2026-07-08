@@ -12,6 +12,7 @@ struct ShoppingProductFormView: View {
     @State private var isShowingReferencePicker = false
     @State private var shouldAutoCalculateInitialURL: Bool
     @State private var didAutoCalculateInitialURL = false
+    @FocusState private var isProductURLFocused: Bool
 
     init(initialURL: String? = nil) {
         _viewModel = StateObject(wrappedValue: ShoppingProductViewModel(initialURL: initialURL))
@@ -28,6 +29,10 @@ struct ShoppingProductFormView: View {
             .padding(20)
         }
         .background(Color(.systemGroupedBackground))
+        .scrollDismissesKeyboard(.interactively)
+        .onTapGesture {
+            isProductURLFocused = false
+        }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .hidesTabBarOnScroll()
@@ -62,25 +67,25 @@ struct ShoppingProductFormView: View {
                 ) { item in
                     calculateAndSaveTemporaryRecommendation(selectedReferenceItem: item)
                     isShowingReferencePicker = false
+                } onRegister: {
+                    presentAddBaselineAfterReferencePicker()
                 }
             }
         }
-        .confirmationDialog(
-            userFits.isEmpty ? "내 옷장에 기준 옷이 없습니다." : "내 옷장에 이 상품과 같은 기준 옷이 없습니다.",
-            isPresented: $isShowingMissingBasisDialog,
-            titleVisibility: .visible
-        ) {
-            Button("\(viewModel.detailCategory.rawValue) 등록하기") {
-                isShowingAddBaseline = true
-            }
-            if !userFits.isEmpty {
-                Button("비교할 옷 선택하기") {
-                    isShowingReferencePicker = true
-                }
-            }
-            Button("취소", role: .cancel) {}
-        } message: {
-            Text(missingBasisMessage)
+        .sheet(isPresented: $isShowingMissingBasisDialog) {
+            MissingBasisBottomSheet(
+                productName: viewModel.productName,
+                brandName: viewModel.brand,
+                imageURLString: viewModel.productImageURLString,
+                category: viewModel.category,
+                detailCategory: viewModel.detailCategory,
+                hasClosetItems: !userFits.isEmpty,
+                message: missingBasisMessage,
+                onRegister: presentAddBaselineAfterMissingBasis,
+                onChooseReference: presentReferencePickerAfterMissingBasis
+            )
+            .presentationDetents([.height(390)])
+            .presentationDragIndicator(.visible)
         }
     }
 
@@ -99,12 +104,20 @@ struct ShoppingProductFormView: View {
                     .textContentType(.URL)
                     .submitLabel(.done)
                     .textFieldStyle(.roundedBorder)
+                    .focused($isProductURLFocused)
+                    .onSubmit {
+                        isProductURLFocused = false
+                        Task {
+                            await loadProductAndCalculate()
+                        }
+                    }
 
                 PrimaryButton(
                     title: viewModel.isLoadingProductInfo ? "계산 중" : "사이즈 계산",
                     systemImage: "sparkles",
                     isLoading: viewModel.isLoadingProductInfo
                 ) {
+                    isProductURLFocused = false
                     Task {
                         await loadProductAndCalculate()
                     }
@@ -120,30 +133,41 @@ struct ShoppingProductFormView: View {
     @ViewBuilder
     private var missingBasisCallout: some View {
         if viewModel.needsDetailCategoryBasis(userFits: userFits) {
-            VStack(alignment: .leading, spacing: 10) {
-                Label(missingBasisMessage, systemImage: "tshirt")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "tshirt.fill")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                        .frame(width: 38, height: 38)
+                        .background(.primary.opacity(0.08), in: Circle())
 
-                Button {
-                    if userFits.isEmpty {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("\(viewModel.detailCategory.rawValue) 기준 옷이 필요해요")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.primary)
+                        Text(missingBasisMessage)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                if userFits.isEmpty {
+                    ComparePrimaryActionButton(title: "내 옷장에 옷 등록하기", systemImage: "plus") {
                         isShowingAddBaseline = true
-                    } else {
+                    }
+                } else {
+                    ComparePrimaryActionButton(title: "비교할 옷 선택하기", systemImage: "list.bullet.rectangle") {
                         isShowingReferencePicker = true
                     }
-                } label: {
-                    Label(userFits.isEmpty ? "기준 옷 등록하기" : "비교할 옷 선택하기", systemImage: userFits.isEmpty ? "plus.circle.fill" : "list.bullet.rectangle")
-                        .font(.subheadline.weight(.bold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 42)
-                        .background(.primary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .foregroundStyle(Color(.systemBackground))
                 }
-                .buttonStyle(.plain)
             }
-            .padding(14)
-            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding(16)
+            .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(.primary.opacity(0.08), lineWidth: 1)
+            }
         }
     }
 
@@ -223,6 +247,27 @@ struct ShoppingProductFormView: View {
             allowsGlobalFallback: allowsGlobalFallback
         ) {
             saveUniqueHistory(history)
+        }
+    }
+
+    private func presentAddBaselineAfterMissingBasis() {
+        isShowingMissingBasisDialog = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            isShowingAddBaseline = true
+        }
+    }
+
+    private func presentReferencePickerAfterMissingBasis() {
+        isShowingMissingBasisDialog = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            isShowingReferencePicker = true
+        }
+    }
+
+    private func presentAddBaselineAfterReferencePicker() {
+        isShowingReferencePicker = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            isShowingAddBaseline = true
         }
     }
 
@@ -322,59 +367,62 @@ private struct TemporaryReferencePickerView: View {
     let productCategory: ClothingCategory
     let productDetailCategory: ClosetDetailCategory
     let onSelect: (UserFit) -> Void
+    let onRegister: () -> Void
 
     var body: some View {
-        List {
-            Section {
-                Text("내 옷장에 이 상품과 같은 기준 옷이 없습니다. 어떤 옷과 비교할까요?")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("비교할 기준 옷") {
-                if candidates.isEmpty {
-                    Text("선택할 수 있는 기준 옷이 없습니다.")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("어떤 옷과 비교할까요?")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(.primary)
+                    Text("같은 \(productDetailCategory.rawValue) 기준 옷이 없어 내 옷장 후보 중 하나를 선택해야 합니다.")
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(candidates) { item in
-                        Button {
-                            onSelect(item)
-                            dismiss()
-                        } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                HStack(alignment: .firstTextBaseline) {
-                                    Text(item.displayName)
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    Text("\(estimatedMatchRate(for: item))%")
-                                        .font(.headline.weight(.black))
-                                        .foregroundStyle(.primary)
-                                }
-                                Text("출처: \(item.sourceName) · 브랜드: \(item.brandName)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text("\(item.category.rawValue) / \(item.detailCategory.rawValue) · \(item.sizeName)")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                if item.isRepresentative {
-                                    Text("기준 옷")
-                                        .font(.caption.weight(.bold))
-                                        .foregroundStyle(.red)
-                                }
-                                if item.category.serviceGroup == productCategory.serviceGroup {
-                                    Text("같은 대분류 후보")
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(.blue)
-                                }
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+                if candidates.isEmpty {
+                    FitMatchCard {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("비교할 옷이 없습니다.")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.primary)
+                            Text("내 옷장에 옷을 먼저 등록하면 상품과 비교할 수 있습니다.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            ComparePrimaryActionButton(title: "내 옷장에 옷 등록하기", systemImage: "plus") {
+                                dismiss()
+                                onRegister()
                             }
-                            .padding(.vertical, 6)
                         }
                     }
+                    .padding(.horizontal, 20)
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(candidates) { item in
+                            Button {
+                                onSelect(item)
+                                dismiss()
+                            } label: {
+                                TemporaryReferenceCard(
+                                    item: item,
+                                    isSameCategory: item.category.serviceGroup == productCategory.serviceGroup
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
                 }
             }
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("임시 기준 옷 선택")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("취소") {
@@ -383,17 +431,182 @@ private struct TemporaryReferencePickerView: View {
             }
         }
     }
+}
 
-    private func estimatedMatchRate(for item: UserFit) -> Int {
-        if item.detailCategory == productDetailCategory {
-            return item.isRepresentative ? 96 : 91
+private struct MissingBasisBottomSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let productName: String
+    let brandName: String
+    let imageURLString: String?
+    let category: ClothingCategory
+    let detailCategory: ClosetDetailCategory
+    let hasClosetItems: Bool
+    let message: String
+    let onRegister: () -> Void
+    let onChooseReference: () -> Void
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: hasClosetItems ? "tshirt.fill" : "plus")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(Color(.systemBackground))
+                .frame(width: 52, height: 52)
+                .background(.primary, in: Circle())
+
+            VStack(spacing: 8) {
+                Text(hasClosetItems ? "비교할 옷을 선택해 주세요" : "내 옷장이 비어 있어요")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+
+                Text(hasClosetItems ? "\(detailCategory.rawValue) 기준 옷이 없어 내 옷장에서 직접 비교할 옷을 선택해야 합니다." : "먼저 내 옷장에 잘 맞는 옷을 등록하면 사이즈를 비교할 수 있습니다.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack(spacing: 12) {
+                ProductThumbnailView(
+                    imageURLString: imageURLString,
+                    width: 58,
+                    height: 72,
+                    cornerRadius: 14
+                )
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(productTitle)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                    Text("\(category.rawValue) / \(detailCategory.rawValue)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+            VStack(spacing: 10) {
+                if hasClosetItems {
+                    ComparePrimaryActionButton(title: "비교할 옷 선택하기", systemImage: "list.bullet.rectangle") {
+                        onChooseReference()
+                    }
+                } else {
+                    ComparePrimaryActionButton(title: "내 옷장에 옷 등록하기", systemImage: "plus") {
+                        onRegister()
+                    }
+                }
+
+                Button {
+                    dismiss()
+                } label: {
+                    Text("나중에 하기")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 24)
+        .padding(.bottom, 18)
+        .background(Color(.systemBackground))
+    }
+
+    private var productTitle: String {
+        let name = productName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let brand = brandName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if name.isEmpty {
+            return brand.isEmpty ? "분석한 상품" : brand
         }
 
-        if item.category.serviceGroup == productCategory.serviceGroup {
-            return item.isRepresentative ? 84 : 78
-        }
+        return brand.isEmpty ? name : "\(brand) \(name)"
+    }
+}
 
-        return item.isRepresentative ? 68 : 62
+private struct ComparePrimaryActionButton: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(Color.black, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(.white.opacity(0.14), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct TemporaryReferenceCard: View {
+    let item: UserFit
+    let isSameCategory: Bool
+
+    var body: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(item.displayName)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+
+                        Text("\(item.brandName) · \(item.sizeName)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+
+                        Text("\(item.category.rawValue) / \(item.detailCategory.rawValue)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: 8) {
+                    if item.isRepresentative {
+                        Text("기준 옷")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 6)
+                            .background(.primary.opacity(0.08), in: Capsule())
+                    }
+
+                    if isSameCategory {
+                        Text("같은 대분류")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.blue)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 6)
+                            .background(.blue.opacity(0.1), in: Capsule())
+                    }
+                }
+            }
+        }
     }
 }
 

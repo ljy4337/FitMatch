@@ -33,6 +33,9 @@ struct ProductThumbnailView: View {
                         }
                     }
                 }
+                .transaction { transaction in
+                    transaction.animation = nil
+                }
             } else {
                 placeholder {
                     Image(systemName: "photo")
@@ -42,6 +45,7 @@ struct ProductThumbnailView: View {
             }
         }
         .frame(width: width, height: height)
+        .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }

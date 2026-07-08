@@ -13,7 +13,7 @@ struct RecommendationResultView: View {
     }
 
     var body: some View {
-        ScrollView {
+        ScrollView(.vertical) {
             VStack(spacing: 18) {
                 heroCard
                 productInfoCard
@@ -26,6 +26,7 @@ struct RecommendationResultView: View {
                 actionCard
             }
             .padding(20)
+            .frame(maxWidth: .infinity)
         }
         .background(Color(.systemBackground))
         .navigationTitle("추천 결과")
@@ -46,32 +47,43 @@ struct RecommendationResultView: View {
     }
 
     private var heroCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("추천 사이즈는 \(currentResult.recommendedSize.name)입니다")
-                .font(.system(size: 34, weight: .black))
-                .foregroundStyle(.white)
-                .minimumScaleFactor(0.78)
-                .lineLimit(2)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(confidenceText)
-                    .font(.title2.weight(.black))
-                    .foregroundStyle(.white)
-                HStack(spacing: 8) {
-                    Text(comparisonReliability.stars)
-                        .font(.subheadline.weight(.black))
-                    Text("비교 신뢰도: \(comparisonReliability.title)")
-                        .font(.subheadline.weight(.bold))
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .center, spacing: 18) {
+                VStack(spacing: 6) {
+                    Text(recommendedSizeName)
+                        .font(.system(size: 42, weight: .black))
+                        .foregroundStyle(.black)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                    Text("추천 사이즈")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.black.opacity(0.62))
                 }
-                .foregroundStyle(.white.opacity(0.86))
-                Text("기준 옷과 \(currentResult.recommendationScore)% 유사합니다.")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.72))
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("\(comparedMeasurementKinds.count)개 항목 비교")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.58))
+                .frame(width: 118, height: 118)
+                .background(.white, in: Circle())
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Fit Confidence")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.62))
+                    Text(comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%")
+                        .font(.system(size: 34, weight: .black))
+                        .foregroundStyle(.white)
+                        .monospacedDigit()
+                    Text("비교 신뢰도 \(comparisonReliability.stars)")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.86))
+                    Text("\(comparisonReliability.title) · \(comparedMeasurementKinds.count)개 항목 비교")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.58))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+
+            Text(heroSummary)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.78))
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -96,7 +108,9 @@ struct RecommendationResultView: View {
                         InfoRow(title: "출처", value: currentResult.product.sourceDisplayName)
                         InfoRow(title: "카테고리", value: "\(currentResult.product.category.rawValue) / \(currentResult.productDetailCategory.rawValue)")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -113,13 +127,13 @@ struct RecommendationResultView: View {
                     InfoRow(title: "카테고리", value: "\(currentResult.userFit.category.rawValue) / \(currentResult.userFit.detailCategory.rawValue)")
                 }
 
-                HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     if currentResult.userFit.isRepresentative {
                         ResultBadge(title: "기준 옷", systemImage: "heart.fill")
                     }
                     ResultBadge(title: currentResult.comparisonMethod, systemImage: comparisonIcon)
                 }
-                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -215,10 +229,10 @@ struct RecommendationResultView: View {
                 SectionHeader(title: "핏별 추천")
 
                 VStack(spacing: 10) {
-                    FitRecommendationRow(
-                        title: currentResult.trueToSizeRecommendation.isEmpty ? "정핏 추천" : "정핏으로 입으려면",
-                        value: currentResult.recommendedSize.name,
-                        detail: "현재 기준으로는 \(currentResult.recommendedSize.name)가 가장 적합합니다.",
+                        FitRecommendationRow(
+                            title: currentResult.trueToSizeRecommendation.isEmpty ? "정핏 추천" : "정핏으로 입으려면",
+                        value: recommendedSizeName,
+                        detail: "현재 기준으로는 \(recommendedSizeName)가 가장 적합합니다.",
                         isPrimary: true
                     )
 
@@ -272,6 +286,14 @@ struct RecommendationResultView: View {
             : "Fit Confidence \(currentResult.recommendationScore)%"
     }
 
+    private var heroSummary: String {
+        strongestMeasurementReasons.first ?? "내 옷장 기준으로 가장 가까운 사이즈예요."
+    }
+
+    private var recommendedSizeName: String {
+        currentResult.recommendedSize.name.displaySizeName
+    }
+
     private var comparisonReliability: ComparisonReliability {
         ComparisonReliability(comparedCount: comparedMeasurementKinds.count)
     }
@@ -314,7 +336,8 @@ struct RecommendationResultView: View {
             .replacingOccurrences(of: "추천", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return value.isEmpty || value == currentResult.recommendedSize.name ? nil : value
+        let displayValue = value.displaySizeName
+        return displayValue.isEmpty || displayValue == recommendedSizeName ? nil : displayValue
     }
 
     private var recommendationReasons: [String] {
@@ -556,12 +579,16 @@ private struct InfoRow: View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
             Spacer(minLength: 16)
             Text(value)
                 .fontWeight(.semibold)
                 .multilineTextAlignment(.trailing)
+                .lineLimit(2)
+                .minimumScaleFactor(0.82)
         }
         .font(.subheadline)
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -573,11 +600,12 @@ private struct ResultBadge: View {
         Label(title, systemImage: systemImage)
             .font(.caption.weight(.bold))
             .foregroundStyle(.primary)
-            .lineLimit(2)
-            .fixedSize(horizontal: false, vertical: true)
+            .lineLimit(1)
+            .truncationMode(.tail)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(.primary.opacity(0.08), in: Capsule())
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -606,6 +634,7 @@ private struct FitRecommendationRow: View {
                 .foregroundStyle(isPrimary ? .white : .primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: true, vertical: false)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 9)
                 .background(isPrimary ? Color.primary : Color.primary.opacity(0.08), in: Capsule())
@@ -740,6 +769,7 @@ private struct ProductMeasurementDifferenceRow: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
             }
+            .frame(minWidth: 96, maxWidth: .infinity, alignment: .leading)
 
             Spacer(minLength: 12)
 
@@ -756,6 +786,7 @@ private struct ProductMeasurementDifferenceRow: View {
                     .foregroundStyle(status.color)
                     .lineLimit(1)
             }
+            .frame(width: 76, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -806,12 +837,14 @@ private struct FitMatchRankRow: View {
                 Text(candidate.userFit.displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
-                    .lineLimit(2)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
 
                 Text("\(candidate.userFit.brandName) · \(candidate.userFit.sizeName) · \(candidate.userFit.category.rawValue) / \(candidate.userFit.detailCategory.rawValue)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
 
                 HStack(spacing: 6) {
                     if candidate.userFit.isRepresentative {
@@ -831,6 +864,7 @@ private struct FitMatchRankRow: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer(minLength: 8)
 
@@ -838,6 +872,7 @@ private struct FitMatchRankRow: View {
                 .font(.headline.weight(.black))
                 .foregroundStyle(.primary)
                 .monospacedDigit()
+                .frame(width: 48, alignment: .trailing)
         }
         .padding(14)
         .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -906,6 +941,21 @@ private struct ResultReferencePickerView: View {
                 }
                 return lhs.updatedAt > rhs.updatedAt
             }
+    }
+}
+
+private extension String {
+    var displaySizeName: String {
+        let value = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.contains("/") else {
+            return value
+        }
+
+        return value
+            .split(separator: "/")
+            .last
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            ?? value
     }
 }
 

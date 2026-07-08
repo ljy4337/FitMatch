@@ -1,8 +1,11 @@
 import SwiftUI
+import SwiftData
 
 struct MyPageView: View {
     @Binding var selectedTab: AppTab
     let onLogout: () -> Void
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
 
     private let menuItems: [MyMenuItem] = [
         MyMenuItem(title: "내 정보", systemImage: "person.circle"),
@@ -24,6 +27,18 @@ struct MyPageView: View {
                             Text("내 옷장 기반 사이즈 추천")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                FitMatchCard {
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeader(title: "내 Fit 데이터", subtitle: "옷장과 비교 기록 요약")
+
+                        HStack(spacing: 10) {
+                            MyStatPill(title: "내 옷", value: "\(userFits.count)")
+                            MyStatPill(title: "기준 옷", value: "\(representativeFitCount)")
+                            MyStatPill(title: "비교 기록", value: "\(histories.count)")
                         }
                     }
                 }
@@ -71,6 +86,10 @@ struct MyPageView: View {
         }
     }
 
+    private var representativeFitCount: Int {
+        userFits.filter(\.isRepresentative).count
+    }
+
     private func menuRow(_ item: MyMenuItem) -> some View {
         HStack {
             Label(item.title, systemImage: item.systemImage)
@@ -82,6 +101,28 @@ struct MyPageView: View {
         }
         .foregroundStyle(.primary)
         .padding(.vertical, 14)
+    }
+}
+
+private struct MyStatPill: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text(value)
+                .font(.title2.weight(.black))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

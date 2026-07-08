@@ -141,9 +141,13 @@ struct HomeView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(Array(histories.prefix(2))) { history in
-                            RecentCompareLine(history: history)
-                        }
+                        Text("총 \(histories.count)건의 비교 기록")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text("최근 결과는 기록 탭에서 확인하세요.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer(minLength: 0)
                     Text("기록 보기")
@@ -159,12 +163,12 @@ struct HomeView: View {
     private var recommendationSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                SectionHeader(title: "추천", subtitle: "최근 비교 기반")
+                SectionHeader(title: "최근 비교", subtitle: histories.isEmpty ? "아직 비교 기록이 없습니다" : "마지막으로 확인한 핏")
                 Spacer()
                 Button {
-                    selectedTab = .recommend
+                    selectedTab = .history
                 } label: {
-                    Text("추천 보러가기")
+                    Text("기록 보기")
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(.primary)
                 }
@@ -172,19 +176,12 @@ struct HomeView: View {
             }
 
             CardView(radius: 24, padding: 18) {
-                if recommendationCandidates.isEmpty {
-                    EmptyStateLine(text: "상품 비교를 진행하면 추천 후보가 표시됩니다.")
-                } else {
-                    VStack(spacing: 0) {
-                        ForEach(Array(recommendationCandidates.enumerated()), id: \.element.id) { index, history in
-                            RecommendationPreviewRow(history: history)
-
-                            if index != recommendationCandidates.count - 1 {
-                                Divider()
-                                    .padding(.vertical, 12)
-                            }
-                        }
+                if let latestHistory = histories.first {
+                    HomeRecentHistoryCard(history: latestHistory) {
+                        selectedTab = .history
                     }
+                } else {
+                    EmptyStateLine(text: "상품을 비교하면 최근 결과가 이곳에 표시됩니다.")
                 }
             }
         }
@@ -194,9 +191,6 @@ struct HomeView: View {
         userFits.first(where: \.isRepresentative)
     }
 
-    private var recommendationCandidates: [RecommendationHistory] {
-        Array(histories.prefix(3))
-    }
 }
 
 private struct HomeOverviewCard<Content: View>: View {
@@ -248,70 +242,6 @@ private struct HomeOverviewCard<Content: View>: View {
     }
 }
 
-private struct RecentCompareLine: View {
-    let history: RecommendationHistory
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 8) {
-            ProductThumbnailView(
-                imageURLString: history.product.imageURLString,
-                width: 34,
-                height: 42,
-                cornerRadius: 10
-            )
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(history.product.displayName)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                HStack(spacing: 6) {
-                    Text(history.recommendedSize.name)
-                    Text("\(history.recommendationScore)%")
-                }
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
-private struct RecommendationPreviewRow: View {
-    let history: RecommendationHistory
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            ProductThumbnailView(
-                imageURLString: history.product.imageURLString,
-                width: 58,
-                height: 72,
-                cornerRadius: 14
-            )
-
-            VStack(alignment: .leading, spacing: 5) {
-                Text(history.product.displayName)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                Text("출처: \(history.product.sourceDisplayName)")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 5) {
-                Text(history.recommendedSize.name)
-                    .font(.title3.weight(.black))
-                    .foregroundStyle(.primary)
-                Text("\(history.recommendationScore)%")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
 private struct EmptyStateLine: View {
     let text: String
 
@@ -320,5 +250,66 @@ private struct EmptyStateLine: View {
             .font(.subheadline)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct HomeRecentHistoryCard: View {
+    let history: RecommendationHistory
+    let onOpenHistory: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 14) {
+                ProductThumbnailView(
+                    imageURLString: history.product.imageURLString,
+                    width: 72,
+                    height: 90,
+                    cornerRadius: 16
+                )
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(history.product.displayName)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+
+                    Text("추천 \(history.recommendedSize.name.displaySizeName) · Fit Confidence \(history.recommendationScore)%")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+
+                    Text(history.createdAt, style: .date)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            Button(action: onOpenHistory) {
+                Text("기록 보기")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background(.primary, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+private extension String {
+    var displaySizeName: String {
+        let value = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.contains("/") else {
+            return value
+        }
+
+        return value
+            .split(separator: "/")
+            .last
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            ?? value
     }
 }
