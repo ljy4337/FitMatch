@@ -70,7 +70,7 @@ struct AddClosetItemView: View {
 
             Section("분류") {
                 Picker("성별", selection: $viewModel.gender) {
-                    ForEach(UserGender.allCases) { gender in
+                    ForEach(inputGenders) { gender in
                         Text(gender.rawValue).tag(gender)
                     }
                 }
@@ -96,7 +96,6 @@ struct AddClosetItemView: View {
 
             Section("상품") {
                 TextField("상품명", text: $viewModel.productName)
-                TextField("사이즈", text: $viewModel.size)
             }
 
             Section("실측값") {
@@ -130,6 +129,9 @@ struct AddClosetItemView: View {
         }
         .navigationTitle("기준 옷")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            normalizeInputSelection()
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("취소") {
@@ -152,11 +154,22 @@ struct AddClosetItemView: View {
     }
 
     private var serviceCategories: [ClothingCategory] {
-        ClothingCategory.closetCategories(for: viewModel.gender)
+        ClothingCategory.closetCategories(for: viewModel.gender).filter { $0 != .other }
     }
 
     private var detailCategories: [ClosetDetailCategory] {
-        ClosetDetailCategory.options(for: viewModel.category, gender: viewModel.gender)
+        ClosetDetailCategory.options(for: viewModel.category, gender: viewModel.gender).filter { $0 != .other }
+    }
+
+    private var inputGenders: [UserGender] {
+        [.men, .women]
+    }
+
+    private func normalizeInputSelection() {
+        if !inputGenders.contains(viewModel.gender) {
+            viewModel.gender = .men
+        }
+        normalizeCategorySelection()
     }
 
     private var measurementKinds: [MeasurementKind] {
@@ -165,14 +178,14 @@ struct AddClosetItemView: View {
 
     private func normalizeCategorySelection() {
         if !serviceCategories.contains(viewModel.category) {
-            viewModel.category = serviceCategories.first ?? .other
+            viewModel.category = serviceCategories.first ?? .top
         }
         normalizeDetailCategorySelection()
     }
 
     private func normalizeDetailCategorySelection() {
         if !detailCategories.contains(viewModel.detailCategory) {
-            viewModel.detailCategory = detailCategories.first ?? .other
+            viewModel.detailCategory = detailCategories.first ?? .shortSleeve
         }
     }
 

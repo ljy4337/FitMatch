@@ -252,17 +252,26 @@ private struct RecentCompareLine: View {
     let history: RecommendationHistory
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(history.product.displayName)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-            HStack(spacing: 6) {
-                Text(history.recommendedSize.name)
-                Text("\(history.recommendationScore)%")
+        HStack(alignment: .center, spacing: 8) {
+            ProductThumbnailView(
+                imageURLString: history.product.imageURLString,
+                width: 34,
+                height: 42,
+                cornerRadius: 10
+            )
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(history.product.displayName)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(history.recommendedSize.name)
+                    Text("\(history.recommendationScore)%")
+                }
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
             }
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(.secondary)
         }
     }
 }
@@ -272,6 +281,13 @@ private struct RecommendationPreviewRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
+            ProductThumbnailView(
+                imageURLString: history.product.imageURLString,
+                width: 58,
+                height: 72,
+                cornerRadius: 14
+            )
+
             VStack(alignment: .leading, spacing: 5) {
                 Text(history.product.displayName)
                     .font(.headline)

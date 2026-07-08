@@ -96,7 +96,11 @@ struct RecommendationService {
             .map { item in
                 FitMatchCandidate(
                     userFit: item,
-                    matchRate: rankedCandidateScore(item, product: product, productDetailCategory: productDetailCategory)
+                    matchRate: bestFitConfidence(
+                        product: product,
+                        userFit: item,
+                        productDetailCategory: productDetailCategory
+                    )?.score ?? 0
                 )
             }
             .sorted { lhs, rhs in
@@ -129,7 +133,8 @@ struct RecommendationService {
         basis: RecommendationBasis
     ) -> RecommendationHistory? {
         var bestHistory: RecommendationHistory?
-        var bestWeightedDifference = Double.greatestFiniteMagnitude
+        var bestFitConfidence = -1
+        var bestAverageDifference = Double.greatestFiniteMagnitude
 
         for size in product.sizes.sorted(by: { $0.displayOrder < $1.displayOrder }) where !size.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             for userFit in userFits {
@@ -146,40 +151,20 @@ struct RecommendationService {
                     footLength: size.measurements.footLength - userFit.measurements.footLength,
                     underBust: size.measurements.underBust - userFit.measurements.underBust
                 )
-                let differences = GarmentMeasurements(
-                    shoulder: abs(signedDifferences.shoulder),
-                    chest: abs(signedDifferences.chest),
-                    totalLength: abs(signedDifferences.totalLength),
-                    sleeveLength: abs(signedDifferences.sleeveLength),
-                    waist: abs(signedDifferences.waist),
-                    hip: abs(signedDifferences.hip),
-                    thigh: abs(signedDifferences.thigh),
-                    rise: abs(signedDifferences.rise),
-                    hem: abs(signedDifferences.hem),
-                    footLength: abs(signedDifferences.footLength),
-                    underBust: abs(signedDifferences.underBust)
-                )
-                let weights = measurementWeights(
+                let fitConfidence = fitConfidence(
+                    productMeasurements: size.measurements,
+                    referenceMeasurements: userFit.measurements,
                     productCategory: product.category,
-                    productDetailCategory: productDetailCategory,
-                    referenceDetailCategory: userFit.detailCategory,
-                    comparisonMethod: basis.methodText
+                    productDetailCategory: productDetailCategory
                 )
-                let weightedDifference = weightedDifference(differences: differences, weights: weights)
-                let validItemCount = validMeasurementCount(size: size.measurements, userFit: userFit.measurements, weights: weights)
-                var recommendationScore = max(0, min(100, Int((100 - weightedDifference * 4).rounded())))
-                recommendationScore = max(0, recommendationScore - basis.scorePenalty)
-                if validItemCount >= 2, recommendationScore > 0 {
-                    recommendationScore = max(30, recommendationScore)
-                }
 
                 let history = RecommendationHistory(
                     product: product,
                     recommendedSize: size,
                     userFit: userFit,
-                    totalDifference: weightedDifference,
+                    totalDifference: fitConfidence.averageDifference,
                     measurementDifferences: signedDifferences,
-                    recommendationScore: recommendationScore,
+                    recommendationScore: fitConfidence.score,
                     trueToSizeRecommendation: "\(userFit.fitPreference.rawValue)으로 입으려면 \(size.name) 추천",
                     oversizedRecommendation: oversizedSuggestion(for: size, in: product.sizes),
                     comparisonMethod: basis.methodText,
@@ -187,9 +172,18 @@ struct RecommendationService {
                     productDetailCategory: productDetailCategory
                 )
 
-                if weightedDifference < bestWeightedDifference {
+                printFitConfidenceDebug(
+                    referenceItem: userFit,
+                    sizeName: size.name,
+                    signedDifferences: signedDifferences,
+                    result: fitConfidence
+                )
+
+                if fitConfidence.score > bestFitConfidence ||
+                    (fitConfidence.score == bestFitConfidence && fitConfidence.averageDifference < bestAverageDifference) {
                     bestHistory = history
-                    bestWeightedDifference = weightedDifference
+                    bestFitConfidence = fitConfidence.score
+                    bestAverageDifference = fitConfidence.averageDifference
                 }
             }
         }
@@ -198,7 +192,7 @@ struct RecommendationService {
             print("[RecommendationService] selectedReferenceItem: \(bestHistory.userFit.displayName)")
             print("[RecommendationService] comparisonMode: \(bestHistory.comparisonMethod)")
             print("[RecommendationService] finalRecommendedSize: \(bestHistory.recommendedSize.name)")
-            print("[RecommendationService] finalScore: \(bestHistory.recommendationScore)")
+            print("[RecommendationService] final Fit Confidence: \(bestHistory.recommendationScore)")
         }
 
         return bestHistory
@@ -283,54 +277,116 @@ struct RecommendationService {
         product: Product,
         productDetailCategory: ClosetDetailCategory
     ) -> Int {
-        var score = 0
-        if item.category.serviceGroup == product.category.serviceGroup {
-            score += 16
-        }
-        if item.isRepresentative {
-            score += 4
-        }
-        if matchesSource(item, product: product) {
-            score += 4
-        }
-        if matchesBrand(item, product: product) {
-            score += 4
-        }
-        if item.detailCategory == productDetailCategory {
-            score += 12
-        }
-
-        let bestWeightedDifference = product.sizes
+        product.sizes
             .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .map { size in
-                let differences = GarmentMeasurements(
-                    shoulder: abs(size.measurements.shoulder - item.measurements.shoulder),
-                    chest: abs(size.measurements.chest - item.measurements.chest),
-                    totalLength: abs(size.measurements.totalLength - item.measurements.totalLength),
-                    sleeveLength: abs(size.measurements.sleeveLength - item.measurements.sleeveLength),
-                    waist: abs(size.measurements.waist - item.measurements.waist),
-                    hip: abs(size.measurements.hip - item.measurements.hip),
-                    thigh: abs(size.measurements.thigh - item.measurements.thigh),
-                    rise: abs(size.measurements.rise - item.measurements.rise),
-                    hem: abs(size.measurements.hem - item.measurements.hem),
-                    footLength: abs(size.measurements.footLength - item.measurements.footLength),
-                    underBust: abs(size.measurements.underBust - item.measurements.underBust)
-                )
-                let weights = measurementWeights(
+                fitConfidence(
+                    productMeasurements: size.measurements,
+                    referenceMeasurements: item.measurements,
                     productCategory: product.category,
-                    productDetailCategory: productDetailCategory,
-                    referenceDetailCategory: item.detailCategory,
-                    comparisonMethod: item.detailCategory == productDetailCategory ? "같은 세부카테고리 기준 비교" : "사용자 선택 임시 비교"
-                )
-                return weightedDifference(differences: differences, weights: weights)
+                    productDetailCategory: productDetailCategory
+                ).score
             }
-            .min() ?? .greatestFiniteMagnitude
+            .max() ?? 0
+    }
 
-        if bestWeightedDifference.isFinite {
-            score += max(0, min(60, Int((60 - bestWeightedDifference * 3).rounded())))
+    private func bestFitConfidence(
+        product: Product,
+        userFit: UserFit,
+        productDetailCategory: ClosetDetailCategory
+    ) -> FitConfidenceResult? {
+        product.sizes
+            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .map {
+                fitConfidence(
+                    productMeasurements: $0.measurements,
+                    referenceMeasurements: userFit.measurements,
+                    productCategory: product.category,
+                    productDetailCategory: productDetailCategory
+                )
+            }
+            .max { lhs, rhs in
+                if lhs.score != rhs.score {
+                    return lhs.score < rhs.score
+                }
+                return lhs.averageDifference > rhs.averageDifference
+            }
+    }
+
+    private func fitConfidence(
+        productMeasurements: GarmentMeasurements,
+        referenceMeasurements: GarmentMeasurements,
+        productCategory: ClothingCategory,
+        productDetailCategory: ClosetDetailCategory
+    ) -> FitConfidenceResult {
+        var comparedItems: [FitConfidenceItem] = []
+        var ignoredKinds: [MeasurementKind] = []
+
+        for kind in v1MeasurementKinds(productCategory: productCategory, productDetailCategory: productDetailCategory) {
+            let productValue = productMeasurements.value(for: kind)
+            let referenceValue = referenceMeasurements.value(for: kind)
+            guard productValue > 0, referenceValue > 0 else {
+                ignoredKinds.append(kind)
+                continue
+            }
+
+            let difference = abs(productValue - referenceValue)
+            let itemScore = max(0, min(100, Int((100 - difference * 5).rounded())))
+            comparedItems.append(FitConfidenceItem(kind: kind, difference: difference, score: itemScore))
         }
 
-        return max(0, min(100, score))
+        let score = comparedItems.isEmpty
+            ? 0
+            : Int((Double(comparedItems.map(\.score).reduce(0, +)) / Double(comparedItems.count)).rounded())
+        let averageDifference = comparedItems.isEmpty
+            ? .greatestFiniteMagnitude
+            : comparedItems.map(\.difference).reduce(0, +) / Double(comparedItems.count)
+
+        return FitConfidenceResult(
+            score: score,
+            comparedItems: comparedItems,
+            ignoredKinds: ignoredKinds,
+            averageDifference: averageDifference
+        )
+    }
+
+    private func v1MeasurementKinds(
+        productCategory: ClothingCategory,
+        productDetailCategory: ClosetDetailCategory
+    ) -> [MeasurementKind] {
+        switch productCategory.serviceGroup {
+        case .top, .outer, .shirt, .knit:
+            return [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .bottom, .pants:
+            return [.waist, .hip, .thigh, .totalLength]
+        default:
+            return productCategory.measurementKinds(detailCategory: productDetailCategory, gender: .unisex)
+        }
+    }
+
+    private func printFitConfidenceDebug(
+        referenceItem: UserFit,
+        sizeName: String,
+        signedDifferences: GarmentMeasurements,
+        result: FitConfidenceResult
+    ) {
+        let comparedNames = result.comparedItems.map { $0.kind.title }.joined(separator: ", ")
+        let ignoredNames = result.ignoredKinds.map(\.title).joined(separator: ", ")
+        let shoulderScore = result.score(for: .shoulder)?.description ?? "ignored"
+        let chestScore = result.score(for: .chest)?.description ?? "ignored"
+        let totalLengthScore = result.score(for: .totalLength)?.description ?? "ignored"
+        let sleeveScore = result.score(for: .sleeveLength)?.description ?? "ignored"
+
+        print("[RecommendationService] reference item: \(referenceItem.displayName)")
+        print("[RecommendationService] product size name: \(sizeName)")
+        print("[RecommendationService] compared measurement names: \(comparedNames)")
+        print("[RecommendationService] ignored measurement names: \(ignoredNames)")
+        print("[RecommendationService] shoulder difference / score: \(signedDifferences.shoulder) / \(shoulderScore)")
+        print("[RecommendationService] chest difference / score: \(signedDifferences.chest) / \(chestScore)")
+        print("[RecommendationService] totalLength difference / score: \(signedDifferences.totalLength) / \(totalLengthScore)")
+        print("[RecommendationService] sleeve difference / score: \(signedDifferences.sleeveLength) / \(sleeveScore)")
+        print("[RecommendationService] final Fit Confidence: \(result.score)")
+        print("[RecommendationService] comparison reliability level: \(result.reliabilityTitle)")
     }
 
     private func matchesSource(_ item: UserFit, product: Product) -> Bool {
@@ -482,4 +538,36 @@ private struct RecommendationBasis {
     let methodText: String
     let scorePenalty: Int
     var fallbackReason: String = ""
+}
+
+private struct FitConfidenceItem {
+    let kind: MeasurementKind
+    let difference: Double
+    let score: Int
+}
+
+private struct FitConfidenceResult {
+    let score: Int
+    let comparedItems: [FitConfidenceItem]
+    let ignoredKinds: [MeasurementKind]
+    let averageDifference: Double
+
+    var reliabilityTitle: String {
+        switch comparedItems.count {
+        case 4...:
+            return "높은 신뢰도"
+        case 3:
+            return "충분한 비교"
+        case 2:
+            return "참고 가능"
+        case 1:
+            return "참고용"
+        default:
+            return "계산 불가"
+        }
+    }
+
+    func score(for kind: MeasurementKind) -> Int? {
+        comparedItems.first { $0.kind == kind }?.score
+    }
 }

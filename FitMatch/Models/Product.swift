@@ -15,6 +15,7 @@ final class Product {
     var categoryRawValue: String
     var productCode: String?
     var sourceURLString: String?
+    var imageURLString: String?
     var sourceTypeRawValue: String = ProductSourceType.manual.rawValue
     var sourceName: String = "직접 입력"
     var sourceRawValue: String
@@ -34,6 +35,7 @@ final class Product {
         category: ClothingCategory,
         productCode: String? = nil,
         sourceURLString: String? = nil,
+        imageURLString: String? = nil,
         sourceType: ProductSourceType = .manual,
         sourceName: String = "직접 입력",
         source: ProductSource = .userInput,
@@ -48,6 +50,7 @@ final class Product {
         self.categoryRawValue = category.rawValue
         self.productCode = productCode
         self.sourceURLString = sourceURLString
+        self.imageURLString = imageURLString
         self.sourceTypeRawValue = sourceType.rawValue
         self.sourceName = sourceName
         self.sourceRawValue = source.rawValue

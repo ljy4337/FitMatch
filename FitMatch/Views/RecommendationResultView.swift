@@ -20,6 +20,7 @@ struct RecommendationResultView: View {
                 referenceFitCard
                 fitMatchRankingCard
                 measurementDifferenceCard
+                comparisonCoverageCard
                 reasonCard
                 fitRecommendationCard
                 actionCard
@@ -57,16 +58,19 @@ struct RecommendationResultView: View {
                     .font(.title2.weight(.black))
                     .foregroundStyle(.white)
                 HStack(spacing: 8) {
-                    Text(confidenceStatus.stars)
+                    Text(comparisonReliability.stars)
                         .font(.subheadline.weight(.black))
-                    Text(confidenceStatus.title)
+                    Text("비교 신뢰도: \(comparisonReliability.title)")
                         .font(.subheadline.weight(.bold))
                 }
                 .foregroundStyle(.white.opacity(0.86))
-                Text("내 옷장 기준으로 가장 가까운 사이즈예요.")
+                Text("기준 옷과 \(currentResult.recommendationScore)% 유사합니다.")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.72))
                     .fixedSize(horizontal: false, vertical: true)
+                Text("\(comparedMeasurementKinds.count)개 항목 비교")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.58))
             }
         }
         .padding(24)
@@ -188,6 +192,23 @@ struct RecommendationResultView: View {
         }
     }
 
+    private var comparisonCoverageCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(title: "비교 항목", subtitle: "입력되지 않은 항목은 추천 점수에서 제외했어요.")
+
+                VStack(spacing: 10) {
+                    ForEach(v1MeasurementKinds, id: \.id) { kind in
+                        ComparisonCoverageRow(
+                            title: kind.title,
+                            isCompared: comparedMeasurementKinds.contains(kind)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     private var fitRecommendationCard: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 16) {
@@ -237,49 +258,54 @@ struct RecommendationResultView: View {
     }
 
     private var productThumbnail: some View {
-        Group {
-            if let productImageURL {
-                AsyncImage(url: productImageURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    default:
-                        productImagePlaceholder
-                    }
-                }
-            } else {
-                productImagePlaceholder
-            }
-        }
-        .frame(width: 90, height: 104)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
-
-    private var productImagePlaceholder: some View {
-        RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .fill(Color(.secondarySystemBackground))
-            .overlay {
-                Image(systemName: "photo")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-            }
-    }
-
-    private var productImageURL: URL? {
-        // TODO: Product 또는 RecommendationHistory에 imageURLString을 저장하면 실제 상품 썸네일을 연결한다.
-        nil
+        ProductThumbnailView(
+            imageURLString: currentResult.product.imageURLString,
+            width: 90,
+            height: 104,
+            cornerRadius: 18
+        )
     }
 
     private var confidenceText: String {
-        currentResult.recommendationScore > 0
-            ? "Fit Confidence \(currentResult.recommendationScore)%"
-            : "Fit Confidence 정보 부족"
+        comparedMeasurementKinds.isEmpty
+            ? "Fit Confidence 계산 불가"
+            : "Fit Confidence \(currentResult.recommendationScore)%"
+    }
+
+    private var comparisonReliability: ComparisonReliability {
+        ComparisonReliability(comparedCount: comparedMeasurementKinds.count)
     }
 
     private var confidenceStatus: ConfidenceStatus {
         ConfidenceStatus(score: currentResult.recommendationScore)
+    }
+
+    private var v1MeasurementKinds: [MeasurementKind] {
+        switch currentResult.product.category.serviceGroup {
+        case .top, .outer, .shirt, .knit:
+            return [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .bottom, .pants:
+            return [.waist, .hip, .thigh, .totalLength]
+        default:
+            return currentResult.product.category.measurementKinds(detailCategory: currentResult.productDetailCategory, gender: .unisex)
+        }
+    }
+
+    private var comparedMeasurementKinds: [MeasurementKind] {
+        v1MeasurementKinds.filter {
+            currentResult.recommendedSize.measurements.value(for: $0) > 0
+                && currentResult.userFit.measurements.value(for: $0) > 0
+        }
+    }
+
+    private var ignoredMeasurementKinds: [MeasurementKind] {
+        v1MeasurementKinds.filter { !comparedMeasurementKinds.contains($0) }
+    }
+
+    private var legacyConfidenceText: String {
+        currentResult.recommendationScore > 0
+            ? "Fit Confidence \(currentResult.recommendationScore)%"
+            : "Fit Confidence 정보 부족"
     }
 
     private var oversizedSize: String? {
@@ -306,6 +332,10 @@ struct RecommendationResultView: View {
             reasons.append(weightingNotice)
         }
 
+        for kind in ignoredMeasurementKinds {
+            reasons.append("\(kind.title)은 입력값이 없어 비교에서 제외했습니다.")
+        }
+
         if !currentResult.fallbackReason.isEmpty {
             reasons.append(currentResult.fallbackReason)
         }
@@ -330,12 +360,7 @@ struct RecommendationResultView: View {
     }
 
     private var visibleMeasurementKinds: [MeasurementKind] {
-        currentResult.product.category
-            .measurementKinds(detailCategory: currentResult.productDetailCategory, gender: .unisex)
-            .filter {
-                currentResult.recommendedSize.measurements.value(for: $0) > 0
-                    && currentResult.userFit.measurements.value(for: $0) > 0
-            }
+        comparedMeasurementKinds
     }
 
     private var fitMatchRanking: [FitMatchCandidate] {
@@ -474,6 +499,52 @@ private struct ConfidenceStatus {
             stars = "정보 부족"
             title = "계산에 필요한 실측이 부족합니다"
         }
+    }
+}
+
+private struct ComparisonReliability {
+    let stars: String
+    let title: String
+
+    init(comparedCount: Int) {
+        switch comparedCount {
+        case 4...:
+            stars = "★★★★★"
+            title = "높은 신뢰도"
+        case 3:
+            stars = "★★★★☆"
+            title = "충분한 비교"
+        case 2:
+            stars = "★★★☆☆"
+            title = "참고 가능"
+        case 1:
+            stars = "★★☆☆☆"
+            title = "참고용"
+        default:
+            stars = "계산 불가"
+            title = "비교 항목 없음"
+        }
+    }
+}
+
+private struct ComparisonCoverageRow: View {
+    let title: String
+    let isCompared: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: isCompared ? "checkmark.circle.fill" : "xmark.circle")
+                .foregroundStyle(isCompared ? .green : .secondary)
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            Spacer()
+            Text(isCompared ? "비교됨" : "없음")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(isCompared ? .green : .secondary)
+        }
+        .padding(12)
+        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 

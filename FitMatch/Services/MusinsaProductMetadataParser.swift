@@ -54,7 +54,7 @@ struct MusinsaProductMetadataParser {
                 detailCategory: Self.mapDetailCategory(from: "\(categoryText ?? "") \(productName)"),
                 categoryDepth1Name: depth1,
                 categoryDepth2Name: depth2,
-                imageURLString: response.data.thumbnailImageUrl,
+                imageURLString: Self.normalizeImageURL(response.data.thumbnailImageUrl),
                 price: response.data.salePrice ?? response.data.finalPrice,
                 canonicalURLString: "https://www.musinsa.com/products/\(productID)"
             )
@@ -103,7 +103,7 @@ struct MusinsaProductMetadataParser {
             detailCategory: .other,
             categoryDepth1Name: nil,
             categoryDepth2Name: nil,
-            imageURLString: ogImage,
+            imageURLString: Self.normalizeImageURL(ogImage),
             price: nil,
             canonicalURLString: canonical ?? "https://www.musinsa.com/products/\(productID)"
         )
@@ -210,6 +210,31 @@ struct MusinsaProductMetadataParser {
             return .onePiece
         }
         return .other
+    }
+
+    private static func normalizeImageURL(_ rawValue: String?) -> String? {
+        guard let rawValue = rawValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !rawValue.isEmpty else {
+            return nil
+        }
+
+        if rawValue.hasPrefix("http://") || rawValue.hasPrefix("https://") {
+            return rawValue
+        }
+
+        if rawValue.hasPrefix("//image.msscdn.net/") {
+            return "https:" + rawValue
+        }
+
+        if rawValue.hasPrefix("/images/") {
+            return "https://image.msscdn.net" + rawValue
+        }
+
+        if rawValue.hasPrefix("images/") {
+            return "https://image.msscdn.net/" + rawValue
+        }
+
+        return rawValue
     }
 }
 

@@ -196,6 +196,7 @@ final class ShoppingProductViewModel: ObservableObject {
             brand: brand,
             category: category,
             sourceURLString: productCanonicalURLString ?? (productURL.trimmed.isEmpty ? nil : productURL.trimmed),
+            imageURLString: productImageURLString,
             sourceType: sourceType,
             sourceName: resolvedSourceName,
             sizes: validOptions

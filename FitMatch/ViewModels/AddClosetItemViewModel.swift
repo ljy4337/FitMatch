@@ -6,11 +6,11 @@ final class AddClosetItemViewModel: ObservableObject {
     @Published var sourceName = "직접 입력"
     @Published var brand = ""
     @Published var usesCustomBrand = true
-    @Published var gender: UserGender = .unisex
+    @Published var gender: UserGender = .men
     @Published var productName = ""
     @Published var category: ClothingCategory = .top
-    @Published var detailCategory: ClosetDetailCategory = .other
-    @Published var size = ""
+    @Published var detailCategory: ClosetDetailCategory = .shortSleeve
+    @Published var size = "기준"
     @Published var shoulder = ""
     @Published var chest = ""
     @Published var totalLength = ""
@@ -43,7 +43,7 @@ final class AddClosetItemViewModel: ObservableObject {
                 detailCategory = prefillDetailCategory
             }
             if let prefillGender {
-                gender = prefillGender
+                gender = prefillGender == .unisex ? .men : prefillGender
             }
             if let prefillBrand, !prefillBrand.trimmed.isEmpty {
                 brand = prefillBrand.trimmed
@@ -59,7 +59,7 @@ final class AddClosetItemViewModel: ObservableObject {
         sourceName = item.sourceName
         brand = item.brandName
         usesCustomBrand = true
-        gender = item.gender
+        gender = item.gender == .unisex ? .men : item.gender
         productName = item.productName
         category = item.category
         detailCategory = item.detailCategory
@@ -84,7 +84,6 @@ final class AddClosetItemViewModel: ObservableObject {
     var canSave: Bool {
         !brand.trimmed.isEmpty
             && !productName.trimmed.isEmpty
-            && !size.trimmed.isEmpty
             && measurements != nil
     }
 
@@ -141,7 +140,7 @@ final class AddClosetItemViewModel: ObservableObject {
             productName: productName.trimmed,
             category: category,
             detailCategory: detailCategory,
-            sizeName: size.trimmed,
+            sizeName: resolvedSizeName,
             measurements: measurements,
             fitMemo: fitMemo.trimmed,
             fitPreference: fitPreference,
@@ -159,6 +158,11 @@ final class AddClosetItemViewModel: ObservableObject {
         case .manual:
             return sourceName.trimmed.isEmpty ? "직접 입력" : sourceName.trimmed
         }
+    }
+
+    private var resolvedSizeName: String {
+        let trimmedSize = size.trimmed
+        return trimmedSize.isEmpty ? "기준" : trimmedSize
     }
 }
 

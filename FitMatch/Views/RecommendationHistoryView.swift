@@ -97,7 +97,14 @@ private struct HistoryCard: View {
     var body: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top) {
+                HStack(alignment: .top, spacing: 12) {
+                    ProductThumbnailView(
+                        imageURLString: history.product.imageURLString,
+                        width: 76,
+                        height: 92,
+                        cornerRadius: 16
+                    )
+
                     VStack(alignment: .leading, spacing: 5) {
                         Text(history.product.displayName)
                             .font(.headline.weight(.semibold))
