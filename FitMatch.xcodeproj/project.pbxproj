@@ -6,7 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8B3F1A012FF9000000010001 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 8B3F1A002FF9000000010001 /* SwiftSoup */; };
+		8B56EC352FFE26CB006D3CC9 /* FitMatchShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8B56EC2B2FFE26CA006D3CC9 /* FitMatchShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		8B56EC332FFE26CB006D3CC9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8BE559762FF7ED950010F340 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8B56EC2A2FFE26CA006D3CC9;
+			remoteInfo = FitMatchShareExtension;
+		};
 		8BE5598C2FF7ED990010F340 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8BE559762FF7ED950010F340 /* Project object */;
@@ -23,15 +35,58 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		8B56EC3A2FFE26CB006D3CC9 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8B56EC352FFE26CB006D3CC9 /* FitMatchShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		8B56EC2B2FFE26CA006D3CC9 /* FitMatchShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FitMatchShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8BE5597E2FF7ED950010F340 /* FitMatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FitMatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8BE5598B2FF7ED990010F340 /* FitMatchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FitMatchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8BE559952FF7ED990010F340 /* FitMatchUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FitMatchUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8B56EC402FFE26CB006D3CC9 /* Exceptions for "FitMatch" folder in "FitMatch" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8BE5597D2FF7ED950010F340 /* FitMatch */;
+		};
+		8B56EC362FFE26CB006D3CC9 /* Exceptions for "FitMatchShareExtension" folder in "FitMatchShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8B56EC2A2FFE26CA006D3CC9 /* FitMatchShareExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		8B56EC2C2FFE26CA006D3CC9 /* FitMatchShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8B56EC362FFE26CB006D3CC9 /* Exceptions for "FitMatchShareExtension" folder in "FitMatchShareExtension" target */,
+			);
+			path = FitMatchShareExtension;
+			sourceTree = "<group>";
+		};
 		8BE559802FF7ED950010F340 /* FitMatch */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8B56EC402FFE26CB006D3CC9 /* Exceptions for "FitMatch" folder in "FitMatch" target */,
+			);
 			path = FitMatch;
 			sourceTree = "<group>";
 		};
@@ -48,10 +103,18 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		8B56EC282FFE26CA006D3CC9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8BE5597B2FF7ED950010F340 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8B3F1A012FF9000000010001 /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +141,7 @@
 				8BE559802FF7ED950010F340 /* FitMatch */,
 				8BE5598E2FF7ED990010F340 /* FitMatchTests */,
 				8BE559982FF7ED990010F340 /* FitMatchUITests */,
+				8B56EC2C2FFE26CA006D3CC9 /* FitMatchShareExtension */,
 				8BE5597F2FF7ED950010F340 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +152,7 @@
 				8BE5597E2FF7ED950010F340 /* FitMatch.app */,
 				8BE5598B2FF7ED990010F340 /* FitMatchTests.xctest */,
 				8BE559952FF7ED990010F340 /* FitMatchUITests.xctest */,
+				8B56EC2B2FFE26CA006D3CC9 /* FitMatchShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,6 +160,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		8B56EC2A2FFE26CA006D3CC9 /* FitMatchShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8B56EC372FFE26CB006D3CC9 /* Build configuration list for PBXNativeTarget "FitMatchShareExtension" */;
+			buildPhases = (
+				8B56EC272FFE26CA006D3CC9 /* Sources */,
+				8B56EC282FFE26CA006D3CC9 /* Frameworks */,
+				8B56EC292FFE26CA006D3CC9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8B56EC2C2FFE26CA006D3CC9 /* FitMatchShareExtension */,
+			);
+			name = FitMatchShareExtension;
+			packageProductDependencies = (
+			);
+			productName = FitMatchShareExtension;
+			productReference = 8B56EC2B2FFE26CA006D3CC9 /* FitMatchShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		8BE5597D2FF7ED950010F340 /* FitMatch */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8BE5599F2FF7ED990010F340 /* Build configuration list for PBXNativeTarget "FitMatch" */;
@@ -102,16 +189,19 @@
 				8BE5597A2FF7ED950010F340 /* Sources */,
 				8BE5597B2FF7ED950010F340 /* Frameworks */,
 				8BE5597C2FF7ED950010F340 /* Resources */,
+				8B56EC3A2FFE26CB006D3CC9 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8B56EC342FFE26CB006D3CC9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				8BE559802FF7ED950010F340 /* FitMatch */,
 			);
 			name = FitMatch;
 			packageProductDependencies = (
+				8B3F1A002FF9000000010001 /* SwiftSoup */,
 			);
 			productName = FitMatch;
 			productReference = 8BE5597E2FF7ED950010F340 /* FitMatch.app */;
@@ -173,6 +263,9 @@
 				LastSwiftUpdateCheck = 2630;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
+					8B56EC2A2FFE26CA006D3CC9 = {
+						CreatedOnToolsVersion = 26.3;
+					};
 					8BE5597D2FF7ED950010F340 = {
 						CreatedOnToolsVersion = 26.3;
 					};
@@ -195,6 +288,9 @@
 			);
 			mainGroup = 8BE559752FF7ED950010F340;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8B3F19FF2FF9000000010001 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8BE5597F2FF7ED950010F340 /* Products */;
 			projectDirPath = "";
@@ -203,11 +299,19 @@
 				8BE5597D2FF7ED950010F340 /* FitMatch */,
 				8BE5598A2FF7ED990010F340 /* FitMatchTests */,
 				8BE559942FF7ED990010F340 /* FitMatchUITests */,
+				8B56EC2A2FFE26CA006D3CC9 /* FitMatchShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		8B56EC292FFE26CA006D3CC9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8BE5597C2FF7ED950010F340 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -232,6 +336,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		8B56EC272FFE26CA006D3CC9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8BE5597A2FF7ED950010F340 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -256,6 +367,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		8B56EC342FFE26CB006D3CC9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8B56EC2A2FFE26CA006D3CC9 /* FitMatchShareExtension */;
+			targetProxy = 8B56EC332FFE26CB006D3CC9 /* PBXContainerItemProxy */;
+		};
 		8BE5598D2FF7ED990010F340 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 8BE5597D2FF7ED950010F340 /* FitMatch */;
@@ -269,6 +385,64 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		8B56EC382FFE26CB006D3CC9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FitMatchShareExtension/FitMatchShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y344H87QC5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitMatchShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FitMatchShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.ljy4337.FitMatch.FitMatchShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		8B56EC392FFE26CB006D3CC9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FitMatchShareExtension/FitMatchShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y344H87QC5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitMatchShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FitMatchShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.ljy4337.FitMatch.FitMatchShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		8BE5599D2FF7ED990010F340 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -393,10 +567,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FitMatch/FitMatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y344H87QC5;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FitMatch/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -415,7 +592,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -424,10 +601,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FitMatch/FitMatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y344H87QC5;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FitMatch/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -446,7 +626,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -533,6 +713,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		8B56EC372FFE26CB006D3CC9 /* Build configuration list for PBXNativeTarget "FitMatchShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8B56EC382FFE26CB006D3CC9 /* Debug */,
+				8B56EC392FFE26CB006D3CC9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		8BE559792FF7ED950010F340 /* Build configuration list for PBXProject "FitMatch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -570,6 +759,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8B3F19FF2FF9000000010001 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.8;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8B3F1A002FF9000000010001 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8B3F19FF2FF9000000010001 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8BE559762FF7ED950010F340 /* Project object */;
 }

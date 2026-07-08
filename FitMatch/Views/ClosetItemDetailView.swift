@@ -3,26 +3,26 @@ import SwiftData
 
 struct ClosetItemDetailView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var baselineFits: [BaselineFit]
     @State private var isShowingEdit = false
 
-    let item: ClosetItem
+    let item: UserFit
 
     var body: some View {
         List {
             Section("기본 정보") {
-                LabeledContent("브랜드", value: item.brand)
+                LabeledContent("출처 유형", value: item.sourceType.displayName)
+                LabeledContent("출처", value: item.sourceName)
+                LabeledContent("브랜드", value: item.brandName)
                 LabeledContent("제품명", value: item.productName)
                 LabeledContent("카테고리", value: item.category.rawValue)
-                LabeledContent("사이즈", value: item.size)
+                LabeledContent("사이즈", value: item.sizeName)
                 LabeledContent("만족도", value: "\(item.satisfaction) / 5")
             }
 
             Section("실측값") {
-                LabeledContent("어깨", value: item.measurements.shoulder.cmText)
-                LabeledContent("가슴", value: item.measurements.chest.cmText)
-                LabeledContent("총장", value: item.measurements.totalLength.cmText)
-                LabeledContent("소매", value: item.measurements.sleeveLength.cmText)
+                ForEach(item.category.measurementKinds(detailCategory: item.detailCategory, gender: item.gender)) { kind in
+                    LabeledContent(kind.title, value: item.measurements.value(for: kind).cmText)
+                }
             }
 
             if !item.fitMemo.isEmpty {
@@ -32,6 +32,7 @@ struct ClosetItemDetailView: View {
             }
         }
         .navigationTitle(item.productName)
+        .hidesTabBarOnScroll()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("수정") {
@@ -48,28 +49,21 @@ struct ClosetItemDetailView: View {
         }
     }
 
-    private func applyChanges(from editedItem: ClosetItem) {
-        item.brand = editedItem.brand
+    private func applyChanges(from editedItem: UserFit) {
+        item.sourceType = editedItem.sourceType
+        item.sourceName = editedItem.sourceName
+        item.brandName = editedItem.brandName
+        item.gender = editedItem.gender
         item.productName = editedItem.productName
         item.category = editedItem.category
-        item.size = editedItem.size
+        item.detailCategory = editedItem.detailCategory
+        item.sizeName = editedItem.sizeName
         item.measurements = editedItem.measurements
         item.fitMemo = editedItem.fitMemo
+        item.fitPreference = editedItem.fitPreference
         item.satisfaction = editedItem.satisfaction
-
-        let matchedFits = baselineFits.filter { ($0.sourceClosetItemID ?? $0.id) == item.id }
-        if matchedFits.isEmpty {
-            modelContext.insert(item.baselineFit)
-        } else {
-            for fit in matchedFits {
-                fit.brand = item.brand
-                fit.productName = item.productName
-                fit.category = item.category
-                fit.size = item.size
-                fit.measurements = item.measurements
-                fit.fitMemo = item.fitMemo
-                fit.satisfaction = item.satisfaction
-            }
-        }
+        item.isRepresentative = editedItem.isRepresentative
+        item.updatedAt = Date()
+        try? modelContext.save()
     }
 }

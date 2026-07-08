@@ -21,19 +21,38 @@ struct MeasurementField: View {
 
 struct MeasurementSummaryView: View {
     let measurements: GarmentMeasurements
+    var category: ClothingCategory = .top
+    var detailCategory: ClosetDetailCategory = .other
+    var gender: UserGender = .unisex
 
     var body: some View {
         Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 8) {
-            GridRow {
-                summaryItem("어깨", measurements.shoulder)
-                summaryItem("가슴", measurements.chest)
-            }
-            GridRow {
-                summaryItem("총장", measurements.totalLength)
-                summaryItem("소매", measurements.sleeveLength)
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                GridRow {
+                    ForEach(row) { kind in
+                        summaryItem(kind.title, measurements.value(for: kind))
+                    }
+                    if row.count == 1 {
+                        Color.clear
+                    }
+                }
             }
         }
         .font(.subheadline)
+    }
+
+    private var rows: [[MeasurementKind]] {
+        let visibleKinds = measurementKinds.filter {
+            measurements.value(for: $0) > 0
+        }
+        let kinds = visibleKinds.isEmpty ? measurementKinds : visibleKinds
+        return stride(from: 0, to: kinds.count, by: 2).map {
+            Array(kinds[$0..<min($0 + 2, kinds.count)])
+        }
+    }
+
+    private var measurementKinds: [MeasurementKind] {
+        category.measurementKinds(detailCategory: detailCategory, gender: gender)
     }
 
     private func summaryItem(_ title: String, _ value: Double) -> some View {

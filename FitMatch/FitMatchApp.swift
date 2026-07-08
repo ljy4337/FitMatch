@@ -15,11 +15,11 @@ struct FitMatchApp: App {
             ContentView()
         }
         .modelContainer(for: [
-            ClosetItem.self,
-            BaselineFit.self,
-            ShoppingProduct.self,
-            ClothingSize.self,
-            RecommendationRecord.self
+            Brand.self,
+            Product.self,
+            ProductSize.self,
+            UserFit.self,
+            RecommendationHistory.self
         ])
     }
 }
