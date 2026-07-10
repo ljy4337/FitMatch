@@ -10,6 +10,20 @@ struct ClosetItemDetailView: View {
 
     var body: some View {
         List {
+            if let imageURLString = item.sourceProduct?.imageURLString,
+               !imageURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Section {
+                    ProductThumbnailView(
+                        imageURLString: imageURLString,
+                        width: 300,
+                        height: 320,
+                        cornerRadius: 22
+                    )
+                    .frame(maxWidth: .infinity)
+                    .listRowInsets(EdgeInsets(top: 16, leading: 20, bottom: 16, trailing: 20))
+                }
+            }
+
             Section("기본 정보") {
                 LabeledContent("출처 유형", value: item.sourceType.displayName)
                 LabeledContent("출처", value: item.sourceName)

@@ -6,7 +6,8 @@ struct RecommendationResultView: View {
     let result: RecommendationHistory
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     @State private var comparisonResult: RecommendationHistory?
-    @State private var isShowingReferencePicker = false
+    @State private var activeSheet: RecommendationResultActiveSheet?
+    @State private var isShowingClosetSavedAlert = false
 
     private var currentResult: RecommendationHistory {
         comparisonResult ?? result
@@ -33,7 +34,9 @@ struct RecommendationResultView: View {
             .background(Color(.systemBackground))
             .navigationTitle("추천 결과")
             .hidesTabBarOnScroll()
-            .sheet(isPresented: $isShowingReferencePicker) {
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .referencePicker:
                 NavigationStack {
                     ResultReferencePickerView(
                         userFits: userFits,
@@ -42,7 +45,7 @@ struct RecommendationResultView: View {
                         productCategory: currentResult.product.category
                     ) { item in
                         compare(with: item)
-                        isShowingReferencePicker = false
+                        dismissActiveSheet()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             withAnimation(.easeInOut(duration: 0.25)) {
                                 proxy.scrollTo("resultTop", anchor: .top)
@@ -50,6 +53,20 @@ struct RecommendationResultView: View {
                         }
                     }
                 }
+                case .addToCloset:
+                AddComparedProductToClosetSheet(
+                    product: currentResult.product,
+                    productDetailCategory: currentResult.productDetailCategory,
+                    recommendedSize: currentResult.recommendedSize
+                ) {
+                    isShowingClosetSavedAlert = true
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                }
+            }
+            .alert("내 옷장에 추가했어요.", isPresented: $isShowingClosetSavedAlert) {
+                Button("확인", role: .cancel) {}
             }
         }
     }
@@ -261,6 +278,10 @@ struct RecommendationResultView: View {
     private var actionCard: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 12) {
+                PrimaryButton(title: "이 상품을 내 옷장에 추가", systemImage: "plus") {
+                    presentActiveSheet(.addToCloset)
+                }
+
                 PrimaryButton(title: "구매하기", systemImage: "safari") {
                     openShoppingMall()
                 }
@@ -274,7 +295,7 @@ struct RecommendationResultView: View {
                 .opacity(0.72)
 
                 SecondaryButton(title: "다른 옷과 비교", systemImage: "tshirt") {
-                    isShowingReferencePicker = true
+                    presentActiveSheet(.referencePicker)
                 }
             }
         }
@@ -435,6 +456,19 @@ struct RecommendationResultView: View {
         }
 
         comparisonResult = history
+    }
+
+    private func presentActiveSheet(_ sheet: RecommendationResultActiveSheet) {
+        print("[RecommendationResultView] activeSheet -> \(sheet.logName)")
+        activeSheet = nil
+        DispatchQueue.main.async {
+            activeSheet = sheet
+        }
+    }
+
+    private func dismissActiveSheet() {
+        print("[RecommendationResultView] activeSheet -> nil")
+        activeSheet = nil
     }
 
     private var comparisonIcon: String {
@@ -628,6 +662,24 @@ private struct ResultBadge: View {
             .padding(.vertical, 6)
             .background(.primary.opacity(0.08), in: Capsule())
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private enum RecommendationResultActiveSheet: Identifiable {
+    case referencePicker
+    case addToCloset
+
+    var id: String {
+        switch self {
+        case .referencePicker:
+            return "referencePicker"
+        case .addToCloset:
+            return "addToCloset"
+        }
+    }
+
+    var logName: String {
+        id
     }
 }
 

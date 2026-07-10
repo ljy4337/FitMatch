@@ -183,6 +183,10 @@ final class ShoppingProductViewModel: ObservableObject {
         return Brand(name: trimmedBrand)
     }
 
+    func makeProductForClosetRegistration(brand: Brand?) -> Product? {
+        makeProduct(brand: brand)
+    }
+
     private func makeProduct(brand: Brand?) -> Product? {
         let validOptions = sizeOptions.compactMap {
             $0.makeSizeOption(category: category, detailCategory: detailCategory)

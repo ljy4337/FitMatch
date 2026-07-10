@@ -13,12 +13,17 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Query private var brands: [Brand]
     @Query private var userFits: [UserFit]
+    @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var selectedTab: AppTab = .home
     @State private var hasFinishedSplash = false
     @State private var isLoggedIn = false
     @State private var pendingCompareURL: String?
     @State private var compareViewID = UUID()
+    @State private var isComparePresented = false
+    @State private var clipboardCandidate: SmartClipboardCandidate?
+    @State private var recentClipboardCandidate: SmartClipboardCandidate?
     private let sharedURLStore = SharedURLStore()
+    private let smartClipboardService = SmartClipboardService()
 
     var body: some View {
         Group {
@@ -41,7 +46,9 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                openPendingSharedURLIfNeeded()
+                if !openPendingSharedURLIfNeeded() {
+                    inspectClipboardIfNeeded()
+                }
             }
         }
         .onOpenURL { url in
@@ -56,23 +63,36 @@ struct ContentView: View {
         } else if !isLoggedIn {
             LoginView {
                 isLoggedIn = true
+                inspectClipboardIfNeeded()
             }
         } else {
-            MainTabView(
-                selectedTab: $selectedTab,
-                compareURL: pendingCompareURL,
-                onCompareURLConsumed: { pendingCompareURL = nil },
-                onRecompare: { urlString in
-                    pendingCompareURL = urlString
-                    compareViewID = UUID()
-                    selectedTab = .compare
-                },
-                onLogout: {
-                    isLoggedIn = false
-                    selectedTab = .home
-                },
-                compareViewID: compareViewID
-            )
+                MainTabView(
+                    selectedTab: $selectedTab,
+                    isComparePresented: $isComparePresented,
+                    clipboardCandidate: $clipboardCandidate,
+                    compareURL: pendingCompareURL,
+                    onCompareURLConsumed: { pendingCompareURL = nil },
+                    onCompareRequested: { urlString in
+                        openCompare(with: urlString)
+                    },
+                    onClipboardCandidateHandled: { candidate, shouldMuteToday in
+                        smartClipboardService.markHandled(candidate)
+                        if shouldMuteToday {
+                            smartClipboardService.muteToday()
+                        }
+                    },
+                    recentClipboardCandidate: recentClipboardCandidate,
+                    histories: histories,
+                    onRecompare: { urlString in
+                        openCompare(with: urlString)
+                    },
+                    onLogout: {
+                        isLoggedIn = false
+                        selectedTab = .home
+                        isComparePresented = false
+                    },
+                    compareViewID: compareViewID
+                )
         }
     }
 
@@ -127,7 +147,8 @@ struct ContentView: View {
         isLoggedIn = true
         pendingCompareURL = nil
         compareViewID = UUID()
-        selectedTab = .compare
+        selectedTab = .home
+        isComparePresented = true
     }
 
     @discardableResult
@@ -139,10 +160,27 @@ struct ContentView: View {
 
         print("[FitMatch] consumed pending shared URL: \(urlString)")
         isLoggedIn = true
+        selectedTab = .home
+        openCompare(with: urlString)
+        return true
+    }
+
+    private func inspectClipboardIfNeeded() {
+        guard isLoggedIn,
+              !isComparePresented,
+              clipboardCandidate == nil,
+              let candidate = smartClipboardService.detectCandidate() else {
+            return
+        }
+
+        recentClipboardCandidate = candidate
+        clipboardCandidate = candidate
+    }
+
+    private func openCompare(with urlString: String?) {
         pendingCompareURL = urlString
         compareViewID = UUID()
-        selectedTab = .compare
-        return true
+        isComparePresented = true
     }
 }
 
@@ -477,7 +515,7 @@ private struct ScreenshotHistoryView: View {
         List {
             if isEmpty {
                 FitMatchCard {
-                    ContentUnavailableView("추천 기록이 없습니다", systemImage: "clock.arrow.circlepath", description: Text("상품 비교를 완료하면 추천 결과가 저장됩니다."))
+                    ContentUnavailableView("상품 비교 기록이 없습니다", systemImage: "clock.arrow.circlepath", description: Text("상품을 비교하면 비교 결과가 저장됩니다."))
                 }
             } else {
                 ScreenshotHistoryCard(title: "유니온스튜디오 로그 헨리넥 크롭 반팔티", source: "무신사", size: "XL", score: "87%")
@@ -773,47 +811,278 @@ private struct ScreenshotMeasure: View {
 
 private struct MainTabView: View {
     @Binding var selectedTab: AppTab
+    @Binding var isComparePresented: Bool
+    @Binding var clipboardCandidate: SmartClipboardCandidate?
     let compareURL: String?
     let onCompareURLConsumed: () -> Void
+    let onCompareRequested: (String?) -> Void
+    let onClipboardCandidateHandled: (SmartClipboardCandidate, Bool) -> Void
+    let recentClipboardCandidate: SmartClipboardCandidate?
+    let histories: [RecommendationHistory]
     let onRecompare: (String) -> Void
     let onLogout: () -> Void
     let compareViewID: UUID
+    @State private var activeSheet: MainActiveSheet?
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            NavigationStack {
-                HomeView(selectedTab: $selectedTab)
-            }
-            .tabItem { Label("홈", systemImage: "house.fill") }
-            .tag(AppTab.home)
+        ZStack(alignment: .bottom) {
+            TabView(selection: $selectedTab) {
+                NavigationStack {
+                    HomeView(
+                        recentClipboardCandidate: recentClipboardCandidate,
+                        onStartCompare: {
+                            presentSheet(.compareStart)
+                        },
+                        onStartCompareWithURL: { urlString in
+                            onCompareRequested(urlString)
+                        },
+                        onOpenHistory: {
+                            selectedTab = .history
+                        },
+                        onRecompare: onRecompare
+                    )
+                }
+                .tag(AppTab.home)
 
+                NavigationStack {
+                    RecommendationHistoryView(onRecompare: onRecompare)
+                }
+                .tag(AppTab.history)
+
+                NavigationStack {
+                    RecommendView()
+                }
+                .tag(AppTab.recommend)
+
+                NavigationStack {
+                    MyClosetView()
+                }
+                .tag(AppTab.my)
+            }
+            .toolbar(.hidden, for: .tabBar)
+
+            FitMatchBottomNavigationBar(
+                selectedTab: $selectedTab,
+                onStartCompare: {
+                    presentSheet(.compareStart)
+                }
+            )
+            .frame(maxWidth: 342)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 10)
+        }
+        .tint(.primary)
+        .fullScreenCover(isPresented: $isComparePresented) {
             NavigationStack {
                 ShoppingProductFormView(initialURL: compareURL)
                     .id(compareViewID)
                     .onAppear(perform: onCompareURLConsumed)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                isComparePresented = false
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.headline.weight(.semibold))
+                            }
+                            .foregroundStyle(.primary)
+                        }
+                }
             }
-            .tabItem { Label("비교", systemImage: "scalemass.fill") }
-            .tag(AppTab.compare)
-
-            NavigationStack {
-                RecommendationHistoryView(onRecompare: onRecompare)
-            }
-            .tabItem { Label("기록", systemImage: "clock.fill") }
-            .tag(AppTab.history)
-
-            NavigationStack {
-                RecommendView()
-            }
-            .tabItem { Label("추천", systemImage: "sparkles") }
-            .tag(AppTab.recommend)
-
-            NavigationStack {
-                MyPageView(selectedTab: $selectedTab, onLogout: onLogout)
-            }
-            .tabItem { Label("마이", systemImage: "person.fill") }
-            .tag(AppTab.my)
         }
-        .tint(.primary)
+        .onChange(of: clipboardCandidate) { _, newValue in
+            if let newValue {
+                presentSheet(.clipboard(newValue))
+            }
+        }
+        .onChange(of: isComparePresented) { _, isPresented in
+            if isPresented, activeSheet != nil {
+                print("[MainTabView] compare presenting, activeSheet -> nil")
+                activeSheet = nil
+            }
+        }
+        .onChange(of: compareViewID) { _, _ in
+            if activeSheet != nil {
+                print("[MainTabView] compareViewID changed, activeSheet -> nil")
+                activeSheet = nil
+            }
+        }
+        .sheet(item: $activeSheet, onDismiss: {
+            print("[MainTabView] activeSheet dismissed")
+        }) { sheet in
+            switch sheet {
+            case .compareStart:
+                CompareStartSheet(
+                    recentClipboardCandidate: recentClipboardCandidate,
+                    onStartCompare: {
+                        dismissSheetThenCompare(nil)
+                    },
+                    onStartCompareWithURL: { urlString in
+                        dismissSheetThenCompare(urlString)
+                    },
+                    onDismiss: {
+                        dismissSheet()
+                    }
+                )
+                .presentationDetents([.height(620)])
+                .presentationDragIndicator(.visible)
+            case .clipboard(let candidate):
+                SmartClipboardPromptSheet(
+                    candidate: candidate,
+                    matchingHistory: matchingHistory(for: candidate),
+                    onCompare: { shouldMuteToday in
+                        onClipboardCandidateHandled(candidate, shouldMuteToday)
+                        clipboardCandidate = nil
+                        dismissSheetThenCompare(candidate.urlString)
+                    },
+                    onLater: { shouldMuteToday in
+                        onClipboardCandidateHandled(candidate, shouldMuteToday)
+                        clipboardCandidate = nil
+                        dismissSheet()
+                    }
+                )
+                .presentationDetents([.height(390)])
+                .presentationDragIndicator(.visible)
+            }
+        }
+    }
+
+    private func presentSheet(_ sheet: MainActiveSheet) {
+        print("[MainTabView] activeSheet -> \(sheet.logName)")
+        activeSheet = nil
+        DispatchQueue.main.async {
+            activeSheet = sheet
+        }
+    }
+
+    private func dismissSheet() {
+        print("[MainTabView] activeSheet -> nil")
+        activeSheet = nil
+    }
+
+    private func dismissSheetThenCompare(_ urlString: String?) {
+        print("[MainTabView] activeSheet -> nil, compareURL: \(urlString ?? "nil")")
+        activeSheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            onCompareRequested(urlString)
+        }
+    }
+
+    private func matchingHistory(for candidate: SmartClipboardCandidate) -> RecommendationHistory? {
+        histories.first { history in
+            history.product.sourceURLString == candidate.urlString
+        }
+    }
+}
+
+private enum MainActiveSheet: Identifiable {
+    case compareStart
+    case clipboard(SmartClipboardCandidate)
+
+    var id: String {
+        switch self {
+        case .compareStart:
+            return "compareStart"
+        case .clipboard(let candidate):
+            return "clipboard-\(candidate.id)"
+        }
+    }
+
+    var logName: String {
+        switch self {
+        case .compareStart:
+            return "compareStart"
+        case .clipboard:
+            return "clipboard"
+        }
+    }
+}
+
+private struct FitMatchBottomNavigationBar: View {
+    @Binding var selectedTab: AppTab
+    let onStartCompare: () -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            BottomNavigationItem(
+                title: "홈",
+                systemImage: "house.fill",
+                isSelected: selectedTab == .home
+            ) {
+                selectedTab = .home
+            }
+
+            BottomNavigationItem(
+                title: "기록",
+                systemImage: "clock.fill",
+                isSelected: selectedTab == .history
+            ) {
+                selectedTab = .history
+            }
+
+            Button(action: onStartCompare) {
+                Image(systemName: "plus")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 52, height: 52)
+                    .background(Color(.systemBackground), in: Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(Color.primary.opacity(0.16), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.14), radius: 16, x: 0, y: 8)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .accessibilityLabel("새 상품 비교 시작")
+
+            BottomNavigationItem(
+                title: "추천",
+                systemImage: "sparkles",
+                isSelected: selectedTab == .recommend
+            ) {
+                selectedTab = .recommend
+            }
+
+            BottomNavigationItem(
+                title: "내 옷장",
+                systemImage: "tshirt.fill",
+                isSelected: selectedTab == .my
+            ) {
+                selectedTab = .my
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.regularMaterial, in: Capsule())
+        .overlay {
+            Capsule()
+                .stroke(.primary.opacity(0.06), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 8)
+    }
+}
+
+private struct BottomNavigationItem: View {
+    let title: String
+    let systemImage: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 17, weight: .semibold))
+                Text(title)
+                    .font(.caption2.weight(.bold))
+            }
+            .foregroundStyle(isSelected ? .primary : .secondary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 48)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

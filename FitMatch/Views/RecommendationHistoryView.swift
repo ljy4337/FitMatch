@@ -5,6 +5,13 @@ struct RecommendationHistoryView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
+    @State private var searchText = ""
+    @State private var sortOption: HistorySortOption = .latest
+    @State private var selectedScope: HistoryScope = .all
+    @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
+    @State private var selectedHistoryForCloset: RecommendationHistory?
+    @State private var isShowingClosetSavedAlert = false
+    private let favoriteStore = FavoriteProductStore()
     var onRecompare: ((String) -> Void)?
 
     init(onRecompare: ((String) -> Void)? = nil) {
@@ -16,26 +23,108 @@ struct RecommendationHistoryView: View {
             if histories.isEmpty {
                 EmptyRecommendationHistoryView()
             } else {
-                List {
-                    ForEach(histories) { history in
-                        HistoryCard(history: history) {
-                            openShoppingMall(history)
-                        } onRecompare: {
-                            recompare(history)
+                VStack(spacing: 0) {
+                    historyControls
+
+                    List {
+                        ForEach(filteredHistories) { history in
+                            HistoryCard(
+                                history: history,
+                                isFavorite: isFavorite(history)
+                            ) {
+                                toggleFavorite(history)
+                            } onOpen: {
+                                openShoppingMall(history)
+                            } onRecompare: {
+                                recompare(history)
+                            } onAddToCloset: {
+                                selectedHistoryForCloset = history
+                            }
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
                         }
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                        .onDelete(perform: deleteItems)
+
+                        Color.clear
+                            .frame(height: 92)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(.init())
                     }
-                    .onDelete(perform: deleteItems)
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
             }
         }
         .background(Color(.systemBackground))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .hidesTabBarOnScroll()
+        .sheet(item: $selectedHistoryForCloset) { history in
+            AddComparedProductToClosetSheet(
+                product: history.product,
+                productDetailCategory: history.productDetailCategory,
+                recommendedSize: history.recommendedSize
+            ) {
+                isShowingClosetSavedAlert = true
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
+        .alert("내 옷장에 추가했어요.", isPresented: $isShowingClosetSavedAlert) {
+            Button("확인", role: .cancel) {}
+        }
+    }
+
+    private var historyControls: some View {
+        VStack(spacing: 12) {
+            Picker("기록 범위", selection: $selectedScope) {
+                ForEach(HistoryScope.allCases, id: \.self) { scope in
+                    Text(scope.title).tag(scope)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                TextField("브랜드, 상품명 검색", text: $searchText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .font(.subheadline)
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 44)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            HStack {
+                Text("\(selectedScope.title) \(filteredHistories.count)건")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Menu {
+                    ForEach(HistorySortOption.allCases, id: \.self) { option in
+                        Button(option.title) {
+                            sortOption = option
+                        }
+                    }
+                } label: {
+                    Label(sortOption.title, systemImage: "arrow.up.arrow.down")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(Color(.secondarySystemGroupedBackground), in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 6)
+        .background(Color(.systemBackground))
     }
 
     private func openShoppingMall(_ history: RecommendationHistory) {
@@ -55,10 +144,84 @@ struct RecommendationHistoryView: View {
 
     private func deleteItems(at offsets: IndexSet) {
         for index in offsets {
-            let history = histories[index]
+            let history = filteredHistories[index]
             modelContext.delete(history)
         }
         try? modelContext.save()
+    }
+
+    private var filteredHistories: [RecommendationHistory] {
+        let normalizedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let scoped = histories.filter { history in
+            switch selectedScope {
+            case .all:
+                return true
+            case .favorite:
+                return isFavorite(history)
+            }
+        }
+
+        let filtered = scoped.filter { history in
+            guard !normalizedSearchText.isEmpty else {
+                return true
+            }
+
+            return history.product.displayName.lowercased().contains(normalizedSearchText)
+                || (history.product.brand?.name.lowercased().contains(normalizedSearchText) ?? false)
+                || history.product.sourceDisplayName.lowercased().contains(normalizedSearchText)
+        }
+
+        switch sortOption {
+        case .latest:
+            return filtered.sorted { $0.createdAt > $1.createdAt }
+        case .oldest:
+            return filtered.sorted { $0.createdAt < $1.createdAt }
+        case .brand:
+            return filtered.sorted { ($0.product.brand?.name ?? "") < ($1.product.brand?.name ?? "") }
+        case .fitConfidence:
+            return filtered.sorted { $0.recommendationScore > $1.recommendationScore }
+        }
+    }
+
+    private func isFavorite(_ history: RecommendationHistory) -> Bool {
+        guard let urlString = history.product.sourceURLString else {
+            return false
+        }
+
+        return favoriteURLs.contains(urlString)
+    }
+
+    private func toggleFavorite(_ history: RecommendationHistory) {
+        _ = favoriteStore.toggle(history.product.sourceURLString)
+        favoriteURLs = favoriteStore.favoriteURLs()
+    }
+}
+
+private enum HistorySortOption: CaseIterable {
+    case latest
+    case oldest
+    case brand
+    case fitConfidence
+
+    var title: String {
+        switch self {
+        case .latest: return "최신순"
+        case .oldest: return "오래된순"
+        case .brand: return "브랜드순"
+        case .fitConfidence: return "Fit Confidence 높은순"
+        }
+    }
+}
+
+private enum HistoryScope: CaseIterable {
+    case all
+    case favorite
+
+    var title: String {
+        switch self {
+        case .all: return "전체"
+        case .favorite: return "관심"
+        }
     }
 }
 
@@ -73,10 +236,10 @@ private struct EmptyRecommendationHistoryView: View {
                 .frame(width: 160, height: 160)
 
             VStack(spacing: 6) {
-                Text("추천 기록이 없습니다.")
+                Text("상품 비교 기록이 없습니다.")
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
-                Text("상품을 비교하면 추천 결과가 여기에 쌓입니다.")
+                Text("상품을 비교하면 비교 결과가 여기에 쌓입니다.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -91,8 +254,11 @@ private struct EmptyRecommendationHistoryView: View {
 
 private struct HistoryCard: View {
     let history: RecommendationHistory
+    let isFavorite: Bool
+    let onToggleFavorite: () -> Void
     let onOpen: () -> Void
     let onRecompare: () -> Void
+    let onAddToCloset: () -> Void
 
     var body: some View {
         FitMatchCard {
@@ -125,7 +291,16 @@ private struct HistoryCard: View {
 
                         Spacer()
 
-                        VStack(alignment: .trailing, spacing: 4) {
+                        VStack(alignment: .trailing, spacing: 6) {
+                            Button(action: onToggleFavorite) {
+                                Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                    .font(.headline.weight(.semibold))
+                                    .foregroundStyle(isFavorite ? .red : .primary)
+                                    .frame(width: 34, height: 34)
+                                    .background(.primary.opacity(0.06), in: Circle())
+                            }
+                            .buttonStyle(.plain)
+
                             Text("Fit Confidence")
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.secondary)
@@ -162,13 +337,21 @@ private struct HistoryCard: View {
                 }
 
                 HStack(spacing: 10) {
-                    Button("쇼핑몰 이동", action: onOpen)
+                    Button("내 옷장에 추가", action: onAddToCloset)
                         .buttonStyle(.plain)
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                         .background(.primary, in: Capsule())
+
+                    Button("쇼핑몰 이동", action: onOpen)
+                        .buttonStyle(.plain)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                        .background(.primary.opacity(0.08), in: Capsule())
                         .disabled(history.product.sourceURLString == nil)
                         .opacity(history.product.sourceURLString == nil ? 0.35 : 1)
 

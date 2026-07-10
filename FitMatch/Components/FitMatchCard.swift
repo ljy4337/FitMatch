@@ -68,7 +68,7 @@ struct PrimaryButton: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(.primary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(Color.black, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
     }
