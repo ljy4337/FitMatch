@@ -57,13 +57,6 @@ struct AddClosetItemView: View {
         .onAppear {
             normalizeInputSelection()
         }
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("취소") {
-                    dismiss()
-                }
-            }
-        }
         .safeAreaInset(edge: .bottom) {
             bottomSaveBar
         }

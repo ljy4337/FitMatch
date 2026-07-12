@@ -74,7 +74,6 @@ struct MyPageView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("My")
-        .hidesTabBarOnScroll()
     }
 
     private func handleTap(title: String) {

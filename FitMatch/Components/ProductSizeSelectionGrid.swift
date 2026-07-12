@@ -4,47 +4,77 @@ struct ProductSizeSelectionGrid: View {
     let sizes: [ProductSize]
     @Binding var selectedSizeName: String?
 
-    private let columns: [GridItem] = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
-    ]
-
     var body: some View {
-        LazyVGrid(columns: columns, alignment: .center, spacing: 12) {
-            ForEach(sizes) { size in
-                let isSelected = selectedSizeName == size.name
+        VStack(spacing: 12) {
+            ForEach(rowStartIndices, id: \.self) { rowStartIndex in
+                HStack(spacing: 12) {
+                    sizeButton(options[rowStartIndex])
 
-                Button {
-                    selectedSizeName = size.name
-                } label: {
-                    HStack(spacing: 8) {
-                        Text(size.name.fitMatchDisplaySizeName)
-                            .font(.headline.weight(.bold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-
-                        if isSelected {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.subheadline.weight(.semibold))
-                        }
+                    if rowStartIndex + 1 < options.count {
+                        sizeButton(options[rowStartIndex + 1])
+                    } else {
+                        Color.clear
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 58)
                     }
-                    .foregroundStyle(isSelected ? .white : .primary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 58)
-                    .background(
-                        isSelected ? Color.black : Color(.secondarySystemGroupedBackground),
-                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    )
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(isSelected ? Color.black : Color(.separator).opacity(0.35), lineWidth: 1)
-                    }
-                    .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
-                .buttonStyle(.plain)
             }
         }
     }
+
+    private var rowStartIndices: [Int] {
+        Array(stride(from: 0, to: options.count, by: 2))
+    }
+
+    private var options: [ProductSizeSelectionOption] {
+        sizes.enumerated().map { index, size in
+            ProductSizeSelectionOption(
+                id: "\(index)-\(size.displayOrder)-\(size.name)",
+                name: size.name,
+                displayName: size.name.fitMatchDisplaySizeName
+            )
+        }
+    }
+
+    private func sizeButton(_ option: ProductSizeSelectionOption) -> some View {
+        let isSelected = selectedSizeName == option.name
+
+        return Button {
+            selectedSizeName = option.name
+        } label: {
+            HStack(spacing: 8) {
+                Text(option.displayName)
+                    .font(.headline.weight(.bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
+            .foregroundStyle(isSelected ? .white : .primary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 58)
+            .background(
+                isSelected ? Color.black : Color(.secondarySystemGroupedBackground),
+                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(isSelected ? Color.black : Color(.separator).opacity(0.35), lineWidth: 1)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct ProductSizeSelectionOption: Identifiable {
+    let id: String
+    let name: String
+    let displayName: String
 }
 
 extension String {

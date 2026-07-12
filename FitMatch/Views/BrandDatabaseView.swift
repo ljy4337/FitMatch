@@ -50,7 +50,6 @@ struct BrandDatabaseView: View {
         .padding(20)
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("브랜드 DB")
-        .hidesTabBarOnScroll()
     }
 }
 
@@ -62,6 +61,7 @@ private struct BrandProductCard: View {
             HStack(alignment: .center, spacing: 14) {
                 ProductThumbnailView(
                     imageURLString: product.imageURLString,
+                    category: product.category,
                     width: 58,
                     height: 72,
                     cornerRadius: 14

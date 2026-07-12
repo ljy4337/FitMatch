@@ -88,19 +88,6 @@ struct AddComparedProductToClosetSheet: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(step == .size ? "취소" : "이전") {
-                        if step == .size {
-                            dismiss()
-                        } else {
-                            withAnimation(.snappy(duration: 0.22)) {
-                                step = .size
-                            }
-                        }
-                    }
-                }
-            }
             .safeAreaInset(edge: .bottom) {
                 bottomActionBar
             }
@@ -155,6 +142,7 @@ struct AddComparedProductToClosetSheet: View {
                 HStack(alignment: .top, spacing: 14) {
                     ProductThumbnailView(
                         imageURLString: product.imageURLString,
+                        category: product.category,
                         width: 104,
                         height: 128,
                         cornerRadius: 18
@@ -225,6 +213,7 @@ struct AddComparedProductToClosetSheet: View {
             HStack(alignment: .center, spacing: 16) {
                 ProductThumbnailView(
                     imageURLString: product.imageURLString,
+                    category: product.category,
                     width: 72,
                     height: 86,
                     cornerRadius: 18

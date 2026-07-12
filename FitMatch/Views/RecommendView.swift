@@ -57,8 +57,10 @@ struct RecommendView: View {
             }
             .padding(20)
             .padding(.bottom, 112)
+            .tracksTabBarVisibilityOnScroll(.recommend)
         }
         .background(Color(.systemGroupedBackground))
+        .fitMatchTabScrollCoordinateSpace(.recommend)
         .hidesTopChromeOnScroll($isTopChromeVisible)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)

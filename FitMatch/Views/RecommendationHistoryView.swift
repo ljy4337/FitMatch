@@ -53,7 +53,6 @@ struct RecommendationHistoryView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
-        .hidesTabBarOnScroll()
         .navigationDestination(isPresented: Binding(
             get: { selectedHistoryForDetail != nil },
             set: { if !$0 { selectedHistoryIDForDetail = nil } }
@@ -107,6 +106,11 @@ struct RecommendationHistoryView: View {
 
     private var historyList: some View {
         List {
+            TabBarScrollSentinel(tab: .history)
+                .listRowSeparator(.hidden)
+                .listRowInsets(.init())
+                .frame(height: 0)
+
             ForEach(filteredHistories) { history in
                 HistoryCard(
                     history: history,
@@ -141,30 +145,36 @@ struct RecommendationHistoryView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .fitMatchTabScrollCoordinateSpace(.history)
         .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
     private var historyGrid: some View {
         ScrollView {
-            LazyVGrid(columns: gridColumns, spacing: 14) {
-                ForEach(filteredHistories) { history in
-                    HistoryGridCard(
-                        history: history,
-                        isFavorite: isFavorite(history),
-                        onToggleFavorite: {
-                            toggleFavorite(history)
-                        },
-                        onShowDetail: {
-                            opensReferencePickerOnDetail = false
-                            selectedHistoryIDForDetail = history.id
-                        }
-                    )
+            VStack(spacing: 0) {
+                TabBarScrollSentinel(tab: .history)
+
+                LazyVGrid(columns: gridColumns, spacing: 14) {
+                    ForEach(filteredHistories) { history in
+                        HistoryGridCard(
+                            history: history,
+                            isFavorite: isFavorite(history),
+                            onToggleFavorite: {
+                                toggleFavorite(history)
+                            },
+                            onShowDetail: {
+                                opensReferencePickerOnDetail = false
+                                selectedHistoryIDForDetail = history.id
+                            }
+                        )
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 122)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 122)
         }
+        .fitMatchTabScrollCoordinateSpace(.history)
         .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
@@ -402,6 +412,7 @@ private struct HistoryCard: View {
                     HStack(alignment: .top, spacing: 14) {
                         ProductThumbnailView(
                             imageURLString: history.product.imageURLString,
+                            category: history.product.category,
                             width: 88,
                             height: 112,
                             cornerRadius: 16
@@ -524,6 +535,7 @@ private struct HistoryGridCard: View {
                     VStack(alignment: .leading, spacing: 10) {
                         ProductThumbnailView(
                             imageURLString: history.product.imageURLString,
+                            category: history.product.category,
                             width: 126,
                             height: 142,
                             cornerRadius: 16

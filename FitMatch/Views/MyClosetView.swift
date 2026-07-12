@@ -55,7 +55,6 @@ struct MyClosetView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
-        .hidesTabBarOnScroll()
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .addMethod:
@@ -155,6 +154,11 @@ struct MyClosetView: View {
 
     private var closetList: some View {
         List {
+            TabBarScrollSentinel(tab: .my)
+                .listRowSeparator(.hidden)
+                .listRowInsets(.init())
+                .frame(height: 0)
+
             ForEach(filteredItems) { item in
                 NavigationLink {
                     ClosetItemDetailView(item: item)
@@ -187,31 +191,37 @@ struct MyClosetView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .fitMatchTabScrollCoordinateSpace(.my)
         .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
     private var closetGrid: some View {
         ScrollView {
-            LazyVGrid(columns: gridColumns, spacing: 14) {
-                ForEach(filteredItems) { item in
-                    NavigationLink {
-                        ClosetItemDetailView(item: item)
-                    } label: {
-                        ClosetGridCard(item: item)
-                    }
-                    .buttonStyle(.plain)
-                }
+            VStack(spacing: 0) {
+                TabBarScrollSentinel(tab: .my)
 
-                if filteredItems.isEmpty {
-                    EmptyFilterResultView()
-                        .gridCellColumns(2)
-                        .padding(.top, 24)
+                LazyVGrid(columns: gridColumns, spacing: 14) {
+                    ForEach(filteredItems) { item in
+                        NavigationLink {
+                            ClosetItemDetailView(item: item)
+                        } label: {
+                            ClosetGridCard(item: item)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if filteredItems.isEmpty {
+                        EmptyFilterResultView()
+                            .gridCellColumns(2)
+                            .padding(.top, 24)
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 122)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 122)
         }
+        .fitMatchTabScrollCoordinateSpace(.my)
         .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
@@ -728,15 +738,13 @@ private struct ClosetItemCard: View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top) {
-                    if let imageURLString = item.sourceProduct?.imageURLString,
-                       !imageURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        ProductThumbnailView(
-                            imageURLString: imageURLString,
-                            width: 72,
-                            height: 88,
-                            cornerRadius: 16
-                        )
-                    }
+                    ProductThumbnailView(
+                        imageURLString: item.sourceProduct?.imageURLString,
+                        category: item.category,
+                        width: 72,
+                        height: 88,
+                        cornerRadius: 16
+                    )
 
                     VStack(alignment: .leading, spacing: 5) {
                         Text(item.displayName)
@@ -798,6 +806,7 @@ private struct ClosetGridCard: View {
                 ZStack(alignment: .topTrailing) {
                     ProductThumbnailView(
                         imageURLString: item.sourceProduct?.imageURLString,
+                        category: item.category,
                         width: 126,
                         height: 142,
                         cornerRadius: 16

@@ -4,7 +4,7 @@ import SwiftData
 struct ClosetItemDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.setFitMatchTabBarVisible) private var setTabBarVisible
+    @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var isShowingEdit = false
@@ -49,6 +49,7 @@ struct ClosetItemDetailView: View {
                     applyChanges(from: editedItem)
                 }
             }
+            .presentationDragIndicator(.visible)
         }
         .alert("저장 실패", isPresented: Binding(
             get: { saveErrorMessage != nil },
@@ -61,10 +62,10 @@ struct ClosetItemDetailView: View {
             Text(saveErrorMessage ?? "")
         }
         .onAppear {
-            setTabBarVisible(false)
+            tabBarVisibilityController.hide(reason: "closet detail")
         }
         .onDisappear {
-            setTabBarVisible(true)
+            tabBarVisibilityController.show(reason: "closet detail disappear")
         }
     }
 
@@ -74,6 +75,7 @@ struct ClosetItemDetailView: View {
                 if let imageURLString, !imageURLString.isEmpty {
                     ProductThumbnailView(
                         imageURLString: imageURLString,
+                        category: item.category,
                         width: 320,
                         height: 260,
                         cornerRadius: 22

@@ -30,13 +30,6 @@ struct LinkClosetRegistrationView: View {
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("상품 링크로 추가")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("닫기") {
-                    dismiss()
-                }
-            }
-        }
         .sheet(isPresented: $isShowingAddToClosetSheet) {
             if let parsedProduct {
                 AddComparedProductToClosetSheet(
@@ -114,6 +107,7 @@ struct LinkClosetRegistrationView: View {
                     HStack(alignment: .top, spacing: 14) {
                         ProductThumbnailView(
                             imageURLString: parsedProduct.imageURLString,
+                            category: parsedProduct.category,
                             width: 82,
                             height: 98,
                             cornerRadius: 16

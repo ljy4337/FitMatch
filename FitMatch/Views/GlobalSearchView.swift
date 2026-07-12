@@ -257,16 +257,13 @@ private struct SearchClosetResultRow: View {
 
     @ViewBuilder
     private var thumbnail: some View {
-        if let imageURLString = item.sourceProduct?.imageURLString,
-           !imageURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            ProductThumbnailView(imageURLString: imageURLString, width: 76, height: 92, cornerRadius: 16)
-        } else {
-            Image(systemName: "tshirt")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 76, height: 92)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        }
+        ProductThumbnailView(
+            imageURLString: item.sourceProduct?.imageURLString,
+            category: item.category,
+            width: 76,
+            height: 92,
+            cornerRadius: 16
+        )
     }
 
     private func metadataPill(_ text: String) -> some View {
@@ -289,6 +286,7 @@ private struct SearchHistoryResultRow: View {
             HStack(spacing: 14) {
                 ProductThumbnailView(
                     imageURLString: history.product.imageURLString,
+                    category: history.product.category,
                     width: 76,
                     height: 92,
                     cornerRadius: 16

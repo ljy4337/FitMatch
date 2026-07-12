@@ -29,8 +29,10 @@ struct HomeView: View {
             .padding(.horizontal, 20)
             .padding(.top, 18)
             .padding(.bottom, 112)
+            .tracksTabBarVisibilityOnScroll(.home)
         }
         .background(Color(.systemGroupedBackground))
+        .fitMatchTabScrollCoordinateSpace(.home)
         .hidesTopChromeOnScroll($isTopChromeVisible)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
@@ -534,6 +536,7 @@ struct RecentProductPreviewCard: View {
         VStack(alignment: .leading, spacing: 12) {
             ProductThumbnailView(
                 imageURLString: history.product.imageURLString,
+                category: history.product.category,
                 width: 178,
                 height: 178,
                 cornerRadius: 18
@@ -552,6 +555,7 @@ struct RecentProductPreviewCard: View {
         HStack(alignment: .top, spacing: 14) {
             ProductThumbnailView(
                 imageURLString: history.product.imageURLString,
+                category: history.product.category,
                 width: 86,
                 height: 108,
                 cornerRadius: 18
@@ -650,6 +654,7 @@ struct SmartClipboardPromptSheet: View {
             HStack(spacing: 14) {
                 ProductThumbnailView(
                     imageURLString: matchingHistory?.product.imageURLString,
+                    category: matchingHistory?.product.category,
                     width: 84,
                     height: 104,
                     cornerRadius: 16

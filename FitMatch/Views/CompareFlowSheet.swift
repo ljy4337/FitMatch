@@ -147,14 +147,6 @@ private extension CompareFlowSheet {
                 }
                 .disabled(sameCategoryCandidates.isEmpty)
                 .opacity(sameCategoryCandidates.isEmpty ? 0.45 : 1)
-
-                Button("닫기") {
-                    dismiss()
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 42)
             }
         }
         .padding(.top, 12)
@@ -314,6 +306,7 @@ private extension CompareFlowSheet {
                     VStack(alignment: .leading, spacing: 16) {
                         ProductThumbnailView(
                             imageURLString: product.imageURLString,
+                            category: product.category,
                             width: 300,
                             height: 240,
                             cornerRadius: 20
@@ -630,7 +623,13 @@ private extension CompareFlowSheet {
 
     func productCompactRow(product: Product) -> some View {
         HStack(alignment: .top, spacing: 13) {
-            ProductThumbnailView(imageURLString: product.imageURLString, width: 72, height: 88, cornerRadius: 16)
+            ProductThumbnailView(
+                imageURLString: product.imageURLString,
+                category: product.category,
+                width: 72,
+                height: 88,
+                cornerRadius: 16
+            )
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(product.brand?.name ?? "브랜드 미상")
@@ -1284,15 +1283,13 @@ private struct ClosetReferenceChoiceCard: View {
     var body: some View {
         FitMatchCard {
             HStack(alignment: .top, spacing: 12) {
-                if let imageURLString = item.sourceProduct?.imageURLString {
-                    ProductThumbnailView(imageURLString: imageURLString, width: 58, height: 70, cornerRadius: 14)
-                } else {
-                    Image(systemName: "tshirt")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 58, height: 70)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
+                ProductThumbnailView(
+                    imageURLString: item.sourceProduct?.imageURLString,
+                    category: item.category,
+                    width: 58,
+                    height: 70,
+                    cornerRadius: 14
+                )
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(item.displayName)

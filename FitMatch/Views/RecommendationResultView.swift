@@ -3,7 +3,7 @@ import SwiftData
 
 struct RecommendationResultView: View {
     @Environment(\.openURL) private var openURL
-    @Environment(\.setFitMatchTabBarVisible) private var setTabBarVisible
+    @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     let result: RecommendationHistory
     private let opensReferencePickerOnAppear: Bool
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
@@ -81,7 +81,7 @@ struct RecommendationResultView: View {
                 Button("확인", role: .cancel) {}
             }
             .onAppear {
-                setTabBarVisible(false)
+                tabBarVisibilityController.hide(reason: "recommendation result")
                 guard opensReferencePickerOnAppear, !didOpenInitialReferencePicker else {
                     return
                 }
@@ -92,7 +92,7 @@ struct RecommendationResultView: View {
                 }
             }
             .onDisappear {
-                setTabBarVisible(true)
+                tabBarVisibilityController.show(reason: "recommendation result disappear")
             }
         }
     }
@@ -172,6 +172,7 @@ struct RecommendationResultView: View {
                     ComparisonTargetColumn(
                         title: "상품",
                         imageURLString: currentResult.product.imageURLString,
+                        category: currentResult.product.category,
                         brand: currentResult.product.brand?.name ?? "브랜드 미상",
                         name: currentResult.product.name,
                         meta: "\(currentResult.product.category.rawValue) / \(currentResult.productDetailCategory.rawValue)",
@@ -181,6 +182,7 @@ struct RecommendationResultView: View {
                     ComparisonTargetColumn(
                         title: "내 옷",
                         imageURLString: currentResult.userFit.sourceProduct?.imageURLString,
+                        category: currentResult.userFit.category,
                         brand: currentResult.userFit.brandName,
                         name: currentResult.userFit.displayName,
                         meta: "\(currentResult.userFit.detailCategory.rawValue) / \(currentResult.userFit.sizeName)",
@@ -294,6 +296,7 @@ struct RecommendationResultView: View {
 
                 ProductMeasurementDifferenceGrid(
                     measurements: currentResult.recommendedSize.measurements,
+                    referenceMeasurements: currentResult.userFit.measurements,
                     differences: currentResult.measurementDifferences,
                     category: currentResult.product.category,
                     detailCategory: currentResult.productDetailCategory
@@ -396,6 +399,7 @@ struct RecommendationResultView: View {
     private var productThumbnail: some View {
         ProductThumbnailView(
             imageURLString: currentResult.product.imageURLString,
+            category: currentResult.product.category,
             width: 90,
             height: 104,
             cornerRadius: 18
@@ -846,6 +850,7 @@ private struct InfoRow: View {
 private struct ComparisonTargetColumn: View {
     let title: String
     let imageURLString: String?
+    let category: ClothingCategory
     let brand: String
     let name: String
     let meta: String
@@ -870,6 +875,7 @@ private struct ComparisonTargetColumn: View {
 
             ProductThumbnailView(
                 imageURLString: imageURLString,
+                category: category,
                 width: 128,
                 height: 136,
                 cornerRadius: 16
@@ -1148,6 +1154,7 @@ private struct MeasurementPill: View {
 
 private struct ProductMeasurementDifferenceGrid: View {
     let measurements: GarmentMeasurements
+    let referenceMeasurements: GarmentMeasurements
     let differences: GarmentMeasurements
     let category: ClothingCategory
     let detailCategory: ClosetDetailCategory
@@ -1157,7 +1164,8 @@ private struct ProductMeasurementDifferenceGrid: View {
             ForEach(kindsToShow) { kind in
                 ProductMeasurementDifferenceRow(
                     title: kind.title,
-                    value: measurements.value(for: kind),
+                    productValue: measurements.value(for: kind),
+                    referenceValue: referenceMeasurements.value(for: kind),
                     difference: differences.value(for: kind)
                 )
             }
@@ -1178,7 +1186,8 @@ private struct ProductMeasurementDifferenceGrid: View {
 
 private struct ProductMeasurementDifferenceRow: View {
     let title: String
-    let value: Double
+    let productValue: Double
+    let referenceValue: Double
     let difference: Double
 
     var body: some View {
@@ -1193,12 +1202,11 @@ private struct ProductMeasurementDifferenceRow: View {
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
                     .foregroundStyle(.secondary)
-                Text(value.cmText)
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(.primary)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.82)
+
+                HStack(spacing: 8) {
+                    measurementValueColumn(title: "상품", value: productValue)
+                    measurementValueColumn(title: "내 옷", value: referenceValue)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -1224,6 +1232,21 @@ private struct ProductMeasurementDifferenceRow: View {
 
     private var status: MeasurementDifferenceStatus {
         MeasurementDifferenceStatus(difference: abs(difference))
+    }
+
+    private func measurementValueColumn(title: String, value: Double) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value > 0 ? value.cmText : "-")
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+        }
+        .frame(minWidth: 58, alignment: .leading)
     }
 }
 
@@ -1352,13 +1375,6 @@ private struct ResultReferencePickerView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("취소") {
-                    dismiss()
-                }
-            }
-        }
         .safeAreaInset(edge: .bottom) {
             bottomActionBar
         }
@@ -1527,19 +1543,13 @@ private struct ResultReferencePickerCard: View {
 
     @ViewBuilder
     private var thumbnail: some View {
-        if let imageURLString = item.sourceProduct?.imageURLString,
-           !imageURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            ProductThumbnailView(imageURLString: imageURLString, width: 68, height: 82, cornerRadius: 16)
-        } else {
-            Image(systemName: item.category.serviceGroup == .bottom ? "figure.walk" : "tshirt")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(isSelected ? Color(.systemBackground).opacity(0.76) : .secondary)
-                .frame(width: 68, height: 82)
-                .background(
-                    isSelected ? Color(.systemBackground).opacity(0.12) : Color(.secondarySystemGroupedBackground),
-                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                )
-        }
+        ProductThumbnailView(
+            imageURLString: item.sourceProduct?.imageURLString,
+            category: item.category,
+            width: 68,
+            height: 82,
+            cornerRadius: 16
+        )
     }
 
     private func pickerBadge(_ title: String, isEmphasized: Bool) -> some View {

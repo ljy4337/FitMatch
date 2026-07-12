@@ -873,23 +873,17 @@ private struct MainTabView: View {
     let onLogout: () -> Void
     let compareViewID: UUID
     @State private var activeSheet: MainActiveSheet?
-    @State private var isTabBarVisible = true
+    @StateObject private var tabBarVisibilityController = TabBarVisibilityController()
 
     var body: some View {
         currentTabContent
-        .environment(\.setFitMatchTabBarVisible) { isVisible in
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-                isTabBarVisible = isVisible
-            }
-        }
+        .environmentObject(tabBarVisibilityController)
         .overlay(alignment: .bottom) {
             bottomNavigationOverlay
         }
         .tint(.primary)
         .onChange(of: selectedTab) { _, _ in
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-                isTabBarVisible = true
-            }
+            tabBarVisibilityController.show(tab: selectedTab, reason: "tab changed")
         }
         .onChange(of: clipboardCandidate) { _, newValue in
             if let newValue {
@@ -949,9 +943,9 @@ private struct MainTabView: View {
         }
         .frame(maxWidth: .infinity)
         .background(.regularMaterial)
-        .offset(y: isTabBarVisible ? 0 : 104)
-        .opacity(isTabBarVisible ? 1 : 0)
-        .allowsHitTesting(isTabBarVisible)
+        .offset(y: tabBarVisibilityController.isVisible ? 0 : 104)
+        .opacity(tabBarVisibilityController.isVisible ? 1 : 0)
+        .allowsHitTesting(tabBarVisibilityController.isVisible)
     }
 
     @ViewBuilder

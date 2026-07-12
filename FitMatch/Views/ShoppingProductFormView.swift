@@ -33,7 +33,6 @@ struct ShoppingProductFormView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .hidesTabBarOnScroll()
         .task {
             await autoCalculateInitialURLIfNeeded()
         }
@@ -557,13 +556,6 @@ private struct TemporaryReferencePickerView: View {
         } message: {
             Text("현재 등록된 \(productDetailCategory.rawValue)가 없어 선택한 옷을 기준으로 비교합니다.\n\n같은 종류의 옷보다 정확도가 낮아질 수 있습니다.")
         }
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("취소") {
-                    dismiss()
-                }
-            }
-        }
     }
 }
 
@@ -597,6 +589,7 @@ private struct MissingBasisBottomSheet: View {
             HStack(spacing: 12) {
                 ProductThumbnailView(
                     imageURLString: imageURLString,
+                    category: category,
                     width: 58,
                     height: 72,
                     cornerRadius: 14
