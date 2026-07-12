@@ -138,37 +138,10 @@ struct AddComparedProductToClosetSheet: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else {
-                        LazyVGrid(columns: sizeSelectionGridColumns, alignment: .center, spacing: 12) {
-                            ForEach(sortedSizes) { size in
-                                let isSelected = selectedSizeName == size.name
-
-                                Button {
-                                    selectedSizeName = size.name
-                                } label: {
-                                    HStack(spacing: 8) {
-                                        Text(size.name.displaySizeName)
-                                            .font(.headline.weight(.bold))
-                                            .lineLimit(1)
-                                            .minimumScaleFactor(0.75)
-
-                                        if isSelected {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .font(.subheadline.weight(.semibold))
-                                        }
-                                    }
-                                    .foregroundStyle(isSelected ? .white : .primary)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 58)
-                                    .background(isSelected ? Color.black : Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                            .stroke(isSelected ? Color.black : Color(.separator).opacity(0.35), lineWidth: 1)
-                                    }
-                                    .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
+                        ProductSizeSelectionGrid(
+                            sizes: sortedSizes,
+                            selectedSizeName: $selectedSizeName
+                        )
                     }
                 }
             }
