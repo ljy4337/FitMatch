@@ -1,49 +1,57 @@
 import SwiftUI
 
 struct RecommendView: View {
+    var onLogout: (() -> Void)?
+    @State private var isTopChromeVisible = true
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Image("FitMatchWordmark")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .foregroundStyle(.primary)
-                    .frame(width: 138, height: 32, alignment: .leading)
+            VStack(alignment: .leading, spacing: 20) {
+                if isTopChromeVisible {
+                    FitMatchNavigationHeader(onLogout: onLogout)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
 
-                CardView(radius: 24, padding: 22) {
-                    VStack(alignment: .leading, spacing: 22) {
+                CardView(radius: 24, padding: 24) {
+                    VStack(alignment: .center, spacing: 22) {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 34, weight: .semibold))
-                            .frame(width: 58, height: 58)
-                            .background(.primary.opacity(0.06), in: Circle())
+                            .font(.system(size: 30, weight: .semibold))
+                            .foregroundStyle(Color(.systemBackground))
+                            .frame(width: 64, height: 64)
+                            .background(Color.primary, in: Circle())
 
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .center, spacing: 8) {
                             Text("추천 서비스 준비중")
                                 .font(.title2.weight(.black))
                                 .foregroundStyle(.primary)
-                            Text("기준 옷을 많이 등록할수록\n더 정확한 추천을 제공합니다.")
+                            Text("내 옷장과 비교 기록이 쌓이면\n나에게 맞는 상품을 추천할 예정입니다.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
                                 .lineSpacing(3)
                         }
 
-                        Text("Coming Soon")
-                            .font(.caption.weight(.black))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 7)
-                            .background(Color(.secondarySystemGroupedBackground), in: Capsule())
+                        HStack(spacing: 8) {
+                            Image(systemName: "clock")
+                                .font(.caption.weight(.bold))
+                            Text("상품추가 준비중")
+                                .font(.caption.weight(.black))
+                        }
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color(.secondarySystemGroupedBackground), in: Capsule())
                     }
+                    .frame(maxWidth: .infinity)
                 }
 
                 CardView(radius: 20, padding: 18) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        SectionHeader(title: "앞으로 제공될 추천", subtitle: "내 옷장, 비교 기록, 선호 핏을 기반으로 확장합니다.")
+                    VStack(alignment: .leading, spacing: 12) {
+                        SectionHeader(title: "추천 기준", subtitle: "지금은 추천 데이터 수집 단계입니다.")
                         Divider()
-                        RecommendPreviewRow(title: "내 기준 옷과 가까운 상품", systemImage: "tshirt")
-                        RecommendPreviewRow(title: "선호 브랜드 신상품", systemImage: "tag")
-                        RecommendPreviewRow(title: "Fit Confidence 높은 상품", systemImage: "chart.bar")
+                        RecommendPreviewRow(title: "내 기준 옷", subtitle: "카테고리별 기준 옷을 우선 반영", systemImage: "tshirt")
+                        RecommendPreviewRow(title: "비교 기록", subtitle: "최근 본 상품과 핏 매칭률 활용", systemImage: "clock")
+                        RecommendPreviewRow(title: "선호 브랜드", subtitle: "브랜드별 실측 차이를 누적 분석", systemImage: "tag")
                     }
                 }
             }
@@ -51,13 +59,16 @@ struct RecommendView: View {
             .padding(.bottom, 112)
         }
         .background(Color(.systemGroupedBackground))
+        .hidesTopChromeOnScroll($isTopChromeVisible)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
 private struct RecommendPreviewRow: View {
     let title: String
+    let subtitle: String
     let systemImage: String
 
     var body: some View {
@@ -66,8 +77,14 @@ private struct RecommendPreviewRow: View {
                 .font(.subheadline.weight(.semibold))
                 .frame(width: 30, height: 30)
                 .background(.primary.opacity(0.06), in: Circle())
-            Text(title)
-                .font(.subheadline.weight(.semibold))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline.weight(.bold))
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Spacer()
         }
         .foregroundStyle(.primary)

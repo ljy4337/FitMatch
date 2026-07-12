@@ -14,6 +14,7 @@ struct ParsedProductInfo {
     var imageURLString: String? = nil
     var price: Int? = nil
     var canonicalURLString: String? = nil
+    var productMetadata: ProductMetadata = ProductMetadata()
 }
 
 struct ParsedProductSize: Identifiable, Equatable {

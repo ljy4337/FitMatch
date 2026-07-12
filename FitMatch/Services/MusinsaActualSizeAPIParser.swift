@@ -11,7 +11,8 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     func parse(from url: URL) async throws -> ParsedProductInfo {
         let resolvedProduct = try await urlResolver.resolve(url)
         let metadata = await metadataParser.parse(productID: resolvedProduct.productID, sourceURL: resolvedProduct.resolvedURL)
-        let sizes = try await parseSizes(productID: resolvedProduct.productID)
+        let actualSize = try await parseActualSize(productID: resolvedProduct.productID)
+        let sizes = actualSize.sizes
 
         guard !sizes.isEmpty else {
             throw ProductURLParserPartialError(productInfo: metadata.parsedProductInfo(sizes: []))
@@ -21,6 +22,10 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     }
 
     func parseSizes(productID: String) async throws -> [ParsedProductSize] {
+        try await parseActualSize(productID: productID).sizes
+    }
+
+    func parseActualSize(productID: String) async throws -> MusinsaActualSizeResult {
         guard let apiURL = URL(string: "https://goods-detail.musinsa.com/api2/goods/\(productID)/actual-size") else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
@@ -28,7 +33,10 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         let data = try await fetchData(from: apiURL)
         do {
             let response = try JSONDecoder().decode(MusinsaActualSizeResponse.self, from: data)
-            return response.data.sizes.compactMap(makeParsedSize)
+            return MusinsaActualSizeResult(
+                typeName: response.data.typeName,
+                sizes: response.data.sizes.compactMap(makeParsedSize)
+            )
         } catch {
             print("[MusinsaActualSizeAPIParser] Actual size JSON decode failed: \(error)")
             throw ProductURLParserError.automaticParsingUnavailable
@@ -113,10 +121,16 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
 
 }
 
+struct MusinsaActualSizeResult {
+    let typeName: String?
+    let sizes: [ParsedProductSize]
+}
+
 private struct MusinsaActualSizeResponse: Decodable {
     let data: DataBody
 
     struct DataBody: Decodable {
+        let typeName: String?
         let sizes: [Size]
     }
 

@@ -70,7 +70,8 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> [UserFit] {
-        let sameDetail = userFits.filter { $0.detailCategory == productDetailCategory }
+        let sameGroupFits = userFits.filter { isSameServiceGroup($0, product: product) }
+        let sameDetail = sameGroupFits.filter { $0.detailCategory == productDetailCategory }
         if !sameDetail.isEmpty {
             return sameDetail.sorted { lhs, rhs in
                 rankedCandidateScore(lhs, product: product, productDetailCategory: productDetailCategory) >
@@ -81,7 +82,7 @@ struct RecommendationService {
         return rankedFitMatches(
             product: product,
             productDetailCategory: productDetailCategory,
-            userFits: userFits
+            userFits: sameGroupFits
         )
         .prefix(3)
         .map(\.userFit)
@@ -93,6 +94,7 @@ struct RecommendationService {
         userFits: [UserFit]
     ) -> [FitMatchCandidate] {
         userFits
+            .filter { isSameServiceGroup($0, product: product) }
             .map { item in
                 FitMatchCandidate(
                     userFit: item,
@@ -214,23 +216,48 @@ struct RecommendationService {
     ) -> RecommendationBasis {
         let priorityGroups: [(method: String, penalty: Int, filter: (UserFit) -> Bool)] = [
             ("같은 플랫폼/브랜드/세부카테고리 기준 비교", 0, { item in
-                matchesSource(item, product: product)
+                isSameServiceGroup(item, product: product)
+                    && matchesSource(item, product: product)
+                    && matchesBrand(item, product: product)
+                    && item.detailCategory == productDetailCategory
+                    && item.isRepresentative
+            }),
+            ("같은 플랫폼/브랜드/세부카테고리 기준 비교", 0, { item in
+                isSameServiceGroup(item, product: product)
+                    && matchesSource(item, product: product)
+                    && matchesBrand(item, product: product)
+                    && item.detailCategory == productDetailCategory
+            }),
+            ("같은 브랜드 기준 비교", 0, { item in
+                isSameServiceGroup(item, product: product)
                     && matchesBrand(item, product: product)
                     && item.detailCategory == productDetailCategory
                     && item.isRepresentative
             }),
             ("같은 브랜드 기준 비교", 0, { item in
-                matchesBrand(item, product: product)
+                isSameServiceGroup(item, product: product)
+                    && matchesBrand(item, product: product)
+                    && item.detailCategory == productDetailCategory
+            }),
+            ("같은 플랫폼 기준 비교", 0, { item in
+                isSameServiceGroup(item, product: product)
+                    && matchesSource(item, product: product)
                     && item.detailCategory == productDetailCategory
                     && item.isRepresentative
             }),
             ("같은 플랫폼 기준 비교", 0, { item in
-                matchesSource(item, product: product)
+                isSameServiceGroup(item, product: product)
+                    && matchesSource(item, product: product)
+                    && item.detailCategory == productDetailCategory
+            }),
+            ("같은 세부카테고리 기준 비교", 0, { item in
+                isSameServiceGroup(item, product: product)
                     && item.detailCategory == productDetailCategory
                     && item.isRepresentative
             }),
             ("같은 세부카테고리 기준 비교", 0, { item in
-                item.detailCategory == productDetailCategory && item.isRepresentative
+                isSameServiceGroup(item, product: product)
+                    && item.detailCategory == productDetailCategory
             })
         ]
 
@@ -254,7 +281,7 @@ struct RecommendationService {
             if !candidates.isEmpty {
                 return RecommendationBasis(
                     userFits: candidates,
-                    methodText: "전체 fallback 비교",
+                    methodText: "유사한 옷 기준 비교",
                     scorePenalty: 15,
                     fallbackReason: "\(productDetailCategory.rawValue) 기준 옷이 없어 유사도가 높은 옷과 비교했습니다."
                 )
@@ -398,6 +425,11 @@ struct RecommendationService {
             return false
         }
         return normalized(item.brandName) == normalized(productBrand)
+    }
+
+    private func isSameServiceGroup(_ item: UserFit, product: Product) -> Bool {
+        item.category.serviceGroup == product.category.serviceGroup
+            && product.category.serviceGroup != .other
     }
 
     private func normalized(_ value: String) -> String {

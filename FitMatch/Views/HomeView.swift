@@ -8,15 +8,20 @@ struct HomeView: View {
     let onStartCompareWithURL: (String) -> Void
     let onOpenHistory: () -> Void
     let onRecompare: (String) -> Void
+    var onLogout: (() -> Void)?
 
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
+    @State private var isTopChromeVisible = true
     private let favoriteStore = FavoriteProductStore()
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                header
+                if isTopChromeVisible {
+                    FitMatchNavigationHeader(onLogout: onLogout)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 clipboardSection
                 recentProductsSection
                 advertisementSection
@@ -26,21 +31,9 @@ struct HomeView: View {
             .padding(.bottom, 112)
         }
         .background(Color(.systemGroupedBackground))
+        .hidesTopChromeOnScroll($isTopChromeVisible)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
-    }
-
-    private var header: some View {
-        HStack(alignment: .center) {
-            Image("FitMatchWordmark")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .foregroundStyle(.primary)
-                .frame(width: 148, height: 34, alignment: .leading)
-
-            Spacer()
-        }
     }
 
     @ViewBuilder
@@ -78,7 +71,7 @@ struct HomeView: View {
     private var recentProductsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                SectionHeader(title: "최근 비교한 상품", subtitle: histories.isEmpty ? "아직 비교 기록이 없습니다" : "최근 3개")
+                SectionHeader(title: "최근 비교한 상품", subtitle: recentProductsSubtitle)
                 Spacer()
                 Button(action: onOpenHistory) {
                     HStack(spacing: 4) {
@@ -96,7 +89,7 @@ struct HomeView: View {
                     title: "아직 비교한 상품이 없습니다.",
                     subtitle: "첫 상품을 비교해보세요.",
                     systemImage: "clock",
-                    actionTitle: "상품 비교 시작",
+                    actionTitle: "비교 시작",
                     action: onStartCompare
                 )
             } else {
@@ -165,6 +158,15 @@ struct HomeView: View {
         uniqueRecentHistories().prefix(3).map { $0 }
     }
 
+    private var recentProductsSubtitle: String {
+        let count = recentHistories.count
+        guard count > 0 else {
+            return "아직 비교 기록이 없습니다"
+        }
+
+        return count == 1 ? "1건" : "최근 \(count)건"
+    }
+
     private func uniqueRecentHistories() -> [RecommendationHistory] {
         var seenKeys = Set<String>()
         var results: [RecommendationHistory] = []
@@ -225,15 +227,7 @@ private struct EmptyHomeCard: View {
             }
 
             if let actionTitle, let action {
-                Button(action: action) {
-                    Text(actionTitle)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Color(.systemBackground))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 42)
-                        .background(.primary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
-                .buttonStyle(.plain)
+                EmptyStateActionButton(title: actionTitle, action: action)
                 .padding(.top, 12)
             }
         }
@@ -518,32 +512,32 @@ struct RecentProductPreviewCard: View {
 
     var body: some View {
         FitMatchCard {
-            if layout == .carousel {
-                carouselContent
-            } else {
-                compactContent
+            ZStack(alignment: .topTrailing) {
+                NavigationLink {
+                    RecommendationResultView(result: history)
+                } label: {
+                    if layout == .carousel {
+                        carouselContent
+                    } else {
+                        compactContent
+                    }
+                }
+                .buttonStyle(.plain)
+
+                favoriteButton
+                    .padding(layout == .carousel ? 9 : 0)
             }
         }
     }
 
     private var carouselContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            ZStack(alignment: .topTrailing) {
-                NavigationLink {
-                    RecommendationResultView(result: history)
-                } label: {
-                    ProductThumbnailView(
-                        imageURLString: history.product.imageURLString,
-                        width: 178,
-                        height: 178,
-                        cornerRadius: 18
-                    )
-                }
-                .buttonStyle(.plain)
-
-                favoriteButton
-                    .padding(9)
-            }
+            ProductThumbnailView(
+                imageURLString: history.product.imageURLString,
+                width: 178,
+                height: 178,
+                cornerRadius: 18
+            )
 
             productText
 
@@ -556,23 +550,18 @@ struct RecentProductPreviewCard: View {
 
     private var compactContent: some View {
         HStack(alignment: .top, spacing: 14) {
-            NavigationLink {
-                RecommendationResultView(result: history)
-            } label: {
-                ProductThumbnailView(
-                    imageURLString: history.product.imageURLString,
-                    width: 86,
-                    height: 108,
-                    cornerRadius: 18
-                )
-            }
-            .buttonStyle(.plain)
+            ProductThumbnailView(
+                imageURLString: history.product.imageURLString,
+                width: 86,
+                height: 108,
+                cornerRadius: 18
+            )
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top) {
                     productText
                     Spacer(minLength: 8)
-                    favoriteButton
+                    Color.clear.frame(width: 34, height: 34)
                 }
 
                 HStack {
@@ -594,9 +583,7 @@ struct RecentProductPreviewCard: View {
                 .font(.headline.weight(.bold))
                 .foregroundStyle(.primary)
                 .lineLimit(2)
-            Text("가격 정보 없음")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            ProductPriceView(product: history.product)
         }
     }
 
@@ -604,7 +591,7 @@ struct RecentProductPreviewCard: View {
         VStack(alignment: .leading, spacing: 2) {
             Text("추천 \(history.recommendedSize.name.displaySizeName)")
                 .font(.subheadline.weight(.bold))
-            Text("Fit Confidence \(history.recommendationScore)%")
+            Text("핏 매칭률 \(history.recommendationScore)%")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
         }

@@ -74,6 +74,23 @@ struct PrimaryButton: View {
     }
 }
 
+struct EmptyStateActionButton: View {
+    let title: String
+    var systemImage: String = "plus"
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(Color(.systemBackground))
+                .frame(width: 156, height: 46)
+                .background(Color.primary, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct SecondaryButton: View {
     let title: String
     var systemImage: String?
@@ -114,6 +131,59 @@ struct SectionHeader: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct FitMatchNavigationTitle: View {
+    var body: some View {
+        Image("FitMatchWordmark")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .foregroundStyle(.primary)
+            .frame(width: 148, height: 34)
+            .accessibilityLabel("FitMatch")
+    }
+}
+
+struct FitMatchNavigationHeader: View {
+    var onLogout: (() -> Void)?
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            FitMatchNavigationTitle()
+
+            Spacer(minLength: 12)
+
+            HStack(spacing: 14) {
+                NavigationLink {
+                    GlobalSearchView()
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 38, height: 38)
+                        .background(Color(.systemBackground), in: Circle())
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("검색")
+
+                NavigationLink {
+                    SettingsView(onLogout: onLogout)
+                } label: {
+                    Image(systemName: "person.crop.circle")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 38, height: 38)
+                        .background(Color(.systemBackground), in: Circle())
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("설정")
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -159,5 +229,77 @@ struct SmallInfoCard<Content: View>: View {
                 content
             }
         }
+    }
+}
+
+struct ProductPriceView: View {
+    let product: Product
+
+    var body: some View {
+        if let displayPrice = product.displayPrice {
+            HStack(spacing: 6) {
+                Text(displayPrice)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.primary)
+
+                if let discountText = product.discountText {
+                    Text(discountText)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.red)
+                }
+
+                if let normalPriceText = product.normalPriceTextForDisplay {
+                    Text(normalPriceText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .strikethrough()
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+        } else {
+            Text("가격 정보 없음")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private extension Product {
+    var displayPrice: String? {
+        (finalPrice ?? salePrice ?? normalPrice).map(Self.formatPrice)
+    }
+
+    var normalPriceTextForDisplay: String? {
+        guard let normalPrice,
+              let currentPrice = finalPrice ?? salePrice,
+              normalPrice > currentPrice else {
+            return nil
+        }
+
+        return Self.formatPrice(normalPrice)
+    }
+
+    var discountText: String? {
+        if let discountRate, discountRate > 0 {
+            let normalizedRate = discountRate <= 1 ? discountRate * 100 : discountRate
+            return "\(Int(normalizedRate.rounded()))% 할인"
+        }
+
+        guard let normalPrice,
+              let currentPrice = finalPrice ?? salePrice,
+              normalPrice > currentPrice else {
+            return nil
+        }
+
+        let rate = Double(normalPrice - currentPrice) / Double(normalPrice) * 100
+        return "\(Int(rate.rounded()))% 할인"
+    }
+
+    static func formatPrice(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        return "\(formatted)원"
     }
 }

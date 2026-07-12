@@ -51,7 +51,11 @@ struct ShoppingProductFormView: View {
                         prefillGender: .men
                     ) { item in
                         modelContext.insert(item)
-                        try? modelContext.save()
+                        do {
+                            try modelContext.save()
+                        } catch {
+                            viewModel.errorMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+                        }
                     }
                 }
             case .addComparedProduct(let product):
@@ -251,8 +255,12 @@ struct ShoppingProductFormView: View {
             brand: brand,
             allowsGlobalFallback: allowsGlobalFallback
         ) {
-            saveUniqueHistory(history)
-            presentActiveSheet(.result(history))
+            do {
+                try saveUniqueHistory(history)
+                presentActiveSheet(.result(history))
+            } catch {
+                viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
+            }
         }
     }
 
@@ -314,21 +322,23 @@ struct ShoppingProductFormView: View {
             selectedReferenceItem: selectedReferenceItem,
             brand: brand
         ) {
-            saveUniqueHistory(history)
-            presentActiveSheet(.result(history))
+            do {
+                try saveUniqueHistory(history)
+                presentActiveSheet(.result(history))
+            } catch {
+                viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
+            }
         }
     }
 
-    private func saveUniqueHistory(_ history: RecommendationHistory) {
+    private func saveUniqueHistory(_ history: RecommendationHistory) throws {
         duplicateHistories(for: history).forEach { duplicate in
-            let duplicateProduct = duplicate.product
             modelContext.delete(duplicate)
-            modelContext.delete(duplicateProduct)
         }
 
         modelContext.insert(history.product)
         modelContext.insert(history)
-        try? modelContext.save()
+        try modelContext.save()
     }
 
     private func duplicateHistories(for history: RecommendationHistory) -> [RecommendationHistory] {

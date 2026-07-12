@@ -2,235 +2,232 @@ import SwiftUI
 import SwiftData
 
 struct MyClosetView: View {
+    var onLogout: (() -> Void)?
+
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
-    @State private var isShowingAddMethodSheet = false
-    @State private var isShowingManualAddClosetItem = false
-    @State private var isShowingLinkCompare = false
+    @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
+    @AppStorage("FitMatch.hideBasisPrompt") private var hidesBasisPrompt = false
+    @AppStorage("FitMatch.closetViewLayout") private var closetViewLayoutRaw = ContentListLayout.list.rawValue
+    @State private var activeSheet: ClosetActiveSheet?
     @State private var pendingBasisItem: UserFit?
     @State private var existingBasisItem: UserFit?
     @State private var isShowingBasisChangeAlert = false
-    @State private var searchText = ""
     @State private var selectedCategory: ClothingCategory?
     @State private var selectedBrand: String?
     @State private var sortOption: ClosetSortOption = .recent
+    @State private var saveErrorMessage: String?
+    @State private var isTopChromeVisible = true
 
     var body: some View {
-        VStack(spacing: 0) {
-            closetHeader
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 0) {
+                if isTopChromeVisible {
+                    VStack(spacing: 0) {
+                        FitMatchNavigationHeader(onLogout: onLogout)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 18)
+                            .padding(.bottom, 12)
 
-            if userFits.isEmpty {
-                EmptyClosetView {
-                    isShowingAddMethodSheet = true
-                }
-            } else {
-                List {
-                    ForEach(filteredItems) { item in
-                        ClosetItemCard(item: item) {
-                            toggleRepresentative(item)
-                        }
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                            basisSwipeButton(for: item)
-                        }
+                        closetHeader
                     }
-                    .onDelete(perform: deleteItems)
-
-                    Color.clear
-                        .frame(height: 92)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(.init())
-
-                    if filteredItems.isEmpty {
-                        EmptyFilterResultView()
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 24, trailing: 20))
-                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
+
+                if userFits.isEmpty {
+                    EmptyClosetView {
+                        presentActiveSheet(.addMethod)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    closetContent
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if !userFits.isEmpty {
+                closetFloatingAddButton
+                    .padding(.trailing, 22)
+                    .padding(.bottom, 92)
             }
         }
         .background(Color(.systemBackground))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .hidesTabBarOnScroll()
-        .toolbar {
-            if !userFits.isEmpty {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isShowingAddMethodSheet = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(.primary)
-                    }
-                    .accessibilityLabel("기준 옷 추가")
-                }
-            }
-        }
-        .sheet(isPresented: $isShowingAddMethodSheet) {
-            AddClosetMethodSheet(
-                onLink: {
-                    isShowingAddMethodSheet = false
-                    isShowingLinkCompare = true
-                },
-                onManual: {
-                    isShowingAddMethodSheet = false
-                    isShowingManualAddClosetItem = true
-                }
-            )
-            .presentationDetents([.height(290)])
-            .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $isShowingManualAddClosetItem) {
-            NavigationStack {
-                AddClosetItemView { item in
-                    modelContext.insert(item)
-                    try? modelContext.save()
-                }
-            }
-        }
-        .fullScreenCover(isPresented: $isShowingLinkCompare) {
-            NavigationStack {
-                LinkClosetRegistrationView()
-                    .toolbar {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button {
-                                isShowingLinkCompare = false
-                            } label: {
-                                Image(systemName: "xmark")
-                                    .font(.headline.weight(.semibold))
-                            }
-                            .foregroundStyle(.primary)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .addMethod:
+                AddClosetMethodSheet(
+                    onLink: {
+                        dismissActiveSheet()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            presentActiveSheet(.linkRegistration)
+                        }
+                    },
+                    onManual: {
+                        dismissActiveSheet()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            presentActiveSheet(.manualAdd)
                         }
                     }
+                )
+                .presentationDetents([.height(290)])
+                .presentationDragIndicator(.visible)
+            case .manualAdd:
+                NavigationStack {
+                    AddClosetItemView { item in
+                        modelContext.insert(item)
+                        do {
+                            try modelContext.save()
+                        } catch {
+                            saveErrorMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+                        }
+                    }
+                }
+            case .linkRegistration:
+                NavigationStack {
+                    LinkClosetRegistrationView()
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
         }
-        .alert(basisAlertTitle, isPresented: $isShowingBasisChangeAlert) {
-            Button("취소", role: .cancel) {
-                pendingBasisItem = nil
-                existingBasisItem = nil
-            }
-            Button(existingBasisItem == nil ? "기준 옷으로 설정" : "변경") {
-                applyPendingBasisChange()
+        .sheet(isPresented: $isShowingBasisChangeAlert) {
+            BasisChangeSheet(
+                title: basisAlertTitle,
+                message: basisAlertMessage,
+                hidesFuturePrompt: $hidesBasisPrompt,
+                onCancel: {
+                    pendingBasisItem = nil
+                    existingBasisItem = nil
+                    isShowingBasisChangeAlert = false
+                },
+                onConfirm: {
+                    isShowingBasisChangeAlert = false
+                    applyPendingBasisChange()
+                }
+            )
+            .presentationDetents([.height(existingBasisItem == nil ? 300 : 380)])
+            .presentationDragIndicator(.visible)
+        }
+        .alert("저장 실패", isPresented: Binding(
+            get: { saveErrorMessage != nil },
+            set: { if !$0 { saveErrorMessage = nil } }
+        )) {
+            Button("확인", role: .cancel) {
+                saveErrorMessage = nil
             }
         } message: {
-            Text(basisAlertMessage)
+            Text(saveErrorMessage ?? "")
         }
     }
 
     private var closetHeader: some View {
-        VStack(spacing: 14) {
-            dashboard
-            searchField
-            categoryFilter
-            brandAndSortRow
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 8)
-        .background(Color(.systemBackground))
+        ContentFilterBar(filters: closetFilterItems, layout: closetLayoutBinding)
     }
 
-    private var dashboard: some View {
-        HStack(spacing: 10) {
-            ClosetDashboardTile(title: "등록한 옷", value: "\(userFits.count)")
-            ClosetDashboardTile(title: "기준 옷", value: "\(userFits.filter(\.isRepresentative).count)")
-            ClosetDashboardTile(title: "브랜드", value: "\(Set(userFits.map(\.brandName)).count)")
-            ClosetDashboardTile(title: "카테고리", value: "\(Set(userFits.map { $0.category.rawValue }).count)")
+    private var closetFloatingAddButton: some View {
+        Button {
+            presentActiveSheet(.addMethod)
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 50, height: 50)
+                .background(.black, in: Circle())
+                .shadow(color: .black.opacity(0.16), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("기준 옷 추가")
+    }
+
+    @ViewBuilder
+    private var closetContent: some View {
+        switch closetLayout {
+        case .list:
+            closetList
+        case .grid:
+            closetGrid
         }
     }
 
-    private var searchField: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-            TextField("브랜드, 상품명 검색", text: $searchText)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .font(.subheadline)
-        }
-        .padding(.horizontal, 14)
-        .frame(height: 44)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private var categoryFilter: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                FilterChip(title: "전체", isSelected: selectedCategory == nil) {
-                    selectedCategory = nil
-                }
-
-                ForEach(availableCategories, id: \.self) { category in
-                    FilterChip(title: category.rawValue, isSelected: selectedCategory == category) {
-                        selectedCategory = category
+    private var closetList: some View {
+        List {
+            ForEach(filteredItems) { item in
+                NavigationLink {
+                    ClosetItemDetailView(item: item)
+                } label: {
+                    ClosetItemCard(item: item) {
+                        toggleRepresentative(item)
                     }
                 }
+                .buttonStyle(.plain)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                    basisSwipeButton(for: item)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    deleteSwipeButton(for: item)
+                }
             }
+
+            if filteredItems.isEmpty {
+                EmptyFilterResultView()
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 24, trailing: 20))
+            }
+
+            Color.clear
+                .frame(height: 112)
+                .listRowSeparator(.hidden)
+                .listRowInsets(.init())
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
-    private var brandAndSortRow: some View {
-        HStack(spacing: 10) {
-            Menu {
-                Button("전체") {
-                    selectedBrand = nil
-                }
-                ForEach(availableBrands, id: \.self) { brand in
-                    Button(brand) {
-                        selectedBrand = brand
+    private var closetGrid: some View {
+        ScrollView {
+            LazyVGrid(columns: gridColumns, spacing: 14) {
+                ForEach(filteredItems) { item in
+                    NavigationLink {
+                        ClosetItemDetailView(item: item)
+                    } label: {
+                        ClosetGridCard(item: item)
                     }
+                    .buttonStyle(.plain)
                 }
-            } label: {
-                Label(selectedBrand ?? "브랜드 전체", systemImage: "tag")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(Color(.secondarySystemGroupedBackground), in: Capsule())
-            }
-            .buttonStyle(.plain)
 
-            Spacer()
-
-            Menu {
-                ForEach(ClosetSortOption.allCases, id: \.self) { option in
-                    Button(option.title) {
-                        sortOption = option
-                    }
+                if filteredItems.isEmpty {
+                    EmptyFilterResultView()
+                        .gridCellColumns(2)
+                        .padding(.top, 24)
                 }
-            } label: {
-                Label(sortOption.title, systemImage: "arrow.up.arrow.down")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(Color(.secondarySystemGroupedBackground), in: Capsule())
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 122)
         }
+        .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
     private var filteredItems: [UserFit] {
-        let normalizedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let filtered = userFits.filter { item in
-            let matchesSearch = normalizedSearchText.isEmpty
-                || item.displayName.lowercased().contains(normalizedSearchText)
-                || item.brandName.lowercased().contains(normalizedSearchText)
-
             let matchesCategory = selectedCategory == nil || item.category == selectedCategory
             let matchesBrand = selectedBrand == nil || item.brandName == selectedBrand
 
-            return matchesSearch && matchesCategory && matchesBrand
+            return matchesCategory && matchesBrand
         }
 
         switch sortOption {
         case .recent:
             return filtered.sorted { $0.createdAt > $1.createdAt }
+        case .oldest:
+            return filtered.sorted { $0.createdAt < $1.createdAt }
         case .brand:
             return filtered.sorted { $0.brandName < $1.brandName }
         case .category:
@@ -245,12 +242,78 @@ struct MyClosetView: View {
         }
     }
 
+    private var closetLayout: ContentListLayout {
+        get { ContentListLayout(rawValue: closetViewLayoutRaw) ?? .list }
+        nonmutating set { closetViewLayoutRaw = newValue.rawValue }
+    }
+
+    private var closetLayoutBinding: Binding<ContentListLayout> {
+        Binding(
+            get: { closetLayout },
+            set: { closetLayout = $0 }
+        )
+    }
+
+    private var closetFilterItems: [ContentFilterItem] {
+        [
+            ContentFilterItem(
+                id: "category",
+                selectedID: selectedCategory?.rawValue ?? "all",
+                selectedTitle: selectedCategory?.rawValue ?? "전체",
+                options: [ContentFilterOption(id: "all", title: "전체")]
+                    + availableCategories.map { ContentFilterOption(id: $0.rawValue, title: $0.rawValue) },
+                onSelect: { id in
+                    selectedCategory = id == "all" ? nil : ClothingCategory(rawValue: id)
+                }
+            ),
+            ContentFilterItem(
+                id: "brand",
+                selectedID: selectedBrand ?? "all",
+                selectedTitle: selectedBrand ?? "브랜드",
+                options: [ContentFilterOption(id: "all", title: "전체 브랜드")]
+                    + availableBrands.map { ContentFilterOption(id: $0, title: $0) },
+                onSelect: { id in
+                    selectedBrand = id == "all" ? nil : id
+                }
+            ),
+            ContentFilterItem(
+                id: "sort",
+                selectedID: sortOption.rawValue,
+                selectedTitle: sortOption.title,
+                options: ClosetSortOption.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
+                onSelect: { id in
+                    sortOption = ClosetSortOption(rawValue: id) ?? .recent
+                }
+            )
+        ]
+    }
+
+    private var gridColumns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: 12),
+            GridItem(.flexible(), spacing: 12)
+        ]
+    }
+
     private var availableCategories: [ClothingCategory] {
         Array(Set(userFits.map(\.category))).sorted { $0.rawValue < $1.rawValue }
     }
 
     private var availableBrands: [String] {
         Array(Set(userFits.map(\.brandName))).sorted()
+    }
+
+    private func presentActiveSheet(_ sheet: ClosetActiveSheet) {
+        print("[MyClosetView] activeSheet -> \(sheet.logName)")
+        activeSheet = nil
+        DispatchQueue.main.async {
+            activeSheet = sheet
+        }
+    }
+
+    private func dismissActiveSheet() {
+        print("[MyClosetView] activeSheet -> nil")
+        activeSheet = nil
     }
 
     @ViewBuilder
@@ -260,17 +323,21 @@ struct MyClosetView: View {
         } label: {
             Label(
                 item.isRepresentative ? "기준 옷 해제" : "기준 옷으로 설정",
-                systemImage: item.isRepresentative ? "heart.slash" : "heart.fill"
+                systemImage: item.isRepresentative ? "tshirt" : "tshirt.fill"
             )
         }
-        .tint(item.isRepresentative ? .gray : .red)
+        .tint(item.isRepresentative ? .gray : .black)
     }
 
     private func toggleRepresentative(_ item: UserFit) {
         if item.isRepresentative {
             item.isRepresentative = false
             item.updatedAt = Date()
-            try? modelContext.save()
+            do {
+                try modelContext.save()
+            } catch {
+                saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
+            }
             return
         }
 
@@ -280,7 +347,11 @@ struct MyClosetView: View {
                 && $0.detailCategory == item.detailCategory
                 && $0.isRepresentative
         }
-        isShowingBasisChangeAlert = true
+        if hidesBasisPrompt {
+            applyPendingBasisChange()
+        } else {
+            isShowingBasisChangeAlert = true
+        }
     }
 
     private var basisAlertTitle: String {
@@ -337,23 +408,72 @@ struct MyClosetView: View {
 
         pendingBasisItem.isRepresentative = true
         pendingBasisItem.updatedAt = Date()
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
+            return
+        }
 
         self.pendingBasisItem = nil
         existingBasisItem = nil
     }
 
-    private func deleteItems(at offsets: IndexSet) {
-        for index in offsets {
-            let item = filteredItems[index]
-            modelContext.delete(item)
+    private func deleteItem(_ item: UserFit) {
+        deleteHistoriesReferencing(item)
+        modelContext.delete(item)
+        do {
+            try modelContext.save()
+        } catch {
+            saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
         }
-        try? modelContext.save()
+    }
+
+    @ViewBuilder
+    private func deleteSwipeButton(for item: UserFit) -> some View {
+        Button(role: .destructive) {
+            deleteItem(item)
+        } label: {
+            Label("삭제", systemImage: "trash")
+        }
+        .tint(.red)
+    }
+
+    private func deleteHistoriesReferencing(_ item: UserFit) {
+        histories
+            .filter { history in
+                history.userFit.id == item.id
+            }
+            .forEach { history in
+                modelContext.delete(history)
+            }
     }
 }
 
-private enum ClosetSortOption: CaseIterable {
+private enum ClosetActiveSheet: Identifiable {
+    case addMethod
+    case manualAdd
+    case linkRegistration
+
+    var id: String {
+        logName
+    }
+
+    var logName: String {
+        switch self {
+        case .addMethod:
+            return "addMethod"
+        case .manualAdd:
+            return "manualAdd"
+        case .linkRegistration:
+            return "linkRegistration"
+        }
+    }
+}
+
+private enum ClosetSortOption: String, CaseIterable {
     case recent
+    case oldest
     case brand
     case category
     case basisFirst
@@ -361,6 +481,7 @@ private enum ClosetSortOption: CaseIterable {
     var title: String {
         switch self {
         case .recent: return "최근 등록"
+        case .oldest: return "오래된순"
         case .brand: return "브랜드순"
         case .category: return "카테고리순"
         case .basisFirst: return "기준 옷 우선"
@@ -415,6 +536,70 @@ private struct EmptyFilterResultView: View {
             systemImage: "line.3.horizontal.decrease.circle",
             description: Text("검색어 또는 필터를 조정해 주세요.")
         )
+    }
+}
+
+private struct BasisChangeSheet: View {
+    let title: String
+    let message: String
+    @Binding var hidesFuturePrompt: Bool
+    let onCancel: () -> Void
+    let onConfirm: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(.primary)
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Button {
+                hidesFuturePrompt.toggle()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: hidesFuturePrompt ? "checkmark.square.fill" : "square")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("앞으로 표시하지 않기")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                }
+                .padding(.vertical, 4)
+            }
+            .buttonStyle(.plain)
+
+            Spacer(minLength: 0)
+
+            HStack(spacing: 10) {
+                Button(action: onCancel) {
+                    Text("취소")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 46)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                }
+                .buttonStyle(.plain)
+
+                Button(action: onConfirm) {
+                    Text("설정")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(Color(.systemBackground))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 46)
+                        .background(Color.primary, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(20)
+        .background(Color(.systemGroupedBackground))
     }
 }
 
@@ -504,33 +689,29 @@ private struct EmptyClosetView: View {
     let onAdd: () -> Void
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack {
             Spacer(minLength: 0)
 
-            Image("EmptyCloset")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 160, height: 160)
+            VStack(spacing: 18) {
+                Image("EmptyCloset")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 132, height: 132)
 
-            VStack(spacing: 6) {
-                Text("옷장이 비었습니다.")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(.primary)
-                Text("핏이 마음에 드는 옷을 먼저 추가해 주세요.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
+                VStack(spacing: 6) {
+                    Text("옷장이 비었습니다.")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.primary)
+                    Text("핏이 마음에 드는 옷을 먼저 추가해 주세요.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
 
-            Button(action: onAdd) {
-                Label("추가하기", systemImage: "plus")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(Color(.systemBackground))
-                    .frame(width: 160, height: 50)
-                    .background(Color.primary, in: Capsule())
+                EmptyStateActionButton(title: "추가하기", action: onAdd)
+                    .padding(.top, 2)
             }
-            .buttonStyle(.plain)
-            .padding(.top, 6)
+            .offset(y: -24)
 
             Spacer(minLength: 0)
         }
@@ -573,19 +754,19 @@ private struct ClosetItemCard: View {
 
                     Spacer()
 
-                    VStack(alignment: .trailing, spacing: 4) {
+                    VStack(alignment: .trailing, spacing: 8) {
                         Button(action: onToggleRepresentative) {
-                            Label(
-                                item.isRepresentative ? "기준 옷" : "기준 옷 설정",
-                                systemImage: item.isRepresentative ? "heart.fill" : "heart"
-                            )
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(item.isRepresentative ? .red : .primary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(.primary.opacity(0.08), in: Capsule())
+                            Image(systemName: item.isRepresentative ? "tshirt.fill" : "tshirt")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(item.isRepresentative ? Color(.systemBackground) : .primary)
+                                .frame(width: 34, height: 34)
+                                .background(
+                                    item.isRepresentative ? Color.primary : Color(.secondarySystemGroupedBackground),
+                                    in: Circle()
+                                )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(item.isRepresentative ? "기준 옷" : "기준 옷으로 설정")
 
                         Text(item.fitPreference.rawValue)
                             .font(.caption.weight(.bold))
@@ -602,18 +783,55 @@ private struct ClosetItemCard: View {
                     detailCategory: item.detailCategory,
                     gender: item.gender
                 )
+            }
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
 
-                NavigationLink {
-                    ClosetItemDetailView(item: item)
-                } label: {
-                    Text("상세 보기")
+private struct ClosetGridCard: View {
+    let item: UserFit
+
+    var body: some View {
+        CardView(radius: 20, padding: 12) {
+            VStack(alignment: .leading, spacing: 10) {
+                ZStack(alignment: .topTrailing) {
+                    ProductThumbnailView(
+                        imageURLString: item.sourceProduct?.imageURLString,
+                        width: 126,
+                        height: 142,
+                        cornerRadius: 16
+                    )
+                    .frame(maxWidth: .infinity)
+
+                    if item.isRepresentative {
+                        Text("기준")
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(Color(.systemBackground))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(Color.primary, in: Capsule())
+                            .padding(8)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.brandName)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Text(item.productName)
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 40)
-                        .background(.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("\(item.sizeName) · \(item.detailCategory.rawValue)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-                .buttonStyle(.plain)
             }
         }
     }

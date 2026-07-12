@@ -92,4 +92,13 @@ final class RecommendationHistory {
         get { ClosetDetailCategory(rawValue: productDetailCategoryRawValue) ?? .other }
         set { productDetailCategoryRawValue = newValue.rawValue }
     }
+
+    var displayComparisonMethod: String {
+        switch comparisonMethod {
+        case "전체 fallback 비교":
+            return "유사한 옷 기준 비교"
+        default:
+            return comparisonMethod.replacingOccurrences(of: "fallback", with: "유사한 옷")
+        }
+    }
 }

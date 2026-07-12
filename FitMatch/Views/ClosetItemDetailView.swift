@@ -2,69 +2,190 @@ import SwiftUI
 import SwiftData
 
 struct ClosetItemDetailView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.setFitMatchTabBarVisible) private var setTabBarVisible
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var isShowingEdit = false
+    @State private var saveErrorMessage: String?
 
     let item: UserFit
 
     var body: some View {
-        List {
-            if let imageURLString = item.sourceProduct?.imageURLString,
-               !imageURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Section {
-                    ProductThumbnailView(
-                        imageURLString: imageURLString,
-                        width: 300,
-                        height: 320,
-                        cornerRadius: 22
-                    )
-                    .frame(maxWidth: .infinity)
-                    .listRowInsets(EdgeInsets(top: 16, leading: 20, bottom: 16, trailing: 20))
-                }
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                heroCard
+                quickSummaryCard
+                basicInfoCard
+                measurementCard
 
-            Section("기본 정보") {
-                LabeledContent("출처 유형", value: item.sourceType.displayName)
-                LabeledContent("출처", value: item.sourceName)
-                LabeledContent("브랜드", value: item.brandName)
-                LabeledContent("제품명", value: item.productName)
-                LabeledContent("카테고리", value: item.category.rawValue)
-                LabeledContent("사이즈", value: item.sizeName)
-                LabeledContent("핏", value: item.fitPreference.rawValue)
-                if item.isRepresentative {
-                    LabeledContent("기준 옷", value: "\(item.detailCategory.rawValue) 기준")
+                if !item.fitMemo.isEmpty {
+                    memoCard
                 }
             }
-
-            Section("실측값") {
-                ForEach(item.category.measurementKinds(detailCategory: item.detailCategory, gender: item.gender)) { kind in
-                    LabeledContent(kind.title, value: item.measurements.value(for: kind).cmText)
-                }
-            }
-
-            if !item.fitMemo.isEmpty {
-                Section("핏 메모") {
-                    Text(item.fitMemo)
-                }
-            }
+            .padding(20)
+            .padding(.bottom, 120)
         }
-        .navigationTitle(item.productName)
-        .hidesTabBarOnScroll()
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("내 옷 정보")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("수정") {
+                Button("편집") {
                     isShowingEdit = true
                 }
+                .font(.subheadline.weight(.bold))
             }
         }
         .sheet(isPresented: $isShowingEdit) {
             NavigationStack {
-                AddClosetItemView(item: item) { editedItem in
+                AddClosetItemView(
+                    item: item,
+                    onDelete: {
+                        deleteItemAndDismiss()
+                    }
+                ) { editedItem in
                     applyChanges(from: editedItem)
                 }
             }
         }
+        .alert("저장 실패", isPresented: Binding(
+            get: { saveErrorMessage != nil },
+            set: { if !$0 { saveErrorMessage = nil } }
+        )) {
+            Button("확인", role: .cancel) {
+                saveErrorMessage = nil
+            }
+        } message: {
+            Text(saveErrorMessage ?? "")
+        }
+        .onAppear {
+            setTabBarVisible(false)
+        }
+        .onDisappear {
+            setTabBarVisible(true)
+        }
+    }
+
+    private var heroCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                if let imageURLString, !imageURLString.isEmpty {
+                    ProductThumbnailView(
+                        imageURLString: imageURLString,
+                        width: 320,
+                        height: 260,
+                        cornerRadius: 22
+                    )
+                    .frame(maxWidth: .infinity)
+                } else {
+                    ClosetDetailPlaceholderImage(category: item.category)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .top, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(item.brandName)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                            Text(item.productName)
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(.primary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer()
+
+                        if item.isRepresentative {
+                            Text("기준 옷")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Color(.systemBackground))
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 6)
+                                .background(Color.primary, in: Capsule())
+                        }
+                    }
+
+                    HStack(spacing: 8) {
+                        ClosetDetailChip(title: item.detailCategory.rawValue)
+                        ClosetDetailChip(title: item.sizeName)
+                        ClosetDetailChip(title: item.fitPreference.rawValue)
+                    }
+                }
+            }
+        }
+    }
+
+    private var quickSummaryCard: some View {
+        HStack(spacing: 10) {
+            ClosetSummaryTile(title: "카테고리", value: item.category.rawValue)
+            ClosetSummaryTile(title: "사이즈", value: item.sizeName)
+            ClosetSummaryTile(title: "핏", value: item.fitPreference.rawValue)
+        }
+    }
+
+    private var basicInfoCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(title: "기본 정보")
+
+                VStack(spacing: 11) {
+                    DetailInfoRow(title: "브랜드", value: item.brandName)
+                    DetailInfoRow(title: "상품명", value: item.productName)
+                    DetailInfoRow(title: "출처", value: sourceDescription)
+                    DetailInfoRow(title: "성별", value: item.gender.rawValue)
+                    DetailInfoRow(title: "분류", value: "\(item.category.rawValue) / \(item.detailCategory.rawValue)")
+                }
+            }
+        }
+    }
+
+    private var measurementCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(title: "실측값")
+
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: 10),
+                    GridItem(.flexible(), spacing: 10)
+                ], spacing: 10) {
+                    ForEach(item.category.measurementKinds(detailCategory: item.detailCategory, gender: item.gender)) { kind in
+                        MeasurementValueTile(
+                            title: kind.title,
+                            value: measurementText(for: kind)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private var memoCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: "핏 메모")
+                Text(item.fitMemo)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var imageURLString: String? {
+        item.sourceProduct?.imageURLString?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var sourceDescription: String {
+        item.sourceName == item.sourceType.displayName
+            ? item.sourceName
+            : "\(item.sourceName) · \(item.sourceType.displayName)"
+    }
+
+    private func measurementText(for kind: MeasurementKind) -> String {
+        let value = item.measurements.value(for: kind)
+        return value > 0 ? value.cmText : "-"
     }
 
     private func applyChanges(from editedItem: UserFit) {
@@ -94,6 +215,135 @@ struct ClosetItemDetailView: View {
                 }
         }
         item.updatedAt = Date()
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            saveErrorMessage = "수정 내용을 저장하지 못했습니다."
+        }
+    }
+
+    private func deleteItemAndDismiss() {
+        histories
+            .filter { $0.userFit.id == item.id }
+            .forEach { modelContext.delete($0) }
+
+        modelContext.delete(item)
+        do {
+            try modelContext.save()
+            dismiss()
+        } catch {
+            saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
+        }
+    }
+}
+
+private struct ClosetDetailPlaceholderImage: View {
+    let category: ClothingCategory
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: iconName)
+                .font(.system(size: 44, weight: .regular))
+                .foregroundStyle(.secondary)
+                .frame(width: 82, height: 82)
+                .background(Color(.systemBackground), in: Circle())
+
+            Text("이미지 없음")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 190)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    private var iconName: String {
+        switch category.serviceGroup {
+        case .shoes:
+            return "shoe.2"
+        case .accessory:
+            return "watch.analog"
+        default:
+            return "tshirt"
+        }
+    }
+}
+
+private struct ClosetDetailChip: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.primary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(Color(.secondarySystemGroupedBackground), in: Capsule())
+    }
+}
+
+private struct ClosetSummaryTile: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 7) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.primary.opacity(0.06), lineWidth: 1)
+        }
+    }
+}
+
+private struct DetailInfoRow: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 16)
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.trailing)
+        }
+    }
+}
+
+private struct MeasurementValueTile: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
