@@ -88,7 +88,22 @@ final class AddClosetItemViewModel: ObservableObject {
     }
 
     var measurements: GarmentMeasurements? {
-        for kind in measurementKinds where value(for: kind).trimmed.isEmpty || Double(value(for: kind)) == nil {
+        var hasAtLeastOneMeasurement = measurementKinds.isEmpty
+
+        for kind in measurementKinds {
+            let rawValue = value(for: kind).trimmed
+            guard !rawValue.isEmpty else {
+                continue
+            }
+
+            guard let number = Double(rawValue), number > 0 else {
+                return nil
+            }
+
+            hasAtLeastOneMeasurement = true
+        }
+
+        guard hasAtLeastOneMeasurement else {
             return nil
         }
 

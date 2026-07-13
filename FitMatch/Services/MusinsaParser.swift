@@ -11,10 +11,10 @@ struct MusinsaParser: ProductURLParsing {
 
     func parse(from url: URL) async throws -> ParsedProductInfo {
         let resolved = try await urlResolver.resolve(url)
-        let metadata = await metadataParser.parse(productID: resolved.productID, sourceURL: resolved.resolvedURL)
-        let sizes: [ParsedProductSize]
+        var metadata = await metadataParser.parse(productID: resolved.productID, sourceURL: resolved.resolvedURL)
+        let actualSize: MusinsaActualSizeResult
         do {
-            sizes = try await actualSizeParser.parseSizes(productID: resolved.productID)
+            actualSize = try await actualSizeParser.parseActualSize(productID: resolved.productID)
         } catch {
             print("[MusinsaParser] actual-size API failed: \(error.localizedDescription)")
             throw ProductURLParserPartialError(
@@ -24,6 +24,8 @@ struct MusinsaParser: ProductURLParsing {
                 )
             )
         }
+        let sizes = actualSize.sizes
+        metadata.applyActualSizeTypeName(actualSize.typeName)
 
         print("[MusinsaParser] detectedProvider: musinsa")
         print("[MusinsaParser] originalURL: \(resolved.originalURL.absoluteString)")
@@ -33,6 +35,7 @@ struct MusinsaParser: ProductURLParsing {
         print("[MusinsaParser] brandName: \(metadata.brandName)")
         print("[MusinsaParser] category: \(metadata.category.rawValue)")
         print("[MusinsaParser] detailCategory: \(metadata.detailCategory.rawValue)")
+        print("[MusinsaParser] actualSizeTypeName: \(actualSize.typeName ?? "nil")")
         print("[MusinsaParser] imageURL: \(metadata.imageURLString ?? "nil")")
         print("[MusinsaParser] sizeCount: \(sizes.count)")
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProductThumbnailView: View {
     let imageURLString: String?
+    var category: ClothingCategory? = nil
     var width: CGFloat = 80
     var height: CGFloat = 96
     var cornerRadius: CGFloat = 16
@@ -21,15 +22,11 @@ struct ProductThumbnailView: View {
                             .scaledToFill()
                     case .failure:
                         placeholder {
-                            Image(systemName: "photo")
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
+                            placeholderIcon
                         }
                     @unknown default:
                         placeholder {
-                            Image(systemName: "photo")
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
+                            placeholderIcon
                         }
                     }
                 }
@@ -38,9 +35,7 @@ struct ProductThumbnailView: View {
                 }
             } else {
                 placeholder {
-                    Image(systemName: "photo")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+                    placeholderIcon
                 }
             }
         }
@@ -65,5 +60,32 @@ struct ProductThumbnailView: View {
             .overlay {
                 content()
             }
+    }
+
+    private var placeholderIcon: some View {
+        Image(systemName: placeholderSystemImage)
+            .font(.system(size: min(width, height) * 0.28, weight: .semibold))
+            .foregroundStyle(.secondary)
+    }
+
+    private var placeholderSystemImage: String {
+        switch category?.serviceGroup {
+        case .top, .shirt, .knit:
+            return "tshirt"
+        case .bottom, .pants:
+            return "figure.walk"
+        case .outer:
+            return "person.crop.rectangle"
+        case .dress:
+            return "figure.dress.line.vertical.figure"
+        case .underwear:
+            return "rectangle.roundedtop"
+        case .shoes:
+            return "shoeprints.fill"
+        case .accessory:
+            return "watch.analog"
+        case .other, nil:
+            return "photo"
+        }
     }
 }

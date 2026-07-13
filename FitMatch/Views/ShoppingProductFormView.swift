@@ -7,9 +7,7 @@ struct ShoppingProductFormView: View {
     @Query(sort: \Brand.name) private var brands: [Brand]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @StateObject private var viewModel: ShoppingProductViewModel
-    @State private var isShowingMissingBasisDialog = false
-    @State private var isShowingAddBaseline = false
-    @State private var isShowingReferencePicker = false
+    @State private var activeSheet: ShoppingActiveSheet?
     @State private var shouldAutoCalculateInitialURL: Bool
     @State private var didAutoCalculateInitialURL = false
     @FocusState private var isProductURLFocused: Bool
@@ -35,57 +33,67 @@ struct ShoppingProductFormView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .hidesTabBarOnScroll()
         .task {
             await autoCalculateInitialURLIfNeeded()
         }
-        .sheet(item: $viewModel.recommendation) { result in
-            NavigationStack {
-                RecommendationResultView(result: result)
-            }
-        }
-        .sheet(isPresented: $isShowingAddBaseline) {
-            NavigationStack {
-                AddClosetItemView(
-                    prefillCategory: viewModel.category,
-                    prefillDetailCategory: viewModel.detailCategory,
-                    prefillGender: .unisex,
-                    prefillBrand: viewModel.brand,
-                    prefillProductName: viewModel.productName
-                ) { item in
-                    modelContext.insert(item)
-                    try? modelContext.save()
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .result(let result):
+                NavigationStack {
+                    RecommendationResultView(result: result)
                 }
-            }
-        }
-        .sheet(isPresented: $isShowingReferencePicker) {
-            NavigationStack {
-                TemporaryReferencePickerView(
-                    candidates: temporaryReferenceCandidates,
-                    productCategory: viewModel.category,
-                    productDetailCategory: viewModel.detailCategory
-                ) { item in
-                    calculateAndSaveTemporaryRecommendation(selectedReferenceItem: item)
-                    isShowingReferencePicker = false
-                } onRegister: {
-                    presentAddBaselineAfterReferencePicker()
+            case .addBaseline:
+                NavigationStack {
+                    AddClosetItemView(
+                        prefillCategory: viewModel.category,
+                        prefillDetailCategory: viewModel.detailCategory,
+                        prefillGender: .men
+                    ) { item in
+                        modelContext.insert(item)
+                        do {
+                            try modelContext.save()
+                        } catch {
+                            viewModel.errorMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+                        }
+                    }
                 }
+            case .addComparedProduct(let product):
+                AddComparedProductToClosetSheet(
+                    product: product,
+                    productDetailCategory: viewModel.detailCategory,
+                    recommendedSize: product.sizes.sorted { $0.displayOrder < $1.displayOrder }.first
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            case .referencePicker:
+                NavigationStack {
+                    TemporaryReferencePickerView(
+                        candidates: temporaryReferenceCandidates,
+                        productCategory: viewModel.category,
+                        productDetailCategory: viewModel.detailCategory
+                    ) { item in
+                        dismissActiveSheet()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            calculateAndSaveTemporaryRecommendation(selectedReferenceItem: item)
+                        }
+                    } onRegister: {
+                        presentAddBaselineAfterReferencePicker()
+                    }
+                }
+            case .missingBasis:
+                MissingBasisBottomSheet(
+                    productName: viewModel.productName,
+                    brandName: viewModel.brand,
+                    imageURLString: viewModel.productImageURLString,
+                    category: viewModel.category,
+                    detailCategory: viewModel.detailCategory,
+                    hasClosetItems: !userFits.isEmpty,
+                    onRegister: presentAddBaselineAfterMissingBasis,
+                    onChooseReference: presentReferencePickerAfterMissingBasis
+                )
+                .presentationDetents([.height(userFits.isEmpty ? 430 : 500)])
+                .presentationDragIndicator(.visible)
             }
-        }
-        .sheet(isPresented: $isShowingMissingBasisDialog) {
-            MissingBasisBottomSheet(
-                productName: viewModel.productName,
-                brandName: viewModel.brand,
-                imageURLString: viewModel.productImageURLString,
-                category: viewModel.category,
-                detailCategory: viewModel.detailCategory,
-                hasClosetItems: !userFits.isEmpty,
-                message: missingBasisMessage,
-                onRegister: presentAddBaselineAfterMissingBasis,
-                onChooseReference: presentReferencePickerAfterMissingBasis
-            )
-            .presentationDetents([.height(390)])
-            .presentationDragIndicator(.visible)
         }
     }
 
@@ -133,34 +141,34 @@ struct ShoppingProductFormView: View {
     @ViewBuilder
     private var missingBasisCallout: some View {
         if viewModel.needsDetailCategoryBasis(userFits: userFits) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "tshirt.fill")
-                        .font(.headline)
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("등록된 \(viewModel.detailCategory.rawValue)가 없습니다.")
+                        .font(.headline.weight(.bold))
                         .foregroundStyle(.primary)
-                        .frame(width: 38, height: 38)
-                        .background(.primary.opacity(0.08), in: Circle())
-
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("\(viewModel.detailCategory.rawValue) 기준 옷이 필요해요")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.primary)
-                        Text(missingBasisMessage)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    Text(missingBasisMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                if userFits.isEmpty {
-                    ComparePrimaryActionButton(title: "내 옷장에 옷 등록하기", systemImage: "plus") {
-                        isShowingAddBaseline = true
-                    }
-                } else {
-                    ComparePrimaryActionButton(title: "비교할 옷 선택하기", systemImage: "list.bullet.rectangle") {
-                        isShowingReferencePicker = true
-                    }
+                ComparePrimaryActionButton(title: "\(viewModel.detailCategory.rawValue) 등록하기", systemImage: "plus") {
+                    presentActiveSheet(.addBaseline)
                 }
+
+                Button {
+                    presentActiveSheet(.referencePicker)
+                } label: {
+                    Label("옷장 속 다른 옷과 비교하기", systemImage: "list.bullet.rectangle")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(userFits.isEmpty ? .secondary : .primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(userFits.isEmpty)
+                .opacity(userFits.isEmpty ? 0.55 : 1)
             }
             .padding(16)
             .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -173,10 +181,10 @@ struct ShoppingProductFormView: View {
 
     private var missingBasisMessage: String {
         if userFits.isEmpty {
-            return "내 옷장에 등록된 기준 옷이 없습니다. 정확한 추천을 위해 먼저 기준 옷을 등록해주세요."
+            return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 \(viewModel.detailCategory.rawValue)를 등록하면 이 상품과 비교할 수 있습니다."
         }
 
-        return "내 옷장에 \(viewModel.detailCategory.rawValue) 기준 옷이 없습니다. 비교할 옷을 직접 선택해주세요."
+        return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 \(viewModel.detailCategory.rawValue)를 등록하거나, 내 옷장에 있는 다른 옷을 직접 선택하여 비교할 수 있습니다."
     }
 
     @ViewBuilder
@@ -214,7 +222,7 @@ struct ShoppingProductFormView: View {
         let didLoad = await viewModel.loadProductInfoFromURL()
 
         if didLoad && viewModel.needsDetailCategoryBasis(userFits: userFits) {
-            isShowingMissingBasisDialog = true
+            presentActiveSheet(.missingBasis)
         } else if didLoad {
             calculateAndSaveRecommendation()
         }
@@ -233,7 +241,7 @@ struct ShoppingProductFormView: View {
         let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
 
         if !allowsGlobalFallback && viewModel.needsDetailCategoryBasis(userFits: userFits) {
-            isShowingMissingBasisDialog = true
+            presentActiveSheet(.missingBasis)
             return
         }
 
@@ -246,34 +254,60 @@ struct ShoppingProductFormView: View {
             brand: brand,
             allowsGlobalFallback: allowsGlobalFallback
         ) {
-            saveUniqueHistory(history)
+            do {
+                try saveUniqueHistory(history)
+                presentActiveSheet(.result(history))
+            } catch {
+                viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
+            }
         }
     }
 
     private func presentAddBaselineAfterMissingBasis() {
-        isShowingMissingBasisDialog = false
+        dismissActiveSheet()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            isShowingAddBaseline = true
+            presentActiveSheet(.addBaseline)
         }
     }
 
     private func presentReferencePickerAfterMissingBasis() {
-        isShowingMissingBasisDialog = false
+        dismissActiveSheet()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            isShowingReferencePicker = true
+            presentActiveSheet(.referencePicker)
         }
     }
 
     private func presentAddBaselineAfterReferencePicker() {
-        isShowingReferencePicker = false
+        dismissActiveSheet()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            isShowingAddBaseline = true
+            presentActiveSheet(.addBaseline)
         }
     }
 
-    private var temporaryReferenceCandidates: [UserFit] {
+    private func presentComparedProductClosetRegistration() {
         let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
-        return viewModel.temporaryComparisonCandidates(userFits: userFits, brand: brand)
+        if let brand, existingBrand(named: brand.name) == nil {
+            modelContext.insert(brand)
+        }
+
+        guard let product = viewModel.makeProductForClosetRegistration(brand: brand) else {
+            presentActiveSheet(.addBaseline)
+            return
+        }
+
+        presentActiveSheet(.addComparedProduct(product))
+    }
+
+    private var temporaryReferenceCandidates: [UserFit] {
+        userFits.sorted {
+            if $0.category.serviceGroup != $1.category.serviceGroup {
+                return $0.category.serviceGroup.rawValue < $1.category.serviceGroup.rawValue
+            }
+            if $0.detailCategory != $1.detailCategory {
+                return $0.detailCategory.rawValue < $1.detailCategory.rawValue
+            }
+            return $0.updatedAt > $1.updatedAt
+        }
     }
 
     private func calculateAndSaveTemporaryRecommendation(selectedReferenceItem: UserFit) {
@@ -287,20 +321,23 @@ struct ShoppingProductFormView: View {
             selectedReferenceItem: selectedReferenceItem,
             brand: brand
         ) {
-            saveUniqueHistory(history)
+            do {
+                try saveUniqueHistory(history)
+                presentActiveSheet(.result(history))
+            } catch {
+                viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
+            }
         }
     }
 
-    private func saveUniqueHistory(_ history: RecommendationHistory) {
+    private func saveUniqueHistory(_ history: RecommendationHistory) throws {
         duplicateHistories(for: history).forEach { duplicate in
-            let duplicateProduct = duplicate.product
             modelContext.delete(duplicate)
-            modelContext.delete(duplicateProduct)
         }
 
         modelContext.insert(history.product)
         modelContext.insert(history)
-        try? modelContext.save()
+        try modelContext.save()
     }
 
     private func duplicateHistories(for history: RecommendationHistory) -> [RecommendationHistory] {
@@ -341,6 +378,19 @@ struct ShoppingProductFormView: View {
         value?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private func presentActiveSheet(_ sheet: ShoppingActiveSheet) {
+        print("[ShoppingProductFormView] activeSheet -> \(sheet.logName)")
+        activeSheet = nil
+        DispatchQueue.main.async {
+            activeSheet = sheet
+        }
+    }
+
+    private func dismissActiveSheet() {
+        print("[ShoppingProductFormView] activeSheet -> nil")
+        activeSheet = nil
+    }
+
     private func normalizeSourceSelection(for sourceType: ProductSourceType) {
         switch sourceType {
         case .officialStore:
@@ -361,6 +411,44 @@ struct ShoppingProductFormView: View {
     }
 }
 
+private enum ShoppingActiveSheet: Identifiable {
+    case result(RecommendationHistory)
+    case addBaseline
+    case addComparedProduct(Product)
+    case referencePicker
+    case missingBasis
+
+    var id: String {
+        switch self {
+        case .result(let result):
+            return "result-\(result.id)"
+        case .addBaseline:
+            return "addBaseline"
+        case .addComparedProduct(let product):
+            return "addComparedProduct-\(product.id)"
+        case .referencePicker:
+            return "referencePicker"
+        case .missingBasis:
+            return "missingBasis"
+        }
+    }
+
+    var logName: String {
+        switch self {
+        case .result:
+            return "result"
+        case .addBaseline:
+            return "addBaseline"
+        case .addComparedProduct:
+            return "addComparedProduct"
+        case .referencePicker:
+            return "referencePicker"
+        case .missingBasis:
+            return "missingBasis"
+        }
+    }
+}
+
 private struct TemporaryReferencePickerView: View {
     @Environment(\.dismiss) private var dismiss
     let candidates: [UserFit]
@@ -368,6 +456,25 @@ private struct TemporaryReferencePickerView: View {
     let productDetailCategory: ClosetDetailCategory
     let onSelect: (UserFit) -> Void
     let onRegister: () -> Void
+    @State private var pendingSelection: UserFit?
+    @State private var isShowingComparisonNotice = false
+
+    private var groupedCandidates: [(category: ClothingCategory, items: [UserFit])] {
+        let grouped = Dictionary(grouping: candidates) { $0.category.serviceGroup }
+        return grouped
+            .map { category, items in
+                (
+                    category,
+                    items.sorted {
+                        if $0.detailCategory != $1.detailCategory {
+                            return $0.detailCategory.rawValue < $1.detailCategory.rawValue
+                        }
+                        return $0.updatedAt > $1.updatedAt
+                    }
+                )
+            }
+            .sorted { $0.category.rawValue < $1.category.rawValue }
+    }
 
     var body: some View {
         ScrollView {
@@ -376,7 +483,7 @@ private struct TemporaryReferencePickerView: View {
                     Text("어떤 옷과 비교할까요?")
                         .font(.title2.weight(.black))
                         .foregroundStyle(.primary)
-                    Text("같은 \(productDetailCategory.rawValue) 기준 옷이 없어 내 옷장 후보 중 하나를 선택해야 합니다.")
+                    Text("등록된 \(productDetailCategory.rawValue)가 없어 직접 선택한 옷을 기준으로 비교합니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -393,7 +500,7 @@ private struct TemporaryReferencePickerView: View {
                             Text("내 옷장에 옷을 먼저 등록하면 상품과 비교할 수 있습니다.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
-                            ComparePrimaryActionButton(title: "내 옷장에 옷 등록하기", systemImage: "plus") {
+                            ComparePrimaryActionButton(title: "등록하기", systemImage: "plus") {
                                 dismiss()
                                 onRegister()
                             }
@@ -401,18 +508,29 @@ private struct TemporaryReferencePickerView: View {
                     }
                     .padding(.horizontal, 20)
                 } else {
-                    VStack(spacing: 12) {
-                        ForEach(candidates) { item in
-                            Button {
-                                onSelect(item)
-                                dismiss()
-                            } label: {
-                                TemporaryReferenceCard(
-                                    item: item,
-                                    isSameCategory: item.category.serviceGroup == productCategory.serviceGroup
-                                )
+                    VStack(alignment: .leading, spacing: 18) {
+                        ForEach(groupedCandidates, id: \.category) { group in
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(group.category.rawValue)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 4)
+
+                                VStack(spacing: 10) {
+                                    ForEach(group.items) { item in
+                                        Button {
+                                            pendingSelection = item
+                                            isShowingComparisonNotice = true
+                                        } label: {
+                                            TemporaryReferenceCard(
+                                                item: item,
+                                                isSameCategory: item.category.serviceGroup == productCategory.serviceGroup
+                                            )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -423,12 +541,20 @@ private struct TemporaryReferencePickerView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("임시 기준 옷 선택")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("취소") {
-                    dismiss()
-                }
+        .alert("선택한 옷으로 비교합니다.", isPresented: $isShowingComparisonNotice) {
+            Button("취소", role: .cancel) {
+                pendingSelection = nil
             }
+            Button("계속 비교") {
+                guard let pendingSelection else {
+                    return
+                }
+                onSelect(pendingSelection)
+                self.pendingSelection = nil
+                dismiss()
+            }
+        } message: {
+            Text("현재 등록된 \(productDetailCategory.rawValue)가 없어 선택한 옷을 기준으로 비교합니다.\n\n같은 종류의 옷보다 정확도가 낮아질 수 있습니다.")
         }
     }
 }
@@ -441,25 +567,18 @@ private struct MissingBasisBottomSheet: View {
     let category: ClothingCategory
     let detailCategory: ClosetDetailCategory
     let hasClosetItems: Bool
-    let message: String
     let onRegister: () -> Void
     let onChooseReference: () -> Void
 
     var body: some View {
         VStack(spacing: 18) {
-            Image(systemName: hasClosetItems ? "tshirt.fill" : "plus")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(Color(.systemBackground))
-                .frame(width: 52, height: 52)
-                .background(.primary, in: Circle())
-
-            VStack(spacing: 8) {
-                Text(hasClosetItems ? "비교할 옷을 선택해 주세요" : "내 옷장이 비어 있어요")
+            VStack(spacing: 10) {
+                Text("등록된 \(detailCategory.rawValue)가 없습니다.")
                     .font(.title2.weight(.black))
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
 
-                Text(hasClosetItems ? "\(detailCategory.rawValue) 기준 옷이 없어 내 옷장에서 직접 비교할 옷을 선택해야 합니다." : "먼저 내 옷장에 잘 맞는 옷을 등록하면 사이즈를 비교할 수 있습니다.")
+                Text(descriptionText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -470,6 +589,7 @@ private struct MissingBasisBottomSheet: View {
             HStack(spacing: 12) {
                 ProductThumbnailView(
                     imageURLString: imageURLString,
+                    category: category,
                     width: 58,
                     height: 72,
                     cornerRadius: 14
@@ -491,15 +611,23 @@ private struct MissingBasisBottomSheet: View {
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             VStack(spacing: 10) {
-                if hasClosetItems {
-                    ComparePrimaryActionButton(title: "비교할 옷 선택하기", systemImage: "list.bullet.rectangle") {
-                        onChooseReference()
-                    }
-                } else {
-                    ComparePrimaryActionButton(title: "내 옷장에 옷 등록하기", systemImage: "plus") {
-                        onRegister()
-                    }
+                ComparePrimaryActionButton(title: "\(detailCategory.rawValue) 등록하기", systemImage: "plus") {
+                    onRegister()
                 }
+
+                Button {
+                    onChooseReference()
+                } label: {
+                    Label("옷장 속 다른 옷과 비교하기", systemImage: "list.bullet.rectangle")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(hasClosetItems ? .primary : .secondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(!hasClosetItems)
+                .opacity(hasClosetItems ? 1 : 0.55)
 
                 Button {
                     dismiss()
@@ -530,6 +658,14 @@ private struct MissingBasisBottomSheet: View {
         }
 
         return brand.isEmpty ? name : "\(brand) \(name)"
+    }
+
+    private var descriptionText: String {
+        if hasClosetItems {
+            return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 \(detailCategory.rawValue)를 등록하거나, 내 옷장에 있는 다른 옷을 직접 선택하여 비교할 수 있습니다."
+        }
+
+        return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 \(detailCategory.rawValue)를 등록하면 이 상품과 비교할 수 있습니다."
     }
 }
 

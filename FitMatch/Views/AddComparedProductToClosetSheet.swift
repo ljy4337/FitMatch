@@ -1,0 +1,607 @@
+import Foundation
+import SwiftUI
+import SwiftData
+
+struct AddComparedProductToClosetSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
+
+    let product: Product
+    let productDetailCategory: ClosetDetailCategory
+    let recommendedSize: ProductSize?
+    var onSaved: (() -> Void)?
+
+    @State private var step: AddComparedProductStep = .size
+    @State private var selectedSizeID: UUID?
+    @State private var brandName: String
+    @State private var productName: String
+    @State private var selectedCategory: ClothingCategory
+    @State private var selectedDetailCategory: ClosetDetailCategory
+    @State private var isBasisItem = false
+    @State private var alertMessage: String?
+
+    init(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        recommendedSize: ProductSize?,
+        onSaved: (() -> Void)? = nil
+    ) {
+        self.product = product
+        self.productDetailCategory = productDetailCategory
+        self.recommendedSize = recommendedSize
+        self.onSaved = onSaved
+        _brandName = State(initialValue: product.brand?.name ?? "")
+        _productName = State(initialValue: product.name)
+        _selectedCategory = State(initialValue: product.category.serviceGroup)
+        _selectedDetailCategory = State(initialValue: productDetailCategory)
+    }
+
+    private var sortedSizes: [ProductSize] {
+        product.sizes.sorted {
+            if $0.displayOrder != $1.displayOrder {
+                return $0.displayOrder < $1.displayOrder
+            }
+            return $0.name < $1.name
+        }
+    }
+
+    private var selectedSize: ProductSize? {
+        guard let selectedSizeID else {
+            return nil
+        }
+
+        return sortedSizes.first { $0.id == selectedSizeID }
+    }
+
+    private var sizeSelectionGridColumns: [GridItem] {
+        [
+            GridItem(.flexible(minimum: 96), spacing: 12),
+            GridItem(.flexible(minimum: 96), spacing: 12)
+        ]
+    }
+
+    private var availableCategories: [ClothingCategory] {
+        [.top, .bottom, .outer, .dress, .underwear, .shoes, .accessory]
+    }
+
+    private var availableDetailCategories: [ClosetDetailCategory] {
+        ClosetDetailCategory
+            .options(for: selectedCategory, gender: .unisex)
+            .filter { $0 != .other }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    switch step {
+                    case .size:
+                        sizeStep
+                    case .confirm:
+                        confirmStep
+                    }
+                }
+                .padding(20)
+                .padding(.bottom, 112)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .bottom) {
+                bottomActionBar
+            }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .onChange(of: selectedCategory) { _, _ in
+                normalizeDetailCategory()
+            }
+            .onAppear {
+                normalizeDetailCategory()
+            }
+            .alert("내 옷장 추가", isPresented: Binding(
+                get: { alertMessage != nil },
+                set: { if !$0 { alertMessage = nil } }
+            )) {
+                Button("확인") {
+                    alertMessage = nil
+                }
+            } message: {
+                Text(alertMessage ?? "")
+            }
+        }
+    }
+
+    private var sizeStep: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            productCompactHeader
+
+            AddComparedSectionCard(
+                title: "사이즈 선택",
+                subtitle: "실제로 가지고 있는 사이즈를 선택하세요."
+            ) {
+                VStack(alignment: .leading, spacing: 16) {
+                    if sortedSizes.isEmpty {
+                        Text("불러온 사이즈표가 없습니다.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ProductSizeSelectionGrid(
+                            sizes: sortedSizes,
+                            selectedSizeID: $selectedSizeID
+                        )
+                    }
+                }
+            }
+        }
+        .transition(.opacity.combined(with: .move(edge: .leading)))
+    }
+
+    private var confirmStep: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            CardView(radius: 26, padding: 20) {
+                HStack(alignment: .top, spacing: 14) {
+                    ProductThumbnailView(
+                        imageURLString: product.imageURLString,
+                        category: product.category,
+                        width: 104,
+                        height: 128,
+                        cornerRadius: 18
+                    )
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("이 옷을 내 옷장에 등록합니다")
+                            .font(.title3.weight(.black))
+                            .foregroundStyle(.primary)
+                        Text(product.name)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(product.brand?.name ?? "브랜드 미상")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                        Text("\(selectedCategory.rawValue) / \(selectedDetailCategory.rawValue)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+
+            AddComparedSectionCard(
+                title: "등록 정보",
+                subtitle: "자동 입력된 정보를 확인하고 저장하세요."
+            ) {
+                VStack(alignment: .leading, spacing: 14) {
+                    RegistrationTextField(title: "브랜드", placeholder: "브랜드명", text: $brandName)
+                    RegistrationTextField(title: "상품명", placeholder: "상품명", text: $productName)
+
+                    RegistrationMenuRow(title: "카테고리", value: selectedCategory.rawValue) {
+                        ForEach(availableCategories) { category in
+                            Button(category.rawValue) {
+                                selectedCategory = category
+                            }
+                        }
+                    }
+
+                    RegistrationMenuRow(title: "상세 카테고리", value: selectedDetailCategory.rawValue) {
+                        ForEach(availableDetailCategories) { detailCategory in
+                            Button(detailCategory.rawValue) {
+                                selectedDetailCategory = detailCategory
+                            }
+                        }
+                    }
+
+                    RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
+                        ForEach(sortedSizes) { size in
+                            Button(size.name.displaySizeName) {
+                                selectedSizeID = size.id
+                            }
+                        }
+                    }
+
+                    BasisToggleRow(isOn: $isBasisItem)
+                }
+            }
+
+            selectedMeasurementSummary
+        }
+        .transition(.opacity.combined(with: .move(edge: .trailing)))
+    }
+
+    private var productCompactHeader: some View {
+        CardView(radius: 26, padding: 20) {
+            HStack(alignment: .center, spacing: 16) {
+                ProductThumbnailView(
+                    imageURLString: product.imageURLString,
+                    category: product.category,
+                    width: 72,
+                    height: 86,
+                    cornerRadius: 18
+                )
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("내 옷장에 추가")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(.primary)
+                    Text(product.brand?.name ?? "브랜드 미상")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.secondary)
+                    Text(product.name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var selectedMeasurementSummary: some View {
+        if let selectedSize {
+            AddComparedSectionCard(
+                title: "선택한 사이즈 실측",
+                subtitle: "\(selectedSize.name.displaySizeName) 기준으로 자동 저장됩니다."
+            ) {
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(spacing: 10) {
+                        ForEach(visibleMeasurementKinds(for: selectedSize), id: \.id) { kind in
+                            HStack(spacing: 12) {
+                                Text(kind.title)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text(formatMeasurement(selectedSize.measurements.value(for: kind)))
+                                    .font(.headline.weight(.black))
+                                    .foregroundStyle(.primary)
+                            }
+                            .padding(.horizontal, 14)
+                            .frame(height: 48)
+                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var bottomActionBar: some View {
+        VStack(spacing: 10) {
+            if let guideText = bottomGuideText {
+                Label(guideText, systemImage: "info.circle")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Button {
+                switch step {
+                case .size:
+                    withAnimation(.snappy(duration: 0.22)) {
+                        step = .confirm
+                    }
+                case .confirm:
+                    saveSelectedSize()
+                }
+            } label: {
+                Label(bottomButtonTitle, systemImage: step == .size ? "chevron.right" : "plus")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(isBottomButtonEnabled ? Color(.systemBackground) : .secondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(
+                        isBottomButtonEnabled ? Color.black : Color(.secondarySystemGroupedBackground),
+                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    )
+            }
+            .buttonStyle(.plain)
+            .disabled(!isBottomButtonEnabled)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+        .background(.regularMaterial)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+    }
+
+    private var bottomButtonTitle: String {
+        switch step {
+        case .size:
+            return "다음"
+        case .confirm:
+            return "내 옷장에 추가"
+        }
+    }
+
+    private var isBottomButtonEnabled: Bool {
+        switch step {
+        case .size:
+            return selectedSize != nil
+        case .confirm:
+            return canSave
+        }
+    }
+
+    private var bottomGuideText: String? {
+        switch step {
+        case .size:
+            return selectedSize == nil ? "등록할 사이즈를 선택해 주세요." : nil
+        case .confirm:
+            if brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return "브랜드명을 입력해 주세요."
+            }
+            if productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return "상품명을 입력해 주세요."
+            }
+            return nil
+        }
+    }
+
+    private var canSave: Bool {
+        selectedSize != nil
+            && !brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func saveSelectedSize() {
+        guard let selectedSize else {
+            return
+        }
+
+        if isDuplicate(size: selectedSize) {
+            alertMessage = "이미 내 옷장에 등록된 사이즈입니다."
+            return
+        }
+
+        let item = UserFit(
+            sourceType: product.sourceType,
+            sourceName: product.sourceDisplayName,
+            brandName: brandName.trimmingCharacters(in: .whitespacesAndNewlines),
+            gender: .unisex,
+            productName: productName.trimmingCharacters(in: .whitespacesAndNewlines),
+            category: selectedCategory.serviceGroup,
+            detailCategory: selectedDetailCategory,
+            sizeName: selectedSize.name.displaySizeName,
+            measurements: selectedSize.measurements,
+            fitMemo: "비교 상품에서 추가",
+            fitPreference: .regular,
+            satisfaction: 0,
+            isRepresentative: isBasisItem,
+            sourceProduct: product,
+            sourceProductSize: selectedSize
+        )
+
+        if isBasisItem {
+            userFits
+                .filter { $0.detailCategory == selectedDetailCategory && $0.isRepresentative }
+                .forEach {
+                    $0.isRepresentative = false
+                    $0.updatedAt = Date()
+                }
+        }
+
+        modelContext.insert(item)
+        do {
+            try modelContext.save()
+        } catch {
+            alertMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+            return
+        }
+        onSaved?()
+        dismiss()
+    }
+
+    private func normalizeDetailCategory() {
+        if !availableDetailCategories.contains(selectedDetailCategory) {
+            selectedDetailCategory = availableDetailCategories.first ?? .shortSleeve
+        }
+    }
+
+    private func isDuplicate(size: ProductSize) -> Bool {
+        userFits.contains { item in
+            if item.sourceProductSize?.id == size.id {
+                return true
+            }
+
+            if let sourceURL = product.sourceURLString,
+               let itemURL = item.sourceProduct?.sourceURLString,
+               sourceURL == itemURL,
+               item.sizeName == size.name.displaySizeName {
+                return true
+            }
+
+            if let productCode = product.productCode,
+               let itemProductCode = item.sourceProduct?.productCode,
+               productCode == itemProductCode,
+               item.sizeName == size.name.displaySizeName {
+                return true
+            }
+
+            if product.sourceURLString != nil,
+               item.sourceProduct == nil,
+               item.productName == product.name,
+               item.sizeName == size.name.displaySizeName,
+               item.sourceName == product.sourceDisplayName,
+               item.brandName == product.brand?.name {
+                return true
+            }
+
+            return false
+        }
+    }
+
+    private func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {
+        selectedCategory
+            .measurementKinds(detailCategory: selectedDetailCategory, gender: .unisex)
+            .filter { size.measurements.value(for: $0) > 0 }
+    }
+
+    private func formatMeasurement(_ value: Double) -> String {
+        guard value > 0 else {
+            return "-"
+        }
+
+        if value.rounded() == value {
+            return "\(Int(value))cm"
+        }
+
+        return String(format: "%.1fcm", value)
+    }
+}
+
+private enum AddComparedProductStep {
+    case size
+    case confirm
+}
+
+private struct AddComparedSectionCard<Content: View>: View {
+    let title: String
+    let subtitle: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        CardView(radius: 24, padding: 18) {
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(title)
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(.primary)
+
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                content
+            }
+        }
+    }
+}
+
+private struct RegistrationTextField: View {
+    let title: String
+    let placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.caption.weight(.black))
+                .foregroundStyle(.secondary)
+
+            TextField(placeholder, text: $text)
+                .font(.subheadline.weight(.semibold))
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(.horizontal, 14)
+                .frame(height: 50)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.primary.opacity(0.055), lineWidth: 1)
+                }
+        }
+    }
+}
+
+private struct RegistrationMenuRow<Content: View>: View {
+    let title: String
+    let value: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        Menu {
+            content()
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.secondary)
+
+                    Text(value)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+
+                Spacer(minLength: 12)
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(Color(.systemBackground), in: Circle())
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .padding(.horizontal, 16)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .stroke(Color.primary.opacity(0.055), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct BasisToggleRow: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: isOn ? "tshirt.fill" : "tshirt")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(isOn ? Color(.systemBackground) : .primary)
+                    .frame(width: 38, height: 38)
+                    .background(isOn ? Color.black : Color(.secondarySystemGroupedBackground), in: Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("기준 옷으로 등록")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                    Text("같은 종류 상품 비교 시 우선 사용됩니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text(isOn ? "ON" : "OFF")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(isOn ? .white : .secondary)
+                    .padding(.horizontal, 10)
+                    .frame(height: 28)
+                    .background(isOn ? Color.black : Color(.secondarySystemGroupedBackground), in: Capsule())
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .stroke(Color.primary.opacity(0.055), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private extension String {
+    var displaySizeName: String {
+        let value = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.contains("/") else {
+            return value
+        }
+
+        return value
+            .split(separator: "/")
+            .last
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            ?? value
+    }
+}

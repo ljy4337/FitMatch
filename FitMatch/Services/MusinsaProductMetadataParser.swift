@@ -12,6 +12,7 @@ struct MusinsaProductMetadata {
     var imageURLString: String?
     var price: Int?
     var canonicalURLString: String?
+    var productMetadata: ProductMetadata = ProductMetadata()
 
     func parsedProductInfo(sizes: [ParsedProductSize], parserNotice: String? = nil) -> ParsedProductInfo {
         ParsedProductInfo(
@@ -27,8 +28,27 @@ struct MusinsaProductMetadata {
             productID: productID,
             imageURLString: imageURLString,
             price: price,
-            canonicalURLString: canonicalURLString
+            canonicalURLString: canonicalURLString,
+            productMetadata: productMetadata
         )
+    }
+
+    mutating func applyActualSizeTypeName(_ typeName: String?) {
+        guard let typeName = typeName?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !typeName.isEmpty else {
+            return
+        }
+
+        let mappedCategory = MusinsaProductMetadataParser.mapCategory(from: typeName)
+        let mappedDetailCategory = MusinsaProductMetadataParser.mapDetailCategory(from: typeName)
+
+        if mappedCategory != .other {
+            category = mappedCategory
+        }
+
+        if mappedDetailCategory != .other {
+            detailCategory = mappedDetailCategory
+        }
     }
 }
 
@@ -44,6 +64,7 @@ struct MusinsaProductMetadataParser {
                 ?? response.data.brandInfo?.brandEnglishName
                 ?? response.data.brand
                 ?? "Musinsa"
+            let metadata = Self.makeProductMetadata(from: response.data)
 
             return MusinsaProductMetadata(
                 sourceURL: sourceURL,
@@ -55,8 +76,9 @@ struct MusinsaProductMetadataParser {
                 categoryDepth1Name: depth1,
                 categoryDepth2Name: depth2,
                 imageURLString: Self.normalizeImageURL(response.data.thumbnailImageUrl),
-                price: response.data.salePrice ?? response.data.finalPrice,
-                canonicalURLString: "https://www.musinsa.com/products/\(productID)"
+                price: metadata.finalPrice ?? metadata.salePrice ?? metadata.normalPrice,
+                canonicalURLString: "https://www.musinsa.com/products/\(productID)",
+                productMetadata: metadata
             )
         } catch {
             print("[MusinsaProductMetadataParser] API metadata failed: \(error.localizedDescription)")
@@ -105,7 +127,8 @@ struct MusinsaProductMetadataParser {
             categoryDepth2Name: nil,
             imageURLString: Self.normalizeImageURL(ogImage),
             price: nil,
-            canonicalURLString: canonical ?? "https://www.musinsa.com/products/\(productID)"
+            canonicalURLString: canonical ?? "https://www.musinsa.com/products/\(productID)",
+            productMetadata: ProductMetadata()
         )
     }
 
@@ -145,7 +168,12 @@ struct MusinsaProductMetadataParser {
 
     static func mapCategory(from categoryText: String?) -> ClothingCategory {
         let text = categoryText ?? ""
-        if text.contains("팬츠") || text.contains("바지") || text.contains("데님") || text.contains("하의") {
+        if text.contains("팬츠") ||
+            text.contains("바지") ||
+            text.contains("데님") ||
+            text.contains("하의") ||
+            text.contains("쇼츠") ||
+            text.localizedCaseInsensitiveContains("shorts") {
             return .bottom
         }
         if text.contains("아우터") || text.contains("재킷") || text.contains("자켓") || text.contains("코트") || text.contains("점퍼") {
@@ -190,6 +218,16 @@ struct MusinsaProductMetadataParser {
         }
         if text.contains("슬랙스") || text.localizedCaseInsensitiveContains("slacks") {
             return .slacks
+        }
+        if text.contains("반바지") ||
+            text.contains("쇼츠") ||
+            text.contains("숏팬츠") ||
+            text.contains("하프팬츠") ||
+            text.contains("버뮤다") ||
+            text.localizedCaseInsensitiveContains("shorts") ||
+            text.localizedCaseInsensitiveContains("short pants") ||
+            text.localizedCaseInsensitiveContains("bermuda") {
+            return .shorts
         }
         if text.contains("데님") || text.contains("청바지") || text.localizedCaseInsensitiveContains("denim") {
             return .denim
@@ -236,30 +274,118 @@ struct MusinsaProductMetadataParser {
 
         return rawValue
     }
+
+    private static func makeProductMetadata(from data: MusinsaProductDetailResponse.DataBody) -> ProductMetadata {
+        ProductMetadata(
+            styleNo: data.styleNo,
+            englishName: data.goodsNmEng,
+            brandCode: data.brand,
+            brandEnglishName: data.brandInfo?.brandEnglishName,
+            brandLogoImageURLString: normalizeImageURL(data.brandInfo?.brandLogoImage),
+            brandNationName: data.brandInfo?.brandNationName,
+            baseCategoryFullPath: data.baseCategoryFullPath,
+            categoryDepth1Code: data.category?.categoryDepth1Code,
+            categoryDepth1Name: data.category?.categoryDepth1Name,
+            categoryDepth2Code: data.category?.categoryDepth2Code,
+            categoryDepth2Name: data.category?.categoryDepth2Name,
+            sizeType: data.sizeType,
+            genderCodes: data.genders ?? data.sex ?? [],
+            labelNames: data.labels?.map(\.name) ?? [],
+            imageURLStrings: data.goodsImages?.compactMap { normalizeImageURL($0.imageUrl) } ?? [],
+            normalPrice: data.goodsPrice?.normalPrice ?? data.normalPrice,
+            salePrice: data.goodsPrice?.salePrice ?? data.salePrice,
+            finalPrice: data.goodsPrice?.finalPrice ?? data.finalPrice,
+            discountRate: data.goodsPrice?.discountRate ?? data.discountRate,
+            isSale: data.goodsPrice?.isSale ?? data.isSale ?? false,
+            isOutOfStock: data.isOutOfStock ?? false,
+            isRestock: data.isRestock ?? false,
+            isSoonOutOfStock: data.isSoonOutOfStock ?? false,
+            isLimitedQuantity: data.isLimitedQuantity ?? false,
+            reviewCount: data.goodsReview?.totalCount,
+            reviewSatisfactionScore: data.goodsReview?.satisfactionScore,
+            seasonYear: data.seasonYear,
+            season: data.season
+        )
+    }
 }
 
 private struct MusinsaProductDetailResponse: Decodable {
     let data: DataBody
 
     struct DataBody: Decodable {
+        let goodsNo: Int?
         let goodsNm: String
+        let goodsNmEng: String?
+        let styleNo: String?
+        let sex: [String]?
         let brand: String?
         let brandInfo: BrandInfo?
+        let seasonYear: String?
+        let season: String?
+        let isSale: Bool?
+        let isRestock: Bool?
+        let isSoonOutOfStock: Bool?
+        let isLimitedQuantity: Bool?
         let baseCategoryFullPath: String?
         let category: Category?
         let thumbnailImageUrl: String?
+        let goodsImages: [GoodsImage]?
+        let goodsPrice: GoodsPrice?
         let salePrice: Int?
+        let normalPrice: Int?
         let finalPrice: Int?
+        let discountRate: Double?
+        let goodsReview: GoodsReview?
+        let sizeType: String?
+        let isUseSize: Bool?
+        let labels: [Label]?
+        let genders: [String]?
+        let isOutOfStock: Bool?
     }
 
     struct BrandInfo: Decodable {
         let brandName: String?
         let brandEnglishName: String?
+        let brandNationName: String?
+        let brandLogoImage: String?
     }
 
     struct Category: Decodable {
+        let categoryDepth1Code: String?
         let categoryDepth1Name: String?
+        let categoryDepth2Code: String?
         let categoryDepth2Name: String?
+        let categoryDepth3Code: String?
+        let categoryDepth3Name: String?
+        let categoryDepth4Code: String?
+        let categoryDepth4Name: String?
+    }
+
+    struct GoodsImage: Decodable {
+        let imageUrl: String?
+    }
+
+    struct GoodsPrice: Decodable {
+        let salePrice: Int?
+        let normalPrice: Int?
+        let finalPrice: Int?
+        let discountRate: Double?
+        let couponPrice: Int?
+        let totalDiscount: Int?
+        let finalDiscount: Int?
+        let isSale: Bool?
+        let isLowestPrice: Bool?
+    }
+
+    struct GoodsReview: Decodable {
+        let totalCount: Int?
+        let satisfactionScore: Double?
+        let hasSummary: Bool?
+    }
+
+    struct Label: Decodable {
+        let code: String?
+        let name: String
     }
 }
 

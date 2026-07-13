@@ -16,6 +16,34 @@ final class Product {
     var productCode: String?
     var sourceURLString: String?
     var imageURLString: String?
+    var styleNo: String?
+    var englishName: String?
+    var brandCode: String?
+    var brandEnglishName: String?
+    var brandLogoImageURLString: String?
+    var brandNationName: String?
+    var baseCategoryFullPath: String?
+    var categoryDepth1Code: String?
+    var categoryDepth1Name: String?
+    var categoryDepth2Code: String?
+    var categoryDepth2Name: String?
+    var sizeType: String?
+    var genderCodes: String = ""
+    var labelNames: String = ""
+    var imageURLStrings: String = ""
+    var normalPrice: Int?
+    var salePrice: Int?
+    var finalPrice: Int?
+    var discountRate: Double?
+    var isSale: Bool = false
+    var isOutOfStock: Bool = false
+    var isRestock: Bool = false
+    var isSoonOutOfStock: Bool = false
+    var isLimitedQuantity: Bool = false
+    var reviewCount: Int?
+    var reviewSatisfactionScore: Double?
+    var seasonYear: String?
+    var season: String?
     var sourceTypeRawValue: String = ProductSourceType.manual.rawValue
     var sourceName: String = "직접 입력"
     var sourceRawValue: String
@@ -36,6 +64,7 @@ final class Product {
         productCode: String? = nil,
         sourceURLString: String? = nil,
         imageURLString: String? = nil,
+        metadata: ProductMetadata = ProductMetadata(),
         sourceType: ProductSourceType = .manual,
         sourceName: String = "직접 입력",
         source: ProductSource = .userInput,
@@ -51,6 +80,34 @@ final class Product {
         self.productCode = productCode
         self.sourceURLString = sourceURLString
         self.imageURLString = imageURLString
+        self.styleNo = metadata.styleNo
+        self.englishName = metadata.englishName
+        self.brandCode = metadata.brandCode
+        self.brandEnglishName = metadata.brandEnglishName
+        self.brandLogoImageURLString = metadata.brandLogoImageURLString
+        self.brandNationName = metadata.brandNationName
+        self.baseCategoryFullPath = metadata.baseCategoryFullPath
+        self.categoryDepth1Code = metadata.categoryDepth1Code
+        self.categoryDepth1Name = metadata.categoryDepth1Name
+        self.categoryDepth2Code = metadata.categoryDepth2Code
+        self.categoryDepth2Name = metadata.categoryDepth2Name
+        self.sizeType = metadata.sizeType
+        self.genderCodes = metadata.genderCodes.joined(separator: ",")
+        self.labelNames = metadata.labelNames.joined(separator: ",")
+        self.imageURLStrings = metadata.imageURLStrings.joined(separator: "\n")
+        self.normalPrice = metadata.normalPrice
+        self.salePrice = metadata.salePrice
+        self.finalPrice = metadata.finalPrice
+        self.discountRate = metadata.discountRate
+        self.isSale = metadata.isSale
+        self.isOutOfStock = metadata.isOutOfStock
+        self.isRestock = metadata.isRestock
+        self.isSoonOutOfStock = metadata.isSoonOutOfStock
+        self.isLimitedQuantity = metadata.isLimitedQuantity
+        self.reviewCount = metadata.reviewCount
+        self.reviewSatisfactionScore = metadata.reviewSatisfactionScore
+        self.seasonYear = metadata.seasonYear
+        self.season = metadata.season
         self.sourceTypeRawValue = sourceType.rawValue
         self.sourceName = sourceName
         self.sourceRawValue = source.rawValue

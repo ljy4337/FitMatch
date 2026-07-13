@@ -20,6 +20,8 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var productImageURLString: String?
     @Published var productPrice: Int?
     @Published var productCanonicalURLString: String?
+    @Published var productCode: String?
+    @Published var productMetadata = ProductMetadata()
     @Published var hasLoadedProductInfo = false
 
     private let recommendationService: RecommendationService
@@ -51,6 +53,8 @@ final class ShoppingProductViewModel: ObservableObject {
         errorMessage = nil
         parserNotice = nil
         hasLoadedProductInfo = false
+        productCode = nil
+        productMetadata = ProductMetadata()
         isLoadingProductInfo = true
         defer { isLoadingProductInfo = false }
 
@@ -183,6 +187,10 @@ final class ShoppingProductViewModel: ObservableObject {
         return Brand(name: trimmedBrand)
     }
 
+    func makeProductForClosetRegistration(brand: Brand?) -> Product? {
+        makeProduct(brand: brand)
+    }
+
     private func makeProduct(brand: Brand?) -> Product? {
         let validOptions = sizeOptions.compactMap {
             $0.makeSizeOption(category: category, detailCategory: detailCategory)
@@ -195,8 +203,10 @@ final class ShoppingProductViewModel: ObservableObject {
             name: productName.trimmed,
             brand: brand,
             category: category,
+            productCode: productCode,
             sourceURLString: productCanonicalURLString ?? (productURL.trimmed.isEmpty ? nil : productURL.trimmed),
             imageURLString: productImageURLString,
+            metadata: productMetadata,
             sourceType: sourceType,
             sourceName: resolvedSourceName,
             sizes: validOptions
@@ -216,6 +226,8 @@ final class ShoppingProductViewModel: ObservableObject {
         productImageURLString = parsedProduct.imageURLString
         productPrice = parsedProduct.price
         productCanonicalURLString = parsedProduct.canonicalURLString
+        productCode = parsedProduct.productID
+        productMetadata = parsedProduct.productMetadata
         parserNotice = parsedProduct.parserNotice
         hasLoadedProductInfo = true
         print("[ShoppingProductViewModel] productName: \(productName)")

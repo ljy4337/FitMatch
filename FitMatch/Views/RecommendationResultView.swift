@@ -3,10 +3,19 @@ import SwiftData
 
 struct RecommendationResultView: View {
     @Environment(\.openURL) private var openURL
+    @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     let result: RecommendationHistory
+    private let opensReferencePickerOnAppear: Bool
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     @State private var comparisonResult: RecommendationHistory?
-    @State private var isShowingReferencePicker = false
+    @State private var activeSheet: RecommendationResultActiveSheet?
+    @State private var isShowingClosetSavedAlert = false
+    @State private var didOpenInitialReferencePicker = false
+
+    init(result: RecommendationHistory, opensReferencePickerOnAppear: Bool = false) {
+        self.result = result
+        self.opensReferencePickerOnAppear = opensReferencePickerOnAppear
+    }
 
     private var currentResult: RecommendationHistory {
         comparisonResult ?? result
@@ -18,22 +27,28 @@ struct RecommendationResultView: View {
                 VStack(spacing: 18) {
                     heroCard
                         .id("resultTop")
-                    productInfoCard
-                    referenceFitCard
-                    fitMatchRankingCard
+                    comparisonTargetsCard
                     measurementDifferenceCard
-                    comparisonCoverageCard
                     reasonCard
+                    comparisonConditionCard
                     fitRecommendationCard
-                    actionCard
+                    fitMatchRankingCard
+                    comparisonCoverageCard
                 }
-                .padding(20)
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 132)
                 .frame(maxWidth: .infinity)
             }
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             .background(Color(.systemBackground))
-            .navigationTitle("추천 결과")
-            .hidesTabBarOnScroll()
-            .sheet(isPresented: $isShowingReferencePicker) {
+            .navigationTitle("분석 결과")
+            .safeAreaInset(edge: .bottom) {
+                resultBottomActionBar
+            }
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .referencePicker:
                 NavigationStack {
                     ResultReferencePickerView(
                         userFits: userFits,
@@ -42,7 +57,7 @@ struct RecommendationResultView: View {
                         productCategory: currentResult.product.category
                     ) { item in
                         compare(with: item)
-                        isShowingReferencePicker = false
+                        dismissActiveSheet()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             withAnimation(.easeInOut(duration: 0.25)) {
                                 proxy.scrollTo("resultTop", anchor: .top)
@@ -50,6 +65,34 @@ struct RecommendationResultView: View {
                         }
                     }
                 }
+                case .addToCloset:
+                AddComparedProductToClosetSheet(
+                    product: currentResult.product,
+                    productDetailCategory: currentResult.productDetailCategory,
+                    recommendedSize: currentResult.recommendedSize
+                ) {
+                    isShowingClosetSavedAlert = true
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                }
+            }
+            .alert("내 옷장에 추가했어요.", isPresented: $isShowingClosetSavedAlert) {
+                Button("확인", role: .cancel) {}
+            }
+            .onAppear {
+                tabBarVisibilityController.hide(reason: .navigationDetail, source: "recommendation result")
+                guard opensReferencePickerOnAppear, !didOpenInitialReferencePicker else {
+                    return
+                }
+
+                didOpenInitialReferencePicker = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    presentActiveSheet(.referencePicker)
+                }
+            }
+            .onDisappear {
+                tabBarVisibilityController.release(reason: .navigationDetail, source: "recommendation result disappear")
             }
         }
     }
@@ -71,7 +114,7 @@ struct RecommendationResultView: View {
                 .background(.white, in: Circle())
 
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Fit Confidence")
+                    Text("핏 매칭률")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.white.opacity(0.62))
                     Text(comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%")
@@ -88,10 +131,6 @@ struct RecommendationResultView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Text(heroSummary)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.78))
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -115,10 +154,41 @@ struct RecommendationResultView: View {
                         InfoRow(title: "브랜드", value: currentResult.product.brand?.name ?? "브랜드 미상")
                         InfoRow(title: "출처", value: currentResult.product.sourceDisplayName)
                         InfoRow(title: "카테고리", value: "\(currentResult.product.category.rawValue) / \(currentResult.productDetailCategory.rawValue)")
+                        ProductPriceView(product: currentResult.product)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private var comparisonTargetsCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(title: "비교 대상")
+
+                HStack(alignment: .top, spacing: 12) {
+                    ComparisonTargetColumn(
+                        title: "상품",
+                        imageURLString: currentResult.product.imageURLString,
+                        category: currentResult.product.category,
+                        brand: currentResult.product.brand?.name ?? "브랜드 미상",
+                        name: currentResult.product.name,
+                        meta: "\(currentResult.product.category.rawValue) / \(currentResult.productDetailCategory.rawValue)",
+                        badge: nil
+                    )
+
+                    ComparisonTargetColumn(
+                        title: "내 옷",
+                        imageURLString: currentResult.userFit.sourceProduct?.imageURLString,
+                        category: currentResult.userFit.category,
+                        brand: currentResult.userFit.brandName,
+                        name: currentResult.userFit.displayName,
+                        meta: "\(currentResult.userFit.detailCategory.rawValue) / \(currentResult.userFit.sizeName)",
+                        badge: currentResult.userFit.isRepresentative ? "기준 옷" : nil
+                    )
+                }
             }
         }
     }
@@ -139,9 +209,28 @@ struct RecommendationResultView: View {
                     if currentResult.userFit.isRepresentative {
                         ResultBadge(title: "기준 옷", systemImage: "heart.fill")
                     }
-                    ResultBadge(title: currentResult.comparisonMethod, systemImage: comparisonIcon)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private var comparisonConditionCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(title: "비교 근거")
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(comparisonSummaryTitle)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.primary)
+
+                    FlowLayout(spacing: 8, lineSpacing: 8) {
+                        ForEach(comparisonConditionRows) { row in
+                            ComparisonConditionChip(item: row)
+                        }
+                    }
+                }
             }
         }
     }
@@ -207,6 +296,7 @@ struct RecommendationResultView: View {
 
                 ProductMeasurementDifferenceGrid(
                     measurements: currentResult.recommendedSize.measurements,
+                    referenceMeasurements: currentResult.userFit.measurements,
                     differences: currentResult.measurementDifferences,
                     category: currentResult.product.category,
                     detailCategory: currentResult.productDetailCategory
@@ -258,31 +348,58 @@ struct RecommendationResultView: View {
         }
     }
 
-    private var actionCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 12) {
-                PrimaryButton(title: "구매하기", systemImage: "safari") {
+    private var resultBottomActionBar: some View {
+        VStack(spacing: 10) {
+            Button {
+                presentActiveSheet(.referencePicker)
+            } label: {
+                Label("다른 옷과 비교", systemImage: "tshirt")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(Color.black, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+            .buttonStyle(.plain)
+
+            HStack(spacing: 10) {
+                Button {
                     openShoppingMall()
+                } label: {
+                    Label("구매하기", systemImage: "bag")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(currentResult.product.sourceURLString == nil ? Color.secondary : Color.primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 42)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
+                .buttonStyle(.plain)
                 .disabled(currentResult.product.sourceURLString == nil)
-                .opacity(currentResult.product.sourceURLString == nil ? 0.35 : 1)
+                .opacity(currentResult.product.sourceURLString == nil ? 0.45 : 1)
 
-                SecondaryButton(title: "기록 보기", systemImage: "clock") {
-                    // TODO: ResultView가 탭 선택 상태를 받을 수 있게 되면 기록 탭으로 이동한다.
+                Button {
+                    presentActiveSheet(.addToCloset)
+                } label: {
+                    Label("내 옷장에 추가", systemImage: "plus")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 42)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
-                .disabled(true)
-                .opacity(0.72)
-
-                SecondaryButton(title: "다른 옷과 비교", systemImage: "tshirt") {
-                    isShowingReferencePicker = true
-                }
+                .buttonStyle(.plain)
             }
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 12)
+        .background(.regularMaterial)
     }
 
     private var productThumbnail: some View {
         ProductThumbnailView(
             imageURLString: currentResult.product.imageURLString,
+            category: currentResult.product.category,
             width: 90,
             height: 104,
             cornerRadius: 18
@@ -291,8 +408,8 @@ struct RecommendationResultView: View {
 
     private var confidenceText: String {
         comparedMeasurementKinds.isEmpty
-            ? "Fit Confidence 계산 불가"
-            : "Fit Confidence \(currentResult.recommendationScore)%"
+            ? "핏 매칭률 계산 불가"
+            : "핏 매칭률 \(currentResult.recommendationScore)%"
     }
 
     private var heroSummary: String {
@@ -333,10 +450,69 @@ struct RecommendationResultView: View {
         v1MeasurementKinds.filter { !comparedMeasurementKinds.contains($0) }
     }
 
+    private var comparisonConditionRows: [ComparisonConditionItem] {
+        let productDetail = currentResult.productDetailCategory.rawValue
+        let referenceDetail = currentResult.userFit.detailCategory.rawValue
+        let isSameDetail = currentResult.userFit.detailCategory == currentResult.productDetailCategory
+
+        let productCategory = currentResult.product.category.serviceGroup.rawValue
+        let referenceCategory = currentResult.userFit.category.serviceGroup.rawValue
+        let isSameCategory = currentResult.product.category.serviceGroup == currentResult.userFit.category.serviceGroup
+
+        let productBrand = currentResult.product.brand?.name ?? "브랜드 미상"
+        let referenceBrand = currentResult.userFit.brandName
+        let isSameBrand = productBrand.normalizedBrandName == referenceBrand.normalizedBrandName
+
+        let productSource = currentResult.product.sourceDisplayName
+        let referenceSource = currentResult.userFit.sourceName
+        let isSameSource = productSource.normalizedBrandName == referenceSource.normalizedBrandName
+
+        let measurementCount = comparedMeasurementKinds.count
+
+        return [
+            ComparisonConditionItem(
+                isMatched: isSameDetail,
+                title: isSameDetail ? "같은 \(productDetail)" : "\(productDetail) ↔ \(referenceDetail)"
+            ),
+            ComparisonConditionItem(
+                isMatched: isSameCategory,
+                title: isSameCategory ? "같은 \(productCategory)" : "\(productCategory) ↔ \(referenceCategory)"
+            ),
+            ComparisonConditionItem(
+                isMatched: isSameBrand,
+                title: isSameBrand ? "같은 브랜드" : "다른 브랜드"
+            ),
+            ComparisonConditionItem(
+                isMatched: isSameSource,
+                title: isSameSource ? "같은 출처" : "다른 출처"
+            ),
+            ComparisonConditionItem(
+                isMatched: currentResult.userFit.isRepresentative,
+                title: currentResult.userFit.isRepresentative ? "내 기준 옷" : "일반 옷"
+            ),
+            ComparisonConditionItem(
+                isMatched: measurementCount >= 2,
+                title: measurementCount > 0 ? "실측 \(measurementCount)개 비교" : "실측 부족"
+            )
+        ]
+    }
+
+    private var comparisonSummaryTitle: String {
+        if currentResult.userFit.detailCategory == currentResult.productDetailCategory {
+            return "같은 \(currentResult.productDetailCategory.rawValue) 기준"
+        }
+
+        if currentResult.userFit.category.serviceGroup == currentResult.product.category.serviceGroup {
+            return "같은 \(currentResult.product.category.serviceGroup.rawValue) 기준"
+        }
+
+        return "참고용 비교"
+    }
+
     private var legacyConfidenceText: String {
         currentResult.recommendationScore > 0
-            ? "Fit Confidence \(currentResult.recommendationScore)%"
-            : "Fit Confidence 정보 부족"
+            ? "핏 매칭률 \(currentResult.recommendationScore)%"
+            : "핏 매칭률 정보 부족"
     }
 
     private var oversizedSize: String? {
@@ -396,12 +572,17 @@ struct RecommendationResultView: View {
     }
 
     private var fitMatchRanking: [FitMatchCandidate] {
-        Array(
+        let targetGroup = currentResult.product.category.serviceGroup
+        let sameCategoryFits = userFits.filter {
+            $0.category.serviceGroup == targetGroup
+        }
+
+        return Array(
             RecommendationService()
                 .rankedFitMatches(
                     product: currentResult.product,
                     productDetailCategory: currentResult.productDetailCategory,
-                    userFits: userFits
+                    userFits: sameCategoryFits
                 )
                 .prefix(3)
         )
@@ -437,6 +618,19 @@ struct RecommendationResultView: View {
         comparisonResult = history
     }
 
+    private func presentActiveSheet(_ sheet: RecommendationResultActiveSheet) {
+        print("[RecommendationResultView] activeSheet -> \(sheet.logName)")
+        activeSheet = nil
+        DispatchQueue.main.async {
+            activeSheet = sheet
+        }
+    }
+
+    private func dismissActiveSheet() {
+        print("[RecommendationResultView] activeSheet -> nil")
+        activeSheet = nil
+    }
+
     private var comparisonIcon: String {
         if currentResult.comparisonMethod.contains("fallback") || currentResult.comparisonMethod.contains("임시") {
             return "arrow.triangle.branch"
@@ -468,27 +662,66 @@ struct RecommendationResultView: View {
         let subjectParticle = subject.hasFinalConsonant ? "은" : "는"
         let absoluteDifference = abs(difference)
 
+        if absoluteDifference == 0 {
+            return "\(subject)\(subjectParticle) 동일합니다."
+        }
+
         if absoluteDifference <= 1 {
-            return "\(subject)\(subjectParticle) 거의 비슷합니다."
+            return "\(subject)\(subjectParticle) 거의 동일합니다."
         }
 
         if absoluteDifference <= 2 {
-            return "\(subject)\(subjectParticle) 안정적인 차이입니다."
+            return compactDirectionalReason(
+                subject: subject,
+                particle: subjectParticle,
+                kind: kind,
+                difference: difference,
+                positiveBodyText: "살짝 여유 있습니다.",
+                negativeBodyText: "살짝 타이트할 수 있습니다.",
+                positiveLengthText: "살짝 길 수 있습니다.",
+                negativeLengthText: "살짝 짧을 수 있습니다."
+            )
         }
 
-        if absoluteDifference < 5 {
-            if kind == .totalLength || kind == .sleeveLength {
-                return difference > 0
-                    ? "\(subject)\(subjectParticle) 약간 길게 느껴질 수 있습니다."
-                    : "\(subject)\(subjectParticle) 약간 짧게 느껴질 수 있습니다."
-            }
+        if absoluteDifference <= 4 {
+            return compactDirectionalReason(
+                subject: subject,
+                particle: subjectParticle,
+                kind: kind,
+                difference: difference,
+                positiveBodyText: "여유 있게 느껴질 수 있습니다.",
+                negativeBodyText: "타이트하게 느껴질 수 있습니다.",
+                positiveLengthText: "길게 느껴질 수 있습니다.",
+                negativeLengthText: "짧게 느껴질 수 있습니다."
+            )
+        }
 
+        if absoluteDifference <= 6 {
+            return "\(subject)\(subjectParticle) 차이가 커서 핏이 달라질 수 있습니다."
+        }
+
+        return "\(subject)\(subjectParticle) 차이가 많이 커서 구매 전 확인이 필요합니다."
+    }
+
+    private func compactDirectionalReason(
+        subject: String,
+        particle: String,
+        kind: MeasurementKind,
+        difference: Double,
+        positiveBodyText: String,
+        negativeBodyText: String,
+        positiveLengthText: String,
+        negativeLengthText: String
+    ) -> String {
+        if kind == .totalLength || kind == .sleeveLength || kind == .rise || kind == .footLength {
             return difference > 0
-                ? "\(subject)\(subjectParticle) 약간 여유 있게 느껴질 수 있습니다."
-                : "\(subject)\(subjectParticle) 조금 더 타이트하게 느껴질 수 있습니다."
+                ? "\(subject)\(particle) \(positiveLengthText)"
+                : "\(subject)\(particle) \(negativeLengthText)"
         }
 
-        return "\(subject)\(subjectParticle) 차이가 커서 핏이 달라질 수 있습니다."
+        return difference > 0
+            ? "\(subject)\(particle) \(positiveBodyText)"
+            : "\(subject)\(particle) \(negativeBodyText)"
     }
 
     private func naturalSubject(for kind: MeasurementKind) -> String {
@@ -614,6 +847,66 @@ private struct InfoRow: View {
     }
 }
 
+private struct ComparisonTargetColumn: View {
+    let title: String
+    let imageURLString: String?
+    let category: ClothingCategory
+    let brand: String
+    let name: String
+    let meta: String
+    let badge: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(title)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if let badge {
+                    Text(badge)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(Color(.systemBackground))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(Color.primary, in: Capsule())
+                }
+            }
+
+            ProductThumbnailView(
+                imageURLString: imageURLString,
+                category: category,
+                width: 128,
+                height: 136,
+                cornerRadius: 16
+            )
+            .frame(maxWidth: .infinity)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(brand)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Text(name)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
+
+                Text(meta)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .padding(12)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
 private struct ResultBadge: View {
     let title: String
     let systemImage: String
@@ -628,6 +921,128 @@ private struct ResultBadge: View {
             .padding(.vertical, 6)
             .background(.primary.opacity(0.08), in: Capsule())
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct ComparisonConditionItem: Identifiable {
+    let id = UUID()
+    let isMatched: Bool
+    let title: String
+}
+
+private struct ComparisonConditionRow: View {
+    let item: ComparisonConditionItem
+
+    var body: some View {
+        HStack(spacing: 11) {
+            Image(systemName: item.isMatched ? "checkmark.circle.fill" : "minus.circle")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(item.isMatched ? .primary : .secondary)
+                .frame(width: 22)
+
+            Text(item.title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 13)
+        .frame(height: 42)
+        .background(.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+private struct ComparisonConditionChip: View {
+    let item: ComparisonConditionItem
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: item.isMatched ? "checkmark.circle.fill" : "minus.circle")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(item.isMatched ? .primary : .secondary)
+
+            Text(item.title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 30)
+        .background(Color(.secondarySystemGroupedBackground), in: Capsule())
+    }
+}
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    var lineSpacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? 0
+        var currentX: CGFloat = 0
+        var currentLineHeight: CGFloat = 0
+        var totalHeight: CGFloat = 0
+        var widestLine: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX > 0, currentX + spacing + size.width > maxWidth {
+                widestLine = max(widestLine, currentX)
+                totalHeight += currentLineHeight + lineSpacing
+                currentX = 0
+                currentLineHeight = 0
+            }
+
+            if currentX > 0 {
+                currentX += spacing
+            }
+            currentX += size.width
+            currentLineHeight = max(currentLineHeight, size.height)
+        }
+
+        widestLine = max(widestLine, currentX)
+        totalHeight += currentLineHeight
+
+        return CGSize(width: maxWidth > 0 ? maxWidth : widestLine, height: totalHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var currentX = bounds.minX
+        var currentY = bounds.minY
+        var currentLineHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX > bounds.minX, currentX + spacing + size.width > bounds.maxX {
+                currentX = bounds.minX
+                currentY += currentLineHeight + lineSpacing
+                currentLineHeight = 0
+            }
+
+            subview.place(
+                at: CGPoint(x: currentX, y: currentY),
+                proposal: ProposedViewSize(size)
+            )
+
+            currentX += size.width + spacing
+            currentLineHeight = max(currentLineHeight, size.height)
+        }
+    }
+}
+
+private enum RecommendationResultActiveSheet: Identifiable {
+    case referencePicker
+    case addToCloset
+
+    var id: String {
+        switch self {
+        case .referencePicker:
+            return "referencePicker"
+        case .addToCloset:
+            return "addToCloset"
+        }
+    }
+
+    var logName: String {
+        id
     }
 }
 
@@ -739,6 +1154,7 @@ private struct MeasurementPill: View {
 
 private struct ProductMeasurementDifferenceGrid: View {
     let measurements: GarmentMeasurements
+    let referenceMeasurements: GarmentMeasurements
     let differences: GarmentMeasurements
     let category: ClothingCategory
     let detailCategory: ClosetDetailCategory
@@ -748,7 +1164,8 @@ private struct ProductMeasurementDifferenceGrid: View {
             ForEach(kindsToShow) { kind in
                 ProductMeasurementDifferenceRow(
                     title: kind.title,
-                    value: measurements.value(for: kind),
+                    productValue: measurements.value(for: kind),
+                    referenceValue: referenceMeasurements.value(for: kind),
                     difference: differences.value(for: kind)
                 )
             }
@@ -769,31 +1186,29 @@ private struct ProductMeasurementDifferenceGrid: View {
 
 private struct ProductMeasurementDifferenceRow: View {
     let title: String
-    let value: Double
+    let productValue: Double
+    let referenceValue: Double
     let difference: Double
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             Image(systemName: status.systemImage)
                 .font(.headline)
                 .foregroundStyle(status.color)
-                .frame(width: 24)
+                .frame(width: 22)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
                     .foregroundStyle(.secondary)
-                Text(value.cmText)
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(.primary)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.82)
-            }
-            .frame(minWidth: 96, maxWidth: .infinity, alignment: .leading)
 
-            Spacer(minLength: 12)
+                HStack(spacing: 8) {
+                    measurementValueColumn(title: "상품", value: productValue)
+                    measurementValueColumn(title: "내 옷", value: referenceValue)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text(difference.signedCmText)
@@ -808,7 +1223,7 @@ private struct ProductMeasurementDifferenceRow: View {
                     .foregroundStyle(status.color)
                     .lineLimit(1)
             }
-            .frame(width: 76, alignment: .trailing)
+            .frame(minWidth: 70, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -817,6 +1232,21 @@ private struct ProductMeasurementDifferenceRow: View {
 
     private var status: MeasurementDifferenceStatus {
         MeasurementDifferenceStatus(difference: abs(difference))
+    }
+
+    private func measurementValueColumn(title: String, value: Double) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value > 0 ? value.cmText : "-")
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+        }
+        .frame(minWidth: 58, alignment: .leading)
     }
 }
 
@@ -849,7 +1279,7 @@ private struct FitMatchRankRow: View {
     let isCurrent: Bool
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: 10) {
             Text("\(rank)")
                 .font(.headline.weight(.black))
                 .foregroundStyle(.white)
@@ -892,17 +1322,18 @@ private struct FitMatchRankRow: View {
                             .foregroundStyle(.blue)
                     }
                 }
+                .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            Spacer(minLength: 8)
 
             Text("\(candidate.matchRate)%")
                 .font(.headline.weight(.black))
                 .foregroundStyle(.primary)
                 .monospacedDigit()
-                .frame(width: 48, alignment: .trailing)
+                .lineLimit(1)
+                .frame(minWidth: 44, alignment: .trailing)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
@@ -915,54 +1346,136 @@ private struct ResultReferencePickerView: View {
     let productDetailCategory: ClosetDetailCategory
     let productCategory: ClothingCategory
     let onSelect: (UserFit) -> Void
+    @State private var selectedItemID: UUID?
 
     var body: some View {
-        List {
-            if selectableFits.isEmpty {
-                Text("선택할 수 있는 다른 옷이 없습니다.")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(selectableFits) { item in
-                    Button {
-                        onSelect(item)
-                        dismiss()
-                    } label: {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(item.displayName)
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                            Text("\(item.category.rawValue) / \(item.detailCategory.rawValue) · \(item.sizeName)")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            if item.isRepresentative {
-                                Text("기준 옷")
-                                    .font(.caption.weight(.bold))
-                                    .foregroundStyle(.blue)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                pickerHeader
+
+                if selectableFits.isEmpty {
+                    emptyStateCard
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(selectableFits) { item in
+                            ResultReferencePickerCard(
+                                item: item,
+                                productDetailCategory: productDetailCategory,
+                                isSelected: selectedItemID == item.id
+                            ) {
+                                selectedItemID = item.id
                             }
                         }
-                        .padding(.vertical, 6)
                     }
                 }
             }
+            .padding(20)
+            .padding(.bottom, 112)
         }
-        .navigationTitle("다른 옷 선택")
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("취소") {
-                    dismiss()
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            bottomActionBar
+        }
+    }
+
+    private var pickerHeader: some View {
+        CardView(radius: 26, padding: 20) {
+            HStack(alignment: .center, spacing: 16) {
+                Image(systemName: "tshirt")
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(width: 48, height: 48)
+                    .background(Color.primary, in: Circle())
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("다른 옷과 비교")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(.primary)
+                    Text("\(productCategory.rawValue) 안에서 비교 기준 옷을 직접 선택하세요.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+
+                Spacer(minLength: 0)
             }
         }
+    }
+
+    private var emptyStateCard: some View {
+        CardView(radius: 24, padding: 24) {
+            VStack(spacing: 14) {
+                Image(systemName: "tray")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 58, height: 58)
+                    .background(Color(.secondarySystemGroupedBackground), in: Circle())
+
+                Text("선택할 수 있는 다른 옷이 없습니다.")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.primary)
+
+                Text("\(productCategory.rawValue) 카테고리의 옷을 먼저 등록해 주세요.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private var bottomActionBar: some View {
+        VStack(spacing: 10) {
+            if selectedItemID == nil, !selectableFits.isEmpty {
+                Label("비교할 옷을 선택해 주세요.", systemImage: "info.circle")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Button {
+                guard let selectedItem else {
+                    return
+                }
+
+                onSelect(selectedItem)
+                dismiss()
+            } label: {
+                Text("선택한 옷으로 비교")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(selectedItem == nil ? .secondary : Color(.systemBackground))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(
+                        selectedItem == nil ? Color(.secondarySystemGroupedBackground) : Color.black,
+                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    )
+            }
+            .buttonStyle(.plain)
+            .disabled(selectedItem == nil)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+        .background(.regularMaterial)
+    }
+
+    private var selectedItem: UserFit? {
+        guard let selectedItemID else {
+            return nil
+        }
+
+        return selectableFits.first { $0.id == selectedItemID }
     }
 
     private var selectableFits: [UserFit] {
         userFits
             .filter { $0.id != currentUserFit.id }
+            .filter { $0.category.serviceGroup == productCategory.serviceGroup }
             .sorted { lhs, rhs in
                 if lhs.detailCategory == productDetailCategory && rhs.detailCategory != productDetailCategory {
-                    return true
-                }
-                if lhs.category.serviceGroup == productCategory.serviceGroup && rhs.category.serviceGroup != productCategory.serviceGroup {
                     return true
                 }
                 if lhs.isRepresentative != rhs.isRepresentative {
@@ -970,6 +1483,82 @@ private struct ResultReferencePickerView: View {
                 }
                 return lhs.updatedAt > rhs.updatedAt
             }
+    }
+}
+
+private struct ResultReferencePickerCard: View {
+    let item: UserFit
+    let productDetailCategory: ClosetDetailCategory
+    let isSelected: Bool
+    let onSelect: () -> Void
+
+    var body: some View {
+        Button(action: onSelect) {
+            CardView(
+                radius: 22,
+                padding: 14,
+                background: isSelected ? Color.black : Color(.systemBackground)
+            ) {
+                HStack(alignment: .center, spacing: 14) {
+                    thumbnail
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 7) {
+                            Text(item.brandName)
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(isSelected ? Color(.systemBackground).opacity(0.72) : .secondary)
+                                .lineLimit(1)
+
+                            if item.isRepresentative {
+                                pickerBadge("기준 옷", isEmphasized: isSelected)
+                            }
+
+                            if item.detailCategory == productDetailCategory {
+                                pickerBadge("같은 종류", isEmphasized: isSelected)
+                            }
+
+                            Spacer(minLength: 0)
+                        }
+
+                        Text(item.displayName)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(isSelected ? Color(.systemBackground) : .primary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+
+                        Text("\(item.category.rawValue) / \(item.detailCategory.rawValue) · \(item.sizeName)")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(isSelected ? Color(.systemBackground).opacity(0.72) : .secondary)
+                            .lineLimit(1)
+                    }
+
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(isSelected ? Color(.systemBackground) : .secondary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var thumbnail: some View {
+        ProductThumbnailView(
+            imageURLString: item.sourceProduct?.imageURLString,
+            category: item.category,
+            width: 68,
+            height: 82,
+            cornerRadius: 16
+        )
+    }
+
+    private func pickerBadge(_ title: String, isEmphasized: Bool) -> some View {
+        Text(title)
+            .font(.caption2.weight(.black))
+            .foregroundStyle(isEmphasized ? Color.primary : Color(.systemBackground))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 4)
+            .background(isEmphasized ? Color(.systemBackground) : Color.primary, in: Capsule())
     }
 }
 
