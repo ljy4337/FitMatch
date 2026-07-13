@@ -98,6 +98,7 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
             if hideAccumulation >= 12 {
                 print("[TabBarScroll] action=hideScroll source=native scroll down tab=\(tab.logName)")
                 tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll down")
+                hideAccumulation = 0
             }
         } else {
             showAccumulation += abs(delta)
@@ -105,7 +106,87 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
             if showAccumulation >= 12 {
                 print("[TabBarScroll] action=showScroll source=native scroll up tab=\(tab.logName)")
                 tabBarVisibilityController.showScroll(tab: tab, source: "native scroll up")
+                showAccumulation = 0
             }
+        }
+    }
+}
+
+private struct RootChromeScrollVisibilityModifier: ViewModifier {
+    @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
+    let tab: AppTab
+    @Binding var isTopChromeVisible: Bool
+    @State private var hideAccumulation: CGFloat = 0
+    @State private var showAccumulation: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { previousOffset, currentOffset in
+                handleScrollOffset(previous: previousOffset, current: currentOffset)
+            }
+            .onDisappear {
+                hideAccumulation = 0
+                showAccumulation = 0
+                tabBarVisibilityController.showScroll(tab: tab, source: "screen disappear")
+                setTopChromeVisible(true, source: "screen disappear")
+            }
+            .onAppear {
+                hideAccumulation = 0
+                showAccumulation = 0
+                tabBarVisibilityController.showScroll(tab: tab, source: "screen appear")
+                setTopChromeVisible(true, source: "screen appear")
+            }
+    }
+
+    private func handleScrollOffset(previous previousOffset: CGFloat, current currentOffset: CGFloat) {
+        guard previousOffset.isFinite, currentOffset.isFinite else { return }
+
+        let delta = currentOffset - previousOffset
+
+        print("[RootChromeScroll] tab=\(tab.logName) previousOffset=\(String(format: "%.1f", previousOffset)) currentOffset=\(String(format: "%.1f", currentOffset)) delta=\(String(format: "%.1f", delta))")
+
+        guard abs(delta) >= 1 else {
+            return
+        }
+
+        if currentOffset <= 2 {
+            hideAccumulation = 0
+            showAccumulation = 0
+            print("[RootChromeScroll] action=show source=native scroll top tab=\(tab.logName)")
+            tabBarVisibilityController.showScroll(tab: tab, source: "native scroll top")
+            setTopChromeVisible(true, source: "native scroll top")
+            return
+        }
+
+        if delta > 0 {
+            hideAccumulation += delta
+            showAccumulation = 0
+            if hideAccumulation >= 12 {
+                print("[RootChromeScroll] action=hide source=native scroll down tab=\(tab.logName)")
+                tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll down")
+                setTopChromeVisible(false, source: "native scroll down")
+                hideAccumulation = 0
+            }
+        } else {
+            showAccumulation += abs(delta)
+            hideAccumulation = 0
+            if showAccumulation >= 12 {
+                print("[RootChromeScroll] action=show source=native scroll up tab=\(tab.logName)")
+                tabBarVisibilityController.showScroll(tab: tab, source: "native scroll up")
+                setTopChromeVisible(true, source: "native scroll up")
+                showAccumulation = 0
+            }
+        }
+    }
+
+    private func setTopChromeVisible(_ visible: Bool, source: String) {
+        guard isTopChromeVisible != visible else { return }
+
+        print("[TopChromeScroll] tab=\(tab.logName) action=\(visible ? "show" : "hide") source=\(source)")
+        withAnimation(.easeInOut(duration: 0.25)) {
+            isTopChromeVisible = visible
         }
     }
 }
@@ -123,6 +204,10 @@ private struct TopChromeScrollVisibilityModifier: ViewModifier {
 extension View {
     func hidesBottomTabBarOnScroll(tab: AppTab) -> some View {
         modifier(BottomTabBarScrollVisibilityModifier(tab: tab))
+    }
+
+    func hidesBottomTabBarOnScroll(tab: AppTab, topChrome isVisible: Binding<Bool>) -> some View {
+        modifier(RootChromeScrollVisibilityModifier(tab: tab, isTopChromeVisible: isVisible))
     }
 
     func tracksTabBarVisibilityOnScroll(_ tab: AppTab) -> some View {

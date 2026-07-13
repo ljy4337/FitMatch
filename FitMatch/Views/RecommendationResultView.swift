@@ -65,6 +65,7 @@ struct RecommendationResultView: View {
                         }
                     }
                 }
+                .presentationDragIndicator(.visible)
                 case .addToCloset:
                 AddComparedProductToClosetSheet(
                     product: currentResult.product,
