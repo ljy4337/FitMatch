@@ -23,6 +23,61 @@ struct ParsedProductSize: Identifiable, Equatable {
     var measurements: GarmentMeasurements
 }
 
+enum ParsedProductSizeNormalizer {
+    static func normalizedSizeKey(for name: String) -> String {
+        name
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+            .lowercased()
+    }
+
+    static func uniqueSizes(_ sizes: [ParsedProductSize]) -> [ParsedProductSize] {
+        var seenKeys = Set<String>()
+        var uniqueSizes: [ParsedProductSize] = []
+
+        for size in sizes {
+            let key = normalizedSizeKey(for: size.name)
+            guard !key.isEmpty, !seenKeys.contains(key) else {
+                continue
+            }
+
+            seenKeys.insert(key)
+            uniqueSizes.append(size)
+        }
+
+        return uniqueSizes
+    }
+
+    static func uniqueProductSizes(_ sizes: [ProductSize]) -> [ProductSize] {
+        var seenKeys = Set<String>()
+        var uniqueSizes: [ProductSize] = []
+
+        for size in sizes {
+            let key = normalizedSizeKey(for: size.name)
+            guard !key.isEmpty, !seenKeys.contains(key) else {
+                continue
+            }
+
+            seenKeys.insert(key)
+            uniqueSizes.append(size)
+        }
+
+        return uniqueSizes
+    }
+
+    static func makeProductSizes(from sizes: [ParsedProductSize]) -> [ProductSize] {
+        uniqueSizes(sizes).enumerated().map { index, size in
+            ProductSize(
+                name: size.name.trimmingCharacters(in: .whitespacesAndNewlines),
+                measurements: size.measurements,
+                displayOrder: index
+            )
+        }
+    }
+}
+
 @MainActor
 protocol ProductURLParsing {
     func canParse(_ url: URL) -> Bool
@@ -77,14 +132,14 @@ struct ProductURLParserService {
 
         if isMusinsaURL {
             do {
-                return try await musinsaParser.parse(from: url)
+                return (try await musinsaParser.parse(from: url)).normalizedSizes()
             } catch let partialError as ProductURLParserPartialError {
                 print("[ProductURLParserService] Musinsa parser partially loaded product info: \(partialError.localizedDescription)")
-                throw partialError
+                throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
             } catch {
                 print("[ProductURLParserService] Musinsa parser failed, falling back to GenericProductParser: \(error.localizedDescription)")
                 do {
-                    return try await genericParser.parse(from: url)
+                    return (try await genericParser.parse(from: url)).normalizedSizes()
                 } catch {
                     print("[ProductURLParserService] Generic fallback also failed for Musinsa URL: \(error.localizedDescription)")
                     throw ProductURLParserError.automaticParsingUnavailable
@@ -92,7 +147,7 @@ struct ProductURLParserService {
             }
         }
 
-        return try await genericParser.parse(from: url)
+        return (try await genericParser.parse(from: url)).normalizedSizes()
     }
 
     private func normalizedURL(from rawValue: String) -> URL? {
@@ -124,5 +179,13 @@ struct ProductURLParserService {
         }
 
         return String(text[range])
+    }
+}
+
+extension ParsedProductInfo {
+    func normalizedSizes() -> ParsedProductInfo {
+        var copy = self
+        copy.sizes = ParsedProductSizeNormalizer.uniqueSizes(sizes)
+        return copy
     }
 }

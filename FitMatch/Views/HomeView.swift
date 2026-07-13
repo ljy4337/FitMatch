@@ -20,7 +20,6 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 22) {
                 TabBarScrollSentinel(tab: .home)
                     .frame(height: 1)
-                    .hidesBottomTabBarOnScroll(tab: .home)
 
                 if isTopChromeVisible {
                     FitMatchNavigationHeader(onLogout: onLogout)
@@ -36,6 +35,7 @@ struct HomeView: View {
         }
         .background(Color(.systemGroupedBackground))
         .fitMatchTabScrollCoordinateSpace(.home)
+        .hidesBottomTabBarOnScroll(tab: .home)
         .hidesTopChromeOnScroll($isTopChromeVisible)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)

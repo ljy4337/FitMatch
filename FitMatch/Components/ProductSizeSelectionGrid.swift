@@ -27,7 +27,7 @@ struct ProductSizeSelectionGrid: View {
     }
 
     private var options: [ProductSizeSelectionOption] {
-        sizes.enumerated().map { index, size in
+        ParsedProductSizeNormalizer.uniqueProductSizes(sizes).map { size in
             ProductSizeSelectionOption(
                 id: size.id,
                 name: size.name,

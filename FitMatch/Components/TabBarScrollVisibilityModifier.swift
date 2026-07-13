@@ -48,7 +48,7 @@ final class TabBarVisibilityController: ObservableObject {
     }
 }
 
-private struct TabBarScrollOffsetPreferenceKey: PreferenceKey {
+struct TabBarScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
 
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
@@ -73,15 +73,6 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(alignment: .top) {
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: TabBarScrollOffsetPreferenceKey.self,
-                        value: proxy.frame(in: .named(coordinateSpaceName(for: tab))).minY
-                    )
-                }
-                .frame(height: 1)
-            }
             .onPreferenceChange(TabBarScrollOffsetPreferenceKey.self) { currentOffset in
                 handleOffset(currentOffset)
             }
@@ -131,7 +122,7 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
     }
 }
 
-private func coordinateSpaceName(for tab: AppTab) -> String {
+func coordinateSpaceName(for tab: AppTab) -> String {
     "FitMatchTabScroll-\(tab.logName)"
 }
 
@@ -139,8 +130,13 @@ struct TabBarScrollSentinel: View {
     let tab: AppTab
 
     var body: some View {
-        Color.clear
-            .frame(height: 1)
+        GeometryReader { proxy in
+            Color.clear.preference(
+                key: TabBarScrollOffsetPreferenceKey.self,
+                value: proxy.frame(in: .named(coordinateSpaceName(for: tab))).minY
+            )
+        }
+        .frame(height: 1)
     }
 }
 

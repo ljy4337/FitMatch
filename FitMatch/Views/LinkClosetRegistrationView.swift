@@ -168,9 +168,7 @@ struct LinkClosetRegistrationView: View {
                 modelContext.insert(brand)
             }
 
-            let sizes = parsedInfo.sizes.enumerated().map { index, size in
-                ProductSize(name: size.name, measurements: size.measurements, displayOrder: index)
-            }
+            let sizes = ParsedProductSizeNormalizer.makeProductSizes(from: parsedInfo.sizes)
 
             let product = Product(
                 name: parsedInfo.productName,
