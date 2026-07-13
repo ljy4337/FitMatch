@@ -21,6 +21,7 @@ struct CompareFlowSheet: View {
     @State private var productForClosetRegistration: Product?
     @State private var registrationContext: CompareProductRegistrationContext?
     @State private var isShowingProductRegistration = false
+    @State private var isShowingRegistrationSavedAlert = false
     @FocusState private var isURLFocused: Bool
 
     init(initialURL: String? = nil, recentClipboardCandidate: SmartClipboardCandidate? = nil) {
@@ -76,6 +77,9 @@ struct CompareFlowSheet: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
             }
+        }
+        .alert("내 옷장에 추가했어요.", isPresented: $isShowingRegistrationSavedAlert) {
+            Button("확인", role: .cancel) {}
         }
     }
 }
@@ -618,7 +622,7 @@ private extension CompareFlowSheet {
             selectedReferenceItemID = item.id
             setStep(.confirmReference)
         case .result, .none:
-            break
+            isShowingRegistrationSavedAlert = true
         }
     }
 
