@@ -17,30 +17,33 @@ struct MyClosetView: View {
     @State private var selectedBrand: String?
     @State private var sortOption: ClosetSortOption = .recent
     @State private var saveErrorMessage: String?
-    @State private var isTopChromeVisible = true
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            VStack(spacing: 0) {
-                if isTopChromeVisible {
+            ScrollView {
+                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                     FitMatchNavigationHeader(onLogout: onLogout)
                         .padding(.horizontal, 20)
                         .padding(.top, 18)
                         .padding(.bottom, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                }
 
-                closetHeader
-
-                if userFits.isEmpty {
-                    EmptyClosetView {
-                        presentActiveSheet(.addMethod)
+                    Section {
+                        if userFits.isEmpty {
+                            EmptyClosetView {
+                                presentActiveSheet(.addMethod)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 520)
+                        } else {
+                            closetContent
+                        }
+                    } header: {
+                        closetHeader
+                            .zIndex(1)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    closetContent
                 }
             }
+            .hidesBottomTabBarOnScroll(tab: .my)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if !userFits.isEmpty {
@@ -50,7 +53,6 @@ struct MyClosetView: View {
             }
         }
         .background(Color(.systemBackground))
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
@@ -152,7 +154,7 @@ struct MyClosetView: View {
     }
 
     private var closetList: some View {
-        List {
+        LazyVStack(spacing: 0) {
             ForEach(filteredItems) { item in
                 NavigationLink {
                     ClosetItemDetailView(item: item)
@@ -162,8 +164,8 @@ struct MyClosetView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     basisSwipeButton(for: item)
                 }
@@ -174,47 +176,37 @@ struct MyClosetView: View {
 
             if filteredItems.isEmpty {
                 EmptyFilterResultView()
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 24, trailing: 20))
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 24)
             }
 
             Color.clear
                 .frame(height: 112)
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init())
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .hidesBottomTabBarOnScroll(tab: .my)
-        .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
     private var closetGrid: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                LazyVGrid(columns: gridColumns, spacing: 14) {
-                    ForEach(filteredItems) { item in
-                        NavigationLink {
-                            ClosetItemDetailView(item: item)
-                        } label: {
-                            ClosetGridCard(item: item)
-                        }
-                        .buttonStyle(.plain)
+        VStack(spacing: 0) {
+            LazyVGrid(columns: gridColumns, spacing: 14) {
+                ForEach(filteredItems) { item in
+                    NavigationLink {
+                        ClosetItemDetailView(item: item)
+                    } label: {
+                        ClosetGridCard(item: item)
                     }
-
-                    if filteredItems.isEmpty {
-                        EmptyFilterResultView()
-                            .gridCellColumns(2)
-                            .padding(.top, 24)
-                    }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 122)
+
+                if filteredItems.isEmpty {
+                    EmptyFilterResultView()
+                        .gridCellColumns(2)
+                        .padding(.top, 24)
+                }
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 122)
         }
-        .hidesBottomTabBarOnScroll(tab: .my)
-        .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
     private var filteredItems: [UserFit] {

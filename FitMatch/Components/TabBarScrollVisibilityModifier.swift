@@ -112,66 +112,10 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
 
 private struct TopChromeScrollVisibilityModifier: ViewModifier {
     @Binding var isVisible: Bool
-    @State private var hideAccumulation: CGFloat = 0
-    @State private var showAccumulation: CGFloat = 0
 
     func body(content: Content) -> some View {
-        content
-            .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y + geometry.contentInsets.top
-            } action: { previousOffset, currentOffset in
-                handleScrollOffset(previous: previousOffset, current: currentOffset)
-            }
-            .onAppear {
-                hideAccumulation = 0
-                showAccumulation = 0
-                setVisible(true, source: "screen appear")
-            }
-            .onDisappear {
-                hideAccumulation = 0
-                showAccumulation = 0
-                setVisible(true, source: "screen disappear")
-            }
-    }
-
-    private func handleScrollOffset(previous previousOffset: CGFloat, current currentOffset: CGFloat) {
-        guard previousOffset.isFinite, currentOffset.isFinite else { return }
-
-        let delta = currentOffset - previousOffset
-
-        print("[TopChromeScroll] previousOffset=\(String(format: "%.1f", previousOffset)) currentOffset=\(String(format: "%.1f", currentOffset)) delta=\(String(format: "%.1f", delta))")
-
-        guard abs(delta) >= 1 else {
-            return
-        }
-
-        if currentOffset <= 2 {
-            hideAccumulation = 0
-            showAccumulation = 0
-            setVisible(true, source: "native scroll top")
-            return
-        }
-
-        if delta > 0 {
-            hideAccumulation += delta
-            showAccumulation = 0
-            if hideAccumulation >= 12 {
-                setVisible(false, source: "native scroll down")
-            }
-        } else {
-            showAccumulation += abs(delta)
-            hideAccumulation = 0
-            if showAccumulation >= 12 {
-                setVisible(true, source: "native scroll up")
-            }
-        }
-    }
-
-    private func setVisible(_ visible: Bool, source: String) {
-        guard isVisible != visible else { return }
-        print("[TopChromeScroll] action=\(visible ? "show" : "hide") source=\(source)")
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-            isVisible = visible
+        content.onAppear {
+            isVisible = true
         }
     }
 }

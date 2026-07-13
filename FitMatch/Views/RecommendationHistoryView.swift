@@ -15,7 +15,6 @@ struct RecommendationHistoryView: View {
     @State private var opensReferencePickerOnDetail = false
     @State private var isShowingClosetSavedAlert = false
     @State private var saveErrorMessage: String?
-    @State private var isTopChromeVisible = true
     private let favoriteStore = FavoriteProductStore()
     var onRecompare: ((String) -> Void)?
     var onStartCompare: (() -> Void)?
@@ -28,27 +27,30 @@ struct RecommendationHistoryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if isTopChromeVisible {
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                 FitMatchNavigationHeader(onLogout: onLogout)
                     .padding(.horizontal, 20)
                     .padding(.top, 18)
                     .padding(.bottom, 12)
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
 
-            historyControls
-
-            if filteredHistories.isEmpty {
-                EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                historyContent
+                Section {
+                    if filteredHistories.isEmpty {
+                        EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 520)
+                    } else {
+                        historyContent
+                    }
+                } header: {
+                    historyControls
+                        .zIndex(1)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
+        .hidesBottomTabBarOnScroll(tab: .history)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
@@ -104,7 +106,7 @@ struct RecommendationHistoryView: View {
     }
 
     private var historyList: some View {
-        List {
+        LazyVStack(spacing: 0) {
             ForEach(filteredHistories) { history in
                 HistoryCard(
                     history: history,
@@ -122,8 +124,8 @@ struct RecommendationHistoryView: View {
                     opensReferencePickerOnDetail = false
                     selectedHistoryIDForDetail = history.id
                 }
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     favoriteSwipeButton(for: history)
                 }
@@ -134,40 +136,30 @@ struct RecommendationHistoryView: View {
 
             Color.clear
                 .frame(height: 92)
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init())
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .hidesBottomTabBarOnScroll(tab: .history)
-        .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
     private var historyGrid: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                LazyVGrid(columns: gridColumns, spacing: 14) {
-                    ForEach(filteredHistories) { history in
-                        HistoryGridCard(
-                            history: history,
-                            isFavorite: isFavorite(history),
-                            onToggleFavorite: {
-                                toggleFavorite(history)
-                            },
-                            onShowDetail: {
-                                opensReferencePickerOnDetail = false
-                                selectedHistoryIDForDetail = history.id
-                            }
-                        )
-                    }
+        VStack(spacing: 0) {
+            LazyVGrid(columns: gridColumns, spacing: 14) {
+                ForEach(filteredHistories) { history in
+                    HistoryGridCard(
+                        history: history,
+                        isFavorite: isFavorite(history),
+                        onToggleFavorite: {
+                            toggleFavorite(history)
+                        },
+                        onShowDetail: {
+                            opensReferencePickerOnDetail = false
+                            selectedHistoryIDForDetail = history.id
+                        }
+                    )
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 122)
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 122)
         }
-        .hidesBottomTabBarOnScroll(tab: .history)
-        .hidesTopChromeOnScroll($isTopChromeVisible)
     }
 
     private var historyLayout: ContentListLayout {
