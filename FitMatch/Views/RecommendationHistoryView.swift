@@ -109,7 +109,7 @@ struct RecommendationHistoryView: View {
             TabBarScrollSentinel(tab: .history)
                 .listRowSeparator(.hidden)
                 .listRowInsets(.init())
-                .frame(height: 0)
+                .frame(height: 1)
 
             ForEach(filteredHistories) { history in
                 HistoryCard(

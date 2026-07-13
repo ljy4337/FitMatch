@@ -1,24 +1,42 @@
 import SwiftUI
 import Combine
 
+enum TabBarHiddenReason: String, Hashable {
+    case navigationDetail
+    case scrolling
+    case modalFlow
+}
+
 @MainActor
 final class TabBarVisibilityController: ObservableObject {
-    @Published private(set) var isVisible = true
+    @Published private var hiddenReasons: Set<TabBarHiddenReason> = []
 
-    func show(tab: AppTab? = nil, reason: String = "") {
-        guard !isVisible else { return }
-        print("[TabBarVisibility] show tab=\(tab?.logName ?? "unknown") reason=\(reason)")
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-            isVisible = true
-        }
+    var isVisible: Bool {
+        hiddenReasons.isEmpty
     }
 
-    func hide(tab: AppTab? = nil, reason: String = "") {
-        guard isVisible else { return }
-        print("[TabBarVisibility] hide tab=\(tab?.logName ?? "unknown") reason=\(reason)")
+    func hide(tab: AppTab? = nil, reason: TabBarHiddenReason, source: String = "") {
+        guard !hiddenReasons.contains(reason) else { return }
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-            isVisible = false
+            _ = hiddenReasons.insert(reason)
         }
+        print("[TabBarVisibility] hide tab=\(tab?.logName ?? "unknown") reason=\(reason.rawValue) source=\(source) active=\(activeReasonLog)")
+    }
+
+    func show(tab: AppTab? = nil, reason: TabBarHiddenReason, source: String = "") {
+        release(tab: tab, reason: reason, source: source)
+    }
+
+    func release(tab: AppTab? = nil, reason: TabBarHiddenReason, source: String = "") {
+        guard hiddenReasons.contains(reason) else { return }
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            _ = hiddenReasons.remove(reason)
+        }
+        print("[TabBarVisibility] release tab=\(tab?.logName ?? "unknown") reason=\(reason.rawValue) source=\(source) active=\(activeReasonLog)")
+    }
+
+    private var activeReasonLog: String {
+        hiddenReasons.map(\.rawValue).sorted().joined(separator: ",")
     }
 }
 
@@ -53,7 +71,7 @@ private struct TabBarScrollContentObserverModifier: ViewModifier {
                         value: proxy.frame(in: .named(coordinateSpaceName(for: tab))).minY
                     )
                 }
-                .frame(height: 0)
+                .frame(height: 1)
             }
             .onPreferenceChange(TabBarScrollOffsetPreferenceKey.self) { currentOffset in
                 handleOffset(currentOffset)
@@ -61,7 +79,12 @@ private struct TabBarScrollContentObserverModifier: ViewModifier {
             .onDisappear {
                 lastOffset = nil
                 hideAccumulation = 0
-                tabBarVisibilityController.show(tab: tab, reason: "screen disappear")
+                tabBarVisibilityController.release(tab: tab, reason: .scrolling, source: "screen disappear")
+            }
+            .onAppear {
+                lastOffset = nil
+                hideAccumulation = 0
+                tabBarVisibilityController.release(tab: tab, reason: .scrolling, source: "screen appear")
             }
     }
 
@@ -76,18 +99,18 @@ private struct TabBarScrollContentObserverModifier: ViewModifier {
 
         if currentOffset >= -2 {
             hideAccumulation = 0
-            tabBarVisibilityController.show(tab: tab, reason: "top")
+            tabBarVisibilityController.release(tab: tab, reason: .scrolling, source: "top")
             return
         }
 
         if delta < 0 {
             hideAccumulation += abs(delta)
             if hideAccumulation >= 40 {
-                tabBarVisibilityController.hide(tab: tab, reason: "scroll down")
+                tabBarVisibilityController.hide(tab: tab, reason: .scrolling, source: "scroll down")
             }
         } else if delta > 12 {
             hideAccumulation = 0
-            tabBarVisibilityController.show(tab: tab, reason: "scroll up")
+            tabBarVisibilityController.release(tab: tab, reason: .scrolling, source: "scroll up")
         }
     }
 }
@@ -101,7 +124,7 @@ struct TabBarScrollSentinel: View {
 
     var body: some View {
         Color.clear
-            .frame(height: 0)
+            .frame(height: 1)
             .tracksTabBarVisibilityOnScroll(tab)
     }
 }

@@ -62,10 +62,10 @@ struct ClosetItemDetailView: View {
             Text(saveErrorMessage ?? "")
         }
         .onAppear {
-            tabBarVisibilityController.hide(reason: "closet detail")
+            tabBarVisibilityController.hide(reason: .navigationDetail, source: "closet detail")
         }
         .onDisappear {
-            tabBarVisibilityController.show(reason: "closet detail disappear")
+            tabBarVisibilityController.release(reason: .navigationDetail, source: "closet detail disappear")
         }
     }
 

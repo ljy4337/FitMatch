@@ -18,6 +18,9 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
+                TabBarScrollSentinel(tab: .home)
+                    .frame(height: 1)
+
                 if isTopChromeVisible {
                     FitMatchNavigationHeader(onLogout: onLogout)
                         .transition(.move(edge: .top).combined(with: .opacity))
@@ -29,7 +32,6 @@ struct HomeView: View {
             .padding(.horizontal, 20)
             .padding(.top, 18)
             .padding(.bottom, 112)
-            .tracksTabBarVisibilityOnScroll(.home)
         }
         .background(Color(.systemGroupedBackground))
         .fitMatchTabScrollCoordinateSpace(.home)

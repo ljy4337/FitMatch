@@ -883,7 +883,7 @@ private struct MainTabView: View {
         }
         .tint(.primary)
         .onChange(of: selectedTab) { _, _ in
-            tabBarVisibilityController.show(tab: selectedTab, reason: "tab changed")
+            tabBarVisibilityController.release(tab: selectedTab, reason: .scrolling, source: "tab changed")
         }
         .onChange(of: clipboardCandidate) { _, newValue in
             if let newValue {
@@ -896,6 +896,7 @@ private struct MainTabView: View {
         }
         .sheet(item: $activeSheet, onDismiss: {
             print("[MainTabView] activeSheet dismissed")
+            tabBarVisibilityController.release(tab: selectedTab, reason: .modalFlow, source: "sheet dismissed")
         }) { sheet in
             switch sheet {
             case .compareFlow(let request):
@@ -943,9 +944,10 @@ private struct MainTabView: View {
         }
         .frame(maxWidth: .infinity)
         .background(.regularMaterial)
-        .offset(y: tabBarVisibilityController.isVisible ? 0 : 104)
+        .offset(y: tabBarVisibilityController.isVisible ? 0 : 140)
         .opacity(tabBarVisibilityController.isVisible ? 1 : 0)
         .allowsHitTesting(tabBarVisibilityController.isVisible)
+        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: tabBarVisibilityController.isVisible)
     }
 
     @ViewBuilder
@@ -991,8 +993,10 @@ private struct MainTabView: View {
 
     private func presentSheet(_ sheet: MainActiveSheet) {
         print("[MainTabView] activeSheet -> \(sheet.logName)")
+        tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: sheet.logName)
         activeSheet = nil
         DispatchQueue.main.async {
+            tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: sheet.logName)
             activeSheet = sheet
         }
     }
@@ -1000,12 +1004,15 @@ private struct MainTabView: View {
     private func dismissSheet() {
         print("[MainTabView] activeSheet -> nil")
         activeSheet = nil
+        tabBarVisibilityController.release(tab: selectedTab, reason: .modalFlow, source: "dismissSheet")
     }
 
     private func presentCompareFlow(initialURL: String?) {
         print("[MainTabView] activeSheet -> compareFlow, initialURL: \(initialURL ?? "nil")")
+        tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
         activeSheet = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
             activeSheet = .compareFlow(CompareFlowRequest(initialURL: initialURL))
         }
     }

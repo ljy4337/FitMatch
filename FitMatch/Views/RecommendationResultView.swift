@@ -81,7 +81,7 @@ struct RecommendationResultView: View {
                 Button("확인", role: .cancel) {}
             }
             .onAppear {
-                tabBarVisibilityController.hide(reason: "recommendation result")
+                tabBarVisibilityController.hide(reason: .navigationDetail, source: "recommendation result")
                 guard opensReferencePickerOnAppear, !didOpenInitialReferencePicker else {
                     return
                 }
@@ -92,7 +92,7 @@ struct RecommendationResultView: View {
                 }
             }
             .onDisappear {
-                tabBarVisibilityController.show(reason: "recommendation result disappear")
+                tabBarVisibilityController.release(reason: .navigationDetail, source: "recommendation result disappear")
             }
         }
     }

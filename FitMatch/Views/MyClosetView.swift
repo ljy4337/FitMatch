@@ -157,7 +157,7 @@ struct MyClosetView: View {
             TabBarScrollSentinel(tab: .my)
                 .listRowSeparator(.hidden)
                 .listRowInsets(.init())
-                .frame(height: 0)
+                .frame(height: 1)
 
             ForEach(filteredItems) { item in
                 NavigationLink {
