@@ -18,6 +18,7 @@ struct MyClosetView: View {
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
     @State private var selectedClosetItemID: UUID?
+    @State private var displayedItems: [UserFit] = []
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -50,7 +51,6 @@ struct MyClosetView: View {
             }
         }
         .background(Color(.systemBackground))
-        .animation(.easeInOut(duration: 0.25), value: isTopChromeVisible)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
@@ -123,6 +123,21 @@ struct MyClosetView: View {
         } message: {
             Text(saveErrorMessage ?? "")
         }
+        .onAppear {
+            rebuildDisplayedItems()
+        }
+        .onChange(of: selectedCategory) { _, _ in
+            rebuildDisplayedItems()
+        }
+        .onChange(of: selectedBrand) { _, _ in
+            rebuildDisplayedItems()
+        }
+        .onChange(of: sortOption) { _, _ in
+            rebuildDisplayedItems()
+        }
+        .onChange(of: userFits.count) { _, _ in
+            rebuildDisplayedItems()
+        }
     }
 
     private var closetHeader: some View {
@@ -156,7 +171,7 @@ struct MyClosetView: View {
 
     private var closetList: some View {
         List {
-            ForEach(filteredItems) { item in
+            ForEach(displayedItems) { item in
                 Button {
                     selectedClosetItemID = item.id
                 } label: {
@@ -176,7 +191,7 @@ struct MyClosetView: View {
                 }
             }
 
-            if filteredItems.isEmpty {
+            if displayedItems.isEmpty {
                 EmptyFilterResultView()
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 24, trailing: 20))
@@ -196,7 +211,7 @@ struct MyClosetView: View {
         ScrollView {
             VStack(spacing: 0) {
                 LazyVGrid(columns: gridColumns, spacing: 14) {
-                    ForEach(filteredItems) { item in
+                    ForEach(displayedItems) { item in
                         NavigationLink {
                             ClosetItemDetailView(item: item)
                         } label: {
@@ -205,7 +220,7 @@ struct MyClosetView: View {
                         .buttonStyle(.plain)
                     }
 
-                    if filteredItems.isEmpty {
+                    if displayedItems.isEmpty {
                         EmptyFilterResultView()
                             .gridCellColumns(2)
                             .padding(.top, 24)
@@ -227,7 +242,7 @@ struct MyClosetView: View {
         return userFits.first { $0.id == selectedClosetItemID }
     }
 
-    private var filteredItems: [UserFit] {
+    private func rebuildDisplayedItems() {
         let filtered = userFits.filter { item in
             let matchesCategory = selectedCategory == nil || item.category == selectedCategory
             let matchesBrand = selectedBrand == nil || item.brandName == selectedBrand
@@ -237,15 +252,15 @@ struct MyClosetView: View {
 
         switch sortOption {
         case .recent:
-            return filtered.sorted { $0.createdAt > $1.createdAt }
+            displayedItems = filtered.sorted { $0.createdAt > $1.createdAt }
         case .oldest:
-            return filtered.sorted { $0.createdAt < $1.createdAt }
+            displayedItems = filtered.sorted { $0.createdAt < $1.createdAt }
         case .brand:
-            return filtered.sorted { $0.brandName < $1.brandName }
+            displayedItems = filtered.sorted { $0.brandName < $1.brandName }
         case .category:
-            return filtered.sorted { $0.category.rawValue < $1.category.rawValue }
+            displayedItems = filtered.sorted { $0.category.rawValue < $1.category.rawValue }
         case .basisFirst:
-            return filtered.sorted {
+            displayedItems = filtered.sorted {
                 if $0.isRepresentative != $1.isRepresentative {
                     return $0.isRepresentative && !$1.isRepresentative
                 }
@@ -347,6 +362,7 @@ struct MyClosetView: View {
             item.updatedAt = Date()
             do {
                 try modelContext.save()
+                rebuildDisplayedItems()
             } catch {
                 saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
             }
@@ -424,6 +440,7 @@ struct MyClosetView: View {
             return
         }
 
+        rebuildDisplayedItems()
         clearPendingBasisChange()
     }
 
@@ -438,6 +455,7 @@ struct MyClosetView: View {
         modelContext.delete(item)
         do {
             try modelContext.save()
+            rebuildDisplayedItems()
         } catch {
             saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
         }
