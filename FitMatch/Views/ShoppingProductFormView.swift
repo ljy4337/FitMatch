@@ -42,6 +42,7 @@ struct ShoppingProductFormView: View {
                 NavigationStack {
                     RecommendationResultView(result: result)
                 }
+                .presentationDragIndicator(.visible)
             case .addBaseline:
                 NavigationStack {
                     AddClosetItemView(
@@ -57,6 +58,7 @@ struct ShoppingProductFormView: View {
                         }
                     }
                 }
+                .presentationDragIndicator(.visible)
             case .addComparedProduct(let product):
                 AddComparedProductToClosetSheet(
                     product: product,
@@ -80,6 +82,7 @@ struct ShoppingProductFormView: View {
                         presentAddBaselineAfterReferencePicker()
                     }
                 }
+                .presentationDragIndicator(.visible)
             case .missingBasis:
                 MissingBasisBottomSheet(
                     productName: viewModel.productName,

@@ -34,7 +34,7 @@ struct RecommendationHistoryView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 18)
                     .padding(.bottom, 12)
-                .transition(.move(edge: .top).combined(with: .opacity))
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
 
             historyControls
@@ -48,7 +48,7 @@ struct RecommendationHistoryView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
+        .animation(.easeInOut(duration: 0.25), value: isTopChromeVisible)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
@@ -139,8 +139,7 @@ struct RecommendationHistoryView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .hidesBottomTabBarOnScroll(tab: .history)
-        .hidesTopChromeOnScroll($isTopChromeVisible)
+        .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 
     private var historyGrid: some View {
@@ -166,8 +165,7 @@ struct RecommendationHistoryView: View {
                 .padding(.bottom, 122)
             }
         }
-        .hidesBottomTabBarOnScroll(tab: .history)
-        .hidesTopChromeOnScroll($isTopChromeVisible)
+        .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 
     private var historyLayout: ContentListLayout {

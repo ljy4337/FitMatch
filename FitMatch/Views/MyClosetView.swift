@@ -7,7 +7,6 @@ struct MyClosetView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
-    @AppStorage("FitMatch.hideBasisPrompt") private var hidesBasisPrompt = false
     @AppStorage("FitMatch.closetViewLayout") private var closetViewLayoutRaw = ContentListLayout.list.rawValue
     @State private var activeSheet: ClosetActiveSheet?
     @State private var pendingBasisItem: UserFit?
@@ -18,6 +17,7 @@ struct MyClosetView: View {
     @State private var sortOption: ClosetSortOption = .recent
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
+    @State private var selectedClosetItemID: UUID?
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -27,7 +27,7 @@ struct MyClosetView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 18)
                         .padding(.bottom, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
                 closetHeader
@@ -35,7 +35,7 @@ struct MyClosetView: View {
                 if userFits.isEmpty {
                     EmptyClosetView {
                         presentActiveSheet(.addMethod)
-                    }
+                        }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     closetContent
@@ -50,10 +50,18 @@ struct MyClosetView: View {
             }
         }
         .background(Color(.systemBackground))
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
+        .animation(.easeInOut(duration: 0.25), value: isTopChromeVisible)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
+        .navigationDestination(isPresented: Binding(
+            get: { selectedClosetItemForDetail != nil },
+            set: { if !$0 { selectedClosetItemID = nil } }
+        )) {
+            if let selectedClosetItemForDetail {
+                ClosetItemDetailView(item: selectedClosetItemForDetail)
+            }
+        }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .addMethod:
@@ -84,6 +92,7 @@ struct MyClosetView: View {
                         }
                     }
                 }
+                .presentationDragIndicator(.visible)
             case .linkRegistration:
                 NavigationStack {
                     LinkClosetRegistrationView()
@@ -92,23 +101,17 @@ struct MyClosetView: View {
                 .presentationDragIndicator(.visible)
             }
         }
-        .sheet(isPresented: $isShowingBasisChangeAlert) {
-            BasisChangeSheet(
-                title: basisAlertTitle,
-                message: basisAlertMessage,
-                hidesFuturePrompt: $hidesBasisPrompt,
-                onCancel: {
-                    pendingBasisItem = nil
-                    existingBasisItem = nil
-                    isShowingBasisChangeAlert = false
-                },
-                onConfirm: {
-                    isShowingBasisChangeAlert = false
-                    applyPendingBasisChange()
-                }
-            )
-            .presentationDetents([.height(existingBasisItem == nil ? 300 : 380)])
-            .presentationDragIndicator(.visible)
+        .alert(basisAlertTitle, isPresented: $isShowingBasisChangeAlert) {
+            Button("취소", role: .cancel) {
+                clearPendingBasisChange()
+            }
+
+            Button(existingBasisItem == nil ? "설정" : "변경") {
+                isShowingBasisChangeAlert = false
+                applyPendingBasisChange()
+            }
+        } message: {
+            Text(basisAlertMessage)
         }
         .alert("저장 실패", isPresented: Binding(
             get: { saveErrorMessage != nil },
@@ -154,12 +157,13 @@ struct MyClosetView: View {
     private var closetList: some View {
         List {
             ForEach(filteredItems) { item in
-                NavigationLink {
-                    ClosetItemDetailView(item: item)
+                Button {
+                    selectedClosetItemID = item.id
                 } label: {
                     ClosetItemCard(item: item) {
                         toggleRepresentative(item)
                     }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .listRowSeparator(.hidden)
@@ -185,8 +189,7 @@ struct MyClosetView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .hidesBottomTabBarOnScroll(tab: .my)
-        .hidesTopChromeOnScroll($isTopChromeVisible)
+        .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
 
     private var closetGrid: some View {
@@ -213,8 +216,15 @@ struct MyClosetView: View {
                 .padding(.bottom, 122)
             }
         }
-        .hidesBottomTabBarOnScroll(tab: .my)
-        .hidesTopChromeOnScroll($isTopChromeVisible)
+        .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
+    }
+
+    private var selectedClosetItemForDetail: UserFit? {
+        guard let selectedClosetItemID else {
+            return nil
+        }
+
+        return userFits.first { $0.id == selectedClosetItemID }
     }
 
     private var filteredItems: [UserFit] {
@@ -349,11 +359,7 @@ struct MyClosetView: View {
                 && $0.detailCategory == item.detailCategory
                 && $0.isRepresentative
         }
-        if hidesBasisPrompt {
-            applyPendingBasisChange()
-        } else {
-            isShowingBasisChangeAlert = true
-        }
+        isShowingBasisChangeAlert = true
     }
 
     private var basisAlertTitle: String {
@@ -365,7 +371,7 @@ struct MyClosetView: View {
             return "이 옷을 기준 옷으로 설정할까요?"
         }
 
-        return "\(pendingBasisItem.detailCategory.rawValue) 기준 옷은 1개만 설정할 수 있습니다."
+        return "\(pendingBasisItem.detailCategory.rawValue) 기준 옷을 변경할까요?"
     }
 
     private var basisAlertMessage: String {
@@ -375,20 +381,20 @@ struct MyClosetView: View {
 
         if let existingBasisItem {
             return """
-            현재 기준 옷:
+            현재 기준 옷
             \(existingBasisItem.displayName)
 
-            새 기준 옷:
+            새 기준 옷
             \(pendingBasisItem.displayName)
 
-            기존 기준 옷이 해제되고 새 기준 옷으로 변경됩니다.
+            기준 옷은 같은 종류별로 1개만 설정할 수 있습니다.
+            변경하면 기존 기준 옷은 자동으로 해제됩니다.
             """
         }
 
         return """
-        기준 옷은 같은 카테고리 상품을 비교할 때 자동으로 우선 비교됩니다.
-
-        언제든 다른 옷으로 변경할 수 있습니다.
+        기준 옷은 같은 종류의 상품을 비교할 때 가장 먼저 사용됩니다.
+        기준 옷은 종류별로 1개만 설정할 수 있으며 언제든 변경할 수 있습니다.
         """
     }
 
@@ -414,11 +420,17 @@ struct MyClosetView: View {
             try modelContext.save()
         } catch {
             saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
+            clearPendingBasisChange()
             return
         }
 
-        self.pendingBasisItem = nil
+        clearPendingBasisChange()
+    }
+
+    private func clearPendingBasisChange() {
+        pendingBasisItem = nil
         existingBasisItem = nil
+        isShowingBasisChangeAlert = false
     }
 
     private func deleteItem(_ item: UserFit) {
@@ -538,70 +550,6 @@ private struct EmptyFilterResultView: View {
             systemImage: "line.3.horizontal.decrease.circle",
             description: Text("검색어 또는 필터를 조정해 주세요.")
         )
-    }
-}
-
-private struct BasisChangeSheet: View {
-    let title: String
-    let message: String
-    @Binding var hidesFuturePrompt: Bool
-    let onCancel: () -> Void
-    let onConfirm: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title)
-                    .font(.title3.weight(.black))
-                    .foregroundStyle(.primary)
-                Text(message)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Button {
-                hidesFuturePrompt.toggle()
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: hidesFuturePrompt ? "checkmark.square.fill" : "square")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("앞으로 표시하지 않기")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Spacer()
-                }
-                .padding(.vertical, 4)
-            }
-            .buttonStyle(.plain)
-
-            Spacer(minLength: 0)
-
-            HStack(spacing: 10) {
-                Button(action: onCancel) {
-                    Text("취소")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 46)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                }
-                .buttonStyle(.plain)
-
-                Button(action: onConfirm) {
-                    Text("설정")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Color(.systemBackground))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 46)
-                        .background(Color.primary, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(20)
-        .background(Color(.systemGroupedBackground))
     }
 }
 
