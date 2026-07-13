@@ -148,10 +148,7 @@ struct ClosetItemDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 SectionHeader(title: "실측값")
 
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 10),
-                    GridItem(.flexible(), spacing: 10)
-                ], spacing: 10) {
+                LazyVGrid(columns: measurementGridColumns, spacing: 10) {
                     ForEach(item.category.measurementKinds(detailCategory: item.detailCategory, gender: item.gender)) { kind in
                         MeasurementValueTile(
                             title: kind.title,
@@ -161,6 +158,11 @@ struct ClosetItemDetailView: View {
                 }
             }
         }
+    }
+
+    private var measurementGridColumns: [GridItem] {
+        let columnCount = item.category.serviceGroup == .bottom ? 3 : 2
+        return Array(repeating: GridItem(.flexible(), spacing: 10), count: columnCount)
     }
 
     private var memoCard: some View {
