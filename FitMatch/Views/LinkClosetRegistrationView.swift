@@ -17,6 +17,14 @@ struct LinkClosetRegistrationView: View {
 
     private let parserService = ProductURLParserService()
 
+    private var normalizedURLString: String {
+        productURL.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var canLoadProduct: Bool {
+        isValidHTTPURL(normalizedURLString) && !isLoading
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -67,8 +75,10 @@ struct LinkClosetRegistrationView: View {
                         .submitLabel(.search)
                         .focused($isURLFocused)
                         .onSubmit {
-                            Task {
-                                await loadProduct()
+                            if canLoadProduct {
+                                Task {
+                                    await loadProduct()
+                                }
                             }
                         }
 
@@ -91,8 +101,8 @@ struct LinkClosetRegistrationView: View {
                         await loadProduct()
                     }
                 }
-                .disabled(productURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
-                .opacity(productURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+                .disabled(!canLoadProduct)
+                .opacity(canLoadProduct ? 1 : 0.45)
             }
         }
     }
@@ -152,8 +162,9 @@ struct LinkClosetRegistrationView: View {
     }
 
     private func loadProduct() async {
-        let trimmedURL = productURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedURL.isEmpty else {
+        let trimmedURL = normalizedURLString
+        guard isValidHTTPURL(trimmedURL), !isLoading else {
+            errorMessage = trimmedURL.isEmpty ? nil : "올바른 상품 URL을 입력해 주세요."
             return
         }
 
@@ -210,5 +221,16 @@ struct LinkClosetRegistrationView: View {
         }
 
         return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+    }
+
+    private func isValidHTTPURL(_ value: String) -> Bool {
+        guard let url = URL(string: value),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              url.host?.isEmpty == false else {
+            return false
+        }
+
+        return true
     }
 }

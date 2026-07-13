@@ -211,7 +211,6 @@ final class ShoppingProductViewModel: ObservableObject {
             sourceName: resolvedSourceName,
             sizes: validOptions
         )
-        validOptions.forEach { $0.product = product }
         return product
     }
 
@@ -309,6 +308,7 @@ struct ClothingSizeForm: Identifiable, Equatable {
         }
 
         return ProductSize(
+            id: id,
             name: sizeName.trimmed,
             measurements: GarmentMeasurements(
                 shoulder: numericValue(for: .shoulder),

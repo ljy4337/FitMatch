@@ -125,11 +125,11 @@ private extension CompareFlowSheet {
                 .background(Color(.secondarySystemGroupedBackground), in: Circle())
 
             VStack(spacing: 8) {
-                Text("비교 가능한 \(viewModel.detailCategory.rawValue)가 없습니다.")
+                Text("비교 가능한 상품이 없습니다.")
                     .font(.title2.weight(.black))
                     .multilineTextAlignment(.center)
 
-                Text("정확한 비교를 위해 \(viewModel.detailCategory.rawValue)를 먼저 등록해 주세요.")
+                Text("정확한 비교를 위해 상품을 먼저 등록해 주세요.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -137,12 +137,12 @@ private extension CompareFlowSheet {
             }
 
             VStack(spacing: 11) {
-                PrimaryButton(title: "\(viewModel.detailCategory.rawValue) 등록", systemImage: "plus") {
+                PrimaryButton(title: "상품 등록", systemImage: "plus") {
                     prepareRegistration(product: currentProduct)
                     setStep(.askRegisterSharedProduct)
                 }
 
-                SecondaryButton(title: "보유 중인 다른 \(viewModel.category.rawValue)와 비교", systemImage: "list.bullet.rectangle") {
+                SecondaryButton(title: "옷장 속 다른 옷과 비교", systemImage: "list.bullet.rectangle") {
                     setStep(.closetSelection)
                 }
                 .disabled(sameCategoryCandidates.isEmpty)
@@ -199,7 +199,7 @@ private extension CompareFlowSheet {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("아니오")
                                     .font(.headline.weight(.bold))
-                                Text("보유 중인 다른 \(viewModel.detailCategory.rawValue)를 등록합니다.")
+                                Text("보유 중인 다른 상품을 등록합니다.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -225,7 +225,7 @@ private extension CompareFlowSheet {
 
     var registerMethodContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            sheetHeader(title: "\(viewModel.detailCategory.rawValue) 등록", subtitle: "내 옷장에 등록하고 비교에 활용하세요.")
+            sheetHeader(title: "상품 등록", subtitle: "내 옷장에 등록하고 비교에 활용하세요.")
 
             if let product = currentProduct, showsSharedProductRegistrationCard {
                 FitMatchCard {
@@ -345,12 +345,10 @@ private extension CompareFlowSheet {
                         }
                     }
 
-                    Picker("사이즈", selection: Binding(
-                        get: { selectedSizeID ?? sortedSizes.first?.id ?? UUID() },
-                        set: { selectedSizeID = $0 }
-                    )) {
+                    Picker("사이즈", selection: $selectedSizeID) {
+                        Text("선택해 주세요").tag(UUID?.none)
                         ForEach(sortedSizes) { size in
-                            Text(size.name.displaySizeNameForCompareFlow).tag(size.id)
+                            Text(size.name.displaySizeNameForCompareFlow).tag(Optional(size.id))
                         }
                     }
 
@@ -376,12 +374,12 @@ private extension CompareFlowSheet {
             if sameCategoryCandidates.isEmpty {
                 FitMatchCard {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("비교할 옷이 없습니다.")
+                        Text("비교 가능한 상품이 없습니다.")
                             .font(.headline.weight(.bold))
-                        Text("내 옷장에 옷을 먼저 등록하면 상품과 비교할 수 있습니다.")
+                        Text("상품을 먼저 등록하면 비교할 수 있습니다.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                PrimaryButton(title: "\(viewModel.detailCategory.rawValue) 등록", systemImage: "plus") {
+                PrimaryButton(title: "상품 등록", systemImage: "plus") {
                     prepareRegistration(product: currentProduct)
                     showsSharedProductRegistrationCard = true
                     setStep(.askRegisterSharedProduct)
@@ -520,7 +518,7 @@ private extension CompareFlowSheet {
             VStack(alignment: .leading, spacing: 16) {
                 CompareSheetSectionTitle(
                     title: "직접 링크 입력",
-                    subtitle: "상품 URL을 붙여넣고 바로 사이즈를 계산합니다."
+                    subtitle: "상품 URL을 붙여넣고 바로 비교합니다."
                 )
 
                 HStack(spacing: 10) {
@@ -557,7 +555,7 @@ private extension CompareFlowSheet {
                         .stroke(Color(.separator).opacity(0.12), lineWidth: 0.5)
                 }
 
-                PrimaryButton(title: "사이즈 계산", systemImage: "sparkles") {
+                PrimaryButton(title: "비교하기", systemImage: "sparkles") {
                     isURLFocused = false
                     Task { await startCompare(with: productURL) }
                 }
@@ -671,12 +669,18 @@ private extension CompareFlowSheet {
     }
 
     var sortedSizes: [ProductSize] {
-        currentProduct?.sizes.sorted {
+        guard let product = currentProduct else {
+            return []
+        }
+
+        let sortedSizes = product.sizes.sorted {
             if $0.displayOrder != $1.displayOrder {
                 return $0.displayOrder < $1.displayOrder
             }
             return $0.name < $1.name
-        } ?? []
+        }
+
+        return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
     }
 
     var selectedSize: ProductSize? {
@@ -936,7 +940,8 @@ private extension CompareFlowSheet {
         registrationProductName = product?.name ?? viewModel.productName
         registrationCategory = viewModel.category.serviceGroup
         registrationDetailCategory = viewModel.detailCategory
-        selectedSizeID = nil
+        let sizes = product.map(uniqueSizes(for:)) ?? []
+        selectedSizeID = sizes.count == 1 ? sizes.first?.id : nil
         registerAsBasis = false
         statusMessage = nil
         normalizeRegistrationDetailCategory()
@@ -1026,6 +1031,17 @@ private extension CompareFlowSheet {
         if !availableDetailCategories.contains(registrationDetailCategory) {
             registrationDetailCategory = availableDetailCategories.first ?? viewModel.detailCategory
         }
+    }
+
+    func uniqueSizes(for product: Product) -> [ProductSize] {
+        let sortedSizes = product.sizes.sorted {
+            if $0.displayOrder != $1.displayOrder {
+                return $0.displayOrder < $1.displayOrder
+            }
+            return $0.name < $1.name
+        }
+
+        return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
     }
 
     func setStep(_ newStep: CompareFlowStep) {
