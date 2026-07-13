@@ -13,9 +13,9 @@ struct UniqloParser: ProductURLParsing {
         let resolved = try await urlResolver.resolve(url)
         let metadata = metadataParser.parse(resolved: resolved)
 
-        let sizes: [ParsedProductSize]
+        let sizeAPIResult: UniqloSizeAPIResult
         do {
-            sizes = try await sizeParser.parseSizes(productIDWithColorCode: resolved.productIDWithColorCode)
+            sizeAPIResult = try await sizeParser.parse(productIDWithColorCode: resolved.productIDWithColorCode)
         } catch {
             print("[UniqloParser] size API failed: \(error.localizedDescription)")
             throw ProductURLParserPartialError(
@@ -25,6 +25,8 @@ struct UniqloParser: ProductURLParsing {
                 )
             )
         }
+        let sizes = sizeAPIResult.sizes
+        let resolvedMetadata = metadata.withPreferredImageURL(sizeAPIResult.imageURLString)
 
         print("[UniqloParser] detectedProvider: uniqlo")
         print("[UniqloParser] originalURL: \(resolved.originalURL.absoluteString)")
@@ -32,22 +34,23 @@ struct UniqloParser: ProductURLParsing {
         print("[UniqloParser] productID: \(resolved.productID)")
         print("[UniqloParser] colorCode: \(resolved.imageColorCode)")
         print("[UniqloParser] apiProductIDWithColorCode: \(resolved.productIDWithColorCode)")
-        print("[UniqloParser] productName: \(metadata.productName)")
-        print("[UniqloParser] category: \(metadata.category.rawValue)")
-        print("[UniqloParser] detailCategory: \(metadata.detailCategory.rawValue)")
-        print("[UniqloParser] imageURL: \(metadata.imageURLString ?? "nil")")
+        print("[UniqloParser] productName: \(resolvedMetadata.productName)")
+        print("[UniqloParser] category: \(resolvedMetadata.category.rawValue)")
+        print("[UniqloParser] detailCategory: \(resolvedMetadata.detailCategory.rawValue)")
+        print("[UniqloParser] sizeAPIImageURL: \(sizeAPIResult.imageURLString ?? "nil")")
+        print("[UniqloParser] imageURL: \(resolvedMetadata.imageURLString ?? "nil")")
         print("[UniqloParser] sizeCount: \(sizes.count)")
 
         guard !sizes.isEmpty else {
             throw ProductURLParserPartialError(
-                productInfo: metadata.parsedProductInfo(
+                productInfo: resolvedMetadata.parsedProductInfo(
                     sizes: [],
                     parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했습니다. 상품 URL을 다시 확인해 주세요."
                 )
             )
         }
 
-        return metadata.parsedProductInfo(sizes: sizes)
+        return resolvedMetadata.parsedProductInfo(sizes: sizes)
     }
 }
 
@@ -208,8 +211,13 @@ private struct UniqloHTMLResponse {
     let body: String
 }
 
+struct UniqloSizeAPIResult {
+    var sizes: [ParsedProductSize]
+    var imageURLString: String?
+}
+
 struct UniqloSizeAPIParser {
-    func parseSizes(productIDWithColorCode: String) async throws -> [ParsedProductSize] {
+    func parse(productIDWithColorCode: String) async throws -> UniqloSizeAPIResult {
         guard var components = URLComponents(string: "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/size-charts") else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
@@ -225,18 +233,32 @@ struct UniqloSizeAPIParser {
         }
 
         let data = try await fetchData(from: apiURL)
-        return try parseSizes(from: data)
+        return try parseResult(from: data)
+    }
+
+    func parseSizes(productIDWithColorCode: String) async throws -> [ParsedProductSize] {
+        try await parse(productIDWithColorCode: productIDWithColorCode).sizes
     }
 
     func parseSizes(from data: Data) throws -> [ParsedProductSize] {
+        try parseResult(from: data).sizes
+    }
+
+    func parseResult(from data: Data) throws -> UniqloSizeAPIResult {
         let response = try JSONDecoder().decode(UniqloSizeChartResponse.self, from: data)
         let sizes = response.result.flatMap { resultItem in
             (resultItem.sizeChart ?? []).compactMap { sizeChart in
                 makeParsedSize(from: sizeChart, productIDWithColorCode: resultItem.productId)
             }
         }
+        let imageURLString = response.result
+            .compactMap { normalizeImageURL($0.imageUrl) }
+            .first
 
-        return ParsedProductSizeNormalizer.uniqueSizes(sizes)
+        return UniqloSizeAPIResult(
+            sizes: ParsedProductSizeNormalizer.uniqueSizes(sizes),
+            imageURLString: imageURLString
+        )
     }
 
     private func fetchData(from apiURL: URL) async throws -> Data {
@@ -316,6 +338,16 @@ struct UniqloSizeAPIParser {
         }
         return nil
     }
+
+    private func normalizeImageURL(_ rawValue: String?) -> String? {
+        guard let rawValue = rawValue?.trimmingCharacters(in: .whitespacesAndNewlines), !rawValue.isEmpty else {
+            return nil
+        }
+        if rawValue.hasPrefix("//") { return "https:" + rawValue }
+        if rawValue.hasPrefix("http://") || rawValue.hasPrefix("https://") { return rawValue }
+        if rawValue.hasPrefix("/") { return "https://www.uniqlo.com" + rawValue }
+        return rawValue
+    }
 }
 
 struct UniqloProductMetadata {
@@ -349,6 +381,19 @@ struct UniqloProductMetadata {
             canonicalURLString: canonicalURLString,
             productMetadata: productMetadata
         )
+    }
+
+    func withPreferredImageURL(_ preferredImageURLString: String?) -> UniqloProductMetadata {
+        guard let preferredImageURLString, !preferredImageURLString.isEmpty else {
+            return self
+        }
+
+        var copy = self
+        copy.imageURLString = preferredImageURLString
+        var metadata = copy.productMetadata
+        metadata.imageURLStrings = [preferredImageURLString]
+        copy.productMetadata = metadata
+        return copy
     }
 }
 

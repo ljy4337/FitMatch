@@ -35,7 +35,7 @@ struct LinkClosetRegistrationView: View {
                 AddComparedProductToClosetSheet(
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
-                    recommendedSize: parsedProduct.sizes.sorted { $0.displayOrder < $1.displayOrder }.first
+                    recommendedSize: uniqueSizes(for: parsedProduct).first
                 ) {
                     isShowingSavedAlert = true
                 }
@@ -100,9 +100,11 @@ struct LinkClosetRegistrationView: View {
     @ViewBuilder
     private var parsedProductPreview: some View {
         if let parsedProduct {
+            let sizes = uniqueSizes(for: parsedProduct)
+
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
-                    SectionHeader(title: "불러온 상품", subtitle: "\(parsedProduct.sizes.count)개 사이즈를 찾았습니다.")
+                    SectionHeader(title: "불러온 상품", subtitle: "\(sizes.count)개 사이즈를 찾았습니다.")
 
                     HStack(alignment: .top, spacing: 14) {
                         ProductThumbnailView(
@@ -182,7 +184,6 @@ struct LinkClosetRegistrationView: View {
                 sourceName: parsedInfo.sourceName,
                 sizes: sizes
             )
-            sizes.forEach { $0.product = product }
 
             parsedDetailCategory = parsedInfo.detailCategory
             parsedProduct = product
@@ -198,5 +199,16 @@ struct LinkClosetRegistrationView: View {
         }
 
         return brands.first { $0.normalizedName == normalizedName }
+    }
+
+    private func uniqueSizes(for product: Product) -> [ProductSize] {
+        let sortedSizes = product.sizes.sorted {
+            if $0.displayOrder != $1.displayOrder {
+                return $0.displayOrder < $1.displayOrder
+            }
+            return $0.name < $1.name
+        }
+
+        return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
     }
 }

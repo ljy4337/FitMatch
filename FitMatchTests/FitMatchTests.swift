@@ -201,6 +201,7 @@ struct FitMatchTests {
                   ]
                 }
               ],
+              "imageUrl": "//image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_00_465185_3x4.jpg?width=400",
               "bodyMeasurements": [
                 {
                   "name": "S",
@@ -220,6 +221,33 @@ struct FitMatchTests {
         #expect(sizes.first?.measurements.totalLength == 64)
         #expect(sizes.first?.measurements.chest == 52)
         #expect(sizes.first?.id == ParsedProductSize.stableID(for: "E465185-000|S"))
+    }
+
+    @Test func uniqloSizeAPIParserReturnsNormalizedImageURL() throws {
+        let json = """
+        {
+          "status": "ok",
+          "result": [
+            {
+              "productId": "E465185-000",
+              "imageUrl": "//image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_00_465185_3x4.jpg?width=400",
+              "sizeChart": [
+                {
+                  "name": "M",
+                  "sizeParts": [
+                    { "code": "body-length-back", "name": "전체 길이", "measurements": [{ "value": "66", "unit": "cm" }] }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+        """
+
+        let result = try UniqloSizeAPIParser().parseResult(from: Data(json.utf8))
+
+        #expect(result.imageURLString == "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_00_465185_3x4.jpg?width=400")
+        #expect(result.sizes.map(\.name) == ["M"])
     }
 
     @Test func uniqloJSONLDParserHandlesSingleProductObject() {
