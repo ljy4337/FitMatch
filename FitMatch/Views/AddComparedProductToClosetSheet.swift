@@ -10,7 +10,7 @@ struct AddComparedProductToClosetSheet: View {
     let product: Product
     let productDetailCategory: ClosetDetailCategory
     let recommendedSize: ProductSize?
-    var onSaved: (() -> Void)?
+    var onSaved: ((UserFit) -> Void)?
 
     @State private var step: AddComparedProductStep = .size
     @State private var selectedSizeID: UUID?
@@ -25,7 +25,7 @@ struct AddComparedProductToClosetSheet: View {
         product: Product,
         productDetailCategory: ClosetDetailCategory,
         recommendedSize: ProductSize?,
-        onSaved: (() -> Void)? = nil
+        onSaved: ((UserFit) -> Void)? = nil
     ) {
         self.product = product
         self.productDetailCategory = productDetailCategory
@@ -392,7 +392,7 @@ struct AddComparedProductToClosetSheet: View {
             alertMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
             return
         }
-        onSaved?()
+        onSaved?(item)
         dismiss()
     }
 
@@ -404,6 +404,9 @@ struct AddComparedProductToClosetSheet: View {
 
     private func normalizeSelectedSize() {
         guard let selectedSizeID else {
+            if availableSizes.count == 1 {
+                self.selectedSizeID = availableSizes.first?.id
+            }
             return
         }
 

@@ -44,7 +44,7 @@ struct LinkClosetRegistrationView: View {
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
                     recommendedSize: uniqueSizes(for: parsedProduct).first
-                ) {
+                ) { _ in
                     isShowingSavedAlert = true
                 }
                 .presentationDetents([.large])

@@ -17,15 +17,10 @@ struct CompareFlowSheet: View {
     @State private var productURL = ""
     @State private var errorMessage: String?
     @State private var selectedReferenceItemID: UUID?
-    @State private var selectedSizeID: UUID?
-    @State private var shouldResumeCompareAfterRegistration = true
-    @State private var showsSharedProductRegistrationCard = false
-    @State private var registrationBrandName = ""
-    @State private var registrationProductName = ""
-    @State private var registrationCategory: ClothingCategory = .top
-    @State private var registrationDetailCategory: ClosetDetailCategory = .shortSleeve
-    @State private var registerAsBasis = false
     @State private var statusMessage: String?
+    @State private var productForClosetRegistration: Product?
+    @State private var registrationContext: CompareProductRegistrationContext?
+    @State private var isShowingProductRegistration = false
     @FocusState private var isURLFocused: Bool
 
     init(initialURL: String? = nil, recentClipboardCandidate: SmartClipboardCandidate? = nil) {
@@ -45,14 +40,6 @@ struct CompareFlowSheet: View {
                     loadingContent
                 case .missingReference:
                     missingReferenceContent
-                case .askRegisterSharedProduct:
-                    askRegisterSharedProductContent
-                case .registerMethod:
-                    registerMethodContent
-                case .sizeSelection:
-                    sizeSelectionContent
-                case .registrationReview:
-                    registrationReviewContent
                 case .closetSelection:
                     closetSelectionContent
                 case .confirmReference:
@@ -77,8 +64,18 @@ struct CompareFlowSheet: View {
                 await startCompare(with: initialURL)
             }
         }
-        .onChange(of: registrationCategory) { _, _ in
-            normalizeRegistrationDetailCategory()
+        .sheet(isPresented: $isShowingProductRegistration) {
+            if let productForClosetRegistration {
+                AddComparedProductToClosetSheet(
+                    product: productForClosetRegistration,
+                    productDetailCategory: viewModel.detailCategory,
+                    recommendedSize: nil
+                ) { savedItem in
+                    handleRegisteredClosetItem(savedItem)
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
         }
     }
 }
@@ -138,8 +135,7 @@ private extension CompareFlowSheet {
 
             VStack(spacing: 11) {
                 PrimaryButton(title: "상품 등록", systemImage: "plus") {
-                    prepareRegistration(product: currentProduct)
-                    setStep(.askRegisterSharedProduct)
+                    presentProductRegistration(context: .missingReference)
                 }
 
                 SecondaryButton(title: "옷장 속 다른 옷과 비교", systemImage: "list.bullet.rectangle") {
@@ -150,221 +146,6 @@ private extension CompareFlowSheet {
             }
         }
         .padding(.top, 12)
-    }
-
-    var askRegisterSharedProductContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            sheetHeader(
-                title: "방금 보신 상품을 내 옷으로 등록하시겠습니까?",
-                subtitle: "이미 가지고 있는 옷이면 사이즈를 선택해 내 옷장에 저장할 수 있습니다."
-            )
-
-            if let product = currentProduct {
-                productCompactCard(product)
-            }
-
-            FitMatchCard {
-                VStack(alignment: .leading, spacing: 12) {
-                    Button {
-                        shouldResumeCompareAfterRegistration = false
-                        prepareRegistration(product: currentProduct)
-                        setStep(.sizeSelection)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.title3.weight(.semibold))
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("예")
-                                    .font(.headline.weight(.bold))
-                                Text("방금 공유한 상품을 내 옷장에 등록합니다.")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                        }
-                        .foregroundStyle(.primary)
-                        .padding(14)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        shouldResumeCompareAfterRegistration = true
-                        showsSharedProductRegistrationCard = false
-                        setStep(.registerMethod)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.title3.weight(.semibold))
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("아니오")
-                                    .font(.headline.weight(.bold))
-                                Text("보유 중인 다른 상품을 등록합니다.")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                        }
-                        .foregroundStyle(.primary)
-                        .padding(14)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            Button("다음에 하기") {
-                dismiss()
-            }
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity)
-            .frame(height: 42)
-        }
-    }
-
-    var registerMethodContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            sheetHeader(title: "상품 등록", subtitle: "내 옷장에 등록하고 비교에 활용하세요.")
-
-            if let product = currentProduct, showsSharedProductRegistrationCard {
-                FitMatchCard {
-                    VStack(alignment: .leading, spacing: 15) {
-                        Text("최근 복사한 상품")
-                            .font(.headline.weight(.bold))
-
-                        productCompactRow(product: product)
-
-                        Text("사이즈를 선택하면 실측 정보를 자동으로 불러옵니다.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        PrimaryButton(title: "이 상품으로 등록", systemImage: "plus") {
-                            prepareRegistration(product: product)
-                            setStep(.sizeSelection)
-                        }
-                    }
-                }
-            }
-
-            FitMatchCard {
-                VStack(spacing: 10) {
-                    SecondaryButton(title: "다른 상품 링크 입력", systemImage: "link") {
-                        productURL = ""
-                        viewModel.productURL = ""
-                        setStep(.start)
-                    }
-
-                    SecondaryButton(title: "직접 입력하기", systemImage: "square.and.pencil") {
-                        statusMessage = "직접 입력은 내 옷장 화면의 추가하기에서 사용할 수 있습니다."
-                    }
-                }
-            }
-
-            if let statusMessage {
-                Text(statusMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            }
-        }
-    }
-
-    var sizeSelectionContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            sheetHeader(title: "어떤 사이즈를 가지고 있나요?", subtitle: "내 옷장에 등록할 사이즈를 선택하세요.")
-
-            if let product = currentProduct {
-                productCompactCard(product)
-            }
-
-            FitMatchCard {
-                if sortedSizes.isEmpty {
-                    Text("불러온 사이즈표가 없습니다.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ProductSizeSelectionGrid(
-                        sizes: sortedSizes,
-                        selectedSizeID: $selectedSizeID
-                    )
-                }
-            }
-
-            PrimaryButton(title: "다음", systemImage: "chevron.right") {
-                setStep(.registrationReview)
-            }
-            .disabled(selectedSize == nil)
-            .opacity(selectedSize == nil ? 0.35 : 1)
-        }
-    }
-
-    var registrationReviewContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            if let product = currentProduct {
-                FitMatchCard {
-                    VStack(alignment: .leading, spacing: 16) {
-                        ProductThumbnailView(
-                            imageURLString: product.imageURLString,
-                            category: product.category,
-                            width: 300,
-                            height: 240,
-                            cornerRadius: 20
-                        )
-                        .frame(maxWidth: .infinity)
-
-                        Text("이 옷을 내 옷장에 등록합니다.")
-                            .font(.title3.weight(.black))
-                    }
-                }
-            }
-
-            FitMatchCard {
-                VStack(alignment: .leading, spacing: 16) {
-                    SectionHeader(title: "등록 정보")
-
-                    TextField("브랜드", text: $registrationBrandName)
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    TextField("상품명", text: $registrationProductName)
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    Picker("카테고리", selection: $registrationCategory) {
-                        ForEach(availableCategories) { category in
-                            Text(category.rawValue).tag(category)
-                        }
-                    }
-
-                    Picker("상세 카테고리", selection: $registrationDetailCategory) {
-                        ForEach(availableDetailCategories) { detail in
-                            Text(detail.rawValue).tag(detail)
-                        }
-                    }
-
-                    Picker("사이즈", selection: $selectedSizeID) {
-                        Text("선택해 주세요").tag(UUID?.none)
-                        ForEach(sortedSizes) { size in
-                            Text(size.name.displaySizeNameForCompareFlow).tag(Optional(size.id))
-                        }
-                    }
-
-                    Toggle("기준 옷으로 등록", isOn: $registerAsBasis)
-                        .font(.subheadline.weight(.semibold))
-                }
-            }
-
-            selectedMeasurementSummary
-
-            PrimaryButton(title: "내 옷장에 저장", systemImage: "checkmark") {
-                saveRegisteredProductAndResumeCompare()
-            }
-            .disabled(!canSaveRegistration)
-            .opacity(canSaveRegistration ? 1 : 0.35)
-        }
     }
 
     var closetSelectionContent: some View {
@@ -379,11 +160,9 @@ private extension CompareFlowSheet {
                         Text("상품을 먼저 등록하면 비교할 수 있습니다.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                PrimaryButton(title: "상품 등록", systemImage: "plus") {
-                    prepareRegistration(product: currentProduct)
-                    showsSharedProductRegistrationCard = true
-                    setStep(.askRegisterSharedProduct)
-                }
+                        PrimaryButton(title: "상품 등록", systemImage: "plus") {
+                            presentProductRegistration(context: .missingReference)
+                        }
                     }
                 }
             } else {
@@ -479,10 +258,7 @@ private extension CompareFlowSheet {
                 }
 
                 SecondaryButton(title: "내 옷장에 추가", systemImage: "plus") {
-                    shouldResumeCompareAfterRegistration = false
-                    showsSharedProductRegistrationCard = true
-                    prepareRegistration(product: history.product)
-                    setStep(.sizeSelection)
+                    presentProductRegistration(product: history.product, context: .result)
                 }
             }
         }
@@ -668,48 +444,6 @@ private extension CompareFlowSheet {
         makeProduct(insertBrandIfNeeded: false)
     }
 
-    var sortedSizes: [ProductSize] {
-        guard let product = currentProduct else {
-            return []
-        }
-
-        let sortedSizes = product.sizes.sorted {
-            if $0.displayOrder != $1.displayOrder {
-                return $0.displayOrder < $1.displayOrder
-            }
-            return $0.name < $1.name
-        }
-
-        return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
-    }
-
-    var selectedSize: ProductSize? {
-        guard let selectedSizeID else { return nil }
-        return sortedSizes.first { $0.id == selectedSizeID }
-    }
-
-    var sizeSelectionGridColumns: [GridItem] {
-        [
-            GridItem(.flexible(minimum: 96), spacing: 12),
-            GridItem(.flexible(minimum: 96), spacing: 12)
-        ]
-    }
-
-    var availableCategories: [ClothingCategory] {
-        [.top, .bottom, .outer, .dress, .underwear, .shoes, .accessory]
-    }
-
-    var availableDetailCategories: [ClosetDetailCategory] {
-        ClosetDetailCategory.options(for: registrationCategory, gender: .unisex)
-            .filter { $0 != .other }
-    }
-
-    var canSaveRegistration: Bool {
-        selectedSize != nil
-            && !registrationBrandName.trimmedForCompareFlow.isEmpty
-            && !registrationProductName.trimmedForCompareFlow.isEmpty
-    }
-
     var sameDetailItems: [UserFit] {
         let targetGroup = viewModel.category.serviceGroup
         return userFits.filter {
@@ -755,30 +489,6 @@ private extension CompareFlowSheet {
         }
     }
 
-    @ViewBuilder
-    var selectedMeasurementSummary: some View {
-        if let selectedSize {
-            FitMatchCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(title: "선택한 사이즈 실측", subtitle: "\(selectedSize.name.displaySizeNameForCompareFlow) 기준으로 자동 저장됩니다.")
-
-                    VStack(spacing: 11) {
-                        ForEach(visibleMeasurementKinds(for: selectedSize), id: \.id) { kind in
-                            HStack {
-                                Text(kind.title)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text(formatMeasurement(selectedSize.measurements.value(for: kind)))
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 private extension CompareFlowSheet {
@@ -877,82 +587,39 @@ private extension CompareFlowSheet {
         }
     }
 
-    func saveRegisteredProductAndResumeCompare() {
-        guard let product = currentProduct, let selectedSize else { return }
-
-        if isDuplicate(size: selectedSize, product: product) {
-            statusMessage = "이미 내 옷장에 등록된 사이즈입니다."
-            return
-        }
-
-        let item = UserFit(
-            sourceType: product.sourceType,
-            sourceName: product.sourceDisplayName,
-            brandName: registrationBrandName.trimmedForCompareFlow,
-            gender: .unisex,
-            productName: registrationProductName.trimmedForCompareFlow,
-            category: registrationCategory.serviceGroup,
-            detailCategory: registrationDetailCategory,
-            sizeName: selectedSize.name.displaySizeNameForCompareFlow,
-            measurements: selectedSize.measurements,
-            fitMemo: "상품 링크에서 추가",
-            fitPreference: .regular,
-            satisfaction: 0,
-            isRepresentative: registerAsBasis,
-            sourceProduct: product,
-            sourceProductSize: selectedSize
-        )
-
-        if registerAsBasis {
-            userFits
-                .filter { $0.detailCategory == registrationDetailCategory && $0.isRepresentative }
-                .forEach {
-                    $0.isRepresentative = false
-                    $0.updatedAt = Date()
-                }
-        }
-
-        modelContext.insert(item)
-        do {
-            try modelContext.save()
-        } catch {
-            statusMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
-            return
-        }
-        if !shouldResumeCompareAfterRegistration || isCurrentComparedProduct(product) {
-            statusMessage = "내 옷장에 추가했어요."
-            print("[CompareFlowSheet] registered same shared product, skip self comparison")
-            setStep(.registerMethod)
-            return
-        }
-
-        statusMessage = "\(registrationDetailCategory.rawValue)를 등록했어요. 이제 이 상품과 비교할게요."
-        print("[CompareFlowSheet] registered closet item, resume compare: \(item.displayName)")
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            calculateAndSaveTemporaryRecommendation(selectedReferenceItem: item)
-        }
-    }
-
-    func prepareRegistration(product: Product?) {
-        showsSharedProductRegistrationCard = product != nil
-        registrationBrandName = product?.brand?.name ?? viewModel.brand
-        registrationProductName = product?.name ?? viewModel.productName
-        registrationCategory = viewModel.category.serviceGroup
-        registrationDetailCategory = viewModel.detailCategory
-        let sizes = product.map(uniqueSizes(for:)) ?? []
-        selectedSizeID = sizes.count == 1 ? sizes.first?.id : nil
-        registerAsBasis = false
-        statusMessage = nil
-        normalizeRegistrationDetailCategory()
-    }
-
     func makeProduct(insertBrandIfNeeded: Bool) -> Product? {
         let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
         if insertBrandIfNeeded, let brand, existingBrand(named: brand.name) == nil {
             modelContext.insert(brand)
         }
         return viewModel.makeProductForClosetRegistration(brand: brand)
+    }
+
+    func presentProductRegistration(product: Product? = nil, context: CompareProductRegistrationContext) {
+        guard let product = product ?? currentProduct else {
+            errorMessage = "상품 정보를 다시 불러와 주세요."
+            setStep(.error)
+            return
+        }
+
+        productForClosetRegistration = product
+        registrationContext = context
+        isShowingProductRegistration = true
+    }
+
+    func handleRegisteredClosetItem(_ item: UserFit) {
+        let context = registrationContext
+        productForClosetRegistration = nil
+        registrationContext = nil
+        statusMessage = "내 옷장에 추가했어요."
+
+        switch context {
+        case .missingReference:
+            selectedReferenceItemID = item.id
+            setStep(.confirmReference)
+        case .result, .none:
+            break
+        }
     }
 
     func existingBrand(named name: String) -> Brand? {
@@ -993,68 +660,11 @@ private extension CompareFlowSheet {
         return lhsBrand == rhsBrand && lhs.name.normalizedBrandName == rhs.name.normalizedBrandName
     }
 
-    func isCurrentComparedProduct(_ product: Product) -> Bool {
-        if let sourceURL = normalizedURL(product.sourceURLString),
-           let currentURL = normalizedURL(productURL) ?? normalizedURL(viewModel.productURL) {
-            return sourceURL == currentURL
-        }
-
-        return product.name.normalizedBrandName == viewModel.productName.normalizedBrandName
-            && (product.brand?.normalizedName ?? "") == viewModel.brand.normalizedBrandName
-    }
-
-    func isDuplicate(size: ProductSize, product: Product) -> Bool {
-        userFits.contains { item in
-            if item.sourceProductSize?.id == size.id {
-                return true
-            }
-
-            if let sourceURL = product.sourceURLString,
-               let itemURL = item.sourceProduct?.sourceURLString,
-               normalizedURL(sourceURL) == normalizedURL(itemURL),
-               item.sizeName == size.name.displaySizeNameForCompareFlow {
-                return true
-            }
-
-            if let productCode = product.productCode,
-               let itemProductCode = item.sourceProduct?.productCode,
-               productCode == itemProductCode,
-               item.sizeName == size.name.displaySizeNameForCompareFlow {
-                return true
-            }
-
-            return false
-        }
-    }
-
-    func normalizeRegistrationDetailCategory() {
-        if !availableDetailCategories.contains(registrationDetailCategory) {
-            registrationDetailCategory = availableDetailCategories.first ?? viewModel.detailCategory
-        }
-    }
-
-    func uniqueSizes(for product: Product) -> [ProductSize] {
-        let sortedSizes = product.sizes.sorted {
-            if $0.displayOrder != $1.displayOrder {
-                return $0.displayOrder < $1.displayOrder
-            }
-            return $0.name < $1.name
-        }
-
-        return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
-    }
-
     func setStep(_ newStep: CompareFlowStep) {
         print("[CompareFlowSheet] step -> \(newStep.logName)")
         withAnimation(.snappy(duration: 0.22)) {
             step = newStep
         }
-    }
-
-    func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {
-        registrationCategory
-            .measurementKinds(detailCategory: registrationDetailCategory, gender: .unisex)
-            .filter { size.measurements.value(for: $0) > 0 }
     }
 
     func measurementKinds(for history: RecommendationHistory) -> [MeasurementKind] {
@@ -1169,10 +779,6 @@ private enum CompareFlowStep: Equatable {
     case start
     case loading
     case missingReference
-    case askRegisterSharedProduct
-    case registerMethod
-    case sizeSelection
-    case registrationReview
     case closetSelection
     case confirmReference
     case result(RecommendationHistory)
@@ -1187,16 +793,17 @@ private enum CompareFlowStep: Equatable {
         case .start: return "start"
         case .loading: return "loading"
         case .missingReference: return "missingReference"
-        case .askRegisterSharedProduct: return "askRegisterSharedProduct"
-        case .registerMethod: return "registerMethod"
-        case .sizeSelection: return "sizeSelection"
-        case .registrationReview: return "registrationReview"
         case .closetSelection: return "closetSelection"
         case .confirmReference: return "confirmReference"
         case .result: return "result"
         case .error: return "error"
         }
     }
+}
+
+private enum CompareProductRegistrationContext {
+    case missingReference
+    case result
 }
 
 private enum CompareLoadingState {
