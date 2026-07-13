@@ -13,7 +13,7 @@ struct AddComparedProductToClosetSheet: View {
     var onSaved: (() -> Void)?
 
     @State private var step: AddComparedProductStep = .size
-    @State private var selectedSizeName: String?
+    @State private var selectedSizeID: UUID?
     @State private var brandName: String
     @State private var productName: String
     @State private var selectedCategory: ClothingCategory
@@ -47,11 +47,11 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private var selectedSize: ProductSize? {
-        guard let selectedSizeName else {
+        guard let selectedSizeID else {
             return nil
         }
 
-        return sortedSizes.first { $0.name == selectedSizeName }
+        return sortedSizes.first { $0.id == selectedSizeID }
     }
 
     private var sizeSelectionGridColumns: [GridItem] {
@@ -127,7 +127,7 @@ struct AddComparedProductToClosetSheet: View {
                     } else {
                         ProductSizeSelectionGrid(
                             sizes: sortedSizes,
-                            selectedSizeName: $selectedSizeName
+                            selectedSizeID: $selectedSizeID
                         )
                     }
                 }
@@ -194,7 +194,7 @@ struct AddComparedProductToClosetSheet: View {
                     RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
                         ForEach(sortedSizes) { size in
                             Button(size.name.displaySizeName) {
-                                selectedSizeName = size.name
+                                selectedSizeID = size.id
                             }
                         }
                     }

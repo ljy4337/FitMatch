@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProductSizeSelectionGrid: View {
     let sizes: [ProductSize]
-    @Binding var selectedSizeName: String?
+    @Binding var selectedSizeID: UUID?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -29,7 +29,7 @@ struct ProductSizeSelectionGrid: View {
     private var options: [ProductSizeSelectionOption] {
         sizes.enumerated().map { index, size in
             ProductSizeSelectionOption(
-                id: "\(index)-\(size.displayOrder)-\(size.name)",
+                id: size.id,
                 name: size.name,
                 displayName: size.name.fitMatchDisplaySizeName
             )
@@ -37,10 +37,10 @@ struct ProductSizeSelectionGrid: View {
     }
 
     private func sizeButton(_ option: ProductSizeSelectionOption) -> some View {
-        let isSelected = selectedSizeName == option.name
+        let isSelected = selectedSizeID == option.id
 
         return Button {
-            selectedSizeName = option.name
+            selectedSizeID = option.id
         } label: {
             HStack(spacing: 8) {
                 Text(option.displayName)
@@ -72,7 +72,7 @@ struct ProductSizeSelectionGrid: View {
 }
 
 private struct ProductSizeSelectionOption: Identifiable {
-    let id: String
+    let id: UUID
     let name: String
     let displayName: String
 }

@@ -9,6 +9,7 @@ struct RecommendView: View {
             VStack(alignment: .leading, spacing: 20) {
                 TabBarScrollSentinel(tab: .recommend)
                     .frame(height: 1)
+                    .hidesBottomTabBarOnScroll(tab: .recommend)
 
                 if isTopChromeVisible {
                     FitMatchNavigationHeader(onLogout: onLogout)

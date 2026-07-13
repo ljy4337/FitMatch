@@ -17,7 +17,7 @@ struct CompareFlowSheet: View {
     @State private var productURL = ""
     @State private var errorMessage: String?
     @State private var selectedReferenceItemID: UUID?
-    @State private var selectedSizeName: String?
+    @State private var selectedSizeID: UUID?
     @State private var shouldResumeCompareAfterRegistration = true
     @State private var showsSharedProductRegistrationCard = false
     @State private var registrationBrandName = ""
@@ -286,7 +286,7 @@ private extension CompareFlowSheet {
                 } else {
                     ProductSizeSelectionGrid(
                         sizes: sortedSizes,
-                        selectedSizeName: $selectedSizeName
+                        selectedSizeID: $selectedSizeID
                     )
                 }
             }
@@ -346,11 +346,11 @@ private extension CompareFlowSheet {
                     }
 
                     Picker("사이즈", selection: Binding(
-                        get: { selectedSizeName ?? sortedSizes.first?.name ?? "" },
-                        set: { selectedSizeName = $0 }
+                        get: { selectedSizeID ?? sortedSizes.first?.id ?? UUID() },
+                        set: { selectedSizeID = $0 }
                     )) {
                         ForEach(sortedSizes) { size in
-                            Text(size.name.displaySizeNameForCompareFlow).tag(size.name)
+                            Text(size.name.displaySizeNameForCompareFlow).tag(size.id)
                         }
                     }
 
@@ -680,8 +680,8 @@ private extension CompareFlowSheet {
     }
 
     var selectedSize: ProductSize? {
-        guard let selectedSizeName else { return nil }
-        return sortedSizes.first { $0.name == selectedSizeName }
+        guard let selectedSizeID else { return nil }
+        return sortedSizes.first { $0.id == selectedSizeID }
     }
 
     var sizeSelectionGridColumns: [GridItem] {
@@ -936,7 +936,7 @@ private extension CompareFlowSheet {
         registrationProductName = product?.name ?? viewModel.productName
         registrationCategory = viewModel.category.serviceGroup
         registrationDetailCategory = viewModel.detailCategory
-        selectedSizeName = nil
+        selectedSizeID = nil
         registerAsBasis = false
         statusMessage = nil
         normalizeRegistrationDetailCategory()

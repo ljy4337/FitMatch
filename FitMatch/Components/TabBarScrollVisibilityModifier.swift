@@ -27,6 +27,14 @@ final class TabBarVisibilityController: ObservableObject {
         release(tab: tab, reason: reason, source: source)
     }
 
+    func hideScroll(tab: AppTab? = nil, source: String = "") {
+        hide(tab: tab, reason: .scrolling, source: source)
+    }
+
+    func showScroll(tab: AppTab? = nil, source: String = "") {
+        release(tab: tab, reason: .scrolling, source: source)
+    }
+
     func release(tab: AppTab? = nil, reason: TabBarHiddenReason, source: String = "") {
         guard hiddenReasons.contains(reason) else { return }
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
@@ -56,11 +64,12 @@ private struct TabBarScrollCoordinateSpaceModifier: ViewModifier {
     }
 }
 
-private struct TabBarScrollContentObserverModifier: ViewModifier {
+private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     let tab: AppTab
     @State private var lastOffset: CGFloat?
     @State private var hideAccumulation: CGFloat = 0
+    @State private var showAccumulation: CGFloat = 0
 
     func body(content: Content) -> some View {
         content
@@ -79,12 +88,14 @@ private struct TabBarScrollContentObserverModifier: ViewModifier {
             .onDisappear {
                 lastOffset = nil
                 hideAccumulation = 0
-                tabBarVisibilityController.release(tab: tab, reason: .scrolling, source: "screen disappear")
+                showAccumulation = 0
+                tabBarVisibilityController.showScroll(tab: tab, source: "screen disappear")
             }
             .onAppear {
                 lastOffset = nil
                 hideAccumulation = 0
-                tabBarVisibilityController.release(tab: tab, reason: .scrolling, source: "screen appear")
+                showAccumulation = 0
+                tabBarVisibilityController.showScroll(tab: tab, source: "screen appear")
             }
     }
 
@@ -99,18 +110,23 @@ private struct TabBarScrollContentObserverModifier: ViewModifier {
 
         if currentOffset >= -2 {
             hideAccumulation = 0
-            tabBarVisibilityController.release(tab: tab, reason: .scrolling, source: "top")
+            showAccumulation = 0
+            tabBarVisibilityController.showScroll(tab: tab, source: "top")
             return
         }
 
         if delta < 0 {
             hideAccumulation += abs(delta)
-            if hideAccumulation >= 40 {
-                tabBarVisibilityController.hide(tab: tab, reason: .scrolling, source: "scroll down")
+            showAccumulation = 0
+            if hideAccumulation >= 12 {
+                tabBarVisibilityController.hideScroll(tab: tab, source: "scroll down")
             }
-        } else if delta > 12 {
+        } else if delta > 0 {
+            showAccumulation += delta
             hideAccumulation = 0
-            tabBarVisibilityController.release(tab: tab, reason: .scrolling, source: "scroll up")
+            if showAccumulation >= 12 {
+                tabBarVisibilityController.showScroll(tab: tab, source: "scroll up")
+            }
         }
     }
 }
@@ -125,7 +141,6 @@ struct TabBarScrollSentinel: View {
     var body: some View {
         Color.clear
             .frame(height: 1)
-            .tracksTabBarVisibilityOnScroll(tab)
     }
 }
 
@@ -144,8 +159,12 @@ extension View {
         modifier(TabBarScrollCoordinateSpaceModifier(tab: tab))
     }
 
+    func hidesBottomTabBarOnScroll(tab: AppTab) -> some View {
+        modifier(BottomTabBarScrollVisibilityModifier(tab: tab))
+    }
+
     func tracksTabBarVisibilityOnScroll(_ tab: AppTab) -> some View {
-        modifier(TabBarScrollContentObserverModifier(tab: tab))
+        hidesBottomTabBarOnScroll(tab: tab)
     }
 
     func hidesTabBarOnScroll() -> some View {

@@ -110,6 +110,7 @@ struct RecommendationHistoryView: View {
                 .listRowSeparator(.hidden)
                 .listRowInsets(.init())
                 .frame(height: 1)
+                .hidesBottomTabBarOnScroll(tab: .history)
 
             ForEach(filteredHistories) { history in
                 HistoryCard(
@@ -153,6 +154,7 @@ struct RecommendationHistoryView: View {
         ScrollView {
             VStack(spacing: 0) {
                 TabBarScrollSentinel(tab: .history)
+                    .hidesBottomTabBarOnScroll(tab: .history)
 
                 LazyVGrid(columns: gridColumns, spacing: 14) {
                     ForEach(filteredHistories) { history in

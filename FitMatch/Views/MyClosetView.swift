@@ -158,6 +158,7 @@ struct MyClosetView: View {
                 .listRowSeparator(.hidden)
                 .listRowInsets(.init())
                 .frame(height: 1)
+                .hidesBottomTabBarOnScroll(tab: .my)
 
             ForEach(filteredItems) { item in
                 NavigationLink {
@@ -199,6 +200,7 @@ struct MyClosetView: View {
         ScrollView {
             VStack(spacing: 0) {
                 TabBarScrollSentinel(tab: .my)
+                    .hidesBottomTabBarOnScroll(tab: .my)
 
                 LazyVGrid(columns: gridColumns, spacing: 14) {
                     ForEach(filteredItems) { item in
