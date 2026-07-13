@@ -31,6 +31,7 @@ struct HomeView: View {
             .padding(.bottom, 112)
         }
         .background(Color(.systemGroupedBackground))
+        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .hidesBottomTabBarOnScroll(tab: .home)
         .hidesTopChromeOnScroll($isTopChromeVisible)
         .navigationBarTitleDisplayMode(.inline)

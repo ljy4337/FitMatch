@@ -30,16 +30,14 @@ struct RecommendationHistoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             if isTopChromeVisible {
-                VStack(spacing: 0) {
-                    FitMatchNavigationHeader(onLogout: onLogout)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 18)
-                        .padding(.bottom, 12)
-
-                    historyControls
-                }
+                FitMatchNavigationHeader(onLogout: onLogout)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    .padding(.bottom, 12)
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
+
+            historyControls
 
             if filteredHistories.isEmpty {
                 EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
@@ -50,6 +48,7 @@ struct RecommendationHistoryView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
+        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
