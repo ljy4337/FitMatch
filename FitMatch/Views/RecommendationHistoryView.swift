@@ -106,11 +106,6 @@ struct RecommendationHistoryView: View {
 
     private var historyList: some View {
         List {
-            TabBarScrollSentinel(tab: .history)
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init())
-                .frame(height: 1)
-
             ForEach(filteredHistories) { history in
                 HistoryCard(
                     history: history,
@@ -145,7 +140,6 @@ struct RecommendationHistoryView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .fitMatchTabScrollCoordinateSpace(.history)
         .hidesBottomTabBarOnScroll(tab: .history)
         .hidesTopChromeOnScroll($isTopChromeVisible)
     }
@@ -153,8 +147,6 @@ struct RecommendationHistoryView: View {
     private var historyGrid: some View {
         ScrollView {
             VStack(spacing: 0) {
-                TabBarScrollSentinel(tab: .history)
-
                 LazyVGrid(columns: gridColumns, spacing: 14) {
                     ForEach(filteredHistories) { history in
                         HistoryGridCard(
@@ -175,7 +167,6 @@ struct RecommendationHistoryView: View {
                 .padding(.bottom, 122)
             }
         }
-        .fitMatchTabScrollCoordinateSpace(.history)
         .hidesBottomTabBarOnScroll(tab: .history)
         .hidesTopChromeOnScroll($isTopChromeVisible)
     }

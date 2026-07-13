@@ -154,11 +154,6 @@ struct MyClosetView: View {
 
     private var closetList: some View {
         List {
-            TabBarScrollSentinel(tab: .my)
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init())
-                .frame(height: 1)
-
             ForEach(filteredItems) { item in
                 NavigationLink {
                     ClosetItemDetailView(item: item)
@@ -191,7 +186,6 @@ struct MyClosetView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .fitMatchTabScrollCoordinateSpace(.my)
         .hidesBottomTabBarOnScroll(tab: .my)
         .hidesTopChromeOnScroll($isTopChromeVisible)
     }
@@ -199,8 +193,6 @@ struct MyClosetView: View {
     private var closetGrid: some View {
         ScrollView {
             VStack(spacing: 0) {
-                TabBarScrollSentinel(tab: .my)
-
                 LazyVGrid(columns: gridColumns, spacing: 14) {
                     ForEach(filteredItems) { item in
                         NavigationLink {
@@ -222,7 +214,6 @@ struct MyClosetView: View {
                 .padding(.bottom, 122)
             }
         }
-        .fitMatchTabScrollCoordinateSpace(.my)
         .hidesBottomTabBarOnScroll(tab: .my)
         .hidesTopChromeOnScroll($isTopChromeVisible)
     }

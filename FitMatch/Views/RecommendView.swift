@@ -7,9 +7,6 @@ struct RecommendView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                TabBarScrollSentinel(tab: .recommend)
-                    .frame(height: 1)
-
                 if isTopChromeVisible {
                     FitMatchNavigationHeader(onLogout: onLogout)
                         .transition(.move(edge: .top).combined(with: .opacity))
@@ -62,7 +59,6 @@ struct RecommendView: View {
             .padding(.bottom, 112)
         }
         .background(Color(.systemGroupedBackground))
-        .fitMatchTabScrollCoordinateSpace(.recommend)
         .hidesBottomTabBarOnScroll(tab: .recommend)
         .hidesTopChromeOnScroll($isTopChromeVisible)
         .navigationTitle("")

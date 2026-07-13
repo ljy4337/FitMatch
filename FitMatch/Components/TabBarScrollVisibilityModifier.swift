@@ -48,95 +48,65 @@ final class TabBarVisibilityController: ObservableObject {
     }
 }
 
-struct TabBarScrollOffsetPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
-private struct TabBarScrollCoordinateSpaceModifier: ViewModifier {
-    let tab: AppTab
-
-    func body(content: Content) -> some View {
-        content.coordinateSpace(name: coordinateSpaceName(for: tab))
-    }
-}
-
 private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     let tab: AppTab
-    @State private var lastOffset: CGFloat?
     @State private var hideAccumulation: CGFloat = 0
     @State private var showAccumulation: CGFloat = 0
 
     func body(content: Content) -> some View {
         content
-            .onPreferenceChange(TabBarScrollOffsetPreferenceKey.self) { currentOffset in
-                handleOffset(currentOffset)
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { previousOffset, currentOffset in
+                handleScrollOffset(previous: previousOffset, current: currentOffset)
             }
             .onDisappear {
-                lastOffset = nil
                 hideAccumulation = 0
                 showAccumulation = 0
                 tabBarVisibilityController.showScroll(tab: tab, source: "screen disappear")
             }
             .onAppear {
-                lastOffset = nil
                 hideAccumulation = 0
                 showAccumulation = 0
                 tabBarVisibilityController.showScroll(tab: tab, source: "screen appear")
             }
     }
 
-    private func handleOffset(_ currentOffset: CGFloat) {
-        guard currentOffset.isFinite else { return }
+    private func handleScrollOffset(previous previousOffset: CGFloat, current currentOffset: CGFloat) {
+        guard previousOffset.isFinite, currentOffset.isFinite else { return }
 
-        let previousOffset = lastOffset ?? currentOffset
         let delta = currentOffset - previousOffset
-        lastOffset = currentOffset
 
-        print("[TabBarScroll] tab=\(tab.logName) currentOffset=\(String(format: "%.1f", currentOffset)) delta=\(String(format: "%.1f", delta))")
+        print("[TabBarScroll] tab=\(tab.logName) previousOffset=\(String(format: "%.1f", previousOffset)) currentOffset=\(String(format: "%.1f", currentOffset)) delta=\(String(format: "%.1f", delta))")
 
-        if currentOffset >= -2 {
-            hideAccumulation = 0
-            showAccumulation = 0
-            tabBarVisibilityController.showScroll(tab: tab, source: "top")
+        guard abs(delta) >= 1 else {
             return
         }
 
-        if delta < 0 {
-            hideAccumulation += abs(delta)
+        if currentOffset <= 2 {
+            hideAccumulation = 0
+            showAccumulation = 0
+            print("[TabBarScroll] action=showScroll source=native scroll top tab=\(tab.logName)")
+            tabBarVisibilityController.showScroll(tab: tab, source: "native scroll top")
+            return
+        }
+
+        if delta > 0 {
+            hideAccumulation += delta
             showAccumulation = 0
             if hideAccumulation >= 12 {
-                tabBarVisibilityController.hideScroll(tab: tab, source: "scroll down")
+                print("[TabBarScroll] action=hideScroll source=native scroll down tab=\(tab.logName)")
+                tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll down")
             }
-        } else if delta > 0 {
-            showAccumulation += delta
+        } else {
+            showAccumulation += abs(delta)
             hideAccumulation = 0
             if showAccumulation >= 12 {
-                tabBarVisibilityController.showScroll(tab: tab, source: "scroll up")
+                print("[TabBarScroll] action=showScroll source=native scroll up tab=\(tab.logName)")
+                tabBarVisibilityController.showScroll(tab: tab, source: "native scroll up")
             }
         }
-    }
-}
-
-func coordinateSpaceName(for tab: AppTab) -> String {
-    "FitMatchTabScroll-\(tab.logName)"
-}
-
-struct TabBarScrollSentinel: View {
-    let tab: AppTab
-
-    var body: some View {
-        GeometryReader { proxy in
-            Color.clear.preference(
-                key: TabBarScrollOffsetPreferenceKey.self,
-                value: proxy.frame(in: .named(coordinateSpaceName(for: tab))).minY
-            )
-        }
-        .frame(height: 1)
     }
 }
 
@@ -151,10 +121,6 @@ private struct TopChromeScrollVisibilityModifier: ViewModifier {
 }
 
 extension View {
-    func fitMatchTabScrollCoordinateSpace(_ tab: AppTab) -> some View {
-        modifier(TabBarScrollCoordinateSpaceModifier(tab: tab))
-    }
-
     func hidesBottomTabBarOnScroll(tab: AppTab) -> some View {
         modifier(BottomTabBarScrollVisibilityModifier(tab: tab))
     }
