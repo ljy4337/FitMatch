@@ -177,6 +177,7 @@ struct LinkClosetRegistrationView: View {
                 productCode: parsedInfo.productID,
                 sourceURLString: parsedInfo.canonicalURLString ?? parsedInfo.sourceURL.absoluteString,
                 imageURLString: parsedInfo.imageURLString,
+                metadata: parsedInfo.productMetadata,
                 sourceType: parsedInfo.sourceType,
                 sourceName: parsedInfo.sourceName,
                 sizes: sizes

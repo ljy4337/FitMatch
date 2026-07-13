@@ -23,6 +23,44 @@ struct ParsedProductSize: Identifiable, Equatable {
     var measurements: GarmentMeasurements
 }
 
+extension ParsedProductSize {
+    static func stableID(for sizeName: String) -> UUID {
+        let normalizedName = sizeName
+            .split(separator: "|", omittingEmptySubsequences: false)
+            .map { ParsedProductSizeNormalizer.normalizedSizeKey(for: String($0)) }
+            .joined(separator: "|")
+        let seed = normalizedName.isEmpty ? sizeName : normalizedName
+        let bytes = Array(seed.utf8)
+        var firstHash: UInt64 = 14_695_981_039_346_656_037
+        var secondHash: UInt64 = 10_995_116_282_11
+
+        for byte in bytes {
+            firstHash ^= UInt64(byte)
+            firstHash &*= 1_099_511_628_211
+        }
+
+        for byte in bytes.reversed() {
+            secondHash ^= UInt64(byte)
+            secondHash &*= 1_099_511_628_211
+        }
+
+        var uuidBytes = [UInt8](repeating: 0, count: 16)
+        for index in 0..<8 {
+            uuidBytes[index] = UInt8((firstHash >> UInt64(index * 8)) & 0xff)
+            uuidBytes[index + 8] = UInt8((secondHash >> UInt64(index * 8)) & 0xff)
+        }
+        uuidBytes[6] = (uuidBytes[6] & 0x0f) | 0x50
+        uuidBytes[8] = (uuidBytes[8] & 0x3f) | 0x80
+
+        return UUID(uuid: (
+            uuidBytes[0], uuidBytes[1], uuidBytes[2], uuidBytes[3],
+            uuidBytes[4], uuidBytes[5], uuidBytes[6], uuidBytes[7],
+            uuidBytes[8], uuidBytes[9], uuidBytes[10], uuidBytes[11],
+            uuidBytes[12], uuidBytes[13], uuidBytes[14], uuidBytes[15]
+        ))
+    }
+}
+
 enum ParsedProductSizeNormalizer {
     static func normalizedSizeKey(for name: String) -> String {
         name
@@ -70,6 +108,7 @@ enum ParsedProductSizeNormalizer {
     static func makeProductSizes(from sizes: [ParsedProductSize]) -> [ProductSize] {
         uniqueSizes(sizes).enumerated().map { index, size in
             ProductSize(
+                id: size.id,
                 name: size.name.trimmingCharacters(in: .whitespacesAndNewlines),
                 measurements: size.measurements,
                 displayOrder: index
@@ -94,9 +133,9 @@ enum ProductURLParserError: LocalizedError {
         case .invalidURL:
             return "올바른 상품 URL을 입력해 주세요."
         case .unsupportedURL:
-            return "아직 지원하지 않는 상품 링크입니다. 현재는 무신사 상품 URL을 우선 지원합니다."
+            return "아직 지원하지 않는 상품 링크입니다. 현재는 무신사와 유니클로 상품 URL을 우선 지원합니다."
         case .automaticParsingUnavailable:
-            return "상품 정보를 불러오지 못했습니다. 잠시 후 다시 시도하거나 무신사 상품 URL인지 확인해 주세요."
+            return "상품 정보를 불러오지 못했습니다. 잠시 후 다시 시도하거나 지원 쇼핑몰 상품 URL인지 확인해 주세요."
         }
     }
 }
@@ -112,13 +151,16 @@ struct ProductURLParserPartialError: LocalizedError {
 @MainActor
 struct ProductURLParserService {
     private let musinsaParser: ProductURLParsing
+    private let uniqloParser: ProductURLParsing
     private let genericParser: ProductURLParsing
 
     init(
         musinsaParser: ProductURLParsing? = nil,
+        uniqloParser: ProductURLParsing? = nil,
         genericParser: ProductURLParsing? = nil
     ) {
         self.musinsaParser = musinsaParser ?? MusinsaParser()
+        self.uniqloParser = uniqloParser ?? UniqloParser()
         self.genericParser = genericParser ?? GenericProductParser()
     }
 
@@ -128,7 +170,9 @@ struct ProductURLParserService {
         }
 
         let isMusinsaURL = url.absoluteString.lowercased().contains("musinsa")
-        print("[ProductURLParserService] detectedProvider: \(isMusinsaURL ? "musinsa" : "generic")")
+        let isUniqloURL = uniqloParser.canParse(url)
+        let detectedProvider = isMusinsaURL ? "musinsa" : (isUniqloURL ? "uniqlo" : "generic")
+        print("[ProductURLParserService] detectedProvider: \(detectedProvider)")
 
         if isMusinsaURL {
             do {
@@ -142,6 +186,23 @@ struct ProductURLParserService {
                     return (try await genericParser.parse(from: url)).normalizedSizes()
                 } catch {
                     print("[ProductURLParserService] Generic fallback also failed for Musinsa URL: \(error.localizedDescription)")
+                    throw ProductURLParserError.automaticParsingUnavailable
+                }
+            }
+        }
+
+        if isUniqloURL {
+            do {
+                return (try await uniqloParser.parse(from: url)).normalizedSizes()
+            } catch let partialError as ProductURLParserPartialError {
+                print("[ProductURLParserService] Uniqlo parser partially loaded product info: \(partialError.localizedDescription)")
+                throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
+            } catch {
+                print("[ProductURLParserService] Uniqlo parser failed, falling back to GenericProductParser: \(error.localizedDescription)")
+                do {
+                    return (try await genericParser.parse(from: url)).normalizedSizes()
+                } catch {
+                    print("[ProductURLParserService] Generic fallback also failed for Uniqlo URL: \(error.localizedDescription)")
                     throw ProductURLParserError.automaticParsingUnavailable
                 }
             }
@@ -171,7 +232,7 @@ struct ProductURLParserService {
     }
 
     private func extractedURLString(from text: String) -> String? {
-        let pattern = #"(https?://)?[^\s]*musinsa[^\s]*"#
+        let pattern = #"(https?://)?[^\s]*(musinsa|uniqlo)[^\s]*"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..<text.endIndex, in: text)),
               let range = Range(match.range, in: text) else {

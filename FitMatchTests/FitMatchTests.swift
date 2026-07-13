@@ -84,6 +84,17 @@ struct FitMatchTests {
         #expect(sizes.map { $0.measurements.chest } == [48, 52, 56])
     }
 
+    @Test func parsedProductSizeStableIDUsesProductAndSizeName() {
+        let firstID = ParsedProductSize.stableID(for: "E465185-000|M")
+        let sameID = ParsedProductSize.stableID(for: "E465185-000| M ")
+        let otherProductID = ParsedProductSize.stableID(for: "E422992-066|M")
+        let otherSizeID = ParsedProductSize.stableID(for: "E465185-000|L")
+
+        #expect(firstID == sameID)
+        #expect(firstID != otherProductID)
+        #expect(firstID != otherSizeID)
+    }
+
     @Test func productSizeNormalizerKeepsSelectionIdentityByProductSizeID() {
         let firstID = UUID()
         let secondID = UUID()
@@ -130,6 +141,165 @@ struct FitMatchTests {
 
             print("[MusinsaDeepLinkTest] \(candidate) | canOpenURL=\(canOpen) | open=\(opened)")
         }
+    }
+
+    @Test func uniqloURLResolverExtractsProductAndTwoDigitColor() {
+        let resolver = UniqloURLResolver()
+        let text = "https://www.uniqlo.com/kr/ko/products/E422992?colorDisplayCode=66 krgoods_66_422992_3x4.jpg"
+
+        let productID = resolver.extractProductID(from: text)
+        let colorCode = resolver.extractColorCode(from: text, productID: "E422992", goodsID: "422992")
+
+        #expect(productID == "E422992")
+        #expect(colorCode == "66")
+        #expect(resolver.normalizeAPIColorCode(colorCode ?? "") == "066")
+        #expect(resolver.normalizeImageColorCode(colorCode ?? "") == "66")
+    }
+
+    @Test func uniqloURLResolverPreservesLeadingZeroColor() {
+        let resolver = UniqloURLResolver()
+        let text = "https://www.uniqlo.com/kr/ko/products/E465185?colorDisplayCode=00"
+
+        let productID = resolver.extractProductID(from: text)
+        let colorCode = resolver.extractColorCode(from: text, productID: "E465185", goodsID: "465185")
+
+        #expect(productID == "E465185")
+        #expect(colorCode == "00")
+        #expect(resolver.normalizeAPIColorCode(colorCode ?? "") == "000")
+        #expect(resolver.normalizeImageColorCode(colorCode ?? "") == "00")
+    }
+
+    @Test func uniqloSizeAPIParserUsesSizeChartAndRemovesDuplicateSizeNames() throws {
+        let json = """
+        {
+          "status": "ok",
+          "result": [
+            {
+              "productId": "E465185-000",
+              "sizeChart": [
+                {
+                  "name": "S",
+                  "sizeParts": [
+                    { "code": "body-length-back", "name": "전체 길이", "measurements": [{ "value": "64", "unit": "cm" }] },
+                    { "code": "shoulder-width", "name": "어깨너비", "measurements": [{ "value": "45", "unit": "cm" }] },
+                    { "code": "body-width", "name": "가슴너비", "measurements": [{ "value": "52", "unit": "cm" }] },
+                    { "code": "sleeve-length-cb", "name": "소매", "measurements": [{ "value": "82", "unit": "cm" }] }
+                  ]
+                },
+                {
+                  "name": " S ",
+                  "sizeParts": [
+                    { "code": "body-length-back", "name": "전체 길이", "measurements": [{ "value": "99", "unit": "cm" }] },
+                    { "code": "body-width", "name": "가슴너비", "measurements": [{ "value": "99", "unit": "cm" }] }
+                  ]
+                },
+                {
+                  "name": "M",
+                  "sizeParts": [
+                    { "code": "body-length-back", "name": "전체 길이", "measurements": [{ "value": "66", "unit": "cm" }] },
+                    { "code": "body-width", "name": "가슴너비", "measurements": [{ "value": "54", "unit": "cm" }] }
+                  ]
+                }
+              ],
+              "bodyMeasurements": [
+                {
+                  "name": "S",
+                  "sizeParts": [
+                    { "code": "height", "name": "키", "measurements": [{ "value": "170", "unit": "cm" }] }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+        """
+
+        let sizes = try UniqloSizeAPIParser().parseSizes(from: Data(json.utf8))
+
+        #expect(sizes.map(\.name) == ["S", "M"])
+        #expect(sizes.first?.measurements.totalLength == 64)
+        #expect(sizes.first?.measurements.chest == 52)
+        #expect(sizes.first?.id == ParsedProductSize.stableID(for: "E465185-000|S"))
+    }
+
+    @Test func uniqloJSONLDParserHandlesSingleProductObject() {
+        let html = """
+        <html><head>
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": "라이트 불루 니트 가디건",
+          "brand": { "name": "UNIQLO" },
+          "image": "//image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_00_465185_3x4.jpg?width=400",
+          "offers": { "price": "39900" }
+        }
+        </script>
+        </head></html>
+        """
+        let parser = UniqloProductMetadataParser()
+        let resolved = ResolvedUniqloURL(
+            originalURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E465185?colorDisplayCode=00")!,
+            resolvedURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E465185?colorDisplayCode=00")!,
+            productID: "E465185",
+            goodsID: "465185",
+            apiColorCode: "000",
+            imageColorCode: "00",
+            productIDWithColorCode: "E465185-000",
+            html: html
+        )
+
+        let metadata = parser.parse(resolved: resolved)
+
+        #expect(metadata.productName == "라이트 불루 니트 가디건")
+        #expect(metadata.brandName == "UNIQLO")
+        #expect(metadata.price == 39_900)
+        #expect(metadata.detailCategory == .cardigan)
+        #expect(metadata.imageURLString?.hasPrefix("https://image.uniqlo.com") == true)
+    }
+
+    @Test func uniqloJSONLDParserHandlesArrayAndBreadcrumb() {
+        let html = """
+        <html><head>
+        <script type="application/ld+json">
+        [
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "position": 1, "name": "WOMEN" },
+              { "position": 2, "name": "니트 & 가디건" },
+              { "position": 3, "name": "니트" },
+              { "position": 4, "name": "가디건" },
+              { "position": 5, "name": "수플레얀 가디건" }
+            ]
+          },
+          {
+            "@type": "Product",
+            "name": "수플레얀 가디건",
+            "brand": "유니클로"
+          }
+        ]
+        </script>
+        </head></html>
+        """
+        let parser = UniqloProductMetadataParser()
+        let resolved = ResolvedUniqloURL(
+            originalURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E465185?colorDisplayCode=00")!,
+            resolvedURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E465185?colorDisplayCode=00")!,
+            productID: "E465185",
+            goodsID: "465185",
+            apiColorCode: "000",
+            imageColorCode: "00",
+            productIDWithColorCode: "E465185-000",
+            html: html
+        )
+
+        let metadata = parser.parse(resolved: resolved)
+
+        #expect(metadata.category == .top)
+        #expect(metadata.detailCategory == .cardigan)
+        #expect(metadata.productMetadata.baseCategoryFullPath == "WOMEN > 니트 & 가디건 > 니트 > 가디건")
+        #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
     }
 
     private func parsedSize(_ name: String, chest: Double) -> ParsedProductSize {
