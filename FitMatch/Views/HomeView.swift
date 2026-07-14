@@ -96,7 +96,7 @@ struct HomeView: View {
                     }
 
                     PrimaryButton(title: "바로 비교하기", systemImage: "sparkles") {
-                        onStartCompareLatestURL()
+                        onStartCompareWithURL(recentClipboardCandidate.urlString)
                     }
                 }
             }

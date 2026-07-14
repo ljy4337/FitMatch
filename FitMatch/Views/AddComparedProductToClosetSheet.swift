@@ -10,6 +10,7 @@ struct AddComparedProductToClosetSheet: View {
     let product: Product
     let productDetailCategory: ClosetDetailCategory
     let recommendedSize: ProductSize?
+    let preselectedCategory: ClothingCategory?
     let isParsedProductReadOnly: Bool
     var onSaved: ((UserFit) -> Void)?
 
@@ -29,20 +30,25 @@ struct AddComparedProductToClosetSheet: View {
         product: Product,
         productDetailCategory: ClosetDetailCategory,
         recommendedSize: ProductSize?,
+        preselectedCategory: ClothingCategory? = nil,
         isParsedProductReadOnly: Bool = false,
         onSaved: ((UserFit) -> Void)? = nil
     ) {
         self.product = product
         self.productDetailCategory = productDetailCategory
         self.recommendedSize = recommendedSize
+        self.preselectedCategory = preselectedCategory
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.onSaved = onSaved
         _step = State(initialValue: isParsedProductReadOnly ? .productInfo : .size)
         _brandName = State(initialValue: product.brand?.name ?? "")
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
-        _selectedCategory = State(initialValue: product.category.serviceGroup)
+        _selectedCategory = State(initialValue: preselectedCategory ?? product.category.serviceGroup)
         _selectedDetailCategory = State(initialValue: productDetailCategory)
+        _selectedSizeID = State(initialValue: Self.initialSelectedSizeID(recommendedSize: recommendedSize, productSizes: product.sizes))
+        _hasSelectedClosetCategory = State(initialValue: preselectedCategory != nil && (preselectedCategory ?? .other) != .other)
+        _hasSelectedClosetDetailCategory = State(initialValue: preselectedCategory != nil && productDetailCategory != .other)
     }
 
     private var availableSizes: [ProductSize] {
@@ -54,6 +60,32 @@ struct AddComparedProductToClosetSheet: View {
         }
 
         return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+    }
+
+    private static func initialSelectedSizeID(recommendedSize: ProductSize?, productSizes: [ProductSize]) -> UUID? {
+        guard let recommendedSize else {
+            return nil
+        }
+
+        let sortedSizes = productSizes.sorted {
+            if $0.displayOrder != $1.displayOrder {
+                return $0.displayOrder < $1.displayOrder
+            }
+            return $0.name < $1.name
+        }
+        let availableSizes = ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+
+        if availableSizes.contains(where: { $0.id == recommendedSize.id }) {
+            return recommendedSize.id
+        }
+
+        let normalizedRecommendedName = recommendedSize.name
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+
+        return availableSizes.first {
+            $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalizedRecommendedName
+        }?.id
     }
 
     private var selectedSize: ProductSize? {

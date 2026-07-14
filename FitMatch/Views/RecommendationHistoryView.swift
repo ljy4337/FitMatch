@@ -28,23 +28,7 @@ struct RecommendationHistoryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            CollapsibleTopChrome(isVisible: isTopChromeVisible) {
-                FitMatchNavigationHeader(onLogout: onLogout)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
-                    .padding(.bottom, 12)
-
-                historyControls
-            }
-
-            if filteredHistories.isEmpty {
-                EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                historyContent
-            }
-        }
+        historyContent
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
         .navigationTitle("")
@@ -92,6 +76,21 @@ struct RecommendationHistoryView: View {
     }
 
     @ViewBuilder
+    private var historyTopChrome: some View {
+        if isTopChromeVisible {
+            VStack(spacing: 0) {
+                FitMatchNavigationHeader(onLogout: onLogout)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    .padding(.bottom, 12)
+
+                historyControls
+            }
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
+    @ViewBuilder
     private var historyContent: some View {
         switch historyLayout {
         case .list:
@@ -102,44 +101,71 @@ struct RecommendationHistoryView: View {
     }
 
     private var historyList: some View {
-        List {
-            ForEach(filteredHistories) { history in
-                HistoryCard(
-                    history: history,
-                    isFavorite: isFavorite(history)
-                ) {
-                    toggleFavorite(history)
-                } onOpen: {
-                    openShoppingMall(history)
-                } onRecompare: {
-                    opensReferencePickerOnDetail = true
-                    selectedHistoryIDForDetail = history.id
-                } onAddToCloset: {
-                    selectedHistoryForCloset = history
-                } onShowDetail: {
-                    opensReferencePickerOnDetail = false
-                    selectedHistoryIDForDetail = history.id
-                }
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                    favoriteSwipeButton(for: history)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    deleteSwipeButton(for: history)
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                historyTopChrome
+
+                if filteredHistories.isEmpty {
+                    EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 36)
+                } else {
+                    ForEach(filteredHistories) { history in
+                        HistoryCard(
+                            history: history,
+                            isFavorite: isFavorite(history)
+                        ) {
+                            toggleFavorite(history)
+                        } onOpen: {
+                            openShoppingMall(history)
+                        } onRecompare: {
+                            opensReferencePickerOnDetail = true
+                            selectedHistoryIDForDetail = history.id
+                        } onAddToCloset: {
+                            selectedHistoryForCloset = history
+                        } onShowDetail: {
+                            opensReferencePickerOnDetail = false
+                            selectedHistoryIDForDetail = history.id
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .contextMenu {
+                            Button {
+                                toggleFavorite(history)
+                            } label: {
+                                Label(
+                                    isFavorite(history) ? "관심 해제" : "관심 등록",
+                                    systemImage: isFavorite(history) ? "heart.slash" : "heart.fill"
+                                )
+                            }
+
+                            Button(role: .destructive) {
+                                deleteHistory(history)
+                            } label: {
+                                Label("삭제", systemImage: "trash")
+                            }
+                        }
+                    }
                 }
             }
-
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
+        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 
     private var historyGrid: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            LazyVStack(spacing: 0) {
+                historyTopChrome
+
+                if filteredHistories.isEmpty {
+                    EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 36)
+                } else {
                 LazyVGrid(columns: gridColumns, spacing: 14) {
                     ForEach(filteredHistories) { history in
                         HistoryGridCard(
@@ -157,9 +183,11 @@ struct RecommendationHistoryView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
+                }
             }
         }
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
+        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 

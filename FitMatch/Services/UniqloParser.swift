@@ -410,10 +410,11 @@ struct UniqloProductMetadataParser {
         let productObject = jsonLDObjects.first(where: { isType("Product", in: $0) })
         let breadcrumbObject = jsonLDObjects.first(where: { isType("BreadcrumbList", in: $0) })
 
-        let productName = stringValue(productGroupObject?["name"])
+        let rawProductName = stringValue(productGroupObject?["name"])
             ?? stringValue(productObject?["name"])
             ?? titleFallback(from: resolved.html)
             ?? "유니클로 상품 \(resolved.goodsID)"
+        let productName = sanitizedProductName(rawProductName, fallback: "유니클로 상품 \(resolved.goodsID)")
         let brandName = brandName(from: productGroupObject) ?? brandName(from: productObject) ?? "유니클로"
         let imageURLString = normalizeImageURL(firstImage(from: productGroupObject) ?? firstImage(from: productObject))
             ?? fallbackImageURL(goodsID: resolved.goodsID, colorCode: resolved.imageColorCode)
@@ -755,6 +756,55 @@ struct UniqloProductMetadataParser {
             .components(separatedBy: "|")
             .first?
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func sanitizedProductName(_ rawName: String, fallback: String) -> String {
+        let decodedName = rawName
+            .htmlDecoded
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+
+        let removableAudienceTokens = [
+            "젠더리스",
+            "MEN",
+            "WOMEN",
+            "UNISEX",
+            "KIDS",
+            "BABY",
+            "남성",
+            "여성",
+            "공용",
+            "키즈",
+            "베이비"
+        ]
+
+        var sanitized = decodedName
+        for token in removableAudienceTokens {
+            let escapedToken = NSRegularExpression.escapedPattern(for: token)
+            let patterns = [
+                #"(?i)^\s*\#(escapedToken)\s*[-_/|:·ㆍ]?\s*"#,
+                #"(?i)\s+\#(escapedToken)\s*$"#,
+                #"(?i)\s*[-_/|:·ㆍ]\s*\#(escapedToken)\s*$"#,
+                #"(?i)^\s*\[\#(escapedToken)\]\s*"#,
+                #"(?i)\s*\[\#(escapedToken)\]\s*$"#,
+                #"(?i)^\s*\(\#(escapedToken)\)\s*"#,
+                #"(?i)\s*\(\#(escapedToken)\)\s*$"#
+            ]
+
+            for pattern in patterns {
+                sanitized = sanitized.replacingOccurrences(
+                    of: pattern,
+                    with: "",
+                    options: .regularExpression
+                )
+            }
+        }
+
+        sanitized = sanitized
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "-_/|:·ㆍ")))
+
+        return sanitized.isEmpty ? fallback : sanitized
     }
 
     private func canonicalURL(from html: String) -> String? {

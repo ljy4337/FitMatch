@@ -50,6 +50,7 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     let tab: AppTab
     @StateObject private var scrollState = ScrollVisibilityState()
+    private let minimumDelta: CGFloat = 3
 
     func body(content: Content) -> some View {
         content
@@ -84,21 +85,18 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
         }
 
         if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
-            if delta > 1 {
-                tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll bottom")
-            }
             scrollState.reset()
             return
         }
 
-        guard abs(delta) >= 1 else { return }
+        guard abs(delta) >= minimumDelta else { return }
 
         if delta > 0 {
-            if scrollState.recordScroll(delta: delta, threshold: 12) == .hide {
+            if scrollState.recordScroll(delta: delta) == .hide {
                 tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll down")
             }
         } else {
-            if scrollState.recordScroll(delta: delta, threshold: 12) == .show {
+            if scrollState.recordScroll(delta: delta) == .show {
                 tabBarVisibilityController.showScroll(tab: tab, source: "native scroll up")
             }
         }
@@ -110,6 +108,7 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
     let tab: AppTab
     @Binding var isTopChromeVisible: Bool
     @StateObject private var scrollState = ScrollVisibilityState()
+    private let minimumDelta: CGFloat = 3
 
     func body(content: Content) -> some View {
         content
@@ -148,23 +147,19 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
         }
 
         if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
-            if delta > 1 {
-                tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll bottom")
-                setTopChromeVisible(false, source: "native scroll bottom")
-            }
             scrollState.reset()
             return
         }
 
-        guard abs(delta) >= 1 else { return }
+        guard abs(delta) >= minimumDelta else { return }
 
         if delta > 0 {
-            if scrollState.recordScroll(delta: delta, threshold: 12) == .hide {
+            if scrollState.recordScroll(delta: delta) == .hide {
                 tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll down")
                 setTopChromeVisible(false, source: "native scroll down")
             }
         } else {
-            if scrollState.recordScroll(delta: delta, threshold: 12) == .show {
+            if scrollState.recordScroll(delta: delta) == .show {
                 tabBarVisibilityController.showScroll(tab: tab, source: "native scroll up")
                 setTopChromeVisible(true, source: "native scroll up")
             }
@@ -233,26 +228,48 @@ private enum ScrollBoundaryState: Equatable {
 private final class ScrollVisibilityState: ObservableObject {
     private var hideAccumulation: CGFloat = 0
     private var showAccumulation: CGFloat = 0
+    private var lastActionDate = Date.distantPast
+    private let hideThreshold: CGFloat = 30
+    private let showThreshold: CGFloat = 20
+    private let cooldownInterval: TimeInterval = 0.22
 
     func reset() {
         hideAccumulation = 0
         showAccumulation = 0
     }
 
-    func recordScroll(delta: CGFloat, threshold: CGFloat) -> ScrollVisibilityAction? {
+    func recordScroll(delta: CGFloat) -> ScrollVisibilityAction? {
         if delta > 0 {
             hideAccumulation += delta
             showAccumulation = 0
-            guard hideAccumulation >= threshold else { return nil }
+            guard hideAccumulation >= hideThreshold else { return nil }
+            guard canEmitAction() else {
+                hideAccumulation = hideThreshold
+                return nil
+            }
             hideAccumulation = 0
+            markActionEmitted()
             return .hide
         }
 
         showAccumulation += abs(delta)
         hideAccumulation = 0
-        guard showAccumulation >= threshold else { return nil }
+        guard showAccumulation >= showThreshold else { return nil }
+        guard canEmitAction() else {
+            showAccumulation = showThreshold
+            return nil
+        }
         showAccumulation = 0
+        markActionEmitted()
         return .show
+    }
+
+    private func canEmitAction() -> Bool {
+        Date().timeIntervalSince(lastActionDate) >= cooldownInterval
+    }
+
+    private func markActionEmitted() {
+        lastActionDate = Date()
     }
 }
 
@@ -264,6 +281,7 @@ private enum ScrollVisibilityAction {
 private struct TopChromeScrollVisibilityModifier: ViewModifier {
     @Binding var isVisible: Bool
     @StateObject private var scrollState = ScrollVisibilityState()
+    private let minimumDelta: CGFloat = 3
 
     func body(content: Content) -> some View {
         content
@@ -298,21 +316,18 @@ private struct TopChromeScrollVisibilityModifier: ViewModifier {
         }
 
         if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
-            if delta > 1 {
-                setVisible(false)
-            }
             scrollState.reset()
             return
         }
 
-        guard abs(delta) >= 1 else { return }
+        guard abs(delta) >= minimumDelta else { return }
 
         if delta > 0 {
-            if scrollState.recordScroll(delta: delta, threshold: 12) == .hide {
+            if scrollState.recordScroll(delta: delta) == .hide {
                 setVisible(false)
             }
         } else {
-            if scrollState.recordScroll(delta: delta, threshold: 12) == .show {
+            if scrollState.recordScroll(delta: delta) == .show {
                 setVisible(true)
             }
         }

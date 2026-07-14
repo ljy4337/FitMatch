@@ -78,8 +78,9 @@ struct CompareFlowSheet: View {
         .sheet(item: $registrationRoute) { route in
             AddComparedProductToClosetSheet(
                 product: route.product,
-                productDetailCategory: viewModel.detailCategory,
-                recommendedSize: nil,
+                productDetailCategory: route.productDetailCategory,
+                recommendedSize: route.recommendedSize,
+                preselectedCategory: route.preselectedCategory,
                 isParsedProductReadOnly: true
             ) { savedItem in
                 handleRegisteredClosetItem(savedItem, context: route.context)
@@ -398,7 +399,13 @@ private extension CompareFlowSheet {
                 }
 
                 SecondaryButton(title: "내 옷장에 추가", systemImage: "plus") {
-                    presentProductRegistration(product: history.product, context: .result)
+                    presentProductRegistration(
+                        product: history.product,
+                        context: .result,
+                        productDetailCategory: history.productDetailCategory,
+                        recommendedSize: history.recommendedSize,
+                        preselectedCategory: history.product.category.serviceGroup
+                    )
                 }
             }
         }
@@ -512,6 +519,7 @@ private extension CompareFlowSheet {
                 }
 
                 PrimaryButton(title: "바로 비교하기", systemImage: "sparkles") {
+                    productURL = candidate.urlString
                     smartClipboardService.markHandled(candidate)
                     Task { await startCompare(with: candidate.urlString) }
                 }
@@ -869,13 +877,25 @@ private extension CompareFlowSheet {
         return viewModel.makeProductForClosetRegistration(brand: brand)
     }
 
-    func presentProductRegistration(product: Product? = nil, context: CompareProductRegistrationContext) {
+    func presentProductRegistration(
+        product: Product? = nil,
+        context: CompareProductRegistrationContext,
+        productDetailCategory: ClosetDetailCategory? = nil,
+        recommendedSize: ProductSize? = nil,
+        preselectedCategory: ClothingCategory? = nil
+    ) {
         guard let product = product ?? currentProduct else {
             errorMessage = "상품 정보를 찾을 수 없습니다. 다시 불러와 주세요."
             return
         }
 
-        registrationRoute = CompareProductRegistrationRoute(product: product, context: context)
+        registrationRoute = CompareProductRegistrationRoute(
+            product: product,
+            context: context,
+            productDetailCategory: productDetailCategory ?? viewModel.detailCategory,
+            recommendedSize: recommendedSize,
+            preselectedCategory: preselectedCategory
+        )
     }
 
     func handleRegisteredClosetItem(_ item: UserFit, context: CompareProductRegistrationContext) {
@@ -1117,6 +1137,9 @@ private struct CompareProductRegistrationRoute: Identifiable {
     let id = UUID()
     let product: Product
     let context: CompareProductRegistrationContext
+    let productDetailCategory: ClosetDetailCategory
+    let recommendedSize: ProductSize?
+    let preselectedCategory: ClothingCategory?
 }
 
 private enum CompareLoadingState {

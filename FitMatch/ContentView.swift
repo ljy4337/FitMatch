@@ -991,7 +991,7 @@ private struct MainTabView: View {
                     onCompare: { shouldMuteToday in
                         onClipboardCandidateHandled(candidate, shouldMuteToday)
                         clipboardCandidate = nil
-                        onStartCompareLatestURL()
+                        presentCompareFlow(initialURL: candidate.urlString)
                     },
                     onLater: { shouldMuteToday in
                         onClipboardCandidateHandled(candidate, shouldMuteToday)
