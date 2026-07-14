@@ -263,10 +263,66 @@ private enum ScrollVisibilityAction {
 
 private struct TopChromeScrollVisibilityModifier: ViewModifier {
     @Binding var isVisible: Bool
+    @StateObject private var scrollState = ScrollVisibilityState()
 
     func body(content: Content) -> some View {
-        content.onAppear {
-            isVisible = true
+        content
+            .onScrollGeometryChange(for: ScrollVisibilitySnapshot.self) { geometry in
+                ScrollVisibilitySnapshot(geometry: geometry)
+            } action: { previousSnapshot, currentSnapshot in
+                handleScroll(previous: previousSnapshot, current: currentSnapshot)
+            }
+            .onDisappear {
+                scrollState.reset()
+                setVisible(true)
+            }
+            .onAppear {
+                scrollState.reset()
+                setVisible(true)
+            }
+    }
+
+    private func handleScroll(previous previousSnapshot: ScrollVisibilitySnapshot, current currentSnapshot: ScrollVisibilitySnapshot) {
+        guard currentSnapshot.isScrollable else {
+            scrollState.reset()
+            setVisible(true)
+            return
+        }
+
+        let delta = currentSnapshot.clampedOffset - previousSnapshot.clampedOffset
+
+        if currentSnapshot.boundaryState == .top {
+            scrollState.reset()
+            setVisible(true)
+            return
+        }
+
+        if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
+            if delta > 1 {
+                setVisible(false)
+            }
+            scrollState.reset()
+            return
+        }
+
+        guard abs(delta) >= 1 else { return }
+
+        if delta > 0 {
+            if scrollState.recordScroll(delta: delta, threshold: 12) == .hide {
+                setVisible(false)
+            }
+        } else {
+            if scrollState.recordScroll(delta: delta, threshold: 12) == .show {
+                setVisible(true)
+            }
+        }
+    }
+
+    private func setVisible(_ visible: Bool) {
+        guard isVisible != visible else { return }
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            isVisible = visible
         }
     }
 }

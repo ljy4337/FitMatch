@@ -22,15 +22,14 @@ struct MyClosetView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if isTopChromeVisible {
+            CollapsibleTopChrome(isVisible: isTopChromeVisible) {
                 FitMatchNavigationHeader(onLogout: onLogout)
                     .padding(.horizontal, 20)
                     .padding(.top, 18)
                     .padding(.bottom, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
 
-            closetHeader
+                closetHeader
+            }
 
             if userFits.isEmpty {
                 EmptyClosetView {

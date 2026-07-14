@@ -221,14 +221,15 @@ struct AddComparedProductToClosetSheet: View {
                         Text(product.brand?.name ?? "브랜드 미상")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(.secondary)
-                        Text("\(selectedCategory.rawValue) / \(selectedDetailCategory.rawValue)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                         if isParsedProductReadOnly {
-                            Text(sourceCategoryText ?? "카테고리 정보 없음")
+                            Text("쇼핑몰 카테고리: \(sourceCategoryText ?? "카테고리 정보 없음")")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(2)
+                        } else {
+                            Text("\(selectedCategory.rawValue) / \(selectedDetailCategory.rawValue)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -692,6 +693,11 @@ struct AddComparedProductToClosetSheet: View {
         if let sourceCategoryPath = product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines),
            !sourceCategoryPath.isEmpty {
             return sourceCategoryPath
+        }
+
+        if let baseCategoryFullPath = product.baseCategoryFullPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !baseCategoryFullPath.isEmpty {
+            return baseCategoryFullPath
         }
 
         return nil

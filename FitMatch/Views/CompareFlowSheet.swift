@@ -26,6 +26,7 @@ struct CompareFlowSheet: View {
     @State private var selectedClosetDetailCategoryName: String?
     @State private var hasConfirmedComparisonCategory = false
     @State private var currentClipboardCandidate: SmartClipboardCandidate?
+    @State private var isSheetHeaderVisible = true
     @FocusState private var isURLFocused: Bool
 
     init(initialURL: String? = nil, recentClipboardCandidate: SmartClipboardCandidate? = nil) {
@@ -63,6 +64,7 @@ struct CompareFlowSheet: View {
             .padding(.bottom, 30)
         }
         .background(Color(.systemGroupedBackground))
+        .hidesTopChromeOnScroll($isSheetHeaderVisible)
         .scrollDismissesKeyboard(.interactively)
         .onTapGesture {
             isURLFocused = false
@@ -543,27 +545,30 @@ private extension CompareFlowSheet {
                 Text("출처: \(product.sourceDisplayName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("\(product.category.rawValue) / \(viewModel.detailCategory.rawValue)")
+                Text(productCompactCategoryText(for: product))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     func sheetHeader(title: String, subtitle: String) -> some View {
-        VStack(alignment: .leading, spacing: 9) {
-            Text(title)
-                .font(.title2.weight(.black))
-                .foregroundStyle(.primary)
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineSpacing(2)
+        CollapsibleTopChrome(isVisible: isSheetHeaderVisible) {
+            VStack(alignment: .leading, spacing: 9) {
+                Text(title)
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 2)
+            .padding(.bottom, 8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 2)
-        .padding(.bottom, 8)
     }
 }
 
@@ -613,6 +618,32 @@ private extension CompareFlowSheet {
     var canConfirmComparisonCategory: Bool {
         viewModel.category != .other
             && viewModel.detailCategory != .other
+    }
+
+    func productCompactCategoryText(for product: Product) -> String {
+        if hasConfirmedComparisonCategory, viewModel.detailCategory != .other {
+            return "비교 분류: \(viewModel.category.serviceGroup.rawValue) / \(viewModel.detailCategory.rawValue)"
+        }
+
+        if let sourceCategoryText = strictSourceCategoryText(for: product) {
+            return "쇼핑몰 카테고리: \(sourceCategoryText)"
+        }
+
+        return "쇼핑몰 카테고리: 카테고리 정보 없음"
+    }
+
+    func strictSourceCategoryText(for product: Product) -> String? {
+        if let sourceCategoryPath = product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !sourceCategoryPath.isEmpty {
+            return sourceCategoryPath
+        }
+
+        if let baseCategoryFullPath = product.baseCategoryFullPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !baseCategoryFullPath.isEmpty {
+            return baseCategoryFullPath
+        }
+
+        return nil
     }
 
     var sourceCategoryHistoryMatches: [SourceCategoryHistoryMatch] {

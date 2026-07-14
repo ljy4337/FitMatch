@@ -29,15 +29,14 @@ struct RecommendationHistoryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if isTopChromeVisible {
+            CollapsibleTopChrome(isVisible: isTopChromeVisible) {
                 FitMatchNavigationHeader(onLogout: onLogout)
                     .padding(.horizontal, 20)
                     .padding(.top, 18)
                     .padding(.bottom, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
 
-            historyControls
+                historyControls
+            }
 
             if filteredHistories.isEmpty {
                 EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
@@ -419,7 +418,7 @@ private struct HistoryCard: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
 
-                            Text(history.sourceCategoryPathForDisplay)
+                            Text(historySourceCategoryText)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
 
@@ -512,6 +511,27 @@ private struct HistoryCard: View {
             }
 
         return kinds.isEmpty ? "실측 부족" : "실측 \(kinds.count)개 비교"
+    }
+
+    private var historySourceCategoryText: String {
+        if let sourceCategoryPath = history.product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !sourceCategoryPath.isEmpty {
+            return sourceCategoryPath
+        }
+
+        if let baseCategoryFullPath = history.product.baseCategoryFullPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !baseCategoryFullPath.isEmpty {
+            return baseCategoryFullPath
+        }
+
+        let snapshot = history.sourceCategoryPathSnapshot?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !snapshot.isEmpty,
+           !snapshot.contains(" / 기타"),
+           snapshot != "\(history.product.category.rawValue) / \(history.productDetailCategory.rawValue)" {
+            return snapshot
+        }
+
+        return "카테고리 정보 없음"
     }
 }
 

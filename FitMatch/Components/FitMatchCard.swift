@@ -187,6 +187,25 @@ struct FitMatchNavigationHeader: View {
     }
 }
 
+struct CollapsibleTopChrome<Content: View>: View {
+    let isVisible: Bool
+    private let content: Content
+
+    init(isVisible: Bool, @ViewBuilder content: () -> Content) {
+        self.isVisible = isVisible
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .frame(height: isVisible ? nil : CGFloat.zero, alignment: .top)
+            .opacity(isVisible ? 1 : 0)
+            .offset(y: isVisible ? 0 : -24)
+            .clipped()
+            .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isVisible)
+    }
+}
+
 struct SmallInfoCard<Content: View>: View {
     let title: String
     let value: String

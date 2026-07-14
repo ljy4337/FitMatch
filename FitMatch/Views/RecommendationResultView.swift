@@ -154,7 +154,7 @@ struct RecommendationResultView: View {
 
                         InfoRow(title: "브랜드", value: currentResult.product.brand?.name ?? "브랜드 미상")
                         InfoRow(title: "출처", value: currentResult.product.sourceDisplayName)
-                        InfoRow(title: "카테고리", value: "\(currentResult.product.category.rawValue) / \(currentResult.productDetailCategory.rawValue)")
+                        InfoRow(title: "쇼핑몰 카테고리", value: productSourceCategoryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -175,7 +175,7 @@ struct RecommendationResultView: View {
                         category: currentResult.product.category,
                         brand: currentResult.product.brand?.name ?? "브랜드 미상",
                         name: currentResult.product.name,
-                        meta: "\(currentResult.product.category.rawValue) / \(currentResult.productDetailCategory.rawValue)",
+                        meta: productComparisonCategoryText,
                         badge: nil
                     )
 
@@ -446,18 +446,43 @@ struct RecommendationResultView: View {
         }
     }
 
+    private var productSourceCategoryText: String {
+        if let sourceCategoryPath = currentResult.product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !sourceCategoryPath.isEmpty {
+            return sourceCategoryPath
+        }
+
+        if let baseCategoryFullPath = currentResult.product.baseCategoryFullPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !baseCategoryFullPath.isEmpty {
+            return baseCategoryFullPath
+        }
+
+        return "카테고리 정보 없음"
+    }
+
+    private var productComparisonCategoryText: String {
+        guard currentResult.product.category.serviceGroup != .other,
+              currentResult.productDetailCategory != .other else {
+            return "분류 미확정"
+        }
+
+        return "\(currentResult.product.category.serviceGroup.rawValue) / \(currentResult.productDetailCategory.rawValue)"
+    }
+
     private var ignoredMeasurementKinds: [MeasurementKind] {
         v1MeasurementKinds.filter { !comparedMeasurementKinds.contains($0) }
     }
 
     private var comparisonConditionRows: [ComparisonConditionItem] {
-        let productDetail = currentResult.productDetailCategory.rawValue
+        let productDetail = currentResult.productDetailCategory == .other ? "분류 미확정" : currentResult.productDetailCategory.rawValue
         let referenceDetail = currentResult.userFit.detailCategory.rawValue
-        let isSameDetail = currentResult.userFit.detailCategory == currentResult.productDetailCategory
+        let isSameDetail = currentResult.productDetailCategory != .other
+            && currentResult.userFit.detailCategory == currentResult.productDetailCategory
 
-        let productCategory = currentResult.product.category.serviceGroup.rawValue
+        let productCategory = currentResult.product.category.serviceGroup == .other ? "분류 미확정" : currentResult.product.category.serviceGroup.rawValue
         let referenceCategory = currentResult.userFit.category.serviceGroup.rawValue
-        let isSameCategory = currentResult.product.category.serviceGroup == currentResult.userFit.category.serviceGroup
+        let isSameCategory = currentResult.product.category.serviceGroup != .other
+            && currentResult.product.category.serviceGroup == currentResult.userFit.category.serviceGroup
 
         let productBrand = currentResult.product.brand?.name ?? "브랜드 미상"
         let referenceBrand = currentResult.userFit.brandName
@@ -498,11 +523,13 @@ struct RecommendationResultView: View {
     }
 
     private var comparisonSummaryTitle: String {
-        if currentResult.userFit.detailCategory == currentResult.productDetailCategory {
+        if currentResult.productDetailCategory != .other,
+           currentResult.userFit.detailCategory == currentResult.productDetailCategory {
             return "같은 \(currentResult.productDetailCategory.rawValue) 기준"
         }
 
-        if currentResult.userFit.category.serviceGroup == currentResult.product.category.serviceGroup {
+        if currentResult.product.category.serviceGroup != .other,
+           currentResult.userFit.category.serviceGroup == currentResult.product.category.serviceGroup {
             return "같은 \(currentResult.product.category.serviceGroup.rawValue) 기준"
         }
 
@@ -528,9 +555,11 @@ struct RecommendationResultView: View {
     private var recommendationReasons: [String] {
         var reasons = strongestMeasurementReasons
 
-        if currentResult.comparisonMethod.contains("세부카테고리") || currentResult.userFit.detailCategory == currentResult.productDetailCategory {
+        if currentResult.productDetailCategory != .other,
+           (currentResult.comparisonMethod.contains("세부카테고리") || currentResult.userFit.detailCategory == currentResult.productDetailCategory) {
             reasons.append("같은 \(currentResult.productDetailCategory.rawValue) 기준으로 비교했습니다.")
-        } else if currentResult.comparisonMethod.contains("대분류") {
+        } else if currentResult.product.category.serviceGroup != .other,
+                  currentResult.comparisonMethod.contains("대분류") {
             reasons.append("같은 \(currentResult.product.category.serviceGroup.rawValue) 대분류 기준으로 비교했습니다.")
         } else if currentResult.comparisonMethod.contains("임시") {
             reasons.append("임시 비교라 일부 항목은 참고용입니다.")
