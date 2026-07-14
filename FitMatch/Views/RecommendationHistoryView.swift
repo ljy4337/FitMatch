@@ -68,7 +68,7 @@ struct RecommendationHistoryView: View {
                 product: history.product,
                 productDetailCategory: history.productDetailCategory,
                 recommendedSize: history.recommendedSize
-            ) {
+            ) { _ in
                 isShowingClosetSavedAlert = true
             }
             .presentationDetents([.large])

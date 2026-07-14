@@ -32,7 +32,7 @@ struct MeasurementSummaryView: View {
                     ForEach(row) { kind in
                         summaryItem(kind.title, measurements.value(for: kind))
                     }
-                    if row.count == 1 {
+                    ForEach(0..<max(0, columnCount - row.count), id: \.self) { _ in
                         Color.clear
                     }
                 }
@@ -42,6 +42,12 @@ struct MeasurementSummaryView: View {
     }
 
     private var rows: [[MeasurementKind]] {
+        if category.serviceGroup == .bottom {
+            return stride(from: 0, to: bottomKinds.count, by: 3).map {
+                Array(bottomKinds[$0..<min($0 + 3, bottomKinds.count)])
+            }
+        }
+
         let visibleKinds = measurementKinds.filter {
             measurements.value(for: $0) > 0
         }
@@ -49,6 +55,14 @@ struct MeasurementSummaryView: View {
         return stride(from: 0, to: kinds.count, by: 2).map {
             Array(kinds[$0..<min($0 + 2, kinds.count)])
         }
+    }
+
+    private var columnCount: Int {
+        category.serviceGroup == .bottom ? 3 : 2
+    }
+
+    private var bottomKinds: [MeasurementKind] {
+        [.totalLength, .waist, .hip, .thigh, .rise, .hem]
     }
 
     private var measurementKinds: [MeasurementKind] {
@@ -59,7 +73,7 @@ struct MeasurementSummaryView: View {
         HStack(spacing: 4) {
             Text(title)
                 .foregroundStyle(.secondary)
-            Text(value.cmText)
+            Text(value > 0 ? value.cmText : "-")
                 .fontWeight(.medium)
         }
     }

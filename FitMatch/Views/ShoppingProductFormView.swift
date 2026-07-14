@@ -124,7 +124,7 @@ struct ShoppingProductFormView: View {
                     }
 
                 PrimaryButton(
-                    title: viewModel.isLoadingProductInfo ? "계산 중" : "사이즈 계산",
+                    title: viewModel.isLoadingProductInfo ? "계산 중" : "비교하기",
                     systemImage: "sparkles",
                     isLoading: viewModel.isLoadingProductInfo
                 ) {
@@ -146,7 +146,7 @@ struct ShoppingProductFormView: View {
         if viewModel.needsDetailCategoryBasis(userFits: userFits) {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("등록된 \(viewModel.detailCategory.rawValue)가 없습니다.")
+                    Text("비교 가능한 상품이 없습니다.")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.primary)
                     Text(missingBasisMessage)
@@ -155,7 +155,7 @@ struct ShoppingProductFormView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                ComparePrimaryActionButton(title: "\(viewModel.detailCategory.rawValue) 등록하기", systemImage: "plus") {
+                ComparePrimaryActionButton(title: "상품 등록", systemImage: "plus") {
                     presentActiveSheet(.addBaseline)
                 }
 
@@ -184,10 +184,10 @@ struct ShoppingProductFormView: View {
 
     private var missingBasisMessage: String {
         if userFits.isEmpty {
-            return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 \(viewModel.detailCategory.rawValue)를 등록하면 이 상품과 비교할 수 있습니다."
+            return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 상품을 등록하면 이 상품과 비교할 수 있습니다."
         }
 
-        return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 \(viewModel.detailCategory.rawValue)를 등록하거나, 내 옷장에 있는 다른 옷을 직접 선택하여 비교할 수 있습니다."
+        return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 상품을 등록하거나, 내 옷장에 있는 다른 옷을 직접 선택하여 비교할 수 있습니다."
     }
 
     @ViewBuilder
@@ -497,13 +497,13 @@ private struct TemporaryReferencePickerView: View {
                 if candidates.isEmpty {
                     FitMatchCard {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("비교할 옷이 없습니다.")
+                            Text("비교 가능한 상품이 없습니다.")
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.primary)
                             Text("내 옷장에 옷을 먼저 등록하면 상품과 비교할 수 있습니다.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
-                            ComparePrimaryActionButton(title: "등록하기", systemImage: "plus") {
+                            ComparePrimaryActionButton(title: "상품 등록", systemImage: "plus") {
                                 dismiss()
                                 onRegister()
                             }
@@ -576,7 +576,7 @@ private struct MissingBasisBottomSheet: View {
     var body: some View {
         VStack(spacing: 18) {
             VStack(spacing: 10) {
-                Text("등록된 \(detailCategory.rawValue)가 없습니다.")
+                Text("비교 가능한 상품이 없습니다.")
                     .font(.title2.weight(.black))
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
@@ -614,7 +614,7 @@ private struct MissingBasisBottomSheet: View {
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             VStack(spacing: 10) {
-                ComparePrimaryActionButton(title: "\(detailCategory.rawValue) 등록하기", systemImage: "plus") {
+                ComparePrimaryActionButton(title: "상품 등록", systemImage: "plus") {
                     onRegister()
                 }
 
@@ -665,10 +665,10 @@ private struct MissingBasisBottomSheet: View {
 
     private var descriptionText: String {
         if hasClosetItems {
-            return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 \(detailCategory.rawValue)를 등록하거나, 내 옷장에 있는 다른 옷을 직접 선택하여 비교할 수 있습니다."
+            return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 상품을 등록하거나, 내 옷장에 있는 다른 옷을 직접 선택하여 비교할 수 있습니다."
         }
 
-        return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 \(detailCategory.rawValue)를 등록하면 이 상품과 비교할 수 있습니다."
+        return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 상품을 등록하면 이 상품과 비교할 수 있습니다."
     }
 }
 

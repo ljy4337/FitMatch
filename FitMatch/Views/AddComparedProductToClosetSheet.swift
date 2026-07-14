@@ -10,7 +10,7 @@ struct AddComparedProductToClosetSheet: View {
     let product: Product
     let productDetailCategory: ClosetDetailCategory
     let recommendedSize: ProductSize?
-    var onSaved: (() -> Void)?
+    var onSaved: ((UserFit) -> Void)?
 
     @State private var step: AddComparedProductStep = .size
     @State private var selectedSizeID: UUID?
@@ -25,7 +25,7 @@ struct AddComparedProductToClosetSheet: View {
         product: Product,
         productDetailCategory: ClosetDetailCategory,
         recommendedSize: ProductSize?,
-        onSaved: (() -> Void)? = nil
+        onSaved: ((UserFit) -> Void)? = nil
     ) {
         self.product = product
         self.productDetailCategory = productDetailCategory
@@ -37,13 +37,15 @@ struct AddComparedProductToClosetSheet: View {
         _selectedDetailCategory = State(initialValue: productDetailCategory)
     }
 
-    private var sortedSizes: [ProductSize] {
-        product.sizes.sorted {
+    private var availableSizes: [ProductSize] {
+        let sortedSizes = product.sizes.sorted {
             if $0.displayOrder != $1.displayOrder {
                 return $0.displayOrder < $1.displayOrder
             }
             return $0.name < $1.name
         }
+
+        return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
     }
 
     private var selectedSize: ProductSize? {
@@ -51,7 +53,7 @@ struct AddComparedProductToClosetSheet: View {
             return nil
         }
 
-        return sortedSizes.first { $0.id == selectedSizeID }
+        return availableSizes.first { $0.id == selectedSizeID }
     }
 
     private var sizeSelectionGridColumns: [GridItem] {
@@ -97,6 +99,7 @@ struct AddComparedProductToClosetSheet: View {
             }
             .onAppear {
                 normalizeDetailCategory()
+                normalizeSelectedSize()
             }
             .alert("내 옷장 추가", isPresented: Binding(
                 get: { alertMessage != nil },
@@ -120,13 +123,13 @@ struct AddComparedProductToClosetSheet: View {
                 subtitle: "실제로 가지고 있는 사이즈를 선택하세요."
             ) {
                 VStack(alignment: .leading, spacing: 16) {
-                    if sortedSizes.isEmpty {
+                    if availableSizes.isEmpty {
                         Text("불러온 사이즈표가 없습니다.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else {
                         ProductSizeSelectionGrid(
-                            sizes: sortedSizes,
+                            sizes: availableSizes,
                             selectedSizeID: $selectedSizeID
                         )
                     }
@@ -192,7 +195,7 @@ struct AddComparedProductToClosetSheet: View {
                     }
 
                     RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
-                        ForEach(sortedSizes) { size in
+                        ForEach(availableSizes) { size in
                             Button(size.name.displaySizeName) {
                                 selectedSizeID = size.id
                             }
@@ -278,6 +281,7 @@ struct AddComparedProductToClosetSheet: View {
             Button {
                 switch step {
                 case .size:
+                    normalizeSelectedSize()
                     withAnimation(.snappy(duration: 0.22)) {
                         step = .confirm
                     }
@@ -388,13 +392,26 @@ struct AddComparedProductToClosetSheet: View {
             alertMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
             return
         }
-        onSaved?()
+        onSaved?(item)
         dismiss()
     }
 
     private func normalizeDetailCategory() {
         if !availableDetailCategories.contains(selectedDetailCategory) {
             selectedDetailCategory = availableDetailCategories.first ?? .shortSleeve
+        }
+    }
+
+    private func normalizeSelectedSize() {
+        guard let selectedSizeID else {
+            if availableSizes.count == 1 {
+                self.selectedSizeID = availableSizes.first?.id
+            }
+            return
+        }
+
+        if !availableSizes.contains(where: { $0.id == selectedSizeID }) {
+            self.selectedSizeID = nil
         }
     }
 

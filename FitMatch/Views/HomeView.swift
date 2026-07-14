@@ -392,7 +392,7 @@ struct CompareStartSheet: View {
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             Button(action: submitURL) {
-                Label("사이즈 계산", systemImage: "sparkles")
+                Label("비교하기", systemImage: "sparkles")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)

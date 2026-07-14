@@ -71,7 +71,7 @@ struct RecommendationResultView: View {
                     product: currentResult.product,
                     productDetailCategory: currentResult.productDetailCategory,
                     recommendedSize: currentResult.recommendedSize
-                ) {
+                ) { _ in
                     isShowingClosetSavedAlert = true
                 }
                 .presentationDetents([.large])
