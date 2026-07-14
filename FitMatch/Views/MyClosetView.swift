@@ -119,7 +119,7 @@ struct MyClosetView: View {
 
     @ViewBuilder
     private var closetTopChrome: some View {
-        if isTopChromeVisible {
+        CollapsibleTopChrome(isVisible: isTopChromeVisible) {
             VStack(spacing: 0) {
                 FitMatchNavigationHeader(onLogout: onLogout)
                     .padding(.horizontal, 20)
@@ -128,7 +128,6 @@ struct MyClosetView: View {
 
                 closetHeader
             }
-            .transition(.move(edge: .top).combined(with: .opacity))
         }
     }
 

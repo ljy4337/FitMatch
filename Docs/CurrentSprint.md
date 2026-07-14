@@ -13,9 +13,9 @@ Uniqlo
 - Reference garments are prioritized; source is display-only metadata.
 - Added root `AGENTS.md`.
 - iOS Simulator build and `git diff --check` passed.
+- Replaced conditional top-header rendering with `CollapsibleTopChrome` in Home, Recommend, History, and My Closet while preserving the existing scroll modifiers.
 
 ## Current Task
-- Header/Filter Scroll
 - Compare Default
 - Clipboard Refresh
 
@@ -29,8 +29,8 @@ Uniqlo
 - Follow `AGENTS.md`.
 
 ## Working Tree
-- Modified: four comparison/source-category view files.
+- Modified: comparison/source-category views plus Home, Recommend, History, and My Closet header views.
 - Untracked: `AGENTS.md`, `Docs/CurrentSprint.md`.
 
 ## Next Task
-Header/filter scroll behavior.
+Manually verify top chrome collapse and remaining scroll jitter on Home, Recommend, History, and My Closet.

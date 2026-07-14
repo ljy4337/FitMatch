@@ -20,9 +20,8 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                if isTopChromeVisible {
+                CollapsibleTopChrome(isVisible: isTopChromeVisible) {
                     FitMatchNavigationHeader(onLogout: onLogout)
-                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 clipboardSection
                 quickCompareSection

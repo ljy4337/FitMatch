@@ -77,7 +77,7 @@ struct RecommendationHistoryView: View {
 
     @ViewBuilder
     private var historyTopChrome: some View {
-        if isTopChromeVisible {
+        CollapsibleTopChrome(isVisible: isTopChromeVisible) {
             VStack(spacing: 0) {
                 FitMatchNavigationHeader(onLogout: onLogout)
                     .padding(.horizontal, 20)
@@ -86,7 +86,6 @@ struct RecommendationHistoryView: View {
 
                 historyControls
             }
-            .transition(.move(edge: .top).combined(with: .opacity))
         }
     }
 

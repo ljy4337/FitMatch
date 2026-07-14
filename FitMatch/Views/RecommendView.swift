@@ -7,9 +7,8 @@ struct RecommendView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if isTopChromeVisible {
+                CollapsibleTopChrome(isVisible: isTopChromeVisible) {
                     FitMatchNavigationHeader(onLogout: onLogout)
-                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
                 CardView(radius: 24, padding: 24) {
