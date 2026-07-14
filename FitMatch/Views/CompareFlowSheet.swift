@@ -24,6 +24,8 @@ struct CompareFlowSheet: View {
     @State private var selectedClosetSourceName: String?
     @State private var selectedClosetCategoryName: String?
     @State private var selectedClosetDetailCategoryName: String?
+    @State private var hasConfirmedComparisonCategory = false
+    @State private var currentClipboardCandidate: SmartClipboardCandidate?
     @FocusState private var isURLFocused: Bool
 
     init(initialURL: String? = nil, recentClipboardCandidate: SmartClipboardCandidate? = nil) {
@@ -31,6 +33,7 @@ struct CompareFlowSheet: View {
         self.recentClipboardCandidate = recentClipboardCandidate
         _viewModel = StateObject(wrappedValue: ShoppingProductViewModel(initialURL: initialURL))
         _productURL = State(initialValue: initialURL ?? "")
+        _currentClipboardCandidate = State(initialValue: recentClipboardCandidate)
     }
 
     var body: some View {
@@ -41,6 +44,8 @@ struct CompareFlowSheet: View {
                     startContent
                 case .loading:
                     loadingContent
+                case .categoryConfirmation:
+                    categoryConfirmationContent
                 case .missingReference:
                     missingReferenceContent
                 case .closetSelection:
@@ -63,6 +68,7 @@ struct CompareFlowSheet: View {
             isURLFocused = false
         }
         .task {
+            refreshClipboardCandidate()
             if let initialURL, !initialURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 await startCompare(with: initialURL)
             }
@@ -90,12 +96,15 @@ private extension CompareFlowSheet {
         VStack(alignment: .leading, spacing: 20) {
             sheetHeader(title: "상품 비교 시작", subtitle: "새 상품을 내 옷과 비교해보세요.")
 
-            if let recentClipboardCandidate {
-                recentClipboardCard(recentClipboardCandidate)
+            if let currentClipboardCandidate {
+                recentClipboardCard(currentClipboardCandidate)
             }
 
             directURLInputCard
             shoppingShortcutCard
+        }
+        .onAppear {
+            refreshClipboardCandidate()
         }
     }
 
@@ -151,6 +160,94 @@ private extension CompareFlowSheet {
             }
         }
         .padding(.top, 12)
+    }
+
+    var categoryConfirmationContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sheetHeader(
+                title: "내 옷장 분류 확인",
+                subtitle: "비교 후보를 찾기 전에 이 상품의 내 옷장 분류를 선택해 주세요."
+            )
+
+            if let product = currentProduct {
+                productCompactCard(product)
+            }
+
+            FitMatchCard {
+                VStack(alignment: .leading, spacing: 14) {
+                    if sourceCategoryHistoryMatches.count > 1 {
+                        CompareSheetSectionTitle(
+                            title: "어떤 분류로 비교할까요?",
+                            subtitle: "이 쇼핑몰 카테고리는 여러 내 옷장 분류로 등록된 적이 있어요."
+                        )
+
+                        VStack(spacing: 10) {
+                            ForEach(sourceCategoryHistoryMatches) { match in
+                                Button {
+                                    applySourceCategoryHistoryMatch(match)
+                                    confirmComparisonCategoryAndContinue()
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text(match.title)
+                                                .font(.subheadline.weight(.bold))
+                                                .foregroundStyle(.primary)
+                                            Text(match.subtitle)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption.weight(.bold))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .frame(height: 54)
+                                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+
+                        Divider()
+                    }
+
+                    CompareSheetSectionTitle(
+                        title: "비교에 사용할 분류",
+                        subtitle: "쇼핑몰 원본 카테고리가 아니라 FitMatch 내 옷장 분류 기준으로 비교합니다."
+                    )
+
+                    CompareSelectionMenu(title: comparisonCategoryTitle) {
+                        ForEach(comparisonCategoryOptions) { category in
+                            Button(category.rawValue) {
+                                viewModel.category = category
+                                viewModel.detailCategory = .other
+                                hasConfirmedComparisonCategory = false
+                            }
+                        }
+                    }
+
+                    CompareSelectionMenu(title: comparisonDetailCategoryTitle) {
+                        ForEach(comparisonDetailCategoryOptions) { detailCategory in
+                            Button(detailCategory.rawValue) {
+                                viewModel.detailCategory = detailCategory
+                                hasConfirmedComparisonCategory = false
+                            }
+                        }
+                    }
+                    .disabled(viewModel.category == .other)
+                    .opacity(viewModel.category == .other ? 0.5 : 1)
+                }
+            }
+
+            PrimaryButton(title: "비교하기", systemImage: "sparkles") {
+                confirmComparisonCategoryAndContinue()
+            }
+            .disabled(!canConfirmComparisonCategory)
+            .opacity(canConfirmComparisonCategory ? 1 : 0.35)
+        }
     }
 
     var closetSelectionContent: some View {
@@ -379,8 +476,10 @@ private extension CompareFlowSheet {
                         openMusinsa()
                     }
 
+                    ShoppingShortcutButton(title: "유니클로", systemImage: "u.circle", status: "상품추가", isEnabled: true) {
+                        openUniqlo()
+                    }
                     ShoppingShortcutButton(title: "29CM", systemImage: "29.circle", status: "준비중", isEnabled: false) {}
-                    ShoppingShortcutButton(title: "유니클로", systemImage: "u.circle", status: "준비중", isEnabled: false) {}
                 }
             }
         }
@@ -411,12 +510,8 @@ private extension CompareFlowSheet {
                 }
 
                 PrimaryButton(title: "바로 비교하기", systemImage: "sparkles") {
-                    guard let latestURL = smartClipboardService.currentSupportedProductCandidate()?.urlString else {
-                        productURL = ""
-                        return
-                    }
-
-                    Task { await startCompare(with: latestURL) }
+                    smartClipboardService.markHandled(candidate)
+                    Task { await startCompare(with: candidate.urlString) }
                 }
             }
         }
@@ -491,6 +586,38 @@ private extension CompareFlowSheet {
                 }
                 return $0.updatedAt > $1.updatedAt
             }
+    }
+
+    var comparisonCategoryOptions: [ClothingCategory] {
+        ClothingCategory.closetCategories(for: comparisonTargetGender)
+            .filter { $0 != .other }
+    }
+
+    var comparisonDetailCategoryOptions: [ClosetDetailCategory] {
+        ClosetDetailCategory.options(for: viewModel.category, gender: comparisonTargetGender)
+            .filter { $0 != .other }
+    }
+
+    var comparisonTargetGender: UserGender {
+        UserGender.productTarget(from: viewModel.productMetadata.genderCodes)
+    }
+
+    var comparisonCategoryTitle: String {
+        viewModel.category == .other ? "대분류 선택" : viewModel.category.rawValue
+    }
+
+    var comparisonDetailCategoryTitle: String {
+        viewModel.detailCategory == .other ? "세부 카테고리 선택" : viewModel.detailCategory.rawValue
+    }
+
+    var canConfirmComparisonCategory: Bool {
+        viewModel.category != .other
+            && viewModel.detailCategory != .other
+    }
+
+    var sourceCategoryHistoryMatches: [SourceCategoryHistoryMatch] {
+        guard let product = currentProduct else { return [] }
+        return SourceCategoryHistoryMatcher.matches(for: product, userFits: userFits)
     }
 
     var sameCategoryCandidates: [UserFit] {
@@ -578,6 +705,7 @@ private extension CompareFlowSheet {
         viewModel.productURL = trimmedURL
         errorMessage = nil
         statusMessage = nil
+        hasConfirmedComparisonCategory = false
         setStep(.loading)
 
         let didLoad = await viewModel.loadProductInfoFromURL()
@@ -596,7 +724,37 @@ private extension CompareFlowSheet {
         print("[CompareFlowSheet] productName: \(product.name)")
         print("[CompareFlowSheet] category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] detailCategory: \(viewModel.detailCategory.rawValue)")
-        print("[CompareFlowSheet] sameDetailItemCount: \(sameDetailItems.count)")
+        print("[CompareFlowSheet] sameDetailItemCount before user confirmation: \(sameDetailItems.count)")
+
+        let historyMatches = SourceCategoryHistoryMatcher.matches(for: product, userFits: userFits)
+        print("[CompareFlowSheet] source category history match count: \(historyMatches.count)")
+        if historyMatches.count == 1, let match = historyMatches.first {
+            applySourceCategoryHistoryMatch(match)
+            print("[CompareFlowSheet] auto confirmed category from source history: \(match.category.rawValue) / \(match.detailCategory.rawValue)")
+            confirmComparisonCategoryAndContinue()
+            return
+        }
+
+        setStep(.categoryConfirmation)
+    }
+
+    func refreshClipboardCandidate() {
+        let latestCandidate = smartClipboardService.currentSupportedProductCandidate()
+        if currentClipboardCandidate != latestCandidate {
+            currentClipboardCandidate = latestCandidate
+        }
+    }
+
+    func confirmComparisonCategoryAndContinue() {
+        guard canConfirmComparisonCategory, let product = currentProduct else {
+            errorMessage = "내 옷장 분류를 선택해 주세요."
+            return
+        }
+
+        hasConfirmedComparisonCategory = true
+        print("[CompareFlowSheet] confirmed category: \(viewModel.category.rawValue)")
+        print("[CompareFlowSheet] confirmed detailCategory: \(viewModel.detailCategory.rawValue)")
+        print("[CompareFlowSheet] sameDetailItemCount after user confirmation: \(sameDetailItems.count)")
 
         if sameDetailItems.isEmpty {
             logMissingReferenceDiagnostics(product: product)
@@ -606,6 +764,12 @@ private extension CompareFlowSheet {
         }
 
         calculateAndSaveRecommendation()
+    }
+
+    func applySourceCategoryHistoryMatch(_ match: SourceCategoryHistoryMatch) {
+        viewModel.category = match.category
+        viewModel.detailCategory = match.detailCategory
+        hasConfirmedComparisonCategory = false
     }
 
     func calculateAndSaveRecommendation() {
@@ -810,7 +974,12 @@ private extension CompareFlowSheet {
     }
 
     func openMusinsa() {
-        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/51vm2j7p") else { return }
+        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/msuf8hvg") else { return }
+        UIApplication.shared.open(url)
+    }
+
+    func openUniqlo() {
+        guard let url = URL(string: "https://www.uniqlo.com/kr/ko/") else { return }
         UIApplication.shared.open(url)
     }
 }
@@ -883,6 +1052,7 @@ private extension CompareFlowSheet {
 private enum CompareFlowStep: Equatable {
     case start
     case loading
+    case categoryConfirmation
     case missingReference
     case closetSelection
     case confirmReference
@@ -897,6 +1067,7 @@ private enum CompareFlowStep: Equatable {
         switch self {
         case .start: return "start"
         case .loading: return "loading"
+        case .categoryConfirmation: return "categoryConfirmation"
         case .missingReference: return "missingReference"
         case .closetSelection: return "closetSelection"
         case .confirmReference: return "confirmReference"

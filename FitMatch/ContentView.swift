@@ -54,6 +54,7 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
+                refreshRecentClipboardCandidate()
                 if !openPendingSharedURLIfNeeded() {
                     inspectClipboardIfNeeded()
                 }
@@ -92,6 +93,9 @@ struct ContentView: View {
                     },
                     onStartCompareLatestURL: {
                         openCompareUsingLatestAvailableURL()
+                    },
+                    onRefreshClipboardCandidate: {
+                        refreshRecentClipboardCandidate()
                     },
                     onLogout: {
                         isLoggedIn = false
@@ -172,6 +176,8 @@ struct ContentView: View {
     }
 
     private func inspectClipboardIfNeeded() {
+        refreshRecentClipboardCandidate()
+
         guard isLoggedIn,
               clipboardCandidate == nil,
               let candidate = smartClipboardService.detectCandidate() else {
@@ -180,6 +186,18 @@ struct ContentView: View {
 
         recentClipboardCandidate = candidate
         clipboardCandidate = candidate
+    }
+
+    private func refreshRecentClipboardCandidate() {
+        guard isLoggedIn else {
+            recentClipboardCandidate = nil
+            return
+        }
+
+        let latestCandidate = smartClipboardService.currentSupportedProductCandidate()
+        if recentClipboardCandidate != latestCandidate {
+            recentClipboardCandidate = latestCandidate
+        }
     }
 
     private func openCompare(with urlString: String?) {
@@ -918,6 +936,7 @@ private struct MainTabView: View {
     let histories: [RecommendationHistory]
     let onRecompare: (String) -> Void
     let onStartCompareLatestURL: () -> Void
+    let onRefreshClipboardCandidate: () -> Void
     let onLogout: () -> Void
     let compareViewID: UUID
     @State private var activeSheet: MainActiveSheet?
@@ -1052,6 +1071,7 @@ private struct MainTabView: View {
                         presentCompareFlow(initialURL: urlString)
                     },
                     onStartCompareLatestURL: onStartCompareLatestURL,
+                    onRefreshClipboardCandidate: onRefreshClipboardCandidate,
                     onOpenHistory: {
                         selectedTab = .history
                     },

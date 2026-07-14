@@ -346,8 +346,8 @@ struct MyClosetView: View {
         pendingBasisItem = item
         existingBasisItem = userFits.first {
             $0.id != item.id
-                && $0.sourceName.normalizedForBasis == item.sourceName.normalizedForBasis
-                && $0.sourceCategoryNameForMatching.normalizedForBasis == item.sourceCategoryNameForMatching.normalizedForBasis
+                && $0.category == item.category
+                && $0.detailCategory == item.detailCategory
                 && $0.isRepresentative
         }
         isShowingBasisChangeAlert = true
@@ -362,7 +362,7 @@ struct MyClosetView: View {
             return "이 옷을 기준 옷으로 설정할까요?"
         }
 
-        return "\(pendingBasisItem.sourceCategoryNameForMatching) 기준 옷을 변경할까요?"
+        return "\(pendingBasisItem.detailCategory.rawValue) 기준 옷을 변경할까요?"
     }
 
     private var basisAlertMessage: String {
@@ -397,8 +397,8 @@ struct MyClosetView: View {
         userFits
             .filter {
                 $0.id != pendingBasisItem.id
-                    && $0.sourceName.normalizedForBasis == pendingBasisItem.sourceName.normalizedForBasis
-                    && $0.sourceCategoryNameForMatching.normalizedForBasis == pendingBasisItem.sourceCategoryNameForMatching.normalizedForBasis
+                    && $0.category == pendingBasisItem.category
+                    && $0.detailCategory == pendingBasisItem.detailCategory
                     && $0.isRepresentative
             }
             .forEach {

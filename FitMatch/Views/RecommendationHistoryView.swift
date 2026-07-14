@@ -419,8 +419,6 @@ private struct HistoryCard: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
 
-                            HistoryPriceSnapshotView(history: history)
-
                             Text(history.sourceCategoryPathForDisplay)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -521,32 +519,7 @@ private struct HistoryPriceSnapshotView: View {
     let history: RecommendationHistory
 
     var body: some View {
-        if let displayPrice {
-            HStack(spacing: 6) {
-                Text(displayPrice)
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(.primary)
-
-                if let discountText {
-                    Text(discountText)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.red)
-                }
-
-                if let normalPriceText {
-                    Text(normalPriceText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .strikethrough()
-                }
-            }
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
-        } else {
-            Text("가격 정보 없음")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
+        EmptyView()
     }
 
     private var currentPrice: Int? {
@@ -631,7 +604,6 @@ private struct HistoryGridCard: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
 
-                            HistoryPriceSnapshotView(history: history)
                         }
                     }
                 }

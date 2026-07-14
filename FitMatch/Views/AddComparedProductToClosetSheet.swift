@@ -346,14 +346,14 @@ struct AddComparedProductToClosetSheet: View {
             ReadOnlyRegistrationInfoRow(title: "브랜드", value: product.brand?.name, emptyText: "정보 없음", isSelectable: true)
             ReadOnlyRegistrationInfoRow(title: "상품명", value: product.name, emptyText: "정보 없음", isSelectable: true)
             ReadOnlyRegistrationInfoRow(title: "상품 대상", value: selectedGender.rawValue, emptyText: "미분류")
-            ReadOnlyRegistrationInfoRow(title: "카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
+            ReadOnlyRegistrationInfoRow(title: "쇼핑몰 카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
         }
     }
 
     private var closetCategorySelectionRows: some View {
         VStack(alignment: .leading, spacing: 14) {
             if let sourceCategoryText {
-                ReadOnlyRegistrationInfoRow(title: "참고 카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
+                ReadOnlyRegistrationInfoRow(title: "쇼핑몰 카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
             }
 
             RegistrationMenuRow(title: "성별", value: selectedGender.rawValue) {
@@ -575,8 +575,8 @@ struct AddComparedProductToClosetSheet: View {
         if isBasisItem {
             userFits
                 .filter {
-                    $0.sourceName.normalizedForClosetRegistration == product.sourceDisplayName.normalizedForClosetRegistration
-                        && $0.sourceCategoryNameForMatching.normalizedForClosetRegistration == product.sourceCategoryNameForMatching.normalizedForClosetRegistration
+                    $0.category == selectedCategory.serviceGroup
+                        && $0.detailCategory == selectedDetailCategory
                         && $0.isRepresentative
                 }
                 .forEach {

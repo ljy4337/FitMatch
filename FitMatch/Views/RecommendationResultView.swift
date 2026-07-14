@@ -155,7 +155,6 @@ struct RecommendationResultView: View {
                         InfoRow(title: "브랜드", value: currentResult.product.brand?.name ?? "브랜드 미상")
                         InfoRow(title: "출처", value: currentResult.product.sourceDisplayName)
                         InfoRow(title: "카테고리", value: "\(currentResult.product.category.rawValue) / \(currentResult.productDetailCategory.rawValue)")
-                        ProductPriceView(product: currentResult.product)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }

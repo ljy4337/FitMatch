@@ -75,6 +75,8 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
             return
         }
 
+        let delta = currentSnapshot.clampedOffset - previousSnapshot.clampedOffset
+
         if currentSnapshot.boundaryState == .top {
             scrollState.reset()
             tabBarVisibilityController.showScroll(tab: tab, source: "native scroll top")
@@ -82,11 +84,13 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
         }
 
         if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
+            if delta > 1 {
+                tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll bottom")
+            }
             scrollState.reset()
             return
         }
 
-        let delta = currentSnapshot.clampedOffset - previousSnapshot.clampedOffset
         guard abs(delta) >= 1 else { return }
 
         if delta > 0 {
@@ -134,6 +138,8 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
             return
         }
 
+        let delta = currentSnapshot.clampedOffset - previousSnapshot.clampedOffset
+
         if currentSnapshot.boundaryState == .top {
             scrollState.reset()
             tabBarVisibilityController.showScroll(tab: tab, source: "native scroll top")
@@ -142,11 +148,14 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
         }
 
         if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
+            if delta > 1 {
+                tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll bottom")
+                setTopChromeVisible(false, source: "native scroll bottom")
+            }
             scrollState.reset()
             return
         }
 
-        let delta = currentSnapshot.clampedOffset - previousSnapshot.clampedOffset
         guard abs(delta) >= 1 else { return }
 
         if delta > 0 {

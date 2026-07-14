@@ -222,8 +222,8 @@ struct ClosetItemDetailView: View {
             userFits
                 .filter {
                     $0.id != item.id
-                        && $0.sourceName.normalizedForClosetDetail == item.sourceName.normalizedForClosetDetail
-                        && $0.sourceCategoryNameForMatching.normalizedForClosetDetail == item.sourceCategoryNameForMatching.normalizedForClosetDetail
+                        && $0.category == item.category
+                        && $0.detailCategory == item.detailCategory
                         && $0.isRepresentative
                 }
                 .forEach {

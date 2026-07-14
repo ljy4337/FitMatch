@@ -7,6 +7,7 @@ struct HomeView: View {
     let onStartCompare: () -> Void
     let onStartCompareWithURL: (String) -> Void
     let onStartCompareLatestURL: () -> Void
+    let onRefreshClipboardCandidate: () -> Void
     let onOpenHistory: () -> Void
     let onRecompare: (String) -> Void
     var onLogout: (() -> Void)?
@@ -26,7 +27,6 @@ struct HomeView: View {
                 clipboardSection
                 quickCompareSection
                 recentProductsSection
-                advertisementSection
             }
             .padding(.horizontal, 20)
             .padding(.top, 18)
@@ -35,6 +35,9 @@ struct HomeView: View {
         .background(Color(.systemGroupedBackground))
         .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .hidesBottomTabBarOnScroll(tab: .home, topChrome: $isTopChromeVisible)
+        .onAppear {
+            onRefreshClipboardCandidate()
+        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -150,42 +153,6 @@ struct HomeView: View {
         }
     }
 
-    private var advertisementSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                SectionHeader(title: "혹시 찾는 상품인가요?", subtitle: "광고 SDK 연결 예정")
-                Spacer()
-                Text("AD")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color(.secondarySystemGroupedBackground), in: Capsule())
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 14) {
-                    AdvertisementPlaceholderCard(
-                        title: "핏 데이터 기반 상품",
-                        subtitle: "내 기준 옷과 가까운 상품 영역",
-                        systemImage: "sparkles"
-                    )
-                    AdvertisementPlaceholderCard(
-                        title: "브랜드 캠페인",
-                        subtitle: "추후 제휴 광고 노출 자리",
-                        systemImage: "tag"
-                    )
-                    AdvertisementPlaceholderCard(
-                        title: "쇼핑몰 추천",
-                        subtitle: "플랫폼 광고 SDK 연결 예정",
-                        systemImage: "bag"
-                    )
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
     private var recentHistories: [RecommendationHistory] {
         uniqueRecentHistories().prefix(3).map { $0 }
     }
@@ -266,36 +233,7 @@ private struct EmptyHomeCard: View {
     }
 }
 
-private struct AdvertisementPlaceholderCard: View {
-    let title: String
-    let subtitle: String
-    let systemImage: String
-
-    var body: some View {
-        CardView(radius: 22, padding: 18) {
-            VStack(alignment: .leading, spacing: 16) {
-                Image(systemName: systemImage)
-                    .font(.title2.weight(.semibold))
-                    .frame(width: 42, height: 42)
-                    .background(.primary.opacity(0.06), in: Circle())
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(title)
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-        .frame(width: 240, height: 150)
-    }
-}
-
+#if DEBUG && FITMATCH_LEGACY_COMPARE_START
 struct CompareStartSheet: View {
     @Environment(\.openURL) private var openURL
     let recentClipboardCandidate: SmartClipboardCandidate?
@@ -443,7 +381,7 @@ struct CompareStartSheet: View {
     }
 
     private func openMusinsa() {
-        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/51vm2j7p") else {
+        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/msuf8hvg") else {
             return
         }
 
@@ -523,6 +461,8 @@ private struct CompareStartRow: View {
         .opacity(isEnabled ? 1 : 0.55)
     }
 }
+
+#endif
 
 struct RecentProductPreviewCard: View {
     enum Layout {
@@ -611,7 +551,6 @@ struct RecentProductPreviewCard: View {
                 .font(.headline.weight(.bold))
                 .foregroundStyle(.primary)
                 .lineLimit(2)
-            ProductPriceView(product: history.product)
         }
     }
 
