@@ -452,13 +452,6 @@ private struct HistoryCard: View {
                                 .background(Color(.systemBackground).opacity(0.92), in: Circle())
                         }
                         .buttonStyle(.plain)
-
-                        Text(history.stockStatus.rawValue)
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 5)
-                            .background(Color(.secondarySystemGroupedBackground), in: Capsule())
                     }
                 }
 
@@ -639,11 +632,6 @@ private struct HistoryGridCard: View {
                                 .lineLimit(1)
 
                             HistoryPriceSnapshotView(history: history)
-
-                            Text(history.stockStatus.rawValue)
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
                         }
                     }
                 }

@@ -214,23 +214,26 @@ struct RecommendationService {
         userFits: [UserFit],
         allowsGlobalFallback: Bool
     ) -> RecommendationBasis {
-        let priorityGroups: [(method: String, penalty: Int, filter: (UserFit) -> Bool)] = [
-            ("같은 쇼핑몰/카테고리 기준 옷 비교", 0, { item in
-                matchesSource(item, product: product)
-                    && matchesShoppingCategory(item, product: product)
-                    && item.isRepresentative
-            })
-        ]
+        let sameDetailFits = userFits.filter {
+            matchesInternalCategory($0, product: product, productDetailCategory: productDetailCategory)
+                && hasComparableMeasurements($0, product: product, productDetailCategory: productDetailCategory)
+        }
+        let representativeFits = sameDetailFits.filter(\.isRepresentative)
 
-        for group in priorityGroups {
-            let matches = userFits.filter(group.filter)
-            if !matches.isEmpty {
-                return RecommendationBasis(
-                    userFits: matches,
-                    methodText: group.method,
-                    scorePenalty: group.penalty
-                )
-            }
+        if !representativeFits.isEmpty {
+            return RecommendationBasis(
+                userFits: representativeFits,
+                methodText: "같은 세부 카테고리 기준 옷 비교",
+                scorePenalty: 0
+            )
+        }
+
+        if !sameDetailFits.isEmpty {
+            return RecommendationBasis(
+                userFits: sameDetailFits,
+                methodText: "같은 세부 카테고리 옷 비교",
+                scorePenalty: 0
+            )
         }
 
         return RecommendationBasis(userFits: [], methodText: "사용자 선택 임시 비교", scorePenalty: 12)
@@ -242,9 +245,8 @@ struct RecommendationService {
         userFits: [UserFit]
     ) -> Bool {
         userFits.contains {
-            matchesSource($0, product: product)
-                && matchesShoppingCategory($0, product: product)
-                && $0.isRepresentative
+            matchesInternalCategory($0, product: product, productDetailCategory: productDetailCategory)
+                && hasComparableMeasurements($0, product: product, productDetailCategory: productDetailCategory)
         }
     }
 
@@ -378,6 +380,28 @@ struct RecommendationService {
 
     private func matchesShoppingCategory(_ item: UserFit, product: Product) -> Bool {
         normalized(item.sourceCategoryNameForMatching) == normalized(product.sourceCategoryNameForMatching)
+    }
+
+    private func matchesInternalCategory(
+        _ item: UserFit,
+        product: Product,
+        productDetailCategory: ClosetDetailCategory
+    ) -> Bool {
+        item.category == product.category && item.detailCategory == productDetailCategory
+    }
+
+    private func hasComparableMeasurements(
+        _ item: UserFit,
+        product: Product,
+        productDetailCategory: ClosetDetailCategory
+    ) -> Bool {
+        let kinds = v1MeasurementKinds(productCategory: product.category, productDetailCategory: productDetailCategory)
+        guard !kinds.isEmpty else { return true }
+        return product.sizes.contains { size in
+            kinds.contains {
+                size.measurements.value(for: $0) > 0 && item.measurements.value(for: $0) > 0
+            }
+        }
     }
 
     private func isSameServiceGroup(_ item: UserFit, product: Product) -> Bool {

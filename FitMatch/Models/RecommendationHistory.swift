@@ -94,8 +94,8 @@ final class RecommendationHistory {
         self.isSaleSnapshot = product.isSale
         self.discountRateSnapshot = product.discountRate
         self.priceCheckedAt = createdAt
-        self.stockStatusRawValue = product.stockStatus.rawValue
-        self.stockCheckedAt = createdAt
+        self.stockStatusRawValue = nil
+        self.stockCheckedAt = nil
         self.selectedColorNameSnapshot = product.checkedColorName
         self.selectedSizeNameSnapshot = product.checkedSizeName ?? recommendedSize.name
         self.productSourceNameSnapshot = product.sourceDisplayName

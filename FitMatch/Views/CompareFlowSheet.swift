@@ -19,9 +19,7 @@ struct CompareFlowSheet: View {
     @State private var errorMessage: String?
     @State private var selectedReferenceItemID: UUID?
     @State private var statusMessage: String?
-    @State private var productForClosetRegistration: Product?
-    @State private var registrationContext: CompareProductRegistrationContext?
-    @State private var isShowingProductRegistration = false
+    @State private var registrationRoute: CompareProductRegistrationRoute?
     @State private var isShowingRegistrationSavedAlert = false
     @State private var selectedClosetSourceName: String?
     @State private var selectedClosetCategoryName: String?
@@ -69,19 +67,17 @@ struct CompareFlowSheet: View {
                 await startCompare(with: initialURL)
             }
         }
-        .sheet(isPresented: $isShowingProductRegistration) {
-            if let productForClosetRegistration {
-                AddComparedProductToClosetSheet(
-                    product: productForClosetRegistration,
-                    productDetailCategory: viewModel.detailCategory,
-                    recommendedSize: nil,
-                    isParsedProductReadOnly: true
-                ) { savedItem in
-                    handleRegisteredClosetItem(savedItem)
-                }
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
+        .sheet(item: $registrationRoute) { route in
+            AddComparedProductToClosetSheet(
+                product: route.product,
+                productDetailCategory: viewModel.detailCategory,
+                recommendedSize: nil,
+                isParsedProductReadOnly: true
+            ) { savedItem in
+                handleRegisteredClosetItem(savedItem, context: route.context)
             }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
         .alert("내 옷장에 추가했어요.", isPresented: $isShowingRegistrationSavedAlert) {
             Button("확인", role: .cancel) {}
@@ -483,11 +479,18 @@ private extension CompareFlowSheet {
 
     var sameDetailItems: [UserFit] {
         guard let product = currentProduct else { return [] }
-        return userFits.filter {
-            $0.isRepresentative
-                && $0.sourceName.normalizedForCompareFlow == product.sourceDisplayName.normalizedForCompareFlow
-                && $0.sourceCategoryNameForMatching.normalizedForCompareFlow == product.sourceCategoryNameForMatching.normalizedForCompareFlow
-        }
+        return userFits
+            .filter { item in
+                item.category == product.category
+                    && item.detailCategory == viewModel.detailCategory
+                    && hasComparableMeasurements(item)
+            }
+            .sorted {
+                if $0.isRepresentative != $1.isRepresentative {
+                    return $0.isRepresentative
+                }
+                return $0.updatedAt > $1.updatedAt
+            }
     }
 
     var sameCategoryCandidates: [UserFit] {
@@ -499,8 +502,9 @@ private extension CompareFlowSheet {
                     return false
                 }
                 return item.sourceName.normalizedForCompareFlow == selectedClosetSourceName.normalizedForCompareFlow
-                    && item.sourceCategoryNameForMatching.normalizedForCompareFlow == selectedClosetCategoryName.normalizedForCompareFlow
-                    && item.sourceDetailCategoryNameForDisplay.normalizedForCompareFlow == selectedClosetDetailCategoryName.normalizedForCompareFlow
+                    && item.category.rawValue.normalizedForCompareFlow == selectedClosetCategoryName.normalizedForCompareFlow
+                    && item.detailCategory.rawValue.normalizedForCompareFlow == selectedClosetDetailCategoryName.normalizedForCompareFlow
+                    && hasComparableMeasurements(item)
             }
             .sorted {
                 if $0.isRepresentative != $1.isRepresentative {
@@ -520,7 +524,7 @@ private extension CompareFlowSheet {
                 guard let selectedClosetSourceName else { return true }
                 return $0.sourceName.normalizedForCompareFlow == selectedClosetSourceName.normalizedForCompareFlow
             }
-            .map(\.sourceCategoryNameForMatching))
+            .map { $0.category.rawValue })
     }
 
     var closetDetailCategoryOptions: [String] {
@@ -531,9 +535,9 @@ private extension CompareFlowSheet {
             }
             .filter {
                 guard let selectedClosetCategoryName else { return true }
-                return $0.sourceCategoryNameForMatching.normalizedForCompareFlow == selectedClosetCategoryName.normalizedForCompareFlow
+                return $0.category.rawValue.normalizedForCompareFlow == selectedClosetCategoryName.normalizedForCompareFlow
             }
-            .map(\.sourceDetailCategoryNameForDisplay))
+            .map { $0.detailCategory.rawValue })
     }
 
     var selectedReferenceItem: UserFit? {
@@ -595,6 +599,7 @@ private extension CompareFlowSheet {
         print("[CompareFlowSheet] sameDetailItemCount: \(sameDetailItems.count)")
 
         if sameDetailItems.isEmpty {
+            logMissingReferenceDiagnostics(product: product)
             resetClosetSelection()
             setStep(.missingReference)
             return
@@ -671,27 +676,22 @@ private extension CompareFlowSheet {
 
     func presentProductRegistration(product: Product? = nil, context: CompareProductRegistrationContext) {
         guard let product = product ?? currentProduct else {
-            errorMessage = "상품 정보를 다시 불러와 주세요."
-            setStep(.error)
+            errorMessage = "상품 정보를 찾을 수 없습니다. 다시 불러와 주세요."
             return
         }
 
-        productForClosetRegistration = product
-        registrationContext = context
-        isShowingProductRegistration = true
+        registrationRoute = CompareProductRegistrationRoute(product: product, context: context)
     }
 
-    func handleRegisteredClosetItem(_ item: UserFit) {
-        let context = registrationContext
-        productForClosetRegistration = nil
-        registrationContext = nil
+    func handleRegisteredClosetItem(_ item: UserFit, context: CompareProductRegistrationContext) {
+        registrationRoute = nil
         statusMessage = "내 옷장에 추가했어요."
 
         switch context {
         case .missingReference:
             selectedReferenceItemID = item.id
             setStep(.confirmReference)
-        case .result, .none:
+        case .result:
             isShowingRegistrationSavedAlert = true
         }
     }
@@ -706,6 +706,25 @@ private extension CompareFlowSheet {
     func uniqueSorted(_ values: [String]) -> [String] {
         Array(Set(values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }))
             .sorted { $0.localizedCompare($1) == .orderedAscending }
+    }
+
+    func hasComparableMeasurements(_ item: UserFit) -> Bool {
+        viewModel.category
+            .measurementKinds(detailCategory: viewModel.detailCategory, gender: item.gender)
+            .contains { item.measurements.value(for: $0) > 0 }
+    }
+
+    func logMissingReferenceDiagnostics(product: Product) {
+        let sameCategory = userFits.filter { $0.category == product.category }
+        let sameDetail = sameCategory.filter { $0.detailCategory == viewModel.detailCategory }
+        let missingMeasurements = sameDetail.filter { !hasComparableMeasurements($0) }
+        print("[CompareFlowSheet] missing reference diagnostics")
+        print("[CompareFlowSheet] compare product category: \(product.category.rawValue)")
+        print("[CompareFlowSheet] compare product detailCategory: \(viewModel.detailCategory.rawValue)")
+        print("[CompareFlowSheet] total UserFit count: \(userFits.count)")
+        print("[CompareFlowSheet] same category count: \(sameCategory.count)")
+        print("[CompareFlowSheet] same category/detail count: \(sameDetail.count)")
+        print("[CompareFlowSheet] excluded missing measurements count: \(missingMeasurements.count)")
     }
 
     func existingBrand(named name: String) -> Brand? {
@@ -890,6 +909,12 @@ private enum CompareFlowStep: Equatable {
 private enum CompareProductRegistrationContext {
     case missingReference
     case result
+}
+
+private struct CompareProductRegistrationRoute: Identifiable {
+    let id = UUID()
+    let product: Product
+    let context: CompareProductRegistrationContext
 }
 
 private enum CompareLoadingState {

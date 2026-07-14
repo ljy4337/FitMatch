@@ -179,4 +179,10 @@ final class UserFit {
         }
         return sourceProduct?.sourceCategoryDisplayText ?? "\(sourceCategoryNameForMatching) / \(sourceDetailCategoryNameForDisplay)"
     }
+
+    var isImportedFromURL: Bool {
+        sourceProduct != nil
+            || sourceProductSize != nil
+            || !(sourceProduct?.sourceURLString?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+    }
 }

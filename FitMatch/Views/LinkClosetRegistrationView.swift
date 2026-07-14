@@ -135,7 +135,7 @@ struct LinkClosetRegistrationView: View {
                             Text("출처: \(parsedProduct.sourceDisplayName)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text("\(parsedProduct.category.rawValue) / \(parsedDetailCategory.rawValue)")
+                            Text(sourceCategoryText(for: parsedProduct))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -217,6 +217,11 @@ struct LinkClosetRegistrationView: View {
         }
 
         return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+    }
+
+    private func sourceCategoryText(for product: Product) -> String {
+        let value = product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? "카테고리 정보 없음" : value
     }
 
 }

@@ -224,10 +224,12 @@ struct AddComparedProductToClosetSheet: View {
                         Text("\(selectedCategory.rawValue) / \(selectedDetailCategory.rawValue)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text(product.sourceCategoryDisplayText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
+                        if isParsedProductReadOnly {
+                            Text(sourceCategoryText ?? "카테고리 정보 없음")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -692,16 +694,7 @@ struct AddComparedProductToClosetSheet: View {
             return sourceCategoryPath
         }
 
-        let depths = [
-            product.sourceCategoryDepth1,
-            product.sourceCategoryDepth2,
-            product.sourceCategoryDepth3,
-            product.sourceCategoryDepth4
-        ]
-            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-
-        return depths.isEmpty ? nil : depths.joined(separator: " > ")
+        return nil
     }
 }
 

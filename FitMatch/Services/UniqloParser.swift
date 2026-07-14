@@ -419,8 +419,13 @@ struct UniqloProductMetadataParser {
             ?? fallbackImageURL(goodsID: resolved.goodsID, colorCode: resolved.imageColorCode)
         let priceInfo = priceInfo(productGroupObject: productGroupObject, productObject: productObject, resolved: resolved)
         let breadcrumb = breadcrumbItems(from: breadcrumbObject, productName: productName)
-        let sourcePath = categoryPath(productGroupObject: productGroupObject, breadcrumb: breadcrumb)
-        let rawSourceCategory = stringValue(productGroupObject?["category"]) ?? breadcrumb.joined(separator: " / ")
+        let htmlBreadcrumb = htmlBreadcrumbItems(from: resolved.html, productName: productName)
+        let sourcePath = categoryPath(productGroupObject: productGroupObject, breadcrumb: breadcrumb, htmlBreadcrumb: htmlBreadcrumb)
+        let rawSourceCategory = !breadcrumb.isEmpty
+            ? breadcrumb.joined(separator: " / ")
+            : (!htmlBreadcrumb.isEmpty
+                ? htmlBreadcrumb.joined(separator: " / ")
+                : (stringValue(productGroupObject?["category"]) ?? "nil"))
         let categoryText = sourcePath.depths.joined(separator: " ")
         let category = mapCategory(from: categoryText)
         let detailCategory = mapDetailCategory(from: sourcePath.depths.last ?? categoryText)
@@ -438,7 +443,7 @@ struct UniqloProductMetadataParser {
             categoryDepth2Name: sourcePath.depth2,
             categoryDepth3Name: sourcePath.depth3,
             categoryDepth4Name: sourcePath.depth4,
-            genderCodes: sourcePath.gender.map { [$0] } ?? genderCodes(from: breadcrumb),
+            genderCodes: sourcePath.gender.map { [$0] } ?? genderCodes(from: breadcrumb + htmlBreadcrumb),
             imageURLStrings: [imageURLString].compactMap { $0 },
             normalPrice: priceInfo.normalPrice,
             salePrice: priceInfo.salePrice,
@@ -632,17 +637,84 @@ struct UniqloProductMetadataParser {
         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         .filter { !$0.isEmpty }
 
-        return names.filter { !$0.caseInsensitiveEquals(productName) }
+        return cleanedCategoryParts(names, productName: productName)
     }
 
-    private func categoryPath(productGroupObject: [String: Any]?, breadcrumb: [String]) -> SourceCategoryPath {
+    private func categoryPath(
+        productGroupObject: [String: Any]?,
+        breadcrumb: [String],
+        htmlBreadcrumb: [String]
+    ) -> SourceCategoryPath {
+        let breadcrumbPath = sourceCategoryPath(from: breadcrumb)
+        if !breadcrumbPath.depths.isEmpty {
+            return breadcrumbPath
+        }
+
+        let htmlBreadcrumbPath = sourceCategoryPath(from: htmlBreadcrumb)
+        if !htmlBreadcrumbPath.depths.isEmpty {
+            return htmlBreadcrumbPath
+        }
+
         let productGroupCategory = stringValue(productGroupObject?["category"])
         let productGroupPath = sourceCategoryPath(from: splitCategoryPath(productGroupCategory))
         if !productGroupPath.depths.isEmpty {
             return productGroupPath
         }
 
-        return sourceCategoryPath(from: breadcrumb)
+        return sourceCategoryPath(from: [])
+    }
+
+    private func htmlBreadcrumbItems(from html: String, productName: String) -> [String] {
+        let patterns = [
+            #"<nav[^>]*(?:breadcrumb|Breadcrumb)[^>]*>(.*?)</nav>"#,
+            #"<ol[^>]*(?:breadcrumb|Breadcrumb)[^>]*>(.*?)</ol>"#,
+            #"<ul[^>]*(?:breadcrumb|Breadcrumb)[^>]*>(.*?)</ul>"#,
+            #"<[^>]*(?:class|data-testid)=["'][^"']*(?:breadcrumb|Breadcrumb)[^"']*["'][^>]*>(.*?)</[^>]+>"#
+        ]
+
+        for pattern in patterns {
+            guard let htmlChunk = firstMatch(in: html, pattern: pattern) else {
+                continue
+            }
+
+            let linkedTexts = allMatches(in: htmlChunk, pattern: #"<a[^>]*>(.*?)</a>"#)
+            let itemTexts = linkedTexts.isEmpty
+                ? allMatches(in: htmlChunk, pattern: #"<li[^>]*>(.*?)</li>"#)
+                : linkedTexts
+            let parts = itemTexts
+                .map { $0.strippingHTMLTags.htmlDecoded.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            let cleaned = cleanedCategoryParts(parts, productName: productName)
+            if !cleaned.isEmpty {
+                return cleaned
+            }
+        }
+
+        return []
+    }
+
+    private func cleanedCategoryParts(_ parts: [String], productName: String) -> [String] {
+        var seen = Set<String>()
+        return parts.compactMap { rawPart in
+            let part = rawPart
+                .htmlDecoded
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            guard !part.isEmpty,
+                  !isBreadcrumbRoot(part),
+                  !part.caseInsensitiveEquals(productName) else {
+                return nil
+            }
+            let key = part.lowercased()
+            guard !seen.contains(key) else { return nil }
+            seen.insert(key)
+            return part
+        }
+    }
+
+    private func isBreadcrumbRoot(_ value: String) -> Bool {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return ["홈", "home", "유니클로", "uniqlo"].contains(normalized)
     }
 
     private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, prefix: String) {
@@ -704,6 +776,19 @@ struct UniqloProductMetadataParser {
             return nil
         }
         return String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func allMatches(in text: String, pattern: String) -> [String] {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
+            return []
+        }
+        return regex.matches(in: text, range: NSRange(text.startIndex..<text.endIndex, in: text)).compactMap { match in
+            guard match.numberOfRanges > 1,
+                  let range = Range(match.range(at: 1), in: text) else {
+                return nil
+            }
+            return String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
     }
 
     private func mapCategory(from text: String) -> ClothingCategory {
@@ -951,6 +1036,12 @@ private extension String {
             .replacingOccurrences(of: "\\u003C", with: "<")
             .replacingOccurrences(of: "\\u003E", with: ">")
             .replacingOccurrences(of: "\\u0026", with: "&")
+    }
+
+    var strippingHTMLTags: String {
+        replacingOccurrences(of: #"<[^>]+>"#, with: " ", options: .regularExpression)
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func caseInsensitiveEquals(_ other: String) -> Bool {
