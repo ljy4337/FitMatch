@@ -908,6 +908,7 @@ private struct ScreenshotMeasure: View {
 #endif
 
 private struct MainTabView: View {
+    @Environment(\.modelContext) private var modelContext
     @Binding var selectedTab: AppTab
     @Binding var clipboardCandidate: SmartClipboardCandidate?
     let compareURL: String?
@@ -946,6 +947,23 @@ private struct MainTabView: View {
             tabBarVisibilityController.release(tab: selectedTab, reason: .modalFlow, source: "sheet dismissed")
         }) { sheet in
             switch sheet {
+            case .newTask:
+                NewTaskSheet(
+                    onCompareMusinsa: {
+                        presentCompareFlowFromNewTask(initialURL: nil)
+                    },
+                    onCompareUniqlo: {
+                        presentCompareFlowFromNewTask(initialURL: nil)
+                    },
+                    onAddByLink: {
+                        presentClosetLinkRegistrationFromNewTask()
+                    },
+                    onAddManually: {
+                        presentManualClosetAddFromNewTask()
+                    }
+                )
+                .presentationDetents([.height(430)])
+                .presentationDragIndicator(.visible)
             case .compareFlow(let request):
                 CompareFlowSheet(
                     initialURL: request.initialURL,
@@ -970,6 +988,24 @@ private struct MainTabView: View {
                 )
                 .presentationDetents([.height(390)])
                 .presentationDragIndicator(.visible)
+            case .closetLinkRegistration:
+                NavigationStack {
+                    LinkClosetRegistrationView()
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            case .manualClosetAdd:
+                NavigationStack {
+                    AddClosetItemView { item in
+                        modelContext.insert(item)
+                        do {
+                            try modelContext.save()
+                        } catch {
+                            print("[MainTabView] manual closet add failed: \(error.localizedDescription)")
+                        }
+                    }
+                }
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -982,7 +1018,7 @@ private struct MainTabView: View {
             FitMatchBottomNavigationBar(
                 selectedTab: $selectedTab,
                 onStartCompare: {
-                    presentCompareFlow(initialURL: nil)
+                    presentSheet(.newTask)
                 }
             )
             .padding(.horizontal, 12)
@@ -1065,6 +1101,27 @@ private struct MainTabView: View {
         }
     }
 
+    private func presentCompareFlowFromNewTask(initialURL: String?) {
+        activeSheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            presentCompareFlow(initialURL: initialURL)
+        }
+    }
+
+    private func presentClosetLinkRegistrationFromNewTask() {
+        activeSheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            presentSheet(.closetLinkRegistration)
+        }
+    }
+
+    private func presentManualClosetAddFromNewTask() {
+        activeSheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            presentSheet(.manualClosetAdd)
+        }
+    }
+
     private func matchingHistory(for candidate: SmartClipboardCandidate) -> RecommendationHistory? {
         histories.first { history in
             history.product.sourceURLString == candidate.urlString
@@ -1073,24 +1130,39 @@ private struct MainTabView: View {
 }
 
 private enum MainActiveSheet: Identifiable {
+    case newTask
     case compareFlow(CompareFlowRequest)
     case clipboard(SmartClipboardCandidate)
+    case closetLinkRegistration
+    case manualClosetAdd
 
     var id: String {
         switch self {
+        case .newTask:
+            return "newTask"
         case .compareFlow(let request):
             return "compareFlow-\(request.id)"
         case .clipboard(let candidate):
             return "clipboard-\(candidate.id)"
+        case .closetLinkRegistration:
+            return "closetLinkRegistration"
+        case .manualClosetAdd:
+            return "manualClosetAdd"
         }
     }
 
     var logName: String {
         switch self {
+        case .newTask:
+            return "newTask"
         case .compareFlow:
             return "compareFlow"
         case .clipboard:
             return "clipboard"
+        case .closetLinkRegistration:
+            return "closetLinkRegistration"
+        case .manualClosetAdd:
+            return "manualClosetAdd"
         }
     }
 }
@@ -1098,6 +1170,106 @@ private enum MainActiveSheet: Identifiable {
 private struct CompareFlowRequest: Identifiable {
     let id = UUID()
     let initialURL: String?
+}
+
+private struct NewTaskSheet: View {
+    let onCompareMusinsa: () -> Void
+    let onCompareUniqlo: () -> Void
+    let onAddByLink: () -> Void
+    let onAddManually: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("새 작업")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(.primary)
+                Text("상품을 비교하거나 내 옷장에 옷을 추가합니다.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            NewTaskSection(title: "상품 비교") {
+                NewTaskRow(title: "무신사", subtitle: "무신사 상품 링크로 비교", systemImage: "m.circle.fill", isPrimary: true) {
+                    onCompareMusinsa()
+                }
+
+                NewTaskRow(title: "유니클로", subtitle: "유니클로 상품 링크로 비교", systemImage: "u.circle.fill", isPrimary: true) {
+                    onCompareUniqlo()
+                }
+            }
+
+            NewTaskSection(title: "내 옷 추가") {
+                NewTaskRow(title: "상품 링크로 추가", subtitle: "상품 정보를 불러와 내 옷장에 저장", systemImage: "link") {
+                    onAddByLink()
+                }
+
+                NewTaskRow(title: "직접 입력", subtitle: "브랜드와 실측값을 직접 입력", systemImage: "square.and.pencil") {
+                    onAddManually()
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+        .background(Color(.systemGroupedBackground))
+    }
+}
+
+private struct NewTaskSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.caption.weight(.black))
+                .foregroundStyle(.secondary)
+
+            VStack(spacing: 10) {
+                content
+            }
+        }
+    }
+}
+
+private struct NewTaskRow: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+    var isPrimary = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: systemImage)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(isPrimary ? Color(.systemBackground) : .primary)
+                    .frame(width: 38, height: 38)
+                    .background(isPrimary ? Color.primary : Color(.secondarySystemGroupedBackground), in: Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 private struct FitMatchBottomNavigationBar: View {
@@ -1132,7 +1304,7 @@ private struct FitMatchBottomNavigationBar: View {
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity)
-            .accessibilityLabel("새 상품 비교 시작")
+            .accessibilityLabel("새 작업")
 
             BottomNavigationItem(
                 title: "추천",

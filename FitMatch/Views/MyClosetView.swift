@@ -21,35 +21,27 @@ struct MyClosetView: View {
     @State private var displayedItems: [UserFit] = []
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            VStack(spacing: 0) {
-                if isTopChromeVisible {
-                    FitMatchNavigationHeader(onLogout: onLogout)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 18)
-                        .padding(.bottom, 12)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-
-                closetHeader
-
-                if userFits.isEmpty {
-                    EmptyClosetView {
-                        presentActiveSheet(.addMethod)
-                        }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    closetContent
-                }
+        VStack(spacing: 0) {
+            if isTopChromeVisible {
+                FitMatchNavigationHeader(onLogout: onLogout)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if !userFits.isEmpty {
-                closetFloatingAddButton
-                    .padding(.trailing, 22)
-                    .padding(.bottom, 92)
+            closetHeader
+
+            if userFits.isEmpty {
+                EmptyClosetView {
+                    presentActiveSheet(.addMethod)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                closetContent
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -142,21 +134,6 @@ struct MyClosetView: View {
 
     private var closetHeader: some View {
         ContentFilterBar(filters: closetFilterItems, layout: closetLayoutBinding)
-    }
-
-    private var closetFloatingAddButton: some View {
-        Button {
-            presentActiveSheet(.addMethod)
-        } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 50, height: 50)
-                .background(.black, in: Circle())
-                .shadow(color: .black.opacity(0.16), radius: 8, x: 0, y: 4)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("기준 옷 추가")
     }
 
     @ViewBuilder
