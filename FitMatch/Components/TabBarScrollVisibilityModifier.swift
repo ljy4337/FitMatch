@@ -7,6 +7,10 @@ enum TabBarHiddenReason: String, Hashable {
     case modalFlow
 }
 
+enum FitMatchScrollContentMetrics {
+    static let bottomClearance: CGFloat = 88
+}
+
 @MainActor
 final class TabBarVisibilityController: ObservableObject {
     @Published private var hiddenReasons: Set<TabBarHiddenReason> = []
@@ -20,7 +24,6 @@ final class TabBarVisibilityController: ObservableObject {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
             _ = hiddenReasons.insert(reason)
         }
-        print("[TabBarVisibility] hide tab=\(tab?.logName ?? "unknown") reason=\(reason.rawValue) source=\(source) active=\(activeReasonLog)")
     }
 
     func show(tab: AppTab? = nil, reason: TabBarHiddenReason, source: String = "") {
@@ -40,11 +43,6 @@ final class TabBarVisibilityController: ObservableObject {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
             _ = hiddenReasons.remove(reason)
         }
-        print("[TabBarVisibility] release tab=\(tab?.logName ?? "unknown") reason=\(reason.rawValue) source=\(source) active=\(activeReasonLog)")
-    }
-
-    private var activeReasonLog: String {
-        hiddenReasons.map(\.rawValue).sorted().joined(separator: ",")
     }
 }
 
@@ -55,10 +53,10 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y + geometry.contentInsets.top
-            } action: { previousOffset, currentOffset in
-                handleScrollOffset(previous: previousOffset, current: currentOffset)
+            .onScrollGeometryChange(for: ScrollVisibilitySnapshot.self) { geometry in
+                ScrollVisibilitySnapshot(geometry: geometry)
+            } action: { previousSnapshot, currentSnapshot in
+                handleScroll(previous: previousSnapshot, current: currentSnapshot)
             }
             .onDisappear {
                 scrollState.reset()
@@ -70,20 +68,26 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
             }
     }
 
-    private func handleScrollOffset(previous previousOffset: CGFloat, current currentOffset: CGFloat) {
-        guard previousOffset.isFinite, currentOffset.isFinite else { return }
-
-        let delta = currentOffset - previousOffset
-
-        guard abs(delta) >= 1 else {
+    private func handleScroll(previous previousSnapshot: ScrollVisibilitySnapshot, current currentSnapshot: ScrollVisibilitySnapshot) {
+        guard currentSnapshot.isScrollable else {
+            scrollState.reset()
+            tabBarVisibilityController.showScroll(tab: tab, source: "content shorter than viewport")
             return
         }
 
-        if currentOffset <= 2 {
+        if currentSnapshot.boundaryState == .top {
             scrollState.reset()
             tabBarVisibilityController.showScroll(tab: tab, source: "native scroll top")
             return
         }
+
+        if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
+            scrollState.reset()
+            return
+        }
+
+        let delta = currentSnapshot.clampedOffset - previousSnapshot.clampedOffset
+        guard abs(delta) >= 1 else { return }
 
         if delta > 0 {
             if scrollState.recordScroll(delta: delta, threshold: 12) == .hide {
@@ -105,10 +109,10 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y + geometry.contentInsets.top
-            } action: { previousOffset, currentOffset in
-                handleScrollOffset(previous: previousOffset, current: currentOffset)
+            .onScrollGeometryChange(for: ScrollVisibilitySnapshot.self) { geometry in
+                ScrollVisibilitySnapshot(geometry: geometry)
+            } action: { previousSnapshot, currentSnapshot in
+                handleScroll(previous: previousSnapshot, current: currentSnapshot)
             }
             .onDisappear {
                 scrollState.reset()
@@ -122,21 +126,28 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
             }
     }
 
-    private func handleScrollOffset(previous previousOffset: CGFloat, current currentOffset: CGFloat) {
-        guard previousOffset.isFinite, currentOffset.isFinite else { return }
-
-        let delta = currentOffset - previousOffset
-
-        guard abs(delta) >= 1 else {
+    private func handleScroll(previous previousSnapshot: ScrollVisibilitySnapshot, current currentSnapshot: ScrollVisibilitySnapshot) {
+        guard currentSnapshot.isScrollable else {
+            scrollState.reset()
+            tabBarVisibilityController.showScroll(tab: tab, source: "content shorter than viewport")
+            setTopChromeVisible(true, source: "content shorter than viewport")
             return
         }
 
-        if currentOffset <= 2 {
+        if currentSnapshot.boundaryState == .top {
             scrollState.reset()
             tabBarVisibilityController.showScroll(tab: tab, source: "native scroll top")
             setTopChromeVisible(true, source: "native scroll top")
             return
         }
+
+        if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
+            scrollState.reset()
+            return
+        }
+
+        let delta = currentSnapshot.clampedOffset - previousSnapshot.clampedOffset
+        guard abs(delta) >= 1 else { return }
 
         if delta > 0 {
             if scrollState.recordScroll(delta: delta, threshold: 12) == .hide {
@@ -154,11 +165,59 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
     private func setTopChromeVisible(_ visible: Bool, source: String) {
         guard isTopChromeVisible != visible else { return }
 
-        print("[TopChromeScroll] tab=\(tab.logName) action=\(visible ? "show" : "hide") source=\(source)")
         withAnimation(.easeInOut(duration: 0.25)) {
             isTopChromeVisible = visible
         }
     }
+}
+
+private struct ScrollVisibilitySnapshot: Equatable {
+    let rawOffset: CGFloat
+    let clampedOffset: CGFloat
+    let minOffset: CGFloat
+    let maxOffset: CGFloat
+    let boundaryState: ScrollBoundaryState
+
+    init(geometry: ScrollGeometry) {
+        let rawOffset = geometry.contentOffset.y + geometry.contentInsets.top
+        let minOffset: CGFloat = 0
+        let maxOffset = max(
+            minOffset,
+            geometry.contentSize.height
+                - geometry.containerSize.height
+                + geometry.contentInsets.top
+                + geometry.contentInsets.bottom
+        )
+        let clampedOffset = min(max(rawOffset, minOffset), maxOffset)
+
+        self.rawOffset = rawOffset
+        self.clampedOffset = clampedOffset
+        self.minOffset = minOffset
+        self.maxOffset = maxOffset
+
+        if rawOffset < minOffset {
+            boundaryState = .top
+        } else if rawOffset > maxOffset {
+            boundaryState = .bottomOverscroll
+        } else if clampedOffset <= minOffset + 2 {
+            boundaryState = .top
+        } else if clampedOffset >= maxOffset - 2 {
+            boundaryState = .bottom
+        } else {
+            boundaryState = .scrolling
+        }
+    }
+
+    var isScrollable: Bool {
+        maxOffset > minOffset + 2
+    }
+}
+
+private enum ScrollBoundaryState: Equatable {
+    case top
+    case scrolling
+    case bottom
+    case bottomOverscroll
 }
 
 @MainActor
