@@ -21,8 +21,6 @@ struct CompareFlowSheet: View {
     @State private var statusMessage: String?
     @State private var registrationRoute: CompareProductRegistrationRoute?
     @State private var isShowingRegistrationSavedAlert = false
-    @State private var selectedClosetCategory: ClothingCategory?
-    @State private var selectedClosetDetailCategory: ClosetDetailCategory?
     @State private var hasConfirmedComparisonCategory = false
     @State private var currentClipboardCandidate: SmartClipboardCandidate?
     @State private var isSheetHeaderVisible = true
@@ -138,11 +136,11 @@ private extension CompareFlowSheet {
                 .background(Color(.secondarySystemGroupedBackground), in: Circle())
 
             VStack(spacing: 8) {
-                Text("비교 가능한 상품이 없습니다.")
+                Text("같은 분류의 옷이 없어요")
                     .font(.title2.weight(.black))
                     .multilineTextAlignment(.center)
 
-                Text("정확한 비교를 위해 상품을 먼저 등록해 주세요.")
+                Text("쇼핑몰 분류: \(currentSourceCategoryText)\n내 옷장에 같은 분류로 등록된 옷이 아직 없습니다. 비슷한 옷을 선택해 비교할 수 있어요.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -150,16 +148,15 @@ private extension CompareFlowSheet {
             }
 
             VStack(spacing: 11) {
-                PrimaryButton(title: "상품 등록", systemImage: "plus") {
-                    presentProductRegistration(context: .missingReference)
-                }
-
-                SecondaryButton(title: "옷장 속 다른 옷과 비교", systemImage: "list.bullet.rectangle") {
-                    prepareClosetSelectionDefaults()
+                PrimaryButton(title: "비슷한 옷 선택하기", systemImage: "list.bullet.rectangle") {
                     setStep(.closetSelection)
                 }
-                .disabled(closetCategoryOptions.isEmpty)
-                .opacity(closetCategoryOptions.isEmpty ? 0.45 : 1)
+                .disabled(allSimilarClosetCandidates.isEmpty)
+                .opacity(allSimilarClosetCandidates.isEmpty ? 0.45 : 1)
+
+                SecondaryButton(title: "비교 취소", systemImage: "xmark") {
+                    dismiss()
+                }
             }
         }
         .padding(.top, 12)
@@ -255,83 +252,41 @@ private extension CompareFlowSheet {
 
     var closetSelectionContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            sheetHeader(title: "어떤 옷과 비교할까요?", subtitle: "대분류와 세부 카테고리를 선택한 뒤 비교할 옷을 고르세요.")
+            sheetHeader(title: "비슷한 옷 선택", subtitle: "내 옷장에 실제로 등록된 옷 중 비교할 옷을 고르세요.")
 
-            if closetCategoryOptions.isEmpty {
+            if allSimilarClosetCandidates.isEmpty {
                 FitMatchCard {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("비교 가능한 상품이 없습니다.")
+                        Text("비교 가능한 옷이 없습니다.")
                             .font(.headline.weight(.bold))
-                        Text("상품을 먼저 등록하면 비교할 수 있습니다.")
+                        Text("실측 정보가 있는 옷을 내 옷장에 등록한 뒤 다시 시도해 주세요.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        PrimaryButton(title: "상품 등록", systemImage: "plus") {
-                            presentProductRegistration(context: .missingReference)
-                        }
                     }
                 }
             } else {
-                VStack(alignment: .leading, spacing: 10) {
-                    CompareSelectionMenu(title: selectedClosetCategory?.rawValue ?? "대분류 선택") {
-                        ForEach(closetCategoryOptions) { category in
-                            Button(category.rawValue) {
-                                selectedClosetCategory = category
-                                selectedClosetDetailCategory = nil
-                                selectedReferenceItemID = nil
-                                viewModel.category = category
-                                viewModel.detailCategory = .other
-                            }
-                        }
-                    }
-
-                    CompareSelectionMenu(title: selectedClosetDetailCategory?.rawValue ?? "세부 카테고리 선택") {
-                        ForEach(closetDetailCategoryOptions) { detail in
-                            Button(detail.rawValue) {
-                                selectedClosetDetailCategory = detail
-                                selectedReferenceItemID = nil
-                                viewModel.detailCategory = detail
-                            }
-                        }
-                    }
-                    .disabled(selectedClosetCategory == nil)
-                    .opacity(selectedClosetCategory == nil ? 0.5 : 1)
-                }
-
-                VStack(spacing: 12) {
-                    if representativeCategoryCandidate != nil {
-                        CompareSheetSectionTitle(
-                            title: "기준옷으로 비교",
-                            subtitle: "선택한 분류에 지정된 기준옷을 우선 사용합니다."
-                        )
-                    } else if selectedClosetDetailCategory != nil, !sameCategoryCandidates.isEmpty {
-                        CompareSheetSectionTitle(
-                            title: "옷 선택",
-                            subtitle: "이 분류에 기준옷이 없어 비교할 옷을 선택해 주세요."
-                        )
-                    }
-
-                    ForEach(closetSelectionCandidates) { item in
-                        Button {
-                            selectedReferenceItemID = item.id
-                            setStep(.confirmReference)
-                        } label: {
-                            ClosetReferenceChoiceCard(item: item, targetDetailCategory: viewModel.detailCategory)
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    if selectedClosetDetailCategory != nil, sameCategoryCandidates.isEmpty {
-                        Text("선택한 분류에 비교 가능한 실측 정보가 있는 옷이 없습니다.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.top, 4)
-                    }
-                }
+                closetCandidateSection(title: "원본 카테고리 기반 추천 분류", items: recommendedSimilarCandidates)
+                closetCandidateSection(title: "같은 대분류", items: sameMainCategoryCandidates)
+                closetCandidateSection(title: "전체 옷장", items: remainingClosetCandidates)
             }
         }
-        .onAppear {
-            prepareClosetSelectionDefaults()
+    }
+
+    @ViewBuilder
+    func closetCandidateSection(title: String, items: [UserFit]) -> some View {
+        if !items.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                CompareSheetSectionTitle(title: title)
+                ForEach(items) { item in
+                    Button {
+                        selectedReferenceItemID = item.id
+                        setStep(.confirmReference)
+                    } label: {
+                        ClosetReferenceChoiceCard(item: item, targetDetailCategory: viewModel.detailCategory)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
     }
 
@@ -667,57 +622,38 @@ private extension CompareFlowSheet {
         return SourceCategoryHistoryMatcher.matches(for: product, userFits: userFits)
     }
 
-    var sameCategoryCandidates: [UserFit] {
-        return userFits
-            .filter { item in
-                guard let selectedClosetCategory,
-                      let selectedClosetDetailCategory else {
-                    return false
-                }
-                return item.category == selectedClosetCategory
-                    && item.detailCategory == selectedClosetDetailCategory
-                    && hasComparableMeasurements(item)
-            }
-            .sorted {
-                if $0.isRepresentative != $1.isRepresentative {
-                    return $0.isRepresentative
-                }
-                return $0.updatedAt > $1.updatedAt
-            }
+    var currentSourceCategoryText: String {
+        guard let product = currentProduct else { return "카테고리 정보 없음" }
+        return strictSourceCategoryText(for: product) ?? "카테고리 정보 없음"
     }
 
-    var representativeCategoryCandidate: UserFit? {
-        sameCategoryCandidates.first(where: \.isRepresentative)
+    var allSimilarClosetCandidates: [UserFit] {
+        sortedClosetCandidates(userFits.filter(hasComparableMeasurements))
     }
 
-    var closetSelectionCandidates: [UserFit] {
-        if let representativeCategoryCandidate {
-            return [representativeCategoryCandidate]
+    var recommendedSimilarCandidates: [UserFit] {
+        allSimilarClosetCandidates.filter {
+            $0.category == viewModel.category && $0.detailCategory == viewModel.detailCategory
         }
-        return sameCategoryCandidates
     }
 
-    var resolvedComparisonCategory: ClothingCategory? {
-        viewModel.category == .other ? nil : viewModel.category
+    var sameMainCategoryCandidates: [UserFit] {
+        allSimilarClosetCandidates.filter {
+            $0.category == viewModel.category && $0.detailCategory != viewModel.detailCategory
+        }
     }
 
-    var resolvedComparisonDetailCategory: ClosetDetailCategory? {
-        viewModel.detailCategory == .other ? nil : viewModel.detailCategory
+    var remainingClosetCandidates: [UserFit] {
+        allSimilarClosetCandidates.filter { $0.category != viewModel.category }
     }
 
-    var closetCategoryOptions: [ClothingCategory] {
-        Array(Set(userFits.map(\.category)))
-            .filter { $0 != .other }
-            .sorted { $0.rawValue.localizedCompare($1.rawValue) == .orderedAscending }
-    }
-
-    var closetDetailCategoryOptions: [ClosetDetailCategory] {
-        guard let selectedClosetCategory else { return [] }
-        return Array(Set(userFits
-            .filter { $0.category == selectedClosetCategory }
-            .map(\.detailCategory)))
-            .filter { $0 != .other }
-            .sorted { $0.rawValue.localizedCompare($1.rawValue) == .orderedAscending }
+    func sortedClosetCandidates(_ items: [UserFit]) -> [UserFit] {
+        items.sorted {
+            if $0.isRepresentative != $1.isRepresentative {
+                return $0.isRepresentative
+            }
+            return $0.updatedAt > $1.updatedAt
+        }
     }
 
     var selectedReferenceItem: UserFit? {
@@ -826,7 +762,6 @@ private extension CompareFlowSheet {
 
         if sameDetailItems.isEmpty {
             logMissingReferenceDiagnostics(product: product)
-            resetClosetSelection()
             setStep(.missingReference)
             return
         }
@@ -937,27 +872,6 @@ private extension CompareFlowSheet {
             setStep(.confirmReference)
         case .result:
             isShowingRegistrationSavedAlert = true
-        }
-    }
-
-    func resetClosetSelection() {
-        selectedClosetCategory = nil
-        selectedClosetDetailCategory = nil
-        selectedReferenceItemID = nil
-    }
-
-    func prepareClosetSelectionDefaults() {
-        guard selectedClosetCategory == nil else { return }
-
-        if let resolvedCategory = resolvedComparisonCategory,
-           closetCategoryOptions.contains(resolvedCategory) {
-            selectedClosetCategory = resolvedCategory
-            viewModel.category = resolvedCategory
-
-            if let resolvedDetailCategory = resolvedComparisonDetailCategory,
-               closetDetailCategoryOptions.contains(resolvedDetailCategory) {
-                selectedClosetDetailCategory = resolvedDetailCategory
-            }
         }
     }
 

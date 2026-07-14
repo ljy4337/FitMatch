@@ -24,6 +24,10 @@ Uniqlo
 - Updated the shared root chrome scroll handler so any meaningful upward scroll immediately restores both the app header and bottom tab bar.
 - Reverified that only `FitMatchNavigationHeader` is collapsible and History/My Closet filters remain ordinary scroll content.
 - Removed the per-event 3pt cutoff from root chrome tracking so slow, small scroll deltas accumulate and trigger header/tab hiding.
+- Replaced the no-same-category comparison UX with a dedicated `같은 분류의 옷이 없어요` screen and compare-cancel action.
+- Removed category/detail pickers from the similar-garment flow.
+- Similar garments now show only existing `UserFit` items, grouped by inferred exact classification, same main category, and remaining closet items.
+- Selected similar garments continue through the existing temporary reference comparison path.
 
 ## Current Task
 - Compare Default
@@ -49,6 +53,7 @@ Uniqlo
 - Search confirmed all four target screens use root-level `CollapsibleTopChrome`, while History/My Closet filters remain in scroll content.
 - Category mapping persistence and automatic-skip changes passed the same build and diff checks.
 - Shared top/bottom chrome restoration change passed `xcodebuild` and `git diff --check`.
+- No-same-category and similar-garment selection changes passed the same build and diff checks.
 
 ## Next Task
 Manually verify source category auto-mapping reuse, then top chrome collapse and remaining scroll jitter.
