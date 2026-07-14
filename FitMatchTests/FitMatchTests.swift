@@ -326,7 +326,10 @@ struct FitMatchTests {
 
         #expect(metadata.category == .top)
         #expect(metadata.detailCategory == .cardigan)
-        #expect(metadata.productMetadata.baseCategoryFullPath == "WOMEN > 니트 & 가디건 > 니트 > 가디건")
+        #expect(metadata.productMetadata.baseCategoryFullPath == "니트 & 가디건 > 니트 > 가디건")
+        #expect(metadata.productMetadata.categoryDepth1Name == "니트 & 가디건")
+        #expect(metadata.productMetadata.categoryDepth2Name == "니트")
+        #expect(metadata.productMetadata.categoryDepth3Name == "가디건")
         #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
     }
 

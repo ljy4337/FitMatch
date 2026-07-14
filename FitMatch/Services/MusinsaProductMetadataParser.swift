@@ -62,9 +62,9 @@ struct MusinsaProductMetadataParser {
         do {
             let response = try await fetchProductDetail(productID: productID)
             let sourcePath = Self.categoryPath(from: response.data)
-            let depth1 = sourcePath.category
-            let depth2 = sourcePath.detailCategory
-            let categoryText = [depth1, depth2].compactMap { $0 }.joined(separator: " ")
+            let depth1 = sourcePath.depth1
+            let depth2 = sourcePath.depth2
+            let categoryText = sourcePath.depths.joined(separator: " ")
             let productName = response.data.goodsNm
             let brandName = response.data.brandInfo?.brandName
                 ?? response.data.brandInfo?.brandEnglishName
@@ -292,9 +292,13 @@ struct MusinsaProductMetadataParser {
             brandNationName: data.brandInfo?.brandNationName,
             baseCategoryFullPath: sourcePath.fullPath,
             categoryDepth1Code: data.category?.categoryDepth1Code,
-            categoryDepth1Name: sourcePath.category,
+            categoryDepth1Name: sourcePath.depth1,
             categoryDepth2Code: data.category?.categoryDepth2Code,
-            categoryDepth2Name: sourcePath.detailCategory,
+            categoryDepth2Name: sourcePath.depth2,
+            categoryDepth3Code: data.category?.categoryDepth3Code,
+            categoryDepth3Name: sourcePath.depth3,
+            categoryDepth4Code: data.category?.categoryDepth4Code,
+            categoryDepth4Name: sourcePath.depth4,
             sizeType: data.sizeType,
             genderCodes: data.genders ?? data.sex ?? [],
             labelNames: data.labels?.map(\.name) ?? [],
@@ -316,19 +320,21 @@ struct MusinsaProductMetadataParser {
         )
     }
 
-    private static func categoryPath(from data: MusinsaProductDetailResponse.DataBody) -> (fullPath: String?, category: String?, detailCategory: String?) {
-        let categoryTitle = normalizedCategoryValue(data.category?.categoryDepth1Title)
-        let detailCategoryTitle = normalizedCategoryValue(data.category?.categoryDepth2Title)
-        if categoryTitle != nil || detailCategoryTitle != nil {
-            let fullPath = splitCategoryPath(data.baseCategoryFullPath).isEmpty
-                ? [categoryTitle, detailCategoryTitle].compactMap { $0 }.joined(separator: " > ")
-                : splitCategoryPath(data.baseCategoryFullPath).joined(separator: " > ")
-            return (fullPath.isEmpty ? nil : fullPath, categoryTitle, detailCategoryTitle)
+    private static func categoryPath(from data: MusinsaProductDetailResponse.DataBody) -> SourceCategoryPath {
+        let titleDepths = [
+            normalizedCategoryValue(data.category?.categoryDepth1Title),
+            normalizedCategoryValue(data.category?.categoryDepth2Title),
+            normalizedCategoryValue(data.category?.categoryDepth3Title),
+            normalizedCategoryValue(data.category?.categoryDepth4Title)
+        ]
+
+        if titleDepths.contains(where: { $0 != nil }) {
+            return SourceCategoryPath(depths: titleDepths.compactMap { $0 })
         }
 
         let pathParts = splitCategoryPath(data.baseCategoryFullPath)
-        if pathParts.count >= 2 {
-            return (pathParts.joined(separator: " > "), pathParts[pathParts.count - 2], pathParts[pathParts.count - 1])
+        if !pathParts.isEmpty {
+            return SourceCategoryPath(depths: pathParts)
         }
 
         let fallbackParts = [
@@ -340,13 +346,7 @@ struct MusinsaProductMetadataParser {
             .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
 
-        if fallbackParts.count >= 2 {
-            return (fallbackParts.joined(separator: " > "), fallbackParts[fallbackParts.count - 2], fallbackParts[fallbackParts.count - 1])
-        }
-        if let only = fallbackParts.last {
-            return (only, nil, only)
-        }
-        return (data.baseCategoryFullPath, nil, nil)
+        return SourceCategoryPath(depths: fallbackParts)
     }
 
     private static func normalizedCategoryValue(_ value: String?) -> String? {
@@ -360,6 +360,24 @@ struct MusinsaProductMetadataParser {
             .components(separatedBy: CharacterSet(charactersIn: ">/"))
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+    }
+}
+
+private struct SourceCategoryPath {
+    let depths: [String]
+
+    var fullPath: String? {
+        depths.isEmpty ? nil : depths.joined(separator: " > ")
+    }
+
+    var depth1: String? { depth(at: 0) }
+    var depth2: String? { depth(at: 1) }
+    var depth3: String? { depth(at: 2) }
+    var depth4: String? { depth(at: 3) }
+
+    private func depth(at index: Int) -> String? {
+        guard depths.indices.contains(index) else { return nil }
+        return depths[index]
     }
 }
 

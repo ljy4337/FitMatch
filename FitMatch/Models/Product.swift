@@ -27,6 +27,10 @@ final class Product {
     var categoryDepth1Name: String?
     var categoryDepth2Code: String?
     var categoryDepth2Name: String?
+    var categoryDepth3Code: String?
+    var categoryDepth3Name: String?
+    var categoryDepth4Code: String?
+    var categoryDepth4Name: String?
     var sizeType: String?
     var genderCodes: String = ""
     var labelNames: String = ""
@@ -92,6 +96,10 @@ final class Product {
         self.categoryDepth1Name = metadata.categoryDepth1Name
         self.categoryDepth2Code = metadata.categoryDepth2Code
         self.categoryDepth2Name = metadata.categoryDepth2Name
+        self.categoryDepth3Code = metadata.categoryDepth3Code
+        self.categoryDepth3Name = metadata.categoryDepth3Name
+        self.categoryDepth4Code = metadata.categoryDepth4Code
+        self.categoryDepth4Name = metadata.categoryDepth4Name
         self.sizeType = metadata.sizeType
         self.genderCodes = metadata.genderCodes.joined(separator: ",")
         self.labelNames = metadata.labelNames.joined(separator: ",")
@@ -149,6 +157,11 @@ final class Product {
     }
 
     var sourceCategoryDisplayText: String {
+        if let baseCategoryFullPath,
+           !baseCategoryFullPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return baseCategoryFullPath
+        }
+
         let categoryName = sourceCategoryNameForMatching
         let detailName = sourceDetailCategoryNameForDisplay
         return detailName.isEmpty ? categoryName : "\(categoryName) / \(detailName)"

@@ -12,6 +12,10 @@ struct ProductMetadata {
     var categoryDepth1Name: String? = nil
     var categoryDepth2Code: String? = nil
     var categoryDepth2Name: String? = nil
+    var categoryDepth3Code: String? = nil
+    var categoryDepth3Name: String? = nil
+    var categoryDepth4Code: String? = nil
+    var categoryDepth4Name: String? = nil
     var sizeType: String? = nil
     var genderCodes: [String] = []
     var labelNames: [String] = []

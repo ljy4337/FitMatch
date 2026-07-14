@@ -414,17 +414,19 @@ struct UniqloProductMetadataParser {
         let priceInfo = priceInfo(productGroupObject: productGroupObject, productObject: productObject, resolved: resolved)
         let breadcrumb = breadcrumbItems(from: breadcrumbObject, productName: productName)
         let sourcePath = categoryPath(productGroupObject: productGroupObject, breadcrumb: breadcrumb)
-        let categoryText = [sourcePath.category, sourcePath.detailCategory].compactMap { $0 }.joined(separator: " ")
+        let categoryText = sourcePath.depths.joined(separator: " ")
         let category = mapCategory(from: categoryText)
-        let detailCategory = mapDetailCategory(from: sourcePath.detailCategory ?? categoryText)
+        let detailCategory = mapDetailCategory(from: sourcePath.depths.last ?? categoryText)
         let canonicalURL = canonicalURL(from: resolved.html) ?? resolved.resolvedURL.absoluteString
 
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
             baseCategoryFullPath: sourcePath.fullPath,
-            categoryDepth1Name: sourcePath.category,
-            categoryDepth2Name: sourcePath.detailCategory,
-            genderCodes: genderCodes(from: breadcrumb),
+            categoryDepth1Name: sourcePath.depth1,
+            categoryDepth2Name: sourcePath.depth2,
+            categoryDepth3Name: sourcePath.depth3,
+            categoryDepth4Name: sourcePath.depth4,
+            genderCodes: sourcePath.gender.map { [$0] } ?? genderCodes(from: breadcrumb),
             imageURLStrings: [imageURLString].compactMap { $0 },
             normalPrice: priceInfo.normalPrice,
             salePrice: priceInfo.salePrice,
@@ -611,23 +613,14 @@ struct UniqloProductMetadataParser {
         return names.filter { !$0.caseInsensitiveEquals(productName) }
     }
 
-    private func categoryPath(productGroupObject: [String: Any]?, breadcrumb: [String]) -> (fullPath: String?, category: String?, detailCategory: String?) {
+    private func categoryPath(productGroupObject: [String: Any]?, breadcrumb: [String]) -> SourceCategoryPath {
         let productGroupCategory = stringValue(productGroupObject?["category"])
-        let parts = splitCategoryPath(productGroupCategory)
-        if parts.count >= 2 {
-            return (parts.joined(separator: " > "), parts[parts.count - 2], parts[parts.count - 1])
-        }
-        if parts.count == 1 {
-            return (parts[0], nil, parts[0])
+        let productGroupPath = sourceCategoryPath(from: splitCategoryPath(productGroupCategory))
+        if !productGroupPath.depths.isEmpty {
+            return productGroupPath
         }
 
-        if breadcrumb.count >= 2 {
-            return (breadcrumb.joined(separator: " > "), breadcrumb[breadcrumb.count - 2], breadcrumb[breadcrumb.count - 1])
-        }
-        if let only = breadcrumb.last {
-            return (only, nil, only)
-        }
-        return (nil, nil, nil)
+        return sourceCategoryPath(from: breadcrumb)
     }
 
     private func splitCategoryPath(_ path: String?) -> [String] {
@@ -636,6 +629,20 @@ struct UniqloProductMetadataParser {
             .components(separatedBy: CharacterSet(charactersIn: "/>"))
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+    }
+
+    private func sourceCategoryPath(from rawParts: [String]) -> SourceCategoryPath {
+        var parts = rawParts
+        let gender = parts.first.flatMap { audienceCode(from: $0) }
+        if gender != nil {
+            parts.removeFirst()
+        }
+        return SourceCategoryPath(gender: gender, depths: parts)
+    }
+
+    private func audienceCode(from value: String) -> String? {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        return ["MEN", "WOMEN", "KIDS", "BABY"].contains(normalized) ? normalized : nil
     }
 
     private func titleFallback(from html: String) -> String? {
@@ -764,6 +771,25 @@ struct UniqloProductMetadataParser {
             return .outOfStock
         }
         return .unknown
+    }
+}
+
+private struct SourceCategoryPath {
+    let gender: String?
+    let depths: [String]
+
+    var fullPath: String? {
+        depths.isEmpty ? nil : depths.joined(separator: " > ")
+    }
+
+    var depth1: String? { depth(at: 0) }
+    var depth2: String? { depth(at: 1) }
+    var depth3: String? { depth(at: 2) }
+    var depth4: String? { depth(at: 3) }
+
+    private func depth(at index: Int) -> String? {
+        guard depths.indices.contains(index) else { return nil }
+        return depths[index]
     }
 }
 
