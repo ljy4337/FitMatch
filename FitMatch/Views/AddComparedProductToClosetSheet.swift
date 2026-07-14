@@ -13,13 +13,15 @@ struct AddComparedProductToClosetSheet: View {
     let isParsedProductReadOnly: Bool
     var onSaved: ((UserFit) -> Void)?
 
-    @State private var step: AddComparedProductStep = .size
+    @State private var step: AddComparedProductStep
     @State private var selectedSizeID: UUID?
     @State private var brandName: String
     @State private var productName: String
     @State private var selectedGender: UserGender
     @State private var selectedCategory: ClothingCategory
     @State private var selectedDetailCategory: ClosetDetailCategory
+    @State private var hasSelectedClosetCategory = false
+    @State private var hasSelectedClosetDetailCategory = false
     @State private var isBasisItem = false
     @State private var alertMessage: String?
 
@@ -35,6 +37,7 @@ struct AddComparedProductToClosetSheet: View {
         self.recommendedSize = recommendedSize
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.onSaved = onSaved
+        _step = State(initialValue: isParsedProductReadOnly ? .confirm : .size)
         _brandName = State(initialValue: product.brand?.name ?? "")
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
@@ -87,6 +90,8 @@ struct AddComparedProductToClosetSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     switch step {
+                    case .productInfo:
+                        productInfoStep
                     case .size:
                         sizeStep
                     case .confirm:
@@ -104,10 +109,14 @@ struct AddComparedProductToClosetSheet: View {
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .onChange(of: selectedCategory) { _, _ in
-                normalizeDetailCategory()
+                if !isParsedProductReadOnly {
+                    normalizeDetailCategory()
+                }
             }
             .onAppear {
-                normalizeDetailCategory()
+                if !isParsedProductReadOnly {
+                    normalizeDetailCategory()
+                }
                 normalizeSelectedSize()
             }
             .alert("내 옷장 추가", isPresented: Binding(
@@ -148,6 +157,47 @@ struct AddComparedProductToClosetSheet: View {
         .transition(.opacity.combined(with: .move(edge: .leading)))
     }
 
+    private var productInfoStep: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            CardView(radius: 26, padding: 20) {
+                HStack(alignment: .top, spacing: 14) {
+                    ProductThumbnailView(
+                        imageURLString: product.imageURLString,
+                        category: product.category,
+                        width: 104,
+                        height: 128,
+                        cornerRadius: 18
+                    )
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("불러온 상품 정보")
+                            .font(.title3.weight(.black))
+                            .foregroundStyle(.primary)
+                        Text(product.brand?.name ?? "정보 없음")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                        Text(product.name.isEmpty ? "정보 없음" : product.name)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("\(availableSizes.count)개 사이즈를 찾았습니다.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+
+            AddComparedSectionCard(
+                title: "상품 정보",
+                subtitle: "상품 링크에서 불러온 정보는 참고용이며 수정할 수 없습니다."
+            ) {
+                parsedProductReadOnlyRows
+            }
+        }
+        .transition(.opacity.combined(with: .move(edge: .leading)))
+    }
+
     private var confirmStep: some View {
         VStack(alignment: .leading, spacing: 18) {
             CardView(radius: 26, padding: 20) {
@@ -183,9 +233,18 @@ struct AddComparedProductToClosetSheet: View {
                 }
             }
 
+            if isParsedProductReadOnly {
+                AddComparedSectionCard(
+                    title: "상품 정보",
+                    subtitle: "상품 링크에서 불러온 정보는 참고용이며 수정할 수 없습니다."
+                ) {
+                    parsedProductReadOnlyRows
+                }
+            }
+
             AddComparedSectionCard(
-                title: "등록 정보",
-                subtitle: isParsedProductReadOnly ? "상품 링크에서 불러온 정보는 수정할 수 없습니다." : "자동 입력된 정보를 확인하고 저장하세요."
+                title: isParsedProductReadOnly ? "내 옷장 분류" : "등록 정보",
+                subtitle: isParsedProductReadOnly ? "내 옷장에 저장할 성별, 카테고리, 사이즈를 선택하세요." : "자동 입력된 정보를 확인하고 저장하세요."
             ) {
                 registrationInformationFields
             }
@@ -228,7 +287,7 @@ struct AddComparedProductToClosetSheet: View {
     private var registrationInformationFields: some View {
         VStack(alignment: .leading, spacing: 14) {
             if isParsedProductReadOnly {
-                parsedProductReadOnlyRows
+                closetCategorySelectionRows
             } else {
                 editableRegistrationRows
             }
@@ -295,6 +354,50 @@ struct AddComparedProductToClosetSheet: View {
         }
     }
 
+    private var closetCategorySelectionRows: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if let sourceCategory = product.sourceCategoryPath,
+               !sourceCategory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                ReadOnlyRegistrationInfoRow(title: "참고 카테고리", value: sourceCategory, emptyText: "미분류")
+            }
+
+            RegistrationMenuRow(title: "성별", value: selectedGender.rawValue) {
+                ForEach(availableGenders) { gender in
+                    Button(gender.rawValue) {
+                        selectedGender = gender
+                        hasSelectedClosetCategory = false
+                        hasSelectedClosetDetailCategory = false
+                        normalizeCategory()
+                    }
+                }
+            }
+
+            RegistrationMenuRow(title: "대분류", value: hasSelectedClosetCategory ? selectedCategory.rawValue : "선택") {
+                ForEach(availableCategories) { category in
+                    Button(category.rawValue) {
+                        selectedCategory = category
+                        hasSelectedClosetCategory = true
+                        hasSelectedClosetDetailCategory = false
+                        normalizeDetailCategory()
+                    }
+                }
+            }
+
+            RegistrationMenuRow(title: "세부 카테고리", value: hasSelectedClosetDetailCategory ? selectedDetailCategory.rawValue : "선택") {
+                if hasSelectedClosetCategory {
+                    ForEach(availableDetailCategories) { detailCategory in
+                        Button(detailCategory.rawValue) {
+                            selectedDetailCategory = detailCategory
+                            hasSelectedClosetDetailCategory = true
+                        }
+                    }
+                } else {
+                    Text("대분류를 먼저 선택해 주세요.")
+                }
+            }
+        }
+    }
+
     @ViewBuilder
     private var selectedMeasurementSummary: some View {
         if let selectedSize {
@@ -335,6 +438,10 @@ struct AddComparedProductToClosetSheet: View {
 
             Button {
                 switch step {
+                case .productInfo:
+                    withAnimation(.snappy(duration: 0.22)) {
+                        step = .confirm
+                    }
                 case .size:
                     normalizeSelectedSize()
                     withAnimation(.snappy(duration: 0.22)) {
@@ -344,7 +451,7 @@ struct AddComparedProductToClosetSheet: View {
                     saveSelectedSize()
                 }
             } label: {
-                Label(bottomButtonTitle, systemImage: step == .size ? "chevron.right" : "plus")
+                Label(bottomButtonTitle, systemImage: step == .confirm ? "plus" : "chevron.right")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(isBottomButtonEnabled ? Color(.systemBackground) : .secondary)
                     .frame(maxWidth: .infinity)
@@ -366,6 +473,8 @@ struct AddComparedProductToClosetSheet: View {
 
     private var bottomButtonTitle: String {
         switch step {
+        case .productInfo:
+            return "다음"
         case .size:
             return "다음"
         case .confirm:
@@ -375,6 +484,8 @@ struct AddComparedProductToClosetSheet: View {
 
     private var isBottomButtonEnabled: Bool {
         switch step {
+        case .productInfo:
+            return true
         case .size:
             return selectedSize != nil
         case .confirm:
@@ -384,10 +495,21 @@ struct AddComparedProductToClosetSheet: View {
 
     private var bottomGuideText: String? {
         switch step {
+        case .productInfo:
+            return nil
         case .size:
             return selectedSize == nil ? "등록할 사이즈를 선택해 주세요." : nil
         case .confirm:
             if isParsedProductReadOnly {
+                if !hasSelectedClosetCategory {
+                    return "대분류를 선택해 주세요."
+                }
+                if !hasSelectedClosetDetailCategory {
+                    return "세부 카테고리를 선택해 주세요."
+                }
+                if selectedSize == nil {
+                    return "저장할 사이즈를 선택해 주세요."
+                }
                 return productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "상품명을 확인할 수 없습니다." : nil
             }
             if brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -403,6 +525,8 @@ struct AddComparedProductToClosetSheet: View {
     private var canSave: Bool {
         if isParsedProductReadOnly {
             return selectedSize != nil
+                && hasSelectedClosetCategory
+                && hasSelectedClosetDetailCategory
                 && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
 
@@ -607,6 +731,7 @@ private extension String {
 }
 
 private enum AddComparedProductStep {
+    case productInfo
     case size
     case confirm
 }

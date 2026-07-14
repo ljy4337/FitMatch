@@ -24,6 +24,7 @@ struct HomeView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 clipboardSection
+                quickCompareSection
                 recentProductsSection
                 advertisementSection
             }
@@ -36,6 +37,35 @@ struct HomeView: View {
         .hidesBottomTabBarOnScroll(tab: .home, topChrome: $isTopChromeVisible)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var quickCompareSection: some View {
+        CardView(radius: 22, padding: 18) {
+            HStack(spacing: 14) {
+                Image(systemName: "plus")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(width: 42, height: 42)
+                    .background(Color.primary, in: Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("상품 비교하기")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(.primary)
+                    Text("쇼핑몰 링크로 내 옷과 사이즈를 비교합니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onStartCompare)
+        }
     }
 
     @ViewBuilder

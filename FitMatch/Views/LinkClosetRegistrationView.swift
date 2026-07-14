@@ -141,7 +141,7 @@ struct LinkClosetRegistrationView: View {
                         }
                     }
 
-                    PrimaryButton(title: "보유한 사이즈 선택", systemImage: "tag") {
+                    PrimaryButton(title: "다음", systemImage: "chevron.right") {
                         isShowingAddToClosetSheet = true
                     }
                 }

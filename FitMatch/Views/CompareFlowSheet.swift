@@ -74,7 +74,8 @@ struct CompareFlowSheet: View {
                 AddComparedProductToClosetSheet(
                     product: productForClosetRegistration,
                     productDetailCategory: viewModel.detailCategory,
-                    recommendedSize: nil
+                    recommendedSize: nil,
+                    isParsedProductReadOnly: true
                 ) { savedItem in
                     handleRegisteredClosetItem(savedItem)
                 }
