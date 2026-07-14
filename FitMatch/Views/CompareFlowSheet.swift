@@ -168,8 +168,8 @@ private extension CompareFlowSheet {
     var categoryConfirmationContent: some View {
         VStack(alignment: .leading, spacing: 20) {
             sheetHeader(
-                title: "내 옷장 분류 확인",
-                subtitle: "비교 후보를 찾기 전에 이 상품의 내 옷장 분류를 선택해 주세요."
+                title: "FitMatch 분류 연결",
+                subtitle: "이 쇼핑몰 카테고리를 FitMatch 분류에 연결해 주세요."
             )
 
             if let product = currentProduct {
@@ -218,8 +218,8 @@ private extension CompareFlowSheet {
                     }
 
                     CompareSheetSectionTitle(
-                        title: "비교에 사용할 분류",
-                        subtitle: "쇼핑몰 원본 카테고리가 아니라 FitMatch 내 옷장 분류 기준으로 비교합니다."
+                        title: "연결할 FitMatch 분류",
+                        subtitle: "다음부터 같은 쇼핑몰 카테고리는 자동으로 이 분류로 비교합니다."
                     )
 
                     CompareSelectionMenu(title: comparisonCategoryTitle) {
@@ -788,6 +788,16 @@ private extension CompareFlowSheet {
             return
         }
 
+        if historyMatches.isEmpty, canConfirmComparisonCategory {
+            viewModel.category = viewModel.category.serviceGroup
+            print("[CompareFlowSheet] auto confirmed inferred category: \(viewModel.category.rawValue) / \(viewModel.detailCategory.rawValue)")
+            confirmComparisonCategoryAndContinue()
+            return
+        }
+
+        viewModel.category = .other
+        viewModel.detailCategory = .other
+
         setStep(.categoryConfirmation)
     }
 
@@ -805,6 +815,11 @@ private extension CompareFlowSheet {
         }
 
         hasConfirmedComparisonCategory = true
+        SourceCategoryHistoryMatcher.saveMapping(
+            for: product,
+            category: viewModel.category,
+            detailCategory: viewModel.detailCategory
+        )
         print("[CompareFlowSheet] confirmed category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] confirmed detailCategory: \(viewModel.detailCategory.rawValue)")
         print("[CompareFlowSheet] sameDetailItemCount after user confirmation: \(sameDetailItems.count)")

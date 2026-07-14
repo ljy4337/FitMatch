@@ -18,22 +18,27 @@ struct HomeView: View {
     private let favoriteStore = FavoriteProductStore()
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                CollapsibleTopChrome(isVisible: isTopChromeVisible) {
-                    FitMatchNavigationHeader(onLogout: onLogout)
-                }
-                clipboardSection
-                quickCompareSection
-                recentProductsSection
+        VStack(spacing: 0) {
+            CollapsibleTopChrome(isVisible: isTopChromeVisible) {
+                FitMatchNavigationHeader(onLogout: onLogout)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 18)
-            .padding(.bottom, 112)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    clipboardSection
+                    quickCompareSection
+                    recentProductsSection
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 112)
+            }
+            .hidesBottomTabBarOnScroll(tab: .home, topChrome: $isTopChromeVisible)
         }
         .background(Color(.systemGroupedBackground))
         .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
-        .hidesBottomTabBarOnScroll(tab: .home, topChrome: $isTopChromeVisible)
         .onAppear {
             onRefreshClipboardCandidate()
         }

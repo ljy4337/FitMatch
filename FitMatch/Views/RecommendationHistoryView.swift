@@ -28,7 +28,10 @@ struct RecommendationHistoryView: View {
     }
 
     var body: some View {
-        historyContent
+        VStack(spacing: 0) {
+            historyTopChrome
+            historyContent
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
         .navigationTitle("")
@@ -78,14 +81,10 @@ struct RecommendationHistoryView: View {
     @ViewBuilder
     private var historyTopChrome: some View {
         CollapsibleTopChrome(isVisible: isTopChromeVisible) {
-            VStack(spacing: 0) {
-                FitMatchNavigationHeader(onLogout: onLogout)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
-                    .padding(.bottom, 12)
-
-                historyControls
-            }
+            FitMatchNavigationHeader(onLogout: onLogout)
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 12)
         }
     }
 
@@ -102,7 +101,7 @@ struct RecommendationHistoryView: View {
     private var historyList: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                historyTopChrome
+                historyControls
 
                 if filteredHistories.isEmpty {
                     EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
@@ -157,7 +156,7 @@ struct RecommendationHistoryView: View {
     private var historyGrid: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                historyTopChrome
+                historyControls
 
                 if filteredHistories.isEmpty {
                     EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)

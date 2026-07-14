@@ -20,6 +20,10 @@ struct SourceCategoryHistoryMatch: Identifiable, Hashable {
 
 enum SourceCategoryHistoryMatcher {
     static func matches(for product: Product, userFits: [UserFit]) -> [SourceCategoryHistoryMatch] {
+        if let storedMatch = storedMatch(for: product) {
+            return [storedMatch]
+        }
+
         let eligibleItems = userFits.filter {
             $0.category != .other && $0.detailCategory != .other
         }
@@ -30,6 +34,23 @@ enum SourceCategoryHistoryMatcher {
         }
 
         return groupedMatches(from: matchesByPathFallback(for: product, userFits: eligibleItems))
+    }
+
+    static func saveMapping(
+        for product: Product,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory
+    ) {
+        guard category != .other, detailCategory != .other else { return }
+        guard let key = depthKey(for: product) ?? pathKey(for: product) else { return }
+
+        var mappings = storedMappings()
+        mappings[key] = StoredSourceCategoryMapping(
+            categoryRawValue: category.rawValue,
+            detailCategoryRawValue: detailCategory.rawValue
+        )
+        guard let data = try? JSONEncoder().encode(mappings) else { return }
+        UserDefaults.standard.set(data, forKey: mappingStoreKey)
     }
 
     private static func matchesByDepth(for product: Product, userFits: [UserFit]) -> [UserFit] {
@@ -100,6 +121,49 @@ enum SourceCategoryHistoryMatcher {
                 }
                 return $0.detailCategory.rawValue.localizedCompare($1.detailCategory.rawValue) == .orderedAscending
             }
+    }
+
+    private static let mappingStoreKey = "FitMatch.sourceCategoryMappings"
+
+    private static func storedMatch(for product: Product) -> SourceCategoryHistoryMatch? {
+        let mappings = storedMappings()
+        guard let key = depthKey(for: product) ?? pathKey(for: product),
+              let mapping = mappings[key],
+              let category = ClothingCategory(rawValue: mapping.categoryRawValue),
+              let detailCategory = ClosetDetailCategory(rawValue: mapping.detailCategoryRawValue) else {
+            return nil
+        }
+
+        return SourceCategoryHistoryMatch(category: category, detailCategory: detailCategory, count: 1)
+    }
+
+    private static func storedMappings() -> [String: StoredSourceCategoryMapping] {
+        guard let data = UserDefaults.standard.data(forKey: mappingStoreKey),
+              let mappings = try? JSONDecoder().decode([String: StoredSourceCategoryMapping].self, from: data) else {
+            return [:]
+        }
+        return mappings
+    }
+
+    private static func depthKey(for product: Product) -> String? {
+        sourceDepthKey(
+            sourceTypeRawValue: product.sourceTypeRawValue,
+            sourceName: product.sourceName,
+            depths: [
+                product.sourceCategoryDepth1,
+                product.sourceCategoryDepth2,
+                product.sourceCategoryDepth3,
+                product.sourceCategoryDepth4
+            ]
+        )
+    }
+
+    private static func pathKey(for product: Product) -> String? {
+        sourcePathKey(
+            sourceTypeRawValue: product.sourceTypeRawValue,
+            sourceName: product.sourceName,
+            sourceCategoryPath: product.sourceCategoryPath
+        )
     }
 
     nonisolated private static func sourceDepthKey(
@@ -187,6 +251,11 @@ enum SourceCategoryHistoryMatcher {
             .replacingOccurrences(of: "&#39;", with: "'")
             .replacingOccurrences(of: "&apos;", with: "'")
     }
+}
+
+private struct StoredSourceCategoryMapping: Codable {
+    let categoryRawValue: String
+    let detailCategoryRawValue: String
 }
 
 private struct CategoryPair: Hashable {

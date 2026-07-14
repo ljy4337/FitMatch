@@ -108,7 +108,6 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
     let tab: AppTab
     @Binding var isTopChromeVisible: Bool
     @StateObject private var scrollState = ScrollVisibilityState()
-    private let minimumDelta: CGFloat = 3
 
     func body(content: Content) -> some View {
         content
@@ -151,7 +150,7 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
             return
         }
 
-        guard abs(delta) >= minimumDelta else { return }
+        guard delta != 0 else { return }
 
         if delta > 0 {
             if scrollState.recordScroll(delta: delta) == .hide {
@@ -159,10 +158,9 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
                 setTopChromeVisible(false, source: "native scroll down")
             }
         } else {
-            if scrollState.recordScroll(delta: delta) == .show {
-                tabBarVisibilityController.showScroll(tab: tab, source: "native scroll up")
-                setTopChromeVisible(true, source: "native scroll up")
-            }
+            scrollState.reset()
+            tabBarVisibilityController.showScroll(tab: tab, source: "native scroll up")
+            setTopChromeVisible(true, source: "native scroll up")
         }
     }
 

@@ -21,7 +21,10 @@ struct MyClosetView: View {
     @State private var displayedItems: [UserFit] = []
 
     var body: some View {
-        closetContent
+        VStack(spacing: 0) {
+            closetTopChrome
+            closetContent
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
         .navigationTitle("")
@@ -120,14 +123,10 @@ struct MyClosetView: View {
     @ViewBuilder
     private var closetTopChrome: some View {
         CollapsibleTopChrome(isVisible: isTopChromeVisible) {
-            VStack(spacing: 0) {
-                FitMatchNavigationHeader(onLogout: onLogout)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
-                    .padding(.bottom, 12)
-
-                closetHeader
-            }
+            FitMatchNavigationHeader(onLogout: onLogout)
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 12)
         }
     }
 
@@ -144,7 +143,7 @@ struct MyClosetView: View {
     private var closetList: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                closetTopChrome
+                closetHeader
 
                 if userFits.isEmpty {
                     EmptyClosetView {
@@ -200,7 +199,7 @@ struct MyClosetView: View {
     private var closetGrid: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                closetTopChrome
+                closetHeader
 
                 if userFits.isEmpty {
                     EmptyClosetView {
