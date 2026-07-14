@@ -198,11 +198,10 @@ struct CollapsibleTopChrome<Content: View>: View {
 
     var body: some View {
         content
-            .frame(height: isVisible ? nil : CGFloat.zero, alignment: .top)
             .opacity(isVisible ? 1 : 0)
             .offset(y: isVisible ? 0 : -24)
+            .frame(height: isVisible ? nil : CGFloat.zero, alignment: .top)
             .clipped()
-            .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isVisible)
     }
 }
 

@@ -31,7 +31,8 @@ Uniqlo
 - Bottom overscroll rebound is ignored instead of being treated as an upward user scroll.
 - Root chrome direction tracking now stores `previousMaxOffset`; geometry events with a max-offset change over 1pt only refresh the baseline and never change visibility.
 - Stable-layout direction changes require at least 2pt raw-offset movement, and both raw/max baselines reset after visibility application.
-- Removed duplicate screen-level header animations; `CollapsibleTopChrome` remains the sole header animation.
+- Removed duplicate screen-level header animations.
+- Removed `CollapsibleTopChrome` animation entirely so header height changes immediately and cannot produce per-frame `maxOffset` changes near the bottom.
 - Replaced the no-same-category comparison UX with a dedicated `같은 분류의 옷이 없어요` screen and compare-cancel action.
 - Removed category/detail pickers from the similar-garment flow.
 - Similar garments now show only existing `UserFit` items, grouped by inferred exact classification, same main category, and remaining closet items.
@@ -52,7 +53,7 @@ Uniqlo
 - Follow `AGENTS.md`.
 
 ## Working Tree
-- Modified: `TabBarScrollVisibilityModifier.swift` and this sprint document.
+- Modified: `FitMatchCard.swift` and this sprint document.
 - No staged or untracked files.
 - No untracked files.
 - No commit or push performed in the latest task.
@@ -68,6 +69,7 @@ Uniqlo
 - Simulator boot was attempted on iPhone 17 Pro but remained blocked at `Waiting on System App`, so automated launch/gesture reproduction could not complete.
 - `5fdff00` was verified as the direct ancestor of current local/remote `Uniqlo` HEAD `8302869` before applying the max-offset stabilization patch.
 - Max-offset stabilization passed `xcodebuild` and `git diff --check`.
+- Immediate-height `CollapsibleTopChrome` change passed `xcodebuild` and `git diff --check`.
 
 ## Next Task
 Manually verify slow scroll, flick/inertia, top/bottom bounce, rapid direction changes, list/grid switches, and repeated tab changes without freezes or crashes. Then verify source category auto-mapping reuse.
