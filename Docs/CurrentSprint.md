@@ -36,11 +36,12 @@ Uniqlo
 - Selected similar garments continue through the existing temporary reference comparison path.
 
 ## Current Task
+- Scroll chrome crash/reentry verification
 - Compare Default
 - Clipboard Refresh
 
 ## Remaining Bugs
-- Scroll jitter
+- Manual verification of scroll jitter/crash fix
 - Discount UI
 
 ## Rules
@@ -49,7 +50,8 @@ Uniqlo
 - Follow `AGENTS.md`.
 
 ## Working Tree
-- Modified: `HomeView.swift`, `RecommendView.swift`, `MyClosetView.swift`, `RecommendationHistoryView.swift`, and this sprint document.
+- Modified: this sprint document only.
+- No staged or untracked files.
 - No untracked files.
 - No commit or push performed in the latest task.
 
@@ -64,4 +66,4 @@ Uniqlo
 - Simulator boot was attempted on iPhone 17 Pro but remained blocked at `Waiting on System App`, so automated launch/gesture reproduction could not complete.
 
 ## Next Task
-Manually verify source category auto-mapping reuse, then top chrome collapse and remaining scroll jitter.
+Manually verify slow scroll, flick/inertia, top/bottom bounce, rapid direction changes, list/grid switches, and repeated tab changes without freezes or crashes. Then verify source category auto-mapping reuse.
