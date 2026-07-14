@@ -29,6 +29,8 @@ Uniqlo
 - Removed synchronous animated header/tab mutations from the geometry callback after confirming they changed the parent height and fed layout-generated offsets back into direction detection.
 - Added a single root chrome coordinator that coalesces visibility decisions onto the next main run loop, ignores geometry during application, and resets the raw-offset baseline afterward.
 - Bottom overscroll rebound is ignored instead of being treated as an upward user scroll.
+- Root chrome direction tracking now stores `previousMaxOffset`; geometry events with a max-offset change over 1pt only refresh the baseline and never change visibility.
+- Stable-layout direction changes require at least 2pt raw-offset movement, and both raw/max baselines reset after visibility application.
 - Removed duplicate screen-level header animations; `CollapsibleTopChrome` remains the sole header animation.
 - Replaced the no-same-category comparison UX with a dedicated `같은 분류의 옷이 없어요` screen and compare-cancel action.
 - Removed category/detail pickers from the similar-garment flow.
@@ -50,7 +52,7 @@ Uniqlo
 - Follow `AGENTS.md`.
 
 ## Working Tree
-- Modified: this sprint document only.
+- Modified: `TabBarScrollVisibilityModifier.swift` and this sprint document.
 - No staged or untracked files.
 - No untracked files.
 - No commit or push performed in the latest task.
@@ -64,6 +66,8 @@ Uniqlo
 - No-same-category and similar-garment selection changes passed the same build and diff checks.
 - Reentrant chrome fix passed `xcodebuild` and `git diff --check`; no AttributeGraph or SwiftUI recursive-update report was found in local logs.
 - Simulator boot was attempted on iPhone 17 Pro but remained blocked at `Waiting on System App`, so automated launch/gesture reproduction could not complete.
+- `5fdff00` was verified as the direct ancestor of current local/remote `Uniqlo` HEAD `8302869` before applying the max-offset stabilization patch.
+- Max-offset stabilization passed `xcodebuild` and `git diff --check`.
 
 ## Next Task
 Manually verify slow scroll, flick/inertia, top/bottom bounce, rapid direction changes, list/grid switches, and repeated tab changes without freezes or crashes. Then verify source category auto-mapping reuse.

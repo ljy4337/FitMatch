@@ -167,24 +167,31 @@ private struct RootChromeScrollSnapshot: Equatable {
 @MainActor
 private final class RootChromeScrollCoordinator: ObservableObject {
     private var previousRawOffset: CGFloat?
+    private var previousMaxOffset: CGFloat?
     private var wasBottomOverscrolling = false
     private var isApplyingVisibilityChange = false
     private var pendingVisibility: Bool?
     private var isApplyScheduled = false
+    private let layoutChangeEpsilon: CGFloat = 1
+    private let minimumScrollDelta: CGFloat = 2
 
     func handle(snapshot: RootChromeScrollSnapshot, apply: @escaping (Bool) -> Void) {
         if isApplyingVisibilityChange {
             previousRawOffset = snapshot.rawOffset
+            previousMaxOffset = snapshot.maxOffset
             return
         }
 
-        guard let previousRawOffset else {
+        guard let previousRawOffset, let previousMaxOffset else {
             self.previousRawOffset = snapshot.rawOffset
+            self.previousMaxOffset = snapshot.maxOffset
             wasBottomOverscrolling = snapshot.rawOffset > snapshot.maxOffset
             return
         }
 
+        let maxOffsetChanged = abs(snapshot.maxOffset - previousMaxOffset) > layoutChangeEpsilon
         self.previousRawOffset = snapshot.rawOffset
+        self.previousMaxOffset = snapshot.maxOffset
 
         if snapshot.rawOffset <= 0 {
             wasBottomOverscrolling = false
@@ -193,6 +200,11 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         }
 
         let isBottomOverscrolling = snapshot.rawOffset > snapshot.maxOffset
+        if maxOffsetChanged {
+            wasBottomOverscrolling = isBottomOverscrolling
+            return
+        }
+
         let delta = snapshot.rawOffset - previousRawOffset
 
         if wasBottomOverscrolling && delta < 0 {
@@ -201,12 +213,13 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         }
         wasBottomOverscrolling = isBottomOverscrolling
 
-        guard delta != 0 else { return }
+        guard abs(delta) >= minimumScrollDelta else { return }
         schedule(visible: delta < 0, apply: apply)
     }
 
     func reset() {
         previousRawOffset = nil
+        previousMaxOffset = nil
         wasBottomOverscrolling = false
         pendingVisibility = nil
         isApplyScheduled = false
@@ -227,6 +240,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
 
             DispatchQueue.main.async {
                 self.previousRawOffset = nil
+                self.previousMaxOffset = nil
                 self.isApplyingVisibilityChange = false
             }
         }
