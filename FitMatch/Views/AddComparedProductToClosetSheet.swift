@@ -37,7 +37,7 @@ struct AddComparedProductToClosetSheet: View {
         self.recommendedSize = recommendedSize
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.onSaved = onSaved
-        _step = State(initialValue: isParsedProductReadOnly ? .confirm : .size)
+        _step = State(initialValue: isParsedProductReadOnly ? .productInfo : .size)
         _brandName = State(initialValue: product.brand?.name ?? "")
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
@@ -170,7 +170,7 @@ struct AddComparedProductToClosetSheet: View {
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("불러온 상품 정보")
+                        Text("이 옷을 내 옷장에 등록합니다")
                             .font(.title3.weight(.black))
                             .foregroundStyle(.primary)
                         Text(product.brand?.name ?? "정보 없음")
@@ -180,7 +180,7 @@ struct AddComparedProductToClosetSheet: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text("\(availableSizes.count)개 사이즈를 찾았습니다.")
+                        Text(availableSizes.isEmpty ? "사이즈 정보를 찾을 수 없습니다." : "\(availableSizes.count)개 사이즈를 찾았습니다.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -189,8 +189,8 @@ struct AddComparedProductToClosetSheet: View {
             }
 
             AddComparedSectionCard(
-                title: "상품 정보",
-                subtitle: "상품 링크에서 불러온 정보는 참고용이며 수정할 수 없습니다."
+                title: "상품 확인",
+                subtitle: "쇼핑몰에서 불러온 정보입니다. 다음 단계에서 내 옷장 분류를 선택합니다."
             ) {
                 parsedProductReadOnlyRows
             }
@@ -230,15 +230,6 @@ struct AddComparedProductToClosetSheet: View {
                             .lineLimit(2)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-
-            if isParsedProductReadOnly {
-                AddComparedSectionCard(
-                    title: "상품 정보",
-                    subtitle: "상품 링크에서 불러온 정보는 참고용이며 수정할 수 없습니다."
-                ) {
-                    parsedProductReadOnlyRows
                 }
             }
 
@@ -292,10 +283,20 @@ struct AddComparedProductToClosetSheet: View {
                 editableRegistrationRows
             }
 
-            RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
-                ForEach(availableSizes) { size in
-                    Button(size.name.displaySizeName) {
-                        selectedSizeID = size.id
+            if availableSizes.isEmpty {
+                Text("사이즈 정보를 찾을 수 없습니다.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14)
+                    .frame(height: 50)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            } else {
+                RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
+                    ForEach(availableSizes) { size in
+                        Button(size.name.displaySizeName) {
+                            selectedSizeID = size.id
+                        }
                     }
                 }
             }
@@ -342,23 +343,15 @@ struct AddComparedProductToClosetSheet: View {
             ReadOnlyRegistrationInfoRow(title: "쇼핑몰", value: product.sourceDisplayName, emptyText: "정보 없음")
             ReadOnlyRegistrationInfoRow(title: "브랜드", value: product.brand?.name, emptyText: "정보 없음", isSelectable: true)
             ReadOnlyRegistrationInfoRow(title: "상품명", value: product.name, emptyText: "정보 없음", isSelectable: true)
-            ReadOnlyRegistrationInfoRow(title: "상품 코드", value: product.productCode, emptyText: "정보 없음")
-            ReadOnlyRegistrationInfoRow(title: "상품 URL", value: product.sourceURLString, emptyText: "정보 없음", isSelectable: true)
             ReadOnlyRegistrationInfoRow(title: "상품 대상", value: selectedGender.rawValue, emptyText: "미분류")
-            ReadOnlyRegistrationInfoRow(title: "원본 카테고리", value: product.sourceCategoryPath, emptyText: "미분류")
-            ReadOnlyRegistrationInfoRow(title: "Depth 1", value: product.sourceCategoryDepth1, emptyText: "미분류")
-            ReadOnlyRegistrationInfoRow(title: "Depth 2", value: product.sourceCategoryDepth2, emptyText: "미분류")
-            ReadOnlyRegistrationInfoRow(title: "Depth 3", value: product.sourceCategoryDepth3, emptyText: "미분류")
-            ReadOnlyRegistrationInfoRow(title: "Depth 4", value: product.sourceCategoryDepth4, emptyText: "미분류")
-            ReadOnlyRegistrationInfoRow(title: "가격", value: productPriceText, emptyText: "가격 정보 없음")
+            ReadOnlyRegistrationInfoRow(title: "카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
         }
     }
 
     private var closetCategorySelectionRows: some View {
         VStack(alignment: .leading, spacing: 14) {
-            if let sourceCategory = product.sourceCategoryPath,
-               !sourceCategory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                ReadOnlyRegistrationInfoRow(title: "참고 카테고리", value: sourceCategory, emptyText: "미분류")
+            if let sourceCategoryText {
+                ReadOnlyRegistrationInfoRow(title: "참고 카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
             }
 
             RegistrationMenuRow(title: "성별", value: selectedGender.rawValue) {
@@ -693,34 +686,22 @@ struct AddComparedProductToClosetSheet: View {
         return productName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private var productPriceText: String? {
-        let currentPrice = product.finalPrice ?? product.salePrice
-        let displayPrice = currentPrice ?? product.normalPrice
-        guard let displayPrice else {
-            return nil
+    private var sourceCategoryText: String? {
+        if let sourceCategoryPath = product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !sourceCategoryPath.isEmpty {
+            return sourceCategoryPath
         }
 
-        let priceText = formatPrice(displayPrice)
-        guard let normalPrice = product.normalPrice,
-              let currentPrice,
-              normalPrice > currentPrice else {
-            return priceText
-        }
+        let depths = [
+            product.sourceCategoryDepth1,
+            product.sourceCategoryDepth2,
+            product.sourceCategoryDepth3,
+            product.sourceCategoryDepth4
+        ]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
 
-        if let discountRate = product.discountRate, discountRate > 0 {
-            let normalizedRate = discountRate <= 1 ? discountRate * 100 : discountRate
-            return "\(priceText) · \(Int(normalizedRate.rounded()))% 할인 · 정가 \(formatPrice(normalPrice))"
-        }
-
-        let calculatedRate = Double(normalPrice - currentPrice) / Double(normalPrice) * 100
-        return "\(priceText) · \(Int(calculatedRate.rounded()))% 할인 · 정가 \(formatPrice(normalPrice))"
-    }
-
-    private func formatPrice(_ value: Int) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        let formatted = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
-        return "\(formatted)원"
+        return depths.isEmpty ? nil : depths.joined(separator: " > ")
     }
 }
 

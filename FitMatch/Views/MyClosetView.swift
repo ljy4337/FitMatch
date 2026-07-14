@@ -553,7 +553,7 @@ private struct EmptyFilterResultView: View {
     }
 }
 
-private struct AddClosetMethodSheet: View {
+struct AddClosetMethodSheet: View {
     @Environment(\.dismiss) private var dismiss
     let onLink: () -> Void
     let onManual: () -> Void
