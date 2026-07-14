@@ -23,6 +23,10 @@ final class RecommendationHistory {
     var comparisonMethod: String = "같은 종류 기준 비교"
     var fallbackReason: String = ""
     var productDetailCategoryRawValue: String = ClosetDetailCategory.other.rawValue
+    var normalPriceSnapshot: Int?
+    var salePriceSnapshot: Int?
+    var finalPriceSnapshot: Int?
+    var stockStatusRawValue: String?
     var reason: String
     var createdAt: Date
 
@@ -68,6 +72,10 @@ final class RecommendationHistory {
         self.comparisonMethod = comparisonMethod
         self.fallbackReason = fallbackReason
         self.productDetailCategoryRawValue = productDetailCategory.rawValue
+        self.normalPriceSnapshot = product.normalPrice
+        self.salePriceSnapshot = product.salePrice
+        self.finalPriceSnapshot = product.finalPrice
+        self.stockStatusRawValue = product.stockStatus.rawValue
         self.reason = reason ?? "내 옷장에 있는 \(userFit.displayName)와 가장 비슷한 핏입니다."
         self.createdAt = createdAt
     }
@@ -100,5 +108,9 @@ final class RecommendationHistory {
         default:
             return comparisonMethod.replacingOccurrences(of: "fallback", with: "유사한 옷")
         }
+    }
+
+    var stockStatus: ProductStockStatus {
+        ProductStockStatus(rawValue: stockStatusRawValue ?? "") ?? .unknown
     }
 }

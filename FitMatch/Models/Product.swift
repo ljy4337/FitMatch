@@ -37,6 +37,7 @@ final class Product {
     var discountRate: Double?
     var isSale: Bool = false
     var isOutOfStock: Bool = false
+    var stockStatusRawValue: String?
     var isRestock: Bool = false
     var isSoonOutOfStock: Bool = false
     var isLimitedQuantity: Bool = false
@@ -101,6 +102,7 @@ final class Product {
         self.discountRate = metadata.discountRate
         self.isSale = metadata.isSale
         self.isOutOfStock = metadata.isOutOfStock
+        self.stockStatusRawValue = metadata.stockStatusRawValue
         self.isRestock = metadata.isRestock
         self.isSoonOutOfStock = metadata.isSoonOutOfStock
         self.isLimitedQuantity = metadata.isLimitedQuantity
@@ -136,6 +138,26 @@ final class Product {
         sourceName.isEmpty ? sourceType.displayName : sourceName
     }
 
+    var sourceCategoryNameForMatching: String {
+        let value = categoryDepth1Name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? category.rawValue : value
+    }
+
+    var sourceDetailCategoryNameForDisplay: String {
+        let value = categoryDepth2Name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? "" : value
+    }
+
+    var sourceCategoryDisplayText: String {
+        let categoryName = sourceCategoryNameForMatching
+        let detailName = sourceDetailCategoryNameForDisplay
+        return detailName.isEmpty ? categoryName : "\(categoryName) / \(detailName)"
+    }
+
+    var stockStatus: ProductStockStatus {
+        ProductStockStatus(rawValue: stockStatusRawValue ?? "") ?? (isOutOfStock ? .outOfStock : .unknown)
+    }
+
     var displayName: String {
         if let brandName = brand?.name, !brandName.isEmpty {
             return "\(brandName) \(name)"
@@ -143,4 +165,10 @@ final class Product {
 
         return name
     }
+}
+
+enum ProductStockStatus: String, Codable, CaseIterable {
+    case inStock = "재고 있음"
+    case outOfStock = "품절"
+    case unknown = "재고 확인 필요"
 }

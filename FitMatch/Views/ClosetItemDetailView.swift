@@ -210,7 +210,8 @@ struct ClosetItemDetailView: View {
             userFits
                 .filter {
                     $0.id != item.id
-                        && $0.detailCategory == item.detailCategory
+                        && $0.sourceName.normalizedForClosetDetail == item.sourceName.normalizedForClosetDetail
+                        && $0.sourceCategoryNameForMatching.normalizedForClosetDetail == item.sourceCategoryNameForMatching.normalizedForClosetDetail
                         && $0.isRepresentative
                 }
                 .forEach {
@@ -238,6 +239,12 @@ struct ClosetItemDetailView: View {
         } catch {
             saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
         }
+    }
+}
+
+private extension String {
+    var normalizedForClosetDetail: String {
+        trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
 

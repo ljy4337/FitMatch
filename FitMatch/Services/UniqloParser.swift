@@ -400,32 +400,41 @@ struct UniqloProductMetadata {
 struct UniqloProductMetadataParser {
     func parse(resolved: ResolvedUniqloURL) -> UniqloProductMetadata {
         let jsonLDObjects = parseJSONLDObjects(from: resolved.html)
+        let productGroupObject = jsonLDObjects.first(where: { isType("ProductGroup", in: $0) })
         let productObject = jsonLDObjects.first(where: { isType("Product", in: $0) })
         let breadcrumbObject = jsonLDObjects.first(where: { isType("BreadcrumbList", in: $0) })
 
-        let productName = stringValue(productObject?["name"])
+        let productName = stringValue(productGroupObject?["name"])
+            ?? stringValue(productObject?["name"])
             ?? titleFallback(from: resolved.html)
             ?? "유니클로 상품 \(resolved.goodsID)"
-        let brandName = brandName(from: productObject) ?? "유니클로"
-        let imageURLString = normalizeImageURL(firstImage(from: productObject))
+        let brandName = brandName(from: productGroupObject) ?? brandName(from: productObject) ?? "유니클로"
+        let imageURLString = normalizeImageURL(firstImage(from: productGroupObject) ?? firstImage(from: productObject))
             ?? fallbackImageURL(goodsID: resolved.goodsID, colorCode: resolved.imageColorCode)
-        let price = price(from: productObject)
+        let priceInfo = priceInfo(productGroupObject: productGroupObject, productObject: productObject, resolved: resolved)
         let breadcrumb = breadcrumbItems(from: breadcrumbObject, productName: productName)
-        let categoryText = breadcrumb.last ?? productName
-        let category = mapCategory(from: breadcrumb.joined(separator: " ") + " " + productName)
-        let detailCategory = mapDetailCategory(from: categoryText + " " + productName)
+        let sourcePath = categoryPath(productGroupObject: productGroupObject, breadcrumb: breadcrumb)
+        let categoryText = [sourcePath.category, sourcePath.detailCategory].compactMap { $0 }.joined(separator: " ")
+        let category = mapCategory(from: categoryText)
+        let detailCategory = mapDetailCategory(from: sourcePath.detailCategory ?? categoryText)
         let canonicalURL = canonicalURL(from: resolved.html) ?? resolved.resolvedURL.absoluteString
 
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
-            baseCategoryFullPath: breadcrumb.joined(separator: " > "),
-            categoryDepth1Name: breadcrumb.first,
-            categoryDepth2Name: breadcrumb.dropFirst().first,
+            baseCategoryFullPath: sourcePath.fullPath,
+            categoryDepth1Name: sourcePath.category,
+            categoryDepth2Name: sourcePath.detailCategory,
             genderCodes: genderCodes(from: breadcrumb),
             imageURLStrings: [imageURLString].compactMap { $0 },
-            normalPrice: price,
-            salePrice: price,
-            finalPrice: price
+            normalPrice: priceInfo.normalPrice,
+            salePrice: priceInfo.salePrice,
+            finalPrice: priceInfo.finalPrice,
+            isSale: priceInfo.normalPrice.map { normal in
+                guard let current = priceInfo.finalPrice ?? priceInfo.salePrice else { return false }
+                return normal > current
+            } ?? false,
+            isOutOfStock: priceInfo.stockStatus == .outOfStock,
+            stockStatusRawValue: priceInfo.stockStatus.rawValue
         )
 
         return UniqloProductMetadata(
@@ -438,7 +447,7 @@ struct UniqloProductMetadataParser {
             category: category,
             detailCategory: detailCategory,
             imageURLString: imageURLString,
-            price: price,
+            price: priceInfo.finalPrice ?? priceInfo.salePrice ?? priceInfo.normalPrice,
             canonicalURLString: canonicalURL,
             productMetadata: metadata
         )
@@ -511,18 +520,75 @@ struct UniqloProductMetadataParser {
         return nil
     }
 
-    private func price(from productObject: [String: Any]?) -> Int? {
-        guard let offers = productObject?["offers"] else {
+    private func priceInfo(
+        productGroupObject: [String: Any]?,
+        productObject: [String: Any]?,
+        resolved: ResolvedUniqloURL
+    ) -> UniqloPriceInfo {
+        let variants = variantObjects(from: productGroupObject?["hasVariant"])
+        let selectedSizeCode = queryValue("sizeDisplayCode", in: resolved.originalURL) ?? queryValue("sizeDisplayCode", in: resolved.resolvedURL)
+        let selectedColorCode = queryValue("colorDisplayCode", in: resolved.originalURL)
+            ?? queryValue("colorDisplayCode", in: resolved.resolvedURL)
+            ?? resolved.imageColorCode
+
+        let selectedVariant = variants.first {
+            variant($0, matchesColorCode: selectedColorCode, sizeCode: selectedSizeCode)
+        } ?? variants.first {
+            variant($0, matchesColorCode: selectedColorCode, sizeCode: nil)
+        } ?? variants.first
+
+        if let selectedVariant, let info = priceInfo(from: selectedVariant["offers"]) {
+            return info
+        }
+        if let info = priceInfo(from: productGroupObject?["offers"]) {
+            return info
+        }
+        if let info = priceInfo(from: productObject?["offers"]) {
+            return info
+        }
+        return UniqloPriceInfo(normalPrice: nil, salePrice: nil, finalPrice: nil, stockStatus: .unknown)
+    }
+
+    private func variantObjects(from value: Any?) -> [[String: Any]] {
+        if let object = value as? [String: Any] { return [object] }
+        if let array = value as? [[String: Any]] { return array }
+        if let array = value as? [Any] {
+            return array.compactMap { $0 as? [String: Any] }
+        }
+        return []
+    }
+
+    private func variant(_ object: [String: Any], matchesColorCode colorCode: String?, sizeCode: String?) -> Bool {
+        let haystack = object.map { "\($0.key)=\($0.value)" }.joined(separator: " ").lowercased()
+        let colorMatches = colorCode.map { haystack.contains($0.lowercased()) } ?? true
+        let sizeMatches = sizeCode.map { haystack.contains($0.lowercased()) } ?? true
+        return colorMatches && sizeMatches
+    }
+
+    private func priceInfo(from offers: Any?) -> UniqloPriceInfo? {
+        let offerObjects: [[String: Any]]
+        if let object = offers as? [String: Any] {
+            offerObjects = [object]
+        } else if let array = offers as? [[String: Any]] {
+            offerObjects = array
+        } else if let array = offers as? [Any] {
+            offerObjects = array.compactMap { $0 as? [String: Any] }
+        } else {
             return nil
         }
 
-        if let object = offers as? [String: Any] {
-            return intValue(object["price"] ?? object["lowPrice"])
-        }
-        if let array = offers as? [[String: Any]] {
-            return array.compactMap { intValue($0["price"] ?? $0["lowPrice"]) }.first
-        }
-        return nil
+        guard let offer = offerObjects.first else { return nil }
+        let finalPrice = intValue(offer["price"] ?? offer["lowPrice"])
+        let salePrice = intValue(offer["salePrice"] ?? offer["priceSpecification"])
+        let normalPrice = intValue(offer["normalPrice"] ?? offer["listPrice"] ?? offer["highPrice"])
+        let availability = stringValue(offer["availability"]) ?? stringValue(offer["itemAvailability"])
+
+        return UniqloPriceInfo(
+            normalPrice: normalPrice,
+            salePrice: salePrice,
+            finalPrice: finalPrice ?? salePrice ?? normalPrice,
+            stockStatus: stockStatus(from: availability)
+        )
     }
 
     private func breadcrumbItems(from breadcrumbObject: [String: Any]?, productName: String) -> [String] {
@@ -545,6 +611,33 @@ struct UniqloProductMetadataParser {
         return names.filter { !$0.caseInsensitiveEquals(productName) }
     }
 
+    private func categoryPath(productGroupObject: [String: Any]?, breadcrumb: [String]) -> (fullPath: String?, category: String?, detailCategory: String?) {
+        let productGroupCategory = stringValue(productGroupObject?["category"])
+        let parts = splitCategoryPath(productGroupCategory)
+        if parts.count >= 2 {
+            return (parts.joined(separator: " > "), parts[parts.count - 2], parts[parts.count - 1])
+        }
+        if parts.count == 1 {
+            return (parts[0], nil, parts[0])
+        }
+
+        if breadcrumb.count >= 2 {
+            return (breadcrumb.joined(separator: " > "), breadcrumb[breadcrumb.count - 2], breadcrumb[breadcrumb.count - 1])
+        }
+        if let only = breadcrumb.last {
+            return (only, nil, only)
+        }
+        return (nil, nil, nil)
+    }
+
+    private func splitCategoryPath(_ path: String?) -> [String] {
+        guard let path else { return [] }
+        return path
+            .components(separatedBy: CharacterSet(charactersIn: "/>"))
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
     private func titleFallback(from html: String) -> String? {
         firstMatch(in: html, pattern: #"<title[^>]*>(.*?)</title>"#)?
             .htmlDecoded
@@ -555,6 +648,13 @@ struct UniqloProductMetadataParser {
 
     private func canonicalURL(from html: String) -> String? {
         firstMatch(in: html, pattern: #"<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["'][^>]*>"#)
+    }
+
+    private func queryValue(_ name: String, in url: URL) -> String? {
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?
+            .first { $0.name == name }?
+            .value
     }
 
     private func firstMatch(in text: String, pattern: String) -> String? {
@@ -652,6 +752,26 @@ struct UniqloProductMetadataParser {
         }
         return nil
     }
+
+    private func stockStatus(from availability: String?) -> ProductStockStatus {
+        guard let availability = availability?.lowercased() else {
+            return .unknown
+        }
+        if availability.contains("instock") {
+            return .inStock
+        }
+        if availability.contains("outofstock") || availability.contains("soldout") {
+            return .outOfStock
+        }
+        return .unknown
+    }
+}
+
+private struct UniqloPriceInfo {
+    let normalPrice: Int?
+    let salePrice: Int?
+    let finalPrice: Int?
+    let stockStatus: ProductStockStatus
 }
 
 private struct UniqloSizeChartResponse: Decodable {

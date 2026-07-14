@@ -144,4 +144,14 @@ final class UserFit {
     var displayName: String {
         "\(brandName) \(productName)"
     }
+
+    var sourceCategoryNameForMatching: String {
+        let value = sourceProduct?.categoryDepth1Name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? category.rawValue : value
+    }
+
+    var sourceDetailCategoryNameForDisplay: String {
+        let value = sourceProduct?.categoryDepth2Name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? detailCategory.rawValue : value
+    }
 }

@@ -22,6 +22,8 @@ struct ContentView: View {
     @State private var compareViewID = UUID()
     @State private var clipboardCandidate: SmartClipboardCandidate?
     @State private var recentClipboardCandidate: SmartClipboardCandidate?
+    @State private var lastCompareLaunchKey: String?
+    @State private var lastCompareLaunchDate = Date.distantPast
     private let sharedURLStore = SharedURLStore()
     private let smartClipboardService = SmartClipboardService()
 
@@ -87,6 +89,9 @@ struct ContentView: View {
                     histories: histories,
                     onRecompare: { urlString in
                         openCompare(with: urlString)
+                    },
+                    onStartCompareLatestURL: {
+                        openCompareUsingLatestAvailableURL()
                     },
                     onLogout: {
                         isLoggedIn = false
@@ -178,8 +183,49 @@ struct ContentView: View {
     }
 
     private func openCompare(with urlString: String?) {
+        guard shouldLaunchCompare(for: urlString) else {
+            return
+        }
+
         pendingCompareURL = urlString
         compareViewID = UUID()
+    }
+
+    private func openCompareUsingLatestAvailableURL(fallbackURL: String? = nil) {
+        openCompare(with: latestCompareURL(fallbackURL: fallbackURL))
+    }
+
+    private func latestCompareURL(fallbackURL: String?) -> String? {
+        if let candidate = smartClipboardService.currentSupportedProductCandidate() {
+            recentClipboardCandidate = candidate
+            clipboardCandidate = nil
+            smartClipboardService.markHandled(candidate)
+            return candidate.urlString
+        }
+
+        if let pendingURL = sharedURLStore.consumePendingProductURL() {
+            return pendingURL
+        }
+
+        guard let fallbackURL = fallbackURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+              ProductURLSupport.isSupportedProductURL(fallbackURL) else {
+            return nil
+        }
+
+        return fallbackURL
+    }
+
+    private func shouldLaunchCompare(for urlString: String?) -> Bool {
+        let key = urlString?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "__empty_compare__"
+        let now = Date()
+        if lastCompareLaunchKey == key,
+           now.timeIntervalSince(lastCompareLaunchDate) < 0.8 {
+            return false
+        }
+
+        lastCompareLaunchKey = key
+        lastCompareLaunchDate = now
+        return true
     }
 }
 
@@ -282,7 +328,7 @@ private struct ScreenshotHomeView: View {
                                 .foregroundStyle(.white.opacity(0.72))
                         }
                         .foregroundStyle(.white)
-                        Label("상품 URL 붙여넣기", systemImage: "link")
+                        Label("상품 비교 시작", systemImage: "link")
                             .font(.headline.weight(.bold))
                             .foregroundStyle(.black)
                             .frame(maxWidth: .infinity)
@@ -870,6 +916,7 @@ private struct MainTabView: View {
     let recentClipboardCandidate: SmartClipboardCandidate?
     let histories: [RecommendationHistory]
     let onRecompare: (String) -> Void
+    let onStartCompareLatestURL: () -> Void
     let onLogout: () -> Void
     let compareViewID: UUID
     @State private var activeSheet: MainActiveSheet?
@@ -913,7 +960,7 @@ private struct MainTabView: View {
                     onCompare: { shouldMuteToday in
                         onClipboardCandidateHandled(candidate, shouldMuteToday)
                         clipboardCandidate = nil
-                        presentCompareFlow(initialURL: candidate.urlString)
+                        onStartCompareLatestURL()
                     },
                     onLater: { shouldMuteToday in
                         onClipboardCandidateHandled(candidate, shouldMuteToday)
@@ -963,6 +1010,7 @@ private struct MainTabView: View {
                     onStartCompareWithURL: { urlString in
                         presentCompareFlow(initialURL: urlString)
                     },
+                    onStartCompareLatestURL: onStartCompareLatestURL,
                     onOpenHistory: {
                         selectedTab = .history
                     },

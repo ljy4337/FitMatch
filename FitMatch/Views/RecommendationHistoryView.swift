@@ -419,9 +419,9 @@ private struct HistoryCard: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
 
-                            ProductPriceView(product: history.product)
+                            HistoryPriceSnapshotView(history: history)
 
-                            Text("\(history.product.category.rawValue) / \(history.productDetailCategory.rawValue)")
+                            Text(history.product.sourceCategoryDisplayText)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
 
@@ -436,14 +436,23 @@ private struct HistoryCard: View {
                             .padding(.trailing, 58)
                     }
 
-                    Button(action: onToggleFavorite) {
-                        Image(systemName: isFavorite ? "heart.fill" : "heart")
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(isFavorite ? .red : .primary)
-                            .frame(width: 36, height: 36)
-                            .background(Color(.systemBackground).opacity(0.92), in: Circle())
+                    VStack(alignment: .trailing, spacing: 8) {
+                        Button(action: onToggleFavorite) {
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .font(.headline.weight(.semibold))
+                                .foregroundStyle(isFavorite ? .red : .primary)
+                                .frame(width: 36, height: 36)
+                                .background(Color(.systemBackground).opacity(0.92), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+
+                        Text(history.stockStatus.rawValue)
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .background(Color(.secondarySystemGroupedBackground), in: Capsule())
                     }
-                    .buttonStyle(.plain)
                 }
 
                 HStack(alignment: .center, spacing: 12) {
@@ -508,6 +517,73 @@ private struct HistoryCard: View {
     }
 }
 
+private struct HistoryPriceSnapshotView: View {
+    let history: RecommendationHistory
+
+    var body: some View {
+        if let displayPrice {
+            HStack(spacing: 6) {
+                Text(displayPrice)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.primary)
+
+                if let discountText {
+                    Text(discountText)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.red)
+                }
+
+                if let normalPriceText {
+                    Text(normalPriceText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .strikethrough()
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+        } else {
+            Text("가격 정보 없음")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var currentPrice: Int? {
+        history.finalPriceSnapshot ?? history.salePriceSnapshot
+    }
+
+    private var displayPrice: String? {
+        (currentPrice ?? history.normalPriceSnapshot).map(formatPrice)
+    }
+
+    private var normalPriceText: String? {
+        guard let normal = history.normalPriceSnapshot,
+              let current = currentPrice,
+              normal > current else {
+            return nil
+        }
+        return formatPrice(normal)
+    }
+
+    private var discountText: String? {
+        guard let normal = history.normalPriceSnapshot,
+              let current = currentPrice,
+              normal > current else {
+            return nil
+        }
+        let rate = Double(normal - current) / Double(normal) * 100
+        return "\(Int(rate.rounded()))% 할인"
+    }
+
+    private func formatPrice(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        return "\(formatted)원"
+    }
+}
+
 private struct HistoryGridCard: View {
     let history: RecommendationHistory
     let isFavorite: Bool
@@ -547,6 +623,13 @@ private struct HistoryGridCard: View {
 
                             Text("핏 매칭률 \(history.recommendationScore)%")
                                 .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+
+                            HistoryPriceSnapshotView(history: history)
+
+                            Text(history.stockStatus.rawValue)
+                                .font(.caption2.weight(.bold))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }

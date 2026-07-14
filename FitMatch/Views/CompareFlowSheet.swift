@@ -11,6 +11,7 @@ struct CompareFlowSheet: View {
 
     let initialURL: String?
     let recentClipboardCandidate: SmartClipboardCandidate?
+    private let smartClipboardService = SmartClipboardService()
 
     @StateObject private var viewModel: ShoppingProductViewModel
     @State private var step: CompareFlowStep = .start
@@ -22,6 +23,9 @@ struct CompareFlowSheet: View {
     @State private var registrationContext: CompareProductRegistrationContext?
     @State private var isShowingProductRegistration = false
     @State private var isShowingRegistrationSavedAlert = false
+    @State private var selectedClosetSourceName: String?
+    @State private var selectedClosetCategoryName: String?
+    @State private var selectedClosetDetailCategoryName: String?
     @FocusState private var isURLFocused: Bool
 
     init(initialURL: String? = nil, recentClipboardCandidate: SmartClipboardCandidate? = nil) {
@@ -145,8 +149,8 @@ private extension CompareFlowSheet {
                 SecondaryButton(title: "옷장 속 다른 옷과 비교", systemImage: "list.bullet.rectangle") {
                     setStep(.closetSelection)
                 }
-                .disabled(sameCategoryCandidates.isEmpty)
-                .opacity(sameCategoryCandidates.isEmpty ? 0.45 : 1)
+                .disabled(closetSourceOptions.isEmpty)
+                .opacity(closetSourceOptions.isEmpty ? 0.45 : 1)
             }
         }
         .padding(.top, 12)
@@ -156,7 +160,7 @@ private extension CompareFlowSheet {
         VStack(alignment: .leading, spacing: 20) {
             sheetHeader(title: "어떤 옷과 비교할까요?", subtitle: "자동 선택하지 않고, 사용자가 직접 비교 기준 옷을 고릅니다.")
 
-            if sameCategoryCandidates.isEmpty {
+            if closetSourceOptions.isEmpty {
                 FitMatchCard {
                     VStack(alignment: .leading, spacing: 14) {
                         Text("비교 가능한 상품이 없습니다.")
@@ -170,6 +174,42 @@ private extension CompareFlowSheet {
                     }
                 }
             } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    CompareSelectionMenu(title: selectedClosetSourceName ?? "쇼핑몰 선택") {
+                        ForEach(closetSourceOptions, id: \.self) { source in
+                            Button(source) {
+                                selectedClosetSourceName = source
+                                selectedClosetCategoryName = nil
+                                selectedClosetDetailCategoryName = nil
+                                selectedReferenceItemID = nil
+                            }
+                        }
+                    }
+
+                    CompareSelectionMenu(title: selectedClosetCategoryName ?? "카테고리 선택") {
+                        ForEach(closetCategoryOptions, id: \.self) { category in
+                            Button(category) {
+                                selectedClosetCategoryName = category
+                                selectedClosetDetailCategoryName = nil
+                                selectedReferenceItemID = nil
+                            }
+                        }
+                    }
+                    .disabled(selectedClosetSourceName == nil)
+                    .opacity(selectedClosetSourceName == nil ? 0.5 : 1)
+
+                    CompareSelectionMenu(title: selectedClosetDetailCategoryName ?? "세부 카테고리 선택") {
+                        ForEach(closetDetailCategoryOptions, id: \.self) { detail in
+                            Button(detail) {
+                                selectedClosetDetailCategoryName = detail
+                                selectedReferenceItemID = nil
+                            }
+                        }
+                    }
+                    .disabled(selectedClosetCategoryName == nil)
+                    .opacity(selectedClosetCategoryName == nil ? 0.5 : 1)
+                }
+
                 VStack(spacing: 12) {
                     ForEach(sameCategoryCandidates) { item in
                         Button {
@@ -313,21 +353,8 @@ private extension CompareFlowSheet {
                             isURLFocused = false
                             Task { await startCompare(with: productURL) }
                         }
-
-                    Button {
-                        productURL = UIPasteboard.general.string ?? productURL
-                    } label: {
-                        Text("붙여넣기")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.primary)
-                            .padding(.horizontal, 10)
-                            .frame(height: 32)
-                            .background(Color(.systemBackground), in: Capsule())
-                    }
-                    .buttonStyle(.plain)
                 }
-                .padding(.leading, 14)
-                .padding(.trailing, 8)
+                .padding(.horizontal, 14)
                 .frame(height: 50)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay {
@@ -339,7 +366,7 @@ private extension CompareFlowSheet {
                     isURLFocused = false
                     Task { await startCompare(with: productURL) }
                 }
-                .disabled(productURL.trimmedForCompareFlow.isEmpty)
+                .disabled(productURL.trimmedForCompareFlow.isEmpty || viewModel.isLoadingProductInfo)
                 .opacity(productURL.trimmedForCompareFlow.isEmpty ? 0.35 : 1)
             }
         }
@@ -387,7 +414,12 @@ private extension CompareFlowSheet {
                 }
 
                 PrimaryButton(title: "바로 비교하기", systemImage: "sparkles") {
-                    Task { await startCompare(with: candidate.urlString) }
+                    guard let latestURL = smartClipboardService.currentSupportedProductCandidate()?.urlString else {
+                        productURL = ""
+                        return
+                    }
+
+                    Task { await startCompare(with: latestURL) }
                 }
             }
         }
@@ -449,29 +481,58 @@ private extension CompareFlowSheet {
     }
 
     var sameDetailItems: [UserFit] {
-        let targetGroup = viewModel.category.serviceGroup
+        guard let product = currentProduct else { return [] }
         return userFits.filter {
-            $0.category.serviceGroup == targetGroup
-                && $0.detailCategory == viewModel.detailCategory
+            $0.isRepresentative
+                && $0.sourceName.normalizedForCompareFlow == product.sourceDisplayName.normalizedForCompareFlow
+                && $0.sourceCategoryNameForMatching.normalizedForCompareFlow == product.sourceCategoryNameForMatching.normalizedForCompareFlow
         }
     }
 
     var sameCategoryCandidates: [UserFit] {
-        let targetGroup = viewModel.category.serviceGroup
         return userFits
-            .filter { $0.category.serviceGroup == targetGroup }
-            .sorted {
-                if $0.detailCategory == viewModel.detailCategory && $1.detailCategory != viewModel.detailCategory {
-                    return true
-                }
-                if $0.detailCategory != viewModel.detailCategory && $1.detailCategory == viewModel.detailCategory {
+            .filter { item in
+                guard let selectedClosetSourceName,
+                      let selectedClosetCategoryName,
+                      let selectedClosetDetailCategoryName else {
                     return false
                 }
+                return item.sourceName.normalizedForCompareFlow == selectedClosetSourceName.normalizedForCompareFlow
+                    && item.sourceCategoryNameForMatching.normalizedForCompareFlow == selectedClosetCategoryName.normalizedForCompareFlow
+                    && item.sourceDetailCategoryNameForDisplay.normalizedForCompareFlow == selectedClosetDetailCategoryName.normalizedForCompareFlow
+            }
+            .sorted {
                 if $0.isRepresentative != $1.isRepresentative {
                     return $0.isRepresentative
                 }
                 return $0.updatedAt > $1.updatedAt
             }
+    }
+
+    var closetSourceOptions: [String] {
+        uniqueSorted(userFits.map(\.sourceName))
+    }
+
+    var closetCategoryOptions: [String] {
+        uniqueSorted(userFits
+            .filter {
+                guard let selectedClosetSourceName else { return true }
+                return $0.sourceName.normalizedForCompareFlow == selectedClosetSourceName.normalizedForCompareFlow
+            }
+            .map(\.sourceCategoryNameForMatching))
+    }
+
+    var closetDetailCategoryOptions: [String] {
+        uniqueSorted(userFits
+            .filter {
+                guard let selectedClosetSourceName else { return true }
+                return $0.sourceName.normalizedForCompareFlow == selectedClosetSourceName.normalizedForCompareFlow
+            }
+            .filter {
+                guard let selectedClosetCategoryName else { return true }
+                return $0.sourceCategoryNameForMatching.normalizedForCompareFlow == selectedClosetCategoryName.normalizedForCompareFlow
+            }
+            .map(\.sourceDetailCategoryNameForDisplay))
     }
 
     var selectedReferenceItem: UserFit? {
@@ -499,6 +560,14 @@ private extension CompareFlowSheet {
     func startCompare(with urlString: String) async {
         let trimmedURL = urlString.trimmedForCompareFlow
         guard !trimmedURL.isEmpty else { return }
+        guard !viewModel.isLoadingProductInfo else { return }
+
+        guard ProductURLSupport.isSupportedProductURL(trimmedURL) else {
+            productURL = trimmedURL
+            errorMessage = ProductURLParserError.unsupportedURL.errorDescription
+            setStep(.error)
+            return
+        }
 
         productURL = trimmedURL
         viewModel.productURL = trimmedURL
@@ -525,6 +594,7 @@ private extension CompareFlowSheet {
         print("[CompareFlowSheet] sameDetailItemCount: \(sameDetailItems.count)")
 
         if sameDetailItems.isEmpty {
+            resetClosetSelection()
             setStep(.missingReference)
             return
         }
@@ -544,12 +614,11 @@ private extension CompareFlowSheet {
             return
         }
 
-        let scopedFits = sameDetailItems.isEmpty ? userFits : sameDetailItems
         guard let history = RecommendationService().recommend(
             product: product,
-            userFits: scopedFits,
+            userFits: sameDetailItems,
             productDetailCategory: viewModel.detailCategory,
-            allowsGlobalFallback: true
+            allowsGlobalFallback: false
         ) else {
             errorMessage = "비교할 수 있는 실측 정보가 부족합니다."
             setStep(.error)
@@ -624,6 +693,18 @@ private extension CompareFlowSheet {
         case .result, .none:
             isShowingRegistrationSavedAlert = true
         }
+    }
+
+    func resetClosetSelection() {
+        selectedClosetSourceName = nil
+        selectedClosetCategoryName = nil
+        selectedClosetDetailCategoryName = nil
+        selectedReferenceItemID = nil
+    }
+
+    func uniqueSorted(_ values: [String]) -> [String] {
+        Array(Set(values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }))
+            .sorted { $0.localizedCompare($1) == .orderedAscending }
     }
 
     func existingBrand(named name: String) -> Brand? {
@@ -903,6 +984,32 @@ private struct CompareSheetSectionTitle: View {
     }
 }
 
+private struct CompareSelectionMenu<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        Menu {
+            content()
+        } label: {
+            HStack(spacing: 8) {
+                Text(title)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 46)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 private struct ClosetReferenceChoiceCard: View {
     let item: UserFit
     let targetDetailCategory: ClosetDetailCategory
@@ -970,5 +1077,10 @@ private extension String {
             .last
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             ?? value
+    }
+
+    var normalizedForCompareFlow: String {
+        trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
     }
 }

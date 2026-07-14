@@ -22,7 +22,7 @@ struct LinkClosetRegistrationView: View {
     }
 
     private var canLoadProduct: Bool {
-        isValidHTTPURL(normalizedURLString) && !isLoading
+        ProductURLSupport.isSupportedProductURL(normalizedURLString) && !isLoading
     }
 
     var body: some View {
@@ -56,6 +56,10 @@ struct LinkClosetRegistrationView: View {
                 dismiss()
             }
         }
+        .onChange(of: productURL) { _, _ in
+            parsedProduct = nil
+            errorMessage = nil
+        }
     }
 
     private var urlCard: some View {
@@ -81,12 +85,6 @@ struct LinkClosetRegistrationView: View {
                                 }
                             }
                         }
-
-                    Button("붙여넣기") {
-                        productURL = UIPasteboard.general.string ?? productURL
-                    }
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
@@ -163,7 +161,7 @@ struct LinkClosetRegistrationView: View {
 
     private func loadProduct() async {
         let trimmedURL = normalizedURLString
-        guard isValidHTTPURL(trimmedURL), !isLoading else {
+        guard ProductURLSupport.isSupportedProductURL(trimmedURL), !isLoading else {
             errorMessage = trimmedURL.isEmpty ? nil : "올바른 상품 URL을 입력해 주세요."
             return
         }
@@ -223,14 +221,4 @@ struct LinkClosetRegistrationView: View {
         return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
     }
 
-    private func isValidHTTPURL(_ value: String) -> Bool {
-        guard let url = URL(string: value),
-              let scheme = url.scheme?.lowercased(),
-              ["http", "https"].contains(scheme),
-              url.host?.isEmpty == false else {
-            return false
-        }
-
-        return true
-    }
 }

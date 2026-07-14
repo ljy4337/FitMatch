@@ -21,8 +21,16 @@ struct SharedURLStore {
         defaults.set(Date(), forKey: Key.pendingProductURLCreatedAt)
     }
 
-    func consumePendingProductURL() -> String? {
+    func pendingProductURL() -> String? {
         guard let urlString = defaults.string(forKey: Key.pendingProductURL), !urlString.isEmpty else {
+            return nil
+        }
+
+        return urlString
+    }
+
+    func consumePendingProductURL() -> String? {
+        guard let urlString = pendingProductURL() else {
             return nil
         }
 

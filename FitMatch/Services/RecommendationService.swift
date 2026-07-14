@@ -215,49 +215,10 @@ struct RecommendationService {
         allowsGlobalFallback: Bool
     ) -> RecommendationBasis {
         let priorityGroups: [(method: String, penalty: Int, filter: (UserFit) -> Bool)] = [
-            ("같은 플랫폼/브랜드/세부카테고리 기준 비교", 0, { item in
-                isSameServiceGroup(item, product: product)
-                    && matchesSource(item, product: product)
-                    && matchesBrand(item, product: product)
-                    && item.detailCategory == productDetailCategory
+            ("같은 쇼핑몰/카테고리 기준 옷 비교", 0, { item in
+                matchesSource(item, product: product)
+                    && matchesShoppingCategory(item, product: product)
                     && item.isRepresentative
-            }),
-            ("같은 플랫폼/브랜드/세부카테고리 기준 비교", 0, { item in
-                isSameServiceGroup(item, product: product)
-                    && matchesSource(item, product: product)
-                    && matchesBrand(item, product: product)
-                    && item.detailCategory == productDetailCategory
-            }),
-            ("같은 브랜드 기준 비교", 0, { item in
-                isSameServiceGroup(item, product: product)
-                    && matchesBrand(item, product: product)
-                    && item.detailCategory == productDetailCategory
-                    && item.isRepresentative
-            }),
-            ("같은 브랜드 기준 비교", 0, { item in
-                isSameServiceGroup(item, product: product)
-                    && matchesBrand(item, product: product)
-                    && item.detailCategory == productDetailCategory
-            }),
-            ("같은 플랫폼 기준 비교", 0, { item in
-                isSameServiceGroup(item, product: product)
-                    && matchesSource(item, product: product)
-                    && item.detailCategory == productDetailCategory
-                    && item.isRepresentative
-            }),
-            ("같은 플랫폼 기준 비교", 0, { item in
-                isSameServiceGroup(item, product: product)
-                    && matchesSource(item, product: product)
-                    && item.detailCategory == productDetailCategory
-            }),
-            ("같은 세부카테고리 기준 비교", 0, { item in
-                isSameServiceGroup(item, product: product)
-                    && item.detailCategory == productDetailCategory
-                    && item.isRepresentative
-            }),
-            ("같은 세부카테고리 기준 비교", 0, { item in
-                isSameServiceGroup(item, product: product)
-                    && item.detailCategory == productDetailCategory
             })
         ]
 
@@ -272,22 +233,6 @@ struct RecommendationService {
             }
         }
 
-        if allowsGlobalFallback {
-            let candidates = temporaryComparisonCandidates(
-                product: product,
-                productDetailCategory: productDetailCategory,
-                userFits: userFits
-            )
-            if !candidates.isEmpty {
-                return RecommendationBasis(
-                    userFits: candidates,
-                    methodText: "유사한 옷 기준 비교",
-                    scorePenalty: 15,
-                    fallbackReason: "\(productDetailCategory.rawValue) 기준 옷이 없어 유사도가 높은 옷과 비교했습니다."
-                )
-            }
-        }
-
         return RecommendationBasis(userFits: [], methodText: "사용자 선택 임시 비교", scorePenalty: 12)
     }
 
@@ -296,7 +241,11 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        userFits.contains { $0.detailCategory == productDetailCategory && $0.isRepresentative }
+        userFits.contains {
+            matchesSource($0, product: product)
+                && matchesShoppingCategory($0, product: product)
+                && $0.isRepresentative
+        }
     }
 
     private func rankedCandidateScore(
@@ -425,6 +374,10 @@ struct RecommendationService {
             return false
         }
         return normalized(item.brandName) == normalized(productBrand)
+    }
+
+    private func matchesShoppingCategory(_ item: UserFit, product: Product) -> Bool {
+        normalized(item.sourceCategoryNameForMatching) == normalized(product.sourceCategoryNameForMatching)
     }
 
     private func isSameServiceGroup(_ item: UserFit, product: Product) -> Bool {

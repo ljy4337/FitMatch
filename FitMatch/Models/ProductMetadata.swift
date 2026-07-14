@@ -22,6 +22,7 @@ struct ProductMetadata {
     var discountRate: Double? = nil
     var isSale: Bool = false
     var isOutOfStock: Bool = false
+    var stockStatusRawValue: String? = nil
     var isRestock: Bool = false
     var isSoonOutOfStock: Bool = false
     var isLimitedQuantity: Bool = false

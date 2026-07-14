@@ -148,6 +148,60 @@ struct ProductURLParserPartialError: LocalizedError {
     }
 }
 
+enum ProductURLSupport {
+    static func normalizedURL(from rawValue: String) -> URL? {
+        let trimmed = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+
+        let candidate = extractedURLString(from: trimmed) ?? trimmed
+        let normalizedCandidate = candidate.hasPrefix("http://") || candidate.hasPrefix("https://")
+            ? candidate
+            : "https://\(candidate)"
+
+        guard let url = URL(string: normalizedCandidate),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              let host = url.host?.lowercased(),
+              !host.isEmpty else {
+            return nil
+        }
+
+        return url
+    }
+
+    static func supportedProviderName(for urlString: String) -> String? {
+        guard let url = normalizedURL(from: urlString) else {
+            return nil
+        }
+
+        let value = url.absoluteString.lowercased()
+        let host = url.host?.lowercased() ?? ""
+
+        if value.contains("musinsa") { return "무신사" }
+        if host.contains("uniqlo") { return "유니클로" }
+
+        return nil
+    }
+
+    static func isSupportedProductURL(_ urlString: String) -> Bool {
+        supportedProviderName(for: urlString) != nil
+    }
+
+    static func extractedURLString(from text: String) -> String? {
+        let pattern = #"(https?://)?[^\s]*(musinsa|uniqlo)[^\s]*"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+              let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..<text.endIndex, in: text)),
+              let range = Range(match.range, in: text) else {
+            return nil
+        }
+
+        return String(text[range])
+            .trimmingCharacters(in: CharacterSet(charactersIn: " \n\t\"'<>"))
+    }
+}
+
 @MainActor
 struct ProductURLParserService {
     private let musinsaParser: ProductURLParsing
@@ -165,7 +219,7 @@ struct ProductURLParserService {
     }
 
     func parse(urlString: String) async throws -> ParsedProductInfo {
-        guard let url = normalizedURL(from: urlString) else {
+        guard let url = ProductURLSupport.normalizedURL(from: urlString) else {
             throw ProductURLParserError.invalidURL
         }
 
@@ -212,34 +266,11 @@ struct ProductURLParserService {
     }
 
     private func normalizedURL(from rawValue: String) -> URL? {
-        let trimmed = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            return nil
-        }
-
-        let candidate = extractedURLString(from: trimmed) ?? trimmed
-        let normalizedCandidate = candidate.hasPrefix("http://") || candidate.hasPrefix("https://")
-            ? candidate
-            : "https://\(candidate)"
-
-        guard let url = URL(string: normalizedCandidate),
-              url.scheme != nil,
-              url.host != nil else {
-            return nil
-        }
-
-        return url
+        ProductURLSupport.normalizedURL(from: rawValue)
     }
 
     private func extractedURLString(from text: String) -> String? {
-        let pattern = #"(https?://)?[^\s]*(musinsa|uniqlo)[^\s]*"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
-              let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..<text.endIndex, in: text)),
-              let range = Range(match.range, in: text) else {
-            return nil
-        }
-
-        return String(text[range])
+        ProductURLSupport.extractedURLString(from: text)
     }
 }
 

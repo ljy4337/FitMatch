@@ -378,7 +378,11 @@ struct AddComparedProductToClosetSheet: View {
 
         if isBasisItem {
             userFits
-                .filter { $0.detailCategory == selectedDetailCategory && $0.isRepresentative }
+                .filter {
+                    $0.sourceName.normalizedForClosetRegistration == product.sourceDisplayName.normalizedForClosetRegistration
+                        && $0.sourceCategoryNameForMatching.normalizedForClosetRegistration == product.sourceCategoryNameForMatching.normalizedForClosetRegistration
+                        && $0.isRepresentative
+                }
                 .forEach {
                     $0.isRepresentative = false
                     $0.updatedAt = Date()
@@ -464,6 +468,12 @@ struct AddComparedProductToClosetSheet: View {
         }
 
         return String(format: "%.1fcm", value)
+    }
+}
+
+private extension String {
+    var normalizedForClosetRegistration: String {
+        trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
 

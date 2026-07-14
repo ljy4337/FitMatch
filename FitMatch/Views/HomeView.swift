@@ -6,6 +6,7 @@ struct HomeView: View {
     let recentClipboardCandidate: SmartClipboardCandidate?
     let onStartCompare: () -> Void
     let onStartCompareWithURL: (String) -> Void
+    let onStartCompareLatestURL: () -> Void
     let onOpenHistory: () -> Void
     let onRecompare: (String) -> Void
     var onLogout: (() -> Void)?
@@ -62,7 +63,7 @@ struct HomeView: View {
                     }
 
                     PrimaryButton(title: "바로 비교하기", systemImage: "sparkles") {
-                        onStartCompareWithURL(recentClipboardCandidate.urlString)
+                        onStartCompareLatestURL()
                     }
                 }
             }
@@ -380,12 +381,6 @@ struct CompareStartSheet: View {
                     .onSubmit {
                         submitURL()
                     }
-
-                Button("붙여넣기") {
-                    productURL = UIPasteboard.general.string ?? productURL
-                }
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.primary)
             }
             .padding(.horizontal, 14)
             .frame(height: 50)
@@ -405,12 +400,12 @@ struct CompareStartSheet: View {
     }
 
     private var canSubmitURL: Bool {
-        !productURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        ProductURLSupport.isSupportedProductURL(productURL)
     }
 
     private func submitURL() {
         let trimmedURL = productURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedURL.isEmpty else {
+        guard ProductURLSupport.isSupportedProductURL(trimmedURL) else {
             return
         }
 

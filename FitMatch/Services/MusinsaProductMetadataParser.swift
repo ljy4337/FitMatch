@@ -34,6 +34,11 @@ struct MusinsaProductMetadata {
     }
 
     mutating func applyActualSizeTypeName(_ typeName: String?) {
+        if categoryDepth1Name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ||
+            categoryDepth2Name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+            return
+        }
+
         guard let typeName = typeName?.trimmingCharacters(in: .whitespacesAndNewlines),
               !typeName.isEmpty else {
             return
@@ -56,9 +61,10 @@ struct MusinsaProductMetadataParser {
     func parse(productID: String, sourceURL: URL) async -> MusinsaProductMetadata {
         do {
             let response = try await fetchProductDetail(productID: productID)
-            let depth1 = response.data.category?.categoryDepth1Name
-            let depth2 = response.data.category?.categoryDepth2Name
-            let categoryText = depth2 ?? depth1 ?? response.data.baseCategoryFullPath
+            let sourcePath = Self.categoryPath(from: response.data)
+            let depth1 = sourcePath.category
+            let depth2 = sourcePath.detailCategory
+            let categoryText = [depth1, depth2].compactMap { $0 }.joined(separator: " ")
             let productName = response.data.goodsNm
             let brandName = response.data.brandInfo?.brandName
                 ?? response.data.brandInfo?.brandEnglishName
@@ -72,7 +78,7 @@ struct MusinsaProductMetadataParser {
                 brandName: brandName,
                 productName: productName,
                 category: Self.mapCategory(from: categoryText),
-                detailCategory: Self.mapDetailCategory(from: "\(categoryText ?? "") \(productName)"),
+                detailCategory: Self.mapDetailCategory(from: depth2 ?? categoryText),
                 categoryDepth1Name: depth1,
                 categoryDepth2Name: depth2,
                 imageURLString: Self.normalizeImageURL(response.data.thumbnailImageUrl),
@@ -121,7 +127,7 @@ struct MusinsaProductMetadataParser {
             productID: productID,
             brandName: "Musinsa",
             productName: productName?.isEmpty == false ? productName! : "Musinsa 상품 \(productID)",
-            category: .top,
+            category: .other,
             detailCategory: .other,
             categoryDepth1Name: nil,
             categoryDepth2Name: nil,
@@ -276,18 +282,19 @@ struct MusinsaProductMetadataParser {
     }
 
     private static func makeProductMetadata(from data: MusinsaProductDetailResponse.DataBody) -> ProductMetadata {
-        ProductMetadata(
+        let sourcePath = categoryPath(from: data)
+        return ProductMetadata(
             styleNo: data.styleNo,
             englishName: data.goodsNmEng,
             brandCode: data.brand,
             brandEnglishName: data.brandInfo?.brandEnglishName,
             brandLogoImageURLString: normalizeImageURL(data.brandInfo?.brandLogoImage),
             brandNationName: data.brandInfo?.brandNationName,
-            baseCategoryFullPath: data.baseCategoryFullPath,
+            baseCategoryFullPath: sourcePath.fullPath,
             categoryDepth1Code: data.category?.categoryDepth1Code,
-            categoryDepth1Name: data.category?.categoryDepth1Name,
+            categoryDepth1Name: sourcePath.category,
             categoryDepth2Code: data.category?.categoryDepth2Code,
-            categoryDepth2Name: data.category?.categoryDepth2Name,
+            categoryDepth2Name: sourcePath.detailCategory,
             sizeType: data.sizeType,
             genderCodes: data.genders ?? data.sex ?? [],
             labelNames: data.labels?.map(\.name) ?? [],
@@ -298,6 +305,7 @@ struct MusinsaProductMetadataParser {
             discountRate: data.goodsPrice?.discountRate ?? data.discountRate,
             isSale: data.goodsPrice?.isSale ?? data.isSale ?? false,
             isOutOfStock: data.isOutOfStock ?? false,
+            stockStatusRawValue: data.isOutOfStock == true ? ProductStockStatus.outOfStock.rawValue : ProductStockStatus.unknown.rawValue,
             isRestock: data.isRestock ?? false,
             isSoonOutOfStock: data.isSoonOutOfStock ?? false,
             isLimitedQuantity: data.isLimitedQuantity ?? false,
@@ -306,6 +314,52 @@ struct MusinsaProductMetadataParser {
             seasonYear: data.seasonYear,
             season: data.season
         )
+    }
+
+    private static func categoryPath(from data: MusinsaProductDetailResponse.DataBody) -> (fullPath: String?, category: String?, detailCategory: String?) {
+        let categoryTitle = normalizedCategoryValue(data.category?.categoryDepth1Title)
+        let detailCategoryTitle = normalizedCategoryValue(data.category?.categoryDepth2Title)
+        if categoryTitle != nil || detailCategoryTitle != nil {
+            let fullPath = splitCategoryPath(data.baseCategoryFullPath).isEmpty
+                ? [categoryTitle, detailCategoryTitle].compactMap { $0 }.joined(separator: " > ")
+                : splitCategoryPath(data.baseCategoryFullPath).joined(separator: " > ")
+            return (fullPath.isEmpty ? nil : fullPath, categoryTitle, detailCategoryTitle)
+        }
+
+        let pathParts = splitCategoryPath(data.baseCategoryFullPath)
+        if pathParts.count >= 2 {
+            return (pathParts.joined(separator: " > "), pathParts[pathParts.count - 2], pathParts[pathParts.count - 1])
+        }
+
+        let fallbackParts = [
+            data.category?.categoryDepth1Name,
+            data.category?.categoryDepth2Name,
+            data.category?.categoryDepth3Name,
+            data.category?.categoryDepth4Name
+        ]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if fallbackParts.count >= 2 {
+            return (fallbackParts.joined(separator: " > "), fallbackParts[fallbackParts.count - 2], fallbackParts[fallbackParts.count - 1])
+        }
+        if let only = fallbackParts.last {
+            return (only, nil, only)
+        }
+        return (data.baseCategoryFullPath, nil, nil)
+    }
+
+    private static func normalizedCategoryValue(_ value: String?) -> String? {
+        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func splitCategoryPath(_ path: String?) -> [String] {
+        guard let path else { return [] }
+        return path
+            .components(separatedBy: CharacterSet(charactersIn: ">/"))
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
     }
 }
 
@@ -353,12 +407,16 @@ private struct MusinsaProductDetailResponse: Decodable {
     struct Category: Decodable {
         let categoryDepth1Code: String?
         let categoryDepth1Name: String?
+        let categoryDepth1Title: String?
         let categoryDepth2Code: String?
         let categoryDepth2Name: String?
+        let categoryDepth2Title: String?
         let categoryDepth3Code: String?
         let categoryDepth3Name: String?
+        let categoryDepth3Title: String?
         let categoryDepth4Code: String?
         let categoryDepth4Name: String?
+        let categoryDepth4Title: String?
     }
 
     struct GoodsImage: Decodable {
