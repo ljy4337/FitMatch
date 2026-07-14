@@ -149,7 +149,6 @@ struct RecommendationHistoryView: View {
             }
         }
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 
@@ -185,7 +184,6 @@ struct RecommendationHistoryView: View {
             }
         }
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 

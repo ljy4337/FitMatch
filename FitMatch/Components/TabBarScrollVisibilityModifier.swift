@@ -38,6 +38,16 @@ final class TabBarVisibilityController: ObservableObject {
         release(tab: tab, reason: .scrolling, source: source)
     }
 
+    func setScrollVisible(_ visible: Bool, tab: AppTab? = nil, source: String = "") {
+        if visible {
+            guard hiddenReasons.contains(.scrolling) else { return }
+            _ = hiddenReasons.remove(.scrolling)
+        } else {
+            guard !hiddenReasons.contains(.scrolling) else { return }
+            _ = hiddenReasons.insert(.scrolling)
+        }
+    }
+
     func release(tab: AppTab? = nil, reason: TabBarHiddenReason, source: String = "") {
         guard hiddenReasons.contains(reason) else { return }
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
@@ -107,68 +117,118 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     let tab: AppTab
     @Binding var isTopChromeVisible: Bool
-    @StateObject private var scrollState = ScrollVisibilityState()
+    @StateObject private var coordinator = RootChromeScrollCoordinator()
 
     func body(content: Content) -> some View {
         content
-            .onScrollGeometryChange(for: ScrollVisibilitySnapshot.self) { geometry in
-                ScrollVisibilitySnapshot(geometry: geometry)
-            } action: { previousSnapshot, currentSnapshot in
-                handleScroll(previous: previousSnapshot, current: currentSnapshot)
+            .onScrollGeometryChange(for: RootChromeScrollSnapshot.self) { geometry in
+                RootChromeScrollSnapshot(geometry: geometry)
+            } action: { _, currentSnapshot in
+                coordinator.handle(snapshot: currentSnapshot) { visible in
+                    applyVisibility(visible, source: "native scroll")
+                }
             }
             .onDisappear {
-                scrollState.reset()
-                tabBarVisibilityController.showScroll(tab: tab, source: "screen disappear")
-                setTopChromeVisible(true, source: "screen disappear")
+                coordinator.reset()
+                applyVisibility(true, source: "screen disappear")
             }
             .onAppear {
-                scrollState.reset()
-                tabBarVisibilityController.showScroll(tab: tab, source: "screen appear")
-                setTopChromeVisible(true, source: "screen appear")
+                coordinator.reset()
+                applyVisibility(true, source: "screen appear")
             }
     }
 
-    private func handleScroll(previous previousSnapshot: ScrollVisibilitySnapshot, current currentSnapshot: ScrollVisibilitySnapshot) {
-        guard currentSnapshot.isScrollable else {
-            scrollState.reset()
-            tabBarVisibilityController.showScroll(tab: tab, source: "content shorter than viewport")
-            setTopChromeVisible(true, source: "content shorter than viewport")
+    private func applyVisibility(_ visible: Bool, source: String) {
+        guard isTopChromeVisible != visible
+                || tabBarVisibilityController.isVisible != visible else { return }
+        tabBarVisibilityController.setScrollVisible(visible, tab: tab, source: source)
+        if isTopChromeVisible != visible {
+            isTopChromeVisible = visible
+        }
+    }
+}
+
+private struct RootChromeScrollSnapshot: Equatable {
+    let rawOffset: CGFloat
+    let maxOffset: CGFloat
+
+    init(geometry: ScrollGeometry) {
+        rawOffset = geometry.contentOffset.y + geometry.contentInsets.top
+        maxOffset = max(
+            0,
+            geometry.contentSize.height
+                - geometry.containerSize.height
+                + geometry.contentInsets.top
+                + geometry.contentInsets.bottom
+        )
+    }
+}
+
+@MainActor
+private final class RootChromeScrollCoordinator: ObservableObject {
+    private var previousRawOffset: CGFloat?
+    private var wasBottomOverscrolling = false
+    private var isApplyingVisibilityChange = false
+    private var pendingVisibility: Bool?
+    private var isApplyScheduled = false
+
+    func handle(snapshot: RootChromeScrollSnapshot, apply: @escaping (Bool) -> Void) {
+        if isApplyingVisibilityChange {
+            previousRawOffset = snapshot.rawOffset
             return
         }
 
-        let delta = currentSnapshot.clampedOffset - previousSnapshot.clampedOffset
-
-        if currentSnapshot.boundaryState == .top {
-            scrollState.reset()
-            tabBarVisibilityController.showScroll(tab: tab, source: "native scroll top")
-            setTopChromeVisible(true, source: "native scroll top")
+        guard let previousRawOffset else {
+            self.previousRawOffset = snapshot.rawOffset
+            wasBottomOverscrolling = snapshot.rawOffset > snapshot.maxOffset
             return
         }
 
-        if currentSnapshot.boundaryState == .bottom || currentSnapshot.boundaryState == .bottomOverscroll {
-            scrollState.reset()
+        self.previousRawOffset = snapshot.rawOffset
+
+        if snapshot.rawOffset <= 0 {
+            wasBottomOverscrolling = false
+            schedule(visible: true, apply: apply)
             return
         }
+
+        let isBottomOverscrolling = snapshot.rawOffset > snapshot.maxOffset
+        let delta = snapshot.rawOffset - previousRawOffset
+
+        if wasBottomOverscrolling && delta < 0 {
+            wasBottomOverscrolling = isBottomOverscrolling
+            return
+        }
+        wasBottomOverscrolling = isBottomOverscrolling
 
         guard delta != 0 else { return }
-
-        if delta > 0 {
-            if scrollState.recordScroll(delta: delta) == .hide {
-                tabBarVisibilityController.hideScroll(tab: tab, source: "native scroll down")
-                setTopChromeVisible(false, source: "native scroll down")
-            }
-        } else {
-            scrollState.reset()
-            tabBarVisibilityController.showScroll(tab: tab, source: "native scroll up")
-            setTopChromeVisible(true, source: "native scroll up")
-        }
+        schedule(visible: delta < 0, apply: apply)
     }
 
-    private func setTopChromeVisible(_ visible: Bool, source: String) {
-        guard isTopChromeVisible != visible else { return }
+    func reset() {
+        previousRawOffset = nil
+        wasBottomOverscrolling = false
+        pendingVisibility = nil
+        isApplyScheduled = false
+        isApplyingVisibilityChange = false
+    }
 
-        withAnimation(.easeInOut(duration: 0.25)) {
-            isTopChromeVisible = visible
+    private func schedule(visible: Bool, apply: @escaping (Bool) -> Void) {
+        pendingVisibility = visible
+        guard !isApplyScheduled else { return }
+        isApplyScheduled = true
+
+        DispatchQueue.main.async {
+            self.isApplyScheduled = false
+            guard let pendingVisibility = self.pendingVisibility else { return }
+            self.pendingVisibility = nil
+            self.isApplyingVisibilityChange = true
+            apply(pendingVisibility)
+
+            DispatchQueue.main.async {
+                self.previousRawOffset = nil
+                self.isApplyingVisibilityChange = false
+            }
         }
     }
 }

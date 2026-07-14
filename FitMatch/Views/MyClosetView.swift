@@ -192,7 +192,6 @@ struct MyClosetView: View {
             }
         }
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
 
@@ -231,7 +230,6 @@ struct MyClosetView: View {
             }
         }
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
 

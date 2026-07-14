@@ -38,7 +38,6 @@ struct HomeView: View {
             .hidesBottomTabBarOnScroll(tab: .home, topChrome: $isTopChromeVisible)
         }
         .background(Color(.systemGroupedBackground))
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isTopChromeVisible)
         .onAppear {
             onRefreshClipboardCandidate()
         }
