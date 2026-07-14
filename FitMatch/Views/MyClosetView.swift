@@ -197,13 +197,10 @@ struct MyClosetView: View {
                     .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 24, trailing: 20))
             }
 
-            Color.clear
-                .frame(height: 112)
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init())
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
 
@@ -228,9 +225,9 @@ struct MyClosetView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                .padding(.bottom, 122)
             }
         }
+        .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
 
