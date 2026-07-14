@@ -547,18 +547,6 @@ private struct HistoryCard: View {
             return sourceCategoryPath
         }
 
-        if let baseCategoryFullPath = history.product.baseCategoryFullPath?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !baseCategoryFullPath.isEmpty {
-            return baseCategoryFullPath
-        }
-
-        let snapshot = history.sourceCategoryPathSnapshot?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if !snapshot.isEmpty,
-           !snapshot.contains(" / 기타"),
-           snapshot != "\(history.product.category.rawValue) / \(history.productDetailCategory.rawValue)" {
-            return snapshot
-        }
-
         return "카테고리 정보 없음"
     }
 }

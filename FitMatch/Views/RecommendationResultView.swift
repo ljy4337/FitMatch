@@ -452,11 +452,6 @@ struct RecommendationResultView: View {
             return sourceCategoryPath
         }
 
-        if let baseCategoryFullPath = currentResult.product.baseCategoryFullPath?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !baseCategoryFullPath.isEmpty {
-            return baseCategoryFullPath
-        }
-
         return "카테고리 정보 없음"
     }
 

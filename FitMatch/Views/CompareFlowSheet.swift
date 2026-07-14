@@ -21,9 +21,8 @@ struct CompareFlowSheet: View {
     @State private var statusMessage: String?
     @State private var registrationRoute: CompareProductRegistrationRoute?
     @State private var isShowingRegistrationSavedAlert = false
-    @State private var selectedClosetSourceName: String?
-    @State private var selectedClosetCategoryName: String?
-    @State private var selectedClosetDetailCategoryName: String?
+    @State private var selectedClosetCategory: ClothingCategory?
+    @State private var selectedClosetDetailCategory: ClosetDetailCategory?
     @State private var hasConfirmedComparisonCategory = false
     @State private var currentClipboardCandidate: SmartClipboardCandidate?
     @State private var isSheetHeaderVisible = true
@@ -156,10 +155,11 @@ private extension CompareFlowSheet {
                 }
 
                 SecondaryButton(title: "옷장 속 다른 옷과 비교", systemImage: "list.bullet.rectangle") {
+                    prepareClosetSelectionDefaults()
                     setStep(.closetSelection)
                 }
-                .disabled(closetSourceOptions.isEmpty)
-                .opacity(closetSourceOptions.isEmpty ? 0.45 : 1)
+                .disabled(closetCategoryOptions.isEmpty)
+                .opacity(closetCategoryOptions.isEmpty ? 0.45 : 1)
             }
         }
         .padding(.top, 12)
@@ -255,9 +255,9 @@ private extension CompareFlowSheet {
 
     var closetSelectionContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            sheetHeader(title: "어떤 옷과 비교할까요?", subtitle: "자동 선택하지 않고, 사용자가 직접 비교 기준 옷을 고릅니다.")
+            sheetHeader(title: "어떤 옷과 비교할까요?", subtitle: "대분류와 세부 카테고리를 선택한 뒤 비교할 옷을 고르세요.")
 
-            if closetSourceOptions.isEmpty {
+            if closetCategoryOptions.isEmpty {
                 FitMatchCard {
                     VStack(alignment: .leading, spacing: 14) {
                         Text("비교 가능한 상품이 없습니다.")
@@ -272,43 +272,45 @@ private extension CompareFlowSheet {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 10) {
-                    CompareSelectionMenu(title: selectedClosetSourceName ?? "쇼핑몰 선택") {
-                        ForEach(closetSourceOptions, id: \.self) { source in
-                            Button(source) {
-                                selectedClosetSourceName = source
-                                selectedClosetCategoryName = nil
-                                selectedClosetDetailCategoryName = nil
+                    CompareSelectionMenu(title: selectedClosetCategory?.rawValue ?? "대분류 선택") {
+                        ForEach(closetCategoryOptions) { category in
+                            Button(category.rawValue) {
+                                selectedClosetCategory = category
+                                selectedClosetDetailCategory = nil
                                 selectedReferenceItemID = nil
+                                viewModel.category = category
+                                viewModel.detailCategory = .other
                             }
                         }
                     }
 
-                    CompareSelectionMenu(title: selectedClosetCategoryName ?? "카테고리 선택") {
-                        ForEach(closetCategoryOptions, id: \.self) { category in
-                            Button(category) {
-                                selectedClosetCategoryName = category
-                                selectedClosetDetailCategoryName = nil
+                    CompareSelectionMenu(title: selectedClosetDetailCategory?.rawValue ?? "세부 카테고리 선택") {
+                        ForEach(closetDetailCategoryOptions) { detail in
+                            Button(detail.rawValue) {
+                                selectedClosetDetailCategory = detail
                                 selectedReferenceItemID = nil
+                                viewModel.detailCategory = detail
                             }
                         }
                     }
-                    .disabled(selectedClosetSourceName == nil)
-                    .opacity(selectedClosetSourceName == nil ? 0.5 : 1)
-
-                    CompareSelectionMenu(title: selectedClosetDetailCategoryName ?? "세부 카테고리 선택") {
-                        ForEach(closetDetailCategoryOptions, id: \.self) { detail in
-                            Button(detail) {
-                                selectedClosetDetailCategoryName = detail
-                                selectedReferenceItemID = nil
-                            }
-                        }
-                    }
-                    .disabled(selectedClosetCategoryName == nil)
-                    .opacity(selectedClosetCategoryName == nil ? 0.5 : 1)
+                    .disabled(selectedClosetCategory == nil)
+                    .opacity(selectedClosetCategory == nil ? 0.5 : 1)
                 }
 
                 VStack(spacing: 12) {
-                    ForEach(sameCategoryCandidates) { item in
+                    if representativeCategoryCandidate != nil {
+                        CompareSheetSectionTitle(
+                            title: "기준옷으로 비교",
+                            subtitle: "선택한 분류에 지정된 기준옷을 우선 사용합니다."
+                        )
+                    } else if selectedClosetDetailCategory != nil, !sameCategoryCandidates.isEmpty {
+                        CompareSheetSectionTitle(
+                            title: "옷 선택",
+                            subtitle: "이 분류에 기준옷이 없어 비교할 옷을 선택해 주세요."
+                        )
+                    }
+
+                    ForEach(closetSelectionCandidates) { item in
                         Button {
                             selectedReferenceItemID = item.id
                             setStep(.confirmReference)
@@ -317,8 +319,19 @@ private extension CompareFlowSheet {
                         }
                         .buttonStyle(.plain)
                     }
+
+                    if selectedClosetDetailCategory != nil, sameCategoryCandidates.isEmpty {
+                        Text("선택한 분류에 비교 가능한 실측 정보가 있는 옷이 없습니다.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 4)
+                    }
                 }
             }
+        }
+        .onAppear {
+            prepareClosetSelectionDefaults()
         }
     }
 
@@ -646,11 +659,6 @@ private extension CompareFlowSheet {
             return sourceCategoryPath
         }
 
-        if let baseCategoryFullPath = product.baseCategoryFullPath?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !baseCategoryFullPath.isEmpty {
-            return baseCategoryFullPath
-        }
-
         return nil
     }
 
@@ -662,14 +670,12 @@ private extension CompareFlowSheet {
     var sameCategoryCandidates: [UserFit] {
         return userFits
             .filter { item in
-                guard let selectedClosetSourceName,
-                      let selectedClosetCategoryName,
-                      let selectedClosetDetailCategoryName else {
+                guard let selectedClosetCategory,
+                      let selectedClosetDetailCategory else {
                     return false
                 }
-                return item.sourceName.normalizedForCompareFlow == selectedClosetSourceName.normalizedForCompareFlow
-                    && item.category.rawValue.normalizedForCompareFlow == selectedClosetCategoryName.normalizedForCompareFlow
-                    && item.detailCategory.rawValue.normalizedForCompareFlow == selectedClosetDetailCategoryName.normalizedForCompareFlow
+                return item.category == selectedClosetCategory
+                    && item.detailCategory == selectedClosetDetailCategory
                     && hasComparableMeasurements(item)
             }
             .sorted {
@@ -680,30 +686,38 @@ private extension CompareFlowSheet {
             }
     }
 
-    var closetSourceOptions: [String] {
-        uniqueSorted(userFits.map(\.sourceName))
+    var representativeCategoryCandidate: UserFit? {
+        sameCategoryCandidates.first(where: \.isRepresentative)
     }
 
-    var closetCategoryOptions: [String] {
-        uniqueSorted(userFits
-            .filter {
-                guard let selectedClosetSourceName else { return true }
-                return $0.sourceName.normalizedForCompareFlow == selectedClosetSourceName.normalizedForCompareFlow
-            }
-            .map { $0.category.rawValue })
+    var closetSelectionCandidates: [UserFit] {
+        if let representativeCategoryCandidate {
+            return [representativeCategoryCandidate]
+        }
+        return sameCategoryCandidates
     }
 
-    var closetDetailCategoryOptions: [String] {
-        uniqueSorted(userFits
-            .filter {
-                guard let selectedClosetSourceName else { return true }
-                return $0.sourceName.normalizedForCompareFlow == selectedClosetSourceName.normalizedForCompareFlow
-            }
-            .filter {
-                guard let selectedClosetCategoryName else { return true }
-                return $0.category.rawValue.normalizedForCompareFlow == selectedClosetCategoryName.normalizedForCompareFlow
-            }
-            .map { $0.detailCategory.rawValue })
+    var resolvedComparisonCategory: ClothingCategory? {
+        viewModel.category == .other ? nil : viewModel.category
+    }
+
+    var resolvedComparisonDetailCategory: ClosetDetailCategory? {
+        viewModel.detailCategory == .other ? nil : viewModel.detailCategory
+    }
+
+    var closetCategoryOptions: [ClothingCategory] {
+        Array(Set(userFits.map(\.category)))
+            .filter { $0 != .other }
+            .sorted { $0.rawValue.localizedCompare($1.rawValue) == .orderedAscending }
+    }
+
+    var closetDetailCategoryOptions: [ClosetDetailCategory] {
+        guard let selectedClosetCategory else { return [] }
+        return Array(Set(userFits
+            .filter { $0.category == selectedClosetCategory }
+            .map(\.detailCategory)))
+            .filter { $0 != .other }
+            .sorted { $0.rawValue.localizedCompare($1.rawValue) == .orderedAscending }
     }
 
     var selectedReferenceItem: UserFit? {
@@ -912,15 +926,24 @@ private extension CompareFlowSheet {
     }
 
     func resetClosetSelection() {
-        selectedClosetSourceName = nil
-        selectedClosetCategoryName = nil
-        selectedClosetDetailCategoryName = nil
+        selectedClosetCategory = nil
+        selectedClosetDetailCategory = nil
         selectedReferenceItemID = nil
     }
 
-    func uniqueSorted(_ values: [String]) -> [String] {
-        Array(Set(values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }))
-            .sorted { $0.localizedCompare($1) == .orderedAscending }
+    func prepareClosetSelectionDefaults() {
+        guard selectedClosetCategory == nil else { return }
+
+        if let resolvedCategory = resolvedComparisonCategory,
+           closetCategoryOptions.contains(resolvedCategory) {
+            selectedClosetCategory = resolvedCategory
+            viewModel.category = resolvedCategory
+
+            if let resolvedDetailCategory = resolvedComparisonDetailCategory,
+               closetDetailCategoryOptions.contains(resolvedDetailCategory) {
+                selectedClosetDetailCategory = resolvedDetailCategory
+            }
+        }
     }
 
     func hasComparableMeasurements(_ item: UserFit) -> Bool {
@@ -1282,8 +1305,12 @@ private struct ClosetReferenceChoiceCard: View {
                         .foregroundStyle(.primary)
                         .lineLimit(2)
 
-                    Text("\(item.category.rawValue) / \(item.detailCategory.rawValue) · \(item.sizeName)")
+                    Text("\(item.sourceName) · \(item.sizeName)")
                         .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Text("\(item.category.rawValue) / \(item.detailCategory.rawValue)")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
 
                     HStack(spacing: 7) {
@@ -1330,8 +1357,4 @@ private extension String {
             ?? value
     }
 
-    var normalizedForCompareFlow: String {
-        trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-    }
 }

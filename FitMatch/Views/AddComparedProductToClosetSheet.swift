@@ -727,11 +727,6 @@ struct AddComparedProductToClosetSheet: View {
             return sourceCategoryPath
         }
 
-        if let baseCategoryFullPath = product.baseCategoryFullPath?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !baseCategoryFullPath.isEmpty {
-            return baseCategoryFullPath
-        }
-
         return nil
     }
 }
