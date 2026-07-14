@@ -1054,7 +1054,6 @@ private struct MainTabView: View {
         .offset(y: tabBarVisibilityController.isVisible ? 0 : 140)
         .opacity(tabBarVisibilityController.isVisible ? 1 : 0)
         .allowsHitTesting(tabBarVisibilityController.isVisible)
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: tabBarVisibilityController.isVisible)
     }
 
     @ViewBuilder
