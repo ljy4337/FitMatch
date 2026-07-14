@@ -10,6 +10,7 @@ struct AddComparedProductToClosetSheet: View {
     let product: Product
     let productDetailCategory: ClosetDetailCategory
     let recommendedSize: ProductSize?
+    let isParsedProductReadOnly: Bool
     var onSaved: ((UserFit) -> Void)?
 
     @State private var step: AddComparedProductStep = .size
@@ -26,11 +27,13 @@ struct AddComparedProductToClosetSheet: View {
         product: Product,
         productDetailCategory: ClosetDetailCategory,
         recommendedSize: ProductSize?,
+        isParsedProductReadOnly: Bool = false,
         onSaved: ((UserFit) -> Void)? = nil
     ) {
         self.product = product
         self.productDetailCategory = productDetailCategory
         self.recommendedSize = recommendedSize
+        self.isParsedProductReadOnly = isParsedProductReadOnly
         self.onSaved = onSaved
         _brandName = State(initialValue: product.brand?.name ?? "")
         _productName = State(initialValue: product.name)
@@ -182,48 +185,9 @@ struct AddComparedProductToClosetSheet: View {
 
             AddComparedSectionCard(
                 title: "등록 정보",
-                subtitle: "자동 입력된 정보를 확인하고 저장하세요."
+                subtitle: isParsedProductReadOnly ? "상품 링크에서 불러온 정보는 수정할 수 없습니다." : "자동 입력된 정보를 확인하고 저장하세요."
             ) {
-                VStack(alignment: .leading, spacing: 14) {
-                    RegistrationTextField(title: "브랜드", placeholder: "브랜드명", text: $brandName)
-                    RegistrationTextField(title: "상품명", placeholder: "상품명", text: $productName)
-
-                    RegistrationMenuRow(title: "성별", value: selectedGender.rawValue) {
-                        ForEach(availableGenders) { gender in
-                            Button(gender.rawValue) {
-                                selectedGender = gender
-                                normalizeCategory()
-                                normalizeDetailCategory()
-                            }
-                        }
-                    }
-
-                    RegistrationMenuRow(title: "카테고리", value: selectedCategory.rawValue) {
-                        ForEach(availableCategories) { category in
-                            Button(category.rawValue) {
-                                selectedCategory = category
-                            }
-                        }
-                    }
-
-                    RegistrationMenuRow(title: "상세 카테고리", value: selectedDetailCategory.rawValue) {
-                        ForEach(availableDetailCategories) { detailCategory in
-                            Button(detailCategory.rawValue) {
-                                selectedDetailCategory = detailCategory
-                            }
-                        }
-                    }
-
-                    RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
-                        ForEach(availableSizes) { size in
-                            Button(size.name.displaySizeName) {
-                                selectedSizeID = size.id
-                            }
-                        }
-                    }
-
-                    BasisToggleRow(isOn: $isBasisItem)
-                }
+                registrationInformationFields
             }
 
             selectedMeasurementSummary
@@ -257,6 +221,77 @@ struct AddComparedProductToClosetSheet: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var registrationInformationFields: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if isParsedProductReadOnly {
+                parsedProductReadOnlyRows
+            } else {
+                editableRegistrationRows
+            }
+
+            RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
+                ForEach(availableSizes) { size in
+                    Button(size.name.displaySizeName) {
+                        selectedSizeID = size.id
+                    }
+                }
+            }
+
+            BasisToggleRow(isOn: $isBasisItem)
+        }
+    }
+
+    private var editableRegistrationRows: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            RegistrationTextField(title: "브랜드", placeholder: "브랜드명", text: $brandName)
+            RegistrationTextField(title: "상품명", placeholder: "상품명", text: $productName)
+
+            RegistrationMenuRow(title: "성별", value: selectedGender.rawValue) {
+                ForEach(availableGenders) { gender in
+                    Button(gender.rawValue) {
+                        selectedGender = gender
+                        normalizeCategory()
+                        normalizeDetailCategory()
+                    }
+                }
+            }
+
+            RegistrationMenuRow(title: "카테고리", value: selectedCategory.rawValue) {
+                ForEach(availableCategories) { category in
+                    Button(category.rawValue) {
+                        selectedCategory = category
+                    }
+                }
+            }
+
+            RegistrationMenuRow(title: "상세 카테고리", value: selectedDetailCategory.rawValue) {
+                ForEach(availableDetailCategories) { detailCategory in
+                    Button(detailCategory.rawValue) {
+                        selectedDetailCategory = detailCategory
+                    }
+                }
+            }
+        }
+    }
+
+    private var parsedProductReadOnlyRows: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ReadOnlyRegistrationInfoRow(title: "쇼핑몰", value: product.sourceDisplayName, emptyText: "정보 없음")
+            ReadOnlyRegistrationInfoRow(title: "브랜드", value: product.brand?.name, emptyText: "정보 없음", isSelectable: true)
+            ReadOnlyRegistrationInfoRow(title: "상품명", value: product.name, emptyText: "정보 없음", isSelectable: true)
+            ReadOnlyRegistrationInfoRow(title: "상품 코드", value: product.productCode, emptyText: "정보 없음")
+            ReadOnlyRegistrationInfoRow(title: "상품 URL", value: product.sourceURLString, emptyText: "정보 없음", isSelectable: true)
+            ReadOnlyRegistrationInfoRow(title: "상품 대상", value: selectedGender.rawValue, emptyText: "미분류")
+            ReadOnlyRegistrationInfoRow(title: "원본 카테고리", value: product.sourceCategoryPath, emptyText: "미분류")
+            ReadOnlyRegistrationInfoRow(title: "Depth 1", value: product.sourceCategoryDepth1, emptyText: "미분류")
+            ReadOnlyRegistrationInfoRow(title: "Depth 2", value: product.sourceCategoryDepth2, emptyText: "미분류")
+            ReadOnlyRegistrationInfoRow(title: "Depth 3", value: product.sourceCategoryDepth3, emptyText: "미분류")
+            ReadOnlyRegistrationInfoRow(title: "Depth 4", value: product.sourceCategoryDepth4, emptyText: "미분류")
+            ReadOnlyRegistrationInfoRow(title: "가격", value: productPriceText, emptyText: "가격 정보 없음")
         }
     }
 
@@ -352,6 +387,9 @@ struct AddComparedProductToClosetSheet: View {
         case .size:
             return selectedSize == nil ? "등록할 사이즈를 선택해 주세요." : nil
         case .confirm:
+            if isParsedProductReadOnly {
+                return productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "상품명을 확인할 수 없습니다." : nil
+            }
             if brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 return "브랜드명을 입력해 주세요."
             }
@@ -363,7 +401,12 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private var canSave: Bool {
-        selectedSize != nil
+        if isParsedProductReadOnly {
+            return selectedSize != nil
+                && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+
+        return selectedSize != nil
             && !brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -386,9 +429,9 @@ struct AddComparedProductToClosetSheet: View {
             sourceCategoryDepth2: product.sourceCategoryDepth2,
             sourceCategoryDepth3: product.sourceCategoryDepth3,
             sourceCategoryDepth4: product.sourceCategoryDepth4,
-            brandName: brandName.trimmingCharacters(in: .whitespacesAndNewlines),
+            brandName: savedBrandName,
             gender: selectedGender,
-            productName: productName.trimmingCharacters(in: .whitespacesAndNewlines),
+            productName: savedProductName,
             category: selectedCategory.serviceGroup,
             detailCategory: selectedDetailCategory,
             sizeName: selectedSize.name.displaySizeName,
@@ -509,6 +552,52 @@ struct AddComparedProductToClosetSheet: View {
 
         return String(format: "%.1fcm", value)
     }
+
+    private var savedBrandName: String {
+        if isParsedProductReadOnly {
+            return product.brand?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        }
+
+        return brandName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var savedProductName: String {
+        if isParsedProductReadOnly {
+            return product.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        return productName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var productPriceText: String? {
+        let currentPrice = product.finalPrice ?? product.salePrice
+        let displayPrice = currentPrice ?? product.normalPrice
+        guard let displayPrice else {
+            return nil
+        }
+
+        let priceText = formatPrice(displayPrice)
+        guard let normalPrice = product.normalPrice,
+              let currentPrice,
+              normalPrice > currentPrice else {
+            return priceText
+        }
+
+        if let discountRate = product.discountRate, discountRate > 0 {
+            let normalizedRate = discountRate <= 1 ? discountRate * 100 : discountRate
+            return "\(priceText) · \(Int(normalizedRate.rounded()))% 할인 · 정가 \(formatPrice(normalPrice))"
+        }
+
+        let calculatedRate = Double(normalPrice - currentPrice) / Double(normalPrice) * 100
+        return "\(priceText) · \(Int(calculatedRate.rounded()))% 할인 · 정가 \(formatPrice(normalPrice))"
+    }
+
+    private func formatPrice(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        return "\(formatted)원"
+    }
 }
 
 private extension String {
@@ -612,6 +701,50 @@ private struct RegistrationMenuRow<Content: View>: View {
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct ReadOnlyRegistrationInfoRow: View {
+    let title: String
+    let value: String?
+    let emptyText: String
+    var isSelectable = false
+
+    private var displayValue: String {
+        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? emptyText : trimmed
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.caption.weight(.black))
+                .foregroundStyle(.secondary)
+
+            valueText
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.primary.opacity(0.055), lineWidth: 1)
+        }
+    }
+
+    @ViewBuilder
+    private var valueText: some View {
+        let text = Text(displayValue)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+        if isSelectable {
+            text.textSelection(.enabled)
+        } else {
+            text
+        }
     }
 }
 

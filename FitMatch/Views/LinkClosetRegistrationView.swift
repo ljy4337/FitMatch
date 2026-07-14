@@ -43,7 +43,8 @@ struct LinkClosetRegistrationView: View {
                 AddComparedProductToClosetSheet(
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
-                    recommendedSize: uniqueSizes(for: parsedProduct).first
+                    recommendedSize: uniqueSizes(for: parsedProduct).first,
+                    isParsedProductReadOnly: true
                 ) { _ in
                     isShowingSavedAlert = true
                 }
@@ -175,9 +176,6 @@ struct LinkClosetRegistrationView: View {
         do {
             let parsedInfo = try await parserService.parse(urlString: trimmedURL)
             let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
-            if existingBrand(named: brand.name) == nil {
-                modelContext.insert(brand)
-            }
 
             let sizes = ParsedProductSizeNormalizer.makeProductSizes(from: parsedInfo.sizes)
 
