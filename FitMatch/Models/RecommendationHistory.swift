@@ -26,7 +26,22 @@ final class RecommendationHistory {
     var normalPriceSnapshot: Int?
     var salePriceSnapshot: Int?
     var finalPriceSnapshot: Int?
+    var currencyCodeSnapshot: String?
+    var isSaleSnapshot: Bool = false
+    var discountRateSnapshot: Double?
+    var priceCheckedAt: Date?
     var stockStatusRawValue: String?
+    var stockCheckedAt: Date?
+    var selectedColorNameSnapshot: String?
+    var selectedSizeNameSnapshot: String?
+    var productSourceNameSnapshot: String?
+    var productBrandNameSnapshot: String?
+    var productNameSnapshot: String?
+    var productImageURLStringSnapshot: String?
+    var productURLStringSnapshot: String?
+    var productCodeSnapshot: String?
+    var productTargetGenderRawValueSnapshot: String?
+    var sourceCategoryPathSnapshot: String?
     var reason: String
     var createdAt: Date
 
@@ -75,7 +90,22 @@ final class RecommendationHistory {
         self.normalPriceSnapshot = product.normalPrice
         self.salePriceSnapshot = product.salePrice
         self.finalPriceSnapshot = product.finalPrice
+        self.currencyCodeSnapshot = product.currencyCode
+        self.isSaleSnapshot = product.isSale
+        self.discountRateSnapshot = product.discountRate
+        self.priceCheckedAt = createdAt
         self.stockStatusRawValue = product.stockStatus.rawValue
+        self.stockCheckedAt = createdAt
+        self.selectedColorNameSnapshot = product.checkedColorName
+        self.selectedSizeNameSnapshot = product.checkedSizeName ?? recommendedSize.name
+        self.productSourceNameSnapshot = product.sourceDisplayName
+        self.productBrandNameSnapshot = product.brand?.name
+        self.productNameSnapshot = product.name
+        self.productImageURLStringSnapshot = product.imageURLString
+        self.productURLStringSnapshot = product.sourceURLString
+        self.productCodeSnapshot = product.productCode
+        self.productTargetGenderRawValueSnapshot = product.productTargetGender.rawValue
+        self.sourceCategoryPathSnapshot = product.sourceCategoryDisplayText
         self.reason = reason ?? "내 옷장에 있는 \(userFit.displayName)와 가장 비슷한 핏입니다."
         self.createdAt = createdAt
     }
@@ -112,5 +142,36 @@ final class RecommendationHistory {
 
     var stockStatus: ProductStockStatus {
         ProductStockStatus(rawValue: stockStatusRawValue ?? "") ?? .unknown
+    }
+
+    var productSourceNameForDisplay: String {
+        productSourceNameSnapshot ?? product.sourceDisplayName
+    }
+
+    var productBrandNameForDisplay: String {
+        productBrandNameSnapshot ?? product.brand?.name ?? product.sourceDisplayName
+    }
+
+    var productNameForDisplay: String {
+        productNameSnapshot ?? product.name
+    }
+
+    var productImageURLStringForDisplay: String? {
+        productImageURLStringSnapshot ?? product.imageURLString
+    }
+
+    var sourceCategoryPathForDisplay: String {
+        sourceCategoryPathSnapshot ?? product.sourceCategoryDisplayText
+    }
+
+    var optionSnapshotText: String? {
+        let values = [
+            selectedColorNameSnapshot.map { "색상 \($0)" },
+            selectedSizeNameSnapshot.map { "옵션 \($0)" }
+        ]
+            .compactMap { $0 }
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+        return values.isEmpty ? nil : values.joined(separator: " · ")
     }
 }

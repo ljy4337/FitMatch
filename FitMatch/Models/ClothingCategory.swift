@@ -32,7 +32,7 @@ enum ClothingCategory: String, CaseIterable, Identifiable, Codable, Hashable {
             return [.top, .bottom, .outer, .underwear, .shoes, .accessory, .other]
         case .women:
             return [.top, .bottom, .outer, .dress, .underwear, .shoes, .accessory, .other]
-        case .unisex:
+        case .kids, .baby, .unisex, .unknown:
             return [.top, .bottom, .outer, .dress, .underwear, .shoes, .accessory, .other]
         }
     }

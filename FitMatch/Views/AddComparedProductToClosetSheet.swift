@@ -16,6 +16,7 @@ struct AddComparedProductToClosetSheet: View {
     @State private var selectedSizeID: UUID?
     @State private var brandName: String
     @State private var productName: String
+    @State private var selectedGender: UserGender
     @State private var selectedCategory: ClothingCategory
     @State private var selectedDetailCategory: ClosetDetailCategory
     @State private var isBasisItem = false
@@ -33,6 +34,7 @@ struct AddComparedProductToClosetSheet: View {
         self.onSaved = onSaved
         _brandName = State(initialValue: product.brand?.name ?? "")
         _productName = State(initialValue: product.name)
+        _selectedGender = State(initialValue: product.productTargetGender)
         _selectedCategory = State(initialValue: product.category.serviceGroup)
         _selectedDetailCategory = State(initialValue: productDetailCategory)
     }
@@ -64,13 +66,17 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private var availableCategories: [ClothingCategory] {
-        [.top, .bottom, .outer, .dress, .underwear, .shoes, .accessory]
+        ClothingCategory.closetCategories(for: selectedGender).filter { $0 != .other }
     }
 
     private var availableDetailCategories: [ClosetDetailCategory] {
         ClosetDetailCategory
-            .options(for: selectedCategory, gender: .unisex)
+            .options(for: selectedCategory, gender: selectedGender)
             .filter { $0 != .other }
+    }
+
+    private var availableGenders: [UserGender] {
+        [.men, .women, .kids, .baby, .unisex, .unknown]
     }
 
     var body: some View {
@@ -165,6 +171,10 @@ struct AddComparedProductToClosetSheet: View {
                         Text("\(selectedCategory.rawValue) / \(selectedDetailCategory.rawValue)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        Text(product.sourceCategoryDisplayText)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -177,6 +187,16 @@ struct AddComparedProductToClosetSheet: View {
                 VStack(alignment: .leading, spacing: 14) {
                     RegistrationTextField(title: "브랜드", placeholder: "브랜드명", text: $brandName)
                     RegistrationTextField(title: "상품명", placeholder: "상품명", text: $productName)
+
+                    RegistrationMenuRow(title: "성별", value: selectedGender.rawValue) {
+                        ForEach(availableGenders) { gender in
+                            Button(gender.rawValue) {
+                                selectedGender = gender
+                                normalizeCategory()
+                                normalizeDetailCategory()
+                            }
+                        }
+                    }
 
                     RegistrationMenuRow(title: "카테고리", value: selectedCategory.rawValue) {
                         ForEach(availableCategories) { category in
@@ -361,8 +381,13 @@ struct AddComparedProductToClosetSheet: View {
         let item = UserFit(
             sourceType: product.sourceType,
             sourceName: product.sourceDisplayName,
+            sourceCategoryPath: product.sourceCategoryPath,
+            sourceCategoryDepth1: product.sourceCategoryDepth1,
+            sourceCategoryDepth2: product.sourceCategoryDepth2,
+            sourceCategoryDepth3: product.sourceCategoryDepth3,
+            sourceCategoryDepth4: product.sourceCategoryDepth4,
             brandName: brandName.trimmingCharacters(in: .whitespacesAndNewlines),
-            gender: .unisex,
+            gender: selectedGender,
             productName: productName.trimmingCharacters(in: .whitespacesAndNewlines),
             category: selectedCategory.serviceGroup,
             detailCategory: selectedDetailCategory,
@@ -375,6 +400,15 @@ struct AddComparedProductToClosetSheet: View {
             sourceProduct: product,
             sourceProductSize: selectedSize
         )
+
+        print("[AddComparedProductToClosetSheet] final UserFit source category saved")
+        print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")
+        print("[AddComparedProductToClosetSheet] parsed gender: \(selectedGender.rawValue)")
+        print("[AddComparedProductToClosetSheet] sourceCategoryDepth1: \(item.sourceCategoryDepth1 ?? "nil")")
+        print("[AddComparedProductToClosetSheet] sourceCategoryDepth2: \(item.sourceCategoryDepth2 ?? "nil")")
+        print("[AddComparedProductToClosetSheet] sourceCategoryDepth3: \(item.sourceCategoryDepth3 ?? "nil")")
+        print("[AddComparedProductToClosetSheet] sourceCategoryDepth4: \(item.sourceCategoryDepth4 ?? "nil")")
+        print("[AddComparedProductToClosetSheet] sourceCategoryPath: \(item.sourceCategoryPath ?? "nil")")
 
         if isBasisItem {
             userFits
@@ -403,6 +437,12 @@ struct AddComparedProductToClosetSheet: View {
     private func normalizeDetailCategory() {
         if !availableDetailCategories.contains(selectedDetailCategory) {
             selectedDetailCategory = availableDetailCategories.first ?? .shortSleeve
+        }
+    }
+
+    private func normalizeCategory() {
+        if !availableCategories.contains(selectedCategory) {
+            selectedCategory = availableCategories.first ?? .top
         }
     }
 
@@ -454,7 +494,7 @@ struct AddComparedProductToClosetSheet: View {
 
     private func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {
         selectedCategory
-            .measurementKinds(detailCategory: selectedDetailCategory, gender: .unisex)
+            .measurementKinds(detailCategory: selectedDetailCategory, gender: selectedGender)
             .filter { size.measurements.value(for: $0) > 0 }
     }
 

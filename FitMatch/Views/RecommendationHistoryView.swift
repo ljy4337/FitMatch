@@ -397,7 +397,7 @@ private struct HistoryCard: View {
                 ZStack(alignment: .topTrailing) {
                     HStack(alignment: .top, spacing: 14) {
                         ProductThumbnailView(
-                            imageURLString: history.product.imageURLString,
+                            imageURLString: history.productImageURLStringForDisplay,
                             category: history.product.category,
                             width: 88,
                             height: 112,
@@ -405,25 +405,32 @@ private struct HistoryCard: View {
                         )
 
                             VStack(alignment: .leading, spacing: 6) {
-                            Text(history.product.brand?.name ?? history.product.sourceDisplayName)
+                            Text(history.productBrandNameForDisplay)
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.secondary)
 
-                            Text(history.product.name)
+                            Text(history.productNameForDisplay)
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.primary)
                                 .lineLimit(2)
 
-                            Text("출처: \(history.product.sourceDisplayName)")
+                            Text("출처: \(history.productSourceNameForDisplay)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
 
                             HistoryPriceSnapshotView(history: history)
 
-                            Text(history.product.sourceCategoryDisplayText)
+                            Text(history.sourceCategoryPathForDisplay)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
+
+                            if let optionText = history.optionSnapshotText {
+                                Text(optionText)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
 
                             Text(history.createdAt, style: .date)
                                 .font(.caption.weight(.semibold))
@@ -567,6 +574,11 @@ private struct HistoryPriceSnapshotView: View {
     }
 
     private var discountText: String? {
+        if let rate = history.discountRateSnapshot, rate > 0 {
+            let normalizedRate = rate <= 1 ? rate * 100 : rate
+            return "\(Int(normalizedRate.rounded()))% 할인"
+        }
+
         guard let normal = history.normalPriceSnapshot,
               let current = currentPrice,
               normal > current else {
@@ -596,7 +608,7 @@ private struct HistoryGridCard: View {
                 CardView(radius: 20, padding: 12) {
                     VStack(alignment: .leading, spacing: 10) {
                         ProductThumbnailView(
-                            imageURLString: history.product.imageURLString,
+                            imageURLString: history.productImageURLStringForDisplay,
                             category: history.product.category,
                             width: 126,
                             height: 142,
@@ -605,12 +617,12 @@ private struct HistoryGridCard: View {
                         .frame(maxWidth: .infinity)
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(history.product.brand?.name ?? history.product.sourceDisplayName)
+                            Text(history.productBrandNameForDisplay)
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
 
-                            Text(history.product.name)
+                            Text(history.productNameForDisplay)
                                 .font(.subheadline.weight(.bold))
                                 .foregroundStyle(.primary)
                                 .lineLimit(2)

@@ -138,6 +138,7 @@ struct ClosetItemDetailView: View {
                     DetailInfoRow(title: "출처", value: sourceDescription)
                     DetailInfoRow(title: "성별", value: item.gender.rawValue)
                     DetailInfoRow(title: "분류", value: "\(item.category.rawValue) / \(item.detailCategory.rawValue)")
+                    DetailInfoRow(title: "원본 카테고리", value: item.sourceCategoryDisplayText)
                 }
             }
         }

@@ -293,7 +293,7 @@ struct AddClosetItemView: View {
     }
 
     private var inputGenders: [UserGender] {
-        [.men, .women]
+        [.men, .women, .kids, .baby, .unisex, .unknown]
     }
 
     private var saveGuideText: String? {
@@ -318,7 +318,7 @@ struct AddClosetItemView: View {
 
     private func normalizeInputSelection() {
         if !inputGenders.contains(viewModel.gender) {
-            viewModel.gender = .men
+            viewModel.gender = .unknown
         }
         normalizeCategorySelection()
     }

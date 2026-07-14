@@ -226,13 +226,20 @@ final class ShoppingProductViewModel: ObservableObject {
         productPrice = parsedProduct.price
         productCanonicalURLString = parsedProduct.canonicalURLString
         productCode = parsedProduct.productID
-        productMetadata = parsedProduct.productMetadata
+        productMetadata = metadataWithSourceCategory(from: parsedProduct)
         parserNotice = parsedProduct.parserNotice
         hasLoadedProductInfo = true
         print("[ShoppingProductViewModel] productName: \(productName)")
         print("[ShoppingProductViewModel] brandName: \(brand)")
         print("[ShoppingProductViewModel] sourceType: \(sourceType.displayName)")
         print("[ShoppingProductViewModel] sourceName: \(sourceName)")
+        print("[ShoppingProductViewModel] raw source category: \(productMetadata.sourceCategoryPath ?? "nil")")
+        print("[ShoppingProductViewModel] parsed gender: \(UserGender.productTarget(from: productMetadata.genderCodes).rawValue)")
+        print("[ShoppingProductViewModel] sourceCategoryDepth1: \(productMetadata.sourceCategoryDepth1 ?? "nil")")
+        print("[ShoppingProductViewModel] sourceCategoryDepth2: \(productMetadata.sourceCategoryDepth2 ?? "nil")")
+        print("[ShoppingProductViewModel] sourceCategoryDepth3: \(productMetadata.sourceCategoryDepth3 ?? "nil")")
+        print("[ShoppingProductViewModel] sourceCategoryDepth4: \(productMetadata.sourceCategoryDepth4 ?? "nil")")
+        print("[ShoppingProductViewModel] sourceCategoryPath: \(productMetadata.sourceCategoryPath ?? "nil")")
         print("[ShoppingProductViewModel] category: \(category.rawValue)")
         print("[ShoppingProductViewModel] detailCategory: \(detailCategory.rawValue)")
         print("[ShoppingProductViewModel] imageURL: \(productImageURLString ?? "nil")")
@@ -259,6 +266,19 @@ final class ShoppingProductViewModel: ObservableObject {
                 displayOrder: index
             )
         }
+    }
+
+    private func metadataWithSourceCategory(from parsedProduct: ParsedProductInfo) -> ProductMetadata {
+        var metadata = parsedProduct.productMetadata
+        metadata.sourceCategoryPath = parsedProduct.sourceCategoryPath ?? metadata.sourceCategoryPath ?? metadata.baseCategoryFullPath
+        metadata.sourceCategoryDepth1 = parsedProduct.sourceCategoryDepth1 ?? metadata.sourceCategoryDepth1 ?? metadata.categoryDepth1Name
+        metadata.sourceCategoryDepth2 = parsedProduct.sourceCategoryDepth2 ?? metadata.sourceCategoryDepth2 ?? metadata.categoryDepth2Name
+        metadata.sourceCategoryDepth3 = parsedProduct.sourceCategoryDepth3 ?? metadata.sourceCategoryDepth3 ?? metadata.categoryDepth3Name
+        metadata.sourceCategoryDepth4 = parsedProduct.sourceCategoryDepth4 ?? metadata.sourceCategoryDepth4 ?? metadata.categoryDepth4Name
+        if metadata.baseCategoryFullPath == nil {
+            metadata.baseCategoryFullPath = metadata.sourceCategoryPath
+        }
+        return metadata
     }
 
     var resolvedSourceName: String {

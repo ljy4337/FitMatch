@@ -29,6 +29,12 @@ struct MusinsaProductMetadata {
             imageURLString: imageURLString,
             price: price,
             canonicalURLString: canonicalURLString,
+            sourceCategoryPath: productMetadata.sourceCategoryPath,
+            sourceCategoryDepth1: productMetadata.sourceCategoryDepth1,
+            sourceCategoryDepth2: productMetadata.sourceCategoryDepth2,
+            sourceCategoryDepth3: productMetadata.sourceCategoryDepth3,
+            sourceCategoryDepth4: productMetadata.sourceCategoryDepth4,
+            productTargetGender: UserGender.productTarget(from: productMetadata.genderCodes),
             productMetadata: productMetadata
         )
     }
@@ -71,6 +77,18 @@ struct MusinsaProductMetadataParser {
                 ?? response.data.brand
                 ?? "Musinsa"
             let metadata = Self.makeProductMetadata(from: response.data)
+            Self.logSourceCategory(
+                rawSourceCategory: [
+                    response.data.category?.categoryDepth1Title,
+                    response.data.category?.categoryDepth2Title,
+                    response.data.category?.categoryDepth3Title,
+                    response.data.category?.categoryDepth4Title
+                ]
+                    .compactMap { Self.normalizedCategoryValue($0) }
+                    .joined(separator: " / "),
+                gender: UserGender.productTarget(from: metadata.genderCodes),
+                sourcePath: sourcePath
+            )
 
             return MusinsaProductMetadata(
                 sourceURL: sourceURL,
@@ -283,13 +301,28 @@ struct MusinsaProductMetadataParser {
 
     private static func makeProductMetadata(from data: MusinsaProductDetailResponse.DataBody) -> ProductMetadata {
         let sourcePath = categoryPath(from: data)
+        let brandLogoImageURLString = normalizeImageURL(data.brandInfo?.brandLogoImage)
+        let imageURLStrings = data.goodsImages?.compactMap { normalizeImageURL($0.imageUrl) } ?? []
+        let normalPrice = data.goodsPrice?.normalPrice ?? data.normalPrice
+        let salePrice = data.goodsPrice?.salePrice ?? data.salePrice
+        let finalPrice = data.goodsPrice?.finalPrice ?? data.finalPrice
+        let hasPrice = normalPrice != nil || salePrice != nil || finalPrice != nil
+        let stockStatusRawValue = data.isOutOfStock == true
+            ? ProductStockStatus.outOfStock.rawValue
+            : ProductStockStatus.unknown.rawValue
+
         return ProductMetadata(
             styleNo: data.styleNo,
             englishName: data.goodsNmEng,
             brandCode: data.brand,
             brandEnglishName: data.brandInfo?.brandEnglishName,
-            brandLogoImageURLString: normalizeImageURL(data.brandInfo?.brandLogoImage),
+            brandLogoImageURLString: brandLogoImageURLString,
             brandNationName: data.brandInfo?.brandNationName,
+            sourceCategoryPath: sourcePath.fullPath,
+            sourceCategoryDepth1: sourcePath.depth1,
+            sourceCategoryDepth2: sourcePath.depth2,
+            sourceCategoryDepth3: sourcePath.depth3,
+            sourceCategoryDepth4: sourcePath.depth4,
             baseCategoryFullPath: sourcePath.fullPath,
             categoryDepth1Code: data.category?.categoryDepth1Code,
             categoryDepth1Name: sourcePath.depth1,
@@ -302,14 +335,15 @@ struct MusinsaProductMetadataParser {
             sizeType: data.sizeType,
             genderCodes: data.genders ?? data.sex ?? [],
             labelNames: data.labels?.map(\.name) ?? [],
-            imageURLStrings: data.goodsImages?.compactMap { normalizeImageURL($0.imageUrl) } ?? [],
-            normalPrice: data.goodsPrice?.normalPrice ?? data.normalPrice,
-            salePrice: data.goodsPrice?.salePrice ?? data.salePrice,
-            finalPrice: data.goodsPrice?.finalPrice ?? data.finalPrice,
+            imageURLStrings: imageURLStrings,
+            normalPrice: normalPrice,
+            salePrice: salePrice,
+            finalPrice: finalPrice,
+            currencyCode: hasPrice ? "KRW" : nil,
             discountRate: data.goodsPrice?.discountRate ?? data.discountRate,
             isSale: data.goodsPrice?.isSale ?? data.isSale ?? false,
             isOutOfStock: data.isOutOfStock ?? false,
-            stockStatusRawValue: data.isOutOfStock == true ? ProductStockStatus.outOfStock.rawValue : ProductStockStatus.unknown.rawValue,
+            stockStatusRawValue: stockStatusRawValue,
             isRestock: data.isRestock ?? false,
             isSoonOutOfStock: data.isSoonOutOfStock ?? false,
             isLimitedQuantity: data.isLimitedQuantity ?? false,
@@ -360,6 +394,16 @@ struct MusinsaProductMetadataParser {
             .components(separatedBy: CharacterSet(charactersIn: ">/"))
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+    }
+
+    private static func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath) {
+        print("[MusinsaProductMetadataParser] raw source category: \(rawSourceCategory.isEmpty ? "nil" : rawSourceCategory)")
+        print("[MusinsaProductMetadataParser] parsed gender: \(gender.rawValue)")
+        print("[MusinsaProductMetadataParser] sourceCategoryDepth1: \(sourcePath.depth1 ?? "nil")")
+        print("[MusinsaProductMetadataParser] sourceCategoryDepth2: \(sourcePath.depth2 ?? "nil")")
+        print("[MusinsaProductMetadataParser] sourceCategoryDepth3: \(sourcePath.depth3 ?? "nil")")
+        print("[MusinsaProductMetadataParser] sourceCategoryDepth4: \(sourcePath.depth4 ?? "nil")")
+        print("[MusinsaProductMetadataParser] sourceCategoryPath: \(sourcePath.fullPath ?? "nil")")
     }
 }
 

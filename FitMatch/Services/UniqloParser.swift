@@ -379,6 +379,12 @@ struct UniqloProductMetadata {
             imageURLString: imageURLString,
             price: price,
             canonicalURLString: canonicalURLString,
+            sourceCategoryPath: productMetadata.sourceCategoryPath,
+            sourceCategoryDepth1: productMetadata.sourceCategoryDepth1,
+            sourceCategoryDepth2: productMetadata.sourceCategoryDepth2,
+            sourceCategoryDepth3: productMetadata.sourceCategoryDepth3,
+            sourceCategoryDepth4: productMetadata.sourceCategoryDepth4,
+            productTargetGender: UserGender.productTarget(from: productMetadata.genderCodes),
             productMetadata: productMetadata
         )
     }
@@ -414,6 +420,7 @@ struct UniqloProductMetadataParser {
         let priceInfo = priceInfo(productGroupObject: productGroupObject, productObject: productObject, resolved: resolved)
         let breadcrumb = breadcrumbItems(from: breadcrumbObject, productName: productName)
         let sourcePath = categoryPath(productGroupObject: productGroupObject, breadcrumb: breadcrumb)
+        let rawSourceCategory = stringValue(productGroupObject?["category"]) ?? breadcrumb.joined(separator: " / ")
         let categoryText = sourcePath.depths.joined(separator: " ")
         let category = mapCategory(from: categoryText)
         let detailCategory = mapDetailCategory(from: sourcePath.depths.last ?? categoryText)
@@ -421,6 +428,11 @@ struct UniqloProductMetadataParser {
 
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
+            sourceCategoryPath: sourcePath.fullPath,
+            sourceCategoryDepth1: sourcePath.depth1,
+            sourceCategoryDepth2: sourcePath.depth2,
+            sourceCategoryDepth3: sourcePath.depth3,
+            sourceCategoryDepth4: sourcePath.depth4,
             baseCategoryFullPath: sourcePath.fullPath,
             categoryDepth1Name: sourcePath.depth1,
             categoryDepth2Name: sourcePath.depth2,
@@ -431,12 +443,22 @@ struct UniqloProductMetadataParser {
             normalPrice: priceInfo.normalPrice,
             salePrice: priceInfo.salePrice,
             finalPrice: priceInfo.finalPrice,
+            currencyCode: (priceInfo.finalPrice ?? priceInfo.salePrice ?? priceInfo.normalPrice) == nil ? nil : "KRW",
             isSale: priceInfo.normalPrice.map { normal in
                 guard let current = priceInfo.finalPrice ?? priceInfo.salePrice else { return false }
                 return normal > current
             } ?? false,
             isOutOfStock: priceInfo.stockStatus == .outOfStock,
-            stockStatusRawValue: priceInfo.stockStatus.rawValue
+            stockStatusRawValue: priceInfo.stockStatus.rawValue,
+            checkedColorName: resolved.imageColorCode,
+            checkedSizeName: queryValue("sizeDisplayCode", in: resolved.originalURL) ?? queryValue("sizeDisplayCode", in: resolved.resolvedURL)
+        )
+
+        logSourceCategory(
+            rawSourceCategory: rawSourceCategory,
+            gender: UserGender.productTarget(from: metadata.genderCodes),
+            sourcePath: sourcePath,
+            prefix: "[UniqloProductMetadataParser]"
         )
 
         return UniqloProductMetadata(
@@ -621,6 +643,16 @@ struct UniqloProductMetadataParser {
         }
 
         return sourceCategoryPath(from: breadcrumb)
+    }
+
+    private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, prefix: String) {
+        print("\(prefix) raw source category: \(rawSourceCategory)")
+        print("\(prefix) parsed gender: \(gender.rawValue)")
+        print("\(prefix) sourceCategoryDepth1: \(sourcePath.depth1 ?? "nil")")
+        print("\(prefix) sourceCategoryDepth2: \(sourcePath.depth2 ?? "nil")")
+        print("\(prefix) sourceCategoryDepth3: \(sourcePath.depth3 ?? "nil")")
+        print("\(prefix) sourceCategoryDepth4: \(sourcePath.depth4 ?? "nil")")
+        print("\(prefix) sourceCategoryPath: \(sourcePath.fullPath ?? "nil")")
     }
 
     private func splitCategoryPath(_ path: String?) -> [String] {

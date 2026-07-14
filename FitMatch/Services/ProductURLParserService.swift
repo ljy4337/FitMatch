@@ -14,6 +14,12 @@ struct ParsedProductInfo {
     var imageURLString: String? = nil
     var price: Int? = nil
     var canonicalURLString: String? = nil
+    var sourceCategoryPath: String? = nil
+    var sourceCategoryDepth1: String? = nil
+    var sourceCategoryDepth2: String? = nil
+    var sourceCategoryDepth3: String? = nil
+    var sourceCategoryDepth4: String? = nil
+    var productTargetGender: UserGender = .unknown
     var productMetadata: ProductMetadata = ProductMetadata()
 }
 
@@ -230,7 +236,7 @@ struct ProductURLParserService {
 
         if isMusinsaURL {
             do {
-                return (try await musinsaParser.parse(from: url)).normalizedSizes()
+                return logParsedProductInfo((try await musinsaParser.parse(from: url)).normalizedSizes())
             } catch let partialError as ProductURLParserPartialError {
                 print("[ProductURLParserService] Musinsa parser partially loaded product info: \(partialError.localizedDescription)")
                 throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
@@ -247,7 +253,7 @@ struct ProductURLParserService {
 
         if isUniqloURL {
             do {
-                return (try await uniqloParser.parse(from: url)).normalizedSizes()
+                return logParsedProductInfo((try await uniqloParser.parse(from: url)).normalizedSizes())
             } catch let partialError as ProductURLParserPartialError {
                 print("[ProductURLParserService] Uniqlo parser partially loaded product info: \(partialError.localizedDescription)")
                 throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
@@ -262,7 +268,18 @@ struct ProductURLParserService {
             }
         }
 
-        return (try await genericParser.parse(from: url)).normalizedSizes()
+        return logParsedProductInfo((try await genericParser.parse(from: url)).normalizedSizes())
+    }
+
+    private func logParsedProductInfo(_ productInfo: ParsedProductInfo) -> ParsedProductInfo {
+        print("[ProductURLParserService] ParsedProductInfo raw source category: \(productInfo.sourceCategoryPath ?? "nil")")
+        print("[ProductURLParserService] ParsedProductInfo parsed gender: \(productInfo.productTargetGender.rawValue)")
+        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth1: \(productInfo.sourceCategoryDepth1 ?? "nil")")
+        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth2: \(productInfo.sourceCategoryDepth2 ?? "nil")")
+        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth3: \(productInfo.sourceCategoryDepth3 ?? "nil")")
+        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth4: \(productInfo.sourceCategoryDepth4 ?? "nil")")
+        print("[ProductURLParserService] ParsedProductInfo sourceCategoryPath: \(productInfo.sourceCategoryPath ?? "nil")")
+        return productInfo
     }
 
     private func normalizedURL(from rawValue: String) -> URL? {

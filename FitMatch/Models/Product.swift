@@ -22,6 +22,11 @@ final class Product {
     var brandEnglishName: String?
     var brandLogoImageURLString: String?
     var brandNationName: String?
+    var sourceCategoryPath: String?
+    var sourceCategoryDepth1: String?
+    var sourceCategoryDepth2: String?
+    var sourceCategoryDepth3: String?
+    var sourceCategoryDepth4: String?
     var baseCategoryFullPath: String?
     var categoryDepth1Code: String?
     var categoryDepth1Name: String?
@@ -38,6 +43,7 @@ final class Product {
     var normalPrice: Int?
     var salePrice: Int?
     var finalPrice: Int?
+    var currencyCode: String?
     var discountRate: Double?
     var isSale: Bool = false
     var isOutOfStock: Bool = false
@@ -49,6 +55,8 @@ final class Product {
     var reviewSatisfactionScore: Double?
     var seasonYear: String?
     var season: String?
+    var checkedColorName: String?
+    var checkedSizeName: String?
     var sourceTypeRawValue: String = ProductSourceType.manual.rawValue
     var sourceName: String = "직접 입력"
     var sourceRawValue: String
@@ -91,6 +99,11 @@ final class Product {
         self.brandEnglishName = metadata.brandEnglishName
         self.brandLogoImageURLString = metadata.brandLogoImageURLString
         self.brandNationName = metadata.brandNationName
+        self.sourceCategoryPath = metadata.sourceCategoryPath ?? metadata.baseCategoryFullPath
+        self.sourceCategoryDepth1 = metadata.sourceCategoryDepth1 ?? metadata.categoryDepth1Name
+        self.sourceCategoryDepth2 = metadata.sourceCategoryDepth2 ?? metadata.categoryDepth2Name
+        self.sourceCategoryDepth3 = metadata.sourceCategoryDepth3 ?? metadata.categoryDepth3Name
+        self.sourceCategoryDepth4 = metadata.sourceCategoryDepth4 ?? metadata.categoryDepth4Name
         self.baseCategoryFullPath = metadata.baseCategoryFullPath
         self.categoryDepth1Code = metadata.categoryDepth1Code
         self.categoryDepth1Name = metadata.categoryDepth1Name
@@ -107,6 +120,7 @@ final class Product {
         self.normalPrice = metadata.normalPrice
         self.salePrice = metadata.salePrice
         self.finalPrice = metadata.finalPrice
+        self.currencyCode = metadata.currencyCode
         self.discountRate = metadata.discountRate
         self.isSale = metadata.isSale
         self.isOutOfStock = metadata.isOutOfStock
@@ -118,6 +132,8 @@ final class Product {
         self.reviewSatisfactionScore = metadata.reviewSatisfactionScore
         self.seasonYear = metadata.seasonYear
         self.season = metadata.season
+        self.checkedColorName = metadata.checkedColorName
+        self.checkedSizeName = metadata.checkedSizeName
         self.sourceTypeRawValue = sourceType.rawValue
         self.sourceName = sourceName
         self.sourceRawValue = source.rawValue
@@ -147,16 +163,23 @@ final class Product {
     }
 
     var sourceCategoryNameForMatching: String {
-        let value = categoryDepth1Name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let value = (sourceCategoryDepth1 ?? categoryDepth1Name)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return value.isEmpty ? category.rawValue : value
     }
 
     var sourceDetailCategoryNameForDisplay: String {
-        let value = categoryDepth2Name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let value = (sourceCategoryDepth2 ?? categoryDepth2Name)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return value.isEmpty ? "" : value
     }
 
     var sourceCategoryDisplayText: String {
+        if let sourceCategoryPath,
+           !sourceCategoryPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return sourceCategoryPath
+        }
+
         if let baseCategoryFullPath,
            !baseCategoryFullPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return baseCategoryFullPath
@@ -165,6 +188,12 @@ final class Product {
         let categoryName = sourceCategoryNameForMatching
         let detailName = sourceDetailCategoryNameForDisplay
         return detailName.isEmpty ? categoryName : "\(categoryName) / \(detailName)"
+    }
+
+    var productTargetGender: UserGender {
+        UserGender.productTarget(from: genderCodes
+            .split(separator: ",")
+            .map(String.init))
     }
 
     var stockStatus: ProductStockStatus {
