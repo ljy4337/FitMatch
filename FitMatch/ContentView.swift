@@ -1074,6 +1074,9 @@ private struct MainTabView: View {
                     onOpenHistory: {
                         selectedTab = .history
                     },
+                    onOpenCloset: {
+                        selectedTab = .my
+                    },
                     onRecompare: onRecompare,
                     onLogout: onLogout
                 )
@@ -1224,7 +1227,7 @@ private struct NewTaskSheet: View {
                 NewTaskLargeButton(title: "상품 비교", systemImage: "sparkles") {
                     onCompare()
                 }
-                NewTaskLargeButton(title: "내 옷 추가", systemImage: "tshirt") {
+                NewTaskLargeButton(title: "내 옷장에 추가", systemImage: "tshirt") {
                     onAddCloset()
                 }
             }

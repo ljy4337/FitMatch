@@ -457,7 +457,7 @@ private struct AddClosetTextField: View {
     }
 }
 
-private struct AddClosetSelectionMenu<Option: Hashable>: View {
+struct AddClosetSelectionMenu<Option: Hashable>: View {
     let title: String
     let value: String
     let options: [Option]

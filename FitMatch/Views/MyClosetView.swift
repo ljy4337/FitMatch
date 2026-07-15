@@ -683,7 +683,7 @@ private struct EmptyClosetView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                EmptyStateActionButton(title: "추가하기", action: onAdd)
+                EmptyStateActionButton(title: "내 옷장에 추가", action: onAdd)
                     .padding(.top, 2)
             }
             .offset(y: -24)
@@ -716,9 +716,12 @@ private struct ClosetItemCard: View {
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(.primary)
 
-                        Text("출처: \(item.sourceName)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        if let sourceClassificationText {
+                            Text(sourceClassificationText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
 
                         Text("\(item.gender.rawValue) / \(item.category.rawValue) / \(item.detailCategory.rawValue) / \(item.sizeName)")
                             .font(.subheadline)
@@ -759,6 +762,24 @@ private struct ClosetItemCard: View {
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var sourceClassificationText: String? {
+        guard item.sourceType != .manual else { return nil }
+
+        let sourceName = item.sourceName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let platformName = sourceName.isEmpty || sourceName == item.sourceType.displayName
+            ? item.brandName.trimmingCharacters(in: .whitespacesAndNewlines)
+            : sourceName
+        guard !platformName.isEmpty else { return nil }
+
+        let sourceCategoryPath = (item.sourceCategoryPath ?? item.sourceProduct?.sourceCategoryPath)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let sourceCategoryPath, !sourceCategoryPath.isEmpty else {
+            return platformName
+        }
+
+        return "\(platformName) (\(sourceCategoryPath))"
     }
 }
 

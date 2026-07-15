@@ -7,6 +7,8 @@ struct FitMatchCandidate: Identifiable {
 }
 
 struct RecommendationService {
+    private let comparisonMatcher = ComparisonProfileMatcher()
+
     func recommend(
         product: Product,
         userFits: [UserFit],
@@ -37,7 +39,13 @@ struct RecommendationService {
         selectedReferenceItem: UserFit,
         productDetailCategory: ClosetDetailCategory
     ) -> RecommendationHistory? {
-        let fallbackReason = "\(productDetailCategory.rawValue) 기준 옷이 없어 선택한 옷으로 임시 비교했습니다."
+        let mismatch = comparisonMatcher.manualMismatch(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            selectedItem: selectedReferenceItem
+        )
+        let fallbackReason = mismatch.note
+            ?? "\(productDetailCategory.rawValue) 기준 옷이 없어 선택한 옷으로 임시 비교했습니다."
         return bestRecommendation(
             product: product,
             userFits: [selectedReferenceItem],
@@ -45,9 +53,34 @@ struct RecommendationService {
             basis: RecommendationBasis(
                 userFits: [selectedReferenceItem],
                 methodText: "사용자 선택 임시 비교",
-                scorePenalty: 12,
-                fallbackReason: fallbackReason
+                scorePenalty: mismatch.note == nil ? 12 : 20,
+                fallbackReason: fallbackReason,
+                excludedMeasurementKinds: mismatch.excludedKinds
             )
+        )
+    }
+
+    func automaticMatchResult(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        userFits: [UserFit]
+    ) -> AutomaticComparisonMatchResult {
+        comparisonMatcher.match(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        )
+    }
+
+    func manualCandidateNote(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        item: UserFit
+    ) -> String? {
+        comparisonMatcher.candidateNote(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            item: item
         )
     }
 
@@ -70,22 +103,11 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> [UserFit] {
-        let sameGroupFits = userFits.filter { isSameServiceGroup($0, product: product) }
-        let sameDetail = sameGroupFits.filter { $0.detailCategory == productDetailCategory }
-        if !sameDetail.isEmpty {
-            return sameDetail.sorted { lhs, rhs in
-                rankedCandidateScore(lhs, product: product, productDetailCategory: productDetailCategory) >
-                    rankedCandidateScore(rhs, product: product, productDetailCategory: productDetailCategory)
-            }
-        }
-
-        return rankedFitMatches(
+        comparisonMatcher.manualCandidates(
             product: product,
             productDetailCategory: productDetailCategory,
-            userFits: sameGroupFits
+            userFits: userFits
         )
-        .prefix(3)
-        .map(\.userFit)
     }
 
     func rankedFitMatches(
@@ -157,8 +179,11 @@ struct RecommendationService {
                     productMeasurements: size.measurements,
                     referenceMeasurements: userFit.measurements,
                     productCategory: product.category,
-                    productDetailCategory: productDetailCategory
+                    productDetailCategory: productDetailCategory,
+                    excludedKinds: basis.excludedMeasurementKinds
                 )
+
+                let adjustedScore = max(0, fitConfidence.score - basis.scorePenalty)
 
                 let history = RecommendationHistory(
                     product: product,
@@ -166,7 +191,7 @@ struct RecommendationService {
                     userFit: userFit,
                     totalDifference: fitConfidence.averageDifference,
                     measurementDifferences: signedDifferences,
-                    recommendationScore: fitConfidence.score,
+                    recommendationScore: adjustedScore,
                     trueToSizeRecommendation: "\(userFit.fitPreference.rawValue)으로 입으려면 \(size.name) 추천",
                     oversizedRecommendation: oversizedSuggestion(for: size, in: product.sizes),
                     comparisonMethod: basis.methodText,
@@ -181,10 +206,10 @@ struct RecommendationService {
                     result: fitConfidence
                 )
 
-                if fitConfidence.score > bestFitConfidence ||
-                    (fitConfidence.score == bestFitConfidence && fitConfidence.averageDifference < bestAverageDifference) {
+                if adjustedScore > bestFitConfidence ||
+                    (adjustedScore == bestFitConfidence && fitConfidence.averageDifference < bestAverageDifference) {
                     bestHistory = history
-                    bestFitConfidence = fitConfidence.score
+                    bestFitConfidence = adjustedScore
                     bestAverageDifference = fitConfidence.averageDifference
                 }
             }
@@ -214,24 +239,15 @@ struct RecommendationService {
         userFits: [UserFit],
         allowsGlobalFallback: Bool
     ) -> RecommendationBasis {
-        let sameDetailFits = userFits.filter {
-            matchesInternalCategory($0, product: product, productDetailCategory: productDetailCategory)
-                && hasComparableMeasurements($0, product: product, productDetailCategory: productDetailCategory)
-        }
-        let representativeFits = sameDetailFits.filter(\.isRepresentative)
-
-        if !representativeFits.isEmpty {
+        let result = comparisonMatcher.match(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        )
+        if !result.compatibleCandidates.isEmpty {
             return RecommendationBasis(
-                userFits: representativeFits,
-                methodText: "같은 세부 카테고리 기준 옷 비교",
-                scorePenalty: 0
-            )
-        }
-
-        if !sameDetailFits.isEmpty {
-            return RecommendationBasis(
-                userFits: sameDetailFits,
-                methodText: "같은 세부 카테고리 옷 비교",
+                userFits: result.compatibleCandidates,
+                methodText: "비교 프로필 호환 옷 비교",
                 scorePenalty: 0
             )
         }
@@ -244,10 +260,11 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        userFits.contains {
-            matchesInternalCategory($0, product: product, productDetailCategory: productDetailCategory)
-                && hasComparableMeasurements($0, product: product, productDetailCategory: productDetailCategory)
-        }
+        !comparisonMatcher.match(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        ).compatibleCandidates.isEmpty
     }
 
     private func rankedCandidateScore(
@@ -295,12 +312,17 @@ struct RecommendationService {
         productMeasurements: GarmentMeasurements,
         referenceMeasurements: GarmentMeasurements,
         productCategory: ClothingCategory,
-        productDetailCategory: ClosetDetailCategory
+        productDetailCategory: ClosetDetailCategory,
+        excludedKinds: [MeasurementKind] = []
     ) -> FitConfidenceResult {
         var comparedItems: [FitConfidenceItem] = []
         var ignoredKinds: [MeasurementKind] = []
 
         for kind in v1MeasurementKinds(productCategory: productCategory, productDetailCategory: productDetailCategory) {
+            guard !excludedKinds.contains(kind) else {
+                ignoredKinds.append(kind)
+                continue
+            }
             let productValue = productMeasurements.value(for: kind)
             let referenceValue = referenceMeasurements.value(for: kind)
             guard productValue > 0, referenceValue > 0 else {
@@ -547,6 +569,7 @@ private struct RecommendationBasis {
     let methodText: String
     let scorePenalty: Int
     var fallbackReason: String = ""
+    var excludedMeasurementKinds: [MeasurementKind] = []
 }
 
 private struct FitConfidenceItem {

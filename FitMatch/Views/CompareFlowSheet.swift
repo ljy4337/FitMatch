@@ -140,7 +140,7 @@ private extension CompareFlowSheet {
                     .font(.title2.weight(.black))
                     .multilineTextAlignment(.center)
 
-                Text("쇼핑몰 분류: \(currentSourceCategoryText)\n내 옷장에 같은 분류로 등록된 옷이 아직 없습니다. 비슷한 옷을 선택해 비교할 수 있어요.")
+                Text(missingCompatibleGarmentMessage)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -148,14 +148,14 @@ private extension CompareFlowSheet {
             }
 
             VStack(spacing: 11) {
-                PrimaryButton(title: "비슷한 옷 선택하기", systemImage: "list.bullet.rectangle") {
+                PrimaryButton(title: "다른 옷과 비교하기", systemImage: "list.bullet.rectangle") {
                     setStep(.closetSelection)
                 }
                 .disabled(allSimilarClosetCandidates.isEmpty)
                 .opacity(allSimilarClosetCandidates.isEmpty ? 0.45 : 1)
 
-                SecondaryButton(title: "비교 취소", systemImage: "xmark") {
-                    dismiss()
+                SecondaryButton(title: "내 옷장에 추가", systemImage: "plus") {
+                    presentProductRegistration(context: .missingReference)
                 }
             }
         }
@@ -265,9 +265,8 @@ private extension CompareFlowSheet {
                     }
                 }
             } else {
-                closetCandidateSection(title: "원본 카테고리 기반 추천 분류", items: recommendedSimilarCandidates)
+                closetCandidateSection(title: "같은 종류 우선", items: recommendedSimilarCandidates)
                 closetCandidateSection(title: "같은 대분류", items: sameMainCategoryCandidates)
-                closetCandidateSection(title: "전체 옷장", items: remainingClosetCandidates)
             }
         }
     }
@@ -282,7 +281,16 @@ private extension CompareFlowSheet {
                         selectedReferenceItemID = item.id
                         setStep(.confirmReference)
                     } label: {
-                        ClosetReferenceChoiceCard(item: item, targetDetailCategory: viewModel.detailCategory)
+                        ClosetReferenceChoiceCard(
+                            item: item,
+                            compatibilityNote: currentProduct.flatMap {
+                                RecommendationService().manualCandidateNote(
+                                    product: $0,
+                                    productDetailCategory: viewModel.detailCategory,
+                                    item: item
+                                )
+                            }
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -553,20 +561,13 @@ private extension CompareFlowSheet {
         makeProduct(insertBrandIfNeeded: false)
     }
 
-    var sameDetailItems: [UserFit] {
-        guard let product = currentProduct else { return [] }
-        return userFits
-            .filter { item in
-                item.category == product.category
-                    && item.detailCategory == viewModel.detailCategory
-                    && hasComparableMeasurements(item)
-            }
-            .sorted {
-                if $0.isRepresentative != $1.isRepresentative {
-                    return $0.isRepresentative
-                }
-                return $0.updatedAt > $1.updatedAt
-            }
+    var automaticMatchResult: AutomaticComparisonMatchResult? {
+        guard let product = currentProduct else { return nil }
+        return RecommendationService().automaticMatchResult(
+            product: product,
+            productDetailCategory: viewModel.detailCategory,
+            userFits: userFits
+        )
     }
 
     var comparisonCategoryOptions: [ClothingCategory] {
@@ -628,23 +629,25 @@ private extension CompareFlowSheet {
     }
 
     var allSimilarClosetCandidates: [UserFit] {
-        sortedClosetCandidates(userFits.filter(hasComparableMeasurements))
+        guard let product = currentProduct else { return [] }
+        return RecommendationService().temporaryComparisonCandidates(
+            product: product,
+            productDetailCategory: viewModel.detailCategory,
+            userFits: userFits.filter(hasComparableMeasurements)
+        )
     }
 
     var recommendedSimilarCandidates: [UserFit] {
-        allSimilarClosetCandidates.filter {
-            $0.category == viewModel.category && $0.detailCategory == viewModel.detailCategory
-        }
+        guard let product = currentProduct else { return [] }
+        let matcher = ComparisonProfileMatcher()
+        let incomingFamily = matcher.profile(for: product, detailCategory: viewModel.detailCategory).garmentFamily
+        return allSimilarClosetCandidates.filter { matcher.profile(for: $0).garmentFamily == incomingFamily }
     }
 
     var sameMainCategoryCandidates: [UserFit] {
-        allSimilarClosetCandidates.filter {
-            $0.category == viewModel.category && $0.detailCategory != viewModel.detailCategory
+        allSimilarClosetCandidates.filter { item in
+            !recommendedSimilarCandidates.contains { $0.id == item.id }
         }
-    }
-
-    var remainingClosetCandidates: [UserFit] {
-        allSimilarClosetCandidates.filter { $0.category != viewModel.category }
     }
 
     func sortedClosetCandidates(_ items: [UserFit]) -> [UserFit] {
@@ -673,6 +676,16 @@ private extension CompareFlowSheet {
         case .accessory: return "watch.analog"
         case .other: return "tshirt"
         }
+    }
+
+    var missingCompatibleGarmentMessage: String {
+        guard let result = automaticMatchResult,
+              result.state == .sameFamilyLengthConflict,
+              result.incomingProfile.lengthType != .unknown,
+              result.incomingProfile.garmentFamily != .unknown else {
+            return "쇼핑몰 분류: \(currentSourceCategoryText)\n자동으로 호환되는 옷을 확인할 수 없습니다. 다른 옷을 직접 선택해 비교해 주세요."
+        }
+        return "내 옷장에 비교 가능한 \(result.incomingProfile.lengthType.displayName) \(result.incomingProfile.garmentFamily.displayName)이 없습니다."
     }
 
 }
@@ -713,7 +726,7 @@ private extension CompareFlowSheet {
         print("[CompareFlowSheet] productName: \(product.name)")
         print("[CompareFlowSheet] category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] detailCategory: \(viewModel.detailCategory.rawValue)")
-        print("[CompareFlowSheet] sameDetailItemCount before user confirmation: \(sameDetailItems.count)")
+        print("[CompareFlowSheet] automaticMatchState before user confirmation: \(String(describing: automaticMatchResult?.state))")
 
         let historyMatches = SourceCategoryHistoryMatcher.matches(for: product, userFits: userFits)
         print("[CompareFlowSheet] source category history match count: \(historyMatches.count)")
@@ -758,9 +771,9 @@ private extension CompareFlowSheet {
         )
         print("[CompareFlowSheet] confirmed category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] confirmed detailCategory: \(viewModel.detailCategory.rawValue)")
-        print("[CompareFlowSheet] sameDetailItemCount after user confirmation: \(sameDetailItems.count)")
+        print("[CompareFlowSheet] automaticMatchState after user confirmation: \(String(describing: automaticMatchResult?.state))")
 
-        if sameDetailItems.isEmpty {
+        if automaticMatchResult?.compatibleCandidates.isEmpty != false {
             logMissingReferenceDiagnostics(product: product)
             setStep(.missingReference)
             return
@@ -789,7 +802,7 @@ private extension CompareFlowSheet {
 
         guard let history = RecommendationService().recommend(
             product: product,
-            userFits: sameDetailItems,
+            userFits: userFits,
             productDetailCategory: viewModel.detailCategory,
             allowsGlobalFallback: false
         ) else {
@@ -1215,7 +1228,7 @@ private struct CompareSelectionMenu<Content: View>: View {
 
 private struct ClosetReferenceChoiceCard: View {
     let item: UserFit
-    let targetDetailCategory: ClosetDetailCategory
+    let compatibilityNote: String?
 
     var body: some View {
         FitMatchCard {
@@ -1251,8 +1264,8 @@ private struct ClosetReferenceChoiceCard: View {
                                 .background(.primary.opacity(0.08), in: Capsule())
                         }
 
-                        if item.detailCategory == targetDetailCategory {
-                            Text("같은 상세")
+                        if let compatibilityNote {
+                            Text(compatibilityNote)
                                 .font(.caption2.weight(.bold))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 5)

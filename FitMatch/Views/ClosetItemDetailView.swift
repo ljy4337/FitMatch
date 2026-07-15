@@ -9,6 +9,7 @@ struct ClosetItemDetailView: View {
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var isShowingEdit = false
     @State private var saveErrorMessage: String?
+    @State private var pendingReferenceChange: PendingClosetEdit?
 
     let item: UserFit
 
@@ -46,8 +47,12 @@ struct ClosetItemDetailView: View {
                         onDelete: {
                             deleteItemAndDismiss()
                         }
-                    ) { selectedSize in
-                        applyImportedSizeChange(selectedSize)
+                    ) { selectedSize, category, detailCategory in
+                        saveImportedChanges(
+                            selectedSize,
+                            category: category,
+                            detailCategory: detailCategory
+                        )
                     }
                 } else {
                     AddClosetItemView(
@@ -71,6 +76,22 @@ struct ClosetItemDetailView: View {
             }
         } message: {
             Text(saveErrorMessage ?? "")
+        }
+        .alert(
+            "\(pendingReferenceChange?.detailCategory.rawValue ?? "이 분류") 기준 옷을 변경할까요?",
+            isPresented: Binding(
+                get: { pendingReferenceChange != nil },
+                set: { if !$0 { pendingReferenceChange = nil } }
+            )
+        ) {
+            Button("취소", role: .cancel) {
+                pendingReferenceChange = nil
+            }
+            Button("변경") {
+                applyPendingReferenceChange()
+            }
+        } message: {
+            Text("같은 분류의 기존 기준 옷은 자동으로 해제됩니다.")
         }
         .onAppear {
             tabBarVisibilityController.hide(reason: .navigationDetail, source: "closet detail")
@@ -205,6 +226,24 @@ struct ClosetItemDetailView: View {
     }
 
     private func applyChanges(from editedItem: UserFit) {
+        if editedItem.isRepresentative,
+           hasAnotherReference(
+                category: editedItem.category,
+                detailCategory: editedItem.detailCategory
+           ) {
+            pendingReferenceChange = PendingClosetEdit(
+                editedItem: editedItem,
+                selectedSize: nil,
+                category: editedItem.category,
+                detailCategory: editedItem.detailCategory
+            )
+            return
+        }
+
+        applyChangesImmediately(from: editedItem)
+    }
+
+    private func applyChangesImmediately(from editedItem: UserFit) {
         item.sourceType = editedItem.sourceType
         item.sourceName = editedItem.sourceName
         item.brandName = editedItem.brandName
@@ -239,7 +278,32 @@ struct ClosetItemDetailView: View {
         }
     }
 
-    private func applyImportedSizeChange(_ selectedSize: ProductSize) {
+    private func saveImportedChanges(
+        _ selectedSize: ProductSize,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory
+    ) {
+        if item.isRepresentative,
+           hasAnotherReference(category: category, detailCategory: detailCategory) {
+            pendingReferenceChange = PendingClosetEdit(
+                editedItem: nil,
+                selectedSize: selectedSize,
+                category: category,
+                detailCategory: detailCategory
+            )
+            return
+        }
+
+        applyImportedChanges(selectedSize, category: category, detailCategory: detailCategory)
+    }
+
+    private func applyImportedChanges(
+        _ selectedSize: ProductSize,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory
+    ) {
+        item.category = category
+        item.detailCategory = detailCategory
         item.sizeName = selectedSize.name.fitMatchDisplaySizeName
         item.measurements = selectedSize.measurements
         item.sourceProductSize = selectedSize
@@ -249,6 +313,45 @@ struct ClosetItemDetailView: View {
         } catch {
             saveErrorMessage = "수정 내용을 저장하지 못했습니다."
         }
+    }
+
+    private func hasAnotherReference(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory
+    ) -> Bool {
+        userFits.contains {
+            $0.id != item.id
+                && $0.category == category
+                && $0.detailCategory == detailCategory
+                && $0.isRepresentative
+        }
+    }
+
+    private func applyPendingReferenceChange() {
+        guard let pendingReferenceChange else { return }
+
+        userFits
+            .filter {
+                $0.id != item.id
+                    && $0.category == pendingReferenceChange.category
+                    && $0.detailCategory == pendingReferenceChange.detailCategory
+                    && $0.isRepresentative
+            }
+            .forEach {
+                $0.isRepresentative = false
+                $0.updatedAt = Date()
+            }
+
+        if let editedItem = pendingReferenceChange.editedItem {
+            applyChangesImmediately(from: editedItem)
+        } else if let selectedSize = pendingReferenceChange.selectedSize {
+            applyImportedChanges(
+                selectedSize,
+                category: pendingReferenceChange.category,
+                detailCategory: pendingReferenceChange.detailCategory
+            )
+        }
+        self.pendingReferenceChange = nil
     }
 
     private func deleteItemAndDismiss() {
@@ -366,12 +469,18 @@ private struct ImportedClosetItemEditView: View {
     @Environment(\.dismiss) private var dismiss
     let item: UserFit
     let onDelete: () -> Void
-    let onSave: (ProductSize) -> Void
+    let onSave: (ProductSize, ClothingCategory, ClosetDetailCategory) -> Void
 
     @State private var selectedSizeID: UUID?
+    @State private var selectedCategory: ClothingCategory
+    @State private var selectedDetailCategory: ClosetDetailCategory
     @State private var isShowingDeleteAlert = false
 
-    init(item: UserFit, onDelete: @escaping () -> Void, onSave: @escaping (ProductSize) -> Void) {
+    init(
+        item: UserFit,
+        onDelete: @escaping () -> Void,
+        onSave: @escaping (ProductSize, ClothingCategory, ClosetDetailCategory) -> Void
+    ) {
         self.item = item
         self.onDelete = onDelete
         self.onSave = onSave
@@ -380,6 +489,8 @@ private struct ImportedClosetItemEditView: View {
             ?? sizes.first { $0.name.fitMatchDisplaySizeName == item.sizeName }?.id
             ?? (sizes.count == 1 ? sizes.first?.id : nil)
         _selectedSizeID = State(initialValue: initialID)
+        _selectedCategory = State(initialValue: item.category)
+        _selectedDetailCategory = State(initialValue: item.detailCategory)
     }
 
     var body: some View {
@@ -387,6 +498,7 @@ private struct ImportedClosetItemEditView: View {
             VStack(alignment: .leading, spacing: 18) {
                 headerCard
                 productInfoCard
+                categorySelectionCard
                 sizeSelectionCard
                 measurementSummaryCard
                 deleteButton
@@ -397,6 +509,9 @@ private struct ImportedClosetItemEditView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("내 옷 정보 수정")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            normalizeCategorySelection()
+        }
         .safeAreaInset(edge: .bottom) {
             bottomSaveBar
         }
@@ -408,6 +523,33 @@ private struct ImportedClosetItemEditView: View {
             }
         } message: {
             Text("삭제한 옷 정보는 복구할 수 없습니다.")
+        }
+    }
+
+    private var categorySelectionCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(
+                    title: "내 옷장 분류",
+                    subtitle: "추천 비교에 사용할 카테고리입니다."
+                )
+                AddClosetSelectionMenu(
+                    title: "대분류",
+                    value: selectedCategory.rawValue,
+                    options: availableCategories,
+                    optionTitle: \.rawValue,
+                    selection: $selectedCategory
+                ) { _ in
+                    normalizeDetailCategory()
+                }
+                AddClosetSelectionMenu(
+                    title: "세부 카테고리",
+                    value: selectedDetailCategory.rawValue,
+                    options: availableDetailCategories,
+                    optionTitle: \.rawValue,
+                    selection: $selectedDetailCategory
+                )
+            }
         }
     }
 
@@ -514,7 +656,7 @@ private struct ImportedClosetItemEditView: View {
 
             Button {
                 guard let selectedSize else { return }
-                onSave(selectedSize)
+                onSave(selectedSize, selectedCategory, selectedDetailCategory)
                 dismiss()
             } label: {
                 Text("수정 저장")
@@ -538,6 +680,28 @@ private struct ImportedClosetItemEditView: View {
 
     private var availableSizes: [ProductSize] {
         Self.availableSizes(for: item)
+    }
+
+    private var availableCategories: [ClothingCategory] {
+        ClothingCategory.closetCategories(for: item.gender).filter { $0 != .other }
+    }
+
+    private var availableDetailCategories: [ClosetDetailCategory] {
+        ClosetDetailCategory.options(for: selectedCategory, gender: item.gender)
+            .filter { $0 != .other }
+    }
+
+    private func normalizeDetailCategory() {
+        if !availableDetailCategories.contains(selectedDetailCategory) {
+            selectedDetailCategory = availableDetailCategories.first ?? .other
+        }
+    }
+
+    private func normalizeCategorySelection() {
+        if !availableCategories.contains(selectedCategory) {
+            selectedCategory = availableCategories.first ?? .top
+        }
+        normalizeDetailCategory()
     }
 
     private static func availableSizes(for item: UserFit) -> [ProductSize] {
@@ -572,6 +736,13 @@ private struct ImportedClosetItemEditView: View {
     private func measurementText(_ value: Double) -> String {
         value > 0 ? value.cmText : "-"
     }
+}
+
+private struct PendingClosetEdit {
+    let editedItem: UserFit?
+    let selectedSize: ProductSize?
+    let category: ClothingCategory
+    let detailCategory: ClosetDetailCategory
 }
 
 private struct MeasurementValueTile: View {

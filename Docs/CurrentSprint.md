@@ -1,6 +1,6 @@
 # Current Sprint
 
-Updated: 2026-07-14
+Updated: 2026-07-15
 
 ## Branch
 Uniqlo
@@ -37,14 +37,26 @@ Uniqlo
 - Removed category/detail pickers from the similar-garment flow.
 - Similar garments now show only existing `UserFit` items, grouped by inferred exact classification, same main category, and remaining closet items.
 - Selected similar garments continue through the existing temporary reference comparison path.
+- Rebuilt Home as a personal dashboard with a wordmark-only header, conditional clipboard and latest-comparison cards, reference-garment readiness, and a reusable guide card.
+- Home reference-garment actions now open My Closet, while clipboard comparison and result-detail navigation reuse the existing flows.
+- Closet editing now supports changing internal category and detail category for both manual and URL-imported garments.
+- URL-imported garment edits keep parsed product fields and source measurements read-only while saving user-selected closet classification.
+- Moving a reference garment into a classification with an existing reference now requires confirmation before replacing it.
+- My Closet list cards now show the source platform with the parsed original category path, without the old `출처:` label or internal-category fallback.
+- Added a shared comparison-profile matcher derived from source category depth/path, product name, internal detail category, and valid measurements.
+- Automatic comparison now requires matching major category, known garment family, known compatible length type, and at least two common core measurements.
+- Reference garments now rank first only among compatible candidates; brand, shopping mall, and prior manual selections do not influence automatic compatibility.
+- Same-family length conflicts and unknown profiles now require manual selection, limited to the same major category with same-family items first.
+- Manual sleeve/pants-length mismatches exclude the incompatible measurement, lower confidence, and add a concise result explanation.
+- Added focused matcher tests for sleeve/pants conflicts, compatible long sleeves, unknown length, selection isolation, and manual exclusion.
+- Standardized all confirmed Closet-add action buttons to `내 옷장에 추가` while preserving navigation, save behavior, and distinct method-selection labels.
 
 ## Current Task
-- Scroll chrome crash/reentry verification
-- Compare Default
-- Clipboard Refresh
+- Closet-add button label verification
 
 ## Remaining Bugs
 - Manual verification of scroll jitter/crash fix
+- Comparison-profile tests are compiled but simulator execution is blocked while the test runner waits for simulator workers to materialize.
 - Discount UI
 
 ## Rules
@@ -70,6 +82,11 @@ Uniqlo
 - `5fdff00` was verified as the direct ancestor of current local/remote `Uniqlo` HEAD `8302869` before applying the max-offset stabilization patch.
 - Max-offset stabilization passed `xcodebuild` and `git diff --check`.
 - Immediate-height `CollapsibleTopChrome` change passed `xcodebuild` and `git diff --check`.
+- Home dashboard composition passed the iOS Simulator Debug build and `git diff --check`.
+- Closet category editing passed the iOS Simulator Debug build and `git diff --check`.
+- My Closet source-category card layout passed the iOS Simulator Debug build and `git diff --check`.
+- Comparison-profile matcher app build passed for the generic iOS Simulator destination; focused test bundle compiled successfully.
+- Closet-add button label standardization passed the generic iOS Simulator build and `git diff --check`.
 
 ## Next Task
 Manually verify slow scroll, flick/inertia, top/bottom bounce, rapid direction changes, list/grid switches, and repeated tab changes without freezes or crashes. Then verify source category auto-mapping reuse.
