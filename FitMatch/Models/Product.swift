@@ -13,6 +13,8 @@ final class Product {
     var id: UUID
     var name: String
     var categoryRawValue: String
+    var categoryCode: String?
+    var normalizedProductTypeCode: String?
     var productCode: String?
     var sourceURLString: String?
     var imageURLString: String?
@@ -59,6 +61,7 @@ final class Product {
     var checkedSizeName: String?
     var sourceTypeRawValue: String = ProductSourceType.manual.rawValue
     var sourceName: String = "직접 입력"
+    var sourcePlatformCode: String?
     var sourceRawValue: String
     var notes: String
     var createdAt: Date
@@ -90,6 +93,7 @@ final class Product {
         self.name = name
         self.brand = brand
         self.categoryRawValue = category.rawValue
+        self.categoryCode = category.taxonomyCode
         self.productCode = productCode
         self.sourceURLString = sourceURLString
         self.imageURLString = imageURLString
@@ -104,6 +108,10 @@ final class Product {
         self.sourceCategoryDepth2 = metadata.sourceCategoryDepth2 ?? metadata.categoryDepth2Name
         self.sourceCategoryDepth3 = metadata.sourceCategoryDepth3 ?? metadata.categoryDepth3Name
         self.sourceCategoryDepth4 = metadata.sourceCategoryDepth4 ?? metadata.categoryDepth4Name
+        self.normalizedProductTypeCode = FitMatchTaxonomyProvider.shared.normalizedProductTypeCode(
+            sourceCategoryPath: metadata.sourceCategoryPath ?? metadata.baseCategoryFullPath,
+            categoryCode: category.taxonomyCode
+        )
         self.baseCategoryFullPath = metadata.baseCategoryFullPath
         self.categoryDepth1Code = metadata.categoryDepth1Code
         self.categoryDepth1Name = metadata.categoryDepth1Name
@@ -136,6 +144,10 @@ final class Product {
         self.checkedSizeName = metadata.checkedSizeName
         self.sourceTypeRawValue = sourceType.rawValue
         self.sourceName = sourceName
+        self.sourcePlatformCode = FitMatchTaxonomyProvider.shared.sourcePlatformCode(
+            sourceName: sourceName,
+            sourceURLString: sourceURLString
+        )
         self.sourceRawValue = source.rawValue
         self.notes = notes
         self.sizes = sizes
@@ -145,7 +157,21 @@ final class Product {
 
     var category: ClothingCategory {
         get { ClothingCategory(rawValue: categoryRawValue) ?? .other }
-        set { categoryRawValue = newValue.rawValue }
+        set {
+            categoryRawValue = newValue.rawValue
+            categoryCode = newValue.taxonomyCode
+        }
+    }
+
+    var resolvedCategoryCode: String? {
+        categoryCode ?? FitMatchTaxonomyProvider.shared.categoryCode(for: categoryRawValue)
+    }
+
+    var resolvedNormalizedProductTypeCode: String? {
+        normalizedProductTypeCode ?? FitMatchTaxonomyProvider.shared.normalizedProductTypeCode(
+            sourceCategoryPath: sourceCategoryPath,
+            categoryCode: resolvedCategoryCode
+        )
     }
 
     var source: ProductSource {
@@ -161,6 +187,9 @@ final class Product {
     var sourceDisplayName: String {
         sourceName.isEmpty ? sourceType.displayName : sourceName
     }
+
+    var sourceFamily: String? { sourceCategoryDepth1 ?? categoryDepth1Name }
+    var sourceDetail: String? { sourceCategoryDepth2 ?? categoryDepth2Name }
 
     var sourceCategoryNameForMatching: String {
         let value = (sourceCategoryDepth1 ?? categoryDepth1Name)?

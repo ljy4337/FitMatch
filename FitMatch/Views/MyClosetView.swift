@@ -367,9 +367,8 @@ struct MyClosetView: View {
         pendingBasisItem = item
         existingBasisItem = userFits.first {
             $0.id != item.id
-                && $0.category == item.category
-                && $0.detailCategory == item.detailCategory
                 && $0.isRepresentative
+                && ReferenceGarmentPolicy.conflicts($0, item)
         }
         isShowingBasisChangeAlert = true
     }
@@ -418,9 +417,8 @@ struct MyClosetView: View {
         userFits
             .filter {
                 $0.id != pendingBasisItem.id
-                    && $0.category == pendingBasisItem.category
-                    && $0.detailCategory == pendingBasisItem.detailCategory
                     && $0.isRepresentative
+                    && ReferenceGarmentPolicy.conflicts($0, pendingBasisItem)
             }
             .forEach {
                 $0.isRepresentative = false
@@ -719,7 +717,7 @@ private struct ClosetItemCard: View {
                                 .lineLimit(1)
                         }
 
-                        Text("\(item.gender.rawValue) / \(item.category.rawValue) / \(item.detailCategory.rawValue) / \(item.sizeName)")
+                        Text(item.taxonomyDisplayMetadata)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }

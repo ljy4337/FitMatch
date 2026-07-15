@@ -67,12 +67,16 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
 
     init(tab: AppTab) {
         self.tab = tab
+        #if DEBUG
         _coordinator = StateObject(
             wrappedValue: RootChromeScrollCoordinator(
                 tab: String(describing: tab),
                 source: "bottom"
             )
         )
+        #else
+        _coordinator = StateObject(wrappedValue: RootChromeScrollCoordinator())
+        #endif
     }
 
     func body(content: Content) -> some View {
@@ -113,12 +117,16 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
     init(tab: AppTab, isTopChromeVisible: Binding<Bool>) {
         self.tab = tab
         _isTopChromeVisible = isTopChromeVisible
+        #if DEBUG
         _coordinator = StateObject(
             wrappedValue: RootChromeScrollCoordinator(
                 tab: String(describing: tab),
                 source: "root"
             )
         )
+        #else
+        _coordinator = StateObject(wrappedValue: RootChromeScrollCoordinator())
+        #endif
     }
 
     func body(content: Content) -> some View {
@@ -199,9 +207,12 @@ private struct RootChromeScrollSnapshot: Equatable {
 
 @MainActor
 private final class RootChromeScrollCoordinator: ObservableObject {
+    #if DEBUG
     private let diagnosticTab: String
     private let diagnosticSource: String
     private let diagnosticID = UUID().uuidString.prefix(6)
+    private var lastDiagnosticSignature: String?
+    #endif
     private var previousRawOffset: CGFloat?
     private var previousMaxOffset: CGFloat?
     private var latestSnapshot: RootChromeScrollSnapshot?
@@ -220,21 +231,23 @@ private final class RootChromeScrollCoordinator: ObservableObject {
     private let bottomBoundaryTolerance: CGFloat = 2
     private let bottomUnlockDistance: CGFloat = 24
 
+    #if DEBUG
     init(tab: String = "none", source: String = "unknown") {
         diagnosticTab = tab
         diagnosticSource = source
     }
+    #else
+    init() {}
+    #endif
 
     func handle(snapshot: RootChromeScrollSnapshot, apply: @escaping (Bool) -> Void) {
-        let diagnosticDelta = previousRawOffset.map { snapshot.rawOffset - $0 }
         latestSnapshot = snapshot
-        debugLog(event: "geometry", snapshot: snapshot, delta: diagnosticDelta)
 
         if snapshot.rawOffset <= 0 || snapshot.boundaryState == .top {
             previousRawOffset = snapshot.rawOffset
             previousMaxOffset = snapshot.maxOffset
             accumulatedDownwardDistance = 0
-            isBottomLocked = false
+            setBottomLocked(false)
             clearBottomGestureState()
             schedule(visible: true, apply: apply)
             return
@@ -243,7 +256,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         guard snapshot.isScrollable else {
             previousRawOffset = snapshot.rawOffset
             previousMaxOffset = snapshot.maxOffset
-            isBottomLocked = false
+            setBottomLocked(false)
             clearBottomGestureState()
             schedule(visible: true, apply: apply)
             return
@@ -252,7 +265,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         guard let previousRawOffset, let previousMaxOffset else {
             self.previousRawOffset = snapshot.rawOffset
             self.previousMaxOffset = snapshot.maxOffset
-            isBottomLocked = snapshot.rawOffset >= snapshot.maxOffset - bottomBoundaryTolerance
+            setBottomLocked(snapshot.rawOffset >= snapshot.maxOffset - bottomBoundaryTolerance)
             return
         }
 
@@ -261,6 +274,9 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         self.previousMaxOffset = snapshot.maxOffset
 
         if maxOffsetChanged {
+            #if DEBUG
+            debugLog(event: "maxOffsetChanged", snapshot: snapshot)
+            #endif
             if snapshot.boundaryState == .bottom || snapshot.boundaryState == .bottomOverscroll {
                 lockAtBottom(apply: apply)
             }
@@ -284,7 +300,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
                   let newGestureStartOffset,
                   snapshot.rawOffset <= newGestureStartOffset - minimumScrollDelta,
                   distanceFromBottom >= bottomUnlockDistance else { return }
-            isBottomLocked = false
+            setBottomLocked(false)
             isWaitingForNewGestureAfterBottom = false
             isNewGestureAfterBottom = false
             self.newGestureStartOffset = nil
@@ -307,7 +323,11 @@ private final class RootChromeScrollCoordinator: ObservableObject {
 
     func handlePhaseChange(from oldPhase: ScrollPhase, to newPhase: ScrollPhase) {
         scrollPhase = newPhase
-        debugLog(event: "phase", snapshot: latestSnapshot, delta: nil)
+        #if DEBUG
+        if oldPhase != newPhase {
+            debugLog(event: "phase", snapshot: latestSnapshot)
+        }
+        #endif
 
         if newPhase == .idle {
             didReachBottomInCurrentGesture = false
@@ -343,12 +363,15 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         previousMaxOffset = nil
         latestSnapshot = nil
         scrollPhase = .idle
-        isBottomLocked = false
+        setBottomLocked(false)
         clearBottomGestureState()
         pendingVisibility = nil
         isApplyScheduled = false
         lastAppliedVisibility = nil
         accumulatedDownwardDistance = 0
+        #if DEBUG
+        lastDiagnosticSignature = nil
+        #endif
     }
 
     private var isUserInteractionPhase: Bool {
@@ -360,7 +383,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
     }
 
     private func lockAtBottom(apply: @escaping (Bool) -> Void) {
-        isBottomLocked = true
+        setBottomLocked(true)
         didReachBottomInCurrentGesture = true
         isWaitingForNewGestureAfterBottom = true
         isNewGestureAfterBottom = false
@@ -373,6 +396,14 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         isWaitingForNewGestureAfterBottom = false
         isNewGestureAfterBottom = false
         newGestureStartOffset = nil
+    }
+
+    private func setBottomLocked(_ isLocked: Bool) {
+        guard isBottomLocked != isLocked else { return }
+        isBottomLocked = isLocked
+        #if DEBUG
+        debugLog(event: "bottomLock", snapshot: latestSnapshot)
+        #endif
     }
 
     private func schedule(visible: Bool, apply: @escaping (Bool) -> Void) {
@@ -391,37 +422,46 @@ private final class RootChromeScrollCoordinator: ObservableObject {
             guard !pendingVisibility || !self.isBottomLocked else { return }
             guard self.lastAppliedVisibility != pendingVisibility else { return }
             self.lastAppliedVisibility = pendingVisibility
+            #if DEBUG
             self.debugLog(
                 event: "visibility",
                 snapshot: self.latestSnapshot,
-                delta: nil,
                 visibility: pendingVisibility
             )
+            #endif
             apply(pendingVisibility)
         }
     }
 
+    #if DEBUG
     private func debugLog(
         event: String,
         snapshot: RootChromeScrollSnapshot?,
-        delta: CGFloat?,
         visibility: Bool? = nil
     ) {
-        #if DEBUG
         let offset = snapshot.map { String(describing: $0.rawOffset) } ?? "nil"
         let maxOffset = snapshot.map { String(describing: $0.maxOffset) } ?? "nil"
         let boundary = snapshot.map { String(describing: $0.boundaryState) } ?? "nil"
-        let delta = delta.map { String(describing: $0) } ?? "nil"
         let visibility = visibility.map { String(describing: $0) } ?? "unchanged"
+        let signature = [
+            event,
+            String(describing: scrollPhase),
+            boundary,
+            String(describing: isBottomLocked),
+            visibility,
+            maxOffset
+        ].joined(separator: "|")
+        guard lastDiagnosticSignature != signature else { return }
+        lastDiagnosticSignature = signature
         print(
             "[ScrollDiagnostics] tab=\(diagnosticTab) source=\(diagnosticSource) "
-                + "coordinator=\(diagnosticID) event=\(event) offset=\(offset) delta=\(delta) "
+                + "coordinator=\(diagnosticID) event=\(event) offset=\(offset) "
                 + "maxOffset=\(maxOffset) phase=\(String(describing: scrollPhase)) "
                 + "boundaryState=\(boundary) bottomLock=\(isBottomLocked) "
                 + "visibility=\(visibility)"
         )
-        #endif
     }
+    #endif
 }
 
 private enum ScrollBoundaryState: Equatable {
@@ -433,7 +473,16 @@ private enum ScrollBoundaryState: Equatable {
 
 private struct TopChromeScrollVisibilityModifier: ViewModifier {
     @Binding var isVisible: Bool
-    @StateObject private var coordinator = RootChromeScrollCoordinator(source: "top")
+    @StateObject private var coordinator: RootChromeScrollCoordinator
+
+    init(isVisible: Binding<Bool>) {
+        _isVisible = isVisible
+        #if DEBUG
+        _coordinator = StateObject(wrappedValue: RootChromeScrollCoordinator(source: "top"))
+        #else
+        _coordinator = StateObject(wrappedValue: RootChromeScrollCoordinator())
+        #endif
+    }
 
     func body(content: Content) -> some View {
         content

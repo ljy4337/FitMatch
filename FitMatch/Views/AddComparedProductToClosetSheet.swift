@@ -19,8 +19,11 @@ struct AddComparedProductToClosetSheet: View {
     @State private var brandName: String
     @State private var productName: String
     @State private var selectedGender: UserGender
+    @State private var selectedGenderCode: String
     @State private var selectedCategory: ClothingCategory
+    @State private var selectedCategoryCode: String
     @State private var selectedDetailCategory: ClosetDetailCategory
+    @State private var selectedDetailCategoryCode: String
     @State private var hasSelectedClosetCategory = false
     @State private var hasSelectedClosetDetailCategory = false
     @State private var isBasisItem = false
@@ -44,8 +47,14 @@ struct AddComparedProductToClosetSheet: View {
         _brandName = State(initialValue: product.brand?.name ?? "")
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
+        _selectedGenderCode = State(initialValue: product.productTargetGender.taxonomyCode)
         _selectedCategory = State(initialValue: preselectedCategory ?? product.category.serviceGroup)
+        _selectedCategoryCode = State(initialValue: (preselectedCategory ?? product.category.serviceGroup).taxonomyCode)
         _selectedDetailCategory = State(initialValue: productDetailCategory)
+        _selectedDetailCategoryCode = State(initialValue: FitMatchTaxonomyProvider.shared.detailCode(
+            for: productDetailCategory.rawValue,
+            categoryCode: (preselectedCategory ?? product.category.serviceGroup).taxonomyCode
+        ) ?? "")
         _selectedSizeID = State(initialValue: Self.initialSelectedSizeID(recommendedSize: recommendedSize, productSizes: product.sizes))
         _hasSelectedClosetCategory = State(initialValue: preselectedCategory != nil && (preselectedCategory ?? .other) != .other)
         _hasSelectedClosetDetailCategory = State(initialValue: preselectedCategory != nil && productDetailCategory != .other)
@@ -103,18 +112,16 @@ struct AddComparedProductToClosetSheet: View {
         ]
     }
 
-    private var availableCategories: [ClothingCategory] {
-        ClothingCategory.closetCategories(for: selectedGender).filter { $0 != .other }
+    private var availableCategories: [TaxonomyCategory] {
+        FitMatchTaxonomyProvider.shared.activeCategories
     }
 
-    private var availableDetailCategories: [ClosetDetailCategory] {
-        ClosetDetailCategory
-            .options(for: selectedCategory, gender: selectedGender)
-            .filter { $0 != .other }
+    private var availableDetailCategories: [TaxonomyOption] {
+        FitMatchTaxonomyProvider.shared.activeDetails(categoryCode: selectedCategoryCode)
     }
 
-    private var availableGenders: [UserGender] {
-        [.men, .women, .kids, .baby, .unisex, .unknown]
+    private var availableGenders: [TaxonomyOption] {
+        FitMatchTaxonomyProvider.shared.selectableGenders
     }
 
     var body: some View {
@@ -259,7 +266,7 @@ struct AddComparedProductToClosetSheet: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(2)
                         } else {
-                            Text("\(selectedCategory.rawValue) / \(selectedDetailCategory.rawValue)")
+                            Text("\(selectedCategoryDisplayName) / \(selectedDetailDisplayName)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -345,28 +352,32 @@ struct AddComparedProductToClosetSheet: View {
             RegistrationTextField(title: "브랜드", placeholder: "브랜드명", text: $brandName)
             RegistrationTextField(title: "상품명", placeholder: "상품명", text: $productName)
 
-            RegistrationMenuRow(title: "성별", value: selectedGender.rawValue) {
+            RegistrationMenuRow(title: "성별", value: selectedGenderDisplayName) {
                 ForEach(availableGenders) { gender in
-                    Button(gender.rawValue) {
-                        selectedGender = gender
+                    Button(gender.displayName) {
+                        selectedGenderCode = gender.code
+                        selectedGender = UserGender.fromTaxonomyCode(gender.code)
                         normalizeCategory()
                         normalizeDetailCategory()
                     }
                 }
             }
 
-            RegistrationMenuRow(title: "카테고리", value: selectedCategory.rawValue) {
+            RegistrationMenuRow(title: "카테고리", value: selectedCategoryDisplayName) {
                 ForEach(availableCategories) { category in
-                    Button(category.rawValue) {
-                        selectedCategory = category
+                    Button(category.displayName) {
+                        selectedCategoryCode = category.code
+                        selectedCategory = ClothingCategory.fromTaxonomyCode(category.code)
+                        normalizeDetailCategory()
                     }
                 }
             }
 
-            RegistrationMenuRow(title: "상세 카테고리", value: selectedDetailCategory.rawValue) {
+            RegistrationMenuRow(title: "상세 카테고리", value: selectedDetailDisplayName) {
                 ForEach(availableDetailCategories) { detailCategory in
-                    Button(detailCategory.rawValue) {
-                        selectedDetailCategory = detailCategory
+                    Button(detailCategory.displayName) {
+                        selectedDetailCategoryCode = detailCategory.code
+                        selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCategory.code)
                     }
                 }
             }
@@ -389,10 +400,11 @@ struct AddComparedProductToClosetSheet: View {
                 ReadOnlyRegistrationInfoRow(title: "쇼핑몰 카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
             }
 
-            RegistrationMenuRow(title: "성별", value: selectedGender.rawValue) {
+            RegistrationMenuRow(title: "성별", value: selectedGenderDisplayName) {
                 ForEach(availableGenders) { gender in
-                    Button(gender.rawValue) {
-                        selectedGender = gender
+                    Button(gender.displayName) {
+                        selectedGenderCode = gender.code
+                        selectedGender = UserGender.fromTaxonomyCode(gender.code)
                         hasSelectedClosetCategory = false
                         hasSelectedClosetDetailCategory = false
                         normalizeCategory()
@@ -400,10 +412,11 @@ struct AddComparedProductToClosetSheet: View {
                 }
             }
 
-            RegistrationMenuRow(title: "대분류", value: hasSelectedClosetCategory ? selectedCategory.rawValue : "선택") {
+            RegistrationMenuRow(title: "대분류", value: hasSelectedClosetCategory ? selectedCategoryDisplayName : "선택") {
                 ForEach(availableCategories) { category in
-                    Button(category.rawValue) {
-                        selectedCategory = category
+                    Button(category.displayName) {
+                        selectedCategoryCode = category.code
+                        selectedCategory = ClothingCategory.fromTaxonomyCode(category.code)
                         hasSelectedClosetCategory = true
                         hasSelectedClosetDetailCategory = false
                         normalizeDetailCategory()
@@ -411,11 +424,12 @@ struct AddComparedProductToClosetSheet: View {
                 }
             }
 
-            RegistrationMenuRow(title: "세부 카테고리", value: hasSelectedClosetDetailCategory ? selectedDetailCategory.rawValue : "선택") {
+            RegistrationMenuRow(title: "세부 카테고리", value: hasSelectedClosetDetailCategory ? selectedDetailDisplayName : "선택") {
                 if hasSelectedClosetCategory {
                     ForEach(availableDetailCategories) { detailCategory in
-                        Button(detailCategory.rawValue) {
-                            selectedDetailCategory = detailCategory
+                        Button(detailCategory.displayName) {
+                            selectedDetailCategoryCode = detailCategory.code
+                            selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCategory.code)
                             hasSelectedClosetDetailCategory = true
                         }
                     }
@@ -529,6 +543,9 @@ struct AddComparedProductToClosetSheet: View {
             return selectedSize == nil ? "등록할 사이즈를 선택해 주세요." : nil
         case .confirm:
             if isParsedProductReadOnly {
+                if selectedGenderCode == "unknown" {
+                    return "성별을 선택해 주세요."
+                }
                 if !hasSelectedClosetCategory {
                     return "대분류를 선택해 주세요."
                 }
@@ -553,12 +570,14 @@ struct AddComparedProductToClosetSheet: View {
     private var canSave: Bool {
         if isParsedProductReadOnly {
             return selectedSize != nil
+                && selectedGenderCode != "unknown"
                 && hasSelectedClosetCategory
                 && hasSelectedClosetDetailCategory
                 && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
 
         return selectedSize != nil
+            && selectedGenderCode != "unknown"
             && !brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -595,6 +614,10 @@ struct AddComparedProductToClosetSheet: View {
             sourceProduct: product,
             sourceProductSize: selectedSize
         )
+        item.genderCode = selectedGenderCode
+        item.categoryCode = selectedCategoryCode
+        item.detailCategoryCode = selectedDetailCategoryCode
+        item.normalizedProductTypeCode = product.resolvedNormalizedProductTypeCode
 
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")
@@ -608,9 +631,7 @@ struct AddComparedProductToClosetSheet: View {
         if isBasisItem {
             userFits
                 .filter {
-                    $0.category == selectedCategory.serviceGroup
-                        && $0.detailCategory == selectedDetailCategory
-                        && $0.isRepresentative
+                    $0.isRepresentative && ReferenceGarmentPolicy.conflicts($0, item)
                 }
                 .forEach {
                     $0.isRepresentative = false
@@ -630,15 +651,34 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private func normalizeDetailCategory() {
-        if !availableDetailCategories.contains(selectedDetailCategory) {
-            selectedDetailCategory = availableDetailCategories.first ?? .shortSleeve
+        if !availableDetailCategories.contains(where: { $0.code == selectedDetailCategoryCode }),
+           let first = availableDetailCategories.first {
+            selectedDetailCategoryCode = first.code
+            selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(first.code)
         }
     }
 
     private func normalizeCategory() {
-        if !availableCategories.contains(selectedCategory) {
-            selectedCategory = availableCategories.first ?? .top
+        if !availableCategories.contains(where: { $0.code == selectedCategoryCode }),
+           let first = availableCategories.first {
+            selectedCategoryCode = first.code
+            selectedCategory = ClothingCategory.fromTaxonomyCode(first.code)
         }
+    }
+
+    private var selectedGenderDisplayName: String {
+        FitMatchTaxonomyProvider.shared.displayName(forGender: selectedGenderCode) ?? selectedGender.rawValue
+    }
+
+    private var selectedCategoryDisplayName: String {
+        FitMatchTaxonomyProvider.shared.displayName(forCategory: selectedCategoryCode) ?? selectedCategory.rawValue
+    }
+
+    private var selectedDetailDisplayName: String {
+        FitMatchTaxonomyProvider.shared.displayName(
+            forDetail: selectedDetailCategoryCode,
+            categoryCode: selectedCategoryCode
+        ) ?? selectedDetailCategory.rawValue
     }
 
     private func normalizeSelectedSize() {

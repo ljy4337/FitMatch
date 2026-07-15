@@ -9,7 +9,99 @@ import Testing
 import UIKit
 @testable import FitMatch
 
+@MainActor
 struct FitMatchTests {
+
+    @Test func taxonomyCodesAndParentsAreValidAndDeterministic() throws {
+        let taxonomy = FitMatchTaxonomyProvider.shared.taxonomy
+        #expect(Set(taxonomy.genders.map(\.code)).count == taxonomy.genders.count)
+        #expect(Set(taxonomy.categories.map(\.code)).count == taxonomy.categories.count)
+        #expect(taxonomy.categories.allSatisfy { category in
+            Set(category.details.map(\.code)).count == category.details.count
+        })
+        #expect(taxonomy.normalizedProductTypes.allSatisfy { type in
+            taxonomy.categories.contains { $0.code == type.categoryCode }
+        })
+
+        let active = FitMatchTaxonomyProvider.shared.activeCategories
+        #expect(active == active.sorted { ($0.sortOrder, $0.code) < ($1.sortOrder, $1.code) })
+        #expect(active.allSatisfy { $0.isActive })
+    }
+
+    @Test func requiredAtomicTaxonomyOptionsExist() {
+        let provider = FitMatchTaxonomyProvider.shared
+        #expect(Set(provider.activeDetails(categoryCode: "tops").map(\.code)).isSuperset(of: [
+            "sleeveless", "short_sleeve", "three_quarter_sleeve", "long_sleeve", "other_tops"
+        ]))
+        #expect(Set(provider.activeDetails(categoryCode: "bottoms").map(\.code)).isSuperset(of: [
+            "short_pants", "shorts", "cropped_pants", "three_quarter_pants", "nine_tenths_pants", "long_pants"
+        ]))
+        #expect(Set(provider.activeDetails(categoryCode: "outerwear").map(\.code)).isSuperset(of: [
+            "jacket", "blazer", "jumper", "blouson", "vest", "padded_vest"
+        ]))
+    }
+
+    @Test func inactiveTaxonomyOptionsAreHidden() throws {
+        let taxonomy = FitMatchTaxonomy(
+            schemaVersion: 1,
+            taxonomyVersion: "test",
+            genders: [
+                .init(code: "male", displayName: "남성", sortOrder: 0, isActive: true),
+                .init(code: "unknown", displayName: "미분류", sortOrder: 1, isActive: false)
+            ],
+            categories: [
+                .init(code: "tops", displayName: "상의", sortOrder: 0, isActive: true, details: [
+                    .init(code: "short_sleeve", displayName: "반팔", sortOrder: 0, isActive: true),
+                    .init(code: "retired", displayName: "종료", sortOrder: 1, isActive: false)
+                ])
+            ],
+            normalizedProductTypes: [],
+            legacyAliases: []
+        )
+        let provider = FitMatchTaxonomyProvider(
+            repository: DataFitMatchTaxonomyRepository(data: try JSONEncoder().encode(taxonomy))
+        )
+
+        #expect(provider.selectableGenders.map(\.code) == ["male"])
+        #expect(provider.activeDetails(categoryCode: "tops").map(\.code) == ["short_sleeve"])
+    }
+
+    @Test func categoryChangeRejectsInvalidDetail() {
+        let provider = FitMatchTaxonomyProvider.shared
+        #expect(provider.isValidDetail("short_sleeve", for: "tops"))
+        #expect(!provider.isValidDetail("short_sleeve", for: "bottoms"))
+    }
+
+    @Test func legacyKoreanTaxonomyAliasesMapWithoutOverwritingSnapshots() {
+        let provider = FitMatchTaxonomyProvider.shared
+        #expect(provider.genderCode(for: "남성") == "male")
+        #expect(provider.genderCode(for: "여성") == "female")
+        #expect(provider.genderCode(for: "공용") == "unisex")
+        #expect(provider.genderCode(for: "키즈") == "kids_unisex")
+        #expect(provider.genderCode(for: "남아") == "boys")
+        #expect(provider.genderCode(for: "여아") == "girls")
+        #expect(provider.genderCode(for: "키즈 공용") == "kids_unisex")
+        #expect(provider.detailCode(for: "반팔 티셔츠", categoryCode: "tops") == "short_sleeve")
+        #expect(provider.detailCode(for: "긴팔티", categoryCode: "tops") == "long_sleeve")
+        #expect(provider.detailCode(for: "반바지", categoryCode: "bottoms") == "shorts")
+    }
+
+    @Test func invalidTaxonomyUsesControlledFallback() {
+        let provider = FitMatchTaxonomyProvider(
+            repository: DataFitMatchTaxonomyRepository(data: Data("not-json".utf8))
+        )
+        #expect(provider.loadingError != nil)
+        #expect(!provider.activeCategories.isEmpty)
+    }
+
+    @Test func tshirtAndKnitMayBothBeReferenceGarments() {
+        let tshirt = comparisonUserFit(name: "반팔 티셔츠", sourceCategory: "상의 > 반소매 티셔츠", detail: .shortSleeve, sleeve: 24)
+        let knit = comparisonUserFit(name: "반팔 니트", sourceCategory: "상의 > 니트/스웨터", detail: .shortSleeve, sleeve: 24)
+        tshirt.normalizedProductTypeCode = "tops.tshirt"
+        knit.normalizedProductTypeCode = "tops.knit_sweater"
+
+        #expect(!ReferenceGarmentPolicy.conflicts(tshirt, knit))
+    }
 
     @Test func musinsaActualSizeLengthPreservesKnitFamily() {
         var metadata = MusinsaProductMetadata(

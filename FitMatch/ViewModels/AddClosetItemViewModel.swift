@@ -7,9 +7,12 @@ final class AddClosetItemViewModel: ObservableObject {
     @Published var brand = ""
     @Published var usesCustomBrand = true
     @Published var gender: UserGender = .men
+    @Published var genderCode = "male"
     @Published var productName = ""
     @Published var category: ClothingCategory = .top
+    @Published var categoryCode = "tops"
     @Published var detailCategory: ClosetDetailCategory = .shortSleeve
+    @Published var detailCategoryCode = "short_sleeve"
     @Published var size = "기준"
     @Published var shoulder = ""
     @Published var chest = ""
@@ -38,12 +41,18 @@ final class AddClosetItemViewModel: ObservableObject {
         guard let item else {
             if let prefillCategory {
                 category = prefillCategory
+                categoryCode = prefillCategory.taxonomyCode
             }
             if let prefillDetailCategory {
                 detailCategory = prefillDetailCategory
+                detailCategoryCode = FitMatchTaxonomyProvider.shared.detailCode(
+                    for: prefillDetailCategory.rawValue,
+                    categoryCode: categoryCode
+                ) ?? detailCategoryCode
             }
             if let prefillGender {
                 gender = prefillGender
+                genderCode = prefillGender.taxonomyCode
             }
             if let prefillBrand, !prefillBrand.trimmed.isEmpty {
                 brand = prefillBrand.trimmed
@@ -60,9 +69,12 @@ final class AddClosetItemViewModel: ObservableObject {
         brand = item.brandName
         usesCustomBrand = true
         gender = item.gender
+        genderCode = item.resolvedGenderCode
         productName = item.productName
         category = item.category
+        categoryCode = item.resolvedCategoryCode ?? item.category.taxonomyCode
         detailCategory = item.detailCategory
+        detailCategoryCode = item.resolvedDetailCategoryCode ?? ""
         size = item.sizeName
         shoulder = item.measurements.shoulder.formText
         chest = item.measurements.chest.formText
@@ -147,7 +159,7 @@ final class AddClosetItemViewModel: ObservableObject {
             return nil
         }
 
-        return UserFit(
+        let item = UserFit(
             sourceType: sourceType,
             sourceName: resolvedSourceName,
             brandName: brand.trimmed,
@@ -162,6 +174,14 @@ final class AddClosetItemViewModel: ObservableObject {
             satisfaction: satisfaction,
             isRepresentative: isRepresentative
         )
+        item.genderCode = genderCode
+        item.categoryCode = categoryCode
+        item.detailCategoryCode = detailCategoryCode
+        item.normalizedProductTypeCode = FitMatchTaxonomyProvider.shared.normalizedProductTypeCode(
+            sourceCategoryPath: item.sourceCategoryPath,
+            categoryCode: categoryCode
+        )
+        return item
     }
 
     var resolvedSourceName: String {

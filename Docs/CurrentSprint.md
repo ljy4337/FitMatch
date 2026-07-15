@@ -6,6 +6,17 @@ Updated: 2026-07-15
 Uniqlo
 
 ## Completed
+- Added a four-page first-launch onboarding shown after Splash, persisted with AppStorage and hidden on later launches.
+- Added a settings replay path that presents onboarding without changing first-launch completion state.
+- Replaced the simple usage steps with an eleven-topic, single-expanded-item accordion matched to current FitMatch behavior.
+- Restored the MY tab root to My Closet; settings remains accessible from the existing top-header account navigation.
+- Replaced the mock signed-in profile header with FitMatch introductory copy.
+- Marked unavailable settings rows as `준비 중` without navigation affordances and added a five-step FitMatch usage guide.
+- Added the versioned, bundled FitMatch taxonomy JSON and provider abstraction with controlled fallback and legacy Korean aliases.
+- Added optional stable classification and normalized product-type codes without removing persisted Korean snapshots or source-category metadata.
+- Switched Closet add classification selectors to provider-backed gender/category/detail options and atomic length/form details.
+- Added centralized verified knit/sweater and T-shirt source mappings, gender-aware automatic matching, and normalized-type-aware reference uniqueness.
+- Added taxonomy contract/DB documentation and focused validation, migration, matching, reference, and fallback tests.
 - Source category UI now uses only `sourceCategoryPath`; internal category fallback was removed.
 - Closet comparison flow is `대분류 > 세부 카테고리 > 옷` with no source filter.
 - Candidates use `UserFit.category/detailCategory` across all shops and brands.
@@ -52,9 +63,11 @@ Uniqlo
 - Standardized all confirmed Closet-add action buttons to `내 옷장에 추가` while preserving navigation, save behavior, and distinct method-selection labels.
 
 ## Current Task
-- Closet-add button label verification
+- First-launch onboarding and detailed usage guide
 
 ## Remaining Bugs
+- Compare's source-category fallback still exposes compatibility enum bindings; it should adopt stable-code state when the compare ViewModel persistence contract is migrated.
+- Existing legacy garment-family details such as 셔츠/니트/후드 cannot be safely converted to the new length-only detail without source/name evidence, so their snapshots remain unresolved rather than being guessed.
 - Manual verification of scroll jitter/crash fix
 - Comparison-profile tests are compiled but simulator execution is blocked while the test runner waits for simulator workers to materialize.
 - Discount UI
@@ -71,6 +84,12 @@ Uniqlo
 - No commit or push performed in the latest task.
 
 ## Verification
+- First-launch onboarding, replay presentation, and accordion usage guide passed the generic iOS Simulator build and `git diff --check`.
+- MY settings navigation and usage guide passed the generic iOS Simulator build and `git diff --check`.
+- Protected scroll modifier call sites have no added or removed lines from this task.
+- Data-driven taxonomy app build and test-bundle compilation passed for the generic iOS Simulator destination.
+- Taxonomy, legacy mapping, reference uniqueness, and matcher tests executed successfully; Xcode's test runner stalled only while finalizing simulator workers after reporting passes.
+- Bundled `FitMatchTaxonomy.json` was verified inside the built app, and `git diff --check` passed.
 - `xcodebuild` passed for the generic iOS Simulator destination.
 - `git diff --check` passed.
 - Search confirmed all four target screens use root-level `CollapsibleTopChrome`, while History/My Closet filters remain in scroll content.

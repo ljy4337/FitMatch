@@ -15,6 +15,7 @@ struct ContentView: View {
     @Query private var products: [Product]
     @Query private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
+    @AppStorage("FitMatch.hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab: AppTab = .home
     @State private var hasFinishedSplash = false
     @State private var isLoggedIn = false
@@ -47,10 +48,12 @@ struct ContentView: View {
             )
             try? await Task.sleep(nanoseconds: 800_000_000)
             hasFinishedSplash = true
-            openPendingSharedURLIfNeeded()
+            if hasCompletedOnboarding {
+                openPendingSharedURLIfNeeded()
+            }
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
+            if newPhase == .active, hasCompletedOnboarding {
                 _ = openPendingSharedURLIfNeeded()
             }
         }
@@ -63,6 +66,11 @@ struct ContentView: View {
     private var normalContent: some View {
         if !hasFinishedSplash {
             SplashView()
+        } else if !hasCompletedOnboarding {
+            FitMatchOnboardingView {
+                hasCompletedOnboarding = true
+                _ = openPendingSharedURLIfNeeded()
+            }
         // 로그인 화면은 추후 재사용을 위해 구현을 유지하고 현재 진입 분기만 비활성화합니다.
         // } else if !isLoggedIn {
         //     LoginView {
