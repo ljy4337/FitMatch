@@ -22,7 +22,7 @@ struct LinkClosetRegistrationView: View {
     }
 
     private var canLoadProduct: Bool {
-        isValidHTTPURL(normalizedURLString) && !isLoading
+        ProductURLSupport.isSupportedProductURL(normalizedURLString) && !isLoading
     }
 
     var body: some View {
@@ -43,7 +43,8 @@ struct LinkClosetRegistrationView: View {
                 AddComparedProductToClosetSheet(
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
-                    recommendedSize: uniqueSizes(for: parsedProduct).first
+                    recommendedSize: uniqueSizes(for: parsedProduct).first,
+                    isParsedProductReadOnly: true
                 ) { _ in
                     isShowingSavedAlert = true
                 }
@@ -55,6 +56,10 @@ struct LinkClosetRegistrationView: View {
             Button("확인") {
                 dismiss()
             }
+        }
+        .onChange(of: productURL) { _, _ in
+            parsedProduct = nil
+            errorMessage = nil
         }
     }
 
@@ -81,12 +86,6 @@ struct LinkClosetRegistrationView: View {
                                 }
                             }
                         }
-
-                    Button("붙여넣기") {
-                        productURL = UIPasteboard.general.string ?? productURL
-                    }
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
@@ -136,13 +135,13 @@ struct LinkClosetRegistrationView: View {
                             Text("출처: \(parsedProduct.sourceDisplayName)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text("\(parsedProduct.category.rawValue) / \(parsedDetailCategory.rawValue)")
+                            Text(sourceCategoryText(for: parsedProduct))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
 
-                    PrimaryButton(title: "보유한 사이즈 선택", systemImage: "tag") {
+                    PrimaryButton(title: "다음", systemImage: "chevron.right") {
                         isShowingAddToClosetSheet = true
                     }
                 }
@@ -163,7 +162,7 @@ struct LinkClosetRegistrationView: View {
 
     private func loadProduct() async {
         let trimmedURL = normalizedURLString
-        guard isValidHTTPURL(trimmedURL), !isLoading else {
+        guard ProductURLSupport.isSupportedProductURL(trimmedURL), !isLoading else {
             errorMessage = trimmedURL.isEmpty ? nil : "올바른 상품 URL을 입력해 주세요."
             return
         }
@@ -177,9 +176,6 @@ struct LinkClosetRegistrationView: View {
         do {
             let parsedInfo = try await parserService.parse(urlString: trimmedURL)
             let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
-            if existingBrand(named: brand.name) == nil {
-                modelContext.insert(brand)
-            }
 
             let sizes = ParsedProductSizeNormalizer.makeProductSizes(from: parsedInfo.sizes)
 
@@ -223,14 +219,9 @@ struct LinkClosetRegistrationView: View {
         return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
     }
 
-    private func isValidHTTPURL(_ value: String) -> Bool {
-        guard let url = URL(string: value),
-              let scheme = url.scheme?.lowercased(),
-              ["http", "https"].contains(scheme),
-              url.host?.isEmpty == false else {
-            return false
-        }
-
-        return true
+    private func sourceCategoryText(for product: Product) -> String {
+        let value = product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? "카테고리 정보 없음" : value
     }
+
 }

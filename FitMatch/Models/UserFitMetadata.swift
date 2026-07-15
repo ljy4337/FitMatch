@@ -3,9 +3,43 @@ import Foundation
 enum UserGender: String, CaseIterable, Identifiable, Codable, Hashable {
     case men = "남성"
     case women = "여성"
+    case kids = "키즈"
+    case baby = "베이비"
     case unisex = "공용"
+    case unknown = "미분류"
 
     var id: String { rawValue }
+
+    static func productTarget(from codes: [String]) -> UserGender {
+        let normalizedCodes = codes
+            .map {
+                $0.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .uppercased()
+            }
+            .filter { !$0.isEmpty }
+
+        guard !normalizedCodes.isEmpty else {
+            return .unknown
+        }
+
+        if normalizedCodes.contains(where: { ["UNISEX", "COMMON", "U", "공용"].contains($0) }) {
+            return .unisex
+        }
+        if normalizedCodes.contains(where: { ["BABY", "베이비"].contains($0) }) {
+            return .baby
+        }
+        if normalizedCodes.contains(where: { ["KIDS", "KID", "키즈"].contains($0) }) {
+            return .kids
+        }
+        if normalizedCodes.contains(where: { ["WOMEN", "WOMAN", "FEMALE", "F", "여성"].contains($0) }) {
+            return .women
+        }
+        if normalizedCodes.contains(where: { ["MEN", "MAN", "MALE", "M", "남성"].contains($0) }) {
+            return .men
+        }
+
+        return .unknown
+    }
 }
 
 enum FitPreference: String, CaseIterable, Identifiable, Codable, Hashable {
@@ -115,7 +149,7 @@ enum ClosetDetailCategory: String, CaseIterable, Identifiable, Codable, Hashable
                 return [.menBriefs, .menTrunks, .menUndershirt, .socks, .other]
             case .women:
                 return [.womenBra, .womenPanty, .womenCamisole, .womenSlip, .socks, .other]
-            case .unisex:
+            case .kids, .baby, .unisex, .unknown:
                 return [.underwear, .menBriefs, .menTrunks, .womenBra, .womenPanty, .socks, .other]
             }
         case .shoes:

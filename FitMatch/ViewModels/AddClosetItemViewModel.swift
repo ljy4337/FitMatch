@@ -43,7 +43,7 @@ final class AddClosetItemViewModel: ObservableObject {
                 detailCategory = prefillDetailCategory
             }
             if let prefillGender {
-                gender = prefillGender == .unisex ? .men : prefillGender
+                gender = prefillGender
             }
             if let prefillBrand, !prefillBrand.trimmed.isEmpty {
                 brand = prefillBrand.trimmed
@@ -59,7 +59,7 @@ final class AddClosetItemViewModel: ObservableObject {
         sourceName = item.sourceName
         brand = item.brandName
         usesCustomBrand = true
-        gender = item.gender == .unisex ? .men : item.gender
+        gender = item.gender
         productName = item.productName
         category = item.category
         detailCategory = item.detailCategory

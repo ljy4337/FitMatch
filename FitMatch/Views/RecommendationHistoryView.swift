@@ -29,22 +29,8 @@ struct RecommendationHistoryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if isTopChromeVisible {
-                FitMatchNavigationHeader(onLogout: onLogout)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
-                    .padding(.bottom, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
-
-            historyControls
-
-            if filteredHistories.isEmpty {
-                EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                historyContent
-            }
+            historyTopChrome
+            historyContent
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
@@ -93,6 +79,16 @@ struct RecommendationHistoryView: View {
     }
 
     @ViewBuilder
+    private var historyTopChrome: some View {
+        CollapsibleTopChrome(isVisible: isTopChromeVisible) {
+            FitMatchNavigationHeader(onLogout: onLogout)
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 12)
+        }
+    }
+
+    @ViewBuilder
     private var historyContent: some View {
         switch historyLayout {
         case .list:
@@ -103,44 +99,70 @@ struct RecommendationHistoryView: View {
     }
 
     private var historyList: some View {
-        List {
-            ForEach(filteredHistories) { history in
-                HistoryCard(
-                    history: history,
-                    isFavorite: isFavorite(history)
-                ) {
-                    toggleFavorite(history)
-                } onOpen: {
-                    openShoppingMall(history)
-                } onRecompare: {
-                    opensReferencePickerOnDetail = true
-                    selectedHistoryIDForDetail = history.id
-                } onAddToCloset: {
-                    selectedHistoryForCloset = history
-                } onShowDetail: {
-                    opensReferencePickerOnDetail = false
-                    selectedHistoryIDForDetail = history.id
-                }
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                    favoriteSwipeButton(for: history)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    deleteSwipeButton(for: history)
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                historyControls
+
+                if filteredHistories.isEmpty {
+                    EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 36)
+                } else {
+                    ForEach(filteredHistories) { history in
+                        HistoryCard(
+                            history: history,
+                            isFavorite: isFavorite(history)
+                        ) {
+                            toggleFavorite(history)
+                        } onOpen: {
+                            openShoppingMall(history)
+                        } onRecompare: {
+                            opensReferencePickerOnDetail = true
+                            selectedHistoryIDForDetail = history.id
+                        } onAddToCloset: {
+                            selectedHistoryForCloset = history
+                        } onShowDetail: {
+                            opensReferencePickerOnDetail = false
+                            selectedHistoryIDForDetail = history.id
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .contextMenu {
+                            Button {
+                                toggleFavorite(history)
+                            } label: {
+                                Label(
+                                    isFavorite(history) ? "관심 해제" : "관심 등록",
+                                    systemImage: isFavorite(history) ? "heart.slash" : "heart.fill"
+                                )
+                            }
+
+                            Button(role: .destructive) {
+                                deleteHistory(history)
+                            } label: {
+                                Label("삭제", systemImage: "trash")
+                            }
+                        }
+                    }
                 }
             }
-
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 
     private var historyGrid: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            LazyVStack(spacing: 0) {
+                historyControls
+
+                if filteredHistories.isEmpty {
+                    EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 36)
+                } else {
                 LazyVGrid(columns: gridColumns, spacing: 14) {
                     ForEach(filteredHistories) { history in
                         HistoryGridCard(
@@ -158,6 +180,7 @@ struct RecommendationHistoryView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
+                }
             }
         }
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
@@ -397,7 +420,7 @@ private struct HistoryCard: View {
                 ZStack(alignment: .topTrailing) {
                     HStack(alignment: .top, spacing: 14) {
                         ProductThumbnailView(
-                            imageURLString: history.product.imageURLString,
+                            imageURLString: history.productImageURLStringForDisplay,
                             category: history.product.category,
                             width: 88,
                             height: 112,
@@ -405,25 +428,30 @@ private struct HistoryCard: View {
                         )
 
                             VStack(alignment: .leading, spacing: 6) {
-                            Text(history.product.brand?.name ?? history.product.sourceDisplayName)
+                            Text(history.productBrandNameForDisplay)
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.secondary)
 
-                            Text(history.product.name)
+                            Text(history.productNameForDisplay)
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.primary)
                                 .lineLimit(2)
 
-                            Text("출처: \(history.product.sourceDisplayName)")
+                            Text("출처: \(history.productSourceNameForDisplay)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
 
-                            ProductPriceView(product: history.product)
-
-                            Text("\(history.product.category.rawValue) / \(history.productDetailCategory.rawValue)")
+                            Text(historySourceCategoryText)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
+
+                            if let optionText = history.optionSnapshotText {
+                                Text(optionText)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
 
                             Text(history.createdAt, style: .date)
                                 .font(.caption.weight(.semibold))
@@ -436,14 +464,16 @@ private struct HistoryCard: View {
                             .padding(.trailing, 58)
                     }
 
-                    Button(action: onToggleFavorite) {
-                        Image(systemName: isFavorite ? "heart.fill" : "heart")
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(isFavorite ? .red : .primary)
-                            .frame(width: 36, height: 36)
-                            .background(Color(.systemBackground).opacity(0.92), in: Circle())
+                    VStack(alignment: .trailing, spacing: 8) {
+                        Button(action: onToggleFavorite) {
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .font(.headline.weight(.semibold))
+                                .foregroundStyle(isFavorite ? .red : .primary)
+                                .frame(width: 36, height: 36)
+                                .background(Color(.systemBackground).opacity(0.92), in: Circle())
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
 
                 HStack(alignment: .center, spacing: 12) {
@@ -506,6 +536,62 @@ private struct HistoryCard: View {
 
         return kinds.isEmpty ? "실측 부족" : "실측 \(kinds.count)개 비교"
     }
+
+    private var historySourceCategoryText: String {
+        if let sourceCategoryPath = history.product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !sourceCategoryPath.isEmpty {
+            return sourceCategoryPath
+        }
+
+        return "카테고리 정보 없음"
+    }
+}
+
+private struct HistoryPriceSnapshotView: View {
+    let history: RecommendationHistory
+
+    var body: some View {
+        EmptyView()
+    }
+
+    private var currentPrice: Int? {
+        history.finalPriceSnapshot ?? history.salePriceSnapshot
+    }
+
+    private var displayPrice: String? {
+        (currentPrice ?? history.normalPriceSnapshot).map(formatPrice)
+    }
+
+    private var normalPriceText: String? {
+        guard let normal = history.normalPriceSnapshot,
+              let current = currentPrice,
+              normal > current else {
+            return nil
+        }
+        return formatPrice(normal)
+    }
+
+    private var discountText: String? {
+        if let rate = history.discountRateSnapshot, rate > 0 {
+            let normalizedRate = rate <= 1 ? rate * 100 : rate
+            return "\(Int(normalizedRate.rounded()))% 할인"
+        }
+
+        guard let normal = history.normalPriceSnapshot,
+              let current = currentPrice,
+              normal > current else {
+            return nil
+        }
+        let rate = Double(normal - current) / Double(normal) * 100
+        return "\(Int(rate.rounded()))% 할인"
+    }
+
+    private func formatPrice(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        return "\(formatted)원"
+    }
 }
 
 private struct HistoryGridCard: View {
@@ -520,7 +606,7 @@ private struct HistoryGridCard: View {
                 CardView(radius: 20, padding: 12) {
                     VStack(alignment: .leading, spacing: 10) {
                         ProductThumbnailView(
-                            imageURLString: history.product.imageURLString,
+                            imageURLString: history.productImageURLStringForDisplay,
                             category: history.product.category,
                             width: 126,
                             height: 142,
@@ -529,12 +615,12 @@ private struct HistoryGridCard: View {
                         .frame(maxWidth: .infinity)
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(history.product.brand?.name ?? history.product.sourceDisplayName)
+                            Text(history.productBrandNameForDisplay)
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
 
-                            Text(history.product.name)
+                            Text(history.productNameForDisplay)
                                 .font(.subheadline.weight(.bold))
                                 .foregroundStyle(.primary)
                                 .lineLimit(2)
@@ -549,6 +635,7 @@ private struct HistoryGridCard: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
+
                         }
                     }
                 }

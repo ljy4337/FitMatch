@@ -145,7 +145,7 @@ extension ClothingCategory {
                 return [.waist, .hip]
             case .women:
                 return [.underBust, .chest, .waist, .hip]
-            case .unisex:
+            case .kids, .baby, .unisex, .unknown:
                 return [.waist, .hip]
             }
         }

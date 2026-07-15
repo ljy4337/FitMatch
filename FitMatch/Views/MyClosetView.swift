@@ -21,35 +21,11 @@ struct MyClosetView: View {
     @State private var displayedItems: [UserFit] = []
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            VStack(spacing: 0) {
-                if isTopChromeVisible {
-                    FitMatchNavigationHeader(onLogout: onLogout)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 18)
-                        .padding(.bottom, 12)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-
-                closetHeader
-
-                if userFits.isEmpty {
-                    EmptyClosetView {
-                        presentActiveSheet(.addMethod)
-                        }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    closetContent
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            if !userFits.isEmpty {
-                closetFloatingAddButton
-                    .padding(.trailing, 22)
-                    .padding(.bottom, 92)
-            }
+        VStack(spacing: 0) {
+            closetTopChrome
+            closetContent
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -144,19 +120,14 @@ struct MyClosetView: View {
         ContentFilterBar(filters: closetFilterItems, layout: closetLayoutBinding)
     }
 
-    private var closetFloatingAddButton: some View {
-        Button {
-            presentActiveSheet(.addMethod)
-        } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 50, height: 50)
-                .background(.black, in: Circle())
-                .shadow(color: .black.opacity(0.16), radius: 8, x: 0, y: 4)
+    @ViewBuilder
+    private var closetTopChrome: some View {
+        CollapsibleTopChrome(isVisible: isTopChromeVisible) {
+            FitMatchNavigationHeader(onLogout: onLogout)
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 12)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("기준 옷 추가")
     }
 
     @ViewBuilder
@@ -170,44 +141,74 @@ struct MyClosetView: View {
     }
 
     private var closetList: some View {
-        List {
-            ForEach(displayedItems) { item in
-                Button {
-                    selectedClosetItemID = item.id
-                } label: {
-                    ClosetItemCard(item: item) {
-                        toggleRepresentative(item)
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                closetHeader
+
+                if userFits.isEmpty {
+                    EmptyClosetView {
+                        presentActiveSheet(.addMethod)
                     }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                    basisSwipeButton(for: item)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    deleteSwipeButton(for: item)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 36)
+                } else {
+                    ForEach(displayedItems) { item in
+                        Button {
+                            selectedClosetItemID = item.id
+                        } label: {
+                            ClosetItemCard(item: item) {
+                                toggleRepresentative(item)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .contextMenu {
+                            Button {
+                                toggleRepresentative(item)
+                            } label: {
+                                Label(
+                                    item.isRepresentative ? "기준 옷 해제" : "기준 옷으로 설정",
+                                    systemImage: item.isRepresentative ? "tshirt" : "tshirt.fill"
+                                )
+                            }
+
+                            Button(role: .destructive) {
+                                deleteItem(item)
+                            } label: {
+                                Label("삭제", systemImage: "trash")
+                            }
+                        }
+                    }
+
+                    if displayedItems.isEmpty {
+                        EmptyFilterResultView()
+                            .padding(.horizontal, 20)
+                            .padding(.top, 24)
+                    }
                 }
             }
-
-            if displayedItems.isEmpty {
-                EmptyFilterResultView()
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 24, trailing: 20))
-            }
-
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
 
     private var closetGrid: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                LazyVGrid(columns: gridColumns, spacing: 14) {
+            LazyVStack(spacing: 0) {
+                closetHeader
+
+                if userFits.isEmpty {
+                    EmptyClosetView {
+                        presentActiveSheet(.addMethod)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 36)
+                } else {
+                    LazyVGrid(columns: gridColumns, spacing: 14) {
                     ForEach(displayedItems) { item in
                         NavigationLink {
                             ClosetItemDetailView(item: item)
@@ -222,9 +223,10 @@ struct MyClosetView: View {
                             .gridCellColumns(2)
                             .padding(.top, 24)
                     }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
             }
         }
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
@@ -369,6 +371,7 @@ struct MyClosetView: View {
         pendingBasisItem = item
         existingBasisItem = userFits.first {
             $0.id != item.id
+                && $0.category == item.category
                 && $0.detailCategory == item.detailCategory
                 && $0.isRepresentative
         }
@@ -419,6 +422,7 @@ struct MyClosetView: View {
         userFits
             .filter {
                 $0.id != pendingBasisItem.id
+                    && $0.category == pendingBasisItem.category
                     && $0.detailCategory == pendingBasisItem.detailCategory
                     && $0.isRepresentative
             }
@@ -476,6 +480,12 @@ struct MyClosetView: View {
             .forEach { history in
                 modelContext.delete(history)
             }
+    }
+}
+
+private extension String {
+    var normalizedForBasis: String {
+        trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
 
@@ -568,7 +578,7 @@ private struct EmptyFilterResultView: View {
     }
 }
 
-private struct AddClosetMethodSheet: View {
+struct AddClosetMethodSheet: View {
     @Environment(\.dismiss) private var dismiss
     let onLink: () -> Void
     let onManual: () -> Void
@@ -673,7 +683,7 @@ private struct EmptyClosetView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                EmptyStateActionButton(title: "추가하기", action: onAdd)
+                EmptyStateActionButton(title: "내 옷장에 추가", action: onAdd)
                     .padding(.top, 2)
             }
             .offset(y: -24)
@@ -706,9 +716,12 @@ private struct ClosetItemCard: View {
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(.primary)
 
-                        Text("출처: \(item.sourceName)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        if let sourceClassificationText {
+                            Text(sourceClassificationText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
 
                         Text("\(item.gender.rawValue) / \(item.category.rawValue) / \(item.detailCategory.rawValue) / \(item.sizeName)")
                             .font(.subheadline)
@@ -749,6 +762,24 @@ private struct ClosetItemCard: View {
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var sourceClassificationText: String? {
+        guard item.sourceType != .manual else { return nil }
+
+        let sourceName = item.sourceName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let platformName = sourceName.isEmpty || sourceName == item.sourceType.displayName
+            ? item.brandName.trimmingCharacters(in: .whitespacesAndNewlines)
+            : sourceName
+        guard !platformName.isEmpty else { return nil }
+
+        let sourceCategoryPath = (item.sourceCategoryPath ?? item.sourceProduct?.sourceCategoryPath)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let sourceCategoryPath, !sourceCategoryPath.isEmpty else {
+            return platformName
+        }
+
+        return "\(platformName) (\(sourceCategoryPath))"
     }
 }
 

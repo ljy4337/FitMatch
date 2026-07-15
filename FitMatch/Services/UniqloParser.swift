@@ -379,6 +379,12 @@ struct UniqloProductMetadata {
             imageURLString: imageURLString,
             price: price,
             canonicalURLString: canonicalURLString,
+            sourceCategoryPath: productMetadata.sourceCategoryPath,
+            sourceCategoryDepth1: productMetadata.sourceCategoryDepth1,
+            sourceCategoryDepth2: productMetadata.sourceCategoryDepth2,
+            sourceCategoryDepth3: productMetadata.sourceCategoryDepth3,
+            sourceCategoryDepth4: productMetadata.sourceCategoryDepth4,
+            productTargetGender: UserGender.productTarget(from: productMetadata.genderCodes),
             productMetadata: productMetadata
         )
     }
@@ -400,32 +406,65 @@ struct UniqloProductMetadata {
 struct UniqloProductMetadataParser {
     func parse(resolved: ResolvedUniqloURL) -> UniqloProductMetadata {
         let jsonLDObjects = parseJSONLDObjects(from: resolved.html)
+        let productGroupObject = jsonLDObjects.first(where: { isType("ProductGroup", in: $0) })
         let productObject = jsonLDObjects.first(where: { isType("Product", in: $0) })
         let breadcrumbObject = jsonLDObjects.first(where: { isType("BreadcrumbList", in: $0) })
 
-        let productName = stringValue(productObject?["name"])
+        let rawProductName = stringValue(productGroupObject?["name"])
+            ?? stringValue(productObject?["name"])
             ?? titleFallback(from: resolved.html)
             ?? "유니클로 상품 \(resolved.goodsID)"
-        let brandName = brandName(from: productObject) ?? "유니클로"
-        let imageURLString = normalizeImageURL(firstImage(from: productObject))
+        let productName = sanitizedProductName(rawProductName, fallback: "유니클로 상품 \(resolved.goodsID)")
+        let brandName = brandName(from: productGroupObject) ?? brandName(from: productObject) ?? "유니클로"
+        let imageURLString = normalizeImageURL(firstImage(from: productGroupObject) ?? firstImage(from: productObject))
             ?? fallbackImageURL(goodsID: resolved.goodsID, colorCode: resolved.imageColorCode)
-        let price = price(from: productObject)
+        let priceInfo = priceInfo(productGroupObject: productGroupObject, productObject: productObject, resolved: resolved)
         let breadcrumb = breadcrumbItems(from: breadcrumbObject, productName: productName)
-        let categoryText = breadcrumb.last ?? productName
-        let category = mapCategory(from: breadcrumb.joined(separator: " ") + " " + productName)
-        let detailCategory = mapDetailCategory(from: categoryText + " " + productName)
+        let htmlBreadcrumb = htmlBreadcrumbItems(from: resolved.html, productName: productName)
+        let sourcePath = categoryPath(productGroupObject: productGroupObject, breadcrumb: breadcrumb, htmlBreadcrumb: htmlBreadcrumb)
+        let rawSourceCategory = !breadcrumb.isEmpty
+            ? breadcrumb.joined(separator: " / ")
+            : (!htmlBreadcrumb.isEmpty
+                ? htmlBreadcrumb.joined(separator: " / ")
+                : (stringValue(productGroupObject?["category"]) ?? "nil"))
+        let categoryText = sourcePath.depths.joined(separator: " ")
+        let category = mapCategory(from: categoryText)
+        let detailCategory = mapDetailCategory(from: sourcePath.depths.last ?? categoryText)
         let canonicalURL = canonicalURL(from: resolved.html) ?? resolved.resolvedURL.absoluteString
 
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
-            baseCategoryFullPath: breadcrumb.joined(separator: " > "),
-            categoryDepth1Name: breadcrumb.first,
-            categoryDepth2Name: breadcrumb.dropFirst().first,
-            genderCodes: genderCodes(from: breadcrumb),
+            sourceCategoryPath: sourcePath.fullPath,
+            sourceCategoryDepth1: sourcePath.depth1,
+            sourceCategoryDepth2: sourcePath.depth2,
+            sourceCategoryDepth3: sourcePath.depth3,
+            sourceCategoryDepth4: sourcePath.depth4,
+            baseCategoryFullPath: sourcePath.fullPath,
+            categoryDepth1Name: sourcePath.depth1,
+            categoryDepth2Name: sourcePath.depth2,
+            categoryDepth3Name: sourcePath.depth3,
+            categoryDepth4Name: sourcePath.depth4,
+            genderCodes: sourcePath.gender.map { [$0] } ?? genderCodes(from: breadcrumb + htmlBreadcrumb),
             imageURLStrings: [imageURLString].compactMap { $0 },
-            normalPrice: price,
-            salePrice: price,
-            finalPrice: price
+            normalPrice: priceInfo.normalPrice,
+            salePrice: priceInfo.salePrice,
+            finalPrice: priceInfo.finalPrice,
+            currencyCode: (priceInfo.finalPrice ?? priceInfo.salePrice ?? priceInfo.normalPrice) == nil ? nil : "KRW",
+            isSale: priceInfo.normalPrice.map { normal in
+                guard let current = priceInfo.finalPrice ?? priceInfo.salePrice else { return false }
+                return normal > current
+            } ?? false,
+            isOutOfStock: priceInfo.stockStatus == .outOfStock,
+            stockStatusRawValue: priceInfo.stockStatus.rawValue,
+            checkedColorName: resolved.imageColorCode,
+            checkedSizeName: queryValue("sizeDisplayCode", in: resolved.originalURL) ?? queryValue("sizeDisplayCode", in: resolved.resolvedURL)
+        )
+
+        logSourceCategory(
+            rawSourceCategory: rawSourceCategory,
+            gender: UserGender.productTarget(from: metadata.genderCodes),
+            sourcePath: sourcePath,
+            prefix: "[UniqloProductMetadataParser]"
         )
 
         return UniqloProductMetadata(
@@ -438,7 +477,7 @@ struct UniqloProductMetadataParser {
             category: category,
             detailCategory: detailCategory,
             imageURLString: imageURLString,
-            price: price,
+            price: priceInfo.finalPrice ?? priceInfo.salePrice ?? priceInfo.normalPrice,
             canonicalURLString: canonicalURL,
             productMetadata: metadata
         )
@@ -511,18 +550,75 @@ struct UniqloProductMetadataParser {
         return nil
     }
 
-    private func price(from productObject: [String: Any]?) -> Int? {
-        guard let offers = productObject?["offers"] else {
+    private func priceInfo(
+        productGroupObject: [String: Any]?,
+        productObject: [String: Any]?,
+        resolved: ResolvedUniqloURL
+    ) -> UniqloPriceInfo {
+        let variants = variantObjects(from: productGroupObject?["hasVariant"])
+        let selectedSizeCode = queryValue("sizeDisplayCode", in: resolved.originalURL) ?? queryValue("sizeDisplayCode", in: resolved.resolvedURL)
+        let selectedColorCode = queryValue("colorDisplayCode", in: resolved.originalURL)
+            ?? queryValue("colorDisplayCode", in: resolved.resolvedURL)
+            ?? resolved.imageColorCode
+
+        let selectedVariant = variants.first {
+            variant($0, matchesColorCode: selectedColorCode, sizeCode: selectedSizeCode)
+        } ?? variants.first {
+            variant($0, matchesColorCode: selectedColorCode, sizeCode: nil)
+        } ?? variants.first
+
+        if let selectedVariant, let info = priceInfo(from: selectedVariant["offers"]) {
+            return info
+        }
+        if let info = priceInfo(from: productGroupObject?["offers"]) {
+            return info
+        }
+        if let info = priceInfo(from: productObject?["offers"]) {
+            return info
+        }
+        return UniqloPriceInfo(normalPrice: nil, salePrice: nil, finalPrice: nil, stockStatus: .unknown)
+    }
+
+    private func variantObjects(from value: Any?) -> [[String: Any]] {
+        if let object = value as? [String: Any] { return [object] }
+        if let array = value as? [[String: Any]] { return array }
+        if let array = value as? [Any] {
+            return array.compactMap { $0 as? [String: Any] }
+        }
+        return []
+    }
+
+    private func variant(_ object: [String: Any], matchesColorCode colorCode: String?, sizeCode: String?) -> Bool {
+        let haystack = object.map { "\($0.key)=\($0.value)" }.joined(separator: " ").lowercased()
+        let colorMatches = colorCode.map { haystack.contains($0.lowercased()) } ?? true
+        let sizeMatches = sizeCode.map { haystack.contains($0.lowercased()) } ?? true
+        return colorMatches && sizeMatches
+    }
+
+    private func priceInfo(from offers: Any?) -> UniqloPriceInfo? {
+        let offerObjects: [[String: Any]]
+        if let object = offers as? [String: Any] {
+            offerObjects = [object]
+        } else if let array = offers as? [[String: Any]] {
+            offerObjects = array
+        } else if let array = offers as? [Any] {
+            offerObjects = array.compactMap { $0 as? [String: Any] }
+        } else {
             return nil
         }
 
-        if let object = offers as? [String: Any] {
-            return intValue(object["price"] ?? object["lowPrice"])
-        }
-        if let array = offers as? [[String: Any]] {
-            return array.compactMap { intValue($0["price"] ?? $0["lowPrice"]) }.first
-        }
-        return nil
+        guard let offer = offerObjects.first else { return nil }
+        let finalPrice = intValue(offer["price"] ?? offer["lowPrice"])
+        let salePrice = intValue(offer["salePrice"] ?? offer["priceSpecification"])
+        let normalPrice = intValue(offer["normalPrice"] ?? offer["listPrice"] ?? offer["highPrice"])
+        let availability = stringValue(offer["availability"]) ?? stringValue(offer["itemAvailability"])
+
+        return UniqloPriceInfo(
+            normalPrice: normalPrice,
+            salePrice: salePrice,
+            finalPrice: finalPrice ?? salePrice ?? normalPrice,
+            stockStatus: stockStatus(from: availability)
+        )
     }
 
     private func breadcrumbItems(from breadcrumbObject: [String: Any]?, productName: String) -> [String] {
@@ -542,7 +638,116 @@ struct UniqloProductMetadataParser {
         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         .filter { !$0.isEmpty }
 
-        return names.filter { !$0.caseInsensitiveEquals(productName) }
+        return cleanedCategoryParts(names, productName: productName)
+    }
+
+    private func categoryPath(
+        productGroupObject: [String: Any]?,
+        breadcrumb: [String],
+        htmlBreadcrumb: [String]
+    ) -> SourceCategoryPath {
+        let breadcrumbPath = sourceCategoryPath(from: breadcrumb)
+        if !breadcrumbPath.depths.isEmpty {
+            return breadcrumbPath
+        }
+
+        let htmlBreadcrumbPath = sourceCategoryPath(from: htmlBreadcrumb)
+        if !htmlBreadcrumbPath.depths.isEmpty {
+            return htmlBreadcrumbPath
+        }
+
+        let productGroupCategory = stringValue(productGroupObject?["category"])
+        let productGroupPath = sourceCategoryPath(from: splitCategoryPath(productGroupCategory))
+        if !productGroupPath.depths.isEmpty {
+            return productGroupPath
+        }
+
+        return sourceCategoryPath(from: [])
+    }
+
+    private func htmlBreadcrumbItems(from html: String, productName: String) -> [String] {
+        let patterns = [
+            #"<nav[^>]*(?:breadcrumb|Breadcrumb)[^>]*>(.*?)</nav>"#,
+            #"<ol[^>]*(?:breadcrumb|Breadcrumb)[^>]*>(.*?)</ol>"#,
+            #"<ul[^>]*(?:breadcrumb|Breadcrumb)[^>]*>(.*?)</ul>"#,
+            #"<[^>]*(?:class|data-testid)=["'][^"']*(?:breadcrumb|Breadcrumb)[^"']*["'][^>]*>(.*?)</[^>]+>"#
+        ]
+
+        for pattern in patterns {
+            guard let htmlChunk = firstMatch(in: html, pattern: pattern) else {
+                continue
+            }
+
+            let linkedTexts = allMatches(in: htmlChunk, pattern: #"<a[^>]*>(.*?)</a>"#)
+            let itemTexts = linkedTexts.isEmpty
+                ? allMatches(in: htmlChunk, pattern: #"<li[^>]*>(.*?)</li>"#)
+                : linkedTexts
+            let parts = itemTexts
+                .map { $0.strippingHTMLTags.htmlDecoded.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            let cleaned = cleanedCategoryParts(parts, productName: productName)
+            if !cleaned.isEmpty {
+                return cleaned
+            }
+        }
+
+        return []
+    }
+
+    private func cleanedCategoryParts(_ parts: [String], productName: String) -> [String] {
+        var seen = Set<String>()
+        return parts.compactMap { rawPart in
+            let part = rawPart
+                .htmlDecoded
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            guard !part.isEmpty,
+                  !isBreadcrumbRoot(part),
+                  !part.caseInsensitiveEquals(productName) else {
+                return nil
+            }
+            let key = part.lowercased()
+            guard !seen.contains(key) else { return nil }
+            seen.insert(key)
+            return part
+        }
+    }
+
+    private func isBreadcrumbRoot(_ value: String) -> Bool {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return ["홈", "home", "유니클로", "uniqlo"].contains(normalized)
+    }
+
+    private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, prefix: String) {
+        print("\(prefix) raw source category: \(rawSourceCategory)")
+        print("\(prefix) parsed gender: \(gender.rawValue)")
+        print("\(prefix) sourceCategoryDepth1: \(sourcePath.depth1 ?? "nil")")
+        print("\(prefix) sourceCategoryDepth2: \(sourcePath.depth2 ?? "nil")")
+        print("\(prefix) sourceCategoryDepth3: \(sourcePath.depth3 ?? "nil")")
+        print("\(prefix) sourceCategoryDepth4: \(sourcePath.depth4 ?? "nil")")
+        print("\(prefix) sourceCategoryPath: \(sourcePath.fullPath ?? "nil")")
+    }
+
+    private func splitCategoryPath(_ path: String?) -> [String] {
+        guard let path else { return [] }
+        return path
+            .components(separatedBy: CharacterSet(charactersIn: "/>"))
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    private func sourceCategoryPath(from rawParts: [String]) -> SourceCategoryPath {
+        var parts = rawParts
+        let gender = parts.first.flatMap { audienceCode(from: $0) }
+        if gender != nil {
+            parts.removeFirst()
+        }
+        return SourceCategoryPath(gender: gender, depths: parts)
+    }
+
+    private func audienceCode(from value: String) -> String? {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        return ["MEN", "WOMEN", "KIDS", "BABY"].contains(normalized) ? normalized : nil
     }
 
     private func titleFallback(from html: String) -> String? {
@@ -553,8 +758,64 @@ struct UniqloProductMetadataParser {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private func sanitizedProductName(_ rawName: String, fallback: String) -> String {
+        let decodedName = rawName
+            .htmlDecoded
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+
+        let removableAudienceTokens = [
+            "젠더리스",
+            "MEN",
+            "WOMEN",
+            "UNISEX",
+            "KIDS",
+            "BABY",
+            "남성",
+            "여성",
+            "공용",
+            "키즈",
+            "베이비"
+        ]
+
+        var sanitized = decodedName
+        for token in removableAudienceTokens {
+            let escapedToken = NSRegularExpression.escapedPattern(for: token)
+            let patterns = [
+                #"(?i)^\s*\#(escapedToken)\s*[-_/|:·ㆍ]?\s*"#,
+                #"(?i)\s+\#(escapedToken)\s*$"#,
+                #"(?i)\s*[-_/|:·ㆍ]\s*\#(escapedToken)\s*$"#,
+                #"(?i)^\s*\[\#(escapedToken)\]\s*"#,
+                #"(?i)\s*\[\#(escapedToken)\]\s*$"#,
+                #"(?i)^\s*\(\#(escapedToken)\)\s*"#,
+                #"(?i)\s*\(\#(escapedToken)\)\s*$"#
+            ]
+
+            for pattern in patterns {
+                sanitized = sanitized.replacingOccurrences(
+                    of: pattern,
+                    with: "",
+                    options: .regularExpression
+                )
+            }
+        }
+
+        sanitized = sanitized
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "-_/|:·ㆍ")))
+
+        return sanitized.isEmpty ? fallback : sanitized
+    }
+
     private func canonicalURL(from html: String) -> String? {
         firstMatch(in: html, pattern: #"<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["'][^>]*>"#)
+    }
+
+    private func queryValue(_ name: String, in url: URL) -> String? {
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?
+            .first { $0.name == name }?
+            .value
     }
 
     private func firstMatch(in text: String, pattern: String) -> String? {
@@ -565,6 +826,19 @@ struct UniqloProductMetadataParser {
             return nil
         }
         return String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func allMatches(in text: String, pattern: String) -> [String] {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
+            return []
+        }
+        return regex.matches(in: text, range: NSRange(text.startIndex..<text.endIndex, in: text)).compactMap { match in
+            guard match.numberOfRanges > 1,
+                  let range = Range(match.range(at: 1), in: text) else {
+                return nil
+            }
+            return String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
     }
 
     private func mapCategory(from text: String) -> ClothingCategory {
@@ -652,6 +926,45 @@ struct UniqloProductMetadataParser {
         }
         return nil
     }
+
+    private func stockStatus(from availability: String?) -> ProductStockStatus {
+        guard let availability = availability?.lowercased() else {
+            return .unknown
+        }
+        if availability.contains("instock") {
+            return .inStock
+        }
+        if availability.contains("outofstock") || availability.contains("soldout") {
+            return .outOfStock
+        }
+        return .unknown
+    }
+}
+
+private struct SourceCategoryPath {
+    let gender: String?
+    let depths: [String]
+
+    var fullPath: String? {
+        depths.isEmpty ? nil : depths.joined(separator: " > ")
+    }
+
+    var depth1: String? { depth(at: 0) }
+    var depth2: String? { depth(at: 1) }
+    var depth3: String? { depth(at: 2) }
+    var depth4: String? { depth(at: 3) }
+
+    private func depth(at index: Int) -> String? {
+        guard depths.indices.contains(index) else { return nil }
+        return depths[index]
+    }
+}
+
+private struct UniqloPriceInfo {
+    let normalPrice: Int?
+    let salePrice: Int?
+    let finalPrice: Int?
+    let stockStatus: ProductStockStatus
 }
 
 private struct UniqloSizeChartResponse: Decodable {
@@ -773,6 +1086,12 @@ private extension String {
             .replacingOccurrences(of: "\\u003C", with: "<")
             .replacingOccurrences(of: "\\u003E", with: ">")
             .replacingOccurrences(of: "\\u0026", with: "&")
+    }
+
+    var strippingHTMLTags: String {
+        replacingOccurrences(of: #"<[^>]+>"#, with: " ", options: .regularExpression)
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func caseInsensitiveEquals(_ other: String) -> Bool {

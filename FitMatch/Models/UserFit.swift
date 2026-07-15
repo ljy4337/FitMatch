@@ -7,6 +7,11 @@ final class UserFit {
     var id: UUID
     var sourceTypeRawValue: String = ProductSourceType.manual.rawValue
     var sourceName: String = "직접 입력"
+    var sourceCategoryPath: String?
+    var sourceCategoryDepth1: String?
+    var sourceCategoryDepth2: String?
+    var sourceCategoryDepth3: String?
+    var sourceCategoryDepth4: String?
     var brandName: String
     var genderRawValue: String = UserGender.unisex.rawValue
     var productName: String
@@ -38,6 +43,11 @@ final class UserFit {
         id: UUID = UUID(),
         sourceType: ProductSourceType = .manual,
         sourceName: String = "직접 입력",
+        sourceCategoryPath: String? = nil,
+        sourceCategoryDepth1: String? = nil,
+        sourceCategoryDepth2: String? = nil,
+        sourceCategoryDepth3: String? = nil,
+        sourceCategoryDepth4: String? = nil,
         brandName: String,
         gender: UserGender = .unisex,
         productName: String,
@@ -57,6 +67,11 @@ final class UserFit {
         self.id = id
         self.sourceTypeRawValue = sourceType.rawValue
         self.sourceName = sourceName
+        self.sourceCategoryPath = sourceCategoryPath ?? sourceProduct?.sourceCategoryPath
+        self.sourceCategoryDepth1 = sourceCategoryDepth1 ?? sourceProduct?.sourceCategoryDepth1
+        self.sourceCategoryDepth2 = sourceCategoryDepth2 ?? sourceProduct?.sourceCategoryDepth2
+        self.sourceCategoryDepth3 = sourceCategoryDepth3 ?? sourceProduct?.sourceCategoryDepth3
+        self.sourceCategoryDepth4 = sourceCategoryDepth4 ?? sourceProduct?.sourceCategoryDepth4
         self.brandName = brandName
         self.genderRawValue = gender.rawValue
         self.productName = productName
@@ -143,5 +158,31 @@ final class UserFit {
 
     var displayName: String {
         "\(brandName) \(productName)"
+    }
+
+    var sourceCategoryNameForMatching: String {
+        let value = (sourceCategoryDepth1 ?? sourceProduct?.sourceCategoryDepth1 ?? sourceProduct?.categoryDepth1Name)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? category.rawValue : value
+    }
+
+    var sourceDetailCategoryNameForDisplay: String {
+        let value = (sourceCategoryDepth2 ?? sourceProduct?.sourceCategoryDepth2 ?? sourceProduct?.categoryDepth2Name)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? detailCategory.rawValue : value
+    }
+
+    var sourceCategoryDisplayText: String {
+        if let sourceCategoryPath,
+           !sourceCategoryPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return sourceCategoryPath
+        }
+        return sourceProduct?.sourceCategoryDisplayText ?? "\(sourceCategoryNameForMatching) / \(sourceDetailCategoryNameForDisplay)"
+    }
+
+    var isImportedFromURL: Bool {
+        sourceProduct != nil
+            || sourceProductSize != nil
+            || !(sourceProduct?.sourceURLString?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
     }
 }

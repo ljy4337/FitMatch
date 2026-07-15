@@ -22,6 +22,8 @@ struct ContentView: View {
     @State private var compareViewID = UUID()
     @State private var clipboardCandidate: SmartClipboardCandidate?
     @State private var recentClipboardCandidate: SmartClipboardCandidate?
+    @State private var lastCompareLaunchKey: String?
+    @State private var lastCompareLaunchDate = Date.distantPast
     private let sharedURLStore = SharedURLStore()
     private let smartClipboardService = SmartClipboardService()
 
@@ -52,6 +54,7 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
+                refreshRecentClipboardCandidate()
                 if !openPendingSharedURLIfNeeded() {
                     inspectClipboardIfNeeded()
                 }
@@ -87,6 +90,12 @@ struct ContentView: View {
                     histories: histories,
                     onRecompare: { urlString in
                         openCompare(with: urlString)
+                    },
+                    onStartCompareLatestURL: {
+                        openCompareUsingLatestAvailableURL()
+                    },
+                    onRefreshClipboardCandidate: {
+                        refreshRecentClipboardCandidate()
                     },
                     onLogout: {
                         isLoggedIn = false
@@ -167,6 +176,8 @@ struct ContentView: View {
     }
 
     private func inspectClipboardIfNeeded() {
+        refreshRecentClipboardCandidate()
+
         guard isLoggedIn,
               clipboardCandidate == nil,
               let candidate = smartClipboardService.detectCandidate() else {
@@ -177,9 +188,62 @@ struct ContentView: View {
         clipboardCandidate = candidate
     }
 
+    private func refreshRecentClipboardCandidate() {
+        guard isLoggedIn else {
+            recentClipboardCandidate = nil
+            return
+        }
+
+        let latestCandidate = smartClipboardService.currentSupportedProductCandidate()
+        if recentClipboardCandidate != latestCandidate {
+            recentClipboardCandidate = latestCandidate
+        }
+    }
+
     private func openCompare(with urlString: String?) {
+        guard shouldLaunchCompare(for: urlString) else {
+            return
+        }
+
         pendingCompareURL = urlString
         compareViewID = UUID()
+    }
+
+    private func openCompareUsingLatestAvailableURL(fallbackURL: String? = nil) {
+        openCompare(with: latestCompareURL(fallbackURL: fallbackURL))
+    }
+
+    private func latestCompareURL(fallbackURL: String?) -> String? {
+        if let candidate = smartClipboardService.currentSupportedProductCandidate() {
+            recentClipboardCandidate = candidate
+            clipboardCandidate = nil
+            smartClipboardService.markHandled(candidate)
+            return candidate.urlString
+        }
+
+        if let pendingURL = sharedURLStore.consumePendingProductURL() {
+            return pendingURL
+        }
+
+        guard let fallbackURL = fallbackURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+              ProductURLSupport.isSupportedProductURL(fallbackURL) else {
+            return nil
+        }
+
+        return fallbackURL
+    }
+
+    private func shouldLaunchCompare(for urlString: String?) -> Bool {
+        let key = urlString?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "__empty_compare__"
+        let now = Date()
+        if lastCompareLaunchKey == key,
+           now.timeIntervalSince(lastCompareLaunchDate) < 0.8 {
+            return false
+        }
+
+        lastCompareLaunchKey = key
+        lastCompareLaunchDate = now
+        return true
     }
 }
 
@@ -282,7 +346,7 @@ private struct ScreenshotHomeView: View {
                                 .foregroundStyle(.white.opacity(0.72))
                         }
                         .foregroundStyle(.white)
-                        Label("상품 URL 붙여넣기", systemImage: "link")
+                        Label("상품 비교 시작", systemImage: "link")
                             .font(.headline.weight(.bold))
                             .foregroundStyle(.black)
                             .frame(maxWidth: .infinity)
@@ -337,7 +401,7 @@ private struct ScreenshotCompareView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(11)
                             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        PrimaryButton(title: "사이즈 계산", systemImage: "sparkles") {}
+                        PrimaryButton(title: "비교하기", systemImage: "sparkles") {}
 
                         if showsMissingBasis {
                             VStack(alignment: .leading, spacing: 10) {
@@ -862,6 +926,7 @@ private struct ScreenshotMeasure: View {
 #endif
 
 private struct MainTabView: View {
+    @Environment(\.modelContext) private var modelContext
     @Binding var selectedTab: AppTab
     @Binding var clipboardCandidate: SmartClipboardCandidate?
     let compareURL: String?
@@ -870,6 +935,8 @@ private struct MainTabView: View {
     let recentClipboardCandidate: SmartClipboardCandidate?
     let histories: [RecommendationHistory]
     let onRecompare: (String) -> Void
+    let onStartCompareLatestURL: () -> Void
+    let onRefreshClipboardCandidate: () -> Void
     let onLogout: () -> Void
     let compareViewID: UUID
     @State private var activeSheet: MainActiveSheet?
@@ -899,6 +966,17 @@ private struct MainTabView: View {
             tabBarVisibilityController.release(tab: selectedTab, reason: .modalFlow, source: "sheet dismissed")
         }) { sheet in
             switch sheet {
+            case .newTask:
+                NewTaskSheet(
+                    onCompare: {
+                        presentCompareFlowFromNewTask(initialURL: nil)
+                    },
+                    onAddCloset: {
+                        presentClosetAddMethodFromNewTask()
+                    }
+                )
+                .presentationDetents([.height(270)])
+                .presentationDragIndicator(.visible)
             case .compareFlow(let request):
                 CompareFlowSheet(
                     initialURL: request.initialURL,
@@ -923,6 +1001,35 @@ private struct MainTabView: View {
                 )
                 .presentationDetents([.height(390)])
                 .presentationDragIndicator(.visible)
+            case .closetAddMethod:
+                AddClosetMethodSheet(
+                    onLink: {
+                        presentClosetLinkRegistrationFromNewTask()
+                    },
+                    onManual: {
+                        presentManualClosetAddFromNewTask()
+                    }
+                )
+                .presentationDetents([.height(290)])
+                .presentationDragIndicator(.visible)
+            case .closetLinkRegistration:
+                NavigationStack {
+                    LinkClosetRegistrationView()
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            case .manualClosetAdd:
+                NavigationStack {
+                    AddClosetItemView { item in
+                        modelContext.insert(item)
+                        do {
+                            try modelContext.save()
+                        } catch {
+                            print("[MainTabView] manual closet add failed: \(error.localizedDescription)")
+                        }
+                    }
+                }
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -935,7 +1042,7 @@ private struct MainTabView: View {
             FitMatchBottomNavigationBar(
                 selectedTab: $selectedTab,
                 onStartCompare: {
-                    presentCompareFlow(initialURL: nil)
+                    presentSheet(.newTask)
                 }
             )
             .padding(.horizontal, 12)
@@ -947,7 +1054,6 @@ private struct MainTabView: View {
         .offset(y: tabBarVisibilityController.isVisible ? 0 : 140)
         .opacity(tabBarVisibilityController.isVisible ? 1 : 0)
         .allowsHitTesting(tabBarVisibilityController.isVisible)
-        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: tabBarVisibilityController.isVisible)
     }
 
     @ViewBuilder
@@ -963,8 +1069,13 @@ private struct MainTabView: View {
                     onStartCompareWithURL: { urlString in
                         presentCompareFlow(initialURL: urlString)
                     },
+                    onStartCompareLatestURL: onStartCompareLatestURL,
+                    onRefreshClipboardCandidate: onRefreshClipboardCandidate,
                     onOpenHistory: {
                         selectedTab = .history
+                    },
+                    onOpenCloset: {
+                        selectedTab = .my
                     },
                     onRecompare: onRecompare,
                     onLogout: onLogout
@@ -1017,6 +1128,34 @@ private struct MainTabView: View {
         }
     }
 
+    private func presentCompareFlowFromNewTask(initialURL: String?) {
+        activeSheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            presentCompareFlow(initialURL: initialURL)
+        }
+    }
+
+    private func presentClosetAddMethodFromNewTask() {
+        activeSheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            presentSheet(.closetAddMethod)
+        }
+    }
+
+    private func presentClosetLinkRegistrationFromNewTask() {
+        activeSheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            presentSheet(.closetLinkRegistration)
+        }
+    }
+
+    private func presentManualClosetAddFromNewTask() {
+        activeSheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            presentSheet(.manualClosetAdd)
+        }
+    }
+
     private func matchingHistory(for candidate: SmartClipboardCandidate) -> RecommendationHistory? {
         histories.first { history in
             history.product.sourceURLString == candidate.urlString
@@ -1025,24 +1164,44 @@ private struct MainTabView: View {
 }
 
 private enum MainActiveSheet: Identifiable {
+    case newTask
     case compareFlow(CompareFlowRequest)
     case clipboard(SmartClipboardCandidate)
+    case closetAddMethod
+    case closetLinkRegistration
+    case manualClosetAdd
 
     var id: String {
         switch self {
+        case .newTask:
+            return "newTask"
         case .compareFlow(let request):
             return "compareFlow-\(request.id)"
         case .clipboard(let candidate):
             return "clipboard-\(candidate.id)"
+        case .closetAddMethod:
+            return "closetAddMethod"
+        case .closetLinkRegistration:
+            return "closetLinkRegistration"
+        case .manualClosetAdd:
+            return "manualClosetAdd"
         }
     }
 
     var logName: String {
         switch self {
+        case .newTask:
+            return "newTask"
         case .compareFlow:
             return "compareFlow"
         case .clipboard:
             return "clipboard"
+        case .closetAddMethod:
+            return "closetAddMethod"
+        case .closetLinkRegistration:
+            return "closetLinkRegistration"
+        case .manualClosetAdd:
+            return "manualClosetAdd"
         }
     }
 }
@@ -1050,6 +1209,66 @@ private enum MainActiveSheet: Identifiable {
 private struct CompareFlowRequest: Identifiable {
     let id = UUID()
     let initialURL: String?
+}
+
+private struct NewTaskSheet: View {
+    let onCompare: () -> Void
+    let onAddCloset: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("새 작업")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(.primary)
+            }
+
+            VStack(spacing: 12) {
+                NewTaskLargeButton(title: "상품 비교", systemImage: "sparkles") {
+                    onCompare()
+                }
+                NewTaskLargeButton(title: "내 옷장에 추가", systemImage: "tshirt") {
+                    onAddCloset()
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+        .background(Color(.systemGroupedBackground))
+    }
+}
+
+private struct NewTaskLargeButton: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: systemImage)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(width: 40, height: 40)
+                    .background(Color.primary, in: Circle())
+
+                Text(title)
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(height: 72)
+            .padding(.horizontal, 16)
+            .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 private struct FitMatchBottomNavigationBar: View {
@@ -1084,7 +1303,7 @@ private struct FitMatchBottomNavigationBar: View {
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity)
-            .accessibilityLabel("새 상품 비교 시작")
+            .accessibilityLabel("새 작업")
 
             BottomNavigationItem(
                 title: "추천",

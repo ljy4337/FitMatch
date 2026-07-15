@@ -11,6 +11,77 @@ import UIKit
 
 struct FitMatchTests {
 
+    @Test func shortSleeveKnitDoesNotAutoMatchLongSleeveKnit() {
+        let product = comparisonProduct(name: "롱 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 60)
+        let item = comparisonUserFit(name: "반팔 니트", detail: .shortSleeve, sleeve: 24)
+
+        let result = ComparisonProfileMatcher().match(product: product, productDetailCategory: .knitTop, userFits: [item])
+
+        #expect(result.state == .sameFamilyLengthConflict)
+        #expect(result.compatibleCandidates.isEmpty)
+    }
+
+    @Test func longSleeveKnitMayAutoMatchLongSleeveKnit() {
+        let product = comparisonProduct(name: "롱 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 60)
+        let item = comparisonUserFit(name: "긴팔 니트", detail: .knitTop, sleeve: 58)
+
+        let result = ComparisonProfileMatcher().match(product: product, productDetailCategory: .knitTop, userFits: [item])
+
+        #expect(result.state == .compatible)
+        #expect(result.compatibleCandidates.first?.id == item.id)
+    }
+
+    @Test func shortSleeveTShirtDoesNotAutoMatchLongSleeveKnit() {
+        let product = comparisonProduct(name: "긴팔 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 60)
+        let item = comparisonUserFit(name: "반팔 티셔츠", sourceCategory: "상의 > 티셔츠", detail: .shortSleeve, sleeve: 24)
+
+        let result = ComparisonProfileMatcher().match(product: product, productDetailCategory: .knitTop, userFits: [item])
+
+        #expect(result.state == .noCompatibleGarment)
+        #expect(result.compatibleCandidates.isEmpty)
+    }
+
+    @Test func shortsDoNotAutoMatchLongPants() {
+        let product = comparisonProduct(name: "롱 팬츠", category: .bottom, sourceCategory: "바지 > 롱 팬츠", sleeve: 0, totalLength: 100)
+        let item = comparisonUserFit(name: "쇼츠", category: .bottom, sourceCategory: "바지 > 숏 팬츠", detail: .shorts, sleeve: 0, totalLength: 55)
+
+        let result = ComparisonProfileMatcher().match(product: product, productDetailCategory: .slacks, userFits: [item])
+
+        #expect(result.state == .sameFamilyLengthConflict)
+    }
+
+    @Test func unknownSleeveLengthRequiresConfirmation() {
+        let product = comparisonProduct(name: "베이직 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 40)
+        let item = comparisonUserFit(name: "니트", detail: .knitTop, sleeve: 40)
+
+        let result = ComparisonProfileMatcher().match(product: product, productDetailCategory: .knitTop, userFits: [item])
+
+        #expect(result.state == .requiresConfirmation)
+    }
+
+    @Test func previousManualSelectionDoesNotAffectNewProduct() {
+        let matcher = ComparisonProfileMatcher()
+        let previous = comparisonProduct(name: "반팔 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 24)
+        let next = comparisonProduct(name: "긴팔 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 60)
+        let item = comparisonUserFit(name: "반팔 니트", detail: .shortSleeve, sleeve: 24)
+
+        _ = matcher.manualCandidates(product: previous, productDetailCategory: .knitTop, userFits: [item])
+        let result = matcher.match(product: next, productDetailCategory: .knitTop, userFits: [item])
+
+        #expect(result.state == .sameFamilyLengthConflict)
+    }
+
+    @Test func manualLengthMismatchExcludesLengthMeasurement() {
+        let matcher = ComparisonProfileMatcher()
+        let topProduct = comparisonProduct(name: "긴팔 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 60)
+        let shortTop = comparisonUserFit(name: "반팔 니트", detail: .shortSleeve, sleeve: 24)
+        let bottomProduct = comparisonProduct(name: "롱 팬츠", category: .bottom, sourceCategory: "바지 > 롱 팬츠", sleeve: 0, totalLength: 100)
+        let shorts = comparisonUserFit(name: "쇼츠", category: .bottom, sourceCategory: "바지 > 숏 팬츠", detail: .shorts, sleeve: 0, totalLength: 55)
+
+        #expect(matcher.manualMismatch(product: topProduct, productDetailCategory: .knitTop, selectedItem: shortTop).excludedKinds == [.sleeveLength])
+        #expect(matcher.manualMismatch(product: bottomProduct, productDetailCategory: .slacks, selectedItem: shorts).excludedKinds == [.totalLength])
+    }
+
     @Test func example() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
     }
@@ -326,7 +397,10 @@ struct FitMatchTests {
 
         #expect(metadata.category == .top)
         #expect(metadata.detailCategory == .cardigan)
-        #expect(metadata.productMetadata.baseCategoryFullPath == "WOMEN > 니트 & 가디건 > 니트 > 가디건")
+        #expect(metadata.productMetadata.baseCategoryFullPath == "니트 & 가디건 > 니트 > 가디건")
+        #expect(metadata.productMetadata.categoryDepth1Name == "니트 & 가디건")
+        #expect(metadata.productMetadata.categoryDepth2Name == "니트")
+        #expect(metadata.productMetadata.categoryDepth3Name == "가디건")
         #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
     }
 
@@ -343,4 +417,49 @@ struct FitMatchTests {
         )
     }
 
+}
+
+private func comparisonProduct(
+    name: String,
+    category: ClothingCategory = .top,
+    sourceCategory: String,
+    sleeve: Double,
+    totalLength: Double = 70
+) -> Product {
+    let metadata = ProductMetadata(sourceCategoryPath: sourceCategory)
+    let size = ProductSize(
+        name: "M",
+        measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: totalLength, sleeveLength: sleeve)
+    )
+    return Product(name: name, category: category, metadata: metadata, sourceName: "무신사", sizes: [size])
+}
+
+private func comparisonUserFit(
+    name: String,
+    category: ClothingCategory = .top,
+    sourceCategory: String = "상의 > 니트/가디건",
+    detail: ClosetDetailCategory,
+    sleeve: Double,
+    totalLength: Double = 70
+) -> UserFit {
+    UserFit(
+        sourceName: "무신사",
+        sourceCategoryPath: sourceCategory,
+        brandName: "테스트",
+        productName: name,
+        category: category,
+        detailCategory: detail,
+        sizeName: "M",
+        measurements: GarmentMeasurements(
+            shoulder: 48,
+            chest: 54,
+            totalLength: totalLength,
+            sleeveLength: sleeve,
+            waist: category == .bottom ? 38 : 0,
+            hip: category == .bottom ? 50 : 0,
+            thigh: category == .bottom ? 30 : 0
+        ),
+        fitMemo: "",
+        satisfaction: 3
+    )
 }

@@ -155,7 +155,7 @@ struct ShoppingProductFormView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                ComparePrimaryActionButton(title: "상품 등록", systemImage: "plus") {
+                ComparePrimaryActionButton(title: "내 옷장에 추가", systemImage: "plus") {
                     presentActiveSheet(.addBaseline)
                 }
 
@@ -503,7 +503,7 @@ private struct TemporaryReferencePickerView: View {
                             Text("내 옷장에 옷을 먼저 등록하면 상품과 비교할 수 있습니다.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
-                            ComparePrimaryActionButton(title: "상품 등록", systemImage: "plus") {
+                            ComparePrimaryActionButton(title: "내 옷장에 추가", systemImage: "plus") {
                                 dismiss()
                                 onRegister()
                             }
@@ -614,7 +614,7 @@ private struct MissingBasisBottomSheet: View {
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             VStack(spacing: 10) {
-                ComparePrimaryActionButton(title: "상품 등록", systemImage: "plus") {
+                ComparePrimaryActionButton(title: "내 옷장에 추가", systemImage: "plus") {
                     onRegister()
                 }
 

@@ -187,6 +187,24 @@ struct FitMatchNavigationHeader: View {
     }
 }
 
+struct CollapsibleTopChrome<Content: View>: View {
+    let isVisible: Bool
+    private let content: Content
+
+    init(isVisible: Bool, @ViewBuilder content: () -> Content) {
+        self.isVisible = isVisible
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .opacity(isVisible ? 1 : 0)
+            .offset(y: isVisible ? 0 : -24)
+            .frame(height: isVisible ? nil : CGFloat.zero, alignment: .top)
+            .clipped()
+    }
+}
+
 struct SmallInfoCard<Content: View>: View {
     let title: String
     let value: String
@@ -236,32 +254,7 @@ struct ProductPriceView: View {
     let product: Product
 
     var body: some View {
-        if let displayPrice = product.displayPrice {
-            HStack(spacing: 6) {
-                Text(displayPrice)
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(.primary)
-
-                if let discountText = product.discountText {
-                    Text(discountText)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.red)
-                }
-
-                if let normalPriceText = product.normalPriceTextForDisplay {
-                    Text(normalPriceText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .strikethrough()
-                }
-            }
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
-        } else {
-            Text("가격 정보 없음")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
+        EmptyView()
     }
 }
 
