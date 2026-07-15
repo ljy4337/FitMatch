@@ -11,6 +11,8 @@ struct RecommendationResultView: View {
     @State private var activeSheet: RecommendationResultActiveSheet?
     @State private var isShowingClosetSavedAlert = false
     @State private var didOpenInitialReferencePicker = false
+    @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
+    private let favoriteStore = FavoriteProductStore()
 
     init(result: RecommendationHistory, opensReferencePickerOnAppear: Bool = false) {
         self.result = result
@@ -43,6 +45,18 @@ struct RecommendationResultView: View {
             .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             .background(Color(.systemBackground))
             .navigationTitle("분석 결과")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        _ = favoriteStore.toggle(currentResult.product.sourceURLString)
+                        favoriteURLs = favoriteStore.favoriteURLs()
+                    } label: {
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                    }
+                    .disabled(currentResult.product.sourceURLString == nil)
+                    .accessibilityLabel(isFavorite ? "관심 해제" : "관심 등록")
+                }
+            }
             .safeAreaInset(edge: .bottom) {
                 resultBottomActionBar
             }
@@ -410,6 +424,11 @@ struct RecommendationResultView: View {
         comparedMeasurementKinds.isEmpty
             ? "핏 매칭률 계산 불가"
             : "핏 매칭률 \(currentResult.recommendationScore)%"
+    }
+
+    private var isFavorite: Bool {
+        guard let urlString = currentResult.product.sourceURLString else { return false }
+        return favoriteURLs.contains(urlString)
     }
 
     private var heroSummary: String {

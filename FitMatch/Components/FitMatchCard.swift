@@ -170,7 +170,7 @@ struct FitMatchNavigationHeader: View {
                 .accessibilityLabel("검색")
 
                 NavigationLink {
-                    SettingsView(onLogout: onLogout)
+                    MyPageView(onLogout: onLogout ?? {})
                 } label: {
                     Image(systemName: "person.crop.circle")
                         .font(.title3.weight(.semibold))
@@ -180,14 +180,26 @@ struct FitMatchNavigationHeader: View {
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("설정")
+                .accessibilityLabel("내 정보")
+
+                // 설정 화면은 추후 다시 사용할 수 있도록 진입 버튼 구현을 보존합니다.
+                // NavigationLink {
+                //     SettingsView(onLogout: onLogout)
+                // } label: {
+                //     Image(systemName: "gearshape")
+                // }
             }
         }
         .frame(maxWidth: .infinity)
     }
 }
 
+enum FitMatchTopChromeMetrics {
+    static let height: CGFloat = 68
+}
+
 struct CollapsibleTopChrome<Content: View>: View {
+
     let isVisible: Bool
     private let content: Content
 
@@ -199,9 +211,10 @@ struct CollapsibleTopChrome<Content: View>: View {
     var body: some View {
         content
             .opacity(isVisible ? 1 : 0)
-            .offset(y: isVisible ? 0 : -24)
-            .frame(height: isVisible ? nil : CGFloat.zero, alignment: .top)
-            .clipped()
+            .frame(height: FitMatchTopChromeMetrics.height, alignment: .top)
+            .offset(y: isVisible ? 0 : -FitMatchTopChromeMetrics.height)
+            .allowsHitTesting(isVisible)
+            .animation(.easeOut(duration: 0.22), value: isVisible)
     }
 }
 

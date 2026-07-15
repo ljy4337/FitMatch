@@ -15,6 +15,33 @@ enum ClothingCategory: String, CaseIterable, Identifiable, Codable, Hashable {
 
     var id: String { rawValue }
 
+    var taxonomyCode: String {
+        switch serviceGroup {
+        case .top: return "tops"
+        case .bottom: return "bottoms"
+        case .outer: return "outerwear"
+        case .dress: return "dresses"
+        case .underwear: return "underwear"
+        case .shoes: return "shoes"
+        case .accessory: return "accessories"
+        case .other: return "other"
+        case .pants, .shirt, .knit: return serviceGroup.taxonomyCode
+        }
+    }
+
+    static func fromTaxonomyCode(_ code: String) -> ClothingCategory {
+        switch code {
+        case "tops": return .top
+        case "bottoms", "leggings", "skirts": return .bottom
+        case "outerwear": return .outer
+        case "dresses": return .dress
+        case "underwear": return .underwear
+        case "shoes": return .shoes
+        case "accessories": return .accessory
+        default: return .other
+        }
+    }
+
     var serviceGroup: ClothingCategory {
         switch self {
         case .pants:

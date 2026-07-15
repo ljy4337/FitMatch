@@ -28,9 +28,10 @@ struct RecommendationHistoryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            historyTopChrome
+        ZStack(alignment: .top) {
             historyContent
+            historyTopChrome
+                .zIndex(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
@@ -85,6 +86,7 @@ struct RecommendationHistoryView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 18)
                 .padding(.bottom, 12)
+                .background(Color(.systemBackground))
         }
     }
 
@@ -99,55 +101,48 @@ struct RecommendationHistoryView: View {
     }
 
     private var historyList: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                historyControls
+        List {
+            historyControls
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets())
 
-                if filteredHistories.isEmpty {
-                    EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 36)
-                } else {
-                    ForEach(filteredHistories) { history in
-                        HistoryCard(
-                            history: history,
-                            isFavorite: isFavorite(history)
-                        ) {
-                            toggleFavorite(history)
-                        } onOpen: {
-                            openShoppingMall(history)
-                        } onRecompare: {
-                            opensReferencePickerOnDetail = true
-                            selectedHistoryIDForDetail = history.id
-                        } onAddToCloset: {
-                            selectedHistoryForCloset = history
-                        } onShowDetail: {
-                            opensReferencePickerOnDetail = false
-                            selectedHistoryIDForDetail = history.id
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                        .contextMenu {
-                            Button {
-                                toggleFavorite(history)
-                            } label: {
-                                Label(
-                                    isFavorite(history) ? "관심 해제" : "관심 등록",
-                                    systemImage: isFavorite(history) ? "heart.slash" : "heart.fill"
-                                )
-                            }
-
-                            Button(role: .destructive) {
-                                deleteHistory(history)
-                            } label: {
-                                Label("삭제", systemImage: "trash")
-                            }
-                        }
+            if filteredHistories.isEmpty {
+                EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
+                    .frame(maxWidth: .infinity)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 36, leading: 20, bottom: 24, trailing: 20))
+            } else {
+                ForEach(filteredHistories) { history in
+                    HistoryCard(
+                        history: history,
+                        isFavorite: isFavorite(history)
+                    ) {
+                        toggleFavorite(history)
+                    } onOpen: {
+                        openShoppingMall(history)
+                    } onRecompare: {
+                        opensReferencePickerOnDetail = true
+                        selectedHistoryIDForDetail = history.id
+                    } onAddToCloset: {
+                        selectedHistoryForCloset = history
+                    } onShowDetail: {
+                        opensReferencePickerOnDetail = false
+                        selectedHistoryIDForDetail = history.id
+                    }
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        favoriteSwipeButton(for: history)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        deleteSwipeButton(for: history)
                     }
                 }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
@@ -183,6 +178,7 @@ struct RecommendationHistoryView: View {
                 }
             }
         }
+        .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }

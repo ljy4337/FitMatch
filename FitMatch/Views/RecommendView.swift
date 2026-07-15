@@ -5,13 +5,7 @@ struct RecommendView: View {
     @State private var isTopChromeVisible = true
 
     var body: some View {
-        VStack(spacing: 0) {
-            CollapsibleTopChrome(isVisible: isTopChromeVisible) {
-                FitMatchNavigationHeader(onLogout: onLogout)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-            }
-
+        ZStack(alignment: .top) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     CardView(radius: 24, padding: 24) {
@@ -60,7 +54,17 @@ struct RecommendView: View {
                 .padding(20)
                 .padding(.bottom, 112)
             }
+            .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
             .hidesBottomTabBarOnScroll(tab: .recommend, topChrome: $isTopChromeVisible)
+
+            CollapsibleTopChrome(isVisible: isTopChromeVisible) {
+                FitMatchNavigationHeader(onLogout: onLogout)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    .padding(.bottom, 12)
+                    .background(Color(.systemGroupedBackground))
+            }
+            .zIndex(1)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("")

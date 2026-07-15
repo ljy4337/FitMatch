@@ -19,8 +19,17 @@ struct SourceCategoryHistoryMatch: Identifiable, Hashable {
 }
 
 enum SourceCategoryHistoryMatcher {
-    static func matches(for product: Product, userFits: [UserFit]) -> [SourceCategoryHistoryMatch] {
-        if let storedMatch = storedMatch(for: product) {
+    static func matches(
+        for product: Product,
+        detectedDetailCategory: ClosetDetailCategory,
+        userFits: [UserFit]
+    ) -> [SourceCategoryHistoryMatch] {
+        if let storedMatch = storedMatch(for: product),
+           isCompatible(
+            storedMatch,
+            product: product,
+            detectedDetailCategory: detectedDetailCategory
+           ) {
             return [storedMatch]
         }
 
@@ -30,10 +39,18 @@ enum SourceCategoryHistoryMatcher {
 
         let depthMatches = matchesByDepth(for: product, userFits: eligibleItems)
         if !depthMatches.isEmpty {
-            return groupedMatches(from: depthMatches)
+            return compatibleMatches(
+                from: depthMatches,
+                product: product,
+                detectedDetailCategory: detectedDetailCategory
+            )
         }
 
-        return groupedMatches(from: matchesByPathFallback(for: product, userFits: eligibleItems))
+        return compatibleMatches(
+            from: matchesByPathFallback(for: product, userFits: eligibleItems),
+            product: product,
+            detectedDetailCategory: detectedDetailCategory
+        )
     }
 
     static func saveMapping(
@@ -121,6 +138,51 @@ enum SourceCategoryHistoryMatcher {
                 }
                 return $0.detailCategory.rawValue.localizedCompare($1.detailCategory.rawValue) == .orderedAscending
             }
+    }
+
+    private static func compatibleMatches(
+        from items: [UserFit],
+        product: Product,
+        detectedDetailCategory: ClosetDetailCategory
+    ) -> [SourceCategoryHistoryMatch] {
+        groupedMatches(from: items).filter {
+            isCompatible(
+                $0,
+                product: product,
+                detectedDetailCategory: detectedDetailCategory
+            )
+        }
+    }
+
+    private static func isCompatible(
+        _ match: SourceCategoryHistoryMatch,
+        product: Product,
+        detectedDetailCategory: ClosetDetailCategory
+    ) -> Bool {
+        let detectedMajor = product.category.serviceGroup
+        guard detectedMajor == .other || match.category.serviceGroup == detectedMajor else {
+            return false
+        }
+
+        let detectedLength = lengthType(for: detectedDetailCategory)
+        let storedLength = lengthType(for: match.detailCategory)
+        guard let detectedLength, let storedLength else {
+            return true
+        }
+        return detectedLength == storedLength
+    }
+
+    private static func lengthType(for detailCategory: ClosetDetailCategory) -> ComparisonLengthType? {
+        switch detailCategory {
+        case .sleeveless:
+            return .sleeveless
+        case .shortSleeve, .shorts:
+            return .short
+        case .longSleeve:
+            return .long
+        default:
+            return nil
+        }
     }
 
     private static let mappingStoreKey = "FitMatch.sourceCategoryMappings"

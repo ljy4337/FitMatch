@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "taxonomyVersion": "2026.07.1",
+  "genders": [
+    {"code":"male","displayName":"남성","sortOrder":0,"isActive":true},
+    {"code":"female","displayName":"여성","sortOrder":1,"isActive":true},
+    {"code":"unisex","displayName":"공용","sortOrder":2,"isActive":true},
+    {"code":"boys","displayName":"남아","sortOrder":3,"isActive":true},
+    {"code":"girls","displayName":"여아","sortOrder":4,"isActive":true},
+    {"code":"kids_unisex","displayName":"키즈 공용","sortOrder":5,"isActive":true},
+    {"code":"unknown","displayName":"미분류","sortOrder":99,"isActive":true}
+  ],
+  "categories": [
+    {"code":"tops","displayName":"상의","sortOrder":0,"isActive":true,"details":[
+      {"code":"sleeveless","displayName":"민소매","sortOrder":0,"isActive":true},
+      {"code":"short_sleeve","displayName":"반팔","sortOrder":1,"isActive":true},
+      {"code":"three_quarter_sleeve","displayName":"7부","sortOrder":2,"isActive":true},
+      {"code":"long_sleeve","displayName":"긴팔","sortOrder":3,"isActive":true},
+      {"code":"other_tops","displayName":"기타 상의","sortOrder":99,"isActive":true}
+    ]},
+    {"code":"bottoms","displayName":"하의","sortOrder":1,"isActive":true,"details":[
+      {"code":"short_pants","displayName":"숏팬츠","sortOrder":0,"isActive":true},
+      {"code":"shorts","displayName":"반바지","sortOrder":1,"isActive":true},
+      {"code":"cropped_pants","displayName":"크롭","sortOrder":2,"isActive":true},
+      {"code":"three_quarter_pants","displayName":"7부","sortOrder":3,"isActive":true},
+      {"code":"nine_tenths_pants","displayName":"9부","sortOrder":4,"isActive":true},
+      {"code":"long_pants","displayName":"긴바지","sortOrder":5,"isActive":true},
+      {"code":"other_bottoms","displayName":"기타 하의","sortOrder":99,"isActive":true}
+    ]},
+    {"code":"leggings","displayName":"레깅스","sortOrder":2,"isActive":true,"details":[
+      {"code":"short_leggings","displayName":"숏","sortOrder":0,"isActive":true},
+      {"code":"three_quarter_leggings","displayName":"7부","sortOrder":1,"isActive":true},
+      {"code":"nine_tenths_leggings","displayName":"9부","sortOrder":2,"isActive":true},
+      {"code":"long_leggings","displayName":"롱","sortOrder":3,"isActive":true},
+      {"code":"other_leggings","displayName":"기타 레깅스","sortOrder":99,"isActive":true}
+    ]},
+    {"code":"outerwear","displayName":"아우터","sortOrder":3,"isActive":true,"details":[
+      {"code":"cardigan","displayName":"가디건","sortOrder":0,"isActive":true},
+      {"code":"windbreaker","displayName":"바람막이","sortOrder":1,"isActive":true},
+      {"code":"anorak","displayName":"아노락","sortOrder":2,"isActive":true},
+      {"code":"jacket","displayName":"재킷","sortOrder":3,"isActive":true},
+      {"code":"blazer","displayName":"블레이저","sortOrder":4,"isActive":true},
+      {"code":"jumper","displayName":"점퍼","sortOrder":5,"isActive":true},
+      {"code":"blouson","displayName":"블루종","sortOrder":6,"isActive":true},
+      {"code":"fleece","displayName":"플리스","sortOrder":7,"isActive":true},
+      {"code":"light_padding","displayName":"경량패딩","sortOrder":8,"isActive":true},
+      {"code":"short_padding","displayName":"숏패딩","sortOrder":9,"isActive":true},
+      {"code":"padding","displayName":"패딩","sortOrder":10,"isActive":true},
+      {"code":"long_padding","displayName":"롱패딩","sortOrder":11,"isActive":true},
+      {"code":"coat","displayName":"코트","sortOrder":12,"isActive":true},
+      {"code":"trench_coat","displayName":"트렌치코트","sortOrder":13,"isActive":true},
+      {"code":"mouton","displayName":"무스탕","sortOrder":14,"isActive":true},
+      {"code":"vest","displayName":"조끼","sortOrder":15,"isActive":true},
+      {"code":"padded_vest","displayName":"패딩조끼","sortOrder":16,"isActive":true},
+      {"code":"other_outerwear","displayName":"기타 아우터","sortOrder":99,"isActive":true}
+    ]},
+    {"code":"skirts","displayName":"스커트","sortOrder":4,"isActive":true,"details":[{"code":"skirt","displayName":"스커트","sortOrder":0,"isActive":true},{"code":"other_skirts","displayName":"기타 스커트","sortOrder":99,"isActive":true}]},
+    {"code":"dresses","displayName":"원피스","sortOrder":5,"isActive":true,"details":[{"code":"one_piece","displayName":"원피스","sortOrder":0,"isActive":true},{"code":"other_dresses","displayName":"기타 원피스","sortOrder":99,"isActive":true}]},
+    {"code":"underwear","displayName":"속옷","sortOrder":6,"isActive":true,"details":[{"code":"underwear","displayName":"속옷","sortOrder":0,"isActive":true},{"code":"men_briefs","displayName":"남성 브리프","sortOrder":1,"isActive":true},{"code":"men_trunks","displayName":"남성 트렁크","sortOrder":2,"isActive":true},{"code":"men_undershirt","displayName":"남성 런닝","sortOrder":3,"isActive":true},{"code":"women_bra","displayName":"브라","sortOrder":4,"isActive":true},{"code":"women_panty","displayName":"팬티","sortOrder":5,"isActive":true},{"code":"women_camisole","displayName":"캐미솔","sortOrder":6,"isActive":true},{"code":"women_slip","displayName":"슬립","sortOrder":7,"isActive":true}]},
+    {"code":"shoes","displayName":"신발","sortOrder":7,"isActive":true,"details":[{"code":"sneakers","displayName":"스니커즈","sortOrder":0,"isActive":true},{"code":"running_shoes","displayName":"러닝화","sortOrder":1,"isActive":true},{"code":"loafers","displayName":"로퍼","sortOrder":2,"isActive":true},{"code":"boots","displayName":"부츠","sortOrder":3,"isActive":true},{"code":"sandals","displayName":"샌들","sortOrder":4,"isActive":true},{"code":"heels","displayName":"힐","sortOrder":5,"isActive":true}]},
+    {"code":"accessories","displayName":"액세서리","sortOrder":8,"isActive":true,"details":[{"code":"watch","displayName":"시계","sortOrder":0,"isActive":true},{"code":"ring","displayName":"반지","sortOrder":1,"isActive":true},{"code":"bracelet","displayName":"팔찌","sortOrder":2,"isActive":true},{"code":"necklace","displayName":"목걸이","sortOrder":3,"isActive":true},{"code":"bag","displayName":"가방","sortOrder":4,"isActive":true},{"code":"hat","displayName":"모자","sortOrder":5,"isActive":true},{"code":"belt","displayName":"벨트","sortOrder":6,"isActive":true},{"code":"scarf","displayName":"스카프","sortOrder":7,"isActive":true},{"code":"socks","displayName":"양말","sortOrder":8,"isActive":true}]},
+    {"code":"homewear","displayName":"홈웨어","sortOrder":9,"isActive":true,"details":[{"code":"loungewear","displayName":"라운지웨어","sortOrder":0,"isActive":true},{"code":"other_homewear","displayName":"기타 홈웨어","sortOrder":99,"isActive":true}]},
+    {"code":"other","displayName":"기타","sortOrder":99,"isActive":true,"details":[{"code":"sportswear","displayName":"스포츠웨어","sortOrder":0,"isActive":true},{"code":"swimwear","displayName":"수영복","sortOrder":1,"isActive":true},{"code":"uniform","displayName":"유니폼","sortOrder":2,"isActive":true},{"code":"costume","displayName":"코스튬","sortOrder":3,"isActive":true},{"code":"other","displayName":"기타","sortOrder":99,"isActive":true}]}
+  ],
+  "normalizedProductTypes": [
+    {"code":"tops.knit_sweater","categoryCode":"tops","displayName":"니트/스웨터","sortOrder":0,"isActive":true},
+    {"code":"tops.tshirt","categoryCode":"tops","displayName":"티셔츠","sortOrder":1,"isActive":true}
+  ],
+  "legacyAliases": [
+    {"type":"gender","value":"남성","targetCode":"male"},{"type":"gender","value":"여성","targetCode":"female"},{"type":"gender","value":"공용","targetCode":"unisex"},{"type":"gender","value":"키즈","targetCode":"kids_unisex"},{"type":"gender","value":"베이비","targetCode":"kids_unisex"},{"type":"gender","value":"남아","targetCode":"boys"},{"type":"gender","value":"여아","targetCode":"girls"},{"type":"gender","value":"키즈 공용","targetCode":"kids_unisex"},{"type":"gender","value":"미분류","targetCode":"unknown"},
+    {"type":"category","value":"상의","targetCode":"tops"},{"type":"category","value":"셔츠","targetCode":"tops"},{"type":"category","value":"니트","targetCode":"tops"},{"type":"category","value":"하의","targetCode":"bottoms"},{"type":"category","value":"팬츠","targetCode":"bottoms"},{"type":"category","value":"레깅스","targetCode":"leggings"},{"type":"category","value":"아우터","targetCode":"outerwear"},{"type":"category","value":"스커트","targetCode":"skirts"},{"type":"category","value":"원피스","targetCode":"dresses"},{"type":"category","value":"속옷","targetCode":"underwear"},{"type":"category","value":"신발","targetCode":"shoes"},{"type":"category","value":"액세서리","targetCode":"accessories"},{"type":"category","value":"홈웨어","targetCode":"homewear"},{"type":"category","value":"기타","targetCode":"other"},
+    {"type":"detailCategory","value":"나시","categoryCode":"tops","targetCode":"sleeveless"},{"type":"detailCategory","value":"민소매","categoryCode":"tops","targetCode":"sleeveless"},{"type":"detailCategory","value":"반팔","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"반팔티","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"반팔 티셔츠","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"긴팔","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"긴팔티","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"긴팔 티셔츠","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"반바지","categoryCode":"bottoms","targetCode":"shorts"},{"type":"detailCategory","value":"레깅스","categoryCode":"leggings","targetCode":"long_leggings"}
+  ]
+}

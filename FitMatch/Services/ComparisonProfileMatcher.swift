@@ -79,7 +79,10 @@ struct ComparisonProfileMatcher {
         userFits: [UserFit]
     ) -> AutomaticComparisonMatchResult {
         let incoming = profile(for: product, detailCategory: productDetailCategory)
-        let sameMajor = userFits.filter { $0.category.serviceGroup == incoming.majorCategory }
+        let sameMajor = userFits.filter {
+            $0.category.serviceGroup == incoming.majorCategory
+                && gendersAreCompatible(product.productTargetGender.taxonomyCode, $0.resolvedGenderCode)
+        }
         let profiled = sameMajor.map { ($0, profile(for: $0)) }
 
         guard incoming.garmentFamily != .unknown, incoming.lengthType != .unknown else {
@@ -179,7 +182,13 @@ struct ComparisonProfileMatcher {
             path: product.sourceCategoryPath,
             depths: [product.sourceCategoryDepth1, product.sourceCategoryDepth2, product.sourceCategoryDepth3, product.sourceCategoryDepth4]
         )
-        let family = garmentFamily(source: source, productName: product.name, detailCategory: detailCategory, major: major)
+        let family = garmentFamily(
+            normalizedProductTypeCode: product.resolvedNormalizedProductTypeCode,
+            source: source,
+            productName: product.name,
+            detailCategory: detailCategory,
+            major: major
+        )
         let length = lengthType(
             productName: product.name,
             source: source,
@@ -202,7 +211,13 @@ struct ComparisonProfileMatcher {
             path: item.sourceCategoryPath ?? item.sourceProduct?.sourceCategoryPath,
             depths: [item.sourceCategoryDepth1, item.sourceCategoryDepth2, item.sourceCategoryDepth3, item.sourceCategoryDepth4]
         )
-        let family = garmentFamily(source: source, productName: item.productName, detailCategory: item.detailCategory, major: major)
+        let family = garmentFamily(
+            normalizedProductTypeCode: item.resolvedNormalizedProductTypeCode,
+            source: source,
+            productName: item.productName,
+            detailCategory: item.detailCategory,
+            major: major
+        )
         let length = lengthType(
             productName: item.productName,
             source: source,
@@ -220,14 +235,34 @@ struct ComparisonProfileMatcher {
     }
 
     private func garmentFamily(
+        normalizedProductTypeCode: String?,
         source: String,
         productName: String,
         detailCategory: ClosetDetailCategory,
         major: ClothingCategory
     ) -> ComparisonGarmentFamily {
-        familyKeywordMatch(source)
+        normalizedProductTypeCode.flatMap(family(forNormalizedProductTypeCode:))
+            ?? familyKeywordMatch(source)
             ?? familyKeywordMatch(productName)
             ?? family(for: detailCategory, major: major)
+    }
+
+    private func family(forNormalizedProductTypeCode code: String) -> ComparisonGarmentFamily? {
+        switch code {
+        case "tops.knit_sweater": return .knitCardigan
+        case "tops.tshirt": return .tshirt
+        default: return nil
+        }
+    }
+
+    private func gendersAreCompatible(_ incoming: String, _ candidate: String) -> Bool {
+        if incoming == "unknown" || candidate == "unknown" { return true }
+        if incoming == "unisex" || candidate == "unisex" { return true }
+        let kids = Set(["boys", "girls", "kids_unisex"])
+        if kids.contains(incoming) || kids.contains(candidate) {
+            return kids.contains(incoming) && kids.contains(candidate)
+        }
+        return incoming == candidate
     }
 
     private func familyKeywordMatch(_ value: String) -> ComparisonGarmentFamily? {
@@ -324,8 +359,8 @@ struct ComparisonProfileMatcher {
     private func detailLength(_ detail: ClosetDetailCategory, major: ClothingCategory) -> ComparisonLengthType? {
         switch detail {
         case .sleeveless, .vest, .womenCamisole: return .sleeveless
-        case .shortSleeve, .shorts: return .short
-        case .longSleeve: return .long
+        case .shortSleeve, .shortPants, .shorts, .shortLeggings: return .short
+        case .longSleeve, .longPants, .longLeggings: return .long
         default: return nil
         }
     }

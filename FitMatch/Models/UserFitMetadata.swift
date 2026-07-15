@@ -10,6 +10,26 @@ enum UserGender: String, CaseIterable, Identifiable, Codable, Hashable {
 
     var id: String { rawValue }
 
+    var taxonomyCode: String {
+        switch self {
+        case .men: return "male"
+        case .women: return "female"
+        case .unisex: return "unisex"
+        case .kids, .baby: return "kids_unisex"
+        case .unknown: return "unknown"
+        }
+    }
+
+    static func fromTaxonomyCode(_ code: String) -> UserGender {
+        switch code {
+        case "male", "boys": return .men
+        case "female", "girls": return .women
+        case "unisex": return .unisex
+        case "kids_unisex": return .kids
+        default: return .unknown
+        }
+    }
+
     static func productTarget(from codes: [String]) -> UserGender {
         let normalizedCodes = codes
             .map {
@@ -75,6 +95,16 @@ enum ClosetDetailCategory: String, CaseIterable, Identifiable, Codable, Hashable
     case sleeveless = "민소매"
     case shortSleeve = "반팔"
     case longSleeve = "긴팔"
+    case threeQuarterSleeve = "7부"
+    case shortPants = "숏팬츠"
+    case croppedPants = "크롭"
+    case threeQuarterPants = "7부 팬츠"
+    case nineTenthsPants = "9부"
+    case longPants = "긴바지"
+    case shortLeggings = "숏 레깅스"
+    case threeQuarterLeggings = "7부 레깅스"
+    case nineTenthsLeggings = "9부 레깅스"
+    case longLeggings = "롱 레깅스"
     case shirt = "셔츠"
     case blouse = "블라우스"
     case knitTop = "니트"
@@ -92,6 +122,17 @@ enum ClosetDetailCategory: String, CaseIterable, Identifiable, Codable, Hashable
     case jacket = "재킷"
     case coat = "코트"
     case padding = "패딩"
+    case windbreaker = "바람막이"
+    case anorak = "아노락"
+    case blazer = "블레이저"
+    case blouson = "블루종"
+    case fleece = "플리스"
+    case lightPadding = "경량패딩"
+    case shortPadding = "숏패딩"
+    case longPadding = "롱패딩"
+    case trenchCoat = "트렌치코트"
+    case mouton = "무스탕"
+    case paddedVest = "패딩조끼"
     case underwear = "속옷"
     case menBriefs = "남성 브리프"
     case menTrunks = "남성 트렁크"
@@ -124,6 +165,73 @@ enum ClosetDetailCategory: String, CaseIterable, Identifiable, Codable, Hashable
     case other = "기타"
 
     var id: String { rawValue }
+
+    static func fromTaxonomyCode(_ code: String) -> ClosetDetailCategory {
+        switch code {
+        case "sleeveless": return .sleeveless
+        case "short_sleeve": return .shortSleeve
+        case "three_quarter_sleeve": return .threeQuarterSleeve
+        case "long_sleeve": return .longSleeve
+        case "short_pants": return .shortPants
+        case "shorts": return .shorts
+        case "cropped_pants": return .croppedPants
+        case "three_quarter_pants": return .threeQuarterPants
+        case "nine_tenths_pants": return .nineTenthsPants
+        case "long_pants": return .longPants
+        case "short_leggings": return .shortLeggings
+        case "three_quarter_leggings": return .threeQuarterLeggings
+        case "nine_tenths_leggings": return .nineTenthsLeggings
+        case "long_leggings": return .longLeggings
+        case "cardigan": return .cardigan
+        case "windbreaker": return .windbreaker
+        case "anorak": return .anorak
+        case "jacket": return .jacket
+        case "blazer": return .blazer
+        case "jumper": return .jumper
+        case "blouson": return .blouson
+        case "fleece": return .fleece
+        case "light_padding": return .lightPadding
+        case "short_padding": return .shortPadding
+        case "padding": return .padding
+        case "long_padding": return .longPadding
+        case "coat": return .coat
+        case "trench_coat": return .trenchCoat
+        case "mouton": return .mouton
+        case "vest": return .vest
+        case "padded_vest": return .paddedVest
+        case "skirt": return .skirt
+        case "one_piece": return .onePiece
+        case "underwear": return .underwear
+        case "men_briefs": return .menBriefs
+        case "men_trunks": return .menTrunks
+        case "men_undershirt": return .menUndershirt
+        case "women_bra": return .womenBra
+        case "women_panty": return .womenPanty
+        case "women_camisole": return .womenCamisole
+        case "women_slip": return .womenSlip
+        case "sneakers": return .sneakers
+        case "running_shoes": return .runningShoes
+        case "loafers": return .loafers
+        case "boots": return .boots
+        case "sandals": return .sandals
+        case "heels": return .heels
+        case "watch": return .watch
+        case "ring": return .ring
+        case "bracelet": return .bracelet
+        case "necklace": return .necklace
+        case "bag": return .bag
+        case "hat": return .hat
+        case "belt": return .belt
+        case "scarf": return .scarf
+        case "socks": return .socks
+        case "loungewear": return .loungewear
+        case "sportswear": return .sportswear
+        case "swimwear": return .swimwear
+        case "uniform": return .uniform
+        case "costume": return .costume
+        default: return .other
+        }
+    }
 
     static func options(for category: ClothingCategory, gender: UserGender) -> [ClosetDetailCategory] {
         switch category.serviceGroup {

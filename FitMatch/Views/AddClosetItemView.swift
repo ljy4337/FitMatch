@@ -143,30 +143,48 @@ struct AddClosetItemView: View {
             VStack(alignment: .leading, spacing: 16) {
                 AddClosetSelectionMenu(
                     title: "성별",
-                    value: viewModel.gender.rawValue,
+                    value: selectedGenderOption?.displayName ?? viewModel.gender.rawValue,
                     options: inputGenders,
-                    optionTitle: \.rawValue,
-                    selection: $viewModel.gender
+                    optionTitle: \.displayName,
+                    selection: Binding(
+                        get: { selectedGenderOption ?? inputGenders[0] },
+                        set: { option in
+                            viewModel.genderCode = option.code
+                            viewModel.gender = UserGender.fromTaxonomyCode(option.code)
+                        }
+                    )
                 ) { _ in
                     normalizeCategorySelection()
                 }
 
                 AddClosetSelectionMenu(
                     title: "카테고리",
-                    value: viewModel.category.rawValue,
+                    value: selectedCategoryOption?.displayName ?? viewModel.category.rawValue,
                     options: serviceCategories,
-                    optionTitle: \.rawValue,
-                    selection: $viewModel.category
+                    optionTitle: \.displayName,
+                    selection: Binding(
+                        get: { selectedCategoryOption ?? serviceCategories[0] },
+                        set: { option in
+                            viewModel.categoryCode = option.code
+                            viewModel.category = ClothingCategory.fromTaxonomyCode(option.code)
+                        }
+                    )
                 ) { _ in
                     normalizeDetailCategorySelection()
                 }
 
                 AddClosetSelectionMenu(
                     title: "세부 카테고리",
-                    value: viewModel.detailCategory.rawValue,
+                    value: selectedDetailOption?.displayName ?? "선택",
                     options: detailCategories,
-                    optionTitle: \.rawValue,
-                    selection: $viewModel.detailCategory
+                    optionTitle: \.displayName,
+                    selection: Binding(
+                        get: { selectedDetailOption ?? detailCategories[0] },
+                        set: { option in
+                            viewModel.detailCategoryCode = option.code
+                            viewModel.detailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
+                        }
+                    )
                 )
             }
         }
@@ -284,16 +302,28 @@ struct AddClosetItemView: View {
         dismiss()
     }
 
-    private var serviceCategories: [ClothingCategory] {
-        ClothingCategory.closetCategories(for: viewModel.gender).filter { $0 != .other }
+    private var serviceCategories: [TaxonomyCategory] {
+        FitMatchTaxonomyProvider.shared.activeCategories
     }
 
-    private var detailCategories: [ClosetDetailCategory] {
-        ClosetDetailCategory.options(for: viewModel.category, gender: viewModel.gender).filter { $0 != .other }
+    private var detailCategories: [TaxonomyOption] {
+        FitMatchTaxonomyProvider.shared.activeDetails(categoryCode: viewModel.categoryCode)
     }
 
-    private var inputGenders: [UserGender] {
-        [.men, .women, .kids, .baby, .unisex, .unknown]
+    private var inputGenders: [TaxonomyOption] {
+        FitMatchTaxonomyProvider.shared.selectableGenders
+    }
+
+    private var selectedGenderOption: TaxonomyOption? {
+        inputGenders.first { $0.code == viewModel.genderCode }
+    }
+
+    private var selectedCategoryOption: TaxonomyCategory? {
+        serviceCategories.first { $0.code == viewModel.categoryCode }
+    }
+
+    private var selectedDetailOption: TaxonomyOption? {
+        detailCategories.first { $0.code == viewModel.detailCategoryCode }
     }
 
     private var saveGuideText: String? {
@@ -317,8 +347,9 @@ struct AddClosetItemView: View {
     }
 
     private func normalizeInputSelection() {
-        if !inputGenders.contains(viewModel.gender) {
-            viewModel.gender = .unknown
+        if selectedGenderOption == nil, let first = inputGenders.first {
+            viewModel.genderCode = first.code
+            viewModel.gender = UserGender.fromTaxonomyCode(first.code)
         }
         normalizeCategorySelection()
     }
@@ -328,15 +359,17 @@ struct AddClosetItemView: View {
     }
 
     private func normalizeCategorySelection() {
-        if !serviceCategories.contains(viewModel.category) {
-            viewModel.category = serviceCategories.first ?? .top
+        if selectedCategoryOption == nil, let first = serviceCategories.first {
+            viewModel.categoryCode = first.code
+            viewModel.category = ClothingCategory.fromTaxonomyCode(first.code)
         }
         normalizeDetailCategorySelection()
     }
 
     private func normalizeDetailCategorySelection() {
-        if !detailCategories.contains(viewModel.detailCategory) {
-            viewModel.detailCategory = detailCategories.first ?? .shortSleeve
+        if selectedDetailOption == nil, let first = detailCategories.first {
+            viewModel.detailCategoryCode = first.code
+            viewModel.detailCategory = ClosetDetailCategory.fromTaxonomyCode(first.code)
         }
     }
 

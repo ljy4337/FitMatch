@@ -334,51 +334,11 @@ struct ShoppingProductFormView: View {
     }
 
     private func saveUniqueHistory(_ history: RecommendationHistory) throws {
-        duplicateHistories(for: history).forEach { duplicate in
-            modelContext.delete(duplicate)
-        }
-
-        modelContext.insert(history.product)
-        modelContext.insert(history)
-        try modelContext.save()
-    }
-
-    private func duplicateHistories(for history: RecommendationHistory) -> [RecommendationHistory] {
-        histories.filter { existing in
-            isSameComparedProduct(existing.product, history.product)
-        }
-    }
-
-    private func isSameComparedProduct(_ lhs: Product, _ rhs: Product) -> Bool {
-        if let lhsURL = normalizedURL(lhs.sourceURLString),
-           let rhsURL = normalizedURL(rhs.sourceURLString) {
-            return lhsURL == rhsURL
-        }
-
-        if let lhsCode = normalizedText(lhs.productCode), !lhsCode.isEmpty,
-           let rhsCode = normalizedText(rhs.productCode), !rhsCode.isEmpty {
-            return lhsCode == rhsCode
-        }
-
-        let lhsBrand = lhs.brand?.normalizedName ?? lhs.displayName.normalizedBrandName
-        let rhsBrand = rhs.brand?.normalizedName ?? rhs.displayName.normalizedBrandName
-        return lhsBrand == rhsBrand && lhs.name.normalizedBrandName == rhs.name.normalizedBrandName
-    }
-
-    private func normalizedURL(_ value: String?) -> String? {
-        guard var value = normalizedText(value)?.lowercased(), !value.isEmpty else {
-            return nil
-        }
-
-        if value.hasSuffix("/") {
-            value.removeLast()
-        }
-
-        return value
-    }
-
-    private func normalizedText(_ value: String?) -> String? {
-        value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        try RecommendationHistoryStore.saveUnique(
+            history,
+            existing: histories,
+            modelContext: modelContext
+        )
     }
 
     private func presentActiveSheet(_ sheet: ShoppingActiveSheet) {

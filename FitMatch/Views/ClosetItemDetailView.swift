@@ -227,10 +227,11 @@ struct ClosetItemDetailView: View {
 
     private func applyChanges(from editedItem: UserFit) {
         if editedItem.isRepresentative,
-           hasAnotherReference(
-                category: editedItem.category,
-                detailCategory: editedItem.detailCategory
-           ) {
+           userFits.contains(where: {
+               $0.id != item.id
+                   && $0.isRepresentative
+                   && ReferenceGarmentPolicy.conflicts($0, editedItem)
+           }) {
             pendingReferenceChange = PendingClosetEdit(
                 editedItem: editedItem,
                 selectedSize: nil,
@@ -248,9 +249,13 @@ struct ClosetItemDetailView: View {
         item.sourceName = editedItem.sourceName
         item.brandName = editedItem.brandName
         item.gender = editedItem.gender
+        item.genderCode = editedItem.resolvedGenderCode
         item.productName = editedItem.productName
         item.category = editedItem.category
         item.detailCategory = editedItem.detailCategory
+        item.categoryCode = editedItem.resolvedCategoryCode
+        item.detailCategoryCode = editedItem.resolvedDetailCategoryCode
+        item.normalizedProductTypeCode = editedItem.resolvedNormalizedProductTypeCode
         item.sizeName = editedItem.sizeName
         item.measurements = editedItem.measurements
         item.fitMemo = editedItem.fitMemo
@@ -261,9 +266,8 @@ struct ClosetItemDetailView: View {
             userFits
                 .filter {
                     $0.id != item.id
-                        && $0.category == item.category
-                        && $0.detailCategory == item.detailCategory
                         && $0.isRepresentative
+                        && ReferenceGarmentPolicy.conflicts($0, item)
                 }
                 .forEach {
                     $0.isRepresentative = false
@@ -321,21 +325,26 @@ struct ClosetItemDetailView: View {
     ) -> Bool {
         userFits.contains {
             $0.id != item.id
-                && $0.category == category
-                && $0.detailCategory == detailCategory
                 && $0.isRepresentative
+                && ReferenceGarmentPolicy.conflicts($0, referenceCandidate(category: category, detailCategory: detailCategory))
         }
     }
 
     private func applyPendingReferenceChange() {
         guard let pendingReferenceChange else { return }
+        let referenceCandidate = pendingReferenceChange.editedItem ?? referenceCandidate(
+            category: pendingReferenceChange.category,
+            detailCategory: pendingReferenceChange.detailCategory
+        )
 
         userFits
             .filter {
                 $0.id != item.id
-                    && $0.category == pendingReferenceChange.category
-                    && $0.detailCategory == pendingReferenceChange.detailCategory
                     && $0.isRepresentative
+                    && ReferenceGarmentPolicy.conflicts(
+                        $0,
+                        referenceCandidate
+                    )
             }
             .forEach {
                 $0.isRepresentative = false
@@ -352,6 +361,33 @@ struct ClosetItemDetailView: View {
             )
         }
         self.pendingReferenceChange = nil
+    }
+
+    private func referenceCandidate(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory
+    ) -> UserFit {
+        let candidate = UserFit(
+            sourceType: item.sourceType,
+            sourceName: item.sourceName,
+            sourceCategoryPath: item.sourceCategoryPath,
+            brandName: item.brandName,
+            gender: item.gender,
+            productName: item.productName,
+            category: category,
+            detailCategory: detailCategory,
+            sizeName: item.sizeName,
+            measurements: item.measurements,
+            fitMemo: item.fitMemo,
+            satisfaction: item.satisfaction,
+            sourceProduct: item.sourceProduct,
+            sourceProductSize: item.sourceProductSize
+        )
+        candidate.genderCode = item.resolvedGenderCode
+        candidate.categoryCode = item.resolvedCategoryCode
+        candidate.detailCategoryCode = item.resolvedDetailCategoryCode
+        candidate.normalizedProductTypeCode = item.resolvedNormalizedProductTypeCode
+        return candidate
     }
 
     private func deleteItemAndDismiss() {
@@ -474,6 +510,8 @@ private struct ImportedClosetItemEditView: View {
     @State private var selectedSizeID: UUID?
     @State private var selectedCategory: ClothingCategory
     @State private var selectedDetailCategory: ClosetDetailCategory
+    @State private var selectedCategoryCode: String
+    @State private var selectedDetailCategoryCode: String
     @State private var isShowingDeleteAlert = false
 
     init(
@@ -491,6 +529,8 @@ private struct ImportedClosetItemEditView: View {
         _selectedSizeID = State(initialValue: initialID)
         _selectedCategory = State(initialValue: item.category)
         _selectedDetailCategory = State(initialValue: item.detailCategory)
+        _selectedCategoryCode = State(initialValue: item.resolvedCategoryCode ?? item.category.taxonomyCode)
+        _selectedDetailCategoryCode = State(initialValue: item.resolvedDetailCategoryCode ?? "")
     }
 
     var body: some View {
@@ -535,19 +575,31 @@ private struct ImportedClosetItemEditView: View {
                 )
                 AddClosetSelectionMenu(
                     title: "대분류",
-                    value: selectedCategory.rawValue,
+                    value: selectedCategoryOption?.displayName ?? selectedCategory.rawValue,
                     options: availableCategories,
-                    optionTitle: \.rawValue,
-                    selection: $selectedCategory
+                    optionTitle: \.displayName,
+                    selection: Binding(
+                        get: { selectedCategoryOption ?? availableCategories[0] },
+                        set: { option in
+                            selectedCategoryCode = option.code
+                            selectedCategory = ClothingCategory.fromTaxonomyCode(option.code)
+                        }
+                    )
                 ) { _ in
                     normalizeDetailCategory()
                 }
                 AddClosetSelectionMenu(
                     title: "세부 카테고리",
-                    value: selectedDetailCategory.rawValue,
+                    value: selectedDetailOption?.displayName ?? "선택",
                     options: availableDetailCategories,
-                    optionTitle: \.rawValue,
-                    selection: $selectedDetailCategory
+                    optionTitle: \.displayName,
+                    selection: Binding(
+                        get: { selectedDetailOption ?? availableDetailCategories[0] },
+                        set: { option in
+                            selectedDetailCategoryCode = option.code
+                            selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
+                        }
+                    )
                 )
             }
         }
@@ -656,6 +708,8 @@ private struct ImportedClosetItemEditView: View {
 
             Button {
                 guard let selectedSize else { return }
+                item.categoryCode = selectedCategoryCode
+                item.detailCategoryCode = selectedDetailCategoryCode
                 onSave(selectedSize, selectedCategory, selectedDetailCategory)
                 dismiss()
             } label: {
@@ -682,24 +736,33 @@ private struct ImportedClosetItemEditView: View {
         Self.availableSizes(for: item)
     }
 
-    private var availableCategories: [ClothingCategory] {
-        ClothingCategory.closetCategories(for: item.gender).filter { $0 != .other }
+    private var availableCategories: [TaxonomyCategory] {
+        FitMatchTaxonomyProvider.shared.activeCategories
     }
 
-    private var availableDetailCategories: [ClosetDetailCategory] {
-        ClosetDetailCategory.options(for: selectedCategory, gender: item.gender)
-            .filter { $0 != .other }
+    private var availableDetailCategories: [TaxonomyOption] {
+        FitMatchTaxonomyProvider.shared.activeDetails(categoryCode: selectedCategoryCode)
+    }
+
+    private var selectedCategoryOption: TaxonomyCategory? {
+        availableCategories.first { $0.code == selectedCategoryCode }
+    }
+
+    private var selectedDetailOption: TaxonomyOption? {
+        availableDetailCategories.first { $0.code == selectedDetailCategoryCode }
     }
 
     private func normalizeDetailCategory() {
-        if !availableDetailCategories.contains(selectedDetailCategory) {
-            selectedDetailCategory = availableDetailCategories.first ?? .other
+        if selectedDetailOption == nil, let first = availableDetailCategories.first {
+            selectedDetailCategoryCode = first.code
+            selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(first.code)
         }
     }
 
     private func normalizeCategorySelection() {
-        if !availableCategories.contains(selectedCategory) {
-            selectedCategory = availableCategories.first ?? .top
+        if selectedCategoryOption == nil, let first = availableCategories.first {
+            selectedCategoryCode = first.code
+            selectedCategory = ClothingCategory.fromTaxonomyCode(first.code)
         }
         normalizeDetailCategory()
     }

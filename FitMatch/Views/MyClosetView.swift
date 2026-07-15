@@ -21,9 +21,10 @@ struct MyClosetView: View {
     @State private var displayedItems: [UserFit] = []
 
     var body: some View {
-        VStack(spacing: 0) {
-            closetTopChrome
+        ZStack(alignment: .top) {
             closetContent
+            closetTopChrome
+                .zIndex(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
@@ -127,6 +128,7 @@ struct MyClosetView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 18)
                 .padding(.bottom, 12)
+                .background(Color(.systemBackground))
         }
     }
 
@@ -141,56 +143,49 @@ struct MyClosetView: View {
     }
 
     private var closetList: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                closetHeader
+        List {
+            closetHeader
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets())
 
-                if userFits.isEmpty {
-                    EmptyClosetView {
-                        presentActiveSheet(.addMethod)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 36)
-                } else {
-                    ForEach(displayedItems) { item in
-                        Button {
-                            selectedClosetItemID = item.id
-                        } label: {
-                            ClosetItemCard(item: item) {
-                                toggleRepresentative(item)
-                            }
-                            .contentShape(Rectangle())
+            if userFits.isEmpty {
+                EmptyClosetView {
+                    presentActiveSheet(.addMethod)
+                }
+                .frame(maxWidth: .infinity)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 36, leading: 20, bottom: 24, trailing: 20))
+            } else {
+                ForEach(displayedItems) { item in
+                    Button {
+                        selectedClosetItemID = item.id
+                    } label: {
+                        ClosetItemCard(item: item) {
+                            toggleRepresentative(item)
                         }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                        .contextMenu {
-                            Button {
-                                toggleRepresentative(item)
-                            } label: {
-                                Label(
-                                    item.isRepresentative ? "기준 옷 해제" : "기준 옷으로 설정",
-                                    systemImage: item.isRepresentative ? "tshirt" : "tshirt.fill"
-                                )
-                            }
-
-                            Button(role: .destructive) {
-                                deleteItem(item)
-                            } label: {
-                                Label("삭제", systemImage: "trash")
-                            }
-                        }
+                        .contentShape(Rectangle())
                     }
-
-                    if displayedItems.isEmpty {
-                        EmptyFilterResultView()
-                            .padding(.horizontal, 20)
-                            .padding(.top, 24)
+                    .buttonStyle(.plain)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        basisSwipeButton(for: item)
                     }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        deleteSwipeButton(for: item)
+                    }
+                }
+
+                if displayedItems.isEmpty {
+                    EmptyFilterResultView()
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 24, trailing: 20))
                 }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
@@ -229,6 +224,7 @@ struct MyClosetView: View {
                 }
             }
         }
+        .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
         .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
@@ -371,9 +367,8 @@ struct MyClosetView: View {
         pendingBasisItem = item
         existingBasisItem = userFits.first {
             $0.id != item.id
-                && $0.category == item.category
-                && $0.detailCategory == item.detailCategory
                 && $0.isRepresentative
+                && ReferenceGarmentPolicy.conflicts($0, item)
         }
         isShowingBasisChangeAlert = true
     }
@@ -422,9 +417,8 @@ struct MyClosetView: View {
         userFits
             .filter {
                 $0.id != pendingBasisItem.id
-                    && $0.category == pendingBasisItem.category
-                    && $0.detailCategory == pendingBasisItem.detailCategory
                     && $0.isRepresentative
+                    && ReferenceGarmentPolicy.conflicts($0, pendingBasisItem)
             }
             .forEach {
                 $0.isRepresentative = false
@@ -723,7 +717,7 @@ private struct ClosetItemCard: View {
                                 .lineLimit(1)
                         }
 
-                        Text("\(item.gender.rawValue) / \(item.category.rawValue) / \(item.detailCategory.rawValue) / \(item.sizeName)")
+                        Text(item.taxonomyDisplayMetadata)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }

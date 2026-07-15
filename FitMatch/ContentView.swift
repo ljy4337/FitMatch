@@ -15,17 +15,15 @@ struct ContentView: View {
     @Query private var products: [Product]
     @Query private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
+    @AppStorage("FitMatch.hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab: AppTab = .home
     @State private var hasFinishedSplash = false
     @State private var isLoggedIn = false
     @State private var pendingCompareURL: String?
     @State private var compareViewID = UUID()
-    @State private var clipboardCandidate: SmartClipboardCandidate?
-    @State private var recentClipboardCandidate: SmartClipboardCandidate?
     @State private var lastCompareLaunchKey: String?
     @State private var lastCompareLaunchDate = Date.distantPast
     private let sharedURLStore = SharedURLStore()
-    private let smartClipboardService = SmartClipboardService()
 
     var body: some View {
         Group {
@@ -50,14 +48,13 @@ struct ContentView: View {
             )
             try? await Task.sleep(nanoseconds: 800_000_000)
             hasFinishedSplash = true
-            openPendingSharedURLIfNeeded()
+            if hasCompletedOnboarding {
+                openPendingSharedURLIfNeeded()
+            }
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
-                refreshRecentClipboardCandidate()
-                if !openPendingSharedURLIfNeeded() {
-                    inspectClipboardIfNeeded()
-                }
+            if newPhase == .active, hasCompletedOnboarding {
+                _ = openPendingSharedURLIfNeeded()
             }
         }
         .onOpenURL { url in
@@ -69,33 +66,23 @@ struct ContentView: View {
     private var normalContent: some View {
         if !hasFinishedSplash {
             SplashView()
-        } else if !isLoggedIn {
-            LoginView {
-                isLoggedIn = true
-                inspectClipboardIfNeeded()
+        } else if !hasCompletedOnboarding {
+            FitMatchOnboardingView {
+                hasCompletedOnboarding = true
+                _ = openPendingSharedURLIfNeeded()
             }
+        // 로그인 화면은 추후 재사용을 위해 구현을 유지하고 현재 진입 분기만 비활성화합니다.
+        // } else if !isLoggedIn {
+        //     LoginView {
+        //         isLoggedIn = true
+        //     }
         } else {
                 MainTabView(
                     selectedTab: $selectedTab,
-                    clipboardCandidate: $clipboardCandidate,
                     compareURL: pendingCompareURL,
                     onCompareURLConsumed: { pendingCompareURL = nil },
-                    onClipboardCandidateHandled: { candidate, shouldMuteToday in
-                        smartClipboardService.markHandled(candidate)
-                        if shouldMuteToday {
-                            smartClipboardService.muteToday()
-                        }
-                    },
-                    recentClipboardCandidate: recentClipboardCandidate,
-                    histories: histories,
                     onRecompare: { urlString in
                         openCompare(with: urlString)
-                    },
-                    onStartCompareLatestURL: {
-                        openCompareUsingLatestAvailableURL()
-                    },
-                    onRefreshClipboardCandidate: {
-                        refreshRecentClipboardCandidate()
                     },
                     onLogout: {
                         isLoggedIn = false
@@ -175,31 +162,6 @@ struct ContentView: View {
         return true
     }
 
-    private func inspectClipboardIfNeeded() {
-        refreshRecentClipboardCandidate()
-
-        guard isLoggedIn,
-              clipboardCandidate == nil,
-              let candidate = smartClipboardService.detectCandidate() else {
-            return
-        }
-
-        recentClipboardCandidate = candidate
-        clipboardCandidate = candidate
-    }
-
-    private func refreshRecentClipboardCandidate() {
-        guard isLoggedIn else {
-            recentClipboardCandidate = nil
-            return
-        }
-
-        let latestCandidate = smartClipboardService.currentSupportedProductCandidate()
-        if recentClipboardCandidate != latestCandidate {
-            recentClipboardCandidate = latestCandidate
-        }
-    }
-
     private func openCompare(with urlString: String?) {
         guard shouldLaunchCompare(for: urlString) else {
             return
@@ -207,30 +169,6 @@ struct ContentView: View {
 
         pendingCompareURL = urlString
         compareViewID = UUID()
-    }
-
-    private func openCompareUsingLatestAvailableURL(fallbackURL: String? = nil) {
-        openCompare(with: latestCompareURL(fallbackURL: fallbackURL))
-    }
-
-    private func latestCompareURL(fallbackURL: String?) -> String? {
-        if let candidate = smartClipboardService.currentSupportedProductCandidate() {
-            recentClipboardCandidate = candidate
-            clipboardCandidate = nil
-            smartClipboardService.markHandled(candidate)
-            return candidate.urlString
-        }
-
-        if let pendingURL = sharedURLStore.consumePendingProductURL() {
-            return pendingURL
-        }
-
-        guard let fallbackURL = fallbackURL?.trimmingCharacters(in: .whitespacesAndNewlines),
-              ProductURLSupport.isSupportedProductURL(fallbackURL) else {
-            return nil
-        }
-
-        return fallbackURL
     }
 
     private func shouldLaunchCompare(for urlString: String?) -> Bool {
@@ -928,15 +866,9 @@ private struct ScreenshotMeasure: View {
 private struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedTab: AppTab
-    @Binding var clipboardCandidate: SmartClipboardCandidate?
     let compareURL: String?
     let onCompareURLConsumed: () -> Void
-    let onClipboardCandidateHandled: (SmartClipboardCandidate, Bool) -> Void
-    let recentClipboardCandidate: SmartClipboardCandidate?
-    let histories: [RecommendationHistory]
     let onRecompare: (String) -> Void
-    let onStartCompareLatestURL: () -> Void
-    let onRefreshClipboardCandidate: () -> Void
     let onLogout: () -> Void
     let compareViewID: UUID
     @State private var activeSheet: MainActiveSheet?
@@ -951,11 +883,6 @@ private struct MainTabView: View {
         .tint(.primary)
         .onChange(of: selectedTab) { _, _ in
             tabBarVisibilityController.release(tab: selectedTab, reason: .scrolling, source: "tab changed")
-        }
-        .onChange(of: clipboardCandidate) { _, newValue in
-            if let newValue {
-                presentSheet(.clipboard(newValue))
-            }
         }
         .onChange(of: compareViewID) { _, _ in
             presentCompareFlow(initialURL: compareURL)
@@ -978,28 +905,10 @@ private struct MainTabView: View {
                 .presentationDetents([.height(270)])
                 .presentationDragIndicator(.visible)
             case .compareFlow(let request):
-                CompareFlowSheet(
-                    initialURL: request.initialURL,
-                    recentClipboardCandidate: recentClipboardCandidate
-                )
+                NavigationStack {
+                    CompareFlowSheet(initialURL: request.initialURL)
+                }
                 .presentationDetents([.height(640), .large])
-                .presentationDragIndicator(.visible)
-            case .clipboard(let candidate):
-                SmartClipboardPromptSheet(
-                    candidate: candidate,
-                    matchingHistory: matchingHistory(for: candidate),
-                    onCompare: { shouldMuteToday in
-                        onClipboardCandidateHandled(candidate, shouldMuteToday)
-                        clipboardCandidate = nil
-                        presentCompareFlow(initialURL: candidate.urlString)
-                    },
-                    onLater: { shouldMuteToday in
-                        onClipboardCandidateHandled(candidate, shouldMuteToday)
-                        clipboardCandidate = nil
-                        dismissSheet()
-                    }
-                )
-                .presentationDetents([.height(390)])
                 .presentationDragIndicator(.visible)
             case .closetAddMethod:
                 AddClosetMethodSheet(
@@ -1054,6 +963,7 @@ private struct MainTabView: View {
         .offset(y: tabBarVisibilityController.isVisible ? 0 : 140)
         .opacity(tabBarVisibilityController.isVisible ? 1 : 0)
         .allowsHitTesting(tabBarVisibilityController.isVisible)
+        .animation(.easeOut(duration: 0.22), value: tabBarVisibilityController.isVisible)
     }
 
     @ViewBuilder
@@ -1062,15 +972,9 @@ private struct MainTabView: View {
         case .home, .compare:
             NavigationStack {
                 HomeView(
-                    recentClipboardCandidate: recentClipboardCandidate,
                     onStartCompare: {
                         presentCompareFlow(initialURL: nil)
                     },
-                    onStartCompareWithURL: { urlString in
-                        presentCompareFlow(initialURL: urlString)
-                    },
-                    onStartCompareLatestURL: onStartCompareLatestURL,
-                    onRefreshClipboardCandidate: onRefreshClipboardCandidate,
                     onOpenHistory: {
                         selectedTab = .history
                     },
@@ -1156,17 +1060,11 @@ private struct MainTabView: View {
         }
     }
 
-    private func matchingHistory(for candidate: SmartClipboardCandidate) -> RecommendationHistory? {
-        histories.first { history in
-            history.product.sourceURLString == candidate.urlString
-        }
-    }
 }
 
 private enum MainActiveSheet: Identifiable {
     case newTask
     case compareFlow(CompareFlowRequest)
-    case clipboard(SmartClipboardCandidate)
     case closetAddMethod
     case closetLinkRegistration
     case manualClosetAdd
@@ -1177,8 +1075,6 @@ private enum MainActiveSheet: Identifiable {
             return "newTask"
         case .compareFlow(let request):
             return "compareFlow-\(request.id)"
-        case .clipboard(let candidate):
-            return "clipboard-\(candidate.id)"
         case .closetAddMethod:
             return "closetAddMethod"
         case .closetLinkRegistration:
@@ -1194,8 +1090,6 @@ private enum MainActiveSheet: Identifiable {
             return "newTask"
         case .compareFlow:
             return "compareFlow"
-        case .clipboard:
-            return "clipboard"
         case .closetAddMethod:
             return "closetAddMethod"
         case .closetLinkRegistration:
