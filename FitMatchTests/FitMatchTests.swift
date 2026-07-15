@@ -11,6 +11,101 @@ import UIKit
 
 struct FitMatchTests {
 
+    @Test func musinsaActualSizeLengthPreservesKnitFamily() {
+        var metadata = MusinsaProductMetadata(
+            sourceURL: URL(string: "https://www.musinsa.com/products/4668060")!,
+            productID: "4668060",
+            brandName: "무신사",
+            productName: "루이 니트 - 다크 네이비",
+            category: .knit,
+            detailCategory: .knitTop,
+            categoryDepth1Name: "상의",
+            categoryDepth2Name: "니트/스웨터"
+        )
+
+        metadata.applyActualSizeTypeName("긴소매티셔츠")
+
+        #expect(metadata.category == .knit)
+        #expect(metadata.detailCategory == .longSleeve)
+    }
+
+    @Test func shortSleeveSourceHistoryDoesNotOverrideDetectedLongSleeve() {
+        let sourceCategory = "상의 > 니트/스웨터 > \(UUID().uuidString)"
+        let product = comparisonProduct(
+            name: "루이 니트 - 다크 네이비",
+            category: .knit,
+            sourceCategory: sourceCategory,
+            sleeve: 70
+        )
+        let shortSleeveHistory = comparisonUserFit(
+            name: "반팔 니트",
+            sourceCategory: sourceCategory,
+            detail: .shortSleeve,
+            sleeve: 24
+        )
+        SourceCategoryHistoryMatcher.saveMapping(
+            for: product,
+            category: .top,
+            detailCategory: .shortSleeve
+        )
+
+        let matches = SourceCategoryHistoryMatcher.matches(
+            for: product,
+            detectedDetailCategory: .longSleeve,
+            userFits: [shortSleeveHistory]
+        )
+
+        #expect(matches.isEmpty)
+    }
+
+    @Test func detectedLongSleeveKnitDoesNotMatchShortKnitWithoutNameKeyword() {
+        let product = comparisonProduct(
+            name: "루이 니트 - 다크 네이비",
+            category: .knit,
+            sourceCategory: "상의 > 니트/스웨터",
+            sleeve: 70
+        )
+        let shortKnit = comparisonUserFit(
+            name: "반팔 니트",
+            detail: .shortSleeve,
+            sleeve: 24
+        )
+
+        let result = ComparisonProfileMatcher().match(
+            product: product,
+            productDetailCategory: .longSleeve,
+            userFits: [shortKnit]
+        )
+
+        #expect(result.incomingProfile.garmentFamily == .knitCardigan)
+        #expect(result.incomingProfile.lengthType == .long)
+        #expect(result.state == .sameFamilyLengthConflict)
+        #expect(result.compatibleCandidates.isEmpty)
+    }
+
+    @Test func detectedLongSleeveKnitMatchesLongSleeveKnit() {
+        let product = comparisonProduct(
+            name: "루이 니트 - 다크 네이비",
+            category: .knit,
+            sourceCategory: "상의 > 니트/스웨터",
+            sleeve: 70
+        )
+        let longKnit = comparisonUserFit(
+            name: "긴팔 니트",
+            detail: .longSleeve,
+            sleeve: 68
+        )
+
+        let result = ComparisonProfileMatcher().match(
+            product: product,
+            productDetailCategory: .longSleeve,
+            userFits: [longKnit]
+        )
+
+        #expect(result.state == .compatible)
+        #expect(result.compatibleCandidates.first?.id == longKnit.id)
+    }
+
     @Test func shortSleeveKnitDoesNotAutoMatchLongSleeveKnit() {
         let product = comparisonProduct(name: "롱 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 60)
         let item = comparisonUserFit(name: "반팔 니트", detail: .shortSleeve, sleeve: 24)

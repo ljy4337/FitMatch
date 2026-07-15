@@ -2,7 +2,6 @@ import SwiftUI
 import SwiftData
 
 struct MyPageView: View {
-    @Binding var selectedTab: AppTab
     let onLogout: () -> Void
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]

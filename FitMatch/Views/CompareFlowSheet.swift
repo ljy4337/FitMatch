@@ -10,9 +10,6 @@ struct CompareFlowSheet: View {
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
 
     let initialURL: String?
-    let recentClipboardCandidate: SmartClipboardCandidate?
-    private let smartClipboardService = SmartClipboardService()
-
     @StateObject private var viewModel: ShoppingProductViewModel
     @State private var step: CompareFlowStep = .start
     @State private var productURL = ""
@@ -22,19 +19,25 @@ struct CompareFlowSheet: View {
     @State private var registrationRoute: CompareProductRegistrationRoute?
     @State private var isShowingRegistrationSavedAlert = false
     @State private var hasConfirmedComparisonCategory = false
-    @State private var currentClipboardCandidate: SmartClipboardCandidate?
     @State private var isSheetHeaderVisible = true
     @FocusState private var isURLFocused: Bool
 
-    init(initialURL: String? = nil, recentClipboardCandidate: SmartClipboardCandidate? = nil) {
+    init(initialURL: String? = nil) {
         self.initialURL = initialURL
-        self.recentClipboardCandidate = recentClipboardCandidate
         _viewModel = StateObject(wrappedValue: ShoppingProductViewModel(initialURL: initialURL))
         _productURL = State(initialValue: initialURL ?? "")
-        _currentClipboardCandidate = State(initialValue: recentClipboardCandidate)
     }
 
+    @ViewBuilder
     var body: some View {
+        if case .result(let history) = step {
+            RecommendationResultView(result: history)
+        } else {
+            comparisonInputContent
+        }
+    }
+
+    private var comparisonInputContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 switch step {
@@ -50,8 +53,8 @@ struct CompareFlowSheet: View {
                     closetSelectionContent
                 case .confirmReference:
                     confirmReferenceContent
-                case .result(let history):
-                    resultContent(history)
+                case .result:
+                    EmptyView()
                 case .error:
                     errorContent
                 }
@@ -67,7 +70,6 @@ struct CompareFlowSheet: View {
             isURLFocused = false
         }
         .task {
-            refreshClipboardCandidate()
             if let initialURL, !initialURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 await startCompare(with: initialURL)
             }
@@ -96,15 +98,8 @@ private extension CompareFlowSheet {
         VStack(alignment: .leading, spacing: 20) {
             sheetHeader(title: "상품 비교 시작", subtitle: "새 상품을 내 옷과 비교해보세요.")
 
-            if let currentClipboardCandidate {
-                recentClipboardCard(currentClipboardCandidate)
-            }
-
             directURLInputCard
             shoppingShortcutCard
-        }
-        .onAppear {
-            refreshClipboardCandidate()
         }
     }
 
@@ -341,52 +336,6 @@ private extension CompareFlowSheet {
         .padding(.top, 12)
     }
 
-    func resultContent(_ history: RecommendationHistory) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
-            productCompactCard(history.product)
-
-            FitMatchCard {
-                VStack(spacing: 14) {
-                    Text("추천 사이즈")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-
-                    Text(history.recommendedSize.name.displaySizeNameForCompareFlow)
-                        .font(.system(size: 46, weight: .black, design: .rounded))
-                        .foregroundStyle(.primary)
-
-                    Text("핏 매칭률 \(history.recommendationScore)%")
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(.green)
-
-                    Text("내 옷장 기준으로 가장 가까운 사이즈예요.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-            }
-
-            comparisonSummaryCard(history)
-            measurementTableCard(history)
-
-            VStack(spacing: 11) {
-                PrimaryButton(title: "쇼핑몰로 이동", systemImage: "bag") {
-                    openShoppingURL(history.product.sourceURLString)
-                }
-
-                SecondaryButton(title: "내 옷장에 추가", systemImage: "plus") {
-                    presentProductRegistration(
-                        product: history.product,
-                        context: .result,
-                        productDetailCategory: history.productDetailCategory,
-                        recommendedSize: history.recommendedSize,
-                        preselectedCategory: history.product.category.serviceGroup
-                    )
-                }
-            }
-        }
-    }
-
     var errorContent: some View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.circle")
@@ -432,6 +381,12 @@ private extension CompareFlowSheet {
                             isURLFocused = false
                             Task { await startCompare(with: productURL) }
                         }
+
+                    Button("붙여넣기") {
+                        productURL = UIPasteboard.general.string ?? ""
+                    }
+                    .font(.subheadline.weight(.bold))
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
@@ -464,40 +419,7 @@ private extension CompareFlowSheet {
                     ShoppingShortcutButton(title: "유니클로", systemImage: "u.circle", status: "상품추가", isEnabled: true) {
                         openUniqlo()
                     }
-                    ShoppingShortcutButton(title: "29CM", systemImage: "29.circle", status: "준비중", isEnabled: false) {}
-                }
-            }
-        }
-    }
-
-    func recentClipboardCard(_ candidate: SmartClipboardCandidate) -> some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                CompareSheetSectionTitle(title: "최근 복사한 링크")
-
-                HStack(alignment: .center, spacing: 12) {
-                    Image(systemName: "link.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.primary)
-                        .frame(width: 42, height: 42)
-                        .background(Color(.secondarySystemGroupedBackground), in: Circle())
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(candidate.providerName)
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(.primary)
-                        Text(URL(string: candidate.urlString)?.host ?? candidate.urlString)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                PrimaryButton(title: "바로 비교하기", systemImage: "sparkles") {
-                    productURL = candidate.urlString
-                    smartClipboardService.markHandled(candidate)
-                    Task { await startCompare(with: candidate.urlString) }
+                    ShoppingShortcutButton(title: "ZARA", systemImage: "z.circle", status: "준비중", isEnabled: false) {}
                 }
             }
         }
@@ -620,7 +542,11 @@ private extension CompareFlowSheet {
 
     var sourceCategoryHistoryMatches: [SourceCategoryHistoryMatch] {
         guard let product = currentProduct else { return [] }
-        return SourceCategoryHistoryMatcher.matches(for: product, userFits: userFits)
+        return SourceCategoryHistoryMatcher.matches(
+            for: product,
+            detectedDetailCategory: viewModel.detailCategory,
+            userFits: userFits
+        )
     }
 
     var currentSourceCategoryText: String {
@@ -728,7 +654,11 @@ private extension CompareFlowSheet {
         print("[CompareFlowSheet] detailCategory: \(viewModel.detailCategory.rawValue)")
         print("[CompareFlowSheet] automaticMatchState before user confirmation: \(String(describing: automaticMatchResult?.state))")
 
-        let historyMatches = SourceCategoryHistoryMatcher.matches(for: product, userFits: userFits)
+        let historyMatches = SourceCategoryHistoryMatcher.matches(
+            for: product,
+            detectedDetailCategory: viewModel.detailCategory,
+            userFits: userFits
+        )
         print("[CompareFlowSheet] source category history match count: \(historyMatches.count)")
         if historyMatches.count == 1, let match = historyMatches.first {
             applySourceCategoryHistoryMatch(match)
@@ -748,13 +678,6 @@ private extension CompareFlowSheet {
         viewModel.detailCategory = .other
 
         setStep(.categoryConfirmation)
-    }
-
-    func refreshClipboardCandidate() {
-        let latestCandidate = smartClipboardService.currentSupportedProductCandidate()
-        if currentClipboardCandidate != latestCandidate {
-            currentClipboardCandidate = latestCandidate
-        }
     }
 
     func confirmComparisonCategoryAndContinue() {
@@ -914,35 +837,11 @@ private extension CompareFlowSheet {
     }
 
     func saveUniqueHistory(_ history: RecommendationHistory) throws {
-        duplicateHistories(for: history).forEach { duplicate in
-            modelContext.delete(duplicate)
-        }
-
-        modelContext.insert(history.product)
-        modelContext.insert(history)
-        try modelContext.save()
-    }
-
-    func duplicateHistories(for history: RecommendationHistory) -> [RecommendationHistory] {
-        histories.filter { existing in
-            isSameComparedProduct(existing.product, history.product)
-        }
-    }
-
-    func isSameComparedProduct(_ lhs: Product, _ rhs: Product) -> Bool {
-        if let lhsURL = normalizedURL(lhs.sourceURLString),
-           let rhsURL = normalizedURL(rhs.sourceURLString) {
-            return lhsURL == rhsURL
-        }
-
-        if let lhsCode = normalizedText(lhs.productCode), !lhsCode.isEmpty,
-           let rhsCode = normalizedText(rhs.productCode), !rhsCode.isEmpty {
-            return lhsCode == rhsCode
-        }
-
-        let lhsBrand = lhs.brand?.normalizedName ?? lhs.displayName.normalizedBrandName
-        let rhsBrand = rhs.brand?.normalizedName ?? rhs.displayName.normalizedBrandName
-        return lhsBrand == rhsBrand && lhs.name.normalizedBrandName == rhs.name.normalizedBrandName
+        try RecommendationHistoryStore.saveUnique(
+            history,
+            existing: histories,
+            modelContext: modelContext
+        )
     }
 
     func setStep(_ newStep: CompareFlowStep) {
@@ -950,43 +849,6 @@ private extension CompareFlowSheet {
         withAnimation(.snappy(duration: 0.22)) {
             step = newStep
         }
-    }
-
-    func measurementKinds(for history: RecommendationHistory) -> [MeasurementKind] {
-        history.product.category
-            .measurementKinds(detailCategory: history.productDetailCategory, gender: .unisex)
-            .filter {
-                history.recommendedSize.measurements.value(for: $0) > 0
-                    || history.userFit.measurements.value(for: $0) > 0
-            }
-    }
-
-    func formatMeasurement(_ value: Double) -> String {
-        guard value > 0 else { return "-" }
-        if value.rounded() == value { return "\(Int(value))cm" }
-        return String(format: "%.1fcm", value)
-    }
-
-    func formatDifference(_ value: Double) -> String {
-        if value == 0 { return "0cm" }
-        let sign = value > 0 ? "+" : ""
-        if value.rounded() == value { return "\(sign)\(Int(value))cm" }
-        return "\(sign)\(String(format: "%.1f", value))cm"
-    }
-
-    func normalizedURL(_ value: String?) -> String? {
-        guard var value = normalizedText(value)?.lowercased(), !value.isEmpty else { return nil }
-        if value.hasSuffix("/") { value.removeLast() }
-        return value
-    }
-
-    func normalizedText(_ value: String?) -> String? {
-        value?.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    func openShoppingURL(_ urlString: String?) {
-        guard let urlString, let url = URL(string: urlString) else { return }
-        UIApplication.shared.open(url)
     }
 
     func openMusinsa() {
@@ -997,71 +859,6 @@ private extension CompareFlowSheet {
     func openUniqlo() {
         guard let url = URL(string: "https://www.uniqlo.com/kr/ko/") else { return }
         UIApplication.shared.open(url)
-    }
-}
-
-private extension CompareFlowSheet {
-    func comparisonSummaryCard(_ history: RecommendationHistory) -> some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 12) {
-                SectionHeader(title: "비교 기준")
-                Text(history.userFit.displayName)
-                    .font(.headline.weight(.bold))
-                Text("\(history.userFit.category.rawValue) / \(history.userFit.detailCategory.rawValue) · \(history.userFit.sizeName)")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text("실측 \(measurementKinds(for: history).count)개 비교")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(.primary.opacity(0.08), in: Capsule())
-            }
-        }
-    }
-
-    func measurementTableCard(_ history: RecommendationHistory) -> some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(title: "비교 상세")
-
-                VStack(spacing: 0) {
-                    HStack {
-                        Text("항목")
-                        Spacer()
-                        Text("내 기준 옷")
-                        Spacer()
-                        Text("추천 상품")
-                        Spacer()
-                        Text("차이")
-                    }
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 8)
-
-                    ForEach(measurementKinds(for: history), id: \.id) { kind in
-                        HStack {
-                            Text(kind.title)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(formatMeasurement(history.userFit.measurements.value(for: kind)))
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                            Text(formatMeasurement(history.recommendedSize.measurements.value(for: kind)))
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                            Text(formatDifference(history.measurementDifferences.value(for: kind)))
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.primary)
-                        .padding(.vertical, 8)
-
-                        if kind != measurementKinds(for: history).last {
-                            Divider()
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -1287,16 +1084,6 @@ private struct ClosetReferenceChoiceCard: View {
 private extension String {
     var trimmedForCompareFlow: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    var displaySizeNameForCompareFlow: String {
-        let value = trimmedForCompareFlow
-        guard value.contains("/") else { return value }
-        return value
-            .split(separator: "/")
-            .last
-            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-            ?? value
     }
 
 }

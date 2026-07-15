@@ -40,11 +40,6 @@ struct MusinsaProductMetadata {
     }
 
     mutating func applyActualSizeTypeName(_ typeName: String?) {
-        if categoryDepth1Name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ||
-            categoryDepth2Name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
-            return
-        }
-
         guard let typeName = typeName?.trimmingCharacters(in: .whitespacesAndNewlines),
               !typeName.isEmpty else {
             return
@@ -52,14 +47,24 @@ struct MusinsaProductMetadata {
 
         let mappedCategory = MusinsaProductMetadataParser.mapCategory(from: typeName)
         let mappedDetailCategory = MusinsaProductMetadataParser.mapDetailCategory(from: typeName)
+        let hasSourceCategory =
+            categoryDepth1Name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ||
+            categoryDepth2Name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
 
-        if mappedCategory != .other {
+        if !hasSourceCategory, mappedCategory != .other {
             category = mappedCategory
         }
 
-        if mappedDetailCategory != .other {
+        if mappedDetailCategory.isSpecificLengthCategory ||
+            (!hasSourceCategory && mappedDetailCategory != .other) {
             detailCategory = mappedDetailCategory
         }
+    }
+}
+
+private extension ClosetDetailCategory {
+    var isSpecificLengthCategory: Bool {
+        self == .sleeveless || self == .shortSleeve || self == .longSleeve || self == .shorts
     }
 }
 

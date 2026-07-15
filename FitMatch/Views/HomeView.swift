@@ -3,11 +3,7 @@ import SwiftData
 import UIKit
 
 struct HomeView: View {
-    let recentClipboardCandidate: SmartClipboardCandidate?
     let onStartCompare: () -> Void
-    let onStartCompareWithURL: (String) -> Void
-    let onStartCompareLatestURL: () -> Void
-    let onRefreshClipboardCandidate: () -> Void
     let onOpenHistory: () -> Void
     let onOpenCloset: () -> Void
     let onRecompare: (String) -> Void
@@ -15,24 +11,15 @@ struct HomeView: View {
 
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var isTopChromeVisible = true
+    private let favoriteStore = FavoriteProductStore()
 
     var body: some View {
-        VStack(spacing: 0) {
-            CollapsibleTopChrome(isVisible: isTopChromeVisible) {
-                HStack {
-                    FitMatchNavigationTitle()
-                    Spacer()
-                }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
-                    .padding(.bottom, 12)
-            }
-
+        ZStack(alignment: .top) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    clipboardSection
-                    comparisonReadinessSection
+                    closetDashboardSection
                     recentComparisonSection
                     homeGuideSection
                 }
@@ -40,134 +27,110 @@ struct HomeView: View {
                 .padding(.top, 18)
                 .padding(.bottom, 112)
             }
+            .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
             .hidesBottomTabBarOnScroll(tab: .home, topChrome: $isTopChromeVisible)
+
+            CollapsibleTopChrome(isVisible: isTopChromeVisible) {
+                FitMatchNavigationHeader(onLogout: onLogout)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    .padding(.bottom, 12)
+                    .background(Color(.systemGroupedBackground))
+            }
+            .zIndex(1)
         }
         .background(Color(.systemGroupedBackground))
-        .onAppear {
-            onRefreshClipboardCandidate()
-        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
     }
 
-    @ViewBuilder
-    private var clipboardSection: some View {
-        if let recentClipboardCandidate {
-            CardView(radius: 20, padding: 18) {
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack(alignment: .top, spacing: 14) {
-                        Image(systemName: "doc.on.clipboard")
-                            .font(.title3.weight(.semibold))
-                            .frame(width: 42, height: 42)
-                            .background(.primary.opacity(0.06), in: Circle())
-
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("방금 복사한 상품을 비교할까요?")
-                                .font(.headline.weight(.bold))
-                                .foregroundStyle(.primary)
-                            Text(clipboardDescription(for: recentClipboardCandidate))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
-
-                        Spacer()
-                    }
-
-                    PrimaryButton(title: "비교하기", systemImage: "sparkles") {
-                        onStartCompareWithURL(recentClipboardCandidate.urlString)
-                    }
-                }
-            }
-        }
-    }
-
-    private var comparisonReadinessSection: some View {
+    private var closetDashboardSection: some View {
         CardView(radius: 22, padding: 18) {
             VStack(alignment: .leading, spacing: 14) {
-                if referenceFits.isEmpty {
-                    Text("기준 옷을 등록하면 상품 사이즈를 비교할 수 있어요")
-                        .font(.title3.weight(.black))
-                    Text("평소 잘 맞는 옷을 기준 옷으로 등록해 주세요.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    PrimaryButton(title: "내 옷장에 등록하기", systemImage: "tshirt") {
-                        onOpenCloset()
-                    }
-                } else {
-                    Text("내 비교 준비 상태")
-                        .font(.headline.weight(.bold))
-                    Text("기준 옷 \(referenceFits.count)개 등록됨")
-                        .font(.title3.weight(.black))
-                    Text(referenceCategorySummary)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
+                SectionHeader(title: "내 옷장 현황", subtitle: "등록된 옷과 분류를 한눈에 확인하세요")
 
-                    Button(action: onOpenCloset) {
-                        HStack {
-                            Text("내 옷장")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.primary)
+                HStack(spacing: 10) {
+                    HomeClosetStat(title: "전체 옷", value: userFits.count)
+                    HomeClosetStat(title: "기준 옷", value: referenceFitCount)
+                    HomeClosetStat(title: "카테고리", value: closetCategoryCount)
+                }
+
+                Button(action: onOpenCloset) {
+                    HStack {
+                        Text("내 옷장 보기")
+                        Spacer()
+                        Image(systemName: "chevron.right")
                     }
-                    .buttonStyle(.plain)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var recentComparisonSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                SectionHeader(title: "최근 비교", subtitle: recentComparisonSubtitle)
+                Spacer()
+                Button(action: onOpenHistory) {
+                    HStack(spacing: 4) {
+                        Text("전체보기")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if !recentHistories.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 14) {
+                        ForEach(recentHistories) { history in
+                            RecentProductPreviewCard(
+                                history: history,
+                                isFavorite: isFavorite(history),
+                                layout: .carousel,
+                                onToggleFavorite: { toggleFavorite(history) },
+                                onRecompare: {
+                                    if let urlString = history.product.sourceURLString {
+                                        onRecompare(urlString)
+                                    }
+                                }
+                            )
+                            .frame(width: 214)
+                        }
+                    }
+                    .padding(.vertical, 2)
                 }
             }
         }
     }
 
-    @ViewBuilder
-    private var recentComparisonSection: some View {
-        if let history = histories.first {
-            CardView(radius: 22, padding: 18) {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("최근 비교")
-                        .font(.headline.weight(.bold))
-
-                    HStack(alignment: .top, spacing: 14) {
-                        ProductThumbnailView(
-                            imageURLString: history.productImageURLStringForDisplay,
-                            category: history.product.category,
-                            width: 86,
-                            height: 108,
-                            cornerRadius: 18
-                        )
-
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(history.productNameForDisplay)
-                                .font(.headline.weight(.bold))
-                                .lineLimit(2)
-                            Text("기준 옷 · \(history.userFit.displayName)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                            Text("추천 사이즈 \(history.recommendedSize.name.displaySizeName)")
-                                .font(.subheadline.weight(.bold))
-                            if history.recommendationScore > 0 {
-                                Text("핏 매칭률 \(history.recommendationScore)%")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-
-                    NavigationLink {
-                        RecommendationResultView(result: history)
-                    } label: {
-                        Text("결과 보기")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Color(.systemBackground))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 46)
-                            .background(Color.primary, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+    private var recentHistories: [RecommendationHistory] {
+        var seenKeys = Set<String>()
+        return histories.filter { history in
+            let key = history.product.sourceURLString ?? history.product.displayName
+            return seenKeys.insert(key).inserted
         }
+        .prefix(5)
+        .map { $0 }
+    }
+
+    private var recentComparisonSubtitle: String {
+        recentHistories.isEmpty ? "아직 비교 기록이 없습니다" : "최근 비교한 상품을 최대 5개까지 보여드려요"
+    }
+
+    private func isFavorite(_ history: RecommendationHistory) -> Bool {
+        guard let urlString = history.product.sourceURLString else { return false }
+        return favoriteURLs.contains(urlString)
+    }
+
+    private func toggleFavorite(_ history: RecommendationHistory) {
+        _ = favoriteStore.toggle(history.product.sourceURLString)
+        favoriteURLs = favoriteStore.favoriteURLs()
     }
 
     private var homeGuideSection: some View {
@@ -183,22 +146,32 @@ struct HomeView: View {
         }
     }
 
-    private var referenceFits: [UserFit] {
-        userFits.filter(\.isRepresentative)
+    private var referenceFitCount: Int {
+        userFits.filter(\.isRepresentative).count
     }
 
-    private var referenceCategorySummary: String {
-        Array(Set(referenceFits.map { $0.detailCategory.rawValue }))
-            .sorted()
-            .prefix(4)
-            .joined(separator: " · ")
+    private var closetCategoryCount: Int {
+        Set(userFits.map { $0.detailCategory.rawValue }).count
     }
 
-    private func clipboardDescription(for candidate: SmartClipboardCandidate) -> String {
-        if let history = histories.first(where: { $0.productURLStringSnapshot == candidate.urlString }) {
-            return "\(history.productBrandNameForDisplay) · \(history.productNameForDisplay)"
+}
+
+private struct HomeClosetStat: View {
+    let title: String
+    let value: Int
+
+    var body: some View {
+        VStack(spacing: 5) {
+            Text("\(value)")
+                .font(.title2.weight(.black))
+                .monospacedDigit()
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
         }
-        return candidate.urlString.isEmpty ? "복사한 링크를 불러왔어요" : candidate.urlString
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 
@@ -241,7 +214,6 @@ private struct EmptyHomeCard: View {
 #if DEBUG && FITMATCH_LEGACY_COMPARE_START
 struct CompareStartSheet: View {
     @Environment(\.openURL) private var openURL
-    let recentClipboardCandidate: SmartClipboardCandidate?
     let onStartCompare: () -> Void
     let onStartCompareWithURL: (String) -> Void
     let onDismiss: () -> Void
@@ -272,32 +244,6 @@ struct CompareStartSheet: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 18) {
-            if let recentClipboardCandidate {
-                VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("최근 복사한 링크")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.primary)
-                        Text(recentClipboardCandidate.providerName)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    PrimaryButton(title: "바로 비교하기", systemImage: "sparkles") {
-                        onStartCompareWithURL(recentClipboardCandidate.urlString)
-                    }
-                }
-                .padding(16)
-                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.black.opacity(0.08), lineWidth: 1)
-                }
-
-                Divider()
-                    .padding(.vertical, 2)
-            }
-
             urlInputSection
 
             Divider()
@@ -516,6 +462,7 @@ struct RecentProductPreviewCard: View {
             HStack {
                 fitSummary
                 Spacer()
+                recompareButton
             }
         }
     }
@@ -592,92 +539,6 @@ struct RecentProductPreviewCard: View {
         .buttonStyle(.plain)
         .disabled(history.product.sourceURLString == nil)
         .opacity(history.product.sourceURLString == nil ? 0.45 : 1)
-    }
-}
-
-struct SmartClipboardPromptSheet: View {
-    let candidate: SmartClipboardCandidate
-    let matchingHistory: RecommendationHistory?
-    let onCompare: (Bool) -> Void
-    let onLater: (Bool) -> Void
-
-    @State private var muteToday = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Capsule()
-                .fill(.tertiary)
-                .frame(width: 38, height: 5)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 4)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("최근 복사한 상품을 발견했어요.")
-                    .font(.title3.weight(.black))
-                Text("바로 비교하시겠어요?")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 14) {
-                ProductThumbnailView(
-                    imageURLString: matchingHistory?.product.imageURLString,
-                    category: matchingHistory?.product.category,
-                    width: 84,
-                    height: 104,
-                    cornerRadius: 16
-                )
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(matchingHistory?.product.brand?.name ?? candidate.providerName)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                    Text(matchingHistory?.product.name ?? "복사한 상품 링크")
-                        .font(.headline.weight(.bold))
-                        .lineLimit(2)
-                    Text(candidate.urlString)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-
-                Spacer(minLength: 0)
-            }
-            .padding(14)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-
-            Toggle("오늘은 다시 묻지 않기", isOn: $muteToday)
-                .font(.subheadline.weight(.semibold))
-
-            HStack(spacing: 10) {
-                Button {
-                    onLater(muteToday)
-                } label: {
-                    Text("나중에 하기")
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-                .buttonStyle(.plain)
-
-                Button {
-                    onCompare(muteToday)
-                } label: {
-                    Text("바로 비교")
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.black, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(20)
-        .background(Color(.systemBackground))
     }
 }
 
