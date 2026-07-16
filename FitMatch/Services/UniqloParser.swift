@@ -295,18 +295,17 @@ struct UniqloSizeAPIParser {
             guard let measurement = part.centimeterMeasurement else {
                 continue
             }
-            let value = measurement.value
-            valuesByCode[part.code.normalizedUniqloMeasurementKey] = value
-            valuesByName[part.name.normalizedUniqloMeasurementKey] = value
-
             let normalizedCode = part.code.normalizedUniqloMeasurementKey
             let mapping = MeasurementSourceMappingPolicy.uniqlo(rawCode: part.code)
+            let normalizedValue = measurement.value * (mapping?.valueMultiplier ?? 1)
+            valuesByCode[normalizedCode] = normalizedValue
+            valuesByName[part.name.normalizedUniqloMeasurementKey] = normalizedValue
             let displayKind = UniqloMeasurementColumn
                 .column(for: normalizedCode, fallbackName: part.name.normalizedUniqloMeasurementKey)?
                 .displayKind ?? .unknown
             measurementRecords.append(
                 ParsedMeasurement(
-                    value: value,
+                    value: normalizedValue,
                     measurementCode: mapping?.code ?? .unknown,
                     displayKind: displayKind,
                     methodSource: "uniqlo_kr",

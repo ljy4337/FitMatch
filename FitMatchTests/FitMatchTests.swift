@@ -505,7 +505,7 @@ struct FitMatchTests {
         #expect(inseam?.displayKind == .totalLength)
         #expect(chest?.measurementCode == .chestWidthPitToPit)
         #expect(chest?.semanticStatus == .mapped)
-        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v4")
+        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v5")
         #expect(length?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(length?.semanticStatus == .mapped)
         #expect(records.allSatisfy { $0.methodSource == "uniqlo_kr" })
@@ -579,6 +579,82 @@ struct FitMatchTests {
         #expect(length?.semanticStatus == .unknownDefinition)
     }
 
+    @Test func uniqloBottomCircumferencesBecomeWidthsAndPreserveRawValues() throws {
+        let json = """
+        {
+          "result": {
+            "items": [{
+              "productId": "E999999-000",
+              "sizeChart": [{
+                "name": "M",
+                "sizeParts": [
+                  { "code": "waist-product-size", "name": "허리둘레", "measurements": [{ "value": "70", "unit": "cm" }] },
+                  { "code": "hip-product-size", "name": "엉덩이둘레", "measurements": [{ "value": "104", "unit": "cm" }] },
+                  { "code": "thigh", "name": "허벅지 너비", "measurements": [{ "value": "31", "unit": "cm" }] },
+                  { "code": "rising-length", "name": "밑위 길이", "measurements": [{ "value": "29", "unit": "cm" }] },
+                  { "code": "bottom-width", "name": "밑단 너비", "measurements": [{ "value": "22", "unit": "cm" }] },
+                  { "code": "inseam", "name": "인심", "measurements": [{ "value": "76", "unit": "cm" }] }
+                ]
+              }]
+            }]
+          }
+        }
+        """
+
+        let sizes = try UniqloSizeAPIParser().parseSizes(from: Data(json.utf8))
+        let size = try #require(sizes.first)
+        let records = size.measurementRecords
+        let waist = records.first { $0.rawCode == "waist-product-size" }
+        let hip = records.first { $0.rawCode == "hip-product-size" }
+
+        #expect(size.measurements.waist == 35)
+        #expect(size.measurements.hip == 52)
+        #expect(waist?.value == 35)
+        #expect(waist?.rawValueText == "70")
+        #expect(waist?.measurementCode == .waistWidthEdgeToEdge)
+        #expect(hip?.value == 52)
+        #expect(hip?.rawValueText == "104")
+        #expect(hip?.measurementCode == .hipWidthAtWidest)
+        #expect(records.first { $0.rawCode == "thigh" }?.measurementCode == .thighWidthCrotchToOuter)
+        #expect(records.first { $0.rawCode == "rising-length" }?.measurementCode == .riseCrotchToWaistFront)
+        #expect(records.first { $0.rawCode == "bottom-width" }?.measurementCode == .hemWidthEdgeToEdge)
+        #expect(records.first { $0.rawCode == "inseam" }?.measurementCode == .pantsInseamCrotchToHem)
+    }
+
+    @Test func musinsaBottomWidthsAndExplicitLengthsUseCommonCodes() throws {
+        let json = """
+        {
+          "data": {
+            "typeName": "바지",
+            "typeNumber": 6,
+            "sizes": [{
+              "name": "M",
+              "items": [
+                { "name": "허리단면", "value": 35 },
+                { "name": "엉덩이단면", "value": 52 },
+                { "name": "허벅지단면", "value": 31 },
+                { "name": "밑위", "value": 29 },
+                { "name": "밑단단면", "value": 22 },
+                { "name": "총장", "value": 102 },
+                { "name": "인심", "value": 76 }
+              ]
+            }]
+          }
+        }
+        """
+
+        let result = try MusinsaActualSizeAPIParser().parseActualSize(from: Data(json.utf8))
+        let records = try #require(result.sizes.first).measurementRecords
+
+        #expect(records.first { $0.rawLabel == "허리단면" }?.measurementCode == .waistWidthEdgeToEdge)
+        #expect(records.first { $0.rawLabel == "엉덩이단면" }?.measurementCode == .hipWidthAtWidest)
+        #expect(records.first { $0.rawLabel == "허벅지단면" }?.measurementCode == .thighWidthCrotchToOuter)
+        #expect(records.first { $0.rawLabel == "밑위" }?.measurementCode == .riseCrotchToWaistFront)
+        #expect(records.first { $0.rawLabel == "밑단단면" }?.measurementCode == .hemWidthEdgeToEdge)
+        #expect(records.first { $0.rawLabel == "총장" }?.measurementCode == .pantsOutseamWaistToHem)
+        #expect(records.first { $0.rawLabel == "인심" }?.measurementCode == .pantsInseamCrotchToHem)
+    }
+
     @Test func musinsaTypeFiveMapsOfficialDiagramChestWidth() throws {
         let json = """
         {
@@ -609,7 +685,7 @@ struct FitMatchTests {
 
         #expect(chest?.measurementCode == .chestWidthPitToPit)
         #expect(chest?.evidenceLevel == .officialDiagram)
-        #expect(chest?.mappingVersion == "musinsa_actual_size_mapping_v4")
+        #expect(chest?.mappingVersion == "musinsa_actual_size_mapping_v5")
         #expect(length?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(length?.semanticStatus == .mapped)
 
@@ -1492,6 +1568,74 @@ struct FitMatchTests {
         #expect(!result.exclusions.contains {
             $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode
         })
+    }
+
+    @Test func crossPlatformBottomWidthsCompareWhileOutseamAndInseamStaySeparate() {
+        let uniqloSize = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 76, sleeveLength: 0,
+                waist: 35, hip: 52, thigh: 31, rise: 29, hem: 22
+            )
+        )
+        uniqloSize.measurementRecords = [
+            comparisonRecord(value: 35, code: .waistWidthEdgeToEdge, kind: .waist, productSize: uniqloSize),
+            comparisonRecord(value: 52, code: .hipWidthAtWidest, kind: .hip, productSize: uniqloSize),
+            comparisonRecord(value: 31, code: .thighWidthCrotchToOuter, kind: .thigh, productSize: uniqloSize),
+            comparisonRecord(value: 29, code: .riseCrotchToWaistFront, kind: .rise, productSize: uniqloSize),
+            comparisonRecord(value: 22, code: .hemWidthEdgeToEdge, kind: .hem, productSize: uniqloSize),
+            comparisonRecord(value: 76, code: .pantsInseamCrotchToHem, kind: .totalLength, productSize: uniqloSize)
+        ]
+        let musinsaItem = UserFit(
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "바지",
+            category: .bottom,
+            detailCategory: .longPants,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 102, sleeveLength: 0,
+                waist: 35, hip: 52, thigh: 31, rise: 29, hem: 22
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        musinsaItem.measurementRecords = [
+            comparisonRecord(value: 35, code: .waistWidthEdgeToEdge, kind: .waist, userFit: musinsaItem),
+            comparisonRecord(value: 52, code: .hipWidthAtWidest, kind: .hip, userFit: musinsaItem),
+            comparisonRecord(value: 31, code: .thighWidthCrotchToOuter, kind: .thigh, userFit: musinsaItem),
+            comparisonRecord(value: 29, code: .riseCrotchToWaistFront, kind: .rise, userFit: musinsaItem),
+            comparisonRecord(value: 22, code: .hemWidthEdgeToEdge, kind: .hem, userFit: musinsaItem),
+            comparisonRecord(value: 102, code: .pantsOutseamWaistToHem, kind: .totalLength, userFit: musinsaItem)
+        ]
+
+        let differentPaths = MeasurementComparisonEngine().compare(
+            productSize: uniqloSize,
+            referenceItem: musinsaItem,
+            productCategory: .bottom,
+            productDetailCategory: .longPants
+        )
+
+        #expect(differentPaths.comparedKinds == [.waist, .hip, .thigh, .rise, .hem])
+        #expect(differentPaths.exclusions.contains {
+            $0.kind == .totalLength
+                && $0.reason == .incompatibleMeasurementCode
+                && $0.productCode == .pantsInseamCrotchToHem
+                && $0.referenceCode == .pantsOutseamWaistToHem
+        })
+
+        let musinsaLength = musinsaItem.measurementRecords.first { $0.displayKind == .totalLength }
+        #expect(musinsaLength != nil)
+        musinsaLength?.measurementCodeRawValue = MeasurementCode.pantsInseamCrotchToHem.rawValue
+        musinsaItem.measurements.totalLength = 76
+        musinsaLength?.value = 76
+        let sameInseam = MeasurementComparisonEngine().compare(
+            productSize: uniqloSize,
+            referenceItem: musinsaItem,
+            productCategory: .bottom,
+            productDetailCategory: .longPants
+        )
+        #expect(sameInseam.comparedKinds.contains(.totalLength))
     }
 
     @Test func compatibleOtherBrandOutranksSameBrandWithLessMeasurementEvidence() {
@@ -2421,7 +2565,7 @@ struct FitMatchTests {
         #expect(chest?.rawCode == "body-width")
         #expect(chest?.rawValueText == "54")
         #expect(chest?.semanticStatus == .mapped)
-        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v4")
+        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v5")
     }
 
     @Test func musinsaTranscribedEntryRequiresExplicitSleeveMethodForMapping() {
@@ -2587,8 +2731,8 @@ struct FitMatchTests {
         #expect(byKind[.totalLength]?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(byKind[.shoulder]?.isComparable == true)
         #expect(byKind[.chest]?.isComparable == true)
-        #expect(records.allSatisfy { $0.mappingVersion == "legacy_backfill_v5" })
-        #expect(MeasurementLegacyBackfillService.migrationVersion == 5)
+        #expect(records.allSatisfy { $0.mappingVersion == "legacy_backfill_v6" })
+        #expect(MeasurementLegacyBackfillService.migrationVersion == 6)
     }
 
     @Test func uniqloLegacyMeasurementsRemainUnknownWithoutRawCodes() {
@@ -2667,11 +2811,11 @@ struct FitMatchTests {
         #expect(savedRecords.count == 1)
         #expect(savedRecords.first?.id == canonicalRecord.id)
         #expect(savedRecords.first?.measurementCode == .chestWidthPitToPit)
-        #expect(savedRecords.first?.mappingVersion == "uniqlo_kr_size_chart_mapping_v4")
-        #expect(size.measurementMigrationVersion == 5)
+        #expect(savedRecords.first?.mappingVersion == "uniqlo_kr_size_chart_mapping_v5")
+        #expect(size.measurementMigrationVersion == 6)
     }
 
-    @Test func migrationVersionFiveConvertsLegacyPlatformChestAndLengthsWithoutChangingSleeves() throws {
+    @Test func migrationVersionSixConvertsLegacyPlatformChestAndLengthsWithoutChangingSleeves() throws {
         let container = try inMemoryModelContainer()
         let context = ModelContext(container)
         let size = ProductSize(
@@ -2752,8 +2896,71 @@ struct FitMatchTests {
             "body-width", "musinsa-5", "musinsa-20", "musinsa-21",
             "body-length-back", "body-length", "knit-body-length-front", "musinsa-sleeve"
         ])
-        #expect(size.measurementMigrationVersion == 5)
-        #expect(item.measurementMigrationVersion == 5)
+        #expect(size.measurementMigrationVersion == 6)
+        #expect(item.measurementMigrationVersion == 6)
+    }
+
+    @Test func migrationVersionSixHalvesUniqloCircumferencesExactlyOnce() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 76, sleeveLength: 0,
+                waist: 70, hip: 104
+            )
+        )
+        let product = Product(name: "기존 유니클로 바지", category: .bottom, sourceName: "유니클로 공식몰", sizes: [size])
+        let waist = GarmentMeasurementRecord(
+            value: 70,
+            measurementCode: .unknown,
+            displayKind: .waist,
+            methodSource: "uniqlo_kr",
+            methodProfile: "uniqlo_size_chart",
+            inputSource: .importedSizeChart,
+            mappingVersion: "uniqlo_kr_size_chart_mapping_v4",
+            rawCode: "waist-product-size",
+            rawLabel: "허리둘레",
+            rawValueText: "70",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped,
+            productSize: size
+        )
+        let hip = GarmentMeasurementRecord(
+            value: 104,
+            measurementCode: .unknown,
+            displayKind: .hip,
+            methodSource: "uniqlo_kr",
+            methodProfile: "uniqlo_size_chart",
+            inputSource: .importedSizeChart,
+            mappingVersion: "uniqlo_kr_size_chart_mapping_v4",
+            rawCode: "hip-product-size",
+            rawLabel: "엉덩이둘레",
+            rawValueText: "104",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped,
+            productSize: size
+        )
+        size.measurementRecords = [waist, hip]
+        size.measurementMigrationVersion = 5
+        size.measurementMigrationStatus = .completed
+        context.insert(product)
+        try context.save()
+
+        try MeasurementLegacyBackfillService.run(modelContext: context, products: [product], userFits: [])
+        #expect(waist.value == 35)
+        #expect(hip.value == 52)
+        #expect(size.measurements.waist == 35)
+        #expect(size.measurements.hip == 52)
+        #expect(waist.rawValueText == "70")
+        #expect(hip.rawValueText == "104")
+
+        try MeasurementLegacyBackfillService.run(modelContext: context, products: [product], userFits: [])
+        #expect(waist.value == 35)
+        #expect(hip.value == 52)
+        #expect(size.measurements.waist == 35)
+        #expect(size.measurements.hip == 52)
+        #expect(size.measurementMigrationVersion == 6)
     }
 
     @Test func musinsaLegacyRaglanAndSetInSleevesStaySeparate() {

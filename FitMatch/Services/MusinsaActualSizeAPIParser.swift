@@ -83,9 +83,6 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         }
 
         var valuesByName: [String: String] = [:]
-        for item in size.items {
-            valuesByName[item.name.normalizedMeasurementName] = item.value.stringValue
-        }
 
         let measurementRecords = size.items.compactMap { item -> ParsedMeasurement? in
             let rawValue = item.value.stringValue
@@ -93,10 +90,13 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
             let column = MusinsaActualSizeColumn.column(for: item.name.normalizedMeasurementName)
             let mapping = MeasurementSourceMappingPolicy.musinsa(
                 typeNumber: typeNumber,
-                displayKind: column?.displayKind
+                displayKind: column?.displayKind,
+                rawLabel: item.name
             )
+            let normalizedValue = value * (mapping?.valueMultiplier ?? 1)
+            valuesByName[item.name.normalizedMeasurementName] = String(normalizedValue)
             return ParsedMeasurement(
-                value: value,
+                value: normalizedValue,
                 measurementCode: mapping?.code ?? .unknown,
                 displayKind: column?.displayKind ?? .unknown,
                 methodSource: "musinsa",

@@ -3,8 +3,8 @@ import SwiftData
 
 @MainActor
 enum MeasurementLegacyBackfillService {
-    static let migrationVersion = 5
-    static let mappingVersion = "legacy_backfill_v5"
+    static let migrationVersion = 6
+    static let mappingVersion = "legacy_backfill_v6"
 
     static func run(
         modelContext: ModelContext,
@@ -55,7 +55,8 @@ enum MeasurementLegacyBackfillService {
                 modelContext.insert(record)
             }
         } else {
-            upgradeSourceMappings(in: canonicalRecords)
+            let convertedValues = upgradeSourceMappings(in: canonicalRecords)
+            applyConvertedValues(convertedValues, to: &size.measurements)
         }
         size.measurementSchemaVersion = 1
         size.measurementMigrationVersion = migrationVersion
@@ -82,7 +83,8 @@ enum MeasurementLegacyBackfillService {
                 modelContext.insert(record)
             }
         } else {
-            upgradeSourceMappings(in: canonicalRecords)
+            let convertedValues = upgradeSourceMappings(in: canonicalRecords)
+            applyConvertedValues(convertedValues, to: &item.measurements)
         }
         item.measurementSchemaVersion = 1
         item.measurementInputSourceRawValue = canonicalRecords.first?.inputSourceRawValue
@@ -114,7 +116,8 @@ enum MeasurementLegacyBackfillService {
 
     private static func upgradeSourceMappings(
         in records: [GarmentMeasurementRecord]
-    ) {
+    ) -> [MeasurementDisplayKind: Double] {
+        var convertedValues: [MeasurementDisplayKind: Double] = [:]
         for record in records {
             let migratedCommonCode = commonCodeReplacingLegacyPlatformCode(record.measurementCode)
             let mapping: SourceMeasurementMapping?
@@ -131,13 +134,22 @@ enum MeasurementLegacyBackfillService {
                     }
                 mapping = MeasurementSourceMappingPolicy.musinsa(
                     typeNumber: typeNumber,
-                    displayKind: record.displayKind
+                    displayKind: record.displayKind,
+                    rawLabel: record.rawLabel
                 )
             default:
                 mapping = nil
             }
 
             guard mapping != nil || migratedCommonCode != nil else { continue }
+            if let mapping,
+               mapping.valueMultiplier != 1,
+               record.mappingVersion != mapping.mappingVersion {
+                record.value *= mapping.valueMultiplier
+                if let displayKind = record.displayKind {
+                    convertedValues[displayKind] = record.value
+                }
+            }
             record.measurementCodeRawValue = (mapping?.code ?? migratedCommonCode ?? record.measurementCode).rawValue
             if let mapping {
                 record.evidenceLevelRawValue = mapping.evidence.rawValue
@@ -148,6 +160,15 @@ enum MeasurementLegacyBackfillService {
             record.semanticStatusRawValue = MeasurementSemanticStatus.mapped.rawValue
             record.updatedAt = Date()
         }
+        return convertedValues
+    }
+
+    private static func applyConvertedValues(
+        _ values: [MeasurementDisplayKind: Double],
+        to measurements: inout GarmentMeasurements
+    ) {
+        if let waist = values[.waist] { measurements.waist = waist }
+        if let hip = values[.hip] { measurements.hip = hip }
     }
 
     private static func commonCodeReplacingLegacyPlatformCode(

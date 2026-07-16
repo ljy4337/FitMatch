@@ -22,6 +22,7 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case hemWidthEdgeToEdge = "hem_width_edge_to_edge"
     case pantsOutseamWaistToHem = "pants_outseam_waist_to_hem"
     case pantsInseamCrotchToHem = "pants_inseam_crotch_to_hem"
+    case skirtLengthWaistToHem = "skirt_length_waist_to_hem"
     case footLengthHeelToToe = "foot_length_heel_to_toe"
     case underBustWidthEdgeToEdge = "under_bust_width_edge_to_edge"
     case unknown
@@ -78,16 +79,63 @@ struct SourceMeasurementMapping: Equatable {
     let code: MeasurementCode
     let evidence: MeasurementEvidenceLevel
     let mappingVersion: String
+    let valueMultiplier: Double
+
+    init(
+        code: MeasurementCode,
+        evidence: MeasurementEvidenceLevel,
+        mappingVersion: String,
+        valueMultiplier: Double = 1
+    ) {
+        self.code = code
+        self.evidence = evidence
+        self.mappingVersion = mappingVersion
+        self.valueMultiplier = valueMultiplier
+    }
 }
 
 enum MeasurementSourceMappingPolicy {
-    static let musinsaVersion = "musinsa_actual_size_mapping_v4"
-    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v4"
+    static let musinsaVersion = "musinsa_actual_size_mapping_v5"
+    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v5"
 
     static func musinsa(
         typeNumber: Int?,
-        displayKind: MeasurementDisplayKind?
+        displayKind: MeasurementDisplayKind?,
+        rawLabel: String? = nil
     ) -> SourceMeasurementMapping? {
+        let normalizedLabel = rawLabel?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() ?? ""
+        let bottomTypes = [6, 23, 42]
+
+        if let typeNumber, bottomTypes.contains(typeNumber) {
+            switch displayKind {
+            case .waist where isExplicitWidthLabel(normalizedLabel, subject: "허리"):
+                return mapping(.waistWidthEdgeToEdge)
+            case .hip where isExplicitWidthLabel(normalizedLabel, subject: "엉덩이")
+                || isExplicitWidthLabel(normalizedLabel, subject: "힙"):
+                return mapping(.hipWidthAtWidest)
+            case .thigh:
+                return mapping(.thighWidthCrotchToOuter)
+            case .rise:
+                return mapping(.riseCrotchToWaistFront)
+            case .hem:
+                return mapping(.hemWidthEdgeToEdge)
+            case .totalLength where normalizedLabel.contains("인심") || normalizedLabel.contains("inseam"):
+                return mapping(.pantsInseamCrotchToHem)
+            case .totalLength where normalizedLabel.contains("총장"):
+                return mapping(.pantsOutseamWaistToHem)
+            default:
+                return nil
+            }
+        }
+
+        if typeNumber == 14,
+           displayKind == .totalLength,
+           normalizedLabel.contains("총장") {
+            return mapping(.skirtLengthWaistToHem)
+        }
+
         switch (typeNumber, displayKind) {
         case (5, .shoulder), (20, .shoulder), (21, .shoulder):
             return SourceMeasurementMapping(
@@ -139,6 +187,18 @@ enum MeasurementSourceMappingPolicy {
         }
     }
 
+    private static func mapping(_ code: MeasurementCode) -> SourceMeasurementMapping {
+        SourceMeasurementMapping(
+            code: code,
+            evidence: .officialDiagram,
+            mappingVersion: musinsaVersion
+        )
+    }
+
+    private static func isExplicitWidthLabel(_ label: String, subject: String) -> Bool {
+        label.contains(subject) && (label.contains("단면") || label.contains("너비") || label.contains("width"))
+    }
+
     static func uniqlo(rawCode: String) -> SourceMeasurementMapping? {
         let normalizedRawCode = rawCode
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -157,6 +217,23 @@ enum MeasurementSourceMappingPolicy {
         // "knitbodylengthfront" used .bodyLengthUniqloKnitFront.
         case "bodylengthback", "bodylength", "knitbodylengthfront": code = .bodyLengthBackNeckToHem
         case "sleevelengthcb": code = .sleeveCenterBackToCuff
+        case "waistproductsize":
+            return SourceMeasurementMapping(
+                code: .waistWidthEdgeToEdge,
+                evidence: .officialText,
+                mappingVersion: uniqloVersion,
+                valueMultiplier: 0.5
+            )
+        case "hipproductsize":
+            return SourceMeasurementMapping(
+                code: .hipWidthAtWidest,
+                evidence: .officialText,
+                mappingVersion: uniqloVersion,
+                valueMultiplier: 0.5
+            )
+        case "thigh": code = .thighWidthCrotchToOuter
+        case "risinglength": code = .riseCrotchToWaistFront
+        case "bottomwidth": code = .hemWidthEdgeToEdge
         case "inseam": code = .pantsInseamCrotchToHem
         default: return nil
         }
