@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Corrected the Home recent-comparison title behavior so any product name that would wrap onto a second line is instead kept to one line with a visible trailing ellipsis.
 - Fixed external-share replacement while an A-product result is already open: compare sheets now wait for actual dismissal, keep only the latest pending request, and recreate `CompareFlowSheet` with a request identity; cold-start requests are handled on MainTab appearance.
 - Refined only the Home preview cards: product names remain capped at two lines with tail truncation, the Closet reference action now reads `기준` and matches the favorite secondary style, and the recent-result summary no longer uses a gray fill.
 - Temporarily disabled and preserved as comments the History/My Closet leading swipe favorite/reference actions; trailing delete swipes remain active.

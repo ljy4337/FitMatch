@@ -747,7 +747,7 @@ struct RecentProductPreviewCard: View {
             Text(history.product.name)
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(.primary)
-                .lineLimit(2)
+                .lineLimit(1)
                 .truncationMode(.tail)
         }
     }
