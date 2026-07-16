@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Fixed external-share replacement while an A-product result is already open: compare sheets now wait for actual dismissal, keep only the latest pending request, and recreate `CompareFlowSheet` with a request identity; cold-start requests are handled on MainTab appearance.
 - Refined only the Home preview cards: product names remain capped at two lines with tail truncation, the Closet reference action now reads `기준` and matches the favorite secondary style, and the recent-result summary no longer uses a gray fill.
 - Temporarily disabled and preserved as comments the History/My Closet leading swipe favorite/reference actions; trailing delete swipes remain active.
 - Rebuilt only the My Closet list card with brand/product/internal classification metadata, platform-aware Musinsa attribution, icon-only reference state, and equal-width two-column measurements; preserved the complete prior card as `closetItemCardLegacy` for rollback.
@@ -132,6 +133,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- External-share compare replacement passed the generic iOS device Debug build and `git diff --check`; the fix changes only compare request/sheet lifecycle and does not alter comparison logic or protected scroll code.
 - Repository-wide exact search confirms zero `"정사이즈 추천"` literals; the recombined confidence/measurement column passed the generic iOS device Debug build and `git diff --check`.
 - History compact metrics passed the generic iOS device Debug build and `git diff --check`; result-detail typography, 2×2 grid cards, and protected scroll code remain unchanged.
 - Result card-order swap and supplied-reference History 2×2 grid cards passed the generic iOS device Debug build and `git diff --check`; list cards, routing, comparison logic, and protected scroll code remain unchanged.
