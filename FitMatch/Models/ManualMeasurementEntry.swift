@@ -81,6 +81,8 @@ enum FitMatchMeasurementStandard {
 enum MeasurementEntrySource: String, CaseIterable, Hashable, Identifiable {
     case musinsaSizeChart = "musinsa_size_chart"
     case uniqloSizeChart = "uniqlo_size_chart"
+    // Zara 지원은 무신사·유니클로 측정 정의와 비교 정책을 안정화한 뒤 추가한다.
+    // 공식 사이즈 가이드에 신체 치수가 포함될 수 있어 옷 실측으로 자동 매핑하면 안 된다.
     case otherSizeChart = "other_size_chart"
     case fitmatchMeasured = "fitmatch_measured"
 
