@@ -134,9 +134,11 @@ struct RecommendationHistoryView: View {
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        favoriteSwipeButton(for: history)
-                    }
+                    // Temporarily disabled: restore these lines to re-enable
+                    // right-swipe favorite assignment/removal.
+//                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+//                        favoriteSwipeButton(for: history)
+//                    }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         deleteSwipeButton(for: history)
                     }

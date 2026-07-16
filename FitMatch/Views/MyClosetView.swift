@@ -168,9 +168,11 @@ struct MyClosetView: View {
                     .buttonStyle(.plain)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        basisSwipeButton(for: item)
-                    }
+                    // Temporarily disabled: restore these lines to re-enable
+                    // right-swipe reference-garment assignment/removal.
+//                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+//                        basisSwipeButton(for: item)
+//                    }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         deleteSwipeButton(for: item)
                     }
