@@ -45,28 +45,70 @@ struct HomeView: View {
     }
 
     private var closetDashboardSection: some View {
-        CardView(radius: 22, padding: 18, background: Color(.secondarySystemGroupedBackground)) {
-            VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(title: "내 옷장 현황", subtitle: "상품 비교에 활용할 수 있는 옷을 확인하세요")
-
-                HStack(spacing: 10) {
-                    HomeClosetStat(title: "등록된 옷", value: userFits.count)
-                    HomeClosetStat(title: "등록 상의", value: comparableTopCount)
-                    HomeClosetStat(title: "등록 하의", value: comparableBottomCount)
-                }
-
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                SectionHeader(title: "내 옷장 현황", subtitle: closetDashboardSubtitle)
+                Spacer()
                 Button(action: onOpenCloset) {
-                    HStack {
-                        Text("내 옷장 보기")
-                        Spacer()
+                    HStack(spacing: 4) {
+                        Text("전체보기")
                         Image(systemName: "chevron.right")
                     }
-                    .font(.subheadline.weight(.bold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(.primary)
                 }
                 .buttonStyle(.plain)
             }
+
+            if !recentClosetItems.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 12) {
+                        ForEach(recentClosetItems) { item in
+                            HomeClosetPreviewCard(item: item)
+                                .frame(width: 204)
+                        }
+                    }
+                    .scrollTargetLayout()
+                    .padding(.vertical, 2)
+                }
+                .scrollTargetBehavior(.viewAligned(limitBehavior: .always))
+            } else {
+                Button(action: onOpenCloset) {
+                    CardView(radius: 22, padding: 18) {
+                        HStack(spacing: 14) {
+                            Image(systemName: "tshirt")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(Color(.systemBackground))
+                                .frame(width: 44, height: 44)
+                                .background(.primary, in: Circle())
+
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("아직 등록된 옷이 없어요")
+                                    .font(.headline.weight(.bold))
+                                Text("잘 맞는 옷을 등록하면 상품 사이즈를 비교할 수 있어요.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer(minLength: 4)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                }
+                .buttonStyle(.plain)
+            }
         }
+    }
+
+    private var recentClosetItems: [UserFit] {
+        Array(userFits.prefix(5))
+    }
+
+    private var closetDashboardSubtitle: String {
+        recentClosetItems.isEmpty ? "등록한 옷을 한눈에 확인하세요" : "최근 등록한 옷을 최대 5개까지 보여드려요"
     }
 
     private var recentComparisonSection: some View {
@@ -179,35 +221,175 @@ struct HomeView: View {
         }
     }
 
-    private var comparableTopCount: Int {
-        userFits.filter { $0.resolvedCategoryCode == "tops" }.count
-    }
-
-    private var comparableBottomCount: Int {
-        userFits.filter {
-            $0.resolvedCategoryCode == "bottoms"
-                || $0.resolvedCategoryCode == "leggings"
-        }.count
-    }
-
 }
 
-private struct HomeClosetStat: View {
-    let title: String
-    let value: Int
+private struct HomeClosetPreviewCard: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var allUserFits: [UserFit]
+
+    let item: UserFit
+    @State private var isShowingReferenceConfirmation = false
+    @State private var existingReferenceItem: UserFit?
+    @State private var saveErrorMessage: String?
 
     var body: some View {
-        VStack(spacing: 5) {
-            Text("\(value)")
-                .font(.title2.weight(.black))
-                .monospacedDigit()
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 9) {
+                NavigationLink {
+                    ClosetItemDetailView(item: item)
+                } label: {
+                    VStack(alignment: .leading, spacing: 9) {
+                        HStack(alignment: .center, spacing: 12) {
+                            summaryValue(title: "등록 사이즈", value: item.sizeName)
+                            Spacer()
+                            summaryValue(title: "분류", value: detailCategoryName, alignment: .trailing)
+                        }
+                        .padding(10)
+                        .background(.primary.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+
+                        ProductThumbnailView(
+                            imageURLString: item.sourceProduct?.imageURLString,
+                            category: item.category,
+                            width: 168,
+                            height: 84,
+                            cornerRadius: 16
+                        )
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.brandName)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Text(item.productName)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+                                .truncationMode(.tail)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+
+                HStack(spacing: 8) {
+                    Button(action: toggleReference) {
+                        Label(item.isRepresentative ? "기준 옷 해제" : "기준 옷 지정", systemImage: item.isRepresentative ? "tshirt" : "tshirt.fill")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.primary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 34)
+                            .background(.primary.opacity(0.06), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        ClosetItemDetailView(item: item)
+                    } label: {
+                        Text("수정")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Color(.systemBackground))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 34)
+                            .background(.primary, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .confirmationDialog(
+            existingReferenceItem == nil ? "이 옷을 기준 옷으로 설정할까요?" : "기준 옷을 변경할까요?",
+            isPresented: $isShowingReferenceConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(existingReferenceItem == nil ? "기준 옷으로 설정" : "기준 옷 변경") {
+                applyReferenceChange()
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            if let existingReferenceItem {
+                Text("기존 기준 옷 ‘\(existingReferenceItem.displayName)’은 자동으로 해제됩니다.")
+            } else {
+                Text("같은 종류의 상품을 비교할 때 이 옷을 먼저 사용합니다.")
+            }
+        }
+        .alert("저장할 수 없습니다", isPresented: saveErrorBinding) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text(saveErrorMessage ?? "기준 옷 설정을 저장하지 못했습니다.")
+        }
+    }
+
+    private var saveErrorBinding: Binding<Bool> {
+        Binding(
+            get: { saveErrorMessage != nil },
+            set: { if !$0 { saveErrorMessage = nil } }
+        )
+    }
+
+    private func toggleReference() {
+        if item.isRepresentative {
+            item.isRepresentative = false
+            item.updatedAt = Date()
+            saveReferenceChange()
+            return
+        }
+
+        existingReferenceItem = allUserFits.first {
+            $0.id != item.id
+                && $0.isRepresentative
+                && ReferenceGarmentPolicy.conflicts($0, item)
+        }
+        isShowingReferenceConfirmation = true
+    }
+
+    private func applyReferenceChange() {
+        allUserFits
+            .filter {
+                $0.id != item.id
+                    && $0.isRepresentative
+                    && ReferenceGarmentPolicy.conflicts($0, item)
+            }
+            .forEach {
+                $0.isRepresentative = false
+                $0.updatedAt = Date()
+            }
+
+        item.isRepresentative = true
+        item.updatedAt = Date()
+        saveReferenceChange()
+    }
+
+    private func saveReferenceChange() {
+        do {
+            try modelContext.save()
+        } catch {
+            saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
+        }
+    }
+
+    private var detailCategoryName: String {
+        guard let categoryCode = item.resolvedCategoryCode,
+              let detailCode = item.resolvedDetailCategoryCode else {
+            return item.detailCategory.rawValue
+        }
+        return FitMatchTaxonomyProvider.shared.displayName(forDetail: detailCode, categoryCode: categoryCode)
+            ?? item.detailCategory.rawValue
+    }
+
+    private func summaryValue(
+        title: String,
+        value: String,
+        alignment: HorizontalAlignment = .leading
+    ) -> some View {
+        VStack(alignment: alignment, spacing: 3) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.title3.weight(.black))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
     }
 }
 

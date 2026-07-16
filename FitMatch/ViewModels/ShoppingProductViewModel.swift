@@ -98,7 +98,7 @@ final class ShoppingProductViewModel: ObservableObject {
             productDetailCategory: detailCategory,
             allowsGlobalFallback: allowsGlobalFallback
         ) else {
-            errorMessage = "비교할 수 있는 사이즈 정보가 없습니다."
+            errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
             return nil
         }
@@ -125,7 +125,7 @@ final class ShoppingProductViewModel: ObservableObject {
             selectedReferenceItem: selectedReferenceItem,
             productDetailCategory: detailCategory
         ) else {
-            errorMessage = "비교할 수 있는 사이즈 정보가 없습니다."
+            errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
             return nil
         }
@@ -263,7 +263,8 @@ final class ShoppingProductViewModel: ObservableObject {
                 hem: size.measurements.hem.extractedFormText,
                 footLength: size.measurements.footLength.extractedFormText,
                 underBust: size.measurements.underBust.extractedFormText,
-                displayOrder: index
+                displayOrder: index,
+                parsedMeasurementRecords: size.measurementRecords
             )
         }
     }
@@ -309,6 +310,7 @@ struct ClothingSizeForm: Identifiable, Equatable {
     var footLength = ""
     var underBust = ""
     var displayOrder = 0
+    var parsedMeasurementRecords: [ParsedMeasurement] = []
 
     func makeSizeOption(category: ClothingCategory, detailCategory: ClosetDetailCategory = .other, gender: UserGender = .unisex) -> ProductSize? {
         guard !sizeName.trimmed.isEmpty else {
@@ -327,7 +329,7 @@ struct ClothingSizeForm: Identifiable, Equatable {
             return nil
         }
 
-        return ProductSize(
+        let productSize = ProductSize(
             id: id,
             name: sizeName.trimmed,
             measurements: GarmentMeasurements(
@@ -345,6 +347,14 @@ struct ClothingSizeForm: Identifiable, Equatable {
             ),
             displayOrder: displayOrder
         )
+        let records = parsedMeasurementRecords.map { $0.makeRecord(productSize: productSize) }
+        productSize.measurementRecords = records
+        if !records.isEmpty {
+            productSize.measurementSchemaVersion = 1
+            productSize.measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
+            productSize.measurementMigrationStatus = .completed
+        }
+        return productSize
     }
 
     func value(for kind: MeasurementKind) -> String {

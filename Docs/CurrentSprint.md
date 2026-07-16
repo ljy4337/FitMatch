@@ -63,7 +63,7 @@ Uniqlo
 - Standardized all confirmed Closet-add action buttons to `내 옷장에 추가` while preserving navigation, save behavior, and distinct method-selection labels.
 
 ## Current Task
-- Restore recent comparison card width
+- Home recent Closet card actions
 
 ## Remaining Bugs
 - Compare's source-category fallback still exposes compatibility enum bindings; it should adopt stable-code state when the compare ViewModel persistence contract is migrated.
@@ -84,6 +84,8 @@ Uniqlo
 - No commit or push performed in the latest task.
 
 ## Verification
+- Home recent Closet cards replace the passive status footer with a safe reference-garment action and an edit action using the existing detail editor; the generic iOS Simulator Debug build and `git diff --check` passed.
+- Home Closet status now shows up to five recently registered garments using the same lazy horizontal 204pt card pattern as recent comparisons; the generic iOS Simulator Debug build and `git diff --check` passed.
 - Restored the recent comparison card width to 204pt while retaining lazy horizontal scrolling and the current card UI; the generic iOS Simulator Debug build and `git diff --check` passed.
 - Recent comparison uses a lazy horizontal list with viewport-relative cards, leaving roughly one-sixth of the next card visible while preserving the existing card UI; the generic iOS Simulator Debug build and `git diff --check` passed.
 - Recent comparison cards now use a softer result container and balanced bottom favorite/recompare actions while preserving result-first navigation; the generic iOS Simulator Debug build and `git diff --check` passed.

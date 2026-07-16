@@ -8,6 +8,7 @@ struct FitMatchCandidate: Identifiable {
 
 struct RecommendationService {
     private let comparisonMatcher = ComparisonProfileMatcher()
+    private let measurementComparisonEngine = MeasurementComparisonEngine()
 
     func recommend(
         product: Product,
@@ -162,26 +163,15 @@ struct RecommendationService {
 
         for size in product.sizes.sorted(by: { $0.displayOrder < $1.displayOrder }) where !size.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             for userFit in userFits {
-                let signedDifferences = GarmentMeasurements(
-                    shoulder: size.measurements.shoulder - userFit.measurements.shoulder,
-                    chest: size.measurements.chest - userFit.measurements.chest,
-                    totalLength: size.measurements.totalLength - userFit.measurements.totalLength,
-                    sleeveLength: size.measurements.sleeveLength - userFit.measurements.sleeveLength,
-                    waist: size.measurements.waist - userFit.measurements.waist,
-                    hip: size.measurements.hip - userFit.measurements.hip,
-                    thigh: size.measurements.thigh - userFit.measurements.thigh,
-                    rise: size.measurements.rise - userFit.measurements.rise,
-                    hem: size.measurements.hem - userFit.measurements.hem,
-                    footLength: size.measurements.footLength - userFit.measurements.footLength,
-                    underBust: size.measurements.underBust - userFit.measurements.underBust
-                )
-                let fitConfidence = fitConfidence(
-                    productMeasurements: size.measurements,
-                    referenceMeasurements: userFit.measurements,
+                let fitConfidence = measurementComparisonEngine.compare(
+                    productSize: size,
+                    referenceItem: userFit,
                     productCategory: product.category,
                     productDetailCategory: productDetailCategory,
                     excludedKinds: basis.excludedMeasurementKinds
                 )
+                guard fitConfidence.status == .confirmed else { continue }
+                let signedDifferences = fitConfidence.signedDifferences
 
                 let adjustedScore = max(0, fitConfidence.score - basis.scorePenalty)
 
@@ -196,7 +186,8 @@ struct RecommendationService {
                     oversizedRecommendation: oversizedSuggestion(for: size, in: product.sizes),
                     comparisonMethod: basis.methodText,
                     fallbackReason: basis.fallbackReason,
-                    productDetailCategory: productDetailCategory
+                    productDetailCategory: productDetailCategory,
+                    comparisonResult: fitConfidence
                 )
 
                 printFitConfidenceDebug(
@@ -275,13 +266,15 @@ struct RecommendationService {
         product.sizes
             .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .map { size in
-                fitConfidence(
-                    productMeasurements: size.measurements,
-                    referenceMeasurements: item.measurements,
+                measurementComparisonEngine.compare(
+                    productSize: size,
+                    referenceItem: item,
                     productCategory: product.category,
                     productDetailCategory: productDetailCategory
-                ).score
+                )
             }
+            .filter { $0.status == .confirmed }
+            .map(\.score)
             .max() ?? 0
     }
 
@@ -289,65 +282,24 @@ struct RecommendationService {
         product: Product,
         userFit: UserFit,
         productDetailCategory: ClosetDetailCategory
-    ) -> FitConfidenceResult? {
+    ) -> MeasurementComparisonResult? {
         product.sizes
             .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .map {
-                fitConfidence(
-                    productMeasurements: $0.measurements,
-                    referenceMeasurements: userFit.measurements,
+                measurementComparisonEngine.compare(
+                    productSize: $0,
+                    referenceItem: userFit,
                     productCategory: product.category,
                     productDetailCategory: productDetailCategory
                 )
             }
+            .filter { $0.status == .confirmed }
             .max { lhs, rhs in
                 if lhs.score != rhs.score {
                     return lhs.score < rhs.score
                 }
                 return lhs.averageDifference > rhs.averageDifference
             }
-    }
-
-    private func fitConfidence(
-        productMeasurements: GarmentMeasurements,
-        referenceMeasurements: GarmentMeasurements,
-        productCategory: ClothingCategory,
-        productDetailCategory: ClosetDetailCategory,
-        excludedKinds: [MeasurementKind] = []
-    ) -> FitConfidenceResult {
-        var comparedItems: [FitConfidenceItem] = []
-        var ignoredKinds: [MeasurementKind] = []
-
-        for kind in v1MeasurementKinds(productCategory: productCategory, productDetailCategory: productDetailCategory) {
-            guard !excludedKinds.contains(kind) else {
-                ignoredKinds.append(kind)
-                continue
-            }
-            let productValue = productMeasurements.value(for: kind)
-            let referenceValue = referenceMeasurements.value(for: kind)
-            guard productValue > 0, referenceValue > 0 else {
-                ignoredKinds.append(kind)
-                continue
-            }
-
-            let difference = abs(productValue - referenceValue)
-            let itemScore = max(0, min(100, Int((100 - difference * 5).rounded())))
-            comparedItems.append(FitConfidenceItem(kind: kind, difference: difference, score: itemScore))
-        }
-
-        let score = comparedItems.isEmpty
-            ? 0
-            : Int((Double(comparedItems.map(\.score).reduce(0, +)) / Double(comparedItems.count)).rounded())
-        let averageDifference = comparedItems.isEmpty
-            ? .greatestFiniteMagnitude
-            : comparedItems.map(\.difference).reduce(0, +) / Double(comparedItems.count)
-
-        return FitConfidenceResult(
-            score: score,
-            comparedItems: comparedItems,
-            ignoredKinds: ignoredKinds,
-            averageDifference: averageDifference
-        )
     }
 
     private func v1MeasurementKinds(
@@ -368,10 +320,10 @@ struct RecommendationService {
         referenceItem: UserFit,
         sizeName: String,
         signedDifferences: GarmentMeasurements,
-        result: FitConfidenceResult
+        result: MeasurementComparisonResult
     ) {
         let comparedNames = result.comparedItems.map { $0.kind.title }.joined(separator: ", ")
-        let ignoredNames = result.ignoredKinds.map(\.title).joined(separator: ", ")
+        let ignoredNames = result.exclusions.map { $0.kind.title }.joined(separator: ", ")
         let shoulderScore = result.score(for: .shoulder)?.description ?? "ignored"
         let chestScore = result.score(for: .chest)?.description ?? "ignored"
         let totalLengthScore = result.score(for: .totalLength)?.description ?? "ignored"
@@ -570,36 +522,4 @@ private struct RecommendationBasis {
     let scorePenalty: Int
     var fallbackReason: String = ""
     var excludedMeasurementKinds: [MeasurementKind] = []
-}
-
-private struct FitConfidenceItem {
-    let kind: MeasurementKind
-    let difference: Double
-    let score: Int
-}
-
-private struct FitConfidenceResult {
-    let score: Int
-    let comparedItems: [FitConfidenceItem]
-    let ignoredKinds: [MeasurementKind]
-    let averageDifference: Double
-
-    var reliabilityTitle: String {
-        switch comparedItems.count {
-        case 4...:
-            return "높은 신뢰도"
-        case 3:
-            return "충분한 비교"
-        case 2:
-            return "참고 가능"
-        case 1:
-            return "참고용"
-        default:
-            return "계산 불가"
-        }
-    }
-
-    func score(for kind: MeasurementKind) -> Int? {
-        comparedItems.first { $0.kind == kind }?.score
-    }
 }

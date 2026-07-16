@@ -49,7 +49,7 @@ struct GarmentMeasurements: Codable, Equatable, Hashable {
     }
 }
 
-enum MeasurementKind: CaseIterable, Identifiable {
+enum MeasurementKind: String, CaseIterable, Identifiable, Codable, Hashable {
     case shoulder
     case chest
     case totalLength

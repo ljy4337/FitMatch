@@ -459,7 +459,10 @@ struct RecommendationResultView: View {
     }
 
     private var comparedMeasurementKinds: [MeasurementKind] {
-        v1MeasurementKinds.filter {
+        if currentResult.comparisonSchemaVersion >= 1 {
+            return currentResult.comparedMeasurementUsages.map(\.kind)
+        }
+        return v1MeasurementKinds.filter {
             currentResult.recommendedSize.measurements.value(for: $0) > 0
                 && currentResult.userFit.measurements.value(for: $0) > 0
         }
@@ -583,8 +586,14 @@ struct RecommendationResultView: View {
             reasons.append(weightingNotice)
         }
 
-        for kind in ignoredMeasurementKinds {
-            reasons.append("\(kind.title)은 입력값이 없어 비교에서 제외했습니다.")
+        if currentResult.comparisonSchemaVersion >= 1 {
+            for exclusion in currentResult.measurementExclusions {
+                reasons.append("\(exclusion.kind.title)은 \(exclusion.reason.userMessage)")
+            }
+        } else {
+            for kind in ignoredMeasurementKinds {
+                reasons.append("\(kind.title)은 입력값이 없어 비교에서 제외했습니다.")
+            }
         }
 
         if !currentResult.fallbackReason.isEmpty {

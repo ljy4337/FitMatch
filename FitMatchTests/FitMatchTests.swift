@@ -601,6 +601,118 @@ struct FitMatchTests {
         #expect(item.measurementMigrationStatus == .completed)
     }
 
+    @Test func measurementComparisonUsesOnlyIdenticalVerifiedCodes() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let item = comparisonItem(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .top,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(result.status == .confirmed)
+        #expect(result.comparedKinds == [.shoulder, .sleeveLength])
+        #expect(result.score == 90)
+        #expect(result.exclusions.contains { $0.kind == .chest && $0.reason == .unverifiedProductDefinition })
+    }
+
+    @Test func measurementComparisonExcludesDifferentSleeveDefinitions() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 47,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let item = comparisonItem(
+            shoulder: 48,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .top,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(result.status == .insufficientEvidence)
+        #expect(result.comparedKinds == [.shoulder])
+        #expect(result.exclusions.contains {
+            $0.kind == .sleeveLength
+                && $0.reason == .incompatibleMeasurementCode
+                && $0.productCode == .sleeveCenterBackToCuff
+                && $0.referenceCode == .sleeveShoulderSeamToCuff
+        })
+    }
+
+    @Test func recommendationIsBlockedWhenCompatibleEvidenceIsInsufficient() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 47,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let product = Product(name: "유니클로 티셔츠", category: .top, sizes: [size])
+        let item = comparisonItem(
+            shoulder: 48,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let history = RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: item,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(history == nil)
+    }
+
+    @Test func recommendationStoresUsedCodesAndExclusionReasons() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "무신사 티셔츠", category: .top, sizes: [size])
+        let item = comparisonItem(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let history = RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: item,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(history?.comparisonStatus == .confirmed)
+        #expect(history?.comparedMeasurementUsages.map(\.measurementCode) == [
+            .shoulderWidthSeamToSeam, .sleeveShoulderSeamToCuff
+        ])
+        #expect(history?.measurementExclusions.contains {
+            $0.kind == .chest && $0.reason == .unverifiedProductDefinition
+        } == true)
+    }
+
     @Test func uniqloSizeAPIParserReturnsNormalizedImageURL() throws {
         let json = """
         {
@@ -836,6 +948,74 @@ struct FitMatchTests {
             chest: chest,
             totalLength: 68,
             sleeveLength: 22
+        )
+    }
+
+    private func comparisonSize(
+        shoulder: Double,
+        sleeve: Double,
+        shoulderCode: MeasurementCode,
+        sleeveCode: MeasurementCode
+    ) -> ProductSize {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: shoulder, chest: 54, totalLength: 70, sleeveLength: sleeve)
+        )
+        size.measurementRecords = [
+            comparisonRecord(value: shoulder, code: shoulderCode, kind: .shoulder, productSize: size),
+            comparisonRecord(value: sleeve, code: sleeveCode, kind: .sleeveLength, productSize: size),
+            comparisonRecord(value: 54, code: .unknown, kind: .chest, productSize: size),
+            comparisonRecord(value: 70, code: .unknown, kind: .totalLength, productSize: size)
+        ]
+        return size
+    }
+
+    private func comparisonItem(
+        shoulder: Double,
+        sleeve: Double,
+        shoulderCode: MeasurementCode,
+        sleeveCode: MeasurementCode
+    ) -> UserFit {
+        let item = UserFit(
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "티셔츠",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "M",
+            measurements: GarmentMeasurements(shoulder: shoulder, chest: 53, totalLength: 69, sleeveLength: sleeve),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.measurementRecords = [
+            comparisonRecord(value: shoulder, code: shoulderCode, kind: .shoulder, userFit: item),
+            comparisonRecord(value: sleeve, code: sleeveCode, kind: .sleeveLength, userFit: item),
+            comparisonRecord(value: 53, code: .unknown, kind: .chest, userFit: item),
+            comparisonRecord(value: 69, code: .unknown, kind: .totalLength, userFit: item)
+        ]
+        return item
+    }
+
+    private func comparisonRecord(
+        value: Double,
+        code: MeasurementCode,
+        kind: MeasurementKind,
+        productSize: ProductSize? = nil,
+        userFit: UserFit? = nil
+    ) -> GarmentMeasurementRecord {
+        GarmentMeasurementRecord(
+            value: value,
+            measurementCode: code,
+            displayKind: kind.displayKind,
+            methodSource: "test",
+            inputSource: .importedSizeChart,
+            mappingVersion: "test_v1",
+            rawLabel: kind.title,
+            evidenceLevel: code == .unknown ? .unknown : .officialText,
+            semanticStatus: code == .unknown ? .unknownDefinition : .mapped,
+            productSize: productSize,
+            userFit: userFit
         )
     }
 

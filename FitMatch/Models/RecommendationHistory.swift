@@ -23,6 +23,10 @@ final class RecommendationHistory {
     var comparisonMethod: String = "같은 종류 기준 비교"
     var fallbackReason: String = ""
     var productDetailCategoryRawValue: String = ClosetDetailCategory.other.rawValue
+    var comparisonSchemaVersion: Int = 0
+    var comparisonStatusRawValue: String = MeasurementComparisonStatus.legacy.rawValue
+    var comparedMeasurementUsagesJSON: String = "[]"
+    var measurementExclusionsJSON: String = "[]"
     var normalPriceSnapshot: Int?
     var salePriceSnapshot: Int?
     var finalPriceSnapshot: Int?
@@ -62,6 +66,7 @@ final class RecommendationHistory {
         comparisonMethod: String = "같은 종류 기준 비교",
         fallbackReason: String = "",
         productDetailCategory: ClosetDetailCategory = .other,
+        comparisonResult: MeasurementComparisonResult? = nil,
         reason: String? = nil,
         createdAt: Date = Date()
     ) {
@@ -87,6 +92,12 @@ final class RecommendationHistory {
         self.comparisonMethod = comparisonMethod
         self.fallbackReason = fallbackReason
         self.productDetailCategoryRawValue = productDetailCategory.rawValue
+        if let comparisonResult {
+            self.comparisonSchemaVersion = 1
+            self.comparisonStatusRawValue = comparisonResult.status.rawValue
+            self.comparedMeasurementUsagesJSON = Self.encode(comparisonResult.usages)
+            self.measurementExclusionsJSON = Self.encode(comparisonResult.exclusions)
+        }
         self.normalPriceSnapshot = product.normalPrice
         self.salePriceSnapshot = product.salePrice
         self.finalPriceSnapshot = product.finalPrice
@@ -131,6 +142,18 @@ final class RecommendationHistory {
         set { productDetailCategoryRawValue = newValue.rawValue }
     }
 
+    var comparisonStatus: MeasurementComparisonStatus {
+        MeasurementComparisonStatus(rawValue: comparisonStatusRawValue) ?? .legacy
+    }
+
+    var comparedMeasurementUsages: [MeasurementComparisonUsage] {
+        Self.decode([MeasurementComparisonUsage].self, from: comparedMeasurementUsagesJSON) ?? []
+    }
+
+    var measurementExclusions: [MeasurementComparisonExclusion] {
+        Self.decode([MeasurementComparisonExclusion].self, from: measurementExclusionsJSON) ?? []
+    }
+
     var displayComparisonMethod: String {
         switch comparisonMethod {
         case "전체 fallback 비교":
@@ -173,5 +196,15 @@ final class RecommendationHistory {
             .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
         return values.isEmpty ? nil : values.joined(separator: " · ")
+    }
+
+    private static func encode<T: Encodable>(_ value: T) -> String {
+        guard let data = try? JSONEncoder().encode(value) else { return "[]" }
+        return String(data: data, encoding: .utf8) ?? "[]"
+    }
+
+    private static func decode<T: Decodable>(_ type: T.Type, from value: String) -> T? {
+        guard let data = value.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
     }
 }
