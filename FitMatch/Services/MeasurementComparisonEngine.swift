@@ -64,6 +64,7 @@ struct MeasurementComparisonResult: Equatable {
     let minimumComparableCount: Int
     let requiredKinds: [MeasurementKind]
     let minimumRequiredKindCount: Int
+    let requiredAllKinds: [MeasurementKind]
 
     var comparedKinds: [MeasurementKind] {
         comparedItems.map(\.kind)
@@ -169,7 +170,12 @@ struct MeasurementComparisonEngine {
         let requiredKindCount = comparedItems.filter { policy.requiredAnyKinds.contains($0.kind) }.count
         let hasRequiredKinds = policy.requiredAnyKinds.isEmpty
             || requiredKindCount >= policy.minimumRequiredKindCount
-        let status: MeasurementComparisonStatus = comparedItems.count >= policy.minimumComparableCount && hasRequiredKinds
+        let hasAllRequiredKinds = policy.requiredAllKinds.allSatisfy { requiredKind in
+            comparedItems.contains { $0.kind == requiredKind }
+        }
+        let status: MeasurementComparisonStatus = comparedItems.count >= policy.minimumComparableCount
+            && hasRequiredKinds
+            && hasAllRequiredKinds
             ? .confirmed
             : .insufficientEvidence
 
@@ -181,7 +187,8 @@ struct MeasurementComparisonEngine {
             averageDifference: averageDifference,
             minimumComparableCount: policy.minimumComparableCount,
             requiredKinds: policy.requiredAnyKinds,
-            minimumRequiredKindCount: policy.minimumRequiredKindCount
+            minimumRequiredKindCount: policy.minimumRequiredKindCount,
+            requiredAllKinds: policy.requiredAllKinds
         )
     }
 
@@ -225,7 +232,7 @@ struct MeasurementComparisonEngine {
         detailCategory: ClosetDetailCategory
     ) -> MeasurementComparisonPolicy {
         switch category.serviceGroup {
-        case .top, .outer, .shirt, .knit:
+        case .top, .shirt, .knit:
             var weights: [MeasurementKind: Double] = [
                 .shoulder: 1.2, .chest: 1.4, .totalLength: 1.0, .sleeveLength: 0.8
             ]
@@ -236,7 +243,17 @@ struct MeasurementComparisonEngine {
                 weights: weights,
                 minimumComparableCount: 2,
                 requiredAnyKinds: [.shoulder, .chest],
-                minimumRequiredKindCount: 1
+                minimumRequiredKindCount: 1,
+                requiredAllKinds: []
+            )
+        case .outer:
+            return MeasurementComparisonPolicy(
+                kinds: [.shoulder, .chest, .totalLength, .sleeveLength, .hem],
+                weights: [.shoulder: 1.1, .chest: 1.5, .totalLength: 0.8, .sleeveLength: 1.0, .hem: 0.6],
+                minimumComparableCount: 2,
+                requiredAnyKinds: [],
+                minimumRequiredKindCount: 0,
+                requiredAllKinds: [.chest]
             )
         case .bottom, .pants:
             return MeasurementComparisonPolicy(
@@ -244,7 +261,8 @@ struct MeasurementComparisonEngine {
                 weights: [.waist: 1.4, .hip: 1.2, .thigh: 0.9, .rise: 0.7, .hem: 0.6, .totalLength: 1.0],
                 minimumComparableCount: 2,
                 requiredAnyKinds: [.waist, .hip, .thigh],
-                minimumRequiredKindCount: 2
+                minimumRequiredKindCount: 2,
+                requiredAllKinds: []
             )
         case .dress:
             return MeasurementComparisonPolicy(
@@ -252,7 +270,8 @@ struct MeasurementComparisonEngine {
                 weights: [.shoulder: 1.0, .chest: 1.2, .totalLength: 1.0, .waist: 1.0, .hip: 0.9],
                 minimumComparableCount: 2,
                 requiredAnyKinds: [.chest, .waist, .hip],
-                minimumRequiredKindCount: 1
+                minimumRequiredKindCount: 1,
+                requiredAllKinds: []
             )
         case .shoes:
             return MeasurementComparisonPolicy(
@@ -260,7 +279,8 @@ struct MeasurementComparisonEngine {
                 weights: [.footLength: 1.0],
                 minimumComparableCount: 1,
                 requiredAnyKinds: [.footLength],
-                minimumRequiredKindCount: 1
+                minimumRequiredKindCount: 1,
+                requiredAllKinds: []
             )
         case .underwear:
             let kinds = category.measurementKinds(detailCategory: detailCategory, gender: .unisex)
@@ -269,7 +289,8 @@ struct MeasurementComparisonEngine {
                 weights: Dictionary(uniqueKeysWithValues: kinds.map { ($0, 1.0) }),
                 minimumComparableCount: min(2, kinds.count),
                 requiredAnyKinds: Array(kinds.prefix(2)),
-                minimumRequiredKindCount: 1
+                minimumRequiredKindCount: 1,
+                requiredAllKinds: []
             )
         case .accessory, .other:
             let kinds = category.measurementKinds(detailCategory: detailCategory, gender: .unisex)
@@ -278,7 +299,8 @@ struct MeasurementComparisonEngine {
                 weights: Dictionary(uniqueKeysWithValues: kinds.map { ($0, 1.0) }),
                 minimumComparableCount: kinds.isEmpty ? 1 : min(2, kinds.count),
                 requiredAnyKinds: [],
-                minimumRequiredKindCount: 0
+                minimumRequiredKindCount: 0,
+                requiredAllKinds: []
             )
         }
     }
@@ -290,6 +312,7 @@ private struct MeasurementComparisonPolicy {
     let minimumComparableCount: Int
     let requiredAnyKinds: [MeasurementKind]
     let minimumRequiredKindCount: Int
+    let requiredAllKinds: [MeasurementKind]
 
     func weight(for kind: MeasurementKind) -> Double {
         weights[kind] ?? 1

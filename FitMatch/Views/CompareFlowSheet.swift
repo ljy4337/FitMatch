@@ -549,6 +549,10 @@ private extension CompareFlowSheet {
             let requiredNames = result.requiredKinds.map(\.title).joined(separator: "·")
             text += " 이 중 \(requiredNames)에서 \(result.minimumRequiredKindCount)개가 필요합니다."
         }
+        if !result.requiredAllKinds.isEmpty {
+            let requiredNames = result.requiredAllKinds.map(\.title).joined(separator: "·")
+            text += " \(requiredNames)은 필수 비교 항목입니다."
+        }
         return text
     }
 }

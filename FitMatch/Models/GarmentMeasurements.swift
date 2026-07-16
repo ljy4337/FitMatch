@@ -100,8 +100,10 @@ enum MeasurementKind: String, CaseIterable, Identifiable, Codable, Hashable {
 extension ClothingCategory {
     var measurementKinds: [MeasurementKind] {
         switch serviceGroup {
-        case .top, .outer:
+        case .top:
             return [.totalLength, .shoulder, .chest, .sleeveLength]
+        case .outer:
+            return [.totalLength, .shoulder, .chest, .sleeveLength, .hem]
         case .bottom:
             return [.totalLength, .waist, .hip, .thigh, .rise, .hem]
         case .dress:

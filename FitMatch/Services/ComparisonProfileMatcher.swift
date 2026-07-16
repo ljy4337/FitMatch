@@ -425,7 +425,8 @@ struct ComparisonProfileMatcher {
     private func commonCoreMeasurementCount(_ lhs: ComparisonProfile, _ rhs: ComparisonProfile) -> Int {
         let core: [MeasurementKind]
         switch lhs.majorCategory {
-        case .top, .outer: core = [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .top: core = [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .outer: core = [.shoulder, .chest, .totalLength, .sleeveLength, .hem]
         case .bottom: core = [.waist, .hip, .thigh, .totalLength]
         default: core = lhs.availableMeasurements
         }

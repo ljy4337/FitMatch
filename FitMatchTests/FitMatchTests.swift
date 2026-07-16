@@ -767,6 +767,83 @@ struct FitMatchTests {
         #expect(result.status == .insufficientEvidence)
     }
 
+    @Test func outerComparisonRequiresChestAndOneAdditionalMeasurement() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 48,
+                chest: 58,
+                totalLength: 72,
+                sleeveLength: 63,
+                hem: 56
+            )
+        )
+        size.measurementRecords = [
+            comparisonRecord(value: 58, code: .chestWidthPitToPit, kind: .chest, productSize: size),
+            comparisonRecord(value: 72, code: .bodyLengthHPSToHemFront, kind: .totalLength, productSize: size),
+            comparisonRecord(value: 56, code: .hemWidthEdgeToEdge, kind: .hem, productSize: size)
+        ]
+        let item = UserFit(
+            sourceName: "직접 측정",
+            brandName: "테스트",
+            productName: "기준 재킷",
+            category: .outer,
+            detailCategory: .jacket,
+            sizeName: "기준",
+            measurements: GarmentMeasurements(
+                shoulder: 47,
+                chest: 57,
+                totalLength: 71,
+                sleeveLength: 62,
+                hem: 55
+            ),
+            fitMemo: "",
+            satisfaction: 4
+        )
+        item.measurementRecords = [
+            comparisonRecord(value: 57, code: .chestWidthPitToPit, kind: .chest, userFit: item),
+            comparisonRecord(value: 71, code: .bodyLengthHPSToHemFront, kind: .totalLength, userFit: item),
+            comparisonRecord(value: 55, code: .hemWidthEdgeToEdge, kind: .hem, userFit: item)
+        ]
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .outer,
+            productDetailCategory: .jacket
+        )
+
+        #expect(result.status == .confirmed)
+        #expect(result.comparedKinds == [.chest, .totalLength, .hem])
+        #expect(result.requiredAllKinds == [.chest])
+    }
+
+    @Test func outerShoulderAndSleeveWithoutChestAreInsufficient() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 64,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let item = comparisonItem(
+            shoulder: 49,
+            sleeve: 63,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .outer,
+            productDetailCategory: .jacket
+        )
+
+        #expect(result.comparedKinds == [.shoulder, .sleeveLength])
+        #expect(result.status == .insufficientEvidence)
+        #expect(result.requiredAllKinds == [.chest])
+    }
+
     @Test func recommendationIsBlockedWhenCompatibleEvidenceIsInsufficient() {
         let size = comparisonSize(
             shoulder: 50,
@@ -1552,6 +1629,34 @@ struct FitMatchTests {
 
         #expect(definition.instruction.contains("허리단"))
         #expect(definition.caution.contains("인심"))
+    }
+
+    @Test func directMeasuredOuterIncludesHemWidth() {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.brand = "테스트"
+        viewModel.productName = "기준 재킷"
+        viewModel.category = .outer
+        viewModel.detailCategory = .jacket
+        viewModel.measurementEntrySource = .fitmatchMeasured
+        viewModel.totalLength = "72"
+        viewModel.shoulder = "48"
+        viewModel.chest = "58"
+        viewModel.sleeveLength = "63"
+        viewModel.hem = "56"
+
+        let item = viewModel.makeUserFit()
+        let hem = item?.measurementRecords.first { $0.displayKind == .hem }
+
+        #expect(item?.measurementRecords.count == 5)
+        #expect(hem?.measurementCode == .hemWidthEdgeToEdge)
+        #expect(hem?.standardVersion == FitMatchMeasurementStandard.version)
+    }
+
+    @Test func outerHemGuideUsesUnstretchedGarmentDefinition() {
+        let definition = FitMatchMeasurementStandard.definition(for: .hem, category: .outer)
+
+        #expect(definition.instruction.contains("아우터 밑단"))
+        #expect(definition.caution.contains("조절끈"))
     }
 
     @Test func directMeasurementRejectsValuesOutsideSafetyRange() {

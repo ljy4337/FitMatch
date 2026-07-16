@@ -516,8 +516,10 @@ struct RecommendationResultView: View {
 
     private var v1MeasurementKinds: [MeasurementKind] {
         switch currentResult.product.category.serviceGroup {
-        case .top, .outer, .shirt, .knit:
+        case .top, .shirt, .knit:
             return [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .outer:
+            return [.shoulder, .chest, .totalLength, .sleeveLength, .hem]
         case .bottom, .pants:
             return [.waist, .hip, .thigh, .rise, .hem, .totalLength]
         default:

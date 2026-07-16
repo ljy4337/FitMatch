@@ -530,8 +530,10 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory
     ) -> [MeasurementKind] {
         switch productCategory.serviceGroup {
-        case .top, .outer, .shirt, .knit:
+        case .top, .shirt, .knit:
             return [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .outer:
+            return [.shoulder, .chest, .totalLength, .sleeveLength, .hem]
         case .bottom, .pants:
             return [.waist, .hip, .thigh, .rise, .hem, .totalLength]
         default:
@@ -656,7 +658,15 @@ struct RecommendationService {
             }
         case .accessory:
             weights = GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0)
-        case .top, .outer, .other, .pants, .shirt, .knit:
+        case .outer:
+            weights = GarmentMeasurements(
+                shoulder: 1.1,
+                chest: 1.5,
+                totalLength: 0.8,
+                sleeveLength: 1.0,
+                hem: 0.6
+            )
+        case .top, .other, .pants, .shirt, .knit:
             weights = GarmentMeasurements(
                 shoulder: 1.2,
                 chest: 1.4,

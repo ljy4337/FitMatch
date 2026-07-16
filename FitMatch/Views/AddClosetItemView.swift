@@ -844,6 +844,9 @@ private struct DirectMeasurementDiagram: View {
         if kind == .totalLength, category.serviceGroup == .bottom {
             return .bottom
         }
+        if kind == .hem, category.serviceGroup == .outer {
+            return .top
+        }
         switch kind {
         case .shoulder, .chest, .totalLength, .sleeveLength, .underBust:
             return .top
@@ -916,7 +919,10 @@ private struct DirectMeasurementDiagram: View {
         case .hip: return (point(0.25, 0.32), point(0.75, 0.32))
         case .thigh: return (point(0.27, 0.46), point(0.50, 0.46))
         case .rise: return (point(0.50, 0.14), point(0.50, 0.45))
-        case .hem: return (point(0.22, 0.90), point(0.45, 0.90))
+        case .hem:
+            return category.serviceGroup == .outer
+                ? (point(0.30, 0.88), point(0.70, 0.88))
+                : (point(0.22, 0.90), point(0.45, 0.90))
         case .footLength: return (point(0.14, 0.78), point(0.88, 0.78))
         case .underBust: return (point(0.29, 0.58), point(0.71, 0.58))
         }

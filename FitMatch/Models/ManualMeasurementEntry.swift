@@ -28,6 +28,14 @@ enum FitMatchMeasurementStandard {
                 20...160
             )
         }
+        if kind == .hem, category?.serviceGroup == .outer {
+            return definition(
+                kind,
+                "아우터 밑단을 자연스럽게 편 상태에서 양쪽 끝을 수평으로 측정",
+                "밑단 조절끈을 당기지 말고 원단을 늘리지 마세요.",
+                15...120
+            )
+        }
 
         switch kind {
         case .shoulder:
