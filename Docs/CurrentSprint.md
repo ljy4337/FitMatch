@@ -66,7 +66,6 @@ Uniqlo
 - Save multiple sizes of the same parsed product
 
 ## Remaining Bugs
-- Full build is currently blocked by the pre-existing `AddClosetItemViewModel.swift:99` optional chaining error on non-optional `rawLabel`.
 - Compare's source-category fallback still exposes compatibility enum bindings; it should adopt stable-code state when the compare ViewModel persistence contract is migrated.
 - Existing legacy garment-family details such as 셔츠/니트/후드 cannot be safely converted to the new length-only detail without source/name evidence, so their snapshots remain unresolved rather than being guessed.
 - Manual verification of scroll jitter/crash fix

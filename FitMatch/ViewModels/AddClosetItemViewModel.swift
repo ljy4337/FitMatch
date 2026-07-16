@@ -96,9 +96,11 @@ final class AddClosetItemViewModel: ObservableObject {
            profile.hasPrefix("other_size_chart_manual:") {
             measurementSourceName = String(profile.dropFirst("other_size_chart_manual:".count))
             measurementSourceLabels = Dictionary(uniqueKeysWithValues: item.measurementRecords.compactMap { record in
-                guard let kind = record.displayKind, let rawLabel = record.rawLabel?.trimmed, !rawLabel.isEmpty else {
+                guard let kind = record.displayKind else {
                     return nil
                 }
+                let rawLabel = record.rawLabel.trimmed
+                guard !rawLabel.isEmpty else { return nil }
                 return (kind, rawLabel)
             })
         }

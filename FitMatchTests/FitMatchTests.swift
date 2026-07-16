@@ -7,6 +7,7 @@
 
 import Testing
 import UIKit
+import SwiftData
 @testable import FitMatch
 
 @MainActor
@@ -944,6 +945,206 @@ struct FitMatchTests {
         #expect(ranked.count == 3)
     }
 
+    @Test func identicalChestDefinitionIsUsedForConfirmedRecommendation() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        markChestComparable(size.measurementRecords)
+        let product = Product(name: "가슴 비교 티셔츠", category: .top, sizes: [size])
+        let item = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        markChestComparable(item.measurementRecords)
+
+        let history = RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: item,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(history?.comparisonStatus == .confirmed)
+        #expect(history?.comparedMeasurementUsages.contains {
+            $0.kind == .chest && $0.measurementCode == .chestWidthPitToPit
+        } == true)
+    }
+
+    @Test func compatibleOtherBrandOutranksSameBrandWithDifferentMeasurementMethod() {
+        let brand = Brand(name: "브랜드A")
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", brand: brand, category: .top, sizes: [size])
+        let incompatibleSameBrand = comparisonItem(
+            shoulder: 50,
+            sleeve: 47,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        incompatibleSameBrand.brandName = "브랜드A"
+        let compatibleOtherBrand = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        compatibleOtherBrand.brandName = "브랜드B"
+
+        let match = RecommendationService().automaticMatchResult(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [incompatibleSameBrand, compatibleOtherBrand]
+        )
+        let history = RecommendationService().recommend(
+            product: product,
+            userFits: [incompatibleSameBrand, compatibleOtherBrand],
+            productDetailCategory: .shortSleeve,
+            allowsGlobalFallback: false
+        )
+
+        #expect(match.compatibleCandidates.map(\.id) == [compatibleOtherBrand.id])
+        #expect(history?.userFit.id == compatibleOtherBrand.id)
+    }
+
+    @Test func changingReferenceItemRecalculatesRecommendedSize() {
+        let medium = comparisonSize(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        medium.name = "M"
+        medium.displayOrder = 0
+        let large = comparisonSize(
+            shoulder: 52,
+            sleeve: 26,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        large.name = "L"
+        large.displayOrder = 1
+        let product = Product(name: "사이즈 재계산 티셔츠", category: .top, sizes: [medium, large])
+        let smallReference = comparisonItem(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let largeReference = comparisonItem(
+            shoulder: 52,
+            sleeve: 26,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let smallResult = RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: smallReference,
+            productDetailCategory: .shortSleeve
+        )
+        let largeResult = RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: largeReference,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(smallResult?.recommendedSize.name == "M")
+        #expect(largeResult?.recommendedSize.name == "L")
+        #expect(smallResult?.userFit.id == smallReference.id)
+        #expect(largeResult?.userFit.id == largeReference.id)
+    }
+
+    @Test func sharedURLStoreConsumesPendingURLOnlyOnce() {
+        let suiteName = "FitMatchTests.SharedURLStore.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = SharedURLStore(defaults: defaults)
+        let url = URL(string: "https://www.musinsa.com/products/4668060")!
+
+        store.savePendingProductURL(url)
+
+        #expect(store.pendingProductURL() == url.absoluteString)
+        #expect(store.consumePendingProductURL() == url.absoluteString)
+        #expect(store.consumePendingProductURL() == nil)
+    }
+
+    @Test func manualClosetItemAndMeasurementRecordsPersistTogether() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let viewModel = manualMeasurementViewModel(source: .fitmatchMeasured)
+        guard let item = viewModel.makeUserFit() else {
+            Issue.record("수동 옷장 항목 생성 실패")
+            return
+        }
+
+        context.insert(item)
+        try context.save()
+
+        let savedItems = try context.fetch(FetchDescriptor<UserFit>())
+        #expect(savedItems.count == 1)
+        #expect(savedItems.first?.measurementRecords.count == 4)
+        #expect(savedItems.first?.measurementRecords.allSatisfy(\.isComparable) == true)
+    }
+
+    @Test func recommendationHistorySaveReplacesSameProductHistory() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let reference = comparisonItem(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        context.insert(reference)
+        try context.save()
+
+        func makeHistory(sizeName: String, shoulder: Double) -> RecommendationHistory? {
+            let size = comparisonSize(
+                shoulder: shoulder,
+                sleeve: 22,
+                shoulderCode: .shoulderWidthSeamToSeam,
+                sleeveCode: .sleeveShoulderSeamToCuff
+            )
+            size.name = sizeName
+            let product = Product(
+                name: "동일 상품",
+                category: .top,
+                sourceURLString: "https://www.musinsa.com/products/4668060",
+                sizes: [size]
+            )
+            return RecommendationService().recommend(
+                product: product,
+                selectedReferenceItem: reference,
+                productDetailCategory: .shortSleeve
+            )
+        }
+
+        guard let first = makeHistory(sizeName: "M", shoulder: 48) else {
+            Issue.record("첫 추천 결과 생성 실패")
+            return
+        }
+        try RecommendationHistoryStore.saveUnique(first, existing: [], modelContext: context)
+
+        let existing = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        guard let second = makeHistory(sizeName: "L", shoulder: 49) else {
+            Issue.record("두 번째 추천 결과 생성 실패")
+            return
+        }
+        try RecommendationHistoryStore.saveUnique(second, existing: existing, modelContext: context)
+
+        let saved = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        #expect(saved.count == 1)
+        #expect(saved.first?.recommendedSize.name == "L")
+    }
+
     @Test func manualClosetEntryRequiresMeasurementSource() {
         let viewModel = AddClosetItemViewModel()
         viewModel.brand = "테스트"
@@ -1350,6 +1551,19 @@ struct FitMatchTests {
         viewModel.totalLength = "70"
         viewModel.sleeveLength = "24"
         return viewModel
+    }
+
+    private func inMemoryModelContainer() throws -> ModelContainer {
+        let schema = Schema([
+            Brand.self,
+            Product.self,
+            ProductSize.self,
+            UserFit.self,
+            RecommendationHistory.self,
+            GarmentMeasurementRecord.self
+        ])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        return try ModelContainer(for: schema, configurations: [configuration])
     }
 
 }
