@@ -780,7 +780,7 @@ private struct HistoryGridCard: View {
                     height: 150,
                     cornerRadius: 16
                 )
-                .overlay(alignment: .topLeading) {
+                .overlay(alignment: .bottomTrailing) {
                     Text(relativeDateText)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.primary)
@@ -823,10 +823,12 @@ private struct HistoryGridCard: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.title3.weight(.black))
-                .foregroundStyle(.blue)
+                .font(.headline.weight(.black))
+                .foregroundStyle(.primary)
                 .monospacedDigit()
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .allowsTightening(true)
         }
     }
 

@@ -239,7 +239,7 @@ struct RecommendationResultView: View {
                         )
                         .frame(width: columnWidth)
                         Divider().frame(width: dividerWidth, height: 150)
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .center, spacing: 3) {
                             HStack(spacing: 5) {
                                 Text("신뢰도")
                                     .font(.caption.weight(.bold))
@@ -250,22 +250,22 @@ struct RecommendationResultView: View {
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("신뢰도 산정 기준")
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .center)
                             .frame(height: 18)
                             Text(comparisonReliability.stars)
                                 .font(.title3.weight(.bold))
                                 .foregroundStyle(.orange.opacity(0.85))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(maxWidth: .infinity, alignment: .center)
                                 .frame(height: 42)
                             Text(comparisonReliability.title)
                                 .font(.caption.weight(.bold))
                                 .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(maxWidth: .infinity, alignment: .center)
                                 .frame(height: 24)
                             Divider()
-                            HStack(spacing: 4) {
+                            HStack(spacing: 3) {
                                 Text("\(comparedMeasurementKinds.count)개 실측 항목 비교")
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(.secondary)
@@ -276,7 +276,7 @@ struct RecommendationResultView: View {
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("비교 실측 항목")
                             }
-                            HStack(spacing: comparedMeasurementKinds.count > 4 ? 3 : 6) {
+                            HStack(spacing: comparedMeasurementKinds.count > 4 ? 2 : 5) {
                                 ForEach(comparedMeasurementKinds) { kind in
                                     VStack(spacing: 2) {
                                         reportMeasurementIcon(for: kind)
@@ -288,8 +288,8 @@ struct RecommendationResultView: View {
                                 }
                             }
                         }
-                        .padding(.leading, 10)
-                        .frame(width: columnWidth, alignment: .leading)
+                        .padding(.horizontal, 6)
+                        .frame(width: columnWidth, alignment: .center)
                     }
                 }
                 .frame(height: 150)

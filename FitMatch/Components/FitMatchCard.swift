@@ -61,12 +61,21 @@ struct RecommendationMetricColumn: View {
     private let valueRowHeight: CGFloat = 42
     private let detailRowHeight: CGFloat = 24
 
+    private var contentAlignment: Alignment {
+        style == .result ? .center : .leading
+    }
+
+    private var textAlignment: TextAlignment {
+        style == .result ? .center : .leading
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(textAlignment)
+                .frame(maxWidth: .infinity, alignment: contentAlignment)
                 .frame(height: titleRowHeight)
             metricValue
             Group {
@@ -82,11 +91,11 @@ struct RecommendationMetricColumn: View {
                     Color.clear
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: contentAlignment)
             .frame(height: detailRowHeight)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, 10)
+        .frame(maxWidth: .infinity, alignment: contentAlignment)
+        .padding(.horizontal, 10)
     }
 
     @ViewBuilder
@@ -95,7 +104,8 @@ struct RecommendationMetricColumn: View {
             .foregroundStyle(.primary)
             .monospacedDigit()
             .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .multilineTextAlignment(textAlignment)
+            .frame(maxWidth: .infinity, alignment: contentAlignment)
             .frame(height: valueRowHeight)
 
         switch style {

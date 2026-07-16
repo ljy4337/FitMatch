@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Refined the History 2×2 result row with neutral app-color emphasis, balanced headline sizing, and bottom-trailing relative dates; restored centered result-detail recommendation metrics and compacted reliability spacing without changing History list alignment.
 - Removed the remaining History `정사이즈 추천` literal and recombined confidence, measurement count, measurement info, and icons into the single third result-metric column while preserving fixed empty detail-row space.
 - Added a History-only compact metric style using `title3.black`, monospaced digits, tightening, and 0.75 minimum scaling so 100% and XXL remain single-line without changing result-detail typography.
 - Swapped only the result reference/measurement card order and rebuilt the History 2×2 grid card with image date/favorite overlays, a restrained product block, separator, and emphasized bottom recommendation/fit row while retaining its legacy composition.
