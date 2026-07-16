@@ -18,7 +18,7 @@ struct HomeView: View {
     var body: some View {
         ZStack(alignment: .top) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 18) {
                     closetDashboardSection
                     recentComparisonSection
                     homeGuideSection
@@ -45,14 +45,14 @@ struct HomeView: View {
     }
 
     private var closetDashboardSection: some View {
-        CardView(radius: 22, padding: 18) {
+        CardView(radius: 22, padding: 18, background: Color(.secondarySystemGroupedBackground)) {
             VStack(alignment: .leading, spacing: 14) {
                 SectionHeader(title: "내 옷장 현황", subtitle: "상품 비교에 활용할 수 있는 옷을 확인하세요")
 
                 HStack(spacing: 10) {
                     HomeClosetStat(title: "등록된 옷", value: userFits.count)
-                    HomeClosetStat(title: "비교 상의", value: comparableTopCount)
-                    HomeClosetStat(title: "비교 하의", value: comparableBottomCount)
+                    HomeClosetStat(title: "등록 상의", value: comparableTopCount)
+                    HomeClosetStat(title: "등록 하의", value: comparableBottomCount)
                 }
 
                 Button(action: onOpenCloset) {
@@ -72,7 +72,7 @@ struct HomeView: View {
     private var recentComparisonSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                SectionHeader(title: "최근 비교", subtitle: recentComparisonSubtitle)
+                SectionHeader(title: "최근 비교 결과", subtitle: recentComparisonSubtitle)
                 Spacer()
                 Button(action: onOpenHistory) {
                     HStack(spacing: 4) {
@@ -87,7 +87,7 @@ struct HomeView: View {
 
             if !recentHistories.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
+                    LazyHStack(spacing: 12) {
                         ForEach(recentHistories) { history in
                             RecentProductPreviewCard(
                                 history: history,
@@ -100,19 +100,22 @@ struct HomeView: View {
                                     }
                                 }
                             )
-                            .frame(width: 214)
+                            .frame(width: 204)
                         }
                     }
+                    .scrollTargetLayout()
                     .padding(.vertical, 2)
                 }
+                .scrollTargetBehavior(.viewAligned(limitBehavior: .always))
             } else {
                 Button(action: onStartCompare) {
                     CardView(radius: 22, padding: 18) {
                         HStack(spacing: 14) {
                             Image(systemName: "arrow.left.arrow.right")
                                 .font(.title3.weight(.bold))
+                                .foregroundStyle(Color(.systemBackground))
                                 .frame(width: 44, height: 44)
-                                .background(.primary.opacity(0.07), in: Circle())
+                                .background(.primary, in: Circle())
 
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("첫 상품을 비교해 보세요")
@@ -134,6 +137,7 @@ struct HomeView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("첫 상품 비교 시작하기")
+                .accessibilityHint("상품 비교 화면을 엽니다")
             }
         }
     }
@@ -461,42 +465,45 @@ struct RecentProductPreviewCard: View {
 
     var body: some View {
         FitMatchCard {
-            ZStack(alignment: .topTrailing) {
-                NavigationLink {
-                    RecommendationResultView(result: history)
-                } label: {
-                    if layout == .carousel {
+            if layout == .carousel {
+                VStack(alignment: .leading, spacing: 10) {
+                    NavigationLink {
+                        RecommendationResultView(result: history)
+                    } label: {
                         carouselContent
-                    } else {
+                    }
+                    .buttonStyle(.plain)
+
+                    carouselActions
+                }
+            } else {
+                ZStack(alignment: .topTrailing) {
+                    NavigationLink {
+                        RecommendationResultView(result: history)
+                    } label: {
                         compactContent
                     }
-                }
-                .buttonStyle(.plain)
+                    .buttonStyle(.plain)
 
-                favoriteButton
-                    .padding(layout == .carousel ? 9 : 0)
+                    favoriteButton
+                }
             }
         }
     }
 
     private var carouselContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 9) {
             resultSummary
 
             ProductThumbnailView(
                 imageURLString: history.product.imageURLString,
                 category: history.product.category,
-                width: 178,
-                height: 112,
-                cornerRadius: 18
+                width: 168,
+                height: 84,
+                cornerRadius: 16
             )
 
             productText
-
-            HStack {
-                Spacer()
-                recompareButton
-            }
         }
     }
 
@@ -533,9 +540,10 @@ struct RecentProductPreviewCard: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
             Text(history.product.name)
-                .font(.headline.weight(.bold))
+                .font(.subheadline.weight(.bold))
                 .foregroundStyle(.primary)
                 .lineLimit(2)
+                .truncationMode(.tail)
         }
     }
 
@@ -572,9 +580,34 @@ struct RecentProductPreviewCard: View {
                     .monospacedDigit()
             }
         }
-        .padding(12)
-        .padding(.trailing, 30)
-        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(10)
+        .background(.primary.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+    }
+
+    private var carouselActions: some View {
+        HStack(spacing: 8) {
+            Button(action: onToggleFavorite) {
+                Label(isFavorite ? "관심 해제" : "관심", systemImage: isFavorite ? "heart.fill" : "heart")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(isFavorite ? .red : .primary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 34)
+                    .background(.primary.opacity(0.06), in: Capsule())
+            }
+            .buttonStyle(.plain)
+
+            Button(action: onRecompare) {
+                Text("다시 비교")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 34)
+                    .background(.primary, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(history.product.sourceURLString == nil)
+            .opacity(history.product.sourceURLString == nil ? 0.45 : 1)
+        }
     }
 
     private var favoriteButton: some View {
@@ -593,8 +626,8 @@ struct RecentProductPreviewCard: View {
             Text("다시 비교")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(Color(.systemBackground))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
                 .background(.primary, in: Capsule())
         }
         .buttonStyle(.plain)

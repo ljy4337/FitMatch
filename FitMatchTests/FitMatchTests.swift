@@ -441,7 +441,7 @@ struct FitMatchTests {
                     { "code": "body-length-back", "name": "전체 길이", "measurements": [{ "value": "64", "unit": "cm" }] },
                     { "code": "shoulder-width", "name": "어깨너비", "measurements": [{ "value": "45", "unit": "cm" }] },
                     { "code": "body-width", "name": "가슴너비", "measurements": [{ "value": "52", "unit": "cm" }] },
-                    { "code": "sleeve-length-cb", "name": "소매", "measurements": [{ "value": "82", "unit": "cm" }] }
+                    { "code": "sleeve-length-cb", "name": "소매", "info": "목 중심부터 소매 끝", "measurements": [{ "value": "82", "unit": "cm" }] }
                   ]
                 },
                 {
@@ -479,6 +479,126 @@ struct FitMatchTests {
         #expect(sizes.first?.measurements.totalLength == 64)
         #expect(sizes.first?.measurements.chest == 52)
         #expect(sizes.first?.id == ParsedProductSize.stableID(for: "E465185-000|S"))
+        let records = sizes.first?.measurementRecords ?? []
+        let shoulder = records.first { $0.rawCode == "shoulder-width" }
+        let sleeve = records.first { $0.rawCode == "sleeve-length-cb" }
+        let chest = records.first { $0.rawCode == "body-width" }
+        let length = records.first { $0.rawCode == "body-length-back" }
+        #expect(shoulder?.measurementCode == .shoulderWidthSeamToSeam)
+        #expect(sleeve?.measurementCode == .sleeveCenterBackToCuff)
+        #expect(sleeve?.rawInfo == "목 중심부터 소매 끝")
+        #expect(chest?.measurementCode == .unknown)
+        #expect(chest?.semanticStatus == .unknownDefinition)
+        #expect(length?.measurementCode == .unknown)
+        #expect(records.allSatisfy { $0.methodSource == "uniqlo_kr" })
+    }
+
+    @Test func musinsaActualSizePreservesRawFieldsAndRaglanMeaning() throws {
+        let json = """
+        {
+          "data": {
+            "typeName": "나그랑",
+            "typeNumber": 11,
+            "webImage": "https://example.com/web.png",
+            "mobileImage": "https://example.com/mobile.png",
+            "sizes": [
+              {
+                "name": "M",
+                "items": [
+                  { "name": "총장", "value": "70" },
+                  { "name": "가슴단면", "value": 54 },
+                  { "name": "화장", "value": "82.5" }
+                ]
+              }
+            ]
+          }
+        }
+        """
+
+        let result = try MusinsaActualSizeAPIParser().parseActualSize(from: Data(json.utf8))
+        let records = result.sizes.first?.measurementRecords ?? []
+        let sleeve = records.first { $0.rawLabel == "화장" }
+        let chest = records.first { $0.rawLabel == "가슴단면" }
+
+        #expect(result.typeNumber == 11)
+        #expect(result.webImage == "https://example.com/web.png")
+        #expect(sleeve?.measurementCode == .sleeveRaglanNeckToCuff)
+        #expect(sleeve?.methodProfile == "musinsa_type_11")
+        #expect(sleeve?.rawValueText == "82.5")
+        #expect(chest?.measurementCode == .unknown)
+        #expect(chest?.semanticStatus == .unknownDefinition)
+    }
+
+    @Test func parsedMeasurementsBecomeOwnedProductSizeRecords() {
+        let parsed = ParsedProductSize(
+            name: "M",
+            measurements: measurements(chest: 54),
+            measurementRecords: [
+                ParsedMeasurement(
+                    value: 54,
+                    measurementCode: .unknown,
+                    displayKind: .chest,
+                    methodSource: "uniqlo_kr",
+                    inputSource: .importedSizeChart,
+                    rawCode: "body-width",
+                    rawLabel: "가슴너비",
+                    rawValueText: "54",
+                    evidenceLevel: .unknown,
+                    semanticStatus: .unknownDefinition
+                )
+            ]
+        )
+
+        let size = ParsedProductSizeNormalizer.makeProductSizes(from: [parsed])[0]
+
+        #expect(size.measurementRecords.count == 1)
+        #expect(size.measurementRecords.first?.productSize === size)
+        #expect(size.measurementSchemaVersion == 1)
+        #expect(size.measurementMigrationStatus == .completed)
+    }
+
+    @Test func userFitCopiesMeasurementRecordsAsIndependentSnapshot() {
+        let sourceSize = ParsedProductSizeNormalizer.makeProductSizes(from: [
+            ParsedProductSize(
+                name: "M",
+                measurements: measurements(chest: 54),
+                measurementRecords: [
+                    ParsedMeasurement(
+                        value: 54,
+                        measurementCode: .unknown,
+                        displayKind: .chest,
+                        methodSource: "uniqlo_kr",
+                        inputSource: .importedSizeChart,
+                        rawCode: "body-width",
+                        rawLabel: "가슴너비",
+                        rawValueText: "54",
+                        evidenceLevel: .unknown,
+                        semanticStatus: .unknownDefinition
+                    )
+                ]
+            )
+        ])[0]
+        let item = UserFit(
+            sourceType: .officialStore,
+            sourceName: "유니클로 공식몰",
+            brandName: "유니클로",
+            productName: "티셔츠",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "M",
+            measurements: sourceSize.measurements,
+            fitMemo: "",
+            satisfaction: 0,
+            sourceProductSize: sourceSize
+        )
+
+        item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
+
+        #expect(item.measurementRecords.count == 1)
+        #expect(item.measurementRecords[0].id != sourceSize.measurementRecords[0].id)
+        #expect(item.measurementRecords[0].userFit === item)
+        #expect(item.measurementRecords[0].productSize == nil)
+        #expect(item.measurementMigrationStatus == .completed)
     }
 
     @Test func uniqloSizeAPIParserReturnsNormalizedImageURL() throws {

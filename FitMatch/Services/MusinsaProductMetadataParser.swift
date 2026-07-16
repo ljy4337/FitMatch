@@ -60,6 +60,13 @@ struct MusinsaProductMetadata {
             detailCategory = mappedDetailCategory
         }
     }
+
+    mutating func applyActualSizeProfile(typeNumber: Int?, typeName: String?) {
+        if let typeNumber {
+            productMetadata.sizeType = String(typeNumber)
+        }
+        applyActualSizeTypeName(typeName)
+    }
 }
 
 private extension ClosetDetailCategory {

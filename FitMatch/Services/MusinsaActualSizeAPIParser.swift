@@ -10,9 +10,10 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
 
     func parse(from url: URL) async throws -> ParsedProductInfo {
         let resolvedProduct = try await urlResolver.resolve(url)
-        let metadata = await metadataParser.parse(productID: resolvedProduct.productID, sourceURL: resolvedProduct.resolvedURL)
+        var metadata = await metadataParser.parse(productID: resolvedProduct.productID, sourceURL: resolvedProduct.resolvedURL)
         let actualSize = try await parseActualSize(productID: resolvedProduct.productID)
         let sizes = actualSize.sizes
+        metadata.applyActualSizeProfile(typeNumber: actualSize.typeNumber, typeName: actualSize.typeName)
 
         guard !sizes.isEmpty else {
             throw ProductURLParserPartialError(productInfo: metadata.parsedProductInfo(sizes: []))
@@ -31,11 +32,20 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         }
 
         let data = try await fetchData(from: apiURL)
+        return try parseActualSize(from: data)
+    }
+
+    func parseActualSize(from data: Data) throws -> MusinsaActualSizeResult {
         do {
             let response = try JSONDecoder().decode(MusinsaActualSizeResponse.self, from: data)
             return MusinsaActualSizeResult(
                 typeName: response.data.typeName,
-                sizes: response.data.sizes.compactMap(makeParsedSize)
+                typeNumber: response.data.typeNumber,
+                webImage: response.data.webImage,
+                mobileImage: response.data.mobileImage,
+                sizes: response.data.sizes.compactMap {
+                    makeParsedSize(from: $0, typeNumber: response.data.typeNumber, typeName: response.data.typeName)
+                }
             )
         } catch {
             print("[MusinsaActualSizeAPIParser] Actual size JSON decode failed: \(error)")
@@ -62,7 +72,11 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         return data
     }
 
-    private func makeParsedSize(from size: MusinsaActualSizeResponse.Size) -> ParsedProductSize? {
+    private func makeParsedSize(
+        from size: MusinsaActualSizeResponse.Size,
+        typeNumber: Int?,
+        typeName: String?
+    ) -> ParsedProductSize? {
         guard !size.name.trimmed.isEmpty else {
             return nil
         }
@@ -70,6 +84,26 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         var valuesByName: [String: String] = [:]
         for item in size.items {
             valuesByName[item.name.normalizedMeasurementName] = item.value.stringValue
+        }
+
+        let measurementRecords = size.items.compactMap { item -> ParsedMeasurement? in
+            let rawValue = item.value.stringValue
+            guard let value = firstNumber(in: rawValue), value.isFinite, value > 0 else { return nil }
+            let column = MusinsaActualSizeColumn.column(for: item.name.normalizedMeasurementName)
+            let mapping = musinsaMapping(column: column, typeNumber: typeNumber)
+            return ParsedMeasurement(
+                value: value,
+                measurementCode: mapping?.code ?? .unknown,
+                displayKind: column?.displayKind ?? .unknown,
+                methodSource: "musinsa",
+                methodProfile: typeNumber.map { "musinsa_type_\($0)" }
+                    ?? typeName.flatMap { $0.trimmed.nonEmpty }.map { "musinsa_type_name_\($0)" },
+                inputSource: .importedSizeChart,
+                rawLabel: item.name,
+                rawValueText: rawValue,
+                evidenceLevel: mapping?.evidence ?? .unknown,
+                semanticStatus: mapping == nil ? .unknownDefinition : .mapped
+            )
         }
 
         let measurements = GarmentMeasurements(
@@ -84,7 +118,8 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
             hem: number(matching: [.hem], in: valuesByName) ?? 0
         )
 
-        guard measurements.shoulder > 0 ||
+        guard !measurementRecords.isEmpty ||
+                measurements.shoulder > 0 ||
                 measurements.chest > 0 ||
                 measurements.totalLength > 0 ||
                 measurements.sleeveLength > 0 ||
@@ -96,7 +131,11 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
             return nil
         }
 
-        return ParsedProductSize(name: size.name.normalizedMusinsaSizeName, measurements: measurements)
+        return ParsedProductSize(
+            name: size.name.normalizedMusinsaSizeName,
+            measurements: measurements,
+            measurementRecords: measurementRecords
+        )
     }
 
     private func number(matching columns: [MusinsaActualSizeColumn], in valuesByName: [String: String]) -> Double? {
@@ -119,10 +158,29 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         return Double(text[range])
     }
 
+    private func musinsaMapping(
+        column: MusinsaActualSizeColumn?,
+        typeNumber: Int?
+    ) -> (code: MeasurementCode, evidence: MeasurementEvidenceLevel)? {
+        switch (typeNumber, column) {
+        case (5, .shoulder), (21, .shoulder), (20, .shoulder):
+            return (.shoulderWidthSeamToSeam, .officialDiagram)
+        case (5, .sleeveLength), (21, .sleeveLength), (20, .sleeveLength):
+            return (.sleeveShoulderSeamToCuff, .officialDiagram)
+        case (11, .sleeveLength):
+            return (.sleeveRaglanNeckToCuff, .officialDiagram)
+        default:
+            return nil
+        }
+    }
+
 }
 
 struct MusinsaActualSizeResult {
     let typeName: String?
+    let typeNumber: Int?
+    let webImage: String?
+    let mobileImage: String?
     let sizes: [ParsedProductSize]
 }
 
@@ -131,6 +189,9 @@ private struct MusinsaActualSizeResponse: Decodable {
 
     struct DataBody: Decodable {
         let typeName: String?
+        let typeNumber: Int?
+        let webImage: String?
+        let mobileImage: String?
         let sizes: [Size]
     }
 
@@ -187,6 +248,27 @@ private enum MusinsaActualSizeColumn {
     case inseam
     case hem
 
+    static func column(for name: String) -> MusinsaActualSizeColumn? {
+        let searchOrder: [MusinsaActualSizeColumn] = [
+            .shoulder, .chest, .sleeveLength, .waist, .hip, .thigh, .rise, .inseam, .hem, .totalLength
+        ]
+        return searchOrder.first { $0.matches(name) }
+    }
+
+    var displayKind: MeasurementDisplayKind {
+        switch self {
+        case .shoulder: return .shoulder
+        case .chest: return .chest
+        case .totalLength, .inseam: return .totalLength
+        case .sleeveLength: return .sleeveLength
+        case .waist: return .waist
+        case .hip: return .hip
+        case .thigh: return .thigh
+        case .rise: return .rise
+        case .hem: return .hem
+        }
+    }
+
     func matches(_ name: String) -> Bool {
         aliases.contains { name.contains($0) }
     }
@@ -236,6 +318,10 @@ private extension ParsedProductInfo {
 private extension String {
     var trimmed: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var nonEmpty: String? {
+        isEmpty ? nil : self
     }
 
     var normalizedMeasurementName: String {

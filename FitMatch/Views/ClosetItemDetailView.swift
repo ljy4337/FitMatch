@@ -311,6 +311,8 @@ struct ClosetItemDetailView: View {
         item.sizeName = selectedSize.name.fitMatchDisplaySizeName
         item.measurements = selectedSize.measurements
         item.sourceProductSize = selectedSize
+        item.measurementRecords.forEach(modelContext.delete)
+        item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
         item.updatedAt = Date()
         do {
             try modelContext.save()
@@ -387,6 +389,7 @@ struct ClosetItemDetailView: View {
         candidate.categoryCode = item.resolvedCategoryCode
         candidate.detailCategoryCode = item.resolvedDetailCategoryCode
         candidate.normalizedProductTypeCode = item.resolvedNormalizedProductTypeCode
+        candidate.replaceMeasurementRecords(with: item.measurementRecords)
         return candidate
     }
 

@@ -27,6 +27,47 @@ struct ParsedProductSize: Identifiable, Equatable {
     var id = UUID()
     var name: String
     var measurements: GarmentMeasurements
+    var measurementRecords: [ParsedMeasurement] = []
+}
+
+struct ParsedMeasurement: Equatable {
+    var value: Double
+    var unit: MeasurementUnit = .centimeter
+    var measurementCode: MeasurementCode
+    var displayKind: MeasurementDisplayKind
+    var methodSource: String
+    var methodProfile: String? = nil
+    var inputSource: MeasurementInputSource
+    var standardVersion: String? = nil
+    var mappingVersion: String = "measurement_mapping_v1"
+    var rawCode: String? = nil
+    var rawLabel: String
+    var rawInfo: String? = nil
+    var rawValueText: String? = nil
+    var evidenceLevel: MeasurementEvidenceLevel
+    var semanticStatus: MeasurementSemanticStatus
+
+    func makeRecord(productSize: ProductSize? = nil, userFit: UserFit? = nil) -> GarmentMeasurementRecord {
+        GarmentMeasurementRecord(
+            value: value,
+            unit: unit,
+            measurementCode: measurementCode,
+            displayKind: displayKind,
+            methodSource: methodSource,
+            methodProfile: methodProfile,
+            inputSource: inputSource,
+            standardVersion: standardVersion,
+            mappingVersion: mappingVersion,
+            rawCode: rawCode,
+            rawLabel: rawLabel,
+            rawInfo: rawInfo,
+            rawValueText: rawValueText,
+            evidenceLevel: evidenceLevel,
+            semanticStatus: semanticStatus,
+            productSize: productSize,
+            userFit: userFit
+        )
+    }
 }
 
 extension ParsedProductSize {
@@ -113,12 +154,21 @@ enum ParsedProductSizeNormalizer {
 
     static func makeProductSizes(from sizes: [ParsedProductSize]) -> [ProductSize] {
         uniqueSizes(sizes).enumerated().map { index, size in
-            ProductSize(
+            let productSize = ProductSize(
                 id: size.id,
                 name: size.name.trimmingCharacters(in: .whitespacesAndNewlines),
                 measurements: size.measurements,
                 displayOrder: index
             )
+            let records = size.measurementRecords.map { $0.makeRecord(productSize: productSize) }
+            productSize.measurementRecords = records
+            if !records.isEmpty {
+                productSize.measurementSchemaVersion = 1
+                productSize.measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
+                productSize.measurementMigrationStatus = .completed
+                productSize.measurementMigrationErrorCode = nil
+            }
+            return productSize
         }
     }
 }

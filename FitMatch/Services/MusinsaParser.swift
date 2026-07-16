@@ -25,7 +25,7 @@ struct MusinsaParser: ProductURLParsing {
             )
         }
         let sizes = actualSize.sizes
-        metadata.applyActualSizeTypeName(actualSize.typeName)
+        metadata.applyActualSizeProfile(typeNumber: actualSize.typeNumber, typeName: actualSize.typeName)
 
         print("[MusinsaParser] detectedProvider: musinsa")
         print("[MusinsaParser] originalURL: \(resolved.originalURL.absoluteString)")
@@ -36,6 +36,7 @@ struct MusinsaParser: ProductURLParsing {
         print("[MusinsaParser] category: \(metadata.category.rawValue)")
         print("[MusinsaParser] detailCategory: \(metadata.detailCategory.rawValue)")
         print("[MusinsaParser] actualSizeTypeName: \(actualSize.typeName ?? "nil")")
+        print("[MusinsaParser] actualSizeTypeNumber: \(actualSize.typeNumber.map(String.init) ?? "nil")")
         print("[MusinsaParser] imageURL: \(metadata.imageURLString ?? "nil")")
         print("[MusinsaParser] sizeCount: \(sizes.count)")
 

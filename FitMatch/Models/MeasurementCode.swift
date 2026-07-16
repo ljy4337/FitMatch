@@ -13,6 +13,7 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
 }
 
 enum MeasurementDisplayKind: String, Codable, CaseIterable, Hashable {
+    case unknown
     case shoulder
     case chest
     case totalLength = "total_length"

@@ -238,6 +238,42 @@ final class UserFit {
         "\(brandName) \(productName)"
     }
 
+    func replaceMeasurementRecords(with sourceRecords: [GarmentMeasurementRecord]) {
+        measurementRecords = sourceRecords.map { source in
+            GarmentMeasurementRecord(
+                value: source.value,
+                unit: MeasurementUnit(rawValue: source.unitRawValue) ?? .centimeter,
+                measurementCode: source.measurementCode,
+                displayKind: source.displayKind ?? .unknown,
+                methodSource: source.methodSource,
+                methodProfile: source.methodProfile,
+                inputSource: MeasurementInputSource(rawValue: source.inputSourceRawValue) ?? .importedSizeChart,
+                standardVersion: source.standardVersion,
+                mappingVersion: source.mappingVersion,
+                rawCode: source.rawCode,
+                rawLabel: source.rawLabel,
+                rawInfo: source.rawInfo,
+                rawValueText: source.rawValueText,
+                evidenceLevel: MeasurementEvidenceLevel(rawValue: source.evidenceLevelRawValue) ?? .unknown,
+                semanticStatus: source.semanticStatus,
+                userFit: self
+            )
+        }
+        guard !measurementRecords.isEmpty else {
+            measurementSchemaVersion = 0
+            measurementInputSourceRawValue = MeasurementInputSource.importedSizeChart.rawValue
+            measurementMigrationVersion = 0
+            measurementMigrationStatus = .notStarted
+            measurementMigrationErrorCode = nil
+            return
+        }
+        measurementSchemaVersion = 1
+        measurementInputSourceRawValue = MeasurementInputSource.importedSizeChart.rawValue
+        measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
+        measurementMigrationStatus = .completed
+        measurementMigrationErrorCode = nil
+    }
+
     var sourceCategoryNameForMatching: String {
         let value = (sourceCategoryDepth1 ?? sourceProduct?.sourceCategoryDepth1 ?? sourceProduct?.categoryDepth1Name)?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""

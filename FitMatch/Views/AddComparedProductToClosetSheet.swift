@@ -618,6 +618,7 @@ struct AddComparedProductToClosetSheet: View {
         item.categoryCode = selectedCategoryCode
         item.detailCategoryCode = selectedDetailCategoryCode
         item.normalizedProductTypeCode = product.resolvedNormalizedProductTypeCode
+        item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
 
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")

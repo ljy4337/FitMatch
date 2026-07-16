@@ -291,13 +291,46 @@ struct UniqloSizeAPIParser {
 
         var valuesByCode: [String: Double] = [:]
         var valuesByName: [String: Double] = [:]
+        let methodProfile = uniqloMethodProfile(for: size.sizeParts ?? [])
+        var measurementRecords: [ParsedMeasurement] = []
 
         for part in size.sizeParts ?? [] {
-            guard let value = part.centimeterValue else {
+            guard let measurement = part.centimeterMeasurement else {
                 continue
             }
+            let value = measurement.value
             valuesByCode[part.code.normalizedUniqloMeasurementKey] = value
             valuesByName[part.name.normalizedUniqloMeasurementKey] = value
+
+            let normalizedCode = part.code.normalizedUniqloMeasurementKey
+            let mapping: (MeasurementCode, MeasurementEvidenceLevel)?
+            switch normalizedCode {
+            case "shoulderwidth":
+                mapping = (.shoulderWidthSeamToSeam, .officialText)
+            case "sleevelengthcb":
+                mapping = (.sleeveCenterBackToCuff, .officialText)
+            default:
+                mapping = nil
+            }
+            let displayKind = UniqloMeasurementColumn
+                .column(for: normalizedCode, fallbackName: part.name.normalizedUniqloMeasurementKey)?
+                .displayKind ?? .unknown
+            measurementRecords.append(
+                ParsedMeasurement(
+                    value: value,
+                    measurementCode: mapping?.0 ?? .unknown,
+                    displayKind: displayKind,
+                    methodSource: "uniqlo_kr",
+                    methodProfile: methodProfile,
+                    inputSource: .importedSizeChart,
+                    rawCode: part.code,
+                    rawLabel: part.name,
+                    rawInfo: part.info,
+                    rawValueText: measurement.rawValue,
+                    evidenceLevel: mapping?.1 ?? .unknown,
+                    semanticStatus: mapping == nil ? .unknownDefinition : .mapped
+                )
+            )
         }
 
         let measurements = GarmentMeasurements(
@@ -312,15 +345,24 @@ struct UniqloSizeAPIParser {
             hem: number(matching: [.hem], valuesByCode: valuesByCode, valuesByName: valuesByName) ?? 0
         )
 
-        guard !measurements.isEmpty else {
+        guard !measurementRecords.isEmpty || !measurements.isEmpty else {
             return nil
         }
 
         return ParsedProductSize(
             id: ParsedProductSize.stableID(for: "\(productIDWithColorCode)|\(sizeName)"),
             name: sizeName,
-            measurements: measurements
+            measurements: measurements,
+            measurementRecords: measurementRecords
         )
+    }
+
+    private func uniqloMethodProfile(for parts: [UniqloSizeChartResponse.SizePart]) -> String {
+        let codes = Set(parts.map { $0.code.normalizedUniqloMeasurementKey })
+        if codes.contains("knitbodylengthfront") { return "uniqlo_top_knit" }
+        if codes.contains("bodylengthback") { return "uniqlo_top_back" }
+        if codes.contains("bodylength") { return "uniqlo_top_shirt" }
+        return "uniqlo_size_chart"
     }
 
     private func number(
@@ -993,10 +1035,15 @@ private struct UniqloSizeChartResponse: Decodable {
         let measurements: [Measurement]?
 
         var centimeterValue: Double? {
-            guard let value = measurements?.first(where: { $0.unit.lowercased() == "cm" })?.value else {
-                return nil
-            }
-            return Self.firstNumber(in: value)
+            centimeterMeasurement?.value
+        }
+
+        var centimeterMeasurement: (value: Double, rawValue: String)? {
+            guard let measurement = measurements?.first(where: { $0.unit.lowercased() == "cm" }),
+                  let value = Self.firstNumber(in: measurement.value),
+                  value.isFinite,
+                  value > 0 else { return nil }
+            return (value, measurement.value)
         }
 
         private static func firstNumber(in text: String) -> Double? {
@@ -1027,6 +1074,28 @@ private enum UniqloMeasurementColumn {
     case rise
     case inseam
     case hem
+
+    static func column(for code: String, fallbackName: String) -> UniqloMeasurementColumn? {
+        let searchOrder: [UniqloMeasurementColumn] = [
+            .shoulder, .chest, .sleeveLength, .waist, .hip, .thigh, .rise, .inseam, .hem, .totalLength
+        ]
+        return searchOrder.first { $0.matches(code) }
+            ?? searchOrder.first { $0.matches(fallbackName) }
+    }
+
+    var displayKind: MeasurementDisplayKind {
+        switch self {
+        case .shoulder: return .shoulder
+        case .chest: return .chest
+        case .totalLength, .inseam: return .totalLength
+        case .sleeveLength: return .sleeveLength
+        case .waist: return .waist
+        case .hip: return .hip
+        case .thigh: return .thigh
+        case .rise: return .rise
+        case .hem: return .hem
+        }
+    }
 
     func matches(_ name: String) -> Bool {
         aliases.contains { name.contains($0) }
