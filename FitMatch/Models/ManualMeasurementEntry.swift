@@ -289,7 +289,8 @@ enum ManualMeasurementRecordFactory {
         rawLabels: [MeasurementKind: String]
     ) -> String {
         if source == .otherSizeChart {
-            return rawLabels[kind]?.trimmed ?? kind.title
+            let rawLabel = rawLabels[kind]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return rawLabel.isEmpty ? kind.title : rawLabel
         }
         guard source == .uniqloSizeChart else { return kind.title }
         switch kind {
