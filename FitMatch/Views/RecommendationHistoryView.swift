@@ -39,14 +39,17 @@ struct RecommendationHistoryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(isPresented: Binding(
-            get: { selectedHistoryForDetail != nil },
+            get: { selectedHistoryIDForDetail != nil },
             set: { if !$0 { selectedHistoryIDForDetail = nil } }
         )) {
             if let selectedHistoryForDetail {
                 RecommendationResultView(
                     result: selectedHistoryForDetail,
                     opensReferencePickerOnAppear: opensReferencePickerOnDetail
-                )
+                ) { updatedHistory in
+                    opensReferencePickerOnDetail = false
+                    selectedHistoryIDForDetail = updatedHistory.id
+                }
             }
         }
         .sheet(item: $selectedHistoryForCloset) { history in

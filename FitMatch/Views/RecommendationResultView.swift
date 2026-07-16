@@ -3,10 +3,13 @@ import SwiftData
 
 struct RecommendationResultView: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     let result: RecommendationHistory
     private let opensReferencePickerOnAppear: Bool
+    private let onResultPersisted: ((RecommendationHistory) -> Void)?
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var comparisonResult: RecommendationHistory?
     @State private var activeSheet: RecommendationResultActiveSheet?
     @State private var isShowingClosetSavedAlert = false
@@ -15,9 +18,14 @@ struct RecommendationResultView: View {
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     private let favoriteStore = FavoriteProductStore()
 
-    init(result: RecommendationHistory, opensReferencePickerOnAppear: Bool = false) {
+    init(
+        result: RecommendationHistory,
+        opensReferencePickerOnAppear: Bool = false,
+        onResultPersisted: ((RecommendationHistory) -> Void)? = nil
+    ) {
         self.result = result
         self.opensReferencePickerOnAppear = opensReferencePickerOnAppear
+        self.onResultPersisted = onResultPersisted
     }
 
     private var currentResult: RecommendationHistory {
@@ -780,21 +788,29 @@ struct RecommendationResultView: View {
         print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 시작] 기존기준옷=\(currentResult.userFit.displayName), 선택기준옷=\(item.displayName)")
         #endif
 
-        let outcome = ResultReferenceComparisonResolver.resolve(
+        let outcome = ResultReferenceComparisonPersistence.resolveAndSave(
             product: currentResult.product,
             selectedReferenceItem: item,
-            productDetailCategory: currentResult.productDetailCategory
+            productDetailCategory: currentResult.productDetailCategory,
+            existingHistories: histories,
+            modelContext: modelContext
         )
 
         switch outcome {
         case .success(let history):
             comparisonResult = history
+            onResultPersisted?(history)
             #if DEBUG
+            print("[화면: 비교 결과][동작: 변경 결과 저장][상태: 성공] 상품=\(history.product.name), 기준옷=\(history.userFit.displayName), 추천사이즈=\(history.recommendedSize.name)")
             print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 성공] 기준옷=\(history.userFit.displayName), 추천사이즈=\(history.recommendedSize.name), 신뢰도=\(history.recommendationScore)")
             #endif
         case .insufficient(let evidence):
             #if DEBUG
             print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 근거 부족] 기준옷=\(item.displayName), 비교항목=\(evidence?.comparedKinds.map(\.title).joined(separator: ",") ?? "없음"), 제외항목=\(evidence?.missingKinds.map(\.title).joined(separator: ",") ?? "확인 불가")")
+            #endif
+        case .saveFailed(let message):
+            #if DEBUG
+            print("[화면: 비교 결과][동작: 변경 결과 저장][상태: 실패] 오류=\(message), 기준옷=\(item.displayName)")
             #endif
         }
 
@@ -1526,12 +1542,45 @@ private struct FitMatchRankRow: View {
 enum ResultReferenceComparisonOutcome {
     case success(RecommendationHistory)
     case insufficient(InsufficientComparisonEvidence?)
+    case saveFailed(String)
 
     var shouldDismissPicker: Bool {
         if case .success = self {
             return true
         }
         return false
+    }
+}
+
+enum ResultReferenceComparisonPersistence {
+    static func resolveAndSave(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        existingHistories: [RecommendationHistory],
+        modelContext: ModelContext
+    ) -> ResultReferenceComparisonOutcome {
+        let outcome = ResultReferenceComparisonResolver.resolve(
+            product: product,
+            selectedReferenceItem: selectedReferenceItem,
+            productDetailCategory: productDetailCategory
+        )
+
+        guard case .success(let history) = outcome else {
+            return outcome
+        }
+
+        do {
+            try RecommendationHistoryStore.saveUnique(
+                history,
+                existing: existingHistories,
+                modelContext: modelContext
+            )
+            return .success(history)
+        } catch {
+            modelContext.rollback()
+            return .saveFailed(error.localizedDescription)
+        }
     }
 }
 
@@ -1571,6 +1620,7 @@ private struct ResultReferencePickerView: View {
     @State private var insufficientEvidence: InsufficientComparisonEvidence?
     @State private var isShowingInsufficientEvidence = false
     @State private var isShowingReferenceComparison = false
+    @State private var saveErrorMessage: String?
 
     var body: some View {
         ScrollView {
@@ -1622,31 +1672,33 @@ private struct ResultReferencePickerView: View {
                         .background(Color.orange.opacity(0.14), in: Circle())
                         .foregroundStyle(.orange)
 
-                    Text("이 옷은 측정 방식이 달라 추천에 필요한 실측 정보가 부족해요")
+                    Text(saveErrorMessage ?? "이 옷은 측정 방식이 달라 추천에 필요한 실측 정보가 부족해요")
                         .font(.title3.weight(.black))
                         .multilineTextAlignment(.center)
 
-                    Text("기존 추천 결과는 변경하지 않았습니다.")
+                    Text(saveErrorMessage == nil ? "기존 추천 결과는 변경하지 않았습니다." : "기존 결과와 저장 기록은 그대로 유지했습니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
             }
 
-            CardView(radius: 24, padding: 20) {
-                VStack(alignment: .leading, spacing: 13) {
-                    Text("확인된 비교 근거")
-                        .font(.headline.weight(.black))
+            if saveErrorMessage == nil {
+                CardView(radius: 24, padding: 20) {
+                    VStack(alignment: .leading, spacing: 13) {
+                        Text("확인된 비교 근거")
+                            .font(.headline.weight(.black))
 
-                    if let evidence = insufficientEvidence {
-                        Text("선택한 옷 · \(evidence.referenceItem.displayName) / \(evidence.referenceItem.sizeName)")
-                            .font(.subheadline.weight(.semibold))
+                        if let evidence = insufficientEvidence {
+                            Text("선택한 옷 · \(evidence.referenceItem.displayName) / \(evidence.referenceItem.sizeName)")
+                                .font(.subheadline.weight(.semibold))
 
-                        evidenceRows(evidence)
-                    } else {
-                        Text("동일한 측정 기준으로 비교할 수 있는 항목이 없습니다.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            evidenceRows(evidence)
+                        } else {
+                            Text("동일한 측정 기준으로 비교할 수 있는 항목이 없습니다.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -1778,6 +1830,12 @@ private struct ResultReferencePickerView: View {
                     dismiss()
                 case .insufficient(let evidence):
                     insufficientEvidence = evidence
+                    saveErrorMessage = nil
+                    isShowingReferenceComparison = false
+                    isShowingInsufficientEvidence = true
+                case .saveFailed:
+                    insufficientEvidence = nil
+                    saveErrorMessage = "변경 결과를 저장하지 못했어요. 다시 시도해 주세요."
                     isShowingReferenceComparison = false
                     isShowingInsufficientEvidence = true
                 }
@@ -1807,6 +1865,7 @@ private struct ResultReferencePickerView: View {
                 isShowingInsufficientEvidence = false
                 isShowingReferenceComparison = false
                 insufficientEvidence = nil
+                saveErrorMessage = nil
                 selectedItemID = nil
             } label: {
                 Text("다른 옷 선택")

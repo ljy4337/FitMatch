@@ -6,6 +6,8 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- History detail re-comparison now replaces the selected history route with the newly persisted history ID, so dismissing the garment picker keeps the recalculated result detail on screen instead of popping to the list.
+- Successful reference-garment changes from RecommendationResultView now replace the persisted same-product history through the existing graph-reuse store; insufficient evidence or save failure keeps the previous screen and record intact.
 - Consolidated recommendation and product-parser diagnostics behind a DEBUG-only Korean logger; per-size score output is now one line and duplicated parser metadata logs are removed from Release builds.
 - Recommendation result reference changes now dismiss only after a successful recalculation; insufficient measurement evidence keeps the picker open with comparable/excluded items and an optional reference-only comparison.
 - Compare flow sheets now receive the root TabBarVisibilityController, preventing RecommendationResultView environment-object crashes; DEBUG logs identify Korean screen/action/status transitions.
@@ -97,6 +99,8 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- History-detail route retention passed the generic iOS device Debug build; the picker dismissal remains local to RecommendationResultView and protected scroll files/call sites are unchanged.
+- Last-reference persistence tests cover latest UserFit/recommended-size replacement, single-history retention, stable ProductSize/measurement-record identities, and insufficient-evidence record preservation; app and test bundles compile for generic iOS devices.
 - Performance-diagnostic logging passed generic iOS device Debug and Release builds; Release binary inspection found no DEBUG logger or detailed recommendation-score strings.
 - Recommendation result reference-change regression tests cover compatible success and insufficient-evidence outcomes; the generic iOS device Debug build succeeded without launching a simulator.
 - Compare sheet environment injection and Korean DEBUG transition logs passed the generic iOS device Debug build and protected-scroll diff checks.

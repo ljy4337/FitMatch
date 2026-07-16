@@ -2019,6 +2019,138 @@ struct FitMatchTests {
         #expect(savedSizes.count == 1)
     }
 
+    @Test func resultReferenceChangePersistsLatestSelectionWithoutDuplicatingProductGraph() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let firstReference = comparisonItem(
+            shoulder: 46,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let lastReference = comparisonItem(
+            shoulder: 52,
+            sleeve: 26,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        context.insert(firstReference)
+        context.insert(lastReference)
+
+        let small = comparisonSize(
+            shoulder: 46,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        small.id = ParsedProductSize.stableID(for: "4668060|S")
+        small.name = "S"
+        let large = comparisonSize(
+            shoulder: 52,
+            sleeve: 26,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        large.id = ParsedProductSize.stableID(for: "4668060|L")
+        large.name = "L"
+        let product = Product(
+            name: "기준 옷 변경 상품",
+            category: .top,
+            productCode: "4668060",
+            sourceURLString: "https://www.musinsa.com/products/4668060",
+            sourceName: "무신사",
+            sizes: [small, large]
+        )
+
+        let initial = try #require(
+            RecommendationService().recommend(
+                product: product,
+                selectedReferenceItem: firstReference,
+                productDetailCategory: .shortSleeve
+            )
+        )
+        try RecommendationHistoryStore.saveUnique(initial, existing: [], modelContext: context)
+
+        let storedBefore = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let storedProduct = try #require(storedBefore.first?.product)
+        let sizeIDsBefore = Set(storedProduct.sizes.map(\.id))
+        let measurementRecordIDsBefore = Set(storedProduct.sizes.flatMap(\.measurementRecords).map(\.id))
+
+        let outcome = ResultReferenceComparisonPersistence.resolveAndSave(
+            product: storedProduct,
+            selectedReferenceItem: lastReference,
+            productDetailCategory: .shortSleeve,
+            existingHistories: storedBefore,
+            modelContext: context
+        )
+
+        guard case .success(let updated) = outcome else {
+            Issue.record("마지막 기준 옷 결과가 저장되어야 합니다.")
+            return
+        }
+        let savedHistories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let savedProducts = try context.fetch(FetchDescriptor<Product>())
+        let savedSizes = try context.fetch(FetchDescriptor<ProductSize>())
+        let savedMeasurementRecords = try context.fetch(FetchDescriptor<GarmentMeasurementRecord>())
+        #expect(updated.userFit.id == lastReference.id)
+        #expect(updated.recommendedSize.name == "L")
+        #expect(savedHistories.count == 1)
+        #expect(savedHistories.first?.userFit.id == lastReference.id)
+        #expect(savedHistories.first?.recommendedSize.name == "L")
+        #expect(savedProducts.count == 1)
+        #expect(Set(savedSizes.map(\.id)) == sizeIDsBefore)
+        #expect(Set(savedMeasurementRecords.map(\.id)) == measurementRecordIDsBefore)
+    }
+
+    @Test func insufficientResultReferenceChangeKeepsPersistedHistory() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let originalReference = comparisonItem(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let incompatibleReference = comparisonItem(
+            shoulder: 49,
+            sleeve: 63,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        context.insert(originalReference)
+        context.insert(incompatibleReference)
+
+        let size = comparisonSize(
+            shoulder: 48,
+            sleeve: 47,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let product = Product(name: "근거 부족 상품", category: .top, sizes: [size])
+        let initial = try #require(
+            RecommendationService().recommend(
+                product: product,
+                selectedReferenceItem: originalReference,
+                productDetailCategory: .shortSleeve
+            )
+        )
+        try RecommendationHistoryStore.saveUnique(initial, existing: [], modelContext: context)
+        let storedBefore = try context.fetch(FetchDescriptor<RecommendationHistory>())
+
+        let outcome = ResultReferenceComparisonPersistence.resolveAndSave(
+            product: try #require(storedBefore.first?.product),
+            selectedReferenceItem: incompatibleReference,
+            productDetailCategory: .shortSleeve,
+            existingHistories: storedBefore,
+            modelContext: context
+        )
+
+        #expect(!outcome.shouldDismissPicker)
+        let storedAfter = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        #expect(storedAfter.count == 1)
+        #expect(storedAfter.first?.userFit.id == originalReference.id)
+    }
+
     @Test func comparingDifferentProductsKeepsSeparateHistoriesAndGraphs() throws {
         let container = try inMemoryModelContainer()
         let context = ModelContext(container)
