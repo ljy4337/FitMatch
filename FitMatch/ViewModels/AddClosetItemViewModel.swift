@@ -95,8 +95,9 @@ final class AddClosetItemViewModel: ObservableObject {
         if let profile = item.measurementRecords.first?.methodProfile,
            profile.hasPrefix("other_size_chart_manual:") {
             measurementSourceName = String(profile.dropFirst("other_size_chart_manual:".count))
-            measurementSourceLabels = Dictionary(uniqueKeysWithValues: item.measurementRecords.compactMap { record in
-                guard let kind = record.displayKind else {
+            measurementSourceLabels = Dictionary(uniqueKeysWithValues: item.measurementRecords.compactMap { record -> (MeasurementKind, String)? in
+                guard let displayKind = record.displayKind,
+                      let kind = MeasurementKind.allCases.first(where: { $0.displayKind == displayKind }) else {
                     return nil
                 }
                 let rawLabel = record.rawLabel.trimmed

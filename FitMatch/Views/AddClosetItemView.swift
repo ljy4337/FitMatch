@@ -399,8 +399,8 @@ struct AddClosetItemView: View {
 
         if viewModel.measurementEntrySource == .otherSizeChart,
            measurementKinds.contains(where: {
-               !viewModel.value(for: $0).trimmed.isEmpty
-                   && (viewModel.measurementSourceLabels[$0]?.trimmed.isEmpty ?? true)
+               !viewModel.value(for: $0).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                   && (viewModel.measurementSourceLabels[$0]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
            }) {
             return "입력한 실측값의 원본 항목명을 입력해 주세요."
         }

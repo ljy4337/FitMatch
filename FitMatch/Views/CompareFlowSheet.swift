@@ -771,7 +771,7 @@ private extension CompareFlowSheet {
 
     var manualSelectionCandidates: [UserFit] {
         let recommendedIDs = Set(recommendedReferenceCandidates.map(\.id))
-        allSimilarClosetCandidates.filter { item in
+        return allSimilarClosetCandidates.filter { item in
             !recommendedIDs.contains(item.id)
         }
     }
@@ -1403,4 +1403,23 @@ private extension String {
         trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    var displaySizeName: String {
+        let value = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.contains("/") else {
+            return value
+        }
+
+        return value
+            .split(separator: "/")
+            .last
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            ?? value
+    }
+}
+
+private extension Double {
+    var signedCmText: String {
+        let sign = self > 0 ? "+" : ""
+        return "\(sign)\(String(format: "%.1f", self))cm"
+    }
 }
