@@ -220,18 +220,24 @@ struct RecommendationResultView: View {
             VStack(alignment: .leading, spacing: 8) {
                 GeometryReader { geometry in
                     let dividerWidth: CGFloat = 1
-                    let availableWidth = geometry.size.width - (dividerWidth * 2)
-                    let resultColumnWidth = availableWidth * 0.28
-                    let reliabilityColumnWidth = availableWidth - (resultColumnWidth * 2)
+                    let columnWidth = (geometry.size.width - (dividerWidth * 2)) / 3
 
                     HStack(alignment: .top, spacing: 0) {
-                        RecommendationMetricColumn(
-                            title: "추천 사이즈",
-                            value: recommendedSizeName,
-                            detail: nil,
-                            isPrimary: true
-                        )
-                        .frame(width: resultColumnWidth)
+                        ZStack {
+                            Text(recommendedSizeName)
+                                .font(.system(size: 34, weight: .black))
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+
+                            Text("추천 사이즈")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                .padding(.leading, 10)
+                        }
+                        .frame(width: columnWidth, height: 132)
                         Divider().frame(width: dividerWidth, height: 132)
                         RecommendationMetricColumn(
                             title: "핏 매칭률",
@@ -239,7 +245,7 @@ struct RecommendationResultView: View {
                             detail: fitMatchDescription,
                             isPrimary: false
                         )
-                        .frame(width: resultColumnWidth)
+                        .frame(width: columnWidth)
                         Divider().frame(width: dividerWidth, height: 132)
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 5) {
@@ -294,7 +300,7 @@ struct RecommendationResultView: View {
                         }
                         .padding(.leading, 10)
                         .padding(.trailing, 4)
-                        .frame(width: reliabilityColumnWidth, alignment: .leading)
+                        .frame(width: columnWidth, alignment: .leading)
                     }
                 }
                 .frame(height: 132)

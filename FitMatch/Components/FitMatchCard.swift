@@ -74,8 +74,8 @@ struct RecommendationMetricColumn: View {
             Text(title)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(textAlignment)
-                .frame(maxWidth: .infinity, alignment: contentAlignment)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: titleRowHeight)
             metricValue
             Group {

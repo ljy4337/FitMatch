@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Restored equal-width result-detail metrics and rebuilt the recommendation-size cell as a 132pt ZStack so its value is geometrically centered while all metric titles remain leading-aligned.
 - Rebalanced result-detail metrics to equal 28% recommendation/fit columns and a 44% reliability column, restoring the full `N개 실측항목 비교` label.
 - Increased the History list recommended-size value from 22pt to 26pt Black while retaining single-line scaling for `XXL` on narrow widths.
 - Reduced the result-detail metric card's content height from 150pt to 132pt and added History-only compact badge typography/scaling so `매우 잘 맞아요` remains visible without ellipsis.
