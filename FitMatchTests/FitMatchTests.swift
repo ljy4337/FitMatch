@@ -1345,6 +1345,106 @@ struct FitMatchTests {
         #expect(ranked.first?.userFit.id == closerOtherBrand.id)
     }
 
+    @Test func musinsaAndUniqloUpperMeasurementsDoNotMixDifferentDefinitions() {
+        let uniqloSize = comparisonSize(
+            shoulder: 50,
+            sleeve: 47,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        setComparableCode(.chestWidthUniqloBodyWidth, for: .chest, in: uniqloSize.measurementRecords)
+        setComparableCode(.bodyLengthUniqloBack, for: .totalLength, in: uniqloSize.measurementRecords)
+        let musinsaItem = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        setComparableCode(.chestWidthPitToPit, for: .chest, in: musinsaItem.measurementRecords)
+        setComparableCode(.bodyLengthMusinsaType5, for: .totalLength, in: musinsaItem.measurementRecords)
+        let product = Product(name: "유니클로 반팔 티셔츠", category: .top, sizes: [uniqloSize])
+        let service = RecommendationService()
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: uniqloSize,
+            referenceItem: musinsaItem,
+            productCategory: .top,
+            productDetailCategory: .shortSleeve
+        )
+        let recommendation = service.recommend(
+            product: product,
+            selectedReferenceItem: musinsaItem,
+            productDetailCategory: .shortSleeve
+        )
+        let evidence = service.insufficientEvidence(
+            product: product,
+            selectedReferenceItem: musinsaItem,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(result.status == .insufficientEvidence)
+        #expect(result.comparedKinds == [.shoulder])
+        #expect(recommendation == nil)
+        #expect(evidence?.comparisonResult == result)
+        #expect(result.exclusions.contains {
+            $0.kind == .chest
+                && $0.reason == .incompatibleMeasurementCode
+                && $0.productCode == .chestWidthUniqloBodyWidth
+                && $0.referenceCode == .chestWidthPitToPit
+        })
+        #expect(result.exclusions.contains {
+            $0.kind == .totalLength
+                && $0.reason == .incompatibleMeasurementCode
+                && $0.productCode == .bodyLengthUniqloBack
+                && $0.referenceCode == .bodyLengthMusinsaType5
+        })
+        #expect(result.exclusions.contains {
+            $0.kind == .sleeveLength
+                && $0.reason == .incompatibleMeasurementCode
+                && $0.productCode == .sleeveCenterBackToCuff
+                && $0.referenceCode == .sleeveShoulderSeamToCuff
+        })
+    }
+
+    @Test func compatibleOtherBrandOutranksSameBrandWithLessMeasurementEvidence() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        setComparableCode(.chestWidthPitToPit, for: .chest, in: size.measurementRecords)
+        setComparableCode(.bodyLengthMusinsaType5, for: .totalLength, in: size.measurementRecords)
+        let product = Product(name: "반팔 티셔츠", brand: Brand(name: "브랜드A"), category: .top, sizes: [size])
+        let sameBrand = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        sameBrand.brandName = "브랜드A"
+        let compatibleOtherBrand = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        compatibleOtherBrand.brandName = "브랜드B"
+        setComparableCode(.chestWidthPitToPit, for: .chest, in: compatibleOtherBrand.measurementRecords)
+        setComparableCode(.bodyLengthMusinsaType5, for: .totalLength, in: compatibleOtherBrand.measurementRecords)
+
+        let ranked = RecommendationService().rankedFitMatches(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [sameBrand, compatibleOtherBrand]
+        )
+
+        #expect(ranked.first?.userFit.id == compatibleOtherBrand.id)
+        #expect(ranked.first?.compatibleMeasurementCount == 4)
+        #expect(ranked.last?.userFit.id == sameBrand.id)
+        #expect(ranked.last?.compatibleMeasurementCount == 2)
+    }
+
     @Test func comparisonProfileStoresGarmentSleeveAndConstructionAttributes() {
         let size = comparisonSize(
             shoulder: 50,
@@ -2219,10 +2319,18 @@ struct FitMatchTests {
     }
 
     private func markChestComparable(_ records: [GarmentMeasurementRecord]) {
-        guard let chest = records.first(where: { $0.displayKind == .chest }) else { return }
-        chest.measurementCodeRawValue = MeasurementCode.chestWidthPitToPit.rawValue
-        chest.evidenceLevelRawValue = MeasurementEvidenceLevel.officialText.rawValue
-        chest.semanticStatusRawValue = MeasurementSemanticStatus.mapped.rawValue
+        setComparableCode(.chestWidthPitToPit, for: .chest, in: records)
+    }
+
+    private func setComparableCode(
+        _ code: MeasurementCode,
+        for kind: MeasurementKind,
+        in records: [GarmentMeasurementRecord]
+    ) {
+        guard let record = records.first(where: { $0.displayKind == kind.displayKind }) else { return }
+        record.measurementCodeRawValue = code.rawValue
+        record.evidenceLevelRawValue = MeasurementEvidenceLevel.officialText.rawValue
+        record.semanticStatusRawValue = MeasurementSemanticStatus.mapped.rawValue
     }
 
     private func manualMeasurementViewModel(source: MeasurementEntrySource) -> AddClosetItemViewModel {

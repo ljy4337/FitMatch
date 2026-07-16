@@ -560,7 +560,7 @@ struct CompareStartSheet: View {
     }
 
     private func openMusinsa() {
-        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/msuf8hvg") else {
+        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/7egjf3sd") else {
             return
         }
 

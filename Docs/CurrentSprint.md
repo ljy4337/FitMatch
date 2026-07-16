@@ -6,6 +6,7 @@ Updated: 2026-07-16
 Uniqlo
 
 ## Completed
+- Updated the Musinsa launch shortcut to the current OneLink in Home and Compare flow.
 - Fixed the Closet edit measurement-label type inference and display-kind conversion build errors.
 - Restored file-local size/difference formatting used by Compare flow and removed cross-file `fileprivate` dependencies from Closet validation.
 - Added a four-page first-launch onboarding shown after Splash, persisted with AppStorage and hidden on later launches.

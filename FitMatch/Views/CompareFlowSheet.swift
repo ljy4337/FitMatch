@@ -1101,7 +1101,7 @@ private extension CompareFlowSheet {
     }
 
     func openMusinsa() {
-        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/msuf8hvg") else { return }
+        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/7egjf3sd") else { return }
         UIApplication.shared.open(url)
     }
 
