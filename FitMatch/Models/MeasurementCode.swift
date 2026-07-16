@@ -96,13 +96,14 @@ struct SourceMeasurementMapping: Equatable {
 }
 
 enum MeasurementSourceMappingPolicy {
-    static let musinsaVersion = "musinsa_actual_size_mapping_v5"
+    static let musinsaVersion = "musinsa_actual_size_mapping_v6"
     static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v5"
 
     static func musinsa(
         typeNumber: Int?,
         displayKind: MeasurementDisplayKind?,
-        rawLabel: String? = nil
+        rawLabel: String? = nil,
+        isTopCategory: Bool = false
     ) -> SourceMeasurementMapping? {
         let normalizedLabel = rawLabel?
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -137,6 +138,16 @@ enum MeasurementSourceMappingPolicy {
             return mapping(.skirtLengthWaistToHem)
         }
 
+        if isTopCategory,
+           displayKind == .totalLength,
+           normalizedLabel == "총장" {
+            return SourceMeasurementMapping(
+                code: .bodyLengthBackNeckToHem,
+                evidence: .officialDiagram,
+                mappingVersion: musinsaVersion
+            )
+        }
+
         switch (typeNumber, displayKind) {
         case (5, .shoulder), (20, .shoulder), (21, .shoulder):
             return SourceMeasurementMapping(
@@ -150,27 +161,13 @@ enum MeasurementSourceMappingPolicy {
                 evidence: .officialDiagram,
                 mappingVersion: musinsaVersion
             )
-        case (5, .totalLength):
-            // Reversible previous mapping: code: .bodyLengthMusinsaType5
-            return SourceMeasurementMapping(
-                code: .bodyLengthBackNeckToHem,
-                evidence: .officialDiagram,
-                mappingVersion: musinsaVersion
-            )
-        case (20, .totalLength):
-            // Reversible previous mapping: code: .bodyLengthMusinsaType20
-            return SourceMeasurementMapping(
-                code: .bodyLengthBackNeckToHem,
-                evidence: .officialDiagram,
-                mappingVersion: musinsaVersion
-            )
-        case (21, .totalLength):
-            // Reversible previous mapping: code: .bodyLengthMusinsaType21
-            return SourceMeasurementMapping(
-                code: .bodyLengthBackNeckToHem,
-                evidence: .officialDiagram,
-                mappingVersion: musinsaVersion
-            )
+        // Reversible previous mapping:
+        // Musinsa top total length was mapped only for types 5, 20 and 21.
+        // Replaced by the common top-length rule so all verified Musinsa top
+        // measurements labeled "총장" use bodyLengthBackNeckToHem.
+        // case (5, .totalLength): code = .bodyLengthMusinsaType5
+        // case (20, .totalLength): code = .bodyLengthMusinsaType20
+        // case (21, .totalLength): code = .bodyLengthMusinsaType21
         case (5, .sleeveLength), (20, .sleeveLength), (21, .sleeveLength):
             return SourceMeasurementMapping(
                 code: .sleeveShoulderSeamToCuff,
@@ -243,6 +240,12 @@ enum MeasurementSourceMappingPolicy {
             evidence: .officialText,
             mappingVersion: uniqloVersion
         )
+    }
+}
+
+extension ClothingCategory {
+    var isMusinsaTopCategory: Bool {
+        serviceGroup == .top
     }
 }
 

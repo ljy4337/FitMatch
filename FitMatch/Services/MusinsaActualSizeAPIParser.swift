@@ -11,7 +11,10 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     func parse(from url: URL) async throws -> ParsedProductInfo {
         let resolvedProduct = try await urlResolver.resolve(url)
         var metadata = await metadataParser.parse(productID: resolvedProduct.productID, sourceURL: resolvedProduct.resolvedURL)
-        let actualSize = try await parseActualSize(productID: resolvedProduct.productID)
+        let actualSize = try await parseActualSize(
+            productID: resolvedProduct.productID,
+            isTopCategory: metadata.category.isMusinsaTopCategory
+        )
         let sizes = actualSize.sizes
         metadata.applyActualSizeProfile(typeNumber: actualSize.typeNumber, typeName: actualSize.typeName)
 
@@ -26,13 +29,13 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         try await parseActualSize(productID: productID).sizes
     }
 
-    func parseActualSize(productID: String) async throws -> MusinsaActualSizeResult {
+    func parseActualSize(productID: String, isTopCategory: Bool = false) async throws -> MusinsaActualSizeResult {
         guard let apiURL = URL(string: "https://goods-detail.musinsa.com/api2/goods/\(productID)/actual-size") else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
         let data = try await fetchData(from: apiURL)
-        return try parseActualSize(from: data)
+        return try parseActualSize(from: data, isTopCategory: isTopCategory)
     }
 
     func parseStandardSizeOptions(productID: String) async throws -> [ParsedProductSize] {
@@ -64,16 +67,23 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         }
     }
 
-    func parseActualSize(from data: Data) throws -> MusinsaActualSizeResult {
+    func parseActualSize(from data: Data, isTopCategory: Bool = false) throws -> MusinsaActualSizeResult {
         do {
             let response = try JSONDecoder().decode(MusinsaActualSizeResponse.self, from: data)
+            let resolvedIsTopCategory = isTopCategory
+                || MusinsaProductMetadataParser.mapCategory(from: response.data?.typeName).isMusinsaTopCategory
             return MusinsaActualSizeResult(
                 typeName: response.data?.typeName,
                 typeNumber: response.data?.typeNumber,
                 webImage: response.data?.webImage,
                 mobileImage: response.data?.mobileImage,
                 sizes: (response.data?.sizes ?? []).compactMap {
-                    makeParsedSize(from: $0, typeNumber: response.data?.typeNumber, typeName: response.data?.typeName)
+                    makeParsedSize(
+                        from: $0,
+                        typeNumber: response.data?.typeNumber,
+                        typeName: response.data?.typeName,
+                        isTopCategory: resolvedIsTopCategory
+                    )
                 }
             )
         } catch {
@@ -105,7 +115,8 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     private func makeParsedSize(
         from size: MusinsaActualSizeResponse.Size,
         typeNumber: Int?,
-        typeName: String?
+        typeName: String?,
+        isTopCategory: Bool
     ) -> ParsedProductSize? {
         guard !size.name.trimmed.isEmpty else {
             return nil
@@ -120,7 +131,8 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
             let mapping = MeasurementSourceMappingPolicy.musinsa(
                 typeNumber: typeNumber,
                 displayKind: column?.displayKind,
-                rawLabel: item.name
+                rawLabel: item.name,
+                isTopCategory: isTopCategory
             )
             let normalizedValue = value * (mapping?.valueMultiplier ?? 1)
             valuesByName[item.name.normalizedMeasurementName] = String(normalizedValue)

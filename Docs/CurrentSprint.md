@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Standardized every verified Musinsa upper-body measurement labeled exactly `총장` to `bodyLengthBackNeckToHem` using parsed FitMatch category context instead of a type-number whitelist, with mapping v6 and idempotent migration v7 recovery for qualified legacy records.
 - Unified History and result-detail recommendation size/fit columns through the shared `RecommendationMetricColumn`, eliminating divergent typography, spacing, and centering behavior.
 - Restored compact measurement icons beneath the result's measurement-count line, including the custom shoulder-line symbol, while removing redundant leading measurement icons from the detail sheet.
 - Fixed History result metrics to three identical calculated column widths, removed automatic recommended-size font scaling, retained centered size/fit metrics, and isolated reliability as the only leading-aligned column.
@@ -113,6 +114,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Musinsa top-length policy tests cover types 5/11/20/21/24, an unknown future type, type 5↔21 comparison, and qualified legacyUnknown recovery; the app and test bundles compile for generic iOS without launching a simulator.
 - Shared History/detail recommendation metric rendering passed the generic iOS device Debug build and `git diff --check`; the existing UserFit migration actor-isolation warning remains.
 - Restored result measurement icons and simplified measurement-sheet rows passed the generic iOS device Debug build and `git diff --check`.
 - Equal-width History metrics and fixed recommended-size typography passed the generic iOS device Debug build and `git diff --check`.

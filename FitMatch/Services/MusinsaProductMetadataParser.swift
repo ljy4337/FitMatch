@@ -241,7 +241,7 @@ struct MusinsaProductMetadataParser {
         if text.contains("니트") {
             return .knit
         }
-        if text.contains("티셔츠") || text.contains("상의") || text.contains("반소매") || text.contains("긴소매") {
+        if text.contains("티셔츠") || text.contains("상의") || text.contains("반소매") || text.contains("긴소매") || text.contains("민소매") {
             return .top
         }
         return .other

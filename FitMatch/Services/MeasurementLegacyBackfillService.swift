@@ -3,8 +3,8 @@ import SwiftData
 
 @MainActor
 enum MeasurementLegacyBackfillService {
-    static let migrationVersion = 6
-    static let mappingVersion = "legacy_backfill_v6"
+    static let migrationVersion = 7
+    static let mappingVersion = "legacy_backfill_v7"
 
     static func run(
         modelContext: ModelContext,
@@ -55,7 +55,10 @@ enum MeasurementLegacyBackfillService {
                 modelContext.insert(record)
             }
         } else {
-            let convertedValues = upgradeSourceMappings(in: canonicalRecords)
+            let convertedValues = upgradeSourceMappings(
+                in: canonicalRecords,
+                isTopCategory: product.category.isMusinsaTopCategory
+            )
             applyConvertedValues(convertedValues, to: &size.measurements)
         }
         size.measurementSchemaVersion = 1
@@ -83,7 +86,10 @@ enum MeasurementLegacyBackfillService {
                 modelContext.insert(record)
             }
         } else {
-            let convertedValues = upgradeSourceMappings(in: canonicalRecords)
+            let convertedValues = upgradeSourceMappings(
+                in: canonicalRecords,
+                isTopCategory: item.category.isMusinsaTopCategory
+            )
             applyConvertedValues(convertedValues, to: &item.measurements)
         }
         item.measurementSchemaVersion = 1
@@ -115,11 +121,15 @@ enum MeasurementLegacyBackfillService {
     }
 
     private static func upgradeSourceMappings(
-        in records: [GarmentMeasurementRecord]
+        in records: [GarmentMeasurementRecord],
+        isTopCategory: Bool
     ) -> [MeasurementDisplayKind: Double] {
         var convertedValues: [MeasurementDisplayKind: Double] = [:]
         for record in records {
-            let migratedCommonCode = commonCodeReplacingLegacyPlatformCode(record.measurementCode)
+            let migratedCommonCode = commonCodeReplacingLegacyPlatformCode(
+                record,
+                isTopCategory: isTopCategory
+            )
             let mapping: SourceMeasurementMapping?
             switch record.methodSource {
             case "uniqlo_kr":
@@ -135,7 +145,8 @@ enum MeasurementLegacyBackfillService {
                 mapping = MeasurementSourceMappingPolicy.musinsa(
                     typeNumber: typeNumber,
                     displayKind: record.displayKind,
-                    rawLabel: record.rawLabel
+                    rawLabel: record.rawLabel,
+                    isTopCategory: isTopCategory
                 )
             default:
                 mapping = nil
@@ -172,21 +183,36 @@ enum MeasurementLegacyBackfillService {
     }
 
     private static func commonCodeReplacingLegacyPlatformCode(
-        _ code: MeasurementCode
+        _ record: GarmentMeasurementRecord,
+        isTopCategory: Bool
     ) -> MeasurementCode? {
-        switch code {
+        switch record.measurementCode {
         case .chestWidthUniqloBodyWidth:
             return .chestWidthPitToPit
-        case .bodyLengthMusinsaType5,
-             .bodyLengthMusinsaType20,
-             .bodyLengthMusinsaType21,
-             .bodyLengthUniqloBack,
+        case .bodyLengthUniqloBack,
              .bodyLengthUniqloShirt,
              .bodyLengthUniqloKnitFront:
             return .bodyLengthBackNeckToHem
+        case .bodyLengthMusinsaType5,
+             .bodyLengthMusinsaType20,
+             .bodyLengthMusinsaType21,
+             .legacyUnknown:
+            return isVerifiedMusinsaTopTotalLength(record, isTopCategory: isTopCategory)
+                ? .bodyLengthBackNeckToHem
+                : nil
         default:
             return nil
         }
+    }
+
+    private static func isVerifiedMusinsaTopTotalLength(
+        _ record: GarmentMeasurementRecord,
+        isTopCategory: Bool
+    ) -> Bool {
+        isTopCategory
+            && record.methodSource == "musinsa"
+            && record.displayKind == .totalLength
+            && record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines) == "총장"
     }
 }
 
@@ -202,7 +228,11 @@ enum MeasurementLegacyBackfillFactory {
 
         return legacyValues(size.measurements).compactMap { legacy in
             guard legacy.value.isFinite, legacy.value > 0 else { return nil }
-            let mapping = musinsaMapping(kind: legacy.kind, sizeType: profile)
+            let mapping = musinsaMapping(
+                kind: legacy.kind,
+                sizeType: profile,
+                isTopCategory: product.category.isMusinsaTopCategory
+            )
             return makeRecord(
                 value: legacy.value,
                 kind: legacy.kind,
@@ -284,13 +314,16 @@ enum MeasurementLegacyBackfillFactory {
 
     private static func musinsaMapping(
         kind: MeasurementKind,
-        sizeType: String?
+        sizeType: String?,
+        isTopCategory: Bool
     ) -> (code: MeasurementCode, evidence: MeasurementEvidenceLevel)? {
         guard let sizeType,
               let typeNumber = Int(sizeType),
               let mapping = MeasurementSourceMappingPolicy.musinsa(
                   typeNumber: typeNumber,
-                  displayKind: kind.displayKind
+                  displayKind: kind.displayKind,
+                  rawLabel: kind == .totalLength ? "총장" : nil,
+                  isTopCategory: isTopCategory
               ) else { return nil }
         return (mapping.code, mapping.evidence)
     }

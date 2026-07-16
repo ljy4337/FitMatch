@@ -28,7 +28,10 @@ struct MusinsaParser: ProductURLParsing {
         var metadata = await metadataParser.parse(productID: resolved.productID, sourceURL: resolved.resolvedURL)
         let actualSize: MusinsaActualSizeResult
         do {
-            actualSize = try await actualSizeParser.parseActualSize(productID: resolved.productID)
+            actualSize = try await actualSizeParser.parseActualSize(
+                productID: resolved.productID,
+                isTopCategory: metadata.category.isMusinsaTopCategory
+            )
         } catch {
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
