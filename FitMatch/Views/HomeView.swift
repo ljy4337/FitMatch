@@ -233,31 +233,31 @@ private struct HomeClosetPreviewCard: View {
     @State private var saveErrorMessage: String?
 
     var body: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 9) {
+        CardView(radius: 20, padding: 14, background: Color(.secondarySystemGroupedBackground)) {
+            VStack(alignment: .leading, spacing: 8) {
                 NavigationLink {
                     ClosetItemDetailView(item: item)
                 } label: {
-                    VStack(alignment: .leading, spacing: 9) {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack(alignment: .center, spacing: 12) {
                             summaryValue(title: "등록 사이즈", value: item.sizeName)
                             Spacer()
                             summaryValue(title: "분류", value: detailCategoryName, alignment: .trailing)
                         }
-                        .padding(10)
-                        .background(.primary.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                        .padding(9)
+                        .background(Color(.systemBackground).opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                         ProductThumbnailView(
                             imageURLString: item.sourceProduct?.imageURLString,
                             category: item.category,
                             width: 168,
-                            height: 84,
-                            cornerRadius: 16
+                            height: 78,
+                            cornerRadius: 15
                         )
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.brandName)
-                                .font(.caption.weight(.bold))
+                                .font(.caption.weight(.medium))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                             Text(item.productName)
@@ -276,7 +276,7 @@ private struct HomeClosetPreviewCard: View {
                             .font(.caption.weight(.bold))
                             .foregroundStyle(item.isRepresentative ? .red : .primary)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 34)
+                            .frame(height: 32)
                             .background(
                                 item.isRepresentative ? Color.red.opacity(0.09) : Color.primary.opacity(0.06),
                                 in: Capsule()
@@ -292,7 +292,7 @@ private struct HomeClosetPreviewCard: View {
                             .font(.caption.weight(.bold))
                             .foregroundStyle(Color(.systemBackground))
                             .frame(maxWidth: .infinity)
-                            .frame(height: 34)
+                            .frame(height: 32)
                             .background(.primary, in: Capsule())
                     }
                     .buttonStyle(.plain)
@@ -656,9 +656,9 @@ struct RecentProductPreviewCard: View {
     let onRecompare: () -> Void
 
     var body: some View {
-        FitMatchCard {
+        CardView(radius: 20, padding: cardPadding) {
             if layout == .carousel {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
                     NavigationLink {
                         RecommendationResultView(result: history)
                     } label: {
@@ -684,15 +684,15 @@ struct RecentProductPreviewCard: View {
     }
 
     private var carouselContent: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 8) {
             resultSummary
 
             ProductThumbnailView(
                 imageURLString: history.product.imageURLString,
                 category: history.product.category,
                 width: 168,
-                height: 84,
-                cornerRadius: 16
+                height: 78,
+                cornerRadius: 15
             )
 
             productText
@@ -725,10 +725,19 @@ struct RecentProductPreviewCard: View {
         }
     }
 
+    private var cardPadding: CGFloat {
+        switch layout {
+        case .compact:
+            18
+        case .carousel:
+            14
+        }
+    }
+
     private var productText: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(history.product.brand?.name ?? history.product.sourceDisplayName)
-                .font(.caption.weight(.bold))
+                .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
             Text(history.product.name)
@@ -772,19 +781,23 @@ struct RecentProductPreviewCard: View {
                     .monospacedDigit()
             }
         }
-        .padding(10)
-        .background(.primary.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .padding(9)
+        .background(.primary.opacity(0.09), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var carouselActions: some View {
         HStack(spacing: 8) {
             Button(action: onToggleFavorite) {
                 Label(isFavorite ? "관심 해제" : "관심", systemImage: isFavorite ? "heart.fill" : "heart")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(isFavorite ? .red : .primary)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(isFavorite ? .red : .secondary)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 34)
-                    .background(.primary.opacity(0.06), in: Capsule())
+                    .frame(height: 32)
+                    .background(isFavorite ? Color.red.opacity(0.06) : Color.clear, in: Capsule())
+                    .overlay {
+                        Capsule()
+                            .stroke(isFavorite ? Color.red.opacity(0.16) : Color.primary.opacity(0.12), lineWidth: 1)
+                    }
             }
             .buttonStyle(.plain)
 
@@ -793,7 +806,7 @@ struct RecentProductPreviewCard: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 34)
+                    .frame(height: 32)
                     .background(.primary, in: Capsule())
             }
             .buttonStyle(.plain)

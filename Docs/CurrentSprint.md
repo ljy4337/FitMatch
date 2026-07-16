@@ -101,6 +101,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Home card polish differentiates Closet and recent-comparison purposes with restrained Material surfaces, tightens carousel density, and preserves result-first typography and existing actions.
 - Cross-platform measurement tests cover common upper measurements, sleeve exclusion, lower width conversion/comparison, outseam/inseam separation, raglan preservation, and idempotent v6 migration; app and test bundles compile for generic iOS devices.
 - History-detail route retention passed the generic iOS device Debug build; the picker dismissal remains local to RecommendationResultView and protected scroll files/call sites are unchanged.
 - Last-reference persistence tests cover latest UserFit/recommended-size replacement, single-history retention, stable ProductSize/measurement-record identities, and insufficient-evidence record preservation; app and test bundles compile for generic iOS devices.
