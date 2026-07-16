@@ -243,10 +243,7 @@ struct RecommendationResultView: View {
                     HStack(spacing: comparedMeasurementKinds.count > 4 ? 4 : 7) {
                         ForEach(comparedMeasurementKinds) { kind in
                             VStack(spacing: 2) {
-                                Image(systemName: reportIcon(for: kind))
-                                    .font(.caption.weight(.semibold))
-                                    .rotationEffect(reportIconRotation(for: kind))
-                                    .frame(width: 16, height: 16)
+                                reportMeasurementIcon(for: kind)
                                 Text(reportShortTitle(for: kind))
                                     .font(.system(size: comparedMeasurementKinds.count > 4 ? 8 : 9, weight: .medium))
                                     .lineLimit(1)
@@ -849,6 +846,19 @@ struct RecommendationResultView: View {
         case .totalLength: return .degrees(90)
         case .sleeveLength: return .degrees(-38)
         default: return .zero
+        }
+    }
+
+    @ViewBuilder
+    private func reportMeasurementIcon(for kind: MeasurementKind) -> some View {
+        if kind == .shoulder {
+            ShoulderMeasurementIcon()
+                .frame(width: 18, height: 16)
+        } else {
+            Image(systemName: reportIcon(for: kind))
+                .font(.caption.weight(.semibold))
+                .rotationEffect(reportIconRotation(for: kind))
+                .frame(width: 16, height: 16)
         }
     }
 
@@ -1724,6 +1734,32 @@ private struct ProductMeasurementDifferenceGrid: View {
                 )
             }
         }
+    }
+}
+
+private struct ShoulderMeasurementIcon: View {
+    var body: some View {
+        Canvas { context, size in
+            var path = Path()
+            path.move(to: CGPoint(x: 1, y: size.height * 0.82))
+            path.addCurve(
+                to: CGPoint(x: size.width * 0.36, y: size.height * 0.34),
+                control1: CGPoint(x: size.width * 0.12, y: size.height * 0.55),
+                control2: CGPoint(x: size.width * 0.25, y: size.height * 0.48)
+            )
+            path.addCurve(
+                to: CGPoint(x: size.width * 0.64, y: size.height * 0.34),
+                control1: CGPoint(x: size.width * 0.42, y: size.height * 0.72),
+                control2: CGPoint(x: size.width * 0.58, y: size.height * 0.72)
+            )
+            path.addCurve(
+                to: CGPoint(x: size.width - 1, y: size.height * 0.82),
+                control1: CGPoint(x: size.width * 0.75, y: size.height * 0.48),
+                control2: CGPoint(x: size.width * 0.88, y: size.height * 0.55)
+            )
+            context.stroke(path, with: .foreground, style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
+        }
+        .accessibilityHidden(true)
     }
 }
 

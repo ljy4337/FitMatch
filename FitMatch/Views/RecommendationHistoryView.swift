@@ -448,7 +448,7 @@ private struct HistoryCard: View {
                     )
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(history.productBrandNameForDisplay)
+                        Text(historyBrandText)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -456,7 +456,7 @@ private struct HistoryCard: View {
                         Text(history.productNameForDisplay)
                             .font(.headline.weight(.bold))
                             .foregroundStyle(.primary)
-                            .lineLimit(2)
+                            .lineLimit(1)
                             .truncationMode(.tail)
 
                         Text(historySourceCategoryText)
@@ -494,9 +494,9 @@ private struct HistoryCard: View {
 
             HStack(alignment: .top, spacing: 0) {
                 historyMetric(title: "추천 사이즈", value: history.recommendedSize.name.displaySizeName)
-                Divider().frame(height: 76)
+                Divider().frame(height: 88)
                 historyMetric(title: "핏 매칭률", value: "\(history.recommendationScore)%", badge: fitMatchBadge)
-                Divider().frame(height: 76)
+                Divider().frame(height: 88)
                 reliabilityMetric
             }
             .padding(.horizontal, 14)
@@ -509,7 +509,7 @@ private struct HistoryCard: View {
                 Text(measurementSummaryText)
                     .font(.caption.weight(.semibold))
                 Spacer()
-                Text(history.createdAt.formatted(.dateTime.year().month().day().weekday(.abbreviated)))
+                Text(formattedHistoryDate)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Image(systemName: "chevron.right")
@@ -521,12 +521,12 @@ private struct HistoryCard: View {
     }
 
     private func historyMetric(title: String, value: String, badge: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .center, spacing: 7) {
             Text(title)
-                .font(.caption.weight(.bold))
+                .font(.subheadline.weight(.bold))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.title2.weight(.black))
+                .font(.title.weight(.black))
                 .foregroundStyle(.primary)
                 .monospacedDigit()
                 .lineLimit(1)
@@ -540,24 +540,24 @@ private struct HistoryCard: View {
                     .background(.green.opacity(0.1), in: Capsule())
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private var reliabilityMetric: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .center, spacing: 7) {
             Text("신뢰도")
-                .font(.caption.weight(.bold))
+                .font(.subheadline.weight(.bold))
                 .foregroundStyle(.secondary)
             Text(reliabilityStars)
-                .font(.caption.weight(.bold))
+                .font(.title3.weight(.bold))
                 .foregroundStyle(.orange.opacity(0.85))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
             Text(reliabilityTitle)
-                .font(.caption.weight(.bold))
+                .font(.subheadline.weight(.bold))
                 .lineLimit(1)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     // TODO: Legacy UI, 삭제 금지. currentCardContent 대신 연결하면 기존 목록 카드로 즉시 원복할 수 있습니다.
@@ -658,6 +658,27 @@ private struct HistoryCard: View {
             to: calendar.startOfDay(for: Date())
         ).day ?? 0
         return days > 0 ? "\(days)일 전" : history.createdAt.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    private var historyBrandText: String {
+        isMusinsaProduct
+            ? "\(history.productBrandNameForDisplay) (무신사)"
+            : history.productBrandNameForDisplay
+    }
+
+    private var isMusinsaProduct: Bool {
+        let source = history.productSourceNameForDisplay.lowercased()
+        if source.contains("무신사") || source.contains("musinsa") {
+            return true
+        }
+        return history.product.sourceURLString?.lowercased().contains("musinsa") == true
+    }
+
+    private var formattedHistoryDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy. M. d. (E)"
+        return formatter.string(from: history.createdAt)
     }
 
     private var historySourceCategoryText: String {

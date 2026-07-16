@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Updated History list cards with Musinsa source attribution beside the brand, centered and enlarged result metrics, one-line product names, Korean numeric weekday dates, and a dedicated shoulder-line icon in result reliability details.
 - Reworked the History list card into the supplied product-summary, three-metric result panel, and dated measurement footer while preserving taps, favorite/delete swipes, grid cards, and the prior list composition as `historyCardLegacy`.
 - Refined reliability measurement symbols so shoulder reads as horizontal width, total length as a vertical ruler, and sleeve length as a diagonal ruler.
 - Removed the comparison-result content's redundant bottom padding so the fixed safe-area action inset no longer creates unnecessary scrolling when the report fits on screen.
@@ -108,6 +109,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- History source/metric/date polish and the comparison-detail shoulder icon passed the generic iOS device Debug build and `git diff --check`; the existing UserFit migration actor-isolation warning remains.
 - The supplied-reference History list card passed the generic iOS device Debug build and `git diff --check`; grid rendering, detail routing, swipe actions, and protected scroll code remain unchanged.
 - The comparison-result control and measurement-visibility refinements passed the generic iOS device Debug build and protected-scroll diff checks.
 - The compact comparison-result UI passed the generic iOS device Debug build and `git diff --check`; no simulator was launched and protected scroll code/call sites remain unchanged.
