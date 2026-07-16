@@ -6,6 +6,10 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Removed the remaining History `정사이즈 추천` literal and recombined confidence, measurement count, measurement info, and icons into the single third result-metric column while preserving fixed empty detail-row space.
+- Added a History-only compact metric style using `title3.black`, monospaced digits, tightening, and 0.75 minimum scaling so 100% and XXL remain single-line without changing result-detail typography.
+- Swapped only the result reference/measurement card order and rebuilt the History 2×2 grid card with image date/favorite overlays, a restrained product block, separator, and emphasized bottom recommendation/fit row while retaining its legacy composition.
+- Reversed the prior centering policy: result metrics now use equal-width, fixed-height rows with identical leading insets, removed only the result-card `정사이즈 추천` label, removed History product-size metadata, and added Musinsa app-first product opening with web fallback.
 - Standardized every verified Musinsa upper-body measurement labeled exactly `총장` to `bodyLengthBackNeckToHem` using parsed FitMatch category context instead of a type-number whitelist, with mapping v6 and idempotent migration v7 recovery for qualified legacy records.
 - Unified History and result-detail recommendation size/fit columns through the shared `RecommendationMetricColumn`, eliminating divergent typography, spacing, and centering behavior.
 - Restored compact measurement icons beneath the result's measurement-count line, including the custom shoulder-line symbol, while removing redundant leading measurement icons from the detail sheet.
@@ -114,6 +118,10 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Repository-wide exact search confirms zero `"정사이즈 추천"` literals; the recombined confidence/measurement column passed the generic iOS device Debug build and `git diff --check`.
+- History compact metrics passed the generic iOS device Debug build and `git diff --check`; result-detail typography, 2×2 grid cards, and protected scroll code remain unchanged.
+- Result card-order swap and supplied-reference History 2×2 grid cards passed the generic iOS device Debug build and `git diff --check`; list cards, routing, comparison logic, and protected scroll code remain unchanged.
+- Equal-width leading-aligned result metrics, result-only label removal, History option removal, and Musinsa app-first opening passed the generic iOS device Debug build and `git diff --check`; device validation of the installed Musinsa route remains.
 - Musinsa top-length policy tests cover types 5/11/20/21/24, an unknown future type, type 5↔21 comparison, and qualified legacyUnknown recovery; the app and test bundles compile for generic iOS without launching a simulator.
 - Shared History/detail recommendation metric rendering passed the generic iOS device Debug build and `git diff --check`; the existing UserFit migration actor-isolation warning remains.
 - Restored result measurement icons and simplified measurement-sheet rows passed the generic iOS device Debug build and `git diff --check`.

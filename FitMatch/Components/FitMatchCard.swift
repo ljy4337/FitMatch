@@ -46,30 +46,67 @@ struct FitMatchCard<Content: View>: View {
 }
 
 struct RecommendationMetricColumn: View {
+    enum Style {
+        case result
+        case historyCompact
+    }
+
     let title: String
     let value: String
-    let detail: String
+    let detail: String?
     let isPrimary: Bool
+    var style: Style = .result
+
+    private let titleRowHeight: CGFloat = 18
+    private let valueRowHeight: CGFloat = 42
+    private let detailRowHeight: CGFloat = 24
 
     var body: some View {
-        VStack(alignment: .center, spacing: 6) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
-            Text(value)
-                .font(.system(size: isPrimary ? 34 : 30, weight: .black))
-                .foregroundStyle(.primary)
-                .monospacedDigit()
-                .lineLimit(1)
-            Text(detail)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.green)
-                .lineLimit(1)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3)
-                .background(.green.opacity(0.1), in: Capsule())
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: titleRowHeight)
+            metricValue
+            Group {
+                if let detail, !detail.isEmpty {
+                    Text(detail)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.green)
+                        .lineLimit(1)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(.green.opacity(0.1), in: Capsule())
+                } else {
+                    Color.clear
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: detailRowHeight)
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 10)
+    }
+
+    @ViewBuilder
+    private var metricValue: some View {
+        let text = Text(value)
+            .foregroundStyle(.primary)
+            .monospacedDigit()
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: valueRowHeight)
+
+        switch style {
+        case .result:
+            text.font(.system(size: isPrimary ? 34 : 30, weight: .black))
+        case .historyCompact:
+            text
+                .font(.title3.weight(.black))
+                .minimumScaleFactor(0.75)
+                .allowsTightening(true)
+        }
     }
 }
 

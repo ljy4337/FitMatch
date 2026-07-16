@@ -45,8 +45,8 @@ struct RecommendationResultView: View {
                     if currentResult.comparisonMode != .actualMeasurements {
                         standardSizeFallbackCard
                     }
-                    reportMeasurementCard
                     reportReferenceCard
+                    reportMeasurementCard
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 10)
@@ -217,61 +217,82 @@ struct RecommendationResultView: View {
 
     private var reportRecommendationCard: some View {
         CardView(radius: 20, padding: 12) {
-            HStack(alignment: .center, spacing: 10) {
-                RecommendationMetricColumn(title: "추천 사이즈", value: recommendedSizeName, detail: "정사이즈 추천", isPrimary: true)
-                Divider().frame(height: 92)
-                RecommendationMetricColumn(
-                    title: "핏 매칭률",
-                    value: comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%",
-                    detail: fitMatchDescription,
-                    isPrimary: false
-                )
-                Divider().frame(height: 92)
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 5) {
-                        Text("신뢰도")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.secondary)
-                        Button { isShowingReliabilityInfo = true } label: {
-                            Image(systemName: "info.circle")
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("신뢰도 산정 기준")
-                    }
-                    Text(comparisonReliability.stars)
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(.orange.opacity(0.85))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    Text(comparisonReliability.title)
-                        .font(.subheadline.weight(.black))
-                        .lineLimit(1)
-                    Divider()
-                    HStack(spacing: 4) {
-                        Text("\(comparedMeasurementKinds.count)개 실측 항목 비교")
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                        Button { isShowingMeasurementInfo = true } label: {
-                            Image(systemName: "info.circle")
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("비교 실측 항목")
-                    }
-                    HStack(spacing: comparedMeasurementKinds.count > 4 ? 4 : 7) {
-                        ForEach(comparedMeasurementKinds) { kind in
-                            VStack(spacing: 2) {
-                                reportMeasurementIcon(for: kind)
-                                Text(reportShortTitle(for: kind))
-                                    .font(.system(size: comparedMeasurementKinds.count > 4 ? 8 : 9, weight: .medium))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.7)
+            VStack(alignment: .leading, spacing: 8) {
+                GeometryReader { geometry in
+                    let dividerWidth: CGFloat = 1
+                    let columnWidth = (geometry.size.width - (dividerWidth * 2)) / 3
+
+                    HStack(alignment: .top, spacing: 0) {
+                        RecommendationMetricColumn(
+                            title: "추천 사이즈",
+                            value: recommendedSizeName,
+                            detail: nil,
+                            isPrimary: true
+                        )
+                        .frame(width: columnWidth)
+                        Divider().frame(width: dividerWidth, height: 150)
+                        RecommendationMetricColumn(
+                            title: "핏 매칭률",
+                            value: comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%",
+                            detail: fitMatchDescription,
+                            isPrimary: false
+                        )
+                        .frame(width: columnWidth)
+                        Divider().frame(width: dividerWidth, height: 150)
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 5) {
+                                Text("신뢰도")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.secondary)
+                                Button { isShowingReliabilityInfo = true } label: {
+                                    Image(systemName: "info.circle")
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("신뢰도 산정 기준")
                             }
-                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(height: 18)
+                            Text(comparisonReliability.stars)
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(.orange.opacity(0.85))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(height: 42)
+                            Text(comparisonReliability.title)
+                                .font(.caption.weight(.bold))
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(height: 24)
+                            Divider()
+                            HStack(spacing: 4) {
+                                Text("\(comparedMeasurementKinds.count)개 실측 항목 비교")
+                                    .font(.caption2.weight(.medium))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                                Button { isShowingMeasurementInfo = true } label: {
+                                    Image(systemName: "info.circle")
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("비교 실측 항목")
+                            }
+                            HStack(spacing: comparedMeasurementKinds.count > 4 ? 3 : 6) {
+                                ForEach(comparedMeasurementKinds) { kind in
+                                    VStack(spacing: 2) {
+                                        reportMeasurementIcon(for: kind)
+                                        Text(reportShortTitle(for: kind))
+                                            .font(.system(size: 8, weight: .medium))
+                                            .lineLimit(1)
+                                    }
+                                    .foregroundStyle(.secondary)
+                                }
+                            }
                         }
+                        .padding(.leading, 10)
+                        .frame(width: columnWidth, alignment: .leading)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: 150)
             }
         }
     }
@@ -1154,7 +1175,35 @@ struct RecommendationResultView: View {
               let url = URL(string: urlString) else {
             return
         }
+
+        if isMusinsaProduct,
+           let productCode = musinsaProductCode(from: url),
+           let appURL = URL(string: "musinsa://app/goods/\(productCode)") {
+            openURL(appURL) { accepted in
+                if !accepted {
+                    openURL(url)
+                }
+            }
+            return
+        }
+
         openURL(url)
+    }
+
+    private var isMusinsaProduct: Bool {
+        currentResult.product.sourceDisplayName.localizedCaseInsensitiveContains("무신사")
+            || currentResult.product.sourceDisplayName.localizedCaseInsensitiveContains("musinsa")
+            || currentResult.product.sourceURLString?.localizedCaseInsensitiveContains("musinsa") == true
+    }
+
+    private func musinsaProductCode(from url: URL) -> String? {
+        let components = url.pathComponents.filter { $0 != "/" }
+        guard let productsIndex = components.firstIndex(where: { $0 == "products" }),
+              components.indices.contains(productsIndex + 1) else {
+            return currentResult.product.productCode
+        }
+        let value = components[productsIndex + 1]
+        return value.allSatisfy(\.isNumber) ? value : currentResult.product.productCode
     }
 
     private func compare(with item: UserFit) -> ResultReferenceComparisonOutcome {
