@@ -695,6 +695,72 @@ private struct ClosetItemCard: View {
 
     var body: some View {
         FitMatchCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    ProductThumbnailView(
+                        imageURLString: item.sourceProduct?.imageURLString,
+                        category: item.category,
+                        width: 72,
+                        height: 88,
+                        cornerRadius: 16
+                    )
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(brandDisplayText)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+
+                        Text(item.productName)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                            .truncationMode(.tail)
+
+                        Text("\(item.category.rawValue) · \(item.detailCategory.rawValue)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 4)
+
+                    Button(action: onToggleRepresentative) {
+                        Image(systemName: item.isRepresentative ? "tshirt.fill" : "tshirt")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(item.isRepresentative ? "기준 옷" : "기준 옷으로 설정")
+                }
+
+                ClosetMeasurementGrid(item: item)
+            }
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var brandDisplayText: String {
+        let brand = item.brandName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayBrand = brand.isEmpty ? "브랜드 미상" : brand
+        return isMusinsaItem ? "\(displayBrand) (무신사)" : displayBrand
+    }
+
+    private var isMusinsaItem: Bool {
+        if item.sourcePlatformCode?.lowercased() == "musinsa"
+            || item.sourceProduct?.sourcePlatformCode?.lowercased() == "musinsa" {
+            return true
+        }
+
+        return item.sourceName.lowercased().contains("무신사")
+            || item.sourceProduct?.sourceURLString?.lowercased().contains("musinsa") == true
+    }
+
+    // TODO: Legacy UI, 삭제 금지. body의 새 카드 대신 연결하면 기존 목록 카드로 즉시 원복할 수 있습니다.
+    private var closetItemCardLegacy: some View {
+        FitMatchCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top) {
                     ProductThumbnailView(
@@ -743,7 +809,6 @@ private struct ClosetItemCard: View {
                             .padding(.horizontal, 8)
                             .padding(.vertical, 5)
                             .background(.primary.opacity(0.08), in: Capsule())
-
                     }
                 }
 
@@ -755,7 +820,6 @@ private struct ClosetItemCard: View {
                 )
             }
         }
-        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private var sourceClassificationText: String? {
@@ -774,6 +838,74 @@ private struct ClosetItemCard: View {
         }
 
         return "\(platformName) (\(sourceCategoryPath))"
+    }
+}
+
+private struct ClosetMeasurementGrid: View {
+    let item: UserFit
+
+    var body: some View {
+        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                GridRow {
+                    measurementCell(row[0])
+
+                    if row.count > 1 {
+                        measurementCell(row[1])
+                    } else {
+                        Color.clear
+                            .frame(maxWidth: .infinity)
+                            .gridCellUnsizedAxes(.vertical)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var rows: [[MeasurementKind]] {
+        stride(from: 0, to: visibleKinds.count, by: 2).map {
+            Array(visibleKinds[$0..<min($0 + 2, visibleKinds.count)])
+        }
+    }
+
+    private var visibleKinds: [MeasurementKind] {
+        orderedKinds.filter { item.measurements.value(for: $0) > 0 }
+    }
+
+    private var orderedKinds: [MeasurementKind] {
+        switch item.category.serviceGroup {
+        case .top:
+            return [.totalLength, .shoulder, .chest, .sleeveLength]
+        case .bottom:
+            return [.totalLength, .waist, .hip, .thigh, .rise, .hem]
+        case .outer:
+            return [.totalLength, .shoulder, .chest, .sleeveLength, .hem]
+        default:
+            return item.category.measurementKinds(
+                detailCategory: item.detailCategory,
+                gender: item.gender
+            )
+        }
+    }
+
+    private func measurementCell(_ kind: MeasurementKind) -> some View {
+        HStack(spacing: 8) {
+            Text(kind.title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Spacer(minLength: 4)
+
+            Text(item.measurements.value(for: kind).cmText)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

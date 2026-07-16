@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Rebuilt only the My Closet list card with brand/product/internal classification metadata, platform-aware Musinsa attribution, icon-only reference state, and equal-width two-column measurements; preserved the complete prior card as `closetItemCardLegacy` for rollback.
 - Reduced only the result-detail fit-match value to 33pt Black while retaining the 44pt recommendation-size value and shared row alignment.
 - Replaced the result-detail recommendation/fit cells with one centered three-row component using identical 44pt values and fixed title/value/detail heights; reliability remains leading-aligned.
 - Consolidated units in the result-detail measurement card by removing repeated `cm` suffixes from row values and adding a subtle top-trailing `(단위: cm)` label.
