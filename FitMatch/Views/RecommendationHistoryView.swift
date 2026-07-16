@@ -415,97 +415,7 @@ private struct HistoryCard: View {
 
     var body: some View {
         FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                ZStack(alignment: .topTrailing) {
-                    HStack(alignment: .top, spacing: 14) {
-                        ProductThumbnailView(
-                            imageURLString: history.productImageURLStringForDisplay,
-                            category: history.product.category,
-                            width: 88,
-                            height: 112,
-                            cornerRadius: 16
-                        )
-
-                            VStack(alignment: .leading, spacing: 6) {
-                            Text(history.productBrandNameForDisplay)
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.secondary)
-
-                            Text(history.productNameForDisplay)
-                                .font(.headline.weight(.bold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(2)
-
-                            Text("출처: \(history.productSourceNameForDisplay)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-
-                            Text(historySourceCategoryText)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-
-                            if let optionText = history.optionSnapshotText {
-                                Text(optionText)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-
-                            Text(history.createdAt, style: .date)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .background(.primary.opacity(0.08), in: Capsule())
-                        }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.trailing, 58)
-                    }
-
-                    VStack(alignment: .trailing, spacing: 8) {
-                        Button(action: onToggleFavorite) {
-                            Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                .font(.headline.weight(.semibold))
-                                .foregroundStyle(isFavorite ? .red : .primary)
-                                .frame(width: 36, height: 36)
-                                .background(Color(.systemBackground).opacity(0.92), in: Circle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-
-                HStack(alignment: .center, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("추천 사이즈")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                        Text(history.recommendedSize.name.displaySizeName)
-                            .font(.title2.weight(.black))
-                            .foregroundStyle(.primary)
-                    }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("핏 매칭률")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                        Text("\(history.recommendationScore)%")
-                            .font(.title2.weight(.black))
-                            .foregroundStyle(.primary)
-                            .monospacedDigit()
-                    }
-                }
-                .padding(14)
-                .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                Text(measurementSummaryText)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            currentCardContent
             .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .onTapGesture(perform: onShowDetail)
             .background(
@@ -525,15 +435,229 @@ private struct HistoryCard: View {
         }
     }
 
+    private var currentCardContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ZStack(alignment: .topTrailing) {
+                HStack(alignment: .top, spacing: 14) {
+                    ProductThumbnailView(
+                        imageURLString: history.productImageURLStringForDisplay,
+                        category: history.product.category,
+                        width: 104,
+                        height: 126,
+                        cornerRadius: 16
+                    )
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(history.productBrandNameForDisplay)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+
+                        Text(history.productNameForDisplay)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                            .truncationMode(.tail)
+
+                        Text(historySourceCategoryText)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+
+                        if let optionText = history.optionSnapshotText {
+                            Text(optionText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+
+                        Text(relativeDateText)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(.primary.opacity(0.07), in: Capsule())
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.trailing, 38)
+                }
+
+                Button(action: onToggleFavorite) {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(isFavorite ? .red : .primary)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isFavorite ? "관심 해제" : "관심 등록")
+            }
+
+            HStack(alignment: .top, spacing: 0) {
+                historyMetric(title: "추천 사이즈", value: history.recommendedSize.name.displaySizeName)
+                Divider().frame(height: 76)
+                historyMetric(title: "핏 매칭률", value: "\(history.recommendationScore)%", badge: fitMatchBadge)
+                Divider().frame(height: 76)
+                reliabilityMetric
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            HStack(spacing: 8) {
+                Image(systemName: "ruler")
+                    .rotationEffect(.degrees(-38))
+                Text(measurementSummaryText)
+                    .font(.caption.weight(.semibold))
+                Spacer()
+                Text(history.createdAt.formatted(.dateTime.year().month().day().weekday(.abbreviated)))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private func historyMetric(title: String, value: String, badge: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.title2.weight(.black))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            if let badge {
+                Text(badge)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.green)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(.green.opacity(0.1), in: Capsule())
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var reliabilityMetric: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("신뢰도")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(reliabilityStars)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.orange.opacity(0.85))
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+            Text(reliabilityTitle)
+                .font(.caption.weight(.bold))
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // TODO: Legacy UI, 삭제 금지. currentCardContent 대신 연결하면 기존 목록 카드로 즉시 원복할 수 있습니다.
+    private var historyCardLegacy: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 14) {
+                ProductThumbnailView(
+                    imageURLString: history.productImageURLStringForDisplay,
+                    category: history.product.category,
+                    width: 88,
+                    height: 112,
+                    cornerRadius: 16
+                )
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(history.productBrandNameForDisplay)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                    Text(history.productNameForDisplay)
+                        .font(.headline.weight(.bold))
+                        .lineLimit(2)
+                    Text("출처: \(history.productSourceNameForDisplay)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(historySourceCategoryText)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            HStack {
+                historyMetric(title: "추천 사이즈", value: history.recommendedSize.name.displaySizeName)
+                historyMetric(title: "핏 매칭률", value: "\(history.recommendationScore)%")
+            }
+            .padding(14)
+            .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            Text(measurementSummaryText)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private var measurementSummaryText: String {
-        let kinds = history.product.category
+        comparedMeasurementKinds.isEmpty ? "실측 부족" : "실측 \(comparedMeasurementKinds.count)개 항목 비교"
+    }
+
+    private var comparedMeasurementKinds: [MeasurementKind] {
+        if history.comparisonSchemaVersion >= 1 {
+            return history.comparedMeasurementUsages.map(\.kind)
+        }
+
+        return history.product.category
             .measurementKinds(detailCategory: history.productDetailCategory, gender: .unisex)
             .filter {
                 history.recommendedSize.measurements.value(for: $0) > 0
                     && history.userFit.measurements.value(for: $0) > 0
             }
+    }
 
-        return kinds.isEmpty ? "실측 부족" : "실측 \(kinds.count)개 비교"
+    private var fitMatchBadge: String {
+        switch history.recommendationScore {
+        case 90...: return "매우 잘 맞아요"
+        case 80..<90: return "잘 맞아요"
+        case 70..<80: return "비슷해요"
+        default: return "참고해 주세요"
+        }
+    }
+
+    private var reliabilityStars: String {
+        switch comparedMeasurementKinds.count {
+        case 4...: return "★★★★★"
+        case 3: return "★★★★☆"
+        case 2: return "★★★☆☆"
+        case 1: return "★★☆☆☆"
+        default: return "★☆☆☆☆"
+        }
+    }
+
+    private var reliabilityTitle: String {
+        switch comparedMeasurementKinds.count {
+        case 4...: return "매우 높음"
+        case 3: return "높음"
+        case 2: return "보통"
+        case 1: return "낮음"
+        default: return "매우 낮음"
+        }
+    }
+
+    private var relativeDateText: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(history.createdAt) {
+            return "오늘"
+        }
+        if calendar.isDateInYesterday(history.createdAt) {
+            return "어제"
+        }
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: history.createdAt),
+            to: calendar.startOfDay(for: Date())
+        ).day ?? 0
+        return days > 0 ? "\(days)일 전" : history.createdAt.formatted(date: .abbreviated, time: .omitted)
     }
 
     private var historySourceCategoryText: String {

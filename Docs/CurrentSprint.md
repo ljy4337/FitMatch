@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Reworked the History list card into the supplied product-summary, three-metric result panel, and dated measurement footer while preserving taps, favorite/delete swipes, grid cards, and the prior list composition as `historyCardLegacy`.
 - Refined reliability measurement symbols so shoulder reads as horizontal width, total length as a vertical ruler, and sleeve length as a diagonal ruler.
 - Removed the comparison-result content's redundant bottom padding so the fixed safe-area action inset no longer creates unnecessary scrolling when the report fits on screen.
 - Moved comparison-result favorite control onto the product image, centered result metrics, moved comparison coverage into the reliability information sheet, unified neutral secondary button surfaces, and applied magnitude-based difference colors.
@@ -107,6 +108,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- The supplied-reference History list card passed the generic iOS device Debug build and `git diff --check`; grid rendering, detail routing, swipe actions, and protected scroll code remain unchanged.
 - The comparison-result control and measurement-visibility refinements passed the generic iOS device Debug build and protected-scroll diff checks.
 - The compact comparison-result UI passed the generic iOS device Debug build and `git diff --check`; no simulator was launched and protected scroll code/call sites remain unchanged.
 - The supplied-image comparison-result layout passed generic iOS device compilation and static diff checks; calculation, persistence, routing, history-list UI, and protected scroll code remain unchanged.
