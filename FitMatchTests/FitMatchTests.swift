@@ -536,10 +536,60 @@ struct FitMatchTests {
         #expect(chest?.semanticStatus == .unknownDefinition)
     }
 
-    @Test func sourceMeasurementMappingPolicyKeepsUnverifiedUpperFieldsUnknown() {
+    @Test func musinsaTypeFiveMapsOfficialDiagramChestWidth() throws {
+        let json = """
+        {
+          "data": {
+            "typeName": "반소매티셔츠",
+            "typeNumber": 5,
+            "webImage": "https://example.com/type-5.png",
+            "mobileImage": null,
+            "sizes": [
+              {
+                "name": "M",
+                "items": [
+                  { "name": "총장", "value": 70 },
+                  { "name": "어깨너비", "value": 48 },
+                  { "name": "가슴단면", "value": 54 },
+                  { "name": "소매길이", "value": 24 }
+                ]
+              }
+            ]
+          }
+        }
+        """
+
+        let result = try MusinsaActualSizeAPIParser().parseActualSize(from: Data(json.utf8))
+        let records = result.sizes.first?.measurementRecords ?? []
+        let chest = records.first { $0.rawLabel == "가슴단면" }
+        let length = records.first { $0.rawLabel == "총장" }
+
+        #expect(chest?.measurementCode == .chestWidthPitToPit)
+        #expect(chest?.evidenceLevel == .officialDiagram)
+        #expect(chest?.mappingVersion == "musinsa_actual_size_mapping_v2")
+        #expect(length?.measurementCode == .unknown)
+        #expect(length?.semanticStatus == .unknownDefinition)
+
+        let productSize = ParsedProductSizeNormalizer.makeProductSizes(from: result.sizes)[0]
+        let referenceItem = manualMeasurementViewModel(source: .fitmatchMeasured).makeUserFit()
+        #expect(referenceItem != nil)
+        if let referenceItem {
+            let comparison = MeasurementComparisonEngine().compare(
+                productSize: productSize,
+                referenceItem: referenceItem,
+                productCategory: .top,
+                productDetailCategory: .shortSleeve
+            )
+            #expect(comparison.status == .confirmed)
+            #expect(comparison.comparedKinds.contains(.chest))
+        }
+    }
+
+    @Test func sourceMeasurementMappingPolicyMapsVerifiedMusinsaChestOnly() {
         let verifiedMusinsaTypes = [5, 20, 21]
         let verifiedMusinsa = MeasurementSourceMappingPolicy.musinsa(typeNumber: 5, displayKind: .shoulder)
-        let unknownMusinsaChest = MeasurementSourceMappingPolicy.musinsa(typeNumber: 5, displayKind: .chest)
+        let verifiedMusinsaChest = MeasurementSourceMappingPolicy.musinsa(typeNumber: 5, displayKind: .chest)
+        let unknownMusinsaLength = MeasurementSourceMappingPolicy.musinsa(typeNumber: 5, displayKind: .totalLength)
         let unknownMusinsaType = MeasurementSourceMappingPolicy.musinsa(typeNumber: 999, displayKind: .shoulder)
         let verifiedUniqloSleeve = MeasurementSourceMappingPolicy.uniqlo(rawCode: "sleeve-length-cb")
         let unknownUniqloChest = MeasurementSourceMappingPolicy.uniqlo(rawCode: "body-width")
@@ -550,9 +600,13 @@ struct FitMatchTests {
         #expect(verifiedMusinsaTypes.allSatisfy {
             MeasurementSourceMappingPolicy.musinsa(typeNumber: $0, displayKind: .sleeveLength)?.code == .sleeveShoulderSeamToCuff
         })
+        #expect(verifiedMusinsaTypes.allSatisfy {
+            MeasurementSourceMappingPolicy.musinsa(typeNumber: $0, displayKind: .chest)?.code == .chestWidthPitToPit
+        })
         #expect(verifiedMusinsa?.code == .shoulderWidthSeamToSeam)
         #expect(verifiedMusinsa?.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
-        #expect(unknownMusinsaChest == nil)
+        #expect(verifiedMusinsaChest?.code == .chestWidthPitToPit)
+        #expect(unknownMusinsaLength == nil)
         #expect(unknownMusinsaType == nil)
         #expect(verifiedUniqloSleeve?.code == .sleeveCenterBackToCuff)
         #expect(verifiedUniqloSleeve?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
@@ -1856,7 +1910,7 @@ struct FitMatchTests {
         #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
     }
 
-    @Test func musinsaLegacyTypeFiveOnlyRestoresVerifiedMeasurements() {
+    @Test func musinsaLegacyTypeFiveRestoresVerifiedShoulderChestAndSleeve() {
         let size = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
@@ -1877,10 +1931,12 @@ struct FitMatchTests {
 
         #expect(byKind[.shoulder]?.measurementCode == .shoulderWidthSeamToSeam)
         #expect(byKind[.sleeveLength]?.measurementCode == .sleeveShoulderSeamToCuff)
-        #expect(byKind[.chest]?.measurementCode == .legacyUnknown)
+        #expect(byKind[.chest]?.measurementCode == .chestWidthPitToPit)
         #expect(byKind[.totalLength]?.measurementCode == .legacyUnknown)
         #expect(byKind[.shoulder]?.isComparable == true)
-        #expect(byKind[.chest]?.isComparable == false)
+        #expect(byKind[.chest]?.isComparable == true)
+        #expect(records.allSatisfy { $0.mappingVersion == "legacy_backfill_v2" })
+        #expect(MeasurementLegacyBackfillService.migrationVersion == 2)
     }
 
     @Test func uniqloLegacyMeasurementsRemainUnknownWithoutRawCodes() {

@@ -74,7 +74,7 @@ struct SourceMeasurementMapping: Equatable {
 }
 
 enum MeasurementSourceMappingPolicy {
-    static let musinsaVersion = "musinsa_actual_size_mapping_v1"
+    static let musinsaVersion = "musinsa_actual_size_mapping_v2"
     static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v1"
 
     static func musinsa(
@@ -85,6 +85,12 @@ enum MeasurementSourceMappingPolicy {
         case (5, .shoulder), (20, .shoulder), (21, .shoulder):
             return SourceMeasurementMapping(
                 code: .shoulderWidthSeamToSeam,
+                evidence: .officialDiagram,
+                mappingVersion: musinsaVersion
+            )
+        case (5, .chest), (20, .chest), (21, .chest):
+            return SourceMeasurementMapping(
+                code: .chestWidthPitToPit,
                 evidence: .officialDiagram,
                 mappingVersion: musinsaVersion
             )

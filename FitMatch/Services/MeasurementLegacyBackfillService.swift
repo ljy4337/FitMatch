@@ -3,8 +3,8 @@ import SwiftData
 
 @MainActor
 enum MeasurementLegacyBackfillService {
-    static let migrationVersion = 1
-    static let mappingVersion = "legacy_backfill_v1"
+    static let migrationVersion = 2
+    static let mappingVersion = "legacy_backfill_v2"
 
     static func run(
         modelContext: ModelContext,
@@ -86,7 +86,10 @@ enum MeasurementLegacyBackfillService {
         modelContext: ModelContext
     ) {
         records
-            .filter { $0.mappingVersion == mappingVersion }
+            .filter {
+                $0.inputSourceRawValue == MeasurementInputSource.migratedLegacy.rawValue
+                    && $0.mappingVersion.hasPrefix("legacy_backfill_v")
+            }
             .forEach(modelContext.delete)
     }
 }
