@@ -3,6 +3,7 @@ import Foundation
 enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case shoulderWidthSeamToSeam = "shoulder_width_seam_to_seam"
     case chestWidthPitToPit = "chest_width_pit_to_pit"
+    case chestWidthUniqloBodyWidth = "chest_width_uniqlo_body_width"
     case bodyLengthHPSToHemFront = "body_length_hps_to_hem_front"
     case bodyLengthBackNeckToHem = "body_length_back_neck_to_hem"
     case sleeveShoulderSeamToCuff = "sleeve_shoulder_seam_to_cuff"
@@ -75,7 +76,7 @@ struct SourceMeasurementMapping: Equatable {
 
 enum MeasurementSourceMappingPolicy {
     static let musinsaVersion = "musinsa_actual_size_mapping_v2"
-    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v1"
+    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v2"
 
     static func musinsa(
         typeNumber: Int?,
@@ -121,6 +122,7 @@ enum MeasurementSourceMappingPolicy {
         let code: MeasurementCode
         switch normalizedRawCode {
         case "shoulderwidth": code = .shoulderWidthSeamToSeam
+        case "bodywidth": code = .chestWidthUniqloBodyWidth
         case "sleevelengthcb": code = .sleeveCenterBackToCuff
         case "inseam": code = .pantsInseamCrotchToHem
         default: return nil

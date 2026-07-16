@@ -3,8 +3,8 @@ import SwiftData
 
 @MainActor
 enum MeasurementLegacyBackfillService {
-    static let migrationVersion = 2
-    static let mappingVersion = "legacy_backfill_v2"
+    static let migrationVersion = 3
+    static let mappingVersion = "legacy_backfill_v3"
 
     static func run(
         modelContext: ModelContext,
@@ -46,11 +46,16 @@ enum MeasurementLegacyBackfillService {
         }
 
         size.measurementMigrationStatus = .inProgress
+        let canonicalRecords = nonLegacyRecords(in: size.measurementRecords)
         removePreviousBackfillRecords(size.measurementRecords, modelContext: modelContext)
-        let records = MeasurementLegacyBackfillFactory.records(for: size, product: product)
-        for record in records {
-            record.productSize = size
-            modelContext.insert(record)
+        if canonicalRecords.isEmpty {
+            let records = MeasurementLegacyBackfillFactory.records(for: size, product: product)
+            for record in records {
+                record.productSize = size
+                modelContext.insert(record)
+            }
+        } else {
+            upgradeSourceMappings(in: canonicalRecords)
         }
         size.measurementSchemaVersion = 1
         size.measurementMigrationVersion = migrationVersion
@@ -68,14 +73,20 @@ enum MeasurementLegacyBackfillService {
         }
 
         item.measurementMigrationStatus = .inProgress
+        let canonicalRecords = nonLegacyRecords(in: item.measurementRecords)
         removePreviousBackfillRecords(item.measurementRecords, modelContext: modelContext)
-        let records = MeasurementLegacyBackfillFactory.records(for: item)
-        for record in records {
-            record.userFit = item
-            modelContext.insert(record)
+        if canonicalRecords.isEmpty {
+            let records = MeasurementLegacyBackfillFactory.records(for: item)
+            for record in records {
+                record.userFit = item
+                modelContext.insert(record)
+            }
+        } else {
+            upgradeSourceMappings(in: canonicalRecords)
         }
         item.measurementSchemaVersion = 1
-        item.measurementInputSourceRawValue = MeasurementInputSource.migratedLegacy.rawValue
+        item.measurementInputSourceRawValue = canonicalRecords.first?.inputSourceRawValue
+            ?? MeasurementInputSource.migratedLegacy.rawValue
         item.measurementMigrationVersion = migrationVersion
         item.measurementMigrationStatus = .completed
         item.measurementMigrationErrorCode = nil
@@ -91,6 +102,47 @@ enum MeasurementLegacyBackfillService {
                     && $0.mappingVersion.hasPrefix("legacy_backfill_v")
             }
             .forEach(modelContext.delete)
+    }
+
+    private static func nonLegacyRecords(
+        in records: [GarmentMeasurementRecord]
+    ) -> [GarmentMeasurementRecord] {
+        records.filter {
+            $0.inputSourceRawValue != MeasurementInputSource.migratedLegacy.rawValue
+        }
+    }
+
+    private static func upgradeSourceMappings(
+        in records: [GarmentMeasurementRecord]
+    ) {
+        for record in records {
+            let mapping: SourceMeasurementMapping?
+            switch record.methodSource {
+            case "uniqlo_kr":
+                mapping = record.rawCode.flatMap {
+                    MeasurementSourceMappingPolicy.uniqlo(rawCode: $0)
+                }
+            case "musinsa":
+                let typeNumber = record.methodProfile
+                    .flatMap { profile -> Int? in
+                        guard profile.hasPrefix("musinsa_type_") else { return nil }
+                        return Int(profile.dropFirst("musinsa_type_".count))
+                    }
+                mapping = MeasurementSourceMappingPolicy.musinsa(
+                    typeNumber: typeNumber,
+                    displayKind: record.displayKind
+                )
+            default:
+                mapping = nil
+            }
+
+            guard let mapping else { continue }
+            record.measurementCodeRawValue = mapping.code.rawValue
+            record.evidenceLevelRawValue = mapping.evidence.rawValue
+            record.semanticStatusRawValue = MeasurementSemanticStatus.mapped.rawValue
+            record.mappingVersion = mapping.mappingVersion
+            record.updatedAt = Date()
+        }
     }
 }
 

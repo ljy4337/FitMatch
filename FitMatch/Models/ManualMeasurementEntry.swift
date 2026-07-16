@@ -172,7 +172,7 @@ enum ManualMeasurementRecordFactory {
                 ),
                 inputSource: source.inputSource,
                 standardVersion: source == .fitmatchMeasured ? FitMatchMeasurementStandard.version : nil,
-                mappingVersion: "manual_measurement_mapping_v1",
+                mappingVersion: mappingVersion(for: source),
                 rawCode: rawCode(for: kind, source: source),
                 rawLabel: rawLabel(for: kind, source: source, rawLabels: rawLabels),
                 rawInfo: source == .otherSizeChart ? "출처: \(otherSourceName)" : nil,
@@ -264,6 +264,15 @@ enum ManualMeasurementRecordFactory {
         case .uniqloSizeChart: return "uniqlo_kr"
         case .otherSizeChart: return "other_size_chart"
         case .fitmatchMeasured: return "fitmatch"
+        }
+    }
+
+    private static func mappingVersion(for source: MeasurementEntrySource) -> String {
+        switch source {
+        case .uniqloSizeChart:
+            return MeasurementSourceMappingPolicy.uniqloVersion
+        default:
+            return "manual_measurement_mapping_v1"
         }
     }
 
