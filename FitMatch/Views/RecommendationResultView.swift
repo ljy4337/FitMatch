@@ -220,7 +220,9 @@ struct RecommendationResultView: View {
             VStack(alignment: .leading, spacing: 8) {
                 GeometryReader { geometry in
                     let dividerWidth: CGFloat = 1
-                    let columnWidth = (geometry.size.width - (dividerWidth * 2)) / 3
+                    let availableWidth = geometry.size.width - (dividerWidth * 2)
+                    let resultColumnWidth = availableWidth * 0.28
+                    let reliabilityColumnWidth = availableWidth - (resultColumnWidth * 2)
 
                     HStack(alignment: .top, spacing: 0) {
                         RecommendationMetricColumn(
@@ -229,17 +231,17 @@ struct RecommendationResultView: View {
                             detail: nil,
                             isPrimary: true
                         )
-                        .frame(width: columnWidth)
-                        Divider().frame(width: dividerWidth, height: 150)
+                        .frame(width: resultColumnWidth)
+                        Divider().frame(width: dividerWidth, height: 132)
                         RecommendationMetricColumn(
                             title: "핏 매칭률",
                             value: comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%",
                             detail: fitMatchDescription,
                             isPrimary: false
                         )
-                        .frame(width: columnWidth)
-                        Divider().frame(width: dividerWidth, height: 150)
-                        VStack(alignment: .center, spacing: 3) {
+                        .frame(width: resultColumnWidth)
+                        Divider().frame(width: dividerWidth, height: 132)
+                        VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 5) {
                                 Text("신뢰도")
                                     .font(.caption.weight(.bold))
@@ -250,26 +252,28 @@ struct RecommendationResultView: View {
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("신뢰도 산정 기준")
                             }
-                            .frame(maxWidth: .infinity, alignment: .center)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: 18)
                             Text(comparisonReliability.stars)
                                 .font(.title3.weight(.bold))
                                 .foregroundStyle(.orange.opacity(0.85))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .frame(height: 42)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(height: 28)
                             Text(comparisonReliability.title)
                                 .font(.caption.weight(.bold))
                                 .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .frame(height: 24)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(height: 18)
                             Divider()
                             HStack(spacing: 3) {
-                                Text("\(comparedMeasurementKinds.count)개 실측 항목 비교")
+                                Text("\(comparedMeasurementKinds.count)개 실측항목 비교")
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(.secondary)
-                                    .lineLimit(2)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                    .allowsTightening(true)
                                 Button { isShowingMeasurementInfo = true } label: {
                                     Image(systemName: "info.circle")
                                 }
@@ -288,11 +292,12 @@ struct RecommendationResultView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, 6)
-                        .frame(width: columnWidth, alignment: .center)
+                        .padding(.leading, 10)
+                        .padding(.trailing, 4)
+                        .frame(width: reliabilityColumnWidth, alignment: .leading)
                     }
                 }
-                .frame(height: 150)
+                .frame(height: 132)
             }
         }
     }

@@ -6,6 +6,12 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Rebalanced result-detail metrics to equal 28% recommendation/fit columns and a 44% reliability column, restoring the full `N개 실측항목 비교` label.
+- Increased the History list recommended-size value from 22pt to 26pt Black while retaining single-line scaling for `XXL` on narrow widths.
+- Reduced the result-detail metric card's content height from 150pt to 132pt and added History-only compact badge typography/scaling so `매우 잘 맞아요` remains visible without ellipsis.
+- Increased only the History list recommended-size value to 22pt Black while retaining the 20pt fit-rate value and existing single-line scaling safeguards.
+- Tightened result-detail reliability star/grade spacing and shortened its coverage label to `N개 항목 비교` without truncation.
+- Kept result-detail recommendation size and fit rate centered while restoring only the reliability column to leading alignment.
 - Refined the History 2×2 result row with neutral app-color emphasis, balanced headline sizing, and bottom-trailing relative dates; restored centered result-detail recommendation metrics and compacted reliability spacing without changing History list alignment.
 - Removed the remaining History `정사이즈 추천` literal and recombined confidence, measurement count, measurement info, and icons into the single third result-metric column while preserving fixed empty detail-row space.
 - Added a History-only compact metric style using `title3.black`, monospaced digits, tightening, and 0.75 minimum scaling so 100% and XXL remain single-line without changing result-detail typography.

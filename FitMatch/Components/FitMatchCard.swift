@@ -81,10 +81,12 @@ struct RecommendationMetricColumn: View {
             Group {
                 if let detail, !detail.isEmpty {
                     Text(detail)
-                        .font(.caption.weight(.bold))
+                        .font(style == .historyCompact ? .caption2.weight(.bold) : .caption.weight(.bold))
                         .foregroundStyle(.green)
                         .lineLimit(1)
-                        .padding(.horizontal, 7)
+                        .minimumScaleFactor(style == .historyCompact ? 0.7 : 1)
+                        .allowsTightening(style == .historyCompact)
+                        .padding(.horizontal, style == .historyCompact ? 5 : 7)
                         .padding(.vertical, 3)
                         .background(.green.opacity(0.1), in: Capsule())
                 } else {
@@ -113,7 +115,7 @@ struct RecommendationMetricColumn: View {
             text.font(.system(size: isPrimary ? 34 : 30, weight: .black))
         case .historyCompact:
             text
-                .font(.title3.weight(.black))
+                .font(isPrimary ? .system(size: 26, weight: .black) : .title3.weight(.black))
                 .minimumScaleFactor(0.75)
                 .allowsTightening(true)
         }
