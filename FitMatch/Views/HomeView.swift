@@ -65,7 +65,7 @@ struct HomeView: View {
                     LazyHStack(spacing: 12) {
                         ForEach(recentClosetItems) { item in
                             HomeClosetPreviewCard(item: item)
-                                .containerRelativeFrame(.horizontal, count: 2, span: 1, spacing: 12)
+                                .frame(width: 204)
                         }
                     }
                     .scrollTargetLayout()
@@ -142,7 +142,7 @@ struct HomeView: View {
                                     }
                                 }
                             )
-                            .containerRelativeFrame(.horizontal, count: 2, span: 1, spacing: 12)
+                            .frame(width: 204)
                         }
                     }
                     .scrollTargetLayout()
@@ -247,16 +247,13 @@ private struct HomeClosetPreviewCard: View {
                         .padding(9)
                         .background(Color(.systemBackground).opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-                        GeometryReader { proxy in
-                            ProductThumbnailView(
-                                imageURLString: item.sourceProduct?.imageURLString,
-                                category: item.category,
-                                width: proxy.size.width,
-                                height: 78,
-                                cornerRadius: 15
-                            )
-                        }
-                        .frame(height: 78)
+                        ProductThumbnailView(
+                            imageURLString: item.sourceProduct?.imageURLString,
+                            category: item.category,
+                            width: 168,
+                            height: 78,
+                            cornerRadius: 15
+                        )
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.brandName)
@@ -273,19 +270,21 @@ private struct HomeClosetPreviewCard: View {
                 }
                 .buttonStyle(.plain)
 
-                Spacer(minLength: 0)
-
                 HStack(spacing: 8) {
                     Button(action: toggleReference) {
-                        Label("기준 옷", systemImage: item.isRepresentative ? "tshirt.fill" : "tshirt")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(item.isRepresentative ? .red : .primary)
+                        Label("기준", systemImage: item.isRepresentative ? "tshirt.fill" : "tshirt")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(item.isRepresentative ? .red : .secondary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 32)
-                            .background(
-                                item.isRepresentative ? Color.red.opacity(0.09) : Color.primary.opacity(0.06),
-                                in: Capsule()
-                            )
+                            .background(item.isRepresentative ? Color.red.opacity(0.06) : Color.clear, in: Capsule())
+                            .overlay {
+                                Capsule()
+                                    .stroke(
+                                        item.isRepresentative ? Color.red.opacity(0.16) : Color.primary.opacity(0.12),
+                                        lineWidth: 1
+                                    )
+                            }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(item.isRepresentative ? "기준 옷 해제" : "기준 옷 지정")
@@ -303,7 +302,6 @@ private struct HomeClosetPreviewCard: View {
                     .buttonStyle(.plain)
                 }
             }
-            .frame(height: HomePreviewCardMetrics.contentHeight, alignment: .top)
         }
         .confirmationDialog(
             existingReferenceItem == nil ? "이 옷을 기준 옷으로 설정할까요?" : "기준 옷을 변경할까요?",
@@ -672,11 +670,8 @@ struct RecentProductPreviewCard: View {
                     }
                     .buttonStyle(.plain)
 
-                    Spacer(minLength: 0)
-
                     carouselActions
                 }
-                .frame(height: HomePreviewCardMetrics.contentHeight, alignment: .top)
             } else {
                 ZStack(alignment: .topTrailing) {
                     NavigationLink {
@@ -696,16 +691,13 @@ struct RecentProductPreviewCard: View {
         VStack(alignment: .leading, spacing: 8) {
             resultSummary
 
-            GeometryReader { proxy in
-                ProductThumbnailView(
-                    imageURLString: history.product.imageURLString,
-                    category: history.product.category,
-                    width: proxy.size.width,
-                    height: 78,
-                    cornerRadius: 15
-                )
-            }
-            .frame(height: 78)
+            ProductThumbnailView(
+                imageURLString: history.product.imageURLString,
+                category: history.product.category,
+                width: 168,
+                height: 78,
+                cornerRadius: 15
+            )
 
             productText
         }
@@ -794,7 +786,6 @@ struct RecentProductPreviewCard: View {
             }
         }
         .padding(9)
-        .background(.primary.opacity(0.09), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var carouselActions: some View {
@@ -851,10 +842,6 @@ struct RecentProductPreviewCard: View {
         .disabled(history.product.sourceURLString == nil)
         .opacity(history.product.sourceURLString == nil ? 0.45 : 1)
     }
-}
-
-private enum HomePreviewCardMetrics {
-    static let contentHeight: CGFloat = 232
 }
 
 private extension String {
