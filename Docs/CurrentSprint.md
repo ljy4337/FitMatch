@@ -6,6 +6,9 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Moved comparison-result favorite control onto the product image, centered result metrics, moved comparison coverage into the reliability information sheet, unified neutral secondary button surfaces, and applied magnitude-based difference colors.
+- Compacted the comparison-result report so product information, dynamic reliability measurement icons, measurement differences, collapsible coverage, and the reference garment form one dense result flow with a single Closet-add action.
+- Rebuilt the comparison-result detail UI to match the supplied report layout while retaining the complete previous card composition as `comparisonResultScreenLegacy` for immediate rollback.
 - Added Musinsa standard-size-chart fallback for products without actual measurements, keeping body chest circumference separate from garment measurements and preserving the existing actual-measurement path.
 - Musinsa and Uniqlo now share canonical upper-body and verified lower-body width measurement codes while retaining distinct sleeve, pants-outseam, pants-inseam, and skirt-length paths.
 - Measurement migration v6 upgrades stored UserFit/ProductSize upper mappings and verified lower mappings; Uniqlo waist/hip circumferences are halved exactly once while source metadata and raw values remain intact.
@@ -102,6 +105,9 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- The comparison-result control and measurement-visibility refinements passed the generic iOS device Debug build and protected-scroll diff checks.
+- The compact comparison-result UI passed the generic iOS device Debug build and `git diff --check`; no simulator was launched and protected scroll code/call sites remain unchanged.
+- The supplied-image comparison-result layout passed generic iOS device compilation and static diff checks; calculation, persistence, routing, history-list UI, and protected scroll code remain unchanged.
 - Musinsa standard-chart detection, option normalization, fallback/mixed comparison, and unavailable-result regression tests compile with the generic iOS device test bundle; no simulator was launched.
 - Home card polish differentiates Closet and recent-comparison purposes with restrained Material surfaces, tightens carousel density, and preserves result-first typography and existing actions.
 - Cross-platform measurement tests cover common upper measurements, sleeve exclusion, lower width conversion/comparison, outseam/inseam separation, raglan preservation, and idempotent v6 migration; app and test bundles compile for generic iOS devices.
