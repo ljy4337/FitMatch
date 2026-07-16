@@ -6,6 +6,8 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Refined reliability measurement symbols so shoulder reads as horizontal width, total length as a vertical ruler, and sleeve length as a diagonal ruler.
+- Removed the comparison-result content's redundant bottom padding so the fixed safe-area action inset no longer creates unnecessary scrolling when the report fits on screen.
 - Moved comparison-result favorite control onto the product image, centered result metrics, moved comparison coverage into the reliability information sheet, unified neutral secondary button surfaces, and applied magnitude-based difference colors.
 - Compacted the comparison-result report so product information, dynamic reliability measurement icons, measurement differences, collapsible coverage, and the reference garment form one dense result flow with a single Closet-add action.
 - Rebuilt the comparison-result detail UI to match the supplied report layout while retaining the complete previous card composition as `comparisonResultScreenLegacy` for immediate rollback.

@@ -49,7 +49,6 @@ struct RecommendationResultView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 10)
-                .padding(.bottom, 82)
                 .frame(maxWidth: .infinity)
             }
             .scrollBounceBehavior(.basedOnSize, axes: .vertical)
@@ -246,6 +245,8 @@ struct RecommendationResultView: View {
                             VStack(spacing: 2) {
                                 Image(systemName: reportIcon(for: kind))
                                     .font(.caption.weight(.semibold))
+                                    .rotationEffect(reportIconRotation(for: kind))
+                                    .frame(width: 16, height: 16)
                                 Text(reportShortTitle(for: kind))
                                     .font(.system(size: comparedMeasurementKinds.count > 4 ? 8 : 9, weight: .medium))
                                     .lineLimit(1)
@@ -815,9 +816,9 @@ struct RecommendationResultView: View {
 
     private func reportIcon(for kind: MeasurementKind) -> String {
         switch kind {
-        case .shoulder: return "figure.arms.open"
+        case .shoulder: return "arrow.left.and.right"
         case .chest, .underBust: return "tshirt"
-        case .totalLength: return "arrow.up.and.down"
+        case .totalLength: return "ruler"
         case .sleeveLength: return "ruler"
         case .waist: return "circle.dashed"
         case .hip: return "figure.stand"
@@ -840,6 +841,14 @@ struct RecommendationResultView: View {
         case .hem: return "밑단"
         case .footLength: return "발길이"
         case .underBust: return "밑가슴"
+        }
+    }
+
+    private func reportIconRotation(for kind: MeasurementKind) -> Angle {
+        switch kind {
+        case .totalLength: return .degrees(90)
+        case .sleeveLength: return .degrees(-38)
+        default: return .zero
         }
     }
 
