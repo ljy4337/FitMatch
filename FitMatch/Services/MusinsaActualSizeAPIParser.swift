@@ -35,16 +35,45 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         return try parseActualSize(from: data)
     }
 
+    func parseStandardSizeOptions(productID: String) async throws -> [ParsedProductSize] {
+        guard let apiURL = URL(string: "https://goods-detail.musinsa.com/api2/goods/\(productID)/options") else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        let response = try JSONDecoder().decode(MusinsaOptionsResponse.self, from: await fetchData(from: apiURL))
+        let optionGroups = response.data.basic
+            .sorted { $0.sequence < $1.sequence }
+            .map { option in
+                option.optionValues
+                    .filter { !$0.isDeleted }
+                    .sorted { $0.sequence < $1.sequence }
+                    .map(\.name)
+            }
+        let names = optionGroups.max { lhs, rhs in
+            lhs.compactMap(StandardBodySizeChart.chestCircumferenceCm).count
+                < rhs.compactMap(StandardBodySizeChart.chestCircumferenceCm).count
+        } ?? []
+        var seen = Set<String>()
+        return names.compactMap { name in
+            let normalizedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalizedName.isEmpty, seen.insert(normalizedName).inserted else { return nil }
+            return ParsedProductSize(
+                name: normalizedName,
+                measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0),
+                standardBodyChestCircumferenceCm: StandardBodySizeChart.chestCircumferenceCm(for: normalizedName)
+            )
+        }
+    }
+
     func parseActualSize(from data: Data) throws -> MusinsaActualSizeResult {
         do {
             let response = try JSONDecoder().decode(MusinsaActualSizeResponse.self, from: data)
             return MusinsaActualSizeResult(
-                typeName: response.data.typeName,
-                typeNumber: response.data.typeNumber,
-                webImage: response.data.webImage,
-                mobileImage: response.data.mobileImage,
-                sizes: response.data.sizes.compactMap {
-                    makeParsedSize(from: $0, typeNumber: response.data.typeNumber, typeName: response.data.typeName)
+                typeName: response.data?.typeName,
+                typeNumber: response.data?.typeNumber,
+                webImage: response.data?.webImage,
+                mobileImage: response.data?.mobileImage,
+                sizes: (response.data?.sizes ?? []).compactMap {
+                    makeParsedSize(from: $0, typeNumber: response.data?.typeNumber, typeName: response.data?.typeName)
                 }
             )
         } catch {
@@ -174,7 +203,7 @@ struct MusinsaActualSizeResult {
 }
 
 private struct MusinsaActualSizeResponse: Decodable {
-    let data: DataBody
+    let data: DataBody?
 
     struct DataBody: Decodable {
         let typeName: String?
@@ -192,6 +221,25 @@ private struct MusinsaActualSizeResponse: Decodable {
     struct Item: Decodable {
         let name: String
         let value: FlexibleString
+    }
+}
+
+private struct MusinsaOptionsResponse: Decodable {
+    let data: DataBody
+
+    struct DataBody: Decodable {
+        let basic: [Option]
+    }
+
+    struct Option: Decodable {
+        let sequence: Int
+        let optionValues: [OptionValue]
+    }
+
+    struct OptionValue: Decodable {
+        let name: String
+        let sequence: Int
+        let isDeleted: Bool
     }
 }
 

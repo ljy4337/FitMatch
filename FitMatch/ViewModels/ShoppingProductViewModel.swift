@@ -23,6 +23,7 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var productCode: String?
     @Published var productMetadata = ProductMetadata()
     @Published var hasLoadedProductInfo = false
+    @Published var measurementAvailability: ProductMeasurementAvailability = .actualMeasurements
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
@@ -228,6 +229,7 @@ final class ShoppingProductViewModel: ObservableObject {
         productCanonicalURLString = parsedProduct.canonicalURLString
         productCode = parsedProduct.productID
         productMetadata = metadataWithSourceCategory(from: parsedProduct)
+        measurementAvailability = parsedProduct.measurementAvailability
         parserNotice = parsedProduct.parserNotice
         hasLoadedProductInfo = true
         #if DEBUG
@@ -258,7 +260,9 @@ final class ShoppingProductViewModel: ObservableObject {
                 footLength: size.measurements.footLength.extractedFormText,
                 underBust: size.measurements.underBust.extractedFormText,
                 displayOrder: index,
-                parsedMeasurementRecords: size.measurementRecords
+                parsedMeasurementRecords: size.measurementRecords,
+                standardBodyChestCircumferenceCm: size.standardBodyChestCircumferenceCm,
+                allowsStandardSizeFallback: parsedProduct.measurementAvailability != .actualMeasurements
             )
         }
     }
@@ -305,6 +309,8 @@ struct ClothingSizeForm: Identifiable, Equatable {
     var underBust = ""
     var displayOrder = 0
     var parsedMeasurementRecords: [ParsedMeasurement] = []
+    var standardBodyChestCircumferenceCm: Double? = nil
+    var allowsStandardSizeFallback = false
 
     func makeSizeOption(category: ClothingCategory, detailCategory: ClosetDetailCategory = .other, gender: UserGender = .unisex) -> ProductSize? {
         guard !sizeName.trimmed.isEmpty else {
@@ -319,7 +325,8 @@ struct ClothingSizeForm: Identifiable, Equatable {
         let validMeasurementCount = measurementKinds.filter {
             numericValue(for: $0) > 0
         }.count
-        guard validMeasurementCount >= min(2, measurementKinds.count) else {
+        let isStandardSizeOption = allowsStandardSizeFallback
+        guard validMeasurementCount >= min(2, measurementKinds.count) || isStandardSizeOption else {
             return nil
         }
 

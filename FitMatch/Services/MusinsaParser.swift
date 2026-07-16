@@ -1,5 +1,19 @@
 import Foundation
 
+enum MusinsaSizeAvailabilityResolver {
+    static func resolve(
+        isUseSize: Bool,
+        sizeType: String?,
+        actualSizes: [ParsedProductSize]
+    ) -> ProductMeasurementAvailability {
+        if !actualSizes.isEmpty { return .actualMeasurements }
+        if isUseSize, (sizeType ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .standardSizeChart
+        }
+        return .unavailable
+    }
+}
+
 struct MusinsaParser: ProductURLParsing {
     private let urlResolver = MusinsaURLResolver()
     private let metadataParser = MusinsaProductMetadataParser()
@@ -26,8 +40,22 @@ struct MusinsaParser: ProductURLParsing {
                 )
             )
         }
-        let sizes = actualSize.sizes
+        var sizes = actualSize.sizes
         metadata.applyActualSizeProfile(typeNumber: actualSize.typeNumber, typeName: actualSize.typeName)
+
+        let availability = MusinsaSizeAvailabilityResolver.resolve(
+            isUseSize: metadata.isUseSize,
+            sizeType: metadata.productMetadata.sizeType,
+            actualSizes: sizes
+        )
+        // Rollback boundary: `actualSize.sizes` above remains the unchanged primary path.
+        // This fallback is entered only when the goods flags confirm a standard chart and no valid actual items exist.
+        if availability == .standardSizeChart {
+            sizes = (try? await actualSizeParser.parseStandardSizeOptions(productID: resolved.productID)) ?? []
+            metadata.productMetadata.sizeType = sizes.contains { $0.standardBodyChestCircumferenceCm != nil }
+                ? StandardBodySizeChart.metadataMarker
+                : StandardBodySizeChart.unavailableMarker
+        }
 
         #if DEBUG
         FitMatchDebugLogger.detail(

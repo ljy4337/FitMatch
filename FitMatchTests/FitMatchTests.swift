@@ -3148,6 +3148,110 @@ struct FitMatchTests {
         return viewModel
     }
 
+    @Test func musinsaStandardSizeAvailabilityUsesFlagsAndActualData() throws {
+        let nullData = try MusinsaActualSizeAPIParser().parseActualSize(from: Data(#"{"meta":{"result":"SUCCESS"},"data":null}"#.utf8))
+        #expect(nullData.sizes.isEmpty)
+        #expect(MusinsaSizeAvailabilityResolver.resolve(isUseSize: true, sizeType: "", actualSizes: nullData.sizes) == .standardSizeChart)
+
+        let actual = ParsedProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
+        )
+        #expect(MusinsaSizeAvailabilityResolver.resolve(isUseSize: true, sizeType: "5", actualSizes: [actual]) == .actualMeasurements)
+        #expect(MusinsaSizeAvailabilityResolver.resolve(isUseSize: false, sizeType: "", actualSizes: []) == .unavailable)
+    }
+
+    @Test func standardBodySizeChartNormalizesSupportedOptionsOnly() {
+        #expect(StandardBodySizeChart.normalizedSize(from: "그레이/M") == "M")
+        #expect(StandardBodySizeChart.chestCircumferenceCm(for: "95(M)") == 95)
+        #expect(StandardBodySizeChart.chestCircumferenceCm(for: "XL") == 105)
+        #expect(StandardBodySizeChart.chestCircumferenceCm(for: "44(85)") == 85)
+        #expect(StandardBodySizeChart.chestCircumferenceCm(for: "FREE") == nil)
+        #expect(StandardBodySizeChart.chestCircumferenceCm(for: "3XL") == nil)
+    }
+
+    @Test func standardSizeFallbackComparesCircumferencesWithoutStoringActualChest() throws {
+        let metadata = ProductMetadata(sizeType: StandardBodySizeChart.metadataMarker)
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0)
+        )
+        let product = Product(name: "기준표 상품", category: .top, metadata: metadata, sourceName: "무신사", sizes: [size])
+        let reference = UserFit(
+            brandName: "테스트",
+            productName: "기준 옷",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "L",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24),
+            fitMemo: "",
+            satisfaction: 3
+        )
+
+        let history = try #require(RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: reference,
+            productDetailCategory: .shortSleeve
+        ))
+        #expect(history.comparisonMode == .standardSizeFallback)
+        #expect(history.measurementDifferences.chest == -5)
+        #expect(history.comparedMeasurementUsages == [MeasurementComparisonUsage(kind: .chest, measurementCode: .standardBodyChestCircumference)])
+        #expect(size.chest == 0)
+        #expect(history.trueToSizeRecommendation.contains("5cm"))
+    }
+
+    @Test func mixedActualAndStandardComparisonConvertsBothOptionNames() throws {
+        let actualSize = ProductSize(
+            name: "L",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 55, totalLength: 70, sleeveLength: 24)
+        )
+        let actualProduct = Product(name: "실측 상품", category: .top, metadata: ProductMetadata(sizeType: "5"), sizes: [actualSize])
+        let standardSource = Product(
+            name: "기준표 옷",
+            category: .top,
+            metadata: ProductMetadata(sizeType: StandardBodySizeChart.metadataMarker),
+            sizes: []
+        )
+        let reference = UserFit(
+            brandName: "테스트",
+            productName: "기준 옷",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "M",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24),
+            fitMemo: "",
+            satisfaction: 3,
+            sourceProduct: standardSource
+        )
+
+        let history = try #require(RecommendationService().recommend(
+            product: actualProduct,
+            selectedReferenceItem: reference,
+            productDetailCategory: .shortSleeve
+        ))
+        #expect(history.comparisonMode == .standardSizeFallback)
+        #expect(history.measurementDifferences.chest == 5)
+        #expect(history.recommendedSize.chest == 55)
+    }
+
+    @Test func unsupportedStandardSizeReturnsUnavailableResult() throws {
+        let product = Product(
+            name: "프리 상품",
+            category: .top,
+            metadata: ProductMetadata(sizeType: StandardBodySizeChart.unavailableMarker),
+            sizes: [ProductSize(name: "FREE", measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0))]
+        )
+        let reference = comparisonUserFit(name: "기준 옷", detail: .shortSleeve, sleeve: 24)
+        let history = try #require(RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: reference,
+            productDetailCategory: .shortSleeve
+        ))
+        #expect(history.comparisonMode == .unavailable)
+        #expect(history.comparedMeasurementUsages.isEmpty)
+        #expect(history.trueToSizeRecommendation.contains("변환할 수 없습니다"))
+    }
+
     private func inMemoryModelContainer() throws -> ModelContainer {
         let schema = Schema([
             Brand.self,

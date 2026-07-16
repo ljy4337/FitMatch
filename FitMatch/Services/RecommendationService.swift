@@ -218,6 +218,13 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> ReferenceSelectionPlan {
+        if product.sizeType == StandardBodySizeChart.metadataMarker || product.sizeType == StandardBodySizeChart.unavailableMarker {
+            let candidates = standardSizeCandidates(product: product, userFits: userFits)
+            return ReferenceSelectionPlan(
+                recommendedCandidates: candidates,
+                automaticallySelectedCandidate: candidates.first
+            )
+        }
         let compatible = comparisonMatcher.match(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -265,6 +272,15 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         basis: RecommendationBasis
     ) -> RecommendationHistory? {
+        if usesStandardSizeFallback(product: product, userFits: userFits) {
+            return standardSizeRecommendation(
+                product: product,
+                userFits: userFits,
+                productDetailCategory: productDetailCategory,
+                basis: basis
+            )
+        }
+
         var bestHistory: RecommendationHistory?
         var bestFitConfidence = -1
         var bestAverageDifference = Double.greatestFiniteMagnitude
@@ -327,6 +343,119 @@ struct RecommendationService {
         return bestHistory
     }
 
+    private func usesStandardSizeFallback(product: Product, userFits: [UserFit]) -> Bool {
+        product.sizeType == StandardBodySizeChart.metadataMarker
+            || product.sizeType == StandardBodySizeChart.unavailableMarker
+            || userFits.contains { $0.sourceProduct?.sizeType == StandardBodySizeChart.metadataMarker }
+    }
+
+    private func standardSizeRecommendation(
+        product: Product,
+        userFits: [UserFit],
+        productDetailCategory: ClosetDetailCategory,
+        basis: RecommendationBasis
+    ) -> RecommendationHistory? {
+        let sizes = product.sizes.sorted { $0.displayOrder < $1.displayOrder }
+        guard let fallbackSize = sizes.first, let fallbackFit = userFits.first else { return nil }
+        var bestHistory: RecommendationHistory?
+        var bestDifference = Double.greatestFiniteMagnitude
+
+        for size in sizes {
+            guard let productChest = StandardBodySizeChart.chestCircumferenceCm(for: size.name) else { continue }
+            for userFit in userFits {
+                guard let referenceChest = StandardBodySizeChart.chestCircumferenceCm(for: userFit.sizeName) else { continue }
+                let signedDifference = productChest - referenceChest
+                let absoluteDifference = abs(signedDifference)
+                let score = max(0, min(100, Int((100 - absoluteDifference * 5).rounded())))
+                let item = MeasurementComparisonItem(
+                    kind: .chest,
+                    measurementCode: .standardBodyChestCircumference,
+                    productValue: productChest,
+                    referenceValue: referenceChest,
+                    signedDifference: signedDifference,
+                    absoluteDifference: absoluteDifference,
+                    score: score,
+                    weight: 1
+                )
+                let comparison = MeasurementComparisonResult(
+                    status: .confirmed,
+                    score: score,
+                    comparedItems: [item],
+                    exclusions: standardSizeExclusions,
+                    averageDifference: absoluteDifference,
+                    minimumComparableCount: 1,
+                    requiredKinds: [.chest],
+                    minimumRequiredKindCount: 1,
+                    requiredAllKinds: []
+                )
+                let history = RecommendationHistory(
+                    product: product,
+                    recommendedSize: size,
+                    userFit: userFit,
+                    totalDifference: absoluteDifference,
+                    measurementDifferences: comparison.signedDifferences,
+                    recommendationScore: max(0, score - basis.scorePenalty),
+                    trueToSizeRecommendation: standardSizeReason(productSize: size.name, referenceSize: userFit.sizeName, difference: signedDifference),
+                    oversizedRecommendation: "기준표에는 총장과 소매 정보가 없어 가슴둘레만 비교했습니다.",
+                    comparisonMethod: "기준표 가슴둘레 비교",
+                    fallbackReason: "실측값이 아닌 한국 의류 기준표 기반 결과입니다.",
+                    productDetailCategory: productDetailCategory,
+                    comparisonResult: comparison
+                )
+                if absoluteDifference < bestDifference {
+                    bestDifference = absoluteDifference
+                    bestHistory = history
+                }
+            }
+        }
+
+        if let bestHistory { return bestHistory }
+
+        let unavailableComparison = MeasurementComparisonResult(
+            status: .insufficientEvidence,
+            score: 0,
+            comparedItems: [],
+            exclusions: standardSizeExclusions,
+            averageDifference: .greatestFiniteMagnitude,
+            minimumComparableCount: 1,
+            requiredKinds: [.chest],
+            minimumRequiredKindCount: 1,
+            requiredAllKinds: []
+        )
+        return RecommendationHistory(
+            product: product,
+            recommendedSize: fallbackSize,
+            userFit: fallbackFit,
+            totalDifference: 0,
+            measurementDifferences: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0),
+            recommendationScore: 0,
+            trueToSizeRecommendation: "해당 사이즈는 기준표로도 변환할 수 없습니다.",
+            oversizedRecommendation: "XS~XXL 영문 사이즈가 있는 다른 옵션이나 옷을 선택해 주세요.",
+            comparisonMethod: "기준표 변환 불가",
+            fallbackReason: "해당 사이즈는 기준표로도 변환할 수 없습니다.",
+            productDetailCategory: productDetailCategory,
+            comparisonResult: unavailableComparison
+        )
+    }
+
+    private var standardSizeExclusions: [MeasurementComparisonExclusion] {
+        [.shoulder, .totalLength, .sleeveLength].map {
+            MeasurementComparisonExclusion(
+                kind: $0,
+                reason: .missingProductValue,
+                productCode: nil,
+                referenceCode: nil
+            )
+        }
+    }
+
+    private func standardSizeReason(productSize: String, referenceSize: String, difference: Double) -> String {
+        let absolute = abs(difference).formatted(.number.precision(.fractionLength(0...1)))
+        if difference == 0 { return "두 사이즈의 기준표 가슴둘레가 같습니다." }
+        let larger = difference > 0 ? productSize : referenceSize
+        return "\(larger) 사이즈가 기준표 가슴둘레 기준 \(absolute)cm 큽니다."
+    }
+
     private func bestInsufficientEvidence(
         product: Product,
         userFits: [UserFit],
@@ -381,6 +510,15 @@ struct RecommendationService {
         userFits: [UserFit],
         allowsGlobalFallback: Bool
     ) -> RecommendationBasis {
+        if product.sizeType == StandardBodySizeChart.metadataMarker || product.sizeType == StandardBodySizeChart.unavailableMarker {
+            let candidates = standardSizeCandidates(product: product, userFits: userFits)
+            return RecommendationBasis(
+                userFits: candidates.first.map { [$0.userFit] } ?? Array(userFits.prefix(1)),
+                methodText: "기준표 가슴둘레 비교",
+                scorePenalty: 18,
+                fallbackReason: "실측값이 아닌 한국 의류 기준표 기반 결과입니다."
+            )
+        }
         let result = comparisonMatcher.match(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -407,6 +545,9 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
+        if product.sizeType == StandardBodySizeChart.metadataMarker || product.sizeType == StandardBodySizeChart.unavailableMarker {
+            return !standardSizeCandidates(product: product, userFits: userFits).isEmpty
+        }
         let profileCandidates = comparisonMatcher.match(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -417,6 +558,26 @@ struct RecommendationService {
             productDetailCategory: productDetailCategory,
             userFits: profileCandidates
         ).isEmpty
+    }
+
+    private func standardSizeCandidates(product: Product, userFits: [UserFit]) -> [FitMatchCandidate] {
+        let sameCategory = userFits.filter { $0.category.serviceGroup == product.category.serviceGroup }
+        let sorted = sameCategory.sorted { lhs, rhs in
+            let lhsConvertible = StandardBodySizeChart.chestCircumferenceCm(for: lhs.sizeName) != nil
+            let rhsConvertible = StandardBodySizeChart.chestCircumferenceCm(for: rhs.sizeName) != nil
+            if lhsConvertible != rhsConvertible { return lhsConvertible }
+            if lhs.isRepresentative != rhs.isRepresentative { return lhs.isRepresentative }
+            return lhs.updatedAt > rhs.updatedAt
+        }
+        return sorted.map { item in
+            let convertible = StandardBodySizeChart.chestCircumferenceCm(for: item.sizeName) != nil
+            return FitMatchCandidate(
+                userFit: item,
+                matchRate: convertible ? 70 : 0,
+                compatibleMeasurementCount: convertible ? 1 : 0,
+                selectionReason: convertible ? "기준표 가슴둘레 비교 가능" : "기준표 변환 확인 필요"
+            )
+        }
     }
 
     private func rankedReferenceCandidates(

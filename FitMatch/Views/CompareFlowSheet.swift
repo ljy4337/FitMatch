@@ -1079,7 +1079,10 @@ private extension CompareFlowSheet {
     }
 
     func hasComparableMeasurements(_ item: UserFit) -> Bool {
-        viewModel.category
+        if viewModel.measurementAvailability != .actualMeasurements {
+            return item.category.serviceGroup == viewModel.category.serviceGroup
+        }
+        return viewModel.category
             .measurementKinds(detailCategory: viewModel.detailCategory, gender: item.gender)
             .contains { item.measurements.value(for: $0) > 0 }
     }

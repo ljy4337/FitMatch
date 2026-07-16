@@ -12,6 +12,7 @@ struct MusinsaProductMetadata {
     var imageURLString: String?
     var price: Int?
     var canonicalURLString: String?
+    var isUseSize: Bool = false
     var productMetadata: ProductMetadata = ProductMetadata()
 
     func parsedProductInfo(sizes: [ParsedProductSize], parserNotice: String? = nil) -> ParsedProductInfo {
@@ -35,7 +36,14 @@ struct MusinsaProductMetadata {
             sourceCategoryDepth3: productMetadata.sourceCategoryDepth3,
             sourceCategoryDepth4: productMetadata.sourceCategoryDepth4,
             productTargetGender: UserGender.productTarget(from: productMetadata.genderCodes),
-            productMetadata: productMetadata
+            productMetadata: productMetadata,
+            measurementAvailability: {
+                switch productMetadata.sizeType {
+                case StandardBodySizeChart.metadataMarker: return .standardSizeChart
+                case StandardBodySizeChart.unavailableMarker: return .unavailable
+                default: return sizes.isEmpty ? .unavailable : .actualMeasurements
+                }
+            }()
         )
     }
 
@@ -114,6 +122,7 @@ struct MusinsaProductMetadataParser {
                 imageURLString: Self.normalizeImageURL(response.data.thumbnailImageUrl),
                 price: metadata.finalPrice ?? metadata.salePrice ?? metadata.normalPrice,
                 canonicalURLString: "https://www.musinsa.com/products/\(productID)",
+                isUseSize: response.data.isUseSize ?? false,
                 productMetadata: metadata
             )
         } catch {
@@ -167,6 +176,7 @@ struct MusinsaProductMetadataParser {
             imageURLString: Self.normalizeImageURL(ogImage),
             price: nil,
             canonicalURLString: canonical ?? "https://www.musinsa.com/products/\(productID)",
+            isUseSize: false,
             productMetadata: ProductMetadata()
         )
     }

@@ -1,5 +1,56 @@
 import Foundation
 
+enum ProductMeasurementAvailability: String, Equatable {
+    case actualMeasurements
+    case standardSizeChart
+    case unavailable
+}
+
+enum ProductComparisonMode: String, Equatable {
+    case actualMeasurements
+    case standardSizeFallback
+    case unavailable
+}
+
+enum StandardBodySizeChart {
+    static let metadataMarker = "fitmatch_standard_size_chart"
+    static let unavailableMarker = "fitmatch_size_unavailable"
+
+    static func normalizedSize(from optionName: String) -> String? {
+        let uppercased = optionName.uppercased()
+        let pattern = #"(?<![A-Z0-9])(XXL|XL|XS|L|M|S)(?![A-Z])"#
+        if let regex = try? NSRegularExpression(pattern: pattern),
+           let match = regex.firstMatch(
+                in: uppercased,
+                range: NSRange(uppercased.startIndex..<uppercased.endIndex, in: uppercased)
+           ),
+           let range = Range(match.range(at: 1), in: uppercased) {
+            return String(uppercased[range])
+        }
+
+        let circumferencePattern = #"(?:44|55|66|77|88|110)\s*\((85|90|95|100|105|110)\)"#
+        guard let regex = try? NSRegularExpression(pattern: circumferencePattern),
+              let match = regex.firstMatch(
+                in: uppercased,
+                range: NSRange(uppercased.startIndex..<uppercased.endIndex, in: uppercased)
+              ),
+              let range = Range(match.range(at: 1), in: uppercased),
+              let circumference = Double(uppercased[range]) else {
+            return nil
+        }
+        return sizeName(for: circumference)
+    }
+
+    static func chestCircumferenceCm(for optionName: String) -> Double? {
+        guard let size = normalizedSize(from: optionName) else { return nil }
+        return ["XS": 85, "S": 90, "M": 95, "L": 100, "XL": 105, "XXL": 110][size]
+    }
+
+    private static func sizeName(for circumference: Double) -> String? {
+        [85: "XS", 90: "S", 95: "M", 100: "L", 105: "XL", 110: "XXL"][circumference]
+    }
+}
+
 struct ParsedProductInfo {
     var sourceURL: URL
     var sourceType: ProductSourceType = .manual
@@ -21,6 +72,7 @@ struct ParsedProductInfo {
     var sourceCategoryDepth4: String? = nil
     var productTargetGender: UserGender = .unknown
     var productMetadata: ProductMetadata = ProductMetadata()
+    var measurementAvailability: ProductMeasurementAvailability = .actualMeasurements
 }
 
 struct ParsedProductSize: Identifiable, Equatable {
@@ -28,6 +80,7 @@ struct ParsedProductSize: Identifiable, Equatable {
     var name: String
     var measurements: GarmentMeasurements
     var measurementRecords: [ParsedMeasurement] = []
+    var standardBodyChestCircumferenceCm: Double? = nil
 }
 
 struct ParsedMeasurement: Equatable {

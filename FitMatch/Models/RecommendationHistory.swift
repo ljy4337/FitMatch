@@ -163,6 +163,14 @@ final class RecommendationHistory {
         }
     }
 
+    var comparisonMode: ProductComparisonMode {
+        switch comparisonMethod {
+        case "기준표 가슴둘레 비교": return .standardSizeFallback
+        case "기준표 변환 불가": return .unavailable
+        default: return .actualMeasurements
+        }
+    }
+
     var stockStatus: ProductStockStatus {
         ProductStockStatus(rawValue: stockStatusRawValue ?? "") ?? .unknown
     }

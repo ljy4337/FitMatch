@@ -40,6 +40,9 @@ struct RecommendationResultView: View {
                         .id("resultTop")
                     comparisonTargetsCard
                     comparisonBasisSummaryCard
+                    if currentResult.comparisonMode != .actualMeasurements {
+                        standardSizeFallbackCard
+                    }
                     fitRecommendationCard
                     comparisonDetailToggleCard
                     if isShowingComparisonDetails {
@@ -332,6 +335,26 @@ struct RecommendationResultView: View {
         }
     }
 
+    private var standardSizeFallbackCard: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: "비교 기준", subtitle: "기준표 가슴둘레")
+
+                Text(currentResult.comparisonMode == .unavailable
+                     ? "해당 사이즈는 기준표로도 변환할 수 없습니다."
+                     : "실측값이 아닌 한국 의류 기준표 기반 결과입니다.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+
+                InfoRow(
+                    title: "비교 가능한 항목",
+                    value: currentResult.comparisonMode == .unavailable ? "없음" : "가슴"
+                )
+                InfoRow(title: "비교할 수 없는 항목", value: "총장, 소매 등 기준표에 없는 항목")
+            }
+        }
+    }
+
     private var fitMatchRankingCard: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 16) {
@@ -389,14 +412,23 @@ struct RecommendationResultView: View {
     private var measurementDifferenceCard: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "실측 차이", subtitle: "상품 실측과 기준 옷의 차이입니다.")
-
-                ProductMeasurementDifferenceGrid(
-                    measurements: currentResult.recommendedSize.measurements,
-                    referenceMeasurements: currentResult.userFit.measurements,
-                    differences: currentResult.measurementDifferences,
-                    kinds: comparedMeasurementKinds
+                SectionHeader(
+                    title: currentResult.comparisonMode == .standardSizeFallback ? "기준표 차이" : "실측 차이",
+                    subtitle: currentResult.comparisonMode == .standardSizeFallback
+                        ? "선택한 두 사이즈의 기준표 가슴둘레 차이입니다."
+                        : "상품 실측과 기준 옷의 차이입니다."
                 )
+
+                if currentResult.comparisonMode == .standardSizeFallback {
+                    InfoRow(title: "가슴", value: currentResult.trueToSizeRecommendation)
+                } else {
+                    ProductMeasurementDifferenceGrid(
+                        measurements: currentResult.recommendedSize.measurements,
+                        referenceMeasurements: currentResult.userFit.measurements,
+                        differences: currentResult.measurementDifferences,
+                        kinds: comparedMeasurementKinds
+                    )
+                }
             }
         }
     }
@@ -584,6 +616,9 @@ struct RecommendationResultView: View {
     }
 
     private var usedMeasurementSummary: String {
+        if currentResult.comparisonMode == .standardSizeFallback {
+            return "기준표 가슴둘레 기준으로 비교했어요."
+        }
         guard !comparedMeasurementKinds.isEmpty else {
             return "추천에 사용할 수 있는 호환 실측 항목이 없습니다."
         }

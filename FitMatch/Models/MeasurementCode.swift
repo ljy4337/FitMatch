@@ -1,6 +1,7 @@
 import Foundation
 
 enum MeasurementCode: String, Codable, CaseIterable, Hashable {
+    case standardBodyChestCircumference = "standard_body_chest_circumference"
     case shoulderWidthSeamToSeam = "shoulder_width_seam_to_seam"
     case chestWidthPitToPit = "chest_width_pit_to_pit"
     case chestWidthUniqloBodyWidth = "chest_width_uniqlo_body_width"

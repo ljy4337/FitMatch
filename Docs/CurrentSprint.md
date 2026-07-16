@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Added Musinsa standard-size-chart fallback for products without actual measurements, keeping body chest circumference separate from garment measurements and preserving the existing actual-measurement path.
 - Musinsa and Uniqlo now share canonical upper-body and verified lower-body width measurement codes while retaining distinct sleeve, pants-outseam, pants-inseam, and skirt-length paths.
 - Measurement migration v6 upgrades stored UserFit/ProductSize upper mappings and verified lower mappings; Uniqlo waist/hip circumferences are halved exactly once while source metadata and raw values remain intact.
 - History detail re-comparison now replaces the selected history route with the newly persisted history ID, so dismissing the garment picker keeps the recalculated result detail on screen instead of popping to the list.
@@ -101,6 +102,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Musinsa standard-chart detection, option normalization, fallback/mixed comparison, and unavailable-result regression tests compile with the generic iOS device test bundle; no simulator was launched.
 - Home card polish differentiates Closet and recent-comparison purposes with restrained Material surfaces, tightens carousel density, and preserves result-first typography and existing actions.
 - Cross-platform measurement tests cover common upper measurements, sleeve exclusion, lower width conversion/comparison, outseam/inseam separation, raglan preservation, and idempotent v6 migration; app and test bundles compile for generic iOS devices.
 - History-detail route retention passed the generic iOS device Debug build; the picker dismissal remains local to RecommendationResultView and protected scroll files/call sites are unchanged.
