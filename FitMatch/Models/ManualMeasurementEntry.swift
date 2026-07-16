@@ -213,11 +213,8 @@ enum ManualMeasurementRecordFactory {
         case .fitmatchMeasured:
             code = fitmatchCode(for: kind, category: category)
         case .uniqloSizeChart:
-            switch kind {
-            case .shoulder: code = .shoulderWidthSeamToSeam
-            case .sleeveLength: code = .sleeveCenterBackToCuff
-            default: code = nil
-            }
+            code = rawCode(for: kind, source: source)
+                .flatMap { MeasurementSourceMappingPolicy.uniqlo(rawCode: $0)?.code }
         case .musinsaSizeChart:
             switch (musinsaSleeveMethod, kind) {
             case (.setIn, .shoulder): code = .shoulderWidthSeamToSeam

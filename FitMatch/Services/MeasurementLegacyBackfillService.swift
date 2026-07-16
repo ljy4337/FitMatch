@@ -187,16 +187,13 @@ enum MeasurementLegacyBackfillFactory {
         kind: MeasurementKind,
         sizeType: String?
     ) -> (code: MeasurementCode, evidence: MeasurementEvidenceLevel)? {
-        switch (sizeType, kind) {
-        case ("5", .shoulder), ("21", .shoulder), ("20", .shoulder):
-            return (.shoulderWidthSeamToSeam, .officialDiagram)
-        case ("5", .sleeveLength), ("21", .sleeveLength), ("20", .sleeveLength):
-            return (.sleeveShoulderSeamToCuff, .officialDiagram)
-        case ("11", .sleeveLength):
-            return (.sleeveRaglanNeckToCuff, .officialDiagram)
-        default:
-            return nil
-        }
+        guard let sizeType,
+              let typeNumber = Int(sizeType),
+              let mapping = MeasurementSourceMappingPolicy.musinsa(
+                  typeNumber: typeNumber,
+                  displayKind: kind.displayKind
+              ) else { return nil }
+        return (mapping.code, mapping.evidence)
     }
 
     private static func resolvedPlatformCode(for product: Product) -> String? {

@@ -67,6 +67,66 @@ enum MeasurementMigrationStatus: String, Codable, Hashable {
     case failed
 }
 
+struct SourceMeasurementMapping: Equatable {
+    let code: MeasurementCode
+    let evidence: MeasurementEvidenceLevel
+    let mappingVersion: String
+}
+
+enum MeasurementSourceMappingPolicy {
+    static let musinsaVersion = "musinsa_actual_size_mapping_v1"
+    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v1"
+
+    static func musinsa(
+        typeNumber: Int?,
+        displayKind: MeasurementDisplayKind?
+    ) -> SourceMeasurementMapping? {
+        switch (typeNumber, displayKind) {
+        case (5, .shoulder), (20, .shoulder), (21, .shoulder):
+            return SourceMeasurementMapping(
+                code: .shoulderWidthSeamToSeam,
+                evidence: .officialDiagram,
+                mappingVersion: musinsaVersion
+            )
+        case (5, .sleeveLength), (20, .sleeveLength), (21, .sleeveLength):
+            return SourceMeasurementMapping(
+                code: .sleeveShoulderSeamToCuff,
+                evidence: .officialDiagram,
+                mappingVersion: musinsaVersion
+            )
+        case (11, .sleeveLength):
+            return SourceMeasurementMapping(
+                code: .sleeveRaglanNeckToCuff,
+                evidence: .officialDiagram,
+                mappingVersion: musinsaVersion
+            )
+        default:
+            return nil
+        }
+    }
+
+    static func uniqlo(rawCode: String) -> SourceMeasurementMapping? {
+        let normalizedRawCode = rawCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "_", with: "")
+            .replacingOccurrences(of: "-", with: "")
+        let code: MeasurementCode
+        switch normalizedRawCode {
+        case "shoulderwidth": code = .shoulderWidthSeamToSeam
+        case "sleevelengthcb": code = .sleeveCenterBackToCuff
+        case "inseam": code = .pantsInseamCrotchToHem
+        default: return nil
+        }
+        return SourceMeasurementMapping(
+            code: code,
+            evidence: .officialText,
+            mappingVersion: uniqloVersion
+        )
+    }
+}
+
 extension MeasurementKind {
     var displayKind: MeasurementDisplayKind {
         switch self {

@@ -488,6 +488,7 @@ struct FitMatchTests {
         let length = records.first { $0.rawCode == "body-length-back" }
         let inseam = records.first { $0.rawCode == "inseam" }
         #expect(shoulder?.measurementCode == .shoulderWidthSeamToSeam)
+        #expect(shoulder?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
         #expect(sleeve?.measurementCode == .sleeveCenterBackToCuff)
         #expect(sleeve?.rawInfo == "목 중심부터 소매 끝")
         #expect(inseam?.measurementCode == .pantsInseamCrotchToHem)
@@ -528,10 +529,34 @@ struct FitMatchTests {
         #expect(result.typeNumber == 11)
         #expect(result.webImage == "https://example.com/web.png")
         #expect(sleeve?.measurementCode == .sleeveRaglanNeckToCuff)
+        #expect(sleeve?.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
         #expect(sleeve?.methodProfile == "musinsa_type_11")
         #expect(sleeve?.rawValueText == "82.5")
         #expect(chest?.measurementCode == .unknown)
         #expect(chest?.semanticStatus == .unknownDefinition)
+    }
+
+    @Test func sourceMeasurementMappingPolicyKeepsUnverifiedUpperFieldsUnknown() {
+        let verifiedMusinsaTypes = [5, 20, 21]
+        let verifiedMusinsa = MeasurementSourceMappingPolicy.musinsa(typeNumber: 5, displayKind: .shoulder)
+        let unknownMusinsaChest = MeasurementSourceMappingPolicy.musinsa(typeNumber: 5, displayKind: .chest)
+        let unknownMusinsaType = MeasurementSourceMappingPolicy.musinsa(typeNumber: 999, displayKind: .shoulder)
+        let verifiedUniqloSleeve = MeasurementSourceMappingPolicy.uniqlo(rawCode: "sleeve-length-cb")
+        let unknownUniqloChest = MeasurementSourceMappingPolicy.uniqlo(rawCode: "body-width")
+
+        #expect(verifiedMusinsaTypes.allSatisfy {
+            MeasurementSourceMappingPolicy.musinsa(typeNumber: $0, displayKind: .shoulder)?.code == .shoulderWidthSeamToSeam
+        })
+        #expect(verifiedMusinsaTypes.allSatisfy {
+            MeasurementSourceMappingPolicy.musinsa(typeNumber: $0, displayKind: .sleeveLength)?.code == .sleeveShoulderSeamToCuff
+        })
+        #expect(verifiedMusinsa?.code == .shoulderWidthSeamToSeam)
+        #expect(verifiedMusinsa?.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
+        #expect(unknownMusinsaChest == nil)
+        #expect(unknownMusinsaType == nil)
+        #expect(verifiedUniqloSleeve?.code == .sleeveCenterBackToCuff)
+        #expect(verifiedUniqloSleeve?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
+        #expect(unknownUniqloChest == nil)
     }
 
     @Test func parsedMeasurementsBecomeOwnedProductSizeRecords() {

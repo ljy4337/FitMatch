@@ -90,7 +90,10 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
             let rawValue = item.value.stringValue
             guard let value = firstNumber(in: rawValue), value.isFinite, value > 0 else { return nil }
             let column = MusinsaActualSizeColumn.column(for: item.name.normalizedMeasurementName)
-            let mapping = musinsaMapping(column: column, typeNumber: typeNumber)
+            let mapping = MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber,
+                displayKind: column?.displayKind
+            )
             return ParsedMeasurement(
                 value: value,
                 measurementCode: mapping?.code ?? .unknown,
@@ -99,6 +102,7 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
                 methodProfile: typeNumber.map { "musinsa_type_\($0)" }
                     ?? typeName.flatMap { $0.trimmed.nonEmpty }.map { "musinsa_type_name_\($0)" },
                 inputSource: .importedSizeChart,
+                mappingVersion: MeasurementSourceMappingPolicy.musinsaVersion,
                 rawLabel: item.name,
                 rawValueText: rawValue,
                 evidenceLevel: mapping?.evidence ?? .unknown,
@@ -156,22 +160,6 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
             return nil
         }
         return Double(text[range])
-    }
-
-    private func musinsaMapping(
-        column: MusinsaActualSizeColumn?,
-        typeNumber: Int?
-    ) -> (code: MeasurementCode, evidence: MeasurementEvidenceLevel)? {
-        switch (typeNumber, column) {
-        case (5, .shoulder), (21, .shoulder), (20, .shoulder):
-            return (.shoulderWidthSeamToSeam, .officialDiagram)
-        case (5, .sleeveLength), (21, .sleeveLength), (20, .sleeveLength):
-            return (.sleeveShoulderSeamToCuff, .officialDiagram)
-        case (11, .sleeveLength):
-            return (.sleeveRaglanNeckToCuff, .officialDiagram)
-        default:
-            return nil
-        }
     }
 
 }

@@ -303,33 +303,24 @@ struct UniqloSizeAPIParser {
             valuesByName[part.name.normalizedUniqloMeasurementKey] = value
 
             let normalizedCode = part.code.normalizedUniqloMeasurementKey
-            let mapping: (MeasurementCode, MeasurementEvidenceLevel)?
-            switch normalizedCode {
-            case "shoulderwidth":
-                mapping = (.shoulderWidthSeamToSeam, .officialText)
-            case "sleevelengthcb":
-                mapping = (.sleeveCenterBackToCuff, .officialText)
-            case "inseam":
-                mapping = (.pantsInseamCrotchToHem, .officialText)
-            default:
-                mapping = nil
-            }
+            let mapping = MeasurementSourceMappingPolicy.uniqlo(rawCode: part.code)
             let displayKind = UniqloMeasurementColumn
                 .column(for: normalizedCode, fallbackName: part.name.normalizedUniqloMeasurementKey)?
                 .displayKind ?? .unknown
             measurementRecords.append(
                 ParsedMeasurement(
                     value: value,
-                    measurementCode: mapping?.0 ?? .unknown,
+                    measurementCode: mapping?.code ?? .unknown,
                     displayKind: displayKind,
                     methodSource: "uniqlo_kr",
                     methodProfile: methodProfile,
                     inputSource: .importedSizeChart,
+                    mappingVersion: MeasurementSourceMappingPolicy.uniqloVersion,
                     rawCode: part.code,
                     rawLabel: part.name,
                     rawInfo: part.info,
                     rawValueText: measurement.rawValue,
-                    evidenceLevel: mapping?.1 ?? .unknown,
+                    evidenceLevel: mapping?.evidence ?? .unknown,
                     semanticStatus: mapping == nil ? .unknownDefinition : .mapped
                 )
             )
