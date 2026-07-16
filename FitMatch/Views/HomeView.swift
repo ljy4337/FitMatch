@@ -65,7 +65,7 @@ struct HomeView: View {
                     LazyHStack(spacing: 12) {
                         ForEach(recentClosetItems) { item in
                             HomeClosetPreviewCard(item: item)
-                                .frame(width: 204)
+                                .containerRelativeFrame(.horizontal, count: 2, span: 1, spacing: 12)
                         }
                     }
                     .scrollTargetLayout()
@@ -142,7 +142,7 @@ struct HomeView: View {
                                     }
                                 }
                             )
-                            .frame(width: 204)
+                            .containerRelativeFrame(.horizontal, count: 2, span: 1, spacing: 12)
                         }
                     }
                     .scrollTargetLayout()
@@ -247,13 +247,16 @@ private struct HomeClosetPreviewCard: View {
                         .padding(9)
                         .background(Color(.systemBackground).opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-                        ProductThumbnailView(
-                            imageURLString: item.sourceProduct?.imageURLString,
-                            category: item.category,
-                            width: 168,
-                            height: 78,
-                            cornerRadius: 15
-                        )
+                        GeometryReader { proxy in
+                            ProductThumbnailView(
+                                imageURLString: item.sourceProduct?.imageURLString,
+                                category: item.category,
+                                width: proxy.size.width,
+                                height: 78,
+                                cornerRadius: 15
+                            )
+                        }
+                        .frame(height: 78)
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.brandName)
@@ -269,6 +272,8 @@ private struct HomeClosetPreviewCard: View {
                     }
                 }
                 .buttonStyle(.plain)
+
+                Spacer(minLength: 0)
 
                 HStack(spacing: 8) {
                     Button(action: toggleReference) {
@@ -298,6 +303,7 @@ private struct HomeClosetPreviewCard: View {
                     .buttonStyle(.plain)
                 }
             }
+            .frame(height: HomePreviewCardMetrics.contentHeight, alignment: .top)
         }
         .confirmationDialog(
             existingReferenceItem == nil ? "이 옷을 기준 옷으로 설정할까요?" : "기준 옷을 변경할까요?",
@@ -666,8 +672,11 @@ struct RecentProductPreviewCard: View {
                     }
                     .buttonStyle(.plain)
 
+                    Spacer(minLength: 0)
+
                     carouselActions
                 }
+                .frame(height: HomePreviewCardMetrics.contentHeight, alignment: .top)
             } else {
                 ZStack(alignment: .topTrailing) {
                     NavigationLink {
@@ -687,13 +696,16 @@ struct RecentProductPreviewCard: View {
         VStack(alignment: .leading, spacing: 8) {
             resultSummary
 
-            ProductThumbnailView(
-                imageURLString: history.product.imageURLString,
-                category: history.product.category,
-                width: 168,
-                height: 78,
-                cornerRadius: 15
-            )
+            GeometryReader { proxy in
+                ProductThumbnailView(
+                    imageURLString: history.product.imageURLString,
+                    category: history.product.category,
+                    width: proxy.size.width,
+                    height: 78,
+                    cornerRadius: 15
+                )
+            }
+            .frame(height: 78)
 
             productText
         }
@@ -839,6 +851,10 @@ struct RecentProductPreviewCard: View {
         .disabled(history.product.sourceURLString == nil)
         .opacity(history.product.sourceURLString == nil ? 0.45 : 1)
     }
+}
+
+private enum HomePreviewCardMetrics {
+    static let contentHeight: CGFloat = 232
 }
 
 private extension String {

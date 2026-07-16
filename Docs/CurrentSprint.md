@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Resized the Home Closet and recent-comparison carousels to show two equal-width cards at once, using responsive thumbnails and one shared fixed content height so every populated Home preview card aligns vertically.
 - Temporarily disabled and preserved as comments the History/My Closet leading swipe favorite/reference actions; trailing delete swipes remain active.
 - Rebuilt only the My Closet list card with brand/product/internal classification metadata, platform-aware Musinsa attribution, icon-only reference state, and equal-width two-column measurements; preserved the complete prior card as `closetItemCardLegacy` for rollback.
 - Reduced only the result-detail fit-match value to 33pt Black while retaining the 44pt recommendation-size value and shared row alignment.
@@ -131,6 +132,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Home two-card carousels passed the generic iOS device Debug build and `git diff --check`; no simulator was launched and protected scroll code/call sites remain unchanged.
 - Repository-wide exact search confirms zero `"정사이즈 추천"` literals; the recombined confidence/measurement column passed the generic iOS device Debug build and `git diff --check`.
 - History compact metrics passed the generic iOS device Debug build and `git diff --check`; result-detail typography, 2×2 grid cards, and protected scroll code remain unchanged.
 - Result card-order swap and supplied-reference History 2×2 grid cards passed the generic iOS device Debug build and `git diff --check`; list cards, routing, comparison logic, and protected scroll code remain unchanged.
