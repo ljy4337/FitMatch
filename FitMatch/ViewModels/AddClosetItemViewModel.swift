@@ -166,7 +166,7 @@ final class AddClosetItemViewModel: ObservableObject {
         for kind in measurementKinds {
             let rawValue = value(for: kind).trimmed
             guard !rawValue.isEmpty, let number = Double(rawValue), number > 0 else { continue }
-            let definition = FitMatchMeasurementStandard.definition(for: kind)
+            let definition = FitMatchMeasurementStandard.definition(for: kind, category: category)
             guard !definition.validRange.contains(number) else { continue }
             return "\(kind.title)은 \(definition.rangeDescription) 범위로 입력해 주세요. 측정 위치와 단위를 확인해 주세요."
         }
@@ -243,7 +243,11 @@ final class AddClosetItemViewModel: ObservableObject {
 
     func measurementGuide(for kind: MeasurementKind) -> String {
         guard let measurementEntrySource else { return "먼저 실측 정보 출처를 선택해 주세요" }
-        return ManualMeasurementRecordFactory.guide(for: kind, source: measurementEntrySource)
+        return ManualMeasurementRecordFactory.guide(
+            for: kind,
+            source: measurementEntrySource,
+            category: category
+        )
     }
 
     private var hasAllRequiredSourceLabels: Bool {

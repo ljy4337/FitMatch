@@ -309,6 +309,8 @@ struct UniqloSizeAPIParser {
                 mapping = (.shoulderWidthSeamToSeam, .officialText)
             case "sleevelengthcb":
                 mapping = (.sleeveCenterBackToCuff, .officialText)
+            case "inseam":
+                mapping = (.pantsInseamCrotchToHem, .officialText)
             default:
                 mapping = nil
             }

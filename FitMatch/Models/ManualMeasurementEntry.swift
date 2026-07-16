@@ -16,7 +16,19 @@ struct DirectMeasurementDefinition: Equatable {
 enum FitMatchMeasurementStandard {
     static let version = "fitmatch_standard_v1"
 
-    static func definition(for kind: MeasurementKind) -> DirectMeasurementDefinition {
+    static func definition(
+        for kind: MeasurementKind,
+        category: ClothingCategory? = nil
+    ) -> DirectMeasurementDefinition {
+        if kind == .totalLength, category?.serviceGroup == .bottom {
+            return definition(
+                kind,
+                "허리단 위쪽부터 바깥쪽 봉제선을 따라 밑단까지 측정",
+                "가랑이부터 잰 인심 길이와는 비교할 수 없습니다.",
+                20...160
+            )
+        }
+
         switch kind {
         case .shoulder:
             return definition(kind, "양쪽 어깨 봉제선의 가장 바깥점을 직선으로 측정", "어깨선이 없는 라글란 옷은 이 항목을 입력하지 마세요.", 10...90)
@@ -132,7 +144,12 @@ enum ManualMeasurementRecordFactory {
         kinds.compactMap { kind in
             let value = measurements.value(for: kind)
             guard value.isFinite, value > 0 else { return nil }
-            let mapping = mapping(for: kind, source: source, musinsaSleeveMethod: musinsaSleeveMethod)
+            let mapping = mapping(
+                for: kind,
+                source: source,
+                musinsaSleeveMethod: musinsaSleeveMethod,
+                category: userFit.category
+            )
             return GarmentMeasurementRecord(
                 value: value,
                 measurementCode: mapping.code,
@@ -157,7 +174,11 @@ enum ManualMeasurementRecordFactory {
         }
     }
 
-    static func guide(for kind: MeasurementKind, source: MeasurementEntrySource) -> String {
+    static func guide(
+        for kind: MeasurementKind,
+        source: MeasurementEntrySource,
+        category: ClothingCategory? = nil
+    ) -> String {
         guard source == .fitmatchMeasured else {
             switch source {
             case .uniqloSizeChart where kind == .sleeveLength:
@@ -168,18 +189,19 @@ enum ManualMeasurementRecordFactory {
                 return "사이즈표에 표시된 값을 변환하지 않고 입력"
             }
         }
-        return FitMatchMeasurementStandard.definition(for: kind).instruction
+        return FitMatchMeasurementStandard.definition(for: kind, category: category).instruction
     }
 
     private static func mapping(
         for kind: MeasurementKind,
         source: MeasurementEntrySource,
-        musinsaSleeveMethod: MusinsaSleeveMeasurementMethod
+        musinsaSleeveMethod: MusinsaSleeveMeasurementMethod,
+        category: ClothingCategory
     ) -> (code: MeasurementCode, evidence: MeasurementEvidenceLevel, status: MeasurementSemanticStatus) {
         let code: MeasurementCode?
         switch source {
         case .fitmatchMeasured:
-            code = fitmatchCode(for: kind)
+            code = fitmatchCode(for: kind, category: category)
         case .uniqloSizeChart:
             switch kind {
             case .shoulder: code = .shoulderWidthSeamToSeam
@@ -207,11 +229,17 @@ enum ManualMeasurementRecordFactory {
         return (code, evidence, .mapped)
     }
 
-    private static func fitmatchCode(for kind: MeasurementKind) -> MeasurementCode {
+    private static func fitmatchCode(
+        for kind: MeasurementKind,
+        category: ClothingCategory
+    ) -> MeasurementCode {
         switch kind {
         case .shoulder: return .shoulderWidthSeamToSeam
         case .chest: return .chestWidthPitToPit
-        case .totalLength: return .bodyLengthHPSToHemFront
+        case .totalLength:
+            return category.serviceGroup == .bottom
+                ? .pantsOutseamWaistToHem
+                : .bodyLengthHPSToHemFront
         case .sleeveLength: return .sleeveShoulderSeamToCuff
         case .waist: return .waistWidthEdgeToEdge
         case .hip: return .hipWidthAtWidest

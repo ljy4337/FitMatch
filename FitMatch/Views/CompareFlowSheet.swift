@@ -97,7 +97,10 @@ struct CompareFlowSheet: View {
             Button("확인", role: .cancel) {}
         }
         .sheet(isPresented: $isShowingMeasurementGuide) {
-            MeasurementMethodGuideSheet(missingKinds: insufficientEvidence?.missingKinds ?? [])
+            MeasurementMethodGuideSheet(
+                missingKinds: insufficientEvidence?.missingKinds ?? [],
+                category: viewModel.category
+            )
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -441,7 +444,7 @@ private extension CompareFlowSheet {
                         .font(.title2.weight(.black))
                         .multilineTextAlignment(.center)
 
-                    Text("호환 가능한 실측은 \(evidence.comparedKinds.count)개이며, 확정 추천에는 최소 \(evidence.comparisonResult.minimumComparableCount)개가 필요합니다.")
+                    Text(insufficientEvidenceRequirementText(evidence.comparisonResult))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -538,6 +541,15 @@ private extension CompareFlowSheet {
                 }
             }
         }
+    }
+
+    func insufficientEvidenceRequirementText(_ result: MeasurementComparisonResult) -> String {
+        var text = "호환 가능한 실측은 \(result.comparedItems.count)개이며, 확정 추천에는 최소 \(result.minimumComparableCount)개가 필요합니다."
+        if result.minimumRequiredKindCount > 1 {
+            let requiredNames = result.requiredKinds.map(\.title).joined(separator: "·")
+            text += " 이 중 \(requiredNames)에서 \(result.minimumRequiredKindCount)개가 필요합니다."
+        }
+        return text
     }
 }
 
@@ -1327,6 +1339,7 @@ private struct ClosetReferenceChoiceCard: View {
 private struct MeasurementMethodGuideSheet: View {
     @Environment(\.dismiss) private var dismiss
     let missingKinds: [MeasurementKind]
+    let category: ClothingCategory
 
     var body: some View {
         NavigationStack {
@@ -1381,19 +1394,7 @@ private struct MeasurementMethodGuideSheet: View {
     }
 
     private func guideText(for kind: MeasurementKind) -> String {
-        switch kind {
-        case .shoulder: return "양쪽 어깨 봉제선 사이를 측정해 주세요."
-        case .chest: return "겨드랑이 바로 아래 양쪽 끝 사이를 측정해 주세요."
-        case .totalLength: return "가장 높은 어깨점부터 앞 밑단까지 측정해 주세요."
-        case .sleeveLength: return "어깨 봉제선부터 소매 끝까지 측정해 주세요."
-        case .waist: return "허리단 양쪽 끝 사이를 측정해 주세요."
-        case .hip: return "엉덩이에서 가장 넓은 지점의 양쪽 끝 사이를 측정해 주세요."
-        case .thigh: return "가랑이점부터 바깥쪽 끝까지 측정해 주세요."
-        case .rise: return "앞 가랑이점부터 허리단 위까지 측정해 주세요."
-        case .hem: return "밑단 양쪽 끝 사이를 측정해 주세요."
-        case .footLength: return "뒤꿈치 끝부터 발가락 끝까지 측정해 주세요."
-        case .underBust: return "밑가슴 밴드 양쪽 끝 사이를 측정해 주세요."
-        }
+        FitMatchMeasurementStandard.definition(for: kind, category: category).instruction
     }
 }
 

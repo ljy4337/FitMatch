@@ -533,7 +533,7 @@ struct RecommendationService {
         case .top, .outer, .shirt, .knit:
             return [.shoulder, .chest, .totalLength, .sleeveLength]
         case .bottom, .pants:
-            return [.waist, .hip, .thigh, .totalLength]
+            return [.waist, .hip, .thigh, .rise, .hem, .totalLength]
         default:
             return productCategory.measurementKinds(detailCategory: productDetailCategory, gender: .unisex)
         }

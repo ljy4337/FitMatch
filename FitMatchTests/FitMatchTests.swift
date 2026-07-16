@@ -442,7 +442,8 @@ struct FitMatchTests {
                     { "code": "body-length-back", "name": "전체 길이", "measurements": [{ "value": "64", "unit": "cm" }] },
                     { "code": "shoulder-width", "name": "어깨너비", "measurements": [{ "value": "45", "unit": "cm" }] },
                     { "code": "body-width", "name": "가슴너비", "measurements": [{ "value": "52", "unit": "cm" }] },
-                    { "code": "sleeve-length-cb", "name": "소매", "info": "목 중심부터 소매 끝", "measurements": [{ "value": "82", "unit": "cm" }] }
+                    { "code": "sleeve-length-cb", "name": "소매", "info": "목 중심부터 소매 끝", "measurements": [{ "value": "82", "unit": "cm" }] },
+                    { "code": "inseam", "name": "인심", "info": "가랑이부터 밑단까지", "measurements": [{ "value": "76", "unit": "cm" }] }
                   ]
                 },
                 {
@@ -485,9 +486,12 @@ struct FitMatchTests {
         let sleeve = records.first { $0.rawCode == "sleeve-length-cb" }
         let chest = records.first { $0.rawCode == "body-width" }
         let length = records.first { $0.rawCode == "body-length-back" }
+        let inseam = records.first { $0.rawCode == "inseam" }
         #expect(shoulder?.measurementCode == .shoulderWidthSeamToSeam)
         #expect(sleeve?.measurementCode == .sleeveCenterBackToCuff)
         #expect(sleeve?.rawInfo == "목 중심부터 소매 끝")
+        #expect(inseam?.measurementCode == .pantsInseamCrotchToHem)
+        #expect(inseam?.displayKind == .totalLength)
         #expect(chest?.measurementCode == .unknown)
         #expect(chest?.semanticStatus == .unknownDefinition)
         #expect(length?.measurementCode == .unknown)
@@ -658,6 +662,109 @@ struct FitMatchTests {
                 && $0.productCode == .sleeveCenterBackToCuff
                 && $0.referenceCode == .sleeveShoulderSeamToCuff
         })
+    }
+
+    @Test func bottomComparisonRequiresTwoCoreWidthMeasurements() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 100,
+                sleeveLength: 0,
+                waist: 39,
+                hip: 51
+            )
+        )
+        size.measurementRecords = [
+            comparisonRecord(value: 39, code: .waistWidthEdgeToEdge, kind: .waist, productSize: size),
+            comparisonRecord(value: 51, code: .hipWidthAtWidest, kind: .hip, productSize: size),
+            comparisonRecord(value: 100, code: .pantsOutseamWaistToHem, kind: .totalLength, productSize: size)
+        ]
+        let item = UserFit(
+            sourceName: "직접 측정",
+            brandName: "테스트",
+            productName: "기준 바지",
+            category: .bottom,
+            detailCategory: .slacks,
+            sizeName: "기준",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 99,
+                sleeveLength: 0,
+                waist: 38,
+                hip: 50
+            ),
+            fitMemo: "",
+            satisfaction: 4
+        )
+        item.measurementRecords = [
+            comparisonRecord(value: 38, code: .waistWidthEdgeToEdge, kind: .waist, userFit: item),
+            comparisonRecord(value: 50, code: .hipWidthAtWidest, kind: .hip, userFit: item),
+            comparisonRecord(value: 99, code: .pantsOutseamWaistToHem, kind: .totalLength, userFit: item)
+        ]
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .bottom,
+            productDetailCategory: .slacks
+        )
+
+        #expect(result.status == .confirmed)
+        #expect(result.comparedKinds == [.waist, .hip, .totalLength])
+        #expect(result.minimumComparableCount == 2)
+        #expect(result.requiredKinds == [.waist, .hip, .thigh])
+        #expect(result.minimumRequiredKindCount == 2)
+    }
+
+    @Test func bottomWidthAndLengthAloneDoNotConfirmRecommendation() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 100,
+                sleeveLength: 0,
+                waist: 39
+            )
+        )
+        size.measurementRecords = [
+            comparisonRecord(value: 39, code: .waistWidthEdgeToEdge, kind: .waist, productSize: size),
+            comparisonRecord(value: 100, code: .pantsOutseamWaistToHem, kind: .totalLength, productSize: size)
+        ]
+        let item = UserFit(
+            sourceName: "직접 측정",
+            brandName: "테스트",
+            productName: "기준 바지",
+            category: .bottom,
+            detailCategory: .slacks,
+            sizeName: "기준",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 99,
+                sleeveLength: 0,
+                waist: 38
+            ),
+            fitMemo: "",
+            satisfaction: 4
+        )
+        item.measurementRecords = [
+            comparisonRecord(value: 38, code: .waistWidthEdgeToEdge, kind: .waist, userFit: item),
+            comparisonRecord(value: 99, code: .pantsOutseamWaistToHem, kind: .totalLength, userFit: item)
+        ]
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .bottom,
+            productDetailCategory: .slacks
+        )
+
+        #expect(result.comparedKinds == [.waist, .totalLength])
+        #expect(result.status == .insufficientEvidence)
     }
 
     @Test func recommendationIsBlockedWhenCompatibleEvidenceIsInsufficient() {
@@ -1410,6 +1517,41 @@ struct FitMatchTests {
         #expect(definitions.allSatisfy { !$0.caution.isEmpty })
         #expect(definitions.allSatisfy { $0.validRange.lowerBound > 0 })
         #expect(definitions.allSatisfy { $0.standardVersion == "fitmatch_standard_v1" })
+    }
+
+    @Test func directMeasuredBottomUsesBottomSpecificCodes() {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.brand = "테스트"
+        viewModel.productName = "기준 바지"
+        viewModel.category = .bottom
+        viewModel.detailCategory = .slacks
+        viewModel.measurementEntrySource = .fitmatchMeasured
+        viewModel.totalLength = "100"
+        viewModel.waist = "38"
+        viewModel.hip = "50"
+        viewModel.thigh = "30"
+        viewModel.rise = "29"
+        viewModel.hem = "22"
+
+        let item = viewModel.makeUserFit()
+        let byKind = Dictionary(uniqueKeysWithValues: (item?.measurementRecords ?? []).compactMap { record in
+            record.displayKind.map { ($0, record.measurementCode) }
+        })
+
+        #expect(byKind[.totalLength] == .pantsOutseamWaistToHem)
+        #expect(byKind[.waist] == .waistWidthEdgeToEdge)
+        #expect(byKind[.hip] == .hipWidthAtWidest)
+        #expect(byKind[.thigh] == .thighWidthCrotchToOuter)
+        #expect(byKind[.rise] == .riseCrotchToWaistFront)
+        #expect(byKind[.hem] == .hemWidthEdgeToEdge)
+        #expect((item?.measurementRecords ?? []).allSatisfy { $0.standardVersion == FitMatchMeasurementStandard.version })
+    }
+
+    @Test func bottomLengthGuideUsesOutseamDefinition() {
+        let definition = FitMatchMeasurementStandard.definition(for: .totalLength, category: .bottom)
+
+        #expect(definition.instruction.contains("허리단"))
+        #expect(definition.caution.contains("인심"))
     }
 
     @Test func directMeasurementRejectsValuesOutsideSafetyRange() {

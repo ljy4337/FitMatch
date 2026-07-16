@@ -71,7 +71,7 @@ struct AddClosetItemView: View {
             Text("삭제한 옷 정보는 복구할 수 없습니다.")
         }
         .sheet(item: $selectedMeasurementGuide) { kind in
-            DirectMeasurementGuideSheet(kind: kind)
+            DirectMeasurementGuideSheet(kind: kind, category: viewModel.category)
         }
     }
 
@@ -743,16 +743,17 @@ private struct AddClosetMeasurementField: View {
 private struct DirectMeasurementGuideSheet: View {
     @Environment(\.dismiss) private var dismiss
     let kind: MeasurementKind
+    let category: ClothingCategory
 
     private var definition: DirectMeasurementDefinition {
-        FitMatchMeasurementStandard.definition(for: kind)
+        FitMatchMeasurementStandard.definition(for: kind, category: category)
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    DirectMeasurementDiagram(kind: kind)
+                    DirectMeasurementDiagram(kind: kind, category: category)
                         .frame(height: 250)
                         .frame(maxWidth: .infinity)
                         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -799,6 +800,7 @@ private struct DirectMeasurementGuideSheet: View {
 
 private struct DirectMeasurementDiagram: View {
     let kind: MeasurementKind
+    let category: ClothingCategory
 
     var body: some View {
         GeometryReader { proxy in
@@ -839,6 +841,9 @@ private struct DirectMeasurementDiagram: View {
     }
 
     private var family: DiagramFamily {
+        if kind == .totalLength, category.serviceGroup == .bottom {
+            return .bottom
+        }
         switch kind {
         case .shoulder, .chest, .totalLength, .sleeveLength, .underBust:
             return .top
@@ -902,7 +907,10 @@ private struct DirectMeasurementDiagram: View {
         switch kind {
         case .shoulder: return (point(0.27, 0.18), point(0.73, 0.18))
         case .chest: return (point(0.24, 0.45), point(0.76, 0.45))
-        case .totalLength: return (point(0.63, 0.17), point(0.63, 0.90))
+        case .totalLength:
+            return category.serviceGroup == .bottom
+                ? (point(0.73, 0.12), point(0.78, 0.90))
+                : (point(0.63, 0.17), point(0.63, 0.90))
         case .sleeveLength: return (point(0.72, 0.18), point(0.87, 0.48))
         case .waist: return (point(0.27, 0.14), point(0.73, 0.14))
         case .hip: return (point(0.25, 0.32), point(0.75, 0.32))
