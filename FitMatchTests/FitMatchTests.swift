@@ -856,6 +856,120 @@ struct FitMatchTests {
         #expect(ranked.first?.compatibleMeasurementCount == 3)
     }
 
+    @Test func singleCompatibleReferenceIsAutomaticallySelected() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let item = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [item]
+        )
+
+        #expect(plan.automaticallySelectedCandidate?.id == item.id)
+        #expect(!plan.requiresUserSelection)
+    }
+
+    @Test func similarReferenceCandidatesRequireUserSelection() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let first = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let second = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [first, second]
+        )
+
+        #expect(plan.recommendedCandidates.count == 2)
+        #expect(plan.automaticallySelectedCandidate?.id == nil)
+        #expect(plan.requiresUserSelection)
+    }
+
+    @Test func richerMeasurementEvidenceMakesReferenceClearlyBest() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        markChestComparable(size.measurementRecords)
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let basic = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let richer = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        markChestComparable(richer.measurementRecords)
+
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [basic, richer]
+        )
+
+        #expect(plan.automaticallySelectedCandidate?.id == richer.id)
+    }
+
+    @Test func differentGarmentTypeShowsManualComparisonLimit() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let hoodie = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        hoodie.garmentTypeRawValue = ComparisonGarmentFamily.hoodie.rawValue
+
+        let note = RecommendationService().manualCandidateNote(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            item: hoodie
+        )
+
+        #expect(note?.contains("다른 종류") == true)
+    }
+
     @Test func representativeOutranksSimilarityWhenEvidenceIsEqual() {
         let size = comparisonSize(
             shoulder: 50,

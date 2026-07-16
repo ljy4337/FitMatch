@@ -8,6 +8,15 @@ struct FitMatchCandidate: Identifiable {
     let selectionReason: String
 }
 
+struct ReferenceSelectionPlan {
+    let recommendedCandidates: [FitMatchCandidate]
+    let automaticallySelectedCandidate: FitMatchCandidate?
+
+    var requiresUserSelection: Bool {
+        !recommendedCandidates.isEmpty && automaticallySelectedCandidate == nil
+    }
+}
+
 struct InsufficientComparisonEvidence {
     let productSize: ProductSize
     let referenceItem: UserFit
@@ -204,6 +213,28 @@ struct RecommendationService {
         ).prefix(3))
     }
 
+    func referenceSelectionPlan(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        userFits: [UserFit]
+    ) -> ReferenceSelectionPlan {
+        let compatible = comparisonMatcher.match(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        ).compatibleCandidates
+        let candidates = Array(rankedReferenceCandidates(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: compatible
+        ).prefix(3))
+
+        return ReferenceSelectionPlan(
+            recommendedCandidates: candidates,
+            automaticallySelectedCandidate: clearlyBestCandidate(in: candidates)
+        )
+    }
+
     private func sortCandidates(_ userFits: [UserFit]) -> [UserFit] {
         userFits.sorted { lhs, rhs in
             if lhs.isRepresentative != rhs.isRepresentative {
@@ -211,6 +242,21 @@ struct RecommendationService {
             }
             return lhs.updatedAt > rhs.updatedAt
         }
+    }
+
+    private func clearlyBestCandidate(in candidates: [FitMatchCandidate]) -> FitMatchCandidate? {
+        guard let first = candidates.first else { return nil }
+        guard candidates.count > 1 else { return first }
+
+        let second = candidates[1]
+        if first.compatibleMeasurementCount > second.compatibleMeasurementCount {
+            return first
+        }
+        if first.compatibleMeasurementCount == second.compatibleMeasurementCount,
+           first.matchRate >= second.matchRate + 10 {
+            return first
+        }
+        return nil
     }
 
     private func bestRecommendation(

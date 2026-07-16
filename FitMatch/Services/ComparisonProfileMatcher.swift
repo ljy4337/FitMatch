@@ -120,9 +120,17 @@ struct ComparisonProfileMatcher {
     func candidateNote(product: Product, productDetailCategory: ClosetDetailCategory, item: UserFit) -> String? {
         let incoming = profile(for: product, detailCategory: productDetailCategory)
         let candidate = profile(for: item)
-        guard incoming.garmentFamily == candidate.garmentFamily, incoming.garmentFamily != .unknown else { return nil }
+        guard incoming.garmentFamily == candidate.garmentFamily,
+              incoming.garmentFamily != .unknown else {
+            return "다른 종류 · 공통 실측만 참고"
+        }
         if incoming.lengthType != .unknown, candidate.lengthType != .unknown, incoming.lengthType != candidate.lengthType {
-            return "같은 \(incoming.garmentFamily.displayName) · 길이 형태 다름"
+            return "길이 형태 다름 · 일부 항목 제외"
+        }
+        if incoming.constructionType != .unknown,
+           candidate.constructionType != .unknown,
+           incoming.constructionType != candidate.constructionType {
+            return "봉제 구조 다름 · 호환 항목만 참고"
         }
         return "같은 \(incoming.garmentFamily.displayName)"
     }
