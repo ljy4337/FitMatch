@@ -592,33 +592,41 @@ struct AddComparedProductToClosetSheet: View {
             return
         }
 
+        let selectedSizeID = selectedSize.id
+        let storedSizeDescriptor = FetchDescriptor<ProductSize>(
+            predicate: #Predicate { $0.id == selectedSizeID }
+        )
+        let storedSourceSize = try? modelContext.fetch(storedSizeDescriptor).first
+        let sourceSize = storedSourceSize ?? selectedSize
+        let sourceProduct = storedSourceSize?.product ?? product
+
         let item = UserFit(
-            sourceType: product.sourceType,
-            sourceName: product.sourceDisplayName,
-            sourceCategoryPath: product.sourceCategoryPath,
-            sourceCategoryDepth1: product.sourceCategoryDepth1,
-            sourceCategoryDepth2: product.sourceCategoryDepth2,
-            sourceCategoryDepth3: product.sourceCategoryDepth3,
-            sourceCategoryDepth4: product.sourceCategoryDepth4,
+            sourceType: sourceProduct.sourceType,
+            sourceName: sourceProduct.sourceDisplayName,
+            sourceCategoryPath: sourceProduct.sourceCategoryPath,
+            sourceCategoryDepth1: sourceProduct.sourceCategoryDepth1,
+            sourceCategoryDepth2: sourceProduct.sourceCategoryDepth2,
+            sourceCategoryDepth3: sourceProduct.sourceCategoryDepth3,
+            sourceCategoryDepth4: sourceProduct.sourceCategoryDepth4,
             brandName: savedBrandName,
             gender: selectedGender,
             productName: savedProductName,
             category: selectedCategory.serviceGroup,
             detailCategory: selectedDetailCategory,
-            sizeName: selectedSize.name.displaySizeName,
-            measurements: selectedSize.measurements,
+            sizeName: sourceSize.name.displaySizeName,
+            measurements: sourceSize.measurements,
             fitMemo: "비교 상품에서 추가",
             fitPreference: .regular,
             satisfaction: 0,
             isRepresentative: isBasisItem,
-            sourceProduct: product,
-            sourceProductSize: selectedSize
+            sourceProduct: sourceProduct,
+            sourceProductSize: sourceSize
         )
         item.genderCode = selectedGenderCode
         item.categoryCode = selectedCategoryCode
         item.detailCategoryCode = selectedDetailCategoryCode
-        item.normalizedProductTypeCode = product.resolvedNormalizedProductTypeCode
-        item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
+        item.normalizedProductTypeCode = sourceProduct.resolvedNormalizedProductTypeCode
+        item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
 
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")
