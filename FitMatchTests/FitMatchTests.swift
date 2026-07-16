@@ -591,6 +591,121 @@ struct FitMatchTests {
         #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
     }
 
+    @Test func musinsaLegacyTypeFiveOnlyRestoresVerifiedMeasurements() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
+        )
+        let product = Product(
+            name: "반소매 티셔츠",
+            category: .top,
+            metadata: ProductMetadata(sizeType: "5"),
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            sizes: [size]
+        )
+
+        let records = MeasurementLegacyBackfillFactory.records(for: size, product: product)
+        let byKind = Dictionary(uniqueKeysWithValues: records.compactMap { record in
+            record.displayKind.map { ($0, record) }
+        })
+
+        #expect(byKind[.shoulder]?.measurementCode == .shoulderWidthSeamToSeam)
+        #expect(byKind[.sleeveLength]?.measurementCode == .sleeveShoulderSeamToCuff)
+        #expect(byKind[.chest]?.measurementCode == .legacyUnknown)
+        #expect(byKind[.totalLength]?.measurementCode == .legacyUnknown)
+        #expect(byKind[.shoulder]?.isComparable == true)
+        #expect(byKind[.chest]?.isComparable == false)
+    }
+
+    @Test func uniqloLegacyMeasurementsRemainUnknownWithoutRawCodes() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 46.5, chest: 53, totalLength: 69, sleeveLength: 45)
+        )
+        let product = Product(
+            name: "크루넥T",
+            category: .top,
+            sourceType: .officialStore,
+            sourceName: "유니클로 공식몰",
+            sizes: [size]
+        )
+
+        let records = MeasurementLegacyBackfillFactory.records(for: size, product: product)
+
+        #expect(records.count == 4)
+        #expect(records.allSatisfy { $0.measurementCode == .legacyUnknown })
+        #expect(records.allSatisfy { !$0.isComparable })
+    }
+
+    @Test func musinsaLegacyRaglanAndSetInSleevesStaySeparate() {
+        let measurements = GarmentMeasurements(shoulder: 0, chest: 54, totalLength: 70, sleeveLength: 42)
+        let raglanSize = ProductSize(name: "M", measurements: measurements)
+        let setInSize = ProductSize(name: "M", measurements: measurements)
+        let raglanProduct = Product(
+            name: "라글란 티셔츠",
+            category: .top,
+            metadata: ProductMetadata(sizeType: "11"),
+            sourceName: "무신사",
+            sizes: [raglanSize]
+        )
+        let setInProduct = Product(
+            name: "긴소매 티셔츠",
+            category: .top,
+            metadata: ProductMetadata(sizeType: "21"),
+            sourceName: "무신사",
+            sizes: [setInSize]
+        )
+
+        let raglanSleeve = MeasurementLegacyBackfillFactory.records(for: raglanSize, product: raglanProduct)
+            .first { $0.displayKind == .sleeveLength }
+        let setInSleeve = MeasurementLegacyBackfillFactory.records(for: setInSize, product: setInProduct)
+            .first { $0.displayKind == .sleeveLength }
+
+        #expect(raglanSleeve?.measurementCode == .sleeveRaglanNeckToCuff)
+        #expect(setInSleeve?.measurementCode == .sleeveShoulderSeamToCuff)
+        #expect(raglanSleeve?.measurementCode != setInSleeve?.measurementCode)
+    }
+
+    @Test func userFitOnlyInheritsUnmodifiedVerifiedLegacyValues() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
+        )
+        let product = Product(
+            name: "반소매 티셔츠",
+            category: .top,
+            metadata: ProductMetadata(sizeType: "5"),
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            sizes: [size]
+        )
+        size.measurementRecords = MeasurementLegacyBackfillFactory.records(for: size, product: product)
+
+        let item = UserFit(
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "반소매 티셔츠",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "M",
+            measurements: GarmentMeasurements(shoulder: 49, chest: 54, totalLength: 70, sleeveLength: 24),
+            fitMemo: "",
+            satisfaction: 3,
+            sourceProduct: product,
+            sourceProductSize: size
+        )
+
+        let records = MeasurementLegacyBackfillFactory.records(for: item)
+        let byKind = Dictionary(uniqueKeysWithValues: records.compactMap { record in
+            record.displayKind.map { ($0, record) }
+        })
+
+        #expect(byKind[.shoulder]?.measurementCode == .legacyUnknown)
+        #expect(byKind[.sleeveLength]?.measurementCode == .sleeveShoulderSeamToCuff)
+    }
+
     private func parsedSize(_ name: String, chest: Double) -> ParsedProductSize {
         ParsedProductSize(name: name, measurements: measurements(chest: chest))
     }

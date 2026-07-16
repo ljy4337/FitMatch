@@ -23,6 +23,8 @@ struct ContentView: View {
     @State private var compareViewID = UUID()
     @State private var lastCompareLaunchKey: String?
     @State private var lastCompareLaunchDate = Date.distantPast
+    @State private var measurementMigrationErrorMessage: String?
+    @State private var measurementMigrationRetryToken = UUID()
     private let sharedURLStore = SharedURLStore()
 
     var body: some View {
@@ -39,7 +41,19 @@ struct ContentView: View {
             #endif
         }
         .dismissesKeyboardOnBackgroundTap()
-        .task {
+        .task(id: measurementMigrationRetryToken) {
+            do {
+                try MeasurementLegacyBackfillService.run(
+                    modelContext: modelContext,
+                    products: products,
+                    userFits: userFits
+                )
+                measurementMigrationErrorMessage = nil
+            } catch {
+                measurementMigrationErrorMessage = "기존 의류 데이터를 업데이트하지 못했어요. 원본 데이터는 삭제되지 않았습니다."
+                hasFinishedSplash = true
+                return
+            }
             SampleDataService.removeLegacySamples(
                 modelContext: modelContext,
                 products: products,
@@ -64,7 +78,11 @@ struct ContentView: View {
 
     @ViewBuilder
     private var normalContent: some View {
-        if !hasFinishedSplash {
+        if let measurementMigrationErrorMessage {
+            MeasurementMigrationRecoveryView(message: measurementMigrationErrorMessage) {
+                measurementMigrationRetryToken = UUID()
+            }
+        } else if !hasFinishedSplash {
             SplashView()
         } else if !hasCompletedOnboarding {
             FitMatchOnboardingView {
@@ -1216,6 +1234,27 @@ private struct FitMatchBottomNavigationBar: View {
             }
         }
         .frame(height: 58)
+    }
+}
+
+private struct MeasurementMigrationRecoveryView: View {
+    let message: String
+    let retry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 34, weight: .semibold))
+            Text("데이터 업데이트가 필요해요")
+                .font(.title3.weight(.bold))
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button("다시 시도", action: retry)
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(28)
     }
 }
 

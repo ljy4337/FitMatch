@@ -21,7 +21,15 @@ final class ProductSize {
     var createdAt: Date
     var updatedAt: Date
 
+    var measurementSchemaVersion: Int = 0
+    var measurementMigrationVersion: Int = 0
+    var measurementMigrationStatusRawValue: String = MeasurementMigrationStatus.notStarted.rawValue
+    var measurementMigrationErrorCode: String?
+
     var product: Product?
+
+    @Relationship(deleteRule: .cascade, inverse: \GarmentMeasurementRecord.productSize)
+    var measurementRecords: [GarmentMeasurementRecord] = []
 
     init(
         id: UUID = UUID(),
@@ -49,6 +57,11 @@ final class ProductSize {
         self.product = product
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+
+    var measurementMigrationStatus: MeasurementMigrationStatus {
+        get { MeasurementMigrationStatus(rawValue: measurementMigrationStatusRawValue) ?? .notStarted }
+        set { measurementMigrationStatusRawValue = newValue.rawValue }
     }
 
     var measurements: GarmentMeasurements {

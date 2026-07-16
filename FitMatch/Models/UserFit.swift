@@ -41,8 +41,17 @@ final class UserFit {
     var createdAt: Date
     var updatedAt: Date
 
+    var measurementSchemaVersion: Int = 0
+    var measurementInputSourceRawValue: String = MeasurementInputSource.migratedLegacy.rawValue
+    var measurementMigrationVersion: Int = 0
+    var measurementMigrationStatusRawValue: String = MeasurementMigrationStatus.notStarted.rawValue
+    var measurementMigrationErrorCode: String?
+
     var sourceProduct: Product?
     var sourceProductSize: ProductSize?
+
+    @Relationship(deleteRule: .cascade, inverse: \GarmentMeasurementRecord.userFit)
+    var measurementRecords: [GarmentMeasurementRecord] = []
 
     init(
         id: UUID = UUID(),
@@ -129,6 +138,11 @@ final class UserFit {
     var sourceType: ProductSourceType {
         get { ProductSourceType(rawValue: sourceTypeRawValue) ?? .manual }
         set { sourceTypeRawValue = newValue.rawValue }
+    }
+
+    var measurementMigrationStatus: MeasurementMigrationStatus {
+        get { MeasurementMigrationStatus(rawValue: measurementMigrationStatusRawValue) ?? .notStarted }
+        set { measurementMigrationStatusRawValue = newValue.rawValue }
     }
 
     var gender: UserGender {

@@ -19,7 +19,8 @@ struct FitMatchApp: App {
             Product.self,
             ProductSize.self,
             UserFit.self,
-            RecommendationHistory.self
+            RecommendationHistory.self,
+            GarmentMeasurementRecord.self
         ])
     }
 }
