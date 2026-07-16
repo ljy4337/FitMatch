@@ -223,29 +223,30 @@ struct RecommendationResultView: View {
                     let columnWidth = (geometry.size.width - (dividerWidth * 2)) / 3
 
                     HStack(alignment: .top, spacing: 0) {
-                        ZStack {
-                            Text(recommendedSizeName)
-                                .font(.system(size: 34, weight: .black))
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-
-                            Text("추천 사이즈")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                                .padding(.leading, 10)
+                        CenteredMetricColumn(
+                            title: "추천 사이즈",
+                            value: recommendedSizeName
+                        ) {
+                            Color.clear
                         }
                         .frame(width: columnWidth, height: 132)
                         Divider().frame(width: dividerWidth, height: 132)
-                        RecommendationMetricColumn(
+                        CenteredMetricColumn(
                             title: "핏 매칭률",
                             value: comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%",
-                            detail: fitMatchDescription,
-                            isPrimary: false
-                        )
-                        .frame(width: columnWidth)
+                            valueFontSize: 33
+                        ) {
+                            Text(fitMatchDescription)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.green)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                                .allowsTightening(true)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(.green.opacity(0.1), in: Capsule())
+                        }
+                        .frame(width: columnWidth, height: 132)
                         Divider().frame(width: dividerWidth, height: 132)
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 5) {
@@ -311,10 +312,18 @@ struct RecommendationResultView: View {
     private var reportMeasurementCard: some View {
         CardView(radius: 20, padding: 12) {
             VStack(alignment: .leading, spacing: 7) {
-                SectionHeader(
-                    title: currentResult.comparisonMode == .standardSizeFallback ? "기준표 비교 결과" : "실측 비교 결과",
-                    subtitle: nil
-                )
+                HStack(alignment: .firstTextBaseline) {
+                    SectionHeader(
+                        title: currentResult.comparisonMode == .standardSizeFallback ? "기준표 비교 결과" : "실측 비교 결과",
+                        subtitle: nil
+                    )
+                    Spacer()
+                    if currentResult.comparisonMode != .standardSizeFallback {
+                        Text("(단위: cm)")
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.secondary.opacity(0.7))
+                    }
+                }
 
                 if currentResult.comparisonMode == .standardSizeFallback {
                     InfoRow(title: "가슴", value: currentResult.trueToSizeRecommendation)
@@ -1839,6 +1848,39 @@ private struct ShoulderMeasurementIcon: View {
     }
 }
 
+private struct CenteredMetricColumn<Detail: View>: View {
+    let title: String
+    let value: String
+    var valueFontSize: CGFloat = 44
+    @ViewBuilder let detail: () -> Detail
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 22)
+                .multilineTextAlignment(.center)
+
+            Text(value)
+                .font(.system(size: valueFontSize, weight: .black))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .allowsTightening(true)
+                .frame(maxWidth: .infinity)
+                .frame(height: 58)
+                .multilineTextAlignment(.center)
+
+            detail()
+                .frame(maxWidth: .infinity)
+                .frame(height: 30)
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+}
+
 private struct ReportMeasurementRow: View {
     let title: String
     let productValue: Double
@@ -1866,7 +1908,7 @@ private struct ReportMeasurementRow: View {
             Text(title)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            Text(value > 0 ? value.cmText : "정보 없음")
+            Text(value > 0 ? String(format: "%.1f", value) : "정보 없음")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(color)
                 .monospacedDigit()
@@ -1881,7 +1923,7 @@ private struct ReportMeasurementRow: View {
             Text("차이")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            Text(productValue > 0 && referenceValue > 0 ? difference.signedCmText : "비교 제외")
+            Text(productValue > 0 && referenceValue > 0 ? signedDifferenceText : "비교 제외")
                 .font(.caption.weight(.black))
                 .foregroundStyle(productValue > 0 && referenceValue > 0 ? differenceSeverityColor : .secondary)
                 .monospacedDigit()
@@ -1897,6 +1939,11 @@ private struct ReportMeasurementRow: View {
         case 2..<5: return .orange
         default: return .green
         }
+    }
+
+    private var signedDifferenceText: String {
+        let sign = difference > 0 ? "+" : ""
+        return "\(sign)\(String(format: "%.1f", difference))"
     }
 }
 

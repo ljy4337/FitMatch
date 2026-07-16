@@ -6,6 +6,9 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Reduced only the result-detail fit-match value to 33pt Black while retaining the 44pt recommendation-size value and shared row alignment.
+- Replaced the result-detail recommendation/fit cells with one centered three-row component using identical 44pt values and fixed title/value/detail heights; reliability remains leading-aligned.
+- Consolidated units in the result-detail measurement card by removing repeated `cm` suffixes from row values and adding a subtle top-trailing `(단위: cm)` label.
 - Restored equal-width result-detail metrics and rebuilt the recommendation-size cell as a 132pt ZStack so its value is geometrically centered while all metric titles remain leading-aligned.
 - Rebalanced result-detail metrics to equal 28% recommendation/fit columns and a 44% reliability column, restoring the full `N개 실측항목 비교` label.
 - Increased the History list recommended-size value from 22pt to 26pt Black while retaining single-line scaling for `XXL` on narrow widths.
