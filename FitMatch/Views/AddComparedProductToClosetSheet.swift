@@ -627,6 +627,7 @@ struct AddComparedProductToClosetSheet: View {
         item.detailCategoryCode = selectedDetailCategoryCode
         item.normalizedProductTypeCode = sourceProduct.resolvedNormalizedProductTypeCode
         item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
+        _ = ComparisonProfileMatcher().profile(for: item)
 
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")

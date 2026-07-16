@@ -15,6 +15,9 @@ final class Product {
     var categoryRawValue: String
     var categoryCode: String?
     var normalizedProductTypeCode: String?
+    var garmentTypeRawValue: String?
+    var sleeveTypeRawValue: String?
+    var constructionTypeRawValue: String?
     var productCode: String?
     var sourceURLString: String?
     var imageURLString: String?
@@ -160,7 +163,29 @@ final class Product {
         set {
             categoryRawValue = newValue.rawValue
             categoryCode = newValue.taxonomyCode
+            clearStoredComparisonAttributes()
         }
+    }
+
+    func clearStoredComparisonAttributes() {
+        garmentTypeRawValue = nil
+        sleeveTypeRawValue = nil
+        constructionTypeRawValue = nil
+    }
+
+    var garmentType: ComparisonGarmentFamily {
+        get { garmentTypeRawValue.flatMap { ComparisonGarmentFamily(rawValue: $0) } ?? .unknown }
+        set { garmentTypeRawValue = newValue.rawValue }
+    }
+
+    var sleeveType: ComparisonLengthType {
+        get { sleeveTypeRawValue.flatMap { ComparisonLengthType(rawValue: $0) } ?? .unknown }
+        set { sleeveTypeRawValue = newValue.rawValue }
+    }
+
+    var constructionType: ComparisonConstructionType {
+        get { constructionTypeRawValue.flatMap { ComparisonConstructionType(rawValue: $0) } ?? .unknown }
+        set { constructionTypeRawValue = newValue.rawValue }
     }
 
     var resolvedCategoryCode: String? {

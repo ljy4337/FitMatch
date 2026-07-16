@@ -919,6 +919,116 @@ struct FitMatchTests {
         #expect(ranked.first?.userFit.id == closerOtherBrand.id)
     }
 
+    @Test func comparisonProfileStoresGarmentSleeveAndConstructionAttributes() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let item = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let matcher = ComparisonProfileMatcher()
+
+        let productProfile = matcher.profile(for: product, detailCategory: .shortSleeve)
+        let itemProfile = matcher.profile(for: item)
+
+        #expect(productProfile.garmentType == .tshirt)
+        #expect(productProfile.sleeveType == .short)
+        #expect(productProfile.constructionType == .setIn)
+        #expect(product.garmentTypeRawValue == ComparisonGarmentFamily.tshirt.rawValue)
+        #expect(product.sleeveTypeRawValue == ComparisonLengthType.short.rawValue)
+        #expect(product.constructionTypeRawValue == ComparisonConstructionType.setIn.rawValue)
+        #expect(itemProfile.garmentType == .tshirt)
+        #expect(item.garmentTypeRawValue == ComparisonGarmentFamily.tshirt.rawValue)
+    }
+
+    @Test func matchingComparisonAttributesCanCrossClosetCategories() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "분류가 다른 반팔", category: .outer, sizes: [size])
+        product.garmentTypeRawValue = ComparisonGarmentFamily.tshirt.rawValue
+        product.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+        product.constructionTypeRawValue = ComparisonConstructionType.setIn.rawValue
+        let item = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        item.category = .top
+        item.garmentTypeRawValue = ComparisonGarmentFamily.tshirt.rawValue
+        item.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+        item.constructionTypeRawValue = ComparisonConstructionType.setIn.rawValue
+
+        let match = RecommendationService().automaticMatchResult(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [item]
+        )
+
+        #expect(product.category != item.category)
+        #expect(match.state == .compatible)
+        #expect(match.compatibleCandidates.map(\.id) == [item.id])
+    }
+
+    @Test func sameClosetCategoryDoesNotOverrideDifferentGarmentType() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        product.garmentTypeRawValue = ComparisonGarmentFamily.tshirt.rawValue
+        product.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+        let knitItem = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        knitItem.garmentTypeRawValue = ComparisonGarmentFamily.knitCardigan.rawValue
+        knitItem.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+
+        let match = ComparisonProfileMatcher().match(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [knitItem]
+        )
+
+        #expect(product.category == knitItem.category)
+        #expect(match.state == .noCompatibleGarment)
+        #expect(match.compatibleCandidates.isEmpty)
+    }
+
+    @Test func closetCategoryChangeInvalidatesStoredComparisonAttributes() {
+        let item = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        item.garmentTypeRawValue = ComparisonGarmentFamily.tshirt.rawValue
+        item.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+        item.constructionTypeRawValue = ComparisonConstructionType.setIn.rawValue
+
+        item.category = .outer
+
+        #expect(item.garmentTypeRawValue == nil)
+        #expect(item.sleeveTypeRawValue == nil)
+        #expect(item.constructionTypeRawValue == nil)
+    }
+
     @Test func fitMatchCandidateRecommendationsAreLimitedToThree() {
         let size = comparisonSize(
             shoulder: 50,
@@ -1092,6 +1202,9 @@ struct FitMatchTests {
         #expect(savedItems.count == 1)
         #expect(savedItems.first?.measurementRecords.count == 4)
         #expect(savedItems.first?.measurementRecords.allSatisfy(\.isComparable) == true)
+        #expect(savedItems.first?.garmentTypeRawValue == ComparisonGarmentFamily.tshirt.rawValue)
+        #expect(savedItems.first?.sleeveTypeRawValue == ComparisonLengthType.short.rawValue)
+        #expect(savedItems.first?.constructionTypeRawValue == ComparisonConstructionType.setIn.rawValue)
     }
 
     @Test func recommendationHistorySaveReplacesSameProductHistory() throws {

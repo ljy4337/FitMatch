@@ -211,6 +211,7 @@ final class ShoppingProductViewModel: ObservableObject {
             sourceName: resolvedSourceName,
             sizes: validOptions
         )
+        _ = ComparisonProfileMatcher().profile(for: product, detailCategory: detailCategory)
         return product
     }
 

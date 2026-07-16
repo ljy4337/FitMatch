@@ -222,6 +222,7 @@ final class AddClosetItemViewModel: ObservableObject {
                 item.measurementMigrationErrorCode = nil
             }
         }
+        _ = ComparisonProfileMatcher().profile(for: item)
         return item
     }
 

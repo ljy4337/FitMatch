@@ -22,6 +22,9 @@ final class UserFit {
     var categoryCode: String?
     var detailCategoryCode: String?
     var normalizedProductTypeCode: String?
+    var garmentTypeRawValue: String?
+    var sleeveTypeRawValue: String?
+    var constructionTypeRawValue: String?
     var sizeName: String
     var shoulder: Double
     var chest: Double
@@ -132,6 +135,7 @@ final class UserFit {
         set {
             categoryRawValue = newValue.rawValue
             categoryCode = newValue.taxonomyCode
+            clearStoredComparisonAttributes()
         }
     }
 
@@ -157,6 +161,8 @@ final class UserFit {
         get { ClosetDetailCategory(rawValue: detailCategoryRawValue) ?? .other }
         set {
             detailCategoryRawValue = newValue.rawValue
+            garmentTypeRawValue = nil
+            sleeveTypeRawValue = nil
             if let resolvedCategoryCode {
                 detailCategoryCode = FitMatchTaxonomyProvider.shared.detailCode(
                     for: newValue.rawValue,
@@ -164,6 +170,27 @@ final class UserFit {
                 )
             }
         }
+    }
+
+    func clearStoredComparisonAttributes() {
+        garmentTypeRawValue = nil
+        sleeveTypeRawValue = nil
+        constructionTypeRawValue = nil
+    }
+
+    var garmentType: ComparisonGarmentFamily {
+        get { garmentTypeRawValue.flatMap { ComparisonGarmentFamily(rawValue: $0) } ?? .unknown }
+        set { garmentTypeRawValue = newValue.rawValue }
+    }
+
+    var sleeveType: ComparisonLengthType {
+        get { sleeveTypeRawValue.flatMap { ComparisonLengthType(rawValue: $0) } ?? .unknown }
+        set { sleeveTypeRawValue = newValue.rawValue }
+    }
+
+    var constructionType: ComparisonConstructionType {
+        get { constructionTypeRawValue.flatMap { ComparisonConstructionType(rawValue: $0) } ?? .unknown }
+        set { constructionTypeRawValue = newValue.rawValue }
     }
 
     var resolvedGenderCode: String {
@@ -239,6 +266,7 @@ final class UserFit {
     }
 
     func replaceMeasurementRecords(with sourceRecords: [GarmentMeasurementRecord]) {
+        constructionTypeRawValue = nil
         measurementRecords = sourceRecords.map { source in
             GarmentMeasurementRecord(
                 value: source.value,

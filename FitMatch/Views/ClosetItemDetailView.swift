@@ -264,6 +264,7 @@ struct ClosetItemDetailView: View {
         item.isRepresentative = editedItem.isRepresentative
         item.measurementRecords.forEach(modelContext.delete)
         item.replaceMeasurementRecords(with: editedItem.measurementRecords)
+        _ = ComparisonProfileMatcher().profile(for: item)
         if item.isRepresentative {
             userFits
                 .filter {
@@ -315,6 +316,7 @@ struct ClosetItemDetailView: View {
         item.sourceProductSize = selectedSize
         item.measurementRecords.forEach(modelContext.delete)
         item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
+        _ = ComparisonProfileMatcher().profile(for: item)
         item.updatedAt = Date()
         do {
             try modelContext.save()

@@ -377,7 +377,6 @@ struct RecommendationService {
     ) -> [FitMatchCandidate] {
         let incomingProfile = comparisonMatcher.profile(for: product, detailCategory: productDetailCategory)
         return userFits
-            .filter { isSameServiceGroup($0, product: product) }
             .compactMap { item -> RankedReferenceCandidate? in
                 let candidateProfile = comparisonMatcher.profile(for: item)
                 guard candidateProfile.garmentFamily == incomingProfile.garmentFamily,
@@ -554,11 +553,6 @@ struct RecommendationService {
                 size.measurements.value(for: $0) > 0 && item.measurements.value(for: $0) > 0
             }
         }
-    }
-
-    private func isSameServiceGroup(_ item: UserFit, product: Product) -> Bool {
-        item.category.serviceGroup == product.category.serviceGroup
-            && product.category.serviceGroup != .other
     }
 
     private func normalized(_ value: String) -> String {
