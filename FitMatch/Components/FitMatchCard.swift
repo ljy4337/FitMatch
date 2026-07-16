@@ -45,6 +45,34 @@ struct FitMatchCard<Content: View>: View {
     }
 }
 
+struct RecommendationMetricColumn: View {
+    let title: String
+    let value: String
+    let detail: String
+    let isPrimary: Bool
+
+    var body: some View {
+        VStack(alignment: .center, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(size: isPrimary ? 34 : 30, weight: .black))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+                .lineLimit(1)
+            Text(detail)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.green)
+                .lineLimit(1)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(.green.opacity(0.1), in: Capsule())
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+}
+
 struct PrimaryButton: View {
     let title: String
     var systemImage: String?

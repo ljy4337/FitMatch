@@ -15,6 +15,7 @@ struct RecommendationResultView: View {
     @State private var isShowingClosetSavedAlert = false
     @State private var isShowingComparisonDetails = false
     @State private var isShowingReliabilityInfo = false
+    @State private var isShowingMeasurementInfo = false
     @State private var isComparisonCoverageExpanded = false
     @State private var didOpenInitialReferencePicker = false
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
@@ -96,6 +97,11 @@ struct RecommendationResultView: View {
             }
             .sheet(isPresented: $isShowingReliabilityInfo) {
                 reliabilityInfoSheet
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $isShowingMeasurementInfo) {
+                measurementInfoSheet
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
@@ -212,16 +218,16 @@ struct RecommendationResultView: View {
     private var reportRecommendationCard: some View {
         CardView(radius: 20, padding: 12) {
             HStack(alignment: .center, spacing: 10) {
-                reportMetric(title: "추천 사이즈", value: recommendedSizeName, detail: "정사이즈 추천", isPrimary: true)
+                RecommendationMetricColumn(title: "추천 사이즈", value: recommendedSizeName, detail: "정사이즈 추천", isPrimary: true)
                 Divider().frame(height: 92)
-                reportMetric(
+                RecommendationMetricColumn(
                     title: "핏 매칭률",
                     value: comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%",
                     detail: fitMatchDescription,
                     isPrimary: false
                 )
                 Divider().frame(height: 92)
-                VStack(alignment: .center, spacing: 6) {
+                VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 5) {
                         Text("신뢰도")
                             .font(.caption.weight(.bold))
@@ -233,13 +239,25 @@ struct RecommendationResultView: View {
                         .accessibilityLabel("신뢰도 산정 기준")
                     }
                     Text(comparisonReliability.stars)
-                        .font(.subheadline.weight(.bold))
+                        .font(.title3.weight(.bold))
                         .foregroundStyle(.orange.opacity(0.85))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Text(comparisonReliability.title)
                         .font(.subheadline.weight(.black))
                         .lineLimit(1)
+                    Divider()
+                    HStack(spacing: 4) {
+                        Text("\(comparedMeasurementKinds.count)개 실측 항목 비교")
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                        Button { isShowingMeasurementInfo = true } label: {
+                            Image(systemName: "info.circle")
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("비교 실측 항목")
+                    }
                     HStack(spacing: comparedMeasurementKinds.count > 4 ? 4 : 7) {
                         ForEach(comparedMeasurementKinds) { kind in
                             VStack(spacing: 2) {
@@ -253,26 +271,9 @@ struct RecommendationResultView: View {
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-    }
-
-    private func reportMetric(title: String, value: String, detail: String, isPrimary: Bool) -> some View {
-        VStack(alignment: .center, spacing: 6) {
-            Text(title)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.system(size: isPrimary ? 34 : 30, weight: .black))
-                .lineLimit(1)
-                .minimumScaleFactor(0.55)
-            Text(detail)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.green)
-                .lineLimit(2)
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private var reportMeasurementCard: some View {
@@ -375,6 +376,21 @@ struct RecommendationResultView: View {
                     .foregroundStyle(.secondary)
                 Divider()
                 InfoRow(title: "현재 신뢰도", value: "\(comparisonReliability.stars) \(comparisonReliability.title)")
+                Spacer()
+            }
+            .font(.subheadline)
+            .padding(20)
+            .navigationTitle("신뢰도 산정 기준")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private var measurementInfoSheet: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("추천 계산에 사용하거나 제외한 실측 항목입니다.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(v1MeasurementKinds, id: \.id) { kind in
                         ComparisonCoverageRow(
@@ -388,7 +404,7 @@ struct RecommendationResultView: View {
             }
             .font(.subheadline)
             .padding(20)
-            .navigationTitle("신뢰도 산정 기준")
+            .navigationTitle("실측 비교 항목")
             .navigationBarTitleDisplayMode(.inline)
         }
     }

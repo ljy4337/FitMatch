@@ -6,6 +6,10 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Unified History and result-detail recommendation size/fit columns through the shared `RecommendationMetricColumn`, eliminating divergent typography, spacing, and centering behavior.
+- Restored compact measurement icons beneath the result's measurement-count line, including the custom shoulder-line symbol, while removing redundant leading measurement icons from the detail sheet.
+- Fixed History result metrics to three identical calculated column widths, removed automatic recommended-size font scaling, retained centered size/fit metrics, and isolated reliability as the only leading-aligned column.
+- Tightened History card spacing, removed color snapshots, normalized centered metric typography, strengthened date contrast, added a light measurement-count reliability line, and split result confidence versus measurement-detail information sheets.
 - Updated History list cards with Musinsa source attribution beside the brand, centered and enlarged result metrics, one-line product names, Korean numeric weekday dates, and a dedicated shoulder-line icon in result reliability details.
 - Reworked the History list card into the supplied product-summary, three-metric result panel, and dated measurement footer while preserving taps, favorite/delete swipes, grid cards, and the prior list composition as `historyCardLegacy`.
 - Refined reliability measurement symbols so shoulder reads as horizontal width, total length as a vertical ruler, and sleeve length as a diagonal ruler.
@@ -109,6 +113,10 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Shared History/detail recommendation metric rendering passed the generic iOS device Debug build and `git diff --check`; the existing UserFit migration actor-isolation warning remains.
+- Restored result measurement icons and simplified measurement-sheet rows passed the generic iOS device Debug build and `git diff --check`.
+- Equal-width History metrics and fixed recommended-size typography passed the generic iOS device Debug build and `git diff --check`.
+- History density/metric refinements and split result confidence/measurement information sheets passed the generic iOS device Debug build and `git diff --check`.
 - History source/metric/date polish and the comparison-detail shoulder icon passed the generic iOS device Debug build and `git diff --check`; the existing UserFit migration actor-isolation warning remains.
 - The supplied-reference History list card passed the generic iOS device Debug build and `git diff --check`; grid rendering, detail routing, swipe actions, and protected scroll code remain unchanged.
 - The comparison-result control and measurement-visibility refinements passed the generic iOS device Debug build and protected-scroll diff checks.

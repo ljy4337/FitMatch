@@ -436,18 +436,18 @@ private struct HistoryCard: View {
     }
 
     private var currentCardContent: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             ZStack(alignment: .topTrailing) {
                 HStack(alignment: .top, spacing: 14) {
                     ProductThumbnailView(
                         imageURLString: history.productImageURLStringForDisplay,
                         category: history.product.category,
                         width: 104,
-                        height: 126,
+                        height: 112,
                         cornerRadius: 16
                     )
 
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 5) {
                         Text(historyBrandText)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
@@ -464,7 +464,7 @@ private struct HistoryCard: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
 
-                        if let optionText = history.optionSnapshotText {
+                        if let optionText = historyOptionText {
                             Text(optionText)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -492,15 +492,34 @@ private struct HistoryCard: View {
                 .accessibilityLabel(isFavorite ? "관심 해제" : "관심 등록")
             }
 
-            HStack(alignment: .top, spacing: 0) {
-                historyMetric(title: "추천 사이즈", value: history.recommendedSize.name.displaySizeName)
-                Divider().frame(height: 88)
-                historyMetric(title: "핏 매칭률", value: "\(history.recommendationScore)%", badge: fitMatchBadge)
-                Divider().frame(height: 88)
-                reliabilityMetric
+            GeometryReader { geometry in
+                let dividerWidth: CGFloat = 1
+                let columnWidth = (geometry.size.width - (dividerWidth * 2)) / 3
+
+                HStack(alignment: .top, spacing: 0) {
+                    RecommendationMetricColumn(
+                        title: "추천 사이즈",
+                        value: history.recommendedSize.name.displaySizeName,
+                        detail: "정사이즈 추천",
+                        isPrimary: true
+                    )
+                        .frame(width: columnWidth)
+                    Divider().frame(width: dividerWidth, height: 88)
+                    RecommendationMetricColumn(
+                        title: "핏 매칭률",
+                        value: "\(history.recommendationScore)%",
+                        detail: fitMatchBadge,
+                        isPrimary: false
+                    )
+                        .frame(width: columnWidth)
+                    Divider().frame(width: dividerWidth, height: 88)
+                    reliabilityMetric
+                        .frame(width: columnWidth)
+                }
             }
+            .frame(height: 100)
             .padding(.horizontal, 14)
-            .padding(.vertical, 13)
+            .padding(.vertical, 10)
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             HStack(spacing: 8) {
@@ -510,8 +529,8 @@ private struct HistoryCard: View {
                     .font(.caption.weight(.semibold))
                 Spacer()
                 Text(formattedHistoryDate)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary.opacity(0.72))
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
@@ -521,43 +540,34 @@ private struct HistoryCard: View {
     }
 
     private func historyMetric(title: String, value: String, badge: String? = nil) -> some View {
-        VStack(alignment: .center, spacing: 7) {
-            Text(title)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.title.weight(.black))
-                .foregroundStyle(.primary)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-            if let badge {
-                Text(badge)
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.green)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(.green.opacity(0.1), in: Capsule())
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
+        RecommendationMetricColumn(
+            title: title,
+            value: value,
+            detail: badge ?? " ",
+            isPrimary: title == "추천 사이즈"
+        )
     }
 
     private var reliabilityMetric: some View {
-        VStack(alignment: .center, spacing: 7) {
+        VStack(alignment: .leading, spacing: 7) {
             Text("신뢰도")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(.secondary)
             Text(reliabilityStars)
-                .font(.title3.weight(.bold))
+                .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(.orange.opacity(0.85))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
             Text(reliabilityTitle)
                 .font(.subheadline.weight(.bold))
                 .lineLimit(1)
+            Text(measurementSummaryText)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.secondary.opacity(0.8))
+                .lineLimit(1)
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 12)
     }
 
     // TODO: Legacy UI, 삭제 금지. currentCardContent 대신 연결하면 기존 목록 카드로 즉시 원복할 수 있습니다.
@@ -664,6 +674,14 @@ private struct HistoryCard: View {
         isMusinsaProduct
             ? "\(history.productBrandNameForDisplay) (무신사)"
             : history.productBrandNameForDisplay
+    }
+
+    private var historyOptionText: String? {
+        guard let size = history.selectedSizeNameSnapshot?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !size.isEmpty else {
+            return nil
+        }
+        return "옵션 \(size.displaySizeName)"
     }
 
     private var isMusinsaProduct: Bool {
