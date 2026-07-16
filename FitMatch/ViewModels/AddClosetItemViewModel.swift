@@ -118,6 +118,7 @@ final class AddClosetItemViewModel: ObservableObject {
             && (measurementKinds.isEmpty || measurementEntrySource != nil)
             && (measurementEntrySource != .otherSizeChart || !measurementSourceName.trimmed.isEmpty)
             && (measurementEntrySource != .otherSizeChart || hasAllRequiredSourceLabels)
+            && directMeasurementValidationMessage == nil
     }
 
     var measurements: GarmentMeasurements? {
@@ -159,6 +160,20 @@ final class AddClosetItemViewModel: ObservableObject {
         category.measurementKinds(detailCategory: detailCategory, gender: gender)
     }
 
+    var directMeasurementValidationMessage: String? {
+        guard measurementEntrySource == .fitmatchMeasured else { return nil }
+
+        for kind in measurementKinds {
+            let rawValue = value(for: kind).trimmed
+            guard !rawValue.isEmpty, let number = Double(rawValue), number > 0 else { continue }
+            let definition = FitMatchMeasurementStandard.definition(for: kind)
+            guard !definition.validRange.contains(number) else { continue }
+            return "\(kind.title)은 \(definition.rangeDescription) 범위로 입력해 주세요. 측정 위치와 단위를 확인해 주세요."
+        }
+
+        return nil
+    }
+
     func value(for kind: MeasurementKind) -> String {
         switch kind {
         case .shoulder: return shoulder
@@ -176,7 +191,7 @@ final class AddClosetItemViewModel: ObservableObject {
     }
 
     func makeUserFit() -> UserFit? {
-        guard let measurements else {
+        guard let measurements, directMeasurementValidationMessage == nil else {
             return nil
         }
 

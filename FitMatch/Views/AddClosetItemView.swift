@@ -6,6 +6,7 @@ struct AddClosetItemView: View {
     @Query(sort: \Brand.name) private var brands: [Brand]
     @StateObject private var viewModel: AddClosetItemViewModel
     @State private var isShowingDeleteAlert = false
+    @State private var selectedMeasurementGuide: MeasurementKind?
 
     let onSave: (UserFit) -> Void
     let onDelete: (() -> Void)?
@@ -68,6 +69,9 @@ struct AddClosetItemView: View {
             }
         } message: {
             Text("삭제한 옷 정보는 복구할 수 없습니다.")
+        }
+        .sheet(item: $selectedMeasurementGuide) { kind in
+            DirectMeasurementGuideSheet(kind: kind)
         }
     }
 
@@ -245,7 +249,10 @@ struct AddClosetItemView: View {
                                 title: kind.title,
                                 subtitle: viewModel.measurementGuide(for: kind),
                                 placeholder: kind.placeholder,
-                                value: binding(for: kind)
+                                value: binding(for: kind),
+                                onShowGuide: viewModel.measurementEntrySource == .fitmatchMeasured
+                                    ? { selectedMeasurementGuide = kind }
+                                    : nil
                             )
                         }
                         Text(measurementInputNotice)
@@ -400,6 +407,10 @@ struct AddClosetItemView: View {
 
         if viewModel.measurements == nil {
             return "실측값을 1개 이상 입력해 주세요. 입력한 값은 0보다 큰 숫자여야 합니다."
+        }
+
+        if let validationMessage = viewModel.directMeasurementValidationMessage {
+            return validationMessage
         }
 
         return nil
@@ -683,13 +694,25 @@ private struct AddClosetMeasurementField: View {
     let subtitle: String
     let placeholder: String
     @Binding var value: String
+    let onShowGuide: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.primary)
+                HStack(spacing: 8) {
+                    Text(title)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+
+                    if let onShowGuide {
+                        Button(action: onShowGuide) {
+                            Label("측정 방법", systemImage: "questionmark.circle")
+                                .font(.caption2.weight(.bold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.blue)
+                    }
+                }
                 Text(subtitle)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -714,5 +737,198 @@ private struct AddClosetMeasurementField: View {
             RoundedRectangle(cornerRadius: 17, style: .continuous)
                 .stroke(Color.primary.opacity(0.055), lineWidth: 1)
         }
+    }
+}
+
+private struct DirectMeasurementGuideSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let kind: MeasurementKind
+
+    private var definition: DirectMeasurementDefinition {
+        FitMatchMeasurementStandard.definition(for: kind)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    DirectMeasurementDiagram(kind: kind)
+                        .frame(height: 250)
+                        .frame(maxWidth: .infinity)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("측정 위치", systemImage: "ruler")
+                            .font(.headline.weight(.black))
+                        Text(definition.instruction)
+                            .font(.body.weight(.semibold))
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("주의사항", systemImage: "exclamationmark.triangle")
+                            .font(.headline.weight(.black))
+                        Text(definition.caution)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("입력 가능 범위 · \(definition.rangeDescription)")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(16)
+                    .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                    Text("핏매치 직접 측정 표준 · \(definition.standardVersion)")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(20)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle(kind.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("완료") { dismiss() }
+                        .fontWeight(.bold)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}
+
+private struct DirectMeasurementDiagram: View {
+    let kind: MeasurementKind
+
+    var body: some View {
+        GeometryReader { proxy in
+            let rect = CGRect(origin: .zero, size: proxy.size).insetBy(dx: 34, dy: 24)
+            let points = measurementPoints(in: rect)
+
+            ZStack {
+                garmentPath(in: rect)
+                    .stroke(Color.primary.opacity(0.32), style: StrokeStyle(lineWidth: 4, lineJoin: .round))
+
+                Path { path in
+                    path.move(to: points.start)
+                    path.addLine(to: points.end)
+                }
+                .stroke(Color.blue, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 13, height: 13)
+                    .position(points.start)
+
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 13, height: 13)
+                    .position(points.end)
+
+                Text(kind.title)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.background, in: Capsule())
+                    .position(labelPoint(for: points, in: rect))
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(kind.title) 측정 위치 도식")
+    }
+
+    private var family: DiagramFamily {
+        switch kind {
+        case .shoulder, .chest, .totalLength, .sleeveLength, .underBust:
+            return .top
+        case .waist, .hip, .thigh, .rise, .hem:
+            return .bottom
+        case .footLength:
+            return .shoe
+        }
+    }
+
+    private func garmentPath(in rect: CGRect) -> Path {
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + rect.width * x, y: rect.minY + rect.height * y)
+        }
+
+        return Path { path in
+            switch family {
+            case .top:
+                path.move(to: point(0.36, 0.12))
+                path.addLine(to: point(0.26, 0.16))
+                path.addLine(to: point(0.08, 0.32))
+                path.addLine(to: point(0.18, 0.52))
+                path.addLine(to: point(0.30, 0.45))
+                path.addLine(to: point(0.30, 0.90))
+                path.addLine(to: point(0.70, 0.90))
+                path.addLine(to: point(0.70, 0.45))
+                path.addLine(to: point(0.82, 0.52))
+                path.addLine(to: point(0.92, 0.32))
+                path.addLine(to: point(0.74, 0.16))
+                path.addLine(to: point(0.64, 0.12))
+                path.addCurve(to: point(0.36, 0.12), control1: point(0.61, 0.30), control2: point(0.39, 0.30))
+                path.closeSubpath()
+            case .bottom:
+                path.move(to: point(0.27, 0.10))
+                path.addLine(to: point(0.73, 0.10))
+                path.addLine(to: point(0.78, 0.92))
+                path.addLine(to: point(0.55, 0.92))
+                path.addLine(to: point(0.50, 0.45))
+                path.addLine(to: point(0.45, 0.92))
+                path.addLine(to: point(0.22, 0.92))
+                path.closeSubpath()
+                path.move(to: point(0.28, 0.20))
+                path.addLine(to: point(0.72, 0.20))
+            case .shoe:
+                path.move(to: point(0.12, 0.65))
+                path.addCurve(to: point(0.45, 0.42), control1: point(0.22, 0.66), control2: point(0.28, 0.48))
+                path.addCurve(to: point(0.72, 0.64), control1: point(0.56, 0.50), control2: point(0.63, 0.60))
+                path.addCurve(to: point(0.90, 0.72), control1: point(0.79, 0.68), control2: point(0.87, 0.66))
+                path.addLine(to: point(0.88, 0.84))
+                path.addLine(to: point(0.14, 0.84))
+                path.closeSubpath()
+            }
+        }
+    }
+
+    private func measurementPoints(in rect: CGRect) -> (start: CGPoint, end: CGPoint) {
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + rect.width * x, y: rect.minY + rect.height * y)
+        }
+
+        switch kind {
+        case .shoulder: return (point(0.27, 0.18), point(0.73, 0.18))
+        case .chest: return (point(0.24, 0.45), point(0.76, 0.45))
+        case .totalLength: return (point(0.63, 0.17), point(0.63, 0.90))
+        case .sleeveLength: return (point(0.72, 0.18), point(0.87, 0.48))
+        case .waist: return (point(0.27, 0.14), point(0.73, 0.14))
+        case .hip: return (point(0.25, 0.32), point(0.75, 0.32))
+        case .thigh: return (point(0.27, 0.46), point(0.50, 0.46))
+        case .rise: return (point(0.50, 0.14), point(0.50, 0.45))
+        case .hem: return (point(0.22, 0.90), point(0.45, 0.90))
+        case .footLength: return (point(0.14, 0.78), point(0.88, 0.78))
+        case .underBust: return (point(0.29, 0.58), point(0.71, 0.58))
+        }
+    }
+
+    private func labelPoint(
+        for points: (start: CGPoint, end: CGPoint),
+        in rect: CGRect
+    ) -> CGPoint {
+        let midpoint = CGPoint(x: (points.start.x + points.end.x) / 2, y: (points.start.y + points.end.y) / 2)
+        let isVertical = abs(points.start.x - points.end.x) < abs(points.start.y - points.end.y)
+        return CGPoint(
+            x: isVertical ? max(rect.minX + 42, midpoint.x - 48) : midpoint.x,
+            y: isVertical ? midpoint.y : max(rect.minY + 18, midpoint.y - 28)
+        )
+    }
+
+    private enum DiagramFamily {
+        case top
+        case bottom
+        case shoe
     }
 }

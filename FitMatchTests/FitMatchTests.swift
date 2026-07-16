@@ -1285,7 +1285,35 @@ struct FitMatchTests {
         #expect(byKind[.totalLength]?.measurementCode == .bodyLengthHPSToHemFront)
         #expect(byKind[.sleeveLength]?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect((item?.measurementRecords ?? []).allSatisfy(\.isComparable))
-        #expect((item?.measurementRecords ?? []).allSatisfy { $0.standardVersion == "fitmatch_standard_v1" })
+        #expect((item?.measurementRecords ?? []).allSatisfy { $0.standardVersion == FitMatchMeasurementStandard.version })
+    }
+
+    @Test func directMeasurementStandardDefinesEveryMeasurementKind() {
+        let definitions = MeasurementKind.allCases.map { FitMatchMeasurementStandard.definition(for: $0) }
+
+        #expect(definitions.count == MeasurementKind.allCases.count)
+        #expect(definitions.allSatisfy { !$0.instruction.isEmpty })
+        #expect(definitions.allSatisfy { !$0.caution.isEmpty })
+        #expect(definitions.allSatisfy { $0.validRange.lowerBound > 0 })
+        #expect(definitions.allSatisfy { $0.standardVersion == "fitmatch_standard_v1" })
+    }
+
+    @Test func directMeasurementRejectsValuesOutsideSafetyRange() {
+        let viewModel = manualMeasurementViewModel(source: .fitmatchMeasured)
+        viewModel.shoulder = "480"
+
+        #expect(viewModel.directMeasurementValidationMessage?.contains("어깨너비") == true)
+        #expect(!viewModel.canSave)
+        #expect(viewModel.makeUserFit() == nil)
+    }
+
+    @Test func sizeChartValuesDoNotUseDirectMeasurementSafetyRange() {
+        let viewModel = manualMeasurementViewModel(source: .uniqloSizeChart)
+        viewModel.shoulder = "480"
+
+        #expect(viewModel.directMeasurementValidationMessage == nil)
+        #expect(viewModel.canSave)
+        #expect(viewModel.makeUserFit() != nil)
     }
 
     @Test func uniqloTranscribedEntrySeparatesCenterBackSleeveAndUnknownChest() {

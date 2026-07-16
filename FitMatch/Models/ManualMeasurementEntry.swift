@@ -1,5 +1,63 @@
 import Foundation
 
+struct DirectMeasurementDefinition: Equatable {
+    let kind: MeasurementKind
+    let instruction: String
+    let caution: String
+    let validRange: ClosedRange<Double>
+
+    var standardVersion: String { FitMatchMeasurementStandard.version }
+
+    var rangeDescription: String {
+        "\(validRange.lowerBound.formatted())~\(validRange.upperBound.formatted())cm"
+    }
+}
+
+enum FitMatchMeasurementStandard {
+    static let version = "fitmatch_standard_v1"
+
+    static func definition(for kind: MeasurementKind) -> DirectMeasurementDefinition {
+        switch kind {
+        case .shoulder:
+            return definition(kind, "양쪽 어깨 봉제선의 가장 바깥점을 직선으로 측정", "어깨선이 없는 라글란 옷은 이 항목을 입력하지 마세요.", 10...90)
+        case .chest:
+            return definition(kind, "겨드랑이 바로 아래 양쪽 끝을 수평으로 측정", "둘레가 아닌 옷의 단면값을 입력하세요.", 15...100)
+        case .totalLength:
+            return definition(kind, "앞면의 가장 높은 어깨점부터 밑단까지 수직으로 측정", "옷깃과 후드 길이는 포함하지 마세요.", 15...180)
+        case .sleeveLength:
+            return definition(kind, "어깨 봉제선부터 소매 끝까지 소매선을 따라 측정", "목 중심부터 잰 화장과는 비교할 수 없습니다.", 3...110)
+        case .waist:
+            return definition(kind, "허리단을 자연스럽게 편 상태에서 양쪽 끝을 수평으로 측정", "허리둘레가 아닌 단면값을 입력하세요.", 15...90)
+        case .hip:
+            return definition(kind, "엉덩이 부분에서 가장 넓은 지점의 양쪽 끝을 측정", "주름을 펴되 원단을 늘리지 마세요.", 20...100)
+        case .thigh:
+            return definition(kind, "가랑이 봉제점 바로 아래부터 바깥쪽 끝까지 측정", "한쪽 다리의 단면값을 입력하세요.", 10...60)
+        case .rise:
+            return definition(kind, "앞면 가랑이 봉제점부터 허리단 위까지 측정", "뒷밑위가 아닌 앞밑위를 측정하세요.", 10...50)
+        case .hem:
+            return definition(kind, "한쪽 바짓단의 양쪽 끝을 수평으로 측정", "양쪽 바짓단을 합산하지 마세요.", 5...90)
+        case .footLength:
+            return definition(kind, "신발 안쪽의 뒤꿈치 끝부터 발가락 끝까지 측정", "발의 실측 길이와 신발 외부 길이를 입력하지 마세요.", 10...40)
+        case .underBust:
+            return definition(kind, "밑가슴 밴드를 편 상태에서 양쪽 끝을 수평으로 측정", "밑가슴둘레가 아닌 옷의 단면값을 입력하세요.", 15...80)
+        }
+    }
+
+    private static func definition(
+        _ kind: MeasurementKind,
+        _ instruction: String,
+        _ caution: String,
+        _ validRange: ClosedRange<Double>
+    ) -> DirectMeasurementDefinition {
+        DirectMeasurementDefinition(
+            kind: kind,
+            instruction: instruction,
+            caution: caution,
+            validRange: validRange
+        )
+    }
+}
+
 enum MeasurementEntrySource: String, CaseIterable, Hashable, Identifiable {
     case musinsaSizeChart = "musinsa_size_chart"
     case uniqloSizeChart = "uniqlo_size_chart"
@@ -86,7 +144,7 @@ enum ManualMeasurementRecordFactory {
                     otherSourceName: otherSourceName
                 ),
                 inputSource: source.inputSource,
-                standardVersion: source == .fitmatchMeasured ? "fitmatch_standard_v1" : nil,
+                standardVersion: source == .fitmatchMeasured ? FitMatchMeasurementStandard.version : nil,
                 mappingVersion: "manual_measurement_mapping_v1",
                 rawCode: rawCode(for: kind, source: source),
                 rawLabel: rawLabel(for: kind, source: source, rawLabels: rawLabels),
@@ -110,19 +168,7 @@ enum ManualMeasurementRecordFactory {
                 return "사이즈표에 표시된 값을 변환하지 않고 입력"
             }
         }
-        switch kind {
-        case .shoulder: return "옷을 평평하게 놓고 양쪽 어깨 봉제선 사이"
-        case .chest: return "겨드랑이 바로 아래 양쪽 끝 사이"
-        case .totalLength: return "가장 높은 어깨점부터 앞 밑단까지"
-        case .sleeveLength: return "어깨 봉제선부터 소매 끝까지"
-        case .waist: return "허리단 양쪽 끝 사이"
-        case .hip: return "엉덩이에서 가장 넓은 지점의 양쪽 끝 사이"
-        case .thigh: return "가랑이점부터 바깥쪽 끝까지"
-        case .rise: return "앞 가랑이점부터 허리단 위까지"
-        case .hem: return "밑단 양쪽 끝 사이"
-        case .footLength: return "뒤꿈치 끝부터 발가락 끝까지"
-        case .underBust: return "밑가슴 밴드 양쪽 끝 사이"
-        }
+        return FitMatchMeasurementStandard.definition(for: kind).instruction
     }
 
     private static func mapping(

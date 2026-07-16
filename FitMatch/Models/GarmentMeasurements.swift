@@ -76,7 +76,7 @@ enum MeasurementKind: String, CaseIterable, Identifiable, Codable, Hashable {
         case .rise: return "밑위"
         case .hem: return "밑단단면"
         case .footLength: return "발길이"
-        case .underBust: return "밑가슴둘레"
+        case .underBust: return "밑가슴단면"
         }
     }
 
@@ -92,7 +92,7 @@ enum MeasurementKind: String, CaseIterable, Identifiable, Codable, Hashable {
         case .rise: return "29"
         case .hem: return "22"
         case .footLength: return "27"
-        case .underBust: return "75"
+        case .underBust: return "38"
         }
     }
 }
