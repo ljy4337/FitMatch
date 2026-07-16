@@ -11,9 +11,19 @@ private struct MusinsaRedirectResponse {
     let body: String
 }
 
+enum MusinsaNetworkPolicy {
+    static let requestTimeout: TimeInterval = 12
+}
+
 struct MusinsaURLResolver {
     func resolve(_ url: URL) async throws -> ResolvedMusinsaURL {
         print("[MusinsaURLResolver] originalURL: \(url.absoluteString)")
+
+        if let productID = extractProductID(from: url),
+           let productURL = URL(string: "https://www.musinsa.com/products/\(productID)") {
+            print("[MusinsaURLResolver] directProductId: \(productID)")
+            return ResolvedMusinsaURL(originalURL: url, resolvedURL: productURL, productID: productID)
+        }
 
         let redirectResponse = try await followRedirects(from: url)
         let finalURL = redirectResponse.url
@@ -75,6 +85,7 @@ struct MusinsaURLResolver {
     private func followRedirects(from url: URL) async throws -> MusinsaRedirectResponse {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
+        request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
         request.setValue(
             "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
             forHTTPHeaderField: "User-Agent"

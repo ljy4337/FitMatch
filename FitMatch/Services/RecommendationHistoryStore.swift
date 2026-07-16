@@ -7,11 +7,48 @@ enum RecommendationHistoryStore {
         existing histories: [RecommendationHistory],
         modelContext: ModelContext
     ) throws {
-        histories
-            .filter { isSameProduct($0.product, history.product) }
-            .forEach(modelContext.delete)
+        let matchingHistories = histories.filter { isSameProduct($0.product, history.product) }
+        let storedProducts = try modelContext.fetch(FetchDescriptor<Product>())
+        let matchingProducts = storedProducts.filter { isSameProduct($0, history.product) }
+        let storedUserFits = try modelContext.fetch(FetchDescriptor<UserFit>())
+        let closetProductIDs = Set(storedUserFits.compactMap { $0.sourceProduct?.id })
+        let recommendedSizeID = history.recommendedSize.id
+        let storedSizeDescriptor = FetchDescriptor<ProductSize>(
+            predicate: #Predicate { $0.id == recommendedSizeID }
+        )
+        let storedSizeByID = try modelContext.fetch(storedSizeDescriptor).first
+        let storedProduct = storedSizeByID?.product
+            ?? matchingProducts.first(where: { closetProductIDs.contains($0.id) })
+            ?? matchingHistories.first?.product
+            ?? matchingProducts.first
 
-        modelContext.insert(history.product)
+        if let storedProduct {
+            let recommendedSizeKey = ParsedProductSizeNormalizer.normalizedSizeKey(for: history.recommendedSize.name)
+            let storedSize = storedSizeByID ?? storedProduct.sizes.first {
+                ParsedProductSizeNormalizer.normalizedSizeKey(for: $0.name) == recommendedSizeKey
+            }
+
+            history.product = storedProduct
+            if let storedSize {
+                history.recommendedSize = storedSize
+            } else {
+                let newSize = history.recommendedSize
+                newSize.product = storedProduct
+                storedProduct.sizes.append(newSize)
+            }
+        }
+
+        matchingHistories.forEach(modelContext.delete)
+
+        if let retainedProductID = history.product.modelContext == nil ? nil : Optional(history.product.id) {
+            matchingProducts
+                .filter { $0.id != retainedProductID && !closetProductIDs.contains($0.id) }
+                .forEach(modelContext.delete)
+        }
+
+        if history.product.modelContext == nil {
+            modelContext.insert(history.product)
+        }
         modelContext.insert(history)
         try modelContext.save()
     }

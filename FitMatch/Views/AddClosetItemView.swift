@@ -102,40 +102,29 @@ struct AddClosetItemView: View {
         AddClosetSectionCard(index: 1, title: "상품 출처", subtitle: "브랜드와 구매처를 구분해 저장합니다.", systemImage: "tag") {
             VStack(alignment: .leading, spacing: 16) {
                 AddClosetSelectionMenu(
-                    title: "출처 유형",
-                    value: viewModel.sourceType.displayName,
-                    options: ProductSourceType.allCases,
+                    title: "상품 출처",
+                    value: viewModel.productSourceOption?.displayName ?? viewModel.resolvedSourceName,
+                    options: ClosetProductSourceOption.allCases,
                     optionTitle: \.displayName,
-                    selection: $viewModel.sourceType
-                ) { selectedType in
-                    normalizeSourceSelection(for: selectedType)
-                }
+                    selection: Binding(
+                        get: { viewModel.productSourceOption ?? .manual },
+                        set: { viewModel.selectProductSource($0) }
+                    )
+                )
 
-                switch viewModel.sourceType {
-                case .officialStore:
-                    AddClosetSelectionMenu(
-                        title: "공식 브랜드",
-                        value: viewModel.brand,
-                        options: ProductSourceType.officialStoreNames,
-                        optionTitle: { $0 },
-                        selection: $viewModel.brand
-                    ) { selectedBrand in
-                        viewModel.sourceName = "\(selectedBrand) 공식몰"
-                    }
-                    Text("선택한 공식 브랜드가 브랜드명으로 저장됩니다.")
+                switch viewModel.productSourceOption {
+                case .uniqlo:
+                    Text("상품 출처와 브랜드가 유니클로 공식몰로 저장됩니다.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                case .marketplace:
-                    AddClosetSelectionMenu(
-                        title: "쇼핑 플랫폼",
-                        value: viewModel.sourceName,
-                        options: ProductSourceType.marketplaceNames,
-                        optionTitle: { $0 },
-                        selection: $viewModel.sourceName
-                    )
+                case .musinsa:
                     AddClosetTextField(title: "입점 브랜드", placeholder: "브랜드명 입력", text: $viewModel.brand)
                 case .manual:
-                    AddClosetTextField(title: "출처명", placeholder: "출처명 입력", text: $viewModel.sourceName)
+                    AddClosetTextField(title: "브랜드", placeholder: "브랜드명 입력", text: $viewModel.brand)
+                case nil:
+                    Text("현재 저장된 상품 출처: \(viewModel.resolvedSourceName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     AddClosetTextField(title: "브랜드", placeholder: "브랜드명 입력", text: $viewModel.brand)
                 }
             }
@@ -210,13 +199,15 @@ struct AddClosetItemView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    AddClosetOptionalSelectionMenu(
-                        title: "실측 정보를 어디에서 확인하셨나요?",
-                        value: viewModel.measurementEntrySource?.displayName ?? "선택",
-                        options: MeasurementEntrySource.allCases,
-                        optionTitle: \.displayName,
-                        selection: $viewModel.measurementEntrySource
-                    )
+                    if !viewModel.skipsMeasurementSourceSelection {
+                        AddClosetOptionalSelectionMenu(
+                            title: "실측 정보를 어디에서 확인하셨나요?",
+                            value: viewModel.measurementEntrySource?.displayName ?? "선택",
+                            options: viewModel.measurementEntrySourceOptions,
+                            optionTitle: \.displayName,
+                            selection: $viewModel.measurementEntrySource
+                        )
+                    }
 
                     if viewModel.measurementEntrySource == .musinsaSizeChart {
                         AddClosetSelectionMenu(
@@ -488,27 +479,6 @@ struct AddClosetItemView: View {
         )
     }
 
-    private func normalizeSourceSelection(for sourceType: ProductSourceType) {
-        switch sourceType {
-        case .officialStore:
-            let selectedBrand = ProductSourceType.officialStoreNames.contains(viewModel.brand)
-                ? viewModel.brand
-                : ProductSourceType.officialStoreNames[0]
-            viewModel.brand = selectedBrand
-            viewModel.sourceName = "\(selectedBrand) 공식몰"
-            viewModel.usesCustomBrand = false
-        case .marketplace:
-            if !ProductSourceType.marketplaceNames.contains(viewModel.sourceName) {
-                viewModel.sourceName = ProductSourceType.marketplaceNames[0]
-            }
-            viewModel.usesCustomBrand = true
-        case .manual:
-            if viewModel.sourceName.isEmpty || ProductSourceType.marketplaceNames.contains(viewModel.sourceName) {
-                viewModel.sourceName = "직접 입력"
-            }
-            viewModel.usesCustomBrand = true
-        }
-    }
 }
 
 private struct AddClosetSectionCard<Content: View>: View {

@@ -56,6 +56,7 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     private func fetchData(from apiURL: URL) async throws -> Data {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
+        request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("https://www.musinsa.com", forHTTPHeaderField: "Referer")
         request.setValue(

@@ -3,9 +3,16 @@
 Updated: 2026-07-16
 
 ## Branch
-Uniqlo
+feature/measurement-standardization
 
 ## Completed
+- Selecting Uniqlo or Musinsa in new Closet registration now defaults measurement input to that platform's size chart; direct registration still defaults to FitMatch measurement.
+- Simplified new Closet registration to Uniqlo official store, Musinsa, or direct registration with source-specific measurement choices.
+- Direct registration now skips measurement-source selection and stores FitMatch-standard measurement records; legacy `otherSizeChart` remains editable without conversion.
+- Recompare persistence now reuses stored Product/ProductSize objects by identity or normalized size name and removes unreferenced duplicate product graphs.
+- Added 12-second request timeouts to Uniqlo parsing, matching the bounded Musinsa recompare requests.
+- Musinsa recompare now bypasses redirect-page loading for canonical product URLs and bounds all Musinsa requests with a 12-second timeout.
+- Recompare history saving now reuses the persisted deterministic ProductSize and Product graph instead of inserting duplicate SwiftData identities.
 - Updated the Musinsa launch shortcut to the current OneLink in Home and Compare flow.
 - Fixed the Closet edit measurement-label type inference and display-kind conversion build errors.
 - Restored file-local size/difference formatting used by Compare flow and removed cross-file `fileprivate` dependencies from Closet validation.
@@ -66,7 +73,7 @@ Uniqlo
 - Standardized all confirmed Closet-add action buttons to `내 옷장에 추가` while preserving navigation, save behavior, and distinct method-selection labels.
 
 ## Current Task
-- Build repair after saving multiple sizes of the same parsed product
+- Standardize Closet source UX and repeated-comparison persistence
 
 ## Remaining Bugs
 - Compare's source-category fallback still exposes compatibility enum bindings; it should adopt stable-code state when the compare ViewModel persistence contract is migrated.
@@ -87,6 +94,9 @@ Uniqlo
 - No commit or push performed in the latest task.
 
 ## Verification
+- Closet source UX and repeated-comparison changes passed the generic iOS Simulator Debug build, test-target build, and `git diff --check`; selected simulator tests were stopped after the test runner did not return results.
+- Musinsa canonical-URL fast-path and request timeout changes passed the generic iOS Simulator Debug build and `git diff --check`.
+- Recompare deterministic-size regression coverage was added; the app Debug build succeeded, while test execution is blocked by a pre-existing Swift Testing macro compile error in `fitmatchMeasuredEntryCreatesComparableStandardRecords`.
 - Generic iOS Simulator Debug build succeeded after resolving the measurement-label and file-private helper compile errors; `git diff --check` passed.
 - Closet product saving now reuses an already persisted deterministic `ProductSize` and its source `Product`, avoiding SwiftData unique-ID conflicts when another size of the same product is added.
 - Home `기준 옷` now toggles immediately like the favorite action, uses a red selected state, and asks only when replacing a conflicting reference garment; the generic iOS Simulator Debug build and `git diff --check` passed.

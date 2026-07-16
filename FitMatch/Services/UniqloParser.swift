@@ -162,6 +162,7 @@ struct UniqloURLResolver {
     private func fetchHTML(from url: URL) async throws -> UniqloHTMLResponse {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
+        request.timeoutInterval = 12
         request.setValue("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
         request.setValue("https://www.uniqlo.com/kr/ko/", forHTTPHeaderField: "Referer")
         request.setValue(
@@ -264,6 +265,7 @@ struct UniqloSizeAPIParser {
     private func fetchData(from apiURL: URL) async throws -> Data {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
+        request.timeoutInterval = 12
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("https://www.uniqlo.com/kr/ko/", forHTTPHeaderField: "Referer")
         request.setValue(

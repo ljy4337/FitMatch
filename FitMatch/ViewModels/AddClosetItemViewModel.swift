@@ -1,6 +1,22 @@
 import Foundation
 import Combine
 
+enum ClosetProductSourceOption: String, CaseIterable, Hashable, Identifiable {
+    case uniqlo
+    case musinsa
+    case manual
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .uniqlo: return "유니클로 공식몰"
+        case .musinsa: return "무신사"
+        case .manual: return "직접 등록"
+        }
+    }
+}
+
 final class AddClosetItemViewModel: ObservableObject {
     @Published var sourceType: ProductSourceType = .manual
     @Published var sourceName = "직접 입력"
@@ -33,6 +49,7 @@ final class AddClosetItemViewModel: ObservableObject {
     @Published var fitPreference: FitPreference = .regular
     @Published var satisfaction = 4
     @Published var isRepresentative = false
+    let isEditingExistingItem: Bool
 
     init(
         item: UserFit? = nil,
@@ -42,7 +59,9 @@ final class AddClosetItemViewModel: ObservableObject {
         prefillBrand: String? = nil,
         prefillProductName: String? = nil
     ) {
+        isEditingExistingItem = item != nil
         guard let item else {
+            measurementEntrySource = .fitmatchMeasured
             if let prefillCategory {
                 category = prefillCategory
                 categoryCode = prefillCategory.taxonomyCode
@@ -110,6 +129,65 @@ final class AddClosetItemViewModel: ObservableObject {
         fitPreference = item.fitPreference
         satisfaction = item.satisfaction
         isRepresentative = item.isRepresentative
+    }
+
+    var productSourceOption: ClosetProductSourceOption? {
+        switch sourceType {
+        case .officialStore where resolvedSourceName.localizedCaseInsensitiveContains("유니클로"):
+            return .uniqlo
+        case .marketplace where resolvedSourceName.localizedCaseInsensitiveContains("무신사"):
+            return .musinsa
+        case .manual:
+            return .manual
+        default:
+            return nil
+        }
+    }
+
+    var measurementEntrySourceOptions: [MeasurementEntrySource] {
+        if isEditingExistingItem {
+            return MeasurementEntrySource.allCases
+        }
+
+        switch productSourceOption {
+        case .uniqlo:
+            return [.uniqloSizeChart, .fitmatchMeasured]
+        case .musinsa:
+            return [.musinsaSizeChart, .fitmatchMeasured]
+        case .manual, nil:
+            return [.fitmatchMeasured]
+        }
+    }
+
+    var skipsMeasurementSourceSelection: Bool {
+        !isEditingExistingItem && productSourceOption == .manual
+    }
+
+    func selectProductSource(_ option: ClosetProductSourceOption) {
+        switch option {
+        case .uniqlo:
+            sourceType = .officialStore
+            sourceName = "유니클로 공식몰"
+            brand = "유니클로"
+            usesCustomBrand = false
+            measurementEntrySource = .uniqloSizeChart
+        case .musinsa:
+            sourceType = .marketplace
+            sourceName = "무신사"
+            if brand == "유니클로" {
+                brand = ""
+            }
+            usesCustomBrand = true
+            measurementEntrySource = .musinsaSizeChart
+        case .manual:
+            sourceType = .manual
+            sourceName = "직접 입력"
+            if brand == "유니클로" {
+                brand = ""
+            }
+            usesCustomBrand = true
+            measurementEntrySource = .fitmatchMeasured
+        }
     }
 
     var canSave: Bool {

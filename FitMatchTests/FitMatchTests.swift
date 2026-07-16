@@ -415,6 +415,16 @@ struct FitMatchTests {
         #expect(resolver.normalizeImageColorCode(colorCode ?? "") == "66")
     }
 
+    @Test func musinsaURLResolverUsesCanonicalProductURLWithoutRedirectRequest() async throws {
+        let resolver = MusinsaURLResolver()
+        let url = try #require(URL(string: "https://www.musinsa.com/products/4668060?source=history"))
+
+        let resolved = try await resolver.resolve(url)
+
+        #expect(resolved.productID == "4668060")
+        #expect(resolved.resolvedURL.absoluteString == "https://www.musinsa.com/products/4668060")
+    }
+
     @Test func uniqloURLResolverPreservesLeadingZeroColor() {
         let resolver = UniqloURLResolver()
         let text = "https://www.uniqlo.com/kr/ko/products/E465185?colorDisplayCode=00"
@@ -1784,17 +1794,291 @@ struct FitMatchTests {
         #expect(saved.first?.recommendedSize.name == "L")
     }
 
+    @Test func recommendationHistoryRecompareReusesPersistedDeterministicSize() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let reference = comparisonItem(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        context.insert(reference)
+        try context.save()
+
+        let sizeID = ParsedProductSize.stableID(for: "E4668060|M")
+
+        func makeHistory(shoulder: Double) -> RecommendationHistory? {
+            let size = comparisonSize(
+                shoulder: shoulder,
+                sleeve: 22,
+                shoulderCode: .shoulderWidthSeamToSeam,
+                sleeveCode: .sleeveShoulderSeamToCuff
+            )
+            size.id = sizeID
+            let product = Product(
+                name: "동일 상품",
+                category: .top,
+                sourceURLString: "https://www.musinsa.com/products/4668060",
+                sizes: [size]
+            )
+            return RecommendationService().recommend(
+                product: product,
+                selectedReferenceItem: reference,
+                productDetailCategory: .shortSleeve
+            )
+        }
+
+        let first = try #require(makeHistory(shoulder: 48))
+        try RecommendationHistoryStore.saveUnique(first, existing: [], modelContext: context)
+        let storedSize = try #require(context.fetch(FetchDescriptor<ProductSize>()).first)
+
+        let second = try #require(makeHistory(shoulder: 49))
+        let existing = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        try RecommendationHistoryStore.saveUnique(second, existing: existing, modelContext: context)
+
+        let saved = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let savedSizes = try context.fetch(FetchDescriptor<ProductSize>())
+        #expect(saved.count == 1)
+        #expect(saved.first?.recommendedSize === storedSize)
+        #expect(savedSizes.count == 1)
+    }
+
+    @Test func musinsaRecompareReusesPersistedSizeByName() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let reference = comparisonItem(
+            shoulder: 48,
+            sleeve: 62,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        context.insert(reference)
+        try context.save()
+
+        func makeHistory() -> RecommendationHistory? {
+            let size = comparisonSize(
+                shoulder: 49,
+                sleeve: 63,
+                shoulderCode: .shoulderWidthSeamToSeam,
+                sleeveCode: .sleeveShoulderSeamToCuff
+            )
+            size.name = "M"
+            let product = Product(
+                name: "무신사 재비교 상품",
+                category: .top,
+                productCode: "4668060",
+                sourceURLString: "https://www.musinsa.com/products/4668060",
+                sourceName: "무신사",
+                sizes: [size]
+            )
+            return RecommendationService().recommend(
+                product: product,
+                selectedReferenceItem: reference,
+                productDetailCategory: .longSleeve
+            )
+        }
+
+        let first = try #require(makeHistory())
+        try RecommendationHistoryStore.saveUnique(first, existing: [], modelContext: context)
+        let persistedSizeID = first.recommendedSize.id
+
+        let second = try #require(makeHistory())
+        let existing = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        try RecommendationHistoryStore.saveUnique(second, existing: existing, modelContext: context)
+
+        let savedHistories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let savedProducts = try context.fetch(FetchDescriptor<Product>())
+        let savedSizes = try context.fetch(FetchDescriptor<ProductSize>())
+        #expect(savedHistories.count == 1)
+        #expect(savedProducts.count == 1)
+        #expect(savedSizes.count == 1)
+        #expect(savedHistories.first?.recommendedSize.id == persistedSizeID)
+    }
+
+    @Test func uniqloRecompareWithDifferentReferenceKeepsSingleProductGraph() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let firstReference = comparisonItem(
+            shoulder: 47,
+            sleeve: 61,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let secondReference = comparisonItem(
+            shoulder: 49,
+            sleeve: 63,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        context.insert(firstReference)
+        context.insert(secondReference)
+        try context.save()
+
+        let sizeID = ParsedProductSize.stableID(for: "E465185-000|M")
+        func makeHistory(reference: UserFit) -> RecommendationHistory? {
+            let size = comparisonSize(
+                shoulder: 48,
+                sleeve: 62,
+                shoulderCode: .shoulderWidthSeamToSeam,
+                sleeveCode: .sleeveCenterBackToCuff
+            )
+            size.id = sizeID
+            size.name = "M"
+            let product = Product(
+                name: "유니클로 재비교 상품",
+                category: .top,
+                productCode: "E465185-000",
+                sourceURLString: "https://www.uniqlo.com/kr/ko/products/E465185?colorDisplayCode=00",
+                sourceName: "유니클로 공식몰",
+                sizes: [size]
+            )
+            return RecommendationService().recommend(
+                product: product,
+                selectedReferenceItem: reference,
+                productDetailCategory: .longSleeve
+            )
+        }
+
+        let first = try #require(makeHistory(reference: firstReference))
+        try RecommendationHistoryStore.saveUnique(first, existing: [], modelContext: context)
+        let second = try #require(makeHistory(reference: secondReference))
+        let existing = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        try RecommendationHistoryStore.saveUnique(second, existing: existing, modelContext: context)
+
+        let savedHistories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let savedProducts = try context.fetch(FetchDescriptor<Product>())
+        let savedSizes = try context.fetch(FetchDescriptor<ProductSize>())
+        #expect(savedHistories.count == 1)
+        #expect(savedHistories.first?.userFit.id == secondReference.id)
+        #expect(savedHistories.first?.recommendedSize.id == sizeID)
+        #expect(savedProducts.count == 1)
+        #expect(savedSizes.count == 1)
+    }
+
+    @Test func comparingDifferentProductsKeepsSeparateHistoriesAndGraphs() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let reference = comparisonItem(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        context.insert(reference)
+        try context.save()
+
+        func makeHistory(code: String) -> RecommendationHistory? {
+            let size = comparisonSize(
+                shoulder: 48,
+                sleeve: 22,
+                shoulderCode: .shoulderWidthSeamToSeam,
+                sleeveCode: .sleeveShoulderSeamToCuff
+            )
+            size.id = ParsedProductSize.stableID(for: "\(code)|M")
+            let product = Product(
+                name: "상품 \(code)",
+                category: .top,
+                productCode: code,
+                sourceURLString: "https://www.musinsa.com/products/\(code)",
+                sizes: [size]
+            )
+            return RecommendationService().recommend(
+                product: product,
+                selectedReferenceItem: reference,
+                productDetailCategory: .shortSleeve
+            )
+        }
+
+        let first = try #require(makeHistory(code: "100001"))
+        try RecommendationHistoryStore.saveUnique(first, existing: [], modelContext: context)
+        let second = try #require(makeHistory(code: "100002"))
+        let existing = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        try RecommendationHistoryStore.saveUnique(second, existing: existing, modelContext: context)
+
+        let savedHistories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let savedProducts = try context.fetch(FetchDescriptor<Product>())
+        let savedSizes = try context.fetch(FetchDescriptor<ProductSize>())
+        #expect(savedHistories.count == 2)
+        #expect(savedProducts.count == 2)
+        #expect(savedSizes.count == 2)
+    }
+
     @Test func manualClosetEntryRequiresMeasurementSource() {
         let viewModel = AddClosetItemViewModel()
         viewModel.brand = "테스트"
         viewModel.productName = "반팔 티셔츠"
         viewModel.shoulder = "48"
+        viewModel.measurementEntrySource = nil
 
         #expect(!viewModel.canSave)
 
         viewModel.measurementEntrySource = .fitmatchMeasured
 
         #expect(viewModel.canSave)
+    }
+
+    @Test func uniqloClosetSourceOffersOnlyUniqloChartAndDirectMeasurement() {
+        let viewModel = AddClosetItemViewModel()
+
+        viewModel.selectProductSource(.uniqlo)
+
+        #expect(viewModel.sourceType == .officialStore)
+        #expect(viewModel.sourceName == "유니클로 공식몰")
+        #expect(viewModel.measurementEntrySource == .uniqloSizeChart)
+        #expect(viewModel.measurementEntrySourceOptions == [.uniqloSizeChart, .fitmatchMeasured])
+        #expect(!viewModel.measurementEntrySourceOptions.contains(.otherSizeChart))
+    }
+
+    @Test func musinsaClosetSourceOffersOnlyMusinsaChartAndDirectMeasurement() {
+        let viewModel = AddClosetItemViewModel()
+
+        viewModel.selectProductSource(.musinsa)
+
+        #expect(viewModel.sourceType == .marketplace)
+        #expect(viewModel.sourceName == "무신사")
+        #expect(viewModel.measurementEntrySource == .musinsaSizeChart)
+        #expect(viewModel.measurementEntrySourceOptions == [.musinsaSizeChart, .fitmatchMeasured])
+        #expect(!viewModel.measurementEntrySourceOptions.contains(.otherSizeChart))
+    }
+
+    @Test func manualClosetSourceAutomaticallyUsesFitMatchMeasurement() {
+        let viewModel = AddClosetItemViewModel()
+
+        viewModel.selectProductSource(.manual)
+
+        #expect(viewModel.sourceType == .manual)
+        #expect(viewModel.measurementEntrySource == .fitmatchMeasured)
+        #expect(viewModel.measurementEntrySourceOptions == [.fitmatchMeasured])
+        #expect(viewModel.skipsMeasurementSourceSelection)
+    }
+
+    @Test func manualClosetSourceStoresFitMatchStandardVersion() throws {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.selectProductSource(.manual)
+        viewModel.brand = "테스트"
+        viewModel.productName = "반팔 티셔츠"
+        viewModel.shoulder = "48"
+        viewModel.chest = "54"
+
+        let item = try #require(viewModel.makeUserFit())
+
+        #expect(!item.measurementRecords.isEmpty)
+        #expect(item.measurementRecords.allSatisfy { $0.standardVersion == "fitmatch_standard_v1" })
+        #expect(item.measurementRecords.allSatisfy { $0.methodSource == "fitmatch" })
+    }
+
+    @Test func editingLegacyOtherSizeChartPreservesMeasurementSource() throws {
+        let original = try #require(manualMeasurementViewModel(source: .otherSizeChart).makeUserFit())
+        let editViewModel = AddClosetItemViewModel(item: original)
+
+        #expect(editViewModel.measurementEntrySource == .otherSizeChart)
+        #expect(editViewModel.measurementEntrySourceOptions.contains(.otherSizeChart))
+
+        let edited = try #require(editViewModel.makeUserFit())
+        #expect(MeasurementEntrySource.infer(from: edited.measurementRecords) == .otherSizeChart)
+        #expect(edited.measurementRecords.allSatisfy { $0.methodSource == "other_size_chart" })
+        #expect(edited.measurementRecords.allSatisfy { $0.methodProfile == "other_size_chart_manual:29CM" })
     }
 
     @Test func fitmatchMeasuredEntryCreatesComparableStandardRecords() {
@@ -1804,14 +2088,22 @@ struct FitMatchTests {
         let byKind = Dictionary(uniqueKeysWithValues: (item?.measurementRecords ?? []).compactMap { record in
             record.displayKind.map { ($0, record) }
         })
+        let shoulderCode = byKind[.shoulder]?.measurementCode
+        let chestCode = byKind[.chest]?.measurementCode
+        let totalLengthCode = byKind[.totalLength]?.measurementCode
+        let sleeveCode = byKind[.sleeveLength]?.measurementCode
+        let recordsAreComparable = (item?.measurementRecords ?? []).allSatisfy(\.isComparable)
+        let recordsUseFitMatchStandard = (item?.measurementRecords ?? []).allSatisfy {
+            $0.standardVersion == FitMatchMeasurementStandard.version
+        }
 
         #expect(item?.measurementInputSourceRawValue == MeasurementInputSource.userMeasured.rawValue)
-        #expect(byKind[.shoulder]?.measurementCode == .shoulderWidthSeamToSeam)
-        #expect(byKind[.chest]?.measurementCode == .chestWidthPitToPit)
-        #expect(byKind[.totalLength]?.measurementCode == .bodyLengthHPSToHemFront)
-        #expect(byKind[.sleeveLength]?.measurementCode == .sleeveShoulderSeamToCuff)
-        #expect((item?.measurementRecords ?? []).allSatisfy(\.isComparable))
-        #expect((item?.measurementRecords ?? []).allSatisfy { $0.standardVersion == FitMatchMeasurementStandard.version })
+        #expect(shoulderCode == .shoulderWidthSeamToSeam)
+        #expect(chestCode == .chestWidthPitToPit)
+        #expect(totalLengthCode == .bodyLengthHPSToHemFront)
+        #expect(sleeveCode == .sleeveShoulderSeamToCuff)
+        #expect(recordsAreComparable)
+        #expect(recordsUseFitMatchStandard)
     }
 
     @Test func directMeasurementStandardDefinesEveryMeasurementKind() {
