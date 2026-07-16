@@ -6,6 +6,7 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Compare flow sheets now receive the root TabBarVisibilityController, preventing RecommendationResultView environment-object crashes; DEBUG logs identify Korean screen/action/status transitions.
 - Selecting Uniqlo or Musinsa in new Closet registration now defaults measurement input to that platform's size chart; direct registration still defaults to FitMatch measurement.
 - Simplified new Closet registration to Uniqlo official store, Musinsa, or direct registration with source-specific measurement choices.
 - Direct registration now skips measurement-source selection and stores FitMatch-standard measurement records; legacy `otherSizeChart` remains editable without conversion.
@@ -94,6 +95,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Compare sheet environment injection and Korean DEBUG transition logs passed the generic iOS device Debug build and protected-scroll diff checks.
 - Closet source UX and repeated-comparison changes passed the generic iOS Simulator Debug build, test-target build, and `git diff --check`; selected simulator tests were stopped after the test runner did not return results.
 - Musinsa canonical-URL fast-path and request timeout changes passed the generic iOS Simulator Debug build and `git diff --check`.
 - Recompare deterministic-size regression coverage was added; the app Debug build succeeded, while test execution is blocked by a pre-existing Swift Testing macro compile error in `fitmatchMeasuredEntryCreatesComparableStandardRecords`.

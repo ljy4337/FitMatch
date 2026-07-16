@@ -903,6 +903,9 @@ private struct MainTabView: View {
             tabBarVisibilityController.release(tab: selectedTab, reason: .scrolling, source: "tab changed")
         }
         .onChange(of: compareViewID) { _, _ in
+            #if DEBUG
+            print("[화면: 홈/기록][동작: 상품 비교 요청][상태: 시작] URL포함=\(compareURL != nil)")
+            #endif
             presentCompareFlow(initialURL: compareURL)
             onCompareURLConsumed()
         }
@@ -926,6 +929,7 @@ private struct MainTabView: View {
                 NavigationStack {
                     CompareFlowSheet(initialURL: request.initialURL)
                 }
+                .environmentObject(tabBarVisibilityController)
                 .presentationDetents([.height(640), .large])
                 .presentationDragIndicator(.visible)
             case .closetAddMethod:
@@ -1041,12 +1045,17 @@ private struct MainTabView: View {
     }
 
     private func presentCompareFlow(initialURL: String?) {
-        print("[MainTabView] activeSheet -> compareFlow, initialURL: \(initialURL ?? "nil")")
+        #if DEBUG
+        print("[화면: 상품 비교][동작: 비교 시트 열기][상태: 요청] URL포함=\(initialURL != nil), 탭=\(selectedTab.logName)")
+        #endif
         tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
         activeSheet = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
             activeSheet = .compareFlow(CompareFlowRequest(initialURL: initialURL))
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 비교 시트 열기][상태: 완료] 탭바환경객체=전달됨")
+            #endif
         }
     }
 

@@ -854,6 +854,9 @@ private extension CompareFlowSheet {
         let didLoad = await viewModel.loadProductInfoFromURL()
         guard didLoad else {
             errorMessage = viewModel.errorMessage ?? "상품 정보를 불러오지 못했어요. URL을 다시 확인해 주세요."
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 상품 분석][상태: 실패] 오류=\(errorMessage ?? "알 수 없음")")
+            #endif
             setStep(.error)
             return
         }
@@ -868,6 +871,9 @@ private extension CompareFlowSheet {
         print("[CompareFlowSheet] category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] detailCategory: \(viewModel.detailCategory.rawValue)")
         print("[CompareFlowSheet] automaticMatchState before user confirmation: \(String(describing: automaticMatchResult?.state))")
+        #if DEBUG
+        print("[화면: 상품 비교][동작: 상품 분석][상태: 성공] 상품=\(product.name), 출처=\(product.sourceDisplayName), 사이즈수=\(product.sizes.count), 분류=\(viewModel.category.rawValue)/\(viewModel.detailCategory.rawValue)")
+        #endif
 
         let historyMatches = SourceCategoryHistoryMatcher.matches(
             for: product,
@@ -971,8 +977,14 @@ private extension CompareFlowSheet {
 
         do {
             try saveUniqueHistory(history)
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 추천 기록 저장][상태: 성공] 상품=\(history.product.name), 추천사이즈=\(history.recommendedSize.name), 기준옷=\(history.userFit.displayName)")
+            #endif
             setStep(.result(history))
         } catch {
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 추천 기록 저장][상태: 실패] 오류=\(error.localizedDescription), 상품=\(history.product.name)")
+            #endif
             errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
             setStep(.error)
         }
@@ -1011,8 +1023,14 @@ private extension CompareFlowSheet {
 
         do {
             try saveUniqueHistory(history)
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 성공] 상품=\(history.product.name), 추천사이즈=\(history.recommendedSize.name), 기준옷=\(history.userFit.displayName)")
+            #endif
             setStep(.result(history))
         } catch {
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 실패] 오류=\(error.localizedDescription), 상품=\(history.product.name)")
+            #endif
             errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
             setStep(.error)
         }
@@ -1094,7 +1112,9 @@ private extension CompareFlowSheet {
     }
 
     func setStep(_ newStep: CompareFlowStep) {
-        print("[CompareFlowSheet] step -> \(newStep.logName)")
+        #if DEBUG
+        print("[화면: 상품 비교][동작: 단계 전환][상태: 완료] 이전=\(step.koreanLogName), 다음=\(newStep.koreanLogName)")
+        #endif
         withAnimation(.snappy(duration: 0.22)) {
             step = newStep
         }
@@ -1137,6 +1157,20 @@ private enum CompareFlowStep: Equatable {
         case .insufficientEvidence: return "insufficientEvidence"
         case .result: return "result"
         case .error: return "error"
+        }
+    }
+
+    var koreanLogName: String {
+        switch self {
+        case .start: return "비교 시작"
+        case .loading: return "상품 분석"
+        case .categoryConfirmation: return "분류 확인"
+        case .missingReference: return "비교 옷 없음"
+        case .closetSelection: return "내 옷 선택"
+        case .confirmReference: return "비교 옷 확인"
+        case .insufficientEvidence: return "실측 정보 부족"
+        case .result: return "비교 결과"
+        case .error: return "오류"
         }
     }
 }

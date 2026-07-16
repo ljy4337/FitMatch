@@ -101,6 +101,9 @@ struct RecommendationResultView: View {
                 Button("확인", role: .cancel) {}
             }
             .onAppear {
+                #if DEBUG
+                print("[화면: 비교 결과][동작: 결과 화면 진입][상태: 성공] 상품=\(currentResult.product.name), 추천사이즈=\(currentResult.recommendedSize.name), 기준옷=\(currentResult.userFit.displayName)")
+                #endif
                 tabBarVisibilityController.hide(reason: .navigationDetail, source: "recommendation result")
                 guard opensReferencePickerOnAppear, !didOpenInitialReferencePicker else {
                     return
@@ -112,6 +115,9 @@ struct RecommendationResultView: View {
                 }
             }
             .onDisappear {
+                #if DEBUG
+                print("[화면: 비교 결과][동작: 결과 화면 종료][상태: 완료]")
+                #endif
                 tabBarVisibilityController.release(reason: .navigationDetail, source: "recommendation result disappear")
             }
         }
