@@ -18,6 +18,9 @@ struct CompareFlowSheet: View {
     @State private var statusMessage: String?
     @State private var registrationRoute: CompareProductRegistrationRoute?
     @State private var isShowingRegistrationSavedAlert = false
+    @State private var insufficientEvidence: InsufficientComparisonEvidence?
+    @State private var isShowingMeasurementGuide = false
+    @State private var isShowingReferenceComparison = false
     @State private var hasConfirmedComparisonCategory = false
     @State private var isSheetHeaderVisible = true
     @FocusState private var isURLFocused: Bool
@@ -53,6 +56,8 @@ struct CompareFlowSheet: View {
                     closetSelectionContent
                 case .confirmReference:
                     confirmReferenceContent
+                case .insufficientEvidence:
+                    insufficientEvidenceContent
                 case .result:
                     EmptyView()
                 case .error:
@@ -89,6 +94,11 @@ struct CompareFlowSheet: View {
         }
         .alert("내 옷장에 추가했어요.", isPresented: $isShowingRegistrationSavedAlert) {
             Button("확인", role: .cancel) {}
+        }
+        .sheet(isPresented: $isShowingMeasurementGuide) {
+            MeasurementMethodGuideSheet(missingKinds: insufficientEvidence?.missingKinds ?? [])
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -357,6 +367,126 @@ private extension CompareFlowSheet {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 20)
+    }
+
+    @ViewBuilder
+    var insufficientEvidenceContent: some View {
+        if let evidence = insufficientEvidence {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(spacing: 12) {
+                    Text("추천 결과 아님")
+                        .font(.caption.weight(.black))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.orange.opacity(0.14), in: Capsule())
+                        .foregroundStyle(.orange)
+
+                    Image(systemName: "ruler")
+                        .font(.system(size: 40, weight: .semibold))
+                        .frame(width: 82, height: 82)
+                        .background(Color(.secondarySystemGroupedBackground), in: Circle())
+
+                    Text("추천하기에 실측 정보가 부족해요")
+                        .font(.title2.weight(.black))
+                        .multilineTextAlignment(.center)
+
+                    Text("호환 가능한 실측은 \(evidence.comparedKinds.count)개이며, 확정 추천에는 최소 \(evidence.comparisonResult.minimumComparableCount)개가 필요합니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity)
+
+                FitMatchCard {
+                    VStack(alignment: .leading, spacing: 14) {
+                        CompareSheetSectionTitle(
+                            title: "확인된 비교 근거",
+                            subtitle: "이 정보만으로는 사이즈를 추천하지 않습니다."
+                        )
+
+                        Text("기준 옷 · \(evidence.referenceItem.displayName) / \(evidence.referenceItem.sizeName)")
+                            .font(.subheadline.weight(.semibold))
+
+                        if evidence.comparedKinds.isEmpty {
+                            Text("동일한 측정 기준으로 비교할 수 있는 항목이 없습니다.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text(evidence.comparedKinds.map(\.title).joined(separator: " · "))
+                                .font(.subheadline.weight(.bold))
+                        }
+
+                        ForEach(evidence.comparisonResult.exclusions, id: \.kind) { exclusion in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("\(exclusion.kind.title) · 비교 제외")
+                                    .font(.subheadline.weight(.semibold))
+                                Text(exclusion.reason.userMessage)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                if isShowingReferenceComparison {
+                    referenceOnlyComparisonCard(evidence)
+                }
+
+                VStack(spacing: 11) {
+                    PrimaryButton(title: "측정 방법 보기", systemImage: "ruler") {
+                        isShowingMeasurementGuide = true
+                    }
+
+                    SecondaryButton(
+                        title: isShowingReferenceComparison ? "참고용 비교 접기" : "참고용 비교 보기",
+                        systemImage: "eye"
+                    ) {
+                        withAnimation(.easeInOut(duration: 0.22)) {
+                            isShowingReferenceComparison.toggle()
+                        }
+                    }
+
+                    SecondaryButton(title: "다른 옷으로 비교", systemImage: "tshirt") {
+                        selectedReferenceItemID = nil
+                        setStep(.closetSelection)
+                    }
+                }
+            }
+        }
+    }
+
+    func referenceOnlyComparisonCard(_ evidence: InsufficientComparisonEvidence) -> some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 14) {
+                CompareSheetSectionTitle(
+                    title: "참고용 비교",
+                    subtitle: "가장 많은 항목을 확인할 수 있었던 \(evidence.productSize.name.displaySizeName) 사이즈입니다. 추천 사이즈가 아닙니다."
+                )
+
+                if evidence.comparisonResult.comparedItems.isEmpty {
+                    Text("수치로 참고할 수 있는 항목이 없습니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(evidence.comparisonResult.comparedItems, id: \.kind) { item in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(item.kind.title)
+                                    .font(.subheadline.weight(.semibold))
+                                Text("상품 \(item.productValue.cmText) · 내 옷 \(item.referenceValue.cmText)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Text(item.signedDifference.signedCmText)
+                                .font(.subheadline.weight(.black))
+                                .monospacedDigit()
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -633,6 +763,8 @@ private extension CompareFlowSheet {
         viewModel.productURL = trimmedURL
         errorMessage = nil
         statusMessage = nil
+        insufficientEvidence = nil
+        isShowingReferenceComparison = false
         hasConfirmedComparisonCategory = false
         setStep(.loading)
 
@@ -729,8 +861,19 @@ private extension CompareFlowSheet {
             productDetailCategory: viewModel.detailCategory,
             allowsGlobalFallback: false
         ) else {
-            errorMessage = "비교할 수 있는 실측 정보가 부족합니다."
-            setStep(.error)
+            insufficientEvidence = RecommendationService().insufficientEvidence(
+                product: product,
+                userFits: userFits,
+                productDetailCategory: viewModel.detailCategory,
+                allowsGlobalFallback: false
+            )
+            if insufficientEvidence != nil {
+                isShowingReferenceComparison = false
+                setStep(.insufficientEvidence)
+            } else {
+                errorMessage = "비교할 수 있는 실측 정보가 부족합니다."
+                setStep(.error)
+            }
             return
         }
 
@@ -749,14 +892,28 @@ private extension CompareFlowSheet {
             modelContext.insert(brand)
         }
 
-        guard let product = makeProduct(insertBrandIfNeeded: true),
-              let history = RecommendationService().recommend(
+        guard let product = makeProduct(insertBrandIfNeeded: true) else {
+            errorMessage = "상품명과 사이즈표를 확인해 주세요."
+            setStep(.error)
+            return
+        }
+        guard let history = RecommendationService().recommend(
                 product: product,
                 selectedReferenceItem: selectedReferenceItem,
                 productDetailCategory: viewModel.detailCategory
               ) else {
-            errorMessage = "비교할 수 있는 실측 정보가 부족합니다."
-            setStep(.error)
+            insufficientEvidence = RecommendationService().insufficientEvidence(
+                product: product,
+                selectedReferenceItem: selectedReferenceItem,
+                productDetailCategory: viewModel.detailCategory
+            )
+            if insufficientEvidence != nil {
+                isShowingReferenceComparison = false
+                setStep(.insufficientEvidence)
+            } else {
+                errorMessage = "비교할 수 있는 실측 정보가 부족합니다."
+                setStep(.error)
+            }
             return
         }
 
@@ -869,6 +1026,7 @@ private enum CompareFlowStep: Equatable {
     case missingReference
     case closetSelection
     case confirmReference
+    case insufficientEvidence
     case result(RecommendationHistory)
     case error
 
@@ -884,6 +1042,7 @@ private enum CompareFlowStep: Equatable {
         case .missingReference: return "missingReference"
         case .closetSelection: return "closetSelection"
         case .confirmReference: return "confirmReference"
+        case .insufficientEvidence: return "insufficientEvidence"
         case .result: return "result"
         case .error: return "error"
         }
@@ -1077,6 +1236,79 @@ private struct ClosetReferenceChoiceCard: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+}
+
+private struct MeasurementMethodGuideSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let missingKinds: [MeasurementKind]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text("추가로 확인하면 좋아요")
+                            .font(.title2.weight(.black))
+                        Text("기준 옷을 평평하게 놓고 FitMatch 기준으로 측정하면 비교 가능한 항목을 늘릴 수 있습니다.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    ForEach(uniqueMissingKinds) { kind in
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "ruler")
+                                .font(.subheadline.weight(.bold))
+                                .frame(width: 34, height: 34)
+                                .background(.primary.opacity(0.08), in: Circle())
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(kind.title)
+                                    .font(.subheadline.weight(.bold))
+                                Text(guideText(for: kind))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .padding(14)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                }
+                .padding(20)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("측정 방법")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("완료") { dismiss() }
+                        .font(.subheadline.weight(.bold))
+                }
+            }
+        }
+    }
+
+    private var uniqueMissingKinds: [MeasurementKind] {
+        var seen = Set<MeasurementKind>()
+        return missingKinds.filter { seen.insert($0).inserted }
+    }
+
+    private func guideText(for kind: MeasurementKind) -> String {
+        switch kind {
+        case .shoulder: return "양쪽 어깨 봉제선 사이를 측정해 주세요."
+        case .chest: return "겨드랑이 바로 아래 양쪽 끝 사이를 측정해 주세요."
+        case .totalLength: return "가장 높은 어깨점부터 앞 밑단까지 측정해 주세요."
+        case .sleeveLength: return "어깨 봉제선부터 소매 끝까지 측정해 주세요."
+        case .waist: return "허리단 양쪽 끝 사이를 측정해 주세요."
+        case .hip: return "엉덩이에서 가장 넓은 지점의 양쪽 끝 사이를 측정해 주세요."
+        case .thigh: return "가랑이점부터 바깥쪽 끝까지 측정해 주세요."
+        case .rise: return "앞 가랑이점부터 허리단 위까지 측정해 주세요."
+        case .hem: return "밑단 양쪽 끝 사이를 측정해 주세요."
+        case .footLength: return "뒤꿈치 끝부터 발가락 끝까지 측정해 주세요."
+        case .underBust: return "밑가슴 밴드 양쪽 끝 사이를 측정해 주세요."
         }
     }
 }

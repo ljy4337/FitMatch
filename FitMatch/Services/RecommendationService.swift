@@ -8,6 +8,20 @@ struct FitMatchCandidate: Identifiable {
     let selectionReason: String
 }
 
+struct InsufficientComparisonEvidence {
+    let productSize: ProductSize
+    let referenceItem: UserFit
+    let comparisonResult: MeasurementComparisonResult
+
+    var comparedKinds: [MeasurementKind] {
+        comparisonResult.comparedKinds
+    }
+
+    var missingKinds: [MeasurementKind] {
+        comparisonResult.exclusions.map(\.kind)
+    }
+}
+
 struct RecommendationService {
     private let comparisonMatcher = ComparisonProfileMatcher()
     private let measurementComparisonEngine = MeasurementComparisonEngine()
@@ -34,6 +48,50 @@ struct RecommendationService {
             userFits: sortedFits,
             productDetailCategory: productDetailCategory,
             basis: basis
+        )
+    }
+
+    func insufficientEvidence(
+        product: Product,
+        userFits: [UserFit],
+        productDetailCategory: ClosetDetailCategory = .other,
+        allowsGlobalFallback: Bool = true
+    ) -> InsufficientComparisonEvidence? {
+        let profileResult = comparisonMatcher.match(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        )
+        let candidates = profileResult.compatibleCandidates.isEmpty && allowsGlobalFallback
+            ? comparisonMatcher.manualCandidates(
+                product: product,
+                productDetailCategory: productDetailCategory,
+                userFits: userFits
+            )
+            : profileResult.compatibleCandidates
+        return bestInsufficientEvidence(
+            product: product,
+            userFits: candidates,
+            productDetailCategory: productDetailCategory,
+            excludedKinds: []
+        )
+    }
+
+    func insufficientEvidence(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory
+    ) -> InsufficientComparisonEvidence? {
+        let mismatch = comparisonMatcher.manualMismatch(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            selectedItem: selectedReferenceItem
+        )
+        return bestInsufficientEvidence(
+            product: product,
+            userFits: [selectedReferenceItem],
+            productDetailCategory: productDetailCategory,
+            excludedKinds: mismatch.excludedKinds
         )
     }
 
@@ -79,10 +137,13 @@ struct RecommendationService {
             productDetailCategory: productDetailCategory,
             userFits: profileResult.compatibleCandidates
         ).prefix(3))
+        let candidates = ranked.isEmpty
+            ? profileResult.compatibleCandidates
+            : ranked.map(\.userFit)
         return AutomaticComparisonMatchResult(
-            state: ranked.isEmpty ? .noCompatibleGarment : .compatible,
+            state: .compatible,
             incomingProfile: profileResult.incomingProfile,
-            compatibleCandidates: ranked.map(\.userFit)
+            compatibleCandidates: candidates
         )
     }
 
@@ -215,6 +276,46 @@ struct RecommendationService {
         }
 
         return bestHistory
+    }
+
+    private func bestInsufficientEvidence(
+        product: Product,
+        userFits: [UserFit],
+        productDetailCategory: ClosetDetailCategory,
+        excludedKinds: [MeasurementKind]
+    ) -> InsufficientComparisonEvidence? {
+        var bestEvidence: InsufficientComparisonEvidence?
+
+        for size in product.sizes.sorted(by: { $0.displayOrder < $1.displayOrder })
+        where !size.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            for userFit in userFits {
+                let result = measurementComparisonEngine.compare(
+                    productSize: size,
+                    referenceItem: userFit,
+                    productCategory: product.category,
+                    productDetailCategory: productDetailCategory,
+                    excludedKinds: excludedKinds
+                )
+                guard result.status == .insufficientEvidence else { continue }
+
+                let candidate = InsufficientComparisonEvidence(
+                    productSize: size,
+                    referenceItem: userFit,
+                    comparisonResult: result
+                )
+                guard let current = bestEvidence else {
+                    bestEvidence = candidate
+                    continue
+                }
+                if result.comparedItems.count > current.comparisonResult.comparedItems.count
+                    || (result.comparedItems.count == current.comparisonResult.comparedItems.count
+                        && result.score > current.comparisonResult.score) {
+                    bestEvidence = candidate
+                }
+            }
+        }
+
+        return bestEvidence
     }
 
     func hasRelevantClosetItem(

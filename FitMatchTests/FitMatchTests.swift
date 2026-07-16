@@ -683,6 +683,83 @@ struct FitMatchTests {
         #expect(history == nil)
     }
 
+    @Test func insufficientRecommendationReturnsUnsavedReferenceEvidence() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 47,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let product = Product(name: "유니클로 티셔츠", category: .top, sizes: [size])
+        let item = comparisonItem(
+            shoulder: 48,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let service = RecommendationService()
+        let history = service.recommend(
+            product: product,
+            selectedReferenceItem: item,
+            productDetailCategory: .shortSleeve
+        )
+        let evidence = service.insufficientEvidence(
+            product: product,
+            selectedReferenceItem: item,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(history == nil)
+        #expect(evidence?.comparisonResult.status == .insufficientEvidence)
+        #expect(evidence?.comparedKinds == [.shoulder])
+        #expect(evidence?.comparisonResult.minimumComparableCount == 2)
+        #expect(evidence?.comparisonResult.exclusions.contains {
+            $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode
+        } == true)
+    }
+
+    @Test func automaticFlowKeepsProfileCompatibleItemForInsufficientEvidenceScreen() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 47,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let product = Product(name: "유니클로 티셔츠", category: .top, sizes: [size])
+        let item = comparisonItem(
+            shoulder: 48,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let service = RecommendationService()
+
+        let match = service.automaticMatchResult(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [item]
+        )
+        let history = service.recommend(
+            product: product,
+            userFits: [item],
+            productDetailCategory: .shortSleeve,
+            allowsGlobalFallback: false
+        )
+        let evidence = service.insufficientEvidence(
+            product: product,
+            userFits: [item],
+            productDetailCategory: .shortSleeve,
+            allowsGlobalFallback: false
+        )
+
+        #expect(match.state == .compatible)
+        #expect(match.compatibleCandidates.map(\.id) == [item.id])
+        #expect(history == nil)
+        #expect(evidence?.referenceItem.id == item.id)
+        #expect(evidence?.comparisonResult.status == .insufficientEvidence)
+    }
+
     @Test func recommendationStoresUsedCodesAndExclusionReasons() {
         let size = comparisonSize(
             shoulder: 50,
