@@ -47,12 +47,12 @@ struct HomeView: View {
     private var closetDashboardSection: some View {
         CardView(radius: 22, padding: 18) {
             VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(title: "내 옷장 현황", subtitle: "등록된 옷과 분류를 한눈에 확인하세요")
+                SectionHeader(title: "내 옷장 현황", subtitle: "상품 비교에 활용할 수 있는 옷을 확인하세요")
 
                 HStack(spacing: 10) {
-                    HomeClosetStat(title: "전체 옷", value: userFits.count)
-                    HomeClosetStat(title: "기준 옷", value: referenceFitCount)
-                    HomeClosetStat(title: "카테고리", value: closetCategoryCount)
+                    HomeClosetStat(title: "등록된 옷", value: userFits.count)
+                    HomeClosetStat(title: "비교 상의", value: comparableTopCount)
+                    HomeClosetStat(title: "비교 하의", value: comparableBottomCount)
                 }
 
                 Button(action: onOpenCloset) {
@@ -105,6 +105,35 @@ struct HomeView: View {
                     }
                     .padding(.vertical, 2)
                 }
+            } else {
+                Button(action: onStartCompare) {
+                    CardView(radius: 22, padding: 18) {
+                        HStack(spacing: 14) {
+                            Image(systemName: "arrow.left.arrow.right")
+                                .font(.title3.weight(.bold))
+                                .frame(width: 44, height: 44)
+                                .background(.primary.opacity(0.07), in: Circle())
+
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("첫 상품을 비교해 보세요")
+                                    .font(.headline.weight(.bold))
+                                Text("상품 링크를 가져오면 내 옷과 맞는 사이즈를 찾아드려요.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            Spacer(minLength: 4)
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("첫 상품 비교 시작하기")
             }
         }
     }
@@ -146,12 +175,15 @@ struct HomeView: View {
         }
     }
 
-    private var referenceFitCount: Int {
-        userFits.filter(\.isRepresentative).count
+    private var comparableTopCount: Int {
+        userFits.filter { $0.resolvedCategoryCode == "tops" }.count
     }
 
-    private var closetCategoryCount: Int {
-        Set(userFits.map { $0.detailCategory.rawValue }).count
+    private var comparableBottomCount: Int {
+        userFits.filter {
+            $0.resolvedCategoryCode == "bottoms"
+                || $0.resolvedCategoryCode == "leggings"
+        }.count
     }
 
 }
@@ -449,18 +481,19 @@ struct RecentProductPreviewCard: View {
 
     private var carouselContent: some View {
         VStack(alignment: .leading, spacing: 12) {
+            resultSummary
+
             ProductThumbnailView(
                 imageURLString: history.product.imageURLString,
                 category: history.product.category,
                 width: 178,
-                height: 178,
+                height: 112,
                 cornerRadius: 18
             )
 
             productText
 
             HStack {
-                fitSummary
                 Spacer()
                 recompareButton
             }
@@ -514,6 +547,34 @@ struct RecentProductPreviewCard: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var resultSummary: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("추천 사이즈")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+                Text(history.recommendedSize.name.displaySizeName)
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(.primary)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("핏 매칭률")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+                Text("\(history.recommendationScore)%")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(.primary)
+                    .monospacedDigit()
+            }
+        }
+        .padding(12)
+        .padding(.trailing, 30)
+        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var favoriteButton: some View {

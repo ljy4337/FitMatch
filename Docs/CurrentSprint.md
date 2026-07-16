@@ -63,7 +63,7 @@ Uniqlo
 - Standardized all confirmed Closet-add action buttons to `내 옷장에 추가` while preserving navigation, save behavior, and distinct method-selection labels.
 
 ## Current Task
-- First-launch onboarding and detailed usage guide
+- Home dashboard UX refinement
 
 ## Remaining Bugs
 - Compare's source-category fallback still exposes compatibility enum bindings; it should adopt stable-code state when the compare ViewModel persistence contract is migrated.
@@ -84,6 +84,7 @@ Uniqlo
 - No commit or push performed in the latest task.
 
 ## Verification
+- Home dashboard now prioritizes comparison-ready closet counts, a full-card recent-comparison empty CTA, and result-first recent cards; the generic iOS Simulator Debug build and `git diff --check` passed.
 - First-launch onboarding, replay presentation, and accordion usage guide passed the generic iOS Simulator build and `git diff --check`.
 - MY settings navigation and usage guide passed the generic iOS Simulator build and `git diff --check`.
 - Protected scroll modifier call sites have no added or removed lines from this task.
