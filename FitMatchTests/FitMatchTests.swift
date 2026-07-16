@@ -503,10 +503,10 @@ struct FitMatchTests {
         #expect(sleeve?.rawInfo == "목 중심부터 소매 끝")
         #expect(inseam?.measurementCode == .pantsInseamCrotchToHem)
         #expect(inseam?.displayKind == .totalLength)
-        #expect(chest?.measurementCode == .chestWidthUniqloBodyWidth)
+        #expect(chest?.measurementCode == .chestWidthPitToPit)
         #expect(chest?.semanticStatus == .mapped)
-        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v3")
-        #expect(length?.measurementCode == .bodyLengthUniqloBack)
+        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v4")
+        #expect(length?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(length?.semanticStatus == .mapped)
         #expect(records.allSatisfy { $0.methodSource == "uniqlo_kr" })
 
@@ -609,8 +609,8 @@ struct FitMatchTests {
 
         #expect(chest?.measurementCode == .chestWidthPitToPit)
         #expect(chest?.evidenceLevel == .officialDiagram)
-        #expect(chest?.mappingVersion == "musinsa_actual_size_mapping_v3")
-        #expect(length?.measurementCode == .bodyLengthMusinsaType5)
+        #expect(chest?.mappingVersion == "musinsa_actual_size_mapping_v4")
+        #expect(length?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(length?.semanticStatus == .mapped)
 
         let productSize = ParsedProductSizeNormalizer.makeProductSizes(from: result.sizes)[0]
@@ -657,19 +657,19 @@ struct FitMatchTests {
         #expect(verifiedMusinsa?.code == .shoulderWidthSeamToSeam)
         #expect(verifiedMusinsa?.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
         #expect(verifiedMusinsaChest?.code == .chestWidthPitToPit)
-        #expect(verifiedMusinsaLength?.code == .bodyLengthMusinsaType5)
+        #expect(verifiedMusinsaLength?.code == .bodyLengthBackNeckToHem)
         #expect(unknownMusinsaType == nil)
         #expect(verifiedUniqloSleeve?.code == .sleeveCenterBackToCuff)
         #expect(verifiedUniqloSleeve?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
-        #expect(verifiedUniqloChest?.code == .chestWidthUniqloBodyWidth)
-        #expect(verifiedUniqloChest?.code != verifiedMusinsaChest?.code)
+        #expect(verifiedUniqloChest?.code == .chestWidthPitToPit)
+        #expect(verifiedUniqloChest?.code == verifiedMusinsaChest?.code)
         #expect(verifiedUniqloLengths == [
-            .bodyLengthUniqloBack,
-            .bodyLengthUniqloShirt,
-            .bodyLengthUniqloKnitFront
+            .bodyLengthBackNeckToHem,
+            .bodyLengthBackNeckToHem,
+            .bodyLengthBackNeckToHem
         ])
-        #expect(Set(verifiedMusinsaLengths).count == 3)
-        #expect(Set(verifiedUniqloLengths).count == 3)
+        #expect(Set(verifiedMusinsaLengths) == [.bodyLengthBackNeckToHem])
+        #expect(Set(verifiedUniqloLengths) == [.bodyLengthBackNeckToHem])
     }
 
     @Test func parsedMeasurementsBecomeOwnedProductSizeRecords() {
@@ -1418,15 +1418,15 @@ struct FitMatchTests {
         #expect(ranked.first?.userFit.id == closerOtherBrand.id)
     }
 
-    @Test func musinsaAndUniqloUpperMeasurementsDoNotMixDifferentDefinitions() {
+    @Test func musinsaAndUniqloCompareCommonUpperMeasurementsButExcludeSleeve() {
         let uniqloSize = comparisonSize(
             shoulder: 50,
             sleeve: 47,
             shoulderCode: .shoulderWidthSeamToSeam,
             sleeveCode: .sleeveCenterBackToCuff
         )
-        setComparableCode(.chestWidthUniqloBodyWidth, for: .chest, in: uniqloSize.measurementRecords)
-        setComparableCode(.bodyLengthUniqloBack, for: .totalLength, in: uniqloSize.measurementRecords)
+        setComparableCode(.chestWidthPitToPit, for: .chest, in: uniqloSize.measurementRecords)
+        setComparableCode(.bodyLengthBackNeckToHem, for: .totalLength, in: uniqloSize.measurementRecords)
         let musinsaItem = comparisonItem(
             shoulder: 49,
             sleeve: 23,
@@ -1434,7 +1434,7 @@ struct FitMatchTests {
             sleeveCode: .sleeveShoulderSeamToCuff
         )
         setComparableCode(.chestWidthPitToPit, for: .chest, in: musinsaItem.measurementRecords)
-        setComparableCode(.bodyLengthMusinsaType5, for: .totalLength, in: musinsaItem.measurementRecords)
+        setComparableCode(.bodyLengthBackNeckToHem, for: .totalLength, in: musinsaItem.measurementRecords)
         let product = Product(name: "유니클로 반팔 티셔츠", category: .top, sizes: [uniqloSize])
         let service = RecommendationService()
 
@@ -1455,27 +1455,42 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(result.status == .insufficientEvidence)
-        #expect(result.comparedKinds == [.shoulder])
-        #expect(recommendation == nil)
-        #expect(evidence?.comparisonResult == result)
-        #expect(result.exclusions.contains {
-            $0.kind == .chest
-                && $0.reason == .incompatibleMeasurementCode
-                && $0.productCode == .chestWidthUniqloBodyWidth
-                && $0.referenceCode == .chestWidthPitToPit
-        })
-        #expect(result.exclusions.contains {
-            $0.kind == .totalLength
-                && $0.reason == .incompatibleMeasurementCode
-                && $0.productCode == .bodyLengthUniqloBack
-                && $0.referenceCode == .bodyLengthMusinsaType5
-        })
+        #expect(result.status == .confirmed)
+        #expect(result.comparedKinds == [.shoulder, .chest, .totalLength])
+        #expect(recommendation != nil)
+        #expect(evidence == nil)
         #expect(result.exclusions.contains {
             $0.kind == .sleeveLength
                 && $0.reason == .incompatibleMeasurementCode
                 && $0.productCode == .sleeveCenterBackToCuff
                 && $0.referenceCode == .sleeveShoulderSeamToCuff
+        })
+    }
+
+    @Test func identicalSetInSleeveCodesRemainComparable() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let item = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .top,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(result.comparedKinds.contains(.sleeveLength))
+        #expect(!result.exclusions.contains {
+            $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode
         })
     }
 
@@ -1487,7 +1502,7 @@ struct FitMatchTests {
             sleeveCode: .sleeveShoulderSeamToCuff
         )
         setComparableCode(.chestWidthPitToPit, for: .chest, in: size.measurementRecords)
-        setComparableCode(.bodyLengthMusinsaType5, for: .totalLength, in: size.measurementRecords)
+        setComparableCode(.bodyLengthBackNeckToHem, for: .totalLength, in: size.measurementRecords)
         let product = Product(name: "반팔 티셔츠", brand: Brand(name: "브랜드A"), category: .top, sizes: [size])
         let sameBrand = comparisonItem(
             shoulder: 49,
@@ -1504,7 +1519,7 @@ struct FitMatchTests {
         )
         compatibleOtherBrand.brandName = "브랜드B"
         setComparableCode(.chestWidthPitToPit, for: .chest, in: compatibleOtherBrand.measurementRecords)
-        setComparableCode(.bodyLengthMusinsaType5, for: .totalLength, in: compatibleOtherBrand.measurementRecords)
+        setComparableCode(.bodyLengthBackNeckToHem, for: .totalLength, in: compatibleOtherBrand.measurementRecords)
 
         let ranked = RecommendationService().rankedFitMatches(
             product: product,
@@ -2392,7 +2407,7 @@ struct FitMatchTests {
         #expect(viewModel.makeUserFit() != nil)
     }
 
-    @Test func uniqloTranscribedEntryKeepsSourceSpecificChestAndCenterBackSleeve() {
+    @Test func uniqloTranscribedEntryUsesCommonChestAndCenterBackSleeve() {
         let viewModel = manualMeasurementViewModel(source: .uniqloSizeChart)
 
         let item = viewModel.makeUserFit()
@@ -2402,11 +2417,11 @@ struct FitMatchTests {
         #expect(item?.measurementInputSourceRawValue == MeasurementInputSource.transcribedSizeChart.rawValue)
         #expect(sleeve?.measurementCode == .sleeveCenterBackToCuff)
         #expect(sleeve?.rawCode == "sleeve-length-cb")
-        #expect(chest?.measurementCode == .chestWidthUniqloBodyWidth)
+        #expect(chest?.measurementCode == .chestWidthPitToPit)
         #expect(chest?.rawCode == "body-width")
         #expect(chest?.rawValueText == "54")
         #expect(chest?.semanticStatus == .mapped)
-        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v3")
+        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v4")
     }
 
     @Test func musinsaTranscribedEntryRequiresExplicitSleeveMethodForMapping() {
@@ -2569,11 +2584,11 @@ struct FitMatchTests {
         #expect(byKind[.shoulder]?.measurementCode == .shoulderWidthSeamToSeam)
         #expect(byKind[.sleeveLength]?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect(byKind[.chest]?.measurementCode == .chestWidthPitToPit)
-        #expect(byKind[.totalLength]?.measurementCode == .bodyLengthMusinsaType5)
+        #expect(byKind[.totalLength]?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(byKind[.shoulder]?.isComparable == true)
         #expect(byKind[.chest]?.isComparable == true)
-        #expect(records.allSatisfy { $0.mappingVersion == "legacy_backfill_v4" })
-        #expect(MeasurementLegacyBackfillService.migrationVersion == 4)
+        #expect(records.allSatisfy { $0.mappingVersion == "legacy_backfill_v5" })
+        #expect(MeasurementLegacyBackfillService.migrationVersion == 5)
     }
 
     @Test func uniqloLegacyMeasurementsRemainUnknownWithoutRawCodes() {
@@ -2651,9 +2666,94 @@ struct FitMatchTests {
             .filter { $0.productSize?.id == size.id }
         #expect(savedRecords.count == 1)
         #expect(savedRecords.first?.id == canonicalRecord.id)
-        #expect(savedRecords.first?.measurementCode == .chestWidthUniqloBodyWidth)
-        #expect(savedRecords.first?.mappingVersion == "uniqlo_kr_size_chart_mapping_v3")
-        #expect(size.measurementMigrationVersion == 4)
+        #expect(savedRecords.first?.measurementCode == .chestWidthPitToPit)
+        #expect(savedRecords.first?.mappingVersion == "uniqlo_kr_size_chart_mapping_v4")
+        #expect(size.measurementMigrationVersion == 5)
+    }
+
+    @Test func migrationVersionFiveConvertsLegacyPlatformChestAndLengthsWithoutChangingSleeves() throws {
+        let container = try inMemoryModelContainer()
+        let context = ModelContext(container)
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
+        )
+        let product = Product(name: "기존 상품", category: .top, sourceName: "무신사", sizes: [size])
+        let item = comparisonItem(
+            shoulder: 48,
+            sleeve: 82,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+
+        func record(
+            code: MeasurementCode,
+            kind: MeasurementDisplayKind,
+            rawCode: String
+        ) -> GarmentMeasurementRecord {
+            GarmentMeasurementRecord(
+                value: 50,
+                measurementCode: code,
+                displayKind: kind,
+                methodSource: "preserved_source",
+                methodProfile: "preserved_profile",
+                inputSource: .importedSizeChart,
+                mappingVersion: "previous_mapping",
+                rawCode: rawCode,
+                rawLabel: "원본 \(rawCode)",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped
+            )
+        }
+
+        let sizeRecords = [
+            record(code: .chestWidthUniqloBodyWidth, kind: .chest, rawCode: "body-width"),
+            record(code: .bodyLengthMusinsaType5, kind: .totalLength, rawCode: "musinsa-5"),
+            record(code: .bodyLengthMusinsaType20, kind: .totalLength, rawCode: "musinsa-20"),
+            record(code: .bodyLengthMusinsaType21, kind: .totalLength, rawCode: "musinsa-21"),
+            record(code: .bodyLengthUniqloBack, kind: .totalLength, rawCode: "body-length-back"),
+            record(code: .bodyLengthUniqloShirt, kind: .totalLength, rawCode: "body-length"),
+            record(code: .bodyLengthUniqloKnitFront, kind: .totalLength, rawCode: "knit-body-length-front"),
+            record(code: .sleeveShoulderSeamToCuff, kind: .sleeveLength, rawCode: "musinsa-sleeve")
+        ]
+        size.measurementRecords = sizeRecords
+        sizeRecords.forEach { $0.productSize = size }
+        size.measurementMigrationVersion = 4
+        size.measurementMigrationStatus = .completed
+
+        let itemChest = record(code: .chestWidthUniqloBodyWidth, kind: .chest, rawCode: "body-width")
+        let itemLength = record(code: .bodyLengthUniqloBack, kind: .totalLength, rawCode: "body-length-back")
+        let itemSleeve = record(code: .sleeveCenterBackToCuff, kind: .sleeveLength, rawCode: "sleeve-length-cb")
+        item.measurementRecords = [itemChest, itemLength, itemSleeve]
+        item.measurementRecords.forEach { $0.userFit = item }
+        item.measurementMigrationVersion = 4
+        item.measurementMigrationStatus = .completed
+
+        context.insert(product)
+        context.insert(item)
+        try context.save()
+        try MeasurementLegacyBackfillService.run(
+            modelContext: context,
+            products: [product],
+            userFits: [item]
+        )
+
+        #expect(sizeRecords.first?.measurementCode == .chestWidthPitToPit)
+        #expect(sizeRecords.dropFirst().dropLast().allSatisfy {
+            $0.measurementCode == .bodyLengthBackNeckToHem
+        })
+        #expect(sizeRecords.last?.measurementCode == .sleeveShoulderSeamToCuff)
+        #expect(itemChest.measurementCode == .chestWidthPitToPit)
+        #expect(itemLength.measurementCode == .bodyLengthBackNeckToHem)
+        #expect(itemSleeve.measurementCode == .sleeveCenterBackToCuff)
+        #expect(sizeRecords.allSatisfy { $0.methodSource == "preserved_source" })
+        #expect(sizeRecords.allSatisfy { $0.methodProfile == "preserved_profile" })
+        #expect(sizeRecords.compactMap(\.rawCode) == [
+            "body-width", "musinsa-5", "musinsa-20", "musinsa-21",
+            "body-length-back", "body-length", "knit-body-length-front", "musinsa-sleeve"
+        ])
+        #expect(size.measurementMigrationVersion == 5)
+        #expect(item.measurementMigrationVersion == 5)
     }
 
     @Test func musinsaLegacyRaglanAndSetInSleevesStaySeparate() {

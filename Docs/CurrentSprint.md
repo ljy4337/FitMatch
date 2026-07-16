@@ -6,6 +6,8 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Musinsa and Uniqlo now share canonical shoulder, chest-width, and body-length measurement codes while retaining distinct set-in, raglan, and center-back sleeve codes.
+- Measurement migration v5 upgrades stored UserFit/ProductSize platform-specific chest and length codes without changing source metadata or sleeve semantics.
 - History detail re-comparison now replaces the selected history route with the newly persisted history ID, so dismissing the garment picker keeps the recalculated result detail on screen instead of popping to the list.
 - Successful reference-garment changes from RecommendationResultView now replace the persisted same-product history through the existing graph-reuse store; insufficient evidence or save failure keeps the previous screen and record intact.
 - Consolidated recommendation and product-parser diagnostics behind a DEBUG-only Korean logger; per-size score output is now one line and duplicated parser metadata logs are removed from Release builds.
@@ -99,6 +101,7 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Cross-platform measurement tests cover common shoulder/chest/length comparison, sleeve exclusion, same-code sleeve compatibility, raglan preservation, and v5 stored-record migration; app and test bundles compile for generic iOS devices.
 - History-detail route retention passed the generic iOS device Debug build; the picker dismissal remains local to RecommendationResultView and protected scroll files/call sites are unchanged.
 - Last-reference persistence tests cover latest UserFit/recommended-size replacement, single-history retention, stable ProductSize/measurement-record identities, and insufficient-evidence record preservation; app and test bundles compile for generic iOS devices.
 - Performance-diagnostic logging passed generic iOS device Debug and Release builds; Release binary inspection found no DEBUG logger or detailed recommendation-score strings.

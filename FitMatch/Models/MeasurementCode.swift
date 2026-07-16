@@ -81,8 +81,8 @@ struct SourceMeasurementMapping: Equatable {
 }
 
 enum MeasurementSourceMappingPolicy {
-    static let musinsaVersion = "musinsa_actual_size_mapping_v3"
-    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v3"
+    static let musinsaVersion = "musinsa_actual_size_mapping_v4"
+    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v4"
 
     static func musinsa(
         typeNumber: Int?,
@@ -102,20 +102,23 @@ enum MeasurementSourceMappingPolicy {
                 mappingVersion: musinsaVersion
             )
         case (5, .totalLength):
+            // Reversible previous mapping: code: .bodyLengthMusinsaType5
             return SourceMeasurementMapping(
-                code: .bodyLengthMusinsaType5,
+                code: .bodyLengthBackNeckToHem,
                 evidence: .officialDiagram,
                 mappingVersion: musinsaVersion
             )
         case (20, .totalLength):
+            // Reversible previous mapping: code: .bodyLengthMusinsaType20
             return SourceMeasurementMapping(
-                code: .bodyLengthMusinsaType20,
+                code: .bodyLengthBackNeckToHem,
                 evidence: .officialDiagram,
                 mappingVersion: musinsaVersion
             )
         case (21, .totalLength):
+            // Reversible previous mapping: code: .bodyLengthMusinsaType21
             return SourceMeasurementMapping(
-                code: .bodyLengthMusinsaType21,
+                code: .bodyLengthBackNeckToHem,
                 evidence: .officialDiagram,
                 mappingVersion: musinsaVersion
             )
@@ -146,10 +149,13 @@ enum MeasurementSourceMappingPolicy {
         let code: MeasurementCode
         switch normalizedRawCode {
         case "shoulderwidth": code = .shoulderWidthSeamToSeam
-        case "bodywidth": code = .chestWidthUniqloBodyWidth
-        case "bodylengthback": code = .bodyLengthUniqloBack
-        case "bodylength": code = .bodyLengthUniqloShirt
-        case "knitbodylengthfront": code = .bodyLengthUniqloKnitFront
+        // Reversible previous mapping: "bodywidth" used .chestWidthUniqloBodyWidth.
+        case "bodywidth": code = .chestWidthPitToPit
+        // Reversible previous mappings:
+        // "bodylengthback" used .bodyLengthUniqloBack.
+        // "bodylength" used .bodyLengthUniqloShirt.
+        // "knitbodylengthfront" used .bodyLengthUniqloKnitFront.
+        case "bodylengthback", "bodylength", "knitbodylengthfront": code = .bodyLengthBackNeckToHem
         case "sleevelengthcb": code = .sleeveCenterBackToCuff
         case "inseam": code = .pantsInseamCrotchToHem
         default: return nil

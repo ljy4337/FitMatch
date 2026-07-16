@@ -3,8 +3,8 @@ import SwiftData
 
 @MainActor
 enum MeasurementLegacyBackfillService {
-    static let migrationVersion = 4
-    static let mappingVersion = "legacy_backfill_v4"
+    static let migrationVersion = 5
+    static let mappingVersion = "legacy_backfill_v5"
 
     static func run(
         modelContext: ModelContext,
@@ -116,6 +116,7 @@ enum MeasurementLegacyBackfillService {
         in records: [GarmentMeasurementRecord]
     ) {
         for record in records {
+            let migratedCommonCode = commonCodeReplacingLegacyPlatformCode(record.measurementCode)
             let mapping: SourceMeasurementMapping?
             switch record.methodSource {
             case "uniqlo_kr":
@@ -136,12 +137,34 @@ enum MeasurementLegacyBackfillService {
                 mapping = nil
             }
 
-            guard let mapping else { continue }
-            record.measurementCodeRawValue = mapping.code.rawValue
-            record.evidenceLevelRawValue = mapping.evidence.rawValue
+            guard mapping != nil || migratedCommonCode != nil else { continue }
+            record.measurementCodeRawValue = (mapping?.code ?? migratedCommonCode ?? record.measurementCode).rawValue
+            if let mapping {
+                record.evidenceLevelRawValue = mapping.evidence.rawValue
+                record.mappingVersion = mapping.mappingVersion
+            } else {
+                record.mappingVersion = mappingVersion
+            }
             record.semanticStatusRawValue = MeasurementSemanticStatus.mapped.rawValue
-            record.mappingVersion = mapping.mappingVersion
             record.updatedAt = Date()
+        }
+    }
+
+    private static func commonCodeReplacingLegacyPlatformCode(
+        _ code: MeasurementCode
+    ) -> MeasurementCode? {
+        switch code {
+        case .chestWidthUniqloBodyWidth:
+            return .chestWidthPitToPit
+        case .bodyLengthMusinsaType5,
+             .bodyLengthMusinsaType20,
+             .bodyLengthMusinsaType21,
+             .bodyLengthUniqloBack,
+             .bodyLengthUniqloShirt,
+             .bodyLengthUniqloKnitFront:
+            return .bodyLengthBackNeckToHem
+        default:
+            return nil
         }
     }
 }
