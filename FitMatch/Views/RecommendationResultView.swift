@@ -233,7 +233,7 @@ struct RecommendationResultView: View {
                         Divider().frame(width: dividerWidth, height: 132)
                         CenteredMetricColumn(
                             title: "핏 매칭률",
-                            value: comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%",
+                            value: "\(currentResult.recommendationScore)%",
                             valueFontSize: 33
                         ) {
                             Text(fitMatchDescription)
@@ -925,7 +925,6 @@ struct RecommendationResultView: View {
     }
 
     private var fitMatchDescription: String {
-        guard !comparedMeasurementKinds.isEmpty else { return "계산 불가" }
         switch currentResult.recommendationScore {
         case 90...: return "매우 잘 맞아요"
         case 80..<90: return "잘 맞아요"
