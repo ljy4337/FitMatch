@@ -272,14 +272,18 @@ private struct HomeClosetPreviewCard: View {
 
                 HStack(spacing: 8) {
                     Button(action: toggleReference) {
-                        Label(item.isRepresentative ? "기준 옷 해제" : "기준 옷 지정", systemImage: item.isRepresentative ? "tshirt" : "tshirt.fill")
+                        Label("기준 옷", systemImage: item.isRepresentative ? "tshirt.fill" : "tshirt")
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(item.isRepresentative ? .red : .primary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 34)
-                            .background(.primary.opacity(0.06), in: Capsule())
+                            .background(
+                                item.isRepresentative ? Color.red.opacity(0.09) : Color.primary.opacity(0.06),
+                                in: Capsule()
+                            )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(item.isRepresentative ? "기준 옷 해제" : "기준 옷 지정")
 
                     NavigationLink {
                         ClosetItemDetailView(item: item)
@@ -338,7 +342,13 @@ private struct HomeClosetPreviewCard: View {
                 && $0.isRepresentative
                 && ReferenceGarmentPolicy.conflicts($0, item)
         }
-        isShowingReferenceConfirmation = true
+        if existingReferenceItem == nil {
+            item.isRepresentative = true
+            item.updatedAt = Date()
+            saveReferenceChange()
+        } else {
+            isShowingReferenceConfirmation = true
+        }
     }
 
     private func applyReferenceChange() {
