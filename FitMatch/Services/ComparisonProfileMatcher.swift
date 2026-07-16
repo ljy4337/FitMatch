@@ -52,10 +52,17 @@ enum ComparisonGarmentFamily: String, Equatable {
     }
 }
 
+enum ComparisonConstructionType: String, Equatable {
+    case setIn = "set_in"
+    case raglan
+    case unknown
+}
+
 struct ComparisonProfile: Equatable {
     let majorCategory: ClothingCategory
     let garmentFamily: ComparisonGarmentFamily
     let lengthType: ComparisonLengthType
+    let constructionType: ComparisonConstructionType
     let availableMeasurements: [MeasurementKind]
 }
 
@@ -97,6 +104,7 @@ struct ComparisonProfileMatcher {
         let compatible = sameFamily
             .filter {
                 $0.1.lengthType == incoming.lengthType
+                    && constructionsAreCompatible(incoming.constructionType, $0.1.constructionType)
                     && commonCoreMeasurementCount(incoming, $0.1) >= 2
             }
             .sorted { lhs, rhs in
@@ -201,6 +209,7 @@ struct ComparisonProfileMatcher {
             majorCategory: major,
             garmentFamily: family,
             lengthType: length,
+            constructionType: constructionType(product.sizes.flatMap(\.measurementRecords)),
             availableMeasurements: availableMeasurements(product.sizes.map(\.measurements))
         )
     }
@@ -230,8 +239,23 @@ struct ComparisonProfileMatcher {
             majorCategory: major,
             garmentFamily: family,
             lengthType: length,
+            constructionType: constructionType(item.measurementRecords),
             availableMeasurements: availableMeasurements([item.measurements])
         )
+    }
+
+    private func constructionType(_ records: [GarmentMeasurementRecord]) -> ComparisonConstructionType {
+        let codes = Set(records.filter(\.isComparable).map(\.measurementCode))
+        if codes.contains(.sleeveRaglanNeckToCuff) { return .raglan }
+        if codes.contains(.sleeveShoulderSeamToCuff) { return .setIn }
+        return .unknown
+    }
+
+    private func constructionsAreCompatible(
+        _ lhs: ComparisonConstructionType,
+        _ rhs: ComparisonConstructionType
+    ) -> Bool {
+        lhs == .unknown || rhs == .unknown || lhs == rhs
     }
 
     private func garmentFamily(

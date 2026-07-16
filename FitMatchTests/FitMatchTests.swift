@@ -713,6 +713,160 @@ struct FitMatchTests {
         } == true)
     }
 
+    @Test func automaticMatchRejectsKnownConstructionConflict() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let setIn = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let raglan = comparisonItem(
+            shoulder: 49,
+            sleeve: 45,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveRaglanNeckToCuff
+        )
+
+        let result = ComparisonProfileMatcher().match(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [raglan, setIn]
+        )
+
+        #expect(result.state == .compatible)
+        #expect(result.compatibleCandidates.map(\.id) == [setIn.id])
+    }
+
+    @Test func compatibleMeasurementCountOutranksRepresentativeFlag() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        markChestComparable(size.measurementRecords)
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let representative = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        representative.isRepresentative = true
+        let richerEvidence = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        markChestComparable(richerEvidence.measurementRecords)
+
+        let ranked = RecommendationService().rankedFitMatches(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [representative, richerEvidence]
+        )
+
+        #expect(ranked.first?.userFit.id == richerEvidence.id)
+        #expect(ranked.first?.compatibleMeasurementCount == 3)
+    }
+
+    @Test func representativeOutranksSimilarityWhenEvidenceIsEqual() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let representative = comparisonItem(
+            shoulder: 46,
+            sleeve: 20,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        representative.isRepresentative = true
+        let closer = comparisonItem(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let history = RecommendationService().recommend(
+            product: product,
+            userFits: [closer, representative],
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(history?.userFit.id == representative.id)
+    }
+
+    @Test func sameBrandIsOnlyATieBreakerAfterSimilarity() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", brand: Brand(name: "브랜드A"), category: .top, sizes: [size])
+        let sameBrand = comparisonItem(
+            shoulder: 46,
+            sleeve: 20,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        sameBrand.brandName = "브랜드A"
+        let closerOtherBrand = comparisonItem(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        closerOtherBrand.brandName = "브랜드B"
+
+        let ranked = RecommendationService().rankedFitMatches(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [sameBrand, closerOtherBrand]
+        )
+
+        #expect(ranked.first?.userFit.id == closerOtherBrand.id)
+    }
+
+    @Test func fitMatchCandidateRecommendationsAreLimitedToThree() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let items = (0..<4).map { index in
+            comparisonItem(
+                shoulder: 50 - Double(index),
+                sleeve: 24 - Double(index),
+                shoulderCode: .shoulderWidthSeamToSeam,
+                sleeveCode: .sleeveShoulderSeamToCuff
+            )
+        }
+
+        let ranked = RecommendationService().rankedFitMatches(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: items
+        )
+
+        #expect(ranked.count == 3)
+    }
+
     @Test func uniqloSizeAPIParserReturnsNormalizedImageURL() throws {
         let json = """
         {
@@ -1017,6 +1171,13 @@ struct FitMatchTests {
             productSize: productSize,
             userFit: userFit
         )
+    }
+
+    private func markChestComparable(_ records: [GarmentMeasurementRecord]) {
+        guard let chest = records.first(where: { $0.displayKind == .chest }) else { return }
+        chest.measurementCodeRawValue = MeasurementCode.chestWidthPitToPit.rawValue
+        chest.evidenceLevelRawValue = MeasurementEvidenceLevel.officialText.rawValue
+        chest.semanticStatusRawValue = MeasurementSemanticStatus.mapped.rawValue
     }
 
 }

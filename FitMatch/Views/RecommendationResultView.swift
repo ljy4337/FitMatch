@@ -1351,6 +1351,11 @@ private struct FitMatchRankRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
 
+                Text(candidate.selectionReason)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+
                 HStack(spacing: 6) {
                     Text("추천 \(recommendedSizeName)")
                         .font(.caption2.weight(.bold))

@@ -4,6 +4,8 @@ struct FitMatchCandidate: Identifiable {
     var id: UUID { userFit.id }
     let userFit: UserFit
     let matchRate: Int
+    let compatibleMeasurementCount: Int
+    let selectionReason: String
 }
 
 struct RecommendationService {
@@ -66,10 +68,21 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> AutomaticComparisonMatchResult {
-        comparisonMatcher.match(
+        let profileResult = comparisonMatcher.match(
             product: product,
             productDetailCategory: productDetailCategory,
             userFits: userFits
+        )
+        guard !profileResult.compatibleCandidates.isEmpty else { return profileResult }
+        let ranked = Array(rankedReferenceCandidates(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: profileResult.compatibleCandidates
+        ).prefix(3))
+        return AutomaticComparisonMatchResult(
+            state: ranked.isEmpty ? .noCompatibleGarment : .compatible,
+            incomingProfile: profileResult.incomingProfile,
+            compatibleCandidates: ranked.map(\.userFit)
         )
     }
 
@@ -104,11 +117,18 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> [UserFit] {
-        comparisonMatcher.manualCandidates(
+        let manual = comparisonMatcher.manualCandidates(
             product: product,
             productDetailCategory: productDetailCategory,
             userFits: userFits
         )
+        let recommended = rankedReferenceCandidates(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: manual
+        ).prefix(3).map(\.userFit)
+        let recommendedIDs = Set(recommended.map(\.id))
+        return recommended + manual.filter { !recommendedIDs.contains($0.id) }
     }
 
     func rankedFitMatches(
@@ -116,30 +136,11 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> [FitMatchCandidate] {
-        userFits
-            .filter { isSameServiceGroup($0, product: product) }
-            .map { item in
-                FitMatchCandidate(
-                    userFit: item,
-                    matchRate: bestFitConfidence(
-                        product: product,
-                        userFit: item,
-                        productDetailCategory: productDetailCategory
-                    )?.score ?? 0
-                )
-            }
-            .sorted { lhs, rhs in
-                if lhs.matchRate != rhs.matchRate {
-                    return lhs.matchRate > rhs.matchRate
-                }
-                if lhs.userFit.detailCategory == productDetailCategory && rhs.userFit.detailCategory != productDetailCategory {
-                    return true
-                }
-                if lhs.userFit.isRepresentative != rhs.userFit.isRepresentative {
-                    return lhs.userFit.isRepresentative
-                }
-                return lhs.userFit.updatedAt > rhs.userFit.updatedAt
-            }
+        Array(rankedReferenceCandidates(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        ).prefix(3))
     }
 
     private func sortCandidates(_ userFits: [UserFit]) -> [UserFit] {
@@ -235,9 +236,14 @@ struct RecommendationService {
             productDetailCategory: productDetailCategory,
             userFits: userFits
         )
-        if !result.compatibleCandidates.isEmpty {
+        let ranked = rankedReferenceCandidates(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: result.compatibleCandidates
+        )
+        if let selected = ranked.first?.userFit {
             return RecommendationBasis(
-                userFits: result.compatibleCandidates,
+                userFits: [selected],
                 methodText: "비교 프로필 호환 옷 비교",
                 scorePenalty: 0
             )
@@ -251,11 +257,82 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        !comparisonMatcher.match(
+        let profileCandidates = comparisonMatcher.match(
             product: product,
             productDetailCategory: productDetailCategory,
             userFits: userFits
-        ).compatibleCandidates.isEmpty
+        ).compatibleCandidates
+        return !rankedReferenceCandidates(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: profileCandidates
+        ).isEmpty
+    }
+
+    private func rankedReferenceCandidates(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        userFits: [UserFit]
+    ) -> [FitMatchCandidate] {
+        let incomingProfile = comparisonMatcher.profile(for: product, detailCategory: productDetailCategory)
+        return userFits
+            .filter { isSameServiceGroup($0, product: product) }
+            .compactMap { item -> RankedReferenceCandidate? in
+                let candidateProfile = comparisonMatcher.profile(for: item)
+                guard candidateProfile.garmentFamily == incomingProfile.garmentFamily,
+                      candidateProfile.lengthType == incomingProfile.lengthType,
+                      let comparison = bestFitConfidence(
+                        product: product,
+                        userFit: item,
+                        productDetailCategory: productDetailCategory
+                      ) else {
+                    return nil
+                }
+                let constructionRank: Int
+                if incomingProfile.constructionType != .unknown,
+                   candidateProfile.constructionType == incomingProfile.constructionType {
+                    constructionRank = 2
+                } else if incomingProfile.constructionType == .unknown || candidateProfile.constructionType == .unknown {
+                    constructionRank = 1
+                } else {
+                    constructionRank = 0
+                }
+                guard constructionRank > 0 else { return nil }
+                let sameBrand = matchesBrand(item, product: product)
+                let reasonParts = [
+                    "같은 \(incomingProfile.garmentFamily.displayName)",
+                    incomingProfile.lengthType.displayName.isEmpty ? nil : "같은 \(incomingProfile.lengthType.displayName)",
+                    constructionRank == 2 ? "같은 봉제 구조" : nil,
+                    "실측 \(comparison.comparedItems.count)개 호환",
+                    sameBrand ? "같은 브랜드" : nil
+                ].compactMap { $0 }
+                return RankedReferenceCandidate(
+                    candidate: FitMatchCandidate(
+                        userFit: item,
+                        matchRate: comparison.score,
+                        compatibleMeasurementCount: comparison.comparedItems.count,
+                        selectionReason: reasonParts.joined(separator: " · ")
+                    ),
+                    constructionRank: constructionRank,
+                    isSameBrand: sameBrand
+                )
+            }
+            .sorted { lhs, rhs in
+                if lhs.constructionRank != rhs.constructionRank { return lhs.constructionRank > rhs.constructionRank }
+                if lhs.candidate.compatibleMeasurementCount != rhs.candidate.compatibleMeasurementCount {
+                    return lhs.candidate.compatibleMeasurementCount > rhs.candidate.compatibleMeasurementCount
+                }
+                if lhs.candidate.userFit.isRepresentative != rhs.candidate.userFit.isRepresentative {
+                    return lhs.candidate.userFit.isRepresentative
+                }
+                if lhs.candidate.matchRate != rhs.candidate.matchRate { return lhs.candidate.matchRate > rhs.candidate.matchRate }
+                if lhs.isSameBrand != rhs.isSameBrand { return lhs.isSameBrand }
+                if lhs.candidate.userFit.updatedAt != rhs.candidate.userFit.updatedAt {
+                    return lhs.candidate.userFit.updatedAt > rhs.candidate.userFit.updatedAt
+                }
+                return lhs.candidate.id.uuidString < rhs.candidate.id.uuidString
+            }
+            .map(\.candidate)
     }
 
     private func rankedCandidateScore(
@@ -522,4 +599,10 @@ private struct RecommendationBasis {
     let scorePenalty: Int
     var fallbackReason: String = ""
     var excludedMeasurementKinds: [MeasurementKind] = []
+}
+
+private struct RankedReferenceCandidate {
+    let candidate: FitMatchCandidate
+    let constructionRank: Int
+    let isSameBrand: Bool
 }
