@@ -867,6 +867,80 @@ struct FitMatchTests {
         #expect(ranked.count == 3)
     }
 
+    @Test func manualClosetEntryRequiresMeasurementSource() {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.brand = "테스트"
+        viewModel.productName = "반팔 티셔츠"
+        viewModel.shoulder = "48"
+
+        #expect(!viewModel.canSave)
+
+        viewModel.measurementEntrySource = .fitmatchMeasured
+
+        #expect(viewModel.canSave)
+    }
+
+    @Test func fitmatchMeasuredEntryCreatesComparableStandardRecords() {
+        let viewModel = manualMeasurementViewModel(source: .fitmatchMeasured)
+
+        let item = viewModel.makeUserFit()
+        let byKind = Dictionary(uniqueKeysWithValues: (item?.measurementRecords ?? []).compactMap { record in
+            record.displayKind.map { ($0, record) }
+        })
+
+        #expect(item?.measurementInputSourceRawValue == MeasurementInputSource.userMeasured.rawValue)
+        #expect(byKind[.shoulder]?.measurementCode == .shoulderWidthSeamToSeam)
+        #expect(byKind[.chest]?.measurementCode == .chestWidthPitToPit)
+        #expect(byKind[.totalLength]?.measurementCode == .bodyLengthHPSToHemFront)
+        #expect(byKind[.sleeveLength]?.measurementCode == .sleeveShoulderSeamToCuff)
+        #expect((item?.measurementRecords ?? []).allSatisfy(\.isComparable))
+        #expect((item?.measurementRecords ?? []).allSatisfy { $0.standardVersion == "fitmatch_standard_v1" })
+    }
+
+    @Test func uniqloTranscribedEntrySeparatesCenterBackSleeveAndUnknownChest() {
+        let viewModel = manualMeasurementViewModel(source: .uniqloSizeChart)
+
+        let item = viewModel.makeUserFit()
+        let sleeve = item?.measurementRecords.first { $0.displayKind == .sleeveLength }
+        let chest = item?.measurementRecords.first { $0.displayKind == .chest }
+
+        #expect(item?.measurementInputSourceRawValue == MeasurementInputSource.transcribedSizeChart.rawValue)
+        #expect(sleeve?.measurementCode == .sleeveCenterBackToCuff)
+        #expect(sleeve?.rawCode == "sleeve-length-cb")
+        #expect(chest?.measurementCode == .unknown)
+        #expect(chest?.rawCode == "body-width")
+        #expect(chest?.rawValueText == "54")
+        #expect(chest?.semanticStatus == .unknownDefinition)
+    }
+
+    @Test func musinsaTranscribedEntryRequiresExplicitSleeveMethodForMapping() {
+        let raglanViewModel = manualMeasurementViewModel(source: .musinsaSizeChart)
+        raglanViewModel.musinsaSleeveMeasurementMethod = .raglan
+        let raglanItem = raglanViewModel.makeUserFit()
+
+        let unknownViewModel = manualMeasurementViewModel(source: .musinsaSizeChart)
+        unknownViewModel.musinsaSleeveMeasurementMethod = .unknown
+        let unknownItem = unknownViewModel.makeUserFit()
+
+        #expect(raglanItem?.measurementRecords.first { $0.displayKind == .sleeveLength }?.measurementCode == .sleeveRaglanNeckToCuff)
+        #expect(raglanItem?.measurementRecords.first { $0.displayKind == .shoulder }?.measurementCode == .unknown)
+        #expect(unknownItem?.measurementRecords.allSatisfy { !$0.isComparable } == true)
+    }
+
+    @Test func otherSizeChartPreservesValuesWithoutClaimingCompatibility() {
+        let viewModel = manualMeasurementViewModel(source: .otherSizeChart)
+
+        let item = viewModel.makeUserFit()
+
+        #expect(item?.measurementRecords.count == 4)
+        #expect(item?.measurementRecords.allSatisfy { $0.methodSource == "other_size_chart" } == true)
+        #expect(item?.measurementRecords.allSatisfy { $0.methodProfile == "other_size_chart_manual:29CM" } == true)
+        #expect(item?.measurementRecords.allSatisfy { $0.rawInfo == "출처: 29CM" } == true)
+        #expect(item?.measurementRecords.first { $0.displayKind == .chest }?.rawLabel == "가슴단면")
+        #expect(item?.measurementRecords.allSatisfy { $0.measurementCode == .unknown } == true)
+        #expect(item?.measurementRecords.allSatisfy { !$0.isComparable } == true)
+    }
+
     @Test func uniqloSizeAPIParserReturnsNormalizedImageURL() throws {
         let json = """
         {
@@ -1178,6 +1252,27 @@ struct FitMatchTests {
         chest.measurementCodeRawValue = MeasurementCode.chestWidthPitToPit.rawValue
         chest.evidenceLevelRawValue = MeasurementEvidenceLevel.officialText.rawValue
         chest.semanticStatusRawValue = MeasurementSemanticStatus.mapped.rawValue
+    }
+
+    private func manualMeasurementViewModel(source: MeasurementEntrySource) -> AddClosetItemViewModel {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.brand = "테스트"
+        viewModel.productName = "반팔 티셔츠"
+        viewModel.measurementEntrySource = source
+        if source == .otherSizeChart {
+            viewModel.measurementSourceName = "29CM"
+            viewModel.measurementSourceLabels = [
+                .shoulder: "어깨너비",
+                .chest: "가슴단면",
+                .totalLength: "총장",
+                .sleeveLength: "소매길이"
+            ]
+        }
+        viewModel.shoulder = "48"
+        viewModel.chest = "54"
+        viewModel.totalLength = "70"
+        viewModel.sleeveLength = "24"
+        return viewModel
     }
 
 }

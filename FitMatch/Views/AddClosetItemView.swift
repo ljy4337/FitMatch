@@ -199,23 +199,65 @@ struct AddClosetItemView: View {
     }
 
     private var measurementSection: some View {
-        AddClosetSectionCard(index: 4, title: "실측값", subtitle: "둘레가 아닌 단면 기준으로 입력합니다.", systemImage: "ruler") {
+        AddClosetSectionCard(index: 4, title: "실측값", subtitle: "출처의 측정 기준과 원본값을 함께 저장합니다.", systemImage: "ruler") {
             VStack(alignment: .leading, spacing: 16) {
                 if measurementKinds.isEmpty {
                     Text("선택한 카테고리는 실측 입력 없이 저장할 수 있습니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(measurementKinds) { kind in
-                        AddClosetMeasurementField(
-                            title: kind.title,
-                            placeholder: kind.placeholder,
-                            value: binding(for: kind)
+                    AddClosetOptionalSelectionMenu(
+                        title: "실측 정보를 어디에서 확인하셨나요?",
+                        value: viewModel.measurementEntrySource?.displayName ?? "선택",
+                        options: MeasurementEntrySource.allCases,
+                        optionTitle: \.displayName,
+                        selection: $viewModel.measurementEntrySource
+                    )
+
+                    if viewModel.measurementEntrySource == .musinsaSizeChart {
+                        AddClosetSelectionMenu(
+                            title: "소매길이 측정 기준",
+                            value: viewModel.musinsaSleeveMeasurementMethod.displayName,
+                            options: MusinsaSleeveMeasurementMethod.allCases,
+                            optionTitle: \.displayName,
+                            selection: $viewModel.musinsaSleeveMeasurementMethod
                         )
                     }
-                    Text("둘레가 아닌 단면 기준으로 입력합니다. 쇼핑몰 표기가 둘레라면 2로 나눈 값을 입력하세요.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+
+                    if viewModel.measurementEntrySource == .otherSizeChart {
+                        AddClosetTextField(
+                            title: "사이즈표 쇼핑몰",
+                            placeholder: "쇼핑몰 이름 입력",
+                            text: $viewModel.measurementSourceName
+                        )
+                    }
+
+                    if viewModel.measurementEntrySource != nil {
+                        ForEach(measurementKinds) { kind in
+                            if viewModel.measurementEntrySource == .otherSizeChart {
+                                AddClosetTextField(
+                                    title: "\(kind.title) 원본 항목명",
+                                    placeholder: "사이즈표에 표시된 이름",
+                                    text: sourceLabelBinding(for: kind)
+                                )
+                            }
+                            AddClosetMeasurementField(
+                                title: kind.title,
+                                subtitle: viewModel.measurementGuide(for: kind),
+                                placeholder: kind.placeholder,
+                                value: binding(for: kind)
+                            )
+                        }
+                        Text(measurementInputNotice)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("측정 방식이 다른 값을 잘못 비교하지 않도록 출처를 먼저 선택해 주세요.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
         }
@@ -339,6 +381,23 @@ struct AddClosetItemView: View {
             return "상품명을 입력하면 저장할 수 있습니다."
         }
 
+        if !measurementKinds.isEmpty, viewModel.measurementEntrySource == nil {
+            return "실측 정보를 확인한 출처를 선택해 주세요."
+        }
+
+        if viewModel.measurementEntrySource == .otherSizeChart,
+           viewModel.measurementSourceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "사이즈표를 확인한 쇼핑몰 이름을 입력해 주세요."
+        }
+
+        if viewModel.measurementEntrySource == .otherSizeChart,
+           measurementKinds.contains(where: {
+               !viewModel.value(for: $0).trimmed.isEmpty
+                   && (viewModel.measurementSourceLabels[$0]?.trimmed.isEmpty ?? true)
+           }) {
+            return "입력한 실측값의 원본 항목명을 입력해 주세요."
+        }
+
         if viewModel.measurements == nil {
             return "실측값을 1개 이상 입력해 주세요. 입력한 값은 0보다 큰 숫자여야 합니다."
         }
@@ -356,6 +415,17 @@ struct AddClosetItemView: View {
 
     private var measurementKinds: [MeasurementKind] {
         viewModel.measurementKinds
+    }
+
+    private var measurementInputNotice: String {
+        switch viewModel.measurementEntrySource {
+        case .fitmatchMeasured:
+            return "안내된 위치를 따라 옷을 평평하게 놓고 측정해 주세요."
+        case .musinsaSizeChart, .uniqloSizeChart, .otherSizeChart:
+            return "쇼핑몰 사이즈표의 값을 나누거나 환산하지 말고 그대로 입력해 주세요."
+        case nil:
+            return ""
+        }
     }
 
     private func normalizeCategorySelection() {
@@ -398,6 +468,13 @@ struct AddClosetItemView: View {
         case .underBust:
             return $viewModel.underBust
         }
+    }
+
+    private func sourceLabelBinding(for kind: MeasurementKind) -> Binding<String> {
+        Binding(
+            get: { viewModel.measurementSourceLabels[kind] ?? "" },
+            set: { viewModel.measurementSourceLabels[kind] = $0 }
+        )
     }
 
     private func normalizeSourceSelection(for sourceType: ProductSourceType) {
@@ -549,8 +626,61 @@ struct AddClosetSelectionMenu<Option: Hashable>: View {
     }
 }
 
+private struct AddClosetOptionalSelectionMenu<Option: Hashable>: View {
+    let title: String
+    let value: String
+    let options: [Option]
+    let optionTitle: (Option) -> String
+    @Binding var selection: Option?
+
+    var body: some View {
+        Menu {
+            ForEach(options, id: \.self) { option in
+                Button {
+                    selection = option
+                } label: {
+                    if option == selection {
+                        Label(optionTitle(option), systemImage: "checkmark")
+                    } else {
+                        Text(optionTitle(option))
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    Text(value)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 12)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(Color(.systemBackground), in: Circle())
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .padding(.horizontal, 16)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .stroke(Color.primary.opacity(0.055), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 private struct AddClosetMeasurementField: View {
     let title: String
+    let subtitle: String
     let placeholder: String
     @Binding var value: String
 
@@ -560,9 +690,10 @@ private struct AddClosetMeasurementField: View {
                 Text(title)
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(.primary)
-                Text("단면 기준")
+                Text(subtitle)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -577,7 +708,7 @@ private struct AddClosetMeasurementField: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 14)
-        .frame(height: 58)
+        .frame(minHeight: 68)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 17, style: .continuous)

@@ -268,7 +268,8 @@ final class UserFit {
             return
         }
         measurementSchemaVersion = 1
-        measurementInputSourceRawValue = MeasurementInputSource.importedSizeChart.rawValue
+        measurementInputSourceRawValue = measurementRecords.first?.inputSourceRawValue
+            ?? MeasurementInputSource.importedSizeChart.rawValue
         measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
         measurementMigrationStatus = .completed
         measurementMigrationErrorCode = nil

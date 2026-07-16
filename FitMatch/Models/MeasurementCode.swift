@@ -8,6 +8,13 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case sleeveShoulderSeamToCuff = "sleeve_shoulder_seam_to_cuff"
     case sleeveCenterBackToCuff = "sleeve_center_back_to_cuff"
     case sleeveRaglanNeckToCuff = "sleeve_raglan_neck_to_cuff"
+    case waistWidthEdgeToEdge = "waist_width_edge_to_edge"
+    case hipWidthAtWidest = "hip_width_at_widest"
+    case thighWidthCrotchToOuter = "thigh_width_crotch_to_outer"
+    case riseCrotchToWaistFront = "rise_crotch_to_waist_front"
+    case hemWidthEdgeToEdge = "hem_width_edge_to_edge"
+    case footLengthHeelToToe = "foot_length_heel_to_toe"
+    case underBustWidthEdgeToEdge = "under_bust_width_edge_to_edge"
     case unknown
     case legacyUnknown = "legacy_unknown"
 }

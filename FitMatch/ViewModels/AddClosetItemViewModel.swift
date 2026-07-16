@@ -25,6 +25,10 @@ final class AddClosetItemViewModel: ObservableObject {
     @Published var hem = ""
     @Published var footLength = ""
     @Published var underBust = ""
+    @Published var measurementEntrySource: MeasurementEntrySource?
+    @Published var measurementSourceName = ""
+    @Published var measurementSourceLabels: [MeasurementKind: String] = [:]
+    @Published var musinsaSleeveMeasurementMethod: MusinsaSleeveMeasurementMethod = .unknown
     @Published var fitMemo = ""
     @Published var fitPreference: FitPreference = .regular
     @Published var satisfaction = 4
@@ -87,6 +91,18 @@ final class AddClosetItemViewModel: ObservableObject {
         hem = item.measurements.hem.formText
         footLength = item.measurements.footLength.formText
         underBust = item.measurements.underBust.formText
+        measurementEntrySource = MeasurementEntrySource.infer(from: item.measurementRecords)
+        if let profile = item.measurementRecords.first?.methodProfile,
+           profile.hasPrefix("other_size_chart_manual:") {
+            measurementSourceName = String(profile.dropFirst("other_size_chart_manual:".count))
+            measurementSourceLabels = Dictionary(uniqueKeysWithValues: item.measurementRecords.compactMap { record in
+                guard let kind = record.displayKind, let rawLabel = record.rawLabel?.trimmed, !rawLabel.isEmpty else {
+                    return nil
+                }
+                return (kind, rawLabel)
+            })
+        }
+        musinsaSleeveMeasurementMethod = MusinsaSleeveMeasurementMethod.infer(from: item.measurementRecords)
         fitMemo = item.fitMemo
         fitPreference = item.fitPreference
         satisfaction = item.satisfaction
@@ -97,6 +113,9 @@ final class AddClosetItemViewModel: ObservableObject {
         !brand.trimmed.isEmpty
             && !productName.trimmed.isEmpty
             && measurements != nil
+            && (measurementKinds.isEmpty || measurementEntrySource != nil)
+            && (measurementEntrySource != .otherSizeChart || !measurementSourceName.trimmed.isEmpty)
+            && (measurementEntrySource != .otherSizeChart || hasAllRequiredSourceLabels)
     }
 
     var measurements: GarmentMeasurements? {
@@ -138,7 +157,7 @@ final class AddClosetItemViewModel: ObservableObject {
         category.measurementKinds(detailCategory: detailCategory, gender: gender)
     }
 
-    private func value(for kind: MeasurementKind) -> String {
+    func value(for kind: MeasurementKind) -> String {
         switch kind {
         case .shoulder: return shoulder
         case .chest: return chest
@@ -181,7 +200,38 @@ final class AddClosetItemViewModel: ObservableObject {
             sourceCategoryPath: item.sourceCategoryPath,
             categoryCode: categoryCode
         )
+        if let measurementEntrySource {
+            let records = ManualMeasurementRecordFactory.records(
+                source: measurementEntrySource,
+                musinsaSleeveMethod: musinsaSleeveMeasurementMethod,
+                measurements: measurements,
+                rawValues: Dictionary(uniqueKeysWithValues: measurementKinds.map { ($0, value(for: $0).trimmed) }),
+                rawLabels: measurementSourceLabels,
+                kinds: measurementKinds,
+                otherSourceName: measurementSourceName.trimmed,
+                userFit: item
+            )
+            item.measurementRecords = records
+            if !records.isEmpty {
+                item.measurementSchemaVersion = 1
+                item.measurementInputSourceRawValue = measurementEntrySource.inputSource.rawValue
+                item.measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
+                item.measurementMigrationStatus = .completed
+                item.measurementMigrationErrorCode = nil
+            }
+        }
         return item
+    }
+
+    func measurementGuide(for kind: MeasurementKind) -> String {
+        guard let measurementEntrySource else { return "먼저 실측 정보 출처를 선택해 주세요" }
+        return ManualMeasurementRecordFactory.guide(for: kind, source: measurementEntrySource)
+    }
+
+    private var hasAllRequiredSourceLabels: Bool {
+        measurementKinds.allSatisfy { kind in
+            value(for: kind).trimmed.isEmpty || !(measurementSourceLabels[kind]?.trimmed.isEmpty ?? true)
+        }
     }
 
     var resolvedSourceName: String {

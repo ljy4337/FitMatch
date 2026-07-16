@@ -262,6 +262,8 @@ struct ClosetItemDetailView: View {
         item.fitPreference = editedItem.fitPreference
         item.satisfaction = editedItem.satisfaction
         item.isRepresentative = editedItem.isRepresentative
+        item.measurementRecords.forEach(modelContext.delete)
+        item.replaceMeasurementRecords(with: editedItem.measurementRecords)
         if item.isRepresentative {
             userFits
                 .filter {
