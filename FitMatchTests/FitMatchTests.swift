@@ -1042,6 +1042,69 @@ struct FitMatchTests {
         } == true)
     }
 
+    @Test func resultReferenceSelectionReplacesResultWhenEvidenceIsCompatible() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "무신사 티셔츠", category: .top, sizes: [size])
+        let selectedItem = comparisonItem(
+            shoulder: 48,
+            sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let outcome = ResultReferenceComparisonResolver.resolve(
+            product: product,
+            selectedReferenceItem: selectedItem,
+            productDetailCategory: .shortSleeve
+        )
+
+        guard case .success(let history) = outcome else {
+            Issue.record("호환 가능한 옷 선택은 새 추천 결과를 반환해야 합니다.")
+            return
+        }
+        let selectedID = selectedItem.id
+        let resultReferenceID = history.userFit.id
+        #expect(outcome.shouldDismissPicker)
+        #expect(resultReferenceID == selectedID)
+        #expect(history.comparisonStatus == .confirmed)
+    }
+
+    @Test func resultReferenceSelectionKeepsPickerForInsufficientEvidence() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 47,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let product = Product(name: "유니클로 티셔츠", category: .top, sizes: [size])
+        let selectedItem = comparisonItem(
+            shoulder: 48,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let outcome = ResultReferenceComparisonResolver.resolve(
+            product: product,
+            selectedReferenceItem: selectedItem,
+            productDetailCategory: .shortSleeve
+        )
+
+        guard case .insufficient(let evidence) = outcome else {
+            Issue.record("근거가 부족한 옷 선택은 실패 상태를 반환해야 합니다.")
+            return
+        }
+        #expect(!outcome.shouldDismissPicker)
+        #expect(evidence?.comparisonResult.status == .insufficientEvidence)
+        #expect(evidence?.comparedKinds == [.shoulder])
+        #expect(evidence?.missingKinds.contains(.sleeveLength) == true)
+    }
+
     @Test func automaticFlowKeepsProfileCompatibleItemForInsufficientEvidenceScreen() {
         let size = comparisonSize(
             shoulder: 50,

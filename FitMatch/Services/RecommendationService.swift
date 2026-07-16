@@ -315,10 +315,13 @@ struct RecommendationService {
         }
 
         if let bestHistory {
-            print("[RecommendationService] selectedReferenceItem: \(bestHistory.userFit.displayName)")
-            print("[RecommendationService] comparisonMode: \(bestHistory.comparisonMethod)")
-            print("[RecommendationService] finalRecommendedSize: \(bestHistory.recommendedSize.name)")
-            print("[RecommendationService] final Fit Confidence: \(bestHistory.recommendationScore)")
+            #if DEBUG
+            FitMatchDebugLogger.detail(
+                screen: "추천 계산",
+                action: "최종 후보 선택",
+                details: "기준옷=\(bestHistory.userFit.displayName), 방식=\(bestHistory.comparisonMethod), 추천사이즈=\(bestHistory.recommendedSize.name), 신뢰도=\(bestHistory.recommendationScore)"
+            )
+            #endif
         }
 
         return bestHistory
@@ -547,6 +550,7 @@ struct RecommendationService {
         signedDifferences: GarmentMeasurements,
         result: MeasurementComparisonResult
     ) {
+        #if DEBUG
         let comparedNames = result.comparedItems.map { $0.kind.title }.joined(separator: ", ")
         let ignoredNames = result.exclusions.map { $0.kind.title }.joined(separator: ", ")
         let shoulderScore = result.score(for: .shoulder)?.description ?? "ignored"
@@ -554,16 +558,12 @@ struct RecommendationService {
         let totalLengthScore = result.score(for: .totalLength)?.description ?? "ignored"
         let sleeveScore = result.score(for: .sleeveLength)?.description ?? "ignored"
 
-        print("[RecommendationService] reference item: \(referenceItem.displayName)")
-        print("[RecommendationService] product size name: \(sizeName)")
-        print("[RecommendationService] compared measurement names: \(comparedNames)")
-        print("[RecommendationService] ignored measurement names: \(ignoredNames)")
-        print("[RecommendationService] shoulder difference / score: \(signedDifferences.shoulder) / \(shoulderScore)")
-        print("[RecommendationService] chest difference / score: \(signedDifferences.chest) / \(chestScore)")
-        print("[RecommendationService] totalLength difference / score: \(signedDifferences.totalLength) / \(totalLengthScore)")
-        print("[RecommendationService] sleeve difference / score: \(signedDifferences.sleeveLength) / \(sleeveScore)")
-        print("[RecommendationService] final Fit Confidence: \(result.score)")
-        print("[RecommendationService] comparison reliability level: \(result.reliabilityTitle)")
+        FitMatchDebugLogger.detail(
+            screen: "추천 계산",
+            action: "사이즈 후보 평가",
+            details: "기준옷=\(referenceItem.displayName), 사이즈=\(sizeName), 비교=\(comparedNames), 제외=\(ignoredNames), 어깨=\(signedDifferences.shoulder)/\(shoulderScore), 가슴=\(signedDifferences.chest)/\(chestScore), 총장=\(signedDifferences.totalLength)/\(totalLengthScore), 소매=\(signedDifferences.sleeveLength)/\(sleeveScore), 신뢰도=\(result.score), 근거=\(result.reliabilityTitle)"
+        )
+        #endif
     }
 
     private func matchesSource(_ item: UserFit, product: Product) -> Bool {

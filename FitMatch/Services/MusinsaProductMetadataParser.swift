@@ -117,7 +117,9 @@ struct MusinsaProductMetadataParser {
                 productMetadata: metadata
             )
         } catch {
-            print("[MusinsaProductMetadataParser] API metadata failed: \(error.localizedDescription)")
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 상품 정보 조회", state: "실패", details: "오류=\(error.localizedDescription), HTML대체파싱=시작")
+            #endif
             return await parseHTMLFallback(productID: productID, sourceURL: sourceURL)
         }
     }
@@ -411,13 +413,13 @@ struct MusinsaProductMetadataParser {
     }
 
     private static func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath) {
-        print("[MusinsaProductMetadataParser] raw source category: \(rawSourceCategory.isEmpty ? "nil" : rawSourceCategory)")
-        print("[MusinsaProductMetadataParser] parsed gender: \(gender.rawValue)")
-        print("[MusinsaProductMetadataParser] sourceCategoryDepth1: \(sourcePath.depth1 ?? "nil")")
-        print("[MusinsaProductMetadataParser] sourceCategoryDepth2: \(sourcePath.depth2 ?? "nil")")
-        print("[MusinsaProductMetadataParser] sourceCategoryDepth3: \(sourcePath.depth3 ?? "nil")")
-        print("[MusinsaProductMetadataParser] sourceCategoryDepth4: \(sourcePath.depth4 ?? "nil")")
-        print("[MusinsaProductMetadataParser] sourceCategoryPath: \(sourcePath.fullPath ?? "nil")")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "무신사 원본 분류 해석",
+            details: "원본=\(rawSourceCategory.isEmpty ? "없음" : rawSourceCategory), 성별=\(gender.rawValue), depth1=\(sourcePath.depth1 ?? "없음"), depth2=\(sourcePath.depth2 ?? "없음"), depth3=\(sourcePath.depth3 ?? "없음"), depth4=\(sourcePath.depth4 ?? "없음"), 경로=\(sourcePath.fullPath ?? "없음")"
+        )
+        #endif
     }
 }
 

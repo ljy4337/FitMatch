@@ -17,28 +17,29 @@ enum MusinsaNetworkPolicy {
 
 struct MusinsaURLResolver {
     func resolve(_ url: URL) async throws -> ResolvedMusinsaURL {
-        print("[MusinsaURLResolver] originalURL: \(url.absoluteString)")
-
         if let productID = extractProductID(from: url),
            let productURL = URL(string: "https://www.musinsa.com/products/\(productID)") {
-            print("[MusinsaURLResolver] directProductId: \(productID)")
+            #if DEBUG
+            FitMatchDebugLogger.detail(screen: "상품 분석", action: "무신사 URL 해석", details: "방식=직접, 상품ID=\(productID)")
+            #endif
             return ResolvedMusinsaURL(originalURL: url, resolvedURL: productURL, productID: productID)
         }
 
         let redirectResponse = try await followRedirects(from: url)
         let finalURL = redirectResponse.url
-        print("[MusinsaURLResolver] resolvedURL: \(finalURL.absoluteString)")
-
         let htmlProductID = extractProductID(from: redirectResponse.body)
         let productID = extractProductID(from: finalURL) ?? extractProductID(from: url) ?? htmlProductID
         guard let productID else {
-            print("[MusinsaURLResolver] extractedProductId: nil")
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 URL 해석", state: "실패", details: "상품ID=없음")
+            #endif
             throw ProductURLParserError.unsupportedURL
         }
 
-        print("[MusinsaURLResolver] extractedProductId: \(productID)")
         let resolvedProductURL = productURL(from: finalURL, fallbackProductID: productID, html: redirectResponse.body)
-        print("[MusinsaURLResolver] productURL: \(resolvedProductURL.absoluteString)")
+        #if DEBUG
+        FitMatchDebugLogger.detail(screen: "상품 분석", action: "무신사 URL 해석", details: "방식=리다이렉트, 상품ID=\(productID), 최종URL=\(resolvedProductURL.absoluteString)")
+        #endif
         return ResolvedMusinsaURL(originalURL: url, resolvedURL: resolvedProductURL, productID: productID)
     }
 

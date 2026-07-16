@@ -17,7 +17,9 @@ struct UniqloParser: ProductURLParsing {
         do {
             sizeAPIResult = try await sizeParser.parse(productIDWithColorCode: resolved.productIDWithColorCode)
         } catch {
-            print("[UniqloParser] size API failed: \(error.localizedDescription)")
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
+            #endif
             throw ProductURLParserPartialError(
                 productInfo: metadata.parsedProductInfo(
                     sizes: [],
@@ -28,18 +30,13 @@ struct UniqloParser: ProductURLParsing {
         let sizes = sizeAPIResult.sizes
         let resolvedMetadata = metadata.withPreferredImageURL(sizeAPIResult.imageURLString)
 
-        print("[UniqloParser] detectedProvider: uniqlo")
-        print("[UniqloParser] originalURL: \(resolved.originalURL.absoluteString)")
-        print("[UniqloParser] resolvedURL: \(resolved.resolvedURL.absoluteString)")
-        print("[UniqloParser] productID: \(resolved.productID)")
-        print("[UniqloParser] colorCode: \(resolved.imageColorCode)")
-        print("[UniqloParser] apiProductIDWithColorCode: \(resolved.productIDWithColorCode)")
-        print("[UniqloParser] productName: \(resolvedMetadata.productName)")
-        print("[UniqloParser] category: \(resolvedMetadata.category.rawValue)")
-        print("[UniqloParser] detailCategory: \(resolvedMetadata.detailCategory.rawValue)")
-        print("[UniqloParser] sizeAPIImageURL: \(sizeAPIResult.imageURLString ?? "nil")")
-        print("[UniqloParser] imageURL: \(resolvedMetadata.imageURLString ?? "nil")")
-        print("[UniqloParser] sizeCount: \(sizes.count)")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "유니클로 파싱 완료",
+            details: "상품ID=\(resolved.productID), 색상=\(resolved.imageColorCode), 상품=\(resolvedMetadata.productName), 분류=\(resolvedMetadata.category.rawValue)/\(resolvedMetadata.detailCategory.rawValue), 사이즈수=\(sizes.count)"
+        )
+        #endif
 
         guard !sizes.isEmpty else {
             throw ProductURLParserPartialError(
@@ -67,14 +64,14 @@ struct ResolvedUniqloURL {
 
 struct UniqloURLResolver {
     func resolve(_ url: URL) async throws -> ResolvedUniqloURL {
-        print("[UniqloURLResolver] originalURL: \(url.absoluteString)")
-
         let response = try await fetchHTML(from: url)
         let finalURL = response.url
         let haystack = "\(url.absoluteString) \(finalURL.absoluteString) \(response.body)"
 
         guard let productID = extractProductID(from: haystack) else {
-            print("[UniqloURLResolver] productID: nil")
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 URL 해석", state: "실패", details: "상품ID=없음")
+            #endif
             throw ProductURLParserError.unsupportedURL
         }
 
@@ -85,11 +82,9 @@ struct UniqloURLResolver {
         let productIDWithColorCode = "\(productID)-\(apiColorCode)"
         let resolvedURL = canonicalURL(productID: productID, colorCode: imageColorCode, fallback: finalURL)
 
-        print("[UniqloURLResolver] resolvedURL: \(resolvedURL.absoluteString)")
-        print("[UniqloURLResolver] productID: \(productID)")
-        print("[UniqloURLResolver] goodsID: \(goodsID)")
-        print("[UniqloURLResolver] apiColorCode: \(apiColorCode)")
-        print("[UniqloURLResolver] imageColorCode: \(imageColorCode)")
+        #if DEBUG
+        FitMatchDebugLogger.detail(screen: "상품 분석", action: "유니클로 URL 해석", details: "상품ID=\(productID), goodsID=\(goodsID), API색상=\(apiColorCode), 이미지색상=\(imageColorCode)")
+        #endif
 
         return ResolvedUniqloURL(
             originalURL: url,
@@ -756,13 +751,13 @@ struct UniqloProductMetadataParser {
     }
 
     private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, prefix: String) {
-        print("\(prefix) raw source category: \(rawSourceCategory)")
-        print("\(prefix) parsed gender: \(gender.rawValue)")
-        print("\(prefix) sourceCategoryDepth1: \(sourcePath.depth1 ?? "nil")")
-        print("\(prefix) sourceCategoryDepth2: \(sourcePath.depth2 ?? "nil")")
-        print("\(prefix) sourceCategoryDepth3: \(sourcePath.depth3 ?? "nil")")
-        print("\(prefix) sourceCategoryDepth4: \(sourcePath.depth4 ?? "nil")")
-        print("\(prefix) sourceCategoryPath: \(sourcePath.fullPath ?? "nil")")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "유니클로 원본 분류 해석",
+            details: "파서=\(prefix), 원본=\(rawSourceCategory), 성별=\(gender.rawValue), depth1=\(sourcePath.depth1 ?? "없음"), depth2=\(sourcePath.depth2 ?? "없음"), depth3=\(sourcePath.depth3 ?? "없음"), depth4=\(sourcePath.depth4 ?? "없음"), 경로=\(sourcePath.fullPath ?? "없음")"
+        )
+        #endif
     }
 
     private func splitCategoryPath(_ path: String?) -> [String] {

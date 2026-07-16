@@ -230,21 +230,14 @@ final class ShoppingProductViewModel: ObservableObject {
         productMetadata = metadataWithSourceCategory(from: parsedProduct)
         parserNotice = parsedProduct.parserNotice
         hasLoadedProductInfo = true
-        print("[ShoppingProductViewModel] productName: \(productName)")
-        print("[ShoppingProductViewModel] brandName: \(brand)")
-        print("[ShoppingProductViewModel] sourceType: \(sourceType.displayName)")
-        print("[ShoppingProductViewModel] sourceName: \(sourceName)")
-        print("[ShoppingProductViewModel] raw source category: \(productMetadata.sourceCategoryPath ?? "nil")")
-        print("[ShoppingProductViewModel] parsed gender: \(UserGender.productTarget(from: productMetadata.genderCodes).rawValue)")
-        print("[ShoppingProductViewModel] sourceCategoryDepth1: \(productMetadata.sourceCategoryDepth1 ?? "nil")")
-        print("[ShoppingProductViewModel] sourceCategoryDepth2: \(productMetadata.sourceCategoryDepth2 ?? "nil")")
-        print("[ShoppingProductViewModel] sourceCategoryDepth3: \(productMetadata.sourceCategoryDepth3 ?? "nil")")
-        print("[ShoppingProductViewModel] sourceCategoryDepth4: \(productMetadata.sourceCategoryDepth4 ?? "nil")")
-        print("[ShoppingProductViewModel] sourceCategoryPath: \(productMetadata.sourceCategoryPath ?? "nil")")
-        print("[ShoppingProductViewModel] category: \(category.rawValue)")
-        print("[ShoppingProductViewModel] detailCategory: \(detailCategory.rawValue)")
-        print("[ShoppingProductViewModel] imageURL: \(productImageURLString ?? "nil")")
-        print("[ShoppingProductViewModel] sizeCount: \(parsedProduct.sizes.count)")
+        #if DEBUG
+        FitMatchDebugLogger.event(
+            screen: "상품 비교",
+            action: "파싱 데이터 적용",
+            state: "완료",
+            details: "상품=\(productName), 브랜드=\(brand), 출처=\(sourceName), 성별=\(UserGender.productTarget(from: productMetadata.genderCodes).rawValue), 원본분류=\(productMetadata.sourceCategoryPath ?? "없음"), FitMatch분류=\(category.rawValue)/\(detailCategory.rawValue), 사이즈수=\(parsedProduct.sizes.count)"
+        )
+        #endif
         guard !parsedProduct.sizes.isEmpty else {
             sizeOptions = [ClothingSizeForm()]
             return

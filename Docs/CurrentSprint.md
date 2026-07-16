@@ -6,6 +6,8 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Consolidated recommendation and product-parser diagnostics behind a DEBUG-only Korean logger; per-size score output is now one line and duplicated parser metadata logs are removed from Release builds.
+- Recommendation result reference changes now dismiss only after a successful recalculation; insufficient measurement evidence keeps the picker open with comparable/excluded items and an optional reference-only comparison.
 - Compare flow sheets now receive the root TabBarVisibilityController, preventing RecommendationResultView environment-object crashes; DEBUG logs identify Korean screen/action/status transitions.
 - Selecting Uniqlo or Musinsa in new Closet registration now defaults measurement input to that platform's size chart; direct registration still defaults to FitMatch measurement.
 - Simplified new Closet registration to Uniqlo official store, Musinsa, or direct registration with source-specific measurement choices.
@@ -95,6 +97,8 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- Performance-diagnostic logging passed generic iOS device Debug and Release builds; Release binary inspection found no DEBUG logger or detailed recommendation-score strings.
+- Recommendation result reference-change regression tests cover compatible success and insufficient-evidence outcomes; the generic iOS device Debug build succeeded without launching a simulator.
 - Compare sheet environment injection and Korean DEBUG transition logs passed the generic iOS device Debug build and protected-scroll diff checks.
 - Closet source UX and repeated-comparison changes passed the generic iOS Simulator Debug build, test-target build, and `git diff --check`; selected simulator tests were stopped after the test runner did not return results.
 - Musinsa canonical-URL fast-path and request timeout changes passed the generic iOS Simulator Debug build and `git diff --check`.

@@ -75,13 +75,15 @@ struct RecommendationResultView: View {
                         productDetailCategory: currentResult.productDetailCategory,
                         productCategory: currentResult.product.category
                     ) { item in
-                        compare(with: item)
-                        dismissActiveSheet()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                proxy.scrollTo("resultTop", anchor: .top)
+                        let outcome = compare(with: item)
+                        if outcome.shouldDismissPicker {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    proxy.scrollTo("resultTop", anchor: .top)
+                                }
                             }
                         }
+                        return outcome
                     }
                 }
                 .presentationDragIndicator(.visible)
@@ -351,7 +353,7 @@ struct RecommendationResultView: View {
                                 .fixedSize(horizontal: false, vertical: true)
 
                             SecondaryButton(title: "이번 비교에서 이 옷으로 보기", systemImage: "arrow.triangle.2.circlepath") {
-                                compare(with: betterCandidate.userFit)
+                                _ = compare(with: betterCandidate.userFit)
                             }
                         }
                         .padding(14)
@@ -773,16 +775,30 @@ struct RecommendationResultView: View {
         openURL(url)
     }
 
-    private func compare(with item: UserFit) {
-        guard let history = RecommendationService().recommend(
+    private func compare(with item: UserFit) -> ResultReferenceComparisonOutcome {
+        #if DEBUG
+        print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 시작] 기존기준옷=\(currentResult.userFit.displayName), 선택기준옷=\(item.displayName)")
+        #endif
+
+        let outcome = ResultReferenceComparisonResolver.resolve(
             product: currentResult.product,
             selectedReferenceItem: item,
             productDetailCategory: currentResult.productDetailCategory
-        ) else {
-            return
+        )
+
+        switch outcome {
+        case .success(let history):
+            comparisonResult = history
+            #if DEBUG
+            print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 성공] 기준옷=\(history.userFit.displayName), 추천사이즈=\(history.recommendedSize.name), 신뢰도=\(history.recommendationScore)")
+            #endif
+        case .insufficient(let evidence):
+            #if DEBUG
+            print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 근거 부족] 기준옷=\(item.displayName), 비교항목=\(evidence?.comparedKinds.map(\.title).joined(separator: ",") ?? "없음"), 제외항목=\(evidence?.missingKinds.map(\.title).joined(separator: ",") ?? "확인 불가")")
+            #endif
         }
 
-        comparisonResult = history
+        return outcome
     }
 
     private func presentActiveSheet(_ sheet: RecommendationResultActiveSheet) {
@@ -1507,31 +1523,75 @@ private struct FitMatchRankRow: View {
     }
 }
 
+enum ResultReferenceComparisonOutcome {
+    case success(RecommendationHistory)
+    case insufficient(InsufficientComparisonEvidence?)
+
+    var shouldDismissPicker: Bool {
+        if case .success = self {
+            return true
+        }
+        return false
+    }
+}
+
+enum ResultReferenceComparisonResolver {
+    static func resolve(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory
+    ) -> ResultReferenceComparisonOutcome {
+        let service = RecommendationService()
+        if let history = service.recommend(
+            product: product,
+            selectedReferenceItem: selectedReferenceItem,
+            productDetailCategory: productDetailCategory
+        ) {
+            return .success(history)
+        }
+
+        return .insufficient(
+            service.insufficientEvidence(
+                product: product,
+                selectedReferenceItem: selectedReferenceItem,
+                productDetailCategory: productDetailCategory
+            )
+        )
+    }
+}
+
 private struct ResultReferencePickerView: View {
     @Environment(\.dismiss) private var dismiss
     let userFits: [UserFit]
     let currentUserFit: UserFit
     let productDetailCategory: ClosetDetailCategory
     let productCategory: ClothingCategory
-    let onSelect: (UserFit) -> Void
+    let onSelect: (UserFit) -> ResultReferenceComparisonOutcome
     @State private var selectedItemID: UUID?
+    @State private var insufficientEvidence: InsufficientComparisonEvidence?
+    @State private var isShowingInsufficientEvidence = false
+    @State private var isShowingReferenceComparison = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                pickerHeader
-
-                if selectableFits.isEmpty {
-                    emptyStateCard
+                if isShowingInsufficientEvidence {
+                    insufficientEvidenceContent
                 } else {
-                    VStack(spacing: 12) {
-                        ForEach(selectableFits) { item in
-                            ResultReferencePickerCard(
-                                item: item,
-                                productDetailCategory: productDetailCategory,
-                                isSelected: selectedItemID == item.id
-                            ) {
-                                selectedItemID = item.id
+                    pickerHeader
+
+                    if selectableFits.isEmpty {
+                        emptyStateCard
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(selectableFits) { item in
+                                ResultReferencePickerCard(
+                                    item: item,
+                                    productDetailCategory: productDetailCategory,
+                                    isSelected: selectedItemID == item.id
+                                ) {
+                                    selectedItemID = item.id
+                                }
                             }
                         }
                     }
@@ -1544,7 +1604,112 @@ private struct ResultReferencePickerView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
-            bottomActionBar
+            if isShowingInsufficientEvidence {
+                insufficientActionBar
+            } else {
+                bottomActionBar
+            }
+        }
+    }
+
+    private var insufficientEvidenceContent: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            CardView(radius: 26, padding: 22) {
+                VStack(spacing: 14) {
+                    Image(systemName: "ruler")
+                        .font(.title2.weight(.semibold))
+                        .frame(width: 58, height: 58)
+                        .background(Color.orange.opacity(0.14), in: Circle())
+                        .foregroundStyle(.orange)
+
+                    Text("이 옷은 측정 방식이 달라 추천에 필요한 실측 정보가 부족해요")
+                        .font(.title3.weight(.black))
+                        .multilineTextAlignment(.center)
+
+                    Text("기존 추천 결과는 변경하지 않았습니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            CardView(radius: 24, padding: 20) {
+                VStack(alignment: .leading, spacing: 13) {
+                    Text("확인된 비교 근거")
+                        .font(.headline.weight(.black))
+
+                    if let evidence = insufficientEvidence {
+                        Text("선택한 옷 · \(evidence.referenceItem.displayName) / \(evidence.referenceItem.sizeName)")
+                            .font(.subheadline.weight(.semibold))
+
+                        evidenceRows(evidence)
+                    } else {
+                        Text("동일한 측정 기준으로 비교할 수 있는 항목이 없습니다.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if isShowingReferenceComparison, let evidence = insufficientEvidence {
+                referenceComparisonCard(evidence)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func evidenceRows(_ evidence: InsufficientComparisonEvidence) -> some View {
+        if evidence.comparedKinds.isEmpty {
+            Text("비교 가능한 항목 · 없음")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        } else {
+            Text("비교 가능한 항목 · \(evidence.comparedKinds.map(\.title).joined(separator: " · "))")
+                .font(.subheadline.weight(.bold))
+        }
+
+        ForEach(evidence.comparisonResult.exclusions, id: \.kind) { exclusion in
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(exclusion.kind.title) · 비교 제외")
+                    .font(.subheadline.weight(.semibold))
+                Text(exclusion.reason.userMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func referenceComparisonCard(_ evidence: InsufficientComparisonEvidence) -> some View {
+        CardView(radius: 24, padding: 20) {
+            VStack(alignment: .leading, spacing: 13) {
+                Text("참고용 비교")
+                    .font(.headline.weight(.black))
+                Text("추천 결과가 아니며, 비교 가능한 실측만 표시합니다.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if evidence.comparisonResult.comparedItems.isEmpty {
+                    Text("수치로 참고할 수 있는 항목이 없습니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(evidence.comparisonResult.comparedItems, id: \.kind) { item in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(item.kind.title)
+                                    .font(.subheadline.weight(.semibold))
+                                Text("상품 \(item.productValue.cmText) · 내 옷 \(item.referenceValue.cmText)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Text(item.signedDifference.signedCmText)
+                                .font(.subheadline.weight(.black))
+                                .monospacedDigit()
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1608,8 +1773,14 @@ private struct ResultReferencePickerView: View {
                     return
                 }
 
-                onSelect(selectedItem)
-                dismiss()
+                switch onSelect(selectedItem) {
+                case .success:
+                    dismiss()
+                case .insufficient(let evidence):
+                    insufficientEvidence = evidence
+                    isShowingReferenceComparison = false
+                    isShowingInsufficientEvidence = true
+                }
             } label: {
                 Text("선택한 옷으로 비교")
                     .font(.headline.weight(.bold))
@@ -1623,6 +1794,43 @@ private struct ResultReferencePickerView: View {
             }
             .buttonStyle(.plain)
             .disabled(selectedItem == nil)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+        .background(.regularMaterial)
+    }
+
+    private var insufficientActionBar: some View {
+        VStack(spacing: 10) {
+            Button {
+                isShowingInsufficientEvidence = false
+                isShowingReferenceComparison = false
+                insufficientEvidence = nil
+                selectedItemID = nil
+            } label: {
+                Text("다른 옷 선택")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(Color.black, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isShowingReferenceComparison.toggle()
+                }
+            } label: {
+                Text(isShowingReferenceComparison ? "참고용 비교 접기" : "참고용 비교")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+            }
+            .buttonStyle(.plain)
+            .disabled(insufficientEvidence == nil)
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)

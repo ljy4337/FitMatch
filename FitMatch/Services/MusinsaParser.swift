@@ -16,7 +16,9 @@ struct MusinsaParser: ProductURLParsing {
         do {
             actualSize = try await actualSizeParser.parseActualSize(productID: resolved.productID)
         } catch {
-            print("[MusinsaParser] actual-size API failed: \(error.localizedDescription)")
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
+            #endif
             throw ProductURLParserPartialError(
                 productInfo: metadata.parsedProductInfo(
                     sizes: [],
@@ -27,18 +29,13 @@ struct MusinsaParser: ProductURLParsing {
         let sizes = actualSize.sizes
         metadata.applyActualSizeProfile(typeNumber: actualSize.typeNumber, typeName: actualSize.typeName)
 
-        print("[MusinsaParser] detectedProvider: musinsa")
-        print("[MusinsaParser] originalURL: \(resolved.originalURL.absoluteString)")
-        print("[MusinsaParser] resolvedURL: \(resolved.resolvedURL.absoluteString)")
-        print("[MusinsaParser] extractedProductId: \(resolved.productID)")
-        print("[MusinsaParser] productName: \(metadata.productName)")
-        print("[MusinsaParser] brandName: \(metadata.brandName)")
-        print("[MusinsaParser] category: \(metadata.category.rawValue)")
-        print("[MusinsaParser] detailCategory: \(metadata.detailCategory.rawValue)")
-        print("[MusinsaParser] actualSizeTypeName: \(actualSize.typeName ?? "nil")")
-        print("[MusinsaParser] actualSizeTypeNumber: \(actualSize.typeNumber.map(String.init) ?? "nil")")
-        print("[MusinsaParser] imageURL: \(metadata.imageURLString ?? "nil")")
-        print("[MusinsaParser] sizeCount: \(sizes.count)")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "무신사 파싱 완료",
+            details: "상품ID=\(resolved.productID), 상품=\(metadata.productName), 브랜드=\(metadata.brandName), 분류=\(metadata.category.rawValue)/\(metadata.detailCategory.rawValue), 실측유형=\(actualSize.typeName ?? "없음"), 사이즈수=\(sizes.count)"
+        )
+        #endif
 
         guard !sizes.isEmpty else {
             throw ProductURLParserPartialError(

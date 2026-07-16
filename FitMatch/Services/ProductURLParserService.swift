@@ -282,20 +282,28 @@ struct ProductURLParserService {
         let isMusinsaURL = url.absoluteString.lowercased().contains("musinsa")
         let isUniqloURL = uniqloParser.canParse(url)
         let detectedProvider = isMusinsaURL ? "musinsa" : (isUniqloURL ? "uniqlo" : "generic")
-        print("[ProductURLParserService] detectedProvider: \(detectedProvider)")
+        #if DEBUG
+        FitMatchDebugLogger.detail(screen: "상품 분석", action: "파서 선택", details: "파서=\(detectedProvider)")
+        #endif
 
         if isMusinsaURL {
             do {
                 return logParsedProductInfo((try await musinsaParser.parse(from: url)).normalizedSizes())
             } catch let partialError as ProductURLParserPartialError {
-                print("[ProductURLParserService] Musinsa parser partially loaded product info: \(partialError.localizedDescription)")
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
+                #endif
                 throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
             } catch {
-                print("[ProductURLParserService] Musinsa parser failed, falling back to GenericProductParser: \(error.localizedDescription)")
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "대체 파싱", details: "오류=\(error.localizedDescription)")
+                #endif
                 do {
                     return (try await genericParser.parse(from: url)).normalizedSizes()
                 } catch {
-                    print("[ProductURLParserService] Generic fallback also failed for Musinsa URL: \(error.localizedDescription)")
+                    #if DEBUG
+                    FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 대체 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
+                    #endif
                     throw ProductURLParserError.automaticParsingUnavailable
                 }
             }
@@ -305,14 +313,20 @@ struct ProductURLParserService {
             do {
                 return logParsedProductInfo((try await uniqloParser.parse(from: url)).normalizedSizes())
             } catch let partialError as ProductURLParserPartialError {
-                print("[ProductURLParserService] Uniqlo parser partially loaded product info: \(partialError.localizedDescription)")
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
+                #endif
                 throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
             } catch {
-                print("[ProductURLParserService] Uniqlo parser failed, falling back to GenericProductParser: \(error.localizedDescription)")
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "대체 파싱", details: "오류=\(error.localizedDescription)")
+                #endif
                 do {
                     return (try await genericParser.parse(from: url)).normalizedSizes()
                 } catch {
-                    print("[ProductURLParserService] Generic fallback also failed for Uniqlo URL: \(error.localizedDescription)")
+                    #if DEBUG
+                    FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 대체 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
+                    #endif
                     throw ProductURLParserError.automaticParsingUnavailable
                 }
             }
@@ -322,13 +336,13 @@ struct ProductURLParserService {
     }
 
     private func logParsedProductInfo(_ productInfo: ParsedProductInfo) -> ParsedProductInfo {
-        print("[ProductURLParserService] ParsedProductInfo raw source category: \(productInfo.sourceCategoryPath ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo parsed gender: \(productInfo.productTargetGender.rawValue)")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth1: \(productInfo.sourceCategoryDepth1 ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth2: \(productInfo.sourceCategoryDepth2 ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth3: \(productInfo.sourceCategoryDepth3 ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth4: \(productInfo.sourceCategoryDepth4 ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryPath: \(productInfo.sourceCategoryPath ?? "nil")")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "파싱 결과",
+            details: "성별=\(productInfo.productTargetGender.rawValue), depth1=\(productInfo.sourceCategoryDepth1 ?? "없음"), depth2=\(productInfo.sourceCategoryDepth2 ?? "없음"), depth3=\(productInfo.sourceCategoryDepth3 ?? "없음"), depth4=\(productInfo.sourceCategoryDepth4 ?? "없음"), 경로=\(productInfo.sourceCategoryPath ?? "없음")"
+        )
+        #endif
         return productInfo
     }
 
