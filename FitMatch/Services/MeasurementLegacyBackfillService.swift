@@ -3,8 +3,8 @@ import SwiftData
 
 @MainActor
 enum MeasurementLegacyBackfillService {
-    static let migrationVersion = 3
-    static let mappingVersion = "legacy_backfill_v3"
+    static let migrationVersion = 4
+    static let mappingVersion = "legacy_backfill_v4"
 
     static func run(
         modelContext: ModelContext,

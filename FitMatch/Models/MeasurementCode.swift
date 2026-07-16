@@ -6,6 +6,12 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case chestWidthUniqloBodyWidth = "chest_width_uniqlo_body_width"
     case bodyLengthHPSToHemFront = "body_length_hps_to_hem_front"
     case bodyLengthBackNeckToHem = "body_length_back_neck_to_hem"
+    case bodyLengthMusinsaType5 = "body_length_musinsa_type_5"
+    case bodyLengthMusinsaType20 = "body_length_musinsa_type_20"
+    case bodyLengthMusinsaType21 = "body_length_musinsa_type_21"
+    case bodyLengthUniqloBack = "body_length_uniqlo_back"
+    case bodyLengthUniqloShirt = "body_length_uniqlo_shirt"
+    case bodyLengthUniqloKnitFront = "body_length_uniqlo_knit_front"
     case sleeveShoulderSeamToCuff = "sleeve_shoulder_seam_to_cuff"
     case sleeveCenterBackToCuff = "sleeve_center_back_to_cuff"
     case sleeveRaglanNeckToCuff = "sleeve_raglan_neck_to_cuff"
@@ -75,8 +81,8 @@ struct SourceMeasurementMapping: Equatable {
 }
 
 enum MeasurementSourceMappingPolicy {
-    static let musinsaVersion = "musinsa_actual_size_mapping_v2"
-    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v2"
+    static let musinsaVersion = "musinsa_actual_size_mapping_v3"
+    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v3"
 
     static func musinsa(
         typeNumber: Int?,
@@ -92,6 +98,24 @@ enum MeasurementSourceMappingPolicy {
         case (5, .chest), (20, .chest), (21, .chest):
             return SourceMeasurementMapping(
                 code: .chestWidthPitToPit,
+                evidence: .officialDiagram,
+                mappingVersion: musinsaVersion
+            )
+        case (5, .totalLength):
+            return SourceMeasurementMapping(
+                code: .bodyLengthMusinsaType5,
+                evidence: .officialDiagram,
+                mappingVersion: musinsaVersion
+            )
+        case (20, .totalLength):
+            return SourceMeasurementMapping(
+                code: .bodyLengthMusinsaType20,
+                evidence: .officialDiagram,
+                mappingVersion: musinsaVersion
+            )
+        case (21, .totalLength):
+            return SourceMeasurementMapping(
+                code: .bodyLengthMusinsaType21,
                 evidence: .officialDiagram,
                 mappingVersion: musinsaVersion
             )
@@ -123,6 +147,9 @@ enum MeasurementSourceMappingPolicy {
         switch normalizedRawCode {
         case "shoulderwidth": code = .shoulderWidthSeamToSeam
         case "bodywidth": code = .chestWidthUniqloBodyWidth
+        case "bodylengthback": code = .bodyLengthUniqloBack
+        case "bodylength": code = .bodyLengthUniqloShirt
+        case "knitbodylengthfront": code = .bodyLengthUniqloKnitFront
         case "sleevelengthcb": code = .sleeveCenterBackToCuff
         case "inseam": code = .pantsInseamCrotchToHem
         default: return nil
