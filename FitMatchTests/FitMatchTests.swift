@@ -3462,7 +3462,7 @@ struct FitMatchTests {
         #expect(first.measurementRecords.allSatisfy { $0.methodSource == "musinsa_fallback" })
     }
 
-    @Test func musinsaFallbackRejectsMissingUnitAndSingleSizeRows() {
+    @Test func musinsaFallbackDefaultsMissingUnitToCentimetersAndRejectsSingleSizeRows() {
         let missingUnit = """
         <table><tr><th>size</th><th>chest width</th><th>length</th></tr>
         <tr><td>M</td><td>54</td><td>70</td></tr>
@@ -3472,7 +3472,9 @@ struct FitMatchTests {
         <table><tr><th>size</th><th>chest width</th><th>length (cm)</th></tr>
         <tr><td>FREE</td><td>54</td><td>70</td></tr></table>
         """
-        #expect(MusinsaFallbackTableParser.parseHTML(missingUnit, family: .upper).isEmpty)
+        let missingUnitSizes = MusinsaFallbackTableParser.parseHTML(missingUnit, family: .upper)
+        #expect(missingUnitSizes.count == 2)
+        #expect(missingUnitSizes.first?.measurements.chest == 54)
         #expect(MusinsaFallbackTableParser.parseHTML(singleRow, family: .upper).isEmpty)
     }
 
