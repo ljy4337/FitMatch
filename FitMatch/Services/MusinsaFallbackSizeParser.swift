@@ -288,7 +288,7 @@ enum MusinsaFallbackTableParser {
     private static func isSizeValue(_ text: String) -> Bool {
         let value = text.uppercased().replacingOccurrences(of: " ", with: "")
         return value.range(
-            of: #"^(XXS|XS|S|M|L|XL|XXL|XXXL|FREE|ONE|[0-9]{2,3}(?:[-/][0-9]{2,3})?)$"#,
+            of: #"^(XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|FREE|ONE|[0-9]{2,3}(?:[-/][0-9]{2,3})?)$"#,
             options: .regularExpression
         ) != nil
     }
@@ -301,7 +301,7 @@ enum MusinsaFallbackTableParser {
 
     private static func column(for header: String, family: MusinsaFallbackGarmentFamily) -> FallbackColumn? {
         switch header {
-        case "가슴단면", "가슴너비", "품", "chestwidth", "pit-to-pit", "pittopit": return .chestWidth
+        case "가슴", "가슴단면", "가슴너비", "품", "chest", "chestwidth", "pit-to-pit", "pittopit": return .chestWidth
         case "가슴둘레", "chestcircumference", "bustcircumference": return .chestCircumference
         case "어깨", "어깨너비", "shoulder", "shoulderwidth": return .shoulder
         case "총장", "총기장", "총길이", "옷길이", "옷길이아웃심", "length", "bodylength", "outseam":
@@ -421,6 +421,10 @@ private enum MusinsaFallbackImageOCR {
         request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
         request.setValue("image/*", forHTTPHeaderField: "Accept")
         request.setValue("https://www.musinsa.com", forHTTPHeaderField: "Referer")
+        request.setValue(
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile Safari/604.1",
+            forHTTPHeaderField: "User-Agent"
+        )
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse,
               (200..<300).contains(http.statusCode) else {

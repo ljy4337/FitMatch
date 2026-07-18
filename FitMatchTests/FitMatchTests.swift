@@ -3538,6 +3538,53 @@ struct FitMatchTests {
         #expect(sizes[4].measurements.hip == 55.5)
     }
 
+    @Test func musinsaFallbackParsesProduct4351517HTMLTable() throws {
+        let html = """
+        <div class="tblWrap" name="sizeTable">
+        <table class="tbl_info" summary="Size"><tbody>
+        <tr><th><span>사이즈</span></th><td><span>064</span></td><td><span>067</span></td></tr>
+        <tr><th><span>허리둘레</span></th><td><span>67</span></td><td><span>71</span></td></tr>
+        <tr><th><span>엉덩이둘레</span></th><td><span>94</span></td><td><span>98</span></td></tr>
+        <tr><th><span>앞 밑위길이</span></th><td><span>30.7</span></td><td><span>31.5</span></td></tr>
+        <tr><th><span>옷길이(아웃심)</span></th><td><span>105.5</span></td><td><span>107</span></td></tr>
+        </tbody></table></div>
+        """
+        let sizes = MusinsaFallbackTableParser.parseHTML(html, family: .lower)
+        #expect(sizes.count == 2)
+        #expect(sizes[0].measurements.waist == 33.5)
+        #expect(sizes[0].measurements.hip == 47)
+    }
+
+    @Test func musinsaFallbackParsesReebokUpperImageTables() throws {
+        let tankTop = try #require(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["사이즈(cm)", "총 기장", "어깨 너비", "가슴 둘레"],
+                ["XS", "49", "30", "90"],
+                ["S", "51", "32", "95"],
+                ["M", "53", "34", "100"]
+            ],
+            context: "SIZE",
+            family: .upper
+        ))
+        #expect(tankTop.count == 3)
+        #expect(tankTop[0].measurements.totalLength == 49)
+        #expect(tankTop[0].measurements.shoulder == 30)
+
+        let tee = try #require(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["사이즈(cm)", "총장", "어깨", "가슴", "소매"],
+                ["XS", "64", "38.5", "45", "16"],
+                ["2XL", "72", "48.5", "57.5", "21"],
+                ["3XL", "72", "50.5", "60", "22"]
+            ],
+            context: "SIZE",
+            family: .upper
+        ))
+        #expect(tee.map(\.name) == ["XS", "2XL", "3XL"])
+        #expect(tee[0].measurements.chest == 45)
+        #expect(tee[2].measurements.sleeveLength == 22)
+    }
+
     @Test func musinsaFallbackParsesGiordanoUpperLongImageTableGrid() throws {
         let grid = [
             ["(cm)", "S", "M", "L"],

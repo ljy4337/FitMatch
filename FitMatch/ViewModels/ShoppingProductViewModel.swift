@@ -65,7 +65,12 @@ final class ShoppingProductViewModel: ObservableObject {
             return true
         } catch let partialError as ProductURLParserPartialError {
             apply(partialError.productInfo)
-            errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
+            if partialError.productInfo.sourceName == "무신사",
+               partialError.productInfo.sizes.isEmpty {
+                errorMessage = MusinsaParser.automaticSizeFailureNotice
+            } else {
+                errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
+            }
             return false
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
