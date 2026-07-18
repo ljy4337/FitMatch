@@ -229,14 +229,13 @@ enum MusinsaFallbackTableParser {
             var records: [ParsedMeasurement] = []
             for (index, mapped, rawHeader) in mappedColumns {
                 guard row.indices.contains(index), let rawValue = strictNumber(row[index]) else { continue }
-                let value = rawValue * unit
-                guard value.isFinite, value > 0, value < 300 else { continue }
-                let record = mapped.record(value: value, rawLabel: rawHeader, rawValue: row[index])
+                let sourceValue = rawValue * unit
+                guard sourceValue.isFinite, sourceValue > 0, sourceValue < 300 else { continue }
+                let record = mapped.record(value: sourceValue, rawLabel: rawHeader, rawValue: row[index])
                 records.append(record)
                 if record.semanticStatus == .mapped,
-                   mapped != .chestCircumference,
-                   mapped != .waistCircumference {
-                    measurements.set(value, for: record.displayKind)
+                   mapped != .chestCircumference {
+                    measurements.set(record.value, for: record.displayKind)
                 }
             }
             guard requiredRecords(records, family: family) else { return nil }
@@ -252,7 +251,7 @@ enum MusinsaFallbackTableParser {
                 && columns.contains(where: { [.length, .shoulder, .sleeve].contains($0) })
         case .lower:
             return columns.contains(where: { $0 == .waistWidth || $0 == .waistCircumference })
-                && columns.contains(where: { [.hip, .thigh, .rise, .outseam, .inseam].contains($0) })
+                && columns.contains(where: { [.hip, .hipCircumference, .thigh, .rise, .outseam, .inseam].contains($0) })
         case .shoes:
             return columns.contains(.footLength)
         }
@@ -311,6 +310,7 @@ enum MusinsaFallbackTableParser {
         case "허리단면", "허리너비", "waistwidth": return .waistWidth
         case "허리둘레", "waistcircumference": return .waistCircumference
         case "엉덩이단면", "엉덩이너비", "힙단면", "hipwidth": return .hip
+        case "엉덩이둘레", "힙둘레", "hipcircumference": return .hipCircumference
         case "허벅지단면", "허벅지너비", "thighwidth": return .thigh
         case "밑위", "앞밑위", "앞밑위길이", "rise", "frontrise": return .rise
         case "인심", "inseam": return .inseam
@@ -323,7 +323,7 @@ enum MusinsaFallbackTableParser {
 private enum FallbackColumn: Equatable {
     case chestWidth, chestCircumference, shoulder, length, sleeve
     case outseam
-    case waistWidth, waistCircumference, hip, thigh, rise, inseam, footLength
+    case waistWidth, waistCircumference, hip, hipCircumference, thigh, rise, inseam, footLength
 
     init?(record: ParsedMeasurement) {
         switch record.measurementCode {
@@ -347,23 +347,25 @@ private enum FallbackColumn: Equatable {
     func record(value: Double, rawLabel: String, rawValue: String) -> ParsedMeasurement {
         let code: MeasurementCode
         let kind: MeasurementDisplayKind
+        let multiplier: Double
         switch self {
-        case .chestWidth: (code, kind) = (.chestWidthPitToPit, .chest)
-        case .chestCircumference: (code, kind) = (.chestCircumferenceGarment, .chest)
-        case .shoulder: (code, kind) = (.shoulderWidthSeamToSeam, .shoulder)
-        case .length: (code, kind) = (.bodyLengthBackNeckToHem, .totalLength)
-        case .outseam: (code, kind) = (.pantsOutseamWaistToHem, .totalLength)
-        case .sleeve: (code, kind) = (.sleeveShoulderSeamToCuff, .sleeveLength)
-        case .waistWidth: (code, kind) = (.waistWidthEdgeToEdge, .waist)
-        case .waistCircumference: (code, kind) = (.waistCircumferenceGarment, .waist)
-        case .hip: (code, kind) = (.hipWidthAtWidest, .hip)
-        case .thigh: (code, kind) = (.thighWidthCrotchToOuter, .thigh)
-        case .rise: (code, kind) = (.riseCrotchToWaistFront, .rise)
-        case .inseam: (code, kind) = (.pantsInseamCrotchToHem, .totalLength)
-        case .footLength: (code, kind) = (.footLengthHeelToToe, .footLength)
+        case .chestWidth: (code, kind, multiplier) = (.chestWidthPitToPit, .chest, 1)
+        case .chestCircumference: (code, kind, multiplier) = (.chestCircumferenceGarment, .chest, 1)
+        case .shoulder: (code, kind, multiplier) = (.shoulderWidthSeamToSeam, .shoulder, 1)
+        case .length: (code, kind, multiplier) = (.bodyLengthBackNeckToHem, .totalLength, 1)
+        case .outseam: (code, kind, multiplier) = (.pantsOutseamWaistToHem, .totalLength, 1)
+        case .sleeve: (code, kind, multiplier) = (.sleeveShoulderSeamToCuff, .sleeveLength, 1)
+        case .waistWidth: (code, kind, multiplier) = (.waistWidthEdgeToEdge, .waist, 1)
+        case .waistCircumference: (code, kind, multiplier) = (.waistWidthEdgeToEdge, .waist, 0.5)
+        case .hip: (code, kind, multiplier) = (.hipWidthAtWidest, .hip, 1)
+        case .hipCircumference: (code, kind, multiplier) = (.hipWidthAtWidest, .hip, 0.5)
+        case .thigh: (code, kind, multiplier) = (.thighWidthCrotchToOuter, .thigh, 1)
+        case .rise: (code, kind, multiplier) = (.riseCrotchToWaistFront, .rise, 1)
+        case .inseam: (code, kind, multiplier) = (.pantsInseamCrotchToHem, .totalLength, 1)
+        case .footLength: (code, kind, multiplier) = (.footLengthHeelToToe, .footLength, 1)
         }
         return ParsedMeasurement(
-            value: value,
+            value: value * multiplier,
             measurementCode: code,
             displayKind: kind,
             methodSource: "musinsa_fallback",
@@ -371,6 +373,7 @@ private enum FallbackColumn: Equatable {
             inputSource: .importedSizeChart,
             mappingVersion: "musinsa_fallback_mapping_v1",
             rawLabel: rawLabel,
+            rawInfo: multiplier == 0.5 ? "circumference_to_width_multiplier=0.5" : nil,
             rawValueText: rawValue,
             evidenceLevel: .officialText,
             semanticStatus: .mapped

@@ -3478,7 +3478,7 @@ struct FitMatchTests {
         #expect(MusinsaFallbackTableParser.parseHTML(singleRow, family: .upper).isEmpty)
     }
 
-    @Test func musinsaFallbackKeepsCircumferenceSeparateFromWidth() throws {
+    @Test func musinsaFallbackConvertsLowerCircumferencesToComparableWidths() throws {
         let html = """
         <table>
           <tr><th>사이즈</th><th>허리둘레</th><th>인심</th></tr>
@@ -3489,8 +3489,9 @@ struct FitMatchTests {
         let sizes = MusinsaFallbackTableParser.parseHTML(html, family: .lower)
         let first = try #require(sizes.first)
         let waist = try #require(first.measurementRecords.first { $0.displayKind == .waist })
-        #expect(waist.measurementCode == .waistCircumferenceGarment)
-        #expect(first.measurements.waist == 0)
+        #expect(waist.measurementCode == .waistWidthEdgeToEdge)
+        #expect(waist.rawInfo == "circumference_to_width_multiplier=0.5")
+        #expect(first.measurements.waist == 38)
         #expect(first.measurements.totalLength == 74)
     }
 
@@ -3507,12 +3508,34 @@ struct FitMatchTests {
             family: .lower
         ))
         #expect(sizes.map(\.name) == ["28", "29", "30", "31"])
-        #expect(sizes[0].measurements.waist == 0)
+        #expect(sizes[0].measurements.waist == 39.05)
         #expect(sizes[0].measurements.rise == 26)
         #expect(sizes[0].measurements.totalLength == 99.7)
         #expect(sizes[0].measurementRecords.contains {
-            $0.measurementCode == .waistCircumferenceGarment
+            $0.measurementCode == .waistWidthEdgeToEdge
         })
+    }
+
+    @Test func musinsaFallbackParsesProduct4351517WidthsAndFiveSizes() throws {
+        let grid = [
+            ["사이즈", "064", "067", "070", "073", "076"],
+            ["허리둘레", "67", "71", "75", "79", "84"],
+            ["엉덩이둘레", "94", "98", "102", "106", "111"],
+            ["앞 밑위길이", "30.7", "31.5", "32.3", "33.1", "33.9"],
+            ["옷길이(아웃심)", "105.5", "107", "108.5", "110", "111.5"]
+        ]
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            grid,
+            context: "Size",
+            family: .lower
+        ))
+        #expect(sizes.count == 5)
+        #expect(sizes[0].measurements.waist == 33.5)
+        #expect(sizes[0].measurements.hip == 47)
+        #expect(sizes[0].measurements.rise == 30.7)
+        #expect(sizes[0].measurements.totalLength == 105.5)
+        #expect(sizes[4].measurements.waist == 42)
+        #expect(sizes[4].measurements.hip == 55.5)
     }
 
     @Test func musinsaFallbackParsesGiordanoUpperLongImageTableGrid() throws {
@@ -3649,15 +3672,18 @@ struct FitMatchTests {
         #expect(history == nil)
     }
 
-    @Test func parsedCanonicalClassificationRejectsInvalidTaxonomyCombination() {
+    @Test func parsedCanonicalClassificationFallsBackToActiveTaxonomyDetail() throws {
         #expect(!FitMatchTaxonomyProvider.shared.isValidDetail("shirt", for: "tops"))
-        #expect(ParsedClosetClassification.resolve(
+        let result = try #require(ParsedClosetClassification.resolve(
             category: .top,
             detailCategory: .shirt,
             sourceDepths: ["상의", "셔츠", nil, nil],
             sourcePath: "상의 > 셔츠",
             productName: "옥스포드 셔츠"
-        ) == nil)
+        ))
+        #expect(result.detailCode == "other_tops")
+        #expect(result.garmentFamily == .shirt)
+        #expect(result.isValid)
     }
 
     @Test func parsedCanonicalClassificationResolvesRequiredSourceFixtures() throws {
@@ -3707,6 +3733,21 @@ struct FitMatchTests {
         #expect(MusinsaProductMetadataParser.mapCategory(
             from: "스포츠/레저 > 스포츠 하의 > 숏 팬츠"
         ) == .bottom)
+    }
+
+    @Test func musinsaDenimPantsMapToLongPantsWhilePreservingDenimFamily() throws {
+        let result = try #require(ParsedClosetClassification.resolve(
+            category: .bottom,
+            detailCategory: .denim,
+            sourceDepths: ["바지", "데님 팬츠", nil, nil],
+            sourcePath: "바지 > 데님 팬츠",
+            productName: "사이드 절개 와이드 데님 팬츠"
+        ))
+        #expect(result.categoryCode == "bottoms")
+        #expect(result.detailCode == "long_pants")
+        #expect(result.detailCategory == .longPants)
+        #expect(result.garmentFamily == .denim)
+        #expect(result.isValid)
     }
 
     @Test func musinsaTopAndOuterExactTotalLengthUseCommonCode() {

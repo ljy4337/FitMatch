@@ -48,6 +48,19 @@ struct ParsedClosetClassification: Equatable {
         if specificSource.contains("스커트") || specificSource.contains("skirt") {
             resolvedCategoryCode = "skirts"; resolvedDetailCode = "skirt"
             resolvedCategory = .bottom; resolvedDetail = .skirt
+        } else if specificSource.contains("레깅스") || specificSource.contains("leggings") {
+            resolvedCategoryCode = "leggings"
+            if containsAny(combined, ["숏", "short"]) {
+                resolvedDetailCode = "short_leggings"
+            } else if containsAny(combined, ["7부", "three quarter", "3/4"]) {
+                resolvedDetailCode = "three_quarter_leggings"
+            } else if containsAny(combined, ["9부", "ankle"]) {
+                resolvedDetailCode = "nine_tenths_leggings"
+            } else {
+                resolvedDetailCode = "long_leggings"
+            }
+            resolvedCategory = .bottom
+            resolvedDetail = ClosetDetailCategory.fromTaxonomyCode(resolvedDetailCode)
         } else if specificSource.contains("원피스") || specificSource.contains("dress") {
             resolvedCategoryCode = "dresses"; resolvedDetailCode = "one_piece"
             resolvedCategory = .dress; resolvedDetail = .onePiece
@@ -106,18 +119,45 @@ struct ParsedClosetClassification: Equatable {
             if containsAny(text, ["민소매", "나시", "슬리브리스", "sleeveless", "tank"]) { return "sleeveless" }
             if containsAny(text, ["반팔", "반소매", "숏슬리브", "short sleeve"]) { return "short_sleeve" }
             if containsAny(text, ["긴팔", "긴소매", "롱슬리브", "long sleeve"]) { return "long_sleeve" }
+            if containsAny(text, ["7부", "three quarter", "3/4 sleeve"]) { return "three_quarter_sleeve" }
+            return "other_tops"
         case "bottoms":
             if containsAny(sourceText, ["숏 팬츠", "쇼트 팬츠", "반바지", "쇼츠", "버뮤다", "shorts", "short pants"]) { return "shorts" }
+            if containsAny(sourceText, ["크롭", "cropped"]) { return "cropped_pants" }
+            if containsAny(sourceText, ["7부", "three quarter", "3/4 pants"]) { return "three_quarter_pants" }
+            if containsAny(sourceText, ["9부", "ankle", "nine tenths"]) { return "nine_tenths_pants" }
+            if containsAny(sourceText, ["점프 슈트", "점프수트", "오버올", "jumpsuit", "overall", "기타 하의"]) {
+                return "other_bottoms"
+            }
+            if containsAny(sourceText, [
+                "데님 팬츠", "코튼 팬츠", "트레이닝", "조거 팬츠",
+                "슈트 팬츠", "슬랙스", "denim", "jeans", "pants"
+            ]) { return "long_pants" }
             if containsAny(text, ["긴바지", "롱 팬츠", "long pants"]) { return "long_pants" }
+            return "other_bottoms"
         case "outerwear":
             let mappings: [(String, [String])] = [
-                ("padded_vest", ["패딩조끼"]), ("cardigan", ["가디건", "cardigan"]),
-                ("blazer", ["블레이저", "blazer"]), ("blouson", ["블루종", "blouson"]),
-                ("padding", ["패딩", "파카", "padding", "parka"]), ("vest", ["베스트", "조끼", "vest"]),
-                ("jacket", ["재킷", "자켓", "jacket"]), ("coat", ["코트", "coat"]),
-                ("jumper", ["점퍼", "jumper"])
+                ("padded_vest", ["패딩조끼", "패딩 베스트"]),
+                ("light_padding", ["경량 패딩"]),
+                ("short_padding", ["숏패딩"]),
+                ("long_padding", ["롱패딩"]),
+                ("cardigan", ["가디건", "카디건", "cardigan"]),
+                ("blazer", ["블레이저", "blazer"]),
+                ("blouson", ["블루종", "ma-1", "ma1", "blouson"]),
+                ("fleece", ["플리스", "뽀글이", "fleece"]),
+                ("anorak", ["아노락", "anorak"]),
+                ("windbreaker", ["바람막이", "나일론/코치", "windbreaker", "coach jacket"]),
+                ("mouton", ["무스탕", "퍼", "mouton"]),
+                ("trench_coat", ["트렌치", "trench"]),
+                ("padding", ["패딩", "파카", "헤비 아우터", "padding", "parka"]),
+                ("vest", ["베스트", "조끼", "vest"]),
+                ("coat", ["코트", "coat"]),
+                ("jumper", ["점퍼", "후드 집업", "jumper"]),
+                ("jacket", ["재킷", "자켓", "라이더스", "스타디움", "사파리", "헌팅", "트러커", "jacket"]),
+                ("other_outerwear", ["기타 아우터"])
             ]
             if let match = mappings.first(where: { containsAny(sourceText, $0.1) }) { return match.0 }
+            return "other_outerwear"
         default: break
         }
         let fallback = FitMatchTaxonomyProvider.shared.detailCode(for: detail.rawValue, categoryCode: categoryCode)
