@@ -3582,6 +3582,35 @@ struct FitMatchTests {
         })
     }
 
+    @Test func musinsaFallbackRetriesAndParsesSmallNoisyGiordanoTable() throws {
+        let initialGrid = [
+            ["59.1", "610", "62.9"],
+            ["38.7", "40.6", "42.5"],
+            ["44.5", "47.0", "49.5"],
+            ["17.1", "17.8", "18.4"]
+        ]
+        #expect(MusinsaFallbackImageOCR.hasRepeatedNumericRows(initialGrid))
+
+        let retryGrid = [
+            ["어서", "너비"],
+            ["(cm)", "S", "M", "L"],
+            ["총길이", "59.1", "61.0", "62.9"],
+            ["총장", "가슴", "너비", "어깨너비", "38.7", "40.6", "42.5"],
+            ["가슴너비", "44.5", "47.0", "49.5"],
+            ["소매길이", "17.1", "17.8", "18.4"]
+        ]
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            retryGrid,
+            context: "DETAIL SIZE (cm)",
+            family: .upper
+        ))
+        #expect(sizes.map(\.name) == ["S", "M", "L"])
+        #expect(sizes[0].measurements.totalLength == 59.1)
+        #expect(sizes[1].measurements.shoulder == 40.6)
+        #expect(sizes[1].measurements.chest == 47)
+        #expect(sizes[2].measurements.sleeveLength == 18.4)
+    }
+
     @Test func musinsaFallbackParsesProduct4351517WidthsAndFiveSizes() throws {
         let grid = [
             ["사이즈", "064", "067", "070", "073", "076"],

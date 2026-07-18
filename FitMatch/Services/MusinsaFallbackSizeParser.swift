@@ -151,10 +151,21 @@ enum MusinsaFallbackTableParser {
             .map { $0.map(\.trimmedCell).filter { !$0.isEmpty } }
             .filter { !$0.isEmpty }
         guard grid.count >= 3 else { return nil }
-        if grid[0].count >= 3,
-           isUnitOnlyCell(grid[0][0]),
-           grid[0].dropFirst().filter({ isSizeValue($0) }).count >= 2 {
+        if let unitHeaderIndex = grid.firstIndex(where: { row in
+            row.count >= 3
+                && isUnitOnlyCell(row[0])
+                && row.dropFirst().filter({ isSizeValue($0) }).count >= 2
+        }) {
+            grid = Array(grid.dropFirst(unitHeaderIndex))
             grid[0][0] = "size"
+            let expectedColumnCount = grid[0].count
+            grid = [grid[0]] + grid.dropFirst().map {
+                normalizedTransposedRow(
+                    $0,
+                    expectedColumnCount: expectedColumnCount,
+                    family: family
+                )
+            }
         }
         grid = grid.map { mergedHeaderCells($0, family: family) }
         let normalized = grid.map { $0.map(\.normalizedSizeHeader) }
@@ -179,6 +190,24 @@ enum MusinsaFallbackTableParser {
             return makeSizes(headers: headers, rows: rows, unit: unit, family: family)
         }
         return nil
+    }
+
+    private static func normalizedTransposedRow(
+        _ row: [String],
+        expectedColumnCount: Int,
+        family: MusinsaFallbackGarmentFamily
+    ) -> [String] {
+        let valueCount = expectedColumnCount - 1
+        guard expectedColumnCount >= 3,
+              row.count > expectedColumnCount,
+              valueCount > 0 else { return row }
+        let values = Array(row.suffix(valueCount))
+        guard values.allSatisfy({ strictNumber($0) != nil }) else { return row }
+        let labelCandidates = row.dropLast(valueCount)
+        guard let label = labelCandidates.last(where: {
+            column(for: $0.normalizedSizeHeader, family: family) != nil
+        }) else { return row }
+        return [label] + values
     }
 
     private static func mergedHeaderCells(
@@ -478,31 +507,43 @@ enum MusinsaFallbackImageOCR {
         }
         for (index, region) in ocrRegions.prefix(8).enumerated() {
             let isBoundedTopCandidate = region.maxY >= 0.96 && region.height > 0.12
-            let observations = recognizedText(
-                in: image,
-                region: region,
-                minimumConfidence: isBoundedTopCandidate ? 0.35 : 0.8
-            )
-            guard observations.count >= 6 else { continue }
-            let grid = gridRows(from: observations)
-            let context = observations.map(\.text).joined(separator: " ")
-            #if DEBUG
-            FitMatchDebugLogger.detail(
-                screen: "상품 분석",
-                action: "사이즈표 OCR",
-                details: "출처=\(sourceDescription), 후보=\(index), 행=\(grid)"
-            )
-            #endif
-            if let sizes = MusinsaFallbackTableParser.parseGrid(grid, context: context, family: family),
-               !sizes.isEmpty {
+            var confidenceAttempts: [VNConfidence] = [isBoundedTopCandidate ? 0.35 : 0.8]
+            var attemptIndex = 0
+            while attemptIndex < confidenceAttempts.count {
+                let confidence = confidenceAttempts[attemptIndex]
+                let observations = recognizedText(
+                    in: image,
+                    region: region,
+                    minimumConfidence: confidence
+                )
+                let grid = gridRows(from: observations)
+                let context = observations.map(\.text).joined(separator: " ")
                 #if DEBUG
                 FitMatchDebugLogger.detail(
                     screen: "상품 분석",
-                    action: "사이즈 이미지 파싱",
-                    details: "출처=\(sourceDescription), 최종사이즈수=\(sizes.count), 사이즈=\(sizes.map(\.name))"
+                    action: "사이즈표 OCR",
+                    details: "출처=\(sourceDescription), 후보=\(index), 신뢰도=\(confidence), 행=\(grid)"
                 )
                 #endif
-                return sizes
+                if observations.count >= 6,
+                   let sizes = MusinsaFallbackTableParser.parseGrid(grid, context: context, family: family),
+                   !sizes.isEmpty {
+                    #if DEBUG
+                    FitMatchDebugLogger.detail(
+                        screen: "상품 분석",
+                        action: "사이즈 이미지 파싱",
+                        details: "출처=\(sourceDescription), 최종사이즈수=\(sizes.count), 사이즈=\(sizes.map(\.name))"
+                    )
+                    #endif
+                    return sizes
+                }
+                if attemptIndex == 0,
+                   !isBoundedTopCandidate,
+                   region.height <= 0.04,
+                   hasRepeatedNumericRows(grid) {
+                    confidenceAttempts.append(0.35)
+                }
+                attemptIndex += 1
             }
         }
         #if DEBUG
@@ -513,6 +554,18 @@ enum MusinsaFallbackImageOCR {
         )
         #endif
         return nil
+    }
+
+    static func hasRepeatedNumericRows(_ grid: [[String]]) -> Bool {
+        grid.filter { row in
+            row.filter { cell in
+                let normalized = cell.replacingOccurrences(of: ",", with: ".")
+                return normalized.range(
+                    of: #"^\d{1,3}(?:\.\d+)?$"#,
+                    options: .regularExpression
+                ) != nil
+            }.count >= 3
+        }.count >= 2
     }
 
     private static func focusedTopTableRegion(_ region: CGRect) -> CGRect {
