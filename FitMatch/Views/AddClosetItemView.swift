@@ -1,6 +1,11 @@
 import SwiftUI
 import SwiftData
 
+enum AddClosetItemPresentationContext: Equatable {
+    case standard
+    case linkedProduct
+}
+
 struct AddClosetItemView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Brand.name) private var brands: [Brand]
@@ -11,14 +16,19 @@ struct AddClosetItemView: View {
     let onSave: (UserFit) -> Void
     let onDelete: (() -> Void)?
     private let isEditing: Bool
+    private let presentationContext: AddClosetItemPresentationContext
+    private let productImageURLString: String?
 
     init(
         item: UserFit? = nil,
         prefillCategory: ClothingCategory? = nil,
         prefillDetailCategory: ClosetDetailCategory? = nil,
         prefillGender: UserGender? = nil,
+        prefillSourceOption: ClosetProductSourceOption? = nil,
         prefillBrand: String? = nil,
         prefillProductName: String? = nil,
+        productImageURLString: String? = nil,
+        presentationContext: AddClosetItemPresentationContext = .standard,
         onDelete: (() -> Void)? = nil,
         onSave: @escaping (UserFit) -> Void
     ) {
@@ -28,11 +38,14 @@ struct AddClosetItemView: View {
                 prefillCategory: prefillCategory,
                 prefillDetailCategory: prefillDetailCategory,
                 prefillGender: prefillGender,
+                prefillSourceOption: prefillSourceOption,
                 prefillBrand: prefillBrand,
                 prefillProductName: prefillProductName
             )
         )
         self.isEditing = item != nil
+        self.presentationContext = presentationContext
+        self.productImageURLString = productImageURLString
         self.onDelete = onDelete
         self.onSave = onSave
     }
@@ -78,17 +91,27 @@ struct AddClosetItemView: View {
     private var addHeader: some View {
         CardView(radius: 26, padding: 20) {
             HStack(alignment: .center, spacing: 16) {
-                Image(systemName: isEditing ? "pencil" : "plus")
-                    .font(.title3.weight(.black))
-                    .foregroundStyle(Color(.systemBackground))
-                    .frame(width: 48, height: 48)
-                    .background(Color.primary, in: Circle())
+                if presentationContext == .linkedProduct, !isEditing {
+                    ProductThumbnailView(
+                        imageURLString: productImageURLString,
+                        category: viewModel.category,
+                        width: 64,
+                        height: 76,
+                        cornerRadius: 14
+                    )
+                } else {
+                    Image(systemName: isEditing ? "pencil" : "plus")
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(Color(.systemBackground))
+                        .frame(width: 48, height: 48)
+                        .background(Color.primary, in: Circle())
+                }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(isEditing ? "내 옷 정보 수정" : "내 옷 추가")
+                    Text(headerTitle)
                         .font(.title2.weight(.black))
                         .foregroundStyle(.primary)
-                    Text(isEditing ? "저장된 핏 정보를 다시 정리합니다." : "핏이 마음에 드는 옷의 정보를 저장합니다.")
+                    Text(headerSubtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -136,7 +159,7 @@ struct AddClosetItemView: View {
             VStack(alignment: .leading, spacing: 16) {
                 AddClosetSelectionMenu(
                     title: "성별",
-                    value: selectedGenderOption?.displayName ?? viewModel.gender.rawValue,
+                    value: selectedGenderOption?.displayName ?? "선택 필요",
                     options: inputGenders,
                     optionTitle: \.displayName,
                     selection: Binding(
@@ -371,6 +394,10 @@ struct AddClosetItemView: View {
             return nil
         }
 
+        if viewModel.gender == .unknown {
+            return "성별을 선택해 주세요."
+        }
+
         if viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return "브랜드명을 입력하면 저장할 수 있습니다."
         }
@@ -405,6 +432,19 @@ struct AddClosetItemView: View {
         }
 
         return nil
+    }
+
+    private var headerTitle: String {
+        if isEditing { return "내 옷 정보 수정" }
+        return presentationContext == .linkedProduct ? "내 옷 정보 입력" : "내 옷 추가"
+    }
+
+    private var headerSubtitle: String {
+        if isEditing { return "저장된 핏 정보를 다시 정리합니다." }
+        if presentationContext == .linkedProduct {
+            return "불러온 상품을 기준으로 보유한 옷의 정보를 입력합니다."
+        }
+        return "핏이 마음에 드는 옷의 정보를 저장합니다."
     }
 
     private func normalizeInputSelection() {

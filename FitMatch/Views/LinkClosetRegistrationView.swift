@@ -64,8 +64,12 @@ struct LinkClosetRegistrationView: View {
                     AddClosetItemView(
                         prefillCategory: partialProduct.category,
                         prefillDetailCategory: parsedDetailCategory,
+                        prefillGender: partialProduct.productTargetGender,
+                        prefillSourceOption: closetSourceOption(for: partialProduct),
                         prefillBrand: partialProduct.brand?.name,
-                        prefillProductName: partialProduct.name
+                        prefillProductName: partialProduct.name,
+                        productImageURLString: partialProduct.imageURLString,
+                        presentationContext: .linkedProduct
                     ) { item in
                         modelContext.insert(item)
                         try? modelContext.save()
@@ -179,14 +183,14 @@ struct LinkClosetRegistrationView: View {
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
                     Label(
-                        partialProduct == nil ? errorMessage : "사이즈 정보를 자동으로 확인하지 못했습니다.",
-                        systemImage: "exclamationmark.circle"
+                        partialProduct == nil ? errorMessage : "상품 정보는 불러왔어요",
+                        systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
                     )
                     .font(.headline)
                     .foregroundStyle(partialProduct == nil ? .red : .primary)
 
                     if let partialProduct {
-                        Text(errorMessage)
+                        Text("사이즈 정보를 직접 입력해 내 옷장에 추가할 수 있습니다.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -212,7 +216,7 @@ struct LinkClosetRegistrationView: View {
                             }
                         }
 
-                        PrimaryButton(title: "직접 입력하기", systemImage: "square.and.pencil") {
+                        PrimaryButton(title: "사이즈 직접 입력", systemImage: "square.and.pencil") {
                             isShowingManualAddSheet = true
                         }
                     }
@@ -312,6 +316,12 @@ struct LinkClosetRegistrationView: View {
     private func sourceCategoryText(for product: Product) -> String {
         let value = product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return value.isEmpty ? "카테고리 정보 없음" : value
+    }
+
+    private func closetSourceOption(for product: Product) -> ClosetProductSourceOption {
+        if product.sourceName == "무신사" { return .musinsa }
+        if product.sourceName.contains("유니클로") { return .uniqlo }
+        return .manual
     }
 
 }

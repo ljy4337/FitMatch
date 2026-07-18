@@ -2619,6 +2619,28 @@ struct FitMatchTests {
         #expect(!viewModel.measurementEntrySourceOptions.contains(.otherSizeChart))
     }
 
+    @Test func linkedMusinsaClosetEntryKeepsSourceAndRequiresUnknownGenderSelection() {
+        let viewModel = AddClosetItemViewModel(
+            prefillCategory: .top,
+            prefillDetailCategory: .sleeveless,
+            prefillGender: .unknown,
+            prefillSourceOption: .musinsa,
+            prefillBrand: "리복",
+            prefillProductName: "탱크 탑"
+        )
+        viewModel.totalLength = "49"
+        viewModel.chest = "45"
+
+        #expect(viewModel.sourceType == .marketplace)
+        #expect(viewModel.sourceName == "무신사")
+        #expect(viewModel.measurementEntrySource == .musinsaSizeChart)
+        #expect(!viewModel.canSave)
+
+        viewModel.gender = .women
+        viewModel.genderCode = viewModel.gender.taxonomyCode
+        #expect(viewModel.canSave)
+    }
+
     @Test func manualClosetSourceAutomaticallyUsesFitMatchMeasurement() {
         let viewModel = AddClosetItemViewModel()
 

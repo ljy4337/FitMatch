@@ -108,15 +108,9 @@ struct CompareFlowSheet: View {
         }
         .sheet(isPresented: $isShowingManualProductEntry) {
             NavigationStack {
-                AddClosetItemView(
-                    prefillCategory: viewModel.category,
-                    prefillDetailCategory: viewModel.detailCategory,
-                    prefillBrand: viewModel.brand,
-                    prefillProductName: viewModel.productName
-                ) { item in
-                    modelContext.insert(item)
-                    try? modelContext.save()
-                    isShowingRegistrationSavedAlert = true
+                ManualComparisonProductEntrySheet(viewModel: viewModel) {
+                    isShowingManualProductEntry = false
+                    continueComparisonAfterProductInput()
                 }
             }
             .presentationDragIndicator(.visible)
@@ -425,10 +419,12 @@ private extension CompareFlowSheet {
 
             VStack(spacing: 8) {
                 Text(isAutomaticMusinsaSizeFailure
-                     ? "사이즈 정보를 자동으로 확인하지 못했습니다."
+                     ? "상품 정보는 불러왔어요"
                      : "상품 정보를 불러오지 못했어요.")
                     .font(.title2.weight(.black))
-                Text(errorMessage ?? "URL을 다시 확인해 주세요.")
+                Text(isAutomaticMusinsaSizeFailure
+                     ? "사이즈표를 자동으로 확인하지 못해 바로 비교할 수 없습니다."
+                     : (errorMessage ?? "URL을 다시 확인해 주세요."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -462,7 +458,7 @@ private extension CompareFlowSheet {
             }
 
             PrimaryButton(
-                title: isAutomaticMusinsaSizeFailure ? "직접 입력하기" : "다시 입력하기",
+                title: isAutomaticMusinsaSizeFailure ? "상품 사이즈 직접 입력" : "다시 입력하기",
                 systemImage: isAutomaticMusinsaSizeFailure ? "square.and.pencil" : "arrow.clockwise"
             ) {
                 if isAutomaticMusinsaSizeFailure {
@@ -935,12 +931,16 @@ private extension CompareFlowSheet {
             return
         }
 
+        continueComparisonAfterProductInput()
+    }
+
+    func continueComparisonAfterProductInput() {
         guard let product = makeProduct(insertBrandIfNeeded: false), !product.sizes.isEmpty else {
-            errorMessage = "사이즈표를 불러오지 못했어요. URL을 다시 확인해 주세요."
+            errorMessage = "사이즈명과 실측값을 확인해 주세요."
             setStep(.error)
             return
         }
-
+        errorMessage = nil
         print("[CompareFlowSheet] productName: \(product.name)")
         print("[CompareFlowSheet] category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] detailCategory: \(viewModel.detailCategory.rawValue)")
@@ -1538,6 +1538,148 @@ private struct MeasurementMethodGuideSheet: View {
 
     private func guideText(for kind: MeasurementKind) -> String {
         FitMatchMeasurementStandard.definition(for: kind, category: category).instruction
+    }
+}
+
+private struct ManualComparisonProductEntrySheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: ShoppingProductViewModel
+    let onContinue: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                FitMatchCard {
+                    HStack(alignment: .top, spacing: 14) {
+                        ProductThumbnailView(
+                            imageURLString: viewModel.productImageURLString,
+                            category: viewModel.category,
+                            width: 82,
+                            height: 98,
+                            cornerRadius: 16
+                        )
+                        VStack(alignment: .leading, spacing: 7) {
+                            Text(viewModel.brand.isEmpty ? "브랜드 정보 없음" : viewModel.brand)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                            Text(viewModel.productName.isEmpty ? "상품명 정보 없음" : viewModel.productName)
+                                .font(.headline.weight(.semibold))
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text("\(viewModel.category.serviceGroup.rawValue) / \(viewModel.detailCategory.rawValue)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                FitMatchCard {
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeader(
+                            title: "상품 사이즈 직접 입력",
+                            subtitle: "판매 페이지의 사이즈표와 동일한 항목만 cm 단위로 입력해 주세요."
+                        )
+
+                        ForEach($viewModel.sizeOptions) { $option in
+                            ManualComparisonSizeEditor(
+                                option: $option,
+                                category: viewModel.category,
+                                detailCategory: viewModel.detailCategory,
+                                canRemove: viewModel.sizeOptions.count > 1
+                            ) {
+                                viewModel.removeSizeOption(option)
+                            }
+                        }
+
+                        SecondaryButton(title: "사이즈 추가", systemImage: "plus") {
+                            viewModel.addSizeOption()
+                        }
+
+                        Text("둘레와 단면은 서로 변환하지 마세요. 화면에 표시된 항목과 의미가 같은 값만 입력합니다.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                PrimaryButton(title: "입력한 사이즈로 비교", systemImage: "sparkles") {
+                    onContinue()
+                }
+                .disabled(!hasValidSize)
+                .opacity(hasValidSize ? 1 : 0.45)
+            }
+            .padding(20)
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("상품 사이즈 입력")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("취소") { dismiss() }
+            }
+        }
+    }
+
+    private var hasValidSize: Bool {
+        viewModel.sizeOptions.contains {
+            $0.makeSizeOption(
+                category: viewModel.category,
+                detailCategory: viewModel.detailCategory
+            ) != nil
+        }
+    }
+}
+
+private struct ManualComparisonSizeEditor: View {
+    @Binding var option: ClothingSizeForm
+    let category: ClothingCategory
+    let detailCategory: ClosetDetailCategory
+    let canRemove: Bool
+    let onRemove: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                TextField("사이즈명 (예: M)", text: $option.sizeName)
+                    .font(.headline)
+                    .textInputAutocapitalization(.characters)
+                if canRemove {
+                    Button(role: .destructive, action: onRemove) {
+                        Image(systemName: "minus.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            ForEach(measurementKinds) { kind in
+                MeasurementField(
+                    title: kind.title,
+                    placeholder: kind.placeholder,
+                    value: binding(for: kind)
+                )
+            }
+        }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var measurementKinds: [MeasurementKind] {
+        category.measurementKinds(detailCategory: detailCategory, gender: .unisex)
+    }
+
+    private func binding(for kind: MeasurementKind) -> Binding<String> {
+        switch kind {
+        case .shoulder: return $option.shoulder
+        case .chest: return $option.chest
+        case .totalLength: return $option.totalLength
+        case .sleeveLength: return $option.sleeveLength
+        case .waist: return $option.waist
+        case .hip: return $option.hip
+        case .thigh: return $option.thigh
+        case .rise: return $option.rise
+        case .hem: return $option.hem
+        case .footLength: return $option.footLength
+        case .underBust: return $option.underBust
+        }
     }
 }
 

@@ -56,12 +56,16 @@ final class AddClosetItemViewModel: ObservableObject {
         prefillCategory: ClothingCategory? = nil,
         prefillDetailCategory: ClosetDetailCategory? = nil,
         prefillGender: UserGender? = nil,
+        prefillSourceOption: ClosetProductSourceOption? = nil,
         prefillBrand: String? = nil,
         prefillProductName: String? = nil
     ) {
         isEditingExistingItem = item != nil
         guard let item else {
             measurementEntrySource = .fitmatchMeasured
+            if let prefillSourceOption {
+                selectProductSource(prefillSourceOption)
+            }
             if let prefillCategory {
                 category = prefillCategory
                 categoryCode = prefillCategory.taxonomyCode
@@ -191,7 +195,8 @@ final class AddClosetItemViewModel: ObservableObject {
     }
 
     var canSave: Bool {
-        !brand.trimmed.isEmpty
+        gender != .unknown
+            && !brand.trimmed.isEmpty
             && !productName.trimmed.isEmpty
             && measurements != nil
             && (measurementKinds.isEmpty || measurementEntrySource != nil)

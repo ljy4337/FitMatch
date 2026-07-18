@@ -401,7 +401,7 @@ struct AddComparedProductToClosetSheet: View {
             ReadOnlyRegistrationInfoRow(title: "쇼핑몰", value: product.sourceDisplayName, emptyText: "정보 없음")
             ReadOnlyRegistrationInfoRow(title: "브랜드", value: product.brand?.name, emptyText: "정보 없음", isSelectable: true)
             ReadOnlyRegistrationInfoRow(title: "상품명", value: product.name, emptyText: "정보 없음", isSelectable: true)
-            ReadOnlyRegistrationInfoRow(title: "상품 대상", value: selectedGender.rawValue, emptyText: "미분류")
+            ReadOnlyRegistrationInfoRow(title: "성별", value: selectedGenderDisplayName, emptyText: "선택 필요")
             ReadOnlyRegistrationInfoRow(title: "쇼핑몰 카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
         }
     }
@@ -705,7 +705,8 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private var selectedGenderDisplayName: String {
-        FitMatchTaxonomyProvider.shared.displayName(forGender: selectedGenderCode) ?? selectedGender.rawValue
+        guard selectedGender != .unknown else { return "선택 필요" }
+        return FitMatchTaxonomyProvider.shared.displayName(forGender: selectedGenderCode) ?? selectedGender.rawValue
     }
 
     private var selectedCategoryDisplayName: String {
