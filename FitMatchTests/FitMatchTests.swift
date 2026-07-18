@@ -3492,6 +3492,47 @@ struct FitMatchTests {
         #expect(first.measurements.totalLength == 74)
     }
 
+    @Test func musinsaFallbackParsesUnitCellTransposedGiordanoTable() throws {
+        let grid = [
+            ["(cm)", "28", "29", "30", "31"],
+            ["허리둘레", "78.1", "80.6", "83.2", "85.7"],
+            ["앞밑위", "26.0", "26.7", "27.3", "27.9"],
+            ["총기장", "99.7", "100.3", "101.0", "101.6"]
+        ]
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            grid,
+            context: "DETAIL SIZE (cm)",
+            family: .lower
+        ))
+        #expect(sizes.map(\.name) == ["28", "29", "30", "31"])
+        #expect(sizes[0].measurements.waist == 0)
+        #expect(sizes[0].measurements.rise == 26)
+        #expect(sizes[0].measurements.totalLength == 99.7)
+        #expect(sizes[0].measurementRecords.contains {
+            $0.measurementCode == .waistCircumferenceGarment
+        })
+    }
+
+    @Test func musinsaFallbackParsesGiordanoUpperLongImageTableGrid() throws {
+        let grid = [
+            ["(cm)", "S", "M", "L"],
+            ["총길이", "59.1", "61.0", "62.9"],
+            ["어깨너비", "38.7", "40.6", "42.5"],
+            ["가슴너비", "44.5", "47.0", "49.5"],
+            ["소매길이", "17.1", "17.8", "18.4"]
+        ]
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            grid,
+            context: "DETAIL SIZE (cm)",
+            family: .upper
+        ))
+        #expect(sizes.map(\.name) == ["S", "M", "L"])
+        #expect(sizes[0].measurements.totalLength == 59.1)
+        #expect(sizes[1].measurements.shoulder == 40.6)
+        #expect(sizes[1].measurements.chest == 47)
+        #expect(sizes[2].measurements.sleeveLength == 18.4)
+    }
+
     @Test func musinsaFallbackSeparatesShoesFromApparelFootRanges() throws {
         let html = """
         <table>

@@ -147,10 +147,15 @@ enum MusinsaFallbackTableParser {
         context: String,
         family: MusinsaFallbackGarmentFamily
     ) -> [ParsedProductSize]? {
-        let grid = rawGrid
+        var grid = rawGrid
             .map { $0.map(\.trimmedCell).filter { !$0.isEmpty } }
             .filter { !$0.isEmpty }
         guard grid.count >= 3 else { return nil }
+        if grid[0].count >= 3,
+           isUnitOnlyCell(grid[0][0]),
+           grid[0].dropFirst().filter({ isSizeValue($0) }).count >= 2 {
+            grid[0][0] = "size"
+        }
         let normalized = grid.map { $0.map(\.normalizedSizeHeader) }
         let unit = unitMultiplier(in: "\(context) \(grid.flatMap { $0 }.joined(separator: " "))")
         guard let unit else { return nil }
@@ -268,6 +273,14 @@ enum MusinsaFallbackTableParser {
         return Set(hits).count == 1 ? hits[0] : nil
     }
 
+    private static func isUnitOnlyCell(_ text: String) -> Bool {
+        let normalized = text.lowercased()
+            .replacingOccurrences(of: "(", with: "")
+            .replacingOccurrences(of: ")", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return ["cm", "mm", "inch", "inches"].contains(normalized)
+    }
+
     nonisolated private static func isSizeHeader(_ text: String) -> Bool {
         ["사이즈", "size", "호칭", "옵션"].contains(text)
     }
@@ -291,7 +304,7 @@ enum MusinsaFallbackTableParser {
         case "가슴단면", "가슴너비", "품", "chestwidth", "pit-to-pit", "pittopit": return .chestWidth
         case "가슴둘레", "chestcircumference", "bustcircumference": return .chestCircumference
         case "어깨", "어깨너비", "shoulder", "shoulderwidth": return .shoulder
-        case "총장", "총기장", "옷길이", "옷길이아웃심", "length", "bodylength", "outseam":
+        case "총장", "총기장", "총길이", "옷길이", "옷길이아웃심", "length", "bodylength", "outseam":
             return family == .lower ? .outseam : .length
         case "소매", "소매길이", "sleeve", "sleevelength": return .sleeve
         case "허리단면", "허리너비", "waistwidth": return .waistWidth
@@ -379,13 +392,14 @@ private enum MusinsaFallbackImageOCR {
         let regions: [CGRect]
         if requiresTableRectangle {
             guard image.height >= image.width * 3 else { return nil }
-            regions = tableRectangles(in: image)
+            let rectangleRegions = tableRectangles(in: image)
+            regions = rectangleRegions.isEmpty ? denseTableRegions(in: image) : rectangleRegions
             guard !regions.isEmpty else { return nil }
         } else {
             regions = [CGRect(x: 0, y: 0, width: 1, height: 1)]
         }
 
-        for region in regions.prefix(3) {
+        for region in regions.prefix(8) {
             let observations = recognizedText(in: image, region: region)
             guard observations.count >= 6 else { continue }
             let grid = gridRows(from: observations)
@@ -425,13 +439,137 @@ private enum MusinsaFallbackImageOCR {
             .sorted { $0.width * $0.height > $1.width * $1.height }
     }
 
+    private static func denseTableRegions(in image: CGImage) -> [CGRect] {
+        let width = image.width
+        let height = image.height
+        guard width >= 300, height >= 900 else { return [] }
+
+        let bytesPerRow = width * 4
+        var pixels = [UInt8](repeating: 255, count: height * bytesPerRow)
+        guard let context = CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return [] }
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        struct InkRow {
+            let y: Int
+            let minX: Int
+            let maxX: Int
+        }
+        var inkRows: [InkRow] = []
+        for y in stride(from: 0, to: height, by: 2) {
+            var darkCount = 0
+            var groups = 0
+            var minX = width
+            var maxX = 0
+            var previousDarkX: Int?
+            for x in 0..<width {
+                let offset = y * bytesPerRow + x * 4
+                let luminance = (
+                    Int(pixels[offset]) * 30
+                    + Int(pixels[offset + 1]) * 59
+                    + Int(pixels[offset + 2]) * 11
+                ) / 100
+                guard luminance < 190 else { continue }
+                darkCount += 1
+                minX = min(minX, x)
+                maxX = max(maxX, x)
+                if previousDarkX == nil || x - previousDarkX! > 12 {
+                    groups += 1
+                }
+                previousDarkX = x
+            }
+            let span = maxX - minX
+            if darkCount >= 20,
+               darkCount <= Int(Double(width) * 0.45),
+               groups >= 5,
+               span >= Int(Double(width) * 0.4) {
+                inkRows.append(InkRow(y: y, minX: minX, maxX: maxX))
+            }
+        }
+
+        struct InkBand {
+            var minY: Int
+            var maxY: Int
+            var minX: Int
+            var maxX: Int
+        }
+        var bands: [InkBand] = []
+        for row in inkRows {
+            if var last = bands.last, row.y - last.maxY <= 6 {
+                last.maxY = row.y
+                last.minX = min(last.minX, row.minX)
+                last.maxX = max(last.maxX, row.maxX)
+                bands[bands.count - 1] = last
+            } else {
+                bands.append(InkBand(minY: row.y, maxY: row.y, minX: row.minX, maxX: row.maxX))
+            }
+        }
+
+        var regions: [CGRect] = []
+        for start in bands.indices {
+            var selected = [bands[start]]
+            for next in bands.index(after: start)..<bands.endIndex {
+                let gap = bands[next].minY - selected.last!.maxY
+                if gap > 180 { break }
+                if gap >= 8 {
+                    selected.append(bands[next])
+                }
+                if selected.count >= 4 {
+                    let minY = selected.map(\.minY).min()!
+                    let maxY = selected.map(\.maxY).max()!
+                    let minX = selected.map(\.minX).min()!
+                    let maxX = selected.map(\.maxX).max()!
+                    let regionHeight = maxY - minY
+                    guard regionHeight <= Int(Double(height) * 0.12),
+                          maxX - minX >= Int(Double(width) * 0.45) else { continue }
+                    let horizontalPadding = Int(Double(width) * 0.04)
+                    let verticalPadding = max(24, regionHeight / 3)
+                    let x0 = max(0, minX - horizontalPadding)
+                    let x1 = min(width, maxX + horizontalPadding)
+                    let y0 = max(0, minY - verticalPadding)
+                    let y1 = min(height, maxY + verticalPadding)
+                    regions.append(CGRect(
+                        x: Double(x0) / Double(width),
+                        y: 1 - Double(y1) / Double(height),
+                        width: Double(x1 - x0) / Double(width),
+                        height: Double(y1 - y0) / Double(height)
+                    ))
+                }
+            }
+        }
+        return regions
+            .filter { $0.width >= 0.45 && $0.height >= 0.015 }
+            .sorted { $0.width * $0.height < $1.width * $1.height }
+            .reduce(into: []) { unique, region in
+                if !unique.contains(where: { $0.intersection(region).width * $0.intersection(region).height
+                    >= min($0.width * $0.height, region.width * region.height) * 0.8 }) {
+                    unique.append(region)
+                }
+            }
+    }
+
     private static func recognizedText(in image: CGImage, region: CGRect) -> [(text: String, box: CGRect)] {
+        let pixelRect = CGRect(
+            x: region.minX * Double(image.width),
+            y: (1 - region.maxY) * Double(image.height),
+            width: region.width * Double(image.width),
+            height: region.height * Double(image.height)
+        ).integral
+        guard pixelRect.width >= 120,
+              pixelRect.height >= 60,
+              let croppedImage = image.cropping(to: pixelRect) else { return [] }
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.recognitionLanguages = ["ko-KR", "en-US"]
         request.usesLanguageCorrection = true
-        request.regionOfInterest = region
-        try? VNImageRequestHandler(cgImage: image).perform([request])
+        try? VNImageRequestHandler(cgImage: croppedImage).perform([request])
         return (request.results ?? []).compactMap {
             guard let candidate = $0.topCandidates(1).first, candidate.confidence >= 0.8 else { return nil }
             return (candidate.string, $0.boundingBox)

@@ -1164,12 +1164,26 @@ private extension CompareFlowSheet {
     }
 
     func openCurrentMusinsaProduct() {
-        let value = viewModel.productCanonicalURLString ?? productURL
-        guard let url = URL(string: value), url.scheme != nil else {
+        let webValue = viewModel.productCanonicalURLString ?? productURL
+        guard let webURL = URL(string: webValue), webURL.scheme != nil else {
             openMusinsa()
             return
         }
-        UIApplication.shared.open(url)
+
+        let productID = viewModel.productCode
+            ?? MusinsaURLResolver().extractProductID(from: webURL)
+        guard let productID,
+              let appURL = URL(string: "musinsa://goods/\(productID)"),
+              UIApplication.shared.canOpenURL(appURL) else {
+            UIApplication.shared.open(webURL)
+            return
+        }
+
+        UIApplication.shared.open(appURL, options: [:]) { opened in
+            if !opened {
+                UIApplication.shared.open(webURL)
+            }
+        }
     }
 
     func openUniqlo() {
