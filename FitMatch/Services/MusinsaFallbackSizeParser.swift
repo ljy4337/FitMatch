@@ -147,6 +147,9 @@ enum MusinsaFallbackTableParser {
         context: String,
         family: MusinsaFallbackGarmentFamily
     ) -> [ParsedProductSize]? {
+        let normalizedContext = context.replacingOccurrences(of: " ", with: "")
+        guard !normalizedContext.contains("신체권장치수"),
+              !normalizedContext.contains("권장신체치수") else { return nil }
         var grid = rawGrid
             .map { $0.map(\.trimmedCell).filter { !$0.isEmpty } }
             .filter { !$0.isEmpty }
@@ -166,6 +169,13 @@ enum MusinsaFallbackTableParser {
                     family: family
                 )
             }
+        }
+        if let transposedHeaderIndex = grid.firstIndex(where: { row in
+            row.count >= 3
+                && isSizeHeader(row[0].normalizedSizeHeader)
+                && row.dropFirst().filter({ isSizeValue($0) }).count >= 2
+        }) {
+            grid = Array(grid.dropFirst(transposedHeaderIndex))
         }
         grid = grid.map { mergedHeaderCells($0, family: family) }
         let normalized = grid.map { $0.map(\.normalizedSizeHeader) }
@@ -289,13 +299,13 @@ enum MusinsaFallbackTableParser {
             )
             var records: [ParsedMeasurement] = []
             for (index, mapped, rawHeader) in mappedColumns {
-                guard row.indices.contains(index), let rawValue = strictNumber(row[index]) else { continue }
-                let sourceValue = rawValue * unit
+                guard row.indices.contains(index),
+                      let sourceValue = measurementValue(row[index], defaultUnit: unit) else { continue }
                 guard sourceValue.isFinite, sourceValue > 0, sourceValue < 300 else { continue }
                 let record = mapped.record(value: sourceValue, rawLabel: rawHeader, rawValue: row[index])
                 records.append(record)
                 if record.semanticStatus == .mapped,
-                   mapped != .chestCircumference {
+                   ![.chestCircumference, .frontLength, .backLength].contains(mapped) {
                     measurements.set(record.value, for: record.displayKind)
                 }
             }
@@ -309,10 +319,14 @@ enum MusinsaFallbackTableParser {
         switch family {
         case .upper:
             return columns.contains(where: { $0 == .chestWidth || $0 == .chestCircumference })
-                && columns.contains(where: { [.length, .shoulder, .sleeve].contains($0) })
+                && columns.contains(where: {
+                    [.length, .frontLength, .backLength, .shoulder, .sleeve].contains($0)
+                })
         case .lower:
             return columns.contains(where: { $0 == .waistWidth || $0 == .waistCircumference })
-                && columns.contains(where: { [.hip, .hipCircumference, .thigh, .rise, .outseam, .inseam].contains($0) })
+                && columns.contains(where: {
+                    [.hip, .hipCircumference, .thigh, .thighCircumference, .rise, .outseam, .inseam].contains($0)
+                })
         case .shoes:
             return columns.contains(.footLength)
         }
@@ -325,6 +339,11 @@ enum MusinsaFallbackTableParser {
     private static func unitMultiplier(in text: String) -> Double? {
         let normalized = text.lowercased()
             .replacingOccurrences(of: #"https?://\S+"#, with: "", options: .regularExpression)
+            .replacingOccurrences(
+                of: #"\d{1,3}(?:[.,]\d+)?\s*(?:cm|mm)(?![a-z])"#,
+                with: "",
+                options: .regularExpression
+            )
         let hits = [
             normalized.range(of: #"(?<![a-z])cm(?![a-z])|센티미터"#, options: .regularExpression) != nil ? 1.0 : nil,
             normalized.range(of: #"(?<![a-z])mm(?![a-z])|밀리미터"#, options: .regularExpression) != nil ? 0.1 : nil,
@@ -343,13 +362,13 @@ enum MusinsaFallbackTableParser {
     }
 
     nonisolated private static func isSizeHeader(_ text: String) -> Bool {
-        ["사이즈", "size", "호칭", "옵션"].contains(text)
+        ["사이즈", "size", "호칭", "옵션", "치수항목"].contains(text)
     }
 
     private static func isSizeValue(_ text: String) -> Bool {
         let value = text.uppercased().replacingOccurrences(of: " ", with: "")
         return value.range(
-            of: #"^(XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|FREE|ONE|[0-9]{2,3}(?:[-/][0-9]{2,3})?)$"#,
+            of: #"^(?:(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM|FREE|ONE)(?:\([0-9]{2,3}\))?|[0-9]{2,3}(?:[-/][0-9]{2,3})?(?:\((?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)\))?)$"#,
             options: .regularExpression
         ) != nil
     }
@@ -360,11 +379,35 @@ enum MusinsaFallbackTableParser {
         return Double(normalized)
     }
 
+    private static func measurementValue(_ text: String, defaultUnit: Double) -> Double? {
+        let normalized = text.replacingOccurrences(of: ",", with: ".").trimmedCell
+        guard normalized != "-",
+              let regex = try? NSRegularExpression(
+                pattern: #"^(\d{1,3}(?:\.\d+)?)\s*(cm|mm)?$"#,
+                options: .caseInsensitive
+              ),
+              let match = regex.firstMatch(
+                in: normalized,
+                range: NSRange(normalized.startIndex..<normalized.endIndex, in: normalized)
+              ),
+              let numberRange = Range(match.range(at: 1), in: normalized),
+              let number = Double(normalized[numberRange]) else { return nil }
+        let multiplier: Double
+        if let unitRange = Range(match.range(at: 2), in: normalized) {
+            multiplier = normalized[unitRange].lowercased() == "mm" ? 0.1 : 1
+        } else {
+            multiplier = defaultUnit
+        }
+        return number * multiplier
+    }
+
     private static func column(for header: String, family: MusinsaFallbackGarmentFamily) -> FallbackColumn? {
         switch header {
         case "가슴", "가슴단면", "가슴너비", "품", "chest", "chestwidth", "pit-to-pit", "pittopit": return .chestWidth
         case "가슴둘레", "chestcircumference", "bustcircumference": return .chestCircumference
         case "어깨", "어깨너비", "shoulder", "shoulderwidth": return .shoulder
+        case "앞기장", "앞길이": return family == .upper ? .frontLength : nil
+        case "뒷기장", "뒷길이": return family == .upper ? .backLength : nil
         case "총장", "총기장", "총길이", "옷길이", "옷길이아웃심", "length", "bodylength", "outseam":
             return family == .lower ? .outseam : .length
         case "소매", "소매길이", "sleeve", "sleevelength": return .sleeve
@@ -373,7 +416,9 @@ enum MusinsaFallbackTableParser {
         case "엉덩이단면", "엉덩이너비", "힙단면", "hipwidth": return .hip
         case "엉덩이둘레", "힙둘레", "hipcircumference": return .hipCircumference
         case "허벅지단면", "허벅지너비", "thighwidth": return .thigh
-        case "밑위", "앞밑위", "앞밑위길이", "rise", "frontrise": return .rise
+        case "허벅지둘레": return .thighCircumference
+        case "밑위", "밑위길이", "앞밑위", "앞밑위길이", "rise", "frontrise": return .rise
+        case "밑단둘레": return .hemCircumference
         case "인심", "inseam": return .inseam
         case "발길이", "발길이정보", "footlength", "feetlength": return family == .shoes ? .footLength : nil
         default: return nil
@@ -382,9 +427,10 @@ enum MusinsaFallbackTableParser {
 }
 
 private enum FallbackColumn: Equatable {
-    case chestWidth, chestCircumference, shoulder, length, sleeve
+    case chestWidth, chestCircumference, shoulder, length, frontLength, backLength, sleeve
     case outseam
-    case waistWidth, waistCircumference, hip, hipCircumference, thigh, rise, inseam, footLength
+    case waistWidth, waistCircumference, hip, hipCircumference
+    case thigh, thighCircumference, rise, hemCircumference, inseam, footLength
 
     init?(record: ParsedMeasurement) {
         switch record.measurementCode {
@@ -392,6 +438,7 @@ private enum FallbackColumn: Equatable {
         case .chestCircumferenceGarment: self = .chestCircumference
         case .shoulderWidthSeamToSeam: self = .shoulder
         case .bodyLengthBackNeckToHem: self = .length
+        case .bodyLengthHPSToHemFront: self = .frontLength
         case .pantsOutseamWaistToHem: self = .outseam
         case .sleeveShoulderSeamToCuff: self = .sleeve
         case .waistWidthEdgeToEdge: self = .waistWidth
@@ -414,6 +461,8 @@ private enum FallbackColumn: Equatable {
         case .chestCircumference: (code, kind, multiplier) = (.chestCircumferenceGarment, .chest, 1)
         case .shoulder: (code, kind, multiplier) = (.shoulderWidthSeamToSeam, .shoulder, 1)
         case .length: (code, kind, multiplier) = (.bodyLengthBackNeckToHem, .totalLength, 1)
+        case .frontLength: (code, kind, multiplier) = (.bodyLengthHPSToHemFront, .totalLength, 1)
+        case .backLength: (code, kind, multiplier) = (.bodyLengthBackNeckToHem, .totalLength, 1)
         case .outseam: (code, kind, multiplier) = (.pantsOutseamWaistToHem, .totalLength, 1)
         case .sleeve: (code, kind, multiplier) = (.sleeveShoulderSeamToCuff, .sleeveLength, 1)
         case .waistWidth: (code, kind, multiplier) = (.waistWidthEdgeToEdge, .waist, 1)
@@ -421,9 +470,21 @@ private enum FallbackColumn: Equatable {
         case .hip: (code, kind, multiplier) = (.hipWidthAtWidest, .hip, 1)
         case .hipCircumference: (code, kind, multiplier) = (.hipWidthAtWidest, .hip, 0.5)
         case .thigh: (code, kind, multiplier) = (.thighWidthCrotchToOuter, .thigh, 1)
+        case .thighCircumference: (code, kind, multiplier) = (.thighWidthCrotchToOuter, .thigh, 0.5)
         case .rise: (code, kind, multiplier) = (.riseCrotchToWaistFront, .rise, 1)
+        case .hemCircumference: (code, kind, multiplier) = (.hemWidthEdgeToEdge, .hem, 0.5)
         case .inseam: (code, kind, multiplier) = (.pantsInseamCrotchToHem, .totalLength, 1)
         case .footLength: (code, kind, multiplier) = (.footLengthHeelToToe, .footLength, 1)
+        }
+        var transformations: [String] = []
+        if rawValue.lowercased().range(
+            of: #"^\s*\d{1,3}(?:[.,]\d+)?\s*mm\s*$"#,
+            options: .regularExpression
+        ) != nil {
+            transformations.append("cell_unit_mm_to_cm_multiplier=0.1")
+        }
+        if multiplier == 0.5 {
+            transformations.append("circumference_to_width_multiplier=0.5")
         }
         return ParsedMeasurement(
             value: value * multiplier,
@@ -434,7 +495,7 @@ private enum FallbackColumn: Equatable {
             inputSource: .importedSizeChart,
             mappingVersion: "musinsa_fallback_mapping_v1",
             rawLabel: rawLabel,
-            rawInfo: multiplier == 0.5 ? "circumference_to_width_multiplier=0.5" : nil,
+            rawInfo: transformations.isEmpty ? nil : transformations.joined(separator: ";"),
             rawValueText: rawValue,
             evidenceLevel: .officialText,
             semanticStatus: .mapped

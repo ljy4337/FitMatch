@@ -3528,6 +3528,111 @@ struct FitMatchTests {
         #expect(first.measurementRecords.allSatisfy { $0.methodSource == "musinsa_fallback" })
     }
 
+    @Test func musinsaFallbackParsesMeasurementItemTransposedCompositeSizes() throws {
+        let html = """
+        <table>
+          <tr><th>치수항목</th><th>093(S)</th><th>095(M)</th><th>100(L)</th></tr>
+          <tr><th>가슴둘레</th><td>104</td><td>108</td><td>112</td></tr>
+          <tr><th>어깨너비</th><td>43</td><td>45</td><td>47</td></tr>
+        </table><p>단위: cm</p>
+        """
+        let sizes = MusinsaFallbackTableParser.parseHTML(html, family: .upper)
+        #expect(sizes.map(\.name) == ["093(S)", "095(M)", "100(L)"])
+        #expect(sizes[0].measurementRecords.contains {
+            $0.measurementCode == .chestCircumferenceGarment && $0.value == 104
+        })
+        #expect(sizes[0].measurements.chest == 0)
+    }
+
+    @Test func musinsaFallbackPreservesSeparateFrontAndBackLengths() throws {
+        for labels in [("앞기장", "뒷기장"), ("앞길이", "뒷길이")] {
+            let grid = [
+                ["치수항목", "S", "M"],
+                ["가슴단면", "50", "53"],
+                [labels.0, "66", "68"],
+                [labels.1, "69", "71"]
+            ]
+            let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+                grid,
+                context: "단위 cm",
+                family: .upper
+            ))
+            #expect(sizes.count == 2)
+            #expect(sizes[0].measurements.totalLength == 0)
+            #expect(sizes[0].measurementRecords.contains {
+                $0.rawLabel == labels.0 && $0.measurementCode == .bodyLengthHPSToHemFront
+            })
+            #expect(sizes[0].measurementRecords.contains {
+                $0.rawLabel == labels.1 && $0.measurementCode == .bodyLengthBackNeckToHem
+            })
+        }
+    }
+
+    @Test func musinsaFallbackParsesCellUnitsAndLowerCircumferenceAliases() throws {
+        let grid = [
+            ["치수항목", "65 (S)", "70 (WM)"],
+            ["허리둘레", "73.5 cm", "780mm"],
+            ["허벅지둘레", "58CM", "620mm"],
+            ["밑위길이", "27", "28"],
+            ["밑단둘레", "44cm", "460mm"]
+        ]
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            grid,
+            context: "실측 사이즈",
+            family: .lower
+        ))
+        #expect(sizes.map(\.name) == ["65 (S)", "70 (WM)"])
+        #expect(sizes[0].measurements.waist == 36.75)
+        #expect(sizes[1].measurements.waist == 39)
+        #expect(sizes[0].measurements.thigh == 29)
+        #expect(sizes[1].measurements.rise == 28)
+        let hem = try #require(sizes[1].measurementRecords.first { $0.displayKind == .hem })
+        #expect(hem.value == 23)
+        #expect(hem.rawLabel == "밑단둘레")
+        #expect(hem.rawValueText == "460mm")
+        #expect(hem.rawInfo == "cell_unit_mm_to_cm_multiplier=0.1;circumference_to_width_multiplier=0.5")
+    }
+
+    @Test func musinsaFallbackParsesLetterFirstCompositeSizesForExplicitSpecTables() throws {
+        let grid = [
+            ["사이즈", "M(95)", "L(100)", "XL(105)", "XXL(110)"],
+            ["가슴둘레", "105", "110", "115", "120"],
+            ["어깨너비", "51", "53", "55", "57"],
+            ["총기장", "70.5", "72", "73.5", "75"]
+        ]
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            grid,
+            context: "실측사이즈 단위 cm",
+            family: .upper
+        ))
+        #expect(sizes.map(\.name) == ["M(95)", "L(100)", "XL(105)", "XXL(110)"])
+        #expect(sizes[0].measurementRecords.contains {
+            $0.measurementCode == .chestCircumferenceGarment && $0.value == 105
+        })
+    }
+
+    @Test func musinsaFallbackKeepsStrictTableRejections() {
+        let singleSize = """
+        <table><tr><th>치수항목</th><th>093(S)</th></tr>
+        <tr><th>가슴둘레</th><td>104cm</td></tr>
+        <tr><th>어깨너비</th><td>43cm</td></tr></table>
+        """
+        let bodyRecommendation = """
+        <h2>신체 권장 치수</h2><table>
+        <tr><th>사이즈</th><th>가슴둘레</th><th>총장</th></tr>
+        <tr><td>S</td><td>90</td><td>165</td></tr>
+        <tr><td>M</td><td>95</td><td>170</td></tr></table><p>cm</p>
+        """
+        let descriptiveNumber = """
+        <table><tr><th>사이즈</th><th>가슴단면</th><th>총장</th></tr>
+        <tr><td>S</td><td>약 52cm (오차 1~2cm)</td><td>68cm</td></tr>
+        <tr><td>M</td><td>약 55cm (오차 1~2cm)</td><td>70cm</td></tr></table>
+        """
+        #expect(MusinsaFallbackTableParser.parseHTML(singleSize, family: .upper).isEmpty)
+        #expect(MusinsaFallbackTableParser.parseHTML(bodyRecommendation, family: .upper).isEmpty)
+        #expect(MusinsaFallbackTableParser.parseHTML(descriptiveNumber, family: .upper).isEmpty)
+    }
+
     @Test func musinsaFallbackDefaultsMissingUnitToCentimetersAndRejectsSingleSizeRows() {
         let missingUnit = """
         <table><tr><th>size</th><th>chest width</th><th>length</th></tr>
@@ -3910,6 +4015,26 @@ struct FitMatchTests {
         #expect(result.detailCode == "other_tops")
         #expect(result.garmentFamily == .shirt)
         #expect(result.isValid)
+    }
+
+    @Test func parsedCanonicalClassificationUsesDeepestPaddingCategory() throws {
+        let fixtures: [([String?], String)] = [
+            (["아우터", "경량 패딩/패딩 베스트", "경량 패딩", nil], "light_padding"),
+            (["아우터", "경량 패딩/패딩 베스트", "패딩 베스트", nil], "padded_vest"),
+            (["아우터", "패딩", "롱패딩", nil], "long_padding"),
+            (["아우터", "코트", "트렌치 코트", nil], "trench_coat"),
+            (["아우터", "재킷", "블레이저", nil], "blazer")
+        ]
+        for (depths, expected) in fixtures {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: .outer,
+                detailCategory: .padding,
+                sourceDepths: depths,
+                sourcePath: depths.compactMap { $0 }.joined(separator: " > "),
+                productName: "테스트 상품"
+            ))
+            #expect(result.detailCode == expected)
+        }
     }
 
     @Test func parsedCanonicalClassificationResolvesRequiredSourceFixtures() throws {

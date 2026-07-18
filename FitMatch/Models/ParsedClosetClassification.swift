@@ -73,10 +73,16 @@ struct ParsedClosetClassification: Equatable {
         } else {
             resolvedCategoryCode = category.serviceGroup.taxonomyCode
             resolvedCategory = category.serviceGroup
-            let inferredDetail = canonicalDetailCode(categoryCode: resolvedCategoryCode,
-                                                     detail: detailCategory,
-                                                     text: combined,
-                                                     sourceText: source)
+            let inferredDetail = resolvedCategoryCode == "outerwear"
+                ? deepestOuterwearDetail(in: depths)
+                    ?? canonicalDetailCode(categoryCode: resolvedCategoryCode,
+                                           detail: detailCategory,
+                                           text: combined,
+                                           sourceText: source)
+                : canonicalDetailCode(categoryCode: resolvedCategoryCode,
+                                      detail: detailCategory,
+                                      text: combined,
+                                      sourceText: source)
             guard let inferredDetail else { return nil }
             resolvedDetailCode = inferredDetail
             resolvedDetail = ClosetDetailCategory.fromTaxonomyCode(inferredDetail)
@@ -136,32 +142,45 @@ struct ParsedClosetClassification: Equatable {
             if containsAny(text, ["긴바지", "롱 팬츠", "long pants"]) { return "long_pants" }
             return "other_bottoms"
         case "outerwear":
-            let mappings: [(String, [String])] = [
-                ("padded_vest", ["패딩조끼", "패딩 베스트"]),
-                ("light_padding", ["경량 패딩"]),
-                ("short_padding", ["숏패딩"]),
-                ("long_padding", ["롱패딩"]),
-                ("cardigan", ["가디건", "카디건", "cardigan"]),
-                ("blazer", ["블레이저", "blazer"]),
-                ("blouson", ["블루종", "ma-1", "ma1", "blouson"]),
-                ("fleece", ["플리스", "뽀글이", "fleece"]),
-                ("anorak", ["아노락", "anorak"]),
-                ("windbreaker", ["바람막이", "나일론/코치", "windbreaker", "coach jacket"]),
-                ("mouton", ["무스탕", "퍼", "mouton"]),
-                ("trench_coat", ["트렌치", "trench"]),
-                ("padding", ["패딩", "파카", "헤비 아우터", "padding", "parka"]),
-                ("vest", ["베스트", "조끼", "vest"]),
-                ("coat", ["코트", "coat"]),
-                ("jumper", ["점퍼", "후드 집업", "jumper"]),
-                ("jacket", ["재킷", "자켓", "라이더스", "스타디움", "사파리", "헌팅", "트러커", "jacket"]),
-                ("other_outerwear", ["기타 아우터"])
-            ]
-            if let match = mappings.first(where: { containsAny(sourceText, $0.1) }) { return match.0 }
+            if let detail = outerwearDetail(in: sourceText) { return detail }
             return "other_outerwear"
         default: break
         }
         let fallback = FitMatchTaxonomyProvider.shared.detailCode(for: detail.rawValue, categoryCode: categoryCode)
         return FitMatchTaxonomyProvider.shared.isValidDetail(fallback, for: categoryCode) ? fallback : nil
+    }
+
+    private static func deepestOuterwearDetail(in depths: [String]) -> String? {
+        for depth in depths.reversed() {
+            if let detail = outerwearDetail(in: depth.lowercased()) {
+                return detail
+            }
+        }
+        return nil
+    }
+
+    private static func outerwearDetail(in source: String) -> String? {
+        let mappings: [(String, [String])] = [
+            ("padded_vest", ["패딩조끼", "패딩 베스트"]),
+            ("light_padding", ["경량 패딩"]),
+            ("short_padding", ["숏패딩"]),
+            ("long_padding", ["롱패딩"]),
+            ("cardigan", ["가디건", "카디건", "cardigan"]),
+            ("blazer", ["블레이저", "blazer"]),
+            ("blouson", ["블루종", "ma-1", "ma1", "blouson"]),
+            ("fleece", ["플리스", "뽀글이", "fleece"]),
+            ("anorak", ["아노락", "anorak"]),
+            ("windbreaker", ["바람막이", "나일론/코치", "windbreaker", "coach jacket"]),
+            ("mouton", ["무스탕", "퍼", "mouton"]),
+            ("trench_coat", ["트렌치", "trench"]),
+            ("padding", ["패딩", "파카", "헤비 아우터", "padding", "parka"]),
+            ("vest", ["베스트", "조끼", "vest"]),
+            ("coat", ["코트", "coat"]),
+            ("jumper", ["점퍼", "후드 집업", "jumper"]),
+            ("jacket", ["재킷", "자켓", "라이더스", "스타디움", "사파리", "헌팅", "트러커", "jacket"]),
+            ("other_outerwear", ["기타 아우터"])
+        ]
+        return mappings.first(where: { containsAny(source, $0.1) })?.0
     }
 
     private static func inferredFamily(from source: String, categoryCode: String) -> ComparisonGarmentFamily {
