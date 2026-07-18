@@ -11,6 +11,7 @@ struct AddComparedProductToClosetSheet: View {
     let productDetailCategory: ClosetDetailCategory
     let recommendedSize: ProductSize?
     let preselectedCategory: ClothingCategory?
+    let preselectedClassification: ParsedClosetClassification?
     let isParsedProductReadOnly: Bool
     var onSaved: ((UserFit) -> Void)?
 
@@ -34,6 +35,7 @@ struct AddComparedProductToClosetSheet: View {
         productDetailCategory: ClosetDetailCategory,
         recommendedSize: ProductSize?,
         preselectedCategory: ClothingCategory? = nil,
+        preselectedClassification: ParsedClosetClassification? = nil,
         isParsedProductReadOnly: Bool = false,
         onSaved: ((UserFit) -> Void)? = nil
     ) {
@@ -41,6 +43,7 @@ struct AddComparedProductToClosetSheet: View {
         self.productDetailCategory = productDetailCategory
         self.recommendedSize = recommendedSize
         self.preselectedCategory = preselectedCategory
+        self.preselectedClassification = preselectedClassification
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.onSaved = onSaved
         _step = State(initialValue: isParsedProductReadOnly ? .productInfo : .size)
@@ -48,16 +51,25 @@ struct AddComparedProductToClosetSheet: View {
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
         _selectedGenderCode = State(initialValue: product.productTargetGender.taxonomyCode)
-        _selectedCategory = State(initialValue: preselectedCategory ?? product.category.serviceGroup)
-        _selectedCategoryCode = State(initialValue: (preselectedCategory ?? product.category.serviceGroup).taxonomyCode)
-        _selectedDetailCategory = State(initialValue: productDetailCategory)
-        _selectedDetailCategoryCode = State(initialValue: FitMatchTaxonomyProvider.shared.detailCode(
-            for: productDetailCategory.rawValue,
-            categoryCode: (preselectedCategory ?? product.category.serviceGroup).taxonomyCode
-        ) ?? "")
+        let canonical = preselectedClassification?.isValid == true ? preselectedClassification : nil
+        let initialCategory = canonical?.category ?? preselectedCategory ?? product.category.serviceGroup
+        let initialCategoryCode = canonical?.categoryCode ?? initialCategory.taxonomyCode
+        let initialDetail = canonical?.detailCategory ?? productDetailCategory
+        let initialDetailCode = canonical?.detailCode ?? FitMatchTaxonomyProvider.shared.detailCode(
+            for: initialDetail.rawValue, categoryCode: initialCategoryCode
+        ) ?? ""
+        let hasValidCanonicalSelection = FitMatchTaxonomyProvider.shared.isValidDetail(
+            initialDetailCode, for: initialCategoryCode
+        )
+        _selectedCategory = State(initialValue: initialCategory)
+        _selectedCategoryCode = State(initialValue: initialCategoryCode)
+        _selectedDetailCategory = State(initialValue: initialDetail)
+        _selectedDetailCategoryCode = State(initialValue: initialDetailCode)
         _selectedSizeID = State(initialValue: Self.initialSelectedSizeID(recommendedSize: recommendedSize, productSizes: product.sizes))
-        _hasSelectedClosetCategory = State(initialValue: preselectedCategory != nil && (preselectedCategory ?? .other) != .other)
-        _hasSelectedClosetDetailCategory = State(initialValue: preselectedCategory != nil && productDetailCategory != .other)
+        // Reversible previous initialization used only preselectedCategory != nil.
+        // Canonical taxonomy validity now controls whether parsed selections appear selected.
+        _hasSelectedClosetCategory = State(initialValue: hasValidCanonicalSelection)
+        _hasSelectedClosetDetailCategory = State(initialValue: hasValidCanonicalSelection)
     }
 
     private var availableSizes: [ProductSize] {
@@ -568,11 +580,20 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private var canSave: Bool {
+        let hasValidClassification = FitMatchTaxonomyProvider.shared.isActiveCategory(selectedCategoryCode)
+            && FitMatchTaxonomyProvider.shared.isValidDetail(selectedDetailCategoryCode, for: selectedCategoryCode)
+            && ParsedClosetClassification.isConsistent(
+                category: selectedCategory,
+                detailCategory: selectedDetailCategory,
+                categoryCode: selectedCategoryCode,
+                detailCode: selectedDetailCategoryCode
+            )
         if isParsedProductReadOnly {
             return selectedSize != nil
                 && selectedGenderCode != "unknown"
                 && hasSelectedClosetCategory
                 && hasSelectedClosetDetailCategory
+                && hasValidClassification
                 && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
 
@@ -580,6 +601,7 @@ struct AddComparedProductToClosetSheet: View {
             && selectedGenderCode != "unknown"
             && !brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && hasValidClassification
     }
 
     private func saveSelectedSize() {
@@ -626,6 +648,12 @@ struct AddComparedProductToClosetSheet: View {
         item.categoryCode = selectedCategoryCode
         item.detailCategoryCode = selectedDetailCategoryCode
         item.normalizedProductTypeCode = sourceProduct.resolvedNormalizedProductTypeCode
+            ?? preselectedClassification?.normalizedProductTypeCode
+        if let preselectedClassification {
+            item.garmentType = preselectedClassification.garmentFamily
+            item.sleeveType = preselectedClassification.lengthType
+            item.constructionType = preselectedClassification.constructionType
+        }
         item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
         _ = ComparisonProfileMatcher().profile(for: item)
 

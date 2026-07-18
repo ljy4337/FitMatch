@@ -4,6 +4,7 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case standardBodyChestCircumference = "standard_body_chest_circumference"
     case shoulderWidthSeamToSeam = "shoulder_width_seam_to_seam"
     case chestWidthPitToPit = "chest_width_pit_to_pit"
+    case chestCircumferenceGarment = "chest_circumference_garment"
     case chestWidthUniqloBodyWidth = "chest_width_uniqlo_body_width"
     case bodyLengthHPSToHemFront = "body_length_hps_to_hem_front"
     case bodyLengthBackNeckToHem = "body_length_back_neck_to_hem"
@@ -17,6 +18,7 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case sleeveCenterBackToCuff = "sleeve_center_back_to_cuff"
     case sleeveRaglanNeckToCuff = "sleeve_raglan_neck_to_cuff"
     case waistWidthEdgeToEdge = "waist_width_edge_to_edge"
+    case waistCircumferenceGarment = "waist_circumference_garment"
     case hipWidthAtWidest = "hip_width_at_widest"
     case thighWidthCrotchToOuter = "thigh_width_crotch_to_outer"
     case riseCrotchToWaistFront = "rise_crotch_to_waist_front"
@@ -96,8 +98,8 @@ struct SourceMeasurementMapping: Equatable {
 }
 
 enum MeasurementSourceMappingPolicy {
-    static let musinsaVersion = "musinsa_actual_size_mapping_v6"
-    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v5"
+    static let musinsaVersion = "musinsa_actual_size_mapping_v8"
+    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v6"
 
     static func musinsa(
         typeNumber: Int?,
@@ -109,80 +111,95 @@ enum MeasurementSourceMappingPolicy {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased() ?? ""
         let bottomTypes = [6, 23, 42]
+        let setInTypes = [5, 7, 8, 9, 10, 20, 21, 38]
+        let raglanTypes = [11, 22, 31]
+        let sleevelessTypes = [24, 25]
 
         if let typeNumber, bottomTypes.contains(typeNumber) {
             switch displayKind {
-            case .waist where isExplicitWidthLabel(normalizedLabel, subject: "허리"):
+            case .waist where isExactWidthLabel(normalizedLabel, labels: ["허리단면", "허리너비"]):
                 return mapping(.waistWidthEdgeToEdge)
-            case .hip where isExplicitWidthLabel(normalizedLabel, subject: "엉덩이")
-                || isExplicitWidthLabel(normalizedLabel, subject: "힙"):
+            case .hip where isExactWidthLabel(normalizedLabel, labels: ["엉덩이단면", "엉덩이너비", "힙단면", "힙너비"]):
                 return mapping(.hipWidthAtWidest)
-            case .thigh:
+            case .thigh where isExactWidthLabel(normalizedLabel, labels: ["허벅지단면", "허벅지너비"]):
                 return mapping(.thighWidthCrotchToOuter)
-            case .rise:
+            case .rise where normalizedLabel == "밑위":
                 return mapping(.riseCrotchToWaistFront)
-            case .hem:
+            case .hem where isExactWidthLabel(normalizedLabel, labels: ["밑단단면", "밑단너비"]):
                 return mapping(.hemWidthEdgeToEdge)
-            case .totalLength where normalizedLabel.contains("인심") || normalizedLabel.contains("inseam"):
+            case .totalLength where normalizedLabel == "인심" || normalizedLabel == "inseam":
                 return mapping(.pantsInseamCrotchToHem)
-            case .totalLength where normalizedLabel.contains("총장"):
+            case .totalLength where normalizedLabel == "총장":
                 return mapping(.pantsOutseamWaistToHem)
             default:
                 return nil
             }
         }
 
-        if typeNumber == 14,
-           displayKind == .totalLength,
-           normalizedLabel.contains("총장") {
-            return mapping(.skirtLengthWaistToHem)
+        if typeNumber == 14 {
+            switch displayKind {
+            case .totalLength where normalizedLabel == "총장":
+                return mapping(.skirtLengthWaistToHem)
+            case .waist where isExactWidthLabel(normalizedLabel, labels: ["허리단면", "허리너비"]):
+                return mapping(.waistWidthEdgeToEdge)
+            case .hip where isExactWidthLabel(normalizedLabel, labels: ["엉덩이단면", "엉덩이너비", "힙단면", "힙너비"]):
+                return mapping(.hipWidthAtWidest)
+            case .hem where isExactWidthLabel(normalizedLabel, labels: ["밑단단면", "밑단너비"]):
+                return mapping(.hemWidthEdgeToEdge)
+            default:
+                return nil
+            }
         }
 
-        if isTopCategory,
-           displayKind == .totalLength,
-           normalizedLabel == "총장" {
-            return SourceMeasurementMapping(
-                code: .bodyLengthBackNeckToHem,
-                evidence: .officialDiagram,
-                mappingVersion: musinsaVersion
-            )
+        if typeNumber == 19 {
+            switch displayKind {
+            case .waist where isExactWidthLabel(normalizedLabel, labels: ["허리단면", "허리너비"]):
+                return mapping(.waistWidthEdgeToEdge)
+            case .hip where isExactWidthLabel(normalizedLabel, labels: ["엉덩이단면", "엉덩이너비", "힙단면", "힙너비"]):
+                return mapping(.hipWidthAtWidest)
+            default:
+                return nil
+            }
         }
 
-        switch (typeNumber, displayKind) {
-        case (5, .shoulder), (20, .shoulder), (21, .shoulder):
-            return SourceMeasurementMapping(
-                code: .shoulderWidthSeamToSeam,
-                evidence: .officialDiagram,
-                mappingVersion: musinsaVersion
-            )
-        case (5, .chest), (20, .chest), (21, .chest):
-            return SourceMeasurementMapping(
-                code: .chestWidthPitToPit,
-                evidence: .officialDiagram,
-                mappingVersion: musinsaVersion
-            )
         // Reversible previous mapping:
-        // Musinsa top total length was mapped only for types 5, 20 and 21.
-        // Replaced by the common top-length rule so all verified Musinsa top
-        // measurements labeled "총장" use bodyLengthBackNeckToHem.
+        // Exact "총장" previously depended on isTopCategory, while shoulder/chest/sleeve
+        // were limited to types 5, 20 and 21 and raglan sleeve to type 11.
+        // Official type diagrams now drive all mappings; category inference is metadata only.
         // case (5, .totalLength): code = .bodyLengthMusinsaType5
         // case (20, .totalLength): code = .bodyLengthMusinsaType20
         // case (21, .totalLength): code = .bodyLengthMusinsaType21
-        case (5, .sleeveLength), (20, .sleeveLength), (21, .sleeveLength):
-            return SourceMeasurementMapping(
-                code: .sleeveShoulderSeamToCuff,
-                evidence: .officialDiagram,
-                mappingVersion: musinsaVersion
-            )
-        case (11, .sleeveLength):
-            return SourceMeasurementMapping(
-                code: .sleeveRaglanNeckToCuff,
-                evidence: .officialDiagram,
-                mappingVersion: musinsaVersion
-            )
-        default:
-            return nil
+
+        guard let typeNumber else { return nil }
+        if setInTypes.contains(typeNumber) {
+            switch displayKind {
+            case .totalLength where normalizedLabel == "총장": return mapping(.bodyLengthBackNeckToHem)
+            case .shoulder where normalizedLabel == "어깨너비": return mapping(.shoulderWidthSeamToSeam)
+            case .chest where normalizedLabel == "가슴단면": return mapping(.chestWidthPitToPit)
+            case .sleeveLength: return mapping(.sleeveShoulderSeamToCuff)
+            case .hip where typeNumber == 38
+                && isExactWidthLabel(normalizedLabel, labels: ["엉덩이단면", "엉덩이너비", "힙단면", "힙너비"]):
+                return mapping(.hipWidthAtWidest)
+            default: return nil
+            }
         }
+        if raglanTypes.contains(typeNumber) {
+            switch displayKind {
+            case .totalLength where normalizedLabel == "총장": return mapping(.bodyLengthBackNeckToHem)
+            case .chest where normalizedLabel == "가슴단면": return mapping(.chestWidthPitToPit)
+            case .sleeveLength: return mapping(.sleeveRaglanNeckToCuff)
+            default: return nil
+            }
+        }
+        if sleevelessTypes.contains(typeNumber) {
+            switch displayKind {
+            case .totalLength where normalizedLabel == "총장": return mapping(.bodyLengthBackNeckToHem)
+            case .shoulder where normalizedLabel == "어깨너비": return mapping(.shoulderWidthSeamToSeam)
+            case .chest where normalizedLabel == "가슴단면": return mapping(.chestWidthPitToPit)
+            default: return nil
+            }
+        }
+        return nil
     }
 
     private static func mapping(_ code: MeasurementCode) -> SourceMeasurementMapping {
@@ -193,8 +210,8 @@ enum MeasurementSourceMappingPolicy {
         )
     }
 
-    private static func isExplicitWidthLabel(_ label: String, subject: String) -> Bool {
-        label.contains(subject) && (label.contains("단면") || label.contains("너비") || label.contains("width"))
+    private static func isExactWidthLabel(_ label: String, labels: [String]) -> Bool {
+        labels.contains(label)
     }
 
     static func uniqlo(rawCode: String) -> SourceMeasurementMapping? {
@@ -214,7 +231,9 @@ enum MeasurementSourceMappingPolicy {
         // "bodylength" used .bodyLengthUniqloShirt.
         // "knitbodylengthfront" used .bodyLengthUniqloKnitFront.
         case "bodylengthback", "bodylength", "knitbodylengthfront": code = .bodyLengthBackNeckToHem
+        case "sleevelength": code = .sleeveShoulderSeamToCuff
         case "sleevelengthcb": code = .sleeveCenterBackToCuff
+        case "skirtlength": code = .skirtLengthWaistToHem
         case "waistproductsize":
             return SourceMeasurementMapping(
                 code: .waistWidthEdgeToEdge,
@@ -246,6 +265,10 @@ enum MeasurementSourceMappingPolicy {
 extension ClothingCategory {
     var isMusinsaTopCategory: Bool {
         serviceGroup == .top
+    }
+
+    var isMusinsaUpperBodyCategory: Bool {
+        serviceGroup == .top || serviceGroup == .outer
     }
 }
 

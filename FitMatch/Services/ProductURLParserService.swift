@@ -19,13 +19,20 @@ enum StandardBodySizeChart {
     static func normalizedSize(from optionName: String) -> String? {
         let uppercased = optionName.uppercased()
         let pattern = #"(?<![A-Z0-9])(XXL|XL|XS|L|M|S)(?![A-Z])"#
-        if let regex = try? NSRegularExpression(pattern: pattern),
-           let match = regex.firstMatch(
+        if let regex = try? NSRegularExpression(pattern: pattern) {
+            let matches = regex.matches(
                 in: uppercased,
                 range: NSRange(uppercased.startIndex..<uppercased.endIndex, in: uppercased)
-           ),
+            )
+            guard matches.count <= 1 else {
+                // A set option such as "브라_S 팬티_L" must not be interpreted
+                // as one garment's body-chest standard size.
+                return nil
+            }
+            if let match = matches.first,
            let range = Range(match.range(at: 1), in: uppercased) {
-            return String(uppercased[range])
+                return String(uppercased[range])
+            }
         }
 
         let circumferencePattern = #"(?:44|55|66|77|88|110)\s*\((85|90|95|100|105|110)\)"#

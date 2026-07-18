@@ -218,7 +218,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> ReferenceSelectionPlan {
-        if product.sizeType == StandardBodySizeChart.metadataMarker || product.sizeType == StandardBodySizeChart.unavailableMarker {
+        if product.sizeType == StandardBodySizeChart.metadataMarker {
             let candidates = standardSizeCandidates(product: product, userFits: userFits)
             return ReferenceSelectionPlan(
                 recommendedCandidates: candidates,
@@ -345,7 +345,6 @@ struct RecommendationService {
 
     private func usesStandardSizeFallback(product: Product, userFits: [UserFit]) -> Bool {
         product.sizeType == StandardBodySizeChart.metadataMarker
-            || product.sizeType == StandardBodySizeChart.unavailableMarker
             || userFits.contains { $0.sourceProduct?.sizeType == StandardBodySizeChart.metadataMarker }
     }
 
@@ -356,7 +355,6 @@ struct RecommendationService {
         basis: RecommendationBasis
     ) -> RecommendationHistory? {
         let sizes = product.sizes.sorted { $0.displayOrder < $1.displayOrder }
-        guard let fallbackSize = sizes.first, let fallbackFit = userFits.first else { return nil }
         var bestHistory: RecommendationHistory?
         var bestDifference = Double.greatestFiniteMagnitude
 
@@ -409,33 +407,7 @@ struct RecommendationService {
             }
         }
 
-        if let bestHistory { return bestHistory }
-
-        let unavailableComparison = MeasurementComparisonResult(
-            status: .insufficientEvidence,
-            score: 0,
-            comparedItems: [],
-            exclusions: standardSizeExclusions,
-            averageDifference: .greatestFiniteMagnitude,
-            minimumComparableCount: 1,
-            requiredKinds: [.chest],
-            minimumRequiredKindCount: 1,
-            requiredAllKinds: []
-        )
-        return RecommendationHistory(
-            product: product,
-            recommendedSize: fallbackSize,
-            userFit: fallbackFit,
-            totalDifference: 0,
-            measurementDifferences: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0),
-            recommendationScore: 0,
-            trueToSizeRecommendation: "해당 사이즈는 기준표로도 변환할 수 없습니다.",
-            oversizedRecommendation: "XS~XXL 영문 사이즈가 있는 다른 옵션이나 옷을 선택해 주세요.",
-            comparisonMethod: "기준표 변환 불가",
-            fallbackReason: "해당 사이즈는 기준표로도 변환할 수 없습니다.",
-            productDetailCategory: productDetailCategory,
-            comparisonResult: unavailableComparison
-        )
+        return bestHistory
     }
 
     private var standardSizeExclusions: [MeasurementComparisonExclusion] {
@@ -510,7 +482,7 @@ struct RecommendationService {
         userFits: [UserFit],
         allowsGlobalFallback: Bool
     ) -> RecommendationBasis {
-        if product.sizeType == StandardBodySizeChart.metadataMarker || product.sizeType == StandardBodySizeChart.unavailableMarker {
+        if product.sizeType == StandardBodySizeChart.metadataMarker {
             let candidates = standardSizeCandidates(product: product, userFits: userFits)
             return RecommendationBasis(
                 userFits: candidates.first.map { [$0.userFit] } ?? Array(userFits.prefix(1)),
@@ -545,7 +517,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        if product.sizeType == StandardBodySizeChart.metadataMarker || product.sizeType == StandardBodySizeChart.unavailableMarker {
+        if product.sizeType == StandardBodySizeChart.metadataMarker {
             return !standardSizeCandidates(product: product, userFits: userFits).isEmpty
         }
         let profileCandidates = comparisonMatcher.match(

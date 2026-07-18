@@ -3,8 +3,8 @@ import SwiftData
 
 @MainActor
 enum MeasurementLegacyBackfillService {
-    static let migrationVersion = 7
-    static let mappingVersion = "legacy_backfill_v7"
+    static let migrationVersion = 9
+    static let mappingVersion = "legacy_backfill_v9"
 
     static func run(
         modelContext: ModelContext,
@@ -57,7 +57,7 @@ enum MeasurementLegacyBackfillService {
         } else {
             let convertedValues = upgradeSourceMappings(
                 in: canonicalRecords,
-                isTopCategory: product.category.isMusinsaTopCategory
+                isTopCategory: product.category.isMusinsaUpperBodyCategory
             )
             applyConvertedValues(convertedValues, to: &size.measurements)
         }
@@ -88,7 +88,7 @@ enum MeasurementLegacyBackfillService {
         } else {
             let convertedValues = upgradeSourceMappings(
                 in: canonicalRecords,
-                isTopCategory: item.category.isMusinsaTopCategory
+                isTopCategory: item.category.isMusinsaUpperBodyCategory
             )
             applyConvertedValues(convertedValues, to: &item.measurements)
         }
@@ -153,9 +153,13 @@ enum MeasurementLegacyBackfillService {
             }
 
             guard mapping != nil || migratedCommonCode != nil else { continue }
+            let alreadyNormalizedPlatformValue =
+                record.mappingVersion == mapping?.mappingVersion
+                || (record.methodSource == "uniqlo_kr"
+                    && record.mappingVersion == "uniqlo_kr_size_chart_mapping_v5")
             if let mapping,
                mapping.valueMultiplier != 1,
-               record.mappingVersion != mapping.mappingVersion {
+               !alreadyNormalizedPlatformValue {
                 record.value *= mapping.valueMultiplier
                 if let displayKind = record.displayKind {
                     convertedValues[displayKind] = record.value
@@ -195,9 +199,8 @@ enum MeasurementLegacyBackfillService {
             return .bodyLengthBackNeckToHem
         case .bodyLengthMusinsaType5,
              .bodyLengthMusinsaType20,
-             .bodyLengthMusinsaType21,
-             .legacyUnknown:
-            return isVerifiedMusinsaTopTotalLength(record, isTopCategory: isTopCategory)
+             .bodyLengthMusinsaType21:
+            return isVerifiedLegacyMusinsaTopTotalLength(record)
                 ? .bodyLengthBackNeckToHem
                 : nil
         default:
@@ -205,12 +208,10 @@ enum MeasurementLegacyBackfillService {
         }
     }
 
-    private static func isVerifiedMusinsaTopTotalLength(
-        _ record: GarmentMeasurementRecord,
-        isTopCategory: Bool
+    private static func isVerifiedLegacyMusinsaTopTotalLength(
+        _ record: GarmentMeasurementRecord
     ) -> Bool {
-        isTopCategory
-            && record.methodSource == "musinsa"
+        record.methodSource == "musinsa"
             && record.displayKind == .totalLength
             && record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines) == "총장"
     }
@@ -231,7 +232,7 @@ enum MeasurementLegacyBackfillFactory {
             let mapping = musinsaMapping(
                 kind: legacy.kind,
                 sizeType: profile,
-                isTopCategory: product.category.isMusinsaTopCategory
+                isTopCategory: product.category.isMusinsaUpperBodyCategory
             )
             return makeRecord(
                 value: legacy.value,
@@ -322,10 +323,25 @@ enum MeasurementLegacyBackfillFactory {
               let mapping = MeasurementSourceMappingPolicy.musinsa(
                   typeNumber: typeNumber,
                   displayKind: kind.displayKind,
-                  rawLabel: kind == .totalLength ? "총장" : nil,
+                  rawLabel: officialMusinsaLegacyLabel(for: kind),
                   isTopCategory: isTopCategory
               ) else { return nil }
         return (mapping.code, mapping.evidence)
+    }
+
+    private static func officialMusinsaLegacyLabel(for kind: MeasurementKind) -> String? {
+        switch kind {
+        case .totalLength: return "총장"
+        case .shoulder: return "어깨너비"
+        case .chest: return "가슴단면"
+        case .sleeveLength: return "소매길이"
+        case .waist: return "허리단면"
+        case .hip: return "엉덩이단면"
+        case .thigh: return "허벅지단면"
+        case .rise: return "밑위"
+        case .hem: return "밑단단면"
+        case .underBust, .footLength: return nil
+        }
     }
 
     private static func resolvedPlatformCode(for product: Product) -> String? {

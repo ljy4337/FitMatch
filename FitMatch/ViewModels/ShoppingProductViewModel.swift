@@ -65,7 +65,7 @@ final class ShoppingProductViewModel: ObservableObject {
             return true
         } catch let partialError as ProductURLParserPartialError {
             apply(partialError.productInfo)
-            errorMessage = partialError.errorDescription
+            errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
             return false
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
@@ -212,6 +212,20 @@ final class ShoppingProductViewModel: ObservableObject {
             sourceName: resolvedSourceName,
             sizes: validOptions
         )
+        if let canonical = ParsedClosetClassification.resolve(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [productMetadata.sourceCategoryDepth1, productMetadata.sourceCategoryDepth2,
+                           productMetadata.sourceCategoryDepth3, productMetadata.sourceCategoryDepth4],
+            sourcePath: productMetadata.sourceCategoryPath,
+            productName: productName
+        ) {
+            product.categoryCode = canonical.categoryCode
+            product.normalizedProductTypeCode = canonical.normalizedProductTypeCode
+            product.garmentType = canonical.garmentFamily
+            product.sleeveType = canonical.lengthType
+            product.constructionType = canonical.constructionType
+        }
         _ = ComparisonProfileMatcher().profile(for: product, detailCategory: detailCategory)
         return product
     }

@@ -459,8 +459,17 @@ struct UniqloProductMetadataParser {
                 ? htmlBreadcrumb.joined(separator: " / ")
                 : (stringValue(productGroupObject?["category"]) ?? "nil"))
         let categoryText = sourcePath.depths.joined(separator: " ")
-        let category = mapCategory(from: categoryText)
-        let detailCategory = mapDetailCategory(from: sourcePath.depths.last ?? categoryText)
+        let initiallyMappedCategory = mapCategory(from: "\(categoryText) \(productName)")
+        let initiallyMappedDetail = mapDetailCategory(from: "\(categoryText) \(productName)")
+        let canonical = ParsedClosetClassification.resolve(
+            category: initiallyMappedCategory,
+            detailCategory: initiallyMappedDetail,
+            sourceDepths: [sourcePath.depth1, sourcePath.depth2, sourcePath.depth3, sourcePath.depth4],
+            sourcePath: sourcePath.fullPath,
+            productName: productName
+        )
+        let category = canonical?.category ?? initiallyMappedCategory
+        let detailCategory = canonical?.detailCategory ?? initiallyMappedDetail
         let canonicalURL = canonicalURL(from: resolved.html) ?? resolved.resolvedURL.absoluteString
 
         let metadata = ProductMetadata(
@@ -874,15 +883,22 @@ struct UniqloProductMetadataParser {
 
     private func mapCategory(from text: String) -> ClothingCategory {
         let value = text.lowercased()
+        // Reversible previous order treated any denim token as bottoms, including denim overshirts.
+        if value.contains("overshirt") || text.contains("오버셔츠") || value.contains("shirt") || text.contains("셔츠") {
+            return .top
+        }
+        if text.contains("스커트") || value.contains("skirt") { return .bottom }
         if value.contains("women") && value.contains("dress") || text.contains("원피스") {
             return .dress
         }
-        if text.contains("팬츠") || text.contains("바지") || text.contains("데님") || text.contains("쇼츠") || value.contains("pants") || value.contains("jeans") || value.contains("shorts") {
+        if value.contains("bottoms") || text.contains("팬츠") || text.contains("바지") || text.contains("데님") || text.contains("쇼츠") || value.contains("pants") || value.contains("jeans") || value.contains("shorts") {
             return .bottom
         }
         if text.contains("아우터") || text.contains("재킷") || text.contains("자켓") || text.contains("코트") || text.contains("파카") || text.contains("점퍼") || value.contains("outer") || value.contains("jacket") || value.contains("coat") {
             return .outer
         }
+        // Official Tops paths take precedence over AIRism/inner wording in a product name.
+        if value.contains("tops") || text.contains("상의") { return .top }
         if text.contains("속옷") || text.contains("이너") || value.contains("inner") || value.contains("underwear") {
             return .underwear
         }
@@ -897,6 +913,10 @@ struct UniqloProductMetadataParser {
 
     private func mapDetailCategory(from text: String) -> ClosetDetailCategory {
         let value = text.lowercased()
+        if text.contains("스커트") || value.contains("skirt") { return .skirt }
+        if text.contains("슬리브리스") || value.contains("sleeveless") { return .sleeveless }
+        if text.contains("쇼트 팬츠") || value.contains("short pants") { return .shorts }
+        if value.contains("overshirt") || text.contains("오버셔츠") { return .shirt }
         if text.contains("가디건") || value.contains("cardigan") { return .cardigan }
         if text.contains("민소매") || text.contains("나시") || value.contains("sleeveless") || value.contains("tank") { return .sleeveless }
         if text.contains("반팔") || text.contains("반소매") || value.contains("short sleeve") { return .shortSleeve }

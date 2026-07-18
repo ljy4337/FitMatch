@@ -13,17 +13,26 @@ struct MusinsaProductMetadata {
     var price: Int?
     var canonicalURLString: String?
     var isUseSize: Bool = false
+    var goodsContents: String = ""
     var productMetadata: ProductMetadata = ProductMetadata()
 
     func parsedProductInfo(sizes: [ParsedProductSize], parserNotice: String? = nil) -> ParsedProductInfo {
-        ParsedProductInfo(
+        let canonical = ParsedClosetClassification.resolve(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [productMetadata.sourceCategoryDepth1, productMetadata.sourceCategoryDepth2,
+                           productMetadata.sourceCategoryDepth3, productMetadata.sourceCategoryDepth4],
+            sourcePath: productMetadata.sourceCategoryPath,
+            productName: productName
+        )
+        return ParsedProductInfo(
             sourceURL: sourceURL,
             sourceType: .marketplace,
             sourceName: "무신사",
             brandName: brandName,
             productName: productName,
-            category: category,
-            detailCategory: detailCategory,
+            category: canonical?.category ?? category,
+            detailCategory: canonical?.detailCategory ?? detailCategory,
             sizes: sizes,
             parserNotice: parserNotice,
             productID: productID,
@@ -123,6 +132,7 @@ struct MusinsaProductMetadataParser {
                 price: metadata.finalPrice ?? metadata.salePrice ?? metadata.normalPrice,
                 canonicalURLString: "https://www.musinsa.com/products/\(productID)",
                 isUseSize: response.data.isUseSize ?? false,
+                goodsContents: response.data.goodsContents ?? "",
                 productMetadata: metadata
             )
         } catch {
@@ -177,6 +187,7 @@ struct MusinsaProductMetadataParser {
             price: nil,
             canonicalURLString: canonical ?? "https://www.musinsa.com/products/\(productID)",
             isUseSize: false,
+            goodsContents: html,
             productMetadata: ProductMetadata()
         )
     }
@@ -218,6 +229,13 @@ struct MusinsaProductMetadataParser {
 
     static func mapCategory(from categoryText: String?) -> ClothingCategory {
         let text = categoryText ?? ""
+        // Reversible previous order checked generic pants/bottom words first,
+        // which classified 여성 속옷 하의 and skirt paths as ordinary bottoms.
+        if text.contains("여성 속옷 하의") || text.contains("속옷") { return .underwear }
+        if text.contains("스커트") { return .bottom }
+        if text.contains("원피스") { return .dress }
+        if text.contains("홈웨어") { return .other }
+        if text.contains("신발") || text.contains("슈즈") { return .shoes }
         if text.contains("팬츠") ||
             text.contains("바지") ||
             text.contains("데님") ||
@@ -228,12 +246,6 @@ struct MusinsaProductMetadataParser {
         }
         if text.contains("아우터") || text.contains("재킷") || text.contains("자켓") || text.contains("코트") || text.contains("점퍼") {
             return .outer
-        }
-        if text.contains("원피스") {
-            return .dress
-        }
-        if text.contains("속옷") {
-            return .underwear
         }
         if text.contains("셔츠") {
             return .shirt
@@ -248,6 +260,10 @@ struct MusinsaProductMetadataParser {
     }
 
     static func mapDetailCategory(from text: String) -> ClosetDetailCategory {
+        if text.contains("여성 속옷 하의") || text.contains("팬티") { return .womenPanty }
+        if text.contains("홈웨어") { return .loungewear }
+        if text.contains("스커트") { return .skirt }
+        if text.contains("원피스") { return .onePiece }
         if text.contains("민소매") || text.localizedCaseInsensitiveContains("sleeveless") || text.localizedCaseInsensitiveContains("tank") {
             return .sleeveless
         }
@@ -483,6 +499,7 @@ private struct MusinsaProductDetailResponse: Decodable {
         let labels: [Label]?
         let genders: [String]?
         let isOutOfStock: Bool?
+        let goodsContents: String?
     }
 
     struct BrandInfo: Decodable {

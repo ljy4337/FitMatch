@@ -6,6 +6,13 @@ Updated: 2026-07-16
 feature/measurement-standardization
 
 ## Completed
+- Applied the audited 17-type Musinsa measurement policy: set-in, raglan, sleeveless/vest, pants, skirt, underwear-bottom, and dress records now use only verified common codes while unknown types/unsupported labels remain unknown.
+- Limited Musinsa Korean body-chest standard fallback to convertible top/outer/dress options, rejected ambiguous set options, and stopped unavailable products from generating synthetic 0% recommendations.
+- Added Uniqlo generic sleeve and skirt-length mappings while preserving CB sleeve and leaving gathered body width/neck circumference unsupported; comparison now calculates differences from the matched record pair.
+- Raised Musinsa mapping to v8, Uniqlo mapping to v6, and legacy migration to v9; imported records are re-evaluated without reapplying already-normalized Uniqlo v5 circumference conversion.
+- Added a validated canonical parsed-closet classification boundary so link registration, missing-reference registration, and compare auto-confirm use active taxonomy category/detail codes while preserving garment family, length, construction, and source metadata independently.
+- Corrected verified Musinsa/Uniqlo classification precedence for skirts, women’s underwear bottoms, homewear, denim overshirts, Bottoms shorts, sleeveless products, and structural outerwear without inventing measurement mappings.
+- Expanded exact Musinsa upper-body `총장` mapping to tops and outerwear with mapping v7 / migration v8 while retaining lower outseam/inseam, skirt length, cross-brand sleeve exclusions, and standard-size fallback behavior.
 - Aligned History detail fit-match display with its list card by showing the persisted recommendation score as `0%` instead of replacing zero with `정보 부족`; comparison and scoring logic remain unchanged.
 - Corrected the Home recent-comparison title behavior so any product name that would wrap onto a second line is instead kept to one line with a visible trailing ellipsis.
 - Fixed external-share replacement while an A-product result is already open: compare sheets now wait for actual dismissal, keep only the latest pending request, and recreate `CompareFlowSheet` with a request identity; cold-start requests are handled on MainTab appearance.
@@ -114,9 +121,10 @@ feature/measurement-standardization
 - Standardized all confirmed Closet-add action buttons to `내 옷장에 추가` while preserving navigation, save behavior, and distinct method-selection labels.
 
 ## Current Task
-- Standardize Closet source UX and repeated-comparison persistence
+- Final audited product classification, standard-chart fallback, and measurement-code correction
 
 ## Remaining Bugs
+- The supplied corpus audit JSON files (`index.json`, `analysis.json`, category/fallback evidence) are not present locally; only `FULL_CORPUS_AUDIT.md` is available, so the 12,011-record and 111-category-pattern suites cannot be executed from raw fixtures yet.
 - Compare's source-category fallback still exposes compatibility enum bindings; it should adopt stable-code state when the compare ViewModel persistence contract is migrated.
 - Existing legacy garment-family details such as 셔츠/니트/후드 cannot be safely converted to the new length-only detail without source/name evidence, so their snapshots remain unresolved rather than being guessed.
 - Manual verification of scroll jitter/crash fix
@@ -135,6 +143,10 @@ feature/measurement-standardization
 - No commit or push performed in the latest task.
 
 ## Verification
+- The official audit table accounts for all 788 Musinsa products with actual measurements; table-driven coverage compiles for all 17 observed types, exact supported labels, unknown type 999, Uniqlo supported/unsupported codes, safe fallback categories, ambiguous set options, record-value comparison, and unavailable-result behavior.
+- Generic iOS device Debug build and test-bundle compilation pass without launching a simulator; `git diff --check` and protected scroll-file/call-site checks pass.
+- Canonical classification and Musinsa upper-body total-length changes passed the generic iOS device Debug build and test-bundle compilation; focused fixtures cover invalid taxonomy combinations, Musinsa skirt/underwear/homewear/cardigan, Uniqlo denim overshirt/Bottoms/sleeveless/skirt, and top/outer total length. No simulator was launched.
+- Re-fetched all 1,200 manifest URLs with zero request errors and reran the current depth-first canonical rules: taxonomy-valid automatic selections improved from 486→662/1,000 for Musinsa and 77→175/200 for Uniqlo; 837/1,200 are now auto-selectable and 363 correctly require confirmation. The validation run also caught and fixed umbrella-path precedence for `원피스/스커트` and `속옷/홈웨어`.
 - External-share compare replacement passed the generic iOS device Debug build and `git diff --check`; the fix changes only compare request/sheet lifecycle and does not alter comparison logic or protected scroll code.
 - Repository-wide exact search confirms zero `"정사이즈 추천"` literals; the recombined confidence/measurement column passed the generic iOS device Debug build and `git diff --check`.
 - History compact metrics passed the generic iOS device Debug build and `git diff --check`; result-detail typography, 2×2 grid cards, and protected scroll code remain unchanged.

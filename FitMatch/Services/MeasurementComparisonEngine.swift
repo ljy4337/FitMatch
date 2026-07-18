@@ -114,19 +114,17 @@ struct MeasurementComparisonEngine {
                 continue
             }
 
-            let productValue = productSize.measurements.value(for: kind)
-            let referenceValue = referenceItem.measurements.value(for: kind)
-            guard productValue > 0 else {
+            let productRecords = records(for: kind, in: productSize.measurementRecords)
+            let referenceRecords = records(for: kind, in: referenceItem.measurementRecords)
+            guard !productRecords.isEmpty else {
                 exclusions.append(exclusion(kind: kind, reason: .missingProductValue, productRecords: productSize.measurementRecords, referenceRecords: referenceItem.measurementRecords))
                 continue
             }
-            guard referenceValue > 0 else {
+            guard !referenceRecords.isEmpty else {
                 exclusions.append(exclusion(kind: kind, reason: .missingReferenceValue, productRecords: productSize.measurementRecords, referenceRecords: referenceItem.measurementRecords))
                 continue
             }
 
-            let productRecords = records(for: kind, in: productSize.measurementRecords)
-            let referenceRecords = records(for: kind, in: referenceItem.measurementRecords)
             let comparableProductRecords = productRecords.filter(\.isComparable)
             let comparableReferenceRecords = referenceRecords.filter(\.isComparable)
 

@@ -505,7 +505,7 @@ struct FitMatchTests {
         #expect(inseam?.displayKind == .totalLength)
         #expect(chest?.measurementCode == .chestWidthPitToPit)
         #expect(chest?.semanticStatus == .mapped)
-        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v5")
+        #expect(chest?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
         #expect(length?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(length?.semanticStatus == .mapped)
         #expect(records.allSatisfy { $0.methodSource == "uniqlo_kr" })
@@ -576,8 +576,8 @@ struct FitMatchTests {
         #expect(sleeve?.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
         #expect(sleeve?.methodProfile == "musinsa_type_11")
         #expect(sleeve?.rawValueText == "82.5")
-        #expect(chest?.measurementCode == .unknown)
-        #expect(chest?.semanticStatus == .unknownDefinition)
+        #expect(chest?.measurementCode == .chestWidthPitToPit)
+        #expect(chest?.semanticStatus == .mapped)
         #expect(length?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(length?.semanticStatus == .mapped)
     }
@@ -691,7 +691,7 @@ struct FitMatchTests {
 
         #expect(chest?.measurementCode == .chestWidthPitToPit)
         #expect(chest?.evidenceLevel == .officialDiagram)
-        #expect(chest?.mappingVersion == "musinsa_actual_size_mapping_v6")
+        #expect(chest?.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
         #expect(length?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(length?.semanticStatus == .mapped)
 
@@ -711,9 +711,13 @@ struct FitMatchTests {
     }
 
     @Test func sourceMeasurementMappingPolicyMapsSourceSpecificUpperMeasurements() {
-        let verifiedMusinsaTypes = [5, 20, 21]
-        let verifiedMusinsa = MeasurementSourceMappingPolicy.musinsa(typeNumber: 5, displayKind: .shoulder)
-        let verifiedMusinsaChest = MeasurementSourceMappingPolicy.musinsa(typeNumber: 5, displayKind: .chest)
+        let verifiedMusinsaTypes = [5, 7, 8, 9, 10, 20, 21, 38]
+        let verifiedMusinsa = MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 5, displayKind: .shoulder, rawLabel: "어깨너비"
+        )
+        let verifiedMusinsaChest = MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 5, displayKind: .chest, rawLabel: "가슴단면"
+        )
         let verifiedMusinsaLength = MeasurementSourceMappingPolicy.musinsa(
             typeNumber: 5,
             displayKind: .totalLength,
@@ -738,13 +742,19 @@ struct FitMatchTests {
         }
 
         #expect(verifiedMusinsaTypes.allSatisfy {
-            MeasurementSourceMappingPolicy.musinsa(typeNumber: $0, displayKind: .shoulder)?.code == .shoulderWidthSeamToSeam
+            MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: $0, displayKind: .shoulder, rawLabel: "어깨너비"
+            )?.code == .shoulderWidthSeamToSeam
         })
         #expect(verifiedMusinsaTypes.allSatisfy {
-            MeasurementSourceMappingPolicy.musinsa(typeNumber: $0, displayKind: .sleeveLength)?.code == .sleeveShoulderSeamToCuff
+            MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: $0, displayKind: .sleeveLength, rawLabel: "소매길이"
+            )?.code == .sleeveShoulderSeamToCuff
         })
         #expect(verifiedMusinsaTypes.allSatisfy {
-            MeasurementSourceMappingPolicy.musinsa(typeNumber: $0, displayKind: .chest)?.code == .chestWidthPitToPit
+            MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: $0, displayKind: .chest, rawLabel: "가슴단면"
+            )?.code == .chestWidthPitToPit
         })
         #expect(verifiedMusinsa?.code == .shoulderWidthSeamToSeam)
         #expect(verifiedMusinsa?.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
@@ -764,8 +774,8 @@ struct FitMatchTests {
         #expect(Set(verifiedUniqloLengths) == [.bodyLengthBackNeckToHem])
     }
 
-    @Test func musinsaAllTopTypesMapExactTotalLengthLabelWithoutTypeWhitelist() {
-        for typeNumber in [5, 11, 20, 21, 24, 999] {
+    @Test func musinsaOfficialUpperTypesMapExactTotalLengthLabel() {
+        for typeNumber in [5, 7, 8, 9, 10, 11, 20, 21, 22, 24, 25, 31, 38] {
             let mapping = MeasurementSourceMappingPolicy.musinsa(
                 typeNumber: typeNumber,
                 displayKind: .totalLength,
@@ -773,7 +783,7 @@ struct FitMatchTests {
                 isTopCategory: true
             )
             #expect(mapping?.code == .bodyLengthBackNeckToHem)
-            #expect(mapping?.mappingVersion == "musinsa_actual_size_mapping_v6")
+            #expect(mapping?.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
         }
 
         #expect(MeasurementSourceMappingPolicy.musinsa(
@@ -786,8 +796,141 @@ struct FitMatchTests {
             typeNumber: 999,
             displayKind: .totalLength,
             rawLabel: "총장",
-            isTopCategory: false
+            isTopCategory: true
         ) == nil)
+    }
+
+    @Test func musinsaOfficialTypeTableMapsOnlyAuditedLabels() {
+        let setInTypes = [5, 7, 8, 9, 10, 20, 21, 38]
+        for typeNumber in setInTypes {
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .totalLength, rawLabel: "총장"
+            )?.code == .bodyLengthBackNeckToHem)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .shoulder, rawLabel: "어깨너비"
+            )?.code == .shoulderWidthSeamToSeam)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .chest, rawLabel: "가슴단면"
+            )?.code == .chestWidthPitToPit)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .sleeveLength, rawLabel: "소매길이"
+            )?.code == .sleeveShoulderSeamToCuff)
+        }
+
+        for typeNumber in [11, 22, 31] {
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .totalLength, rawLabel: "총장"
+            )?.code == .bodyLengthBackNeckToHem)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .chest, rawLabel: "가슴단면"
+            )?.code == .chestWidthPitToPit)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .sleeveLength, rawLabel: "화장"
+            )?.code == .sleeveRaglanNeckToCuff)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .shoulder, rawLabel: "어깨너비"
+            ) == nil)
+        }
+
+        for typeNumber in [24, 25] {
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .totalLength, rawLabel: "총장"
+            )?.code == .bodyLengthBackNeckToHem)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .shoulder, rawLabel: "어깨너비"
+            )?.code == .shoulderWidthSeamToSeam)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .chest, rawLabel: "가슴단면"
+            )?.code == .chestWidthPitToPit)
+            #expect(MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber, displayKind: .sleeveLength, rawLabel: "소매길이"
+            ) == nil)
+        }
+
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 38, displayKind: .hip, rawLabel: "엉덩이단면"
+        )?.code == .hipWidthAtWidest)
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 14, displayKind: .totalLength, rawLabel: "총장"
+        )?.code == .skirtLengthWaistToHem)
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 19, displayKind: .waist, rawLabel: "허리단면"
+        )?.code == .waistWidthEdgeToEdge)
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 19, displayKind: .hip, rawLabel: "엉덩이단면"
+        )?.code == .hipWidthAtWidest)
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 999, displayKind: .chest, rawLabel: "가슴단면"
+        ) == nil)
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 5, displayKind: .totalLength, rawLabel: "기장"
+        ) == nil)
+    }
+
+    @Test func uniqloAuditedCodesPreserveDifferentDefinitions() {
+        #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "sleeve-length")?.code == .sleeveShoulderSeamToCuff)
+        #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "sleeve-length-cb")?.code == .sleeveCenterBackToCuff)
+        #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "skirt-length")?.code == .skirtLengthWaistToHem)
+        #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "body-width-gather-and-tack") == nil)
+        #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "neck-circumference") == nil)
+    }
+
+    @Test func comparisonUsesMatchedRecordValuesInsteadOfScalarMeasurements() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 999, chest: 999, totalLength: 999, sleeveLength: 999)
+        )
+        size.measurementRecords = [
+            comparisonRecord(value: 52, code: .chestWidthPitToPit, kind: .chest, productSize: size),
+            comparisonRecord(value: 70, code: .bodyLengthBackNeckToHem, kind: .totalLength, productSize: size)
+        ]
+        let item = UserFit(
+            brandName: "테스트",
+            productName: "기준 옷",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "M",
+            measurements: GarmentMeasurements(shoulder: 1, chest: 1, totalLength: 1, sleeveLength: 1),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.measurementRecords = [
+            comparisonRecord(value: 50, code: .chestWidthPitToPit, kind: .chest, userFit: item),
+            comparisonRecord(value: 69, code: .bodyLengthBackNeckToHem, kind: .totalLength, userFit: item)
+        ]
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .top,
+            productDetailCategory: .shortSleeve
+        )
+        #expect(result.comparedItems.first { $0.kind == .chest }?.signedDifference == 2)
+        #expect(result.comparedItems.first { $0.kind == .totalLength }?.signedDifference == 1)
+    }
+
+    @Test func uniqloGenericSleeveDoesNotPairWithCenterBackSleeve() {
+        let size = comparisonSize(
+            shoulder: 0,
+            sleeve: 61,
+            shoulderCode: .unknown,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let item = comparisonItem(
+            shoulder: 0,
+            sleeve: 82,
+            shoulderCode: .unknown,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .top,
+            productDetailCategory: .longSleeve
+        )
+        #expect(result.exclusions.contains {
+            $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode
+        })
     }
 
     @Test func musinsaTypeFiveAndTwentyOneCompareCommonTotalLength() {
@@ -2645,7 +2788,7 @@ struct FitMatchTests {
         #expect(chest?.rawCode == "body-width")
         #expect(chest?.rawValueText == "54")
         #expect(chest?.semanticStatus == .mapped)
-        #expect(chest?.mappingVersion == "uniqlo_kr_size_chart_mapping_v5")
+        #expect(chest?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
     }
 
     @Test func musinsaTranscribedEntryRequiresExplicitSleeveMethodForMapping() {
@@ -2811,8 +2954,8 @@ struct FitMatchTests {
         #expect(byKind[.totalLength]?.measurementCode == .bodyLengthBackNeckToHem)
         #expect(byKind[.shoulder]?.isComparable == true)
         #expect(byKind[.chest]?.isComparable == true)
-        #expect(records.allSatisfy { $0.mappingVersion == "legacy_backfill_v7" })
-        #expect(MeasurementLegacyBackfillService.migrationVersion == 7)
+        #expect(records.allSatisfy { $0.mappingVersion == MeasurementLegacyBackfillService.mappingVersion })
+        #expect(MeasurementLegacyBackfillService.migrationVersion == 9)
     }
 
     @Test func uniqloLegacyMeasurementsRemainUnknownWithoutRawCodes() {
@@ -2891,8 +3034,8 @@ struct FitMatchTests {
         #expect(savedRecords.count == 1)
         #expect(savedRecords.first?.id == canonicalRecord.id)
         #expect(savedRecords.first?.measurementCode == .chestWidthPitToPit)
-        #expect(savedRecords.first?.mappingVersion == "uniqlo_kr_size_chart_mapping_v5")
-        #expect(size.measurementMigrationVersion == 7)
+        #expect(savedRecords.first?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
+        #expect(size.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
     }
 
     @Test func migrationVersionSevenConvertsLegacyPlatformChestAndLengthsWithoutChangingSleeves() throws {
@@ -2977,8 +3120,8 @@ struct FitMatchTests {
             "body-width", "musinsa-5", "musinsa-20", "musinsa-21",
             "body-length-back", "body-length", "knit-body-length-front", "musinsa-sleeve"
         ])
-        #expect(size.measurementMigrationVersion == 7)
-        #expect(item.measurementMigrationVersion == 7)
+        #expect(size.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
+        #expect(item.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
     }
 
     @Test func migrationVersionSevenRecoversOnlyVerifiedMusinsaTopUnknownTotalLength() throws {
@@ -3020,8 +3163,8 @@ struct FitMatchTests {
         #expect(record.rawCode == "legacy-type-24-length")
         #expect(record.rawLabel == "총장")
         #expect(record.rawValueText == "71")
-        #expect(record.mappingVersion == "musinsa_actual_size_mapping_v6")
-        #expect(size.measurementMigrationVersion == 7)
+        #expect(record.mappingVersion == MeasurementSourceMappingPolicy.musinsaVersion)
+        #expect(size.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
     }
 
     @Test func migrationVersionSevenHalvesUniqloCircumferencesExactlyOnce() throws {
@@ -3084,7 +3227,7 @@ struct FitMatchTests {
         #expect(hip.value == 52)
         #expect(size.measurements.waist == 35)
         #expect(size.measurements.hip == 52)
-        #expect(size.measurementMigrationVersion == 7)
+        #expect(size.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
     }
 
     @Test func musinsaLegacyRaglanAndSetInSleevesStaySeparate() {
@@ -3275,7 +3418,9 @@ struct FitMatchTests {
     @Test func musinsaStandardSizeAvailabilityUsesFlagsAndActualData() throws {
         let nullData = try MusinsaActualSizeAPIParser().parseActualSize(from: Data(#"{"meta":{"result":"SUCCESS"},"data":null}"#.utf8))
         #expect(nullData.sizes.isEmpty)
-        #expect(MusinsaSizeAvailabilityResolver.resolve(isUseSize: true, sizeType: "", actualSizes: nullData.sizes) == .standardSizeChart)
+        #expect(MusinsaSizeAvailabilityResolver.resolve(
+            isUseSize: true, sizeType: "", actualSizes: nullData.sizes, category: .top
+        ) == .standardSizeChart)
 
         let actual = ParsedProductSize(
             name: "M",
@@ -3285,6 +3430,92 @@ struct FitMatchTests {
         #expect(MusinsaSizeAvailabilityResolver.resolve(isUseSize: false, sizeType: "", actualSizes: []) == .unavailable)
     }
 
+    @Test func musinsaStandardSizeFallbackIsLimitedToBodyChestCategories() {
+        for category in [ClothingCategory.top, .outer, .dress] {
+            #expect(MusinsaSizeAvailabilityResolver.resolve(
+                isUseSize: true, sizeType: " ", actualSizes: [], category: category
+            ) == .standardSizeChart)
+        }
+        for category in [ClothingCategory.bottom, .underwear, .other] {
+            #expect(MusinsaSizeAvailabilityResolver.resolve(
+                isUseSize: true, sizeType: "", actualSizes: [], category: category
+            ) == .unavailable)
+        }
+        #expect(MusinsaSizeAvailabilityResolver.resolve(
+            isUseSize: true, sizeType: "5", actualSizes: [], category: .top
+        ) == .unavailable)
+    }
+
+    @Test func musinsaFallbackParsesValidUpperHTMLTable() throws {
+        let html = """
+        <table>
+          <tr><th>사이즈</th><th>가슴단면</th><th>총장</th></tr>
+          <tr><td>M</td><td>54</td><td>70</td></tr>
+          <tr><td>L</td><td>56</td><td>72</td></tr>
+        </table><p>단위: cm</p>
+        """
+        let sizes = MusinsaFallbackTableParser.parseHTML(html, family: .upper)
+        let first = try #require(sizes.first)
+        #expect(sizes.map(\.name) == ["M", "L"])
+        #expect(first.measurements.chest == 54)
+        #expect(first.measurements.totalLength == 70)
+        #expect(first.measurementRecords.allSatisfy { $0.methodSource == "musinsa_fallback" })
+    }
+
+    @Test func musinsaFallbackRejectsMissingUnitAndSingleSizeRows() {
+        let missingUnit = """
+        <table><tr><th>size</th><th>chest width</th><th>length</th></tr>
+        <tr><td>M</td><td>54</td><td>70</td></tr>
+        <tr><td>L</td><td>56</td><td>72</td></tr></table>
+        """
+        let singleRow = """
+        <table><tr><th>size</th><th>chest width</th><th>length (cm)</th></tr>
+        <tr><td>FREE</td><td>54</td><td>70</td></tr></table>
+        """
+        #expect(MusinsaFallbackTableParser.parseHTML(missingUnit, family: .upper).isEmpty)
+        #expect(MusinsaFallbackTableParser.parseHTML(singleRow, family: .upper).isEmpty)
+    }
+
+    @Test func musinsaFallbackKeepsCircumferenceSeparateFromWidth() throws {
+        let html = """
+        <table>
+          <tr><th>사이즈</th><th>허리둘레</th><th>인심</th></tr>
+          <tr><td>90</td><td>76</td><td>74</td></tr>
+          <tr><td>95</td><td>81</td><td>75</td></tr>
+        </table><span>cm</span>
+        """
+        let sizes = MusinsaFallbackTableParser.parseHTML(html, family: .lower)
+        let first = try #require(sizes.first)
+        let waist = try #require(first.measurementRecords.first { $0.displayKind == .waist })
+        #expect(waist.measurementCode == .waistCircumferenceGarment)
+        #expect(first.measurements.waist == 0)
+        #expect(first.measurements.totalLength == 74)
+    }
+
+    @Test func musinsaFallbackSeparatesShoesFromApparelFootRanges() throws {
+        let html = """
+        <table>
+          <tr><th>사이즈</th><th>발길이(mm)</th></tr>
+          <tr><td>260</td><td>260</td></tr>
+          <tr><td>270</td><td>270</td></tr>
+        </table>
+        """
+        let shoes = MusinsaFallbackTableParser.parseHTML(html, family: .shoes)
+        let first = try #require(shoes.first)
+        #expect(first.measurements.footLength == 26)
+        #expect(MusinsaFallbackTableParser.parseHTML(html, family: .upper).isEmpty)
+        #expect(MusinsaFallbackTableParser.parseHTML(html, family: .lower).isEmpty)
+    }
+
+    @Test func musinsaFallbackRejectsDescriptionNumbersWithoutTableStructure() {
+        let html = """
+        <div>배송은 2~3일 소요됩니다. 세탁은 30도 이하를 권장합니다.</div>
+        <img src="https://example.com/delivery_100.jpg">
+        """
+        #expect(MusinsaFallbackTableParser.parseHTML(html, family: .upper).isEmpty)
+        #expect(MusinsaFallbackImageExtractor.images(in: html).allSatisfy { !$0.isExplicitSizeImage })
+    }
+
     @Test func standardBodySizeChartNormalizesSupportedOptionsOnly() {
         #expect(StandardBodySizeChart.normalizedSize(from: "그레이/M") == "M")
         #expect(StandardBodySizeChart.chestCircumferenceCm(for: "95(M)") == 95)
@@ -3292,6 +3523,7 @@ struct FitMatchTests {
         #expect(StandardBodySizeChart.chestCircumferenceCm(for: "44(85)") == 85)
         #expect(StandardBodySizeChart.chestCircumferenceCm(for: "FREE") == nil)
         #expect(StandardBodySizeChart.chestCircumferenceCm(for: "3XL") == nil)
+        #expect(StandardBodySizeChart.chestCircumferenceCm(for: "브라_S 팬티_L") == nil)
     }
 
     @Test func standardSizeFallbackComparesCircumferencesWithoutStoringActualChest() throws {
@@ -3358,7 +3590,7 @@ struct FitMatchTests {
         #expect(history.recommendedSize.chest == 55)
     }
 
-    @Test func unsupportedStandardSizeReturnsUnavailableResult() throws {
+    @Test func unsupportedStandardSizeDoesNotCreateZeroPercentRecommendation() {
         let product = Product(
             name: "프리 상품",
             category: .top,
@@ -3366,14 +3598,88 @@ struct FitMatchTests {
             sizes: [ProductSize(name: "FREE", measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0))]
         )
         let reference = comparisonUserFit(name: "기준 옷", detail: .shortSleeve, sleeve: 24)
-        let history = try #require(RecommendationService().recommend(
+        let history = RecommendationService().recommend(
             product: product,
             selectedReferenceItem: reference,
             productDetailCategory: .shortSleeve
+        )
+        #expect(history == nil)
+    }
+
+    @Test func parsedCanonicalClassificationRejectsInvalidTaxonomyCombination() {
+        #expect(!FitMatchTaxonomyProvider.shared.isValidDetail("shirt", for: "tops"))
+        #expect(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .shirt,
+            sourceDepths: ["상의", "셔츠", nil, nil],
+            sourcePath: "상의 > 셔츠",
+            productName: "옥스포드 셔츠"
+        ) == nil)
+    }
+
+    @Test func parsedCanonicalClassificationResolvesRequiredSourceFixtures() throws {
+        let fixtures: [(String, String, ClothingCategory, ClosetDetailCategory, String, String)] = [
+            ("스커트 > 롱 스커트", "롱 스커트", .bottom, .skirt, "skirts", "skirt"),
+            ("원피스/스커트 > 원피스 > 미디", "미디 원피스", .dress, .onePiece, "dresses", "one_piece"),
+            ("원피스/스커트 > 스커트 > 롱", "롱 스커트", .bottom, .skirt, "skirts", "skirt"),
+            ("여성 > 여성 속옷 하의", "팬티", .bottom, .other, "underwear", "women_panty"),
+            ("속옷/홈웨어 > 여성 속옷 > 브라", "와이어리스 브라", .underwear, .underwear, "underwear", "underwear"),
+            ("홈웨어 > 파자마", "라운지 세트", .other, .other, "homewear", "loungewear"),
+            ("아우터 > 카디건", "긴팔 카디건", .outer, .longSleeve, "outerwear", "cardigan"),
+            ("Women > Bottoms > Short Pants", "협업 쇼트 팬츠", .bottom, .shorts, "bottoms", "shorts"),
+            ("Women > Tops > Sleeveless", "슬리브리스 탑", .top, .sleeveless, "tops", "sleeveless"),
+            ("Women > Skirts", "플레어 스커트", .bottom, .skirt, "skirts", "skirt")
+        ]
+        for fixture in fixtures {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: fixture.2, detailCategory: fixture.3,
+                sourceDepths: fixture.0.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.0, productName: fixture.1
+            ))
+            #expect(result.categoryCode == fixture.4)
+            #expect(result.detailCode == fixture.5)
+            #expect(result.isValid)
+        }
+
+        let overshirt = try #require(ParsedClosetClassification.resolve(
+            category: .top, detailCategory: .shortSleeve,
+            sourceDepths: ["Men", "Tops", "Shirts", nil],
+            sourcePath: "Men > Tops > Shirts", productName: "데님 오버셔츠 반팔"
         ))
-        #expect(history.comparisonMode == .unavailable)
-        #expect(history.comparedMeasurementUsages.isEmpty)
-        #expect(history.trueToSizeRecommendation.contains("변환할 수 없습니다"))
+        #expect(overshirt.categoryCode == "tops")
+        #expect(overshirt.detailCode == "short_sleeve")
+        #expect(overshirt.garmentFamily == .shirt)
+    }
+
+    @Test func musinsaSourceDepthPriorityKeepsUmbrellaFamiliesOutOfGenericBottoms() {
+        #expect(MusinsaProductMetadataParser.mapCategory(
+            from: "속옷/홈웨어 > 여성 속옷 > 여성 속옷 하의"
+        ) == .underwear)
+        #expect(MusinsaProductMetadataParser.mapCategory(
+            from: "원피스/스커트 > 스커트 > 롱 스커트"
+        ) == .bottom)
+        #expect(MusinsaProductMetadataParser.mapCategory(
+            from: "원피스/스커트 > 원피스 > 미디 원피스"
+        ) == .dress)
+        #expect(MusinsaProductMetadataParser.mapCategory(
+            from: "스포츠/레저 > 스포츠 하의 > 숏 팬츠"
+        ) == .bottom)
+    }
+
+    @Test func musinsaTopAndOuterExactTotalLengthUseCommonCode() {
+        for (upperCategory, typeNumber) in [(ClothingCategory.top, 5), (.outer, 7)] {
+            let mapping = MeasurementSourceMappingPolicy.musinsa(
+                typeNumber: typeNumber,
+                displayKind: .totalLength,
+                rawLabel: "총장",
+                isTopCategory: upperCategory.isMusinsaUpperBodyCategory
+            )
+            #expect(mapping?.code == .bodyLengthBackNeckToHem)
+        }
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 6, displayKind: .totalLength, rawLabel: "총장",
+            isTopCategory: false
+        )?.code == .pantsOutseamWaistToHem)
     }
 
     private func inMemoryModelContainer() throws -> ModelContainer {

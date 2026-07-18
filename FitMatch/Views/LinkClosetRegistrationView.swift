@@ -44,6 +44,10 @@ struct LinkClosetRegistrationView: View {
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
                     recommendedSize: uniqueSizes(for: parsedProduct).first,
+                    preselectedClassification: ParsedClosetClassification.resolve(
+                        product: parsedProduct,
+                        detailCategory: parsedDetailCategory
+                    ),
                     isParsedProductReadOnly: true
                 ) { _ in
                     isShowingSavedAlert = true
@@ -193,6 +197,16 @@ struct LinkClosetRegistrationView: View {
             )
 
             parsedDetailCategory = parsedInfo.detailCategory
+            if let canonical = ParsedClosetClassification.resolve(
+                product: product,
+                detailCategory: parsedInfo.detailCategory
+            ) {
+                product.categoryCode = canonical.categoryCode
+                product.normalizedProductTypeCode = canonical.normalizedProductTypeCode
+                product.garmentType = canonical.garmentFamily
+                product.sleeveType = canonical.lengthType
+                product.constructionType = canonical.constructionType
+            }
             parsedProduct = product
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."

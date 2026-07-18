@@ -86,6 +86,7 @@ struct CompareFlowSheet: View {
                 productDetailCategory: route.productDetailCategory,
                 recommendedSize: route.recommendedSize,
                 preselectedCategory: route.preselectedCategory,
+                preselectedClassification: route.preselectedClassification,
                 isParsedProductReadOnly: true
             ) { savedItem in
                 handleRegisteredClosetItem(savedItem, context: route.context)
@@ -407,7 +408,9 @@ private extension CompareFlowSheet {
                 .foregroundStyle(.secondary)
 
             VStack(spacing: 8) {
-                Text("상품 정보를 불러오지 못했어요.")
+                Text(isAutomaticMusinsaSizeFailure
+                     ? "사이즈 정보를 자동으로 확인하지 못했습니다."
+                     : "상품 정보를 불러오지 못했어요.")
                     .font(.title2.weight(.black))
                 Text(errorMessage ?? "URL을 다시 확인해 주세요.")
                     .font(.subheadline)
@@ -415,12 +418,24 @@ private extension CompareFlowSheet {
                     .multilineTextAlignment(.center)
             }
 
-            PrimaryButton(title: "다시 입력하기", systemImage: "arrow.clockwise") {
-                setStep(.start)
+            PrimaryButton(
+                title: isAutomaticMusinsaSizeFailure ? "무신사에서 사이즈표 보기" : "다시 입력하기",
+                systemImage: isAutomaticMusinsaSizeFailure ? "arrow.up.right.square" : "arrow.clockwise"
+            ) {
+                if isAutomaticMusinsaSizeFailure {
+                    openCurrentMusinsaProduct()
+                } else {
+                    setStep(.start)
+                }
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 20)
+    }
+
+    var isAutomaticMusinsaSizeFailure: Bool {
+        productURL.lowercased().contains("musinsa")
+            && errorMessage == MusinsaParser.automaticSizeFailureNotice
     }
 
     @ViewBuilder
@@ -721,8 +736,24 @@ private extension CompareFlowSheet {
     }
 
     var canConfirmComparisonCategory: Bool {
-        viewModel.category != .other
-            && viewModel.detailCategory != .other
+        guard let classification = currentParsedClassification else { return false }
+        return classification.isValid
+    }
+
+    var currentParsedClassification: ParsedClosetClassification? {
+        if let product = currentProduct {
+            return ParsedClosetClassification.resolve(product: product, detailCategory: viewModel.detailCategory)
+        }
+        return ParsedClosetClassification.resolve(
+            category: viewModel.category,
+            detailCategory: viewModel.detailCategory,
+            sourceDepths: [viewModel.productMetadata.sourceCategoryDepth1,
+                           viewModel.productMetadata.sourceCategoryDepth2,
+                           viewModel.productMetadata.sourceCategoryDepth3,
+                           viewModel.productMetadata.sourceCategoryDepth4],
+            sourcePath: viewModel.productMetadata.sourceCategoryPath,
+            productName: viewModel.productName
+        )
     }
 
     func productCompactCategoryText(for product: Product) -> String {
@@ -1061,7 +1092,11 @@ private extension CompareFlowSheet {
             context: context,
             productDetailCategory: productDetailCategory ?? viewModel.detailCategory,
             recommendedSize: recommendedSize,
-            preselectedCategory: preselectedCategory
+            preselectedCategory: preselectedCategory,
+            preselectedClassification: ParsedClosetClassification.resolve(
+                product: product,
+                detailCategory: productDetailCategory ?? viewModel.detailCategory
+            )
         )
     }
 
@@ -1128,6 +1163,15 @@ private extension CompareFlowSheet {
         UIApplication.shared.open(url)
     }
 
+    func openCurrentMusinsaProduct() {
+        let value = viewModel.productCanonicalURLString ?? productURL
+        guard let url = URL(string: value), url.scheme != nil else {
+            openMusinsa()
+            return
+        }
+        UIApplication.shared.open(url)
+    }
+
     func openUniqlo() {
         guard let url = URL(string: "https://www.uniqlo.com/kr/ko/") else { return }
         UIApplication.shared.open(url)
@@ -1190,6 +1234,7 @@ private struct CompareProductRegistrationRoute: Identifiable {
     let productDetailCategory: ClosetDetailCategory
     let recommendedSize: ProductSize?
     let preselectedCategory: ClothingCategory?
+    let preselectedClassification: ParsedClosetClassification?
 }
 
 private enum CompareLoadingState {

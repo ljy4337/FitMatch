@@ -13,7 +13,7 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         var metadata = await metadataParser.parse(productID: resolvedProduct.productID, sourceURL: resolvedProduct.resolvedURL)
         let actualSize = try await parseActualSize(
             productID: resolvedProduct.productID,
-            isTopCategory: metadata.category.isMusinsaTopCategory
+            isTopCategory: metadata.category.isMusinsaUpperBodyCategory
         )
         let sizes = actualSize.sizes
         metadata.applyActualSizeProfile(typeNumber: actualSize.typeNumber, typeName: actualSize.typeName)
@@ -71,7 +71,7 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         do {
             let response = try JSONDecoder().decode(MusinsaActualSizeResponse.self, from: data)
             let resolvedIsTopCategory = isTopCategory
-                || MusinsaProductMetadataParser.mapCategory(from: response.data?.typeName).isMusinsaTopCategory
+                || MusinsaProductMetadataParser.mapCategory(from: response.data?.typeName).isMusinsaUpperBodyCategory
             return MusinsaActualSizeResult(
                 typeName: response.data?.typeName,
                 typeNumber: response.data?.typeNumber,
