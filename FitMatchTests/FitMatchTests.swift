@@ -2641,6 +2641,50 @@ struct FitMatchTests {
         #expect(viewModel.canSave)
     }
 
+    @Test func manualComparisonEntryPreservesChestCircumferenceMeaning() throws {
+        var form = ClothingSizeForm(
+            sizeName: "M",
+            shoulder: "34",
+            chest: "100",
+            totalLength: "53"
+        )
+        form.chestUsesCircumference = true
+
+        let size = try #require(form.makeSizeOption(
+            category: .top,
+            detailCategory: .sleeveless
+        ))
+        #expect(size.measurements.chest == 0)
+        #expect(size.measurementRecords.contains {
+            $0.measurementCode == .chestCircumferenceGarment && $0.value == 100
+        })
+        #expect(size.measurementRecords.contains {
+            $0.measurementCode == .shoulderWidthSeamToSeam && $0.value == 34
+        })
+    }
+
+    @Test func manualComparisonEntryPreservesWaistCircumferenceMeaning() throws {
+        var form = ClothingSizeForm(
+            sizeName: "M",
+            totalLength: "100",
+            waist: "80",
+            hip: "50"
+        )
+        form.waistUsesCircumference = true
+
+        let size = try #require(form.makeSizeOption(
+            category: .bottom,
+            detailCategory: .longPants
+        ))
+        #expect(size.measurements.waist == 0)
+        #expect(size.measurementRecords.contains {
+            $0.measurementCode == .waistCircumferenceGarment && $0.value == 80
+        })
+        #expect(size.measurementRecords.contains {
+            $0.measurementCode == .hipWidthAtWidest && $0.value == 50
+        })
+    }
+
     @Test func manualClosetSourceAutomaticallyUsesFitMatchMeasurement() {
         let viewModel = AddClosetItemViewModel()
 

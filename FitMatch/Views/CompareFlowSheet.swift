@@ -22,6 +22,7 @@ struct CompareFlowSheet: View {
     @State private var isShowingMeasurementGuide = false
     @State private var isShowingReferenceComparison = false
     @State private var isShowingManualProductEntry = false
+    @State private var isPreparingManualComparison = false
     @State private var showsAllReferenceCandidates = false
     @State private var hasConfirmedComparisonCategory = false
     @State private var isSheetHeaderVisible = true
@@ -110,7 +111,12 @@ struct CompareFlowSheet: View {
             NavigationStack {
                 ManualComparisonProductEntrySheet(viewModel: viewModel) {
                     isShowingManualProductEntry = false
-                    continueComparisonAfterProductInput()
+                    isPreparingManualComparison = true
+                    setStep(.loading)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        continueComparisonAfterProductInput()
+                        isPreparingManualComparison = false
+                    }
                 }
             }
             .presentationDragIndicator(.visible)
@@ -130,15 +136,21 @@ private extension CompareFlowSheet {
 
     var loadingContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            sheetHeader(title: "상품을 분석하고 있어요", subtitle: "잠시만 기다려 주세요.")
+            sheetHeader(
+                title: isPreparingManualComparison ? "비교를 준비하고 있어요" : "상품을 분석하고 있어요",
+                subtitle: "잠시만 기다려 주세요."
+            )
 
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
                     CompareLoadingRow(title: "상품 정보 불러오는 중", state: .done)
-                    CompareLoadingRow(title: "사이즈표 확인 중", state: .done)
+                    CompareLoadingRow(
+                        title: isPreparingManualComparison ? "입력한 사이즈 확인 완료" : "사이즈표 확인 중",
+                        state: .done
+                    )
                     CompareLoadingRow(title: "내 옷과 비교 준비 중", state: .loading)
 
-                    Text("평균 10~20초 소요됩니다.")
+                    Text(isPreparingManualComparison ? "입력한 측정 의미와 호환되는 내 옷을 확인합니다." : "평균 10~20초 소요됩니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.top, 6)
@@ -1573,6 +1585,36 @@ private struct ManualComparisonProductEntrySheet: View {
                 }
 
                 FitMatchCard {
+                    VStack(alignment: .leading, spacing: 14) {
+                        SectionHeader(
+                            title: "비교 분류 확인",
+                            subtitle: "표시되는 실측 항목이 상품과 맞는지 확인해 주세요."
+                        )
+
+                        Menu {
+                            ForEach(categoryOptions) { category in
+                                Button(category.rawValue) {
+                                    viewModel.category = category.serviceGroup
+                                    viewModel.detailCategory = detailOptions(for: category).first ?? .other
+                                }
+                            }
+                        } label: {
+                            manualSelectionRow(title: "카테고리", value: viewModel.category.serviceGroup.rawValue)
+                        }
+
+                        Menu {
+                            ForEach(detailOptions(for: viewModel.category)) { detail in
+                                Button(detail.rawValue) {
+                                    viewModel.detailCategory = detail
+                                }
+                            }
+                        } label: {
+                            manualSelectionRow(title: "세부 카테고리", value: viewModel.detailCategory.rawValue)
+                        }
+                    }
+                }
+
+                FitMatchCard {
                     VStack(alignment: .leading, spacing: 16) {
                         SectionHeader(
                             title: "상품 사이즈 직접 입력",
@@ -1627,6 +1669,42 @@ private struct ManualComparisonProductEntrySheet: View {
             ) != nil
         }
     }
+
+    private var categoryOptions: [ClothingCategory] {
+        let gender = UserGender.productTarget(from: viewModel.productMetadata.genderCodes)
+        let resolvedGender = gender == .unknown ? UserGender.unisex : gender
+        return ClothingCategory.closetCategories(for: resolvedGender)
+            .map(\.serviceGroup)
+            .filter { $0 != .other }
+            .reduce(into: []) { result, category in
+                if !result.contains(category) { result.append(category) }
+            }
+    }
+
+    private func detailOptions(for category: ClothingCategory) -> [ClosetDetailCategory] {
+        let gender = UserGender.productTarget(from: viewModel.productMetadata.genderCodes)
+        let resolvedGender = gender == .unknown ? UserGender.unisex : gender
+        return ClosetDetailCategory.options(for: category.serviceGroup, gender: resolvedGender)
+            .filter { $0 != .other }
+    }
+
+    private func manualSelectionRow(title: String, value: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            Spacer()
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 50)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
 }
 
 private struct ManualComparisonSizeEditor: View {
@@ -1651,8 +1729,21 @@ private struct ManualComparisonSizeEditor: View {
             }
 
             ForEach(measurementKinds) { kind in
+                if kind == .chest {
+                    measurementShapePicker(
+                        widthTitle: "가슴단면",
+                        circumferenceTitle: "가슴둘레",
+                        selection: $option.chestUsesCircumference
+                    )
+                } else if kind == .waist {
+                    measurementShapePicker(
+                        widthTitle: "허리단면",
+                        circumferenceTitle: "허리둘레",
+                        selection: $option.waistUsesCircumference
+                    )
+                }
                 MeasurementField(
-                    title: kind.title,
+                    title: measurementTitle(for: kind),
                     placeholder: kind.placeholder,
                     value: binding(for: kind)
                 )
@@ -1680,6 +1771,28 @@ private struct ManualComparisonSizeEditor: View {
         case .footLength: return $option.footLength
         case .underBust: return $option.underBust
         }
+    }
+
+    private func measurementTitle(for kind: MeasurementKind) -> String {
+        if kind == .chest {
+            return option.chestUsesCircumference ? "가슴둘레" : "가슴단면"
+        }
+        if kind == .waist {
+            return option.waistUsesCircumference ? "허리둘레" : "허리단면"
+        }
+        return kind.title
+    }
+
+    private func measurementShapePicker(
+        widthTitle: String,
+        circumferenceTitle: String,
+        selection: Binding<Bool>
+    ) -> some View {
+        Picker("측정 형태", selection: selection) {
+            Text(widthTitle).tag(false)
+            Text(circumferenceTitle).tag(true)
+        }
+        .pickerStyle(.segmented)
     }
 }
 

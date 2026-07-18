@@ -326,6 +326,8 @@ struct ClothingSizeForm: Identifiable, Equatable {
     var hem = ""
     var footLength = ""
     var underBust = ""
+    var chestUsesCircumference = false
+    var waistUsesCircumference = false
     var displayOrder = 0
     var parsedMeasurementRecords: [ParsedMeasurement] = []
     var standardBodyChestCircumferenceCm: Double? = nil
@@ -354,10 +356,10 @@ struct ClothingSizeForm: Identifiable, Equatable {
             name: sizeName.trimmed,
             measurements: GarmentMeasurements(
                 shoulder: numericValue(for: .shoulder),
-                chest: numericValue(for: .chest),
+                chest: chestUsesCircumference ? 0 : numericValue(for: .chest),
                 totalLength: numericValue(for: .totalLength),
                 sleeveLength: numericValue(for: .sleeveLength),
-                waist: numericValue(for: .waist),
+                waist: waistUsesCircumference ? 0 : numericValue(for: .waist),
                 hip: numericValue(for: .hip),
                 thigh: numericValue(for: .thigh),
                 rise: numericValue(for: .rise),
@@ -367,7 +369,14 @@ struct ClothingSizeForm: Identifiable, Equatable {
             ),
             displayOrder: displayOrder
         )
-        let records = parsedMeasurementRecords.map { $0.makeRecord(productSize: productSize) }
+        let sourceRecords = parsedMeasurementRecords.isEmpty
+            ? manualMeasurementRecords(
+                category: category,
+                detailCategory: detailCategory,
+                productSize: productSize
+            )
+            : parsedMeasurementRecords.map { $0.makeRecord(productSize: productSize) }
+        let records = sourceRecords
         productSize.measurementRecords = records
         if !records.isEmpty {
             productSize.measurementSchemaVersion = 1
@@ -375,6 +384,60 @@ struct ClothingSizeForm: Identifiable, Equatable {
             productSize.measurementMigrationStatus = .completed
         }
         return productSize
+    }
+
+    private func manualMeasurementRecords(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        productSize: ProductSize
+    ) -> [GarmentMeasurementRecord] {
+        category.measurementKinds(detailCategory: detailCategory, gender: .unisex).compactMap { kind in
+            let value = numericValue(for: kind)
+            guard value > 0, let code = manualMeasurementCode(for: kind, category: category) else {
+                return nil
+            }
+            let label: String
+            switch kind {
+            case .chest: label = chestUsesCircumference ? "가슴둘레" : "가슴단면"
+            case .waist: label = waistUsesCircumference ? "허리둘레" : "허리단면"
+            default: label = kind.title
+            }
+            return ParsedMeasurement(
+                value: value,
+                measurementCode: code,
+                displayKind: kind.displayKind,
+                methodSource: "manual_product_size_entry",
+                methodProfile: "transcribed_size_chart",
+                inputSource: .transcribedSizeChart,
+                mappingVersion: "manual_product_size_entry_v1",
+                rawLabel: label,
+                rawValueText: value.truncatingRemainder(dividingBy: 1) == 0
+                    ? String(Int(value))
+                    : String(value),
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped
+            ).makeRecord(productSize: productSize)
+        }
+    }
+
+    private func manualMeasurementCode(
+        for kind: MeasurementKind,
+        category: ClothingCategory
+    ) -> MeasurementCode? {
+        switch kind {
+        case .shoulder: return .shoulderWidthSeamToSeam
+        case .chest: return chestUsesCircumference ? .chestCircumferenceGarment : .chestWidthPitToPit
+        case .totalLength:
+            return category.serviceGroup == .bottom ? .pantsOutseamWaistToHem : .bodyLengthBackNeckToHem
+        case .sleeveLength: return .sleeveShoulderSeamToCuff
+        case .waist: return waistUsesCircumference ? .waistCircumferenceGarment : .waistWidthEdgeToEdge
+        case .hip: return .hipWidthAtWidest
+        case .thigh: return .thighWidthCrotchToOuter
+        case .rise: return .riseCrotchToWaistFront
+        case .hem: return .hemWidthEdgeToEdge
+        case .footLength: return .footLengthHeelToToe
+        case .underBust: return .underBustWidthEdgeToEdge
+        }
     }
 
     func value(for kind: MeasurementKind) -> String {
