@@ -56,6 +56,7 @@ struct RecommendationMetricColumn: View {
     let detail: String?
     let isPrimary: Bool
     var style: Style = .result
+    var leadingPadding: CGFloat = 10
 
     private let titleRowHeight: CGFloat = 18
     private let valueRowHeight: CGFloat = 42
@@ -97,7 +98,8 @@ struct RecommendationMetricColumn: View {
             .frame(height: detailRowHeight)
         }
         .frame(maxWidth: .infinity, alignment: contentAlignment)
-        .padding(.horizontal, 10)
+        .padding(.leading, leadingPadding)
+        .padding(.trailing, 10)
     }
 
     @ViewBuilder

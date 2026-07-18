@@ -220,7 +220,9 @@ struct RecommendationResultView: View {
             VStack(alignment: .leading, spacing: 8) {
                 GeometryReader { geometry in
                     let dividerWidth: CGFloat = 1
-                    let columnWidth = (geometry.size.width - (dividerWidth * 2)) / 3
+                    let availableWidth = geometry.size.width - (dividerWidth * 2)
+                    let primaryMetricWidth = availableWidth * 0.30
+                    let reliabilityWidth = availableWidth * 0.40
 
                     HStack(alignment: .top, spacing: 0) {
                         CenteredMetricColumn(
@@ -229,12 +231,11 @@ struct RecommendationResultView: View {
                         ) {
                             Color.clear
                         }
-                        .frame(width: columnWidth, height: 132)
+                        .frame(width: primaryMetricWidth, height: 132)
                         Divider().frame(width: dividerWidth, height: 132)
                         CenteredMetricColumn(
                             title: "핏 매칭률",
-                            value: "\(currentResult.recommendationScore)%",
-                            valueFontSize: 33
+                            value: "\(currentResult.recommendationScore)%"
                         ) {
                             Text(fitMatchDescription)
                                 .font(.caption.weight(.bold))
@@ -246,7 +247,7 @@ struct RecommendationResultView: View {
                                 .padding(.vertical, 3)
                                 .background(.green.opacity(0.1), in: Capsule())
                         }
-                        .frame(width: columnWidth, height: 132)
+                        .frame(width: primaryMetricWidth, height: 132)
                         Divider().frame(width: dividerWidth, height: 132)
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 5) {
@@ -300,8 +301,7 @@ struct RecommendationResultView: View {
                             }
                         }
                         .padding(.leading, 10)
-                        .padding(.trailing, 4)
-                        .frame(width: columnWidth, alignment: .leading)
+                        .frame(width: reliabilityWidth, alignment: .leading)
                     }
                 }
                 .frame(height: 132)
@@ -1850,7 +1850,7 @@ private struct ShoulderMeasurementIcon: View {
 private struct CenteredMetricColumn<Detail: View>: View {
     let title: String
     let value: String
-    var valueFontSize: CGFloat = 44
+    var valueFontSize: CGFloat = 35.2
     @ViewBuilder let detail: () -> Detail
 
     var body: some View {

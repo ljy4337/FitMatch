@@ -489,7 +489,9 @@ private struct HistoryCard: View {
 
             GeometryReader { geometry in
                 let dividerWidth: CGFloat = 1
-                let columnWidth = (geometry.size.width - (dividerWidth * 2)) / 3
+                let availableWidth = geometry.size.width - (dividerWidth * 2)
+                let primaryMetricWidth = availableWidth * 0.30
+                let reliabilityWidth = availableWidth * 0.40
 
                 HStack(alignment: .top, spacing: 0) {
                     RecommendationMetricColumn(
@@ -497,21 +499,22 @@ private struct HistoryCard: View {
                         value: history.recommendedSize.name.displaySizeName,
                         detail: nil,
                         isPrimary: true,
-                        style: .historyCompact
+                        style: .historyCompact,
+                        leadingPadding: 0
                     )
-                        .frame(width: columnWidth)
+                        .frame(width: primaryMetricWidth)
                     Divider().frame(width: dividerWidth, height: 88)
                     RecommendationMetricColumn(
                         title: "핏 매칭률",
                         value: "\(history.recommendationScore)%",
                         detail: fitMatchBadge,
-                        isPrimary: false,
+                        isPrimary: true,
                         style: .historyCompact
                     )
-                        .frame(width: columnWidth)
+                        .frame(width: primaryMetricWidth)
                     Divider().frame(width: dividerWidth, height: 88)
                     reliabilityMetric
-                        .frame(width: columnWidth)
+                        .frame(width: reliabilityWidth)
                 }
             }
             .frame(height: 100)
