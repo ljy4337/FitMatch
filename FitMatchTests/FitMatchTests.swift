@@ -3585,6 +3585,90 @@ struct FitMatchTests {
         #expect(tee[2].measurements.sleeveLength == 22)
     }
 
+    @Test func musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage() throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        let image = UIGraphicsImageRenderer(
+            size: CGSize(width: 962, height: 3062),
+            format: format
+        ).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 962, height: 3062))
+
+            let titleAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 52, weight: .bold),
+                .foregroundColor: UIColor.black
+            ]
+            let cellAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 31, weight: .semibold),
+                .foregroundColor: UIColor.black
+            ]
+            "SIZE".draw(at: CGPoint(x: 44, y: 28), withAttributes: titleAttributes)
+
+            let columns: [(String, CGFloat)] = [
+                ("사이즈(cm)", 65),
+                ("총기장", 320),
+                ("어깨너비", 535),
+                ("가슴둘레", 750)
+            ]
+            for (text, x) in columns {
+                text.draw(at: CGPoint(x: x, y: 150), withAttributes: cellAttributes)
+            }
+            let rows = [
+                ["XS", "49", "30", "90"],
+                ["S", "51", "32", "95"],
+                ["M", "53", "34", "100"]
+            ]
+            for (rowIndex, row) in rows.enumerated() {
+                let y = CGFloat(245 + rowIndex * 105)
+                for (columnIndex, value) in row.enumerated() {
+                    value.draw(
+                        at: CGPoint(x: columns[columnIndex].1 + 35, y: y),
+                        withAttributes: cellAttributes
+                    )
+                }
+            }
+            UIColor.darkGray.setStroke()
+            context.cgContext.setLineWidth(2)
+            for y in [130, 215, 320, 425, 530] {
+                context.cgContext.move(to: CGPoint(x: 44, y: y))
+                context.cgContext.addLine(to: CGPoint(x: 918, y: y))
+            }
+            context.cgContext.strokePath()
+
+            "WASHING TIP".draw(
+                at: CGPoint(x: 44, y: 760),
+                withAttributes: titleAttributes
+            )
+            for index in 0..<12 {
+                "세탁 시 제품에 부착된 취급 주의사항을 확인해 주세요."
+                    .draw(
+                        at: CGPoint(x: 60, y: 900 + CGFloat(index * 110)),
+                        withAttributes: cellAttributes
+                    )
+            }
+        }
+        let cgImage = try #require(image.cgImage)
+        let regions = MusinsaFallbackImageOCR.denseTableRegions(in: cgImage)
+        #expect(regions.prefix(8).contains { $0.maxY >= 0.96 && $0.height > 0.12 })
+
+        let sizes = try #require(MusinsaFallbackImageOCR.parse(
+            image: cgImage,
+            family: .upper,
+            requiresTableRectangle: true,
+            sourceDescription: "synthetic-long-top-table"
+        ))
+        #expect(sizes.map(\.name) == ["XS", "S", "M"])
+        #expect(sizes[0].measurements.totalLength == 49)
+        #expect(sizes[0].measurements.shoulder == 30)
+        let chestCircumference = try #require(sizes[0].measurementRecords.first {
+            $0.measurementCode == .chestCircumferenceGarment
+        })
+        #expect(chestCircumference.value == 90)
+        #expect(sizes[0].measurements.chest == 0)
+    }
+
     @Test func musinsaFallbackParsesGiordanoUpperLongImageTableGrid() throws {
         let grid = [
             ["(cm)", "S", "M", "L"],

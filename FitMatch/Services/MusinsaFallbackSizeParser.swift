@@ -156,6 +156,7 @@ enum MusinsaFallbackTableParser {
            grid[0].dropFirst().filter({ isSizeValue($0) }).count >= 2 {
             grid[0][0] = "size"
         }
+        grid = grid.map { mergedHeaderCells($0, family: family) }
         let normalized = grid.map { $0.map(\.normalizedSizeHeader) }
         let unit = unitMultiplier(in: "\(context) \(grid.flatMap { $0 }.joined(separator: " "))")
         guard let unit else { return nil }
@@ -178,6 +179,37 @@ enum MusinsaFallbackTableParser {
             return makeSizes(headers: headers, rows: rows, unit: unit, family: family)
         }
         return nil
+    }
+
+    private static func mergedHeaderCells(
+        _ row: [String],
+        family: MusinsaFallbackGarmentFamily
+    ) -> [String] {
+        let normalized = row.map(\.normalizedSizeHeader)
+        guard normalized.contains(where: isSizeHeader) else { return row }
+
+        var result: [String] = []
+        var index = 0
+        while index < row.count {
+            let maxLength = min(3, row.count - index)
+            var merged: String?
+            var consumed = 1
+            if isSizeHeader(normalized[index]) {
+                merged = row[index]
+            } else {
+                for length in stride(from: maxLength, through: 1, by: -1) {
+                    let candidate = normalized[index..<(index + length)].joined()
+                    if column(for: candidate, family: family) != nil {
+                        merged = row[index..<(index + length)].joined()
+                        consumed = length
+                        break
+                    }
+                }
+            }
+            result.append(merged ?? row[index])
+            index += consumed
+        }
+        return result
     }
 
     private static func rows(in table: String) -> [[String]] {
@@ -382,7 +414,7 @@ private enum FallbackColumn: Equatable {
 }
 
 @MainActor
-private enum MusinsaFallbackImageOCR {
+enum MusinsaFallbackImageOCR {
     static func parse(
         url: URL,
         family: MusinsaFallbackGarmentFamily,
@@ -393,27 +425,105 @@ private enum MusinsaFallbackImageOCR {
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
 
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "사이즈 이미지 로드",
+            details: "URL=\(url.absoluteString), 크기=\(image.width)x\(image.height)"
+        )
+        #endif
+        return parse(
+            image: image,
+            family: family,
+            requiresTableRectangle: requiresTableRectangle,
+            sourceDescription: url.absoluteString
+        )
+    }
+
+    static func parse(
+        image: CGImage,
+        family: MusinsaFallbackGarmentFamily,
+        requiresTableRectangle: Bool,
+        sourceDescription: String = "in-memory"
+    ) -> [ParsedProductSize]? {
         let regions: [CGRect]
         if requiresTableRectangle {
             guard image.height >= image.width * 3 else { return nil }
             let rectangleRegions = tableRectangles(in: image)
             regions = rectangleRegions.isEmpty ? denseTableRegions(in: image) : rectangleRegions
-            guard !regions.isEmpty else { return nil }
         } else {
             regions = [CGRect(x: 0, y: 0, width: 1, height: 1)]
         }
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "사이즈표 후보 탐지",
+            details: "출처=\(sourceDescription), 후보수=\(regions.count), 영역=\(regions.map(\.debugDescription).joined(separator: " | "))"
+        )
+        #endif
+        guard !regions.isEmpty else {
+            #if DEBUG
+            FitMatchDebugLogger.detail(
+                screen: "상품 분석",
+                action: "사이즈 이미지 파싱",
+                details: "출처=\(sourceDescription), 최종사이즈수=0"
+            )
+            #endif
+            return nil
+        }
 
-        for region in regions.prefix(8) {
-            let observations = recognizedText(in: image, region: region)
+        let ocrRegions = regions.flatMap { region -> [CGRect] in
+            guard region.maxY >= 0.96, region.height > 0.12 else { return [region] }
+            return [focusedTopTableRegion(region), region]
+        }
+        for (index, region) in ocrRegions.prefix(8).enumerated() {
+            let isBoundedTopCandidate = region.maxY >= 0.96 && region.height > 0.12
+            let observations = recognizedText(
+                in: image,
+                region: region,
+                minimumConfidence: isBoundedTopCandidate ? 0.35 : 0.8
+            )
             guard observations.count >= 6 else { continue }
             let grid = gridRows(from: observations)
             let context = observations.map(\.text).joined(separator: " ")
+            #if DEBUG
+            FitMatchDebugLogger.detail(
+                screen: "상품 분석",
+                action: "사이즈표 OCR",
+                details: "출처=\(sourceDescription), 후보=\(index), 행=\(grid)"
+            )
+            #endif
             if let sizes = MusinsaFallbackTableParser.parseGrid(grid, context: context, family: family),
                !sizes.isEmpty {
+                #if DEBUG
+                FitMatchDebugLogger.detail(
+                    screen: "상품 분석",
+                    action: "사이즈 이미지 파싱",
+                    details: "출처=\(sourceDescription), 최종사이즈수=\(sizes.count), 사이즈=\(sizes.map(\.name))"
+                )
+                #endif
                 return sizes
             }
         }
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "사이즈 이미지 파싱",
+            details: "출처=\(sourceDescription), 최종사이즈수=0"
+        )
+        #endif
         return nil
+    }
+
+    private static func focusedTopTableRegion(_ region: CGRect) -> CGRect {
+        let topTrim = region.height * 0.18
+        let bottomTrim = region.height * 0.08
+        return CGRect(
+            x: region.minX,
+            y: region.minY + bottomTrim,
+            width: region.width,
+            height: region.height - topTrim - bottomTrim
+        )
     }
 
     private static func fetch(_ url: URL) async throws -> Data {
@@ -447,7 +557,7 @@ private enum MusinsaFallbackImageOCR {
             .sorted { $0.width * $0.height > $1.width * $1.height }
     }
 
-    private static func denseTableRegions(in image: CGImage) -> [CGRect] {
+    static func denseTableRegions(in image: CGImage) -> [CGRect] {
         let width = image.width
         let height = image.height
         guard width >= 300, height >= 900 else { return [] }
@@ -535,13 +645,20 @@ private enum MusinsaFallbackImageOCR {
                     let minX = selected.map(\.minX).min()!
                     let maxX = selected.map(\.maxX).max()!
                     let regionHeight = maxY - minY
-                    guard regionHeight <= Int(Double(height) * 0.12),
+                    let verticalPadding = max(24, regionHeight / 3)
+                    let y0 = max(0, minY - verticalPadding)
+                    let regularHeightLimit = Int(Double(height) * 0.12)
+                    let topHeightLimit = min(
+                        Int(Double(height) * 0.30),
+                        Int(Double(width) * 1.1)
+                    )
+                    let isBoundedTopCandidate = y0 <= Int(Double(height) * 0.04)
+                        && regionHeight <= topHeightLimit
+                    guard (regionHeight <= regularHeightLimit || isBoundedTopCandidate),
                           maxX - minX >= Int(Double(width) * 0.45) else { continue }
                     let horizontalPadding = Int(Double(width) * 0.04)
-                    let verticalPadding = max(24, regionHeight / 3)
                     let x0 = max(0, minX - horizontalPadding)
                     let x1 = min(width, maxX + horizontalPadding)
-                    let y0 = max(0, minY - verticalPadding)
                     let y1 = min(height, maxY + verticalPadding)
                     regions.append(CGRect(
                         x: Double(x0) / Double(width),
@@ -554,7 +671,12 @@ private enum MusinsaFallbackImageOCR {
         }
         return regions
             .filter { $0.width >= 0.45 && $0.height >= 0.015 }
-            .sorted { $0.width * $0.height < $1.width * $1.height }
+            .sorted {
+                let lhsIsTop = $0.maxY >= 0.96
+                let rhsIsTop = $1.maxY >= 0.96
+                if lhsIsTop != rhsIsTop { return lhsIsTop }
+                return $0.width * $0.height < $1.width * $1.height
+            }
             .reduce(into: []) { unique, region in
                 if !unique.contains(where: { $0.intersection(region).width * $0.intersection(region).height
                     >= min($0.width * $0.height, region.width * region.height) * 0.8 }) {
@@ -563,7 +685,11 @@ private enum MusinsaFallbackImageOCR {
             }
     }
 
-    private static func recognizedText(in image: CGImage, region: CGRect) -> [(text: String, box: CGRect)] {
+    private static func recognizedText(
+        in image: CGImage,
+        region: CGRect,
+        minimumConfidence: VNConfidence
+    ) -> [(text: String, box: CGRect)] {
         let pixelRect = CGRect(
             x: region.minX * Double(image.width),
             y: (1 - region.maxY) * Double(image.height),
@@ -573,15 +699,44 @@ private enum MusinsaFallbackImageOCR {
         guard pixelRect.width >= 120,
               pixelRect.height >= 60,
               let croppedImage = image.cropping(to: pixelRect) else { return [] }
+        let recognitionImage = minimumConfidence < 0.8
+            ? upscaledImage(croppedImage, scale: 2)
+            : croppedImage
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.recognitionLanguages = ["ko-KR", "en-US"]
         request.usesLanguageCorrection = true
-        try? VNImageRequestHandler(cgImage: croppedImage).perform([request])
+        request.customWords = [
+            "XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL",
+            "사이즈", "총장", "총기장", "총길이", "어깨", "어깨너비",
+            "가슴", "가슴단면", "가슴둘레", "소매", "소매길이",
+            "허리단면", "허리둘레", "엉덩이단면", "엉덩이둘레",
+            "허벅지단면", "밑위", "인심", "발길이"
+        ]
+        try? VNImageRequestHandler(cgImage: recognitionImage).perform([request])
         return (request.results ?? []).compactMap {
-            guard let candidate = $0.topCandidates(1).first, candidate.confidence >= 0.8 else { return nil }
+            guard let candidate = $0.topCandidates(1).first,
+                  candidate.confidence >= minimumConfidence else { return nil }
             return (candidate.string, $0.boundingBox)
         }
+    }
+
+    private static func upscaledImage(_ image: CGImage, scale: Int) -> CGImage {
+        guard scale > 1 else { return image }
+        let width = image.width * scale
+        let height = image.height * scale
+        guard let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return image }
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return context.makeImage() ?? image
     }
 
     private static func gridRows(from observations: [(text: String, box: CGRect)]) -> [[String]] {

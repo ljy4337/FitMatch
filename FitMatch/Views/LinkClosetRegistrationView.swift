@@ -10,8 +10,10 @@ struct LinkClosetRegistrationView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var parsedProduct: Product?
+    @State private var partialProduct: Product?
     @State private var parsedDetailCategory: ClosetDetailCategory = .other
     @State private var isShowingAddToClosetSheet = false
+    @State private var isShowingManualAddSheet = false
     @State private var isShowingSavedAlert = false
     @FocusState private var isURLFocused: Bool
 
@@ -56,6 +58,23 @@ struct LinkClosetRegistrationView: View {
                 .presentationDragIndicator(.visible)
             }
         }
+        .sheet(isPresented: $isShowingManualAddSheet) {
+            if let partialProduct {
+                NavigationStack {
+                    AddClosetItemView(
+                        prefillCategory: partialProduct.category,
+                        prefillDetailCategory: parsedDetailCategory,
+                        prefillBrand: partialProduct.brand?.name,
+                        prefillProductName: partialProduct.name
+                    ) { item in
+                        modelContext.insert(item)
+                        try? modelContext.save()
+                        isShowingSavedAlert = true
+                    }
+                }
+                .presentationDragIndicator(.visible)
+            }
+        }
         .alert("내 옷장에 추가했어요.", isPresented: $isShowingSavedAlert) {
             Button("확인") {
                 dismiss()
@@ -63,6 +82,7 @@ struct LinkClosetRegistrationView: View {
         }
         .onChange(of: productURL) { _, _ in
             parsedProduct = nil
+            partialProduct = nil
             errorMessage = nil
         }
     }
@@ -157,9 +177,46 @@ struct LinkClosetRegistrationView: View {
     private var errorCard: some View {
         if let errorMessage {
             FitMatchCard {
-                Label(errorMessage, systemImage: "exclamationmark.circle")
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
+                VStack(alignment: .leading, spacing: 16) {
+                    Label(
+                        partialProduct == nil ? errorMessage : "사이즈 정보를 자동으로 확인하지 못했습니다.",
+                        systemImage: "exclamationmark.circle"
+                    )
+                    .font(.headline)
+                    .foregroundStyle(partialProduct == nil ? .red : .primary)
+
+                    if let partialProduct {
+                        Text(errorMessage)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        HStack(alignment: .top, spacing: 14) {
+                            ProductThumbnailView(
+                                imageURLString: partialProduct.imageURLString,
+                                category: partialProduct.category,
+                                width: 82,
+                                height: 98,
+                                cornerRadius: 16
+                            )
+
+                            VStack(alignment: .leading, spacing: 7) {
+                                Text(partialProduct.brand?.name ?? "브랜드 미상")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.secondary)
+                                Text(partialProduct.name)
+                                    .font(.headline.weight(.semibold))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(sourceCategoryText(for: partialProduct))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        PrimaryButton(title: "직접 입력하기", systemImage: "square.and.pencil") {
+                            isShowingManualAddSheet = true
+                        }
+                    }
+                }
             }
         }
     }
@@ -174,6 +231,7 @@ struct LinkClosetRegistrationView: View {
         isURLFocused = false
         errorMessage = nil
         parsedProduct = nil
+        partialProduct = nil
         isLoading = true
         defer { isLoading = false }
 
@@ -208,6 +266,24 @@ struct LinkClosetRegistrationView: View {
                 product.constructionType = canonical.constructionType
             }
             parsedProduct = product
+        } catch let partialError as ProductURLParserPartialError {
+            let parsedInfo = partialError.productInfo
+            let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
+            let product = Product(
+                name: parsedInfo.productName,
+                brand: brand,
+                category: parsedInfo.category,
+                productCode: parsedInfo.productID,
+                sourceURLString: parsedInfo.canonicalURLString ?? parsedInfo.sourceURL.absoluteString,
+                imageURLString: parsedInfo.imageURLString,
+                metadata: parsedInfo.productMetadata,
+                sourceType: parsedInfo.sourceType,
+                sourceName: parsedInfo.sourceName,
+                sizes: []
+            )
+            parsedDetailCategory = parsedInfo.detailCategory
+            partialProduct = product
+            errorMessage = parsedInfo.parserNotice ?? partialError.errorDescription
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
         }

@@ -21,6 +21,7 @@ struct CompareFlowSheet: View {
     @State private var insufficientEvidence: InsufficientComparisonEvidence?
     @State private var isShowingMeasurementGuide = false
     @State private var isShowingReferenceComparison = false
+    @State private var isShowingManualProductEntry = false
     @State private var showsAllReferenceCandidates = false
     @State private var hasConfirmedComparisonCategory = false
     @State private var isSheetHeaderVisible = true
@@ -104,6 +105,21 @@ struct CompareFlowSheet: View {
             )
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $isShowingManualProductEntry) {
+            NavigationStack {
+                AddClosetItemView(
+                    prefillCategory: viewModel.category,
+                    prefillDetailCategory: viewModel.detailCategory,
+                    prefillBrand: viewModel.brand,
+                    prefillProductName: viewModel.productName
+                ) { item in
+                    modelContext.insert(item)
+                    try? modelContext.save()
+                    isShowingRegistrationSavedAlert = true
+                }
+            }
+            .presentationDragIndicator(.visible)
         }
     }
 }
@@ -418,12 +434,39 @@ private extension CompareFlowSheet {
                     .multilineTextAlignment(.center)
             }
 
+            if isAutomaticMusinsaSizeFailure {
+                FitMatchCard {
+                    HStack(alignment: .top, spacing: 14) {
+                        ProductThumbnailView(
+                            imageURLString: viewModel.productImageURLString,
+                            category: viewModel.category,
+                            width: 82,
+                            height: 98,
+                            cornerRadius: 16
+                        )
+
+                        VStack(alignment: .leading, spacing: 7) {
+                            Text(viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "브랜드 미상" : viewModel.brand)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                            Text(viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "상품명 미상" : viewModel.productName)
+                                .font(.headline.weight(.semibold))
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(currentSourceCategoryText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
+
             PrimaryButton(
-                title: isAutomaticMusinsaSizeFailure ? "무신사에서 사이즈표 보기" : "다시 입력하기",
-                systemImage: isAutomaticMusinsaSizeFailure ? "arrow.up.right.square" : "arrow.clockwise"
+                title: isAutomaticMusinsaSizeFailure ? "직접 입력하기" : "다시 입력하기",
+                systemImage: isAutomaticMusinsaSizeFailure ? "square.and.pencil" : "arrow.clockwise"
             ) {
                 if isAutomaticMusinsaSizeFailure {
-                    openCurrentMusinsaProduct()
+                    isShowingManualProductEntry = true
                 } else {
                     setStep(.start)
                 }
