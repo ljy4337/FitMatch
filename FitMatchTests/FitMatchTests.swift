@@ -95,13 +95,25 @@ struct FitMatchTests {
         #expect(!provider.activeCategories.isEmpty)
     }
 
-    @Test func tshirtAndKnitMayBothBeReferenceGarments() {
+    @Test func normalizedProductTypeDoesNotSplitReferenceGarmentScope() {
         let tshirt = comparisonUserFit(name: "반팔 티셔츠", sourceCategory: "상의 > 반소매 티셔츠", detail: .shortSleeve, sleeve: 24)
         let knit = comparisonUserFit(name: "반팔 니트", sourceCategory: "상의 > 니트/스웨터", detail: .shortSleeve, sleeve: 24)
         tshirt.normalizedProductTypeCode = "tops.tshirt"
         knit.normalizedProductTypeCode = "tops.knit_sweater"
 
-        #expect(!ReferenceGarmentPolicy.conflicts(tshirt, knit))
+        #expect(ReferenceGarmentPolicy.conflicts(tshirt, knit))
+    }
+
+    @Test func referenceGarmentScopeKeepsDifferentGenderOrDetail() {
+        let maleShort = comparisonUserFit(name: "남성 반팔", detail: .shortSleeve, sleeve: 24)
+        maleShort.gender = .men
+        let femaleShort = comparisonUserFit(name: "여성 반팔", detail: .shortSleeve, sleeve: 24)
+        femaleShort.gender = .women
+        let maleLong = comparisonUserFit(name: "남성 긴팔", detail: .longSleeve, sleeve: 60)
+        maleLong.gender = .men
+
+        #expect(!ReferenceGarmentPolicy.conflicts(maleShort, femaleShort))
+        #expect(!ReferenceGarmentPolicy.conflicts(maleShort, maleLong))
     }
 
     @Test func musinsaActualSizeLengthPreservesKnitFamily() {
@@ -1506,7 +1518,7 @@ struct FitMatchTests {
         #expect(result.compatibleCandidates.map(\.id) == [setIn.id])
     }
 
-    @Test func compatibleMeasurementCountOutranksRepresentativeFlag() {
+    @Test func compatibleRepresentativeOutranksRicherMeasurementEvidence() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -1536,8 +1548,244 @@ struct FitMatchTests {
             userFits: [representative, richerEvidence]
         )
 
-        #expect(ranked.first?.userFit.id == richerEvidence.id)
-        #expect(ranked.first?.compatibleMeasurementCount == 3)
+        #expect(ranked.first?.userFit.id == representative.id)
+        #expect(ranked.first?.compatibleMeasurementCount == 2)
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [representative, richerEvidence]
+        )
+        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
+        #expect(!plan.requiresUserSelection)
+    }
+
+    @Test func compatibleRepresentativeOutranksHigherSimilarity() {
+        let size = comparisonSize(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let representative = comparisonItem(
+            shoulder: 45, sleeve: 19,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        representative.isRepresentative = true
+        let closer = comparisonItem(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [closer, representative]
+        )
+
+        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
+    }
+
+    @Test func compatibleRepresentativeOutranksSameBrandCandidate() {
+        let size = comparisonSize(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(
+            name: "반팔 티셔츠",
+            brand: Brand(name: "같은 브랜드"),
+            category: .top,
+            sizes: [size]
+        )
+        let representative = comparisonItem(
+            shoulder: 48, sleeve: 22,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        representative.isRepresentative = true
+        representative.brandName = "다른 브랜드"
+        let sameBrand = comparisonItem(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        sameBrand.brandName = "같은 브랜드"
+
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [sameBrand, representative]
+        )
+
+        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
+    }
+
+    @Test func multipleCompatibleRepresentativesSelectDeterministically() {
+        let size = comparisonSize(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let older = comparisonItem(
+            shoulder: 49, sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        older.isRepresentative = true
+        older.updatedAt = Date(timeIntervalSince1970: 100)
+        let newer = comparisonItem(
+            shoulder: 49, sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        newer.isRepresentative = true
+        newer.updatedAt = Date(timeIntervalSince1970: 200)
+
+        let service = RecommendationService()
+        let first = service.referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [older, newer]
+        )
+        let second = service.referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [newer, older]
+        )
+
+        #expect(first.automaticallySelectedCandidate?.id == newer.id)
+        #expect(second.automaticallySelectedCandidate?.id == newer.id)
+    }
+
+    @Test func insufficientRepresentativeEvidenceBlocksAutomaticSelection() {
+        let size = comparisonSize(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let representative = comparisonItem(
+            shoulder: 49, sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        representative.isRepresentative = true
+        setComparableCode(.unknown, for: .shoulder, in: representative.measurementRecords)
+        let compatibleGeneral = comparisonItem(
+            shoulder: 49, sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [compatibleGeneral, representative]
+        )
+
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.recommendedCandidates.map(\.id).contains(compatibleGeneral.id))
+        #expect(plan.requiresUserSelection)
+    }
+
+    @Test func incompatibleRepresentativeBlocksGeneralAutomaticSelection() {
+        let size = comparisonSize(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let representative = comparisonItem(
+            shoulder: 49, sleeve: 60,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        representative.isRepresentative = true
+        representative.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+        let compatibleGeneral = comparisonItem(
+            shoulder: 49, sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [compatibleGeneral, representative]
+        )
+
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.recommendedCandidates.map(\.id) == [compatibleGeneral.id])
+        #expect(plan.requiresUserSelection)
+        #expect(RecommendationService().recommend(
+            product: product,
+            userFits: [compatibleGeneral, representative],
+            productDetailCategory: .shortSleeve
+        ) == nil)
+    }
+
+    @Test func representativeFromDifferentDetailHasNoSelectionPriority() {
+        let size = comparisonSize(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        markChestComparable(size.measurementRecords)
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let otherDetailRepresentative = comparisonItem(
+            shoulder: 49, sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        otherDetailRepresentative.detailCategory = .longSleeve
+        otherDetailRepresentative.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+        otherDetailRepresentative.isRepresentative = true
+        let richer = comparisonItem(
+            shoulder: 49, sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        markChestComparable(richer.measurementRecords)
+
+        let plan = RecommendationService().referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [otherDetailRepresentative, richer]
+        )
+
+        #expect(plan.automaticallySelectedCandidate?.id == richer.id)
+    }
+
+    @Test func manualSelectionRecommendationIsUnaffectedByRepresentativePolicy() throws {
+        let size = comparisonSize(
+            shoulder: 50, sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "반팔 티셔츠", category: .top, sizes: [size])
+        let selected = comparisonItem(
+            shoulder: 49, sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let before = try #require(RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: selected,
+            productDetailCategory: .shortSleeve
+        ))
+        selected.isRepresentative = true
+        let after = try #require(RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: selected,
+            productDetailCategory: .shortSleeve
+        ))
+
+        #expect(after.recommendedSize.name == before.recommendedSize.name)
+        #expect(after.recommendationScore == before.recommendationScore)
+        #expect(after.comparisonStatus == before.comparisonStatus)
     }
 
     @Test func singleCompatibleReferenceIsAutomaticallySelected() {
@@ -3607,6 +3855,47 @@ struct FitMatchTests {
         ))
         #expect(sizes.map(\.name) == ["M(95)", "L(100)", "XL(105)", "XXL(110)"])
         #expect(sizes[0].measurementRecords.contains {
+            $0.measurementCode == .chestCircumferenceGarment && $0.value == 105
+        })
+    }
+
+    @Test func importedChestCircumferenceReachesSizeFormWithoutWidthConversion() throws {
+        let parsed = ParsedProductSize(
+            name: "M(95)",
+            measurements: GarmentMeasurements(
+                shoulder: 51,
+                chest: 0,
+                totalLength: 70.5,
+                sleeveLength: 24.7
+            ),
+            measurementRecords: [
+                ParsedMeasurement(
+                    value: 105,
+                    measurementCode: .chestCircumferenceGarment,
+                    displayKind: .chest,
+                    methodSource: "musinsa_fallback",
+                    inputSource: .importedSizeChart,
+                    rawLabel: "가슴둘레",
+                    rawValueText: "105",
+                    evidenceLevel: .officialText,
+                    semanticStatus: .mapped
+                )
+            ]
+        )
+
+        let form = ShoppingProductViewModel.makeSizeForm(
+            from: parsed,
+            displayOrder: 0,
+            allowsStandardSizeFallback: false
+        )
+        #expect(form.chest == "105")
+        #expect(form.chestUsesCircumference)
+        let saved = try #require(form.makeSizeOption(
+            category: .top,
+            detailCategory: .shortSleeve
+        ))
+        #expect(saved.measurements.chest == 0)
+        #expect(saved.measurementRecords.contains {
             $0.measurementCode == .chestCircumferenceGarment && $0.value == 105
         })
     }

@@ -230,15 +230,28 @@ struct RecommendationService {
             productDetailCategory: productDetailCategory,
             userFits: userFits
         ).compatibleCandidates
+        let preferredRepresentativeIDs = Set(preferredRepresentatives(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        ).map(\.id))
         let candidates = Array(rankedReferenceCandidates(
             product: product,
             productDetailCategory: productDetailCategory,
             userFits: compatible
         ).prefix(3))
+        let automaticallySelected: FitMatchCandidate?
+        if preferredRepresentativeIDs.isEmpty {
+            automaticallySelected = clearlyBestCandidate(in: candidates)
+        } else {
+            automaticallySelected = candidates.first {
+                preferredRepresentativeIDs.contains($0.id)
+            }
+        }
 
         return ReferenceSelectionPlan(
             recommendedCandidates: candidates,
-            automaticallySelectedCandidate: clearlyBestCandidate(in: candidates)
+            automaticallySelectedCandidate: automaticallySelected
         )
     }
 
@@ -496,12 +509,25 @@ struct RecommendationService {
             productDetailCategory: productDetailCategory,
             userFits: userFits
         )
+        let preferredRepresentativeIDs = Set(preferredRepresentatives(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        ).map(\.id))
         let ranked = rankedReferenceCandidates(
             product: product,
             productDetailCategory: productDetailCategory,
             userFits: result.compatibleCandidates
         )
-        if let selected = ranked.first?.userFit {
+        let selected: UserFit?
+        if preferredRepresentativeIDs.isEmpty {
+            selected = ranked.first?.userFit
+        } else {
+            selected = ranked.first {
+                preferredRepresentativeIDs.contains($0.userFit.id)
+            }?.userFit
+        }
+        if let selected {
             return RecommendationBasis(
                 userFits: [selected],
                 methodText: "비교 프로필 호환 옷 비교",
@@ -525,11 +551,22 @@ struct RecommendationService {
             productDetailCategory: productDetailCategory,
             userFits: userFits
         ).compatibleCandidates
-        return !rankedReferenceCandidates(
+        let ranked = rankedReferenceCandidates(
             product: product,
             productDetailCategory: productDetailCategory,
             userFits: profileCandidates
-        ).isEmpty
+        )
+        let preferredRepresentativeIDs = Set(preferredRepresentatives(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        ).map(\.id))
+        if preferredRepresentativeIDs.isEmpty {
+            return !ranked.isEmpty
+        }
+        return ranked.contains {
+            preferredRepresentativeIDs.contains($0.userFit.id)
+        }
     }
 
     private func standardSizeCandidates(product: Product, userFits: [UserFit]) -> [FitMatchCandidate] {
@@ -558,6 +595,11 @@ struct RecommendationService {
         userFits: [UserFit]
     ) -> [FitMatchCandidate] {
         let incomingProfile = comparisonMatcher.profile(for: product, detailCategory: productDetailCategory)
+        let preferredRepresentativeIDs = Set(preferredRepresentatives(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            userFits: userFits
+        ).map(\.id))
         return userFits
             .compactMap { item -> RankedReferenceCandidate? in
                 let candidateProfile = comparisonMatcher.profile(for: item)
@@ -600,12 +642,12 @@ struct RecommendationService {
                 )
             }
             .sorted { lhs, rhs in
+                let lhsPreferred = preferredRepresentativeIDs.contains(lhs.candidate.userFit.id)
+                let rhsPreferred = preferredRepresentativeIDs.contains(rhs.candidate.userFit.id)
+                if lhsPreferred != rhsPreferred { return lhsPreferred }
                 if lhs.constructionRank != rhs.constructionRank { return lhs.constructionRank > rhs.constructionRank }
                 if lhs.candidate.compatibleMeasurementCount != rhs.candidate.compatibleMeasurementCount {
                     return lhs.candidate.compatibleMeasurementCount > rhs.candidate.compatibleMeasurementCount
-                }
-                if lhs.candidate.userFit.isRepresentative != rhs.candidate.userFit.isRepresentative {
-                    return lhs.candidate.userFit.isRepresentative
                 }
                 if lhs.candidate.matchRate != rhs.candidate.matchRate { return lhs.candidate.matchRate > rhs.candidate.matchRate }
                 if lhs.isSameBrand != rhs.isSameBrand { return lhs.isSameBrand }
@@ -615,6 +657,30 @@ struct RecommendationService {
                 return lhs.candidate.id.uuidString < rhs.candidate.id.uuidString
             }
             .map(\.candidate)
+    }
+
+    private func preferredRepresentatives(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        userFits: [UserFit]
+    ) -> [UserFit] {
+        let incomingGender = product.productTargetGender.taxonomyCode
+        return userFits.filter {
+            $0.isRepresentative
+                && gendersAreCompatible(incomingGender, $0.resolvedGenderCode)
+                && $0.category.serviceGroup == product.category.serviceGroup
+                && $0.detailCategory == productDetailCategory
+        }
+    }
+
+    private func gendersAreCompatible(_ incoming: String, _ candidate: String) -> Bool {
+        if incoming == "unknown" || candidate == "unknown" { return true }
+        if incoming == "unisex" || candidate == "unisex" { return true }
+        let kids = Set(["boys", "girls", "kids_unisex"])
+        if kids.contains(incoming) || kids.contains(candidate) {
+            return kids.contains(incoming) && kids.contains(candidate)
+        }
+        return incoming == candidate
     }
 
     private func rankedCandidateScore(

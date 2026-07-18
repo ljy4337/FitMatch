@@ -265,25 +265,46 @@ final class ShoppingProductViewModel: ObservableObject {
         }
 
         sizeOptions = parsedProduct.sizes.enumerated().map { index, size in
-            ClothingSizeForm(
-                sizeName: size.name,
-                shoulder: size.measurements.shoulder.extractedFormText,
-                chest: size.measurements.chest.extractedFormText,
-                totalLength: size.measurements.totalLength.extractedFormText,
-                sleeveLength: size.measurements.sleeveLength.extractedFormText,
-                waist: size.measurements.waist.extractedFormText,
-                hip: size.measurements.hip.extractedFormText,
-                thigh: size.measurements.thigh.extractedFormText,
-                rise: size.measurements.rise.extractedFormText,
-                hem: size.measurements.hem.extractedFormText,
-                footLength: size.measurements.footLength.extractedFormText,
-                underBust: size.measurements.underBust.extractedFormText,
+            Self.makeSizeForm(
+                from: size,
                 displayOrder: index,
-                parsedMeasurementRecords: size.measurementRecords,
-                standardBodyChestCircumferenceCm: size.standardBodyChestCircumferenceCm,
                 allowsStandardSizeFallback: parsedProduct.measurementAvailability != .actualMeasurements
             )
         }
+    }
+
+    static func makeSizeForm(
+        from size: ParsedProductSize,
+        displayOrder: Int,
+        allowsStandardSizeFallback: Bool
+    ) -> ClothingSizeForm {
+        let chestCircumference = size.measurementRecords.first {
+            $0.measurementCode == .chestCircumferenceGarment
+                && $0.semanticStatus == .mapped
+                && $0.value.isFinite
+                && $0.value > 0
+        }
+        return ClothingSizeForm(
+            sizeName: size.name,
+            shoulder: size.measurements.shoulder.extractedFormText,
+            chest: size.measurements.chest > 0
+                ? size.measurements.chest.extractedFormText
+                : chestCircumference?.value.extractedFormText ?? "",
+            totalLength: size.measurements.totalLength.extractedFormText,
+            sleeveLength: size.measurements.sleeveLength.extractedFormText,
+            waist: size.measurements.waist.extractedFormText,
+            hip: size.measurements.hip.extractedFormText,
+            thigh: size.measurements.thigh.extractedFormText,
+            rise: size.measurements.rise.extractedFormText,
+            hem: size.measurements.hem.extractedFormText,
+            footLength: size.measurements.footLength.extractedFormText,
+            underBust: size.measurements.underBust.extractedFormText,
+            chestUsesCircumference: size.measurements.chest <= 0 && chestCircumference != nil,
+            displayOrder: displayOrder,
+            parsedMeasurementRecords: size.measurementRecords,
+            standardBodyChestCircumferenceCm: size.standardBodyChestCircumferenceCm,
+            allowsStandardSizeFallback: allowsStandardSizeFallback
+        )
     }
 
     private func metadataWithSourceCategory(from parsedProduct: ParsedProductInfo) -> ProductMetadata {
