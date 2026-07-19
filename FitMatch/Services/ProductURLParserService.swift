@@ -80,6 +80,7 @@ struct ParsedProductInfo {
     var productTargetGender: UserGender = .unknown
     var productMetadata: ProductMetadata = ProductMetadata()
     var measurementAvailability: ProductMeasurementAvailability = .actualMeasurements
+    var sizeTableRecoveryContext: SizeTableRecoveryContext? = nil
 }
 
 struct ParsedProductSize: Identifiable, Equatable {

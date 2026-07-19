@@ -12,6 +12,63 @@ import SwiftData
 
 @MainActor
 struct FitMatchTests {
+    @Test func sizeTableRecoveryRejectsDuplicateSizeNames() {
+        let forms = [
+            ClothingSizeForm(sizeName: "M", chest: "52", totalLength: "68"),
+            ClothingSizeForm(sizeName: " m ", chest: "54", totalLength: "70")
+        ]
+
+        #expect(SizeTableRecoveryValidator.validationMessage(
+            for: forms,
+            category: .top,
+            detailCategory: .shortSleeve
+        ) == "중복된 사이즈명은 저장할 수 없습니다.")
+    }
+
+    @Test func sizeTableRecoveryRejectsEmptyAndMeasurementlessRows() {
+        #expect(SizeTableRecoveryValidator.validationMessage(
+            for: [ClothingSizeForm(sizeName: "", chest: "52", totalLength: "68")],
+            category: .top,
+            detailCategory: .shortSleeve
+        ) == "모든 행에 사이즈명을 입력해 주세요.")
+
+        #expect(SizeTableRecoveryValidator.validationMessage(
+            for: [ClothingSizeForm(sizeName: "M")],
+            category: .top,
+            detailCategory: .shortSleeve
+        ) == "각 사이즈 행에 비교 가능한 치수를 입력해 주세요.")
+    }
+
+    @Test func sizeTableRecoveryAcceptsExistingSupportedMeasurements() {
+        let forms = [
+            ClothingSizeForm(sizeName: "S", chest: "50", totalLength: "66"),
+            ClothingSizeForm(sizeName: "M", chest: "52", totalLength: "68")
+        ]
+
+        #expect(SizeTableRecoveryValidator.validationMessage(
+            for: forms,
+            category: .top,
+            detailCategory: .shortSleeve
+        ) == nil)
+    }
+
+    @Test func sizeTableRecoveryContextDistinguishesCandidateStates() {
+        let candidates = SizeTableRecoveryContext(
+            failure: .imageCandidatesAvailable,
+            imageURLStrings: ["https://example.com/size.jpg"]
+        )
+        let empty = SizeTableRecoveryContext(
+            failure: .noImageCandidates,
+            imageURLStrings: []
+        )
+
+        #expect(candidates.failure == .imageCandidatesAvailable)
+        #expect(candidates.imageURLStrings.count == 1)
+        #expect(empty.failure == .noImageCandidates)
+        #expect(empty.imageURLStrings.isEmpty)
+        #expect(SizeTableRecoveryFeature.isEnabled)
+    }
+
 
     @Test func taxonomyCodesAndParentsAreValidAndDeterministic() throws {
         let taxonomy = FitMatchTaxonomyProvider.shared.taxonomy

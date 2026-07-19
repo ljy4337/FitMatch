@@ -23,6 +23,8 @@ struct CompareFlowSheet: View {
     @State private var isShowingReferenceComparison = false
     @State private var isShowingManualProductEntry = false
     @State private var isPreparingManualComparison = false
+    @State private var isShowingSizeTableRecovery = false
+    @State private var usesLegacySizeFailureScreen = false
     @State private var showsAllReferenceCandidates = false
     @State private var hasConfirmedComparisonCategory = false
     @State private var isSheetHeaderVisible = true
@@ -118,6 +120,26 @@ struct CompareFlowSheet: View {
                         isPreparingManualComparison = false
                     }
                 }
+            }
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $isShowingSizeTableRecovery) {
+            NavigationStack {
+                SizeTableRecoveryView(
+                    viewModel: viewModel,
+                    onCancel: {
+                        usesLegacySizeFailureScreen = true
+                    },
+                    onComplete: {
+                        isShowingSizeTableRecovery = false
+                        isPreparingManualComparison = true
+                        setStep(.loading)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            continueComparisonAfterProductInput()
+                            isPreparingManualComparison = false
+                        }
+                    }
+                )
             }
             .presentationDragIndicator(.visible)
         }
@@ -423,7 +445,93 @@ private extension CompareFlowSheet {
         .padding(.top, 12)
     }
 
+    @ViewBuilder
     var errorContent: some View {
+        if SizeTableRecoveryFeature.isEnabled,
+           isAutomaticMusinsaSizeFailure,
+           !usesLegacySizeFailureScreen {
+            sizeTableRecoveryEntryContent
+        } else {
+            legacyErrorContent
+        }
+    }
+
+    var sizeTableRecoveryEntryContent: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "tablecells.badge.ellipsis")
+                .font(.system(size: 46, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            VStack(spacing: 8) {
+                Text("사이즈표를 자동으로 확인하지 못했어요")
+                    .font(.title2.weight(.black))
+                Text("상품 정보는 불러왔어요. 사이즈표만 추가하면 바로 비교할 수 있어요.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            failedProductCard
+
+            PrimaryButton(
+                title: recoveryPrimaryButtonTitle,
+                systemImage: recoveryPrimaryButtonSystemImage
+            ) {
+                isShowingSizeTableRecovery = true
+            }
+
+            Button("기존 화면으로 돌아가기") {
+                usesLegacySizeFailureScreen = true
+            }
+            .font(.subheadline.weight(.semibold))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 20)
+    }
+
+    var failedProductCard: some View {
+        FitMatchCard {
+            HStack(alignment: .top, spacing: 14) {
+                ProductThumbnailView(
+                    imageURLString: viewModel.productImageURLString,
+                    category: viewModel.category,
+                    width: 82,
+                    height: 98,
+                    cornerRadius: 16
+                )
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "브랜드 미상" : viewModel.brand)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                    Text(viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "상품명 미상" : viewModel.productName)
+                        .font(.headline.weight(.semibold))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(currentSourceCategoryText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    var recoveryPrimaryButtonTitle: String {
+        switch viewModel.sizeTableRecoveryContext?.failure {
+        case .imageCandidatesAvailable: "사이즈표 이미지 선택"
+        case .incompleteOCR: "인식 결과 확인"
+        case .noImageCandidates, .none: "사진에서 불러오기"
+        }
+    }
+
+    var recoveryPrimaryButtonSystemImage: String {
+        switch viewModel.sizeTableRecoveryContext?.failure {
+        case .imageCandidatesAvailable: "photo.on.rectangle.angled"
+        case .incompleteOCR: "tablecells"
+        case .noImageCandidates, .none: "photo.badge.plus"
+        }
+    }
+
+    var legacyErrorContent: some View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.circle")
                 .font(.system(size: 46, weight: .semibold))
@@ -470,11 +578,15 @@ private extension CompareFlowSheet {
             }
 
             PrimaryButton(
-                title: isAutomaticMusinsaSizeFailure ? "상품 사이즈 직접 입력" : "다시 입력하기",
+                title: isAutomaticMusinsaSizeFailure
+                    ? "상품 사이즈 직접 입력"
+                    : (viewModel.isNetworkFailure ? "다시 시도" : "다시 입력하기"),
                 systemImage: isAutomaticMusinsaSizeFailure ? "square.and.pencil" : "arrow.clockwise"
             ) {
                 if isAutomaticMusinsaSizeFailure {
                     isShowingManualProductEntry = true
+                } else if viewModel.isNetworkFailure {
+                    Task { await startCompare(with: productURL) }
                 } else {
                     setStep(.start)
                 }
@@ -928,6 +1040,7 @@ private extension CompareFlowSheet {
         viewModel.productURL = trimmedURL
         errorMessage = nil
         statusMessage = nil
+        usesLegacySizeFailureScreen = false
         insufficientEvidence = nil
         isShowingReferenceComparison = false
         hasConfirmedComparisonCategory = false
@@ -1707,7 +1820,7 @@ private struct ManualComparisonProductEntrySheet: View {
     }
 }
 
-private struct ManualComparisonSizeEditor: View {
+struct ManualComparisonSizeEditor: View {
     @Binding var option: ClothingSizeForm
     let category: ClothingCategory
     let detailCategory: ClosetDetailCategory
