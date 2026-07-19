@@ -165,12 +165,12 @@ private extension CompareFlowSheet {
 
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
-                    CompareLoadingRow(title: "상품 정보 불러오는 중", state: .done)
-                    CompareLoadingRow(
+                    FitMatchLoadingRow(title: "상품 정보 불러오는 중", state: .done)
+                    FitMatchLoadingRow(
                         title: isPreparingManualComparison ? "입력한 사이즈 확인 완료" : "사이즈표 확인 중",
                         state: .done
                     )
-                    CompareLoadingRow(title: "내 옷과 비교 준비 중", state: .loading)
+                    FitMatchLoadingRow(title: "내 옷과 비교 준비 중", state: .loading)
 
                     Text(isPreparingManualComparison ? "입력한 측정 의미와 호환되는 내 옷을 확인합니다." : "평균 10~20초 소요됩니다.")
                         .font(.subheadline)
@@ -465,7 +465,7 @@ private extension CompareFlowSheet {
             VStack(spacing: 8) {
                 Text("사이즈표를 자동으로 확인하지 못했어요")
                     .font(.title2.weight(.black))
-                Text("상품 정보는 불러왔어요. 사이즈표만 추가하면 바로 비교할 수 있어요.")
+                Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 추가하면 바로 비교할 수 있어요.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -539,11 +539,11 @@ private extension CompareFlowSheet {
 
             VStack(spacing: 8) {
                 Text(isAutomaticMusinsaSizeFailure
-                     ? "상품 정보는 불러왔어요"
+                     ? "상품 정보를 불러왔습니다."
                      : "상품 정보를 불러오지 못했어요.")
                     .font(.title2.weight(.black))
                 Text(isAutomaticMusinsaSizeFailure
-                     ? "사이즈표를 자동으로 확인하지 못해 바로 비교할 수 없습니다."
+                     ? "판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요."
                      : (errorMessage ?? "URL을 다시 확인해 주세요."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -1417,35 +1417,6 @@ private struct CompareProductRegistrationRoute: Identifiable {
     let recommendedSize: ProductSize?
     let preselectedCategory: ClothingCategory?
     let preselectedClassification: ParsedClosetClassification?
-}
-
-private enum CompareLoadingState {
-    case done
-    case loading
-}
-
-private struct CompareLoadingRow: View {
-    let title: String
-    let state: CompareLoadingState
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Group {
-                switch state {
-                case .done:
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.primary)
-                case .loading:
-                    ProgressView()
-                }
-            }
-            .frame(width: 24, height: 24)
-
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
-        }
-    }
 }
 
 private struct ShoppingShortcutButton: View {

@@ -390,9 +390,9 @@ private struct ScreenshotClosetEmptyView: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            Image("EmptyCloset")
-                .resizable()
-                .scaledToFit()
+            Image(systemName: "hanger")
+                .font(.system(size: 92, weight: .light))
+                .foregroundStyle(.secondary)
                 .frame(width: 160, height: 160)
             Text("옷장이 비었습니다.")
                 .font(.title3.weight(.bold))

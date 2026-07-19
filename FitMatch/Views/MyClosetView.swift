@@ -664,9 +664,9 @@ private struct EmptyClosetView: View {
             Spacer(minLength: 0)
 
             VStack(spacing: 18) {
-                Image("EmptyCloset")
-                    .resizable()
-                    .scaledToFit()
+                Image(systemName: "hanger")
+                    .font(.system(size: 82, weight: .light))
+                    .foregroundStyle(.secondary)
                     .frame(width: 132, height: 132)
 
                 VStack(spacing: 6) {
