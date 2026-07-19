@@ -605,7 +605,7 @@ enum MusinsaFallbackTableParser {
             .replacingOccurrences(of: "–", with: "~")
             .replacingOccurrences(of: "—", with: "~")
         return value.range(
-            of: #"^(?:(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM|FREE|ONE)(?:\([0-9]{2,3}\))?|[0-9]{2,3}(?:[-/][0-9]{2,3})?(?:\((?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)\))?|[0-9]{2,3}/(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)/[0-9]{2,3}~[0-9]{2,3})$"#,
+            of: #"^(?:(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM|FREE|ONE)(?:\([0-9]{2,3}\))?|[0-9]{2,3}(?:[-/][0-9]{2,3})?(?:\((?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)\))?|[0-9]{2,3}/(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)|[0-9]{2,3}/(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)/[0-9]{2,3}~[0-9]{2,3})$"#,
             options: .regularExpression
         ) != nil
     }

@@ -3833,6 +3833,57 @@ struct FitMatchTests {
         #expect(first.measurementRecords.allSatisfy { $0.methodSource == "musinsa_fallback" })
     }
 
+    @Test func musinsaFallbackParsesSlashCompositeSizesFrom6045676HTML() throws {
+        let html = """
+        <table>
+          <tr><th>사이즈</th><th>가슴둘레</th><th>밑단둘레</th><th>총길이</th><th>화장</th></tr>
+          <tr><td>85 / XS</td><td>113</td><td>103</td><td>57</td><td>46</td></tr>
+          <tr><td>90 / S</td><td>122</td><td>108</td><td>66</td><td>51</td></tr>
+          <tr><td>95 / M</td><td>127</td><td>113</td><td>68</td><td>52.5</td></tr>
+          <tr><td>100 / L</td><td>132</td><td>118</td><td>70</td><td>54</td></tr>
+          <tr><td>105 / XL</td><td>137</td><td>123</td><td>72</td><td>55.5</td></tr>
+          <tr><td>110 / 2XL</td><td>142</td><td>128</td><td>74</td><td>57</td></tr>
+          <tr><td>115 / 3XL</td><td>147</td><td>133</td><td>74</td><td>57</td></tr>
+        </table><p>단위: cm</p>
+        """
+        let sizes = MusinsaFallbackTableParser.parseHTML(html, family: .upper)
+        #expect(sizes.map(\.name) == [
+            "85 / XS", "90 / S", "95 / M", "100 / L",
+            "105 / XL", "110 / 2XL", "115 / 3XL"
+        ])
+
+        let xs = try #require(sizes.first)
+        #expect(xs.measurementRecords.contains {
+            $0.measurementCode == .chestCircumferenceGarment && $0.value == 113
+        })
+        #expect(xs.measurements.totalLength == 57)
+        #expect(xs.measurementRecords.contains {
+            $0.measurementCode == .sleeveCenterBackToCuff && $0.value == 46
+        })
+
+        let threeXL = try #require(sizes.last)
+        #expect(threeXL.measurementRecords.contains {
+            $0.measurementCode == .chestCircumferenceGarment && $0.value == 147
+        })
+        #expect(threeXL.measurements.totalLength == 74)
+        #expect(threeXL.measurementRecords.contains {
+            $0.measurementCode == .sleeveCenterBackToCuff && $0.value == 57
+        })
+    }
+
+    @Test func musinsaFallbackRejectsNonSizeSlashLabels() {
+        for invalidSize in ["85 / 일반", "가슴 / 113"] {
+            let html = """
+            <table>
+              <tr><th>사이즈</th><th>가슴둘레</th><th>총길이</th></tr>
+              <tr><td>\(invalidSize)</td><td>113</td><td>57</td></tr>
+              <tr><td>90 / S</td><td>122</td><td>66</td></tr>
+            </table><p>단위: cm</p>
+            """
+            #expect(MusinsaFallbackTableParser.parseHTML(html, family: .upper).isEmpty)
+        }
+    }
+
     @Test func musinsaFallbackParsesMeasurementItemTransposedCompositeSizes() throws {
         let html = """
         <table>
