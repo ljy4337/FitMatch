@@ -4158,6 +4158,40 @@ struct FitMatchTests {
         #expect(sizes[0].measurements.chest == 0)
     }
 
+    @Test func musinsaFallbackDetectsSmallTableInsideVeryLongImage() throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        let image = UIGraphicsImageRenderer(
+            size: CGSize(width: 1000, height: 6000),
+            format: format
+        ).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 1000, height: 6000))
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 18),
+                .foregroundColor: UIColor.darkGray
+            ]
+            let columns: [(String, CGFloat)] = [
+                ("사이즈(cm)", 250), ("허리단면", 410), ("엉덩이단면", 555), ("총기장", 720)
+            ]
+            for (text, x) in columns {
+                text.draw(at: CGPoint(x: x, y: 4500), withAttributes: attributes)
+            }
+            for (rowIndex, row) in [["S", "38", "54", "46"], ["M", "40", "56", "47"], ["L", "42", "58", "48"]].enumerated() {
+                for (columnIndex, value) in row.enumerated() {
+                    value.draw(
+                        at: CGPoint(x: columns[columnIndex].1, y: 4540 + CGFloat(rowIndex * 38)),
+                        withAttributes: attributes
+                    )
+                }
+            }
+        }
+        let cgImage = try #require(image.cgImage)
+        let regions = MusinsaFallbackImageOCR.denseTableRegions(in: cgImage)
+        #expect(regions.contains { $0.minY < 0.28 && $0.maxY > 0.18 })
+    }
+
     @Test func musinsaFallbackParsesGiordanoUpperLongImageTableGrid() throws {
         let grid = [
             ["(cm)", "S", "M", "L"],
@@ -4191,6 +4225,75 @@ struct FitMatchTests {
         #expect(first.measurements.footLength == 26)
         #expect(MusinsaFallbackTableParser.parseHTML(html, family: .upper).isEmpty)
         #expect(MusinsaFallbackTableParser.parseHTML(html, family: .lower).isEmpty)
+    }
+
+    @Test func musinsaFallbackParsesLooseHeaderAndScopesUnitsToCurrentTable() throws {
+        let html = """
+        <p>신발 사이즈 안내: KOREA 260mm</p>
+        <table>
+          <th>사이즈</th><th>가슴단면</th><th>상의 길이</th>
+          <tr><td>70/S/25~26</td><td>52cm</td><td>68cm</td></tr>
+          <tr><td>75/M/27~28</td><td>55cm</td><td>70cm</td></tr>
+        </table>
+        """
+        let sizes = MusinsaFallbackTableParser.parseHTML(html, family: .upper)
+        #expect(sizes.map(\.name) == ["70/S/25~26", "75/M/27~28"])
+        #expect(sizes[0].measurements.chest == 52)
+        #expect(sizes[0].measurements.totalLength == 68)
+    }
+
+    @Test func musinsaFallbackCanonicalizesKoreanAliasesWithoutMergingDifferentMethods() throws {
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["치수항목", "S", "M"],
+                ["어깨 넓이", "42", "44"],
+                ["가슴너비", "51", "54"],
+                ["앞기장", "66", "68"],
+                ["뒷기장", "69", "71"],
+                ["화장", "78", "80"],
+                ["소매장", "61", "62"]
+            ],
+            context: "단위 cm",
+            family: .upper
+        ))
+        let records = sizes[0].measurementRecords
+        #expect(records.contains {
+            $0.rawLabel == "어깨 넓이" && $0.measurementCode == .shoulderWidthSeamToSeam
+        })
+        #expect(records.contains {
+            $0.rawLabel == "화장" && $0.measurementCode == .sleeveCenterBackToCuff
+        })
+        #expect(records.contains {
+            $0.rawLabel == "소매장" && $0.measurementCode == .sleeveShoulderSeamToCuff
+        })
+        #expect(records.contains {
+            $0.rawLabel == "앞기장" && $0.measurementCode == .bodyLengthHPSToHemFront
+        })
+        #expect(records.contains {
+            $0.rawLabel == "뒷기장" && $0.measurementCode == .bodyLengthBackNeckToHem
+        })
+    }
+
+    @Test func musinsaFallbackParsesKoreanShoeConversionRowAndRejectsSingleReference() throws {
+        let conversion = """
+        <table>
+          <tr><th>국가</th><th>1</th><th>2</th><th>3</th></tr>
+          <tr><th>US</th><td>5</td><td>5.5</td><td>6</td></tr>
+          <tr><th>KOREA</th><td>225</td><td>230</td><td>235</td></tr>
+        </table>
+        """
+        let sizes = MusinsaFallbackTableParser.parseHTML(conversion, family: .shoes)
+        #expect(sizes.map(\.name) == ["225", "230", "235"])
+        #expect(sizes.map(\.measurements.footLength) == [22.5, 23, 23.5])
+        #expect(sizes[0].measurementRecords[0].rawLabel == "KOREA")
+        #expect(sizes[0].measurementRecords[0].rawInfo == "table_unit_mm_to_cm_multiplier=0.1")
+
+        let singleReference = """
+        <table><tr><th>US</th><td>6</td></tr>
+        <tr><th>KOREA</th><td>240</td></tr>
+        <tr><th>굽 높이</th><td>3cm</td></tr></table>
+        """
+        #expect(MusinsaFallbackTableParser.parseHTML(singleReference, family: .shoes).isEmpty)
     }
 
     @Test func musinsaFallbackRejectsDescriptionNumbersWithoutTableStructure() {
@@ -4329,6 +4432,7 @@ struct FitMatchTests {
     @Test func parsedCanonicalClassificationResolvesRequiredSourceFixtures() throws {
         let fixtures: [(String, String, ClothingCategory, ClosetDetailCategory, String, String)] = [
             ("스커트 > 롱 스커트", "롱 스커트", .bottom, .skirt, "skirts", "skirt"),
+            ("원피스/스커트 > 미니원피스", "미니 원피스", .dress, .onePiece, "dresses", "one_piece"),
             ("원피스/스커트 > 원피스 > 미디", "미디 원피스", .dress, .onePiece, "dresses", "one_piece"),
             ("원피스/스커트 > 스커트 > 롱", "롱 스커트", .bottom, .skirt, "skirts", "skirt"),
             ("여성 > 여성 속옷 하의", "팬티", .bottom, .other, "underwear", "women_panty"),

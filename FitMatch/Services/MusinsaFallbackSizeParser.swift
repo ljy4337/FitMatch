@@ -14,13 +14,32 @@ struct MusinsaFallbackSizeParser {
         ) else { return [] }
 
         let htmlSizes = MusinsaFallbackTableParser.parseHTML(goodsContents, family: family)
-        if !htmlSizes.isEmpty { return htmlSizes }
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "HTML 사이즈표 탐색",
+            details: "결과사이즈수=\(htmlSizes.count)"
+        )
+        #endif
+        if !htmlSizes.isEmpty {
+            logStandardization(htmlSizes, source: "html")
+            return htmlSizes
+        }
 
         let images = MusinsaFallbackImageExtractor.images(in: goodsContents)
+            .sorted { $0.candidateScore > $1.candidateScore }
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "사이즈 이미지 선택",
+            details: "전체=\(images.count), 후보=\(images.prefix(12).map { "\($0.candidateScore):\($0.url.lastPathComponent)" }.joined(separator: ","))"
+        )
+        #endif
         let explicitImages = images.filter(\.isExplicitSizeImage)
-        for image in explicitImages.prefix(3) {
+        for image in explicitImages.prefix(6) {
             if let sizes = await MusinsaFallbackImageOCR.parse(url: image.url, family: family, requiresTableRectangle: false),
                !sizes.isEmpty {
+                logStandardization(sizes, source: image.url.absoluteString)
                 return sizes
             }
         }
@@ -30,14 +49,26 @@ struct MusinsaFallbackSizeParser {
                 !$0.isExplicitSizeImage
                     && ($0.isLongImageCandidate || $0.declaredHeight == nil || $0.declaredWidth == nil)
             }
-            .prefix(6)
+            .prefix(12)
         for image in longImages {
             if let sizes = await MusinsaFallbackImageOCR.parse(url: image.url, family: family, requiresTableRectangle: true),
                !sizes.isEmpty {
+                logStandardization(sizes, source: image.url.absoluteString)
                 return sizes
             }
         }
         return []
+    }
+
+    private func logStandardization(_ sizes: [ParsedProductSize], source: String) {
+        #if DEBUG
+        let codes = Set(sizes.flatMap(\.measurementRecords).map(\.measurementCode.rawValue)).sorted()
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "측정 항목 표준화",
+            details: "출처=\(source), 사이즈수=\(sizes.count), canonical=\(codes.joined(separator: ","))"
+        )
+        #endif
     }
 }
 
@@ -66,9 +97,20 @@ struct MusinsaFallbackImage {
 
     var isExplicitSizeImage: Bool {
         let normalized = sourceText.lowercased()
-        let pattern = #"(^|[/_.\-])(actual[\-_]?size|size[\-_]?(guide|chart|spec|info)?|spec)([/_.\-]|$)"#
+        let pattern = #"(^|[/_.\-\s])(actual[\-_]?size|size[\-_]?(guide|chart|spec|info)?|spec|실측|사이즈|치수)([/_.\-\s]|$)"#
         return normalized.range(of: pattern, options: .regularExpression) != nil
             && !normalized.contains("modelspec")
+    }
+
+    var candidateScore: Int {
+        let normalized = sourceText.lowercased()
+        let keywords = ["actual-size", "actual_size", "size chart", "size guide", "실측", "사이즈", "치수",
+                        "어깨", "가슴", "허리", "엉덩이", "소매", " cm"]
+        var score = keywords.reduce(0) { $0 + (normalized.contains($1) ? 3 : 0) }
+        if isExplicitSizeImage { score += 8 }
+        if normalized.contains("tit_size") { score += 1 }
+        if isLongImageCandidate { score += 2 }
+        return score
     }
 
     var isLongImageCandidate: Bool {
@@ -92,9 +134,15 @@ enum MusinsaFallbackImageExtractor {
             let resolved = normalizedURL(rawURL)
             guard let resolved, seen.insert(resolved.absoluteString).inserted else { return nil }
             let tag = String(html[tagRange])
+            let nsHTML = html as NSString
+            let contextStart = max(0, match.range.location - 240)
+            let contextEnd = min(nsHTML.length, NSMaxRange(match.range) + 240)
+            let nearbyText = nsHTML.substring(
+                with: NSRange(location: contextStart, length: contextEnd - contextStart)
+            ).strippingHTML
             return MusinsaFallbackImage(
                 url: resolved,
-                sourceText: "\(rawURL) \(attribute("alt", in: tag) ?? "") \(attribute("title", in: tag) ?? "")",
+                sourceText: "\(rawURL) \(attribute("alt", in: tag) ?? "") \(attribute("title", in: tag) ?? "") \(nearbyText)",
                 declaredWidth: numberAttribute("width", in: tag),
                 declaredHeight: numberAttribute("height", in: tag)
             )
@@ -130,12 +178,20 @@ enum MusinsaFallbackTableParser {
         let range = NSRange(html.startIndex..<html.endIndex, in: html)
         for tableMatch in tableRegex.matches(in: html, range: range) {
             guard let tableRange = Range(tableMatch.range(at: 1), in: html) else { continue }
-            let grid = rows(in: String(html[tableRange]))
+            let tableHTML = String(html[tableRange])
+            let grid = rows(in: tableHTML)
             let nsHTML = html as NSString
             let start = max(0, tableMatch.range.location - 400)
             let end = min(nsHTML.length, NSMaxRange(tableMatch.range) + 400)
             let context = nsHTML.substring(with: NSRange(location: start, length: end - start)).strippingHTML
-            if let result = parseGrid(grid, context: context, family: family), !result.isEmpty {
+            let normalizedContext = context.replacingOccurrences(of: " ", with: "")
+            guard !normalizedContext.contains("신체권장치수"),
+                  !normalizedContext.contains("권장신체치수") else { continue }
+            if let result = parseGrid(
+                grid,
+                context: tableHTML.strippingHTML,
+                family: family
+            ), !result.isEmpty {
                 return result
             }
         }
@@ -154,6 +210,10 @@ enum MusinsaFallbackTableParser {
             .map { $0.map(\.trimmedCell).filter { !$0.isEmpty } }
             .filter { !$0.isEmpty }
         guard grid.count >= 3 else { return nil }
+        if family == .shoes,
+           let shoeSizes = parseShoeConversionGrid(grid) {
+            return shoeSizes
+        }
         if let unitHeaderIndex = grid.firstIndex(where: { row in
             row.count >= 3
                 && isUnitOnlyCell(row[0])
@@ -185,7 +245,7 @@ enum MusinsaFallbackTableParser {
         if let headerIndex = normalized.firstIndex(where: { row in
             row.contains(where: isSizeHeader) && row.contains(where: { column(for: $0, family: family) != nil })
         }) {
-            let headers = normalized[headerIndex]
+            let headers = grid[headerIndex]
             let rows = Array(grid.dropFirst(headerIndex + 1)).filter { $0.count == headers.count }
             return makeSizes(headers: headers, rows: rows, unit: unit, family: family)
         }
@@ -195,7 +255,7 @@ enum MusinsaFallbackTableParser {
         if let headerIndex = transposedNormalized.firstIndex(where: { row in
             row.contains(where: isSizeHeader) && row.contains(where: { column(for: $0, family: family) != nil })
         }) {
-            let headers = transposedNormalized[headerIndex]
+            let headers = transposed[headerIndex]
             let rows = Array(transposed.dropFirst(headerIndex + 1)).filter { $0.count == headers.count }
             return makeSizes(headers: headers, rows: rows, unit: unit, family: family)
         }
@@ -259,7 +319,9 @@ enum MusinsaFallbackTableParser {
             pattern: #"<t[hd]\b[^>]*>(.*?)</t[hd]>"#,
             options: [.caseInsensitive, .dotMatchesLineSeparators]
         ) else { return [] }
-        return rowRegex.matches(in: table, range: NSRange(table.startIndex..<table.endIndex, in: table)).compactMap { rowMatch in
+        let tableRange = NSRange(table.startIndex..<table.endIndex, in: table)
+        let rowMatches = rowRegex.matches(in: table, range: tableRange)
+        var parsedRows: [[String]] = rowMatches.compactMap { rowMatch -> [String]? in
             guard let range = Range(rowMatch.range(at: 1), in: table) else { return nil }
             let row = String(table[range])
             return cellRegex.matches(in: row, range: NSRange(row.startIndex..<row.endIndex, in: row)).compactMap { cell in
@@ -267,6 +329,22 @@ enum MusinsaFallbackTableParser {
                 return String(row[range]).strippingHTML
             }
         }
+        if let firstRow = rowMatches.first, firstRow.range.location > 0 {
+            let prefix = (table as NSString).substring(
+                with: NSRange(location: 0, length: firstRow.range.location)
+            )
+            let looseHeader = cellRegex.matches(
+                in: prefix,
+                range: NSRange(prefix.startIndex..<prefix.endIndex, in: prefix)
+            ).compactMap { cell -> String? in
+                guard let range = Range(cell.range(at: 1), in: prefix) else { return nil }
+                return String(prefix[range]).strippingHTML
+            }
+            if looseHeader.count >= 2 {
+                parsedRows.insert(looseHeader, at: 0)
+            }
+        }
+        return parsedRows
     }
 
     private static func transpose(_ grid: [[String]]) -> [[String]] {
@@ -280,9 +358,9 @@ enum MusinsaFallbackTableParser {
         unit: Double,
         family: MusinsaFallbackGarmentFamily
     ) -> [ParsedProductSize]? {
-        guard let sizeIndex = headers.firstIndex(where: isSizeHeader) else { return nil }
+        guard let sizeIndex = headers.firstIndex(where: { isSizeHeader($0.normalizedSizeHeader) }) else { return nil }
         let mappedColumns = headers.enumerated().compactMap { index, header in
-            column(for: header, family: family).map { (index, $0, header) }
+            column(for: header.normalizedSizeHeader, family: family).map { (index, $0, header) }
         }
         guard requiredColumns(mappedColumns.map(\.1), family: family) else { return nil }
 
@@ -302,7 +380,12 @@ enum MusinsaFallbackTableParser {
                 guard row.indices.contains(index),
                       let sourceValue = measurementValue(row[index], defaultUnit: unit) else { continue }
                 guard sourceValue.isFinite, sourceValue > 0, sourceValue < 300 else { continue }
-                let record = mapped.record(value: sourceValue, rawLabel: rawHeader, rawValue: row[index])
+                let record = mapped.record(
+                    value: sourceValue,
+                    rawLabel: rawHeader,
+                    rawValue: row[index],
+                    tableUnit: unit
+                )
                 records.append(record)
                 if record.semanticStatus == .mapped,
                    ![.chestCircumference, .frontLength, .backLength].contains(mapped) {
@@ -315,17 +398,56 @@ enum MusinsaFallbackTableParser {
         return parsed.count >= 2 ? parsed : nil
     }
 
+    private static func parseShoeConversionGrid(_ grid: [[String]]) -> [ParsedProductSize]? {
+        let countryMarkers = Set(["us", "uk", "eu", "eur", "jp", "cm", "china", "중국", "일본"])
+        guard grid.contains(where: { row in
+            guard let first = row.first else { return false }
+            return countryMarkers.contains(first.normalizedSizeHeader)
+        }), let koreaRow = grid.first(where: { row in
+            guard let first = row.first else { return false }
+            return ["한국", "korea", "kr"].contains(first.normalizedSizeHeader)
+        }) else { return nil }
+        let values = koreaRow.dropFirst().compactMap { cell -> (String, Double)? in
+            guard let millimeters = strictNumber(cell),
+                  (200...350).contains(millimeters) else { return nil }
+            return (cell.trimmedCell, millimeters)
+        }
+        guard values.count >= 2 else { return nil }
+        return values.map { rawName, millimeters in
+            let centimeters = millimeters * 0.1
+            let record = FallbackColumn.footLength.record(
+                value: centimeters,
+                rawLabel: koreaRow[0],
+                rawValue: rawName,
+                tableUnit: 0.1
+            )
+            var measurements = GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 0,
+                sleeveLength: 0
+            )
+            measurements.footLength = centimeters
+            return ParsedProductSize(
+                name: rawName,
+                measurements: measurements,
+                measurementRecords: [record]
+            )
+        }
+    }
+
     private static func requiredColumns(_ columns: [FallbackColumn], family: MusinsaFallbackGarmentFamily) -> Bool {
         switch family {
         case .upper:
             return columns.contains(where: { $0 == .chestWidth || $0 == .chestCircumference })
                 && columns.contains(where: {
-                    [.length, .frontLength, .backLength, .shoulder, .sleeve].contains($0)
+                    [.length, .frontLength, .backLength, .shoulder, .sleeve, .centerBackSleeve].contains($0)
                 })
         case .lower:
             return columns.contains(where: { $0 == .waistWidth || $0 == .waistCircumference })
                 && columns.contains(where: {
-                    [.hip, .hipCircumference, .thigh, .thighCircumference, .rise, .outseam, .inseam].contains($0)
+                    [.hip, .hipCircumference, .thigh, .thighCircumference, .rise, .backRise,
+                     .hemWidth, .hemCircumference, .outseam, .inseam].contains($0)
                 })
         case .shoes:
             return columns.contains(.footLength)
@@ -366,9 +488,12 @@ enum MusinsaFallbackTableParser {
     }
 
     private static func isSizeValue(_ text: String) -> Bool {
-        let value = text.uppercased().replacingOccurrences(of: " ", with: "")
+        let value = text.uppercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "–", with: "~")
+            .replacingOccurrences(of: "—", with: "~")
         return value.range(
-            of: #"^(?:(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM|FREE|ONE)(?:\([0-9]{2,3}\))?|[0-9]{2,3}(?:[-/][0-9]{2,3})?(?:\((?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)\))?)$"#,
+            of: #"^(?:(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM|FREE|ONE)(?:\([0-9]{2,3}\))?|[0-9]{2,3}(?:[-/][0-9]{2,3})?(?:\((?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)\))?|[0-9]{2,3}/(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)/[0-9]{2,3}~[0-9]{2,3})$"#,
             options: .regularExpression
         ) != nil
     }
@@ -403,14 +528,15 @@ enum MusinsaFallbackTableParser {
 
     private static func column(for header: String, family: MusinsaFallbackGarmentFamily) -> FallbackColumn? {
         switch header {
-        case "가슴", "가슴단면", "가슴너비", "품", "chest", "chestwidth", "pit-to-pit", "pittopit": return .chestWidth
+        case "가슴", "가슴단면", "가슴너비", "품", "chest", "chestwidth", "pittopit": return .chestWidth
         case "가슴둘레", "chestcircumference", "bustcircumference": return .chestCircumference
-        case "어깨", "어깨너비", "shoulder", "shoulderwidth": return .shoulder
+        case "어깨", "어깨너비", "어깨폭", "어깨넓이", "shoulder", "shoulderwidth": return .shoulder
         case "앞기장", "앞길이": return family == .upper ? .frontLength : nil
         case "뒷기장", "뒷길이": return family == .upper ? .backLength : nil
-        case "총장", "총기장", "총길이", "옷길이", "옷길이아웃심", "length", "bodylength", "outseam":
+        case "총장", "총기장", "총길이", "기장", "옷길이", "상의길이", "옷길이아웃심", "length", "bodylength", "outseam":
             return family == .lower ? .outseam : .length
-        case "소매", "소매길이", "sleeve", "sleevelength": return .sleeve
+        case "소매", "소매길이", "소매장", "sleeve", "sleevelength": return .sleeve
+        case "화장", "목중심부터소매끝", "목중심소매길이": return family == .upper ? .centerBackSleeve : nil
         case "허리단면", "허리너비", "waistwidth": return .waistWidth
         case "허리둘레", "waistcircumference": return .waistCircumference
         case "엉덩이단면", "엉덩이너비", "힙단면", "hipwidth": return .hip
@@ -418,19 +544,22 @@ enum MusinsaFallbackTableParser {
         case "허벅지단면", "허벅지너비", "thighwidth": return .thigh
         case "허벅지둘레": return .thighCircumference
         case "밑위", "밑위길이", "앞밑위", "앞밑위길이", "rise", "frontrise": return .rise
+        case "뒤밑위", "뒤밑위길이", "backrise": return .backRise
+        case "밑단", "밑단단면", "밑단너비": return .hemWidth
         case "밑단둘레": return .hemCircumference
-        case "인심", "inseam": return .inseam
-        case "발길이", "발길이정보", "footlength", "feetlength": return family == .shoes ? .footLength : nil
+        case "인심", "안쪽기장", "inseam": return .inseam
+        case "바깥기장", "아웃심": return .outseam
+        case "발길이", "발길이정보", "한국", "korea", "footlength", "feetlength": return family == .shoes ? .footLength : nil
         default: return nil
         }
     }
 }
 
 private enum FallbackColumn: Equatable {
-    case chestWidth, chestCircumference, shoulder, length, frontLength, backLength, sleeve
+    case chestWidth, chestCircumference, shoulder, length, frontLength, backLength, sleeve, centerBackSleeve
     case outseam
     case waistWidth, waistCircumference, hip, hipCircumference
-    case thigh, thighCircumference, rise, hemCircumference, inseam, footLength
+    case thigh, thighCircumference, rise, backRise, hemWidth, hemCircumference, inseam, footLength
 
     init?(record: ParsedMeasurement) {
         switch record.measurementCode {
@@ -441,18 +570,26 @@ private enum FallbackColumn: Equatable {
         case .bodyLengthHPSToHemFront: self = .frontLength
         case .pantsOutseamWaistToHem: self = .outseam
         case .sleeveShoulderSeamToCuff: self = .sleeve
+        case .sleeveCenterBackToCuff: self = .centerBackSleeve
         case .waistWidthEdgeToEdge: self = .waistWidth
         case .waistCircumferenceGarment: self = .waistCircumference
         case .hipWidthAtWidest: self = .hip
         case .thighWidthCrotchToOuter: self = .thigh
         case .riseCrotchToWaistFront: self = .rise
+        case .riseCrotchToWaistBack: self = .backRise
+        case .hemWidthEdgeToEdge: self = .hemWidth
         case .pantsInseamCrotchToHem: self = .inseam
         case .footLengthHeelToToe: self = .footLength
         default: return nil
         }
     }
 
-    func record(value: Double, rawLabel: String, rawValue: String) -> ParsedMeasurement {
+    func record(
+        value: Double,
+        rawLabel: String,
+        rawValue: String,
+        tableUnit: Double
+    ) -> ParsedMeasurement {
         let code: MeasurementCode
         let kind: MeasurementDisplayKind
         let multiplier: Double
@@ -465,6 +602,7 @@ private enum FallbackColumn: Equatable {
         case .backLength: (code, kind, multiplier) = (.bodyLengthBackNeckToHem, .totalLength, 1)
         case .outseam: (code, kind, multiplier) = (.pantsOutseamWaistToHem, .totalLength, 1)
         case .sleeve: (code, kind, multiplier) = (.sleeveShoulderSeamToCuff, .sleeveLength, 1)
+        case .centerBackSleeve: (code, kind, multiplier) = (.sleeveCenterBackToCuff, .sleeveLength, 1)
         case .waistWidth: (code, kind, multiplier) = (.waistWidthEdgeToEdge, .waist, 1)
         case .waistCircumference: (code, kind, multiplier) = (.waistWidthEdgeToEdge, .waist, 0.5)
         case .hip: (code, kind, multiplier) = (.hipWidthAtWidest, .hip, 1)
@@ -472,6 +610,8 @@ private enum FallbackColumn: Equatable {
         case .thigh: (code, kind, multiplier) = (.thighWidthCrotchToOuter, .thigh, 1)
         case .thighCircumference: (code, kind, multiplier) = (.thighWidthCrotchToOuter, .thigh, 0.5)
         case .rise: (code, kind, multiplier) = (.riseCrotchToWaistFront, .rise, 1)
+        case .backRise: (code, kind, multiplier) = (.riseCrotchToWaistBack, .rise, 1)
+        case .hemWidth: (code, kind, multiplier) = (.hemWidthEdgeToEdge, .hem, 1)
         case .hemCircumference: (code, kind, multiplier) = (.hemWidthEdgeToEdge, .hem, 0.5)
         case .inseam: (code, kind, multiplier) = (.pantsInseamCrotchToHem, .totalLength, 1)
         case .footLength: (code, kind, multiplier) = (.footLengthHeelToToe, .footLength, 1)
@@ -482,6 +622,10 @@ private enum FallbackColumn: Equatable {
             options: .regularExpression
         ) != nil {
             transformations.append("cell_unit_mm_to_cm_multiplier=0.1")
+        } else if tableUnit == 0.1 {
+            transformations.append("table_unit_mm_to_cm_multiplier=0.1")
+        } else if tableUnit == 2.54 {
+            transformations.append("table_unit_inch_to_cm_multiplier=2.54")
         }
         if multiplier == 0.5 {
             transformations.append("circumference_to_width_multiplier=0.5")
@@ -513,7 +657,14 @@ enum MusinsaFallbackImageOCR {
         guard let data = try? await fetch(url),
               data.count <= 20_000_000,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int,
+              width > 0,
+              height > 0,
+              width * height <= 60_000_000,
               let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
+        let effectiveRequiresTableRectangle = requiresTableRectangle || height >= width * 3
 
         #if DEBUG
         FitMatchDebugLogger.detail(
@@ -522,10 +673,19 @@ enum MusinsaFallbackImageOCR {
             details: "URL=\(url.absoluteString), 크기=\(image.width)x\(image.height)"
         )
         #endif
+        if #available(iOS 26.0, *),
+           let documentSizes = await parseDocumentTables(
+               image: image,
+               family: family,
+               requiresTableRectangle: effectiveRequiresTableRectangle,
+               sourceDescription: url.absoluteString
+           ) {
+            return documentSizes
+        }
         return parse(
             image: image,
             family: family,
-            requiresTableRectangle: requiresTableRectangle,
+            requiresTableRectangle: effectiveRequiresTableRectangle,
             sourceDescription: url.absoluteString
         )
     }
@@ -539,8 +699,7 @@ enum MusinsaFallbackImageOCR {
         let regions: [CGRect]
         if requiresTableRectangle {
             guard image.height >= image.width * 3 else { return nil }
-            let rectangleRegions = tableRectangles(in: image)
-            regions = rectangleRegions.isEmpty ? denseTableRegions(in: image) : rectangleRegions
+            regions = candidateRegions(in: image)
         } else {
             regions = [CGRect(x: 0, y: 0, width: 1, height: 1)]
         }
@@ -566,7 +725,7 @@ enum MusinsaFallbackImageOCR {
             guard region.maxY >= 0.96, region.height > 0.12 else { return [region] }
             return [focusedTopTableRegion(region), region]
         }
-        for (index, region) in ocrRegions.prefix(8).enumerated() {
+        for (index, region) in ocrRegions.prefix(16).enumerated() {
             let isBoundedTopCandidate = region.maxY >= 0.96 && region.height > 0.12
             var confidenceAttempts: [VNConfidence] = [isBoundedTopCandidate ? 0.35 : 0.8]
             var attemptIndex = 0
@@ -615,6 +774,73 @@ enum MusinsaFallbackImageOCR {
         )
         #endif
         return nil
+    }
+
+    @available(iOS 26.0, *)
+    private static func parseDocumentTables(
+        image: CGImage,
+        family: MusinsaFallbackGarmentFamily,
+        requiresTableRectangle: Bool,
+        sourceDescription: String
+    ) async -> [ParsedProductSize]? {
+        let regions = requiresTableRectangle
+            ? candidateRegions(in: image)
+            : [CGRect(x: 0, y: 0, width: 1, height: 1)]
+        for (index, region) in regions.prefix(6).enumerated() {
+            guard let crop = croppedImage(image, region: region) else { continue }
+            var request = RecognizeDocumentsRequest()
+            request.textRecognitionOptions.automaticallyDetectLanguage = true
+            request.textRecognitionOptions.useLanguageCorrection = true
+            request.textRecognitionOptions.customWords = ocrCustomWords
+            guard let documents = try? await ImageRequestHandler(crop).perform(request) else { continue }
+            for table in documents.flatMap(\.document.tables) {
+                let grid = documentGrid(from: table)
+                let context = grid.flatMap { $0 }.joined(separator: " ")
+                #if DEBUG
+                FitMatchDebugLogger.detail(
+                    screen: "상품 분석",
+                    action: "문서 표 복원",
+                    details: "출처=\(sourceDescription), 후보=\(index), 행=\(grid)"
+                )
+                #endif
+                if let sizes = MusinsaFallbackTableParser.parseGrid(
+                    grid,
+                    context: context,
+                    family: family
+                ), !sizes.isEmpty {
+                    return sizes
+                }
+            }
+        }
+        return nil
+    }
+
+    @available(iOS 26.0, *)
+    private static func documentGrid(
+        from table: DocumentObservation.Container.Table
+    ) -> [[String]] {
+        table.rows.map { row in
+            let columnCount = (row.map { $0.columnRange.upperBound }.max() ?? -1) + 1
+            var cells = [String](repeating: "", count: columnCount)
+            for cell in row {
+                let value = cell.content.text.transcript.trimmedCell
+                for column in cell.columnRange where cells.indices.contains(column) {
+                    cells[column] = value
+                }
+            }
+            return cells
+        }
+    }
+
+    private static func croppedImage(_ image: CGImage, region: CGRect) -> CGImage? {
+        let pixelRect = CGRect(
+            x: region.minX * Double(image.width),
+            y: (1 - region.maxY) * Double(image.height),
+            width: region.width * Double(image.width),
+            height: region.height * Double(image.height)
+        ).integral
+        guard pixelRect.width >= 120, pixelRect.height >= 60 else { return nil }
+        return image.cropping(to: pixelRect)
     }
 
     static func hasRepeatedNumericRows(_ grid: [[String]]) -> Bool {
@@ -671,6 +897,47 @@ enum MusinsaFallbackImageOCR {
             .sorted { $0.width * $0.height > $1.width * $1.height }
     }
 
+    private static func candidateRegions(in image: CGImage) -> [CGRect] {
+        mergedRegions(
+            edgeTableRegions(in: image)
+                + tableRectangles(in: image)
+                + denseTableRegions(in: image)
+        )
+    }
+
+    private static func edgeTableRegions(in image: CGImage) -> [CGRect] {
+        guard image.height >= image.width * 3 else { return [] }
+        // Brand detail images commonly place a compact chart before the care copy.
+        // This is a bounded candidate crop; the full long image is never OCRed.
+        let normalizedHeight = min(0.24, Double(image.width) * 0.8 / Double(image.height))
+        return [
+            CGRect(x: 0.02, y: 1 - normalizedHeight, width: 0.96, height: normalizedHeight)
+        ]
+    }
+
+    private static func mergedRegions(_ regions: [CGRect]) -> [CGRect] {
+        regions
+            .filter { $0.width >= 0.35 && $0.height >= 0.015 }
+            .sorted {
+                let lhsTop = $0.maxY >= 0.96
+                let rhsTop = $1.maxY >= 0.96
+                if lhsTop != rhsTop { return lhsTop }
+                let lhsRows = $0.width / max($0.height, 0.001)
+                let rhsRows = $1.width / max($1.height, 0.001)
+                if abs(lhsRows - rhsRows) > 0.5 { return lhsRows > rhsRows }
+                return $0.width * $0.height < $1.width * $1.height
+            }
+            .reduce(into: []) { unique, region in
+                let regionArea = region.width * region.height
+                guard !unique.contains(where: {
+                    let overlap = $0.intersection(region)
+                    return overlap.width * overlap.height
+                        >= min($0.width * $0.height, regionArea) * 0.8
+                }) else { return }
+                unique.append(region)
+            }
+    }
+
     static func denseTableRegions(in image: CGImage) -> [CGRect] {
         let width = image.width
         let height = image.height
@@ -718,10 +985,10 @@ enum MusinsaFallbackImageOCR {
                 previousDarkX = x
             }
             let span = maxX - minX
-            if darkCount >= 20,
-               darkCount <= Int(Double(width) * 0.45),
-               groups >= 5,
-               span >= Int(Double(width) * 0.4) {
+            if darkCount >= 12,
+               darkCount <= Int(Double(width) * 0.55),
+               groups >= 4,
+               span >= Int(Double(width) * 0.32) {
                 inkRows.append(InkRow(y: y, minX: minX, maxX: maxX))
             }
         }
@@ -753,7 +1020,7 @@ enum MusinsaFallbackImageOCR {
                 if gap >= 8 {
                     selected.append(bands[next])
                 }
-                if selected.count >= 4 {
+                if selected.count >= 3 {
                     let minY = selected.map(\.minY).min()!
                     let maxY = selected.map(\.maxY).max()!
                     let minX = selected.map(\.minX).min()!
@@ -769,7 +1036,7 @@ enum MusinsaFallbackImageOCR {
                     let isBoundedTopCandidate = y0 <= Int(Double(height) * 0.04)
                         && regionHeight <= topHeightLimit
                     guard (regionHeight <= regularHeightLimit || isBoundedTopCandidate),
-                          maxX - minX >= Int(Double(width) * 0.45) else { continue }
+                          maxX - minX >= Int(Double(width) * 0.35) else { continue }
                     let horizontalPadding = Int(Double(width) * 0.04)
                     let x0 = max(0, minX - horizontalPadding)
                     let x1 = min(width, maxX + horizontalPadding)
@@ -784,7 +1051,7 @@ enum MusinsaFallbackImageOCR {
             }
         }
         return regions
-            .filter { $0.width >= 0.45 && $0.height >= 0.015 }
+            .filter { $0.width >= 0.35 && $0.height >= 0.01 }
             .sorted {
                 let lhsIsTop = $0.maxY >= 0.96
                 let rhsIsTop = $1.maxY >= 0.96
@@ -797,6 +1064,8 @@ enum MusinsaFallbackImageOCR {
                     unique.append(region)
                 }
             }
+            .prefix(24)
+            .map { $0 }
     }
 
     private static func recognizedText(
@@ -813,20 +1082,15 @@ enum MusinsaFallbackImageOCR {
         guard pixelRect.width >= 120,
               pixelRect.height >= 60,
               let croppedImage = image.cropping(to: pixelRect) else { return [] }
+        let scale = croppedImage.height < 260 ? 4 : 2
         let recognitionImage = minimumConfidence < 0.8
-            ? upscaledImage(croppedImage, scale: 2)
+            ? upscaledImage(croppedImage, scale: scale)
             : croppedImage
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.recognitionLanguages = ["ko-KR", "en-US"]
         request.usesLanguageCorrection = true
-        request.customWords = [
-            "XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL",
-            "사이즈", "총장", "총기장", "총길이", "어깨", "어깨너비",
-            "가슴", "가슴단면", "가슴둘레", "소매", "소매길이",
-            "허리단면", "허리둘레", "엉덩이단면", "엉덩이둘레",
-            "허벅지단면", "밑위", "인심", "발길이"
-        ]
+        request.customWords = ocrCustomWords
         try? VNImageRequestHandler(cgImage: recognitionImage).perform([request])
         return (request.results ?? []).compactMap {
             guard let candidate = $0.topCandidates(1).first,
@@ -834,6 +1098,14 @@ enum MusinsaFallbackImageOCR {
             return (candidate.string, $0.boundingBox)
         }
     }
+
+    private static let ocrCustomWords = [
+            "XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL",
+            "사이즈", "총장", "총기장", "총길이", "어깨", "어깨너비",
+            "가슴", "가슴단면", "가슴둘레", "소매", "소매길이",
+            "허리단면", "허리둘레", "엉덩이단면", "엉덩이둘레",
+            "허벅지단면", "허벅지둘레", "밑위", "인심", "발길이", "한국", "KOREA"
+    ]
 
     private static func upscaledImage(_ image: CGImage, scale: Int) -> CGImage {
         guard scale > 1 else { return image }

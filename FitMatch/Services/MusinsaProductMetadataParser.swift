@@ -229,11 +229,23 @@ struct MusinsaProductMetadataParser {
 
     static func mapCategory(from categoryText: String?) -> ClothingCategory {
         let text = categoryText ?? ""
-        // Reversible previous order checked generic pants/bottom words first,
-        // which classified 여성 속옷 하의 and skirt paths as ordinary bottoms.
+        let depths = text
+            .components(separatedBy: ">")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        let umbrellaCategories = ["원피스/스커트", "경량 패딩/패딩 베스트"]
+        for depth in depths.reversed() where !umbrellaCategories.contains(depth) {
+            if let category = atomicCategory(from: depth) {
+                return category
+            }
+        }
+        return atomicCategory(from: text) ?? .other
+    }
+
+    private static func atomicCategory(from text: String) -> ClothingCategory? {
         if text.contains("여성 속옷 하의") || text.contains("속옷") { return .underwear }
-        if text.contains("스커트") { return .bottom }
         if text.contains("원피스") { return .dress }
+        if text.contains("스커트") { return .bottom }
         if text.contains("홈웨어") { return .other }
         if text.contains("신발") || text.contains("슈즈") { return .shoes }
         if text.contains("팬츠") ||
@@ -256,7 +268,7 @@ struct MusinsaProductMetadataParser {
         if text.contains("티셔츠") || text.contains("상의") || text.contains("반소매") || text.contains("긴소매") || text.contains("민소매") {
             return .top
         }
-        return .other
+        return nil
     }
 
     static func mapDetailCategory(from text: String) -> ClosetDetailCategory {

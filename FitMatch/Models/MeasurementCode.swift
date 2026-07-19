@@ -22,6 +22,7 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case hipWidthAtWidest = "hip_width_at_widest"
     case thighWidthCrotchToOuter = "thigh_width_crotch_to_outer"
     case riseCrotchToWaistFront = "rise_crotch_to_waist_front"
+    case riseCrotchToWaistBack = "rise_crotch_to_waist_back"
     case hemWidthEdgeToEdge = "hem_width_edge_to_edge"
     case pantsOutseamWaistToHem = "pants_outseam_waist_to_hem"
     case pantsInseamCrotchToHem = "pants_inseam_crotch_to_hem"
