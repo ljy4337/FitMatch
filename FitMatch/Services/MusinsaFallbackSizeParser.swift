@@ -207,8 +207,8 @@ enum MusinsaFallbackTableParser {
         guard !normalizedContext.contains("신체권장치수"),
               !normalizedContext.contains("권장신체치수") else { return nil }
         var grid = rawGrid
-            .map { $0.map(\.trimmedCell).filter { !$0.isEmpty } }
-            .filter { !$0.isEmpty }
+            .map { $0.map(\.trimmedCell) }
+            .filter { $0.contains(where: { !$0.isEmpty }) }
         guard grid.count >= 3 else { return nil }
         if family == .shoes,
            let shoeSizes = parseShoeConversionGrid(grid) {
@@ -249,6 +249,14 @@ enum MusinsaFallbackTableParser {
             let rows = Array(grid.dropFirst(headerIndex + 1)).filter { $0.count == headers.count }
             return makeSizes(headers: headers, rows: rows, unit: unit, family: family)
         }
+        if let recovered = recoverBrokenSizeHeader(in: grid, family: family) {
+            return makeSizes(
+                headers: recovered.headers,
+                rows: recovered.rows,
+                unit: unit,
+                family: family
+            )
+        }
 
         let transposed = transpose(grid)
         let transposedNormalized = transposed.map { $0.map(\.normalizedSizeHeader) }
@@ -258,6 +266,90 @@ enum MusinsaFallbackTableParser {
             let headers = transposed[headerIndex]
             let rows = Array(transposed.dropFirst(headerIndex + 1)).filter { $0.count == headers.count }
             return makeSizes(headers: headers, rows: rows, unit: unit, family: family)
+        }
+        return nil
+    }
+
+    static func parseCandidateGrids(
+        _ candidateGrids: [[[String]]],
+        context: String,
+        family: MusinsaFallbackGarmentFamily
+    ) -> [ParsedProductSize]? {
+        let cleaned = candidateGrids.map {
+            $0.map { $0.map(\.trimmedCell) }
+                .filter { $0.contains(where: { !$0.isEmpty }) }
+        }
+        let allRows = cleaned.flatMap { $0 }
+        let headers = allRows.filter { row in
+            row.count >= 3
+                && row.dropFirst().filter {
+                    column(for: $0.normalizedSizeHeader, family: family) != nil
+                }.count >= 2
+                && (isSizeHeader(row[0].normalizedSizeHeader)
+                    || row[0].range(of: #"[^A-Za-z가-힣0-9]*(?:cm|mm)"#, options: [.regularExpression, .caseInsensitive]) != nil)
+        }
+        guard let header = headers.max(by: { lhs, rhs in
+            let lhsMapped = lhs.dropFirst().filter {
+                column(for: $0.normalizedSizeHeader, family: family) != nil
+            }.count
+            let rhsMapped = rhs.dropFirst().filter {
+                column(for: $0.normalizedSizeHeader, family: family) != nil
+            }.count
+            return (lhsMapped, lhs.count) < (rhsMapped, rhs.count)
+        }) else { return nil }
+
+        var bestRows: [String: [String]] = [:]
+        var order: [String] = []
+        for row in allRows where row.count == header.count {
+            let sizeName = row[0].trimmedCell
+            guard isSizeValue(sizeName),
+                  row.dropFirst().filter({
+                      measurementValue($0, defaultUnit: 1) != nil
+                  }).count >= 2 else { continue }
+            let key = sizeName.uppercased()
+            if bestRows[key] == nil {
+                order.append(key)
+                bestRows[key] = row
+            } else if row.dropFirst().filter({ measurementValue($0, defaultUnit: 1) != nil }).count
+                        > bestRows[key]!.dropFirst().filter({ measurementValue($0, defaultUnit: 1) != nil }).count {
+                bestRows[key] = row
+            }
+        }
+        guard bestRows.count >= 2 else { return nil }
+        var recoveredHeader = header
+        if !isSizeHeader(recoveredHeader[0].normalizedSizeHeader) {
+            recoveredHeader[0] = "사이즈"
+        }
+        return parseGrid(
+            [recoveredHeader] + order.compactMap { bestRows[$0] },
+            context: context,
+            family: family
+        )
+    }
+
+    private static func recoverBrokenSizeHeader(
+        in grid: [[String]],
+        family: MusinsaFallbackGarmentFamily
+    ) -> (headers: [String], rows: [[String]])? {
+        for headerIndex in grid.indices {
+            var headers = grid[headerIndex]
+            guard headers.count >= 3,
+                  !isSizeHeader(headers[0].normalizedSizeHeader) else { continue }
+            let measurementHeaderCount = headers.dropFirst().filter {
+                column(for: $0.normalizedSizeHeader, family: family) != nil
+            }.count
+            guard measurementHeaderCount >= 2 else { continue }
+            let rows = Array(grid.dropFirst(headerIndex + 1))
+                .filter { $0.count == headers.count }
+            let validRows = rows.filter { row in
+                guard isSizeValue(row[0]) else { return false }
+                return row.dropFirst().filter {
+                    measurementValue($0, defaultUnit: 1) != nil
+                }.count >= 2
+            }
+            guard validRows.count >= 2 else { continue }
+            headers[0] = "사이즈"
+            return (headers, rows)
         }
         return nil
     }
@@ -673,21 +765,29 @@ enum MusinsaFallbackImageOCR {
             details: "URL=\(url.absoluteString), 크기=\(image.width)x\(image.height)"
         )
         #endif
-        if #available(iOS 26.0, *),
-           let documentSizes = await parseDocumentTables(
+        let documentSizes: [ParsedProductSize]?
+        if #available(iOS 26.0, *) {
+            documentSizes = await parseDocumentTables(
                image: image,
                family: family,
                requiresTableRectangle: effectiveRequiresTableRectangle,
                sourceDescription: url.absoluteString
-           ) {
+            )
+        } else {
+            documentSizes = nil
+        }
+        if let documentSizes,
+           documentSizes.count >= 4,
+           documentSizes.filter({ isLetterSizeOCRCandidate($0.name) }).count >= 2 {
             return documentSizes
         }
-        return parse(
+        let textSizes = parse(
             image: image,
             family: family,
             requiresTableRectangle: effectiveRequiresTableRectangle,
             sourceDescription: url.absoluteString
         )
+        return preferredSizes(documentSizes, textSizes)
     }
 
     static func parse(
@@ -725,7 +825,10 @@ enum MusinsaFallbackImageOCR {
             guard region.maxY >= 0.96, region.height > 0.12 else { return [region] }
             return [focusedTopTableRegion(region), region]
         }
-        for (index, region) in ocrRegions.prefix(16).enumerated() {
+        var bestSizes: [ParsedProductSize]?
+        var candidateGrids: [[[String]]] = []
+        var candidateContexts: [String] = []
+        for (index, region) in ocrRegions.prefix(12).enumerated() {
             let isBoundedTopCandidate = region.maxY >= 0.96 && region.height > 0.12
             var confidenceAttempts: [VNConfidence] = [isBoundedTopCandidate ? 0.35 : 0.8]
             var attemptIndex = 0
@@ -738,6 +841,10 @@ enum MusinsaFallbackImageOCR {
                 )
                 let grid = gridRows(from: observations)
                 let context = observations.map(\.text).joined(separator: " ")
+                if !grid.isEmpty {
+                    candidateGrids.append(grid)
+                    candidateContexts.append(context)
+                }
                 #if DEBUG
                 FitMatchDebugLogger.detail(
                     screen: "상품 분석",
@@ -747,7 +854,8 @@ enum MusinsaFallbackImageOCR {
                 #endif
                 if observations.count >= 6,
                    let sizes = MusinsaFallbackTableParser.parseGrid(grid, context: context, family: family),
-                   !sizes.isEmpty {
+                   !sizes.isEmpty,
+                   hasSizeNameEvidence(sizes, in: grid) {
                     #if DEBUG
                     FitMatchDebugLogger.detail(
                         screen: "상품 분석",
@@ -755,7 +863,7 @@ enum MusinsaFallbackImageOCR {
                         details: "출처=\(sourceDescription), 최종사이즈수=\(sizes.count), 사이즈=\(sizes.map(\.name))"
                     )
                     #endif
-                    return sizes
+                    bestSizes = preferredSizes(bestSizes, sizes)
                 }
                 if attemptIndex == 0,
                    !isBoundedTopCandidate,
@@ -766,6 +874,23 @@ enum MusinsaFallbackImageOCR {
                 attemptIndex += 1
             }
         }
+        if let mergedSizes = MusinsaFallbackTableParser.parseCandidateGrids(
+            candidateGrids,
+            context: candidateContexts.joined(separator: " "),
+            family: family
+        ), hasSizeNameEvidence(
+            mergedSizes,
+            in: candidateGrids.flatMap { $0 }
+        ) {
+            #if DEBUG
+            FitMatchDebugLogger.detail(
+                screen: "상품 분석",
+                action: "분할 사이즈표 병합",
+                details: "출처=\(sourceDescription), 후보수=\(candidateGrids.count), 최종사이즈=\(mergedSizes.map(\.name))"
+            )
+            #endif
+            bestSizes = preferredSizes(bestSizes, mergedSizes)
+        }
         #if DEBUG
         FitMatchDebugLogger.detail(
             screen: "상품 분석",
@@ -773,7 +898,36 @@ enum MusinsaFallbackImageOCR {
             details: "출처=\(sourceDescription), 최종사이즈수=0"
         )
         #endif
-        return nil
+        return bestSizes
+    }
+
+    private static func hasSizeNameEvidence(
+        _ sizes: [ParsedProductSize],
+        in grid: [[String]]
+    ) -> Bool {
+        let letterSizeEvidence = grid.flatMap { $0 }.filter(isLetterSizeOCRCandidate).count
+        let parsedNamesAreNumeric = sizes.allSatisfy {
+            $0.name.trimmedCell.range(of: #"^\d{2,3}$"#, options: .regularExpression) != nil
+        }
+        if parsedNamesAreNumeric, letterSizeEvidence >= 2 {
+            return false
+        }
+        let firstColumn = Set(grid.compactMap(\.first).map {
+            $0.trimmedCell.uppercased().replacingOccurrences(of: " ", with: "")
+        })
+        let explicitSizeRows = grid.filter { row in
+            guard let first = row.first else { return false }
+            return ["사이즈", "사이즈(cm)", "SIZE", "SIZE(CM)", "호칭"].contains(
+                first.trimmedCell.uppercased().replacingOccurrences(of: " ", with: "")
+            )
+        }
+        let headerValues = Set(explicitSizeRows.flatMap { $0.dropFirst() }.map {
+            $0.trimmedCell.uppercased().replacingOccurrences(of: " ", with: "")
+        })
+        return sizes.allSatisfy {
+            let name = $0.name.trimmedCell.uppercased().replacingOccurrences(of: " ", with: "")
+            return firstColumn.contains(name) || headerValues.contains(name)
+        }
     }
 
     @available(iOS 26.0, *)
@@ -786,6 +940,8 @@ enum MusinsaFallbackImageOCR {
         let regions = requiresTableRectangle
             ? candidateRegions(in: image)
             : [CGRect(x: 0, y: 0, width: 1, height: 1)]
+        var bestSizes: [ParsedProductSize]?
+        var candidateGrids: [[[String]]] = []
         for (index, region) in regions.prefix(6).enumerated() {
             guard let crop = croppedImage(image, region: region) else { continue }
             var request = RecognizeDocumentsRequest()
@@ -795,6 +951,7 @@ enum MusinsaFallbackImageOCR {
             guard let documents = try? await ImageRequestHandler(crop).perform(request) else { continue }
             for table in documents.flatMap(\.document.tables) {
                 let grid = documentGrid(from: table)
+                candidateGrids.append(grid)
                 let context = grid.flatMap { $0 }.joined(separator: " ")
                 #if DEBUG
                 FitMatchDebugLogger.detail(
@@ -807,12 +964,50 @@ enum MusinsaFallbackImageOCR {
                     grid,
                     context: context,
                     family: family
-                ), !sizes.isEmpty {
-                    return sizes
+                ), !sizes.isEmpty,
+                   hasSizeNameEvidence(sizes, in: grid) {
+                    bestSizes = preferredSizes(bestSizes, sizes)
                 }
             }
+            let textGrid = gridRows(from: recognizedText(
+                in: image,
+                region: region,
+                minimumConfidence: 0.35
+            ))
+            if !textGrid.isEmpty {
+                candidateGrids.append(textGrid)
+            }
         }
-        return nil
+        if let mergedSizes = MusinsaFallbackTableParser.parseCandidateGrids(
+            candidateGrids,
+            context: candidateGrids.flatMap { $0 }.flatMap { $0 }.joined(separator: " "),
+            family: family
+        ), hasSizeNameEvidence(mergedSizes, in: candidateGrids.flatMap { $0 }) {
+            bestSizes = preferredSizes(bestSizes, mergedSizes)
+        }
+        return bestSizes
+    }
+
+    private static func preferredSizes(
+        _ lhs: [ParsedProductSize]?,
+        _ rhs: [ParsedProductSize]?
+    ) -> [ParsedProductSize]? {
+        guard let lhs else { return rhs }
+        guard let rhs else { return lhs }
+        let lhsLetterSizes = lhs.filter { isLetterSizeOCRCandidate($0.name) }.count
+        let rhsLetterSizes = rhs.filter { isLetterSizeOCRCandidate($0.name) }.count
+        if (lhsLetterSizes >= 2) != (rhsLetterSizes >= 2) {
+            return lhsLetterSizes >= 2 ? lhs : rhs
+        }
+        if lhs.count != rhs.count {
+            return lhs.count > rhs.count ? lhs : rhs
+        }
+        if lhsLetterSizes != rhsLetterSizes {
+            return lhsLetterSizes > rhsLetterSizes ? lhs : rhs
+        }
+        let lhsRecords = lhs.reduce(0) { $0 + $1.measurementRecords.count }
+        let rhsRecords = rhs.reduce(0) { $0 + $1.measurementRecords.count }
+        return lhsRecords >= rhsRecords ? lhs : rhs
     }
 
     @available(iOS 26.0, *)
@@ -898,10 +1093,60 @@ enum MusinsaFallbackImageOCR {
     }
 
     private static func candidateRegions(in image: CGImage) -> [CGRect] {
-        mergedRegions(
-            edgeTableRegions(in: image)
-                + tableRectangles(in: image)
-                + denseTableRegions(in: image)
+        let detected = tableRectangles(in: image) + denseTableRegions(in: image)
+        let joined = joinedTableRegions(detected)
+        return prioritizedRegions(
+            edgeTableRegions(in: image) + mergedRegions(detected) + joined
+        )
+    }
+
+    private static func prioritizedRegions(_ regions: [CGRect]) -> [CGRect] {
+        regions
+            .filter { $0.width >= 0.35 && $0.height >= 0.015 }
+            .reduce(into: []) { unique, region in
+                let area = region.width * region.height
+                guard !unique.contains(where: {
+                    let overlap = $0.intersection(region)
+                    let existingArea = $0.width * $0.height
+                    let areaRatio = max(existingArea, area) / max(min(existingArea, area), 0.001)
+                    return areaRatio <= 2
+                        && overlap.width * overlap.height >= min(existingArea, area) * 0.8
+                }) else { return }
+                unique.append(region)
+            }
+    }
+
+    static func joinedTableRegions(_ regions: [CGRect]) -> [CGRect] {
+        var joined: [CGRect] = []
+        for firstIndex in regions.indices {
+            for secondIndex in regions.indices where secondIndex > firstIndex {
+                let first = regions[firstIndex]
+                let second = regions[secondIndex]
+                let horizontalOverlap = first.intersection(
+                    CGRect(x: second.minX, y: first.minY, width: second.width, height: first.height)
+                ).width
+                let horizontalAlignment = horizontalOverlap / max(min(first.width, second.width), 0.001)
+                let verticalGap = max(0, max(first.minY, second.minY) - min(first.maxY, second.maxY))
+                let overlapsVertically = first.intersects(second)
+                guard horizontalAlignment >= 0.72,
+                      overlapsVertically || verticalGap <= 0.045 else { continue }
+                let union = first.union(second)
+                guard union.height <= 0.35,
+                      union.width >= 0.45 else { continue }
+                joined.append(expandedTableRegion(union))
+            }
+        }
+        return joined
+    }
+
+    private static func expandedTableRegion(_ region: CGRect) -> CGRect {
+        let horizontalPadding = max(0.025, region.width * 0.04)
+        let verticalPadding = max(0.018, region.height * 0.18)
+        return CGRect(
+            x: max(0, region.minX - horizontalPadding),
+            y: max(0, region.minY - verticalPadding),
+            width: min(1, region.maxX + horizontalPadding) - max(0, region.minX - horizontalPadding),
+            height: min(1, region.maxY + verticalPadding) - max(0, region.minY - verticalPadding)
         )
     }
 
@@ -1093,10 +1338,39 @@ enum MusinsaFallbackImageOCR {
         request.customWords = ocrCustomWords
         try? VNImageRequestHandler(cgImage: recognitionImage).perform([request])
         return (request.results ?? []).compactMap {
-            guard let candidate = $0.topCandidates(1).first,
-                  candidate.confidence >= minimumConfidence else { return nil }
-            return (candidate.string, $0.boundingBox)
+            let candidates = $0.topCandidates(3)
+            guard let first = candidates.first,
+                  first.confidence >= minimumConfidence else { return nil }
+            let text: String
+            if $0.boundingBox.midX <= 0.28,
+               let sizeCandidate = candidates.first(where: {
+                   $0.confidence >= minimumConfidence
+                       && isLetterSizeOCRCandidate($0.string)
+               }) {
+                text = sizeCandidate.string
+            } else if first.string.range(of: #"^\d$"#, options: .regularExpression) != nil,
+                      let completeNumber = candidates.dropFirst().first(where: {
+                          $0.confidence >= minimumConfidence
+                              && $0.string.range(
+                                  of: #"^\d{2,3}(?:[.,]\d+)?$"#,
+                                  options: .regularExpression
+                              ) != nil
+                      }) {
+                text = completeNumber.string
+            } else {
+                text = first.string
+            }
+            return (text, $0.boundingBox)
         }
+    }
+
+    private static func isLetterSizeOCRCandidate(_ text: String) -> Bool {
+        text.uppercased()
+            .replacingOccurrences(of: " ", with: "")
+            .range(
+                of: #"^(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)$"#,
+                options: .regularExpression
+            ) != nil
     }
 
     private static let ocrCustomWords = [

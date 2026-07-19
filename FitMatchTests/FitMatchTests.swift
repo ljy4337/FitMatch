@@ -4074,6 +4074,107 @@ struct FitMatchTests {
         #expect(tee[2].measurements.sleeveLength == 22)
     }
 
+    @Test func musinsaFallbackRecoversReebokBrokenSizeHeaderSafely() throws {
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["1/0|2(cm)", "총장", "가슴", "소매"],
+                ["S", "61", "63", "86"],
+                ["M", "64", "66.5", "89"],
+                ["L", "66", "69", "91"],
+                ["XL", "68", "71.5", "93"]
+            ],
+            context: "SIZE cm",
+            family: .upper
+        ))
+        #expect(sizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(sizes.map(\.measurements.totalLength) == [61, 64, 66, 68])
+        #expect(sizes.map(\.measurements.chest) == [63, 66.5, 69, 71.5])
+        #expect(sizes.map(\.measurements.sleeveLength) == [86, 89, 91, 93])
+    }
+
+    @Test func musinsaFallbackKeepsRowWithOneMissingOptionalMeasurement() throws {
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["사이즈(cm)", "총장", "가슴", "소매"],
+                ["S", "61", "63", "86"],
+                ["M", "64", "66.5", "89"],
+                ["L", "66", "69", ""],
+                ["XL", "68", "71.5", "93"]
+            ],
+            context: "사이즈(cm) 총장 가슴 소매",
+            family: .upper
+        ))
+
+        #expect(sizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(sizes[2].measurementRecords.map(\.value) == [66, 69])
+    }
+
+    @Test func musinsaFallbackJoinsAdjacentAndOverlappingTableFragments() {
+        let headerAndTopRows = CGRect(x: 0.05, y: 0.82, width: 0.9, height: 0.12)
+        let lowerRows = CGRect(x: 0.06, y: 0.73, width: 0.88, height: 0.12)
+        let unrelatedCopy = CGRect(x: 0.15, y: 0.30, width: 0.65, height: 0.08)
+        let joined = MusinsaFallbackImageOCR.joinedTableRegions([
+            headerAndTopRows, lowerRows, unrelatedCopy
+        ])
+        #expect(joined.contains {
+            $0.minY < lowerRows.minY
+                && $0.maxY > headerAndTopRows.maxY
+                && $0.minX < headerAndTopRows.minX
+                && $0.maxX > headerAndTopRows.maxX
+        })
+        #expect(!joined.contains { $0.minY < 0.3 && $0.maxY > 0.7 })
+    }
+
+    @Test func musinsaFallbackCombinesSplitOCRGridsAndDeduplicatesRows() throws {
+        let sizes = try #require(MusinsaFallbackTableParser.parseCandidateGrids(
+            [
+                [
+                    ["사이즈(cm)", "가슴", "소매"],
+                    ["S", "61", "63", "86"],
+                    ["M", "64", "66.5", "89"],
+                    ["L", "66", "69", "91"],
+                    ["XL", "68", "71.5", "93"]
+                ],
+                [
+                    ["1/0|2(cm)", "총장", "가슴", "소매"],
+                    ["S", "61", "63", "86"],
+                    ["M", "64", "66.5", "89"]
+                ],
+                [
+                    ["M", "64", "66.5", "89"],
+                    ["L", "66", "69", "91"],
+                    ["XL", "68", "71.5", "93"]
+                ]
+            ],
+            context: "SIZE cm",
+            family: .upper
+        ))
+        #expect(sizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(sizes.map(\.measurements.totalLength) == [61, 64, 66, 68])
+        #expect(sizes.map(\.measurements.chest) == [63, 66.5, 69, 71.5])
+        #expect(sizes.map(\.measurements.sleeveLength) == [86, 89, 91, 93])
+    }
+
+    @Test func musinsaFallbackDoesNotInventSizesFromNumericFragment() {
+        #expect(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["61", "63", "86"],
+                ["64", "66.5", "89"],
+                ["66", "69", "91"]
+            ],
+            context: "SIZE cm",
+            family: .upper
+        ) == nil)
+        #expect(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["깨진헤더", "총장", "가슴", "소매"],
+                ["S", "61", "63", "86"]
+            ],
+            context: "SIZE cm",
+            family: .upper
+        ) == nil)
+    }
+
     @Test func musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage() throws {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
