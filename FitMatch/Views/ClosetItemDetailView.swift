@@ -221,8 +221,11 @@ struct ClosetItemDetailView: View {
     }
 
     private func measurementText(for kind: MeasurementKind) -> String {
-        let value = item.measurements.value(for: kind)
-        return value > 0 ? value.cmText : "-"
+        MeasurementResolver.value(
+            for: kind,
+            measurements: item.measurements,
+            records: item.measurementRecords
+        )?.cmText ?? "-"
     }
 
     private func applyChanges(from editedItem: UserFit) {
@@ -677,7 +680,11 @@ private struct ImportedClosetItemEditView: View {
                         ForEach(visibleMeasurementKinds(for: selectedSize)) { kind in
                             MeasurementValueTile(
                                 title: kind.title,
-                                value: measurementText(selectedSize.measurements.value(for: kind))
+                                value: MeasurementResolver.value(
+                                    for: kind,
+                                    measurements: selectedSize.measurements,
+                                    records: selectedSize.measurementRecords
+                                )?.cmText ?? "-"
                             )
                         }
                     }
@@ -800,7 +807,13 @@ private struct ImportedClosetItemEditView: View {
     private func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {
         item.category
             .measurementKinds(detailCategory: item.detailCategory, gender: item.gender)
-            .filter { size.measurements.value(for: $0) > 0 }
+            .filter {
+                MeasurementResolver.value(
+                    for: $0,
+                    measurements: size.measurements,
+                    records: size.measurementRecords
+                ) != nil
+            }
     }
 
     private func measurementText(_ value: Double) -> String {

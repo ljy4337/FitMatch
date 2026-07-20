@@ -3964,6 +3964,95 @@ struct FitMatchTests {
         })
     }
 
+    @Test func measurementResolverUsesCanonicalRecordBeforeZeroLegacyScalar() {
+        let record = GarmentMeasurementRecord(
+            value: 113,
+            measurementCode: .chestCircumferenceGarment,
+            displayKind: .chest,
+            methodSource: "musinsa_fallback",
+            inputSource: .importedSizeChart,
+            mappingVersion: "test",
+            rawLabel: "가슴둘레",
+            rawValueText: "113",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped
+        )
+        let measurements = GarmentMeasurements(
+            shoulder: 0,
+            chest: 0,
+            totalLength: 57,
+            sleeveLength: 0
+        )
+        #expect(MeasurementResolver.value(
+            for: .chest,
+            measurements: measurements,
+            records: [record]
+        ) == 113)
+        #expect(MeasurementResolver.value(
+            for: .chest,
+            measurements: measurements,
+            records: [record],
+            requiredCode: .chestWidthPitToPit
+        ) == nil)
+    }
+
+    @Test func measurementResolverRejectsUnknownAndAmbiguousRecords() {
+        let unknown = GarmentMeasurementRecord(
+            value: 113,
+            measurementCode: .unknown,
+            displayKind: .chest,
+            methodSource: "musinsa",
+            inputSource: .importedSizeChart,
+            mappingVersion: "test",
+            rawLabel: "가슴",
+            evidenceLevel: .unknown,
+            semanticStatus: .unknownDefinition
+        )
+        let front = GarmentMeasurementRecord(
+            value: 66,
+            measurementCode: .bodyLengthHPSToHemFront,
+            displayKind: .totalLength,
+            methodSource: "musinsa_fallback",
+            inputSource: .importedSizeChart,
+            mappingVersion: "test",
+            rawLabel: "앞기장",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped
+        )
+        let back = GarmentMeasurementRecord(
+            value: 69,
+            measurementCode: .bodyLengthBackNeckToHem,
+            displayKind: .totalLength,
+            methodSource: "musinsa_fallback",
+            inputSource: .importedSizeChart,
+            mappingVersion: "test",
+            rawLabel: "뒷기장",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped
+        )
+        let legacy = GarmentMeasurements(
+            shoulder: 0,
+            chest: 54,
+            totalLength: 70,
+            sleeveLength: 0
+        )
+        #expect(MeasurementResolver.value(
+            for: .chest,
+            measurements: legacy,
+            records: [unknown]
+        ) == nil)
+        #expect(MeasurementResolver.value(
+            for: .totalLength,
+            measurements: legacy,
+            records: [front, back]
+        ) == nil)
+        #expect(MeasurementResolver.value(
+            for: .chest,
+            measurements: legacy,
+            records: [GarmentMeasurementRecord]()
+        ) == 54)
+    }
+
     @Test func musinsaFallbackKeepsStrictTableRejections() {
         let singleSize = """
         <table><tr><th>치수항목</th><th>093(S)</th></tr>
