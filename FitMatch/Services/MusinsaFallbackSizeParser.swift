@@ -3,6 +3,26 @@ import ImageIO
 import Vision
 
 struct MusinsaFallbackSizeParser {
+    func parseRecoveryImage(
+        data: Data,
+        category: ClothingCategory,
+        categoryDepth2Name: String?
+    ) -> [ParsedProductSize] {
+        guard let family = MusinsaFallbackGarmentFamily(
+            category: category,
+            categoryDepth2Name: categoryDepth2Name
+        ), let source = CGImageSourceCreateWithData(data as CFData, nil),
+           let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+            return []
+        }
+        return MusinsaFallbackImageOCR.parse(
+            image: image,
+            family: family,
+            requiresTableRectangle: true,
+            sourceDescription: "user_selected_image"
+        ) ?? []
+    }
+
     func parse(
         goodsContents: String,
         category: ClothingCategory,
@@ -265,7 +285,6 @@ enum MusinsaFallbackTableParser {
                 allowsSingleNamedSize: allowsSingleNamedSize
             )
         }
-
         let transposed = transpose(grid)
         let transposedNormalized = transposed.map { $0.map(\.normalizedSizeHeader) }
         if let headerIndex = transposedNormalized.firstIndex(where: { row in

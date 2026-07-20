@@ -30,9 +30,13 @@ struct LinkClosetRegistrationView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                urlCard
-                parsedProductPreview
-                errorCard
+                if isLoading {
+                    loadingContent
+                } else {
+                    urlCard
+                    parsedProductPreview
+                    errorCard
+                }
             }
             .padding(20)
         }
@@ -91,6 +95,31 @@ struct LinkClosetRegistrationView: View {
         }
     }
 
+    private var loadingContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 7) {
+                Text("상품 정보를 불러오고 있어요")
+                    .font(.title2.weight(.black))
+                Text("잠시만 기다려 주세요.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            FitMatchCard {
+                VStack(alignment: .leading, spacing: 16) {
+                    FitMatchLoadingRow(title: "상품 정보 불러오는 중", state: .done)
+                    FitMatchLoadingRow(title: "사이즈표 확인 중", state: .loading)
+                    FitMatchLoadingRow(title: "내 옷장 추가 준비 중", state: .waiting)
+
+                    Text("평균 10~20초 소요됩니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 6)
+                }
+            }
+        }
+    }
+
     private var urlCard: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 14) {
@@ -107,6 +136,7 @@ struct LinkClosetRegistrationView: View {
                         .textContentType(.URL)
                         .submitLabel(.search)
                         .focused($isURLFocused)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                         .onSubmit {
                             if canLoadProduct {
                                 Task {
@@ -118,6 +148,10 @@ struct LinkClosetRegistrationView: View {
                 .padding(.horizontal, 14)
                 .frame(height: 50)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isURLFocused = true
+                }
 
                 PrimaryButton(
                     title: isLoading ? "불러오는 중" : "상품 정보 불러오기",
@@ -183,14 +217,14 @@ struct LinkClosetRegistrationView: View {
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
                     Label(
-                        partialProduct == nil ? errorMessage : "상품 정보는 불러왔어요",
+                        partialProduct == nil ? errorMessage : "상품 정보를 불러왔습니다.",
                         systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
                     )
                     .font(.headline)
                     .foregroundStyle(partialProduct == nil ? .red : .primary)
 
                     if let partialProduct {
-                        Text("사이즈 정보를 직접 입력해 내 옷장에 추가할 수 있습니다.")
+                        Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 

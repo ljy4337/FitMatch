@@ -24,6 +24,10 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var productMetadata = ProductMetadata()
     @Published var hasLoadedProductInfo = false
     @Published var measurementAvailability: ProductMeasurementAvailability = .actualMeasurements
+    @Published var sizeTableRecoveryContext: SizeTableRecoveryContext?
+    @Published var isAnalyzingRecoveryImage = false
+    @Published var recoveryErrorMessage: String?
+    @Published var isNetworkFailure = false
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
@@ -56,6 +60,8 @@ final class ShoppingProductViewModel: ObservableObject {
         hasLoadedProductInfo = false
         productCode = nil
         productMetadata = ProductMetadata()
+        sizeTableRecoveryContext = nil
+        isNetworkFailure = false
         isLoadingProductInfo = true
         defer { isLoadingProductInfo = false }
 
@@ -73,9 +79,49 @@ final class ShoppingProductViewModel: ObservableObject {
             }
             return false
         } catch {
+            let nsError = error as NSError
+            isNetworkFailure = nsError.domain == NSURLErrorDomain
+                || (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain == NSURLErrorDomain
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
             return false
         }
+    }
+
+    func analyzeRecoveryImage(url: URL) async -> Bool {
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                recoveryErrorMessage = "이미지를 불러오지 못했어요."
+                return false
+            }
+            return analyzeRecoveryImage(data: data)
+        } catch {
+            recoveryErrorMessage = "이미지를 불러오지 못했어요."
+            return false
+        }
+    }
+
+    func analyzeRecoveryImage(data: Data) -> Bool {
+        recoveryErrorMessage = nil
+        isAnalyzingRecoveryImage = true
+        defer { isAnalyzingRecoveryImage = false }
+        let parsed = MusinsaFallbackSizeParser().parseRecoveryImage(
+            data: data,
+            category: category,
+            categoryDepth2Name: productMetadata.categoryDepth2Name
+        )
+        guard !parsed.isEmpty else {
+            recoveryErrorMessage = "표를 확정하지 못했어요. 값을 직접 입력해 주세요."
+            return false
+        }
+        sizeOptions = parsed.enumerated().map {
+            Self.makeSizeForm(from: $0.element, displayOrder: $0.offset, allowsStandardSizeFallback: false)
+        }
+        sizeTableRecoveryContext = SizeTableRecoveryContext(
+            failure: .incompleteOCR,
+            imageURLStrings: sizeTableRecoveryContext?.imageURLStrings ?? []
+        )
+        return true
     }
 
     @discardableResult
@@ -249,6 +295,7 @@ final class ShoppingProductViewModel: ObservableObject {
         productCode = parsedProduct.productID
         productMetadata = metadataWithSourceCategory(from: parsedProduct)
         measurementAvailability = parsedProduct.measurementAvailability
+        sizeTableRecoveryContext = parsedProduct.sizeTableRecoveryContext
         parserNotice = parsedProduct.parserNotice
         hasLoadedProductInfo = true
         #if DEBUG

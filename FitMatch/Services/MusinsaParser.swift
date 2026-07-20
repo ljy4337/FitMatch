@@ -79,11 +79,20 @@ struct MusinsaParser: ProductURLParsing {
         #endif
 
         guard !sizes.isEmpty else {
+            let recoveryImages = MusinsaFallbackImageExtractor.images(in: metadata.goodsContents)
+                .sorted { $0.candidateScore > $1.candidateScore }
+                .prefix(12)
+                .map(\.url.absoluteString)
+            var productInfo = metadata.parsedProductInfo(
+                sizes: [],
+                parserNotice: Self.automaticSizeFailureNotice
+            )
+            productInfo.sizeTableRecoveryContext = SizeTableRecoveryContext(
+                failure: recoveryImages.isEmpty ? .noImageCandidates : .imageCandidatesAvailable,
+                imageURLStrings: recoveryImages
+            )
             throw ProductURLParserPartialError(
-                productInfo: metadata.parsedProductInfo(
-                    sizes: [],
-                    parserNotice: Self.automaticSizeFailureNotice
-                )
+                productInfo: productInfo
             )
         }
 
