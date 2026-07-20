@@ -4764,6 +4764,77 @@ struct FitMatchTests {
         )?.code == .pantsOutseamWaistToHem)
     }
 
+    @Test func parsedSizeValidatorRejectsUnknownOnlyActualSizeAndKeepsMappedFallback() {
+        let unknown = ParsedMeasurement(
+            value: 90,
+            measurementCode: .unknown,
+            displayKind: .chest,
+            methodSource: "actual-size",
+            inputSource: .importedSizeChart,
+            rawLabel: "기타",
+            evidenceLevel: .unknown,
+            semanticStatus: .unknownDefinition
+        )
+        let mapped = ParsedMeasurement(
+            value: 90,
+            measurementCode: .chestCircumferenceGarment,
+            displayKind: .chest,
+            methodSource: "html",
+            inputSource: .transcribedSizeChart,
+            rawLabel: "가슴둘레",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped
+        )
+        let actual = ParsedProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0),
+            measurementRecords: [unknown]
+        )
+        let fallback = ParsedProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0),
+            measurementRecords: [mapped]
+        )
+
+        #expect(ParsedSizeValidator.validSizes(
+            [actual],
+            category: .top
+        ).isEmpty)
+        #expect(ParsedSizeValidator.validSizes(
+            [fallback],
+            category: .top
+        ).map(\.name) == ["M"])
+        #expect(MusinsaSizeAvailabilityResolver.resolve(
+            isUseSize: false,
+            sizeType: nil,
+            actualSizes: [actual],
+            category: .top
+        ) == .unavailable)
+    }
+
+    @Test func parsedSizeValidatorRejectsSingleShoeReference() {
+        let footLength = ParsedMeasurement(
+            value: 235,
+            measurementCode: .footLengthHeelToToe,
+            displayKind: .footLength,
+            methodSource: "html",
+            inputSource: .transcribedSizeChart,
+            rawLabel: "발길이",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped
+        )
+        let reference = ParsedProductSize(
+            name: "235",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0),
+            measurementRecords: [footLength]
+        )
+
+        #expect(ParsedSizeValidator.validSizes(
+            [reference],
+            category: .shoes
+        ).isEmpty)
+    }
+
     private func inMemoryModelContainer() throws -> ModelContainer {
         let schema = Schema([
             Brand.self,

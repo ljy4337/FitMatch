@@ -7,7 +7,13 @@ enum MusinsaSizeAvailabilityResolver {
         actualSizes: [ParsedProductSize],
         category: ClothingCategory = .other
     ) -> ProductMeasurementAvailability {
-        if !actualSizes.isEmpty { return .actualMeasurements }
+        let hasLegacyActualMeasurements = actualSizes.contains {
+            $0.measurementRecords.isEmpty && !$0.measurements.isEmpty
+        }
+        if ParsedSizeValidator.hasUsableMeasurements(actualSizes, category: category)
+            || hasLegacyActualMeasurements {
+            return .actualMeasurements
+        }
         let supportsBodyChestStandard = [.top, .outer, .dress].contains(category.serviceGroup)
         if supportsBodyChestStandard,
            isUseSize,
@@ -46,18 +52,22 @@ struct MusinsaParser: ProductURLParsing {
             #endif
             actualSize = nil
         }
-        var sizes = actualSize?.sizes ?? []
+        var sizes = ParsedSizeValidator.validSizes(
+            actualSize?.sizes ?? [],
+            category: metadata.category
+        )
         metadata.applyActualSizeProfile(typeNumber: actualSize?.typeNumber, typeName: actualSize?.typeName)
 
         if sizes.isEmpty {
-            sizes = await fallbackSizeParser.parse(
+            let fallbackSizes = await fallbackSizeParser.parse(
                 goodsContents: metadata.goodsContents,
                 category: metadata.category,
                 categoryDepth2Name: metadata.categoryDepth2Name
             )
-        }
-        if sizes.isEmpty {
-            metadata.productMetadata.sizeType = StandardBodySizeChart.unavailableMarker
+            sizes = ParsedSizeValidator.validSizes(
+                fallbackSizes,
+                category: metadata.category
+            )
         }
 
         #if DEBUG
