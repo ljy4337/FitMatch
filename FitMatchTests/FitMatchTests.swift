@@ -3776,6 +3776,70 @@ struct FitMatchTests {
         #expect(first.measurementRecords.allSatisfy { $0.methodSource == "musinsa_fallback" })
     }
 
+    @Test func musinsaSizeTokenNormalizerSupportsSharedHTMLAndOCRFormats() {
+        let valid = [
+            "XS", "S", "M", "L", "XL", "XXL", "2XL", "3XL", "4XL", "5XL",
+            "FREE", "ONE", "093(S)", "095(M)", "100(L)", "65 (S)", "70 (WM)",
+            "85 / XS", "85/XS", "110 / 2XL", "115 / 3XL", "70/S/25~26",
+            "225", "230", "235"
+        ]
+        #expect(valid.allSatisfy(SizeTokenNormalizer.isValid))
+        #expect(["85 / 일반", "가슴 / 113", "85 / XS 상품입니다", "6045676"].allSatisfy {
+            !SizeTokenNormalizer.isValid($0)
+        })
+        #expect(SizeTokenNormalizer.normalizedKey(for: "85 / XS") == "85/XS")
+    }
+
+    @Test func musinsaPipelineFixturesParseDeterministically() throws {
+        let transposed = MusinsaFallbackTableParser.parseHTML(
+            MusinsaSizePipelineFixtures.product6219777HTML,
+            family: .upper
+        )
+        #expect(transposed.map(\.name) == ["093(S)", "095(M)", "100(L)", "105(XL)", "110(XXL)"])
+        #expect(transposed.compactMap {
+            $0.measurementRecords.first { $0.measurementCode == .chestCircumferenceGarment }?.value
+        } == [110, 115, 120, 125, 130])
+
+        let slash = MusinsaFallbackTableParser.parseHTML(
+            MusinsaSizePipelineFixtures.product6045676HTML,
+            family: .upper
+        )
+        #expect(slash.map(\.name) == [
+            "85 / XS", "90 / S", "95 / M", "100 / L",
+            "105 / XL", "110 / 2XL", "115 / 3XL"
+        ])
+        let first = try #require(slash.first)
+        let last = try #require(slash.last)
+        #expect(first.measurementRecords.contains {
+            $0.measurementCode == .chestCircumferenceGarment && $0.value == 113
+        })
+        #expect(first.measurements.totalLength == 57)
+        #expect(first.measurementRecords.contains {
+            $0.measurementCode == .sleeveCenterBackToCuff && $0.value == 46
+        })
+        #expect(last.measurementRecords.contains {
+            $0.measurementCode == .chestCircumferenceGarment && $0.value == 147
+        })
+        #expect(last.measurements.totalLength == 74)
+    }
+
+    @Test func musinsaSingleFreeSizeRequiresAValidMeasurementStructure() {
+        let valid = """
+        <table><caption>제품 실측 사이즈</caption>
+        <tr><th>사이즈</th><th>가슴단면</th><th>총장</th></tr>
+        <tr><td>FREE</td><td>54</td><td>70</td></tr></table>
+        """
+        #expect(MusinsaFallbackTableParser.parseHTML(valid, family: .upper).map(\.name) == ["FREE"])
+        #expect(MusinsaFallbackTableParser.parseHTML(
+            MusinsaSizePipelineFixtures.productNoticeHTML,
+            family: .upper
+        ).isEmpty)
+        #expect(MusinsaFallbackTableParser.parseHTML(
+            MusinsaSizePipelineFixtures.bodyRecommendationHTML,
+            family: .upper
+        ).isEmpty)
+    }
+
     @Test func musinsaFallbackParsesMeasurementItemTransposedCompositeSizes() throws {
         let html = """
         <table>
@@ -4072,6 +4136,107 @@ struct FitMatchTests {
         #expect(tee.map(\.name) == ["XS", "2XL", "3XL"])
         #expect(tee[0].measurements.chest == 45)
         #expect(tee[2].measurements.sleeveLength == 22)
+    }
+
+    @Test func musinsaFallbackRecoversReebokBrokenSizeHeaderSafely() throws {
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["1/0|2(cm)", "총장", "가슴", "소매"],
+                ["S", "61", "63", "86"],
+                ["M", "64", "66.5", "89"],
+                ["L", "66", "69", "91"],
+                ["XL", "68", "71.5", "93"]
+            ],
+            context: "SIZE cm",
+            family: .upper
+        ))
+        #expect(sizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(sizes.map(\.measurements.totalLength) == [61, 64, 66, 68])
+        #expect(sizes.map(\.measurements.chest) == [63, 66.5, 69, 71.5])
+        #expect(sizes.map(\.measurements.sleeveLength) == [86, 89, 91, 93])
+    }
+
+    @Test func musinsaFallbackKeepsRowWithOneMissingOptionalMeasurement() throws {
+        let sizes = try #require(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["사이즈(cm)", "총장", "가슴", "소매"],
+                ["S", "61", "63", "86"],
+                ["M", "64", "66.5", "89"],
+                ["L", "66", "69", ""],
+                ["XL", "68", "71.5", "93"]
+            ],
+            context: "사이즈(cm) 총장 가슴 소매",
+            family: .upper
+        ))
+
+        #expect(sizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(sizes[2].measurementRecords.map(\.value) == [66, 69])
+    }
+
+    @Test func musinsaFallbackJoinsAdjacentAndOverlappingTableFragments() {
+        let headerAndTopRows = CGRect(x: 0.05, y: 0.82, width: 0.9, height: 0.12)
+        let lowerRows = CGRect(x: 0.06, y: 0.73, width: 0.88, height: 0.12)
+        let unrelatedCopy = CGRect(x: 0.15, y: 0.30, width: 0.65, height: 0.08)
+        let joined = MusinsaFallbackImageOCR.joinedTableRegions([
+            headerAndTopRows, lowerRows, unrelatedCopy
+        ])
+        #expect(joined.contains {
+            $0.minY < lowerRows.minY
+                && $0.maxY > headerAndTopRows.maxY
+                && $0.minX < headerAndTopRows.minX
+                && $0.maxX > headerAndTopRows.maxX
+        })
+        #expect(!joined.contains { $0.minY < 0.3 && $0.maxY > 0.7 })
+    }
+
+    @Test func musinsaFallbackCombinesSplitOCRGridsAndDeduplicatesRows() throws {
+        let sizes = try #require(MusinsaFallbackTableParser.parseCandidateGrids(
+            [
+                [
+                    ["사이즈(cm)", "가슴", "소매"],
+                    ["S", "61", "63", "86"],
+                    ["M", "64", "66.5", "89"],
+                    ["L", "66", "69", "91"],
+                    ["XL", "68", "71.5", "93"]
+                ],
+                [
+                    ["1/0|2(cm)", "총장", "가슴", "소매"],
+                    ["S", "61", "63", "86"],
+                    ["M", "64", "66.5", "89"]
+                ],
+                [
+                    ["M", "64", "66.5", "89"],
+                    ["L", "66", "69", "91"],
+                    ["XL", "68", "71.5", "93"]
+                ]
+            ],
+            context: "SIZE cm",
+            family: .upper
+        ))
+        #expect(sizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(sizes.map(\.measurements.totalLength) == [61, 64, 66, 68])
+        #expect(sizes.map(\.measurements.chest) == [63, 66.5, 69, 71.5])
+        #expect(sizes.map(\.measurements.sleeveLength) == [86, 89, 91, 93])
+    }
+
+    @Test func musinsaFallbackDoesNotInventSizesFromNumericFragment() {
+        #expect(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["61", "63", "86"],
+                ["64", "66.5", "89"],
+                ["66", "69", "91"]
+            ],
+            context: "SIZE cm",
+            family: .upper
+        ) == nil)
+        #expect(MusinsaFallbackTableParser.parseGrid(
+            [
+                ["깨진헤더", "총장", "가슴", "소매"],
+                ["S", "61", "63", "86"]
+            ],
+            context: "SIZE cm",
+            family: .upper
+        ) == nil)
     }
 
     @Test func musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage() throws {

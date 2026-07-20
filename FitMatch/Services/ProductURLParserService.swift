@@ -170,12 +170,7 @@ extension ParsedProductSize {
 
 enum ParsedProductSizeNormalizer {
     static func normalizedSizeKey(for name: String) -> String {
-        name
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .components(separatedBy: .whitespacesAndNewlines)
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
-            .lowercased()
+        SizeTokenNormalizer.normalizedKey(for: name)
     }
 
     static func uniqueSizes(_ sizes: [ParsedProductSize]) -> [ParsedProductSize] {
