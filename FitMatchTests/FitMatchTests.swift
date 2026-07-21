@@ -4161,6 +4161,34 @@ struct FitMatchTests {
         ) == 54)
     }
 
+    @Test func measurementResolverDisplaysCircumferenceRecordsWithTheirMeaning() {
+        let parsed = ParsedMeasurement(
+            value: 113,
+            measurementCode: .chestCircumferenceGarment,
+            displayKind: .chest,
+            methodSource: "html",
+            inputSource: .importedSizeChart,
+            rawLabel: "가슴둘레",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped
+        )
+        let stored = parsed.makeRecord()
+        let empty = GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0)
+
+        #expect(MeasurementResolver.value(
+            for: .chest,
+            measurements: empty,
+            records: [parsed]
+        ) == 113)
+        #expect(MeasurementResolver.title(for: .chest, records: [parsed]) == "가슴둘레")
+        #expect(MeasurementResolver.value(
+            for: .chest,
+            measurements: empty,
+            records: [stored]
+        ) == 113)
+        #expect(MeasurementResolver.title(for: .chest, records: [stored]) == "가슴둘레")
+    }
+
     @Test func musinsaFallbackKeepsStrictTableRejections() {
         let singleSize = """
         <table><tr><th>치수항목</th><th>093(S)</th></tr>

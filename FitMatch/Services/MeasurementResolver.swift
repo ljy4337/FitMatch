@@ -1,6 +1,35 @@
 import Foundation
 
 enum MeasurementResolver {
+    static func title(
+        for kind: MeasurementKind,
+        records: [GarmentMeasurementRecord]
+    ) -> String {
+        title(
+            for: kind,
+            measurementCodes: records
+                .filter { $0.displayKind == displayKind(for: kind) && $0.isComparable }
+                .map(\.measurementCode)
+        )
+    }
+
+    static func title(
+        for kind: MeasurementKind,
+        records: [ParsedMeasurement]
+    ) -> String {
+        title(
+            for: kind,
+            measurementCodes: records
+                .filter {
+                    $0.displayKind == displayKind(for: kind)
+                        && $0.semanticStatus == .mapped
+                        && $0.measurementCode != .unknown
+                        && $0.measurementCode != .legacyUnknown
+                }
+                .map(\.measurementCode)
+        )
+    }
+
     static func value(
         for kind: MeasurementKind,
         measurements: GarmentMeasurements,
@@ -51,6 +80,25 @@ enum MeasurementResolver {
         case .hem: .hem
         case .footLength: .footLength
         case .underBust: .underBust
+        }
+    }
+
+    private static func title(
+        for kind: MeasurementKind,
+        measurementCodes: [MeasurementCode]
+    ) -> String {
+        guard Set(measurementCodes).count == 1, let code = measurementCodes.first else {
+            return kind.title
+        }
+        switch code {
+        case .chestCircumferenceGarment:
+            return "가슴둘레"
+        case .waistCircumferenceGarment:
+            return "허리둘레"
+        case .sleeveCenterBackToCuff:
+            return "화장"
+        default:
+            return kind.title
         }
     }
 }

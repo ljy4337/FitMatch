@@ -872,7 +872,13 @@ private struct ClosetMeasurementGrid: View {
     }
 
     private var visibleKinds: [MeasurementKind] {
-        orderedKinds.filter { item.measurements.value(for: $0) > 0 }
+        orderedKinds.filter {
+            MeasurementResolver.value(
+                for: $0,
+                measurements: item.measurements,
+                records: item.measurementRecords
+            ) != nil
+        }
     }
 
     private var orderedKinds: [MeasurementKind] {
@@ -893,7 +899,7 @@ private struct ClosetMeasurementGrid: View {
 
     private func measurementCell(_ kind: MeasurementKind) -> some View {
         HStack(spacing: 8) {
-            Text(kind.title)
+            Text(MeasurementResolver.title(for: kind, records: item.measurementRecords))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -901,7 +907,11 @@ private struct ClosetMeasurementGrid: View {
 
             Spacer(minLength: 4)
 
-            Text(item.measurements.value(for: kind).cmText)
+            Text(MeasurementResolver.value(
+                for: kind,
+                measurements: item.measurements,
+                records: item.measurementRecords
+            )?.cmText ?? "-")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.primary)
                 .monospacedDigit()

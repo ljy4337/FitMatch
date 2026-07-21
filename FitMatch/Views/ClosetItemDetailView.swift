@@ -184,7 +184,10 @@ struct ClosetItemDetailView: View {
                 LazyVGrid(columns: measurementGridColumns, spacing: 10) {
                     ForEach(item.category.measurementKinds(detailCategory: item.detailCategory, gender: item.gender)) { kind in
                         MeasurementValueTile(
-                            title: kind.title,
+                            title: MeasurementResolver.title(
+                                for: kind,
+                                records: item.measurementRecords
+                            ),
                             value: measurementText(for: kind)
                         )
                     }

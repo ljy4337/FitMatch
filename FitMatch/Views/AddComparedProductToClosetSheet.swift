@@ -463,11 +463,20 @@ struct AddComparedProductToClosetSheet: View {
                     VStack(spacing: 10) {
                         ForEach(visibleMeasurementKinds(for: selectedSize), id: \.id) { kind in
                             HStack(spacing: 12) {
-                                Text(kind.title)
+                                Text(MeasurementResolver.title(
+                                    for: kind,
+                                    records: selectedSize.measurementRecords
+                                ))
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(.secondary)
                                 Spacer()
-                                Text(formatMeasurement(selectedSize.measurements.value(for: kind)))
+                                Text(formatMeasurement(
+                                    MeasurementResolver.value(
+                                        for: kind,
+                                        measurements: selectedSize.measurements,
+                                        records: selectedSize.measurementRecords
+                                    ) ?? 0
+                                ))
                                     .font(.headline.weight(.black))
                                     .foregroundStyle(.primary)
                             }
@@ -769,7 +778,13 @@ struct AddComparedProductToClosetSheet: View {
     private func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {
         selectedCategory
             .measurementKinds(detailCategory: selectedDetailCategory, gender: selectedGender)
-            .filter { size.measurements.value(for: $0) > 0 }
+            .filter {
+                MeasurementResolver.value(
+                    for: $0,
+                    measurements: size.measurements,
+                    records: size.measurementRecords
+                ) != nil
+            }
     }
 
     private func formatMeasurement(_ value: Double) -> String {
