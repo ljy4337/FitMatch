@@ -601,10 +601,8 @@ struct FitMatchTests {
 
             #expect(sameSourceComparison.status == .confirmed)
             #expect(sameSourceComparison.comparedKinds.contains(.chest))
-            #expect(crossSourceComparison.status == .insufficientEvidence)
-            #expect(crossSourceComparison.exclusions.contains {
-                $0.kind == .chest && $0.reason == .incompatibleMeasurementCode
-            })
+            #expect(crossSourceComparison.status == .confirmed)
+            #expect(crossSourceComparison.comparedKinds.contains(.chest))
         }
     }
 
@@ -2601,7 +2599,8 @@ struct FitMatchTests {
             shoulder: 48,
             sleeve: 62,
             shoulderCode: .shoulderWidthSeamToSeam,
-            sleeveCode: .sleeveShoulderSeamToCuff
+            sleeveCode: .sleeveShoulderSeamToCuff,
+            detailCategory: .longSleeve
         )
         context.insert(reference)
         try context.save()
@@ -2653,13 +2652,15 @@ struct FitMatchTests {
             shoulder: 47,
             sleeve: 61,
             shoulderCode: .shoulderWidthSeamToSeam,
-            sleeveCode: .sleeveCenterBackToCuff
+            sleeveCode: .sleeveCenterBackToCuff,
+            detailCategory: .longSleeve
         )
         let secondReference = comparisonItem(
             shoulder: 49,
             sleeve: 63,
             shoulderCode: .shoulderWidthSeamToSeam,
-            sleeveCode: .sleeveCenterBackToCuff
+            sleeveCode: .sleeveCenterBackToCuff,
+            detailCategory: .longSleeve
         )
         context.insert(firstReference)
         context.insert(secondReference)
@@ -2778,7 +2779,9 @@ struct FitMatchTests {
         let savedHistories = try context.fetch(FetchDescriptor<RecommendationHistory>())
         let savedProducts = try context.fetch(FetchDescriptor<Product>())
         let savedSizes = try context.fetch(FetchDescriptor<ProductSize>())
-        let savedMeasurementRecords = try context.fetch(FetchDescriptor<GarmentMeasurementRecord>())
+        let savedProductMeasurementRecordIDs = Set(
+            savedProducts.flatMap(\.sizes).flatMap(\.measurementRecords).map(\.id)
+        )
         #expect(updated.userFit.id == lastReference.id)
         #expect(updated.recommendedSize.name == "L")
         #expect(savedHistories.count == 1)
@@ -2786,7 +2789,7 @@ struct FitMatchTests {
         #expect(savedHistories.first?.recommendedSize.name == "L")
         #expect(savedProducts.count == 1)
         #expect(Set(savedSizes.map(\.id)) == sizeIDsBefore)
-        #expect(Set(savedMeasurementRecords.map(\.id)) == measurementRecordIDsBefore)
+        #expect(savedProductMeasurementRecordIDs == measurementRecordIDsBefore)
     }
 
     @Test func insufficientResultReferenceChangeKeepsPersistedHistory() throws {
@@ -3705,7 +3708,8 @@ struct FitMatchTests {
         shoulder: Double,
         sleeve: Double,
         shoulderCode: MeasurementCode,
-        sleeveCode: MeasurementCode
+        sleeveCode: MeasurementCode,
+        detailCategory: ClosetDetailCategory = .shortSleeve
     ) -> UserFit {
         let item = UserFit(
             sourceType: .marketplace,
@@ -3713,7 +3717,7 @@ struct FitMatchTests {
             brandName: "테스트",
             productName: "티셔츠",
             category: .top,
-            detailCategory: .shortSleeve,
+            detailCategory: detailCategory,
             sizeName: "M",
             measurements: GarmentMeasurements(shoulder: shoulder, chest: 53, totalLength: 69, sleeveLength: sleeve),
             fitMemo: "",

@@ -360,12 +360,8 @@ struct UniqloSizeAPIParser {
         valuesByName: [String: Double]
     ) -> Double? {
         for column in columns {
-            if let match = valuesByCode.first(where: { column.matches($0.key) })?.value {
-                return match
-            }
-            if let match = valuesByName.first(where: { column.matches($0.key) })?.value {
-                return match
-            }
+            if let match = column.firstValue(in: valuesByCode) { return match }
+            if let match = column.firstValue(in: valuesByName) { return match }
         }
         return nil
     }
@@ -469,7 +465,9 @@ struct UniqloProductMetadataParser {
             productName: productName
         )
         let category = canonical?.category ?? initiallyMappedCategory
-        let detailCategory = canonical?.detailCategory ?? initiallyMappedDetail
+        let detailCategory = canonical?.detailCategory == .other
+            ? initiallyMappedDetail
+            : (canonical?.detailCategory ?? initiallyMappedDetail)
         let canonicalURL = canonicalURL(from: resolved.html) ?? resolved.resolvedURL.absoluteString
 
         let metadata = ProductMetadata(
@@ -1022,6 +1020,25 @@ private struct UniqloSizeChartResponse: Decodable {
     let status: String?
     let result: [ResultItem]
 
+    private enum CodingKeys: String, CodingKey {
+        case status
+        case result
+    }
+
+    private struct ResultContainer: Decodable {
+        let items: [ResultItem]
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = try container.decodeIfPresent(String.self, forKey: .status)
+        if let items = try? container.decode([ResultItem].self, forKey: .result) {
+            result = items
+        } else {
+            result = try container.decode(ResultContainer.self, forKey: .result).items
+        }
+    }
+
     struct ResultItem: Decodable {
         let productId: String
         let sizeChart: [SizeChart]?
@@ -1108,6 +1125,16 @@ private enum UniqloMeasurementColumn {
 
     func matches(_ name: String) -> Bool {
         aliases.contains { name.contains($0) }
+    }
+
+    func firstValue(in values: [String: Double]) -> Double? {
+        for alias in aliases {
+            if let exact = values[alias] { return exact }
+            if let key = values.keys.sorted().first(where: { $0.contains(alias) }) {
+                return values[key]
+            }
+        }
+        return nil
     }
 
     private var aliases: [String] {

@@ -21,8 +21,12 @@ enum RecommendationHistoryStore {
             ?? matchingProducts.first(where: { closetProductIDs.contains($0.id) })
             ?? matchingHistories.first?.product
             ?? matchingProducts.first
+        var replacedTransientSize: ProductSize?
+        var replacedTransientProduct: Product?
 
         if let storedProduct {
+            let incomingProduct = history.product
+            let incomingSize = history.recommendedSize
             let recommendedSizeKey = ParsedProductSizeNormalizer.normalizedSizeKey(for: history.recommendedSize.name)
             let storedSize = storedSizeByID ?? storedProduct.sizes.first {
                 ParsedProductSizeNormalizer.normalizedSizeKey(for: $0.name) == recommendedSizeKey
@@ -31,10 +35,18 @@ enum RecommendationHistoryStore {
             history.product = storedProduct
             if let storedSize {
                 history.recommendedSize = storedSize
+                if incomingSize !== storedSize {
+                    incomingSize.product = nil
+                    replacedTransientSize = incomingSize
+                }
             } else {
                 let newSize = history.recommendedSize
                 newSize.product = storedProduct
                 storedProduct.sizes.append(newSize)
+            }
+            if incomingProduct !== storedProduct {
+                incomingProduct.sizes.removeAll()
+                replacedTransientProduct = incomingProduct
             }
         }
 
@@ -50,6 +62,12 @@ enum RecommendationHistoryStore {
             modelContext.insert(history.product)
         }
         modelContext.insert(history)
+        if let replacedTransientSize, replacedTransientSize.modelContext != nil {
+            modelContext.delete(replacedTransientSize)
+        }
+        if let replacedTransientProduct, replacedTransientProduct.modelContext != nil {
+            modelContext.delete(replacedTransientProduct)
+        }
         try modelContext.save()
     }
 
