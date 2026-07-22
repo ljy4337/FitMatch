@@ -1,5 +1,63 @@
 import Foundation
 
+enum ProductMeasurementAvailability: String, Equatable {
+    case actualMeasurements
+    case standardSizeChart
+    case unavailable
+}
+
+enum ProductComparisonMode: String, Equatable {
+    case actualMeasurements
+    case standardSizeFallback
+    case unavailable
+}
+
+enum StandardBodySizeChart {
+    static let metadataMarker = "fitmatch_standard_size_chart"
+    static let unavailableMarker = "fitmatch_size_unavailable"
+
+    static func normalizedSize(from optionName: String) -> String? {
+        let uppercased = optionName.uppercased()
+        let pattern = #"(?<![A-Z0-9])(XXL|XL|XS|L|M|S)(?![A-Z])"#
+        if let regex = try? NSRegularExpression(pattern: pattern) {
+            let matches = regex.matches(
+                in: uppercased,
+                range: NSRange(uppercased.startIndex..<uppercased.endIndex, in: uppercased)
+            )
+            guard matches.count <= 1 else {
+                // A set option such as "브라_S 팬티_L" must not be interpreted
+                // as one garment's body-chest standard size.
+                return nil
+            }
+            if let match = matches.first,
+           let range = Range(match.range(at: 1), in: uppercased) {
+                return String(uppercased[range])
+            }
+        }
+
+        let circumferencePattern = #"(?:44|55|66|77|88|110)\s*\((85|90|95|100|105|110)\)"#
+        guard let regex = try? NSRegularExpression(pattern: circumferencePattern),
+              let match = regex.firstMatch(
+                in: uppercased,
+                range: NSRange(uppercased.startIndex..<uppercased.endIndex, in: uppercased)
+              ),
+              let range = Range(match.range(at: 1), in: uppercased),
+              let circumference = Double(uppercased[range]) else {
+            return nil
+        }
+        return sizeName(for: circumference)
+    }
+
+    static func chestCircumferenceCm(for optionName: String) -> Double? {
+        guard let size = normalizedSize(from: optionName) else { return nil }
+        return ["XS": 85, "S": 90, "M": 95, "L": 100, "XL": 105, "XXL": 110][size]
+    }
+
+    private static func sizeName(for circumference: Double) -> String? {
+        [85: "XS", 90: "S", 95: "M", 100: "L", 105: "XL", 110: "XXL"][circumference]
+    }
+}
+
 struct ParsedProductInfo {
     var sourceURL: URL
     var sourceType: ProductSourceType = .manual
@@ -21,12 +79,56 @@ struct ParsedProductInfo {
     var sourceCategoryDepth4: String? = nil
     var productTargetGender: UserGender = .unknown
     var productMetadata: ProductMetadata = ProductMetadata()
+    var measurementAvailability: ProductMeasurementAvailability = .actualMeasurements
+    var sizeTableRecoveryContext: SizeTableRecoveryContext? = nil
 }
 
 struct ParsedProductSize: Identifiable, Equatable {
     var id = UUID()
     var name: String
     var measurements: GarmentMeasurements
+    var measurementRecords: [ParsedMeasurement] = []
+    var standardBodyChestCircumferenceCm: Double? = nil
+}
+
+struct ParsedMeasurement: Equatable {
+    var value: Double
+    var unit: MeasurementUnit = .centimeter
+    var measurementCode: MeasurementCode
+    var displayKind: MeasurementDisplayKind
+    var methodSource: String
+    var methodProfile: String? = nil
+    var inputSource: MeasurementInputSource
+    var standardVersion: String? = nil
+    var mappingVersion: String = "measurement_mapping_v1"
+    var rawCode: String? = nil
+    var rawLabel: String
+    var rawInfo: String? = nil
+    var rawValueText: String? = nil
+    var evidenceLevel: MeasurementEvidenceLevel
+    var semanticStatus: MeasurementSemanticStatus
+
+    func makeRecord(productSize: ProductSize? = nil, userFit: UserFit? = nil) -> GarmentMeasurementRecord {
+        GarmentMeasurementRecord(
+            value: value,
+            unit: unit,
+            measurementCode: measurementCode,
+            displayKind: displayKind,
+            methodSource: methodSource,
+            methodProfile: methodProfile,
+            inputSource: inputSource,
+            standardVersion: standardVersion,
+            mappingVersion: mappingVersion,
+            rawCode: rawCode,
+            rawLabel: rawLabel,
+            rawInfo: rawInfo,
+            rawValueText: rawValueText,
+            evidenceLevel: evidenceLevel,
+            semanticStatus: semanticStatus,
+            productSize: productSize,
+            userFit: userFit
+        )
+    }
 }
 
 extension ParsedProductSize {
@@ -69,12 +171,7 @@ extension ParsedProductSize {
 
 enum ParsedProductSizeNormalizer {
     static func normalizedSizeKey(for name: String) -> String {
-        name
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .components(separatedBy: .whitespacesAndNewlines)
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
-            .lowercased()
+        SizeTokenNormalizer.normalizedKey(for: name)
     }
 
     static func uniqueSizes(_ sizes: [ParsedProductSize]) -> [ParsedProductSize] {
@@ -113,12 +210,21 @@ enum ParsedProductSizeNormalizer {
 
     static func makeProductSizes(from sizes: [ParsedProductSize]) -> [ProductSize] {
         uniqueSizes(sizes).enumerated().map { index, size in
-            ProductSize(
+            let productSize = ProductSize(
                 id: size.id,
                 name: size.name.trimmingCharacters(in: .whitespacesAndNewlines),
                 measurements: size.measurements,
                 displayOrder: index
             )
+            let records = size.measurementRecords.map { $0.makeRecord(productSize: productSize) }
+            productSize.measurementRecords = records
+            if !records.isEmpty {
+                productSize.measurementSchemaVersion = 1
+                productSize.measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
+                productSize.measurementMigrationStatus = .completed
+                productSize.measurementMigrationErrorCode = nil
+            }
+            return productSize
         }
     }
 }
@@ -232,20 +338,28 @@ struct ProductURLParserService {
         let isMusinsaURL = url.absoluteString.lowercased().contains("musinsa")
         let isUniqloURL = uniqloParser.canParse(url)
         let detectedProvider = isMusinsaURL ? "musinsa" : (isUniqloURL ? "uniqlo" : "generic")
-        print("[ProductURLParserService] detectedProvider: \(detectedProvider)")
+        #if DEBUG
+        FitMatchDebugLogger.detail(screen: "상품 분석", action: "파서 선택", details: "파서=\(detectedProvider)")
+        #endif
 
         if isMusinsaURL {
             do {
                 return logParsedProductInfo((try await musinsaParser.parse(from: url)).normalizedSizes())
             } catch let partialError as ProductURLParserPartialError {
-                print("[ProductURLParserService] Musinsa parser partially loaded product info: \(partialError.localizedDescription)")
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
+                #endif
                 throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
             } catch {
-                print("[ProductURLParserService] Musinsa parser failed, falling back to GenericProductParser: \(error.localizedDescription)")
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "대체 파싱", details: "오류=\(error.localizedDescription)")
+                #endif
                 do {
                     return (try await genericParser.parse(from: url)).normalizedSizes()
                 } catch {
-                    print("[ProductURLParserService] Generic fallback also failed for Musinsa URL: \(error.localizedDescription)")
+                    #if DEBUG
+                    FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 대체 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
+                    #endif
                     throw ProductURLParserError.automaticParsingUnavailable
                 }
             }
@@ -255,14 +369,20 @@ struct ProductURLParserService {
             do {
                 return logParsedProductInfo((try await uniqloParser.parse(from: url)).normalizedSizes())
             } catch let partialError as ProductURLParserPartialError {
-                print("[ProductURLParserService] Uniqlo parser partially loaded product info: \(partialError.localizedDescription)")
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
+                #endif
                 throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
             } catch {
-                print("[ProductURLParserService] Uniqlo parser failed, falling back to GenericProductParser: \(error.localizedDescription)")
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "대체 파싱", details: "오류=\(error.localizedDescription)")
+                #endif
                 do {
                     return (try await genericParser.parse(from: url)).normalizedSizes()
                 } catch {
-                    print("[ProductURLParserService] Generic fallback also failed for Uniqlo URL: \(error.localizedDescription)")
+                    #if DEBUG
+                    FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 대체 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
+                    #endif
                     throw ProductURLParserError.automaticParsingUnavailable
                 }
             }
@@ -272,13 +392,13 @@ struct ProductURLParserService {
     }
 
     private func logParsedProductInfo(_ productInfo: ParsedProductInfo) -> ParsedProductInfo {
-        print("[ProductURLParserService] ParsedProductInfo raw source category: \(productInfo.sourceCategoryPath ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo parsed gender: \(productInfo.productTargetGender.rawValue)")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth1: \(productInfo.sourceCategoryDepth1 ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth2: \(productInfo.sourceCategoryDepth2 ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth3: \(productInfo.sourceCategoryDepth3 ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryDepth4: \(productInfo.sourceCategoryDepth4 ?? "nil")")
-        print("[ProductURLParserService] ParsedProductInfo sourceCategoryPath: \(productInfo.sourceCategoryPath ?? "nil")")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "파싱 결과",
+            details: "성별=\(productInfo.productTargetGender.rawValue), depth1=\(productInfo.sourceCategoryDepth1 ?? "없음"), depth2=\(productInfo.sourceCategoryDepth2 ?? "없음"), depth3=\(productInfo.sourceCategoryDepth3 ?? "없음"), depth4=\(productInfo.sourceCategoryDepth4 ?? "없음"), 경로=\(productInfo.sourceCategoryPath ?? "없음")"
+        )
+        #endif
         return productInfo
     }
 

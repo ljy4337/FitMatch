@@ -1,6 +1,22 @@
 import Foundation
 import Combine
 
+enum ClosetProductSourceOption: String, CaseIterable, Hashable, Identifiable {
+    case uniqlo
+    case musinsa
+    case manual
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .uniqlo: return "유니클로 공식몰"
+        case .musinsa: return "무신사"
+        case .manual: return "직접 등록"
+        }
+    }
+}
+
 final class AddClosetItemViewModel: ObservableObject {
     @Published var sourceType: ProductSourceType = .manual
     @Published var sourceName = "직접 입력"
@@ -25,20 +41,31 @@ final class AddClosetItemViewModel: ObservableObject {
     @Published var hem = ""
     @Published var footLength = ""
     @Published var underBust = ""
+    @Published var measurementEntrySource: MeasurementEntrySource?
+    @Published var measurementSourceName = ""
+    @Published var measurementSourceLabels: [MeasurementKind: String] = [:]
+    @Published var musinsaSleeveMeasurementMethod: MusinsaSleeveMeasurementMethod = .unknown
     @Published var fitMemo = ""
     @Published var fitPreference: FitPreference = .regular
     @Published var satisfaction = 4
     @Published var isRepresentative = false
+    let isEditingExistingItem: Bool
 
     init(
         item: UserFit? = nil,
         prefillCategory: ClothingCategory? = nil,
         prefillDetailCategory: ClosetDetailCategory? = nil,
         prefillGender: UserGender? = nil,
+        prefillSourceOption: ClosetProductSourceOption? = nil,
         prefillBrand: String? = nil,
         prefillProductName: String? = nil
     ) {
+        isEditingExistingItem = item != nil
         guard let item else {
+            measurementEntrySource = .fitmatchMeasured
+            if let prefillSourceOption {
+                selectProductSource(prefillSourceOption)
+            }
             if let prefillCategory {
                 category = prefillCategory
                 categoryCode = prefillCategory.taxonomyCode
@@ -87,16 +114,95 @@ final class AddClosetItemViewModel: ObservableObject {
         hem = item.measurements.hem.formText
         footLength = item.measurements.footLength.formText
         underBust = item.measurements.underBust.formText
+        measurementEntrySource = MeasurementEntrySource.infer(from: item.measurementRecords)
+        if let profile = item.measurementRecords.first?.methodProfile,
+           profile.hasPrefix("other_size_chart_manual:") {
+            measurementSourceName = String(profile.dropFirst("other_size_chart_manual:".count))
+            measurementSourceLabels = Dictionary(uniqueKeysWithValues: item.measurementRecords.compactMap { record -> (MeasurementKind, String)? in
+                guard let displayKind = record.displayKind,
+                      let kind = MeasurementKind.allCases.first(where: { $0.displayKind == displayKind }) else {
+                    return nil
+                }
+                let rawLabel = record.rawLabel.trimmed
+                guard !rawLabel.isEmpty else { return nil }
+                return (kind, rawLabel)
+            })
+        }
+        musinsaSleeveMeasurementMethod = MusinsaSleeveMeasurementMethod.infer(from: item.measurementRecords)
         fitMemo = item.fitMemo
         fitPreference = item.fitPreference
         satisfaction = item.satisfaction
         isRepresentative = item.isRepresentative
     }
 
+    var productSourceOption: ClosetProductSourceOption? {
+        switch sourceType {
+        case .officialStore where resolvedSourceName.localizedCaseInsensitiveContains("유니클로"):
+            return .uniqlo
+        case .marketplace where resolvedSourceName.localizedCaseInsensitiveContains("무신사"):
+            return .musinsa
+        case .manual:
+            return .manual
+        default:
+            return nil
+        }
+    }
+
+    var measurementEntrySourceOptions: [MeasurementEntrySource] {
+        if isEditingExistingItem {
+            return MeasurementEntrySource.allCases
+        }
+
+        switch productSourceOption {
+        case .uniqlo:
+            return [.uniqloSizeChart, .fitmatchMeasured]
+        case .musinsa:
+            return [.musinsaSizeChart, .fitmatchMeasured]
+        case .manual, nil:
+            return [.fitmatchMeasured]
+        }
+    }
+
+    var skipsMeasurementSourceSelection: Bool {
+        !isEditingExistingItem && productSourceOption == .manual
+    }
+
+    func selectProductSource(_ option: ClosetProductSourceOption) {
+        switch option {
+        case .uniqlo:
+            sourceType = .officialStore
+            sourceName = "유니클로 공식몰"
+            brand = "유니클로"
+            usesCustomBrand = false
+            measurementEntrySource = .uniqloSizeChart
+        case .musinsa:
+            sourceType = .marketplace
+            sourceName = "무신사"
+            if brand == "유니클로" {
+                brand = ""
+            }
+            usesCustomBrand = true
+            measurementEntrySource = .musinsaSizeChart
+        case .manual:
+            sourceType = .manual
+            sourceName = "직접 입력"
+            if brand == "유니클로" {
+                brand = ""
+            }
+            usesCustomBrand = true
+            measurementEntrySource = .fitmatchMeasured
+        }
+    }
+
     var canSave: Bool {
-        !brand.trimmed.isEmpty
+        gender != .unknown
+            && !brand.trimmed.isEmpty
             && !productName.trimmed.isEmpty
             && measurements != nil
+            && (measurementKinds.isEmpty || measurementEntrySource != nil)
+            && (measurementEntrySource != .otherSizeChart || !measurementSourceName.trimmed.isEmpty)
+            && (measurementEntrySource != .otherSizeChart || hasAllRequiredSourceLabels)
+            && directMeasurementValidationMessage == nil
     }
 
     var measurements: GarmentMeasurements? {
@@ -138,7 +244,21 @@ final class AddClosetItemViewModel: ObservableObject {
         category.measurementKinds(detailCategory: detailCategory, gender: gender)
     }
 
-    private func value(for kind: MeasurementKind) -> String {
+    var directMeasurementValidationMessage: String? {
+        guard measurementEntrySource == .fitmatchMeasured else { return nil }
+
+        for kind in measurementKinds {
+            let rawValue = value(for: kind).trimmed
+            guard !rawValue.isEmpty, let number = Double(rawValue), number > 0 else { continue }
+            let definition = FitMatchMeasurementStandard.definition(for: kind, category: category)
+            guard !definition.validRange.contains(number) else { continue }
+            return "\(kind.title)은 \(definition.rangeDescription) 범위로 입력해 주세요. 측정 위치와 단위를 확인해 주세요."
+        }
+
+        return nil
+    }
+
+    func value(for kind: MeasurementKind) -> String {
         switch kind {
         case .shoulder: return shoulder
         case .chest: return chest
@@ -155,7 +275,7 @@ final class AddClosetItemViewModel: ObservableObject {
     }
 
     func makeUserFit() -> UserFit? {
-        guard let measurements else {
+        guard let measurements, directMeasurementValidationMessage == nil else {
             return nil
         }
 
@@ -181,7 +301,43 @@ final class AddClosetItemViewModel: ObservableObject {
             sourceCategoryPath: item.sourceCategoryPath,
             categoryCode: categoryCode
         )
+        if let measurementEntrySource {
+            let records = ManualMeasurementRecordFactory.records(
+                source: measurementEntrySource,
+                musinsaSleeveMethod: musinsaSleeveMeasurementMethod,
+                measurements: measurements,
+                rawValues: Dictionary(uniqueKeysWithValues: measurementKinds.map { ($0, value(for: $0).trimmed) }),
+                rawLabels: measurementSourceLabels,
+                kinds: measurementKinds,
+                otherSourceName: measurementSourceName.trimmed,
+                userFit: item
+            )
+            item.measurementRecords = records
+            if !records.isEmpty {
+                item.measurementSchemaVersion = 1
+                item.measurementInputSourceRawValue = measurementEntrySource.inputSource.rawValue
+                item.measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
+                item.measurementMigrationStatus = .completed
+                item.measurementMigrationErrorCode = nil
+            }
+        }
+        _ = ComparisonProfileMatcher().profile(for: item)
         return item
+    }
+
+    func measurementGuide(for kind: MeasurementKind) -> String {
+        guard let measurementEntrySource else { return "먼저 실측 정보 출처를 선택해 주세요" }
+        return ManualMeasurementRecordFactory.guide(
+            for: kind,
+            source: measurementEntrySource,
+            category: category
+        )
+    }
+
+    private var hasAllRequiredSourceLabels: Bool {
+        measurementKinds.allSatisfy { kind in
+            value(for: kind).trimmed.isEmpty || !(measurementSourceLabels[kind]?.trimmed.isEmpty ?? true)
+        }
     }
 
     var resolvedSourceName: String {

@@ -1,62 +1,14 @@
 import Foundation
 
-enum ComparisonLengthType: String, Equatable {
-    case sleeveless
-    case short
-    case long
-    case unknown
-
-    var displayName: String {
-        switch self {
-        case .sleeveless: return "민소매"
-        case .short: return "반팔"
-        case .long: return "긴팔"
-        case .unknown: return ""
-        }
-    }
-}
-
-enum ComparisonGarmentFamily: String, Equatable {
-    case knitCardigan
-    case tshirt
-    case shirt
-    case sweatshirt
-    case hoodie
-    case pants
-    case denim
-    case skirt
-    case outerwear
-    case underwear
-    case dress
-    case shoes
-    case accessory
-    case unknown
-
-    var displayName: String {
-        switch self {
-        case .knitCardigan: return "니트/가디건"
-        case .tshirt: return "티셔츠"
-        case .shirt: return "셔츠/블라우스"
-        case .sweatshirt: return "스웨트"
-        case .hoodie: return "후드"
-        case .pants: return "팬츠"
-        case .denim: return "데님"
-        case .skirt: return "스커트"
-        case .outerwear: return "아우터"
-        case .underwear: return "속옷"
-        case .dress: return "원피스"
-        case .shoes: return "신발"
-        case .accessory: return "액세서리"
-        case .unknown: return "옷"
-        }
-    }
-}
-
 struct ComparisonProfile: Equatable {
     let majorCategory: ClothingCategory
     let garmentFamily: ComparisonGarmentFamily
     let lengthType: ComparisonLengthType
+    let constructionType: ComparisonConstructionType
     let availableMeasurements: [MeasurementKind]
+
+    var garmentType: ComparisonGarmentFamily { garmentFamily }
+    var sleeveType: ComparisonLengthType { lengthType }
 }
 
 enum AutomaticComparisonMatchState: Equatable {
@@ -79,11 +31,10 @@ struct ComparisonProfileMatcher {
         userFits: [UserFit]
     ) -> AutomaticComparisonMatchResult {
         let incoming = profile(for: product, detailCategory: productDetailCategory)
-        let sameMajor = userFits.filter {
-            $0.category.serviceGroup == incoming.majorCategory
-                && gendersAreCompatible(product.productTargetGender.taxonomyCode, $0.resolvedGenderCode)
+        let candidates = userFits.filter {
+            gendersAreCompatible(product.productTargetGender.taxonomyCode, $0.resolvedGenderCode)
         }
-        let profiled = sameMajor.map { ($0, profile(for: $0)) }
+        let profiled = candidates.map { ($0, profile(for: $0)) }
 
         guard incoming.garmentFamily != .unknown, incoming.lengthType != .unknown else {
             return AutomaticComparisonMatchResult(
@@ -97,6 +48,7 @@ struct ComparisonProfileMatcher {
         let compatible = sameFamily
             .filter {
                 $0.1.lengthType == incoming.lengthType
+                    && constructionsAreCompatible(incoming.constructionType, $0.1.constructionType)
                     && commonCoreMeasurementCount(incoming, $0.1) >= 2
             }
             .sorted { lhs, rhs in
@@ -132,7 +84,6 @@ struct ComparisonProfileMatcher {
     ) -> [UserFit] {
         let incoming = profile(for: product, detailCategory: productDetailCategory)
         return userFits
-            .filter { $0.category.serviceGroup == incoming.majorCategory }
             .sorted { lhs, rhs in
                 let lhsProfile = profile(for: lhs)
                 let rhsProfile = profile(for: rhs)
@@ -169,9 +120,17 @@ struct ComparisonProfileMatcher {
     func candidateNote(product: Product, productDetailCategory: ClosetDetailCategory, item: UserFit) -> String? {
         let incoming = profile(for: product, detailCategory: productDetailCategory)
         let candidate = profile(for: item)
-        guard incoming.garmentFamily == candidate.garmentFamily, incoming.garmentFamily != .unknown else { return nil }
+        guard incoming.garmentFamily == candidate.garmentFamily,
+              incoming.garmentFamily != .unknown else {
+            return "다른 종류 · 공통 실측만 참고"
+        }
         if incoming.lengthType != .unknown, candidate.lengthType != .unknown, incoming.lengthType != candidate.lengthType {
-            return "같은 \(incoming.garmentFamily.displayName) · 길이 형태 다름"
+            return "길이 형태 다름 · 일부 항목 제외"
+        }
+        if incoming.constructionType != .unknown,
+           candidate.constructionType != .unknown,
+           incoming.constructionType != candidate.constructionType {
+            return "봉제 구조 다름 · 호환 항목만 참고"
         }
         return "같은 \(incoming.garmentFamily.displayName)"
     }
@@ -182,14 +141,14 @@ struct ComparisonProfileMatcher {
             path: product.sourceCategoryPath,
             depths: [product.sourceCategoryDepth1, product.sourceCategoryDepth2, product.sourceCategoryDepth3, product.sourceCategoryDepth4]
         )
-        let family = garmentFamily(
+        let inferredFamily = garmentFamily(
             normalizedProductTypeCode: product.resolvedNormalizedProductTypeCode,
             source: source,
             productName: product.name,
             detailCategory: detailCategory,
             major: major
         )
-        let length = lengthType(
+        let inferredLength = lengthType(
             productName: product.name,
             source: source,
             detailCategory: detailCategory,
@@ -197,10 +156,21 @@ struct ComparisonProfileMatcher {
             gender: product.productTargetGender,
             measurements: product.sizes.map(\.measurements)
         )
+        let inferredConstruction = constructionType(product.sizes.flatMap(\.measurementRecords))
+        let family = storedGarmentType(product.garmentTypeRawValue, fallback: inferredFamily)
+        let length = storedSleeveType(product.sleeveTypeRawValue, fallback: inferredLength)
+        let construction = storedConstructionType(product.constructionTypeRawValue, fallback: inferredConstruction)
+        storeResolvedAttributes(
+            garmentType: family,
+            sleeveType: length,
+            constructionType: construction,
+            on: product
+        )
         return ComparisonProfile(
             majorCategory: major,
             garmentFamily: family,
             lengthType: length,
+            constructionType: construction,
             availableMeasurements: availableMeasurements(product.sizes.map(\.measurements))
         )
     }
@@ -211,14 +181,14 @@ struct ComparisonProfileMatcher {
             path: item.sourceCategoryPath ?? item.sourceProduct?.sourceCategoryPath,
             depths: [item.sourceCategoryDepth1, item.sourceCategoryDepth2, item.sourceCategoryDepth3, item.sourceCategoryDepth4]
         )
-        let family = garmentFamily(
+        let inferredFamily = garmentFamily(
             normalizedProductTypeCode: item.resolvedNormalizedProductTypeCode,
             source: source,
             productName: item.productName,
             detailCategory: item.detailCategory,
             major: major
         )
-        let length = lengthType(
+        let inferredLength = lengthType(
             productName: item.productName,
             source: source,
             detailCategory: item.detailCategory,
@@ -226,12 +196,95 @@ struct ComparisonProfileMatcher {
             gender: item.gender,
             measurements: [item.measurements]
         )
+        let inferredConstruction = constructionType(item.measurementRecords)
+        let family = storedGarmentType(item.garmentTypeRawValue, fallback: inferredFamily)
+        let length = storedSleeveType(item.sleeveTypeRawValue, fallback: inferredLength)
+        let construction = storedConstructionType(item.constructionTypeRawValue, fallback: inferredConstruction)
+        storeResolvedAttributes(
+            garmentType: family,
+            sleeveType: length,
+            constructionType: construction,
+            on: item
+        )
         return ComparisonProfile(
             majorCategory: major,
             garmentFamily: family,
             lengthType: length,
+            constructionType: construction,
             availableMeasurements: availableMeasurements([item.measurements])
         )
+    }
+
+    private func storedGarmentType(
+        _ rawValue: String?,
+        fallback: ComparisonGarmentFamily
+    ) -> ComparisonGarmentFamily {
+        guard let rawValue,
+              let stored = ComparisonGarmentFamily(rawValue: rawValue),
+              stored != .unknown else {
+            return fallback
+        }
+        return stored
+    }
+
+    private func storedSleeveType(
+        _ rawValue: String?,
+        fallback: ComparisonLengthType
+    ) -> ComparisonLengthType {
+        guard let rawValue,
+              let stored = ComparisonLengthType(rawValue: rawValue),
+              stored != .unknown else {
+            return fallback
+        }
+        return stored
+    }
+
+    private func storedConstructionType(
+        _ rawValue: String?,
+        fallback: ComparisonConstructionType
+    ) -> ComparisonConstructionType {
+        guard let rawValue,
+              let stored = ComparisonConstructionType(rawValue: rawValue),
+              stored != .unknown else {
+            return fallback
+        }
+        return stored
+    }
+
+    private func storeResolvedAttributes(
+        garmentType: ComparisonGarmentFamily,
+        sleeveType: ComparisonLengthType,
+        constructionType: ComparisonConstructionType,
+        on product: Product
+    ) {
+        if garmentType != .unknown, product.garmentType != garmentType { product.garmentType = garmentType }
+        if sleeveType != .unknown, product.sleeveType != sleeveType { product.sleeveType = sleeveType }
+        if constructionType != .unknown, product.constructionType != constructionType { product.constructionType = constructionType }
+    }
+
+    private func storeResolvedAttributes(
+        garmentType: ComparisonGarmentFamily,
+        sleeveType: ComparisonLengthType,
+        constructionType: ComparisonConstructionType,
+        on item: UserFit
+    ) {
+        if garmentType != .unknown, item.garmentType != garmentType { item.garmentType = garmentType }
+        if sleeveType != .unknown, item.sleeveType != sleeveType { item.sleeveType = sleeveType }
+        if constructionType != .unknown, item.constructionType != constructionType { item.constructionType = constructionType }
+    }
+
+    private func constructionType(_ records: [GarmentMeasurementRecord]) -> ComparisonConstructionType {
+        let codes = Set(records.filter(\.isComparable).map(\.measurementCode))
+        if codes.contains(.sleeveRaglanNeckToCuff) { return .raglan }
+        if codes.contains(.sleeveShoulderSeamToCuff) { return .setIn }
+        return .unknown
+    }
+
+    private func constructionsAreCompatible(
+        _ lhs: ComparisonConstructionType,
+        _ rhs: ComparisonConstructionType
+    ) -> Bool {
+        lhs == .unknown || rhs == .unknown || lhs == rhs
     }
 
     private func garmentFamily(
@@ -372,7 +425,8 @@ struct ComparisonProfileMatcher {
     private func commonCoreMeasurementCount(_ lhs: ComparisonProfile, _ rhs: ComparisonProfile) -> Int {
         let core: [MeasurementKind]
         switch lhs.majorCategory {
-        case .top, .outer: core = [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .top: core = [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .outer: core = [.shoulder, .chest, .totalLength, .sleeveLength, .hem]
         case .bottom: core = [.waist, .hip, .thigh, .totalLength]
         default: core = lhs.availableMeasurements
         }

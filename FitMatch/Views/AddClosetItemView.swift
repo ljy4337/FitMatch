@@ -1,23 +1,34 @@
 import SwiftUI
 import SwiftData
 
+enum AddClosetItemPresentationContext: Equatable {
+    case standard
+    case linkedProduct
+}
+
 struct AddClosetItemView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Brand.name) private var brands: [Brand]
     @StateObject private var viewModel: AddClosetItemViewModel
     @State private var isShowingDeleteAlert = false
+    @State private var selectedMeasurementGuide: MeasurementKind?
 
     let onSave: (UserFit) -> Void
     let onDelete: (() -> Void)?
     private let isEditing: Bool
+    private let presentationContext: AddClosetItemPresentationContext
+    private let productImageURLString: String?
 
     init(
         item: UserFit? = nil,
         prefillCategory: ClothingCategory? = nil,
         prefillDetailCategory: ClosetDetailCategory? = nil,
         prefillGender: UserGender? = nil,
+        prefillSourceOption: ClosetProductSourceOption? = nil,
         prefillBrand: String? = nil,
         prefillProductName: String? = nil,
+        productImageURLString: String? = nil,
+        presentationContext: AddClosetItemPresentationContext = .standard,
         onDelete: (() -> Void)? = nil,
         onSave: @escaping (UserFit) -> Void
     ) {
@@ -27,11 +38,14 @@ struct AddClosetItemView: View {
                 prefillCategory: prefillCategory,
                 prefillDetailCategory: prefillDetailCategory,
                 prefillGender: prefillGender,
+                prefillSourceOption: prefillSourceOption,
                 prefillBrand: prefillBrand,
                 prefillProductName: prefillProductName
             )
         )
         self.isEditing = item != nil
+        self.presentationContext = presentationContext
+        self.productImageURLString = productImageURLString
         self.onDelete = onDelete
         self.onSave = onSave
     }
@@ -69,22 +83,35 @@ struct AddClosetItemView: View {
         } message: {
             Text("삭제한 옷 정보는 복구할 수 없습니다.")
         }
+        .sheet(item: $selectedMeasurementGuide) { kind in
+            DirectMeasurementGuideSheet(kind: kind, category: viewModel.category)
+        }
     }
 
     private var addHeader: some View {
         CardView(radius: 26, padding: 20) {
             HStack(alignment: .center, spacing: 16) {
-                Image(systemName: isEditing ? "pencil" : "plus")
-                    .font(.title3.weight(.black))
-                    .foregroundStyle(Color(.systemBackground))
-                    .frame(width: 48, height: 48)
-                    .background(Color.primary, in: Circle())
+                if presentationContext == .linkedProduct, !isEditing {
+                    ProductThumbnailView(
+                        imageURLString: productImageURLString,
+                        category: viewModel.category,
+                        width: 64,
+                        height: 76,
+                        cornerRadius: 14
+                    )
+                } else {
+                    Image(systemName: isEditing ? "pencil" : "plus")
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(Color(.systemBackground))
+                        .frame(width: 48, height: 48)
+                        .background(Color.primary, in: Circle())
+                }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(isEditing ? "내 옷 정보 수정" : "내 옷 추가")
+                    Text(headerTitle)
                         .font(.title2.weight(.black))
                         .foregroundStyle(.primary)
-                    Text(isEditing ? "저장된 핏 정보를 다시 정리합니다." : "핏이 마음에 드는 옷의 정보를 저장합니다.")
+                    Text(headerSubtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -98,40 +125,29 @@ struct AddClosetItemView: View {
         AddClosetSectionCard(index: 1, title: "상품 출처", subtitle: "브랜드와 구매처를 구분해 저장합니다.", systemImage: "tag") {
             VStack(alignment: .leading, spacing: 16) {
                 AddClosetSelectionMenu(
-                    title: "출처 유형",
-                    value: viewModel.sourceType.displayName,
-                    options: ProductSourceType.allCases,
+                    title: "상품 출처",
+                    value: viewModel.productSourceOption?.displayName ?? viewModel.resolvedSourceName,
+                    options: ClosetProductSourceOption.allCases,
                     optionTitle: \.displayName,
-                    selection: $viewModel.sourceType
-                ) { selectedType in
-                    normalizeSourceSelection(for: selectedType)
-                }
+                    selection: Binding(
+                        get: { viewModel.productSourceOption ?? .manual },
+                        set: { viewModel.selectProductSource($0) }
+                    )
+                )
 
-                switch viewModel.sourceType {
-                case .officialStore:
-                    AddClosetSelectionMenu(
-                        title: "공식 브랜드",
-                        value: viewModel.brand,
-                        options: ProductSourceType.officialStoreNames,
-                        optionTitle: { $0 },
-                        selection: $viewModel.brand
-                    ) { selectedBrand in
-                        viewModel.sourceName = "\(selectedBrand) 공식몰"
-                    }
-                    Text("선택한 공식 브랜드가 브랜드명으로 저장됩니다.")
+                switch viewModel.productSourceOption {
+                case .uniqlo:
+                    Text("상품 출처와 브랜드가 유니클로 공식몰로 저장됩니다.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                case .marketplace:
-                    AddClosetSelectionMenu(
-                        title: "쇼핑 플랫폼",
-                        value: viewModel.sourceName,
-                        options: ProductSourceType.marketplaceNames,
-                        optionTitle: { $0 },
-                        selection: $viewModel.sourceName
-                    )
+                case .musinsa:
                     AddClosetTextField(title: "입점 브랜드", placeholder: "브랜드명 입력", text: $viewModel.brand)
                 case .manual:
-                    AddClosetTextField(title: "출처명", placeholder: "출처명 입력", text: $viewModel.sourceName)
+                    AddClosetTextField(title: "브랜드", placeholder: "브랜드명 입력", text: $viewModel.brand)
+                case nil:
+                    Text("현재 저장된 상품 출처: \(viewModel.resolvedSourceName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     AddClosetTextField(title: "브랜드", placeholder: "브랜드명 입력", text: $viewModel.brand)
                 }
             }
@@ -143,7 +159,7 @@ struct AddClosetItemView: View {
             VStack(alignment: .leading, spacing: 16) {
                 AddClosetSelectionMenu(
                     title: "성별",
-                    value: selectedGenderOption?.displayName ?? viewModel.gender.rawValue,
+                    value: selectedGenderOption?.displayName ?? "선택 필요",
                     options: inputGenders,
                     optionTitle: \.displayName,
                     selection: Binding(
@@ -199,23 +215,70 @@ struct AddClosetItemView: View {
     }
 
     private var measurementSection: some View {
-        AddClosetSectionCard(index: 4, title: "실측값", subtitle: "둘레가 아닌 단면 기준으로 입력합니다.", systemImage: "ruler") {
+        AddClosetSectionCard(index: 4, title: "실측값", subtitle: "출처의 측정 기준과 원본값을 함께 저장합니다.", systemImage: "ruler") {
             VStack(alignment: .leading, spacing: 16) {
                 if measurementKinds.isEmpty {
                     Text("선택한 카테고리는 실측 입력 없이 저장할 수 있습니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(measurementKinds) { kind in
-                        AddClosetMeasurementField(
-                            title: kind.title,
-                            placeholder: kind.placeholder,
-                            value: binding(for: kind)
+                    if !viewModel.skipsMeasurementSourceSelection {
+                        AddClosetOptionalSelectionMenu(
+                            title: "실측 정보를 어디에서 확인하셨나요?",
+                            value: viewModel.measurementEntrySource?.displayName ?? "선택",
+                            options: viewModel.measurementEntrySourceOptions,
+                            optionTitle: \.displayName,
+                            selection: $viewModel.measurementEntrySource
                         )
                     }
-                    Text("둘레가 아닌 단면 기준으로 입력합니다. 쇼핑몰 표기가 둘레라면 2로 나눈 값을 입력하세요.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+
+                    if viewModel.measurementEntrySource == .musinsaSizeChart {
+                        AddClosetSelectionMenu(
+                            title: "소매길이 측정 기준",
+                            value: viewModel.musinsaSleeveMeasurementMethod.displayName,
+                            options: MusinsaSleeveMeasurementMethod.allCases,
+                            optionTitle: \.displayName,
+                            selection: $viewModel.musinsaSleeveMeasurementMethod
+                        )
+                    }
+
+                    if viewModel.measurementEntrySource == .otherSizeChart {
+                        AddClosetTextField(
+                            title: "사이즈표 쇼핑몰",
+                            placeholder: "쇼핑몰 이름 입력",
+                            text: $viewModel.measurementSourceName
+                        )
+                    }
+
+                    if viewModel.measurementEntrySource != nil {
+                        ForEach(measurementKinds) { kind in
+                            if viewModel.measurementEntrySource == .otherSizeChart {
+                                AddClosetTextField(
+                                    title: "\(kind.title) 원본 항목명",
+                                    placeholder: "사이즈표에 표시된 이름",
+                                    text: sourceLabelBinding(for: kind)
+                                )
+                            }
+                            AddClosetMeasurementField(
+                                title: kind.title,
+                                subtitle: viewModel.measurementGuide(for: kind),
+                                placeholder: kind.placeholder,
+                                value: binding(for: kind),
+                                onShowGuide: viewModel.measurementEntrySource == .fitmatchMeasured
+                                    ? { selectedMeasurementGuide = kind }
+                                    : nil
+                            )
+                        }
+                        Text(measurementInputNotice)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("측정 방식이 다른 값을 잘못 비교하지 않도록 출처를 먼저 선택해 주세요.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
         }
@@ -331,6 +394,10 @@ struct AddClosetItemView: View {
             return nil
         }
 
+        if viewModel.gender == .unknown {
+            return "성별을 선택해 주세요."
+        }
+
         if viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return "브랜드명을 입력하면 저장할 수 있습니다."
         }
@@ -339,11 +406,45 @@ struct AddClosetItemView: View {
             return "상품명을 입력하면 저장할 수 있습니다."
         }
 
+        if !measurementKinds.isEmpty, viewModel.measurementEntrySource == nil {
+            return "실측 정보를 확인한 출처를 선택해 주세요."
+        }
+
+        if viewModel.measurementEntrySource == .otherSizeChart,
+           viewModel.measurementSourceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "사이즈표를 확인한 쇼핑몰 이름을 입력해 주세요."
+        }
+
+        if viewModel.measurementEntrySource == .otherSizeChart,
+           measurementKinds.contains(where: {
+               !viewModel.value(for: $0).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                   && (viewModel.measurementSourceLabels[$0]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+           }) {
+            return "입력한 실측값의 원본 항목명을 입력해 주세요."
+        }
+
         if viewModel.measurements == nil {
             return "실측값을 1개 이상 입력해 주세요. 입력한 값은 0보다 큰 숫자여야 합니다."
         }
 
+        if let validationMessage = viewModel.directMeasurementValidationMessage {
+            return validationMessage
+        }
+
         return nil
+    }
+
+    private var headerTitle: String {
+        if isEditing { return "내 옷 정보 수정" }
+        return presentationContext == .linkedProduct ? "내 옷 정보 입력" : "내 옷 추가"
+    }
+
+    private var headerSubtitle: String {
+        if isEditing { return "저장된 핏 정보를 다시 정리합니다." }
+        if presentationContext == .linkedProduct {
+            return "불러온 상품을 기준으로 보유한 옷의 정보를 입력합니다."
+        }
+        return "핏이 마음에 드는 옷의 정보를 저장합니다."
     }
 
     private func normalizeInputSelection() {
@@ -356,6 +457,17 @@ struct AddClosetItemView: View {
 
     private var measurementKinds: [MeasurementKind] {
         viewModel.measurementKinds
+    }
+
+    private var measurementInputNotice: String {
+        switch viewModel.measurementEntrySource {
+        case .fitmatchMeasured:
+            return "안내된 위치를 따라 옷을 평평하게 놓고 측정해 주세요."
+        case .musinsaSizeChart, .uniqloSizeChart, .otherSizeChart:
+            return "쇼핑몰 사이즈표의 값을 나누거나 환산하지 말고 그대로 입력해 주세요."
+        case nil:
+            return ""
+        }
     }
 
     private func normalizeCategorySelection() {
@@ -400,27 +512,13 @@ struct AddClosetItemView: View {
         }
     }
 
-    private func normalizeSourceSelection(for sourceType: ProductSourceType) {
-        switch sourceType {
-        case .officialStore:
-            let selectedBrand = ProductSourceType.officialStoreNames.contains(viewModel.brand)
-                ? viewModel.brand
-                : ProductSourceType.officialStoreNames[0]
-            viewModel.brand = selectedBrand
-            viewModel.sourceName = "\(selectedBrand) 공식몰"
-            viewModel.usesCustomBrand = false
-        case .marketplace:
-            if !ProductSourceType.marketplaceNames.contains(viewModel.sourceName) {
-                viewModel.sourceName = ProductSourceType.marketplaceNames[0]
-            }
-            viewModel.usesCustomBrand = true
-        case .manual:
-            if viewModel.sourceName.isEmpty || ProductSourceType.marketplaceNames.contains(viewModel.sourceName) {
-                viewModel.sourceName = "직접 입력"
-            }
-            viewModel.usesCustomBrand = true
-        }
+    private func sourceLabelBinding(for kind: MeasurementKind) -> Binding<String> {
+        Binding(
+            get: { viewModel.measurementSourceLabels[kind] ?? "" },
+            set: { viewModel.measurementSourceLabels[kind] = $0 }
+        )
     }
+
 }
 
 private struct AddClosetSectionCard<Content: View>: View {
@@ -549,20 +647,86 @@ struct AddClosetSelectionMenu<Option: Hashable>: View {
     }
 }
 
+private struct AddClosetOptionalSelectionMenu<Option: Hashable>: View {
+    let title: String
+    let value: String
+    let options: [Option]
+    let optionTitle: (Option) -> String
+    @Binding var selection: Option?
+
+    var body: some View {
+        Menu {
+            ForEach(options, id: \.self) { option in
+                Button {
+                    selection = option
+                } label: {
+                    if option == selection {
+                        Label(optionTitle(option), systemImage: "checkmark")
+                    } else {
+                        Text(optionTitle(option))
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    Text(value)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 12)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(Color(.systemBackground), in: Circle())
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .padding(.horizontal, 16)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .stroke(Color.primary.opacity(0.055), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 private struct AddClosetMeasurementField: View {
     let title: String
+    let subtitle: String
     let placeholder: String
     @Binding var value: String
+    let onShowGuide: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.primary)
-                Text("단면 기준")
+                HStack(spacing: 8) {
+                    Text(title)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+
+                    if let onShowGuide {
+                        Button(action: onShowGuide) {
+                            Label("측정 방법", systemImage: "questionmark.circle")
+                                .font(.caption2.weight(.bold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.blue)
+                    }
+                }
+                Text(subtitle)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -577,11 +741,218 @@ private struct AddClosetMeasurementField: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 14)
-        .frame(height: 58)
+        .frame(minHeight: 68)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 17, style: .continuous)
                 .stroke(Color.primary.opacity(0.055), lineWidth: 1)
         }
+    }
+}
+
+private struct DirectMeasurementGuideSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let kind: MeasurementKind
+    let category: ClothingCategory
+
+    private var definition: DirectMeasurementDefinition {
+        FitMatchMeasurementStandard.definition(for: kind, category: category)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    DirectMeasurementDiagram(kind: kind, category: category)
+                        .frame(height: 250)
+                        .frame(maxWidth: .infinity)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("측정 위치", systemImage: "ruler")
+                            .font(.headline.weight(.black))
+                        Text(definition.instruction)
+                            .font(.body.weight(.semibold))
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("주의사항", systemImage: "exclamationmark.triangle")
+                            .font(.headline.weight(.black))
+                        Text(definition.caution)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("입력 가능 범위 · \(definition.rangeDescription)")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(16)
+                    .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                    Text("핏매치 직접 측정 표준 · \(definition.standardVersion)")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(20)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle(kind.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("완료") { dismiss() }
+                        .fontWeight(.bold)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}
+
+private struct DirectMeasurementDiagram: View {
+    let kind: MeasurementKind
+    let category: ClothingCategory
+
+    var body: some View {
+        GeometryReader { proxy in
+            let rect = CGRect(origin: .zero, size: proxy.size).insetBy(dx: 34, dy: 24)
+            let points = measurementPoints(in: rect)
+
+            ZStack {
+                garmentPath(in: rect)
+                    .stroke(Color.primary.opacity(0.32), style: StrokeStyle(lineWidth: 4, lineJoin: .round))
+
+                Path { path in
+                    path.move(to: points.start)
+                    path.addLine(to: points.end)
+                }
+                .stroke(Color.blue, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 13, height: 13)
+                    .position(points.start)
+
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 13, height: 13)
+                    .position(points.end)
+
+                Text(kind.title)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.background, in: Capsule())
+                    .position(labelPoint(for: points, in: rect))
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(kind.title) 측정 위치 도식")
+    }
+
+    private var family: DiagramFamily {
+        if kind == .totalLength, category.serviceGroup == .bottom {
+            return .bottom
+        }
+        if kind == .hem, category.serviceGroup == .outer {
+            return .top
+        }
+        switch kind {
+        case .shoulder, .chest, .totalLength, .sleeveLength, .underBust:
+            return .top
+        case .waist, .hip, .thigh, .rise, .hem:
+            return .bottom
+        case .footLength:
+            return .shoe
+        }
+    }
+
+    private func garmentPath(in rect: CGRect) -> Path {
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + rect.width * x, y: rect.minY + rect.height * y)
+        }
+
+        return Path { path in
+            switch family {
+            case .top:
+                path.move(to: point(0.36, 0.12))
+                path.addLine(to: point(0.26, 0.16))
+                path.addLine(to: point(0.08, 0.32))
+                path.addLine(to: point(0.18, 0.52))
+                path.addLine(to: point(0.30, 0.45))
+                path.addLine(to: point(0.30, 0.90))
+                path.addLine(to: point(0.70, 0.90))
+                path.addLine(to: point(0.70, 0.45))
+                path.addLine(to: point(0.82, 0.52))
+                path.addLine(to: point(0.92, 0.32))
+                path.addLine(to: point(0.74, 0.16))
+                path.addLine(to: point(0.64, 0.12))
+                path.addCurve(to: point(0.36, 0.12), control1: point(0.61, 0.30), control2: point(0.39, 0.30))
+                path.closeSubpath()
+            case .bottom:
+                path.move(to: point(0.27, 0.10))
+                path.addLine(to: point(0.73, 0.10))
+                path.addLine(to: point(0.78, 0.92))
+                path.addLine(to: point(0.55, 0.92))
+                path.addLine(to: point(0.50, 0.45))
+                path.addLine(to: point(0.45, 0.92))
+                path.addLine(to: point(0.22, 0.92))
+                path.closeSubpath()
+                path.move(to: point(0.28, 0.20))
+                path.addLine(to: point(0.72, 0.20))
+            case .shoe:
+                path.move(to: point(0.12, 0.65))
+                path.addCurve(to: point(0.45, 0.42), control1: point(0.22, 0.66), control2: point(0.28, 0.48))
+                path.addCurve(to: point(0.72, 0.64), control1: point(0.56, 0.50), control2: point(0.63, 0.60))
+                path.addCurve(to: point(0.90, 0.72), control1: point(0.79, 0.68), control2: point(0.87, 0.66))
+                path.addLine(to: point(0.88, 0.84))
+                path.addLine(to: point(0.14, 0.84))
+                path.closeSubpath()
+            }
+        }
+    }
+
+    private func measurementPoints(in rect: CGRect) -> (start: CGPoint, end: CGPoint) {
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + rect.width * x, y: rect.minY + rect.height * y)
+        }
+
+        switch kind {
+        case .shoulder: return (point(0.27, 0.18), point(0.73, 0.18))
+        case .chest: return (point(0.24, 0.45), point(0.76, 0.45))
+        case .totalLength:
+            return category.serviceGroup == .bottom
+                ? (point(0.73, 0.12), point(0.78, 0.90))
+                : (point(0.63, 0.17), point(0.63, 0.90))
+        case .sleeveLength: return (point(0.72, 0.18), point(0.87, 0.48))
+        case .waist: return (point(0.27, 0.14), point(0.73, 0.14))
+        case .hip: return (point(0.25, 0.32), point(0.75, 0.32))
+        case .thigh: return (point(0.27, 0.46), point(0.50, 0.46))
+        case .rise: return (point(0.50, 0.14), point(0.50, 0.45))
+        case .hem:
+            return category.serviceGroup == .outer
+                ? (point(0.30, 0.88), point(0.70, 0.88))
+                : (point(0.22, 0.90), point(0.45, 0.90))
+        case .footLength: return (point(0.14, 0.78), point(0.88, 0.78))
+        case .underBust: return (point(0.29, 0.58), point(0.71, 0.58))
+        }
+    }
+
+    private func labelPoint(
+        for points: (start: CGPoint, end: CGPoint),
+        in rect: CGRect
+    ) -> CGPoint {
+        let midpoint = CGPoint(x: (points.start.x + points.end.x) / 2, y: (points.start.y + points.end.y) / 2)
+        let isVertical = abs(points.start.x - points.end.x) < abs(points.start.y - points.end.y)
+        return CGPoint(
+            x: isVertical ? max(rect.minX + 42, midpoint.x - 48) : midpoint.x,
+            y: isVertical ? midpoint.y : max(rect.minY + 18, midpoint.y - 28)
+        )
+    }
+
+    private enum DiagramFamily {
+        case top
+        case bottom
+        case shoe
     }
 }

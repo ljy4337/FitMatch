@@ -17,7 +17,9 @@ struct UniqloParser: ProductURLParsing {
         do {
             sizeAPIResult = try await sizeParser.parse(productIDWithColorCode: resolved.productIDWithColorCode)
         } catch {
-            print("[UniqloParser] size API failed: \(error.localizedDescription)")
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
+            #endif
             throw ProductURLParserPartialError(
                 productInfo: metadata.parsedProductInfo(
                     sizes: [],
@@ -28,18 +30,13 @@ struct UniqloParser: ProductURLParsing {
         let sizes = sizeAPIResult.sizes
         let resolvedMetadata = metadata.withPreferredImageURL(sizeAPIResult.imageURLString)
 
-        print("[UniqloParser] detectedProvider: uniqlo")
-        print("[UniqloParser] originalURL: \(resolved.originalURL.absoluteString)")
-        print("[UniqloParser] resolvedURL: \(resolved.resolvedURL.absoluteString)")
-        print("[UniqloParser] productID: \(resolved.productID)")
-        print("[UniqloParser] colorCode: \(resolved.imageColorCode)")
-        print("[UniqloParser] apiProductIDWithColorCode: \(resolved.productIDWithColorCode)")
-        print("[UniqloParser] productName: \(resolvedMetadata.productName)")
-        print("[UniqloParser] category: \(resolvedMetadata.category.rawValue)")
-        print("[UniqloParser] detailCategory: \(resolvedMetadata.detailCategory.rawValue)")
-        print("[UniqloParser] sizeAPIImageURL: \(sizeAPIResult.imageURLString ?? "nil")")
-        print("[UniqloParser] imageURL: \(resolvedMetadata.imageURLString ?? "nil")")
-        print("[UniqloParser] sizeCount: \(sizes.count)")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "유니클로 파싱 완료",
+            details: "상품ID=\(resolved.productID), 색상=\(resolved.imageColorCode), 상품=\(resolvedMetadata.productName), 분류=\(resolvedMetadata.category.rawValue)/\(resolvedMetadata.detailCategory.rawValue), 사이즈수=\(sizes.count)"
+        )
+        #endif
 
         guard !sizes.isEmpty else {
             throw ProductURLParserPartialError(
@@ -67,14 +64,14 @@ struct ResolvedUniqloURL {
 
 struct UniqloURLResolver {
     func resolve(_ url: URL) async throws -> ResolvedUniqloURL {
-        print("[UniqloURLResolver] originalURL: \(url.absoluteString)")
-
         let response = try await fetchHTML(from: url)
         let finalURL = response.url
         let haystack = "\(url.absoluteString) \(finalURL.absoluteString) \(response.body)"
 
         guard let productID = extractProductID(from: haystack) else {
-            print("[UniqloURLResolver] productID: nil")
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 URL 해석", state: "실패", details: "상품ID=없음")
+            #endif
             throw ProductURLParserError.unsupportedURL
         }
 
@@ -85,11 +82,9 @@ struct UniqloURLResolver {
         let productIDWithColorCode = "\(productID)-\(apiColorCode)"
         let resolvedURL = canonicalURL(productID: productID, colorCode: imageColorCode, fallback: finalURL)
 
-        print("[UniqloURLResolver] resolvedURL: \(resolvedURL.absoluteString)")
-        print("[UniqloURLResolver] productID: \(productID)")
-        print("[UniqloURLResolver] goodsID: \(goodsID)")
-        print("[UniqloURLResolver] apiColorCode: \(apiColorCode)")
-        print("[UniqloURLResolver] imageColorCode: \(imageColorCode)")
+        #if DEBUG
+        FitMatchDebugLogger.detail(screen: "상품 분석", action: "유니클로 URL 해석", details: "상품ID=\(productID), goodsID=\(goodsID), API색상=\(apiColorCode), 이미지색상=\(imageColorCode)")
+        #endif
 
         return ResolvedUniqloURL(
             originalURL: url,
@@ -162,6 +157,7 @@ struct UniqloURLResolver {
     private func fetchHTML(from url: URL) async throws -> UniqloHTMLResponse {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
+        request.timeoutInterval = 12
         request.setValue("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
         request.setValue("https://www.uniqlo.com/kr/ko/", forHTTPHeaderField: "Referer")
         request.setValue(
@@ -264,6 +260,7 @@ struct UniqloSizeAPIParser {
     private func fetchData(from apiURL: URL) async throws -> Data {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
+        request.timeoutInterval = 12
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("https://www.uniqlo.com/kr/ko/", forHTTPHeaderField: "Referer")
         request.setValue(
@@ -291,13 +288,38 @@ struct UniqloSizeAPIParser {
 
         var valuesByCode: [String: Double] = [:]
         var valuesByName: [String: Double] = [:]
+        let methodProfile = uniqloMethodProfile(for: size.sizeParts ?? [])
+        var measurementRecords: [ParsedMeasurement] = []
 
         for part in size.sizeParts ?? [] {
-            guard let value = part.centimeterValue else {
+            guard let measurement = part.centimeterMeasurement else {
                 continue
             }
-            valuesByCode[part.code.normalizedUniqloMeasurementKey] = value
-            valuesByName[part.name.normalizedUniqloMeasurementKey] = value
+            let normalizedCode = part.code.normalizedUniqloMeasurementKey
+            let mapping = MeasurementSourceMappingPolicy.uniqlo(rawCode: part.code)
+            let normalizedValue = measurement.value * (mapping?.valueMultiplier ?? 1)
+            valuesByCode[normalizedCode] = normalizedValue
+            valuesByName[part.name.normalizedUniqloMeasurementKey] = normalizedValue
+            let displayKind = UniqloMeasurementColumn
+                .column(for: normalizedCode, fallbackName: part.name.normalizedUniqloMeasurementKey)?
+                .displayKind ?? .unknown
+            measurementRecords.append(
+                ParsedMeasurement(
+                    value: normalizedValue,
+                    measurementCode: mapping?.code ?? .unknown,
+                    displayKind: displayKind,
+                    methodSource: "uniqlo_kr",
+                    methodProfile: methodProfile,
+                    inputSource: .importedSizeChart,
+                    mappingVersion: MeasurementSourceMappingPolicy.uniqloVersion,
+                    rawCode: part.code,
+                    rawLabel: part.name,
+                    rawInfo: part.info,
+                    rawValueText: measurement.rawValue,
+                    evidenceLevel: mapping?.evidence ?? .unknown,
+                    semanticStatus: mapping == nil ? .unknownDefinition : .mapped
+                )
+            )
         }
 
         let measurements = GarmentMeasurements(
@@ -312,15 +334,24 @@ struct UniqloSizeAPIParser {
             hem: number(matching: [.hem], valuesByCode: valuesByCode, valuesByName: valuesByName) ?? 0
         )
 
-        guard !measurements.isEmpty else {
+        guard !measurementRecords.isEmpty || !measurements.isEmpty else {
             return nil
         }
 
         return ParsedProductSize(
             id: ParsedProductSize.stableID(for: "\(productIDWithColorCode)|\(sizeName)"),
             name: sizeName,
-            measurements: measurements
+            measurements: measurements,
+            measurementRecords: measurementRecords
         )
+    }
+
+    private func uniqloMethodProfile(for parts: [UniqloSizeChartResponse.SizePart]) -> String {
+        let codes = Set(parts.map { $0.code.normalizedUniqloMeasurementKey })
+        if codes.contains("knitbodylengthfront") { return "uniqlo_top_knit" }
+        if codes.contains("bodylengthback") { return "uniqlo_top_back" }
+        if codes.contains("bodylength") { return "uniqlo_top_shirt" }
+        return "uniqlo_size_chart"
     }
 
     private func number(
@@ -329,12 +360,8 @@ struct UniqloSizeAPIParser {
         valuesByName: [String: Double]
     ) -> Double? {
         for column in columns {
-            if let match = valuesByCode.first(where: { column.matches($0.key) })?.value {
-                return match
-            }
-            if let match = valuesByName.first(where: { column.matches($0.key) })?.value {
-                return match
-            }
+            if let match = column.firstValue(in: valuesByCode) { return match }
+            if let match = column.firstValue(in: valuesByName) { return match }
         }
         return nil
     }
@@ -428,8 +455,19 @@ struct UniqloProductMetadataParser {
                 ? htmlBreadcrumb.joined(separator: " / ")
                 : (stringValue(productGroupObject?["category"]) ?? "nil"))
         let categoryText = sourcePath.depths.joined(separator: " ")
-        let category = mapCategory(from: categoryText)
-        let detailCategory = mapDetailCategory(from: sourcePath.depths.last ?? categoryText)
+        let initiallyMappedCategory = mapCategory(from: "\(categoryText) \(productName)")
+        let initiallyMappedDetail = mapDetailCategory(from: "\(categoryText) \(productName)")
+        let canonical = ParsedClosetClassification.resolve(
+            category: initiallyMappedCategory,
+            detailCategory: initiallyMappedDetail,
+            sourceDepths: [sourcePath.depth1, sourcePath.depth2, sourcePath.depth3, sourcePath.depth4],
+            sourcePath: sourcePath.fullPath,
+            productName: productName
+        )
+        let category = canonical?.category ?? initiallyMappedCategory
+        let detailCategory = canonical?.detailCategory == .other
+            ? initiallyMappedDetail
+            : (canonical?.detailCategory ?? initiallyMappedDetail)
         let canonicalURL = canonicalURL(from: resolved.html) ?? resolved.resolvedURL.absoluteString
 
         let metadata = ProductMetadata(
@@ -719,13 +757,13 @@ struct UniqloProductMetadataParser {
     }
 
     private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, prefix: String) {
-        print("\(prefix) raw source category: \(rawSourceCategory)")
-        print("\(prefix) parsed gender: \(gender.rawValue)")
-        print("\(prefix) sourceCategoryDepth1: \(sourcePath.depth1 ?? "nil")")
-        print("\(prefix) sourceCategoryDepth2: \(sourcePath.depth2 ?? "nil")")
-        print("\(prefix) sourceCategoryDepth3: \(sourcePath.depth3 ?? "nil")")
-        print("\(prefix) sourceCategoryDepth4: \(sourcePath.depth4 ?? "nil")")
-        print("\(prefix) sourceCategoryPath: \(sourcePath.fullPath ?? "nil")")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "유니클로 원본 분류 해석",
+            details: "파서=\(prefix), 원본=\(rawSourceCategory), 성별=\(gender.rawValue), depth1=\(sourcePath.depth1 ?? "없음"), depth2=\(sourcePath.depth2 ?? "없음"), depth3=\(sourcePath.depth3 ?? "없음"), depth4=\(sourcePath.depth4 ?? "없음"), 경로=\(sourcePath.fullPath ?? "없음")"
+        )
+        #endif
     }
 
     private func splitCategoryPath(_ path: String?) -> [String] {
@@ -843,15 +881,22 @@ struct UniqloProductMetadataParser {
 
     private func mapCategory(from text: String) -> ClothingCategory {
         let value = text.lowercased()
+        // Reversible previous order treated any denim token as bottoms, including denim overshirts.
+        if value.contains("overshirt") || text.contains("오버셔츠") || value.contains("shirt") || text.contains("셔츠") {
+            return .top
+        }
+        if text.contains("스커트") || value.contains("skirt") { return .bottom }
         if value.contains("women") && value.contains("dress") || text.contains("원피스") {
             return .dress
         }
-        if text.contains("팬츠") || text.contains("바지") || text.contains("데님") || text.contains("쇼츠") || value.contains("pants") || value.contains("jeans") || value.contains("shorts") {
+        if value.contains("bottoms") || text.contains("팬츠") || text.contains("바지") || text.contains("데님") || text.contains("쇼츠") || value.contains("pants") || value.contains("jeans") || value.contains("shorts") {
             return .bottom
         }
         if text.contains("아우터") || text.contains("재킷") || text.contains("자켓") || text.contains("코트") || text.contains("파카") || text.contains("점퍼") || value.contains("outer") || value.contains("jacket") || value.contains("coat") {
             return .outer
         }
+        // Official Tops paths take precedence over AIRism/inner wording in a product name.
+        if value.contains("tops") || text.contains("상의") { return .top }
         if text.contains("속옷") || text.contains("이너") || value.contains("inner") || value.contains("underwear") {
             return .underwear
         }
@@ -866,6 +911,10 @@ struct UniqloProductMetadataParser {
 
     private func mapDetailCategory(from text: String) -> ClosetDetailCategory {
         let value = text.lowercased()
+        if text.contains("스커트") || value.contains("skirt") { return .skirt }
+        if text.contains("슬리브리스") || value.contains("sleeveless") { return .sleeveless }
+        if text.contains("쇼트 팬츠") || value.contains("short pants") { return .shorts }
+        if value.contains("overshirt") || text.contains("오버셔츠") { return .shirt }
         if text.contains("가디건") || value.contains("cardigan") { return .cardigan }
         if text.contains("민소매") || text.contains("나시") || value.contains("sleeveless") || value.contains("tank") { return .sleeveless }
         if text.contains("반팔") || text.contains("반소매") || value.contains("short sleeve") { return .shortSleeve }
@@ -971,6 +1020,25 @@ private struct UniqloSizeChartResponse: Decodable {
     let status: String?
     let result: [ResultItem]
 
+    private enum CodingKeys: String, CodingKey {
+        case status
+        case result
+    }
+
+    private struct ResultContainer: Decodable {
+        let items: [ResultItem]
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = try container.decodeIfPresent(String.self, forKey: .status)
+        if let items = try? container.decode([ResultItem].self, forKey: .result) {
+            result = items
+        } else {
+            result = try container.decode(ResultContainer.self, forKey: .result).items
+        }
+    }
+
     struct ResultItem: Decodable {
         let productId: String
         let sizeChart: [SizeChart]?
@@ -993,10 +1061,15 @@ private struct UniqloSizeChartResponse: Decodable {
         let measurements: [Measurement]?
 
         var centimeterValue: Double? {
-            guard let value = measurements?.first(where: { $0.unit.lowercased() == "cm" })?.value else {
-                return nil
-            }
-            return Self.firstNumber(in: value)
+            centimeterMeasurement?.value
+        }
+
+        var centimeterMeasurement: (value: Double, rawValue: String)? {
+            guard let measurement = measurements?.first(where: { $0.unit.lowercased() == "cm" }),
+                  let value = Self.firstNumber(in: measurement.value),
+                  value.isFinite,
+                  value > 0 else { return nil }
+            return (value, measurement.value)
         }
 
         private static func firstNumber(in text: String) -> Double? {
@@ -1028,8 +1101,40 @@ private enum UniqloMeasurementColumn {
     case inseam
     case hem
 
+    static func column(for code: String, fallbackName: String) -> UniqloMeasurementColumn? {
+        let searchOrder: [UniqloMeasurementColumn] = [
+            .shoulder, .chest, .sleeveLength, .waist, .hip, .thigh, .rise, .inseam, .hem, .totalLength
+        ]
+        return searchOrder.first { $0.matches(code) }
+            ?? searchOrder.first { $0.matches(fallbackName) }
+    }
+
+    var displayKind: MeasurementDisplayKind {
+        switch self {
+        case .shoulder: return .shoulder
+        case .chest: return .chest
+        case .totalLength, .inseam: return .totalLength
+        case .sleeveLength: return .sleeveLength
+        case .waist: return .waist
+        case .hip: return .hip
+        case .thigh: return .thigh
+        case .rise: return .rise
+        case .hem: return .hem
+        }
+    }
+
     func matches(_ name: String) -> Bool {
         aliases.contains { name.contains($0) }
+    }
+
+    func firstValue(in values: [String: Double]) -> Double? {
+        for alias in aliases {
+            if let exact = values[alias] { return exact }
+            if let key = values.keys.sorted().first(where: { $0.contains(alias) }) {
+                return values[key]
+            }
+        }
+        return nil
     }
 
     private var aliases: [String] {

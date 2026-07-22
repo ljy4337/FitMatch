@@ -49,7 +49,7 @@ struct GarmentMeasurements: Codable, Equatable, Hashable {
     }
 }
 
-enum MeasurementKind: CaseIterable, Identifiable {
+enum MeasurementKind: String, CaseIterable, Identifiable, Codable, Hashable {
     case shoulder
     case chest
     case totalLength
@@ -76,7 +76,7 @@ enum MeasurementKind: CaseIterable, Identifiable {
         case .rise: return "밑위"
         case .hem: return "밑단단면"
         case .footLength: return "발길이"
-        case .underBust: return "밑가슴둘레"
+        case .underBust: return "밑가슴단면"
         }
     }
 
@@ -92,7 +92,7 @@ enum MeasurementKind: CaseIterable, Identifiable {
         case .rise: return "29"
         case .hem: return "22"
         case .footLength: return "27"
-        case .underBust: return "75"
+        case .underBust: return "38"
         }
     }
 }
@@ -100,8 +100,10 @@ enum MeasurementKind: CaseIterable, Identifiable {
 extension ClothingCategory {
     var measurementKinds: [MeasurementKind] {
         switch serviceGroup {
-        case .top, .outer:
+        case .top:
             return [.totalLength, .shoulder, .chest, .sleeveLength]
+        case .outer:
+            return [.totalLength, .shoulder, .chest, .sleeveLength, .hem]
         case .bottom:
             return [.totalLength, .waist, .hip, .thigh, .rise, .hem]
         case .dress:

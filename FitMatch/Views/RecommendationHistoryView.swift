@@ -39,14 +39,17 @@ struct RecommendationHistoryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(isPresented: Binding(
-            get: { selectedHistoryForDetail != nil },
+            get: { selectedHistoryIDForDetail != nil },
             set: { if !$0 { selectedHistoryIDForDetail = nil } }
         )) {
             if let selectedHistoryForDetail {
                 RecommendationResultView(
                     result: selectedHistoryForDetail,
                     opensReferencePickerOnAppear: opensReferencePickerOnDetail
-                )
+                ) { updatedHistory in
+                    opensReferencePickerOnDetail = false
+                    selectedHistoryIDForDetail = updatedHistory.id
+                }
             }
         }
         .sheet(item: $selectedHistoryForCloset) { history in
@@ -131,9 +134,11 @@ struct RecommendationHistoryView: View {
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        favoriteSwipeButton(for: history)
-                    }
+                    // Temporarily disabled: restore these lines to re-enable
+                    // right-swipe favorite assignment/removal.
+//                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+//                        favoriteSwipeButton(for: history)
+//                    }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         deleteSwipeButton(for: history)
                     }
@@ -412,97 +417,7 @@ private struct HistoryCard: View {
 
     var body: some View {
         FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                ZStack(alignment: .topTrailing) {
-                    HStack(alignment: .top, spacing: 14) {
-                        ProductThumbnailView(
-                            imageURLString: history.productImageURLStringForDisplay,
-                            category: history.product.category,
-                            width: 88,
-                            height: 112,
-                            cornerRadius: 16
-                        )
-
-                            VStack(alignment: .leading, spacing: 6) {
-                            Text(history.productBrandNameForDisplay)
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.secondary)
-
-                            Text(history.productNameForDisplay)
-                                .font(.headline.weight(.bold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(2)
-
-                            Text("출처: \(history.productSourceNameForDisplay)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-
-                            Text(historySourceCategoryText)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-
-                            if let optionText = history.optionSnapshotText {
-                                Text(optionText)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-
-                            Text(history.createdAt, style: .date)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .background(.primary.opacity(0.08), in: Capsule())
-                        }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.trailing, 58)
-                    }
-
-                    VStack(alignment: .trailing, spacing: 8) {
-                        Button(action: onToggleFavorite) {
-                            Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                .font(.headline.weight(.semibold))
-                                .foregroundStyle(isFavorite ? .red : .primary)
-                                .frame(width: 36, height: 36)
-                                .background(Color(.systemBackground).opacity(0.92), in: Circle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-
-                HStack(alignment: .center, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("추천 사이즈")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                        Text(history.recommendedSize.name.displaySizeName)
-                            .font(.title2.weight(.black))
-                            .foregroundStyle(.primary)
-                    }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("핏 매칭률")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                        Text("\(history.recommendationScore)%")
-                            .font(.title2.weight(.black))
-                            .foregroundStyle(.primary)
-                            .monospacedDigit()
-                    }
-                }
-                .padding(14)
-                .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                Text(measurementSummaryText)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            currentCardContent
             .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .onTapGesture(perform: onShowDetail)
             .background(
@@ -522,15 +437,259 @@ private struct HistoryCard: View {
         }
     }
 
+    private var currentCardContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ZStack(alignment: .topTrailing) {
+                HStack(alignment: .top, spacing: 14) {
+                    ProductThumbnailView(
+                        imageURLString: history.productImageURLStringForDisplay,
+                        category: history.product.category,
+                        width: 104,
+                        height: 112,
+                        cornerRadius: 16
+                    )
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(historyBrandText)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+
+                        Text(history.productNameForDisplay)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+
+                        Text(historySourceCategoryText)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+
+                        Text(relativeDateText)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(.primary.opacity(0.07), in: Capsule())
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.trailing, 38)
+                }
+
+                Button(action: onToggleFavorite) {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(isFavorite ? .red : .primary)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isFavorite ? "관심 해제" : "관심 등록")
+            }
+
+            GeometryReader { geometry in
+                let dividerWidth: CGFloat = 1
+                let availableWidth = geometry.size.width - (dividerWidth * 2)
+                let primaryMetricWidth = availableWidth * 0.30
+                let reliabilityWidth = availableWidth * 0.40
+
+                HStack(alignment: .top, spacing: 0) {
+                    RecommendationMetricColumn(
+                        title: "추천 사이즈",
+                        value: history.recommendedSize.name.displaySizeName,
+                        detail: nil,
+                        isPrimary: true,
+                        style: .historyCompact,
+                        leadingPadding: 0
+                    )
+                        .frame(width: primaryMetricWidth)
+                    Divider().frame(width: dividerWidth, height: 88)
+                    RecommendationMetricColumn(
+                        title: "핏 매칭률",
+                        value: "\(history.recommendationScore)%",
+                        detail: fitMatchBadge,
+                        isPrimary: true,
+                        style: .historyCompact
+                    )
+                        .frame(width: primaryMetricWidth)
+                    Divider().frame(width: dividerWidth, height: 88)
+                    reliabilityMetric
+                        .frame(width: reliabilityWidth)
+                }
+            }
+            .frame(height: 100)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            HStack(spacing: 8) {
+                Image(systemName: "ruler")
+                    .rotationEffect(.degrees(-38))
+                Text(measurementSummaryText)
+                    .font(.caption.weight(.semibold))
+                Spacer()
+                Text(formattedHistoryDate)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary.opacity(0.72))
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private func historyMetric(title: String, value: String, badge: String? = nil) -> some View {
+        RecommendationMetricColumn(
+            title: title,
+            value: value,
+            detail: badge ?? " ",
+            isPrimary: title == "추천 사이즈",
+            style: .historyCompact
+        )
+    }
+
+    private var reliabilityMetric: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("신뢰도")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(reliabilityStars)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.orange.opacity(0.85))
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+            Text(reliabilityTitle)
+                .font(.subheadline.weight(.bold))
+                .lineLimit(1)
+            Text(measurementSummaryText)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.secondary.opacity(0.8))
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 12)
+    }
+
+    // TODO: Legacy UI, 삭제 금지. currentCardContent 대신 연결하면 기존 목록 카드로 즉시 원복할 수 있습니다.
+    private var historyCardLegacy: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 14) {
+                ProductThumbnailView(
+                    imageURLString: history.productImageURLStringForDisplay,
+                    category: history.product.category,
+                    width: 88,
+                    height: 112,
+                    cornerRadius: 16
+                )
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(history.productBrandNameForDisplay)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                    Text(history.productNameForDisplay)
+                        .font(.headline.weight(.bold))
+                        .lineLimit(2)
+                    Text("출처: \(history.productSourceNameForDisplay)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(historySourceCategoryText)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            HStack {
+                historyMetric(title: "추천 사이즈", value: history.recommendedSize.name.displaySizeName)
+                historyMetric(title: "핏 매칭률", value: "\(history.recommendationScore)%")
+            }
+            .padding(14)
+            .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            Text(measurementSummaryText)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private var measurementSummaryText: String {
-        let kinds = history.product.category
+        comparedMeasurementKinds.isEmpty ? "실측 부족" : "실측 \(comparedMeasurementKinds.count)개 항목 비교"
+    }
+
+    private var comparedMeasurementKinds: [MeasurementKind] {
+        if history.comparisonSchemaVersion >= 1 {
+            return history.comparedMeasurementUsages.map(\.kind)
+        }
+
+        return history.product.category
             .measurementKinds(detailCategory: history.productDetailCategory, gender: .unisex)
             .filter {
                 history.recommendedSize.measurements.value(for: $0) > 0
                     && history.userFit.measurements.value(for: $0) > 0
             }
+    }
 
-        return kinds.isEmpty ? "실측 부족" : "실측 \(kinds.count)개 비교"
+    private var fitMatchBadge: String {
+        switch history.recommendationScore {
+        case 90...: return "매우 잘 맞아요"
+        case 80..<90: return "잘 맞아요"
+        case 70..<80: return "비슷해요"
+        default: return "참고해 주세요"
+        }
+    }
+
+    private var reliabilityStars: String {
+        switch comparedMeasurementKinds.count {
+        case 4...: return "★★★★★"
+        case 3: return "★★★★☆"
+        case 2: return "★★★☆☆"
+        case 1: return "★★☆☆☆"
+        default: return "★☆☆☆☆"
+        }
+    }
+
+    private var reliabilityTitle: String {
+        switch comparedMeasurementKinds.count {
+        case 4...: return "매우 높음"
+        case 3: return "높음"
+        case 2: return "보통"
+        case 1: return "낮음"
+        default: return "매우 낮음"
+        }
+    }
+
+    private var relativeDateText: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(history.createdAt) {
+            return "오늘"
+        }
+        if calendar.isDateInYesterday(history.createdAt) {
+            return "어제"
+        }
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: history.createdAt),
+            to: calendar.startOfDay(for: Date())
+        ).day ?? 0
+        return days > 0 ? "\(days)일 전" : history.createdAt.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    private var historyBrandText: String {
+        isMusinsaProduct
+            ? "\(history.productBrandNameForDisplay) (무신사)"
+            : history.productBrandNameForDisplay
+    }
+
+    private var isMusinsaProduct: Bool {
+        let source = history.productSourceNameForDisplay.lowercased()
+        if source.contains("무신사") || source.contains("musinsa") {
+            return true
+        }
+        return history.product.sourceURLString?.lowercased().contains("musinsa") == true
+    }
+
+    private var formattedHistoryDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy. M. d. (E)"
+        return formatter.string(from: history.createdAt)
     }
 
     private var historySourceCategoryText: String {
@@ -600,53 +759,114 @@ private struct HistoryGridCard: View {
         ZStack(alignment: .topTrailing) {
             Button(action: onShowDetail) {
                 CardView(radius: 20, padding: 12) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        ProductThumbnailView(
-                            imageURLString: history.productImageURLStringForDisplay,
-                            category: history.product.category,
-                            width: 126,
-                            height: 142,
-                            cornerRadius: 16
-                        )
-                        .frame(maxWidth: .infinity)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(history.productBrandNameForDisplay)
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-
-                            Text(history.productNameForDisplay)
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(2)
-                                .fixedSize(horizontal: false, vertical: true)
-
-                            Text("추천 \(history.recommendedSize.name.displaySizeName)")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-
-                            Text("핏 매칭률 \(history.recommendationScore)%")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-
-                        }
-                    }
+                    currentGridContent
                 }
             }
             .buttonStyle(.plain)
 
             Button(action: onToggleFavorite) {
                 Image(systemName: isFavorite ? "heart.fill" : "heart")
-                    .font(.subheadline.weight(.bold))
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(isFavorite ? .red : .primary)
-                    .frame(width: 34, height: 34)
-                    .background(Color(.systemBackground).opacity(0.92), in: Circle())
+                    .frame(width: 32, height: 32)
             }
             .buttonStyle(.plain)
-            .padding(8)
+            .padding(10)
+        }
+    }
+
+    private var currentGridContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            GeometryReader { geometry in
+                ProductThumbnailView(
+                    imageURLString: history.productImageURLStringForDisplay,
+                    category: history.product.category,
+                    width: geometry.size.width,
+                    height: 150,
+                    cornerRadius: 16
+                )
+                .overlay(alignment: .bottomTrailing) {
+                    Text(relativeDateText)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 5)
+                        .background(Color(.systemBackground).opacity(0.9), in: Capsule())
+                        .padding(8)
+                }
+            }
+            .frame(height: 150)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(history.productBrandNameForDisplay)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Text(history.productNameForDisplay)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .frame(minHeight: 38, alignment: .topLeading)
+            }
+
+            Divider()
+                .overlay(.secondary.opacity(0.12))
+
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                gridResult(title: "추천", value: history.recommendedSize.name.displaySizeName)
+                Spacer(minLength: 4)
+                gridResult(title: "핏 매칭률", value: "\(history.recommendationScore)%")
+            }
+        }
+    }
+
+    private func gridResult(title: String, value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 5) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.headline.weight(.black))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .allowsTightening(true)
+        }
+    }
+
+    private var relativeDateText: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(history.createdAt) { return "오늘" }
+        if calendar.isDateInYesterday(history.createdAt) { return "어제" }
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: history.createdAt),
+            to: calendar.startOfDay(for: Date())
+        ).day ?? 0
+        return days > 0 ? "\(days)일 전" : history.createdAt.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    // TODO: Legacy UI, 삭제 금지. currentGridContent 대신 연결하면 기존 그리드 카드로 원복할 수 있습니다.
+    private var historyGridCardLegacy: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ProductThumbnailView(
+                imageURLString: history.productImageURLStringForDisplay,
+                category: history.product.category,
+                width: 126,
+                height: 142,
+                cornerRadius: 16
+            )
+            Text(history.productBrandNameForDisplay)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(history.productNameForDisplay)
+                .font(.subheadline.weight(.bold))
+                .lineLimit(2)
+            Text("추천 \(history.recommendedSize.name.displaySizeName) · 핏 매칭률 \(history.recommendationScore)%")
+                .font(.caption.weight(.bold))
         }
     }
 }

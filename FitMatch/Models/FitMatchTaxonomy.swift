@@ -165,6 +165,11 @@ final class FitMatchTaxonomyProvider {
         return activeDetails(categoryCode: categoryCode).contains { $0.code == detailCode }
     }
 
+    func isActiveCategory(_ categoryCode: String?) -> Bool {
+        guard let categoryCode else { return false }
+        return activeCategories.contains { $0.code == categoryCode }
+    }
+
     private func resolveAlias(_ type: TaxonomyLegacyAlias.AliasType, value: String, categoryCode: String?) -> String? {
         let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return taxonomy.legacyAliases.first {

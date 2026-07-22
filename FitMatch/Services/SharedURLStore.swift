@@ -12,8 +12,8 @@ struct SharedURLStore {
 
     private let defaults: UserDefaults
 
-    init() {
-        defaults = UserDefaults(suiteName: AppGroupConfig.identifier) ?? .standard
+    init(defaults: UserDefaults? = nil) {
+        self.defaults = defaults ?? UserDefaults(suiteName: AppGroupConfig.identifier) ?? .standard
     }
 
     func savePendingProductURL(_ url: URL) {

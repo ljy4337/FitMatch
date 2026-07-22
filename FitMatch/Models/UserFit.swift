@@ -22,6 +22,9 @@ final class UserFit {
     var categoryCode: String?
     var detailCategoryCode: String?
     var normalizedProductTypeCode: String?
+    var garmentTypeRawValue: String?
+    var sleeveTypeRawValue: String?
+    var constructionTypeRawValue: String?
     var sizeName: String
     var shoulder: Double
     var chest: Double
@@ -41,8 +44,17 @@ final class UserFit {
     var createdAt: Date
     var updatedAt: Date
 
+    var measurementSchemaVersion: Int = 0
+    var measurementInputSourceRawValue: String = MeasurementInputSource.migratedLegacy.rawValue
+    var measurementMigrationVersion: Int = 0
+    var measurementMigrationStatusRawValue: String = MeasurementMigrationStatus.notStarted.rawValue
+    var measurementMigrationErrorCode: String?
+
     var sourceProduct: Product?
     var sourceProductSize: ProductSize?
+
+    @Relationship(deleteRule: .cascade, inverse: \GarmentMeasurementRecord.userFit)
+    var measurementRecords: [GarmentMeasurementRecord] = []
 
     init(
         id: UUID = UUID(),
@@ -123,12 +135,18 @@ final class UserFit {
         set {
             categoryRawValue = newValue.rawValue
             categoryCode = newValue.taxonomyCode
+            clearStoredComparisonAttributes()
         }
     }
 
     var sourceType: ProductSourceType {
         get { ProductSourceType(rawValue: sourceTypeRawValue) ?? .manual }
         set { sourceTypeRawValue = newValue.rawValue }
+    }
+
+    var measurementMigrationStatus: MeasurementMigrationStatus {
+        get { MeasurementMigrationStatus(rawValue: measurementMigrationStatusRawValue) ?? .notStarted }
+        set { measurementMigrationStatusRawValue = newValue.rawValue }
     }
 
     var gender: UserGender {
@@ -143,6 +161,8 @@ final class UserFit {
         get { ClosetDetailCategory(rawValue: detailCategoryRawValue) ?? .other }
         set {
             detailCategoryRawValue = newValue.rawValue
+            garmentTypeRawValue = nil
+            sleeveTypeRawValue = nil
             if let resolvedCategoryCode {
                 detailCategoryCode = FitMatchTaxonomyProvider.shared.detailCode(
                     for: newValue.rawValue,
@@ -150,6 +170,27 @@ final class UserFit {
                 )
             }
         }
+    }
+
+    func clearStoredComparisonAttributes() {
+        garmentTypeRawValue = nil
+        sleeveTypeRawValue = nil
+        constructionTypeRawValue = nil
+    }
+
+    var garmentType: ComparisonGarmentFamily {
+        get { garmentTypeRawValue.flatMap { ComparisonGarmentFamily(rawValue: $0) } ?? .unknown }
+        set { garmentTypeRawValue = newValue.rawValue }
+    }
+
+    var sleeveType: ComparisonLengthType {
+        get { sleeveTypeRawValue.flatMap { ComparisonLengthType(rawValue: $0) } ?? .unknown }
+        set { sleeveTypeRawValue = newValue.rawValue }
+    }
+
+    var constructionType: ComparisonConstructionType {
+        get { constructionTypeRawValue.flatMap { ComparisonConstructionType(rawValue: $0) } ?? .unknown }
+        set { constructionTypeRawValue = newValue.rawValue }
     }
 
     var resolvedGenderCode: String {
@@ -222,6 +263,44 @@ final class UserFit {
 
     var displayName: String {
         "\(brandName) \(productName)"
+    }
+
+    func replaceMeasurementRecords(with sourceRecords: [GarmentMeasurementRecord]) {
+        constructionTypeRawValue = nil
+        measurementRecords = sourceRecords.map { source in
+            GarmentMeasurementRecord(
+                value: source.value,
+                unit: MeasurementUnit(rawValue: source.unitRawValue) ?? .centimeter,
+                measurementCode: source.measurementCode,
+                displayKind: source.displayKind ?? .unknown,
+                methodSource: source.methodSource,
+                methodProfile: source.methodProfile,
+                inputSource: MeasurementInputSource(rawValue: source.inputSourceRawValue) ?? .importedSizeChart,
+                standardVersion: source.standardVersion,
+                mappingVersion: source.mappingVersion,
+                rawCode: source.rawCode,
+                rawLabel: source.rawLabel,
+                rawInfo: source.rawInfo,
+                rawValueText: source.rawValueText,
+                evidenceLevel: MeasurementEvidenceLevel(rawValue: source.evidenceLevelRawValue) ?? .unknown,
+                semanticStatus: source.semanticStatus,
+                userFit: self
+            )
+        }
+        guard !measurementRecords.isEmpty else {
+            measurementSchemaVersion = 0
+            measurementInputSourceRawValue = MeasurementInputSource.importedSizeChart.rawValue
+            measurementMigrationVersion = 0
+            measurementMigrationStatus = .notStarted
+            measurementMigrationErrorCode = nil
+            return
+        }
+        measurementSchemaVersion = 1
+        measurementInputSourceRawValue = measurementRecords.first?.inputSourceRawValue
+            ?? MeasurementInputSource.importedSizeChart.rawValue
+        measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
+        measurementMigrationStatus = .completed
+        measurementMigrationErrorCode = nil
     }
 
     var sourceCategoryNameForMatching: String {

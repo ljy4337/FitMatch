@@ -11,6 +11,7 @@ struct AddComparedProductToClosetSheet: View {
     let productDetailCategory: ClosetDetailCategory
     let recommendedSize: ProductSize?
     let preselectedCategory: ClothingCategory?
+    let preselectedClassification: ParsedClosetClassification?
     let isParsedProductReadOnly: Bool
     var onSaved: ((UserFit) -> Void)?
 
@@ -34,6 +35,7 @@ struct AddComparedProductToClosetSheet: View {
         productDetailCategory: ClosetDetailCategory,
         recommendedSize: ProductSize?,
         preselectedCategory: ClothingCategory? = nil,
+        preselectedClassification: ParsedClosetClassification? = nil,
         isParsedProductReadOnly: Bool = false,
         onSaved: ((UserFit) -> Void)? = nil
     ) {
@@ -41,6 +43,7 @@ struct AddComparedProductToClosetSheet: View {
         self.productDetailCategory = productDetailCategory
         self.recommendedSize = recommendedSize
         self.preselectedCategory = preselectedCategory
+        self.preselectedClassification = preselectedClassification
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.onSaved = onSaved
         _step = State(initialValue: isParsedProductReadOnly ? .productInfo : .size)
@@ -48,16 +51,25 @@ struct AddComparedProductToClosetSheet: View {
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
         _selectedGenderCode = State(initialValue: product.productTargetGender.taxonomyCode)
-        _selectedCategory = State(initialValue: preselectedCategory ?? product.category.serviceGroup)
-        _selectedCategoryCode = State(initialValue: (preselectedCategory ?? product.category.serviceGroup).taxonomyCode)
-        _selectedDetailCategory = State(initialValue: productDetailCategory)
-        _selectedDetailCategoryCode = State(initialValue: FitMatchTaxonomyProvider.shared.detailCode(
-            for: productDetailCategory.rawValue,
-            categoryCode: (preselectedCategory ?? product.category.serviceGroup).taxonomyCode
-        ) ?? "")
+        let canonical = preselectedClassification?.isValid == true ? preselectedClassification : nil
+        let initialCategory = canonical?.category ?? preselectedCategory ?? product.category.serviceGroup
+        let initialCategoryCode = canonical?.categoryCode ?? initialCategory.taxonomyCode
+        let initialDetail = canonical?.detailCategory ?? productDetailCategory
+        let initialDetailCode = canonical?.detailCode ?? FitMatchTaxonomyProvider.shared.detailCode(
+            for: initialDetail.rawValue, categoryCode: initialCategoryCode
+        ) ?? ""
+        let hasValidCanonicalSelection = FitMatchTaxonomyProvider.shared.isValidDetail(
+            initialDetailCode, for: initialCategoryCode
+        )
+        _selectedCategory = State(initialValue: initialCategory)
+        _selectedCategoryCode = State(initialValue: initialCategoryCode)
+        _selectedDetailCategory = State(initialValue: initialDetail)
+        _selectedDetailCategoryCode = State(initialValue: initialDetailCode)
         _selectedSizeID = State(initialValue: Self.initialSelectedSizeID(recommendedSize: recommendedSize, productSizes: product.sizes))
-        _hasSelectedClosetCategory = State(initialValue: preselectedCategory != nil && (preselectedCategory ?? .other) != .other)
-        _hasSelectedClosetDetailCategory = State(initialValue: preselectedCategory != nil && productDetailCategory != .other)
+        // Reversible previous initialization used only preselectedCategory != nil.
+        // Canonical taxonomy validity now controls whether parsed selections appear selected.
+        _hasSelectedClosetCategory = State(initialValue: hasValidCanonicalSelection)
+        _hasSelectedClosetDetailCategory = State(initialValue: hasValidCanonicalSelection)
     }
 
     private var availableSizes: [ProductSize] {
@@ -389,7 +401,7 @@ struct AddComparedProductToClosetSheet: View {
             ReadOnlyRegistrationInfoRow(title: "쇼핑몰", value: product.sourceDisplayName, emptyText: "정보 없음")
             ReadOnlyRegistrationInfoRow(title: "브랜드", value: product.brand?.name, emptyText: "정보 없음", isSelectable: true)
             ReadOnlyRegistrationInfoRow(title: "상품명", value: product.name, emptyText: "정보 없음", isSelectable: true)
-            ReadOnlyRegistrationInfoRow(title: "상품 대상", value: selectedGender.rawValue, emptyText: "미분류")
+            ReadOnlyRegistrationInfoRow(title: "성별", value: selectedGenderDisplayName, emptyText: "선택 필요")
             ReadOnlyRegistrationInfoRow(title: "쇼핑몰 카테고리", value: sourceCategoryText, emptyText: "카테고리 정보 없음")
         }
     }
@@ -451,11 +463,20 @@ struct AddComparedProductToClosetSheet: View {
                     VStack(spacing: 10) {
                         ForEach(visibleMeasurementKinds(for: selectedSize), id: \.id) { kind in
                             HStack(spacing: 12) {
-                                Text(kind.title)
+                                Text(MeasurementResolver.title(
+                                    for: kind,
+                                    records: selectedSize.measurementRecords
+                                ))
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(.secondary)
                                 Spacer()
-                                Text(formatMeasurement(selectedSize.measurements.value(for: kind)))
+                                Text(formatMeasurement(
+                                    MeasurementResolver.value(
+                                        for: kind,
+                                        measurements: selectedSize.measurements,
+                                        records: selectedSize.measurementRecords
+                                    ) ?? 0
+                                ))
                                     .font(.headline.weight(.black))
                                     .foregroundStyle(.primary)
                             }
@@ -568,11 +589,20 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private var canSave: Bool {
+        let hasValidClassification = FitMatchTaxonomyProvider.shared.isActiveCategory(selectedCategoryCode)
+            && FitMatchTaxonomyProvider.shared.isValidDetail(selectedDetailCategoryCode, for: selectedCategoryCode)
+            && ParsedClosetClassification.isConsistent(
+                category: selectedCategory,
+                detailCategory: selectedDetailCategory,
+                categoryCode: selectedCategoryCode,
+                detailCode: selectedDetailCategoryCode
+            )
         if isParsedProductReadOnly {
             return selectedSize != nil
                 && selectedGenderCode != "unknown"
                 && hasSelectedClosetCategory
                 && hasSelectedClosetDetailCategory
+                && hasValidClassification
                 && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
 
@@ -580,6 +610,7 @@ struct AddComparedProductToClosetSheet: View {
             && selectedGenderCode != "unknown"
             && !brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && hasValidClassification
     }
 
     private func saveSelectedSize() {
@@ -592,32 +623,48 @@ struct AddComparedProductToClosetSheet: View {
             return
         }
 
+        let selectedSizeID = selectedSize.id
+        let storedSizeDescriptor = FetchDescriptor<ProductSize>(
+            predicate: #Predicate { $0.id == selectedSizeID }
+        )
+        let storedSourceSize = try? modelContext.fetch(storedSizeDescriptor).first
+        let sourceSize = storedSourceSize ?? selectedSize
+        let sourceProduct = storedSourceSize?.product ?? product
+
         let item = UserFit(
-            sourceType: product.sourceType,
-            sourceName: product.sourceDisplayName,
-            sourceCategoryPath: product.sourceCategoryPath,
-            sourceCategoryDepth1: product.sourceCategoryDepth1,
-            sourceCategoryDepth2: product.sourceCategoryDepth2,
-            sourceCategoryDepth3: product.sourceCategoryDepth3,
-            sourceCategoryDepth4: product.sourceCategoryDepth4,
+            sourceType: sourceProduct.sourceType,
+            sourceName: sourceProduct.sourceDisplayName,
+            sourceCategoryPath: sourceProduct.sourceCategoryPath,
+            sourceCategoryDepth1: sourceProduct.sourceCategoryDepth1,
+            sourceCategoryDepth2: sourceProduct.sourceCategoryDepth2,
+            sourceCategoryDepth3: sourceProduct.sourceCategoryDepth3,
+            sourceCategoryDepth4: sourceProduct.sourceCategoryDepth4,
             brandName: savedBrandName,
             gender: selectedGender,
             productName: savedProductName,
             category: selectedCategory.serviceGroup,
             detailCategory: selectedDetailCategory,
-            sizeName: selectedSize.name.displaySizeName,
-            measurements: selectedSize.measurements,
+            sizeName: sourceSize.name.displaySizeName,
+            measurements: sourceSize.measurements,
             fitMemo: "비교 상품에서 추가",
             fitPreference: .regular,
             satisfaction: 0,
             isRepresentative: isBasisItem,
-            sourceProduct: product,
-            sourceProductSize: selectedSize
+            sourceProduct: sourceProduct,
+            sourceProductSize: sourceSize
         )
         item.genderCode = selectedGenderCode
         item.categoryCode = selectedCategoryCode
         item.detailCategoryCode = selectedDetailCategoryCode
-        item.normalizedProductTypeCode = product.resolvedNormalizedProductTypeCode
+        item.normalizedProductTypeCode = sourceProduct.resolvedNormalizedProductTypeCode
+            ?? preselectedClassification?.normalizedProductTypeCode
+        if let preselectedClassification {
+            item.garmentType = preselectedClassification.garmentFamily
+            item.sleeveType = preselectedClassification.lengthType
+            item.constructionType = preselectedClassification.constructionType
+        }
+        item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
+        _ = ComparisonProfileMatcher().profile(for: item)
 
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")
@@ -667,7 +714,8 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private var selectedGenderDisplayName: String {
-        FitMatchTaxonomyProvider.shared.displayName(forGender: selectedGenderCode) ?? selectedGender.rawValue
+        guard selectedGender != .unknown else { return "선택 필요" }
+        return FitMatchTaxonomyProvider.shared.displayName(forGender: selectedGenderCode) ?? selectedGender.rawValue
     }
 
     private var selectedCategoryDisplayName: String {
@@ -730,7 +778,13 @@ struct AddComparedProductToClosetSheet: View {
     private func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {
         selectedCategory
             .measurementKinds(detailCategory: selectedDetailCategory, gender: selectedGender)
-            .filter { size.measurements.value(for: $0) > 0 }
+            .filter {
+                MeasurementResolver.value(
+                    for: $0,
+                    measurements: size.measurements,
+                    records: size.measurementRecords
+                ) != nil
+            }
     }
 
     private func formatMeasurement(_ value: Double) -> String {

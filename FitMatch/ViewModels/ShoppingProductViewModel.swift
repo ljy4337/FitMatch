@@ -23,6 +23,11 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var productCode: String?
     @Published var productMetadata = ProductMetadata()
     @Published var hasLoadedProductInfo = false
+    @Published var measurementAvailability: ProductMeasurementAvailability = .actualMeasurements
+    @Published var sizeTableRecoveryContext: SizeTableRecoveryContext?
+    @Published var isAnalyzingRecoveryImage = false
+    @Published var recoveryErrorMessage: String?
+    @Published var isNetworkFailure = false
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
@@ -55,6 +60,8 @@ final class ShoppingProductViewModel: ObservableObject {
         hasLoadedProductInfo = false
         productCode = nil
         productMetadata = ProductMetadata()
+        sizeTableRecoveryContext = nil
+        isNetworkFailure = false
         isLoadingProductInfo = true
         defer { isLoadingProductInfo = false }
 
@@ -64,12 +71,57 @@ final class ShoppingProductViewModel: ObservableObject {
             return true
         } catch let partialError as ProductURLParserPartialError {
             apply(partialError.productInfo)
-            errorMessage = partialError.errorDescription
+            if partialError.productInfo.sourceName == "무신사",
+               partialError.productInfo.sizes.isEmpty {
+                errorMessage = MusinsaParser.automaticSizeFailureNotice
+            } else {
+                errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
+            }
             return false
         } catch {
+            let nsError = error as NSError
+            isNetworkFailure = nsError.domain == NSURLErrorDomain
+                || (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain == NSURLErrorDomain
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
             return false
         }
+    }
+
+    func analyzeRecoveryImage(url: URL) async -> Bool {
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                recoveryErrorMessage = "이미지를 불러오지 못했어요."
+                return false
+            }
+            return analyzeRecoveryImage(data: data)
+        } catch {
+            recoveryErrorMessage = "이미지를 불러오지 못했어요."
+            return false
+        }
+    }
+
+    func analyzeRecoveryImage(data: Data) -> Bool {
+        recoveryErrorMessage = nil
+        isAnalyzingRecoveryImage = true
+        defer { isAnalyzingRecoveryImage = false }
+        let parsed = MusinsaFallbackSizeParser().parseRecoveryImage(
+            data: data,
+            category: category,
+            categoryDepth2Name: productMetadata.categoryDepth2Name
+        )
+        guard !parsed.isEmpty else {
+            recoveryErrorMessage = "표를 확정하지 못했어요. 값을 직접 입력해 주세요."
+            return false
+        }
+        sizeOptions = parsed.enumerated().map {
+            Self.makeSizeForm(from: $0.element, displayOrder: $0.offset, allowsStandardSizeFallback: false)
+        }
+        sizeTableRecoveryContext = SizeTableRecoveryContext(
+            failure: .incompleteOCR,
+            imageURLStrings: sizeTableRecoveryContext?.imageURLStrings ?? []
+        )
+        return true
     }
 
     @discardableResult
@@ -98,7 +150,7 @@ final class ShoppingProductViewModel: ObservableObject {
             productDetailCategory: detailCategory,
             allowsGlobalFallback: allowsGlobalFallback
         ) else {
-            errorMessage = "비교할 수 있는 사이즈 정보가 없습니다."
+            errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
             return nil
         }
@@ -125,7 +177,7 @@ final class ShoppingProductViewModel: ObservableObject {
             selectedReferenceItem: selectedReferenceItem,
             productDetailCategory: detailCategory
         ) else {
-            errorMessage = "비교할 수 있는 사이즈 정보가 없습니다."
+            errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
             return nil
         }
@@ -211,6 +263,21 @@ final class ShoppingProductViewModel: ObservableObject {
             sourceName: resolvedSourceName,
             sizes: validOptions
         )
+        if let canonical = ParsedClosetClassification.resolve(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [productMetadata.sourceCategoryDepth1, productMetadata.sourceCategoryDepth2,
+                           productMetadata.sourceCategoryDepth3, productMetadata.sourceCategoryDepth4],
+            sourcePath: productMetadata.sourceCategoryPath,
+            productName: productName
+        ) {
+            product.categoryCode = canonical.categoryCode
+            product.normalizedProductTypeCode = canonical.normalizedProductTypeCode
+            product.garmentType = canonical.garmentFamily
+            product.sleeveType = canonical.lengthType
+            product.constructionType = canonical.constructionType
+        }
+        _ = ComparisonProfileMatcher().profile(for: product, detailCategory: detailCategory)
         return product
     }
 
@@ -227,45 +294,62 @@ final class ShoppingProductViewModel: ObservableObject {
         productCanonicalURLString = parsedProduct.canonicalURLString
         productCode = parsedProduct.productID
         productMetadata = metadataWithSourceCategory(from: parsedProduct)
+        measurementAvailability = parsedProduct.measurementAvailability
+        sizeTableRecoveryContext = parsedProduct.sizeTableRecoveryContext
         parserNotice = parsedProduct.parserNotice
         hasLoadedProductInfo = true
-        print("[ShoppingProductViewModel] productName: \(productName)")
-        print("[ShoppingProductViewModel] brandName: \(brand)")
-        print("[ShoppingProductViewModel] sourceType: \(sourceType.displayName)")
-        print("[ShoppingProductViewModel] sourceName: \(sourceName)")
-        print("[ShoppingProductViewModel] raw source category: \(productMetadata.sourceCategoryPath ?? "nil")")
-        print("[ShoppingProductViewModel] parsed gender: \(UserGender.productTarget(from: productMetadata.genderCodes).rawValue)")
-        print("[ShoppingProductViewModel] sourceCategoryDepth1: \(productMetadata.sourceCategoryDepth1 ?? "nil")")
-        print("[ShoppingProductViewModel] sourceCategoryDepth2: \(productMetadata.sourceCategoryDepth2 ?? "nil")")
-        print("[ShoppingProductViewModel] sourceCategoryDepth3: \(productMetadata.sourceCategoryDepth3 ?? "nil")")
-        print("[ShoppingProductViewModel] sourceCategoryDepth4: \(productMetadata.sourceCategoryDepth4 ?? "nil")")
-        print("[ShoppingProductViewModel] sourceCategoryPath: \(productMetadata.sourceCategoryPath ?? "nil")")
-        print("[ShoppingProductViewModel] category: \(category.rawValue)")
-        print("[ShoppingProductViewModel] detailCategory: \(detailCategory.rawValue)")
-        print("[ShoppingProductViewModel] imageURL: \(productImageURLString ?? "nil")")
-        print("[ShoppingProductViewModel] sizeCount: \(parsedProduct.sizes.count)")
+        #if DEBUG
+        FitMatchDebugLogger.event(
+            screen: "상품 비교",
+            action: "파싱 데이터 적용",
+            state: "완료",
+            details: "상품=\(productName), 브랜드=\(brand), 출처=\(sourceName), 성별=\(UserGender.productTarget(from: productMetadata.genderCodes).rawValue), 원본분류=\(productMetadata.sourceCategoryPath ?? "없음"), FitMatch분류=\(category.rawValue)/\(detailCategory.rawValue), 사이즈수=\(parsedProduct.sizes.count)"
+        )
+        #endif
         guard !parsedProduct.sizes.isEmpty else {
             sizeOptions = [ClothingSizeForm()]
             return
         }
 
         sizeOptions = parsedProduct.sizes.enumerated().map { index, size in
-            ClothingSizeForm(
-                sizeName: size.name,
-                shoulder: size.measurements.shoulder.extractedFormText,
-                chest: size.measurements.chest.extractedFormText,
-                totalLength: size.measurements.totalLength.extractedFormText,
-                sleeveLength: size.measurements.sleeveLength.extractedFormText,
-                waist: size.measurements.waist.extractedFormText,
-                hip: size.measurements.hip.extractedFormText,
-                thigh: size.measurements.thigh.extractedFormText,
-                rise: size.measurements.rise.extractedFormText,
-                hem: size.measurements.hem.extractedFormText,
-                footLength: size.measurements.footLength.extractedFormText,
-                underBust: size.measurements.underBust.extractedFormText,
-                displayOrder: index
+            Self.makeSizeForm(
+                from: size,
+                displayOrder: index,
+                allowsStandardSizeFallback: parsedProduct.measurementAvailability != .actualMeasurements
             )
         }
+    }
+
+    static func makeSizeForm(
+        from size: ParsedProductSize,
+        displayOrder: Int,
+        allowsStandardSizeFallback: Bool
+    ) -> ClothingSizeForm {
+        let chestCircumference = size.measurementRecords.first {
+            $0.measurementCode == .chestCircumferenceGarment
+                && $0.semanticStatus == .mapped
+                && $0.value.isFinite
+                && $0.value > 0
+        }
+        return ClothingSizeForm(
+            sizeName: size.name,
+            shoulder: MeasurementResolver.value(for: .shoulder, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            chest: MeasurementResolver.value(for: .chest, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            totalLength: MeasurementResolver.value(for: .totalLength, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            sleeveLength: MeasurementResolver.value(for: .sleeveLength, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            waist: MeasurementResolver.value(for: .waist, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            hip: MeasurementResolver.value(for: .hip, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            thigh: MeasurementResolver.value(for: .thigh, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            rise: MeasurementResolver.value(for: .rise, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            hem: MeasurementResolver.value(for: .hem, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            footLength: MeasurementResolver.value(for: .footLength, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            underBust: MeasurementResolver.value(for: .underBust, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
+            chestUsesCircumference: size.measurements.chest <= 0 && chestCircumference != nil,
+            displayOrder: displayOrder,
+            parsedMeasurementRecords: size.measurementRecords,
+            standardBodyChestCircumferenceCm: size.standardBodyChestCircumferenceCm,
+            allowsStandardSizeFallback: allowsStandardSizeFallback
+        )
     }
 
     private func metadataWithSourceCategory(from parsedProduct: ParsedProductInfo) -> ProductMetadata {
@@ -308,7 +392,12 @@ struct ClothingSizeForm: Identifiable, Equatable {
     var hem = ""
     var footLength = ""
     var underBust = ""
+    var chestUsesCircumference = false
+    var waistUsesCircumference = false
     var displayOrder = 0
+    var parsedMeasurementRecords: [ParsedMeasurement] = []
+    var standardBodyChestCircumferenceCm: Double? = nil
+    var allowsStandardSizeFallback = false
 
     func makeSizeOption(category: ClothingCategory, detailCategory: ClosetDetailCategory = .other, gender: UserGender = .unisex) -> ProductSize? {
         guard !sizeName.trimmed.isEmpty else {
@@ -323,19 +412,20 @@ struct ClothingSizeForm: Identifiable, Equatable {
         let validMeasurementCount = measurementKinds.filter {
             numericValue(for: $0) > 0
         }.count
-        guard validMeasurementCount >= min(2, measurementKinds.count) else {
+        let isStandardSizeOption = allowsStandardSizeFallback
+        guard validMeasurementCount >= min(2, measurementKinds.count) || isStandardSizeOption else {
             return nil
         }
 
-        return ProductSize(
+        let productSize = ProductSize(
             id: id,
             name: sizeName.trimmed,
             measurements: GarmentMeasurements(
                 shoulder: numericValue(for: .shoulder),
-                chest: numericValue(for: .chest),
+                chest: chestUsesCircumference ? 0 : numericValue(for: .chest),
                 totalLength: numericValue(for: .totalLength),
                 sleeveLength: numericValue(for: .sleeveLength),
-                waist: numericValue(for: .waist),
+                waist: waistUsesCircumference ? 0 : numericValue(for: .waist),
                 hip: numericValue(for: .hip),
                 thigh: numericValue(for: .thigh),
                 rise: numericValue(for: .rise),
@@ -345,6 +435,75 @@ struct ClothingSizeForm: Identifiable, Equatable {
             ),
             displayOrder: displayOrder
         )
+        let sourceRecords = parsedMeasurementRecords.isEmpty
+            ? manualMeasurementRecords(
+                category: category,
+                detailCategory: detailCategory,
+                productSize: productSize
+            )
+            : parsedMeasurementRecords.map { $0.makeRecord(productSize: productSize) }
+        let records = sourceRecords
+        productSize.measurementRecords = records
+        if !records.isEmpty {
+            productSize.measurementSchemaVersion = 1
+            productSize.measurementMigrationVersion = MeasurementLegacyBackfillService.migrationVersion
+            productSize.measurementMigrationStatus = .completed
+        }
+        return productSize
+    }
+
+    private func manualMeasurementRecords(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        productSize: ProductSize
+    ) -> [GarmentMeasurementRecord] {
+        category.measurementKinds(detailCategory: detailCategory, gender: .unisex).compactMap { kind in
+            let value = numericValue(for: kind)
+            guard value > 0, let code = manualMeasurementCode(for: kind, category: category) else {
+                return nil
+            }
+            let label: String
+            switch kind {
+            case .chest: label = chestUsesCircumference ? "가슴둘레" : "가슴단면"
+            case .waist: label = waistUsesCircumference ? "허리둘레" : "허리단면"
+            default: label = kind.title
+            }
+            return ParsedMeasurement(
+                value: value,
+                measurementCode: code,
+                displayKind: kind.displayKind,
+                methodSource: "manual_product_size_entry",
+                methodProfile: "transcribed_size_chart",
+                inputSource: .transcribedSizeChart,
+                mappingVersion: "manual_product_size_entry_v1",
+                rawLabel: label,
+                rawValueText: value.truncatingRemainder(dividingBy: 1) == 0
+                    ? String(Int(value))
+                    : String(value),
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped
+            ).makeRecord(productSize: productSize)
+        }
+    }
+
+    private func manualMeasurementCode(
+        for kind: MeasurementKind,
+        category: ClothingCategory
+    ) -> MeasurementCode? {
+        switch kind {
+        case .shoulder: return .shoulderWidthSeamToSeam
+        case .chest: return chestUsesCircumference ? .chestCircumferenceGarment : .chestWidthPitToPit
+        case .totalLength:
+            return category.serviceGroup == .bottom ? .pantsOutseamWaistToHem : .bodyLengthBackNeckToHem
+        case .sleeveLength: return .sleeveShoulderSeamToCuff
+        case .waist: return waistUsesCircumference ? .waistCircumferenceGarment : .waistWidthEdgeToEdge
+        case .hip: return .hipWidthAtWidest
+        case .thigh: return .thighWidthCrotchToOuter
+        case .rise: return .riseCrotchToWaistFront
+        case .hem: return .hemWidthEdgeToEdge
+        case .footLength: return .footLengthHeelToToe
+        case .underBust: return .underBustWidthEdgeToEdge
+        }
     }
 
     func value(for kind: MeasurementKind) -> String {

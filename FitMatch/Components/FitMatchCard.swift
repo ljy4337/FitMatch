@@ -45,6 +45,85 @@ struct FitMatchCard<Content: View>: View {
     }
 }
 
+struct RecommendationMetricColumn: View {
+    enum Style {
+        case result
+        case historyCompact
+    }
+
+    let title: String
+    let value: String
+    let detail: String?
+    let isPrimary: Bool
+    var style: Style = .result
+    var leadingPadding: CGFloat = 10
+
+    private let titleRowHeight: CGFloat = 18
+    private let valueRowHeight: CGFloat = 42
+    private let detailRowHeight: CGFloat = 24
+
+    private var contentAlignment: Alignment {
+        style == .result ? .center : .leading
+    }
+
+    private var textAlignment: TextAlignment {
+        style == .result ? .center : .leading
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: titleRowHeight)
+            metricValue
+            Group {
+                if let detail, !detail.isEmpty {
+                    Text(detail)
+                        .font(style == .historyCompact ? .caption2.weight(.bold) : .caption.weight(.bold))
+                        .foregroundStyle(.green)
+                        .lineLimit(1)
+                        .minimumScaleFactor(style == .historyCompact ? 0.7 : 1)
+                        .allowsTightening(style == .historyCompact)
+                        .padding(.horizontal, style == .historyCompact ? 5 : 7)
+                        .padding(.vertical, 3)
+                        .background(.green.opacity(0.1), in: Capsule())
+                } else {
+                    Color.clear
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: contentAlignment)
+            .frame(height: detailRowHeight)
+        }
+        .frame(maxWidth: .infinity, alignment: contentAlignment)
+        .padding(.leading, leadingPadding)
+        .padding(.trailing, 10)
+    }
+
+    @ViewBuilder
+    private var metricValue: some View {
+        let text = Text(value)
+            .foregroundStyle(.primary)
+            .monospacedDigit()
+            .lineLimit(1)
+            .multilineTextAlignment(textAlignment)
+            .frame(maxWidth: .infinity, alignment: contentAlignment)
+            .frame(height: valueRowHeight)
+
+        switch style {
+        case .result:
+            text.font(.system(size: isPrimary ? 34 : 30, weight: .black))
+        case .historyCompact:
+            text
+                .font(isPrimary ? .system(size: 26, weight: .black) : .title3.weight(.black))
+                .minimumScaleFactor(0.75)
+                .allowsTightening(true)
+        }
+    }
+}
+
 struct PrimaryButton: View {
     let title: String
     var systemImage: String?

@@ -7,14 +7,6 @@ enum ReferenceGarmentPolicy {
               lhs.resolvedDetailCategoryCode == rhs.resolvedDetailCategoryCode else {
             return false
         }
-
-        let lhsType = lhs.resolvedNormalizedProductTypeCode
-        let rhsType = rhs.resolvedNormalizedProductTypeCode
-        if let lhsType, let rhsType {
-            return lhsType == rhsType
-        }
-
-        // Unknown product types keep the existing conservative one-reference-per-class behavior.
         return true
     }
 }

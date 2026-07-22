@@ -12,17 +12,27 @@ struct MusinsaProductMetadata {
     var imageURLString: String?
     var price: Int?
     var canonicalURLString: String?
+    var isUseSize: Bool = false
+    var goodsContents: String = ""
     var productMetadata: ProductMetadata = ProductMetadata()
 
     func parsedProductInfo(sizes: [ParsedProductSize], parserNotice: String? = nil) -> ParsedProductInfo {
-        ParsedProductInfo(
+        let canonical = ParsedClosetClassification.resolve(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [productMetadata.sourceCategoryDepth1, productMetadata.sourceCategoryDepth2,
+                           productMetadata.sourceCategoryDepth3, productMetadata.sourceCategoryDepth4],
+            sourcePath: productMetadata.sourceCategoryPath,
+            productName: productName
+        )
+        return ParsedProductInfo(
             sourceURL: sourceURL,
             sourceType: .marketplace,
             sourceName: "무신사",
             brandName: brandName,
             productName: productName,
-            category: category,
-            detailCategory: detailCategory,
+            category: canonical?.category ?? category,
+            detailCategory: canonical?.detailCategory ?? detailCategory,
             sizes: sizes,
             parserNotice: parserNotice,
             productID: productID,
@@ -35,7 +45,14 @@ struct MusinsaProductMetadata {
             sourceCategoryDepth3: productMetadata.sourceCategoryDepth3,
             sourceCategoryDepth4: productMetadata.sourceCategoryDepth4,
             productTargetGender: UserGender.productTarget(from: productMetadata.genderCodes),
-            productMetadata: productMetadata
+            productMetadata: productMetadata,
+            measurementAvailability: {
+                switch productMetadata.sizeType {
+                case StandardBodySizeChart.metadataMarker: return .standardSizeChart
+                case StandardBodySizeChart.unavailableMarker: return .unavailable
+                default: return sizes.isEmpty ? .unavailable : .actualMeasurements
+                }
+            }()
         )
     }
 
@@ -59,6 +76,13 @@ struct MusinsaProductMetadata {
             (!hasSourceCategory && mappedDetailCategory != .other) {
             detailCategory = mappedDetailCategory
         }
+    }
+
+    mutating func applyActualSizeProfile(typeNumber: Int?, typeName: String?) {
+        if let typeNumber {
+            productMetadata.sizeType = String(typeNumber)
+        }
+        applyActualSizeTypeName(typeName)
     }
 }
 
@@ -107,10 +131,14 @@ struct MusinsaProductMetadataParser {
                 imageURLString: Self.normalizeImageURL(response.data.thumbnailImageUrl),
                 price: metadata.finalPrice ?? metadata.salePrice ?? metadata.normalPrice,
                 canonicalURLString: "https://www.musinsa.com/products/\(productID)",
+                isUseSize: response.data.isUseSize ?? false,
+                goodsContents: response.data.goodsContents ?? "",
                 productMetadata: metadata
             )
         } catch {
-            print("[MusinsaProductMetadataParser] API metadata failed: \(error.localizedDescription)")
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 상품 정보 조회", state: "실패", details: "오류=\(error.localizedDescription), HTML대체파싱=시작")
+            #endif
             return await parseHTMLFallback(productID: productID, sourceURL: sourceURL)
         }
     }
@@ -122,6 +150,7 @@ struct MusinsaProductMetadataParser {
 
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
+        request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("https://www.musinsa.com", forHTTPHeaderField: "Referer")
         request.setValue(
@@ -157,12 +186,15 @@ struct MusinsaProductMetadataParser {
             imageURLString: Self.normalizeImageURL(ogImage),
             price: nil,
             canonicalURLString: canonical ?? "https://www.musinsa.com/products/\(productID)",
+            isUseSize: false,
+            goodsContents: html,
             productMetadata: ProductMetadata()
         )
     }
 
     private func fetchHTML(from url: URL) async throws -> String {
         var request = URLRequest(url: url)
+        request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
         request.setValue(
             "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
             forHTTPHeaderField: "User-Agent"
@@ -197,6 +229,25 @@ struct MusinsaProductMetadataParser {
 
     static func mapCategory(from categoryText: String?) -> ClothingCategory {
         let text = categoryText ?? ""
+        let depths = text
+            .components(separatedBy: ">")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        let umbrellaCategories = ["원피스/스커트", "경량 패딩/패딩 베스트"]
+        for depth in depths.reversed() where !umbrellaCategories.contains(depth) {
+            if let category = atomicCategory(from: depth) {
+                return category
+            }
+        }
+        return atomicCategory(from: text) ?? .other
+    }
+
+    private static func atomicCategory(from text: String) -> ClothingCategory? {
+        if text.contains("여성 속옷 하의") || text.contains("속옷") { return .underwear }
+        if text.contains("원피스") { return .dress }
+        if text.contains("스커트") { return .bottom }
+        if text.contains("홈웨어") { return .other }
+        if text.contains("신발") || text.contains("슈즈") { return .shoes }
         if text.contains("팬츠") ||
             text.contains("바지") ||
             text.contains("데님") ||
@@ -208,25 +259,23 @@ struct MusinsaProductMetadataParser {
         if text.contains("아우터") || text.contains("재킷") || text.contains("자켓") || text.contains("코트") || text.contains("점퍼") {
             return .outer
         }
-        if text.contains("원피스") {
-            return .dress
-        }
-        if text.contains("속옷") {
-            return .underwear
-        }
         if text.contains("셔츠") {
             return .shirt
         }
         if text.contains("니트") {
             return .knit
         }
-        if text.contains("티셔츠") || text.contains("상의") || text.contains("반소매") || text.contains("긴소매") {
+        if text.contains("티셔츠") || text.contains("상의") || text.contains("반소매") || text.contains("긴소매") || text.contains("민소매") {
             return .top
         }
-        return .other
+        return nil
     }
 
     static func mapDetailCategory(from text: String) -> ClosetDetailCategory {
+        if text.contains("여성 속옷 하의") || text.contains("팬티") { return .womenPanty }
+        if text.contains("홈웨어") { return .loungewear }
+        if text.contains("스커트") { return .skirt }
+        if text.contains("원피스") { return .onePiece }
         if text.contains("민소매") || text.localizedCaseInsensitiveContains("sleeveless") || text.localizedCaseInsensitiveContains("tank") {
             return .sleeveless
         }
@@ -402,13 +451,13 @@ struct MusinsaProductMetadataParser {
     }
 
     private static func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath) {
-        print("[MusinsaProductMetadataParser] raw source category: \(rawSourceCategory.isEmpty ? "nil" : rawSourceCategory)")
-        print("[MusinsaProductMetadataParser] parsed gender: \(gender.rawValue)")
-        print("[MusinsaProductMetadataParser] sourceCategoryDepth1: \(sourcePath.depth1 ?? "nil")")
-        print("[MusinsaProductMetadataParser] sourceCategoryDepth2: \(sourcePath.depth2 ?? "nil")")
-        print("[MusinsaProductMetadataParser] sourceCategoryDepth3: \(sourcePath.depth3 ?? "nil")")
-        print("[MusinsaProductMetadataParser] sourceCategoryDepth4: \(sourcePath.depth4 ?? "nil")")
-        print("[MusinsaProductMetadataParser] sourceCategoryPath: \(sourcePath.fullPath ?? "nil")")
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "무신사 원본 분류 해석",
+            details: "원본=\(rawSourceCategory.isEmpty ? "없음" : rawSourceCategory), 성별=\(gender.rawValue), depth1=\(sourcePath.depth1 ?? "없음"), depth2=\(sourcePath.depth2 ?? "없음"), depth3=\(sourcePath.depth3 ?? "없음"), depth4=\(sourcePath.depth4 ?? "없음"), 경로=\(sourcePath.fullPath ?? "없음")"
+        )
+        #endif
     }
 }
 
@@ -462,6 +511,7 @@ private struct MusinsaProductDetailResponse: Decodable {
         let labels: [Label]?
         let genders: [String]?
         let isOutOfStock: Bool?
+        let goodsContents: String?
     }
 
     struct BrandInfo: Decodable {

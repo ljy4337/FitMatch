@@ -18,7 +18,7 @@ struct HomeView: View {
     var body: some View {
         ZStack(alignment: .top) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 18) {
                     closetDashboardSection
                     recentComparisonSection
                     homeGuideSection
@@ -45,34 +45,76 @@ struct HomeView: View {
     }
 
     private var closetDashboardSection: some View {
-        CardView(radius: 22, padding: 18) {
-            VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(title: "내 옷장 현황", subtitle: "등록된 옷과 분류를 한눈에 확인하세요")
-
-                HStack(spacing: 10) {
-                    HomeClosetStat(title: "전체 옷", value: userFits.count)
-                    HomeClosetStat(title: "기준 옷", value: referenceFitCount)
-                    HomeClosetStat(title: "카테고리", value: closetCategoryCount)
-                }
-
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                SectionHeader(title: "내 옷장 현황", subtitle: closetDashboardSubtitle)
+                Spacer()
                 Button(action: onOpenCloset) {
-                    HStack {
-                        Text("내 옷장 보기")
-                        Spacer()
+                    HStack(spacing: 4) {
+                        Text("전체보기")
                         Image(systemName: "chevron.right")
                     }
-                    .font(.subheadline.weight(.bold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if !recentClosetItems.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 12) {
+                        ForEach(recentClosetItems) { item in
+                            HomeClosetPreviewCard(item: item)
+                                .frame(width: 204)
+                        }
+                    }
+                    .scrollTargetLayout()
+                    .padding(.vertical, 2)
+                }
+                .scrollTargetBehavior(.viewAligned(limitBehavior: .always))
+            } else {
+                Button(action: onOpenCloset) {
+                    CardView(radius: 22, padding: 18) {
+                        HStack(spacing: 14) {
+                            Image(systemName: "tshirt")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(Color(.systemBackground))
+                                .frame(width: 44, height: 44)
+                                .background(.primary, in: Circle())
+
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("아직 등록된 옷이 없어요")
+                                    .font(.headline.weight(.bold))
+                                Text("잘 맞는 옷을 등록하면 상품 사이즈를 비교할 수 있어요.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer(minLength: 4)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
                 }
                 .buttonStyle(.plain)
             }
         }
     }
 
+    private var recentClosetItems: [UserFit] {
+        Array(userFits.prefix(5))
+    }
+
+    private var closetDashboardSubtitle: String {
+        recentClosetItems.isEmpty ? "등록한 옷을 한눈에 확인하세요" : "최근 등록한 옷을 최대 5개까지 보여드려요"
+    }
+
     private var recentComparisonSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                SectionHeader(title: "최근 비교", subtitle: recentComparisonSubtitle)
+                SectionHeader(title: "최근 비교 결과", subtitle: recentComparisonSubtitle)
                 Spacer()
                 Button(action: onOpenHistory) {
                     HStack(spacing: 4) {
@@ -87,7 +129,7 @@ struct HomeView: View {
 
             if !recentHistories.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
+                    LazyHStack(spacing: 12) {
                         ForEach(recentHistories) { history in
                             RecentProductPreviewCard(
                                 history: history,
@@ -100,11 +142,44 @@ struct HomeView: View {
                                     }
                                 }
                             )
-                            .frame(width: 214)
+                            .frame(width: 204)
                         }
                     }
+                    .scrollTargetLayout()
                     .padding(.vertical, 2)
                 }
+                .scrollTargetBehavior(.viewAligned(limitBehavior: .always))
+            } else {
+                Button(action: onStartCompare) {
+                    CardView(radius: 22, padding: 18) {
+                        HStack(spacing: 14) {
+                            Image(systemName: "arrow.left.arrow.right")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(Color(.systemBackground))
+                                .frame(width: 44, height: 44)
+                                .background(.primary, in: Circle())
+
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("첫 상품을 비교해 보세요")
+                                    .font(.headline.weight(.bold))
+                                Text("상품 링크를 가져오면 내 옷과 맞는 사이즈를 찾아드려요.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            Spacer(minLength: 4)
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("첫 상품 비교 시작하기")
+                .accessibilityHint("상품 비교 화면을 엽니다")
             }
         }
     }
@@ -146,32 +221,189 @@ struct HomeView: View {
         }
     }
 
-    private var referenceFitCount: Int {
-        userFits.filter(\.isRepresentative).count
-    }
-
-    private var closetCategoryCount: Int {
-        Set(userFits.map { $0.detailCategory.rawValue }).count
-    }
-
 }
 
-private struct HomeClosetStat: View {
-    let title: String
-    let value: Int
+private struct HomeClosetPreviewCard: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var allUserFits: [UserFit]
+
+    let item: UserFit
+    @State private var isShowingReferenceConfirmation = false
+    @State private var existingReferenceItem: UserFit?
+    @State private var saveErrorMessage: String?
 
     var body: some View {
-        VStack(spacing: 5) {
-            Text("\(value)")
-                .font(.title2.weight(.black))
-                .monospacedDigit()
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+        CardView(radius: 20, padding: 14, background: Color(.secondarySystemGroupedBackground)) {
+            VStack(alignment: .leading, spacing: 8) {
+                NavigationLink {
+                    ClosetItemDetailView(item: item)
+                } label: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(alignment: .center, spacing: 12) {
+                            summaryValue(title: "등록 사이즈", value: item.sizeName)
+                            Spacer()
+                            summaryValue(title: "분류", value: detailCategoryName, alignment: .trailing)
+                        }
+                        .padding(9)
+                        .background(Color(.systemBackground).opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                        ProductThumbnailView(
+                            imageURLString: item.sourceProduct?.imageURLString,
+                            category: item.category,
+                            width: 168,
+                            height: 78,
+                            cornerRadius: 15
+                        )
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.brandName)
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Text(item.productName)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+                                .truncationMode(.tail)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+
+                HStack(spacing: 8) {
+                    Button(action: toggleReference) {
+                        Label("기준", systemImage: item.isRepresentative ? "tshirt.fill" : "tshirt")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(item.isRepresentative ? .red : .secondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 32)
+                            .background(item.isRepresentative ? Color.red.opacity(0.06) : Color.clear, in: Capsule())
+                            .overlay {
+                                Capsule()
+                                    .stroke(
+                                        item.isRepresentative ? Color.red.opacity(0.16) : Color.primary.opacity(0.12),
+                                        lineWidth: 1
+                                    )
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(item.isRepresentative ? "기준 옷 해제" : "기준 옷 지정")
+
+                    NavigationLink {
+                        ClosetItemDetailView(item: item)
+                    } label: {
+                        Text("수정")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Color(.systemBackground))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 32)
+                            .background(.primary, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .confirmationDialog(
+            existingReferenceItem == nil ? "이 옷을 기준 옷으로 설정할까요?" : "기준 옷을 변경할까요?",
+            isPresented: $isShowingReferenceConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(existingReferenceItem == nil ? "기준 옷으로 설정" : "기준 옷 변경") {
+                applyReferenceChange()
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            if let existingReferenceItem {
+                Text("기존 기준 옷 ‘\(existingReferenceItem.displayName)’은 자동으로 해제됩니다.")
+            } else {
+                Text("같은 종류의 상품을 비교할 때 이 옷을 먼저 사용합니다.")
+            }
+        }
+        .alert("저장할 수 없습니다", isPresented: saveErrorBinding) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text(saveErrorMessage ?? "기준 옷 설정을 저장하지 못했습니다.")
+        }
+    }
+
+    private var saveErrorBinding: Binding<Bool> {
+        Binding(
+            get: { saveErrorMessage != nil },
+            set: { if !$0 { saveErrorMessage = nil } }
+        )
+    }
+
+    private func toggleReference() {
+        if item.isRepresentative {
+            item.isRepresentative = false
+            item.updatedAt = Date()
+            saveReferenceChange()
+            return
+        }
+
+        existingReferenceItem = allUserFits.first {
+            $0.id != item.id
+                && $0.isRepresentative
+                && ReferenceGarmentPolicy.conflicts($0, item)
+        }
+        if existingReferenceItem == nil {
+            item.isRepresentative = true
+            item.updatedAt = Date()
+            saveReferenceChange()
+        } else {
+            isShowingReferenceConfirmation = true
+        }
+    }
+
+    private func applyReferenceChange() {
+        allUserFits
+            .filter {
+                $0.id != item.id
+                    && $0.isRepresentative
+                    && ReferenceGarmentPolicy.conflicts($0, item)
+            }
+            .forEach {
+                $0.isRepresentative = false
+                $0.updatedAt = Date()
+            }
+
+        item.isRepresentative = true
+        item.updatedAt = Date()
+        saveReferenceChange()
+    }
+
+    private func saveReferenceChange() {
+        do {
+            try modelContext.save()
+        } catch {
+            saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
+        }
+    }
+
+    private var detailCategoryName: String {
+        guard let categoryCode = item.resolvedCategoryCode,
+              let detailCode = item.resolvedDetailCategoryCode else {
+            return item.detailCategory.rawValue
+        }
+        return FitMatchTaxonomyProvider.shared.displayName(forDetail: detailCode, categoryCode: categoryCode)
+            ?? item.detailCategory.rawValue
+    }
+
+    private func summaryValue(
+        title: String,
+        value: String,
+        alignment: HorizontalAlignment = .leading
+    ) -> some View {
+        VStack(alignment: alignment, spacing: 3) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.title3.weight(.black))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
     }
 }
 
@@ -332,7 +564,7 @@ struct CompareStartSheet: View {
     }
 
     private func openMusinsa() {
-        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/msuf8hvg") else {
+        guard let url = URL(string: "https://musinsa.onelink.me/PvkC/7egjf3sd") else {
             return
         }
 
@@ -428,42 +660,46 @@ struct RecentProductPreviewCard: View {
     let onRecompare: () -> Void
 
     var body: some View {
-        FitMatchCard {
-            ZStack(alignment: .topTrailing) {
-                NavigationLink {
-                    RecommendationResultView(result: history)
-                } label: {
-                    if layout == .carousel {
+        CardView(radius: 20, padding: cardPadding) {
+            if layout == .carousel {
+                VStack(alignment: .leading, spacing: 8) {
+                    NavigationLink {
+                        RecommendationResultView(result: history)
+                    } label: {
                         carouselContent
-                    } else {
+                    }
+                    .buttonStyle(.plain)
+
+                    carouselActions
+                }
+            } else {
+                ZStack(alignment: .topTrailing) {
+                    NavigationLink {
+                        RecommendationResultView(result: history)
+                    } label: {
                         compactContent
                     }
-                }
-                .buttonStyle(.plain)
+                    .buttonStyle(.plain)
 
-                favoriteButton
-                    .padding(layout == .carousel ? 9 : 0)
+                    favoriteButton
+                }
             }
         }
     }
 
     private var carouselContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
+            resultSummary
+
             ProductThumbnailView(
                 imageURLString: history.product.imageURLString,
                 category: history.product.category,
-                width: 178,
-                height: 178,
-                cornerRadius: 18
+                width: 168,
+                height: 78,
+                cornerRadius: 15
             )
 
             productText
-
-            HStack {
-                fitSummary
-                Spacer()
-                recompareButton
-            }
         }
     }
 
@@ -493,16 +729,26 @@ struct RecentProductPreviewCard: View {
         }
     }
 
+    private var cardPadding: CGFloat {
+        switch layout {
+        case .compact:
+            18
+        case .carousel:
+            14
+        }
+    }
+
     private var productText: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(history.product.brand?.name ?? history.product.sourceDisplayName)
-                .font(.caption.weight(.bold))
+                .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
             Text(history.product.name)
-                .font(.headline.weight(.bold))
+                .font(.subheadline.weight(.bold))
                 .foregroundStyle(.primary)
-                .lineLimit(2)
+                .lineLimit(1)
+                .truncationMode(.tail)
         }
     }
 
@@ -513,6 +759,62 @@ struct RecentProductPreviewCard: View {
             Text("핏 매칭률 \(history.recommendationScore)%")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var resultSummary: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("추천 사이즈")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+                Text(history.recommendedSize.name.displaySizeName)
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(.primary)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("핏 매칭률")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+                Text("\(history.recommendationScore)%")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(.primary)
+                    .monospacedDigit()
+            }
+        }
+        .padding(9)
+    }
+
+    private var carouselActions: some View {
+        HStack(spacing: 8) {
+            Button(action: onToggleFavorite) {
+                Label(isFavorite ? "관심 해제" : "관심", systemImage: isFavorite ? "heart.fill" : "heart")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(isFavorite ? .red : .secondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 32)
+                    .background(isFavorite ? Color.red.opacity(0.06) : Color.clear, in: Capsule())
+                    .overlay {
+                        Capsule()
+                            .stroke(isFavorite ? Color.red.opacity(0.16) : Color.primary.opacity(0.12), lineWidth: 1)
+                    }
+            }
+            .buttonStyle(.plain)
+
+            Button(action: onRecompare) {
+                Text("다시 비교")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 32)
+                    .background(.primary, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(history.product.sourceURLString == nil)
+            .opacity(history.product.sourceURLString == nil ? 0.45 : 1)
         }
     }
 
@@ -532,8 +834,8 @@ struct RecentProductPreviewCard: View {
             Text("다시 비교")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(Color(.systemBackground))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
                 .background(.primary, in: Capsule())
         }
         .buttonStyle(.plain)

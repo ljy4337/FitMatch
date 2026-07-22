@@ -20,9 +20,11 @@ struct ContentView: View {
     @State private var hasFinishedSplash = false
     @State private var isLoggedIn = false
     @State private var pendingCompareURL: String?
-    @State private var compareViewID = UUID()
+    @State private var compareViewID: UUID?
     @State private var lastCompareLaunchKey: String?
     @State private var lastCompareLaunchDate = Date.distantPast
+    @State private var measurementMigrationErrorMessage: String?
+    @State private var measurementMigrationRetryToken = UUID()
     private let sharedURLStore = SharedURLStore()
 
     var body: some View {
@@ -39,7 +41,19 @@ struct ContentView: View {
             #endif
         }
         .dismissesKeyboardOnBackgroundTap()
-        .task {
+        .task(id: measurementMigrationRetryToken) {
+            do {
+                try MeasurementLegacyBackfillService.run(
+                    modelContext: modelContext,
+                    products: products,
+                    userFits: userFits
+                )
+                measurementMigrationErrorMessage = nil
+            } catch {
+                measurementMigrationErrorMessage = "기존 의류 데이터를 업데이트하지 못했어요. 원본 데이터는 삭제되지 않았습니다."
+                hasFinishedSplash = true
+                return
+            }
             SampleDataService.removeLegacySamples(
                 modelContext: modelContext,
                 products: products,
@@ -64,7 +78,11 @@ struct ContentView: View {
 
     @ViewBuilder
     private var normalContent: some View {
-        if !hasFinishedSplash {
+        if let measurementMigrationErrorMessage {
+            MeasurementMigrationRecoveryView(message: measurementMigrationErrorMessage) {
+                measurementMigrationRetryToken = UUID()
+            }
+        } else if !hasFinishedSplash {
             SplashView()
         } else if !hasCompletedOnboarding {
             FitMatchOnboardingView {
@@ -80,7 +98,10 @@ struct ContentView: View {
                 MainTabView(
                     selectedTab: $selectedTab,
                     compareURL: pendingCompareURL,
-                    onCompareURLConsumed: { pendingCompareURL = nil },
+                    onCompareURLConsumed: {
+                        pendingCompareURL = nil
+                        compareViewID = nil
+                    },
                     onRecompare: { urlString in
                         openCompare(with: urlString)
                     },
@@ -369,9 +390,9 @@ private struct ScreenshotClosetEmptyView: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            Image("EmptyCloset")
-                .resizable()
-                .scaledToFit()
+            Image(systemName: "hanger")
+                .font(.system(size: 92, weight: .light))
+                .foregroundStyle(.secondary)
                 .frame(width: 160, height: 160)
             Text("옷장이 비었습니다.")
                 .font(.title3.weight(.bold))
@@ -870,8 +891,11 @@ private struct MainTabView: View {
     let onCompareURLConsumed: () -> Void
     let onRecompare: (String) -> Void
     let onLogout: () -> Void
-    let compareViewID: UUID
+    let compareViewID: UUID?
     @State private var activeSheet: MainActiveSheet?
+    @State private var pendingCompareRequest: CompareFlowRequest?
+    @State private var isAwaitingSheetDismissal = false
+    @State private var lastHandledCompareViewID: UUID?
     @StateObject private var tabBarVisibilityController = TabBarVisibilityController()
 
     var body: some View {
@@ -884,12 +908,24 @@ private struct MainTabView: View {
         .onChange(of: selectedTab) { _, _ in
             tabBarVisibilityController.release(tab: selectedTab, reason: .scrolling, source: "tab changed")
         }
-        .onChange(of: compareViewID) { _, _ in
-            presentCompareFlow(initialURL: compareURL)
-            onCompareURLConsumed()
+        .onAppear {
+            handleCompareRequestIfNeeded(compareViewID)
+        }
+        .onChange(of: compareViewID) { _, newValue in
+            handleCompareRequestIfNeeded(newValue)
         }
         .sheet(item: $activeSheet, onDismiss: {
             print("[MainTabView] activeSheet dismissed")
+            if isAwaitingSheetDismissal {
+                isAwaitingSheetDismissal = false
+                if let request = pendingCompareRequest {
+                    pendingCompareRequest = nil
+                    DispatchQueue.main.async {
+                        presentCompareRequest(request)
+                    }
+                    return
+                }
+            }
             tabBarVisibilityController.release(tab: selectedTab, reason: .modalFlow, source: "sheet dismissed")
         }) { sheet in
             switch sheet {
@@ -907,7 +943,9 @@ private struct MainTabView: View {
             case .compareFlow(let request):
                 NavigationStack {
                     CompareFlowSheet(initialURL: request.initialURL)
+                        .id(request.id)
                 }
+                .environmentObject(tabBarVisibilityController)
                 .presentationDetents([.height(640), .large])
                 .presentationDragIndicator(.visible)
             case .closetAddMethod:
@@ -1023,20 +1061,46 @@ private struct MainTabView: View {
     }
 
     private func presentCompareFlow(initialURL: String?) {
-        print("[MainTabView] activeSheet -> compareFlow, initialURL: \(initialURL ?? "nil")")
-        tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
-        activeSheet = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
-            activeSheet = .compareFlow(CompareFlowRequest(initialURL: initialURL))
+        #if DEBUG
+        print("[화면: 상품 비교][동작: 비교 시트 열기][상태: 요청] URL포함=\(initialURL != nil), 탭=\(selectedTab.logName)")
+        #endif
+        let request = CompareFlowRequest(initialURL: initialURL)
+        guard activeSheet == nil, !isAwaitingSheetDismissal else {
+            pendingCompareRequest = request
+            if activeSheet != nil {
+                isAwaitingSheetDismissal = true
+                activeSheet = nil
+            }
+            return
         }
+
+        presentCompareRequest(request)
     }
 
     private func presentCompareFlowFromNewTask(initialURL: String?) {
-        activeSheet = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            presentCompareFlow(initialURL: initialURL)
+        presentCompareFlow(initialURL: initialURL)
+    }
+
+    private func handleCompareRequestIfNeeded(_ requestID: UUID?) {
+        guard let requestID, lastHandledCompareViewID != requestID else {
+            return
         }
+
+        lastHandledCompareViewID = requestID
+        #if DEBUG
+        print("[화면: 홈/기록][동작: 상품 비교 요청][상태: 시작] URL포함=\(compareURL != nil), 요청ID=\(requestID)")
+        #endif
+        let initialURL = compareURL
+        onCompareURLConsumed()
+        presentCompareFlow(initialURL: initialURL)
+    }
+
+    private func presentCompareRequest(_ request: CompareFlowRequest) {
+        tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
+        activeSheet = .compareFlow(request)
+        #if DEBUG
+        print("[화면: 상품 비교][동작: 비교 시트 열기][상태: 완료] 탭바환경객체=전달됨, 요청ID=\(request.id)")
+        #endif
     }
 
     private func presentClosetAddMethodFromNewTask() {
@@ -1216,6 +1280,27 @@ private struct FitMatchBottomNavigationBar: View {
             }
         }
         .frame(height: 58)
+    }
+}
+
+private struct MeasurementMigrationRecoveryView: View {
+    let message: String
+    let retry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 34, weight: .semibold))
+            Text("데이터 업데이트가 필요해요")
+                .font(.title3.weight(.bold))
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button("다시 시도", action: retry)
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(28)
     }
 }
 

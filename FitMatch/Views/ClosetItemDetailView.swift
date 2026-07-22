@@ -184,7 +184,10 @@ struct ClosetItemDetailView: View {
                 LazyVGrid(columns: measurementGridColumns, spacing: 10) {
                     ForEach(item.category.measurementKinds(detailCategory: item.detailCategory, gender: item.gender)) { kind in
                         MeasurementValueTile(
-                            title: kind.title,
+                            title: MeasurementResolver.title(
+                                for: kind,
+                                records: item.measurementRecords
+                            ),
                             value: measurementText(for: kind)
                         )
                     }
@@ -221,8 +224,11 @@ struct ClosetItemDetailView: View {
     }
 
     private func measurementText(for kind: MeasurementKind) -> String {
-        let value = item.measurements.value(for: kind)
-        return value > 0 ? value.cmText : "-"
+        MeasurementResolver.value(
+            for: kind,
+            measurements: item.measurements,
+            records: item.measurementRecords
+        )?.cmText ?? "-"
     }
 
     private func applyChanges(from editedItem: UserFit) {
@@ -262,6 +268,9 @@ struct ClosetItemDetailView: View {
         item.fitPreference = editedItem.fitPreference
         item.satisfaction = editedItem.satisfaction
         item.isRepresentative = editedItem.isRepresentative
+        item.measurementRecords.forEach(modelContext.delete)
+        item.replaceMeasurementRecords(with: editedItem.measurementRecords)
+        _ = ComparisonProfileMatcher().profile(for: item)
         if item.isRepresentative {
             userFits
                 .filter {
@@ -311,6 +320,9 @@ struct ClosetItemDetailView: View {
         item.sizeName = selectedSize.name.fitMatchDisplaySizeName
         item.measurements = selectedSize.measurements
         item.sourceProductSize = selectedSize
+        item.measurementRecords.forEach(modelContext.delete)
+        item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
+        _ = ComparisonProfileMatcher().profile(for: item)
         item.updatedAt = Date()
         do {
             try modelContext.save()
@@ -387,6 +399,7 @@ struct ClosetItemDetailView: View {
         candidate.categoryCode = item.resolvedCategoryCode
         candidate.detailCategoryCode = item.resolvedDetailCategoryCode
         candidate.normalizedProductTypeCode = item.resolvedNormalizedProductTypeCode
+        candidate.replaceMeasurementRecords(with: item.measurementRecords)
         return candidate
     }
 
@@ -670,7 +683,11 @@ private struct ImportedClosetItemEditView: View {
                         ForEach(visibleMeasurementKinds(for: selectedSize)) { kind in
                             MeasurementValueTile(
                                 title: kind.title,
-                                value: measurementText(selectedSize.measurements.value(for: kind))
+                                value: MeasurementResolver.value(
+                                    for: kind,
+                                    measurements: selectedSize.measurements,
+                                    records: selectedSize.measurementRecords
+                                )?.cmText ?? "-"
                             )
                         }
                     }
@@ -793,7 +810,13 @@ private struct ImportedClosetItemEditView: View {
     private func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {
         item.category
             .measurementKinds(detailCategory: item.detailCategory, gender: item.gender)
-            .filter { size.measurements.value(for: $0) > 0 }
+            .filter {
+                MeasurementResolver.value(
+                    for: $0,
+                    measurements: size.measurements,
+                    records: size.measurementRecords
+                ) != nil
+            }
     }
 
     private func measurementText(_ value: Double) -> String {

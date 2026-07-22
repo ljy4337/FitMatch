@@ -10,8 +10,10 @@ struct LinkClosetRegistrationView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var parsedProduct: Product?
+    @State private var partialProduct: Product?
     @State private var parsedDetailCategory: ClosetDetailCategory = .other
     @State private var isShowingAddToClosetSheet = false
+    @State private var isShowingManualAddSheet = false
     @State private var isShowingSavedAlert = false
     @FocusState private var isURLFocused: Bool
 
@@ -28,9 +30,13 @@ struct LinkClosetRegistrationView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                urlCard
-                parsedProductPreview
-                errorCard
+                if isLoading {
+                    loadingContent
+                } else {
+                    urlCard
+                    parsedProductPreview
+                    errorCard
+                }
             }
             .padding(20)
         }
@@ -44,11 +50,36 @@ struct LinkClosetRegistrationView: View {
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
                     recommendedSize: uniqueSizes(for: parsedProduct).first,
+                    preselectedClassification: ParsedClosetClassification.resolve(
+                        product: parsedProduct,
+                        detailCategory: parsedDetailCategory
+                    ),
                     isParsedProductReadOnly: true
                 ) { _ in
                     isShowingSavedAlert = true
                 }
                 .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+        }
+        .sheet(isPresented: $isShowingManualAddSheet) {
+            if let partialProduct {
+                NavigationStack {
+                    AddClosetItemView(
+                        prefillCategory: partialProduct.category,
+                        prefillDetailCategory: parsedDetailCategory,
+                        prefillGender: partialProduct.productTargetGender,
+                        prefillSourceOption: closetSourceOption(for: partialProduct),
+                        prefillBrand: partialProduct.brand?.name,
+                        prefillProductName: partialProduct.name,
+                        productImageURLString: partialProduct.imageURLString,
+                        presentationContext: .linkedProduct
+                    ) { item in
+                        modelContext.insert(item)
+                        try? modelContext.save()
+                        isShowingSavedAlert = true
+                    }
+                }
                 .presentationDragIndicator(.visible)
             }
         }
@@ -59,7 +90,33 @@ struct LinkClosetRegistrationView: View {
         }
         .onChange(of: productURL) { _, _ in
             parsedProduct = nil
+            partialProduct = nil
             errorMessage = nil
+        }
+    }
+
+    private var loadingContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 7) {
+                Text("상품 정보를 불러오고 있어요")
+                    .font(.title2.weight(.black))
+                Text("잠시만 기다려 주세요.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            FitMatchCard {
+                VStack(alignment: .leading, spacing: 16) {
+                    FitMatchLoadingRow(title: "상품 정보 불러오는 중", state: .done)
+                    FitMatchLoadingRow(title: "사이즈표 확인 중", state: .loading)
+                    FitMatchLoadingRow(title: "내 옷장 추가 준비 중", state: .waiting)
+
+                    Text("평균 10~20초 소요됩니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 6)
+                }
+            }
         }
     }
 
@@ -79,6 +136,7 @@ struct LinkClosetRegistrationView: View {
                         .textContentType(.URL)
                         .submitLabel(.search)
                         .focused($isURLFocused)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                         .onSubmit {
                             if canLoadProduct {
                                 Task {
@@ -90,6 +148,10 @@ struct LinkClosetRegistrationView: View {
                 .padding(.horizontal, 14)
                 .frame(height: 50)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isURLFocused = true
+                }
 
                 PrimaryButton(
                     title: isLoading ? "불러오는 중" : "상품 정보 불러오기",
@@ -153,9 +215,46 @@ struct LinkClosetRegistrationView: View {
     private var errorCard: some View {
         if let errorMessage {
             FitMatchCard {
-                Label(errorMessage, systemImage: "exclamationmark.circle")
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
+                VStack(alignment: .leading, spacing: 16) {
+                    Label(
+                        partialProduct == nil ? errorMessage : "상품 정보를 불러왔습니다.",
+                        systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
+                    )
+                    .font(.headline)
+                    .foregroundStyle(partialProduct == nil ? .red : .primary)
+
+                    if let partialProduct {
+                        Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        HStack(alignment: .top, spacing: 14) {
+                            ProductThumbnailView(
+                                imageURLString: partialProduct.imageURLString,
+                                category: partialProduct.category,
+                                width: 82,
+                                height: 98,
+                                cornerRadius: 16
+                            )
+
+                            VStack(alignment: .leading, spacing: 7) {
+                                Text(partialProduct.brand?.name ?? "브랜드 미상")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.secondary)
+                                Text(partialProduct.name)
+                                    .font(.headline.weight(.semibold))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(sourceCategoryText(for: partialProduct))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        PrimaryButton(title: "사이즈 직접 입력", systemImage: "square.and.pencil") {
+                            isShowingManualAddSheet = true
+                        }
+                    }
+                }
             }
         }
     }
@@ -170,6 +269,7 @@ struct LinkClosetRegistrationView: View {
         isURLFocused = false
         errorMessage = nil
         parsedProduct = nil
+        partialProduct = nil
         isLoading = true
         defer { isLoading = false }
 
@@ -193,7 +293,35 @@ struct LinkClosetRegistrationView: View {
             )
 
             parsedDetailCategory = parsedInfo.detailCategory
+            if let canonical = ParsedClosetClassification.resolve(
+                product: product,
+                detailCategory: parsedInfo.detailCategory
+            ) {
+                product.categoryCode = canonical.categoryCode
+                product.normalizedProductTypeCode = canonical.normalizedProductTypeCode
+                product.garmentType = canonical.garmentFamily
+                product.sleeveType = canonical.lengthType
+                product.constructionType = canonical.constructionType
+            }
             parsedProduct = product
+        } catch let partialError as ProductURLParserPartialError {
+            let parsedInfo = partialError.productInfo
+            let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
+            let product = Product(
+                name: parsedInfo.productName,
+                brand: brand,
+                category: parsedInfo.category,
+                productCode: parsedInfo.productID,
+                sourceURLString: parsedInfo.canonicalURLString ?? parsedInfo.sourceURL.absoluteString,
+                imageURLString: parsedInfo.imageURLString,
+                metadata: parsedInfo.productMetadata,
+                sourceType: parsedInfo.sourceType,
+                sourceName: parsedInfo.sourceName,
+                sizes: []
+            )
+            parsedDetailCategory = parsedInfo.detailCategory
+            partialProduct = product
+            errorMessage = parsedInfo.parserNotice ?? partialError.errorDescription
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
         }
@@ -222,6 +350,12 @@ struct LinkClosetRegistrationView: View {
     private func sourceCategoryText(for product: Product) -> String {
         let value = product.sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return value.isEmpty ? "카테고리 정보 없음" : value
+    }
+
+    private func closetSourceOption(for product: Product) -> ClosetProductSourceOption {
+        if product.sourceName == "무신사" { return .musinsa }
+        if product.sourceName.contains("유니클로") { return .uniqlo }
+        return .manual
     }
 
 }
