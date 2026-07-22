@@ -10,17 +10,21 @@ import SwiftData
 
 @main
 struct FitMatchApp: App {
+    private let modelContainer: ModelContainer = {
+        do {
+            return try ModelContainer(
+                for: Schema(FitMatchSchemaV1.models),
+                migrationPlan: FitMatchSchemaMigrationPlan.self
+            )
+        } catch {
+            fatalError("Failed to create FitMatch model container: \(error)")
+        }
+    }()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [
-            Brand.self,
-            Product.self,
-            ProductSize.self,
-            UserFit.self,
-            RecommendationHistory.self,
-            GarmentMeasurementRecord.self
-        ])
+        .modelContainer(modelContainer)
     }
 }
