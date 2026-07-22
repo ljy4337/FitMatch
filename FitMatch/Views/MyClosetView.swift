@@ -719,7 +719,7 @@ private struct ClosetItemCard: View {
                             .lineLimit(2)
                             .truncationMode(.tail)
 
-                        Text("\(item.category.rawValue) · \(item.detailCategory.rawValue)")
+                        Text("\(item.category.rawValue) · \(item.detailCategory.rawValue) / \(item.sizeName)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
