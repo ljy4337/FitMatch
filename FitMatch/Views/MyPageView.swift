@@ -57,14 +57,18 @@ struct MyPageView: View {
                                 .buttonStyle(.plain)
                             case .guide:
                                 NavigationLink {
-                                    FitMatchUsageGuideView()
+                                    MyNavigationDetailContainer(source: "usage guide") {
+                                        FitMatchUsageGuideView()
+                                    }
                                 } label: {
                                     menuRow(item)
                                 }
                                 .buttonStyle(.plain)
                             case .bodyShape:
                                 NavigationLink {
-                                    BodyShapeSetupFlow(isRequiredFlow: false)
+                                    MyNavigationDetailContainer(source: "body shape settings") {
+                                        BodyShapeSetupFlow(isRequiredFlow: false)
+                                    }
                                 } label: {
                                     menuRow(item)
                                 }
@@ -119,6 +123,30 @@ struct MyPageView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 14)
         .contentShape(Rectangle())
+    }
+}
+
+private struct MyNavigationDetailContainer<Content: View>: View {
+    @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
+    let source: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        content()
+            .onAppear {
+                tabBarVisibilityController.hide(
+                    tab: .my,
+                    reason: .navigationDetail,
+                    source: source
+                )
+            }
+            .onDisappear {
+                tabBarVisibilityController.release(
+                    tab: .my,
+                    reason: .navigationDetail,
+                    source: "\(source) disappear"
+                )
+            }
     }
 }
 

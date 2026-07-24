@@ -295,7 +295,8 @@ struct RecommendationService {
                 product: product,
                 userFits: userFits,
                 productDetailCategory: productDetailCategory,
-                basis: basis
+                basis: basis,
+                bodyShapePreferences: bodyShapePreferences
             )
         }
 
@@ -330,7 +331,8 @@ struct RecommendationService {
                     comparisonMethod: basis.methodText,
                     fallbackReason: basis.fallbackReason,
                     productDetailCategory: productDetailCategory,
-                    comparisonResult: fitConfidence
+                    comparisonResult: fitConfidence,
+                    bodyShapeSettings: bodyShapePreferences
                 )
 
                 printFitConfidenceDebug(
@@ -371,7 +373,8 @@ struct RecommendationService {
         product: Product,
         userFits: [UserFit],
         productDetailCategory: ClosetDetailCategory,
-        basis: RecommendationBasis
+        basis: RecommendationBasis,
+        bodyShapePreferences: BodyShapePreferences
     ) -> RecommendationHistory? {
         let sizes = product.sizes.sorted { $0.displayOrder < $1.displayOrder }
         var bestHistory: RecommendationHistory?
@@ -403,7 +406,9 @@ struct RecommendationService {
                     minimumComparableCount: 1,
                     requiredKinds: [.chest],
                     minimumRequiredKindCount: 1,
-                    requiredAllKinds: []
+                    requiredAllKinds: [],
+                    expectedWeightSum: 1,
+                    usedWeightSum: 1
                 )
                 let history = RecommendationHistory(
                     product: product,
@@ -417,7 +422,8 @@ struct RecommendationService {
                     comparisonMethod: "기준표 가슴둘레 비교",
                     fallbackReason: "실측값이 아닌 한국 의류 기준표 기반 결과입니다.",
                     productDetailCategory: productDetailCategory,
-                    comparisonResult: comparison
+                    comparisonResult: comparison,
+                    bodyShapeSettings: bodyShapePreferences
                 )
                 if absoluteDifference < bestDifference {
                     bestDifference = absoluteDifference

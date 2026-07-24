@@ -10,6 +10,7 @@ enum MeasurementExclusionReason: String, Codable, Equatable {
     case categoryPolicy = "category_policy"
     case missingProductValue = "missing_product_value"
     case missingReferenceValue = "missing_reference_value"
+    case missingBothValues = "missing_both_values"
     case unverifiedProductDefinition = "unverified_product_definition"
     case unverifiedReferenceDefinition = "unverified_reference_definition"
     case incompatibleMeasurementCode = "incompatible_measurement_code"
@@ -22,6 +23,8 @@ enum MeasurementExclusionReason: String, Codable, Equatable {
             return "비교 상품의 실측값이 없습니다."
         case .missingReferenceValue:
             return "기준 옷의 실측값이 없습니다."
+        case .missingBothValues:
+            return "상품과 기준 옷 모두 실측값이 없습니다."
         case .unverifiedProductDefinition:
             return "비교 상품의 측정 방식을 확인할 수 없습니다."
         case .unverifiedReferenceDefinition:
@@ -65,6 +68,8 @@ struct MeasurementComparisonResult: Equatable {
     let requiredKinds: [MeasurementKind]
     let minimumRequiredKindCount: Int
     let requiredAllKinds: [MeasurementKind]
+    let expectedWeightSum: Double
+    let usedWeightSum: Double
 
     var comparedKinds: [MeasurementKind] {
         comparedItems.map(\.kind)
@@ -72,6 +77,11 @@ struct MeasurementComparisonResult: Equatable {
 
     var usages: [MeasurementComparisonUsage] {
         comparedItems.map { MeasurementComparisonUsage(kind: $0.kind, measurementCode: $0.measurementCode) }
+    }
+
+    var comparisonCoverage: Double {
+        guard expectedWeightSum > 0 else { return 0 }
+        return min(1, max(0, usedWeightSum / expectedWeightSum))
     }
 
     var signedDifferences: GarmentMeasurements {
@@ -121,6 +131,10 @@ struct MeasurementComparisonEngine {
 
             let productRecords = records(for: kind, in: productSize.measurementRecords)
             let referenceRecords = records(for: kind, in: referenceItem.measurementRecords)
+            guard !productRecords.isEmpty || !referenceRecords.isEmpty else {
+                exclusions.append(exclusion(kind: kind, reason: .missingBothValues, productRecords: productSize.measurementRecords, referenceRecords: referenceItem.measurementRecords))
+                continue
+            }
             guard !productRecords.isEmpty else {
                 exclusions.append(exclusion(kind: kind, reason: .missingProductValue, productRecords: productSize.measurementRecords, referenceRecords: referenceItem.measurementRecords))
                 continue
@@ -184,6 +198,7 @@ struct MeasurementComparisonEngine {
         }
 
         let weightSum = comparedItems.map(\.weight).reduce(0, +)
+        let expectedWeightSum = policy.expectedWeightSum
         let score = weightSum > 0
             ? Int((comparedItems.map { Double($0.score) * $0.weight }.reduce(0, +) / weightSum).rounded())
             : 0
@@ -211,7 +226,9 @@ struct MeasurementComparisonEngine {
             minimumComparableCount: policy.minimumComparableCount,
             requiredKinds: policy.requiredAnyKinds,
             minimumRequiredKindCount: policy.minimumRequiredKindCount,
-            requiredAllKinds: policy.requiredAllKinds
+            requiredAllKinds: policy.requiredAllKinds,
+            expectedWeightSum: expectedWeightSum,
+            usedWeightSum: weightSum
         )
     }
 
@@ -349,6 +366,13 @@ private struct MeasurementComparisonPolicy {
 
     func weight(for kind: MeasurementKind) -> Double {
         weights[kind] ?? 1
+    }
+
+    var expectedWeightSum: Double {
+        let regularKinds = kinds.filter { $0 != .upperAbdomen && $0 != .upperWaist }
+        let regularWeight = regularKinds.map(weight(for:)).reduce(0, +)
+        let includesAbdomenGroup = kinds.contains(.upperAbdomen) || kinds.contains(.upperWaist)
+        return regularWeight + (includesAbdomenGroup ? 1.4 * 1.25 : 0)
     }
 }
 

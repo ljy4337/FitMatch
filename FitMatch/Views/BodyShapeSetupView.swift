@@ -7,6 +7,7 @@ struct BodyShapeSetupFlow: View {
     @Environment(\.dismiss) private var dismiss
     @State private var page = 0
     @State private var preferences: BodyShapePreferences
+    @State private var isShowingSaveConfirmation = false
 
     init(isRequiredFlow: Bool, onComplete: @escaping () -> Void = {}) {
         self.isRequiredFlow = isRequiredFlow
@@ -16,20 +17,6 @@ struct BodyShapeSetupFlow: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if !isRequiredFlow {
-                HStack {
-                    Button {
-                        if page == 0 { dismiss() } else { page = 0 }
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.headline.weight(.semibold))
-                            .frame(width: 44, height: 44)
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 12)
-            }
-
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     Text("체형 설정 \(page + 1)/2")
@@ -88,6 +75,12 @@ struct BodyShapeSetupFlow: View {
                         .foregroundStyle(.secondary)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    Text("선택한 체형은 관련 치수가 있는 상품에서만 반영돼요.\n변경한 설정은 새로 비교하는 상품부터 적용돼요.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -95,29 +88,44 @@ struct BodyShapeSetupFlow: View {
 
             HStack(spacing: 12) {
                 if page == 1 {
-                    Button("이전") {
+                    Button {
                         page = 0
+                    } label: {
+                        Label("이전", systemImage: "chevron.left")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .frame(minWidth: 96)
+                            .frame(height: 54)
+                            .background(
+                                Color.primary.opacity(0.07),
+                                in: RoundedRectangle(cornerRadius: 17, style: .continuous)
+                            )
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
+                    .buttonStyle(.plain)
                 }
 
-                Button(page == 0 ? "다음" : "설정 완료") {
+                Button {
                     if page == 0 {
                         page = 1
                     } else {
                         let store = BodyShapeSettingsStore()
                         store.save(preferences)
                         store.markCompleted()
-                        onComplete()
-                        if !isRequiredFlow { dismiss() }
+                        isShowingSaveConfirmation = true
                     }
+                } label: {
+                    Text(page == 0 ? "다음" : "설정 완료")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            Color.black,
+                            in: RoundedRectangle(cornerRadius: 17, style: .continuous)
+                        )
+                        .contentShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
                 }
-                .font(.headline.weight(.bold))
-                .foregroundStyle(Color(.systemBackground))
                 .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(Color.primary, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
@@ -125,9 +133,17 @@ struct BodyShapeSetupFlow: View {
             .background(.bar)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
-        .navigationBarBackButtonHidden(!isRequiredFlow)
+        .navigationBarBackButtonHidden(isRequiredFlow)
         .navigationTitle(isRequiredFlow ? "" : "체형 설정")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("체형 설정을 저장했어요", isPresented: $isShowingSaveConfirmation) {
+            Button("확인") {
+                onComplete()
+                if !isRequiredFlow { dismiss() }
+            }
+        } message: {
+            Text("기존 비교 기록은 변경되지 않아요.")
+        }
     }
 
     private func selectionCard(

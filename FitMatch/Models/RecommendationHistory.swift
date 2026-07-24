@@ -67,6 +67,7 @@ final class RecommendationHistory {
         fallbackReason: String = "",
         productDetailCategory: ClosetDetailCategory = .other,
         comparisonResult: MeasurementComparisonResult? = nil,
+        bodyShapeSettings: BodyShapePreferences = .none,
         reason: String? = nil,
         createdAt: Date = Date()
     ) {
@@ -93,9 +94,15 @@ final class RecommendationHistory {
         self.fallbackReason = fallbackReason
         self.productDetailCategoryRawValue = productDetailCategory.rawValue
         if let comparisonResult {
-            self.comparisonSchemaVersion = 1
+            self.comparisonSchemaVersion = 2
             self.comparisonStatusRawValue = comparisonResult.status.rawValue
-            self.comparedMeasurementUsagesJSON = Self.encode(comparisonResult.usages)
+            let snapshot = RecommendationCalculationSnapshot.make(
+                comparison: comparisonResult,
+                bodyShapeSettings: bodyShapeSettings
+            )
+            self.comparedMeasurementUsagesJSON = Self.encode(
+                RecommendationComparisonEnvelope(snapshot: snapshot)
+            )
             self.measurementExclusionsJSON = Self.encode(comparisonResult.exclusions)
         }
         self.normalPriceSnapshot = product.normalPrice
@@ -147,7 +154,24 @@ final class RecommendationHistory {
     }
 
     var comparedMeasurementUsages: [MeasurementComparisonUsage] {
-        Self.decode([MeasurementComparisonUsage].self, from: comparedMeasurementUsagesJSON) ?? []
+        if let envelope = Self.decode(
+            RecommendationComparisonEnvelope.self,
+            from: comparedMeasurementUsagesJSON
+        ) {
+            return envelope.snapshot.usages
+        }
+        return Self.decode([MeasurementComparisonUsage].self, from: comparedMeasurementUsagesJSON) ?? []
+    }
+
+    var calculationSnapshot: RecommendationCalculationSnapshot? {
+        Self.decode(
+            RecommendationComparisonEnvelope.self,
+            from: comparedMeasurementUsagesJSON
+        )?.snapshot
+    }
+
+    var comparisonCoverage: Double {
+        calculationSnapshot?.comparisonCoverage ?? 0
     }
 
     var measurementExclusions: [MeasurementComparisonExclusion] {

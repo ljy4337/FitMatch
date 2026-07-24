@@ -203,6 +203,338 @@ struct BodyShapePreferencesTests {
         #expect(preferred.recommendedSize.name == "S")
     }
 
+    @Test func newRecommendationStoresBodyShapeCalculationSnapshot() throws {
+        let fixture = upperFixture(includeAbdomen: true, includeUpperWaist: true)
+        let product = Product(name: "스냅샷 상의", category: .top, sizes: [fixture.size])
+        let preferences = BodyShapePreferences(
+            hasBroadShoulders: true,
+            hasProminentAbdomen: true
+        )
+
+        let history = try #require(RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: fixture.item,
+            productDetailCategory: .shortSleeve,
+            bodyShapePreferences: preferences
+        ))
+        let snapshot = try #require(history.calculationSnapshot)
+
+        #expect(history.comparisonSchemaVersion == 2)
+        #expect(snapshot.bodyShapeSettings == preferences)
+        #expect(snapshot.comparisonCoverage == history.comparisonCoverage)
+        #expect(snapshot.comparisonCoverage > 0)
+        #expect(snapshot.comparisonCoverage <= 1)
+        #expect(snapshot.usedMeasurements.map(\.measurementCode) == history.comparedMeasurementUsages.map(\.measurementCode))
+        #expect(snapshot.usedMeasurements.contains {
+            $0.kind == .shoulder && $0.effectiveWeight == 1.2 * 1.25
+        })
+        #expect(snapshot.usedMeasurements
+            .filter { $0.kind == .upperAbdomen || $0.kind == .upperWaist }
+            .map(\.effectiveWeight)
+            .reduce(0, +) == 1.75)
+        #expect(snapshot.bodyShapeApplications.contains {
+            $0.preference == .broadShoulders && $0.status == .applied
+        })
+        #expect(snapshot.bodyShapeApplications.contains {
+            $0.preference == .prominentAbdomen && $0.status == .applied
+        })
+    }
+
+    @Test func missingSelectedMeasurementStoresUnappliedReasonAndCoverage() throws {
+        let fixture = upperFixture()
+        let product = Product(name: "결측 상의", category: .top, sizes: [fixture.size])
+
+        let history = try #require(RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: fixture.item,
+            productDetailCategory: .shortSleeve,
+            bodyShapePreferences: BodyShapePreferences(hasProminentAbdomen: true)
+        ))
+        let snapshot = try #require(history.calculationSnapshot)
+        let abdomen = try #require(snapshot.bodyShapeApplications.first {
+            $0.preference == .prominentAbdomen
+        })
+
+        #expect(abdomen.status == .missingBothMeasurements)
+        #expect(abdomen.measurementCodes.isEmpty)
+        #expect(snapshot.excludedMeasurements.contains {
+            ($0.kind == .upperAbdomen || $0.kind == .upperWaist)
+                && $0.reason == .missingBothValues
+        })
+        #expect(snapshot.comparisonCoverage < 1)
+        #expect(snapshot.comparisonCoverage.isFinite)
+    }
+
+    @Test func legacyHistoryDecodesWithoutSnapshotAndNeverUsesCurrentSettings() throws {
+        let fixture = upperFixture()
+        let product = Product(name: "기존 기록", category: .top, sizes: [fixture.size])
+        let history = RecommendationHistory(
+            product: product,
+            recommendedSize: fixture.size,
+            userFit: fixture.item,
+            totalDifference: 2,
+            measurementDifferences: GarmentMeasurements(
+                shoulder: 2,
+                chest: 2,
+                totalLength: 1,
+                sleeveLength: 0
+            ),
+            recommendationScore: 87
+        )
+        let legacyUsages = [
+            MeasurementComparisonUsage(
+                kind: .chest,
+                measurementCode: .chestWidthPitToPit
+            )
+        ]
+        history.comparisonSchemaVersion = 1
+        history.comparedMeasurementUsagesJSON = String(
+            data: try JSONEncoder().encode(legacyUsages),
+            encoding: .utf8
+        )!
+        let originalSize = history.recommendedSize.name
+        let originalScore = history.recommendationScore
+        let suiteName = "BodyShapePreferencesTests.history.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        BodyShapeSettingsStore(defaults: defaults).save(
+            BodyShapePreferences(
+                hasBroadShoulders: true,
+                hasDevelopedChest: true,
+                hasProminentAbdomen: true
+            )
+        )
+
+        #expect(history.calculationSnapshot == nil)
+        #expect(history.comparisonCoverage == 0)
+        #expect(history.comparedMeasurementUsages == legacyUsages)
+        #expect(history.recommendedSize.name == originalSize)
+        #expect(history.recommendationScore == originalScore)
+    }
+
+    @Test func comparisonCoverageIncludesSelectedPreferenceWeightsAndClampsBounds() {
+        let fixture = upperFixture()
+        let result = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .shortSleeve,
+            bodyShapePreferences: BodyShapePreferences(hasBroadShoulders: true)
+        )
+
+        #expect(result.expectedWeightSum == (1.2 * 1.25) + 1.4 + 1.0 + 0.2)
+        #expect(result.usedWeightSum == (1.2 * 1.25) + 1.4 + 1.0)
+        #expect(result.comparisonCoverage == result.usedWeightSum / result.expectedWeightSum)
+
+        let zero = MeasurementComparisonResult(
+            status: .insufficientEvidence,
+            score: 0,
+            comparedItems: [],
+            exclusions: [],
+            averageDifference: .greatestFiniteMagnitude,
+            minimumComparableCount: 1,
+            requiredKinds: [],
+            minimumRequiredKindCount: 0,
+            requiredAllKinds: [],
+            expectedWeightSum: 0,
+            usedWeightSum: 0
+        )
+        let over = MeasurementComparisonResult(
+            status: .confirmed,
+            score: 100,
+            comparedItems: [],
+            exclusions: [],
+            averageDifference: 0,
+            minimumComparableCount: 0,
+            requiredKinds: [],
+            minimumRequiredKindCount: 0,
+            requiredAllKinds: [],
+            expectedWeightSum: 1,
+            usedWeightSum: 2
+        )
+        #expect(zero.comparisonCoverage == 0)
+        #expect(over.comparisonCoverage == 1)
+    }
+
+    @Test func comparisonCoverageCanReachOneHundredPercent() {
+        let fixture = upperFixture()
+        let result = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        )
+
+        #expect(result.usedWeightSum == result.expectedWeightSum)
+        #expect(result.comparisonCoverage == 1)
+    }
+
+    @Test func exclusionsDistinguishProductReferenceAndBothMissing() {
+        let engine = MeasurementComparisonEngine()
+
+        let productMissing = upperFixture()
+        productMissing.size.measurementRecords.removeAll { $0.displayKind == .shoulder }
+        #expect(engine.compare(
+            productSize: productMissing.size,
+            referenceItem: productMissing.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        ).exclusions.contains { $0.kind == .shoulder && $0.reason == .missingProductValue })
+
+        let referenceMissing = upperFixture()
+        referenceMissing.item.measurementRecords.removeAll { $0.displayKind == .shoulder }
+        #expect(engine.compare(
+            productSize: referenceMissing.size,
+            referenceItem: referenceMissing.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        ).exclusions.contains { $0.kind == .shoulder && $0.reason == .missingReferenceValue })
+
+        let bothMissing = upperFixture()
+        bothMissing.size.measurementRecords.removeAll { $0.displayKind == .shoulder }
+        bothMissing.item.measurementRecords.removeAll { $0.displayKind == .shoulder }
+        #expect(engine.compare(
+            productSize: bothMissing.size,
+            referenceItem: bothMissing.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        ).exclusions.contains { $0.kind == .shoulder && $0.reason == .missingBothValues })
+    }
+
+    @Test func exclusionsKeepIncompatibleDefinitionAndCategoryPolicySeparate() {
+        let incompatible = upperFixture()
+        incompatible.item.measurementRecords.removeAll { $0.displayKind == .chest }
+        incompatible.item.measurementRecords.append(
+            record(
+                value: 52,
+                code: .chestWidthUniqloBodyWidth,
+                kind: .chest,
+                userFit: incompatible.item
+            )
+        )
+        let incompatibleResult = MeasurementComparisonEngine().compare(
+            productSize: incompatible.size,
+            referenceItem: incompatible.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        )
+        #expect(incompatibleResult.exclusions.contains {
+            $0.kind == .chest && $0.reason == .incompatibleMeasurementCode
+        })
+
+        let categoryExcluded = upperFixture()
+        let categoryResult = MeasurementComparisonEngine().compare(
+            productSize: categoryExcluded.size,
+            referenceItem: categoryExcluded.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless,
+            excludedKinds: [.shoulder]
+        )
+        #expect(categoryResult.exclusions.contains {
+            $0.kind == .shoulder && $0.reason == .categoryPolicy
+        })
+    }
+
+    @Test func snapshotPresentationUsesSavedStateAndHidesUnselectedBodyShape() throws {
+        let fixture = upperFixture()
+        let noPreferenceResult = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        )
+        let noPreference = RecommendationCalculationPresentation(
+            snapshot: .make(comparison: noPreferenceResult, bodyShapeSettings: .none)
+        )
+        #expect(noPreference.coveragePercent == 100)
+        #expect(noPreference.bodyShapeTitle == nil)
+        #expect(noPreference.bodyShapeMessages.isEmpty)
+
+        let allResult = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless,
+            bodyShapePreferences: BodyShapePreferences(
+                hasBroadShoulders: true,
+                hasDevelopedChest: true
+            )
+        )
+        let all = RecommendationCalculationPresentation(
+            snapshot: .make(
+                comparison: allResult,
+                bodyShapeSettings: BodyShapePreferences(
+                    hasBroadShoulders: true,
+                    hasDevelopedChest: true
+                )
+            )
+        )
+        #expect(all.bodyShapeTitle == "선택한 체형을 모두 반영했어요")
+
+        let partialFixture = upperFixture()
+        partialFixture.size.measurementRecords.removeAll { $0.displayKind == .shoulder }
+        let partialPreferences = BodyShapePreferences(
+            hasBroadShoulders: true,
+            hasDevelopedChest: true
+        )
+        let partialResult = MeasurementComparisonEngine().compare(
+            productSize: partialFixture.size,
+            referenceItem: partialFixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless,
+            bodyShapePreferences: partialPreferences
+        )
+        let partial = RecommendationCalculationPresentation(
+            snapshot: .make(comparison: partialResult, bodyShapeSettings: partialPreferences)
+        )
+        #expect(partial.bodyShapeTitle == "체형 설정 일부 반영")
+        #expect(partial.bodyShapeMessages.contains {
+            $0.contains("상품의 관련 치수가 없어")
+        })
+
+        let noneAppliedPreferences = BodyShapePreferences(hasProminentAbdomen: true)
+        let noneAppliedResult = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless,
+            bodyShapePreferences: noneAppliedPreferences
+        )
+        let noneApplied = RecommendationCalculationPresentation(
+            snapshot: .make(
+                comparison: noneAppliedResult,
+                bodyShapeSettings: noneAppliedPreferences
+            )
+        )
+        #expect(noneApplied.bodyShapeTitle == "체형 설정을 반영하지 못했어요")
+    }
+
+    @Test func snapshotPresentationDistinguishesExclusionMessagesAndClampsPercent() {
+        let snapshot = RecommendationCalculationSnapshot(
+            version: 1,
+            bodyShapeSettings: .none,
+            bodyShapeApplications: [],
+            usedMeasurements: [],
+            excludedMeasurements: [
+                MeasurementComparisonExclusion(kind: .shoulder, reason: .missingProductValue, productCode: nil, referenceCode: .shoulderWidthSeamToSeam),
+                MeasurementComparisonExclusion(kind: .chest, reason: .missingReferenceValue, productCode: .chestWidthPitToPit, referenceCode: nil),
+                MeasurementComparisonExclusion(kind: .upperWaist, reason: .missingBothValues, productCode: nil, referenceCode: nil),
+                MeasurementComparisonExclusion(kind: .sleeveLength, reason: .incompatibleMeasurementCode, productCode: .sleeveShoulderSeamToCuff, referenceCode: .sleeveRaglanNeckToCuff),
+                MeasurementComparisonExclusion(kind: .hem, reason: .categoryPolicy, productCode: .hemWidthEdgeToEdge, referenceCode: .hemWidthEdgeToEdge)
+            ],
+            comparisonCoverage: 1.5
+        )
+        let presentation = RecommendationCalculationPresentation(snapshot: snapshot)
+
+        #expect(presentation.coveragePercent == 100)
+        #expect(presentation.exclusionMessages.contains("어깨너비 · 상품 치수 없음"))
+        #expect(presentation.exclusionMessages.contains("가슴단면 · 기준 옷 치수 없음"))
+        #expect(presentation.exclusionMessages.contains("상의 허리단면 · 상품과 기준 옷 모두 치수 없음"))
+        #expect(presentation.exclusionMessages.contains("소매길이 · 측정 기준이 달라 비교 제외"))
+        #expect(presentation.exclusionMessages.contains("밑단단면 · 해당 카테고리의 비교 대상이 아님"))
+    }
+
     private func abdomenComparison(
         _ fixture: (size: ProductSize, item: UserFit)
     ) -> MeasurementComparisonResult {

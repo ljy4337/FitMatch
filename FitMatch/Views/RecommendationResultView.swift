@@ -102,7 +102,7 @@ struct RecommendationResultView: View {
             }
             .sheet(isPresented: $isShowingMeasurementInfo) {
                 measurementInfoSheet
-                    .presentationDetents([.medium])
+                    .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
             .onAppear {
@@ -428,25 +428,73 @@ struct RecommendationResultView: View {
 
     private var measurementInfoSheet: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("추천 계산에 사용하거나 제외한 실측 항목입니다.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(v1MeasurementKinds, id: \.id) { kind in
-                        ComparisonCoverageRow(
-                            title: kind.title,
-                            isCompared: comparedMeasurementKinds.contains(kind),
-                            detail: comparisonCoverageDetail(for: kind)
-                        )
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text("추천 계산에 사용하거나 제외한 실측 항목입니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(v1MeasurementKinds, id: \.id) { kind in
+                            ComparisonCoverageRow(
+                                title: kind.title,
+                                isCompared: comparedMeasurementKinds.contains(kind),
+                                detail: comparisonCoverageDetail(for: kind)
+                            )
+                        }
                     }
+
+                    calculationSnapshotSections
                 }
-                Spacer()
+                .font(.subheadline)
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .font(.subheadline)
-            .padding(20)
             .navigationTitle("실측 비교 항목")
             .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    @ViewBuilder
+    private var calculationSnapshotSections: some View {
+        if let snapshot = currentResult.calculationSnapshot {
+            let presentation = RecommendationCalculationPresentation(snapshot: snapshot)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("비교 정보 \(presentation.coveragePercent)%")
+                    .font(.headline.weight(.bold))
+                Text("추천 판단에 필요한 치수 중 실제로 비교한 정보의 비율이에요.")
+                    .foregroundStyle(.secondary)
+            }
+
+            if let title = presentation.bodyShapeTitle {
+                Divider()
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(title)
+                        .font(.headline.weight(.bold))
+                    ForEach(presentation.bodyShapeMessages, id: \.self) { message in
+                        Label(message, systemImage: "checkmark.circle")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
+            if !presentation.exclusionMessages.isEmpty {
+                Divider()
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("비교에서 제외된 실측")
+                        .font(.headline.weight(.bold))
+                    ForEach(presentation.exclusionMessages, id: \.self) { message in
+                        Text(message)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
         }
     }
 
