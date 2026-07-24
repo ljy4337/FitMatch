@@ -1156,7 +1156,8 @@ private extension CompareFlowSheet {
             product: product,
             userFits: userFits,
             productDetailCategory: viewModel.detailCategory,
-            allowsGlobalFallback: false
+            allowsGlobalFallback: false,
+            bodyShapePreferences: BodyShapeSettingsStore().load()
         ) else {
             insufficientEvidence = RecommendationService().insufficientEvidence(
                 product: product,
@@ -1203,7 +1204,8 @@ private extension CompareFlowSheet {
         guard let history = RecommendationService().recommend(
                 product: product,
                 selectedReferenceItem: selectedReferenceItem,
-                productDetailCategory: viewModel.detailCategory
+                productDetailCategory: viewModel.detailCategory,
+                bodyShapePreferences: BodyShapeSettingsStore().load()
               ) else {
             insufficientEvidence = RecommendationService().insufficientEvidence(
                 product: product,
@@ -1847,6 +1849,7 @@ struct ManualComparisonSizeEditor: View {
         case .chest: return $option.chest
         case .totalLength: return $option.totalLength
         case .sleeveLength: return $option.sleeveLength
+        case .upperAbdomen, .upperWaist: return .constant("")
         case .waist: return $option.waist
         case .hip: return $option.hip
         case .thigh: return $option.thigh

@@ -148,7 +148,8 @@ final class ShoppingProductViewModel: ObservableObject {
             product: product,
             userFits: userFits,
             productDetailCategory: detailCategory,
-            allowsGlobalFallback: allowsGlobalFallback
+            allowsGlobalFallback: allowsGlobalFallback,
+            bodyShapePreferences: BodyShapeSettingsStore().load()
         ) else {
             errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
@@ -175,7 +176,8 @@ final class ShoppingProductViewModel: ObservableObject {
         guard let history = recommendationService.recommend(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: detailCategory
+            productDetailCategory: detailCategory,
+            bodyShapePreferences: BodyShapeSettingsStore().load()
         ) else {
             errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
@@ -496,6 +498,8 @@ struct ClothingSizeForm: Identifiable, Equatable {
         case .totalLength:
             return category.serviceGroup == .bottom ? .pantsOutseamWaistToHem : .bodyLengthBackNeckToHem
         case .sleeveLength: return .sleeveShoulderSeamToCuff
+        case .upperAbdomen: return .upperAbdomenWidthEdgeToEdge
+        case .upperWaist: return .upperWaistWidthEdgeToEdge
         case .waist: return waistUsesCircumference ? .waistCircumferenceGarment : .waistWidthEdgeToEdge
         case .hip: return .hipWidthAtWidest
         case .thigh: return .thighWidthCrotchToOuter
@@ -512,6 +516,7 @@ struct ClothingSizeForm: Identifiable, Equatable {
         case .chest: return chest
         case .totalLength: return totalLength
         case .sleeveLength: return sleeveLength
+        case .upperAbdomen, .upperWaist: return ""
         case .waist: return waist
         case .hip: return hip
         case .thigh: return thigh

@@ -17,6 +17,8 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case sleeveShoulderSeamToCuff = "sleeve_shoulder_seam_to_cuff"
     case sleeveCenterBackToCuff = "sleeve_center_back_to_cuff"
     case sleeveRaglanNeckToCuff = "sleeve_raglan_neck_to_cuff"
+    case upperAbdomenWidthEdgeToEdge = "upper_abdomen_width_edge_to_edge"
+    case upperWaistWidthEdgeToEdge = "upper_waist_width_edge_to_edge"
     case waistWidthEdgeToEdge = "waist_width_edge_to_edge"
     case waistCircumferenceGarment = "waist_circumference_garment"
     case hipWidthAtWidest = "hip_width_at_widest"
@@ -39,6 +41,8 @@ enum MeasurementDisplayKind: String, Codable, CaseIterable, Hashable {
     case chest
     case totalLength = "total_length"
     case sleeveLength = "sleeve_length"
+    case upperAbdomen = "upper_abdomen"
+    case upperWaist = "upper_waist"
     case waist
     case hip
     case thigh
@@ -115,6 +119,17 @@ enum MeasurementSourceMappingPolicy {
         let setInTypes = [5, 7, 8, 9, 10, 20, 21, 38]
         let raglanTypes = [11, 22, 31]
         let sleevelessTypes = [24, 25]
+
+        if isTopCategory {
+            switch displayKind {
+            case .upperAbdomen where normalizedLabel == "복부단면":
+                return mapping(.upperAbdomenWidthEdgeToEdge)
+            case .upperWaist where normalizedLabel == "허리단면":
+                return mapping(.upperWaistWidthEdgeToEdge)
+            default:
+                break
+            }
+        }
 
         if let typeNumber, bottomTypes.contains(typeNumber) {
             switch displayKind {
@@ -280,6 +295,8 @@ extension MeasurementKind {
         case .chest: return .chest
         case .totalLength: return .totalLength
         case .sleeveLength: return .sleeveLength
+        case .upperAbdomen: return .upperAbdomen
+        case .upperWaist: return .upperWaist
         case .waist: return .waist
         case .hip: return .hip
         case .thigh: return .thigh

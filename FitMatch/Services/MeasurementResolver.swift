@@ -73,6 +73,8 @@ enum MeasurementResolver {
         case .chest: .chest
         case .totalLength: .totalLength
         case .sleeveLength: .sleeveLength
+        case .upperAbdomen: .upperAbdomen
+        case .upperWaist: .upperWaist
         case .waist: .waist
         case .hip: .hip
         case .thigh: .thigh

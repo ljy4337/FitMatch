@@ -102,9 +102,14 @@ struct MeasurementComparisonEngine {
         referenceItem: UserFit,
         productCategory: ClothingCategory,
         productDetailCategory: ClosetDetailCategory,
-        excludedKinds: [MeasurementKind] = []
+        excludedKinds: [MeasurementKind] = [],
+        bodyShapePreferences: BodyShapePreferences = .none
     ) -> MeasurementComparisonResult {
-        let policy = policy(for: productCategory, detailCategory: productDetailCategory)
+        let policy = policy(
+            for: productCategory,
+            detailCategory: productDetailCategory,
+            bodyShapePreferences: bodyShapePreferences
+        )
         var comparedItems: [MeasurementComparisonItem] = []
         var exclusions: [MeasurementComparisonExclusion] = []
 
@@ -156,6 +161,26 @@ struct MeasurementComparisonEngine {
                     weight: policy.weight(for: kind)
                 )
             )
+        }
+
+        let availableAbdomenKinds = comparedItems.filter {
+            $0.kind == .upperAbdomen || $0.kind == .upperWaist
+        }.map(\.kind)
+        if !availableAbdomenKinds.isEmpty {
+            let dividedWeight = 1.4 * 1.25 / Double(availableAbdomenKinds.count)
+            comparedItems = comparedItems.map { item in
+                guard availableAbdomenKinds.contains(item.kind) else { return item }
+                return MeasurementComparisonItem(
+                    kind: item.kind,
+                    measurementCode: item.measurementCode,
+                    productValue: item.productValue,
+                    referenceValue: item.referenceValue,
+                    signedDifference: item.signedDifference,
+                    absoluteDifference: item.absoluteDifference,
+                    score: item.score,
+                    weight: dividedWeight
+                )
+            }
         }
 
         let weightSum = comparedItems.map(\.weight).reduce(0, +)
@@ -227,8 +252,18 @@ struct MeasurementComparisonEngine {
 
     private func policy(
         for category: ClothingCategory,
-        detailCategory: ClosetDetailCategory
+        detailCategory: ClosetDetailCategory,
+        bodyShapePreferences: BodyShapePreferences
     ) -> MeasurementComparisonPolicy {
+        let preferredKinds = bodyShapePreferences.preferredMeasurementKinds
+        func weighted(_ weights: [MeasurementKind: Double]) -> [MeasurementKind: Double] {
+            weights.mapValues { $0 }.reduce(into: [:]) { result, pair in
+                result[pair.key] = pair.value * (preferredKinds.contains(pair.key) ? 1.25 : 1)
+            }
+        }
+        let abdomenKinds: [MeasurementKind] = bodyShapePreferences.hasProminentAbdomen
+            ? [.upperAbdomen, .upperWaist]
+            : []
         switch category.serviceGroup {
         case .top, .shirt, .knit:
             var weights: [MeasurementKind: Double] = [
@@ -237,8 +272,8 @@ struct MeasurementComparisonEngine {
             if detailCategory == .sleeveless { weights[.sleeveLength] = 0 }
             if detailCategory == .shortSleeve { weights[.sleeveLength] = 0.2 }
             return MeasurementComparisonPolicy(
-                kinds: [.shoulder, .chest, .totalLength, .sleeveLength].filter { (weights[$0] ?? 0) > 0 },
-                weights: weights,
+                kinds: ([.shoulder, .chest, .totalLength, .sleeveLength].filter { (weights[$0] ?? 0) > 0 }) + abdomenKinds,
+                weights: weighted(weights),
                 minimumComparableCount: 2,
                 requiredAnyKinds: [.shoulder, .chest],
                 minimumRequiredKindCount: 1,
@@ -246,8 +281,8 @@ struct MeasurementComparisonEngine {
             )
         case .outer:
             return MeasurementComparisonPolicy(
-                kinds: [.shoulder, .chest, .totalLength, .sleeveLength, .hem],
-                weights: [.shoulder: 1.1, .chest: 1.5, .totalLength: 0.8, .sleeveLength: 1.0, .hem: 0.6],
+                kinds: [.shoulder, .chest, .totalLength, .sleeveLength, .hem] + abdomenKinds,
+                weights: weighted([.shoulder: 1.1, .chest: 1.5, .totalLength: 0.8, .sleeveLength: 1.0, .hem: 0.6]),
                 minimumComparableCount: 2,
                 requiredAnyKinds: [],
                 minimumRequiredKindCount: 0,
@@ -256,7 +291,7 @@ struct MeasurementComparisonEngine {
         case .bottom, .pants:
             return MeasurementComparisonPolicy(
                 kinds: [.waist, .hip, .thigh, .rise, .hem, .totalLength],
-                weights: [.waist: 1.4, .hip: 1.2, .thigh: 0.9, .rise: 0.7, .hem: 0.6, .totalLength: 1.0],
+                weights: weighted([.waist: 1.4, .hip: 1.2, .thigh: 0.9, .rise: 0.7, .hem: 0.6, .totalLength: 1.0]),
                 minimumComparableCount: 2,
                 requiredAnyKinds: [.waist, .hip, .thigh],
                 minimumRequiredKindCount: 2,
@@ -324,6 +359,8 @@ private extension GarmentMeasurements {
         case .chest: chest = value
         case .totalLength: totalLength = value
         case .sleeveLength: sleeveLength = value
+        case .upperAbdomen: upperAbdomen = value
+        case .upperWaist: upperWaist = value
         case .waist: waist = value
         case .hip: hip = value
         case .thigh: thigh = value

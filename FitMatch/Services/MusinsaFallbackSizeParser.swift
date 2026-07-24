@@ -1470,6 +1470,8 @@ private extension GarmentMeasurements {
         case .chest: chest = value
         case .totalLength: totalLength = value
         case .sleeveLength: sleeveLength = value
+        case .upperAbdomen: upperAbdomen = value
+        case .upperWaist: upperWaist = value
         case .waist: waist = value
         case .hip: hip = value
         case .thigh: thigh = value

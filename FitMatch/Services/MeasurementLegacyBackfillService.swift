@@ -340,7 +340,7 @@ enum MeasurementLegacyBackfillFactory {
         case .thigh: return "허벅지단면"
         case .rise: return "밑위"
         case .hem: return "밑단단면"
-        case .underBust, .footLength: return nil
+        case .upperAbdomen, .upperWaist, .underBust, .footLength: return nil
         }
     }
 

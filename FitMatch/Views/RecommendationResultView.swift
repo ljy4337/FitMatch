@@ -871,7 +871,7 @@ struct RecommendationResultView: View {
     private func reportIcon(for kind: MeasurementKind) -> String {
         switch kind {
         case .shoulder: return "arrow.left.and.right"
-        case .chest, .underBust: return "tshirt"
+        case .chest, .upperAbdomen, .upperWaist, .underBust: return "tshirt"
         case .totalLength: return "ruler"
         case .sleeveLength: return "ruler"
         case .waist: return "circle.dashed"
@@ -888,6 +888,8 @@ struct RecommendationResultView: View {
         case .chest: return "가슴"
         case .totalLength: return "총장"
         case .sleeveLength: return "소매"
+        case .upperAbdomen: return "복부"
+        case .upperWaist: return "상의 허리"
         case .waist: return "허리"
         case .hip: return "엉덩이"
         case .thigh: return "허벅지"
@@ -1235,7 +1237,8 @@ struct RecommendationResultView: View {
             selectedReferenceItem: item,
             productDetailCategory: currentResult.productDetailCategory,
             existingHistories: histories,
-            modelContext: modelContext
+            modelContext: modelContext,
+            bodyShapePreferences: BodyShapeSettingsStore().load()
         )
 
         switch outcome {
@@ -1385,7 +1388,8 @@ struct RecommendationResultView: View {
             .recommend(
                 product: currentResult.product,
                 selectedReferenceItem: userFit,
-                productDetailCategory: currentResult.productDetailCategory
+                productDetailCategory: currentResult.productDetailCategory,
+                bodyShapePreferences: BodyShapeSettingsStore().load()
             )?
             .recommendedSize
             .name
@@ -2125,12 +2129,14 @@ enum ResultReferenceComparisonPersistence {
         selectedReferenceItem: UserFit,
         productDetailCategory: ClosetDetailCategory,
         existingHistories: [RecommendationHistory],
-        modelContext: ModelContext
+        modelContext: ModelContext,
+        bodyShapePreferences: BodyShapePreferences = .none
     ) -> ResultReferenceComparisonOutcome {
         let outcome = ResultReferenceComparisonResolver.resolve(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: productDetailCategory
+            productDetailCategory: productDetailCategory,
+            bodyShapePreferences: bodyShapePreferences
         )
 
         guard case .success(let history) = outcome else {
@@ -2155,13 +2161,15 @@ enum ResultReferenceComparisonResolver {
     static func resolve(
         product: Product,
         selectedReferenceItem: UserFit,
-        productDetailCategory: ClosetDetailCategory
+        productDetailCategory: ClosetDetailCategory,
+        bodyShapePreferences: BodyShapePreferences = .none
     ) -> ResultReferenceComparisonOutcome {
         let service = RecommendationService()
         if let history = service.recommend(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: productDetailCategory
+            productDetailCategory: productDetailCategory,
+            bodyShapePreferences: bodyShapePreferences
         ) {
             return .success(history)
         }

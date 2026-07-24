@@ -495,6 +495,8 @@ struct AddClosetItemView: View {
             return $viewModel.totalLength
         case .sleeveLength:
             return $viewModel.sleeveLength
+        case .upperAbdomen, .upperWaist:
+            return .constant("")
         case .waist:
             return $viewModel.waist
         case .hip:
@@ -858,7 +860,7 @@ private struct DirectMeasurementDiagram: View {
             return .top
         }
         switch kind {
-        case .shoulder, .chest, .totalLength, .sleeveLength, .underBust:
+        case .shoulder, .chest, .totalLength, .sleeveLength, .upperAbdomen, .upperWaist, .underBust:
             return .top
         case .waist, .hip, .thigh, .rise, .hem:
             return .bottom
@@ -925,6 +927,8 @@ private struct DirectMeasurementDiagram: View {
                 ? (point(0.73, 0.12), point(0.78, 0.90))
                 : (point(0.63, 0.17), point(0.63, 0.90))
         case .sleeveLength: return (point(0.72, 0.18), point(0.87, 0.48))
+        case .upperAbdomen: return (point(0.27, 0.62), point(0.73, 0.62))
+        case .upperWaist: return (point(0.28, 0.70), point(0.72, 0.70))
         case .waist: return (point(0.27, 0.14), point(0.73, 0.14))
         case .hip: return (point(0.25, 0.32), point(0.75, 0.32))
         case .thigh: return (point(0.27, 0.46), point(0.50, 0.46))

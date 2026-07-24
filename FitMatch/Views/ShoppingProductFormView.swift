@@ -764,6 +764,8 @@ private struct ClothingSizeEditor: View {
             return $option.totalLength
         case .sleeveLength:
             return $option.sleeveLength
+        case .upperAbdomen, .upperWaist:
+            return .constant("")
         case .waist:
             return $option.waist
         case .hip:

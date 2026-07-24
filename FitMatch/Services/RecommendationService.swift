@@ -39,7 +39,8 @@ struct RecommendationService {
         product: Product,
         userFits: [UserFit],
         productDetailCategory: ClosetDetailCategory = .other,
-        allowsGlobalFallback: Bool = true
+        allowsGlobalFallback: Bool = true,
+        bodyShapePreferences: BodyShapePreferences = .none
     ) -> RecommendationHistory? {
         let basis = selectBasis(
             product: product,
@@ -56,7 +57,8 @@ struct RecommendationService {
             product: product,
             userFits: sortedFits,
             productDetailCategory: productDetailCategory,
-            basis: basis
+            basis: basis,
+            bodyShapePreferences: bodyShapePreferences
         )
     }
 
@@ -107,7 +109,8 @@ struct RecommendationService {
     func recommend(
         product: Product,
         selectedReferenceItem: UserFit,
-        productDetailCategory: ClosetDetailCategory
+        productDetailCategory: ClosetDetailCategory,
+        bodyShapePreferences: BodyShapePreferences = .none
     ) -> RecommendationHistory? {
         let mismatch = comparisonMatcher.manualMismatch(
             product: product,
@@ -126,7 +129,8 @@ struct RecommendationService {
                 scorePenalty: mismatch.note == nil ? 12 : 20,
                 fallbackReason: fallbackReason,
                 excludedMeasurementKinds: mismatch.excludedKinds
-            )
+            ),
+            bodyShapePreferences: bodyShapePreferences
         )
     }
 
@@ -283,7 +287,8 @@ struct RecommendationService {
         product: Product,
         userFits: [UserFit],
         productDetailCategory: ClosetDetailCategory,
-        basis: RecommendationBasis
+        basis: RecommendationBasis,
+        bodyShapePreferences: BodyShapePreferences = .none
     ) -> RecommendationHistory? {
         if usesStandardSizeFallback(product: product, userFits: userFits) {
             return standardSizeRecommendation(
@@ -305,7 +310,8 @@ struct RecommendationService {
                     referenceItem: userFit,
                     productCategory: product.category,
                     productDetailCategory: productDetailCategory,
-                    excludedKinds: basis.excludedMeasurementKinds
+                    excludedKinds: basis.excludedMeasurementKinds,
+                    bodyShapePreferences: bodyShapePreferences
                 )
                 guard fitConfidence.status == .confirmed else { continue }
                 let signedDifferences = fitConfidence.signedDifferences
