@@ -165,7 +165,6 @@ struct RecommendationHistoryView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
-        .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 
@@ -201,7 +200,6 @@ struct RecommendationHistoryView: View {
             }
         }
         .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
-        .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 

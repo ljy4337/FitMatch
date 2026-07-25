@@ -207,7 +207,6 @@ struct MyClosetView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
-        .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
 
@@ -246,7 +245,6 @@ struct MyClosetView: View {
             }
         }
         .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
-        .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .my, topChrome: $isTopChromeVisible)
     }
 
