@@ -19,6 +19,7 @@ struct MyClosetView: View {
     @State private var isTopChromeVisible = true
     @State private var selectedClosetItemID: UUID?
     @State private var displayedItems: [UserFit] = []
+    @State private var pendingDeleteItem: UserFit?
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -99,6 +100,24 @@ struct MyClosetView: View {
             }
         } message: {
             Text(saveErrorMessage ?? "")
+        }
+        .alert(
+            "이 옷을 삭제할까요?",
+            isPresented: Binding(
+                get: { pendingDeleteItem != nil },
+                set: { if !$0 { pendingDeleteItem = nil } }
+            )
+        ) {
+            Button("취소", role: .cancel) {
+                pendingDeleteItem = nil
+            }
+            Button("삭제", role: .destructive) {
+                guard let item = pendingDeleteItem else { return }
+                pendingDeleteItem = nil
+                deleteItem(item)
+            }
+        } message: {
+            Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 함께 삭제됩니다. 그래도 삭제하시겠어요?")
         }
         .onAppear {
             rebuildDisplayedItems()
@@ -461,7 +480,11 @@ struct MyClosetView: View {
     @ViewBuilder
     private func deleteSwipeButton(for item: UserFit) -> some View {
         Button(role: .destructive) {
-            deleteItem(item)
+            if historiesReferencing(item).isEmpty {
+                deleteItem(item)
+            } else {
+                pendingDeleteItem = item
+            }
         } label: {
             Label("삭제", systemImage: "trash")
         }
@@ -469,13 +492,14 @@ struct MyClosetView: View {
     }
 
     private func deleteHistoriesReferencing(_ item: UserFit) {
-        histories
-            .filter { history in
-                history.userFit.id == item.id
-            }
+        historiesReferencing(item)
             .forEach { history in
                 modelContext.delete(history)
             }
+    }
+
+    private func historiesReferencing(_ item: UserFit) -> [RecommendationHistory] {
+        histories.filter { $0.userFit.id == item.id }
     }
 }
 

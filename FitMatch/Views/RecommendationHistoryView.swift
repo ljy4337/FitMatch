@@ -628,10 +628,13 @@ private struct HistoryCard: View {
 
     private var fitMatchBadge: String {
         switch history.recommendationScore {
-        case 90...: return "매우 잘 맞아요"
-        case 80..<90: return "잘 맞아요"
-        case 70..<80: return "비슷해요"
-        default: return "참고해 주세요"
+        case 90...: return "거의 완벽한 핏"
+        case 80..<90: return "매우 잘 맞는 편"
+        case 70..<80: return "잘 맞는 편"
+        case 60..<70: return "약간의 차이가 있어요"
+        case 50..<60: return "핏 차이를 확인해 보세요"
+        case 40..<50: return "핏 차이가 큰 편이에요"
+        default: return "추천하기 어려워요"
         }
     }
 

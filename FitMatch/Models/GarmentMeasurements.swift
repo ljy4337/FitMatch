@@ -5,6 +5,8 @@ struct GarmentMeasurements: Codable, Equatable, Hashable {
     var chest: Double
     var totalLength: Double
     var sleeveLength: Double
+    var upperAbdomen: Double = 0
+    var upperWaist: Double = 0
     var waist: Double = 0
     var hip: Double = 0
     var thigh: Double = 0
@@ -15,7 +17,8 @@ struct GarmentMeasurements: Codable, Equatable, Hashable {
 
     var isEmpty: Bool {
         shoulder == 0 && chest == 0 && totalLength == 0 && sleeveLength == 0
-            && waist == 0 && hip == 0 && thigh == 0 && rise == 0 && hem == 0 && footLength == 0 && underBust == 0
+            && upperAbdomen == 0 && upperWaist == 0 && waist == 0 && hip == 0 && thigh == 0
+            && rise == 0 && hem == 0 && footLength == 0 && underBust == 0
     }
 
     func distance(to other: GarmentMeasurements) -> Double {
@@ -23,6 +26,8 @@ struct GarmentMeasurements: Codable, Equatable, Hashable {
             + abs(chest - other.chest)
             + abs(totalLength - other.totalLength)
             + abs(sleeveLength - other.sleeveLength)
+            + abs(upperAbdomen - other.upperAbdomen)
+            + abs(upperWaist - other.upperWaist)
             + abs(waist - other.waist)
             + abs(hip - other.hip)
             + abs(thigh - other.thigh)
@@ -38,6 +43,8 @@ struct GarmentMeasurements: Codable, Equatable, Hashable {
         case .chest: return chest
         case .totalLength: return totalLength
         case .sleeveLength: return sleeveLength
+        case .upperAbdomen: return upperAbdomen
+        case .upperWaist: return upperWaist
         case .waist: return waist
         case .hip: return hip
         case .thigh: return thigh
@@ -54,6 +61,8 @@ enum MeasurementKind: String, CaseIterable, Identifiable, Codable, Hashable {
     case chest
     case totalLength
     case sleeveLength
+    case upperAbdomen
+    case upperWaist
     case waist
     case hip
     case thigh
@@ -70,6 +79,8 @@ enum MeasurementKind: String, CaseIterable, Identifiable, Codable, Hashable {
         case .chest: return "가슴단면"
         case .totalLength: return "총장"
         case .sleeveLength: return "소매길이"
+        case .upperAbdomen: return "복부단면"
+        case .upperWaist: return "상의 허리단면"
         case .waist: return "허리단면"
         case .hip: return "엉덩이단면"
         case .thigh: return "허벅지단면"
@@ -86,6 +97,8 @@ enum MeasurementKind: String, CaseIterable, Identifiable, Codable, Hashable {
         case .chest: return "56"
         case .totalLength: return "70"
         case .sleeveLength: return "62"
+        case .upperAbdomen: return "52"
+        case .upperWaist: return "50"
         case .waist: return "39"
         case .hip: return "52"
         case .thigh: return "31"

@@ -134,7 +134,6 @@ struct ShoppingProductFormView: View {
                     }
                 }
                 .disabled(viewModel.productURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isLoadingProductInfo)
-                .opacity(viewModel.productURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
 
                 missingBasisCallout
             }
@@ -764,6 +763,8 @@ private struct ClothingSizeEditor: View {
             return $option.totalLength
         case .sleeveLength:
             return $option.sleeveLength
+        case .upperAbdomen, .upperWaist:
+            return .constant("")
         case .waist:
             return $option.waist
         case .hip:

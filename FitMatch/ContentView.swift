@@ -16,6 +16,7 @@ struct ContentView: View {
     @Query private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("FitMatch.bodyShape.completedVersion") private var bodyShapeCompletedVersion = 0
     @State private var selectedTab: AppTab = .home
     @State private var hasFinishedSplash = false
     @State private var isLoggedIn = false
@@ -87,6 +88,10 @@ struct ContentView: View {
         } else if !hasCompletedOnboarding {
             FitMatchOnboardingView {
                 hasCompletedOnboarding = true
+            }
+        } else if bodyShapeCompletedVersion < BodyShapeSettingsStore.dataVersion {
+            BodyShapeSetupFlow(isRequiredFlow: true) {
+                bodyShapeCompletedVersion = BodyShapeSettingsStore.dataVersion
                 _ = openPendingSharedURLIfNeeded()
             }
         // 로그인 화면은 추후 재사용을 위해 구현을 유지하고 현재 진입 분기만 비활성화합니다.

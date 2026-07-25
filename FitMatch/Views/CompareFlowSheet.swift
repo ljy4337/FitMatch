@@ -165,12 +165,18 @@ private extension CompareFlowSheet {
 
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
-                    FitMatchLoadingRow(title: "상품 정보 불러오는 중", state: .done)
+                    FitMatchLoadingRow(
+                        title: "상품 정보 불러오는 중",
+                        state: loadingState(for: .loadingProductInfo)
+                    )
                     FitMatchLoadingRow(
                         title: isPreparingManualComparison ? "입력한 사이즈 확인 완료" : "사이즈표 확인 중",
-                        state: .done
+                        state: loadingState(for: .loadingSizeChart)
                     )
-                    FitMatchLoadingRow(title: "내 옷과 비교 준비 중", state: .loading)
+                    FitMatchLoadingRow(
+                        title: "내 옷과 비교 준비 중",
+                        state: loadingState(for: .preparingComparison)
+                    )
 
                     Text(isPreparingManualComparison ? "입력한 측정 의미와 호환되는 내 옷을 확인합니다." : "평균 10~20초 소요됩니다.")
                         .font(.subheadline)
@@ -179,6 +185,16 @@ private extension CompareFlowSheet {
                 }
             }
         }
+    }
+
+    func loadingState(for phase: ProductAnalysisPhase) -> FitMatchLoadingState {
+        if isPreparingManualComparison {
+            return phase == .preparingComparison ? .loading : .done
+        }
+        if viewModel.analysisPhase == phase {
+            return .loading
+        }
+        return viewModel.analysisPhase.rawValue > phase.rawValue ? .done : .waiting
     }
 
     var missingReferenceContent: some View {
@@ -207,7 +223,6 @@ private extension CompareFlowSheet {
                     setStep(.closetSelection)
                 }
                 .disabled(allSimilarClosetCandidates.isEmpty)
-                .opacity(allSimilarClosetCandidates.isEmpty ? 0.45 : 1)
 
                 SecondaryButton(title: "내 옷장에 추가", systemImage: "plus") {
                     presentProductRegistration(context: .missingReference)
@@ -301,7 +316,6 @@ private extension CompareFlowSheet {
                 confirmComparisonCategoryAndContinue()
             }
             .disabled(!canConfirmComparisonCategory)
-            .opacity(canConfirmComparisonCategory ? 1 : 0.35)
         }
     }
 
@@ -538,16 +552,22 @@ private extension CompareFlowSheet {
                 .foregroundStyle(.secondary)
 
             VStack(spacing: 8) {
-                Text(isAutomaticMusinsaSizeFailure
-                     ? "상품 정보를 불러왔습니다."
-                     : "상품 정보를 불러오지 못했어요.")
-                    .font(.title2.weight(.black))
-                Text(isAutomaticMusinsaSizeFailure
-                     ? "판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요."
-                     : (errorMessage ?? "URL을 다시 확인해 주세요."))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                if isUnsupportedTopBottomSet {
+                    Text(MusinsaParser.unsupportedTopBottomSetNotice)
+                        .font(.title2.weight(.black))
+                        .multilineTextAlignment(.center)
+                } else {
+                    Text(isAutomaticMusinsaSizeFailure
+                         ? "상품 정보를 불러왔습니다."
+                         : "상품 정보를 불러오지 못했어요.")
+                        .font(.title2.weight(.black))
+                    Text(isAutomaticMusinsaSizeFailure
+                         ? "판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요."
+                         : (errorMessage ?? "URL을 다시 확인해 주세요."))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
             }
 
             if isAutomaticMusinsaSizeFailure {
@@ -599,6 +619,10 @@ private extension CompareFlowSheet {
     var isAutomaticMusinsaSizeFailure: Bool {
         productURL.lowercased().contains("musinsa")
             && errorMessage == MusinsaParser.automaticSizeFailureNotice
+    }
+
+    var isUnsupportedTopBottomSet: Bool {
+        errorMessage == MusinsaParser.unsupportedTopBottomSetNotice
     }
 
     @ViewBuilder
@@ -757,10 +781,16 @@ private extension CompareFlowSheet {
                             Task { await startCompare(with: productURL) }
                         }
 
-                    Button("붙여넣기") {
+                    Button {
                         productURL = UIPasteboard.general.string ?? ""
+                    } label: {
+                        Text("붙여넣기")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .frame(height: 34)
+                            .background(Color.black, in: Capsule())
                     }
-                    .font(.subheadline.weight(.bold))
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 14)
@@ -776,7 +806,6 @@ private extension CompareFlowSheet {
                     Task { await startCompare(with: productURL) }
                 }
                 .disabled(productURL.trimmedForCompareFlow.isEmpty || viewModel.isLoadingProductInfo)
-                .opacity(productURL.trimmedForCompareFlow.isEmpty ? 0.35 : 1)
             }
         }
     }
@@ -1156,7 +1185,8 @@ private extension CompareFlowSheet {
             product: product,
             userFits: userFits,
             productDetailCategory: viewModel.detailCategory,
-            allowsGlobalFallback: false
+            allowsGlobalFallback: false,
+            bodyShapePreferences: BodyShapeSettingsStore().load()
         ) else {
             insufficientEvidence = RecommendationService().insufficientEvidence(
                 product: product,
@@ -1203,7 +1233,8 @@ private extension CompareFlowSheet {
         guard let history = RecommendationService().recommend(
                 product: product,
                 selectedReferenceItem: selectedReferenceItem,
-                productDetailCategory: viewModel.detailCategory
+                productDetailCategory: viewModel.detailCategory,
+                bodyShapePreferences: BodyShapeSettingsStore().load()
               ) else {
             insufficientEvidence = RecommendationService().insufficientEvidence(
                 product: product,
@@ -1731,7 +1762,6 @@ private struct ManualComparisonProductEntrySheet: View {
                     onContinue()
                 }
                 .disabled(!hasValidSize)
-                .opacity(hasValidSize ? 1 : 0.45)
             }
             .padding(20)
         }
@@ -1795,6 +1825,7 @@ struct ManualComparisonSizeEditor: View {
     @Binding var option: ClothingSizeForm
     let category: ClothingCategory
     let detailCategory: ClosetDetailCategory
+    var allowsMeasurementShapeSelection: Bool = true
     let canRemove: Bool
     let onRemove: () -> Void
 
@@ -1813,13 +1844,13 @@ struct ManualComparisonSizeEditor: View {
             }
 
             ForEach(measurementKinds) { kind in
-                if kind == .chest {
+                if kind == .chest, allowsMeasurementShapeSelection {
                     measurementShapePicker(
                         widthTitle: "가슴단면",
                         circumferenceTitle: "가슴둘레",
                         selection: $option.chestUsesCircumference
                     )
-                } else if kind == .waist {
+                } else if kind == .waist, allowsMeasurementShapeSelection {
                     measurementShapePicker(
                         widthTitle: "허리단면",
                         circumferenceTitle: "허리둘레",
@@ -1847,6 +1878,7 @@ struct ManualComparisonSizeEditor: View {
         case .chest: return $option.chest
         case .totalLength: return $option.totalLength
         case .sleeveLength: return $option.sleeveLength
+        case .upperAbdomen, .upperWaist: return .constant("")
         case .waist: return $option.waist
         case .hip: return $option.hip
         case .thigh: return $option.thigh

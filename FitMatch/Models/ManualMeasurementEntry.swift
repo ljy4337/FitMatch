@@ -46,6 +46,10 @@ enum FitMatchMeasurementStandard {
             return definition(kind, "앞면의 가장 높은 어깨점부터 밑단까지 수직으로 측정", "옷깃과 후드 길이는 포함하지 마세요.", 15...180)
         case .sleeveLength:
             return definition(kind, "어깨 봉제선부터 소매 끝까지 소매선을 따라 측정", "목 중심부터 잰 화장과는 비교할 수 없습니다.", 3...110)
+        case .upperAbdomen:
+            return definition(kind, "복부 위치의 양쪽 끝을 수평으로 측정", "가슴이나 밑단 치수로 대체하지 마세요.", 15...100)
+        case .upperWaist:
+            return definition(kind, "상의 허리 위치의 양쪽 끝을 수평으로 측정", "하의 허리단면과 구분해 입력하세요.", 15...100)
         case .waist:
             return definition(kind, "허리단을 자연스럽게 편 상태에서 양쪽 끝을 수평으로 측정", "허리둘레가 아닌 단면값을 입력하세요.", 15...90)
         case .hip:
@@ -248,6 +252,8 @@ enum ManualMeasurementRecordFactory {
                 ? .pantsOutseamWaistToHem
                 : .bodyLengthHPSToHemFront
         case .sleeveLength: return .sleeveShoulderSeamToCuff
+        case .upperAbdomen: return .upperAbdomenWidthEdgeToEdge
+        case .upperWaist: return .upperWaistWidthEdgeToEdge
         case .waist: return .waistWidthEdgeToEdge
         case .hip: return .hipWidthAtWidest
         case .thigh: return .thighWidthCrotchToOuter

@@ -10,8 +10,16 @@ struct UniqloParser: ProductURLParsing {
     }
 
     func parse(from url: URL) async throws -> ParsedProductInfo {
+        try await parse(from: url, onProgress: { _ in })
+    }
+
+    func parse(
+        from url: URL,
+        onProgress: @escaping (ProductAnalysisPhase) -> Void
+    ) async throws -> ParsedProductInfo {
         let resolved = try await urlResolver.resolve(url)
         let metadata = metadataParser.parse(resolved: resolved)
+        onProgress(.loadingSizeChart)
 
         let sizeAPIResult: UniqloSizeAPIResult
         do {

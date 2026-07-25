@@ -8,6 +8,7 @@ struct MyPageView: View {
 
     private let menuItems: [MyMenuItem] = [
         // MyMenuItem(title: "내 정보", systemImage: "person.circle", destination: .comingSoon),
+        MyMenuItem(title: "체형 설정", systemImage: "figure.stand", destination: .bodyShape),
         MyMenuItem(title: "핏매치 사용 방법", systemImage: "questionmark.circle", destination: .guide),
         // MyMenuItem(title: "앱 설정", systemImage: "gearshape", destination: .comingSoon)
         // 로그인 기능을 다시 사용할 때 함께 복구합니다.
@@ -56,7 +57,18 @@ struct MyPageView: View {
                                 .buttonStyle(.plain)
                             case .guide:
                                 NavigationLink {
-                                    FitMatchUsageGuideView()
+                                    MyNavigationDetailContainer(source: "usage guide") {
+                                        FitMatchUsageGuideView()
+                                    }
+                                } label: {
+                                    menuRow(item)
+                                }
+                                .buttonStyle(.plain)
+                            case .bodyShape:
+                                NavigationLink {
+                                    MyNavigationDetailContainer(source: "body shape settings") {
+                                        BodyShapeSetupFlow(isRequiredFlow: false)
+                                    }
                                 } label: {
                                     menuRow(item)
                                 }
@@ -101,7 +113,7 @@ struct MyPageView: View {
                 Text("준비 중")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
-            } else if item.destination == .closet || item.destination == .guide {
+            } else if item.destination == .closet || item.destination == .guide || item.destination == .bodyShape {
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
@@ -111,6 +123,30 @@ struct MyPageView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 14)
         .contentShape(Rectangle())
+    }
+}
+
+private struct MyNavigationDetailContainer<Content: View>: View {
+    @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
+    let source: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        content()
+            .onAppear {
+                tabBarVisibilityController.hide(
+                    tab: .my,
+                    reason: .navigationDetail,
+                    source: source
+                )
+            }
+            .onDisappear {
+                tabBarVisibilityController.release(
+                    tab: .my,
+                    reason: .navigationDetail,
+                    source: "\(source) disappear"
+                )
+            }
     }
 }
 
@@ -145,6 +181,7 @@ private struct MyMenuItem {
 private enum MyMenuDestination: Equatable {
     case closet
     case guide
+    case bodyShape
     case logout
     case comingSoon
 }

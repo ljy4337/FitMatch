@@ -27,7 +27,9 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var sizeTableRecoveryContext: SizeTableRecoveryContext?
     @Published var isAnalyzingRecoveryImage = false
     @Published var recoveryErrorMessage: String?
+    @Published var recoverySelectedSizeID: UUID?
     @Published var isNetworkFailure = false
+    @Published var analysisPhase: ProductAnalysisPhase = .loadingProductInfo
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
@@ -62,18 +64,26 @@ final class ShoppingProductViewModel: ObservableObject {
         productMetadata = ProductMetadata()
         sizeTableRecoveryContext = nil
         isNetworkFailure = false
+        analysisPhase = .loadingProductInfo
         isLoadingProductInfo = true
         defer { isLoadingProductInfo = false }
 
         do {
-            let parsedProduct = try await parserService.parse(urlString: productURL)
+            let parsedProduct = try await parserService.parse(
+                urlString: productURL,
+                onProgress: { [weak self] phase in
+                    self?.analysisPhase = phase
+                }
+            )
+            analysisPhase = .preparingComparison
             apply(parsedProduct)
             return true
         } catch let partialError as ProductURLParserPartialError {
             apply(partialError.productInfo)
             if partialError.productInfo.sourceName == "무신사",
                partialError.productInfo.sizes.isEmpty {
-                errorMessage = MusinsaParser.automaticSizeFailureNotice
+                errorMessage = partialError.productInfo.parserNotice
+                    ?? MusinsaParser.automaticSizeFailureNotice
             } else {
                 errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
             }
@@ -148,7 +158,8 @@ final class ShoppingProductViewModel: ObservableObject {
             product: product,
             userFits: userFits,
             productDetailCategory: detailCategory,
-            allowsGlobalFallback: allowsGlobalFallback
+            allowsGlobalFallback: allowsGlobalFallback,
+            bodyShapePreferences: BodyShapeSettingsStore().load()
         ) else {
             errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
@@ -175,7 +186,8 @@ final class ShoppingProductViewModel: ObservableObject {
         guard let history = recommendationService.recommend(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: detailCategory
+            productDetailCategory: detailCategory,
+            bodyShapePreferences: BodyShapeSettingsStore().load()
         ) else {
             errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
@@ -281,7 +293,7 @@ final class ShoppingProductViewModel: ObservableObject {
         return product
     }
 
-    private func apply(_ parsedProduct: ParsedProductInfo) {
+    func apply(_ parsedProduct: ParsedProductInfo) {
         productURL = parsedProduct.sourceURL.absoluteString
         sourceType = parsedProduct.sourceType
         sourceName = parsedProduct.sourceName
@@ -496,6 +508,8 @@ struct ClothingSizeForm: Identifiable, Equatable {
         case .totalLength:
             return category.serviceGroup == .bottom ? .pantsOutseamWaistToHem : .bodyLengthBackNeckToHem
         case .sleeveLength: return .sleeveShoulderSeamToCuff
+        case .upperAbdomen: return .upperAbdomenWidthEdgeToEdge
+        case .upperWaist: return .upperWaistWidthEdgeToEdge
         case .waist: return waistUsesCircumference ? .waistCircumferenceGarment : .waistWidthEdgeToEdge
         case .hip: return .hipWidthAtWidest
         case .thigh: return .thighWidthCrotchToOuter
@@ -512,6 +526,7 @@ struct ClothingSizeForm: Identifiable, Equatable {
         case .chest: return chest
         case .totalLength: return totalLength
         case .sleeveLength: return sleeveLength
+        case .upperAbdomen, .upperWaist: return ""
         case .waist: return waist
         case .hip: return hip
         case .thigh: return thigh

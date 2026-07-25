@@ -127,7 +127,10 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         let measurementRecords = size.items.compactMap { item -> ParsedMeasurement? in
             let rawValue = item.value.stringValue
             guard let value = firstNumber(in: rawValue), value.isFinite, value > 0 else { return nil }
-            let column = MusinsaActualSizeColumn.column(for: item.name.normalizedMeasurementName)
+            let column = MusinsaActualSizeColumn.column(
+                for: item.name.normalizedMeasurementName,
+                isTopCategory: isTopCategory
+            )
             let mapping = MeasurementSourceMappingPolicy.musinsa(
                 typeNumber: typeNumber,
                 displayKind: column?.displayKind,
@@ -290,6 +293,8 @@ private enum MusinsaActualSizeColumn {
     case chest
     case totalLength
     case sleeveLength
+    case upperAbdomen
+    case upperWaist
     case waist
     case hip
     case thigh
@@ -297,7 +302,9 @@ private enum MusinsaActualSizeColumn {
     case inseam
     case hem
 
-    static func column(for name: String) -> MusinsaActualSizeColumn? {
+    static func column(for name: String, isTopCategory: Bool = false) -> MusinsaActualSizeColumn? {
+        if isTopCategory, name == "복부단면" { return .upperAbdomen }
+        if isTopCategory, name == "허리단면" { return .upperWaist }
         let searchOrder: [MusinsaActualSizeColumn] = [
             .shoulder, .chest, .sleeveLength, .waist, .hip, .thigh, .rise, .inseam, .hem, .totalLength
         ]
@@ -310,6 +317,8 @@ private enum MusinsaActualSizeColumn {
         case .chest: return .chest
         case .totalLength, .inseam: return .totalLength
         case .sleeveLength: return .sleeveLength
+        case .upperAbdomen: return .upperAbdomen
+        case .upperWaist: return .upperWaist
         case .waist: return .waist
         case .hip: return .hip
         case .thigh: return .thigh
@@ -332,6 +341,10 @@ private enum MusinsaActualSizeColumn {
             return ["총장", "기장", "전체길이", "length", "bodylength"]
         case .sleeveLength:
             return ["소매", "소매길이", "화장", "sleeve"]
+        case .upperAbdomen:
+            return ["복부단면"]
+        case .upperWaist:
+            return ["허리단면"]
         case .waist:
             return ["허리", "waist"]
         case .hip:

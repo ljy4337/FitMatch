@@ -125,6 +125,8 @@ struct RecommendationMetricColumn: View {
 }
 
 struct PrimaryButton: View {
+    @Environment(\.isEnabled) private var isEnabled
+
     let title: String
     var systemImage: String?
     var isLoading = false
@@ -135,7 +137,7 @@ struct PrimaryButton: View {
             HStack(spacing: 8) {
                 if isLoading {
                     ProgressView()
-                        .tint(.white)
+                        .tint(isEnabled ? .white : .secondary)
                 } else if let systemImage {
                     Image(systemName: systemImage)
                 }
@@ -144,10 +146,13 @@ struct PrimaryButton: View {
                     .fontWeight(.semibold)
             }
             .font(.body)
-            .foregroundStyle(.white)
+            .foregroundStyle(isEnabled ? Color.white : Color.secondary)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(Color.black, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(
+                isEnabled ? Color.black : Color(.secondarySystemGroupedBackground),
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
         }
         .buttonStyle(.plain)
     }

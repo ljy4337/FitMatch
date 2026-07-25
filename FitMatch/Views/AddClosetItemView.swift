@@ -15,6 +15,7 @@ struct AddClosetItemView: View {
 
     let onSave: (UserFit) -> Void
     let onDelete: (() -> Void)?
+    private let hasComparisonHistory: Bool
     private let isEditing: Bool
     private let presentationContext: AddClosetItemPresentationContext
     private let productImageURLString: String?
@@ -29,6 +30,7 @@ struct AddClosetItemView: View {
         prefillProductName: String? = nil,
         productImageURLString: String? = nil,
         presentationContext: AddClosetItemPresentationContext = .standard,
+        hasComparisonHistory: Bool = false,
         onDelete: (() -> Void)? = nil,
         onSave: @escaping (UserFit) -> Void
     ) {
@@ -46,6 +48,7 @@ struct AddClosetItemView: View {
         self.isEditing = item != nil
         self.presentationContext = presentationContext
         self.productImageURLString = productImageURLString
+        self.hasComparisonHistory = hasComparisonHistory
         self.onDelete = onDelete
         self.onSave = onSave
     }
@@ -81,7 +84,7 @@ struct AddClosetItemView: View {
                 dismiss()
             }
         } message: {
-            Text("삭제한 옷 정보는 복구할 수 없습니다.")
+            Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 함께 삭제됩니다. 그래도 삭제하시겠어요?")
         }
         .sheet(item: $selectedMeasurementGuide) { kind in
             DirectMeasurementGuideSheet(kind: kind, category: viewModel.category)
@@ -308,7 +311,12 @@ struct AddClosetItemView: View {
     private var deleteSection: some View {
         if isEditing, onDelete != nil {
             Button(role: .destructive) {
-                isShowingDeleteAlert = true
+                if hasComparisonHistory {
+                    isShowingDeleteAlert = true
+                } else {
+                    onDelete?()
+                    dismiss()
+                }
             } label: {
                 Text("삭제")
                     .font(.subheadline.weight(.bold))
@@ -495,6 +503,8 @@ struct AddClosetItemView: View {
             return $viewModel.totalLength
         case .sleeveLength:
             return $viewModel.sleeveLength
+        case .upperAbdomen, .upperWaist:
+            return .constant("")
         case .waist:
             return $viewModel.waist
         case .hip:
@@ -858,7 +868,7 @@ private struct DirectMeasurementDiagram: View {
             return .top
         }
         switch kind {
-        case .shoulder, .chest, .totalLength, .sleeveLength, .underBust:
+        case .shoulder, .chest, .totalLength, .sleeveLength, .upperAbdomen, .upperWaist, .underBust:
             return .top
         case .waist, .hip, .thigh, .rise, .hem:
             return .bottom
@@ -925,6 +935,8 @@ private struct DirectMeasurementDiagram: View {
                 ? (point(0.73, 0.12), point(0.78, 0.90))
                 : (point(0.63, 0.17), point(0.63, 0.90))
         case .sleeveLength: return (point(0.72, 0.18), point(0.87, 0.48))
+        case .upperAbdomen: return (point(0.27, 0.62), point(0.73, 0.62))
+        case .upperWaist: return (point(0.28, 0.70), point(0.72, 0.70))
         case .waist: return (point(0.27, 0.14), point(0.73, 0.14))
         case .hip: return (point(0.25, 0.32), point(0.75, 0.32))
         case .thigh: return (point(0.27, 0.46), point(0.50, 0.46))

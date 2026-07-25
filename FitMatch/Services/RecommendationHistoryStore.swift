@@ -7,6 +7,9 @@ enum RecommendationHistoryStore {
         existing histories: [RecommendationHistory],
         modelContext: ModelContext
     ) throws {
+        if history.comparisonSchemaVersion >= 2, history.calculationSnapshot == nil {
+            throw RecommendationHistoryStoreError.missingCalculationSnapshot
+        }
         let matchingHistories = histories.filter { isSameProduct($0.product, history.product) }
         let storedProducts = try modelContext.fetch(FetchDescriptor<Product>())
         let matchingProducts = storedProducts.filter { isSameProduct($0, history.product) }
@@ -96,4 +99,8 @@ enum RecommendationHistoryStore {
     private static func normalizedText(_ value: String?) -> String? {
         value?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+}
+
+enum RecommendationHistoryStoreError: Error {
+    case missingCalculationSnapshot
 }

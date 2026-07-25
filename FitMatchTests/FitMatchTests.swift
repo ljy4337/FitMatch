@@ -12,6 +12,24 @@ import SwiftData
 
 @MainActor
 struct FitMatchTests {
+    @Test func musinsaTopBottomSetIsExplicitlyUnsupported() {
+        #expect(MusinsaUnsupportedProductPolicy.isTopBottomSet(
+            categoryDepth2Name: "상하의세트"
+        ))
+        #expect(MusinsaUnsupportedProductPolicy.isTopBottomSet(
+            categoryDepth2Name: " 상하의 세트 "
+        ))
+        #expect(!MusinsaUnsupportedProductPolicy.isTopBottomSet(
+            categoryDepth2Name: "트레이닝 세트"
+        ))
+        #expect(!MusinsaUnsupportedProductPolicy.isTopBottomSet(
+            categoryDepth2Name: "반소매 티셔츠"
+        ))
+        #expect(!MusinsaUnsupportedProductPolicy.isTopBottomSet(
+            categoryDepth2Name: nil
+        ))
+    }
+
     @Test func sizeTableRecoveryRejectsDuplicateSizeNames() {
         let forms = [
             ClothingSizeForm(sizeName: "M", chest: "52", totalLength: "68"),

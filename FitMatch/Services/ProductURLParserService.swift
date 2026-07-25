@@ -12,6 +12,12 @@ enum ProductComparisonMode: String, Equatable {
     case unavailable
 }
 
+enum ProductAnalysisPhase: Int, Equatable {
+    case loadingProductInfo
+    case loadingSizeChart
+    case preparingComparison
+}
+
 enum StandardBodySizeChart {
     static let metadataMarker = "fitmatch_standard_size_chart"
     static let unavailableMarker = "fitmatch_size_unavailable"
@@ -233,6 +239,19 @@ enum ParsedProductSizeNormalizer {
 protocol ProductURLParsing {
     func canParse(_ url: URL) -> Bool
     func parse(from url: URL) async throws -> ParsedProductInfo
+    func parse(
+        from url: URL,
+        onProgress: @escaping (ProductAnalysisPhase) -> Void
+    ) async throws -> ParsedProductInfo
+}
+
+extension ProductURLParsing {
+    func parse(
+        from url: URL,
+        onProgress: @escaping (ProductAnalysisPhase) -> Void
+    ) async throws -> ParsedProductInfo {
+        try await parse(from: url)
+    }
 }
 
 enum ProductURLParserError: LocalizedError {
@@ -330,10 +349,14 @@ struct ProductURLParserService {
         self.genericParser = genericParser ?? GenericProductParser()
     }
 
-    func parse(urlString: String) async throws -> ParsedProductInfo {
+    func parse(
+        urlString: String,
+        onProgress: @escaping (ProductAnalysisPhase) -> Void = { _ in }
+    ) async throws -> ParsedProductInfo {
         guard let url = ProductURLSupport.normalizedURL(from: urlString) else {
             throw ProductURLParserError.invalidURL
         }
+        onProgress(.loadingProductInfo)
 
         let isMusinsaURL = url.absoluteString.lowercased().contains("musinsa")
         let isUniqloURL = uniqloParser.canParse(url)
@@ -344,7 +367,9 @@ struct ProductURLParserService {
 
         if isMusinsaURL {
             do {
-                return logParsedProductInfo((try await musinsaParser.parse(from: url)).normalizedSizes())
+                return logParsedProductInfo((
+                    try await musinsaParser.parse(from: url, onProgress: onProgress)
+                ).normalizedSizes())
             } catch let partialError as ProductURLParserPartialError {
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
@@ -367,7 +392,9 @@ struct ProductURLParserService {
 
         if isUniqloURL {
             do {
-                return logParsedProductInfo((try await uniqloParser.parse(from: url)).normalizedSizes())
+                return logParsedProductInfo((
+                    try await uniqloParser.parse(from: url, onProgress: onProgress)
+                ).normalizedSizes())
             } catch let partialError as ProductURLParserPartialError {
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")

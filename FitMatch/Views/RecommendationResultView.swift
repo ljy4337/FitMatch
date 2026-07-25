@@ -16,6 +16,13 @@ struct RecommendationResultView: View {
     @State private var isShowingComparisonDetails = false
     @State private var isShowingReliabilityInfo = false
     @State private var isShowingMeasurementInfo = false
+    @State private var isShowingAlternativeSizeComparison = false
+    @State private var selectedAlternativeSizeID: UUID?
+    @State private var temporarySizeAnalysis: TemporarySizeAnalysis?
+    @State private var temporaryAnalysisCache: [TemporarySizeAnalysisCacheKey: TemporarySizeAnalysis] = [:]
+    @State private var unavailableAlternativeSizeKeys: Set<TemporarySizeAnalysisCacheKey> = []
+    @State private var isAnalyzingAlternativeSize = false
+    @State private var alternativeSizeErrorMessage: String?
     @State private var isComparisonCoverageExpanded = false
     @State private var didOpenInitialReferencePicker = false
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
@@ -102,7 +109,12 @@ struct RecommendationResultView: View {
             }
             .sheet(isPresented: $isShowingMeasurementInfo) {
                 measurementInfoSheet
-                    .presentationDetents([.medium])
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $isShowingAlternativeSizeComparison) {
+                alternativeSizeComparisonSheet
+                    .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
             .onAppear {
@@ -110,6 +122,7 @@ struct RecommendationResultView: View {
                 print("[화면: 비교 결과][동작: 결과 화면 진입][상태: 성공] 상품=\(currentResult.product.name), 추천사이즈=\(currentResult.recommendedSize.name), 기준옷=\(currentResult.userFit.displayName)")
                 #endif
                 tabBarVisibilityController.hide(reason: .navigationDetail, source: "recommendation result")
+                prepareAlternativeSizeAnalyses()
                 guard opensReferencePickerOnAppear, !didOpenInitialReferencePicker else {
                     return
                 }
@@ -124,6 +137,10 @@ struct RecommendationResultView: View {
                 print("[화면: 비교 결과][동작: 결과 화면 종료][상태: 완료]")
                 #endif
                 tabBarVisibilityController.release(reason: .navigationDetail, source: "recommendation result disappear")
+            }
+            .onChange(of: comparisonResult?.id) {
+                resetTemporarySizeComparison()
+                prepareAlternativeSizeAnalyses()
             }
         }
     }
@@ -226,26 +243,46 @@ struct RecommendationResultView: View {
 
                     HStack(alignment: .top, spacing: 0) {
                         CenteredMetricColumn(
-                            title: "추천 사이즈",
-                            value: recommendedSizeName
+                            title: temporarySizeAnalysis == nil ? "추천 사이즈" : "비교 사이즈",
+                            value: temporarySizeAnalysis?.productSize.name.displaySizeName ?? recommendedSizeName
                         ) {
-                            Color.clear
+                            Button {
+                                isShowingAlternativeSizeComparison = true
+                            } label: {
+                                Text("다른 사이즈 비교")
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .font(.subheadline.weight(.bold))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 30)
+                                    .background(
+                                        Color(.secondarySystemGroupedBackground),
+                                        in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    )
+                                    .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 6)
+                            .accessibilityHint("상품의 다른 사이즈를 임시로 비교합니다.")
                         }
                         .frame(width: primaryMetricWidth, height: 132)
                         Divider().frame(width: dividerWidth, height: 132)
                         CenteredMetricColumn(
                             title: "핏 매칭률",
-                            value: "\(currentResult.recommendationScore)%"
+                            value: "\(displayedRecommendationScore)%"
                         ) {
                             Text(fitMatchDescription)
                                 .font(.caption.weight(.bold))
-                                .foregroundStyle(.green)
+                                .foregroundStyle(fitMatchColor(for: displayedRecommendationScore))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.75)
                                 .allowsTightening(true)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(.green.opacity(0.1), in: Capsule())
+                                .background(
+                                    fitMatchColor(for: displayedRecommendationScore).opacity(0.1),
+                                    in: Capsule()
+                                )
                         }
                         .frame(width: primaryMetricWidth, height: 132)
                         Divider().frame(width: dividerWidth, height: 132)
@@ -305,6 +342,14 @@ struct RecommendationResultView: View {
                     }
                 }
                 .frame(height: 132)
+
+                if let temporarySizeAnalysis {
+                    Text("\(temporarySizeAnalysis.productSize.name.displaySizeName) 사이즈를 임시로 비교한 결과예요.")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
@@ -326,7 +371,7 @@ struct RecommendationResultView: View {
                 }
 
                 if currentResult.comparisonMode == .standardSizeFallback {
-                    InfoRow(title: "가슴", value: currentResult.trueToSizeRecommendation)
+                    InfoRow(title: "가슴", value: displayedTrueToSizeRecommendation)
                 } else if comparedMeasurementKinds.isEmpty {
                     ContentUnavailableView(
                         "비교 가능한 항목이 없어요",
@@ -338,9 +383,9 @@ struct RecommendationResultView: View {
                         ForEach(comparedMeasurementKinds) { kind in
                             ReportMeasurementRow(
                                 title: kind.title,
-                                productValue: currentResult.recommendedSize.measurements.value(for: kind),
-                                referenceValue: currentResult.userFit.measurements.value(for: kind),
-                                difference: currentResult.measurementDifferences.value(for: kind)
+                                productValue: displayedMeasurementValues(for: kind).product,
+                                referenceValue: displayedMeasurementValues(for: kind).reference,
+                                difference: displayedMeasurementDifferences.value(for: kind)
                             )
                         }
                     }
@@ -426,27 +471,390 @@ struct RecommendationResultView: View {
         }
     }
 
-    private var measurementInfoSheet: some View {
+    private var alternativeSizeComparisonSheet: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("추천 계산에 사용하거나 제외한 실측 항목입니다.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(v1MeasurementKinds, id: \.id) { kind in
-                        ComparisonCoverageRow(
-                            title: kind.title,
-                            isCompared: comparedMeasurementKinds.contains(kind),
-                            detail: comparisonCoverageDetail(for: kind)
-                        )
+            ScrollView {
+                LazyVStack(spacing: 10) {
+                    ForEach(availableProductSizes) { size in
+                        let analysis = cachedAnalysis(for: size)
+                        AlternativeSizeResultCard(
+                            sizeName: size.name.displaySizeName,
+                            isRecommended: size.id == currentResult.recommendedSize.id,
+                            isSelected: size.id == selectedAlternativeSizeID,
+                            score: analysis?.recommendationScore,
+                            fitDescription: analysis.map {
+                                fitMatchDescription(for: $0.recommendationScore)
+                            },
+                            fitColor: analysis.map {
+                                fitMatchColor(for: $0.recommendationScore)
+                            },
+                            measurements: alternativeMeasurementSummaries(for: analysis)
+                        ) {
+                            selectedAlternativeSizeID = size.id
+                        }
                     }
                 }
-                Spacer()
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 88)
             }
-            .font(.subheadline)
-            .padding(20)
+            .navigationTitle("다른 사이즈 비교")
+            .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .bottom) {
+                Button(action: analyzeSelectedAlternativeSize) {
+                    HStack(spacing: 8) {
+                        if isAnalyzingAlternativeSize {
+                            ProgressView()
+                                .tint(.white)
+                        }
+                        Text(alternativeAnalysisButtonTitle)
+                            .font(.headline.weight(.bold))
+                    }
+                    .foregroundStyle(alternativeAnalysisHasValidSelection ? Color.white : Color.secondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(
+                        alternativeAnalysisHasValidSelection ? Color.black : Color.secondary.opacity(0.25),
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(!alternativeAnalysisIsEnabled)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.regularMaterial)
+            }
+            .alert(
+                "분석할 수 없어요",
+                isPresented: Binding(
+                    get: { alternativeSizeErrorMessage != nil },
+                    set: { if !$0 { alternativeSizeErrorMessage = nil } }
+                )
+            ) {
+                Button("확인", role: .cancel) {}
+            } message: {
+                Text(alternativeSizeErrorMessage ?? "")
+            }
+            .onAppear {
+                prepareAlternativeSizeAnalyses()
+            }
+        }
+    }
+
+    private var measurementInfoSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text("추천 계산에 사용하거나 제외한 실측 항목입니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(v1MeasurementKinds, id: \.id) { kind in
+                            ComparisonCoverageRow(
+                                title: kind.title,
+                                isCompared: comparedMeasurementKinds.contains(kind),
+                                detail: comparisonCoverageDetail(for: kind)
+                            )
+                        }
+                    }
+
+                    calculationSnapshotSections
+                }
+                .font(.subheadline)
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
             .navigationTitle("실측 비교 항목")
             .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private var availableProductSizes: [ProductSize] {
+        currentResult.product.sizes
+            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .sorted { $0.displayOrder < $1.displayOrder }
+    }
+
+    private var displayedProductSize: ProductSize {
+        temporarySizeAnalysis?.productSize ?? currentResult.recommendedSize
+    }
+
+    private func fitMatchDescription(for score: Int) -> String {
+        switch score {
+        case 90...: return "거의 완벽한 핏"
+        case 80..<90: return "매우 잘 맞는 편"
+        case 70..<80: return "잘 맞는 편"
+        case 60..<70: return "약간의 차이가 있어요"
+        case 50..<60: return "핏 차이를 확인해 보세요"
+        case 40..<50: return "핏 차이가 큰 편이에요"
+        default: return "추천하기 어려워요"
+        }
+    }
+
+    private func fitMatchColor(for score: Int) -> Color {
+        switch score {
+        case 90...: return .green
+        case 80..<90: return .mint
+        case 70..<80: return .teal
+        case 60..<70: return .orange
+        case 50..<60: return .yellow
+        case 40..<50: return .pink
+        default: return .red
+        }
+    }
+
+    private func alternativeMeasurementSummaries(
+        for analysis: TemporarySizeAnalysis?
+    ) -> [AlternativeSizeMeasurementSummary] {
+        let kinds: [MeasurementKind] = [.shoulder, .chest, .totalLength]
+        return kinds.map { kind in
+            guard let item = analysis?.comparisonResult.comparedItems.first(where: { $0.kind == kind }) else {
+                return AlternativeSizeMeasurementSummary(
+                    title: reportShortTitle(for: kind),
+                    message: "비교 정보 없음",
+                    status: .unavailable
+                )
+            }
+            let status: AlternativeSizeMeasurementStatus
+            switch item.absoluteDifference {
+            case ...1: status = .close
+            case ...4: status = .caution
+            default: status = .negative
+            }
+            return AlternativeSizeMeasurementSummary(
+                title: reportShortTitle(for: kind),
+                message: compactAlternativeSizeMessage(
+                    for: kind,
+                    difference: item.signedDifference
+                ),
+                status: status
+            )
+        }
+    }
+
+    private func compactAlternativeSizeMessage(
+        for kind: MeasurementKind,
+        difference: Double
+    ) -> String {
+        let absoluteDifference = abs(difference)
+        if absoluteDifference == 0 { return "차이 없음" }
+        if absoluteDifference <= 1 { return "거의 비슷해요" }
+
+        let isLength = kind == .totalLength
+        if absoluteDifference <= 2 {
+            if isLength { return difference > 0 ? "조금 길어요" : "조금 짧아요" }
+            return difference > 0 ? "조금 여유로워요" : "조금 타이트해요"
+        }
+        if absoluteDifference <= 4 {
+            if isLength { return difference > 0 ? "긴 편이에요" : "짧은 편이에요" }
+            return difference > 0 ? "여유가 있어요" : "타이트한 편이에요"
+        }
+        if isLength { return difference > 0 ? "많이 길어요" : "많이 짧아요" }
+        return difference > 0 ? "많이 커요" : "많이 작아요"
+    }
+
+    private var displayedRecommendationScore: Int {
+        temporarySizeAnalysis?.recommendationScore ?? currentResult.recommendationScore
+    }
+
+    private var displayedTrueToSizeRecommendation: String {
+        temporarySizeAnalysis?.comparisonSummary ?? currentResult.trueToSizeRecommendation
+    }
+
+    private var displayedMeasurementDifferences: GarmentMeasurements {
+        temporarySizeAnalysis?.comparisonResult.signedDifferences ?? currentResult.measurementDifferences
+    }
+
+    private var displayedMeasurementUsages: [MeasurementComparisonUsage] {
+        temporarySizeAnalysis?.comparisonResult.usages ?? currentResult.comparedMeasurementUsages
+    }
+
+    private var displayedMeasurementExclusions: [MeasurementComparisonExclusion] {
+        temporarySizeAnalysis?.comparisonResult.exclusions ?? currentResult.measurementExclusions
+    }
+
+    private var displayedCalculationSnapshot: RecommendationCalculationSnapshot? {
+        temporarySizeAnalysis?.calculationSnapshot ?? currentResult.calculationSnapshot
+    }
+
+    private func displayedMeasurementValues(
+        for kind: MeasurementKind
+    ) -> (product: Double, reference: Double) {
+        if let used = displayedCalculationSnapshot?.usedMeasurements.first(where: { $0.kind == kind }) {
+            return (used.productValue, used.referenceValue)
+        }
+        return (
+            displayedProductSize.measurements.value(for: kind),
+            currentResult.userFit.measurements.value(for: kind)
+        )
+    }
+
+    private var comparisonBodyShapePreferences: BodyShapePreferences {
+        BodyShapeSettingsStore().load()
+    }
+
+    private var comparisonExcludedKinds: [MeasurementKind] {
+        currentResult.measurementExclusions
+            .filter { $0.reason == .categoryPolicy }
+            .map(\.kind)
+    }
+
+    private var originalScorePenalty: Int {
+        switch currentResult.comparisonMethod {
+        case "기준표 가슴둘레 비교":
+            return 18
+        case "사용자 선택 임시 비교":
+            return RecommendationService().manualCandidateNote(
+                product: currentResult.product,
+                productDetailCategory: currentResult.productDetailCategory,
+                item: currentResult.userFit
+            ) == nil ? 12 : 20
+        default:
+            return 0
+        }
+    }
+
+    private func analysisCacheKey(for size: ProductSize) -> TemporarySizeAnalysisCacheKey {
+        TemporarySizeAnalysisCacheKey(
+            productID: currentResult.product.id,
+            sizeID: size.id,
+            referenceID: currentResult.userFit.id,
+            detailCategory: currentResult.productDetailCategory.rawValue,
+            comparisonMethod: currentResult.comparisonMethod,
+            bodyShapeSignature: comparisonBodyShapePreferences.cacheSignature,
+            excludedKindsSignature: comparisonExcludedKinds.map(\.rawValue).sorted().joined(separator: "|"),
+            scorePenalty: originalScorePenalty
+        )
+    }
+
+    private func cachedAnalysis(for size: ProductSize) -> TemporarySizeAnalysis? {
+        temporaryAnalysisCache[analysisCacheKey(for: size)]
+    }
+
+    private func prepareAlternativeSizeAnalyses() {
+        let service = RecommendationService()
+        let scorePenalty = originalScorePenalty
+        for size in availableProductSizes {
+            let key = analysisCacheKey(for: size)
+            guard temporaryAnalysisCache[key] == nil,
+                  !unavailableAlternativeSizeKeys.contains(key) else {
+                continue
+            }
+            if let analysis = service.analyzeSizeWithoutSaving(
+                size,
+                product: currentResult.product,
+                referenceItem: currentResult.userFit,
+                productDetailCategory: currentResult.productDetailCategory,
+                comparisonMethod: currentResult.comparisonMethod,
+                excludedKinds: comparisonExcludedKinds,
+                bodyShapePreferences: comparisonBodyShapePreferences,
+                scorePenalty: scorePenalty
+            ) {
+                temporaryAnalysisCache[key] = analysis
+            } else {
+                unavailableAlternativeSizeKeys.insert(key)
+            }
+        }
+    }
+
+    private var selectedAlternativeSize: ProductSize? {
+        guard let selectedAlternativeSizeID else { return nil }
+        return availableProductSizes.first { $0.id == selectedAlternativeSizeID }
+    }
+
+    private var alternativeAnalysisIsEnabled: Bool {
+        !isAnalyzingAlternativeSize && alternativeAnalysisHasValidSelection
+    }
+
+    private var alternativeAnalysisHasValidSelection: Bool {
+        guard let selectedAlternativeSize,
+              selectedAlternativeSize.id != displayedProductSize.id else {
+            return false
+        }
+        return cachedAnalysis(for: selectedAlternativeSize) != nil
+    }
+
+    private var alternativeAnalysisButtonTitle: String {
+        guard let selectedAlternativeSize else { return "비교할 사이즈를 선택해 주세요" }
+        return "\(selectedAlternativeSize.name.displaySizeName) 사이즈로 분석하기"
+    }
+
+    private func analyzeSelectedAlternativeSize() {
+        guard alternativeAnalysisIsEnabled,
+              !isAnalyzingAlternativeSize,
+              let selectedAlternativeSize else {
+            return
+        }
+        isAnalyzingAlternativeSize = true
+        Task { @MainActor in
+            await Task.yield()
+            if selectedAlternativeSize.id == currentResult.recommendedSize.id {
+                temporarySizeAnalysis = nil
+                isAnalyzingAlternativeSize = false
+                isShowingAlternativeSizeComparison = false
+                return
+            }
+            guard let analysis = cachedAnalysis(for: selectedAlternativeSize) else {
+                isAnalyzingAlternativeSize = false
+                alternativeSizeErrorMessage = "선택한 사이즈는 비교 가능한 실측 정보가 부족합니다."
+                return
+            }
+            temporarySizeAnalysis = analysis
+            isAnalyzingAlternativeSize = false
+            isShowingAlternativeSizeComparison = false
+        }
+    }
+
+    private func resetTemporarySizeComparison() {
+        selectedAlternativeSizeID = nil
+        temporarySizeAnalysis = nil
+        temporaryAnalysisCache.removeAll()
+        unavailableAlternativeSizeKeys.removeAll()
+        isAnalyzingAlternativeSize = false
+        alternativeSizeErrorMessage = nil
+    }
+
+    @ViewBuilder
+    private var calculationSnapshotSections: some View {
+        if let snapshot = displayedCalculationSnapshot {
+            let presentation = RecommendationCalculationPresentation(snapshot: snapshot)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("비교 정보 \(presentation.coveragePercent)%")
+                    .font(.headline.weight(.bold))
+                Text("추천 판단에 필요한 치수 중 실제로 비교한 정보의 비율이에요.")
+                    .foregroundStyle(.secondary)
+            }
+
+            if let title = presentation.bodyShapeTitle {
+                Divider()
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(title)
+                        .font(.headline.weight(.bold))
+                    ForEach(presentation.bodyShapeMessages, id: \.self) { message in
+                        Label(message, systemImage: "checkmark.circle")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
+            if !presentation.exclusionMessages.isEmpty {
+                Divider()
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("비교에서 제외된 실측")
+                        .font(.headline.weight(.bold))
+                    ForEach(presentation.exclusionMessages, id: \.self) { message in
+                        Text(message)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
         }
     }
 
@@ -470,7 +878,7 @@ struct RecommendationResultView: View {
                     Text("사이즈 유사도")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.white.opacity(0.62))
-                    Text(comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(currentResult.recommendationScore)%")
+                    Text(comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(displayedRecommendationScore)%")
                         .font(.system(size: 34, weight: .black))
                         .foregroundStyle(.white)
                         .monospacedDigit()
@@ -734,12 +1142,12 @@ struct RecommendationResultView: View {
                 )
 
                 if currentResult.comparisonMode == .standardSizeFallback {
-                    InfoRow(title: "가슴", value: currentResult.trueToSizeRecommendation)
+                    InfoRow(title: "가슴", value: displayedTrueToSizeRecommendation)
                 } else {
                     ProductMeasurementDifferenceGrid(
-                        measurements: currentResult.recommendedSize.measurements,
+                        measurements: displayedProductSize.measurements,
                         referenceMeasurements: currentResult.userFit.measurements,
-                        differences: currentResult.measurementDifferences,
+                        differences: displayedMeasurementDifferences,
                         kinds: comparedMeasurementKinds
                     )
                 }
@@ -847,7 +1255,7 @@ struct RecommendationResultView: View {
     private var confidenceText: String {
         comparedMeasurementKinds.isEmpty
             ? "핏 매칭률 계산 불가"
-            : "핏 매칭률 \(currentResult.recommendationScore)%"
+            : "핏 매칭률 \(displayedRecommendationScore)%"
     }
 
     private var isFavorite: Bool {
@@ -871,7 +1279,7 @@ struct RecommendationResultView: View {
     private func reportIcon(for kind: MeasurementKind) -> String {
         switch kind {
         case .shoulder: return "arrow.left.and.right"
-        case .chest, .underBust: return "tshirt"
+        case .chest, .upperAbdomen, .upperWaist, .underBust: return "tshirt"
         case .totalLength: return "ruler"
         case .sleeveLength: return "ruler"
         case .waist: return "circle.dashed"
@@ -888,6 +1296,8 @@ struct RecommendationResultView: View {
         case .chest: return "가슴"
         case .totalLength: return "총장"
         case .sleeveLength: return "소매"
+        case .upperAbdomen: return "복부"
+        case .upperWaist: return "상의 허리"
         case .waist: return "허리"
         case .hip: return "엉덩이"
         case .thigh: return "허벅지"
@@ -925,12 +1335,7 @@ struct RecommendationResultView: View {
     }
 
     private var fitMatchDescription: String {
-        switch currentResult.recommendationScore {
-        case 90...: return "매우 잘 맞아요"
-        case 80..<90: return "잘 맞아요"
-        case 70..<80: return "비슷해요"
-        default: return "참고해 주세요"
-        }
+        fitMatchDescription(for: displayedRecommendationScore)
     }
 
     private var comparisonReliability: ComparisonReliability {
@@ -938,7 +1343,7 @@ struct RecommendationResultView: View {
     }
 
     private var confidenceStatus: ConfidenceStatus {
-        ConfidenceStatus(score: currentResult.recommendationScore)
+        ConfidenceStatus(score: displayedRecommendationScore)
     }
 
     private var v1MeasurementKinds: [MeasurementKind] {
@@ -955,11 +1360,14 @@ struct RecommendationResultView: View {
     }
 
     private var comparedMeasurementKinds: [MeasurementKind] {
+        if temporarySizeAnalysis != nil {
+            return displayedMeasurementUsages.map(\.kind)
+        }
         if currentResult.comparisonSchemaVersion >= 1 {
-            return currentResult.comparedMeasurementUsages.map(\.kind)
+            return displayedMeasurementUsages.map(\.kind)
         }
         return v1MeasurementKinds.filter {
-            currentResult.recommendedSize.measurements.value(for: $0) > 0
+            displayedProductSize.measurements.value(for: $0) > 0
                 && currentResult.userFit.measurements.value(for: $0) > 0
         }
     }
@@ -1006,10 +1414,10 @@ struct RecommendationResultView: View {
     }
 
     private var excludedMeasurementSummary: String? {
-        if currentResult.comparisonSchemaVersion >= 1,
-           let exclusion = currentResult.measurementExclusions.first {
-            let suffix = currentResult.measurementExclusions.count > 1
-                ? " 외 \(currentResult.measurementExclusions.count - 1)개 항목도 상세에서 확인할 수 있어요."
+        if !displayedMeasurementExclusions.isEmpty,
+           let exclusion = displayedMeasurementExclusions.first {
+            let suffix = displayedMeasurementExclusions.count > 1
+                ? " 외 \(displayedMeasurementExclusions.count - 1)개 항목도 상세에서 확인할 수 있어요."
                 : ""
             return "\(exclusion.kind.title): \(exclusion.reason.userMessage)\(suffix)"
         }
@@ -1022,8 +1430,7 @@ struct RecommendationResultView: View {
         if comparedMeasurementKinds.contains(kind) {
             return "동일한 측정 기준으로 추천에 사용"
         }
-        if currentResult.comparisonSchemaVersion >= 1,
-           let exclusion = currentResult.measurementExclusions.first(where: { $0.kind == kind }) {
+        if let exclusion = displayedMeasurementExclusions.first(where: { $0.kind == kind }) {
             return exclusion.reason.userMessage
         }
         return "상품 또는 기준 옷의 실측값이 없어 제외"
@@ -1093,8 +1500,8 @@ struct RecommendationResultView: View {
     }
 
     private var legacyConfidenceText: String {
-        currentResult.recommendationScore > 0
-            ? "핏 매칭률 \(currentResult.recommendationScore)%"
+        displayedRecommendationScore > 0
+            ? "핏 매칭률 \(displayedRecommendationScore)%"
             : "핏 매칭률 정보 부족"
     }
 
@@ -1125,8 +1532,8 @@ struct RecommendationResultView: View {
             reasons.append(weightingNotice)
         }
 
-        if currentResult.comparisonSchemaVersion >= 1 {
-            for exclusion in currentResult.measurementExclusions {
+        if currentResult.comparisonSchemaVersion >= 1 || temporarySizeAnalysis != nil {
+            for exclusion in displayedMeasurementExclusions {
                 reasons.append("\(exclusion.kind.title)은 \(exclusion.reason.userMessage)")
             }
         } else {
@@ -1149,7 +1556,7 @@ struct RecommendationResultView: View {
     private var strongestMeasurementReasons: [String] {
         visibleMeasurementKinds
             .map { kind in
-                (kind: kind, difference: currentResult.measurementDifferences.value(for: kind))
+                (kind: kind, difference: displayedMeasurementDifferences.value(for: kind))
             }
             .sorted { abs($0.difference) < abs($1.difference) }
             .prefix(3)
@@ -1196,8 +1603,7 @@ struct RecommendationResultView: View {
         }
 
         if isMusinsaProduct,
-           let productCode = musinsaProductCode(from: url),
-           let appURL = URL(string: "musinsa://app/goods/\(productCode)") {
+           let appURL = musinsaAppURL(for: url) {
             openURL(appURL) { accepted in
                 if !accepted {
                     openURL(url)
@@ -1207,6 +1613,16 @@ struct RecommendationResultView: View {
         }
 
         openURL(url)
+    }
+
+    private func musinsaAppURL(for webURL: URL) -> URL? {
+        var components = URLComponents()
+        components.scheme = "musinsaad"
+        components.host = "web"
+        components.queryItems = [
+            URLQueryItem(name: "link", value: webURL.absoluteString)
+        ]
+        return components.url
     }
 
     private var isMusinsaProduct: Bool {
@@ -1235,7 +1651,8 @@ struct RecommendationResultView: View {
             selectedReferenceItem: item,
             productDetailCategory: currentResult.productDetailCategory,
             existingHistories: histories,
-            modelContext: modelContext
+            modelContext: modelContext,
+            bodyShapePreferences: BodyShapeSettingsStore().load()
         )
 
         switch outcome {
@@ -1385,7 +1802,8 @@ struct RecommendationResultView: View {
             .recommend(
                 product: currentResult.product,
                 selectedReferenceItem: userFit,
-                productDetailCategory: currentResult.productDetailCategory
+                productDetailCategory: currentResult.productDetailCategory,
+                bodyShapePreferences: BodyShapeSettingsStore().load()
             )?
             .recommendedSize
             .name
@@ -1443,6 +1861,153 @@ private struct ComparisonReliability {
             stars = "★☆☆☆☆"
             title = "매우 낮음"
         }
+    }
+}
+
+private struct TemporarySizeAnalysisCacheKey: Hashable {
+    let productID: UUID
+    let sizeID: UUID
+    let referenceID: UUID
+    let detailCategory: String
+    let comparisonMethod: String
+    let bodyShapeSignature: String
+    let excludedKindsSignature: String
+    let scorePenalty: Int
+}
+
+private enum AlternativeSizeMeasurementStatus {
+    case close
+    case caution
+    case negative
+    case unavailable
+
+    var color: Color {
+        switch self {
+        case .close: return .green
+        case .caution: return .orange
+        case .negative: return .red
+        case .unavailable: return .secondary
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .close: return "checkmark"
+        case .caution: return "minus"
+        case .negative: return "exclamationmark"
+        case .unavailable: return "questionmark"
+        }
+    }
+}
+
+private struct AlternativeSizeMeasurementSummary {
+    let title: String
+    let message: String
+    let status: AlternativeSizeMeasurementStatus
+}
+
+private struct AlternativeSizeResultCard: View {
+    let sizeName: String
+    let isRecommended: Bool
+    let isSelected: Bool
+    let score: Int?
+    let fitDescription: String?
+    let fitColor: Color?
+    let measurements: [AlternativeSizeMeasurementSummary]
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .top, spacing: 9) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(isSelected ? .primary : .secondary)
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack(spacing: 5) {
+                            Text(sizeName)
+                                .font(.title2.weight(.black))
+                            if isRecommended {
+                                Text("추천")
+                                    .font(.caption2.weight(.bold))
+                                    .foregroundStyle(.green)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(.green.opacity(0.12), in: Capsule())
+                            }
+                        }
+                        if let score {
+                            Text("\(score)%")
+                                .font(.title3.weight(.black))
+                                .monospacedDigit()
+                        }
+                        if let fitDescription, let fitColor {
+                            Text(fitDescription)
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(fitColor)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(fitColor.opacity(0.1), in: Capsule())
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(measurements.enumerated()), id: \.offset) { _, measurement in
+                        HStack(alignment: .top, spacing: 6) {
+                            Image(systemName: measurement.status.symbol)
+                                .font(.system(size: 8, weight: .black))
+                                .foregroundStyle(.white)
+                                .frame(width: 17, height: 17)
+                                .background(measurement.status.color, in: Circle())
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(measurement.title)
+                                    .font(.caption2.weight(.bold))
+                                Text(measurement.message)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .foregroundStyle(.primary)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                isRecommended ? Color.green.opacity(0.08) : Color(.secondarySystemGroupedBackground),
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(
+                        isSelected ? Color.primary : (isRecommended ? Color.green : Color.secondary.opacity(0.18)),
+                        lineWidth: isSelected ? 2 : 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var accessibilityText: String {
+        var parts = ["\(sizeName) 사이즈"]
+        if isRecommended { parts.append("핏매치 추천 사이즈") }
+        if isSelected { parts.append("선택됨") }
+        if let score { parts.append("핏 매칭률 \(score)퍼센트") }
+        if let fitDescription { parts.append(fitDescription) }
+        parts.append(contentsOf: measurements.map { "\($0.title), \($0.message)" })
+        return parts.joined(separator: ", ")
     }
 }
 
@@ -2125,12 +2690,14 @@ enum ResultReferenceComparisonPersistence {
         selectedReferenceItem: UserFit,
         productDetailCategory: ClosetDetailCategory,
         existingHistories: [RecommendationHistory],
-        modelContext: ModelContext
+        modelContext: ModelContext,
+        bodyShapePreferences: BodyShapePreferences = .none
     ) -> ResultReferenceComparisonOutcome {
         let outcome = ResultReferenceComparisonResolver.resolve(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: productDetailCategory
+            productDetailCategory: productDetailCategory,
+            bodyShapePreferences: bodyShapePreferences
         )
 
         guard case .success(let history) = outcome else {
@@ -2155,13 +2722,15 @@ enum ResultReferenceComparisonResolver {
     static func resolve(
         product: Product,
         selectedReferenceItem: UserFit,
-        productDetailCategory: ClosetDetailCategory
+        productDetailCategory: ClosetDetailCategory,
+        bodyShapePreferences: BodyShapePreferences = .none
     ) -> ResultReferenceComparisonOutcome {
         let service = RecommendationService()
         if let history = service.recommend(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: productDetailCategory
+            productDetailCategory: productDetailCategory,
+            bodyShapePreferences: bodyShapePreferences
         ) {
             return .success(history)
         }
@@ -2590,6 +3159,21 @@ private extension String {
         }
 
         return (scalar - base) % 28 != 0
+    }
+}
+
+private extension BodyShapePreferences {
+    var cacheSignature: String {
+        [
+            hasBroadShoulders,
+            hasDevelopedChest,
+            hasProminentAbdomen,
+            hasProminentLowerWaist,
+            hasDevelopedHips,
+            hasDevelopedThighs
+        ]
+        .map { $0 ? "1" : "0" }
+        .joined()
     }
 }
 

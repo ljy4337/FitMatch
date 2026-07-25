@@ -264,6 +264,7 @@ final class AddClosetItemViewModel: ObservableObject {
         case .chest: return chest
         case .totalLength: return totalLength
         case .sleeveLength: return sleeveLength
+        case .upperAbdomen, .upperWaist: return ""
         case .waist: return waist
         case .hip: return hip
         case .thigh: return thigh
