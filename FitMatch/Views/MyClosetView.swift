@@ -871,13 +871,22 @@ private struct ClosetMeasurementGrid: View {
     let item: UserFit
 
     var body: some View {
+        let snapshot = MeasurementResolver.snapshot(
+            measurements: item.measurements,
+            records: item.measurementRecords
+        )
+        let visibleKinds = orderedKinds.filter { snapshot.value(for: $0) != nil }
+        let rows = stride(from: 0, to: visibleKinds.count, by: 2).map {
+            Array(visibleKinds[$0..<min($0 + 2, visibleKinds.count)])
+        }
+
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 GridRow {
-                    measurementCell(row[0])
+                    measurementCell(row[0], snapshot: snapshot)
 
                     if row.count > 1 {
-                        measurementCell(row[1])
+                        measurementCell(row[1], snapshot: snapshot)
                     } else {
                         Color.clear
                             .frame(maxWidth: .infinity)
@@ -887,22 +896,6 @@ private struct ClosetMeasurementGrid: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var rows: [[MeasurementKind]] {
-        stride(from: 0, to: visibleKinds.count, by: 2).map {
-            Array(visibleKinds[$0..<min($0 + 2, visibleKinds.count)])
-        }
-    }
-
-    private var visibleKinds: [MeasurementKind] {
-        orderedKinds.filter {
-            MeasurementResolver.value(
-                for: $0,
-                measurements: item.measurements,
-                records: item.measurementRecords
-            ) != nil
-        }
     }
 
     private var orderedKinds: [MeasurementKind] {
@@ -921,9 +914,12 @@ private struct ClosetMeasurementGrid: View {
         }
     }
 
-    private func measurementCell(_ kind: MeasurementKind) -> some View {
+    private func measurementCell(
+        _ kind: MeasurementKind,
+        snapshot: MeasurementResolver.GarmentSnapshot
+    ) -> some View {
         HStack(spacing: 8) {
-            Text(MeasurementResolver.title(for: kind, records: item.measurementRecords))
+            Text(snapshot.title(for: kind))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -931,11 +927,7 @@ private struct ClosetMeasurementGrid: View {
 
             Spacer(minLength: 4)
 
-            Text(MeasurementResolver.value(
-                for: kind,
-                measurements: item.measurements,
-                records: item.measurementRecords
-            )?.cmText ?? "-")
+            Text(snapshot.value(for: kind)?.cmText ?? "-")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.primary)
                 .monospacedDigit()

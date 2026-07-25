@@ -45,9 +45,16 @@ struct HomeView: View {
     }
 
     private var closetDashboardSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let items = recentClosetItems
+
+        return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                SectionHeader(title: "내 옷장 현황", subtitle: closetDashboardSubtitle)
+                SectionHeader(
+                    title: "내 옷장 현황",
+                    subtitle: items.isEmpty
+                        ? "등록한 옷을 한눈에 확인하세요"
+                        : "최근 등록한 옷을 최대 5개까지 보여드려요"
+                )
                 Spacer()
                 Button(action: onOpenCloset) {
                     HStack(spacing: 4) {
@@ -60,11 +67,11 @@ struct HomeView: View {
                 .buttonStyle(.plain)
             }
 
-            if !recentClosetItems.isEmpty {
+            if !items.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 12) {
-                        ForEach(recentClosetItems) { item in
-                            HomeClosetPreviewCard(item: item)
+                        ForEach(items) { item in
+                            HomeClosetPreviewCard(item: item, allUserFits: userFits)
                                 .frame(width: 204)
                         }
                     }
@@ -107,14 +114,17 @@ struct HomeView: View {
         Array(userFits.prefix(5))
     }
 
-    private var closetDashboardSubtitle: String {
-        recentClosetItems.isEmpty ? "등록한 옷을 한눈에 확인하세요" : "최근 등록한 옷을 최대 5개까지 보여드려요"
-    }
-
     private var recentComparisonSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let items = recentHistories
+
+        return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                SectionHeader(title: "최근 비교 결과", subtitle: recentComparisonSubtitle)
+                SectionHeader(
+                    title: "최근 비교 결과",
+                    subtitle: items.isEmpty
+                        ? "아직 비교 기록이 없습니다"
+                        : "최근 비교한 상품을 최대 5개까지 보여드려요"
+                )
                 Spacer()
                 Button(action: onOpenHistory) {
                     HStack(spacing: 4) {
@@ -127,10 +137,10 @@ struct HomeView: View {
                 .buttonStyle(.plain)
             }
 
-            if !recentHistories.isEmpty {
+            if !items.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 12) {
-                        ForEach(recentHistories) { history in
+                        ForEach(items) { history in
                             RecentProductPreviewCard(
                                 history: history,
                                 isFavorite: isFavorite(history),
@@ -186,16 +196,18 @@ struct HomeView: View {
 
     private var recentHistories: [RecommendationHistory] {
         var seenKeys = Set<String>()
-        return histories.filter { history in
-            let key = history.product.sourceURLString ?? history.product.displayName
-            return seenKeys.insert(key).inserted
-        }
-        .prefix(5)
-        .map { $0 }
-    }
+        var result: [RecommendationHistory] = []
 
-    private var recentComparisonSubtitle: String {
-        recentHistories.isEmpty ? "아직 비교 기록이 없습니다" : "최근 비교한 상품을 최대 5개까지 보여드려요"
+        for history in histories {
+            let key = history.product.sourceURLString ?? history.product.displayName
+            guard seenKeys.insert(key).inserted else { continue }
+            result.append(history)
+            if result.count == 5 {
+                break
+            }
+        }
+
+        return result
     }
 
     private func isFavorite(_ history: RecommendationHistory) -> Bool {
@@ -225,9 +237,9 @@ struct HomeView: View {
 
 private struct HomeClosetPreviewCard: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var allUserFits: [UserFit]
 
     let item: UserFit
+    let allUserFits: [UserFit]
     @State private var isShowingReferenceConfirmation = false
     @State private var existingReferenceItem: UserFit?
     @State private var saveErrorMessage: String?

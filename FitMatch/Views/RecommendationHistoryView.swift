@@ -17,7 +17,7 @@ struct RecommendationHistoryView: View {
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
     @State private var cachedFilteredHistories: [RecommendationHistory] = []
-    @State private var cachedHistoryFilterSignature: HistoryFilterSignature?
+    @State private var cachedAvailableCategories: [ClothingCategory] = []
     private let favoriteStore = FavoriteProductStore()
     var onRecompare: ((String) -> Void)?
     var onStartCompare: (() -> Void)?
@@ -81,7 +81,16 @@ struct RecommendationHistoryView: View {
         .onAppear {
             refreshFilteredHistories()
         }
-        .onChange(of: historyFilterSignature) {
+        .onChange(of: histories.count) {
+            refreshFilteredHistories()
+        }
+        .onChange(of: sortOption) {
+            refreshFilteredHistories()
+        }
+        .onChange(of: selectedScope) {
+            refreshFilteredHistories()
+        }
+        .onChange(of: selectedCategory) {
             refreshFilteredHistories()
         }
     }
@@ -242,7 +251,7 @@ struct RecommendationHistoryView: View {
     }
 
     private var availableCategories: [ClothingCategory] {
-        Array(Set(histories.map { $0.product.category })).sorted { $0.rawValue < $1.rawValue }
+        cachedAvailableCategories
     }
 
     private var gridColumns: [GridItem] {
@@ -285,32 +294,13 @@ struct RecommendationHistoryView: View {
     }
 
     private var displayedHistories: [RecommendationHistory] {
-        cachedHistoryFilterSignature == historyFilterSignature
-            ? cachedFilteredHistories
-            : makeFilteredHistories()
-    }
-
-    private var historyFilterSignature: HistoryFilterSignature {
-        HistoryFilterSignature(
-            historyRevisions: histories.map {
-                HistoryRevisionSignature(
-                    id: $0.id,
-                    createdAt: $0.createdAt,
-                    recommendationScore: $0.recommendationScore,
-                    category: $0.product.category,
-                    brandName: $0.product.brand?.name
-                )
-            },
-            favoriteURLs: favoriteURLs.sorted(),
-            sortOption: sortOption,
-            selectedScope: selectedScope,
-            selectedCategory: selectedCategory
-        )
+        cachedFilteredHistories
     }
 
     private func refreshFilteredHistories() {
         cachedFilteredHistories = makeFilteredHistories()
-        cachedHistoryFilterSignature = historyFilterSignature
+        cachedAvailableCategories = Array(Set(histories.map { $0.product.category }))
+            .sorted { $0.rawValue < $1.rawValue }
     }
 
     private func makeFilteredHistories() -> [RecommendationHistory] {
@@ -351,6 +341,7 @@ struct RecommendationHistoryView: View {
     private func toggleFavorite(_ history: RecommendationHistory) {
         _ = favoriteStore.toggle(history.product.sourceURLString)
         favoriteURLs = favoriteStore.favoriteURLs()
+        refreshFilteredHistories()
     }
 
     @ViewBuilder
@@ -403,22 +394,6 @@ private enum HistoryScope: String, CaseIterable {
         case .favorite: return "관심상품"
         }
     }
-}
-
-private struct HistoryFilterSignature: Equatable {
-    let historyRevisions: [HistoryRevisionSignature]
-    let favoriteURLs: [String]
-    let sortOption: HistorySortOption
-    let selectedScope: HistoryScope
-    let selectedCategory: ClothingCategory?
-}
-
-private struct HistoryRevisionSignature: Equatable {
-    let id: UUID
-    let createdAt: Date
-    let recommendationScore: Int
-    let category: ClothingCategory
-    let brandName: String?
 }
 
 private struct EmptyRecommendationHistoryView: View {
