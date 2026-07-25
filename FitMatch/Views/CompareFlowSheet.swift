@@ -786,7 +786,10 @@ private extension CompareFlowSheet {
                     } label: {
                         Text("붙여넣기")
                             .font(.subheadline.weight(.bold))
-                            .foregroundColor(.black)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .frame(height: 34)
+                            .background(Color.black, in: Capsule())
                     }
                     .buttonStyle(.plain)
                 }
