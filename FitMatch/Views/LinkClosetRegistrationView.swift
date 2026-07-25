@@ -4,7 +4,6 @@ import SwiftData
 struct LinkClosetRegistrationView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \Brand.name) private var brands: [Brand]
 
     @State private var productURL = ""
@@ -19,7 +18,8 @@ struct LinkClosetRegistrationView: View {
     @State private var isShowingSizeTableRecovery = false
     @State private var recoveredSelectedSizeID: UUID?
     @State private var isShowingSavedAlert = false
-    @State private var canPasteProductURL = false
+    @State private var isShowingEmptyPasteboardMessage = false
+    @State private var emptyPasteboardShake = 0
     @FocusState private var isURLFocused: Bool
 
     private let parserService = ProductURLParserService()
@@ -117,13 +117,8 @@ struct LinkClosetRegistrationView: View {
             recoveryViewModel = nil
             recoveredSelectedSizeID = nil
             errorMessage = nil
-        }
-        .onAppear {
-            refreshPasteboardAvailability()
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                refreshPasteboardAvailability()
+            if ProductURLSupport.isSupportedProductURL(productURL) {
+                isShowingEmptyPasteboardMessage = false
             }
         }
     }
@@ -178,13 +173,14 @@ struct LinkClosetRegistrationView: View {
                             }
                         }
 
-                    Button("붙여넣기") {
+                    Button {
                         pasteProductURL()
+                    } label: {
+                        Text("붙여넣기")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundColor(.black)
                     }
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(canPasteProductURL ? Color.black : Color.secondary)
                     .buttonStyle(.plain)
-                    .disabled(!canPasteProductURL)
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
@@ -192,6 +188,15 @@ struct LinkClosetRegistrationView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     isURLFocused = true
+                }
+
+                if isShowingEmptyPasteboardMessage {
+                    Text("복사된 상품 링크가 없어요. 링크를 복사한 후 다시 눌러 주세요.")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .modifier(ClosetLinkPasteShakeEffect(animatableData: CGFloat(emptyPasteboardShake)))
+                        .transition(.opacity)
                 }
 
                 PrimaryButton(
@@ -380,21 +385,20 @@ struct LinkClosetRegistrationView: View {
         }
     }
 
-    private func refreshPasteboardAvailability() {
-        canPasteProductURL = !(UIPasteboard.general.string ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .isEmpty
-    }
-
     private func pasteProductURL() {
         guard let value = UIPasteboard.general.string,
               !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            canPasteProductURL = false
+            isShowingEmptyPasteboardMessage = true
+            withAnimation(.linear(duration: 0.45)) {
+                emptyPasteboardShake += 1
+            }
             return
         }
         productURL = ProductURLSupport.extractedURLString(from: value) ?? value
+        if ProductURLSupport.isSupportedProductURL(productURL) {
+            isShowingEmptyPasteboardMessage = false
+        }
         isURLFocused = false
-        refreshPasteboardAvailability()
     }
 
     private var isUnsupportedTopBottomSet: Bool {
@@ -449,4 +453,13 @@ struct LinkClosetRegistrationView: View {
         return .manual
     }
 
+}
+
+private struct ClosetLinkPasteShakeEffect: GeometryEffect {
+    var animatableData: CGFloat
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        let translation = sin(animatableData * .pi * 6) * 7
+        return ProjectionTransform(CGAffineTransform(translationX: translation, y: 0))
+    }
 }

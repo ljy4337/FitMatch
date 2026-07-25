@@ -781,10 +781,13 @@ private extension CompareFlowSheet {
                             Task { await startCompare(with: productURL) }
                         }
 
-                    Button("붙여넣기") {
+                    Button {
                         productURL = UIPasteboard.general.string ?? ""
+                    } label: {
+                        Text("붙여넣기")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundColor(.black)
                     }
-                    .font(.subheadline.weight(.bold))
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 14)
