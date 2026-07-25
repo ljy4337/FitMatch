@@ -304,7 +304,7 @@ struct SizeTableRecoveryView: View {
     private func analyze(data: Data) async {
         isAnalyzing = true
         defer { isAnalyzing = false }
-        let didAnalyze = viewModel.analyzeRecoveryImage(data: data)
+        let didAnalyze = await viewModel.analyzeRecoveryImage(data: data)
         if didAnalyze {
             selectedSizeID = nil
             showsManualEditor = true

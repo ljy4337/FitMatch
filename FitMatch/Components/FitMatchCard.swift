@@ -4,17 +4,20 @@ struct CardView<Content: View>: View {
     var radius: CGFloat = 22
     var padding: CGFloat = 18
     var background: Color = Color(.systemBackground)
+    var shadowRadius: CGFloat = 16
     private let content: Content
 
     init(
         radius: CGFloat = 22,
         padding: CGFloat = 18,
         background: Color = Color(.systemBackground),
+        shadowRadius: CGFloat = 16,
         @ViewBuilder content: () -> Content
     ) {
         self.radius = radius
         self.padding = padding
         self.background = background
+        self.shadowRadius = shadowRadius
         self.content = content()
     }
 
@@ -27,19 +30,26 @@ struct CardView<Content: View>: View {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .stroke(.primary.opacity(0.06), lineWidth: 1)
             }
-            .shadow(color: .black.opacity(0.045), radius: 16, x: 0, y: 8)
+            .shadow(
+                color: .black.opacity(shadowRadius > 0 ? 0.045 : 0),
+                radius: shadowRadius,
+                x: 0,
+                y: shadowRadius > 0 ? min(8, shadowRadius / 2) : 0
+            )
     }
 }
 
 struct FitMatchCard<Content: View>: View {
+    var shadowRadius: CGFloat = 16
     private let content: Content
 
-    init(@ViewBuilder content: () -> Content) {
+    init(shadowRadius: CGFloat = 16, @ViewBuilder content: () -> Content) {
+        self.shadowRadius = shadowRadius
         self.content = content()
     }
 
     var body: some View {
-        CardView(radius: 20, padding: 18) {
+        CardView(radius: 20, padding: 18, shadowRadius: shadowRadius) {
             content
         }
     }

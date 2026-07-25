@@ -2,7 +2,7 @@ import Foundation
 import ImageIO
 import Vision
 
-struct MusinsaFallbackSizeParser {
+nonisolated struct MusinsaFallbackSizeParser {
     func parseRecoveryImage(
         data: Data,
         category: ClothingCategory,
@@ -92,7 +92,7 @@ struct MusinsaFallbackSizeParser {
     }
 }
 
-enum MusinsaFallbackGarmentFamily {
+nonisolated enum MusinsaFallbackGarmentFamily {
     case upper
     case lower
     case shoes
@@ -772,8 +772,7 @@ private enum FallbackColumn: Equatable {
     }
 }
 
-@MainActor
-enum MusinsaFallbackImageOCR {
+nonisolated enum MusinsaFallbackImageOCR {
     static func parse(
         url: URL,
         family: MusinsaFallbackGarmentFamily,

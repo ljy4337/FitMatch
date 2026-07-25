@@ -28,6 +28,7 @@ struct CompareFlowSheet: View {
     @State private var showsAllReferenceCandidates = false
     @State private var hasConfirmedComparisonCategory = false
     @State private var isSheetHeaderVisible = true
+    @State private var preparedComparison: PreparedComparison?
     @FocusState private var isURLFocused: Bool
 
     init(initialURL: String? = nil) {
@@ -47,7 +48,7 @@ struct CompareFlowSheet: View {
 
     private var comparisonInputContent: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            LazyVStack(alignment: .leading, spacing: 20) {
                 switch step {
                 case .start:
                     startContent
@@ -144,6 +145,14 @@ struct CompareFlowSheet: View {
             .presentationDragIndicator(.visible)
         }
     }
+}
+
+private struct PreparedComparison {
+    let product: Product
+    let automaticMatchResult: AutomaticComparisonMatchResult
+    let referenceSelectionPlan: ReferenceSelectionPlan
+    let sourceCategoryHistoryMatches: [SourceCategoryHistoryMatch]
+    let allSimilarClosetCandidates: [UserFit]
 }
 
 private extension CompareFlowSheet {
@@ -295,6 +304,7 @@ private extension CompareFlowSheet {
                                 viewModel.category = category
                                 viewModel.detailCategory = .other
                                 hasConfirmedComparisonCategory = false
+                                rebuildPreparedComparison()
                             }
                         }
                     }
@@ -304,6 +314,7 @@ private extension CompareFlowSheet {
                             Button(detailCategory.rawValue) {
                                 viewModel.detailCategory = detailCategory
                                 hasConfirmedComparisonCategory = false
+                                rebuildPreparedComparison()
                             }
                         }
                     }
@@ -391,7 +402,7 @@ private extension CompareFlowSheet {
     @ViewBuilder
     func closetCandidateSection(title: String, items: [UserFit]) -> some View {
         if !items.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
+            LazyVStack(alignment: .leading, spacing: 12) {
                 CompareSheetSectionTitle(title: title)
                 ForEach(items) { item in
                     Button {
@@ -884,25 +895,15 @@ private extension CompareFlowSheet {
 
 private extension CompareFlowSheet {
     var currentProduct: Product? {
-        makeProduct(insertBrandIfNeeded: false)
+        preparedComparison?.product ?? makeProduct(insertBrandIfNeeded: false)
     }
 
     var automaticMatchResult: AutomaticComparisonMatchResult? {
-        guard let product = currentProduct else { return nil }
-        return RecommendationService().automaticMatchResult(
-            product: product,
-            productDetailCategory: viewModel.detailCategory,
-            userFits: userFits
-        )
+        preparedComparison?.automaticMatchResult
     }
 
     var referenceSelectionPlan: ReferenceSelectionPlan? {
-        guard let product = currentProduct else { return nil }
-        return RecommendationService().referenceSelectionPlan(
-            product: product,
-            productDetailCategory: viewModel.detailCategory,
-            userFits: userFits.filter(hasComparableMeasurements)
-        )
+        preparedComparison?.referenceSelectionPlan
     }
 
     var comparisonCategoryOptions: [ClothingCategory] {
@@ -970,12 +971,7 @@ private extension CompareFlowSheet {
     }
 
     var sourceCategoryHistoryMatches: [SourceCategoryHistoryMatch] {
-        guard let product = currentProduct else { return [] }
-        return SourceCategoryHistoryMatcher.matches(
-            for: product,
-            detectedDetailCategory: viewModel.detailCategory,
-            userFits: userFits
-        )
+        preparedComparison?.sourceCategoryHistoryMatches ?? []
     }
 
     var currentSourceCategoryText: String {
@@ -984,12 +980,7 @@ private extension CompareFlowSheet {
     }
 
     var allSimilarClosetCandidates: [UserFit] {
-        guard let product = currentProduct else { return [] }
-        return RecommendationService().temporaryComparisonCandidates(
-            product: product,
-            productDetailCategory: viewModel.detailCategory,
-            userFits: userFits.filter(hasComparableMeasurements)
-        )
+        preparedComparison?.allSimilarClosetCandidates ?? []
     }
 
     var recommendedReferenceCandidates: [FitMatchCandidate] {
@@ -1073,6 +1064,7 @@ private extension CompareFlowSheet {
         insufficientEvidence = nil
         isShowingReferenceComparison = false
         hasConfirmedComparisonCategory = false
+        preparedComparison = nil
         setStep(.loading)
 
         let didLoad = await viewModel.loadProductInfoFromURL()
@@ -1094,6 +1086,7 @@ private extension CompareFlowSheet {
             setStep(.error)
             return
         }
+        rebuildPreparedComparison(using: product)
         errorMessage = nil
         print("[CompareFlowSheet] productName: \(product.name)")
         print("[CompareFlowSheet] category: \(viewModel.category.rawValue)")
@@ -1103,11 +1096,7 @@ private extension CompareFlowSheet {
         print("[화면: 상품 비교][동작: 상품 분석][상태: 성공] 상품=\(product.name), 출처=\(product.sourceDisplayName), 사이즈수=\(product.sizes.count), 분류=\(viewModel.category.rawValue)/\(viewModel.detailCategory.rawValue)")
         #endif
 
-        let historyMatches = SourceCategoryHistoryMatcher.matches(
-            for: product,
-            detectedDetailCategory: viewModel.detailCategory,
-            userFits: userFits
-        )
+        let historyMatches = sourceCategoryHistoryMatches
         print("[CompareFlowSheet] source category history match count: \(historyMatches.count)")
         if historyMatches.count == 1, let match = historyMatches.first {
             applySourceCategoryHistoryMatch(match)
@@ -1118,6 +1107,7 @@ private extension CompareFlowSheet {
 
         if historyMatches.isEmpty, canConfirmComparisonCategory {
             viewModel.category = viewModel.category.serviceGroup
+            rebuildPreparedComparison()
             print("[CompareFlowSheet] auto confirmed inferred category: \(viewModel.category.rawValue) / \(viewModel.detailCategory.rawValue)")
             confirmComparisonCategoryAndContinue()
             return
@@ -1167,6 +1157,39 @@ private extension CompareFlowSheet {
         viewModel.category = match.category
         viewModel.detailCategory = match.detailCategory
         hasConfirmedComparisonCategory = false
+        rebuildPreparedComparison()
+    }
+
+    func rebuildPreparedComparison(using suppliedProduct: Product? = nil) {
+        guard let product = suppliedProduct ?? makeProduct(insertBrandIfNeeded: false) else {
+            preparedComparison = nil
+            return
+        }
+        let service = RecommendationService()
+        let comparableFits = userFits.filter(hasComparableMeasurements)
+        preparedComparison = PreparedComparison(
+            product: product,
+            automaticMatchResult: service.automaticMatchResult(
+                product: product,
+                productDetailCategory: viewModel.detailCategory,
+                userFits: userFits
+            ),
+            referenceSelectionPlan: service.referenceSelectionPlan(
+                product: product,
+                productDetailCategory: viewModel.detailCategory,
+                userFits: comparableFits
+            ),
+            sourceCategoryHistoryMatches: SourceCategoryHistoryMatcher.matches(
+                for: product,
+                detectedDetailCategory: viewModel.detailCategory,
+                userFits: userFits
+            ),
+            allSimilarClosetCandidates: service.temporaryComparisonCandidates(
+                product: product,
+                productDetailCategory: viewModel.detailCategory,
+                userFits: comparableFits
+            )
+        )
     }
 
     func calculateAndSaveRecommendation() {
