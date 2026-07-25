@@ -28,6 +28,7 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var isAnalyzingRecoveryImage = false
     @Published var recoveryErrorMessage: String?
     @Published var isNetworkFailure = false
+    @Published var analysisPhase: ProductAnalysisPhase = .loadingProductInfo
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
@@ -62,18 +63,26 @@ final class ShoppingProductViewModel: ObservableObject {
         productMetadata = ProductMetadata()
         sizeTableRecoveryContext = nil
         isNetworkFailure = false
+        analysisPhase = .loadingProductInfo
         isLoadingProductInfo = true
         defer { isLoadingProductInfo = false }
 
         do {
-            let parsedProduct = try await parserService.parse(urlString: productURL)
+            let parsedProduct = try await parserService.parse(
+                urlString: productURL,
+                onProgress: { [weak self] phase in
+                    self?.analysisPhase = phase
+                }
+            )
+            analysisPhase = .preparingComparison
             apply(parsedProduct)
             return true
         } catch let partialError as ProductURLParserPartialError {
             apply(partialError.productInfo)
             if partialError.productInfo.sourceName == "무신사",
                partialError.productInfo.sizes.isEmpty {
-                errorMessage = MusinsaParser.automaticSizeFailureNotice
+                errorMessage = partialError.productInfo.parserNotice
+                    ?? MusinsaParser.automaticSizeFailureNotice
             } else {
                 errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
             }

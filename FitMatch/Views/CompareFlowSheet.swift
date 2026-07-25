@@ -165,12 +165,18 @@ private extension CompareFlowSheet {
 
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
-                    FitMatchLoadingRow(title: "상품 정보 불러오는 중", state: .done)
+                    FitMatchLoadingRow(
+                        title: "상품 정보 불러오는 중",
+                        state: loadingState(for: .loadingProductInfo)
+                    )
                     FitMatchLoadingRow(
                         title: isPreparingManualComparison ? "입력한 사이즈 확인 완료" : "사이즈표 확인 중",
-                        state: .done
+                        state: loadingState(for: .loadingSizeChart)
                     )
-                    FitMatchLoadingRow(title: "내 옷과 비교 준비 중", state: .loading)
+                    FitMatchLoadingRow(
+                        title: "내 옷과 비교 준비 중",
+                        state: loadingState(for: .preparingComparison)
+                    )
 
                     Text(isPreparingManualComparison ? "입력한 측정 의미와 호환되는 내 옷을 확인합니다." : "평균 10~20초 소요됩니다.")
                         .font(.subheadline)
@@ -179,6 +185,16 @@ private extension CompareFlowSheet {
                 }
             }
         }
+    }
+
+    func loadingState(for phase: ProductAnalysisPhase) -> FitMatchLoadingState {
+        if isPreparingManualComparison {
+            return phase == .preparingComparison ? .loading : .done
+        }
+        if viewModel.analysisPhase == phase {
+            return .loading
+        }
+        return viewModel.analysisPhase.rawValue > phase.rawValue ? .done : .waiting
     }
 
     var missingReferenceContent: some View {
