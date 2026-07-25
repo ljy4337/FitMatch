@@ -31,6 +31,22 @@ struct InsufficientComparisonEvidence {
     }
 }
 
+struct TemporarySizeAnalysis {
+    let productSize: ProductSize
+    let comparisonResult: MeasurementComparisonResult
+    let recommendationScore: Int
+    let comparisonSummary: String?
+
+    var calculationSnapshot: RecommendationCalculationSnapshot {
+        RecommendationCalculationSnapshot.make(
+            comparison: comparisonResult,
+            bodyShapeSettings: bodyShapePreferences
+        )
+    }
+
+    fileprivate let bodyShapePreferences: BodyShapePreferences
+}
+
 struct RecommendationService {
     private let comparisonMatcher = ComparisonProfileMatcher()
     private let measurementComparisonEngine = MeasurementComparisonEngine()
@@ -58,6 +74,78 @@ struct RecommendationService {
             userFits: sortedFits,
             productDetailCategory: productDetailCategory,
             basis: basis,
+            bodyShapePreferences: bodyShapePreferences
+        )
+    }
+
+    func analyzeSizeWithoutSaving(
+        _ size: ProductSize,
+        product: Product,
+        referenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        comparisonMethod: String,
+        excludedKinds: [MeasurementKind],
+        bodyShapePreferences: BodyShapePreferences,
+        scorePenalty: Int
+    ) -> TemporarySizeAnalysis? {
+        if comparisonMethod == "기준표 가슴둘레 비교" {
+            guard let productChest = StandardBodySizeChart.chestCircumferenceCm(for: size.name),
+                  let referenceChest = StandardBodySizeChart.chestCircumferenceCm(for: referenceItem.sizeName) else {
+                return nil
+            }
+            let signedDifference = productChest - referenceChest
+            let absoluteDifference = abs(signedDifference)
+            let rawScore = max(0, min(100, Int((100 - absoluteDifference * 5).rounded())))
+            let item = MeasurementComparisonItem(
+                kind: .chest,
+                measurementCode: .standardBodyChestCircumference,
+                productValue: productChest,
+                referenceValue: referenceChest,
+                signedDifference: signedDifference,
+                absoluteDifference: absoluteDifference,
+                score: rawScore,
+                weight: 1
+            )
+            let comparison = MeasurementComparisonResult(
+                status: .confirmed,
+                score: rawScore,
+                comparedItems: [item],
+                exclusions: standardSizeExclusions,
+                averageDifference: absoluteDifference,
+                minimumComparableCount: 1,
+                requiredKinds: [.chest],
+                minimumRequiredKindCount: 1,
+                requiredAllKinds: [],
+                expectedWeightSum: 1,
+                usedWeightSum: 1
+            )
+            return TemporarySizeAnalysis(
+                productSize: size,
+                comparisonResult: comparison,
+                recommendationScore: max(0, rawScore - scorePenalty),
+                comparisonSummary: standardSizeReason(
+                    productSize: size.name,
+                    referenceSize: referenceItem.sizeName,
+                    difference: signedDifference
+                ),
+                bodyShapePreferences: bodyShapePreferences
+            )
+        }
+
+        let comparison = measurementComparisonEngine.compare(
+            productSize: size,
+            referenceItem: referenceItem,
+            productCategory: product.category,
+            productDetailCategory: productDetailCategory,
+            excludedKinds: excludedKinds,
+            bodyShapePreferences: bodyShapePreferences
+        )
+        guard comparison.status == .confirmed else { return nil }
+        return TemporarySizeAnalysis(
+            productSize: size,
+            comparisonResult: comparison,
+            recommendationScore: max(0, comparison.score - scorePenalty),
+            comparisonSummary: nil,
             bodyShapePreferences: bodyShapePreferences
         )
     }

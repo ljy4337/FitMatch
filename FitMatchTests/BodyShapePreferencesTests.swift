@@ -240,6 +240,90 @@ struct BodyShapePreferencesTests {
         })
     }
 
+    @Test func temporarySizeAnalysisReusesComparisonEngineWithoutCreatingHistory() throws {
+        let fixture = upperFixture()
+        let alternative = upperSize(name: "XL", shoulder: 51, chest: 57)
+        alternative.displayOrder = 1
+        let product = Product(name: "임시 분석 상의", category: .top, sizes: [fixture.size, alternative])
+        let preferences = BodyShapePreferences(hasBroadShoulders: true)
+
+        let analysis = try #require(RecommendationService().analyzeSizeWithoutSaving(
+            alternative,
+            product: product,
+            referenceItem: fixture.item,
+            productDetailCategory: .shortSleeve,
+            comparisonMethod: "사용자 선택 임시 비교",
+            excludedKinds: [],
+            bodyShapePreferences: preferences,
+            scorePenalty: 12
+        ))
+        let direct = MeasurementComparisonEngine().compare(
+            productSize: alternative,
+            referenceItem: fixture.item,
+            productCategory: product.category,
+            productDetailCategory: .shortSleeve,
+            bodyShapePreferences: preferences
+        )
+
+        #expect(analysis.productSize.id == alternative.id)
+        #expect(analysis.comparisonResult == direct)
+        #expect(analysis.recommendationScore == max(0, direct.score - 12))
+        #expect(analysis.calculationSnapshot.bodyShapeSettings == preferences)
+    }
+
+    @Test func temporarySizeAnalysisDoesNotMutateOriginalRecommendation() throws {
+        let fixture = upperFixture()
+        fixture.size.displayOrder = 0
+        let alternative = upperSize(name: "XL", shoulder: 53, chest: 58)
+        alternative.displayOrder = 1
+        let product = Product(name: "원본 보존 상의", category: .top, sizes: [fixture.size, alternative])
+        let original = try #require(RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: fixture.item,
+            productDetailCategory: .shortSleeve
+        ))
+        let originalSizeID = original.recommendedSize.id
+        let originalScore = original.recommendationScore
+        let originalSnapshot = original.calculationSnapshot
+
+        _ = RecommendationService().analyzeSizeWithoutSaving(
+            alternative,
+            product: product,
+            referenceItem: fixture.item,
+            productDetailCategory: .shortSleeve,
+            comparisonMethod: original.comparisonMethod,
+            excludedKinds: original.measurementExclusions.filter { $0.reason == .categoryPolicy }.map(\.kind),
+            bodyShapePreferences: original.calculationSnapshot?.bodyShapeSettings ?? .none,
+            scorePenalty: 0
+        )
+
+        #expect(original.recommendedSize.id == originalSizeID)
+        #expect(original.recommendationScore == originalScore)
+        #expect(original.calculationSnapshot == originalSnapshot)
+    }
+
+    @Test func temporarySizeAnalysisReturnsNilForInsufficientEvidence() {
+        let reference = upperFixture().item
+        let emptySize = ProductSize(
+            name: "정보없음",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0)
+        )
+        let product = Product(name: "실측 부족 상의", category: .top, sizes: [emptySize])
+
+        let analysis = RecommendationService().analyzeSizeWithoutSaving(
+            emptySize,
+            product: product,
+            referenceItem: reference,
+            productDetailCategory: .shortSleeve,
+            comparisonMethod: "사용자 선택 임시 비교",
+            excludedKinds: [],
+            bodyShapePreferences: .none,
+            scorePenalty: 0
+        )
+
+        #expect(analysis == nil)
+    }
+
     @Test func missingSelectedMeasurementStoresUnappliedReasonAndCoverage() throws {
         let fixture = upperFixture()
         let product = Product(name: "결측 상의", category: .top, sizes: [fixture.size])
