@@ -540,7 +540,7 @@ struct CompareStartSheet: View {
             Button(action: submitURL) {
                 Label("비교하기", systemImage: "sparkles")
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(canSubmitURL ? Color.white : Color.secondary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
                     .background(canSubmitURL ? Color.black : Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -769,8 +769,10 @@ struct RecentProductPreviewCard: View {
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.secondary)
                 Text(history.recommendedSize.name.displaySizeName)
-                    .font(.title2.weight(.black))
+                    .font(.title3.weight(.black))
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
 
             Spacer()

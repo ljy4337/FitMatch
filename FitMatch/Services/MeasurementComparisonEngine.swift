@@ -155,20 +155,24 @@ struct MeasurementComparisonEngine {
                 exclusions.append(exclusion(kind: kind, reason: .unverifiedReferenceDefinition, productRecords: productRecords, referenceRecords: referenceRecords))
                 continue
             }
-            guard let pair = matchingPair(productRecords: comparableProductRecords, referenceRecords: comparableReferenceRecords) else {
+            guard let pair = matchingPair(
+                kind: kind,
+                productRecords: comparableProductRecords,
+                referenceRecords: comparableReferenceRecords
+            ) else {
                 exclusions.append(exclusion(kind: kind, reason: .incompatibleMeasurementCode, productRecords: comparableProductRecords, referenceRecords: comparableReferenceRecords))
                 continue
             }
 
-            let signedDifference = pair.product.value - pair.reference.value
+            let signedDifference = pair.productValue - pair.referenceValue
             let absoluteDifference = abs(signedDifference)
             let itemScore = max(0, min(100, Int((100 - absoluteDifference * 5).rounded())))
             comparedItems.append(
                 MeasurementComparisonItem(
                     kind: kind,
-                    measurementCode: pair.product.measurementCode,
-                    productValue: pair.product.value,
-                    referenceValue: pair.reference.value,
+                    measurementCode: pair.comparisonCode,
+                    productValue: pair.productValue,
+                    referenceValue: pair.referenceValue,
                     signedDifference: signedDifference,
                     absoluteDifference: absoluteDifference,
                     score: itemScore,
@@ -241,16 +245,50 @@ struct MeasurementComparisonEngine {
         }
     }
 
+    private struct ComparableMeasurementPair {
+        let comparisonCode: MeasurementCode
+        let productValue: Double
+        let referenceValue: Double
+    }
+
     private func matchingPair(
+        kind: MeasurementKind,
         productRecords: [GarmentMeasurementRecord],
         referenceRecords: [GarmentMeasurementRecord]
-    ) -> (product: GarmentMeasurementRecord, reference: GarmentMeasurementRecord)? {
+    ) -> ComparableMeasurementPair? {
+        if kind == .chest,
+           let productRecord = preferredGarmentChestRecord(in: productRecords),
+           let referenceRecord = preferredGarmentChestRecord(in: referenceRecords) {
+            return ComparableMeasurementPair(
+                comparisonCode: .chestWidthPitToPit,
+                productValue: garmentChestWidthValue(productRecord),
+                referenceValue: garmentChestWidthValue(referenceRecord)
+            )
+        }
+
         for productRecord in productRecords {
             if let referenceRecord = referenceRecords.first(where: { $0.measurementCode == productRecord.measurementCode }) {
-                return (productRecord, referenceRecord)
+                return ComparableMeasurementPair(
+                    comparisonCode: productRecord.measurementCode,
+                    productValue: productRecord.value,
+                    referenceValue: referenceRecord.value
+                )
             }
         }
         return nil
+    }
+
+    private func preferredGarmentChestRecord(
+        in records: [GarmentMeasurementRecord]
+    ) -> GarmentMeasurementRecord? {
+        records.first { $0.measurementCode == .chestWidthPitToPit }
+            ?? records.first { $0.measurementCode == .chestCircumferenceGarment }
+    }
+
+    private func garmentChestWidthValue(_ record: GarmentMeasurementRecord) -> Double {
+        record.measurementCode == .chestCircumferenceGarment
+            ? record.value / 2
+            : record.value
     }
 
     private func exclusion(

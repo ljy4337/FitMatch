@@ -223,7 +223,6 @@ private extension CompareFlowSheet {
                     setStep(.closetSelection)
                 }
                 .disabled(allSimilarClosetCandidates.isEmpty)
-                .opacity(allSimilarClosetCandidates.isEmpty ? 0.45 : 1)
 
                 SecondaryButton(title: "내 옷장에 추가", systemImage: "plus") {
                     presentProductRegistration(context: .missingReference)
@@ -317,7 +316,6 @@ private extension CompareFlowSheet {
                 confirmComparisonCategoryAndContinue()
             }
             .disabled(!canConfirmComparisonCategory)
-            .opacity(canConfirmComparisonCategory ? 1 : 0.35)
         }
     }
 
@@ -554,16 +552,22 @@ private extension CompareFlowSheet {
                 .foregroundStyle(.secondary)
 
             VStack(spacing: 8) {
-                Text(isAutomaticMusinsaSizeFailure
-                     ? "상품 정보를 불러왔습니다."
-                     : "상품 정보를 불러오지 못했어요.")
-                    .font(.title2.weight(.black))
-                Text(isAutomaticMusinsaSizeFailure
-                     ? "판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요."
-                     : (errorMessage ?? "URL을 다시 확인해 주세요."))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                if isUnsupportedTopBottomSet {
+                    Text(MusinsaParser.unsupportedTopBottomSetNotice)
+                        .font(.title2.weight(.black))
+                        .multilineTextAlignment(.center)
+                } else {
+                    Text(isAutomaticMusinsaSizeFailure
+                         ? "상품 정보를 불러왔습니다."
+                         : "상품 정보를 불러오지 못했어요.")
+                        .font(.title2.weight(.black))
+                    Text(isAutomaticMusinsaSizeFailure
+                         ? "판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요."
+                         : (errorMessage ?? "URL을 다시 확인해 주세요."))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
             }
 
             if isAutomaticMusinsaSizeFailure {
@@ -615,6 +619,10 @@ private extension CompareFlowSheet {
     var isAutomaticMusinsaSizeFailure: Bool {
         productURL.lowercased().contains("musinsa")
             && errorMessage == MusinsaParser.automaticSizeFailureNotice
+    }
+
+    var isUnsupportedTopBottomSet: Bool {
+        errorMessage == MusinsaParser.unsupportedTopBottomSetNotice
     }
 
     @ViewBuilder
@@ -792,7 +800,6 @@ private extension CompareFlowSheet {
                     Task { await startCompare(with: productURL) }
                 }
                 .disabled(productURL.trimmedForCompareFlow.isEmpty || viewModel.isLoadingProductInfo)
-                .opacity(productURL.trimmedForCompareFlow.isEmpty ? 0.35 : 1)
             }
         }
     }
@@ -1749,7 +1756,6 @@ private struct ManualComparisonProductEntrySheet: View {
                     onContinue()
                 }
                 .disabled(!hasValidSize)
-                .opacity(hasValidSize ? 1 : 0.45)
             }
             .padding(20)
         }
@@ -1813,6 +1819,7 @@ struct ManualComparisonSizeEditor: View {
     @Binding var option: ClothingSizeForm
     let category: ClothingCategory
     let detailCategory: ClosetDetailCategory
+    var allowsMeasurementShapeSelection: Bool = true
     let canRemove: Bool
     let onRemove: () -> Void
 
@@ -1831,13 +1838,13 @@ struct ManualComparisonSizeEditor: View {
             }
 
             ForEach(measurementKinds) { kind in
-                if kind == .chest {
+                if kind == .chest, allowsMeasurementShapeSelection {
                     measurementShapePicker(
                         widthTitle: "가슴단면",
                         circumferenceTitle: "가슴둘레",
                         selection: $option.chestUsesCircumference
                     )
-                } else if kind == .waist {
+                } else if kind == .waist, allowsMeasurementShapeSelection {
                     measurementShapePicker(
                         widthTitle: "허리단면",
                         circumferenceTitle: "허리둘레",

@@ -4,6 +4,7 @@ import SwiftData
 struct LinkClosetRegistrationView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \Brand.name) private var brands: [Brand]
 
     @State private var productURL = ""
@@ -14,7 +15,11 @@ struct LinkClosetRegistrationView: View {
     @State private var parsedDetailCategory: ClosetDetailCategory = .other
     @State private var isShowingAddToClosetSheet = false
     @State private var isShowingManualAddSheet = false
+    @State private var recoveryViewModel: ShoppingProductViewModel?
+    @State private var isShowingSizeTableRecovery = false
+    @State private var recoveredSelectedSizeID: UUID?
     @State private var isShowingSavedAlert = false
+    @State private var canPasteProductURL = false
     @FocusState private var isURLFocused: Bool
 
     private let parserService = ProductURLParserService()
@@ -49,7 +54,9 @@ struct LinkClosetRegistrationView: View {
                 AddComparedProductToClosetSheet(
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
-                    recommendedSize: uniqueSizes(for: parsedProduct).first,
+                    recommendedSize: recoveredSelectedSizeID.flatMap { selectedID in
+                        uniqueSizes(for: parsedProduct).first { $0.id == selectedID }
+                    } ?? uniqueSizes(for: parsedProduct).first,
                     preselectedClassification: ParsedClosetClassification.resolve(
                         product: parsedProduct,
                         detailCategory: parsedDetailCategory
@@ -57,6 +64,22 @@ struct LinkClosetRegistrationView: View {
                     isParsedProductReadOnly: true
                 ) { _ in
                     isShowingSavedAlert = true
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+        }
+        .sheet(isPresented: $isShowingSizeTableRecovery) {
+            if let recoveryViewModel {
+                NavigationStack {
+                    SizeTableRecoveryView(
+                        viewModel: recoveryViewModel,
+                        purpose: .closetRegistration,
+                        onCancel: {},
+                        onComplete: {
+                            completeRecoveredProduct(using: recoveryViewModel)
+                        }
+                    )
                 }
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
@@ -91,7 +114,17 @@ struct LinkClosetRegistrationView: View {
         .onChange(of: productURL) { _, _ in
             parsedProduct = nil
             partialProduct = nil
+            recoveryViewModel = nil
+            recoveredSelectedSizeID = nil
             errorMessage = nil
+        }
+        .onAppear {
+            refreshPasteboardAvailability()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                refreshPasteboardAvailability()
+            }
         }
     }
 
@@ -144,6 +177,14 @@ struct LinkClosetRegistrationView: View {
                                 }
                             }
                         }
+
+                    Button("붙여넣기") {
+                        pasteProductURL()
+                    }
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(canPasteProductURL ? Color.black : Color.secondary)
+                    .buttonStyle(.plain)
+                    .disabled(!canPasteProductURL)
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
@@ -163,7 +204,6 @@ struct LinkClosetRegistrationView: View {
                     }
                 }
                 .disabled(!canLoadProduct)
-                .opacity(canLoadProduct ? 1 : 0.45)
             }
         }
     }
@@ -216,14 +256,20 @@ struct LinkClosetRegistrationView: View {
         if let errorMessage {
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
-                    Label(
-                        partialProduct == nil ? errorMessage : "상품 정보를 불러왔습니다.",
-                        systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
-                    )
-                    .font(.headline)
-                    .foregroundStyle(partialProduct == nil ? .red : .primary)
+                    if isUnsupportedTopBottomSet {
+                        Text(MusinsaParser.unsupportedTopBottomSetNotice)
+                            .font(.title2.weight(.black))
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Label(
+                            partialProduct == nil ? errorMessage : "상품 정보를 불러왔습니다.",
+                            systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
+                        )
+                        .font(.headline)
+                        .foregroundStyle(partialProduct == nil ? .red : .primary)
+                    }
 
-                    if let partialProduct {
+                    if let partialProduct, !isUnsupportedTopBottomSet {
                         Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -250,7 +296,11 @@ struct LinkClosetRegistrationView: View {
                             }
                         }
 
-                        PrimaryButton(title: "사이즈 직접 입력", systemImage: "square.and.pencil") {
+                        PrimaryButton(title: "사이즈표 이미지 분석", systemImage: "viewfinder") {
+                            isShowingSizeTableRecovery = true
+                        }
+
+                        SecondaryButton(title: "사이즈 직접 입력", systemImage: "square.and.pencil") {
                             isShowingManualAddSheet = true
                         }
                     }
@@ -321,10 +371,34 @@ struct LinkClosetRegistrationView: View {
             )
             parsedDetailCategory = parsedInfo.detailCategory
             partialProduct = product
+            let viewModel = ShoppingProductViewModel(initialURL: parsedInfo.sourceURL.absoluteString)
+            viewModel.apply(parsedInfo)
+            recoveryViewModel = viewModel
             errorMessage = parsedInfo.parserNotice ?? partialError.errorDescription
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
         }
+    }
+
+    private func refreshPasteboardAvailability() {
+        canPasteProductURL = !(UIPasteboard.general.string ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
+    }
+
+    private func pasteProductURL() {
+        guard let value = UIPasteboard.general.string,
+              !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            canPasteProductURL = false
+            return
+        }
+        productURL = ProductURLSupport.extractedURLString(from: value) ?? value
+        isURLFocused = false
+        refreshPasteboardAvailability()
+    }
+
+    private var isUnsupportedTopBottomSet: Bool {
+        errorMessage == MusinsaParser.unsupportedTopBottomSetNotice
     }
 
     private func existingBrand(named name: String) -> Brand? {
@@ -334,6 +408,23 @@ struct LinkClosetRegistrationView: View {
         }
 
         return brands.first { $0.normalizedName == normalizedName }
+    }
+
+    private func completeRecoveredProduct(using viewModel: ShoppingProductViewModel) {
+        let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
+        guard let product = viewModel.makeProductForClosetRegistration(brand: brand) else {
+            viewModel.recoveryErrorMessage = "선택한 사이즈 정보를 저장할 수 없습니다."
+            return
+        }
+
+        parsedProduct = product
+        partialProduct = nil
+        errorMessage = nil
+        recoveredSelectedSizeID = viewModel.recoverySelectedSizeID
+        isShowingSizeTableRecovery = false
+        DispatchQueue.main.async {
+            isShowingAddToClosetSheet = true
+        }
     }
 
     private func uniqueSizes(for product: Product) -> [ProductSize] {

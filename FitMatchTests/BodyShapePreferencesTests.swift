@@ -520,6 +520,115 @@ struct BodyShapePreferencesTests {
         })
     }
 
+    @Test func garmentChestCircumferenceAndWidthCompareAsChestWidthWithoutMutatingSources() throws {
+        let fixture = upperFixture()
+        fixture.size.measurementRecords.removeAll { $0.displayKind == .chest }
+        fixture.size.measurementRecords.append(
+            record(
+                value: 108,
+                code: .chestCircumferenceGarment,
+                kind: .chest,
+                productSize: fixture.size
+            )
+        )
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        )
+        let chest = try #require(result.comparedItems.first { $0.kind == .chest })
+
+        #expect(chest.measurementCode == .chestWidthPitToPit)
+        #expect(chest.productValue == 54)
+        #expect(chest.referenceValue == 52)
+        #expect(chest.signedDifference == 2)
+        #expect(fixture.size.measurementRecords.first { $0.displayKind == .chest }?.value == 108)
+        #expect(fixture.size.measurementRecords.first { $0.displayKind == .chest }?.measurementCode == .chestCircumferenceGarment)
+        let snapshot = RecommendationCalculationSnapshot.make(
+            comparison: result,
+            bodyShapeSettings: .none
+        )
+        #expect(snapshot.usedMeasurements.first { $0.kind == .chest }?.productValue == 54)
+        #expect(snapshot.usedMeasurements.first { $0.kind == .chest }?.referenceValue == 52)
+    }
+
+    @Test func garmentChestCircumferencesUseHalfScaleDifference() throws {
+        let fixture = upperFixture()
+        fixture.size.measurementRecords.removeAll { $0.displayKind == .chest }
+        fixture.item.measurementRecords.removeAll { $0.displayKind == .chest }
+        fixture.size.measurementRecords.append(
+            record(value: 108, code: .chestCircumferenceGarment, kind: .chest, productSize: fixture.size)
+        )
+        fixture.item.measurementRecords.append(
+            record(value: 104, code: .chestCircumferenceGarment, kind: .chest, userFit: fixture.item)
+        )
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        )
+        let chest = try #require(result.comparedItems.first { $0.kind == .chest })
+
+        #expect(chest.productValue == 54)
+        #expect(chest.referenceValue == 52)
+        #expect(chest.absoluteDifference == 2)
+        #expect(chest.score == 90)
+    }
+
+    @Test func referenceGarmentChestCircumferenceConvertsWhenProductUsesWidth() throws {
+        let fixture = upperFixture()
+        fixture.item.measurementRecords.removeAll { $0.displayKind == .chest }
+        fixture.item.measurementRecords.append(
+            record(
+                value: 104,
+                code: .chestCircumferenceGarment,
+                kind: .chest,
+                userFit: fixture.item
+            )
+        )
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        )
+        let chest = try #require(result.comparedItems.first { $0.kind == .chest })
+
+        #expect(chest.productValue == 54)
+        #expect(chest.referenceValue == 52)
+        #expect(chest.signedDifference == 2)
+    }
+
+    @Test func standardBodyChestCircumferenceDoesNotConvertToGarmentWidth() {
+        let fixture = upperFixture()
+        fixture.item.measurementRecords.removeAll { $0.displayKind == .chest }
+        fixture.item.measurementRecords.append(
+            record(
+                value: 100,
+                code: .standardBodyChestCircumference,
+                kind: .chest,
+                userFit: fixture.item
+            )
+        )
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: fixture.size,
+            referenceItem: fixture.item,
+            productCategory: .top,
+            productDetailCategory: .sleeveless
+        )
+
+        #expect(!result.comparedKinds.contains(.chest))
+        #expect(result.exclusions.contains {
+            $0.kind == .chest && $0.reason == .incompatibleMeasurementCode
+        })
+    }
+
     @Test func snapshotPresentationUsesSavedStateAndHidesUnselectedBodyShape() throws {
         let fixture = upperFixture()
         let noPreferenceResult = MeasurementComparisonEngine().compare(

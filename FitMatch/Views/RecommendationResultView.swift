@@ -383,8 +383,8 @@ struct RecommendationResultView: View {
                         ForEach(comparedMeasurementKinds) { kind in
                             ReportMeasurementRow(
                                 title: kind.title,
-                                productValue: displayedProductSize.measurements.value(for: kind),
-                                referenceValue: currentResult.userFit.measurements.value(for: kind),
+                                productValue: displayedMeasurementValues(for: kind).product,
+                                referenceValue: displayedMeasurementValues(for: kind).reference,
                                 difference: displayedMeasurementDifferences.value(for: kind)
                             )
                         }
@@ -510,7 +510,7 @@ struct RecommendationResultView: View {
                         Text(alternativeAnalysisButtonTitle)
                             .font(.headline.weight(.bold))
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(alternativeAnalysisHasValidSelection ? Color.white : Color.secondary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .background(
@@ -677,6 +677,18 @@ struct RecommendationResultView: View {
         temporarySizeAnalysis?.calculationSnapshot ?? currentResult.calculationSnapshot
     }
 
+    private func displayedMeasurementValues(
+        for kind: MeasurementKind
+    ) -> (product: Double, reference: Double) {
+        if let used = displayedCalculationSnapshot?.usedMeasurements.first(where: { $0.kind == kind }) {
+            return (used.productValue, used.referenceValue)
+        }
+        return (
+            displayedProductSize.measurements.value(for: kind),
+            currentResult.userFit.measurements.value(for: kind)
+        )
+    }
+
     private var comparisonBodyShapePreferences: BodyShapePreferences {
         BodyShapeSettingsStore().load()
     }
@@ -756,8 +768,7 @@ struct RecommendationResultView: View {
 
     private var alternativeAnalysisHasValidSelection: Bool {
         guard let selectedAlternativeSize,
-              selectedAlternativeSize.id != currentResult.recommendedSize.id,
-              selectedAlternativeSize.id != temporarySizeAnalysis?.productSize.id else {
+              selectedAlternativeSize.id != displayedProductSize.id else {
             return false
         }
         return cachedAnalysis(for: selectedAlternativeSize) != nil
@@ -777,6 +788,12 @@ struct RecommendationResultView: View {
         isAnalyzingAlternativeSize = true
         Task { @MainActor in
             await Task.yield()
+            if selectedAlternativeSize.id == currentResult.recommendedSize.id {
+                temporarySizeAnalysis = nil
+                isAnalyzingAlternativeSize = false
+                isShowingAlternativeSizeComparison = false
+                return
+            }
             guard let analysis = cachedAnalysis(for: selectedAlternativeSize) else {
                 isAnalyzingAlternativeSize = false
                 alternativeSizeErrorMessage = "선택한 사이즈는 비교 가능한 실측 정보가 부족합니다."

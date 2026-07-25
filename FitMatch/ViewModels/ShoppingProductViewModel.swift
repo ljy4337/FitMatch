@@ -27,6 +27,7 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var sizeTableRecoveryContext: SizeTableRecoveryContext?
     @Published var isAnalyzingRecoveryImage = false
     @Published var recoveryErrorMessage: String?
+    @Published var recoverySelectedSizeID: UUID?
     @Published var isNetworkFailure = false
     @Published var analysisPhase: ProductAnalysisPhase = .loadingProductInfo
 
@@ -292,7 +293,7 @@ final class ShoppingProductViewModel: ObservableObject {
         return product
     }
 
-    private func apply(_ parsedProduct: ParsedProductInfo) {
+    func apply(_ parsedProduct: ParsedProductInfo) {
         productURL = parsedProduct.sourceURL.absoluteString
         sourceType = parsedProduct.sourceType
         sourceName = parsedProduct.sourceName

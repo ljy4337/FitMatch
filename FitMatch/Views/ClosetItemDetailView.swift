@@ -44,6 +44,7 @@ struct ClosetItemDetailView: View {
                 if item.isImportedFromURL {
                     ImportedClosetItemEditView(
                         item: item,
+                        hasComparisonHistory: hasComparisonHistory,
                         onDelete: {
                             deleteItemAndDismiss()
                         }
@@ -57,6 +58,7 @@ struct ClosetItemDetailView: View {
                 } else {
                     AddClosetItemView(
                         item: item,
+                        hasComparisonHistory: hasComparisonHistory,
                         onDelete: {
                             deleteItemAndDismiss()
                         }
@@ -416,6 +418,10 @@ struct ClosetItemDetailView: View {
             saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
         }
     }
+
+    private var hasComparisonHistory: Bool {
+        histories.contains { $0.userFit.id == item.id }
+    }
 }
 
 private extension String {
@@ -517,6 +523,7 @@ private struct DetailInfoRow: View {
 private struct ImportedClosetItemEditView: View {
     @Environment(\.dismiss) private var dismiss
     let item: UserFit
+    let hasComparisonHistory: Bool
     let onDelete: () -> Void
     let onSave: (ProductSize, ClothingCategory, ClosetDetailCategory) -> Void
 
@@ -529,10 +536,12 @@ private struct ImportedClosetItemEditView: View {
 
     init(
         item: UserFit,
+        hasComparisonHistory: Bool,
         onDelete: @escaping () -> Void,
         onSave: @escaping (ProductSize, ClothingCategory, ClosetDetailCategory) -> Void
     ) {
         self.item = item
+        self.hasComparisonHistory = hasComparisonHistory
         self.onDelete = onDelete
         self.onSave = onSave
         let sizes = Self.availableSizes(for: item)
@@ -575,7 +584,7 @@ private struct ImportedClosetItemEditView: View {
                 dismiss()
             }
         } message: {
-            Text("삭제한 옷 정보는 복구할 수 없습니다.")
+            Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 함께 삭제됩니다. 그래도 삭제하시겠어요?")
         }
     }
 
@@ -698,7 +707,12 @@ private struct ImportedClosetItemEditView: View {
 
     private var deleteButton: some View {
         Button(role: .destructive) {
-            isShowingDeleteAlert = true
+            if hasComparisonHistory {
+                isShowingDeleteAlert = true
+            } else {
+                onDelete()
+                dismiss()
+            }
         } label: {
             Text("삭제")
                 .font(.subheadline.weight(.bold))

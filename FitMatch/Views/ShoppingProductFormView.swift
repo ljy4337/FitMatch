@@ -134,7 +134,6 @@ struct ShoppingProductFormView: View {
                     }
                 }
                 .disabled(viewModel.productURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isLoadingProductInfo)
-                .opacity(viewModel.productURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
 
                 missingBasisCallout
             }

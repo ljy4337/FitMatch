@@ -18,7 +18,7 @@ struct MusinsaFallbackSizeParser {
         return MusinsaFallbackImageOCR.parse(
             image: image,
             family: family,
-            requiresTableRectangle: true,
+            requiresTableRectangle: image.height >= image.width * 3,
             sourceDescription: "user_selected_image"
         ) ?? []
     }

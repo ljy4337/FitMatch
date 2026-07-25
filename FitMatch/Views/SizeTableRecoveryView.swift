@@ -2,16 +2,24 @@ import PhotosUI
 import SwiftUI
 
 struct SizeTableRecoveryView: View {
+    enum Purpose {
+        case comparison
+        case closetRegistration
+    }
+
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: ShoppingProductViewModel
+    var purpose: Purpose = .comparison
     let onCancel: () -> Void
     let onComplete: () -> Void
 
-    @State private var selectedCandidateURLString: String?
-    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var selectedImageData: Data?
+    @State private var selectedSizeID: UUID?
     @State private var isAnalyzing = false
     @State private var showsManualEditor = false
+    @State private var isManualEntry = false
+    @State private var showsAnalysisFailureAlert = false
     @State private var validationMessage: String?
 
     var body: some View {
@@ -19,14 +27,28 @@ struct SizeTableRecoveryView: View {
             VStack(alignment: .leading, spacing: 18) {
                 productCard
 
-                if !candidateURLStrings.isEmpty {
-                    candidateSection
-                }
-
                 photoSection
 
-                if showsManualEditor || hasRecognizedRows {
-                    tableEditor
+                if selectedImageData != nil {
+                    selectedImageSection
+                }
+
+                if isAnalyzing {
+                    FitMatchCard {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                            Text("사이즈표를 분석하고 있어요.")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                    }
+                }
+
+                if hasRecognizedRows {
+                    sizeSelectionSection
+                }
+
+                if showsManualEditor, selectedSizeID != nil {
+                    sizeConfirmationSection
                 }
 
                 if let message = validationMessage ?? viewModel.recoveryErrorMessage {
@@ -36,9 +58,10 @@ struct SizeTableRecoveryView: View {
                 }
 
                 if hasRecognizedRows || showsManualEditor {
-                    PrimaryButton(title: "이 사이즈표로 비교하기", systemImage: "sparkles") {
+                    PrimaryButton(title: comparisonButtonTitle, systemImage: "sparkles") {
                         complete()
                     }
+                    .disabled(selectedSizeID == nil || isAnalyzing)
                 }
 
                 SecondaryButton(title: "직접 입력하기", systemImage: "square.and.pencil") {
@@ -48,7 +71,7 @@ struct SizeTableRecoveryView: View {
             .padding(20)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("사이즈표 복구")
+        .navigationTitle("이미지 분석")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -58,16 +81,32 @@ struct SizeTableRecoveryView: View {
                 }
             }
         }
-        .onChange(of: selectedPhotoItem) { _, item in
-            guard let item else { return }
+        .onChange(of: selectedPhotoItems) { _, items in
+            guard let item = items.first else { return }
             Task {
                 guard let data = try? await item.loadTransferable(type: Data.self) else {
                     viewModel.recoveryErrorMessage = "선택한 사진을 불러오지 못했어요."
+                    selectedPhotoItems = []
                     return
                 }
+                selectedSizeID = nil
+                showsManualEditor = false
+                isManualEntry = false
+                validationMessage = nil
+                viewModel.recoveryErrorMessage = nil
+                viewModel.sizeOptions = [ClothingSizeForm()]
                 selectedImageData = data
                 await analyze(data: data)
+                selectedPhotoItems = []
             }
+        }
+        .alert("이미지를 분석할 수 없습니다", isPresented: $showsAnalysisFailureAlert) {
+            Button("수동으로 입력하기") {
+                prepareManualEntry()
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("죄송합니다. 이미지를 분석할 수 없습니다. 수동으로 사이즈를 입력하시겠습니까?")
         }
     }
 
@@ -93,62 +132,18 @@ struct SizeTableRecoveryView: View {
         }
     }
 
-    private var candidateSection: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(
-                    title: "상세 이미지에서 사이즈표 선택",
-                    subtitle: "사이즈표가 보이는 이미지를 하나 선택해 주세요."
-                )
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(candidateURLStrings, id: \.self) { value in
-                            Button {
-                                selectedCandidateURLString = value
-                                selectedImageData = nil
-                            } label: {
-                                AsyncImage(url: URL(string: value)) { image in
-                                    image.resizable().scaledToFill()
-                                } placeholder: {
-                                    ProgressView()
-                                }
-                                .frame(width: 100, height: 124)
-                                .clipped()
-                                .background(Color(.secondarySystemGroupedBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(
-                                            selectedCandidateURLString == value ? Color.accentColor : .clear,
-                                            lineWidth: 3
-                                        )
-                                }
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-
-                PrimaryButton(title: "선택한 이미지 분석", systemImage: "viewfinder") {
-                    guard let value = selectedCandidateURLString,
-                          let url = URL(string: value) else { return }
-                    Task { await analyze(url: url) }
-                }
-                .disabled(selectedCandidateURLString == nil || isAnalyzing)
-                .opacity(selectedCandidateURLString == nil || isAnalyzing ? 0.45 : 1)
-            }
-        }
-    }
-
     private var photoSection: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 12) {
                 SectionHeader(
-                    title: "다른 이미지 사용",
-                    subtitle: "사이즈표 스크린샷이나 사진을 선택할 수 있어요."
+                    title: "사이즈표 사진 추가",
+                    subtitle: "판매 페이지의 사이즈표를 캡처한 사진을 선택해 주세요."
                 )
-                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                PhotosPicker(
+                    selection: $selectedPhotoItems,
+                    maxSelectionCount: 1,
+                    matching: .images
+                ) {
                     Label("사진에서 불러오기", systemImage: "photo.badge.plus")
                         .font(.headline.weight(.bold))
                         .frame(maxWidth: .infinity)
@@ -156,65 +151,136 @@ struct SizeTableRecoveryView: View {
                         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
                 }
                 .buttonStyle(.plain)
+                .disabled(isAnalyzing)
+                .opacity(isAnalyzing ? 0.45 : 1)
             }
         }
     }
 
-    private var tableEditor: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if let selectedImageData, let image = UIImage(data: selectedImageData) {
-                FitMatchCard {
-                    VStack(alignment: .leading, spacing: 10) {
-                        SectionHeader(title: "선택한 원본", subtitle: "확대해서 표와 인식값을 비교해 주세요.")
-                        ScrollView([.horizontal, .vertical]) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(minWidth: 300)
-                        }
-                        .frame(maxHeight: 260)
-                    }
-                }
-            } else if let value = selectedCandidateURLString {
-                FitMatchCard {
-                    VStack(alignment: .leading, spacing: 10) {
-                        SectionHeader(title: "선택한 원본", subtitle: "확대해서 표와 인식값을 비교해 주세요.")
-                        AsyncImage(url: URL(string: value)) { image in
-                            image.resizable().scaledToFit()
-                        } placeholder: {
-                            ProgressView()
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 300)
-                    }
+    @ViewBuilder
+    private var selectedImageSection: some View {
+        if let selectedImageData, let image = UIImage(data: selectedImageData) {
+            FitMatchCard {
+                VStack(alignment: .leading, spacing: 10) {
+                    SectionHeader(title: "선택한 원본", subtitle: "선택한 이미지를 원본 비율로 표시해요.")
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .accessibilityLabel("선택한 사이즈표 이미지")
                 }
             }
+        }
+    }
 
+    @ViewBuilder
+    private var sizeConfirmationSection: some View {
+        if let selectedSizeIndex {
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
                     SectionHeader(
-                        title: hasRecognizedRows ? "인식 결과 확인" : "상품 사이즈 직접 입력",
-                        subtitle: "빈칸과 잘못 인식된 값은 판매 페이지를 보고 수정해 주세요."
+                        title: "사이즈 확인",
+                        subtitle: "선택한 사이즈의 인식값을 확인하고 필요한 값만 수정해 주세요."
                     )
-                    ForEach($viewModel.sizeOptions) { $option in
-                        ManualComparisonSizeEditor(
-                            option: $option,
-                            category: viewModel.category,
-                            detailCategory: viewModel.detailCategory,
-                            canRemove: viewModel.sizeOptions.count > 1
-                        ) {
-                            viewModel.removeSizeOption(option)
-                        }
-                    }
-                    SecondaryButton(title: "사이즈 행 추가", systemImage: "plus") {
-                        viewModel.addSizeOption()
+                    ManualComparisonSizeEditor(
+                        option: $viewModel.sizeOptions[selectedSizeIndex],
+                        category: viewModel.category,
+                        detailCategory: viewModel.detailCategory,
+                        allowsMeasurementShapeSelection: isManualEntry,
+                        canRemove: false
+                    ) {}
+                }
+            }
+        }
+    }
+
+    private var sizeSelectionSection: some View {
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 14) {
+                SectionHeader(
+                    title: purpose == .closetRegistration ? "저장할 사이즈 선택" : "비교할 사이즈 선택",
+                    subtitle: purpose == .closetRegistration
+                        ? "내 옷장에 추가할 사이즈를 하나 선택해 주세요."
+                        : "인식된 사이즈 중 확인할 사이즈를 하나 선택해 주세요."
+                )
+
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ],
+                    spacing: 12
+                ) {
+                    ForEach(viewModel.sizeOptions) { option in
+                        sizeSelectionButton(option)
                     }
                 }
             }
         }
     }
 
-    private var candidateURLStrings: [String] {
-        viewModel.sizeTableRecoveryContext?.imageURLStrings ?? []
+    private func sizeSelectionButton(_ option: ClothingSizeForm) -> some View {
+        let name = option.sizeName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isSelected = selectedSizeID == option.id
+
+        return Button {
+            selectedSizeID = option.id
+            validationMessage = nil
+        } label: {
+            HStack(spacing: 8) {
+                Text(name.isEmpty ? "사이즈 미입력" : name.fitMatchDisplaySizeName)
+                    .font(.headline.weight(.bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
+            .foregroundStyle(isSelected ? .white : .primary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(
+                isSelected ? Color.black : Color(.secondarySystemGroupedBackground),
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isSelected ? Color.black : Color(.separator).opacity(0.35), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(name.isEmpty ? "사이즈 미입력" : "\(name) 사이즈")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var comparisonButtonTitle: String {
+        guard let selectedSize = selectedSize else {
+            return purpose == .closetRegistration
+                ? "저장할 사이즈를 선택해 주세요"
+                : "비교할 사이즈를 선택해 주세요"
+        }
+        let name = selectedSize.sizeName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if purpose == .closetRegistration {
+            return name.isEmpty
+                ? "선택한 사이즈로 계속하기"
+                : "\(name.fitMatchDisplaySizeName) 사이즈로 계속하기"
+        }
+        return name.isEmpty
+            ? "선택한 사이즈로 비교하기"
+            : "\(name.fitMatchDisplaySizeName) 사이즈 비교하기"
+    }
+
+    private var selectedSize: ClothingSizeForm? {
+        guard let selectedSizeID else { return nil }
+        return viewModel.sizeOptions.first { $0.id == selectedSizeID }
+    }
+
+    private var selectedSizeIndex: Int? {
+        guard let selectedSizeID else { return nil }
+        return viewModel.sizeOptions.firstIndex { $0.id == selectedSizeID }
     }
 
     private var hasRecognizedRows: Bool {
@@ -227,29 +293,35 @@ struct SizeTableRecoveryView: View {
         if !hasRecognizedRows {
             viewModel.sizeOptions = [ClothingSizeForm()]
         }
+        selectedSizeID = viewModel.sizeOptions.count == 1 ? viewModel.sizeOptions[0].id : nil
         showsManualEditor = true
+        isManualEntry = true
         validationMessage = nil
-    }
-
-    @MainActor
-    private func analyze(url: URL) async {
-        isAnalyzing = true
-        defer { isAnalyzing = false }
-        _ = await viewModel.analyzeRecoveryImage(url: url)
-        showsManualEditor = true
+        viewModel.recoveryErrorMessage = nil
     }
 
     @MainActor
     private func analyze(data: Data) async {
         isAnalyzing = true
         defer { isAnalyzing = false }
-        _ = viewModel.analyzeRecoveryImage(data: data)
-        showsManualEditor = true
+        let didAnalyze = viewModel.analyzeRecoveryImage(data: data)
+        if didAnalyze {
+            selectedSizeID = nil
+            showsManualEditor = true
+            isManualEntry = false
+        } else {
+            showsManualEditor = false
+            showsAnalysisFailureAlert = true
+        }
     }
 
     private func complete() {
+        guard let selectedSize else {
+            validationMessage = "비교할 사이즈를 선택해 주세요."
+            return
+        }
         if let message = SizeTableRecoveryValidator.validationMessage(
-            for: viewModel.sizeOptions,
+            for: [selectedSize],
             category: viewModel.category,
             detailCategory: viewModel.detailCategory
         ) {
@@ -257,6 +329,7 @@ struct SizeTableRecoveryView: View {
             return
         }
         validationMessage = nil
+        viewModel.recoverySelectedSizeID = selectedSize.id
         onComplete()
     }
 }
