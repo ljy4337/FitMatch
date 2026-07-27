@@ -1,5 +1,9 @@
 import SwiftUI
 import Combine
+// IOS17_COMPATIBILITY_DELETE_BEGIN
+// Remove this entire section when the minimum deployment target becomes iOS 18 or later.
+import UIKit
+// IOS17_COMPATIBILITY_DELETE_END
 
 enum TabBarHiddenReason: String, Hashable {
     case navigationDetail
@@ -82,31 +86,7 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
     }
 
     func body(content: Content) -> some View {
-        content
-            .onScrollGeometryChange(for: RootChromeScrollSnapshot.self) { geometry in
-                RootChromeScrollSnapshot(geometry: geometry)
-            } action: { _, snapshot in
-                coordinator.handle(snapshot: snapshot) { visible in
-                    withAnimation(.easeOut(duration: 0.22)) {
-                        tabBarVisibilityController.setScrollVisible(
-                            visible,
-                            tab: tab,
-                            source: "native scroll"
-                        )
-                    }
-                }
-            }
-            .onScrollPhaseChange { oldPhase, newPhase in
-                coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
-                    withAnimation(.easeOut(duration: 0.22)) {
-                        tabBarVisibilityController.setScrollVisible(
-                            visible,
-                            tab: tab,
-                            source: "native scroll phase"
-                        )
-                    }
-                }
-            }
+        observedContent(content)
             .onDisappear {
                 coordinator.reset()
                 tabBarVisibilityController.showScroll(tab: tab, source: "screen disappear")
@@ -115,6 +95,51 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
                 coordinator.reset()
                 tabBarVisibilityController.showScroll(tab: tab, source: "screen appear")
             }
+    }
+
+    @ViewBuilder
+    private func observedContent(_ content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.modifier(IOS18ScrollEventModifier(
+                onSnapshot: handleSnapshot,
+                onPhaseChange: handlePhaseChange
+            ))
+        } else {
+            // IOS17_COMPATIBILITY_DELETE_BEGIN
+            // Remove this entire section when the minimum deployment target becomes iOS 18 or later.
+            content.modifier(IOS17ScrollEventModifier(
+                onSnapshot: handleSnapshot,
+                onPhaseChange: handlePhaseChange
+            ))
+            // IOS17_COMPATIBILITY_DELETE_END
+        }
+    }
+
+    private func handleSnapshot(_ snapshot: RootChromeScrollSnapshot) {
+        coordinator.handle(snapshot: snapshot) { visible in
+            withAnimation(.easeOut(duration: 0.22)) {
+                tabBarVisibilityController.setScrollVisible(
+                    visible,
+                    tab: tab,
+                    source: "native scroll"
+                )
+            }
+        }
+    }
+
+    private func handlePhaseChange(
+        _ oldPhase: RootChromeScrollPhase,
+        _ newPhase: RootChromeScrollPhase
+    ) {
+        coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
+            withAnimation(.easeOut(duration: 0.22)) {
+                tabBarVisibilityController.setScrollVisible(
+                    visible,
+                    tab: tab,
+                    source: "native scroll phase"
+                )
+            }
+        }
     }
 }
 
@@ -141,21 +166,8 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
     }
 
     func body(content: Content) -> some View {
-        content
+        observedContent(content)
             .contentMargins(.bottom, bottomScrollClearance, for: .scrollContent)
-            .onScrollGeometryChange(for: RootChromeScrollSnapshot.self) { geometry in
-                RootChromeScrollSnapshot(geometry: geometry)
-            } action: { _, currentSnapshot in
-                ensureMinimumScrollExtent(for: currentSnapshot)
-                coordinator.handle(snapshot: currentSnapshot) { visible in
-                    applyVisibility(visible, source: "native scroll")
-                }
-            }
-            .onScrollPhaseChange { oldPhase, newPhase in
-                coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
-                    applyVisibility(visible, source: "native scroll phase")
-                }
-            }
             .onDisappear {
                 coordinator.reset()
                 applyVisibility(true, source: "screen disappear")
@@ -164,6 +176,40 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
                 coordinator.reset()
                 applyVisibility(true, source: "screen appear")
             }
+    }
+
+    @ViewBuilder
+    private func observedContent(_ content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.modifier(IOS18ScrollEventModifier(
+                onSnapshot: handleSnapshot,
+                onPhaseChange: handlePhaseChange
+            ))
+        } else {
+            // IOS17_COMPATIBILITY_DELETE_BEGIN
+            // Remove this entire section when the minimum deployment target becomes iOS 18 or later.
+            content.modifier(IOS17ScrollEventModifier(
+                onSnapshot: handleSnapshot,
+                onPhaseChange: handlePhaseChange
+            ))
+            // IOS17_COMPATIBILITY_DELETE_END
+        }
+    }
+
+    private func handleSnapshot(_ snapshot: RootChromeScrollSnapshot) {
+        ensureMinimumScrollExtent(for: snapshot)
+        coordinator.handle(snapshot: snapshot) { visible in
+            applyVisibility(visible, source: "native scroll")
+        }
+    }
+
+    private func handlePhaseChange(
+        _ oldPhase: RootChromeScrollPhase,
+        _ newPhase: RootChromeScrollPhase
+    ) {
+        coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
+            applyVisibility(visible, source: "native scroll phase")
+        }
     }
 
     private func ensureMinimumScrollExtent(for snapshot: RootChromeScrollSnapshot) {
@@ -196,19 +242,25 @@ private struct RootChromeScrollSnapshot: Equatable {
     let clampedOffset: CGFloat
     let boundaryState: ScrollBoundaryState
 
-    init(geometry: ScrollGeometry) {
-        contentSizeHeight = geometry.contentSize.height
-        containerSizeHeight = geometry.containerSize.height
-        contentInsetTop = geometry.contentInsets.top
-        contentInsetBottom = geometry.contentInsets.bottom
-        let rawOffset = geometry.contentOffset.y + geometry.contentInsets.top
+    init(
+        contentSizeHeight: CGFloat,
+        containerSizeHeight: CGFloat,
+        contentInsetTop: CGFloat,
+        contentInsetBottom: CGFloat,
+        contentOffsetY: CGFloat
+    ) {
+        self.contentSizeHeight = contentSizeHeight
+        self.containerSizeHeight = containerSizeHeight
+        self.contentInsetTop = contentInsetTop
+        self.contentInsetBottom = contentInsetBottom
+        let rawOffset = contentOffsetY + contentInsetTop
         let minOffset: CGFloat = 0
         let maxOffset = max(
             minOffset,
-            geometry.contentSize.height
-                - geometry.containerSize.height
-                + geometry.contentInsets.top
-                + geometry.contentInsets.bottom
+            contentSizeHeight
+                - containerSizeHeight
+                + contentInsetTop
+                + contentInsetBottom
         )
         let clampedOffset = min(max(rawOffset, minOffset), maxOffset)
 
@@ -235,6 +287,307 @@ private struct RootChromeScrollSnapshot: Equatable {
     }
 }
 
+private enum RootChromeScrollPhase: Equatable {
+    case idle
+    case tracking
+    case interacting
+    case decelerating
+    case animating
+}
+
+@available(iOS 18.0, *)
+private extension RootChromeScrollSnapshot {
+    init(geometry: ScrollGeometry) {
+        self.init(
+            contentSizeHeight: geometry.contentSize.height,
+            containerSizeHeight: geometry.containerSize.height,
+            contentInsetTop: geometry.contentInsets.top,
+            contentInsetBottom: geometry.contentInsets.bottom,
+            contentOffsetY: geometry.contentOffset.y
+        )
+    }
+}
+
+@available(iOS 18.0, *)
+private extension RootChromeScrollPhase {
+    init(_ phase: ScrollPhase) {
+        switch phase {
+        case .idle:
+            self = .idle
+        case .tracking:
+            self = .tracking
+        case .interacting:
+            self = .interacting
+        case .decelerating:
+            self = .decelerating
+        case .animating:
+            self = .animating
+        @unknown default:
+            self = .idle
+        }
+    }
+}
+
+@available(iOS 18.0, *)
+private struct IOS18ScrollEventModifier: ViewModifier {
+    let onSnapshot: (RootChromeScrollSnapshot) -> Void
+    let onPhaseChange: (RootChromeScrollPhase, RootChromeScrollPhase) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onScrollGeometryChange(for: RootChromeScrollSnapshot.self) { geometry in
+                RootChromeScrollSnapshot(geometry: geometry)
+            } action: { _, snapshot in
+                onSnapshot(snapshot)
+            }
+            .onScrollPhaseChange { oldPhase, newPhase in
+                onPhaseChange(
+                    RootChromeScrollPhase(oldPhase),
+                    RootChromeScrollPhase(newPhase)
+                )
+            }
+    }
+}
+
+// IOS17_COMPATIBILITY_DELETE_BEGIN
+// Remove this entire section when the minimum deployment target becomes iOS 18 or later.
+private struct IOS17ScrollEventModifier: ViewModifier {
+    let onSnapshot: (RootChromeScrollSnapshot) -> Void
+    let onPhaseChange: (RootChromeScrollPhase, RootChromeScrollPhase) -> Void
+
+    func body(content: Content) -> some View {
+        content.background {
+            IOS17ScrollViewObserver(
+                onSnapshot: onSnapshot,
+                onPhaseChange: onPhaseChange
+            )
+            .frame(width: 0, height: 0)
+            .allowsHitTesting(false)
+        }
+    }
+}
+
+private struct IOS17ScrollViewObserver: UIViewRepresentable {
+    let onSnapshot: (RootChromeScrollSnapshot) -> Void
+    let onPhaseChange: (RootChromeScrollPhase, RootChromeScrollPhase) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onSnapshot: onSnapshot, onPhaseChange: onPhaseChange)
+    }
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: .zero)
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.updateCallbacks(
+            onSnapshot: onSnapshot,
+            onPhaseChange: onPhaseChange
+        )
+        DispatchQueue.main.async {
+            context.coordinator.attachIfNeeded(from: uiView)
+        }
+    }
+
+    static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) {
+        coordinator.detach()
+    }
+
+    @MainActor
+    final class Coordinator: NSObject {
+        private weak var scrollView: UIScrollView?
+        private var observations: [NSKeyValueObservation] = []
+        private var decelerationPoll: DispatchWorkItem?
+        private var currentPhase: RootChromeScrollPhase = .idle
+        private var onSnapshot: (RootChromeScrollSnapshot) -> Void
+        private var onPhaseChange: (RootChromeScrollPhase, RootChromeScrollPhase) -> Void
+
+        init(
+            onSnapshot: @escaping (RootChromeScrollSnapshot) -> Void,
+            onPhaseChange: @escaping (RootChromeScrollPhase, RootChromeScrollPhase) -> Void
+        ) {
+            self.onSnapshot = onSnapshot
+            self.onPhaseChange = onPhaseChange
+        }
+
+        deinit {
+            decelerationPoll?.cancel()
+        }
+
+        func updateCallbacks(
+            onSnapshot: @escaping (RootChromeScrollSnapshot) -> Void,
+            onPhaseChange: @escaping (RootChromeScrollPhase, RootChromeScrollPhase) -> Void
+        ) {
+            self.onSnapshot = onSnapshot
+            self.onPhaseChange = onPhaseChange
+        }
+
+        func attachIfNeeded(from markerView: UIView) {
+            guard let candidate = findScrollView(from: markerView) else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    [weak self, weak markerView] in
+                    guard let self, let markerView else { return }
+                    self.attachIfNeeded(from: markerView)
+                }
+                return
+            }
+            guard scrollView !== candidate else {
+                emitSnapshot()
+                return
+            }
+
+            detach()
+            scrollView = candidate
+            candidate.panGestureRecognizer.addTarget(
+                self,
+                action: #selector(handlePanGesture(_:))
+            )
+            observations = [
+                candidate.observe(\.contentOffset, options: [.initial, .new]) {
+                    [weak self] _, _ in
+                    self?.scrollViewDidChange()
+                },
+                candidate.observe(\.contentSize, options: [.new]) {
+                    [weak self] _, _ in
+                    self?.emitSnapshot()
+                },
+                candidate.observe(\.bounds, options: [.new]) {
+                    [weak self] _, _ in
+                    self?.emitSnapshot()
+                },
+                candidate.observe(\.adjustedContentInset, options: [.new]) {
+                    [weak self] _, _ in
+                    self?.emitSnapshot()
+                }
+            ]
+            updatePhase()
+            emitSnapshot()
+        }
+
+        func detach() {
+            decelerationPoll?.cancel()
+            decelerationPoll = nil
+            observations.removeAll()
+            scrollView?.panGestureRecognizer.removeTarget(
+                self,
+                action: #selector(handlePanGesture(_:))
+            )
+            scrollView = nil
+            transition(to: .idle)
+        }
+
+        @objc
+        private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+            switch gesture.state {
+            case .began:
+                transition(to: .tracking)
+                transition(to: .interacting)
+            case .changed:
+                transition(to: .interacting)
+            case .ended:
+                updatePhase()
+                pollUntilDecelerationEnds()
+            case .cancelled, .failed:
+                transition(to: .idle)
+            default:
+                break
+            }
+            emitSnapshot()
+        }
+
+        private func scrollViewDidChange() {
+            updatePhase()
+            emitSnapshot()
+            if scrollView?.isDecelerating == true {
+                pollUntilDecelerationEnds()
+            }
+        }
+
+        private func updatePhase() {
+            guard let scrollView else {
+                transition(to: .idle)
+                return
+            }
+            if scrollView.isDragging || scrollView.panGestureRecognizer.state == .changed {
+                transition(to: .interacting)
+            } else if scrollView.isTracking {
+                transition(to: .tracking)
+            } else if scrollView.isDecelerating {
+                transition(to: .decelerating)
+            } else {
+                transition(to: .idle)
+            }
+        }
+
+        private func transition(to phase: RootChromeScrollPhase) {
+            guard currentPhase != phase else { return }
+            let oldPhase = currentPhase
+            currentPhase = phase
+            onPhaseChange(oldPhase, phase)
+        }
+
+        private func pollUntilDecelerationEnds() {
+            decelerationPoll?.cancel()
+            guard scrollView?.isDecelerating == true else {
+                updatePhase()
+                return
+            }
+            let workItem = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.updatePhase()
+                self.emitSnapshot()
+                self.pollUntilDecelerationEnds()
+            }
+            decelerationPoll = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: workItem)
+        }
+
+        private func emitSnapshot() {
+            guard let scrollView else { return }
+            let insets = scrollView.adjustedContentInset
+            onSnapshot(RootChromeScrollSnapshot(
+                contentSizeHeight: scrollView.contentSize.height,
+                containerSizeHeight: scrollView.bounds.height,
+                contentInsetTop: insets.top,
+                contentInsetBottom: insets.bottom,
+                contentOffsetY: scrollView.contentOffset.y
+            ))
+        }
+
+        private func findScrollView(from markerView: UIView) -> UIScrollView? {
+            var ancestor = markerView.superview
+            while let view = ancestor {
+                if let scrollView = view as? UIScrollView {
+                    return scrollView
+                }
+                ancestor = view.superview
+            }
+
+            guard let rootView = markerView.window else { return nil }
+            return descendantScrollViews(in: rootView)
+                .filter { !$0.isHidden && $0.alpha > 0 }
+                .max {
+                    ($0.bounds.width * $0.bounds.height)
+                        < ($1.bounds.width * $1.bounds.height)
+                }
+        }
+
+        private func descendantScrollViews(in view: UIView) -> [UIScrollView] {
+            var result: [UIScrollView] = []
+            for subview in view.subviews {
+                if let scrollView = subview as? UIScrollView {
+                    result.append(scrollView)
+                }
+                result.append(contentsOf: descendantScrollViews(in: subview))
+            }
+            return result
+        }
+    }
+}
+// IOS17_COMPATIBILITY_DELETE_END
+
 @MainActor
 private final class RootChromeScrollCoordinator: ObservableObject {
     #if DEBUG
@@ -247,7 +600,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
     private var previousClampedOffset: CGFloat?
     private var previousMaxOffset: CGFloat?
     private var latestSnapshot: RootChromeScrollSnapshot?
-    private var scrollPhase: ScrollPhase = .idle
+    private var scrollPhase: RootChromeScrollPhase = .idle
     private var isBottomLocked = false
     private var didReachBottomInCurrentGesture = false
     private var isWaitingForNewGestureAfterBottom = false
@@ -367,8 +720,8 @@ private final class RootChromeScrollCoordinator: ObservableObject {
     }
 
     func handlePhaseChange(
-        from oldPhase: ScrollPhase,
-        to newPhase: ScrollPhase,
+        from oldPhase: RootChromeScrollPhase,
+        to newPhase: RootChromeScrollPhase,
         apply: @escaping (Bool) -> Void
     ) {
         scrollPhase = newPhase
@@ -436,7 +789,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         isUserInteraction(scrollPhase)
     }
 
-    private func isUserInteraction(_ phase: ScrollPhase) -> Bool {
+    private func isUserInteraction(_ phase: RootChromeScrollPhase) -> Bool {
         phase == .tracking || phase == .interacting
     }
 
@@ -562,19 +915,7 @@ private struct TopChromeScrollVisibilityModifier: ViewModifier {
     }
 
     func body(content: Content) -> some View {
-        content
-            .onScrollGeometryChange(for: RootChromeScrollSnapshot.self) { geometry in
-                RootChromeScrollSnapshot(geometry: geometry)
-            } action: { _, snapshot in
-                coordinator.handle(snapshot: snapshot) { visible in
-                    setVisible(visible)
-                }
-            }
-            .onScrollPhaseChange { oldPhase, newPhase in
-                coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
-                    setVisible(visible)
-                }
-            }
+        observedContent(content)
             .onDisappear {
                 coordinator.reset()
                 setVisible(true)
@@ -583,6 +924,39 @@ private struct TopChromeScrollVisibilityModifier: ViewModifier {
                 coordinator.reset()
                 setVisible(true)
             }
+    }
+
+    @ViewBuilder
+    private func observedContent(_ content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.modifier(IOS18ScrollEventModifier(
+                onSnapshot: handleSnapshot,
+                onPhaseChange: handlePhaseChange
+            ))
+        } else {
+            // IOS17_COMPATIBILITY_DELETE_BEGIN
+            // Remove this entire section when the minimum deployment target becomes iOS 18 or later.
+            content.modifier(IOS17ScrollEventModifier(
+                onSnapshot: handleSnapshot,
+                onPhaseChange: handlePhaseChange
+            ))
+            // IOS17_COMPATIBILITY_DELETE_END
+        }
+    }
+
+    private func handleSnapshot(_ snapshot: RootChromeScrollSnapshot) {
+        coordinator.handle(snapshot: snapshot) { visible in
+            setVisible(visible)
+        }
+    }
+
+    private func handlePhaseChange(
+        _ oldPhase: RootChromeScrollPhase,
+        _ newPhase: RootChromeScrollPhase
+    ) {
+        coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
+            setVisible(visible)
+        }
     }
 
     private func setVisible(_ visible: Bool) {
