@@ -175,7 +175,10 @@ struct EmptyStateActionButton: View {
 
     var body: some View {
         Button(action: action) {
-            Label(title, systemImage: systemImage)
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                Text(title)
+            }
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(Color(.systemBackground))
                 .frame(width: 156, height: 46)
