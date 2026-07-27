@@ -1,7 +1,7 @@
 import Foundation
 
 enum AppGroupConfig {
-    static let identifier = "group.io.github.ljy4337.FitMatch"
+    static let identifier = "group.com.ljy4337.fitmatch"
 }
 
 struct SharedURLStore {

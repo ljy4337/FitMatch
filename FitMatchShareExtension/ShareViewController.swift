@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 final class ShareViewController: UIViewController {
     private enum AppGroup {
-        static let identifier = "group.io.github.ljy4337.FitMatch"
+        static let identifier = "group.com.ljy4337.fitmatch"
     }
 
     private enum Key {
