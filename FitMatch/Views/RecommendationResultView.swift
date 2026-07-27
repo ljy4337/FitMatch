@@ -8,6 +8,10 @@ struct RecommendationResultView: View {
     let result: RecommendationHistory
     private let opensReferencePickerOnAppear: Bool
     private let onResultPersisted: ((RecommendationHistory) -> Void)?
+    private let resultCalculationSnapshot: RecommendationCalculationSnapshot?
+    private let resultComparedMeasurementUsages: [MeasurementComparisonUsage]
+    private let resultMeasurementExclusions: [MeasurementComparisonExclusion]
+    private let resultProductSizes: [ProductSize]
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var comparisonResult: RecommendationHistory?
@@ -20,8 +24,11 @@ struct RecommendationResultView: View {
     @State private var selectedAlternativeSizeID: UUID?
     @State private var temporarySizeAnalysis: TemporarySizeAnalysis?
     @State private var temporaryAnalysisCache: [TemporarySizeAnalysisCacheKey: TemporarySizeAnalysis] = [:]
+    @State private var activeAlternativeAnalysisKeys: [UUID: TemporarySizeAnalysisCacheKey] = [:]
     @State private var unavailableAlternativeSizeKeys: Set<TemporarySizeAnalysisCacheKey> = []
     @State private var isAnalyzingAlternativeSize = false
+    @State private var isPreparingAlternativeSizes = false
+    @State private var alternativePreparationGeneration = UUID()
     @State private var alternativeSizeErrorMessage: String?
     @State private var isComparisonCoverageExpanded = false
     @State private var didOpenInitialReferencePicker = false
@@ -36,6 +43,12 @@ struct RecommendationResultView: View {
         self.result = result
         self.opensReferencePickerOnAppear = opensReferencePickerOnAppear
         self.onResultPersisted = onResultPersisted
+        self.resultCalculationSnapshot = result.calculationSnapshot
+        self.resultComparedMeasurementUsages = result.comparedMeasurementUsages
+        self.resultMeasurementExclusions = result.measurementExclusions
+        self.resultProductSizes = result.product.sizes
+            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .sorted { $0.displayOrder < $1.displayOrder }
     }
 
     private var currentResult: RecommendationHistory {
@@ -122,7 +135,6 @@ struct RecommendationResultView: View {
                 print("[화면: 비교 결과][동작: 결과 화면 진입][상태: 성공] 상품=\(currentResult.product.name), 추천사이즈=\(currentResult.recommendedSize.name), 기준옷=\(currentResult.userFit.displayName)")
                 #endif
                 tabBarVisibilityController.hide(reason: .navigationDetail, source: "recommendation result")
-                prepareAlternativeSizeAnalyses()
                 guard opensReferencePickerOnAppear, !didOpenInitialReferencePicker else {
                     return
                 }
@@ -140,7 +152,6 @@ struct RecommendationResultView: View {
             }
             .onChange(of: comparisonResult?.id) {
                 resetTemporarySizeComparison()
-                prepareAlternativeSizeAnalyses()
             }
         }
     }
@@ -167,7 +178,7 @@ struct RecommendationResultView: View {
     }
 
     private var reportProductCard: some View {
-        CardView(radius: 20, padding: 12) {
+        CardView(radius: 20, padding: 12, shadowRadius: 10) {
             HStack(alignment: .top, spacing: 14) {
                 reportProductImage
                 VStack(alignment: .leading, spacing: 8) {
@@ -233,7 +244,7 @@ struct RecommendationResultView: View {
     }
 
     private var reportRecommendationCard: some View {
-        CardView(radius: 20, padding: 12) {
+        CardView(radius: 20, padding: 12, shadowRadius: 10) {
             VStack(alignment: .leading, spacing: 8) {
                 GeometryReader { geometry in
                     let dividerWidth: CGFloat = 1
@@ -247,7 +258,7 @@ struct RecommendationResultView: View {
                             value: temporarySizeAnalysis?.productSize.name.displaySizeName ?? recommendedSizeName
                         ) {
                             Button {
-                                isShowingAlternativeSizeComparison = true
+                                presentAlternativeSizeComparison()
                             } label: {
                                 Text("다른 사이즈 비교")
                                     .lineLimit(1)
@@ -355,7 +366,7 @@ struct RecommendationResultView: View {
     }
 
     private var reportMeasurementCard: some View {
-        CardView(radius: 20, padding: 12) {
+        CardView(radius: 20, padding: 12, shadowRadius: 10) {
             VStack(alignment: .leading, spacing: 7) {
                 HStack(alignment: .firstTextBaseline) {
                     SectionHeader(
@@ -395,7 +406,7 @@ struct RecommendationResultView: View {
     }
 
     private var reportReferenceCard: some View {
-        CardView(radius: 20, padding: 12) {
+        CardView(radius: 20, padding: 12, shadowRadius: 10) {
             VStack(alignment: .leading, spacing: 6) {
                 SectionHeader(title: "비교 기준 옷")
                 HStack(spacing: 14) {
@@ -433,7 +444,7 @@ struct RecommendationResultView: View {
     }
 
     private var reportMetadataCard: some View {
-        CardView(radius: 20, padding: 12) {
+        CardView(radius: 20, padding: 12, shadowRadius: 10) {
             HStack(spacing: 16) {
                 Label {
                     VStack(alignment: .leading, spacing: 3) {
@@ -535,9 +546,6 @@ struct RecommendationResultView: View {
             } message: {
                 Text(alternativeSizeErrorMessage ?? "")
             }
-            .onAppear {
-                prepareAlternativeSizeAnalyses()
-            }
         }
     }
 
@@ -570,9 +578,7 @@ struct RecommendationResultView: View {
     }
 
     private var availableProductSizes: [ProductSize] {
-        currentResult.product.sizes
-            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .sorted { $0.displayOrder < $1.displayOrder }
+        resultProductSizes
     }
 
     private var displayedProductSize: ProductSize {
@@ -666,15 +672,27 @@ struct RecommendationResultView: View {
     }
 
     private var displayedMeasurementUsages: [MeasurementComparisonUsage] {
-        temporarySizeAnalysis?.comparisonResult.usages ?? currentResult.comparedMeasurementUsages
+        temporarySizeAnalysis?.comparisonResult.usages ?? persistedMeasurementUsages
     }
 
     private var displayedMeasurementExclusions: [MeasurementComparisonExclusion] {
-        temporarySizeAnalysis?.comparisonResult.exclusions ?? currentResult.measurementExclusions
+        temporarySizeAnalysis?.comparisonResult.exclusions ?? persistedMeasurementExclusions
     }
 
     private var displayedCalculationSnapshot: RecommendationCalculationSnapshot? {
-        temporarySizeAnalysis?.calculationSnapshot ?? currentResult.calculationSnapshot
+        temporarySizeAnalysis?.calculationSnapshot ?? persistedCalculationSnapshot
+    }
+
+    private var persistedMeasurementUsages: [MeasurementComparisonUsage] {
+        comparisonResult?.comparedMeasurementUsages ?? resultComparedMeasurementUsages
+    }
+
+    private var persistedMeasurementExclusions: [MeasurementComparisonExclusion] {
+        comparisonResult?.measurementExclusions ?? resultMeasurementExclusions
+    }
+
+    private var persistedCalculationSnapshot: RecommendationCalculationSnapshot? {
+        comparisonResult?.calculationSnapshot ?? resultCalculationSnapshot
     }
 
     private func displayedMeasurementValues(
@@ -687,16 +705,6 @@ struct RecommendationResultView: View {
             displayedProductSize.measurements.value(for: kind),
             currentResult.userFit.measurements.value(for: kind)
         )
-    }
-
-    private var comparisonBodyShapePreferences: BodyShapePreferences {
-        BodyShapeSettingsStore().load()
-    }
-
-    private var comparisonExcludedKinds: [MeasurementKind] {
-        currentResult.measurementExclusions
-            .filter { $0.reason == .categoryPolicy }
-            .map(\.kind)
     }
 
     private var originalScorePenalty: Int {
@@ -714,30 +722,45 @@ struct RecommendationResultView: View {
         }
     }
 
-    private func analysisCacheKey(for size: ProductSize) -> TemporarySizeAnalysisCacheKey {
-        TemporarySizeAnalysisCacheKey(
-            productID: currentResult.product.id,
-            sizeID: size.id,
-            referenceID: currentResult.userFit.id,
-            detailCategory: currentResult.productDetailCategory.rawValue,
-            comparisonMethod: currentResult.comparisonMethod,
-            bodyShapeSignature: comparisonBodyShapePreferences.cacheSignature,
-            excludedKindsSignature: comparisonExcludedKinds.map(\.rawValue).sorted().joined(separator: "|"),
-            scorePenalty: originalScorePenalty
-        )
-    }
-
     private func cachedAnalysis(for size: ProductSize) -> TemporarySizeAnalysis? {
-        temporaryAnalysisCache[analysisCacheKey(for: size)]
+        guard let key = activeAlternativeAnalysisKeys[size.id] else {
+            return nil
+        }
+        return temporaryAnalysisCache[key]
     }
 
-    private func prepareAlternativeSizeAnalyses() {
+    @MainActor
+    private func prepareAlternativeSizeAnalyses() async {
+        let generation = alternativePreparationGeneration
         let service = RecommendationService()
         let scorePenalty = originalScorePenalty
+        let preferences = BodyShapeSettingsStore().load()
+        let excludedKinds = persistedMeasurementExclusions
+            .filter { $0.reason == .categoryPolicy }
+            .map(\.kind)
+        let excludedKindsSignature = excludedKinds.map(\.rawValue).sorted().joined(separator: "|")
+        var preparedAnalyses = temporaryAnalysisCache
+        var unavailableKeys = unavailableAlternativeSizeKeys
+        var activeKeys: [UUID: TemporarySizeAnalysisCacheKey] = [:]
+
         for size in availableProductSizes {
-            let key = analysisCacheKey(for: size)
-            guard temporaryAnalysisCache[key] == nil,
-                  !unavailableAlternativeSizeKeys.contains(key) else {
+            await Task.yield()
+            guard generation == alternativePreparationGeneration else {
+                return
+            }
+            let key = TemporarySizeAnalysisCacheKey(
+                productID: currentResult.product.id,
+                sizeID: size.id,
+                referenceID: currentResult.userFit.id,
+                detailCategory: currentResult.productDetailCategory.rawValue,
+                comparisonMethod: currentResult.comparisonMethod,
+                bodyShapeSignature: preferences.cacheSignature,
+                excludedKindsSignature: excludedKindsSignature,
+                scorePenalty: scorePenalty
+            )
+            activeKeys[size.id] = key
+            guard preparedAnalyses[key] == nil,
+                  !unavailableKeys.contains(key) else {
                 continue
             }
             if let analysis = service.analyzeSizeWithoutSaving(
@@ -746,14 +769,35 @@ struct RecommendationResultView: View {
                 referenceItem: currentResult.userFit,
                 productDetailCategory: currentResult.productDetailCategory,
                 comparisonMethod: currentResult.comparisonMethod,
-                excludedKinds: comparisonExcludedKinds,
-                bodyShapePreferences: comparisonBodyShapePreferences,
+                excludedKinds: excludedKinds,
+                bodyShapePreferences: preferences,
                 scorePenalty: scorePenalty
             ) {
-                temporaryAnalysisCache[key] = analysis
+                preparedAnalyses[key] = analysis
             } else {
-                unavailableAlternativeSizeKeys.insert(key)
+                unavailableKeys.insert(key)
             }
+        }
+
+        guard generation == alternativePreparationGeneration else {
+            return
+        }
+        temporaryAnalysisCache = preparedAnalyses
+        unavailableAlternativeSizeKeys = unavailableKeys
+        activeAlternativeAnalysisKeys = activeKeys
+        isPreparingAlternativeSizes = false
+    }
+
+    private func presentAlternativeSizeComparison() {
+        isShowingAlternativeSizeComparison = true
+        guard !isPreparingAlternativeSizes else {
+            return
+        }
+        isPreparingAlternativeSizes = true
+        alternativePreparationGeneration = UUID()
+        Task { @MainActor in
+            await Task.yield()
+            await prepareAlternativeSizeAnalyses()
         }
     }
 
@@ -806,11 +850,14 @@ struct RecommendationResultView: View {
     }
 
     private func resetTemporarySizeComparison() {
+        alternativePreparationGeneration = UUID()
         selectedAlternativeSizeID = nil
         temporarySizeAnalysis = nil
         temporaryAnalysisCache.removeAll()
+        activeAlternativeAnalysisKeys.removeAll()
         unavailableAlternativeSizeKeys.removeAll()
         isAnalyzingAlternativeSize = false
+        isPreparingAlternativeSizes = false
         alternativeSizeErrorMessage = nil
     }
 

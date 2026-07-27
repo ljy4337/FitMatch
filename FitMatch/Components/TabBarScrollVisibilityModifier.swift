@@ -9,6 +9,8 @@ enum TabBarHiddenReason: String, Hashable {
 
 enum FitMatchScrollContentMetrics {
     static let bottomClearance: CGFloat = 88
+    static let minimumRootScrollExtent: CGFloat =
+        FitMatchTopChromeMetrics.height + 24
 }
 
 @MainActor
@@ -95,7 +97,15 @@ private struct BottomTabBarScrollVisibilityModifier: ViewModifier {
                 }
             }
             .onScrollPhaseChange { oldPhase, newPhase in
-                coordinator.handlePhaseChange(from: oldPhase, to: newPhase)
+                coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
+                    withAnimation(.easeOut(duration: 0.22)) {
+                        tabBarVisibilityController.setScrollVisible(
+                            visible,
+                            tab: tab,
+                            source: "native scroll phase"
+                        )
+                    }
+                }
             }
             .onDisappear {
                 coordinator.reset()
@@ -113,6 +123,7 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
     let tab: AppTab
     @Binding var isTopChromeVisible: Bool
     @StateObject private var coordinator: RootChromeScrollCoordinator
+    @State private var bottomScrollClearance = FitMatchScrollContentMetrics.bottomClearance
 
     init(tab: AppTab, isTopChromeVisible: Binding<Bool>) {
         self.tab = tab
@@ -131,15 +142,19 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .contentMargins(.bottom, bottomScrollClearance, for: .scrollContent)
             .onScrollGeometryChange(for: RootChromeScrollSnapshot.self) { geometry in
                 RootChromeScrollSnapshot(geometry: geometry)
             } action: { _, currentSnapshot in
+                ensureMinimumScrollExtent(for: currentSnapshot)
                 coordinator.handle(snapshot: currentSnapshot) { visible in
                     applyVisibility(visible, source: "native scroll")
                 }
             }
             .onScrollPhaseChange { oldPhase, newPhase in
-                coordinator.handlePhaseChange(from: oldPhase, to: newPhase)
+                coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
+                    applyVisibility(visible, source: "native scroll phase")
+                }
             }
             .onDisappear {
                 coordinator.reset()
@@ -149,6 +164,13 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
                 coordinator.reset()
                 applyVisibility(true, source: "screen appear")
             }
+    }
+
+    private func ensureMinimumScrollExtent(for snapshot: RootChromeScrollSnapshot) {
+        let missingExtent = FitMatchScrollContentMetrics.minimumRootScrollExtent
+            - snapshot.maxOffset
+        guard missingExtent > 1 else { return }
+        bottomScrollClearance += missingExtent
     }
 
     private func applyVisibility(_ visible: Bool, source: String) {
@@ -164,6 +186,10 @@ private struct RootChromeScrollVisibilityModifier: ViewModifier {
 }
 
 private struct RootChromeScrollSnapshot: Equatable {
+    let contentSizeHeight: CGFloat
+    let containerSizeHeight: CGFloat
+    let contentInsetTop: CGFloat
+    let contentInsetBottom: CGFloat
     let rawOffset: CGFloat
     let minOffset: CGFloat
     let maxOffset: CGFloat
@@ -171,6 +197,10 @@ private struct RootChromeScrollSnapshot: Equatable {
     let boundaryState: ScrollBoundaryState
 
     init(geometry: ScrollGeometry) {
+        contentSizeHeight = geometry.contentSize.height
+        containerSizeHeight = geometry.containerSize.height
+        contentInsetTop = geometry.contentInsets.top
+        contentInsetBottom = geometry.contentInsets.bottom
         let rawOffset = geometry.contentOffset.y + geometry.contentInsets.top
         let minOffset: CGFloat = 0
         let maxOffset = max(
@@ -214,6 +244,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
     private var lastDiagnosticSignature: String?
     #endif
     private var previousRawOffset: CGFloat?
+    private var previousClampedOffset: CGFloat?
     private var previousMaxOffset: CGFloat?
     private var latestSnapshot: RootChromeScrollSnapshot?
     private var scrollPhase: ScrollPhase = .idle
@@ -245,16 +276,20 @@ private final class RootChromeScrollCoordinator: ObservableObject {
 
         if snapshot.rawOffset <= 0 || snapshot.boundaryState == .top {
             previousRawOffset = snapshot.rawOffset
+            previousClampedOffset = snapshot.clampedOffset
             previousMaxOffset = snapshot.maxOffset
             accumulatedDownwardDistance = 0
-            setBottomLocked(false)
-            clearBottomGestureState()
-            schedule(visible: true, apply: apply)
+            if isUserInteractionPhase || scrollPhase == .idle {
+                setBottomLocked(false)
+                clearBottomGestureState()
+                schedule(visible: true, apply: apply)
+            }
             return
         }
 
         guard snapshot.isScrollable else {
             previousRawOffset = snapshot.rawOffset
+            previousClampedOffset = snapshot.clampedOffset
             previousMaxOffset = snapshot.maxOffset
             setBottomLocked(false)
             clearBottomGestureState()
@@ -262,34 +297,43 @@ private final class RootChromeScrollCoordinator: ObservableObject {
             return
         }
 
-        guard let previousRawOffset, let previousMaxOffset else {
+        guard let previousRawOffset,
+              let previousClampedOffset,
+              let previousMaxOffset else {
             self.previousRawOffset = snapshot.rawOffset
+            self.previousClampedOffset = snapshot.clampedOffset
             self.previousMaxOffset = snapshot.maxOffset
             setBottomLocked(snapshot.rawOffset >= snapshot.maxOffset - bottomBoundaryTolerance)
             return
         }
 
         let maxOffsetChanged = abs(snapshot.maxOffset - previousMaxOffset) > layoutChangeEpsilon
+        let rawDelta = snapshot.rawOffset - previousRawOffset
+        let clampedDelta = snapshot.clampedOffset - previousClampedOffset
         self.previousRawOffset = snapshot.rawOffset
+        self.previousClampedOffset = snapshot.clampedOffset
         self.previousMaxOffset = snapshot.maxOffset
 
         if maxOffsetChanged {
             #if DEBUG
             debugLog(event: "maxOffsetChanged", snapshot: snapshot)
             #endif
-            if snapshot.boundaryState == .bottom || snapshot.boundaryState == .bottomOverscroll {
-                lockAtBottom(apply: apply)
+            if isBottomLocked,
+               snapshot.maxOffset > previousMaxOffset,
+               snapshot.boundaryState == .scrolling {
+                setBottomLocked(false)
+                clearBottomGestureState()
             }
-            return
+
+            guard rawDelta != 0 else { return }
         }
 
-        let delta = snapshot.rawOffset - previousRawOffset
         let distanceFromBottom = max(0, snapshot.maxOffset - snapshot.rawOffset)
 
         if snapshot.boundaryState == .bottom
             || snapshot.boundaryState == .bottomOverscroll
             || snapshot.rawOffset >= snapshot.maxOffset - bottomBoundaryTolerance {
-            lockAtBottom(apply: apply)
+            lockAtBottom()
             return
         }
 
@@ -308,20 +352,25 @@ private final class RootChromeScrollCoordinator: ObservableObject {
             return
         }
 
-        guard isUserInteractionPhase,
-              !didReachBottomInCurrentGesture else { return }
+        guard !didReachBottomInCurrentGesture else { return }
 
-        if delta > 0 {
-            accumulatedDownwardDistance += delta
-            guard accumulatedDownwardDistance >= FitMatchTopChromeMetrics.height else { return }
-            schedule(visible: false, apply: apply)
-        } else if delta <= -minimumScrollDelta {
+        if clampedDelta > 0 {
+            accumulateDownwardDistance(
+                clampedDelta,
+                apply: apply
+            )
+        } else if isUserInteractionPhase,
+                  clampedDelta <= -minimumScrollDelta {
             accumulatedDownwardDistance = 0
             schedule(visible: true, apply: apply)
         }
     }
 
-    func handlePhaseChange(from oldPhase: ScrollPhase, to newPhase: ScrollPhase) {
+    func handlePhaseChange(
+        from oldPhase: ScrollPhase,
+        to newPhase: ScrollPhase,
+        apply: @escaping (Bool) -> Void
+    ) {
         scrollPhase = newPhase
         #if DEBUG
         if oldPhase != newPhase {
@@ -334,8 +383,15 @@ private final class RootChromeScrollCoordinator: ObservableObject {
             isNewGestureAfterBottom = false
             newGestureStartOffset = nil
             previousRawOffset = latestSnapshot?.rawOffset
+            previousClampedOffset = latestSnapshot?.clampedOffset
             previousMaxOffset = latestSnapshot?.maxOffset
             accumulatedDownwardDistance = 0
+            if let latestSnapshot,
+               !latestSnapshot.isScrollable || latestSnapshot.boundaryState == .top {
+                setBottomLocked(false)
+                clearBottomGestureState()
+                schedule(visible: true, apply: apply)
+            }
             return
         }
 
@@ -346,6 +402,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
 
         didReachBottomInCurrentGesture = false
         previousRawOffset = latestSnapshot?.rawOffset
+        previousClampedOffset = latestSnapshot?.clampedOffset
         previousMaxOffset = latestSnapshot?.maxOffset
         accumulatedDownwardDistance = 0
 
@@ -360,6 +417,7 @@ private final class RootChromeScrollCoordinator: ObservableObject {
 
     func reset() {
         previousRawOffset = nil
+        previousClampedOffset = nil
         previousMaxOffset = nil
         latestSnapshot = nil
         scrollPhase = .idle
@@ -382,13 +440,23 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         phase == .tracking || phase == .interacting
     }
 
-    private func lockAtBottom(apply: @escaping (Bool) -> Void) {
+    private func accumulateDownwardDistance(
+        _ distance: CGFloat,
+        apply: @escaping (Bool) -> Void
+    ) {
+        accumulatedDownwardDistance += distance
+        let hideThreshold = FitMatchTopChromeMetrics.height
+        guard hideThreshold > 0,
+              accumulatedDownwardDistance >= hideThreshold else { return }
+        schedule(visible: false, apply: apply)
+    }
+
+    private func lockAtBottom() {
         setBottomLocked(true)
         didReachBottomInCurrentGesture = true
         isWaitingForNewGestureAfterBottom = true
         isNewGestureAfterBottom = false
         newGestureStartOffset = nil
-        schedule(visible: false, apply: apply)
     }
 
     private func clearBottomGestureState() {
@@ -441,8 +509,13 @@ private final class RootChromeScrollCoordinator: ObservableObject {
     ) {
         let offset = snapshot.map { String(describing: $0.rawOffset) } ?? "nil"
         let maxOffset = snapshot.map { String(describing: $0.maxOffset) } ?? "nil"
+        let contentSize = snapshot.map { String(describing: $0.contentSizeHeight) } ?? "nil"
+        let containerSize = snapshot.map { String(describing: $0.containerSizeHeight) } ?? "nil"
+        let insetTop = snapshot.map { String(describing: $0.contentInsetTop) } ?? "nil"
+        let insetBottom = snapshot.map { String(describing: $0.contentInsetBottom) } ?? "nil"
         let boundary = snapshot.map { String(describing: $0.boundaryState) } ?? "nil"
         let visibility = visibility.map { String(describing: $0) } ?? "unchanged"
+        let hideThreshold = FitMatchTopChromeMetrics.height
         let signature = [
             event,
             String(describing: scrollPhase),
@@ -456,8 +529,12 @@ private final class RootChromeScrollCoordinator: ObservableObject {
         print(
             "[ScrollDiagnostics] tab=\(diagnosticTab) source=\(diagnosticSource) "
                 + "coordinator=\(diagnosticID) event=\(event) offset=\(offset) "
+                + "contentSize=\(contentSize) containerSize=\(containerSize) "
+                + "insetTop=\(insetTop) insetBottom=\(insetBottom) "
                 + "maxOffset=\(maxOffset) phase=\(String(describing: scrollPhase)) "
                 + "boundaryState=\(boundary) bottomLock=\(isBottomLocked) "
+                + "hideThreshold=\(hideThreshold) "
+                + "accumulatedDistance=\(accumulatedDownwardDistance) "
                 + "visibility=\(visibility)"
         )
     }
@@ -494,7 +571,9 @@ private struct TopChromeScrollVisibilityModifier: ViewModifier {
                 }
             }
             .onScrollPhaseChange { oldPhase, newPhase in
-                coordinator.handlePhaseChange(from: oldPhase, to: newPhase)
+                coordinator.handlePhaseChange(from: oldPhase, to: newPhase) { visible in
+                    setVisible(visible)
+                }
             }
             .onDisappear {
                 coordinator.reset()

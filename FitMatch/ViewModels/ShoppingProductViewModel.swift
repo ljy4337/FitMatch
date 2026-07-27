@@ -104,22 +104,31 @@ final class ShoppingProductViewModel: ObservableObject {
                 recoveryErrorMessage = "이미지를 불러오지 못했어요."
                 return false
             }
-            return analyzeRecoveryImage(data: data)
+            return await analyzeRecoveryImage(data: data)
         } catch {
             recoveryErrorMessage = "이미지를 불러오지 못했어요."
             return false
         }
     }
 
-    func analyzeRecoveryImage(data: Data) -> Bool {
+    func analyzeRecoveryImage(data: Data) async -> Bool {
         recoveryErrorMessage = nil
         isAnalyzingRecoveryImage = true
         defer { isAnalyzingRecoveryImage = false }
-        let parsed = MusinsaFallbackSizeParser().parseRecoveryImage(
+        let input = RecoveryImageAnalysisInput(
             data: data,
             category: category,
             categoryDepth2Name: productMetadata.categoryDepth2Name
         )
+        let parsed = await Task.detached(priority: .userInitiated) {
+            RecoveryImageAnalysisResult(
+                sizes: MusinsaFallbackSizeParser().parseRecoveryImage(
+                    data: input.data,
+                    category: input.category,
+                    categoryDepth2Name: input.categoryDepth2Name
+                )
+            )
+        }.value.sizes
         guard !parsed.isEmpty else {
             recoveryErrorMessage = "표를 확정하지 못했어요. 값을 직접 입력해 주세요."
             return false
@@ -388,6 +397,26 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
+}
+
+private final class RecoveryImageAnalysisInput: @unchecked Sendable {
+    nonisolated let data: Data
+    nonisolated let category: ClothingCategory
+    nonisolated let categoryDepth2Name: String?
+
+    nonisolated init(data: Data, category: ClothingCategory, categoryDepth2Name: String?) {
+        self.data = data
+        self.category = category
+        self.categoryDepth2Name = categoryDepth2Name
+    }
+}
+
+private final class RecoveryImageAnalysisResult: @unchecked Sendable {
+    nonisolated let sizes: [ParsedProductSize]
+
+    nonisolated init(sizes: [ParsedProductSize]) {
+        self.sizes = sizes
+    }
 }
 
 struct ClothingSizeForm: Identifiable, Equatable {

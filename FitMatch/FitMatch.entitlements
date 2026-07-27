@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.io.github.ljy4337.FitMatch</string>
+		<string>group.com.ljy4337.fitmatch</string>
 	</array>
 </dict>
 </plist>

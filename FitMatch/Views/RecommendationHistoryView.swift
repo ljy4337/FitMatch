@@ -16,6 +16,8 @@ struct RecommendationHistoryView: View {
     @State private var isShowingClosetSavedAlert = false
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
+    @State private var cachedFilteredHistories: [RecommendationHistory] = []
+    @State private var cachedAvailableCategories: [ClothingCategory] = []
     private let favoriteStore = FavoriteProductStore()
     var onRecompare: ((String) -> Void)?
     var onStartCompare: (() -> Void)?
@@ -76,6 +78,21 @@ struct RecommendationHistoryView: View {
         } message: {
             Text(saveErrorMessage ?? "")
         }
+        .onAppear {
+            refreshFilteredHistories()
+        }
+        .onChange(of: histories.count) {
+            refreshFilteredHistories()
+        }
+        .onChange(of: sortOption) {
+            refreshFilteredHistories()
+        }
+        .onChange(of: selectedScope) {
+            refreshFilteredHistories()
+        }
+        .onChange(of: selectedCategory) {
+            refreshFilteredHistories()
+        }
     }
 
     private var historyControls: some View {
@@ -109,13 +126,13 @@ struct RecommendationHistoryView: View {
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets())
 
-            if filteredHistories.isEmpty {
+            if displayedHistories.isEmpty {
                 EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
                     .frame(maxWidth: .infinity)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 36, leading: 20, bottom: 24, trailing: 20))
             } else {
-                ForEach(filteredHistories) { history in
+                ForEach(displayedHistories) { history in
                     HistoryCard(
                         history: history,
                         isFavorite: isFavorite(history)
@@ -148,7 +165,6 @@ struct RecommendationHistoryView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
-        .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 
@@ -157,14 +173,14 @@ struct RecommendationHistoryView: View {
             LazyVStack(spacing: 0) {
                 historyControls
 
-                if filteredHistories.isEmpty {
+                if displayedHistories.isEmpty {
                     EmptyRecommendationHistoryView(onStartCompare: histories.isEmpty ? onStartCompare : nil)
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, 20)
                         .padding(.top, 36)
                 } else {
                 LazyVGrid(columns: gridColumns, spacing: 14) {
-                    ForEach(filteredHistories) { history in
+                    ForEach(displayedHistories) { history in
                         HistoryGridCard(
                             history: history,
                             isFavorite: isFavorite(history),
@@ -184,7 +200,6 @@ struct RecommendationHistoryView: View {
             }
         }
         .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
-        .contentMargins(.bottom, FitMatchScrollContentMetrics.bottomClearance, for: .scrollContent)
         .hidesBottomTabBarOnScroll(tab: .history, topChrome: $isTopChromeVisible)
     }
 
@@ -234,7 +249,7 @@ struct RecommendationHistoryView: View {
     }
 
     private var availableCategories: [ClothingCategory] {
-        Array(Set(histories.map { $0.product.category })).sorted { $0.rawValue < $1.rawValue }
+        cachedAvailableCategories
     }
 
     private var gridColumns: [GridItem] {
@@ -276,7 +291,17 @@ struct RecommendationHistoryView: View {
         }
     }
 
-    private var filteredHistories: [RecommendationHistory] {
+    private var displayedHistories: [RecommendationHistory] {
+        cachedFilteredHistories
+    }
+
+    private func refreshFilteredHistories() {
+        cachedFilteredHistories = makeFilteredHistories()
+        cachedAvailableCategories = Array(Set(histories.map { $0.product.category }))
+            .sorted { $0.rawValue < $1.rawValue }
+    }
+
+    private func makeFilteredHistories() -> [RecommendationHistory] {
         let scoped = histories.filter { history in
             let matchesCategory = selectedCategory == nil || history.product.category == selectedCategory
             guard matchesCategory else {
@@ -314,6 +339,7 @@ struct RecommendationHistoryView: View {
     private func toggleFavorite(_ history: RecommendationHistory) {
         _ = favoriteStore.toggle(history.product.sourceURLString)
         favoriteURLs = favoriteStore.favoriteURLs()
+        refreshFilteredHistories()
     }
 
     @ViewBuilder
@@ -413,31 +439,23 @@ private struct HistoryCard: View {
     let onRecompare: () -> Void
     let onAddToCloset: () -> Void
     let onShowDetail: () -> Void
-    @State private var isPressed = false
+    private static let historyDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy. M. d. (E)"
+        return formatter
+    }()
 
     var body: some View {
-        FitMatchCard {
-            currentCardContent
-            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .onTapGesture(perform: onShowDetail)
-            .background(
-                Color.primary.opacity(isPressed ? 0.035 : 0),
-                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-            .scaleEffect(isPressed ? 0.992 : 1)
-            .animation(.easeOut(duration: 0.12), value: isPressed)
-            .onLongPressGesture(
-                minimumDuration: .infinity,
-                maximumDistance: 16,
-                pressing: { isPressing in
-                    isPressed = isPressing
-                },
-                perform: {}
-            )
+        let comparedKinds = resolvedComparedMeasurementKinds
+        FitMatchCard(shadowRadius: 8) {
+            currentCardContent(comparedKinds: comparedKinds)
+                .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .onTapGesture(perform: onShowDetail)
         }
     }
 
-    private var currentCardContent: some View {
+    private func currentCardContent(comparedKinds: [MeasurementKind]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             ZStack(alignment: .topTrailing) {
                 HStack(alignment: .top, spacing: 14) {
@@ -513,7 +531,7 @@ private struct HistoryCard: View {
                     )
                         .frame(width: primaryMetricWidth)
                     Divider().frame(width: dividerWidth, height: 88)
-                    reliabilityMetric
+                    reliabilityMetric(comparedKinds: comparedKinds)
                         .frame(width: reliabilityWidth)
                 }
             }
@@ -525,7 +543,7 @@ private struct HistoryCard: View {
             HStack(spacing: 8) {
                 Image(systemName: "ruler")
                     .rotationEffect(.degrees(-38))
-                Text(measurementSummaryText)
+                Text(measurementSummaryText(comparedKinds: comparedKinds))
                     .font(.caption.weight(.semibold))
                 Spacer()
                 Text(formattedHistoryDate)
@@ -549,20 +567,20 @@ private struct HistoryCard: View {
         )
     }
 
-    private var reliabilityMetric: some View {
+    private func reliabilityMetric(comparedKinds: [MeasurementKind]) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("신뢰도")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(.secondary)
-            Text(reliabilityStars)
+            Text(reliabilityStars(comparedCount: comparedKinds.count))
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(.orange.opacity(0.85))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
-            Text(reliabilityTitle)
+            Text(reliabilityTitle(comparedCount: comparedKinds.count))
                 .font(.subheadline.weight(.bold))
                 .lineLimit(1)
-            Text(measurementSummaryText)
+            Text(measurementSummaryText(comparedKinds: comparedKinds))
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(.secondary.opacity(0.8))
                 .lineLimit(1)
@@ -603,17 +621,17 @@ private struct HistoryCard: View {
             }
             .padding(14)
             .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            Text(measurementSummaryText)
+            Text(measurementSummaryText(comparedKinds: resolvedComparedMeasurementKinds))
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
         }
     }
 
-    private var measurementSummaryText: String {
-        comparedMeasurementKinds.isEmpty ? "실측 부족" : "실측 \(comparedMeasurementKinds.count)개 항목 비교"
+    private func measurementSummaryText(comparedKinds: [MeasurementKind]) -> String {
+        comparedKinds.isEmpty ? "실측 부족" : "실측 \(comparedKinds.count)개 항목 비교"
     }
 
-    private var comparedMeasurementKinds: [MeasurementKind] {
+    private var resolvedComparedMeasurementKinds: [MeasurementKind] {
         if history.comparisonSchemaVersion >= 1 {
             return history.comparedMeasurementUsages.map(\.kind)
         }
@@ -638,8 +656,8 @@ private struct HistoryCard: View {
         }
     }
 
-    private var reliabilityStars: String {
-        switch comparedMeasurementKinds.count {
+    private func reliabilityStars(comparedCount: Int) -> String {
+        switch comparedCount {
         case 4...: return "★★★★★"
         case 3: return "★★★★☆"
         case 2: return "★★★☆☆"
@@ -648,8 +666,8 @@ private struct HistoryCard: View {
         }
     }
 
-    private var reliabilityTitle: String {
-        switch comparedMeasurementKinds.count {
+    private func reliabilityTitle(comparedCount: Int) -> String {
+        switch comparedCount {
         case 4...: return "매우 높음"
         case 3: return "높음"
         case 2: return "보통"
@@ -689,10 +707,7 @@ private struct HistoryCard: View {
     }
 
     private var formattedHistoryDate: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy. M. d. (E)"
-        return formatter.string(from: history.createdAt)
+        Self.historyDateFormatter.string(from: history.createdAt)
     }
 
     private var historySourceCategoryText: String {
@@ -761,7 +776,7 @@ private struct HistoryGridCard: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             Button(action: onShowDetail) {
-                CardView(radius: 20, padding: 12) {
+                CardView(radius: 20, padding: 12, shadowRadius: 8) {
                     currentGridContent
                 }
             }

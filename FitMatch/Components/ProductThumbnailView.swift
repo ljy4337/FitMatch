@@ -1,37 +1,32 @@
 import SwiftUI
+import UIKit
+import Combine
+import ImageIO
 
 struct ProductThumbnailView: View {
+    @Environment(\.displayScale) private var displayScale
     let imageURLString: String?
     var category: ClothingCategory? = nil
     var width: CGFloat = 80
     var height: CGFloat = 96
     var cornerRadius: CGFloat = 16
+    @StateObject private var imageLoader = ProductThumbnailImageLoader()
 
     var body: some View {
         Group {
-            if let imageURL {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        placeholder {
-                            ProgressView()
-                        }
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        placeholder {
-                            placeholderIcon
-                        }
-                    @unknown default:
-                        placeholder {
-                            placeholderIcon
-                        }
+            if imageURL != nil {
+                if let image = imageLoader.image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else if imageLoader.didFail {
+                    placeholder {
+                        placeholderIcon
                     }
-                }
-                .transaction { transaction in
-                    transaction.animation = nil
+                } else {
+                    placeholder {
+                        ProgressView()
+                    }
                 }
             } else {
                 placeholder {
@@ -43,6 +38,12 @@ struct ProductThumbnailView: View {
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .task(id: imageURL) {
+            await imageLoader.load(
+                imageURL,
+                maxPixelSize: max(width, height) * displayScale
+            )
+        }
     }
 
     private var imageURL: URL? {
@@ -87,5 +88,100 @@ struct ProductThumbnailView: View {
         case .other, nil:
             return "photo"
         }
+    }
+}
+
+@MainActor
+private final class ProductThumbnailImageLoader: ObservableObject {
+    @Published private(set) var image: UIImage?
+    @Published private(set) var didFail = false
+
+    private static let cache: NSCache<NSURL, UIImage> = {
+        let cache = NSCache<NSURL, UIImage>()
+        cache.countLimit = 120
+        cache.totalCostLimit = 64 * 1_024 * 1_024
+        return cache
+    }()
+
+    private var currentURL: URL?
+
+    func load(_ url: URL?, maxPixelSize: CGFloat) async {
+        guard currentURL != url || (image == nil && !didFail) else {
+            return
+        }
+
+        currentURL = url
+        image = nil
+        didFail = false
+
+        guard let url else {
+            return
+        }
+        if let cachedImage = Self.cache.object(forKey: url as NSURL) {
+            image = cachedImage
+            return
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard !Task.isCancelled,
+                  currentURL == url,
+                  ((response as? HTTPURLResponse)?.statusCode ?? 200) < 400,
+                  let loadedImage = await Self.decodeThumbnail(
+                    data,
+                    maxPixelSize: maxPixelSize
+                  ) else {
+                if !Task.isCancelled, currentURL == url {
+                    didFail = true
+                }
+                return
+            }
+
+            let pixelWidth = loadedImage.size.width * loadedImage.scale
+            let pixelHeight = loadedImage.size.height * loadedImage.scale
+            let cost = max(1, Int(pixelWidth * pixelHeight * 4))
+            Self.cache.setObject(loadedImage, forKey: url as NSURL, cost: cost)
+            image = loadedImage
+        } catch {
+            guard !Task.isCancelled, currentURL == url else { return }
+            didFail = true
+        }
+    }
+
+    private static func decodeThumbnail(_ data: Data, maxPixelSize: CGFloat) async -> UIImage? {
+        let input = ThumbnailDecodeInput(data: data, maxPixelSize: maxPixelSize)
+        return await Task.detached(priority: .userInitiated) {
+            guard let source = CGImageSourceCreateWithData(input.data as CFData, nil) else {
+                return ThumbnailDecodeResult(image: nil)
+            }
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: max(1, Int(input.maxPixelSize)),
+                kCGImageSourceShouldCacheImmediately: true
+            ]
+            guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+                return ThumbnailDecodeResult(image: nil)
+            }
+            return ThumbnailDecodeResult(image: UIImage(cgImage: cgImage))
+        }.value.image
+    }
+}
+
+private final class ThumbnailDecodeInput: @unchecked Sendable {
+    nonisolated let data: Data
+    nonisolated let maxPixelSize: CGFloat
+
+    nonisolated init(data: Data, maxPixelSize: CGFloat) {
+        self.data = data
+        self.maxPixelSize = maxPixelSize
+    }
+}
+
+private final class ThumbnailDecodeResult: @unchecked Sendable {
+    nonisolated let image: UIImage?
+
+    nonisolated init(image: UIImage?) {
+        self.image = image
     }
 }

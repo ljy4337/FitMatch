@@ -1,6 +1,56 @@
 import Foundation
 
 enum MeasurementResolver {
+    struct GarmentSnapshot {
+        private let measurements: GarmentMeasurements
+        private let recordsByDisplayKind: [MeasurementDisplayKind?: [GarmentMeasurementRecord]]
+
+        fileprivate init(
+            measurements: GarmentMeasurements,
+            records: [GarmentMeasurementRecord]
+        ) {
+            self.measurements = measurements
+            self.recordsByDisplayKind = Dictionary(grouping: records, by: \.displayKind)
+        }
+
+        func title(for kind: MeasurementKind) -> String {
+            MeasurementResolver.title(
+                for: kind,
+                measurementCodes: records(for: kind)
+                    .filter(\.isComparable)
+                    .map(\.measurementCode)
+            )
+        }
+
+        func value(
+            for kind: MeasurementKind,
+            requiredCode: MeasurementCode? = nil
+        ) -> Double? {
+            let kindRecords = records(for: kind)
+            let mapped = kindRecords.filter {
+                $0.isComparable && (requiredCode == nil || $0.measurementCode == requiredCode)
+            }
+            if requiredCode != nil {
+                return mapped.count == 1 ? mapped[0].value : nil
+            }
+            if mapped.count == 1 { return mapped[0].value }
+            if !kindRecords.isEmpty { return nil }
+            let legacy = measurements.value(for: kind)
+            return legacy.isFinite && legacy > 0 ? legacy : nil
+        }
+
+        private func records(for kind: MeasurementKind) -> [GarmentMeasurementRecord] {
+            recordsByDisplayKind[MeasurementResolver.displayKind(for: kind)] ?? []
+        }
+    }
+
+    static func snapshot(
+        measurements: GarmentMeasurements,
+        records: [GarmentMeasurementRecord]
+    ) -> GarmentSnapshot {
+        GarmentSnapshot(measurements: measurements, records: records)
+    }
+
     static func title(
         for kind: MeasurementKind,
         records: [GarmentMeasurementRecord]
@@ -36,17 +86,8 @@ enum MeasurementResolver {
         records: [GarmentMeasurementRecord],
         requiredCode: MeasurementCode? = nil
     ) -> Double? {
-        let kindRecords = records.filter { $0.displayKind == displayKind(for: kind) }
-        let mapped = kindRecords.filter {
-            $0.isComparable && (requiredCode == nil || $0.measurementCode == requiredCode)
-        }
-        if requiredCode != nil {
-            return mapped.count == 1 ? mapped[0].value : nil
-        }
-        if mapped.count == 1 { return mapped[0].value }
-        if !kindRecords.isEmpty { return nil }
-        let legacy = measurements.value(for: kind)
-        return legacy.isFinite && legacy > 0 ? legacy : nil
+        snapshot(measurements: measurements, records: records)
+            .value(for: kind, requiredCode: requiredCode)
     }
 
     static func value(
