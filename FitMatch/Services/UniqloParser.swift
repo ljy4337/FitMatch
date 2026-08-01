@@ -36,7 +36,9 @@ struct UniqloParser: ProductURLParsing {
             )
         }
         let sizes = sizeAPIResult.sizes
-        let resolvedMetadata = metadata.withPreferredImageURL(sizeAPIResult.imageURLString)
+        let resolvedMetadata = metadata
+            .withPreferredImageURL(sizeAPIResult.imageURLString)
+            .withInferredSleeveDetail(from: sizes)
 
         #if DEBUG
         FitMatchDebugLogger.detail(
@@ -434,6 +436,32 @@ struct UniqloProductMetadata {
         var metadata = copy.productMetadata
         metadata.imageURLStrings = [preferredImageURLString]
         copy.productMetadata = metadata
+        return copy
+    }
+
+    func withInferredSleeveDetail(
+        from sizes: [ParsedProductSize]
+    ) -> UniqloProductMetadata {
+        guard category.serviceGroup == .top,
+              detailCategory == .other || detailCategory == .shirt else {
+            return self
+        }
+
+        let gender = UserGender.productTarget(from: productMetadata.genderCodes)
+        let length = GarmentLengthInferencePolicy.infer(
+            category: category,
+            gender: gender,
+            samples: GarmentLengthInferencePolicy.samples(from: sizes),
+            fallbackMeasurements: sizes.map(\.measurements)
+        )
+        let inferred: ClosetDetailCategory
+        switch length {
+        case .short: inferred = .shortSleeve
+        case .long: inferred = .longSleeve
+        default: return self
+        }
+        var copy = self
+        copy.detailCategory = inferred
         return copy
     }
 }
@@ -1162,7 +1190,7 @@ private enum UniqloMeasurementColumn {
         case .thigh:
             return ["thigh", "허벅지"]
         case .rise:
-            return ["rise", "front-rise", "밑위"]
+            return ["risinglength", "rise", "front-rise", "밑위"]
         case .inseam:
             return ["inseam", "인심"]
         case .hem:

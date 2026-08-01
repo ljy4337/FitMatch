@@ -1,0 +1,42 @@
+{
+  "existing_source_category_paths": [
+    "니트 & 가디건",
+    "니트 & 가디건 > 니트",
+    "니트 & 가디건 > 니트 > 가디건"
+  ],
+  "unresolved_rules": [
+    {
+      "id": "bra",
+      "source": "*",
+      "terminal_labels": ["브라"],
+      "reason": "기존 검토에서 앱 카테고리 연결이 확정되지 않음"
+    },
+    {
+      "id": "uniqlo_tops_shirts",
+      "source": "uniqlo",
+      "exact_paths": ["Tops > Shirts"],
+      "reason": "상품명과 소매 유형에 따라 복수 앱 상세 카테고리로 해석될 수 있음"
+    },
+    {
+      "id": "uniqlo_cardigan",
+      "source": "uniqlo",
+      "terminal_labels": ["가디건", "cardigan"],
+      "reason": "기존 유니클로 가디건 분류 충돌을 유지"
+    }
+  ],
+  "live_seeds": {
+    "musinsa": [
+      "https://www.musinsa.com/category/001/goods?gf=A",
+      "https://www.musinsa.com/category/002/goods?gf=A",
+      "https://www.musinsa.com/category/003/goods?gf=A",
+      "https://www.musinsa.com/category/100/goods?gf=A"
+    ],
+    "uniqlo": [
+      "https://www.uniqlo.com/kr/ko/women/tops/t-shirts",
+      "https://www.uniqlo.com/kr/ko/men/outerwear",
+      "https://www.uniqlo.com/kr/ko/men/bottoms",
+      "https://www.uniqlo.com/kr/ko/women/bottoms",
+      "https://www.uniqlo.com/kr/ko/women/dress-and-skirts"
+    ]
+  }
+}

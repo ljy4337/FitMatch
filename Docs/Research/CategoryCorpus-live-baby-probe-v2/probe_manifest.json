@@ -1,0 +1,2415 @@
+{
+  "category": {
+    "audience": "BABY",
+    "category_urls": [
+      "https://www.uniqlo.com/kr/ko/baby",
+      "https://www.uniqlo.com/kr/ko/baby/newborn",
+      "https://www.uniqlo.com/kr/ko/baby/newborn/bodysuits",
+      "https://www.uniqlo.com/kr/ko/baby/newborn/innerwear",
+      "https://www.uniqlo.com/kr/ko/baby/newborn/one-pieces",
+      "https://www.uniqlo.com/kr/ko/baby/newborn/outerwear",
+      "https://www.uniqlo.com/kr/ko/baby/newborn/pants-and-leggings",
+      "https://www.uniqlo.com/kr/ko/baby/newborn/socks",
+      "https://www.uniqlo.com/kr/ko/baby/newborn/tops",
+      "https://www.uniqlo.com/kr/ko/baby/newborn/ut-graphic-tees"
+    ],
+    "cms_product_observations": [],
+    "final_url": "https://www.uniqlo.com/kr/ko/baby/newborn/bodysuits",
+    "http_status": 200,
+    "product_ids": [
+      "E444812-000",
+      "E450071-000",
+      "E466434-000",
+      "E473721-000",
+      "E481761-000",
+      "E481761-001",
+      "E481764-000",
+      "E481764-001",
+      "E481769-000",
+      "E481769-001",
+      "E481772-000",
+      "E481772-001",
+      "E481862-000",
+      "E485184-000",
+      "E486367-000",
+      "E486367-001",
+      "E486378-000",
+      "E486378-001",
+      "E486380-000",
+      "E486380-001",
+      "E487909-000",
+      "E487909-001",
+      "E487909-002",
+      "E487909-003",
+      "E488861-000",
+      "E488861-001",
+      "E489526-000",
+      "E489526-001",
+      "E489530-000",
+      "E489530-001"
+    ],
+    "raw_evidence": {
+      "bytes": 1824156,
+      "collected_at": "2026-07-27T22:39:36.376787+00:00",
+      "content_type": "text/html",
+      "path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-probe-v2/raw/uniqlo/category-pages/baby-newborn-bodysuits.html",
+      "sha256": "5a40ec147da1cb3fe62acce0e108aea5c8e33c1b028656dee4edad6c3e621a34",
+      "status": 200,
+      "url": "https://www.uniqlo.com/kr/ko/baby/newborn/bodysuits"
+    },
+    "requested": true,
+    "taxonomy_nodes": [
+      {
+        "evidence_path": "taxonomies.classes",
+        "id": 57980,
+        "key": "newborn",
+        "level": "classes",
+        "name": "신생아(0개월~2세)",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.classes",
+        "id": 57981,
+        "key": "toddler",
+        "level": "classes",
+        "name": "영유아(6개월~5세)",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58102,
+        "key": "bodysuits",
+        "level": "categories",
+        "name": "바디수트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58101,
+        "key": "one-pieces",
+        "level": "categories",
+        "name": "커버올",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58104,
+        "key": "tops",
+        "level": "categories",
+        "name": "티셔츠 & 스웨트셔츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58105,
+        "key": "pants-and-leggings",
+        "level": "categories",
+        "name": "레깅스 & 팬츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 112672,
+        "key": "innerwear",
+        "level": "categories",
+        "name": "이너웨어",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58106,
+        "key": "ut-graphic-tees",
+        "level": "categories",
+        "name": "그래픽티셔츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58103,
+        "key": "outerwear",
+        "level": "categories",
+        "name": "아우터",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58108,
+        "key": "socks",
+        "level": "categories",
+        "name": "양말",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58115,
+        "key": "homewear",
+        "level": "categories",
+        "name": "홈웨어 & 파자마",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58111,
+        "key": "tops",
+        "level": "categories",
+        "name": "티셔츠 & 스웨트셔츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58113,
+        "key": "pants-and-leggings",
+        "level": "categories",
+        "name": "레깅스 & 팬츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58116,
+        "key": "innerwear",
+        "level": "categories",
+        "name": "이너웨어",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58110,
+        "key": "outerwear",
+        "level": "categories",
+        "name": "아우터",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58112,
+        "key": "ut-graphic-tees",
+        "level": "categories",
+        "name": "그래픽티셔츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.categories",
+        "id": 58117,
+        "key": "socks",
+        "level": "categories",
+        "name": "양말",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58673,
+        "key": "cotton-mesh",
+        "level": "subcategories",
+        "name": "코튼메쉬",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58102,
+            "key": "bodysuits",
+            "name": "바디수트"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58675,
+        "key": "short-sleeve",
+        "level": "subcategories",
+        "name": "반팔",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58102,
+            "key": "bodysuits",
+            "name": "바디수트"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58676,
+        "key": "sleeveless",
+        "level": "subcategories",
+        "name": "슬리브리스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58102,
+            "key": "bodysuits",
+            "name": "바디수트"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58674,
+        "key": "long-sleeve",
+        "level": "subcategories",
+        "name": "긴팔",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58102,
+            "key": "bodysuits",
+            "name": "바디수트"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58672,
+        "key": "cotton",
+        "level": "subcategories",
+        "name": "코튼",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58102,
+            "key": "bodysuits",
+            "name": "바디수트"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58678,
+        "key": "fullopened",
+        "level": "subcategories",
+        "name": "전면 오픈 타입",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58102,
+            "key": "bodysuits",
+            "name": "바디수트"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58677,
+        "key": "pullon",
+        "level": "subcategories",
+        "name": "티셔츠 타입",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58102,
+            "key": "bodysuits",
+            "name": "바디수트"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58669,
+        "key": "shortsleeves",
+        "level": "subcategories",
+        "name": "반팔",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58101,
+            "key": "one-pieces",
+            "name": "커버올"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58670,
+        "key": "sleeveless",
+        "level": "subcategories",
+        "name": "슬리브리스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58101,
+            "key": "one-pieces",
+            "name": "커버올"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58668,
+        "key": "longsleeves",
+        "level": "subcategories",
+        "name": "긴팔",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58101,
+            "key": "one-pieces",
+            "name": "커버올"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58671,
+        "key": "others",
+        "level": "subcategories",
+        "name": "그 외",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58101,
+            "key": "one-pieces",
+            "name": "커버올"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 126278,
+        "key": "short-sleeve",
+        "level": "subcategories",
+        "name": "티셔츠(반팔)",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58104,
+            "key": "tops",
+            "name": "티셔츠 & 스웨트셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58685,
+        "key": "long-sleeve",
+        "level": "subcategories",
+        "name": "티셔츠(긴팔)",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58104,
+            "key": "tops",
+            "name": "티셔츠 & 스웨트셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58686,
+        "key": "sweat",
+        "level": "subcategories",
+        "name": "스웨트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58104,
+            "key": "tops",
+            "name": "티셔츠 & 스웨트셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58688,
+        "key": "sweater",
+        "level": "subcategories",
+        "name": "니트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58104,
+            "key": "tops",
+            "name": "티셔츠 & 스웨트셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58690,
+        "key": "cropped-leggings",
+        "level": "subcategories",
+        "name": "크롭레깅스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58105,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58691,
+        "key": "shorts",
+        "level": "subcategories",
+        "name": "쇼트팬츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58105,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58689,
+        "key": "leggings",
+        "level": "subcategories",
+        "name": "레깅스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58105,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58694,
+        "key": "long-pants",
+        "level": "subcategories",
+        "name": "롱팬츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58105,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 128396,
+        "key": "fleece",
+        "level": "subcategories",
+        "name": "후리스레깅스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58105,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 112815,
+        "key": "cotton-mesh",
+        "level": "subcategories",
+        "name": "코튼메쉬",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 112672,
+            "key": "innerwear",
+            "name": "이너웨어"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 144586,
+        "key": "peanuts-26ss",
+        "level": "subcategories",
+        "name": "PEANUTS",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58106,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 143660,
+        "key": "mickeyandfriends-26ss",
+        "level": "subcategories",
+        "name": "Mickey＆Friends",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58106,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 128054,
+        "key": "the-picture-book-collection",
+        "level": "subcategories",
+        "name": "The Picture Book Collection",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58106,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 134782,
+        "key": "sanrio-characters",
+        "level": "subcategories",
+        "name": "Sanrio characters",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58106,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 112078,
+        "key": "jason-polan",
+        "level": "subcategories",
+        "name": "Jason Polan",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58106,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 65714,
+        "key": "studio-ghibli",
+        "level": "subcategories",
+        "name": "STUDIO GHIBLI",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58106,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 138052,
+        "key": "other",
+        "level": "subcategories",
+        "name": "other",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58106,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58681,
+        "key": "uv-protection",
+        "level": "subcategories",
+        "name": "UV Protection",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58103,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58682,
+        "key": "sweat",
+        "level": "subcategories",
+        "name": "스웨트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58103,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 123764,
+        "key": "cardigan",
+        "level": "subcategories",
+        "name": "베스트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58103,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 98389,
+        "key": "fleece",
+        "level": "subcategories",
+        "name": "후리스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58103,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58680,
+        "key": "padding",
+        "level": "subcategories",
+        "name": "패딩",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58103,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58698,
+        "key": "regular-socks",
+        "level": "subcategories",
+        "name": "레귤러삭스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58108,
+            "key": "socks",
+            "name": "양말"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58699,
+        "key": "short-socks",
+        "level": "subcategories",
+        "name": "쇼트삭스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58108,
+            "key": "socks",
+            "name": "양말"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58700,
+        "key": "others",
+        "level": "subcategories",
+        "name": "그 외",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57980,
+            "key": "newborn",
+            "name": "신생아(0개월~2세)"
+          },
+          {
+            "id": 58108,
+            "key": "socks",
+            "name": "양말"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58722,
+        "key": "short-sleeve",
+        "level": "subcategories",
+        "name": "반팔",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58115,
+            "key": "homewear",
+            "name": "홈웨어 & 파자마"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58721,
+        "key": "long-sleeve",
+        "level": "subcategories",
+        "name": "긴팔",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58115,
+            "key": "homewear",
+            "name": "홈웨어 & 파자마"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 126281,
+        "key": "quilted-pajamas",
+        "level": "subcategories",
+        "name": "퀼팅 파자마",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58115,
+            "key": "homewear",
+            "name": "홈웨어 & 파자마"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58723,
+        "key": "others",
+        "level": "subcategories",
+        "name": "그 외",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58115,
+            "key": "homewear",
+            "name": "홈웨어 & 파자마"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 126279,
+        "key": "short-sleeve",
+        "level": "subcategories",
+        "name": "티셔츠(반팔)",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58111,
+            "key": "tops",
+            "name": "티셔츠 & 스웨트셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 87958,
+        "key": "long-sleeve",
+        "level": "subcategories",
+        "name": "티셔츠(긴팔)",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58111,
+            "key": "tops",
+            "name": "티셔츠 & 스웨트셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58709,
+        "key": "sweat",
+        "level": "subcategories",
+        "name": "스웨트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58111,
+            "key": "tops",
+            "name": "티셔츠 & 스웨트셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58712,
+        "key": "sweater",
+        "level": "subcategories",
+        "name": "니트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58111,
+            "key": "tops",
+            "name": "티셔츠 & 스웨트셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58716,
+        "key": "shorts",
+        "level": "subcategories",
+        "name": "쇼트팬츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58113,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58715,
+        "key": "cropped-leggings",
+        "level": "subcategories",
+        "name": "크롭레깅스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58113,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58714,
+        "key": "leggings",
+        "level": "subcategories",
+        "name": "레깅스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58113,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58719,
+        "key": "long-pants",
+        "level": "subcategories",
+        "name": "롱팬츠",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58113,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 126280,
+        "key": "fleece-leggings",
+        "level": "subcategories",
+        "name": "후리스레깅스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58113,
+            "key": "pants-and-leggings",
+            "name": "레깅스 & 팬츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58725,
+        "key": "cotton-mesh-inner",
+        "level": "subcategories",
+        "name": "코튼메쉬",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58116,
+            "key": "innerwear",
+            "name": "이너웨어"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58705,
+        "key": "uv-protection",
+        "level": "subcategories",
+        "name": "UV Protection",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58110,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58706,
+        "key": "sweat",
+        "level": "subcategories",
+        "name": "스웨트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58110,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 124091,
+        "key": "cardigan",
+        "level": "subcategories",
+        "name": "베스트",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58110,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 105313,
+        "key": "fleece",
+        "level": "subcategories",
+        "name": "후리스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58110,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58704,
+        "key": "pufftech",
+        "level": "subcategories",
+        "name": "패딩",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58110,
+            "key": "outerwear",
+            "name": "아우터"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 145573,
+        "key": "paw-patrol-26ss",
+        "level": "subcategories",
+        "name": "PAW Patrol",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 144816,
+        "key": "disney-winnie-the-pooh-26ss",
+        "level": "subcategories",
+        "name": "Disney Winnie the Pooh",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 144585,
+        "key": "peanuts-26ss",
+        "level": "subcategories",
+        "name": "PEANUTS",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 143661,
+        "key": "mickeyandfriends-26ss",
+        "level": "subcategories",
+        "name": "Mickey＆Friends",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 134783,
+        "key": "sanrio-characters",
+        "level": "subcategories",
+        "name": "Sanrio characters",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 128055,
+        "key": "the-picture-book-collection-26ss",
+        "level": "subcategories",
+        "name": "The Picture Book Collection",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 131942,
+        "key": "jason-polan",
+        "level": "subcategories",
+        "name": "Jason Polan",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 81253,
+        "key": "studio-ghibli",
+        "level": "subcategories",
+        "name": "STUDIO GHIBLI",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 112079,
+        "key": "other02",
+        "level": "subcategories",
+        "name": "other02",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 136650,
+        "key": "other01",
+        "level": "subcategories",
+        "name": "other01",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 122905,
+        "key": "clay-animation",
+        "level": "subcategories",
+        "name": "Clay Animation",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 63048,
+        "key": "the-picture-book-collection-23ss",
+        "level": "subcategories",
+        "name": "The Picture Book Collection",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58112,
+            "key": "ut-graphic-tees",
+            "name": "그래픽티셔츠"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58731,
+        "key": "regular-socks",
+        "level": "subcategories",
+        "name": "레귤러삭스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58117,
+            "key": "socks",
+            "name": "양말"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58732,
+        "key": "short-socks",
+        "level": "subcategories",
+        "name": "쇼트삭스",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58117,
+            "key": "socks",
+            "name": "양말"
+          }
+        ]
+      },
+      {
+        "evidence_path": "taxonomies.subcategories",
+        "id": 58733,
+        "key": "others",
+        "level": "subcategories",
+        "name": "그 외",
+        "parents": [
+          {
+            "id": 57925,
+            "key": "baby",
+            "name": "BABY"
+          },
+          {
+            "id": 57981,
+            "key": "toddler",
+            "name": "영유아(6개월~5세)"
+          },
+          {
+            "id": 58117,
+            "key": "socks",
+            "name": "양말"
+          }
+        ]
+      }
+    ],
+    "url": "https://www.uniqlo.com/kr/ko/baby/newborn/bodysuits",
+    "validation_status": "resolved_baby"
+  },
+  "generated_at": "2026-07-27T22:39:40.063049+00:00",
+  "logical_requests": [
+    "https://www.uniqlo.com/kr/ko/baby/newborn/bodysuits",
+    "https://www.uniqlo.com/kr/ko/products/E488861-000",
+    "https://www.uniqlo.com/kr/ko/products/E486367-000",
+    "https://www.uniqlo.com/kr/ko/products/E481772-000",
+    "https://www.uniqlo.com/kr/ko/products/E481769-000"
+  ],
+  "mode": "baby-probe",
+  "plan": {
+    "category_request": {
+      "source": "saved_baby_html_href",
+      "url": "https://www.uniqlo.com/kr/ko/baby/newborn/bodysuits"
+    },
+    "logical_request_limit": 5,
+    "product_requests": [
+      {
+        "audience": "BABY",
+        "bucket": "default",
+        "evidence_path": "cms./home/v2.components.body[0].baby[0].content[8].productIds.default",
+        "observed_id": "E488861-000",
+        "raw_product_id": "E488861-000-00",
+        "url": "https://www.uniqlo.com/kr/ko/products/E488861-000"
+      },
+      {
+        "audience": "BABY",
+        "bucket": "default",
+        "evidence_path": "cms./home/v2.components.body[0].baby[0].content[8].productIds.default",
+        "observed_id": "E486367-000",
+        "raw_product_id": "E486367-000-00",
+        "url": "https://www.uniqlo.com/kr/ko/products/E486367-000"
+      },
+      {
+        "audience": "BABY",
+        "bucket": "default",
+        "evidence_path": "cms./home/v2.components.body[0].baby[0].content[8].productIds.default",
+        "observed_id": "E481772-000",
+        "raw_product_id": "E481772-000-00",
+        "url": "https://www.uniqlo.com/kr/ko/products/E481772-000"
+      },
+      {
+        "audience": "BABY",
+        "bucket": "default",
+        "evidence_path": "cms./home/v2.components.body[0].baby[0].content[8].productIds.default",
+        "observed_id": "E481769-000",
+        "raw_product_id": "E481769-000-00",
+        "url": "https://www.uniqlo.com/kr/ko/products/E481769-000"
+      }
+    ],
+    "source_raw": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/category-pages/8f9b7efaf10ecb94841d.html",
+    "source_raw_sha256": "efe3f8cbf713116fb97a19b7a9d528f87acf4e4e129bf01e9fae89d21b294ee1"
+  },
+  "products": [
+    {
+      "allowed": true,
+      "allowed_final_path": "/kr/ko/products/E488861-000/00",
+      "audience": "BABY",
+      "base_product_id": "E488861-000",
+      "breadcrumb_items": [
+        {
+          "id": "57925",
+          "level": 1,
+          "locale": "BABY",
+          "name": "baby",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57980",
+          "level": 2,
+          "locale": "신생아(0개월~2세)",
+          "name": "newborn",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58102",
+          "level": 3,
+          "locale": "바디수트",
+          "name": "bodysuits",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58674",
+          "level": 4,
+          "locale": "긴팔",
+          "name": "long sleeve",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "bucket": "default",
+      "category_path": "신생아(0개월~2세) > 바디수트 > 긴팔",
+      "category_status": "resolved",
+      "evidence_path": "cms./home/v2.components.body[0].baby[0].content[8].productIds.default",
+      "evidence_source": "uniqlo_hydration",
+      "final_url": "https://www.uniqlo.com/kr/ko/products/E488861-000/00",
+      "http_status": 200,
+      "hydration_audience": "BABY",
+      "hydration_product_id": "E488861-000",
+      "hydration_status": "resolved",
+      "hydration_validation_executed": true,
+      "json_ld_status": "unresolved",
+      "observed_id": "E488861-000",
+      "product_id_matches": true,
+      "raw_evidence": {
+        "bytes": 969256,
+        "collected_at": "2026-07-27T22:39:37.432653+00:00",
+        "content_type": "text/html",
+        "path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-probe-v2/raw/uniqlo/products/E488861-000.html",
+        "sha256": "6c6a0884e00e77ab3681e4ae67e78b4e902a72f8153bfeb4267284daed719b32",
+        "status": 200,
+        "url": "https://www.uniqlo.com/kr/ko/products/E488861-000/00"
+      },
+      "raw_product_id": "E488861-000-00",
+      "request_url": "https://www.uniqlo.com/kr/ko/products/E488861-000",
+      "requested": true,
+      "requested_observed_id": "E488861-000",
+      "selected_entity_key": "E488861-000-00",
+      "skipped_reason": "",
+      "unresolved_reason": "",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488861-000",
+      "url_allowed": true,
+      "url_rejection_reason": "",
+      "validation_status": "resolved_baby",
+      "variant_suffix": "00"
+    },
+    {
+      "allowed": true,
+      "allowed_final_path": "/kr/ko/products/E486367-000/00",
+      "audience": "BABY",
+      "base_product_id": "E486367-000",
+      "breadcrumb_items": [
+        {
+          "id": "57925",
+          "level": 1,
+          "locale": "BABY",
+          "name": "baby",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57980",
+          "level": 2,
+          "locale": "신생아(0개월~2세)",
+          "name": "newborn",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58102",
+          "level": 3,
+          "locale": "바디수트",
+          "name": "bodysuits",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58674",
+          "level": 4,
+          "locale": "긴팔",
+          "name": "long sleeve",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "bucket": "default",
+      "category_path": "신생아(0개월~2세) > 바디수트 > 긴팔",
+      "category_status": "resolved",
+      "evidence_path": "cms./home/v2.components.body[0].baby[0].content[8].productIds.default",
+      "evidence_source": "uniqlo_hydration",
+      "final_url": "https://www.uniqlo.com/kr/ko/products/E486367-000/00",
+      "http_status": 200,
+      "hydration_audience": "BABY",
+      "hydration_product_id": "E486367-000",
+      "hydration_status": "resolved",
+      "hydration_validation_executed": true,
+      "json_ld_status": "unresolved",
+      "observed_id": "E486367-000",
+      "product_id_matches": true,
+      "raw_evidence": {
+        "bytes": 972123,
+        "collected_at": "2026-07-27T22:39:38.414699+00:00",
+        "content_type": "text/html",
+        "path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-probe-v2/raw/uniqlo/products/E486367-000.html",
+        "sha256": "36727f1cf9cdbef6521ef4b3d8297be511251fa33129215efd63ffabbce0de97",
+        "status": 200,
+        "url": "https://www.uniqlo.com/kr/ko/products/E486367-000/00"
+      },
+      "raw_product_id": "E486367-000-00",
+      "request_url": "https://www.uniqlo.com/kr/ko/products/E486367-000",
+      "requested": true,
+      "requested_observed_id": "E486367-000",
+      "selected_entity_key": "E486367-000-00",
+      "skipped_reason": "",
+      "unresolved_reason": "",
+      "url": "https://www.uniqlo.com/kr/ko/products/E486367-000",
+      "url_allowed": true,
+      "url_rejection_reason": "",
+      "validation_status": "resolved_baby",
+      "variant_suffix": "00"
+    },
+    {
+      "allowed": true,
+      "allowed_final_path": "/kr/ko/products/E481772-000/00",
+      "audience": "BABY",
+      "base_product_id": "E481772-000",
+      "breadcrumb_items": [
+        {
+          "id": "57925",
+          "level": 1,
+          "locale": "BABY",
+          "name": "baby",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57980",
+          "level": 2,
+          "locale": "신생아(0개월~2세)",
+          "name": "newborn",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58102",
+          "level": 3,
+          "locale": "바디수트",
+          "name": "bodysuits",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58675",
+          "level": 4,
+          "locale": "반팔",
+          "name": "short sleeve",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "bucket": "default",
+      "category_path": "신생아(0개월~2세) > 바디수트 > 반팔",
+      "category_status": "resolved",
+      "evidence_path": "cms./home/v2.components.body[0].baby[0].content[8].productIds.default",
+      "evidence_source": "uniqlo_hydration",
+      "final_url": "https://www.uniqlo.com/kr/ko/products/E481772-000/00",
+      "http_status": 200,
+      "hydration_audience": "BABY",
+      "hydration_product_id": "E481772-000",
+      "hydration_status": "resolved",
+      "hydration_validation_executed": true,
+      "json_ld_status": "unresolved",
+      "observed_id": "E481772-000",
+      "product_id_matches": true,
+      "raw_evidence": {
+        "bytes": 967072,
+        "collected_at": "2026-07-27T22:39:39.306163+00:00",
+        "content_type": "text/html",
+        "path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-probe-v2/raw/uniqlo/products/E481772-000.html",
+        "sha256": "06c2b7bfd431bf4caed8b69c63ba79b3aeac24831c6b4870b207924d499d4355",
+        "status": 200,
+        "url": "https://www.uniqlo.com/kr/ko/products/E481772-000/00"
+      },
+      "raw_product_id": "E481772-000-00",
+      "request_url": "https://www.uniqlo.com/kr/ko/products/E481772-000",
+      "requested": true,
+      "requested_observed_id": "E481772-000",
+      "selected_entity_key": "E481772-000-00",
+      "skipped_reason": "",
+      "unresolved_reason": "",
+      "url": "https://www.uniqlo.com/kr/ko/products/E481772-000",
+      "url_allowed": true,
+      "url_rejection_reason": "",
+      "validation_status": "resolved_baby",
+      "variant_suffix": "00"
+    },
+    {
+      "allowed": true,
+      "allowed_final_path": "/kr/ko/products/E481769-000/00",
+      "audience": "BABY",
+      "base_product_id": "E481769-000",
+      "breadcrumb_items": [
+        {
+          "id": "57925",
+          "level": 1,
+          "locale": "BABY",
+          "name": "baby",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57980",
+          "level": 2,
+          "locale": "신생아(0개월~2세)",
+          "name": "newborn",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58102",
+          "level": 3,
+          "locale": "바디수트",
+          "name": "bodysuits",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58673",
+          "level": 4,
+          "locale": "코튼메쉬",
+          "name": "cotton mesh",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "bucket": "default",
+      "category_path": "신생아(0개월~2세) > 바디수트 > 코튼메쉬",
+      "category_status": "resolved",
+      "evidence_path": "cms./home/v2.components.body[0].baby[0].content[8].productIds.default",
+      "evidence_source": "uniqlo_hydration",
+      "final_url": "https://www.uniqlo.com/kr/ko/products/E481769-000/00",
+      "http_status": 200,
+      "hydration_audience": "BABY",
+      "hydration_product_id": "E481769-000",
+      "hydration_status": "resolved",
+      "hydration_validation_executed": true,
+      "json_ld_status": "unresolved",
+      "observed_id": "E481769-000",
+      "product_id_matches": true,
+      "raw_evidence": {
+        "bytes": 964758,
+        "collected_at": "2026-07-27T22:39:40.016876+00:00",
+        "content_type": "text/html",
+        "path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-probe-v2/raw/uniqlo/products/E481769-000.html",
+        "sha256": "20d031fd70fa24f93ec6498b3f7e87b91c2b7fc4c6860132122b544115231b2c",
+        "status": 200,
+        "url": "https://www.uniqlo.com/kr/ko/products/E481769-000/00"
+      },
+      "raw_product_id": "E481769-000-00",
+      "request_url": "https://www.uniqlo.com/kr/ko/products/E481769-000",
+      "requested": true,
+      "requested_observed_id": "E481769-000",
+      "selected_entity_key": "E481769-000-00",
+      "skipped_reason": "",
+      "unresolved_reason": "",
+      "url": "https://www.uniqlo.com/kr/ko/products/E481769-000",
+      "url_allowed": true,
+      "url_rejection_reason": "",
+      "validation_status": "resolved_baby",
+      "variant_suffix": "00"
+    }
+  ],
+  "stop_reason": "",
+  "success": true
+}

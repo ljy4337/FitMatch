@@ -308,13 +308,25 @@ final class ShoppingProductViewModel: ObservableObject {
         sourceName = parsedProduct.sourceName
         brand = parsedProduct.brandName
         productName = parsedProduct.productName
-        category = parsedProduct.category
-        detailCategory = parsedProduct.detailCategory
         productImageURLString = parsedProduct.imageURLString
         productPrice = parsedProduct.price
         productCanonicalURLString = parsedProduct.canonicalURLString
         productCode = parsedProduct.productID
         productMetadata = metadataWithSourceCategory(from: parsedProduct)
+        let canonical = ParsedClosetClassification.resolve(
+            category: parsedProduct.category,
+            detailCategory: parsedProduct.detailCategory,
+            sourceDepths: [
+                productMetadata.sourceCategoryDepth1,
+                productMetadata.sourceCategoryDepth2,
+                productMetadata.sourceCategoryDepth3,
+                productMetadata.sourceCategoryDepth4
+            ],
+            sourcePath: productMetadata.sourceCategoryPath,
+            productName: parsedProduct.productName
+        )
+        category = canonical?.category ?? parsedProduct.category
+        detailCategory = canonical?.detailCategory ?? parsedProduct.detailCategory
         measurementAvailability = parsedProduct.measurementAvailability
         sizeTableRecoveryContext = parsedProduct.sizeTableRecoveryContext
         parserNotice = parsedProduct.parserNotice

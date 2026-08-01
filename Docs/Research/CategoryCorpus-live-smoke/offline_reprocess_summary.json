@@ -1,0 +1,2040 @@
+{
+  "audience_counts": {
+    "MEN": 19,
+    "WOMEN": 1
+  },
+  "checkpoint_preserved": true,
+  "checkpoint_sha256": "bee16abb8009a937f0e9752c7439e35ec2d1082a57b17d9c9146714f221b3b37",
+  "empty_paths": 0,
+  "evidence_source_counts": {
+    "uniqlo_hydration": 20
+  },
+  "generated_at": "2026-07-27T22:02:23.403417+00:00",
+  "inventory_status_counts": {
+    "direct_product_leaf": 19,
+    "intermediate": 17,
+    "leaf_and_parent": 0,
+    "navigation_only": 0,
+    "unresolved": 0
+  },
+  "mode": "offline-reprocess",
+  "network_requests": 0,
+  "per_product": [
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57967",
+          "level": 2,
+          "locale": "티셔츠 & 스웨트셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58039",
+          "level": 3,
+          "locale": "티셔츠 (반팔 & 긴팔)",
+          "name": "t shirts",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58395",
+          "level": 4,
+          "locale": "반팔",
+          "name": "short sleeve",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57967",
+              "level": 2,
+              "locale": "티셔츠 & 스웨트셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58039",
+              "level": 3,
+              "locale": "티셔츠 (반팔 & 긴팔)",
+              "name": "t shirts",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58395",
+              "level": 4,
+              "locale": "반팔",
+              "name": "short sleeve",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57967",
+            "58039",
+            "58395"
+          ],
+          "depth_names": [
+            "티셔츠 & 스웨트셔츠 & UT",
+            "티셔츠 (반팔 & 긴팔)",
+            "반팔"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+          "selected_entity_key": "E422992-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E422992-000",
+      "path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "product_key": "E422992",
+      "selected_entity_key": "E422992-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "WOMEN",
+      "breadcrumb_items": [
+        {
+          "id": "57892",
+          "level": 1,
+          "locale": "WOMEN",
+          "name": "women",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57959",
+          "level": 2,
+          "locale": "티셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "57995",
+          "level": 3,
+          "locale": "티셔츠 (반팔 & 긴팔)",
+          "name": "t shirts",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58144",
+          "level": 4,
+          "locale": "반팔",
+          "name": "half sleeve",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "WOMEN",
+          "breadcrumb_items": [
+            {
+              "id": "57892",
+              "level": 1,
+              "locale": "WOMEN",
+              "name": "women",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57959",
+              "level": 2,
+              "locale": "티셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "57995",
+              "level": 3,
+              "locale": "티셔츠 (반팔 & 긴팔)",
+              "name": "t shirts",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58144",
+              "level": 4,
+              "locale": "반팔",
+              "name": "half sleeve",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57959",
+            "57995",
+            "58144"
+          ],
+          "depth_names": [
+            "티셔츠 & UT",
+            "티셔츠 (반팔 & 긴팔)",
+            "반팔"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+          "selected_entity_key": "E424873-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E424873-000",
+      "path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "product_key": "E424873",
+      "selected_entity_key": "E424873-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58376",
+          "level": 4,
+          "locale": "감탄 재킷 (라이트)",
+          "name": "cotton",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58376",
+              "level": 4,
+              "locale": "감탄 재킷 (라이트)",
+              "name": "cotton",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "58376"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (라이트)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (라이트)",
+          "selected_entity_key": "E444557-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E444557-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (라이트)",
+      "product_key": "E444557",
+      "selected_entity_key": "E444557-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58376",
+          "level": 4,
+          "locale": "감탄 재킷 (라이트)",
+          "name": "cotton",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58376",
+              "level": 4,
+              "locale": "감탄 재킷 (라이트)",
+              "name": "cotton",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "58376"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (라이트)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (라이트)",
+          "selected_entity_key": "E444557-001-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E444557-001",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (라이트)",
+      "product_key": "E444557",
+      "selected_entity_key": "E444557-001-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58375",
+          "level": 4,
+          "locale": "감탄 재킷",
+          "name": "wool",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58375",
+              "level": 4,
+              "locale": "감탄 재킷",
+              "name": "wool",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "58375"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷",
+          "selected_entity_key": "E448034-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E448034-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷",
+      "product_key": "E448034",
+      "selected_entity_key": "E448034-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "116908",
+          "level": 4,
+          "locale": "감탄 재킷 (CUSTOM ORDER)",
+          "name": "uniqlo custom order",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "116908",
+              "level": 4,
+              "locale": "감탄 재킷 (CUSTOM ORDER)",
+              "name": "uniqlo custom order",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "116908"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (CUSTOM ORDER)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+          "selected_entity_key": "E448039-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E448039-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+      "product_key": "E448039",
+      "selected_entity_key": "E448039-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "116908",
+          "level": 4,
+          "locale": "감탄 재킷 (CUSTOM ORDER)",
+          "name": "uniqlo custom order",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "116908",
+              "level": 4,
+              "locale": "감탄 재킷 (CUSTOM ORDER)",
+              "name": "uniqlo custom order",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "116908"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (CUSTOM ORDER)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+          "selected_entity_key": "E448040-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E448040-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+      "product_key": "E448040",
+      "selected_entity_key": "E448040-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "116908",
+          "level": 4,
+          "locale": "감탄 재킷 (CUSTOM ORDER)",
+          "name": "uniqlo custom order",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "116908",
+              "level": 4,
+              "locale": "감탄 재킷 (CUSTOM ORDER)",
+              "name": "uniqlo custom order",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "116908"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (CUSTOM ORDER)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+          "selected_entity_key": "E448041-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E448041-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+      "product_key": "E448041",
+      "selected_entity_key": "E448041-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "116908",
+          "level": 4,
+          "locale": "감탄 재킷 (CUSTOM ORDER)",
+          "name": "uniqlo custom order",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "116908",
+              "level": 4,
+              "locale": "감탄 재킷 (CUSTOM ORDER)",
+              "name": "uniqlo custom order",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "116908"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (CUSTOM ORDER)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+          "selected_entity_key": "E448042-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E448042-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+      "product_key": "E448042",
+      "selected_entity_key": "E448042-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "116908",
+          "level": 4,
+          "locale": "감탄 재킷 (CUSTOM ORDER)",
+          "name": "uniqlo custom order",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "116908",
+              "level": 4,
+              "locale": "감탄 재킷 (CUSTOM ORDER)",
+              "name": "uniqlo custom order",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "116908"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (CUSTOM ORDER)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+          "selected_entity_key": "E448043-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E448043-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+      "product_key": "E448043",
+      "selected_entity_key": "E448043-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "116908",
+          "level": 4,
+          "locale": "감탄 재킷 (CUSTOM ORDER)",
+          "name": "uniqlo custom order",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "116908",
+              "level": 4,
+              "locale": "감탄 재킷 (CUSTOM ORDER)",
+              "name": "uniqlo custom order",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "116908"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (CUSTOM ORDER)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+          "selected_entity_key": "E448044-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E448044-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+      "product_key": "E448044",
+      "selected_entity_key": "E448044-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58036",
+          "level": 3,
+          "locale": "감탄 재킷",
+          "name": "gamtan jackets",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "116908",
+          "level": 4,
+          "locale": "감탄 재킷 (CUSTOM ORDER)",
+          "name": "uniqlo custom order",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58036",
+              "level": 3,
+              "locale": "감탄 재킷",
+              "name": "gamtan jackets",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "116908",
+              "level": 4,
+              "locale": "감탄 재킷 (CUSTOM ORDER)",
+              "name": "uniqlo custom order",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58036",
+            "116908"
+          ],
+          "depth_names": [
+            "아우터",
+            "감탄 재킷",
+            "감탄 재킷 (CUSTOM ORDER)"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+          "selected_entity_key": "E448045-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E448045-000",
+      "path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+      "product_key": "E448045",
+      "selected_entity_key": "E448045-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57967",
+          "level": 2,
+          "locale": "티셔츠 & 스웨트셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58039",
+          "level": 3,
+          "locale": "티셔츠 (반팔 & 긴팔)",
+          "name": "t shirts",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58394",
+          "level": 4,
+          "locale": "긴팔",
+          "name": "long sleeve",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57967",
+              "level": 2,
+              "locale": "티셔츠 & 스웨트셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58039",
+              "level": 3,
+              "locale": "티셔츠 (반팔 & 긴팔)",
+              "name": "t shirts",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58394",
+              "level": 4,
+              "locale": "긴팔",
+              "name": "long sleeve",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57967",
+            "58039",
+            "58394"
+          ],
+          "depth_names": [
+            "티셔츠 & 스웨트셔츠 & UT",
+            "티셔츠 (반팔 & 긴팔)",
+            "긴팔"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+          "selected_entity_key": "E450179-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E450179-000",
+      "path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+      "product_key": "E450179",
+      "selected_entity_key": "E450179-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57966",
+          "level": 2,
+          "locale": "아우터",
+          "name": "outerwear",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58035",
+          "level": 3,
+          "locale": "파카 & 블루종",
+          "name": "parkas and blousons",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "98333",
+          "level": 4,
+          "locale": "후리스",
+          "name": "fleece",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57966",
+              "level": 2,
+              "locale": "아우터",
+              "name": "outerwear",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58035",
+              "level": 3,
+              "locale": "파카 & 블루종",
+              "name": "parkas and blousons",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "98333",
+              "level": 4,
+              "locale": "후리스",
+              "name": "fleece",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57966",
+            "58035",
+            "98333"
+          ],
+          "depth_names": [
+            "아우터",
+            "파카 & 블루종",
+            "후리스"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "아우터 > 파카 & 블루종 > 후리스",
+          "selected_entity_key": "E450195-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E450195-000",
+      "path": "아우터 > 파카 & 블루종 > 후리스",
+      "product_key": "E450195",
+      "selected_entity_key": "E450195-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57967",
+          "level": 2,
+          "locale": "티셔츠 & 스웨트셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58039",
+          "level": 3,
+          "locale": "티셔츠 (반팔 & 긴팔)",
+          "name": "t shirts",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58395",
+          "level": 4,
+          "locale": "반팔",
+          "name": "short sleeve",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57967",
+              "level": 2,
+              "locale": "티셔츠 & 스웨트셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58039",
+              "level": 3,
+              "locale": "티셔츠 (반팔 & 긴팔)",
+              "name": "t shirts",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58395",
+              "level": 4,
+              "locale": "반팔",
+              "name": "short sleeve",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57967",
+            "58039",
+            "58395"
+          ],
+          "depth_names": [
+            "티셔츠 & 스웨트셔츠 & UT",
+            "티셔츠 (반팔 & 긴팔)",
+            "반팔"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+          "selected_entity_key": "E455365-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E455365-000",
+      "path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "product_key": "E455365",
+      "selected_entity_key": "E455365-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57967",
+          "level": 2,
+          "locale": "티셔츠 & 스웨트셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58950",
+          "level": 3,
+          "locale": "PEACE FOR ALL",
+          "name": "peace for all",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58951",
+          "level": 4,
+          "locale": "그래픽 티셔츠",
+          "name": "graphic tees",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57967",
+              "level": 2,
+              "locale": "티셔츠 & 스웨트셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58950",
+              "level": 3,
+              "locale": "PEACE FOR ALL",
+              "name": "peace for all",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58951",
+              "level": 4,
+              "locale": "그래픽 티셔츠",
+              "name": "graphic tees",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57967",
+            "58950",
+            "58951"
+          ],
+          "depth_names": [
+            "티셔츠 & 스웨트셔츠 & UT",
+            "PEACE FOR ALL",
+            "그래픽 티셔츠"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+          "selected_entity_key": "E457111-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E457111-000",
+      "path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+      "product_key": "E457111",
+      "selected_entity_key": "E457111-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57967",
+          "level": 2,
+          "locale": "티셔츠 & 스웨트셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58950",
+          "level": 3,
+          "locale": "PEACE FOR ALL",
+          "name": "peace for all",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58951",
+          "level": 4,
+          "locale": "그래픽 티셔츠",
+          "name": "graphic tees",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57967",
+              "level": 2,
+              "locale": "티셔츠 & 스웨트셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58950",
+              "level": 3,
+              "locale": "PEACE FOR ALL",
+              "name": "peace for all",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58951",
+              "level": 4,
+              "locale": "그래픽 티셔츠",
+              "name": "graphic tees",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57967",
+            "58950",
+            "58951"
+          ],
+          "depth_names": [
+            "티셔츠 & 스웨트셔츠 & UT",
+            "PEACE FOR ALL",
+            "그래픽 티셔츠"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+          "selected_entity_key": "E457119-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E457119-000",
+      "path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+      "product_key": "E457119",
+      "selected_entity_key": "E457119-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57967",
+          "level": 2,
+          "locale": "티셔츠 & 스웨트셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58950",
+          "level": 3,
+          "locale": "PEACE FOR ALL",
+          "name": "peace for all",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58951",
+          "level": 4,
+          "locale": "그래픽 티셔츠",
+          "name": "graphic tees",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57967",
+              "level": 2,
+              "locale": "티셔츠 & 스웨트셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58950",
+              "level": 3,
+              "locale": "PEACE FOR ALL",
+              "name": "peace for all",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58951",
+              "level": 4,
+              "locale": "그래픽 티셔츠",
+              "name": "graphic tees",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57967",
+            "58950",
+            "58951"
+          ],
+          "depth_names": [
+            "티셔츠 & 스웨트셔츠 & UT",
+            "PEACE FOR ALL",
+            "그래픽 티셔츠"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+          "selected_entity_key": "E457120-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E457120-000",
+      "path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+      "product_key": "E457120",
+      "selected_entity_key": "E457120-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57967",
+          "level": 2,
+          "locale": "티셔츠 & 스웨트셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58950",
+          "level": 3,
+          "locale": "PEACE FOR ALL",
+          "name": "peace for all",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58951",
+          "level": 4,
+          "locale": "그래픽 티셔츠",
+          "name": "graphic tees",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57967",
+              "level": 2,
+              "locale": "티셔츠 & 스웨트셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58950",
+              "level": 3,
+              "locale": "PEACE FOR ALL",
+              "name": "peace for all",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58951",
+              "level": 4,
+              "locale": "그래픽 티셔츠",
+              "name": "graphic tees",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57967",
+            "58950",
+            "58951"
+          ],
+          "depth_names": [
+            "티셔츠 & 스웨트셔츠 & UT",
+            "PEACE FOR ALL",
+            "그래픽 티셔츠"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+          "selected_entity_key": "E457122-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E457122-000",
+      "path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+      "product_key": "E457122",
+      "selected_entity_key": "E457122-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    },
+    {
+      "audience": "MEN",
+      "breadcrumb_items": [
+        {
+          "id": "57893",
+          "level": 1,
+          "locale": "MEN",
+          "name": "men",
+          "raw_order": 0,
+          "role": "gender"
+        },
+        {
+          "id": "57967",
+          "level": 2,
+          "locale": "티셔츠 & 스웨트셔츠 & UT",
+          "name": "tops",
+          "raw_order": 1,
+          "role": "class"
+        },
+        {
+          "id": "58039",
+          "level": 3,
+          "locale": "티셔츠 (반팔 & 긴팔)",
+          "name": "t shirts",
+          "raw_order": 2,
+          "role": "category"
+        },
+        {
+          "id": "58390",
+          "level": 4,
+          "locale": "에어리즘 코튼",
+          "name": "arism cotton",
+          "raw_order": 3,
+          "role": "subcategory"
+        }
+      ],
+      "entity_match_basis": "product.productId_exact",
+      "evidence_candidates": {
+        "uniqlo_hydration": {
+          "audience": "MEN",
+          "breadcrumb_items": [
+            {
+              "id": "57893",
+              "level": 1,
+              "locale": "MEN",
+              "name": "men",
+              "raw_order": 0,
+              "role": "gender"
+            },
+            {
+              "id": "57967",
+              "level": 2,
+              "locale": "티셔츠 & 스웨트셔츠 & UT",
+              "name": "tops",
+              "raw_order": 1,
+              "role": "class"
+            },
+            {
+              "id": "58039",
+              "level": 3,
+              "locale": "티셔츠 (반팔 & 긴팔)",
+              "name": "t shirts",
+              "raw_order": 2,
+              "role": "category"
+            },
+            {
+              "id": "58390",
+              "level": 4,
+              "locale": "에어리즘 코튼",
+              "name": "arism cotton",
+              "raw_order": 3,
+              "role": "subcategory"
+            }
+          ],
+          "depth_codes": [
+            "57967",
+            "58039",
+            "58390"
+          ],
+          "depth_names": [
+            "티셔츠 & 스웨트셔츠 & UT",
+            "티셔츠 (반팔 & 긴팔)",
+            "에어리즘 코튼"
+          ],
+          "entity_match_basis": "product.productId_exact",
+          "evidence_source": "uniqlo_hydration",
+          "path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼",
+          "selected_entity_key": "E457517-000-00",
+          "status": "resolved",
+          "unresolved_reason": ""
+        }
+      },
+      "evidence_source": "uniqlo_hydration",
+      "observed_id": "E457517-000",
+      "path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼",
+      "product_key": "E457517",
+      "selected_entity_key": "E457517-000-00",
+      "status": "resolved",
+      "unresolved_reason": ""
+    }
+  ],
+  "raw_files_verified": 64,
+  "raw_hash_failures": [],
+  "resolved_paths": 20,
+  "uniqlo_raw_products": 20,
+  "unique_paths": [
+    "아우터 > 감탄 재킷 > 감탄 재킷",
+    "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+    "아우터 > 감탄 재킷 > 감탄 재킷 (라이트)",
+    "아우터 > 파카 & 블루종 > 후리스",
+    "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+    "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+    "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼"
+  ],
+  "unresolved_products": 0
+}

@@ -554,7 +554,7 @@ struct BodyShapePreferencesTests {
         #expect(snapshot.usedMeasurements.first { $0.kind == .chest }?.referenceValue == 52)
     }
 
-    @Test func garmentChestCircumferencesUseHalfScaleDifference() throws {
+    @Test func garmentChestCircumferencesKeepOfficialCircumferenceScale() throws {
         let fixture = upperFixture()
         fixture.size.measurementRecords.removeAll { $0.displayKind == .chest }
         fixture.item.measurementRecords.removeAll { $0.displayKind == .chest }
@@ -565,18 +565,21 @@ struct BodyShapePreferencesTests {
             record(value: 104, code: .chestCircumferenceGarment, kind: .chest, userFit: fixture.item)
         )
 
-        let result = MeasurementComparisonEngine().compare(
-            productSize: fixture.size,
-            referenceItem: fixture.item,
-            productCategory: .top,
-            productDetailCategory: .sleeveless
-        )
-        let chest = try #require(result.comparedItems.first { $0.kind == .chest })
+        for category in [ClothingCategory.top, .outer] {
+            let result = MeasurementComparisonEngine().compare(
+                productSize: fixture.size,
+                referenceItem: fixture.item,
+                productCategory: category,
+                productDetailCategory: .sleeveless
+            )
+            let chest = try #require(result.comparedItems.first { $0.kind == .chest })
 
-        #expect(chest.productValue == 54)
-        #expect(chest.referenceValue == 52)
-        #expect(chest.absoluteDifference == 2)
-        #expect(chest.score == 90)
+            #expect(chest.displayTitle == "가슴둘레")
+            #expect(chest.productValue == 108)
+            #expect(chest.referenceValue == 104)
+            #expect(chest.absoluteDifference == 4)
+            #expect(chest.score == 80)
+        }
     }
 
     @Test func referenceGarmentChestCircumferenceConvertsWhenProductUsesWidth() throws {

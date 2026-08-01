@@ -1,0 +1,110 @@
+{
+  "attempts": 11,
+  "by_source_kind": {
+    "uniqlo/baby_collection_category": {
+      "attempts": 1,
+      "duration": {
+        "count": 1,
+        "max_ms": 422.719,
+        "median_ms": 422.719,
+        "min_ms": 422.719,
+        "p95_ms": 422.719
+      },
+      "failures": 0,
+      "successes": 1
+    },
+    "uniqlo/baby_collection_product": {
+      "attempts": 10,
+      "duration": {
+        "count": 10,
+        "max_ms": 1091.03,
+        "median_ms": 900.158,
+        "min_ms": 605.855,
+        "p95_ms": 1056.636
+      },
+      "failures": 0,
+      "successes": 10
+    }
+  },
+  "duration": {
+    "count": 11,
+    "max_ms": 1091.03,
+    "median_ms": 884.527,
+    "min_ms": 422.719,
+    "p95_ms": 1052.814
+  },
+  "failures": 0,
+  "http_403": 0,
+  "http_429": 0,
+  "progress_segments": [
+    {
+      "attempt_range": [
+        1,
+        3
+      ],
+      "attempts": 3,
+      "duration": {
+        "count": 3,
+        "max_ms": 1014.599,
+        "median_ms": 809.728,
+        "min_ms": 422.719,
+        "p95_ms": 994.112
+      },
+      "failure_rate": 0.0,
+      "failures": 0
+    },
+    {
+      "attempt_range": [
+        4,
+        6
+      ],
+      "attempts": 3,
+      "duration": {
+        "count": 3,
+        "max_ms": 1091.03,
+        "median_ms": 979.687,
+        "min_ms": 915.789,
+        "p95_ms": 1079.896
+      },
+      "failure_rate": 0.0,
+      "failures": 0
+    },
+    {
+      "attempt_range": [
+        7,
+        9
+      ],
+      "attempts": 3,
+      "duration": {
+        "count": 3,
+        "max_ms": 943.502,
+        "median_ms": 884.527,
+        "min_ms": 858.601,
+        "p95_ms": 937.604
+      },
+      "failure_rate": 0.0,
+      "failures": 0
+    },
+    {
+      "attempt_range": [
+        10,
+        11
+      ],
+      "attempts": 2,
+      "duration": {
+        "count": 2,
+        "max_ms": 862.752,
+        "median_ms": 734.303,
+        "min_ms": 605.855,
+        "p95_ms": 849.907
+      },
+      "failure_rate": 0.0,
+      "failures": 0
+    }
+  ],
+  "retries": 0,
+  "status_counts": {
+    "200": 11
+  },
+  "successes": 11
+}

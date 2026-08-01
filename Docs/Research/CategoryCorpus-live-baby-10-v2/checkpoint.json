@@ -1,0 +1,64 @@
+{
+  "accepted_core_product_ids": [
+    "E481772",
+    "E481769",
+    "E487909",
+    "E481764",
+    "E481761",
+    "E473721",
+    "E444812",
+    "E486378",
+    "E486380",
+    "E489530"
+  ],
+  "accepted_count": 10,
+  "logical_requests": [
+    "https://www.uniqlo.com/kr/ko/baby/newborn/bodysuits",
+    "https://www.uniqlo.com/kr/ko/products/E481772-000",
+    "https://www.uniqlo.com/kr/ko/products/E481769-000",
+    "https://www.uniqlo.com/kr/ko/products/E487909-001",
+    "https://www.uniqlo.com/kr/ko/products/E481764-000",
+    "https://www.uniqlo.com/kr/ko/products/E481761-000",
+    "https://www.uniqlo.com/kr/ko/products/E473721-000",
+    "https://www.uniqlo.com/kr/ko/products/E444812-000",
+    "https://www.uniqlo.com/kr/ko/products/E486378-000",
+    "https://www.uniqlo.com/kr/ko/products/E486380-000",
+    "https://www.uniqlo.com/kr/ko/products/E489530-000"
+  ],
+  "processed_base_product_ids": [
+    "E481772-000",
+    "E481769-000",
+    "E487909-001",
+    "E481764-000",
+    "E481761-000",
+    "E473721-000",
+    "E444812-000",
+    "E486378-000",
+    "E486380-000",
+    "E489530-000"
+  ],
+  "remaining_queue": [
+    "E489526",
+    "E481862",
+    "E466434",
+    "E450071",
+    "E485184",
+    "E486367",
+    "E488861"
+  ],
+  "resume_reason": "This bounded evidence run is terminal; use a new output path for any separately approved follow-up.",
+  "resume_supported": false,
+  "settings": {
+    "audience": "BABY",
+    "baby_limit": 10,
+    "delay_ms": 250,
+    "max_logical_requests": 25,
+    "retries": 2,
+    "source": "uniqlo",
+    "start_url": "https://www.uniqlo.com/kr/ko/baby/newborn/bodysuits"
+  },
+  "stop_reason": "Accepted BABY product limit reached",
+  "stopped": true,
+  "updated_at": "2026-07-27T22:55:09.456149+00:00",
+  "version": 1
+}

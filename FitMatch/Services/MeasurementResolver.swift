@@ -1,6 +1,12 @@
 import Foundation
 
 enum MeasurementResolver {
+    struct SourceDisplayRow: Identifiable {
+        let id: UUID
+        let title: String
+        let valueText: String
+    }
+
     struct GarmentSnapshot {
         private let measurements: GarmentMeasurements
         private let recordsByDisplayKind: [MeasurementDisplayKind?: [GarmentMeasurementRecord]]
@@ -49,6 +55,48 @@ enum MeasurementResolver {
         records: [GarmentMeasurementRecord]
     ) -> GarmentSnapshot {
         GarmentSnapshot(measurements: measurements, records: records)
+    }
+
+    static func sourceDisplayRows(
+        records: [GarmentMeasurementRecord]
+    ) -> [SourceDisplayRow] {
+        let imported = records.filter {
+            $0.inputSourceRawValue == MeasurementInputSource.importedSizeChart.rawValue
+                || $0.inputSourceRawValue == MeasurementInputSource.transcribedSizeChart.rawValue
+        }
+        return imported
+            .sorted {
+                let lhsOrder = displayOrder($0.displayKind)
+                let rhsOrder = displayOrder($1.displayKind)
+                if lhsOrder != rhsOrder { return lhsOrder < rhsOrder }
+                return ($0.rawLabel, $0.id.uuidString) < ($1.rawLabel, $1.id.uuidString)
+            }
+            .map {
+                SourceDisplayRow(
+                    id: $0.id,
+                    title: $0.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? ($0.displayKind?.rawValue ?? "실측")
+                        : $0.rawLabel,
+                    valueText: sourceValueText(for: $0)
+                )
+            }
+    }
+
+    private static func sourceValueText(for record: GarmentMeasurementRecord) -> String {
+        let raw = record.rawValueText?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let raw, !raw.isEmpty {
+            let lower = raw.lowercased()
+            if lower.contains("cm") || lower.contains("mm") || lower.contains("inch") || lower.contains("인치") {
+                return raw
+            }
+            return "\(raw) \(record.unitRawValue)"
+        }
+        return "\(record.value.cmText)"
+    }
+
+    private static func displayOrder(_ kind: MeasurementDisplayKind?) -> Int {
+        MeasurementDisplayKind.allCases.firstIndex(of: kind ?? .unknown) ?? Int.max
     }
 
     static func title(

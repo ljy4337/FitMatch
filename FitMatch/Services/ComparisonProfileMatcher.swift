@@ -1,5 +1,183 @@
 import Foundation
 
+enum GarmentLengthInferencePolicy {
+    struct Sample {
+        let value: Double
+        let code: MeasurementCode
+        let methodSource: String
+    }
+
+    static func infer(
+        category: ClothingCategory,
+        gender: UserGender,
+        samples: [Sample],
+        fallbackMeasurements: [GarmentMeasurements] = []
+    ) -> ComparisonLengthType {
+        let major = category.serviceGroup
+        guard major == .top || major == .outer || major == .bottom else {
+            return .unknown
+        }
+
+        if major == .bottom {
+            if let inferred = inferBottom(gender: gender, samples: samples) {
+                return inferred
+            }
+            let values = fallbackMeasurements
+                .map(\.totalLength)
+                .filter { $0.isFinite && $0 > 0 }
+            guard let value = median(values) else { return .unknown }
+            return value <= fallbackBottomBoundary(for: gender) ? .short : .long
+        }
+
+        if let inferred = inferSleeve(gender: gender, samples: samples) {
+            return inferred
+        }
+        let values = fallbackMeasurements
+            .map(\.sleeveLength)
+            .filter { $0.isFinite && $0 > 0 }
+        guard let value = median(values) else { return .unknown }
+        return value <= fallbackSleeveBoundary(for: gender) ? .short : .long
+    }
+
+    static func samples(from records: [GarmentMeasurementRecord]) -> [Sample] {
+        records.compactMap {
+            guard $0.isComparable, $0.value.isFinite, $0.value > 0 else { return nil }
+            return Sample(value: $0.value, code: $0.measurementCode, methodSource: $0.methodSource)
+        }
+    }
+
+    static func samples(from sizes: [ParsedProductSize]) -> [Sample] {
+        sizes.flatMap(\.measurementRecords).compactMap {
+            guard $0.semanticStatus == .mapped,
+                  $0.measurementCode != .unknown,
+                  $0.measurementCode != .legacyUnknown,
+                  $0.value.isFinite,
+                  $0.value > 0 else {
+                return nil
+            }
+            return Sample(value: $0.value, code: $0.measurementCode, methodSource: $0.methodSource)
+        }
+    }
+
+    private static func inferSleeve(
+        gender: UserGender,
+        samples: [Sample]
+    ) -> ComparisonLengthType? {
+        let sleeveSamples = samples.filter {
+            $0.code == .sleeveShoulderSeamToCuff
+                || $0.code == .sleeveCenterBackToCuff
+                || $0.code == .sleeveRaglanNeckToCuff
+        }
+        for code in [
+            MeasurementCode.sleeveShoulderSeamToCuff,
+            .sleeveCenterBackToCuff,
+            .sleeveRaglanNeckToCuff
+        ] {
+            let matching = sleeveSamples.filter { $0.code == code }
+            guard let value = median(matching.map(\.value)) else { continue }
+            let platform = dominantPlatform(in: matching)
+            let boundary = sleeveBoundary(code: code, platform: platform, gender: gender)
+            return value <= boundary ? .short : .long
+        }
+        return nil
+    }
+
+    private static func inferBottom(
+        gender: UserGender,
+        samples: [Sample]
+    ) -> ComparisonLengthType? {
+        for code in [
+            MeasurementCode.pantsInseamCrotchToHem,
+            .pantsOutseamWaistToHem
+        ] {
+            let matching = samples.filter { $0.code == code }
+            guard let value = median(matching.map(\.value)) else { continue }
+            let platform = dominantPlatform(in: matching)
+            let boundary: Double
+            if code == .pantsInseamCrotchToHem {
+                boundary = platform == "uniqlo" ? 46.5 : 48
+            } else if platform == "musinsa" {
+                switch gender {
+                case .men: boundary = 84.0
+                case .women: boundary = 65.0
+                default: boundary = 74.0
+                }
+            } else {
+                boundary = fallbackBottomBoundary(for: gender)
+            }
+            return value <= boundary ? .short : .long
+        }
+        return nil
+    }
+
+    private static func sleeveBoundary(
+        code: MeasurementCode,
+        platform: String?,
+        gender: UserGender
+    ) -> Double {
+        if platform == "uniqlo", code == .sleeveCenterBackToCuff {
+            switch gender {
+            case .men: return 67.0
+            case .women: return 60.0
+            case .kids, .baby: return 34.5
+            default: return 63.5
+            }
+        }
+        if platform == "musinsa", code == .sleeveShoulderSeamToCuff {
+            switch gender {
+            case .men: return 52.0
+            case .women: return 43.0
+            default: return 47.5
+            }
+        }
+        switch code {
+        case .sleeveShoulderSeamToCuff: return fallbackSleeveBoundary(for: gender)
+        case .sleeveCenterBackToCuff: return gender == .men ? 67 : (gender == .women ? 60 : 63.5)
+        case .sleeveRaglanNeckToCuff: return 52.5
+        default: return fallbackSleeveBoundary(for: gender)
+        }
+    }
+
+    private static func fallbackSleeveBoundary(for gender: UserGender) -> Double {
+        switch gender {
+        case .men: return 50
+        case .women: return 42
+        default: return 46
+        }
+    }
+
+    private static func fallbackBottomBoundary(for gender: UserGender) -> Double {
+        switch gender {
+        case .men: return 84
+        case .women: return 65
+        default: return 74
+        }
+    }
+
+    private static func dominantPlatform(in samples: [Sample]) -> String? {
+        let values = samples.compactMap { platform(for: $0.methodSource) }
+        return Dictionary(grouping: values, by: { $0 })
+            .max { $0.value.count < $1.value.count }?
+            .key
+    }
+
+    private static func platform(for methodSource: String) -> String? {
+        let normalized = methodSource.lowercased()
+        if normalized.contains("uniqlo") { return "uniqlo" }
+        if normalized.contains("musinsa") { return "musinsa" }
+        return nil
+    }
+
+    private static func median(_ values: [Double]) -> Double? {
+        guard !values.isEmpty else { return nil }
+        let sorted = values.sorted()
+        let middle = sorted.count / 2
+        return sorted.count.isMultiple(of: 2)
+            ? (sorted[middle - 1] + sorted[middle]) / 2
+            : sorted[middle]
+    }
+}
+
 struct ComparisonProfile: Equatable {
     let majorCategory: ClothingCategory
     let garmentFamily: ComparisonGarmentFamily
@@ -112,9 +290,30 @@ struct ComparisonProfileMatcher {
             return ([.totalLength], "바지 길이 형태가 달라 총장은 비교에서 제외했어요.")
         }
         if incoming.majorCategory == .top || incoming.majorCategory == .outer {
+            if hasDirectSourceComparison(
+                kind: .sleeveLength,
+                product: product,
+                selectedItem: selectedItem
+            ) {
+                return ([], nil)
+            }
             return ([.sleeveLength], "소매 형태가 달라 소매 길이는 비교에서 제외했어요.")
         }
         return ([], nil)
+    }
+
+    func hasSamePlatformOfficialFormat(
+        product: Product,
+        selectedItem: UserFit,
+        minimumCommonMeasurementCount: Int = 2
+    ) -> Bool {
+        MeasurementKind.allCases.filter {
+            hasDirectSourceComparison(
+                kind: $0,
+                product: product,
+                selectedItem: selectedItem
+            )
+        }.count >= minimumCommonMeasurementCount
     }
 
     func candidateNote(product: Product, productDetailCategory: ClosetDetailCategory, item: UserFit) -> String? {
@@ -154,7 +353,8 @@ struct ComparisonProfileMatcher {
             detailCategory: detailCategory,
             major: major,
             gender: product.productTargetGender,
-            measurements: product.sizes.map(\.measurements)
+            measurements: product.sizes.map(\.measurements),
+            measurementRecords: product.sizes.flatMap(\.measurementRecords)
         )
         let inferredConstruction = constructionType(product.sizes.flatMap(\.measurementRecords))
         let family = storedGarmentType(product.garmentTypeRawValue, fallback: inferredFamily)
@@ -194,7 +394,8 @@ struct ComparisonProfileMatcher {
             detailCategory: item.detailCategory,
             major: major,
             gender: item.gender,
-            measurements: [item.measurements]
+            measurements: [item.measurements],
+            measurementRecords: item.measurementRecords
         )
         let inferredConstruction = constructionType(item.measurementRecords)
         let family = storedGarmentType(item.garmentTypeRawValue, fallback: inferredFamily)
@@ -370,30 +571,18 @@ struct ComparisonProfileMatcher {
         detailCategory: ClosetDetailCategory,
         major: ClothingCategory,
         gender: UserGender,
-        measurements: [GarmentMeasurements]
+        measurements: [GarmentMeasurements],
+        measurementRecords: [GarmentMeasurementRecord]
     ) -> ComparisonLengthType {
         if let value = keywordLength(productName, major: major) { return value }
         if let value = keywordLength(source, major: major) { return value }
         if let value = detailLength(detailCategory, major: major) { return value }
-        guard gender != .kids, gender != .baby else { return .unknown }
-
-        let values: [Double]
-        if major == .bottom {
-            values = measurements.map(\.totalLength).filter { $0 > 0 && $0.isFinite }
-        } else if major == .top || major == .outer {
-            values = measurements.map(\.sleeveLength).filter { $0 > 0 && $0.isFinite }
-        } else {
-            return .unknown
-        }
-        guard let median = median(values) else { return .unknown }
-        if major == .bottom {
-            if median <= 70 { return .short }
-            if median >= 85 { return .long }
-        } else {
-            if median <= 35 { return .short }
-            if median >= 45 { return .long }
-        }
-        return .unknown
+        return GarmentLengthInferencePolicy.infer(
+            category: major,
+            gender: gender,
+            samples: GarmentLengthInferencePolicy.samples(from: measurementRecords),
+            fallbackMeasurements: measurements
+        )
     }
 
     private func keywordLength(_ text: String, major: ClothingCategory) -> ComparisonLengthType? {
@@ -431,6 +620,54 @@ struct ComparisonProfileMatcher {
         default: core = lhs.availableMeasurements
         }
         return core.filter { lhs.availableMeasurements.contains($0) && rhs.availableMeasurements.contains($0) }.count
+    }
+
+    private func hasDirectSourceComparison(
+        kind: MeasurementKind,
+        product: Product,
+        selectedItem: UserFit
+    ) -> Bool {
+        let productRecords = product.sizes
+            .flatMap(\.measurementRecords)
+            .filter { $0.displayKind == kind.displayKind && $0.isComparable }
+        let referenceRecords = selectedItem.measurementRecords
+            .filter { $0.displayKind == kind.displayKind && $0.isComparable }
+
+        return productRecords.contains { productRecord in
+            guard let productPlatform = platform(for: productRecord.methodSource) else {
+                return false
+            }
+            return referenceRecords.contains { referenceRecord in
+                guard platform(for: referenceRecord.methodSource) == productPlatform else {
+                    return false
+                }
+                if let productCode = normalizedSourceKey(productRecord.rawCode),
+                   let referenceCode = normalizedSourceKey(referenceRecord.rawCode) {
+                    return productCode == referenceCode
+                }
+                return normalizedSourceKey(productRecord.rawLabel)
+                    == normalizedSourceKey(referenceRecord.rawLabel)
+            }
+        }
+    }
+
+    private func platform(for methodSource: String) -> String? {
+        let normalized = methodSource.lowercased()
+        if normalized.contains("uniqlo") { return "uniqlo" }
+        if normalized.contains("musinsa") { return "musinsa" }
+        if normalized.contains("fitmatch") || normalized.contains("manual") { return "fitmatch" }
+        return nil
+    }
+
+    private func normalizedSourceKey(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let normalized = value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "_", with: "")
+            .replacingOccurrences(of: "-", with: "")
+        return normalized.isEmpty ? nil : normalized
     }
 
     private func sourceText(path: String?, depths: [String?]) -> String {

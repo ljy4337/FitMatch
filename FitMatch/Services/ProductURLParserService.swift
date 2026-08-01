@@ -442,6 +442,21 @@ extension ParsedProductInfo {
     func normalizedSizes() -> ParsedProductInfo {
         var copy = self
         copy.sizes = ParsedProductSizeNormalizer.uniqueSizes(sizes)
+        if copy.detailCategory == .other {
+            let length = GarmentLengthInferencePolicy.infer(
+                category: copy.category,
+                gender: copy.productTargetGender,
+                samples: GarmentLengthInferencePolicy.samples(from: copy.sizes),
+                fallbackMeasurements: copy.sizes.map(\.measurements)
+            )
+            if copy.category.serviceGroup == .top {
+                if length == .short { copy.detailCategory = .shortSleeve }
+                if length == .long { copy.detailCategory = .longSleeve }
+            } else if copy.category.serviceGroup == .bottom {
+                if length == .short { copy.detailCategory = .shorts }
+                if length == .long { copy.detailCategory = .longPants }
+            }
+        }
         return copy
     }
 }

@@ -1,0 +1,13 @@
+{
+  "audience_mismatch_products": [],
+  "breadcrumb_order_or_level_issues": [],
+  "empty_path_products": [],
+  "id_role_locale_conflicts": {},
+  "paths_in_multiple_audiences": {
+    "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔": [
+      "KIDS",
+      "WOMEN"
+    ]
+  },
+  "unresolved_products": []
+}

@@ -873,27 +873,51 @@ private struct ClosetMeasurementGrid: View {
             measurements: item.measurements,
             records: item.measurementRecords
         )
-        let visibleKinds = orderedKinds.filter { snapshot.value(for: $0) != nil }
-        let rows = stride(from: 0, to: visibleKinds.count, by: 2).map {
-            Array(visibleKinds[$0..<min($0 + 2, visibleKinds.count)])
-        }
+        let sourceRows = MeasurementResolver.sourceDisplayRows(
+            records: item.measurementRecords
+        )
+        if sourceRows.isEmpty {
+            let visibleKinds = orderedKinds.filter { snapshot.value(for: $0) != nil }
+            let rows = stride(from: 0, to: visibleKinds.count, by: 2).map {
+                Array(visibleKinds[$0..<min($0 + 2, visibleKinds.count)])
+            }
 
-        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                GridRow {
-                    measurementCell(row[0], snapshot: snapshot)
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    GridRow {
+                        measurementCell(row[0], snapshot: snapshot)
 
-                    if row.count > 1 {
-                        measurementCell(row[1], snapshot: snapshot)
-                    } else {
-                        Color.clear
-                            .frame(maxWidth: .infinity)
-                            .gridCellUnsizedAxes(.vertical)
+                        if row.count > 1 {
+                            measurementCell(row[1], snapshot: snapshot)
+                        } else {
+                            Color.clear
+                                .frame(maxWidth: .infinity)
+                                .gridCellUnsizedAxes(.vertical)
+                        }
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            let rows = stride(from: 0, to: sourceRows.count, by: 2).map {
+                Array(sourceRows[$0..<min($0 + 2, sourceRows.count)])
+            }
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    GridRow {
+                        sourceMeasurementCell(row[0])
+                        if row.count > 1 {
+                            sourceMeasurementCell(row[1])
+                        } else {
+                            Color.clear
+                                .frame(maxWidth: .infinity)
+                                .gridCellUnsizedAxes(.vertical)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var orderedKinds: [MeasurementKind] {
@@ -926,6 +950,27 @@ private struct ClosetMeasurementGrid: View {
             Spacer(minLength: 4)
 
             Text(snapshot.value(for: kind)?.cmText ?? "-")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func sourceMeasurementCell(
+        _ row: MeasurementResolver.SourceDisplayRow
+    ) -> some View {
+        HStack(spacing: 8) {
+            Text(row.title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Spacer(minLength: 4)
+
+            Text(row.valueText)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.primary)
                 .monospacedDigit()

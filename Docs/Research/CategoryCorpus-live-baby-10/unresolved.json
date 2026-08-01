@@ -1,0 +1,7 @@
+[
+  {
+    "base_product_id": "E444812-000",
+    "raw_product_id": "E444812-000-01",
+    "reason": "Final product path does not match CMS base product ID and variant suffix: expected /kr/ko/products/E444812-000/01, got /kr/ko/products/E444812-000/00"
+  }
+]

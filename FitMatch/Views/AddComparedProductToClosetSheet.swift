@@ -51,7 +51,18 @@ struct AddComparedProductToClosetSheet: View {
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
         _selectedGenderCode = State(initialValue: product.productTargetGender.taxonomyCode)
-        let canonical = preselectedClassification?.isValid == true ? preselectedClassification : nil
+        let suppliedCanonical = preselectedClassification?.isValid == true
+            ? preselectedClassification
+            : nil
+        let inferredCanonical = ParsedClosetClassification.resolve(
+            product: product,
+            detailCategory: productDetailCategory
+        )
+        // Some entry points (notably the result screen) do not carry the
+        // parser's canonical classification. Rebuild it from the persisted
+        // source path so a comparison detail such as "데님" is stored as the
+        // valid closet taxonomy detail "긴바지" instead of falling back to 기타.
+        let canonical = suppliedCanonical ?? inferredCanonical
         let initialCategory = canonical?.category ?? preselectedCategory ?? product.category.serviceGroup
         let initialCategoryCode = canonical?.categoryCode ?? initialCategory.taxonomyCode
         let initialDetail = canonical?.detailCategory ?? productDetailCategory
@@ -658,10 +669,15 @@ struct AddComparedProductToClosetSheet: View {
         item.detailCategoryCode = selectedDetailCategoryCode
         item.normalizedProductTypeCode = sourceProduct.resolvedNormalizedProductTypeCode
             ?? preselectedClassification?.normalizedProductTypeCode
-        if let preselectedClassification {
-            item.garmentType = preselectedClassification.garmentFamily
-            item.sleeveType = preselectedClassification.lengthType
-            item.constructionType = preselectedClassification.constructionType
+        let savedClassification = preselectedClassification
+            ?? ParsedClosetClassification.resolve(
+                product: sourceProduct,
+                detailCategory: selectedDetailCategory
+            )
+        if let savedClassification {
+            item.garmentType = savedClassification.garmentFamily
+            item.sleeveType = savedClassification.lengthType
+            item.constructionType = savedClassification.constructionType
         }
         item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
         _ = ComparisonProfileMatcher().profile(for: item)
@@ -669,6 +685,8 @@ struct AddComparedProductToClosetSheet: View {
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")
         print("[AddComparedProductToClosetSheet] parsed gender: \(selectedGender.rawValue)")
+        print("[AddComparedProductToClosetSheet] closet category: \(item.category.rawValue) / \(item.detailCategory.rawValue)")
+        print("[AddComparedProductToClosetSheet] closet taxonomy: \(item.categoryCode ?? "nil") / \(item.detailCategoryCode ?? "nil")")
         print("[AddComparedProductToClosetSheet] sourceCategoryDepth1: \(item.sourceCategoryDepth1 ?? "nil")")
         print("[AddComparedProductToClosetSheet] sourceCategoryDepth2: \(item.sourceCategoryDepth2 ?? "nil")")
         print("[AddComparedProductToClosetSheet] sourceCategoryDepth3: \(item.sourceCategoryDepth3 ?? "nil")")

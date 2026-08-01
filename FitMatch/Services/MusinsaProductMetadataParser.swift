@@ -25,14 +25,31 @@ struct MusinsaProductMetadata {
             sourcePath: productMetadata.sourceCategoryPath,
             productName: productName
         )
+        let resolvedCategory = canonical?.category ?? category
+        var resolvedDetail = canonical?.detailCategory ?? detailCategory
+        if resolvedDetail == .other {
+            let length = GarmentLengthInferencePolicy.infer(
+                category: resolvedCategory,
+                gender: UserGender.productTarget(from: productMetadata.genderCodes),
+                samples: GarmentLengthInferencePolicy.samples(from: sizes),
+                fallbackMeasurements: sizes.map(\.measurements)
+            )
+            if resolvedCategory.serviceGroup == .top {
+                if length == .short { resolvedDetail = .shortSleeve }
+                if length == .long { resolvedDetail = .longSleeve }
+            } else if resolvedCategory.serviceGroup == .bottom {
+                if length == .short { resolvedDetail = .shorts }
+                if length == .long { resolvedDetail = .longPants }
+            }
+        }
         return ParsedProductInfo(
             sourceURL: sourceURL,
             sourceType: .marketplace,
             sourceName: "무신사",
             brandName: brandName,
             productName: productName,
-            category: canonical?.category ?? category,
-            detailCategory: canonical?.detailCategory ?? detailCategory,
+            category: resolvedCategory,
+            detailCategory: resolvedDetail,
             sizes: sizes,
             parserNotice: parserNotice,
             productID: productID,

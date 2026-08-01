@@ -165,4 +165,36 @@ extension ClothingCategory {
             }
         }
     }
+
+    func alternativeSizeSummaryKinds(
+        detailCategory: ClosetDetailCategory,
+        gender: UserGender
+    ) -> [MeasurementKind] {
+        switch serviceGroup {
+        case .top:
+            return [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .outer:
+            return [.shoulder, .chest, .totalLength, .sleeveLength]
+        case .bottom:
+            return [.waist, .hip, .thigh, .totalLength]
+        case .dress:
+            return [.chest, .waist, .hip, .totalLength]
+        case .underwear:
+            return Array(
+                measurementKinds(detailCategory: detailCategory, gender: gender)
+                    .prefix(4)
+            )
+        case .shoes:
+            return [.footLength]
+        case .accessory:
+            return []
+        case .other:
+            return Array(measurementKinds.prefix(4))
+        case .pants, .shirt, .knit:
+            return serviceGroup.alternativeSizeSummaryKinds(
+                detailCategory: detailCategory,
+                gender: gender
+            )
+        }
+    }
 }

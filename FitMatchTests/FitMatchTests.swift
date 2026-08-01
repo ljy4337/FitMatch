@@ -325,13 +325,13 @@ struct FitMatchTests {
         #expect(result.state == .sameFamilyLengthConflict)
     }
 
-    @Test func unknownSleeveLengthRequiresConfirmation() {
+    @Test func unspecifiedSleeveLengthUsesMeasuredFallbackInsteadOfConfirmation() {
         let product = comparisonProduct(name: "베이직 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 40)
         let item = comparisonUserFit(name: "니트", detail: .knitTop, sleeve: 40)
 
         let result = ComparisonProfileMatcher().match(product: product, productDetailCategory: .knitTop, userFits: [item])
 
-        #expect(result.state == .requiresConfirmation)
+        #expect(result.state == .compatible)
     }
 
     @Test func previousManualSelectionDoesNotAffectNewProduct() {
@@ -704,9 +704,78 @@ struct FitMatchTests {
         #expect(hip?.rawValueText == "104")
         #expect(hip?.measurementCode == .hipWidthAtWidest)
         #expect(records.first { $0.rawCode == "thigh" }?.measurementCode == .thighWidthCrotchToOuter)
-        #expect(records.first { $0.rawCode == "rising-length" }?.measurementCode == .riseCrotchToWaistFront)
+        let rise = records.first { $0.rawCode == "rising-length" }
+        #expect(rise?.measurementCode == .riseCrotchToWaistFront)
+        #expect(rise?.displayKind == .rise)
         #expect(records.first { $0.rawCode == "bottom-width" }?.measurementCode == .hemWidthEdgeToEdge)
         #expect(records.first { $0.rawCode == "inseam" }?.measurementCode == .pantsInseamCrotchToHem)
+    }
+
+    @Test func comparisonRepairsLegacyUniqloRiseStoredAsTotalLength() {
+        let size = ProductSize(
+            name: "L",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 29, sleeveLength: 0, rise: 0
+            )
+        )
+        size.measurementRecords = [
+            GarmentMeasurementRecord(
+                value: 29,
+                measurementCode: .riseCrotchToWaistFront,
+                displayKind: .totalLength,
+                methodSource: "uniqlo_kr",
+                methodProfile: "legacy",
+                inputSource: .importedSizeChart,
+                mappingVersion: "legacy",
+                rawCode: "rising-length",
+                rawLabel: "밑위 길이",
+                rawValueText: "29",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped,
+                productSize: size
+            )
+        ]
+        let item = UserFit(
+            sourceName: "유니클로 공식몰",
+            brandName: "유니클로",
+            productName: "기준 바지",
+            category: .bottom,
+            detailCategory: .longPants,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 28, sleeveLength: 0, rise: 0
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.measurementRecords = [
+            GarmentMeasurementRecord(
+                value: 28,
+                measurementCode: .riseCrotchToWaistFront,
+                displayKind: .totalLength,
+                methodSource: "uniqlo_kr",
+                methodProfile: "legacy",
+                inputSource: .importedSizeChart,
+                mappingVersion: "legacy",
+                rawCode: "rising-length",
+                rawLabel: "밑위 길이",
+                rawValueText: "28",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped,
+                userFit: item
+            )
+        ]
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .bottom,
+            productDetailCategory: .longPants
+        )
+
+        #expect(result.comparedItems.first?.kind == .rise)
+        #expect(result.comparedItems.first?.signedDifference == 1)
+        #expect(!result.comparedKinds.contains(.totalLength))
     }
 
     @Test func musinsaBottomWidthsAndExplicitLengthsUseCommonCodes() throws {
@@ -992,6 +1061,544 @@ struct FitMatchTests {
         )
         #expect(result.comparedItems.first { $0.kind == .chest }?.signedDifference == 2)
         #expect(result.comparedItems.first { $0.kind == .totalLength }?.signedDifference == 1)
+    }
+
+    @Test func samePlatformAndFormatUsesMatchingSourceFieldsDirectly() {
+        let size = ProductSize(
+            name: "L",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 0, sleeveLength: 0)
+        )
+        size.measurementRecords = [
+            comparisonRecord(
+                value: 48, code: .shoulderWidthSeamToSeam, kind: .shoulder,
+                methodSource: "musinsa", methodProfile: "musinsa_type_5",
+                rawCode: "1", rawLabel: "어깨너비", productSize: size
+            ),
+            comparisonRecord(
+                value: 54, code: .chestWidthPitToPit, kind: .chest,
+                methodSource: "musinsa", methodProfile: "musinsa_type_5",
+                rawCode: "2", rawLabel: "가슴단면", productSize: size
+            )
+        ]
+        let item = comparisonUserFit(name: "기준 옷", detail: .shortSleeve, sleeve: 0)
+        item.measurementRecords = [
+            comparisonRecord(
+                value: 47, code: .upperWaistWidthEdgeToEdge, kind: .shoulder,
+                methodSource: "musinsa", methodProfile: "musinsa_type_5",
+                rawCode: "1", rawLabel: "어깨너비", userFit: item
+            ),
+            comparisonRecord(
+                value: 53, code: .waistWidthEdgeToEdge, kind: .chest,
+                methodSource: "musinsa", methodProfile: "musinsa_type_5",
+                rawCode: "2", rawLabel: "가슴단면", userFit: item
+            )
+        ]
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .top,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(result.status == .confirmed)
+        #expect(result.comparedItems.first { $0.kind == .shoulder }?.signedDifference == 1)
+        #expect(result.comparedItems.first { $0.kind == .chest }?.signedDifference == 1)
+    }
+
+    @Test func comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat() throws {
+        func product(
+            source: String,
+            profile: String,
+            waistValue: Double,
+            rawLabel: String,
+            rawValue: String
+        ) -> ProductSize {
+            let size = ProductSize(
+                name: "L",
+                measurements: GarmentMeasurements(
+                    shoulder: 0, chest: 0, totalLength: 100, sleeveLength: 0,
+                    waist: waistValue
+                )
+            )
+            size.measurementRecords = [
+                comparisonRecord(
+                    value: waistValue, code: .waistWidthEdgeToEdge, kind: .waist,
+                    methodSource: source, methodProfile: profile,
+                    rawCode: "waist-product-size", rawLabel: rawLabel,
+                    rawValueText: rawValue, productSize: size
+                )
+            ]
+            return size
+        }
+        func reference(
+            source: String,
+            profile: String,
+            waistValue: Double,
+            rawLabel: String,
+            rawValue: String
+        ) -> UserFit {
+            let item = comparisonUserFit(
+                name: "기준 바지", category: .bottom, detail: .longPants,
+                sleeve: 0, totalLength: 99
+            )
+            item.measurementRecords = [
+                comparisonRecord(
+                    value: waistValue, code: .waistWidthEdgeToEdge, kind: .waist,
+                    methodSource: source, methodProfile: profile,
+                    rawCode: "waist-product-size", rawLabel: rawLabel,
+                    rawValueText: rawValue, userFit: item
+                )
+            ]
+            return item
+        }
+        func waistItem(_ size: ProductSize, _ item: UserFit) throws -> MeasurementComparisonItem {
+            let result = MeasurementComparisonEngine().compare(
+                productSize: size,
+                referenceItem: item,
+                productCategory: .bottom,
+                productDetailCategory: .longPants
+            )
+            return try #require(result.comparedItems.first { $0.kind == .waist })
+        }
+
+        let uniqloToUniqlo = try waistItem(
+            product(
+                source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
+                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+            ),
+            reference(
+                source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
+                waistValue: 39, rawLabel: "허리둘레", rawValue: "78"
+            )
+        )
+        #expect(uniqloToUniqlo.displayTitle == "허리둘레")
+        #expect(uniqloToUniqlo.productValue == 80)
+        #expect(uniqloToUniqlo.referenceValue == 78)
+        #expect(uniqloToUniqlo.signedDifference == 2)
+
+        let circumferenceToWidth = try waistItem(
+            product(
+                source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
+                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+            ),
+            reference(
+                source: "musinsa", profile: "musinsa_type_6",
+                waistValue: 39, rawLabel: "허리단면", rawValue: "39"
+            )
+        )
+        #expect(circumferenceToWidth.displayTitle == "허리단면")
+        #expect(circumferenceToWidth.productValue == 40)
+        #expect(circumferenceToWidth.referenceValue == 39)
+        #expect(circumferenceToWidth.signedDifference == 1)
+
+        let differentBrandCircumferences = try waistItem(
+            product(
+                source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
+                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+            ),
+            reference(
+                source: "other_shop", profile: "brand_chart",
+                waistValue: 39, rawLabel: "허리둘레", rawValue: "78"
+            )
+        )
+        #expect(differentBrandCircumferences.displayTitle == "허리둘레")
+        #expect(differentBrandCircumferences.productValue == 80)
+        #expect(differentBrandCircumferences.referenceValue == 78)
+        #expect(differentBrandCircumferences.signedDifference == 2)
+    }
+
+    @Test func uniqloOfficialTopComparisonKeepsSleeveAndHasNoManualPenalty() throws {
+        let measurements = GarmentMeasurements(
+            shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24
+        )
+        let size = ProductSize(name: "M", measurements: measurements)
+        let fields: [(MeasurementKind, MeasurementCode, String, String)] = [
+            (.shoulder, .shoulderWidthSeamToSeam, "shoulder-width", "어깨너비"),
+            (.chest, .chestWidthPitToPit, "body-width", "가슴너비"),
+            (.totalLength, .bodyLengthBackNeckToHem, "body-length", "몸길이"),
+            (.sleeveLength, .sleeveShoulderSeamToCuff, "sleeve-length", "소매길이")
+        ]
+        size.measurementRecords = fields.map { kind, code, rawCode, rawLabel in
+            comparisonRecord(
+                value: measurements.value(for: kind),
+                code: code,
+                kind: kind,
+                methodSource: "uniqlo_kr",
+                methodProfile: "uniqlo_official_top",
+                rawCode: rawCode,
+                rawLabel: rawLabel,
+                rawValueText: String(measurements.value(for: kind)),
+                productSize: size
+            )
+        }
+        let product = Product(
+            name: "DRY-EX폴로셔츠",
+            category: .top,
+            metadata: ProductMetadata(
+                sourceCategoryPath: "셔츠 > 폴로셔츠 (카라티) > DRY-EX"
+            ),
+            sourceName: "유니클로 공식몰",
+            sizes: [size]
+        )
+        product.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+
+        let item = UserFit(
+            sourceName: "유니클로 공식몰",
+            sourceCategoryPath: "상의 > 티셔츠",
+            brandName: "유니클로",
+            productName: "크루넥T",
+            category: .top,
+            detailCategory: .longSleeve,
+            sizeName: "M",
+            measurements: measurements,
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+        item.measurementRecords = fields.map { kind, code, rawCode, rawLabel in
+            comparisonRecord(
+                value: measurements.value(for: kind),
+                code: code,
+                kind: kind,
+                methodSource: "uniqlo_kr",
+                methodProfile: "uniqlo_official_top",
+                rawCode: rawCode,
+                rawLabel: rawLabel,
+                rawValueText: String(measurements.value(for: kind)),
+                userFit: item
+            )
+        }
+
+        let mismatch = ComparisonProfileMatcher().manualMismatch(
+            product: product,
+            productDetailCategory: .shirt,
+            selectedItem: item
+        )
+        #expect(!mismatch.excludedKinds.contains(.sleeveLength))
+
+        let result = try #require(RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: item,
+            productDetailCategory: .shirt
+        ))
+        #expect(result.recommendationScore == 100)
+        #expect(result.comparedMeasurementUsages.contains { $0.kind == .sleeveLength })
+        #expect(!result.measurementExclusions.contains {
+            $0.kind == .sleeveLength && $0.reason == .categoryPolicy
+        })
+    }
+
+    @Test func uniqloPoloInfersShortSleeveFromOfficialSizeChart() {
+        let sleeve = ParsedMeasurement(
+            value: 24,
+            measurementCode: .sleeveShoulderSeamToCuff,
+            displayKind: .sleeveLength,
+            methodSource: "uniqlo_kr",
+            methodProfile: "uniqlo_official_top",
+            inputSource: .importedSizeChart,
+            mappingVersion: MeasurementSourceMappingPolicy.uniqloVersion,
+            rawCode: "sleeve-length",
+            rawLabel: "소매길이",
+            rawValueText: "24",
+            evidenceLevel: .officialText,
+            semanticStatus: .mapped
+        )
+        let size = ParsedProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24
+            ),
+            measurementRecords: [sleeve]
+        )
+        let metadata = UniqloProductMetadata(
+            sourceURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E482305-000/00")!,
+            productID: "E482305-000",
+            goodsID: "482305",
+            colorCode: "00",
+            brandName: "유니클로",
+            productName: "DRY-EX폴로셔츠",
+            category: .top,
+            detailCategory: .other
+        )
+
+        #expect(metadata.withInferredSleeveDetail(from: [size]).detailCategory == .shortSleeve)
+    }
+
+    @Test func unspecifiedTopSleeveTypeUsesMeasurementMethodSpecificLengthRules() {
+        func product(
+            name: String,
+            sleeveValue: Double,
+            sleeveCode: MeasurementCode
+        ) -> Product {
+            let size = ProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 48, chest: 54, totalLength: 70, sleeveLength: sleeveValue
+                )
+            )
+            size.measurementRecords = [
+                comparisonRecord(
+                    value: sleeveValue,
+                    code: sleeveCode,
+                    kind: .sleeveLength,
+                    methodSource: "uniqlo_kr",
+                    rawCode: sleeveCode == .sleeveCenterBackToCuff
+                        ? "sleeve-length-cb"
+                        : "sleeve-length",
+                    rawLabel: sleeveCode == .sleeveCenterBackToCuff ? "화장" : "소매길이",
+                    productSize: size
+                )
+            ]
+            return Product(
+                name: name,
+                category: .top,
+                metadata: ProductMetadata(sourceCategoryPath: "셔츠 > 폴로셔츠"),
+                sourceName: "유니클로 공식몰",
+                sizes: [size]
+            )
+        }
+
+        let setInShort = product(
+            name: "소매 구분 없는 폴로셔츠",
+            sleeveValue: 24,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let centerBackShort = product(
+            name: "소매 구분 없는 티셔츠",
+            sleeveValue: 45,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+        let centerBackLong = product(
+            name: "소매 구분 없는 셔츠",
+            sleeveValue: 78,
+            sleeveCode: .sleeveCenterBackToCuff
+        )
+
+        let matcher = ComparisonProfileMatcher()
+        #expect(matcher.profile(for: setInShort, detailCategory: .other).lengthType == .short)
+        #expect(matcher.profile(for: centerBackShort, detailCategory: .other).lengthType == .short)
+        #expect(matcher.profile(for: centerBackLong, detailCategory: .other).lengthType == .long)
+    }
+
+    @Test func learnedPlatformLengthBoundariesClassifyUnspecifiedGarments() {
+        func infer(
+            category: ClothingCategory,
+            gender: UserGender,
+            value: Double,
+            code: MeasurementCode,
+            source: String
+        ) -> ComparisonLengthType {
+            GarmentLengthInferencePolicy.infer(
+                category: category,
+                gender: gender,
+                samples: [.init(value: value, code: code, methodSource: source)]
+            )
+        }
+
+        #expect(infer(
+            category: .top, gender: .men, value: 67,
+            code: .sleeveCenterBackToCuff, source: "uniqlo_kr"
+        ) == .short)
+        #expect(infer(
+            category: .top, gender: .men, value: 68,
+            code: .sleeveCenterBackToCuff, source: "uniqlo_kr"
+        ) == .long)
+        #expect(infer(
+            category: .top, gender: .women, value: 43,
+            code: .sleeveShoulderSeamToCuff, source: "musinsa"
+        ) == .short)
+        #expect(infer(
+            category: .top, gender: .women, value: 44,
+            code: .sleeveShoulderSeamToCuff, source: "musinsa"
+        ) == .long)
+        #expect(infer(
+            category: .bottom, gender: .women, value: 65,
+            code: .pantsOutseamWaistToHem, source: "musinsa"
+        ) == .short)
+        #expect(infer(
+            category: .bottom, gender: .women, value: 66,
+            code: .pantsOutseamWaistToHem, source: "musinsa"
+        ) == .long)
+        #expect(infer(
+            category: .bottom, gender: .men, value: 46.5,
+            code: .pantsInseamCrotchToHem, source: "uniqlo_kr"
+        ) == .short)
+        #expect(infer(
+            category: .bottom, gender: .men, value: 47,
+            code: .pantsInseamCrotchToHem, source: "uniqlo_kr"
+        ) == .long)
+        #expect(infer(
+            category: .top, gender: .kids, value: 34.5,
+            code: .sleeveCenterBackToCuff, source: "uniqlo_kr"
+        ) == .short)
+        #expect(infer(
+            category: .top, gender: .kids, value: 35,
+            code: .sleeveCenterBackToCuff, source: "uniqlo_kr"
+        ) == .long)
+    }
+
+    @Test func normalizedParsedProductReplacesOtherWithMeasuredLengthCategory() {
+        func parsedSize(
+            value: Double,
+            code: MeasurementCode,
+            kind: MeasurementDisplayKind,
+            source: String
+        ) -> ParsedProductSize {
+            ParsedProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 0,
+                    chest: 0,
+                    totalLength: kind == .totalLength ? value : 70,
+                    sleeveLength: kind == .sleeveLength ? value : 0
+                ),
+                measurementRecords: [
+                    ParsedMeasurement(
+                        value: value,
+                        measurementCode: code,
+                        displayKind: kind,
+                        methodSource: source,
+                        inputSource: .importedSizeChart,
+                        rawLabel: kind == .sleeveLength ? "소매길이" : "총장",
+                        evidenceLevel: .officialText,
+                        semanticStatus: .mapped
+                    )
+                ]
+            )
+        }
+
+        let top = ParsedProductInfo(
+            sourceURL: URL(string: "https://example.com/top")!,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "분류 미지정 상의",
+            category: .top,
+            detailCategory: .other,
+            sizes: [parsedSize(
+                value: 61,
+                code: .sleeveShoulderSeamToCuff,
+                kind: .sleeveLength,
+                source: "musinsa"
+            )],
+            productTargetGender: .women
+        ).normalizedSizes()
+        let bottom = ParsedProductInfo(
+            sourceURL: URL(string: "https://example.com/bottom")!,
+            sourceType: .officialStore,
+            sourceName: "유니클로 공식몰",
+            brandName: "유니클로",
+            productName: "분류 미지정 팬츠",
+            category: .bottom,
+            detailCategory: .other,
+            sizes: [parsedSize(
+                value: 72,
+                code: .pantsInseamCrotchToHem,
+                kind: .totalLength,
+                source: "uniqlo_kr"
+            )],
+            productTargetGender: .men
+        ).normalizedSizes()
+
+        #expect(top.detailCategory == .longSleeve)
+        #expect(bottom.detailCategory == .longPants)
+    }
+
+    @Test func differentPlatformFormatsRequireCanonicalMeasurementCodes() {
+        let size = ProductSize(
+            name: "L",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 0, sleeveLength: 0)
+        )
+        size.measurementRecords = [
+            comparisonRecord(
+                value: 48, code: .shoulderWidthSeamToSeam, kind: .shoulder,
+                methodSource: "musinsa", methodProfile: "musinsa_type_5",
+                rawCode: "1", rawLabel: "어깨너비", productSize: size
+            ),
+            comparisonRecord(
+                value: 54, code: .chestWidthPitToPit, kind: .chest,
+                methodSource: "musinsa", methodProfile: "musinsa_type_5",
+                rawCode: "2", rawLabel: "가슴단면", productSize: size
+            )
+        ]
+        let item = comparisonUserFit(name: "기준 옷", detail: .shortSleeve, sleeve: 0)
+        item.measurementRecords = [
+            comparisonRecord(
+                value: 47, code: .upperWaistWidthEdgeToEdge, kind: .shoulder,
+                methodSource: "musinsa_fallback", methodProfile: "structured_size_table",
+                rawCode: "1", rawLabel: "어깨너비", userFit: item
+            ),
+            comparisonRecord(
+                value: 53, code: .waistWidthEdgeToEdge, kind: .chest,
+                methodSource: "musinsa_fallback", methodProfile: "structured_size_table",
+                rawCode: "2", rawLabel: "가슴단면", userFit: item
+            )
+        ]
+
+        let result = MeasurementComparisonEngine().compare(
+            productSize: size,
+            referenceItem: item,
+            productCategory: .top,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(result.status == .insufficientEvidence)
+        #expect(result.comparedItems.isEmpty)
+    }
+
+    @Test func alternativeSizeSummariesUseCategorySpecificMeasurements() {
+        #expect(ClothingCategory.top.alternativeSizeSummaryKinds(
+            detailCategory: .shortSleeve,
+            gender: .men
+        ) == [.shoulder, .chest, .totalLength, .sleeveLength])
+        #expect(ClothingCategory.outer.alternativeSizeSummaryKinds(
+            detailCategory: .jacket,
+            gender: .men
+        ) == [.shoulder, .chest, .totalLength, .sleeveLength])
+        #expect(ClothingCategory.bottom.alternativeSizeSummaryKinds(
+            detailCategory: .longPants,
+            gender: .men
+        ) == [.waist, .hip, .thigh, .totalLength])
+        #expect(ClothingCategory.dress.alternativeSizeSummaryKinds(
+            detailCategory: .onePiece,
+            gender: .women
+        ) == [.chest, .waist, .hip, .totalLength])
+        #expect(ClothingCategory.underwear.alternativeSizeSummaryKinds(
+            detailCategory: .womenBra,
+            gender: .women
+        ) == [.underBust, .chest])
+        #expect(ClothingCategory.shoes.alternativeSizeSummaryKinds(
+            detailCategory: .sneakers,
+            gender: .unisex
+        ) == [.footLength])
+        #expect(ClothingCategory.accessory.alternativeSizeSummaryKinds(
+            detailCategory: .watch,
+            gender: .unisex
+        ).isEmpty)
+    }
+
+    @Test func comparisonDifferenceTextUsesClosetItemAsReference() {
+        #expect(MeasurementDifferenceReferenceText.text(
+            kind: .totalLength,
+            difference: 2
+        ) == "내 옷보다 2cm 길어요")
+        #expect(MeasurementDifferenceReferenceText.text(
+            kind: .sleeveLength,
+            difference: -2.5
+        ) == "내 옷보다 2.5cm 짧아요")
+        #expect(MeasurementDifferenceReferenceText.text(
+            kind: .chest,
+            difference: 3
+        ) == "내 옷보다 3cm 넓어요")
+        #expect(MeasurementDifferenceReferenceText.text(
+            kind: .waist,
+            difference: -1
+        ) == "내 옷보다 1cm 좁아요")
+        #expect(MeasurementDifferenceReferenceText.text(
+            kind: .hip,
+            difference: 0
+        ) == "내 옷과 같아요")
     }
 
     @Test func uniqloGenericSleeveDoesNotPairWithCenterBackSleeve() {
@@ -3754,6 +4361,11 @@ struct FitMatchTests {
         value: Double,
         code: MeasurementCode,
         kind: MeasurementKind,
+        methodSource: String = "test",
+        methodProfile: String? = nil,
+        rawCode: String? = nil,
+        rawLabel: String? = nil,
+        rawValueText: String? = nil,
         productSize: ProductSize? = nil,
         userFit: UserFit? = nil
     ) -> GarmentMeasurementRecord {
@@ -3761,10 +4373,13 @@ struct FitMatchTests {
             value: value,
             measurementCode: code,
             displayKind: kind.displayKind,
-            methodSource: "test",
+            methodSource: methodSource,
+            methodProfile: methodProfile,
             inputSource: .importedSizeChart,
             mappingVersion: "test_v1",
-            rawLabel: kind.title,
+            rawCode: rawCode,
+            rawLabel: rawLabel ?? kind.title,
+            rawValueText: rawValueText,
             evidenceLevel: code == .unknown ? .unknown : .officialText,
             semanticStatus: code == .unknown ? .unknownDefinition : .mapped,
             productSize: productSize,
@@ -4903,6 +5518,55 @@ struct FitMatchTests {
         #expect(result.detailCode == "long_pants")
         #expect(result.detailCategory == .longPants)
         #expect(result.garmentFamily == .denim)
+        #expect(result.isValid)
+    }
+
+    @Test func uniqloStraightJeansMapToLongPantsWhilePreservingDenimFamily() throws {
+        let result = try #require(ParsedClosetClassification.resolve(
+            category: .bottom,
+            detailCategory: .denim,
+            sourceDepths: ["팬츠", "진(청바지)", "스트레이트", nil],
+            sourcePath: "팬츠 > 진(청바지) > 스트레이트",
+            productName: "스트레이트진"
+        ))
+
+        #expect(result.categoryCode == "bottoms")
+        #expect(result.detailCode == "long_pants")
+        #expect(result.detailCategory == .longPants)
+        #expect(result.garmentFamily == .denim)
+        #expect(result.lengthType == .long)
+        #expect(result.isValid)
+    }
+
+    @Test func uniqloWideChinoPantsMapToLongPants() throws {
+        let result = try #require(ParsedClosetClassification.resolve(
+            category: .bottom,
+            detailCategory: .other,
+            sourceDepths: ["팬츠", "치노팬츠", "와이드", nil],
+            sourcePath: "팬츠 > 치노팬츠 > 와이드",
+            productName: "와이드치노팬츠"
+        ))
+
+        #expect(result.categoryCode == "bottoms")
+        #expect(result.detailCode == "long_pants")
+        #expect(result.detailCategory == .longPants)
+        #expect(result.lengthType == .long)
+        #expect(result.isValid)
+    }
+
+    @Test func uniqloShortPantsRemainShortsBeforeGenericPantsRule() throws {
+        let result = try #require(ParsedClosetClassification.resolve(
+            category: .bottom,
+            detailCategory: .other,
+            sourceDepths: ["팬츠", "쇼트팬츠", "와이드", nil],
+            sourcePath: "팬츠 > 쇼트팬츠 > 와이드",
+            productName: "와이드핏쇼트팬츠"
+        ))
+
+        #expect(result.categoryCode == "bottoms")
+        #expect(result.detailCode == "shorts")
+        #expect(result.detailCategory == .shorts)
+        #expect(result.lengthType == .short)
         #expect(result.isValid)
     }
 

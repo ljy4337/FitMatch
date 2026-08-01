@@ -179,19 +179,28 @@ struct ClosetItemDetailView: View {
     }
 
     private var measurementCard: some View {
-        FitMatchCard {
+        let sourceRows = MeasurementResolver.sourceDisplayRows(
+            records: item.measurementRecords
+        )
+        return FitMatchCard {
             VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "실측값")
+                SectionHeader(title: sourceRows.isEmpty ? "실측값" : "플랫폼 사이즈표")
 
                 LazyVGrid(columns: measurementGridColumns, spacing: 10) {
-                    ForEach(item.category.measurementKinds(detailCategory: item.detailCategory, gender: item.gender)) { kind in
-                        MeasurementValueTile(
-                            title: MeasurementResolver.title(
-                                for: kind,
-                                records: item.measurementRecords
-                            ),
-                            value: measurementText(for: kind)
-                        )
+                    if sourceRows.isEmpty {
+                        ForEach(item.category.measurementKinds(detailCategory: item.detailCategory, gender: item.gender)) { kind in
+                            MeasurementValueTile(
+                                title: MeasurementResolver.title(
+                                    for: kind,
+                                    records: item.measurementRecords
+                                ),
+                                value: measurementText(for: kind)
+                            )
+                        }
+                    } else {
+                        ForEach(sourceRows) { row in
+                            MeasurementValueTile(title: row.title, value: row.valueText)
+                        }
                     }
                 }
             }

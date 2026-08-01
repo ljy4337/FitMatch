@@ -393,7 +393,8 @@ struct RecommendationResultView: View {
                     VStack(spacing: 4) {
                         ForEach(comparedMeasurementKinds) { kind in
                             ReportMeasurementRow(
-                                title: kind.title,
+                                kind: kind,
+                                title: reportMeasurementTitle(for: kind),
                                 productValue: displayedMeasurementValues(for: kind).product,
                                 referenceValue: displayedMeasurementValues(for: kind).reference,
                                 difference: displayedMeasurementDifferences.value(for: kind)
@@ -488,17 +489,17 @@ struct RecommendationResultView: View {
                 LazyVStack(spacing: 10) {
                     ForEach(availableProductSizes) { size in
                         let analysis = cachedAnalysis(for: size)
+                        let score = alternativeRecommendationScore(
+                            for: size,
+                            analysis: analysis
+                        )
                         AlternativeSizeResultCard(
                             sizeName: size.name.displaySizeName,
                             isRecommended: size.id == currentResult.recommendedSize.id,
                             isSelected: size.id == selectedAlternativeSizeID,
-                            score: analysis?.recommendationScore,
-                            fitDescription: analysis.map {
-                                fitMatchDescription(for: $0.recommendationScore)
-                            },
-                            fitColor: analysis.map {
-                                fitMatchColor(for: $0.recommendationScore)
-                            },
+                            score: score,
+                            fitDescription: score.map(fitMatchDescription(for:)),
+                            fitColor: score.map(fitMatchColor(for:)),
                             measurements: alternativeMeasurementSummaries(for: analysis)
                         ) {
                             selectedAlternativeSizeID = size.id
@@ -612,7 +613,10 @@ struct RecommendationResultView: View {
     private func alternativeMeasurementSummaries(
         for analysis: TemporarySizeAnalysis?
     ) -> [AlternativeSizeMeasurementSummary] {
-        let kinds: [MeasurementKind] = [.shoulder, .chest, .totalLength]
+        let kinds = currentResult.product.category.alternativeSizeSummaryKinds(
+            detailCategory: currentResult.productDetailCategory,
+            gender: currentResult.product.productTargetGender
+        )
         return kinds.map { kind in
             guard let item = analysis?.comparisonResult.comparedItems.first(where: { $0.kind == kind }) else {
                 return AlternativeSizeMeasurementSummary(
@@ -722,6 +726,16 @@ struct RecommendationResultView: View {
         }
     }
 
+    private func alternativeRecommendationScore(
+        for size: ProductSize,
+        analysis: TemporarySizeAnalysis?
+    ) -> Int? {
+        if size.id == currentResult.recommendedSize.id {
+            return currentResult.recommendationScore
+        }
+        return analysis?.recommendationScore
+    }
+
     private func cachedAnalysis(for size: ProductSize) -> TemporarySizeAnalysis? {
         guard let key = activeAlternativeAnalysisKeys[size.id] else {
             return nil
@@ -734,7 +748,11 @@ struct RecommendationResultView: View {
         let generation = alternativePreparationGeneration
         let service = RecommendationService()
         let scorePenalty = originalScorePenalty
-        let preferences = BodyShapeSettingsStore().load()
+        // Keep every alternative on the same calculation basis as the persisted
+        // comparison. Loading today's settings here can make the recommended
+        // size show a different score from the result that opened this sheet.
+        let preferences = persistedCalculationSnapshot?.bodyShapeSettings
+            ?? BodyShapeSettingsStore().load()
         let excludedKinds = persistedMeasurementExclusions
             .filter { $0.reason == .categoryPolicy }
             .map(\.kind)
@@ -1352,6 +1370,28 @@ struct RecommendationResultView: View {
         case .hem: return "밑단"
         case .footLength: return "발길이"
         case .underBust: return "밑가슴"
+        }
+    }
+
+    private func reportMeasurementTitle(for kind: MeasurementKind) -> String {
+        guard let usage = displayedMeasurementUsages.first(where: { $0.kind == kind }) else {
+            return kind.title
+        }
+        if let displayTitle = usage.displayTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !displayTitle.isEmpty {
+            return displayTitle
+        }
+        switch usage.measurementCode {
+        case .pantsInseamCrotchToHem:
+            return "인심"
+        case .riseCrotchToWaistFront:
+            return "앞밑위"
+        case .riseCrotchToWaistBack:
+            return "뒷밑위"
+        case .skirtLengthWaistToHem:
+            return "스커트 길이"
+        default:
+            return kind.title
         }
     }
 
@@ -2005,7 +2045,14 @@ private struct AlternativeSizeResultCard: View {
 
                 Divider()
 
-                VStack(alignment: .leading, spacing: 8) {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 8, alignment: .topLeading),
+                        GridItem(.flexible(), spacing: 8, alignment: .topLeading)
+                    ],
+                    alignment: .leading,
+                    spacing: 9
+                ) {
                     ForEach(Array(measurements.enumerated()), id: \.offset) { _, measurement in
                         HStack(alignment: .top, spacing: 6) {
                             Image(systemName: measurement.status.symbol)
@@ -2019,6 +2066,8 @@ private struct AlternativeSizeResultCard: View {
                                 Text(measurement.message)
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                                    .minimumScaleFactor(0.75)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
@@ -2493,6 +2542,7 @@ private struct CenteredMetricColumn<Detail: View>: View {
 }
 
 private struct ReportMeasurementRow: View {
+    let kind: MeasurementKind
     let title: String
     let productValue: Double
     let referenceValue: Double
@@ -2534,14 +2584,21 @@ private struct ReportMeasurementRow: View {
             Text("차이")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            Text(productValue > 0 && referenceValue > 0 ? signedDifferenceText : "비교 제외")
+            Text(
+                productValue > 0 && referenceValue > 0
+                    ? MeasurementDifferenceReferenceText.text(
+                        kind: kind,
+                        difference: difference
+                    )
+                    : "비교 제외"
+            )
                 .font(.caption.weight(.black))
                 .foregroundStyle(productValue > 0 && referenceValue > 0 ? differenceSeverityColor : .secondary)
-                .monospacedDigit()
-                .lineLimit(1)
+                .multilineTextAlignment(.trailing)
+                .lineLimit(2)
                 .minimumScaleFactor(0.75)
         }
-        .frame(minWidth: 60, alignment: .trailing)
+        .frame(minWidth: 112, alignment: .trailing)
     }
 
     private var differenceSeverityColor: Color {
@@ -2552,9 +2609,31 @@ private struct ReportMeasurementRow: View {
         }
     }
 
-    private var signedDifferenceText: String {
-        let sign = difference > 0 ? "+" : ""
-        return "\(sign)\(String(format: "%.1f", difference))"
+}
+
+enum MeasurementDifferenceReferenceText {
+    static func text(kind: MeasurementKind, difference: Double) -> String {
+        guard difference != 0 else {
+            return "내 옷과 같아요"
+        }
+
+        let value = formattedCentimeters(abs(difference))
+        let direction: String
+        switch kind {
+        case .shoulder, .chest, .upperAbdomen, .upperWaist,
+             .waist, .hip, .thigh, .hem, .underBust:
+            direction = difference > 0 ? "넓어요" : "좁아요"
+        case .totalLength, .sleeveLength, .rise, .footLength:
+            direction = difference > 0 ? "길어요" : "짧아요"
+        }
+        return "내 옷보다 \(value) \(direction)"
+    }
+
+    private static func formattedCentimeters(_ value: Double) -> String {
+        if value.rounded() == value {
+            return "\(Int(value))cm"
+        }
+        return "\(String(format: "%.1f", value))cm"
     }
 }
 

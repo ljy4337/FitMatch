@@ -1,0 +1,94 @@
+{
+  "attempts": 5,
+  "by_source_kind": {
+    "uniqlo/baby_probe_category": {
+      "attempts": 1,
+      "duration": {
+        "count": 1,
+        "max_ms": 448.377,
+        "median_ms": 448.377,
+        "min_ms": 448.377,
+        "p95_ms": 448.377
+      },
+      "failures": 0,
+      "successes": 1
+    },
+    "uniqlo/baby_probe_product": {
+      "attempts": 4,
+      "duration": {
+        "count": 4,
+        "max_ms": 920.895,
+        "median_ms": 868.93,
+        "min_ms": 656.813,
+        "p95_ms": 919.564
+      },
+      "failures": 0,
+      "successes": 4
+    }
+  },
+  "duration": {
+    "count": 5,
+    "max_ms": 920.895,
+    "median_ms": 825.836,
+    "min_ms": 448.377,
+    "p95_ms": 919.121
+  },
+  "failures": 0,
+  "http_403": 0,
+  "http_429": 0,
+  "progress_segments": [
+    {
+      "attempt_range": [
+        1,
+        2
+      ],
+      "attempts": 2,
+      "duration": {
+        "count": 2,
+        "max_ms": 912.024,
+        "median_ms": 680.201,
+        "min_ms": 448.377,
+        "p95_ms": 888.842
+      },
+      "failure_rate": 0.0,
+      "failures": 0
+    },
+    {
+      "attempt_range": [
+        3,
+        4
+      ],
+      "attempts": 2,
+      "duration": {
+        "count": 2,
+        "max_ms": 920.895,
+        "median_ms": 873.365,
+        "min_ms": 825.836,
+        "p95_ms": 916.142
+      },
+      "failure_rate": 0.0,
+      "failures": 0
+    },
+    {
+      "attempt_range": [
+        5,
+        5
+      ],
+      "attempts": 1,
+      "duration": {
+        "count": 1,
+        "max_ms": 656.813,
+        "median_ms": 656.813,
+        "min_ms": 656.813,
+        "p95_ms": 656.813
+      },
+      "failure_rate": 0.0,
+      "failures": 0
+    }
+  ],
+  "retries": 0,
+  "status_counts": {
+    "200": 5
+  },
+  "successes": 5
+}

@@ -1,0 +1,4123 @@
+[
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E422992-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57967",
+        "level": 2,
+        "locale": "티셔츠 & 스웨트셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58039",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58395",
+        "level": 4,
+        "locale": "반팔",
+        "name": "short sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E422992-000",
+    "product_id": "E422992-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E422992-000.html",
+    "source_raw_sha256": "241cc1d3622fe9236b93a2c32a97b85c7ca5474a7469fbbb6cbe6d2aa8fc2156",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E458325-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57968",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58054",
+        "level": 3,
+        "locale": "쇼트 팬츠(반바지)",
+        "name": "short pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58475",
+        "level": 4,
+        "locale": "이지(허리 밴딩)",
+        "name": "easy",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩)",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E458325-000",
+    "product_id": "E458325-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E458325-000.html",
+    "source_raw_sha256": "95ee6df74e95ed145dca429384fbd40a310d516d572ad8742d38891e6c1adf6f",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E455365-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57967",
+        "level": 2,
+        "locale": "티셔츠 & 스웨트셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58039",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58395",
+        "level": 4,
+        "locale": "반팔",
+        "name": "short sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E455365-000",
+    "product_id": "E455365-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E455365-000.html",
+    "source_raw_sha256": "c87d829e1be0601d5be0e9cbed861f0c262b1788327651d8310aa33050188d6e",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E465185-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57967",
+        "level": 2,
+        "locale": "티셔츠 & 스웨트셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58039",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58390",
+        "level": 4,
+        "locale": "에어리즘 코튼",
+        "name": "arism cotton",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E465185-000",
+    "product_id": "E465185-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E465185-000.html",
+    "source_raw_sha256": "d05bee51d2bf56c5c0d24c04684a517efe744191d36f4f4ddae3809524513428",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E471809-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57968",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58050",
+        "level": 3,
+        "locale": "스웨트 팬츠 & 조거 팬츠",
+        "name": "sweat pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58460",
+        "level": 4,
+        "locale": "스웨트",
+        "name": "sweat",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E471809-000",
+    "product_id": "E471809-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E471809-000.html",
+    "source_raw_sha256": "137e90e8b2f98838af593e698ac349d57f64e5ad4414c31b63a2d8abb8daede9",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E473715-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57968",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58050",
+        "level": 3,
+        "locale": "스웨트 팬츠 & 조거 팬츠",
+        "name": "sweat pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58460",
+        "level": 4,
+        "locale": "스웨트",
+        "name": "sweat",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E473715-000",
+    "product_id": "E473715-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E473715-000.html",
+    "source_raw_sha256": "9a0ca2c878e01b53ef901513d50cf2bd5f578736de62934b5d009e173c95782a",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E475386-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57969",
+        "level": 2,
+        "locale": "스포츠 유틸리티 웨어",
+        "name": "sport utility wear",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58058",
+        "level": 3,
+        "locale": "팬츠",
+        "name": "pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "112643",
+        "level": 4,
+        "locale": "울트라 스트레치 팬츠",
+        "name": "ultra stretch",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "스포츠 유틸리티 웨어 > 팬츠 > 울트라 스트레치 팬츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E475386-000",
+    "product_id": "E475386-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E475386-000.html",
+    "source_raw_sha256": "c6ed6fe87471236bd4e459b8ba489aca8f5f4f470c5dea74eed055c6ee3d5e24",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E478702-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "124425",
+        "level": 2,
+        "locale": "GU",
+        "name": "gu",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "124432",
+        "level": 3,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "124450",
+        "level": 4,
+        "locale": "팬츠",
+        "name": "pants",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "GU > 팬츠 > 팬츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E478702-000",
+    "product_id": "E478702-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E478702-000.html",
+    "source_raw_sha256": "eef9eb563ec5c895dbc23ccced1a048aeedc48a0f6a6cca0a74f4518228a23a7",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E481582-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57968",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58054",
+        "level": 3,
+        "locale": "쇼트 팬츠(반바지)",
+        "name": "short pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58475",
+        "level": 4,
+        "locale": "이지(허리 밴딩)",
+        "name": "easy",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩)",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E481582-000",
+    "product_id": "E481582-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E481582-000.html",
+    "source_raw_sha256": "6059f774ddd294adc56d7e9bcb76a065fb9e9bd7465f62c33a91a8237fe0d40a",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E481583-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57971",
+        "level": 2,
+        "locale": "라운지 팬츠",
+        "name": "loungewear and homeware",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58067",
+        "level": 3,
+        "locale": "라운지 팬츠",
+        "name": "lounge pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58545",
+        "level": 4,
+        "locale": "쇼트 팬츠",
+        "name": "shorts",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "라운지 팬츠 > 라운지 팬츠 > 쇼트 팬츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E481583-000",
+    "product_id": "E481583-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E481583-000.html",
+    "source_raw_sha256": "088368674507c3d681a6ec8624174ba81b1057206f8baa9885b439ae80784860",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E482260-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57971",
+        "level": 2,
+        "locale": "라운지 팬츠",
+        "name": "loungewear and homeware",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58067",
+        "level": 3,
+        "locale": "라운지 팬츠",
+        "name": "lounge pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58545",
+        "level": 4,
+        "locale": "쇼트 팬츠",
+        "name": "shorts",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "라운지 팬츠 > 라운지 팬츠 > 쇼트 팬츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482260-000",
+    "product_id": "E482260-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482260-000.html",
+    "source_raw_sha256": "229c6d08a595c609918e597fb665f0e8cb52e99139ee8732e173114ab61bca8e",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E482299-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57967",
+        "level": 2,
+        "locale": "티셔츠 & 스웨트셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58039",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58393",
+        "level": 4,
+        "locale": "DRY-EX",
+        "name": "dry ex",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > DRY-EX",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482299-000",
+    "product_id": "E482299-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482299-000.html",
+    "source_raw_sha256": "cd3de0b01f9535a7a0491dc8434fbfad8e923f494b2b6080f1373a7b990e9e9d",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E482758-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57968",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58050",
+        "level": 3,
+        "locale": "스웨트 팬츠 & 조거 팬츠",
+        "name": "sweat pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58460",
+        "level": 4,
+        "locale": "스웨트",
+        "name": "sweat",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482758-000",
+    "product_id": "E482758-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482758-000.html",
+    "source_raw_sha256": "86d18c5ef82071305c5ad58eab8f948fcc66bd371591cd1668891422b71eaeb5",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E482883-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57968",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58046",
+        "level": 3,
+        "locale": "와이드 팬츠",
+        "name": "wide pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58443",
+        "level": 4,
+        "locale": "유틸리티(카고ㆍ커브)",
+        "name": "work pants",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 와이드 팬츠 > 유틸리티(카고ㆍ커브)",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482883-000",
+    "product_id": "E482883-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482883-000.html",
+    "source_raw_sha256": "e577ed68ca28e7142c0aa94d673f4974a75724e4ac675fddd3bfe50f704e6ac6",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E482939-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57969",
+        "level": 2,
+        "locale": "스포츠 유틸리티 웨어",
+        "name": "sport utility wear",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58058",
+        "level": 3,
+        "locale": "팬츠",
+        "name": "pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58498",
+        "level": 4,
+        "locale": "기어 팬츠",
+        "name": "geared",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "스포츠 유틸리티 웨어 > 팬츠 > 기어 팬츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482939-000",
+    "product_id": "E482939-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482939-000.html",
+    "source_raw_sha256": "b801dd762b5bfe1c86b68ea6d85914de7442e364b44b557a16f7f8213e1ee209",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E482942-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "107543",
+        "level": 2,
+        "locale": "Special Collaborations",
+        "name": "special collaboration",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "107552",
+        "level": 3,
+        "locale": "UNIQLO and JW ANDERSON",
+        "name": "uniqlo and jw anderson",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "107624",
+        "level": 4,
+        "locale": "Bottoms",
+        "name": "bottoms",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "Special Collaborations > UNIQLO and JW ANDERSON > Bottoms",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482942-000",
+    "product_id": "E482942-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482942-000.html",
+    "source_raw_sha256": "dd698ef0235aee88b392a7bb86fe6d8289ab689d7002610f6dcfc81e5ac84969",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E482965-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "107543",
+        "level": 2,
+        "locale": "Special Collaborations",
+        "name": "special collaboration",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "107550",
+        "level": 3,
+        "locale": "Uniqlo U",
+        "name": "uniqlo u",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "107607",
+        "level": 4,
+        "locale": "Bottoms",
+        "name": "bottoms",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "Special Collaborations > Uniqlo U > Bottoms",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482965-000",
+    "product_id": "E482965-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482965-000.html",
+    "source_raw_sha256": "cd8e009b9631053086ca8e1b4846a5e6e3a8e3fba4a9f358382ada498f8e0a44",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E483970-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57967",
+        "level": 2,
+        "locale": "티셔츠 & 스웨트셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58039",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58393",
+        "level": 4,
+        "locale": "DRY-EX",
+        "name": "dry ex",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > DRY-EX",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483970-000",
+    "product_id": "E483970-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483970-000.html",
+    "source_raw_sha256": "9df0a1a2beed948d195ab1df55995648b3f22e28203944c30db1b490bf4205a3",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E484080-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57967",
+        "level": 2,
+        "locale": "티셔츠 & 스웨트셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58039",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58394",
+        "level": 4,
+        "locale": "긴팔",
+        "name": "long sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E484080-000",
+    "product_id": "E484080-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E484080-000.html",
+    "source_raw_sha256": "7f6b9adfafe01af8fa1dd75438f531306e8377b0650a8aab784552314b24bc9b",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "MEN",
+    "audience_matches": true,
+    "base_product_id": "E484209-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57893",
+        "level": 1,
+        "locale": "MEN",
+        "name": "men",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57968",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58054",
+        "level": 3,
+        "locale": "쇼트 팬츠(반바지)",
+        "name": "short pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "113378",
+        "level": 4,
+        "locale": "데님 & 코튼",
+        "name": "denim",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 쇼트 팬츠(반바지) > 데님 & 코튼",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E484209-000",
+    "product_id": "E484209-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E484209-000.html",
+    "source_raw_sha256": "991ad5c04a5b87edcf86bdd1ebf2401ddb45dd65c903cca0309f8d087c0985c9",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E424873-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58144",
+        "level": 4,
+        "locale": "반팔",
+        "name": "half sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E424873-000",
+    "product_id": "E424873-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E424873-000.html",
+    "source_raw_sha256": "a8a55ee0eddd43d6d8376ea8a41fbc3713a0cd68260455c6de96f118ef2d6856",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E465751-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58142",
+        "level": 4,
+        "locale": "긴팔",
+        "name": "long sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E465751-000",
+    "product_id": "E465751-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E465751-000.html",
+    "source_raw_sha256": "9b8f5111ebe9d5989f035dabeda18920fb23b3f340a3ceb799da725041cda732",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E465755-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58144",
+        "level": 4,
+        "locale": "반팔",
+        "name": "half sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E465755-000",
+    "product_id": "E465755-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E465755-000.html",
+    "source_raw_sha256": "5b38d00228156fc7b00bb6d8cc11f857ad2b47da34662ff1368069997fe7b273",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E465760-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58144",
+        "level": 4,
+        "locale": "반팔",
+        "name": "half sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E465760-000",
+    "product_id": "E465760-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E465760-000.html",
+    "source_raw_sha256": "23ad08b5fe0a1f2c42a2e409770c744f050e1be35f60ec24deafefd848a03a3d",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E470143-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58142",
+        "level": 4,
+        "locale": "긴팔",
+        "name": "long sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E470143-000",
+    "product_id": "E470143-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E470143-000.html",
+    "source_raw_sha256": "51cb39d04b0be823b60ef09b930b75a0923483eedda89e56f6c9c491af1a2001",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E476225-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57960",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58005",
+        "level": 3,
+        "locale": "스웨트 팬츠 & 조거 팬츠",
+        "name": "sweat pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "63086",
+        "level": 4,
+        "locale": "유니섹스",
+        "name": "unisex",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 스웨트 팬츠 & 조거 팬츠 > 유니섹스",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E476225-000",
+    "product_id": "E476225-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E476225-000.html",
+    "source_raw_sha256": "8f10345e78f5b67e9c1635ed5d1b4d8d3cb0766beb98ec3023ffe4a721e38707",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E480054-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58144",
+        "level": 4,
+        "locale": "반팔",
+        "name": "half sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E480054-000",
+    "product_id": "E480054-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E480054-000.html",
+    "source_raw_sha256": "498bb379596e6c2d21e03f84f0624090ec58fc18b9c0cdbefb650be03479aece",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E480302-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57960",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58010",
+        "level": 3,
+        "locale": "쇼트 팬츠(반바지)",
+        "name": "short pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "96370",
+        "level": 4,
+        "locale": "스코츠",
+        "name": "skort",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 쇼트 팬츠(반바지) > 스코츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E480302-000",
+    "product_id": "E480302-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E480302-000.html",
+    "source_raw_sha256": "4d356dbe78fe9b88dfa9c3ceb24bbedc3905801b0cd71cde7ac262b6ea8d6f22",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E482286-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57961",
+        "level": 2,
+        "locale": "원피스 & 스커트",
+        "name": "dress and skirts",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58012",
+        "level": 3,
+        "locale": "스커트",
+        "name": "skirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58247",
+        "level": 4,
+        "locale": "플레어",
+        "name": "flare skirts",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "원피스 & 스커트 > 스커트 > 플레어",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482286-000",
+    "product_id": "E482286-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482286-000.html",
+    "source_raw_sha256": "7c374c609ccc1850e3fac86b2ea6a8c2350e768bbfb484102dcc9dc5696fb905",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E482658-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57961",
+        "level": 2,
+        "locale": "원피스 & 스커트",
+        "name": "dress and skirts",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58012",
+        "level": 3,
+        "locale": "스커트",
+        "name": "skirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58246",
+        "level": 4,
+        "locale": "플리츠",
+        "name": "pleated skirts",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "원피스 & 스커트 > 스커트 > 플리츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482658-000",
+    "product_id": "E482658-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482658-000.html",
+    "source_raw_sha256": "1e5843f18423dae5483e25342f61ae3f82090d88314a024587c55be8f4844490",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E482982-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57961",
+        "level": 2,
+        "locale": "원피스 & 스커트",
+        "name": "dress and skirts",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58011",
+        "level": 3,
+        "locale": "원피스",
+        "name": "dresses",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58243",
+        "level": 4,
+        "locale": "슬리브리스 원피스",
+        "name": "sleeveless",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "원피스 & 스커트 > 원피스 > 슬리브리스 원피스",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482982-000",
+    "product_id": "E482982-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482982-000.html",
+    "source_raw_sha256": "a9c04a707a703e83aa559df3a844a4a8dc70802f172a1d5e7c20a588570397e7",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E482983-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57961",
+        "level": 2,
+        "locale": "원피스 & 스커트",
+        "name": "dress and skirts",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58011",
+        "level": 3,
+        "locale": "원피스",
+        "name": "dresses",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58243",
+        "level": 4,
+        "locale": "슬리브리스 원피스",
+        "name": "sleeveless",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "원피스 & 스커트 > 원피스 > 슬리브리스 원피스",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482983-000",
+    "product_id": "E482983-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482983-000.html",
+    "source_raw_sha256": "aca94498ba3db27cbdab64b5eba14ae1e9bc8ee2413d8976aa120d7ada807dda",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E483268-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58144",
+        "level": 4,
+        "locale": "반팔",
+        "name": "half sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483268-000",
+    "product_id": "E483268-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483268-000.html",
+    "source_raw_sha256": "182714841ffbd1dea4585ebcbb570cbde369a8e80754f462d41015b497e49746",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E483461-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58144",
+        "level": 4,
+        "locale": "반팔",
+        "name": "half sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483461-000",
+    "product_id": "E483461-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483461-000.html",
+    "source_raw_sha256": "e0cd69c3b09ee5e7d6fb8580a82a4b9dd1cbe02cbf9fb2efb3e926d33faa57b6",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E482937-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57960",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58010",
+        "level": 3,
+        "locale": "쇼트 팬츠(반바지)",
+        "name": "short pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "63087",
+        "level": 4,
+        "locale": "유니섹스",
+        "name": "unisex",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 쇼트 팬츠(반바지) > 유니섹스",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482937-000",
+    "product_id": "E482937-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482937-000.html",
+    "source_raw_sha256": "d2f556d7ffd4ecec639d114069ee55de26a4c50b0c05ad7a72092ccd2bc8b78e",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E483463-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58144",
+        "level": 4,
+        "locale": "반팔",
+        "name": "half sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483463-000",
+    "product_id": "E483463-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483463-000.html",
+    "source_raw_sha256": "d42e0bb053998edf4cadee2f6939333254bd80e0c9d54559daecbafeaeffe760",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E483479-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58145",
+        "level": 4,
+        "locale": "슬리브리스",
+        "name": "sleeveless",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 슬리브리스",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483479-000",
+    "product_id": "E483479-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483479-000.html",
+    "source_raw_sha256": "5b6212aacf8c0cea808ed31a96cad350f748d3a1dd574a56b691d43e58d05f3a",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E483535-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58144",
+        "level": 4,
+        "locale": "반팔",
+        "name": "half sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483535-000",
+    "product_id": "E483535-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483535-000.html",
+    "source_raw_sha256": "51b431c859071c7b10ef3a1c2df21843e7acb1f956b9804725a188249a3ca756",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E482944-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57960",
+        "level": 2,
+        "locale": "팬츠",
+        "name": "bottoms",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58010",
+        "level": 3,
+        "locale": "쇼트 팬츠(반바지)",
+        "name": "short pants",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "63087",
+        "level": 4,
+        "locale": "유니섹스",
+        "name": "unisex",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "팬츠 > 쇼트 팬츠(반바지) > 유니섹스",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E482944-000",
+    "product_id": "E482944-000",
+    "queue_audience": "MEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E482944-000.html",
+    "source_raw_sha256": "1522d9614018b5e427763c375c035a2b74c7cd0295dc4be88b2dc6d281000068",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "WOMEN",
+    "audience_matches": true,
+    "base_product_id": "E483536-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57892",
+        "level": 1,
+        "locale": "WOMEN",
+        "name": "women",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57959",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "57995",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58142",
+        "level": 4,
+        "locale": "긴팔",
+        "name": "long sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483536-000",
+    "product_id": "E483536-000",
+    "queue_audience": "WOMEN",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483536-000.html",
+    "source_raw_sha256": "76d2f2f4c1c720b620f7ffc55a45ee8c6ffae4566e720b749ab8883a4a8d34b1",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E474592-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58587",
+        "level": 4,
+        "locale": "에어리즘 코튼",
+        "name": "airism cotton",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E474592-000",
+    "product_id": "E474592-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E474592-000.html",
+    "source_raw_sha256": "7677716e02e4a3dd80c4329b99b7718bc4187db7f9c6e23466d656e204ba374a",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E474832-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58587",
+        "level": 4,
+        "locale": "에어리즘 코튼",
+        "name": "airism cotton",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E474832-000",
+    "product_id": "E474832-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E474832-000.html",
+    "source_raw_sha256": "b2608a2fa4b5f22d2485cc48da6c2d614f6b6e7564c289d2331f441ac54a10d2",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E483348-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58586",
+        "level": 4,
+        "locale": "걸즈",
+        "name": "girls",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 걸즈",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483348-000",
+    "product_id": "E483348-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483348-000.html",
+    "source_raw_sha256": "6183a6e60bae00fa8a95ca6bafe7a84272aab11a76e91755408855ea2ccf1c37",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E483349-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "94366",
+        "level": 4,
+        "locale": "그래픽 티셔츠",
+        "name": "ut",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 그래픽 티셔츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483349-000",
+    "product_id": "E483349-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483349-000.html",
+    "source_raw_sha256": "5f8228480e480b23286c0129a0963909370a94f8fae53335cfcc162b35c6a2a8",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E483350-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "94366",
+        "level": 4,
+        "locale": "그래픽 티셔츠",
+        "name": "ut",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 그래픽 티셔츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483350-000",
+    "product_id": "E483350-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483350-000.html",
+    "source_raw_sha256": "48da86d306f3f94c4619a9828f4874c217991e0abce0001c76798bc722b7b320",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E483351-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "94366",
+        "level": 4,
+        "locale": "그래픽 티셔츠",
+        "name": "ut",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 그래픽 티셔츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483351-000",
+    "product_id": "E483351-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483351-000.html",
+    "source_raw_sha256": "78b7c20c55c9becccd36a4706814e9001ffc61bba1ffd700971dc832bff89e93",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E483352-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "94366",
+        "level": 4,
+        "locale": "그래픽 티셔츠",
+        "name": "ut",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 그래픽 티셔츠",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483352-000",
+    "product_id": "E483352-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483352-000.html",
+    "source_raw_sha256": "26e9fcff41b510ccb95027ea3d77861e4bdc24db4da0187530716d8d1a684959",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E483373-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58081",
+        "level": 3,
+        "locale": "그래픽티셔츠",
+        "name": "ut graphic tees",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "136135",
+        "level": 4,
+        "locale": "mofusand",
+        "name": "mofusand 26ss",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 그래픽티셔츠 > mofusand",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483373-000",
+    "product_id": "E483373-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483373-000.html",
+    "source_raw_sha256": "47bf57d99c0a389d39a0b22c42de93e8d106e2d2383a9b430dc535202a54af2e",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E483377-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58585",
+        "level": 4,
+        "locale": "반팔",
+        "name": "short sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483377-000",
+    "product_id": "E483377-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483377-000.html",
+    "source_raw_sha256": "5e924d71cc8069ee0d4f95f5dfe6bae08034cf298ebd02db471ba97e3ffb9e1d",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "KIDS",
+    "audience_matches": true,
+    "base_product_id": "E483382-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57894",
+        "level": 1,
+        "locale": "KIDS",
+        "name": "kids",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57974",
+        "level": 2,
+        "locale": "티셔츠 & UT",
+        "name": "tops",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58078",
+        "level": 3,
+        "locale": "티셔츠 (반팔 & 긴팔)",
+        "name": "t shirts",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58585",
+        "level": 4,
+        "locale": "반팔",
+        "name": "short sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E483382-000",
+    "product_id": "E483382-000",
+    "queue_audience": "KIDS",
+    "selection_basis": "accepted_for_audience_quota=True; original product_category_paths.csv order within audience",
+    "source_dataset": "CategoryCorpus-live-medium",
+    "source_raw_path": "Docs/Research/CategoryCorpus-live-medium/raw/uniqlo/products/E483382-000.html",
+    "source_raw_sha256": "00c7e303406035adb52af19c88f9ce4c5a5bf6f8c72f4203051a764a0bf8f1e6",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": ""
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E481772-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58675",
+        "level": 4,
+        "locale": "반팔",
+        "name": "short sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E481772-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E481772-000-00",
+    "product_id": "E481772-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 1; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E481772-000.html",
+    "source_raw_sha256": "bfb04c8e2c8a3fbb670cbb27b43d3c93b4d9eade55902cf1ba67541222e1e96a",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E481772-000-00",
+      "first_observation_raw_order": 0,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E481772-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[0]",
+          "raw_order": 0,
+          "raw_product_id": "E481772-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481772-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[1]",
+          "raw_order": 1,
+          "raw_product_id": "E481772-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E481772-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.1.0.search.productIds[0]",
+          "raw_order": 21,
+          "raw_product_id": "E481772-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.1.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481772-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.1.0.search.productIds[1]",
+          "raw_order": 22,
+          "raw_product_id": "E481772-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.1.0",
+          "suffix": "01"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E481772-000-00",
+      "selected_observation_raw_order": 0,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": [
+        {
+          "base_product_id": "E481772-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[1]",
+          "raw_order": 1,
+          "raw_product_id": "E481772-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E481772-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.1.0.search.productIds[0]",
+          "raw_order": 21,
+          "raw_product_id": "E481772-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.1.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481772-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.1.0.search.productIds[1]",
+          "raw_order": 22,
+          "raw_product_id": "E481772-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.1.0",
+          "suffix": "01"
+        }
+      ]
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E481769-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58673",
+        "level": 4,
+        "locale": "코튼메쉬",
+        "name": "cotton mesh",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E481769-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 코튼메쉬",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E481769-000-00",
+    "product_id": "E481769-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 2; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E481769-000.html",
+    "source_raw_sha256": "93991c3a8d83f25ee00c73bec148fd1681d5d99961b2c3d9e6065c529fbc7853",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E481769-000-00",
+      "first_observation_raw_order": 2,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E481769-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[2]",
+          "raw_order": 2,
+          "raw_product_id": "E481769-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481769-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.1.0.search.productIds[2]",
+          "raw_order": 23,
+          "raw_product_id": "E481769-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.1.0",
+          "suffix": "00"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E481769-000-00",
+      "selected_observation_raw_order": 2,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": [
+        {
+          "base_product_id": "E481769-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.1.0.search.productIds[2]",
+          "raw_order": 23,
+          "raw_product_id": "E481769-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.1.0",
+          "suffix": "00"
+        }
+      ]
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E487909-001",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58675",
+        "level": 4,
+        "locale": "반팔",
+        "name": "short sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E487909-001/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 반팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E487909-001-00",
+    "product_id": "E487909-001",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 3; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E487909-001.html",
+    "source_raw_sha256": "529073cd632e41983e9a1818cda0ce6a4f69b2b73cdf59c7af0df232ed2b60a9",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E487909-001-00",
+      "first_observation_raw_order": 6,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E487909-001",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[6]",
+          "raw_order": 6,
+          "raw_product_id": "E487909-001-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E487909-001",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.1.0.search.productIds[6]",
+          "raw_order": 27,
+          "raw_product_id": "E487909-001-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.1.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E487909-001",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.4.0.search.productIds[3]",
+          "raw_order": 61,
+          "raw_product_id": "E487909-001-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.4.0",
+          "suffix": "00"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E487909-001-00",
+      "selected_observation_raw_order": 6,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": [
+        {
+          "base_product_id": "E487909-001",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.1.0.search.productIds[6]",
+          "raw_order": 27,
+          "raw_product_id": "E487909-001-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.1.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E487909-001",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.4.0.search.productIds[3]",
+          "raw_order": 61,
+          "raw_product_id": "E487909-001-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.4.0",
+          "suffix": "00"
+        }
+      ]
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E481764-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58673",
+        "level": 4,
+        "locale": "코튼메쉬",
+        "name": "cotton mesh",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E481764-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 코튼메쉬",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E481764-000-00",
+    "product_id": "E481764-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 4; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E481764-000.html",
+    "source_raw_sha256": "06fa6c94a6ac1b89877fea50355dc34d7ace1c60f7161c29c65ef7606c3a00ae",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E481764-000-00",
+      "first_observation_raw_order": 10,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E481764-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[10]",
+          "raw_order": 10,
+          "raw_product_id": "E481764-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481764-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[13]",
+          "raw_order": 13,
+          "raw_product_id": "E481764-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E481764-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[0]",
+          "raw_order": 31,
+          "raw_product_id": "E481764-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481764-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[3]",
+          "raw_order": 34,
+          "raw_product_id": "E481764-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "01"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E481764-000-00",
+      "selected_observation_raw_order": 10,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": [
+        {
+          "base_product_id": "E481764-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[13]",
+          "raw_order": 13,
+          "raw_product_id": "E481764-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E481764-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[0]",
+          "raw_order": 31,
+          "raw_product_id": "E481764-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481764-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[3]",
+          "raw_order": 34,
+          "raw_product_id": "E481764-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "01"
+        }
+      ]
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E481761-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58673",
+        "level": 4,
+        "locale": "코튼메쉬",
+        "name": "cotton mesh",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E481761-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 코튼메쉬",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E481761-000-00",
+    "product_id": "E481761-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 5; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E481761-000.html",
+    "source_raw_sha256": "aeec6cdf2564d15f52aadd7d2250e786dc7c39d4f268d773f5211866c556a45a",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E481761-000-00",
+      "first_observation_raw_order": 11,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E481761-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[11]",
+          "raw_order": 11,
+          "raw_product_id": "E481761-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481761-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[12]",
+          "raw_order": 12,
+          "raw_product_id": "E481761-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E481761-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[1]",
+          "raw_order": 32,
+          "raw_product_id": "E481761-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481761-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[2]",
+          "raw_order": 33,
+          "raw_product_id": "E481761-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "01"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E481761-000-00",
+      "selected_observation_raw_order": 11,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": [
+        {
+          "base_product_id": "E481761-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[12]",
+          "raw_order": 12,
+          "raw_product_id": "E481761-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E481761-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[1]",
+          "raw_order": 32,
+          "raw_product_id": "E481761-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E481761-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[2]",
+          "raw_order": 33,
+          "raw_product_id": "E481761-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "01"
+        }
+      ]
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E473721-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58673",
+        "level": 4,
+        "locale": "코튼메쉬",
+        "name": "cotton mesh",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E473721-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 코튼메쉬",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E473721-000-00",
+    "product_id": "E473721-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 6; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E473721-000.html",
+    "source_raw_sha256": "e4caa4a60722abef66eaa7aa1f00127ce03b2d7cd5b57606e37958049a1ae8ae",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E473721-000-00",
+      "first_observation_raw_order": 18,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E473721-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[18]",
+          "raw_order": 18,
+          "raw_product_id": "E473721-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E473721-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[8]",
+          "raw_order": 39,
+          "raw_product_id": "E473721-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E473721-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.5.0.search.productIds[2]",
+          "raw_order": 71,
+          "raw_product_id": "E473721-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.5.0",
+          "suffix": "00"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E473721-000-00",
+      "selected_observation_raw_order": 18,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": [
+        {
+          "base_product_id": "E473721-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[8]",
+          "raw_order": 39,
+          "raw_product_id": "E473721-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E473721-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.5.0.search.productIds[2]",
+          "raw_order": 71,
+          "raw_product_id": "E473721-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.5.0",
+          "suffix": "00"
+        }
+      ]
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E444812-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58673",
+        "level": 4,
+        "locale": "코튼메쉬",
+        "name": "cotton mesh",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E444812-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 코튼메쉬",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E444812-000-01",
+    "product_id": "E444812-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 7; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E444812-000.html",
+    "source_raw_sha256": "d1c993534750d472f9a6b10a3426ddc479ca350bf4d709a9b77d437f7efe323a",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E444812-000-01",
+      "first_observation_raw_order": 19,
+      "first_observation_replacement_reason": "canonical suffix matched a later explicitly observed raw variant",
+      "first_observation_suffix": "01",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[19]",
+          "raw_order": 19,
+          "raw_product_id": "E444812-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[20]",
+          "raw_order": 20,
+          "raw_product_id": "E444812-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[9]",
+          "raw_order": 40,
+          "raw_product_id": "E444812-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[10]",
+          "raw_order": 41,
+          "raw_product_id": "E444812-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.5.0.search.productIds[3]",
+          "raw_order": 72,
+          "raw_product_id": "E444812-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.5.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.5.0.search.productIds[4]",
+          "raw_order": 73,
+          "raw_product_id": "E444812-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.5.0",
+          "suffix": "00"
+        }
+      ],
+      "selected_first_observation": false,
+      "selected_observation_id": "E444812-000-00",
+      "selected_observation_raw_order": 20,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": [
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.0.0.search.productIds[19]",
+          "raw_order": 19,
+          "raw_product_id": "E444812-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.0.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[9]",
+          "raw_order": 40,
+          "raw_product_id": "E444812-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.2.0.search.productIds[10]",
+          "raw_order": 41,
+          "raw_product_id": "E444812-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.2.0",
+          "suffix": "00"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.5.0.search.productIds[3]",
+          "raw_order": 72,
+          "raw_product_id": "E444812-000-01",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.5.0",
+          "suffix": "01"
+        },
+        {
+          "base_product_id": "E444812-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.5.0.search.productIds[4]",
+          "raw_order": 73,
+          "raw_product_id": "E444812-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.5.0",
+          "suffix": "00"
+        }
+      ]
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E486378-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58674",
+        "level": 4,
+        "locale": "긴팔",
+        "name": "long sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E486378-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 긴팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E486378-000-00",
+    "product_id": "E486378-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 8; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E486378-000.html",
+    "source_raw_sha256": "6c52cab16011f7d9230e7e54ee024ac6c284828fd5de6e5096e70981449d5ecf",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E486378-000-00",
+      "first_observation_raw_order": 42,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E486378-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.3.0.search.productIds[0]",
+          "raw_order": 42,
+          "raw_product_id": "E486378-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.3.0",
+          "suffix": "00"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E486378-000-00",
+      "selected_observation_raw_order": 42,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": []
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E486380-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58674",
+        "level": 4,
+        "locale": "긴팔",
+        "name": "long sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E486380-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 긴팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E486380-000-00",
+    "product_id": "E486380-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 9; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E486380-000.html",
+    "source_raw_sha256": "5a773fa157ce35431e0ae1d19bc7641f44fe55ed90a16aa3534701ce1487c2d6",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E486380-000-00",
+      "first_observation_raw_order": 44,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E486380-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.3.0.search.productIds[2]",
+          "raw_order": 44,
+          "raw_product_id": "E486380-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.3.0",
+          "suffix": "00"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E486380-000-00",
+      "selected_observation_raw_order": 44,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": []
+    }
+  },
+  {
+    "audience": "BABY",
+    "audience_matches": true,
+    "base_product_id": "E489530-000",
+    "both_valid": false,
+    "breadcrumb": [
+      {
+        "id": "57925",
+        "level": 1,
+        "locale": "BABY",
+        "name": "baby",
+        "raw_order": 0,
+        "role": "gender"
+      },
+      {
+        "id": "57980",
+        "level": 2,
+        "locale": "신생아(0개월~2세)",
+        "name": "newborn",
+        "raw_order": 1,
+        "role": "class"
+      },
+      {
+        "id": "58102",
+        "level": 3,
+        "locale": "바디수트",
+        "name": "bodysuits",
+        "raw_order": 2,
+        "role": "category"
+      },
+      {
+        "id": "58674",
+        "level": 4,
+        "locale": "긴팔",
+        "name": "long sleeve",
+        "raw_order": 3,
+        "role": "subcategory"
+      }
+    ],
+    "breadcrumb_depth": 4,
+    "canonical_final_url": "https://www.uniqlo.com/kr/ko/products/E489530-000/00",
+    "db_candidate_reason": "not excluded by current known-category policy",
+    "evidence_conflict": false,
+    "evidence_source": "uniqlo_hydration",
+    "final_path": "신생아(0개월~2세) > 바디수트 > 긴팔",
+    "hydration_status": "resolved",
+    "is_db_candidate": true,
+    "json_ld_script_present": false,
+    "json_ld_status": "unresolved",
+    "observed_id": "E489530-000-00",
+    "product_id": "E489530-000",
+    "queue_audience": "BABY",
+    "selection_basis": "accepted_products order 10; validation_status=accepted_baby",
+    "source_dataset": "CategoryCorpus-live-baby-10-v2",
+    "source_raw_path": "/Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-baby-10-v2/raw/uniqlo/products/E489530-000.html",
+    "source_raw_sha256": "92a3048539604b06560fd093bf3f0f593d36f1d860f650fa6639fec508bfc9f6",
+    "status": "resolved",
+    "unresolved_reason": "",
+    "unresolved_rule": "",
+    "variant_selection": {
+      "canonical_suffix": "00",
+      "first_observation_id": "E489530-000-00",
+      "first_observation_raw_order": 46,
+      "first_observation_replacement_reason": "",
+      "first_observation_suffix": "00",
+      "raw_variant_observations": [
+        {
+          "base_product_id": "E489530-000",
+          "evidence_path": "search./v2/baby/newborn/bodysuits0.0.3.0.search.productIds[4]",
+          "raw_order": 46,
+          "raw_product_id": "E489530-000-00",
+          "search_key": "/v2/baby/newborn/bodysuits0.0.3.0",
+          "suffix": "00"
+        }
+      ],
+      "selected_first_observation": true,
+      "selected_observation_id": "E489530-000-00",
+      "selected_observation_raw_order": 46,
+      "selection_evidence_source": "uniqlo_hydration_search_product_ids",
+      "selection_reason": "canonical_redirect_matches_raw_variant",
+      "selection_rule": "canonical_redirect_matches_raw_variant",
+      "unresolved": false,
+      "unresolved_reason": "",
+      "unselected_observations": []
+    }
+  }
+]

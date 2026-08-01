@@ -1,0 +1,1329 @@
+{
+  "generated_at": "2026-07-27T16:17:05.171458+00:00",
+  "mode": "bootstrap",
+  "nodes": [
+    {
+      "audiences": [
+        "남성",
+        "남성|여성",
+        "여성"
+      ],
+      "category_codes": [
+        "003"
+      ],
+      "child_count": 6,
+      "depth": 1,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "바지",
+      "parent_path": "",
+      "path": "바지",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "남성|여성"
+      ],
+      "category_codes": [
+        "003006"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 5,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "기타 하의",
+      "parent_path": "바지",
+      "path": "바지 > 기타 하의",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성"
+      ],
+      "category_codes": [
+        "003002"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 12,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "데님 팬츠",
+      "parent_path": "바지",
+      "path": "바지 > 데님 팬츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성"
+      ],
+      "category_codes": [
+        "003009"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 8,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "숏 팬츠",
+      "parent_path": "바지",
+      "path": "바지 > 숏 팬츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성|여성",
+        "남성"
+      ],
+      "category_codes": [
+        "003008"
+      ],
+      "child_count": 1,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "슈트 팬츠",
+      "parent_path": "바지",
+      "path": "바지 > 슈트 팬츠",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성|여성",
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 11,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "슬랙스",
+      "parent_path": "바지 > 슈트 팬츠",
+      "path": "바지 > 슈트 팬츠 > 슬랙스",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성|여성",
+        "남성",
+        "여성"
+      ],
+      "category_codes": [
+        "003007"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 12,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "코튼 팬츠",
+      "parent_path": "바지",
+      "path": "바지 > 코튼 팬츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [
+        "003004"
+      ],
+      "child_count": 1,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "트레이닝",
+      "parent_path": "바지",
+      "path": "바지 > 트레이닝",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 9,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "조거 팬츠",
+      "parent_path": "바지 > 트레이닝",
+      "path": "바지 > 트레이닝 > 조거 팬츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성",
+        "남성|여성",
+        "라이프"
+      ],
+      "category_codes": [
+        "001"
+      ],
+      "child_count": 6,
+      "depth": 1,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "상의",
+      "parent_path": "",
+      "path": "상의",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [
+        "001008"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 1,
+      "is_db_candidate": false,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "검토 필요"
+      ],
+      "name": "기타 상의",
+      "parent_path": "상의",
+      "path": "상의 > 기타 상의",
+      "source": "musinsa",
+      "status": "unresolved",
+      "unresolved_reason": "복구된 조사 자료에서 매핑 검토 필요",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [
+        "001010"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 4,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "긴소매 티셔츠",
+      "parent_path": "상의",
+      "path": "상의 > 긴소매 티셔츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [
+        "001006"
+      ],
+      "child_count": 1,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "니트",
+      "parent_path": "상의",
+      "path": "상의 > 니트",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 1,
+      "is_db_candidate": false,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "검토 필요"
+      ],
+      "name": "스웨터",
+      "parent_path": "상의 > 니트",
+      "path": "상의 > 니트 > 스웨터",
+      "source": "musinsa",
+      "status": "unresolved",
+      "unresolved_reason": "복구된 조사 자료에서 매핑 검토 필요",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [
+        "001011"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 2,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "민소매 티셔츠",
+      "parent_path": "상의",
+      "path": "상의 > 민소매 티셔츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성",
+        "남성|여성",
+        "라이프"
+      ],
+      "category_codes": [
+        "001001"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 41,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "반소매 티셔츠",
+      "parent_path": "상의",
+      "path": "상의 > 반소매 티셔츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [
+        "001002"
+      ],
+      "child_count": 1,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "셔츠",
+      "parent_path": "상의",
+      "path": "상의 > 셔츠",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 7,
+      "is_db_candidate": false,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "검토 필요"
+      ],
+      "name": "블라우스",
+      "parent_path": "상의 > 셔츠",
+      "path": "상의 > 셔츠 > 블라우스",
+      "source": "musinsa",
+      "status": "unresolved",
+      "unresolved_reason": "복구된 조사 자료에서 매핑 검토 필요",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성",
+        "남성|여성"
+      ],
+      "category_codes": [
+        "017"
+      ],
+      "child_count": 1,
+      "depth": 1,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "스포츠",
+      "parent_path": "",
+      "path": "스포츠",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성",
+        "남성|여성"
+      ],
+      "category_codes": [
+        "017016",
+        "017018",
+        "017020"
+      ],
+      "child_count": 3,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "레저",
+      "parent_path": "스포츠",
+      "path": "스포츠 > 레저",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [
+        "017016003",
+        "017016005"
+      ],
+      "child_count": 2,
+      "depth": 3,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "상의",
+      "parent_path": "스포츠 > 레저",
+      "path": "스포츠 > 레저 > 상의",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 1,
+      "depth": 4,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "나시",
+      "parent_path": "스포츠 > 레저 > 상의",
+      "path": "스포츠 > 레저 > 상의 > 나시",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 5,
+      "direct_product_count": 1,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "민소매 티셔츠",
+      "parent_path": "스포츠 > 레저 > 상의 > 나시",
+      "path": "스포츠 > 레저 > 상의 > 나시 > 민소매 티셔츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 4,
+      "direct_product_count": 3,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "반소매 티셔츠",
+      "parent_path": "스포츠 > 레저 > 상의",
+      "path": "스포츠 > 레저 > 상의 > 반소매 티셔츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [
+        "017018003"
+      ],
+      "child_count": 1,
+      "depth": 3,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "아우터",
+      "parent_path": "스포츠 > 레저",
+      "path": "스포츠 > 레저 > 아우터",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 1,
+      "depth": 4,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "나일론",
+      "parent_path": "스포츠 > 레저 > 아우터",
+      "path": "스포츠 > 레저 > 아우터 > 나일론",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 5,
+      "direct_product_count": 1,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "코치 재킷",
+      "parent_path": "스포츠 > 레저 > 아우터 > 나일론",
+      "path": "스포츠 > 레저 > 아우터 > 나일론 > 코치 재킷",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성|여성",
+        "남성"
+      ],
+      "category_codes": [
+        "017020001",
+        "017020002"
+      ],
+      "child_count": 2,
+      "depth": 3,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "하의",
+      "parent_path": "스포츠 > 레저",
+      "path": "스포츠 > 레저 > 하의",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성|여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 4,
+      "direct_product_count": 2,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "기타 바지",
+      "parent_path": "스포츠 > 레저 > 하의",
+      "path": "스포츠 > 레저 > 하의 > 기타 바지",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 4,
+      "direct_product_count": 1,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "숏팬츠",
+      "parent_path": "스포츠 > 레저 > 하의",
+      "path": "스포츠 > 레저 > 하의 > 숏팬츠",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성",
+        "남성|여성"
+      ],
+      "category_codes": [
+        "002"
+      ],
+      "child_count": 7,
+      "depth": 1,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "아우터",
+      "parent_path": "",
+      "path": "아우터",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성"
+      ],
+      "category_codes": [
+        "002027"
+      ],
+      "child_count": 1,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "경량 패딩",
+      "parent_path": "아우터",
+      "path": "아우터 > 경량 패딩",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성"
+      ],
+      "category_codes": [
+        "002027001"
+      ],
+      "child_count": 1,
+      "depth": 3,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "패딩 베스트",
+      "parent_path": "아우터 > 경량 패딩",
+      "path": "아우터 > 경량 패딩 > 패딩 베스트",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 4,
+      "direct_product_count": 2,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "경량 패딩",
+      "parent_path": "아우터 > 경량 패딩 > 패딩 베스트",
+      "path": "아우터 > 경량 패딩 > 패딩 베스트 > 경량 패딩",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "남성|여성"
+      ],
+      "category_codes": [
+        "002015"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 2,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "기타 아우터",
+      "parent_path": "아우터",
+      "path": "아우터 > 기타 아우터",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성",
+        "남성|여성"
+      ],
+      "category_codes": [
+        "002006"
+      ],
+      "child_count": 1,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "나일론",
+      "parent_path": "아우터",
+      "path": "아우터 > 나일론",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "남성",
+        "여성",
+        "남성|여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 13,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "코치 재킷",
+      "parent_path": "아우터 > 나일론",
+      "path": "아우터 > 나일론 > 코치 재킷",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [
+        "002003"
+      ],
+      "child_count": 1,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "슈트",
+      "parent_path": "아우터",
+      "path": "아우터 > 슈트",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 9,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "블레이저 재킷",
+      "parent_path": "아우터 > 슈트",
+      "path": "아우터 > 슈트 > 블레이저 재킷",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성"
+      ],
+      "category_codes": [
+        "002020"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 22,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "카디건",
+      "parent_path": "아우터",
+      "path": "아우터 > 카디건",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성|여성"
+      ],
+      "category_codes": [
+        "002018"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 3,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "트레이닝 재킷",
+      "parent_path": "아우터",
+      "path": "아우터 > 트레이닝 재킷",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성",
+        "남성",
+        "남성|여성"
+      ],
+      "category_codes": [
+        "002022"
+      ],
+      "child_count": 0,
+      "depth": 2,
+      "direct_product_count": 8,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "후드 집업",
+      "parent_path": "아우터",
+      "path": "아우터 > 후드 집업",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [
+        "100"
+      ],
+      "child_count": 1,
+      "depth": 1,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "원피스",
+      "parent_path": "",
+      "path": "원피스",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [
+        "100001",
+        "100005",
+        "100002",
+        "100003",
+        "100004",
+        "100006"
+      ],
+      "child_count": 6,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "스커트",
+      "parent_path": "원피스",
+      "path": "원피스 > 스커트",
+      "source": "musinsa",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 1,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "롱스커트",
+      "parent_path": "원피스 > 스커트",
+      "path": "원피스 > 스커트 > 롱스커트",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 4,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "맥시원피스",
+      "parent_path": "원피스 > 스커트",
+      "path": "원피스 > 스커트 > 맥시원피스",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 3,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "미니스커트",
+      "parent_path": "원피스 > 스커트",
+      "path": "원피스 > 스커트 > 미니스커트",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 6,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "미니원피스",
+      "parent_path": "원피스 > 스커트",
+      "path": "원피스 > 스커트 > 미니원피스",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 3,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "미디스커트",
+      "parent_path": "원피스 > 스커트",
+      "path": "원피스 > 스커트 > 미디스커트",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 3,
+      "direct_product_count": 3,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "확정 가능"
+      ],
+      "name": "미디원피스",
+      "parent_path": "원피스 > 스커트",
+      "path": "원피스 > 스커트 > 미디원피스",
+      "source": "musinsa",
+      "status": "direct_product_leaf",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 1,
+      "depth": 1,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "kr",
+      "parent_path": "",
+      "path": "kr",
+      "source": "uniqlo",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 2,
+      "depth": 2,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "ko",
+      "parent_path": "kr",
+      "path": "kr > ko",
+      "source": "uniqlo",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 2,
+      "depth": 3,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "men",
+      "parent_path": "kr > ko",
+      "path": "kr > ko > men",
+      "source": "uniqlo",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 4,
+      "direct_product_count": 15,
+      "is_db_candidate": false,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "검토 필요"
+      ],
+      "name": "bottoms",
+      "parent_path": "kr > ko > men",
+      "path": "kr > ko > men > bottoms",
+      "source": "uniqlo",
+      "status": "unresolved",
+      "unresolved_reason": "복구된 조사 자료에서 매핑 검토 필요",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 4,
+      "direct_product_count": 23,
+      "is_db_candidate": false,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "검토 필요"
+      ],
+      "name": "outerwear",
+      "parent_path": "kr > ko > men",
+      "path": "kr > ko > men > outerwear",
+      "source": "uniqlo",
+      "status": "unresolved",
+      "unresolved_reason": "복구된 조사 자료에서 매핑 검토 필요",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 3,
+      "depth": 3,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "women",
+      "parent_path": "kr > ko",
+      "path": "kr > ko > women",
+      "source": "uniqlo",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 4,
+      "direct_product_count": 15,
+      "is_db_candidate": false,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "검토 필요"
+      ],
+      "name": "bottoms",
+      "parent_path": "kr > ko > women",
+      "path": "kr > ko > women > bottoms",
+      "source": "uniqlo",
+      "status": "unresolved",
+      "unresolved_reason": "복구된 조사 자료에서 매핑 검토 필요",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 4,
+      "direct_product_count": 9,
+      "is_db_candidate": false,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "검토 필요"
+      ],
+      "name": "dress-and-skirts",
+      "parent_path": "kr > ko > women",
+      "path": "kr > ko > women > dress-and-skirts",
+      "source": "uniqlo",
+      "status": "unresolved",
+      "unresolved_reason": "복구된 조사 자료에서 매핑 검토 필요",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 1,
+      "depth": 4,
+      "direct_product_count": 0,
+      "is_db_candidate": true,
+      "is_existing_source_category": false,
+      "mapping_certainty": [],
+      "name": "tops",
+      "parent_path": "kr > ko > women",
+      "path": "kr > ko > women > tops",
+      "source": "uniqlo",
+      "status": "intermediate",
+      "unresolved_reason": "",
+      "unresolved_rule": ""
+    },
+    {
+      "audiences": [
+        "여성"
+      ],
+      "category_codes": [],
+      "child_count": 0,
+      "depth": 5,
+      "direct_product_count": 33,
+      "is_db_candidate": false,
+      "is_existing_source_category": false,
+      "mapping_certainty": [
+        "검토 필요"
+      ],
+      "name": "t-shirts",
+      "parent_path": "kr > ko > women > tops",
+      "path": "kr > ko > women > tops > t-shirts",
+      "source": "uniqlo",
+      "status": "unresolved",
+      "unresolved_reason": "복구된 조사 자료에서 매핑 검토 필요",
+      "unresolved_rule": ""
+    }
+  ]
+}

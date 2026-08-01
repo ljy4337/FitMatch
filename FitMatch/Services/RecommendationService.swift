@@ -207,6 +207,10 @@ struct RecommendationService {
         )
         let fallbackReason = mismatch.note
             ?? "\(productDetailCategory.rawValue) 기준 옷이 없어 선택한 옷으로 임시 비교했습니다."
+        let preservesOfficialFormat = comparisonMatcher.hasSamePlatformOfficialFormat(
+            product: product,
+            selectedItem: selectedReferenceItem
+        )
         return bestRecommendation(
             product: product,
             userFits: [selectedReferenceItem],
@@ -214,7 +218,9 @@ struct RecommendationService {
             basis: RecommendationBasis(
                 userFits: [selectedReferenceItem],
                 methodText: "사용자 선택 임시 비교",
-                scorePenalty: mismatch.note == nil ? 12 : 20,
+                scorePenalty: preservesOfficialFormat && mismatch.note == nil
+                    ? 0
+                    : (mismatch.note == nil ? 12 : 20),
                 fallbackReason: fallbackReason,
                 excludedMeasurementKinds: mismatch.excludedKinds
             ),

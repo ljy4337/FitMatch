@@ -1,0 +1,37 @@
+{
+  "actual": {
+    "file_count": 11,
+    "files": [
+      "categories.csv",
+      "category-mappings.csv",
+      "category-measurements.csv",
+      "duplicates.csv",
+      "failures.csv",
+      "field-aliases.csv",
+      "parser-cases.csv",
+      "products.csv",
+      "report.md",
+      "sources.md",
+      "verification.md"
+    ],
+    "products_by_source": {
+      "musinsa": 200,
+      "uniqlo": 100
+    },
+    "unique_base_products": 295,
+    "unique_category_paths_by_source": {
+      "musinsa": 30,
+      "uniqlo": 5
+    },
+    "unique_products": 300
+  },
+  "checks": {
+    "file_count_11": true,
+    "musinsa_products_200": true,
+    "musinsa_unique_paths_30": true,
+    "uniqlo_products_100": true,
+    "uniqlo_unique_paths_5": true,
+    "unique_products_300": true
+  },
+  "passed": true
+}

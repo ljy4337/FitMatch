@@ -1,0 +1,4631 @@
+{
+  "generated_at": "2026-07-27T16:17:05.173398+00:00",
+  "mode": "bootstrap",
+  "products": [
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "1558197"
+      ],
+      "product_key": "1558197",
+      "product_name": "릴렉스드 베이식 블레이저 [블랙]",
+      "product_url": "https://www.musinsa.com/products/1558197",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "1803235"
+      ],
+      "product_key": "1803235",
+      "product_name": "SAINT TWO TUCK WIDE PANTS BROWN",
+      "product_url": "https://www.musinsa.com/products/1803235",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "1803462"
+      ],
+      "product_key": "1803462",
+      "product_name": "우먼즈 베이식 블레이저 [블랙]",
+      "product_url": "https://www.musinsa.com/products/1803462",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 숏 팬츠"
+      ],
+      "observed_ids": [
+        "1884480"
+      ],
+      "product_key": "1884480",
+      "product_name": "[2PACK] 코스모 밴딩 숏팬츠 2PACK JMSP2332",
+      "product_url": "https://www.musinsa.com/products/1884480",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "2124438"
+      ],
+      "product_key": "2124438",
+      "product_name": "원턱 와이드 슬랙스[딥브라운]",
+      "product_url": "https://www.musinsa.com/products/2124438",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "2303284"
+      ],
+      "product_key": "2303284",
+      "product_name": "우먼즈 스트레이트 데님 팬츠 [미디엄 인디고]",
+      "product_url": "https://www.musinsa.com/products/2303284",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "2398609"
+      ],
+      "product_key": "2398609",
+      "product_name": "우먼즈 라이트웨이트 크롭 반팔 블레이저 [블랙]",
+      "product_url": "https://www.musinsa.com/products/2398609",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "2444810"
+      ],
+      "product_key": "2444810",
+      "product_name": "[쿨탠다드] 릴렉스드 베이식 블레이저 [그레이]",
+      "product_url": "https://www.musinsa.com/products/2444810",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "2578996"
+      ],
+      "product_key": "2578996",
+      "product_name": "[여름원단추가]더블턱 와이드 슬랙스[블랙]",
+      "product_url": "https://www.musinsa.com/products/2578996",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "2609006"
+      ],
+      "product_key": "2609006",
+      "product_name": "라이트웨이트 쓰리 턱 세미 벌룬 슬랙스 [블랙]",
+      "product_url": "https://www.musinsa.com/products/2609006",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "2796118"
+      ],
+      "product_key": "2796118",
+      "product_name": "7160 캣 브러쉬 슬림 진청 부츠컷 데님팬츠",
+      "product_url": "https://www.musinsa.com/products/2796118",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "3132891"
+      ],
+      "product_key": "3132891",
+      "product_name": "리즌 트레일 피그먼트 반팔티 마젠타",
+      "product_url": "https://www.musinsa.com/products/3132891",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "3154695"
+      ],
+      "product_key": "3154695",
+      "product_name": "투턱 밴딩 와이드 린넨 슬랙스 [OATMEAL]",
+      "product_url": "https://www.musinsa.com/products/3154695",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "3182421"
+      ],
+      "product_key": "3182421",
+      "product_name": "커브드 라인 래글런 반팔티 차콜",
+      "product_url": "https://www.musinsa.com/products/3182421",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "3189629"
+      ],
+      "product_key": "3189629",
+      "product_name": "[2PACK] 쿨믹스 와이드 린넨 라이크 롱팬츠 8종 2PACK BJLP4539",
+      "product_url": "https://www.musinsa.com/products/3189629",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "3201942"
+      ],
+      "product_key": "3201942",
+      "product_name": "내츄럴 린넨 데님 와이드 팬츠 (OFF WHITE)",
+      "product_url": "https://www.musinsa.com/products/3201942",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "3274287"
+      ],
+      "product_key": "3274287",
+      "product_name": "카고 파라슈트 치노 팬츠 [KHAKI]",
+      "product_url": "https://www.musinsa.com/products/3274287",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "3306719"
+      ],
+      "product_key": "3306719",
+      "product_name": "라이크린넨 원턱 밴딩 팬츠 ( 5Color )",
+      "product_url": "https://www.musinsa.com/products/3306719",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "3776694"
+      ],
+      "product_key": "3776694",
+      "product_name": "에어라이트 래글런 윈드브레이커_블루",
+      "product_url": "https://www.musinsa.com/products/3776694",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "3790852"
+      ],
+      "product_key": "3790852",
+      "product_name": "우먼즈 시어 후디드 윈드브레이커 재킷 [민트 그레이]",
+      "product_url": "https://www.musinsa.com/products/3790852",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "3791988"
+      ],
+      "product_key": "3791988",
+      "product_name": "데미지 워시드 데님 팬츠-미디엄 블루",
+      "product_url": "https://www.musinsa.com/products/3791988",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "3837942"
+      ],
+      "product_key": "3837942",
+      "product_name": "아디브레이크 팬츠 - 블랙 / IU2519",
+      "product_url": "https://www.musinsa.com/products/3837942",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "3943088"
+      ],
+      "product_key": "3943088",
+      "product_name": "배색라인 와이드 트레이닝 트랙팬츠",
+      "product_url": "https://www.musinsa.com/products/3943088",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "3972476"
+      ],
+      "product_key": "3972476",
+      "product_name": "카멜리아 라운드넥 니트가디건 핑크",
+      "product_url": "https://www.musinsa.com/products/3972476",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "4059353"
+      ],
+      "product_key": "4059353",
+      "product_name": "LOT.052 프리덤 티셔츠 티크 브라운",
+      "product_url": "https://www.musinsa.com/products/4059353",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 숏 팬츠"
+      ],
+      "observed_ids": [
+        "4071959"
+      ],
+      "product_key": "4071959",
+      "product_name": "다트 버뮤다 데님 하프팬츠 샌드블랙",
+      "product_url": "https://www.musinsa.com/products/4071959",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 셔츠 > 블라우스"
+      ],
+      "observed_ids": [
+        "4093932"
+      ],
+      "product_key": "4093932",
+      "product_name": "모먼트 워시드 하프셔츠(4COL)",
+      "product_url": "https://www.musinsa.com/products/4093932",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "4108579"
+      ],
+      "product_key": "4108579",
+      "product_name": "[패션플래닛X드로우핏] 쿨링 릴렉스드 와이드 밴딩 팬츠 [BLACK]",
+      "product_url": "https://www.musinsa.com/products/4108579",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "4109246"
+      ],
+      "product_key": "4109246",
+      "product_name": "스트링 시어 레이스 투웨이 자수 바람막이 긴팔 점퍼 _2COLOR",
+      "product_url": "https://www.musinsa.com/products/4109246",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 맥시원피스"
+      ],
+      "observed_ids": [
+        "4154987"
+      ],
+      "product_key": "4154987",
+      "product_name": "블룸 오브 조이 아노락 원피스_42ON1801",
+      "product_url": "https://www.musinsa.com/products/4154987",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 숏 팬츠"
+      ],
+      "observed_ids": [
+        "4190655"
+      ],
+      "product_key": "4190655",
+      "product_name": "Deep One Tuck Sweat Shorts [Light Grey]",
+      "product_url": "https://www.musinsa.com/products/4190655",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 트레이닝 재킷"
+      ],
+      "observed_ids": [
+        "4336062"
+      ],
+      "product_key": "4336062",
+      "product_name": "파이어버드 니트 탑 - 블랙 / IY7278",
+      "product_url": "https://www.musinsa.com/products/4336062",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 후드 집업"
+      ],
+      "observed_ids": [
+        "4513309"
+      ],
+      "product_key": "4513309",
+      "product_name": "헤비 플리스 집업 후드 - 스카이 캡틴 / T4029683",
+      "product_url": "https://www.musinsa.com/products/4513309",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "4619961"
+      ],
+      "product_key": "4619961",
+      "product_name": "우먼즈 라운드 넥 트위드 크롭 반소매 재킷 [블랙]",
+      "product_url": "https://www.musinsa.com/products/4619961",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니원피스"
+      ],
+      "observed_ids": [
+        "4622191"
+      ],
+      "product_key": "4622191",
+      "product_name": "우먼즈 코튼 베이비 돌 미니 드레스 [화이트]",
+      "product_url": "https://www.musinsa.com/products/4622191",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "4651436"
+      ],
+      "product_key": "4651436",
+      "product_name": "우먼즈 리브드 슬림 스쿱 넥 저지 가디건 [멜란지 그레이]",
+      "product_url": "https://www.musinsa.com/products/4651436",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "4652853"
+      ],
+      "product_key": "4652853",
+      "product_name": "[시티 레저] 에어웨이트 시어 윈드브레이커 재킷 [클라우디 블루]",
+      "product_url": "https://www.musinsa.com/products/4652853",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 기타 하의"
+      ],
+      "observed_ids": [
+        "4663938"
+      ],
+      "product_key": "4663938",
+      "product_name": "시어서커 원 턱 와이드 밴딩 팬츠 [그레이]",
+      "product_url": "https://www.musinsa.com/products/4663938",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니스커트"
+      ],
+      "observed_ids": [
+        "4687212"
+      ],
+      "product_key": "4687212",
+      "product_name": "우먼즈 레이어드 미니 스코츠 [차콜 그레이]",
+      "product_url": "https://www.musinsa.com/products/4687212",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "4702364"
+      ],
+      "product_key": "4702364",
+      "product_name": "[여름용] 사이드 라인 나일론 트랙 팬츠 (BLACK)",
+      "product_url": "https://www.musinsa.com/products/4702364",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 숏 팬츠"
+      ],
+      "observed_ids": [
+        "4719540"
+      ],
+      "product_key": "4719540",
+      "product_name": "투 턱 와이드 치노 쇼츠 [베이지]",
+      "product_url": "https://www.musinsa.com/products/4719540",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "4719977"
+      ],
+      "product_key": "4719977",
+      "product_name": "에어라이트 하이넥 윈드브레이커_크림",
+      "product_url": "https://www.musinsa.com/products/4719977",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "4739114"
+      ],
+      "product_key": "4739114",
+      "product_name": "LOT.051 튜뷸러 티셔츠 더 프레쉬 맨",
+      "product_url": "https://www.musinsa.com/products/4739114",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "4795032"
+      ],
+      "product_key": "4795032",
+      "product_name": "Steve Packable Windbreaker / WHJJG3711U",
+      "product_url": "https://www.musinsa.com/products/4795032",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "4800605"
+      ],
+      "product_key": "4800605",
+      "product_name": "[여름/사계절] 시비코 세미 오버핏 싱글 셋업 수트 [그레이]",
+      "product_url": "https://www.musinsa.com/products/4800605",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 기타 아우터"
+      ],
+      "observed_ids": [
+        "4821229"
+      ],
+      "product_key": "4821229",
+      "product_name": "메트로폴리스 퍼텍스 오버셔츠 재킷 - 블랙 / 18CLOS020A110033A999",
+      "product_url": "https://www.musinsa.com/products/4821229",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "4827195"
+      ],
+      "product_key": "4827195",
+      "product_name": "라이트 플레인 원 턱 와이드 히든 밴딩 슬랙스 [네이비]",
+      "product_url": "https://www.musinsa.com/products/4827195",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "4933453"
+      ],
+      "product_key": "4933453",
+      "product_name": "[메르고X플랙] 셀비지 베를린 K94 블랙 로우",
+      "product_url": "https://www.musinsa.com/products/4933453",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 셔츠 > 블라우스"
+      ],
+      "observed_ids": [
+        "4989733"
+      ],
+      "product_key": "4989733",
+      "product_name": "링클 시어서커 체크 반팔 셔츠 [차콜]",
+      "product_url": "https://www.musinsa.com/products/4989733",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "4993190"
+      ],
+      "product_key": "4993190",
+      "product_name": "라이크 린넨 원턱 와이드 밴딩 팬츠 3Color",
+      "product_url": "https://www.musinsa.com/products/4993190",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "5097306"
+      ],
+      "product_key": "5097306",
+      "product_name": "[셋업] 에어플로우 루즈핏 블레이저 셋업",
+      "product_url": "https://www.musinsa.com/products/5097306",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "5104486"
+      ],
+      "product_key": "5104486",
+      "product_name": "썸머 시스루 니트 가디건_6COLOR(WC25-KN29)",
+      "product_url": "https://www.musinsa.com/products/5104486",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 맥시원피스"
+      ],
+      "observed_ids": [
+        "5134734"
+      ],
+      "product_key": "5134734",
+      "product_name": "플브 슬리브리스 롱 원피스",
+      "product_url": "https://www.musinsa.com/products/5134734",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "5152458"
+      ],
+      "product_key": "5152458",
+      "product_name": "두굿_와이드 원턱 쿨맥스 밴딩 슬랙스 - 2color",
+      "product_url": "https://www.musinsa.com/products/5152458",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "5178636"
+      ],
+      "product_key": "5178636",
+      "product_name": "골지 라운드 반팔 가디건 [블랙]",
+      "product_url": "https://www.musinsa.com/products/5178636",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니원피스"
+      ],
+      "observed_ids": [
+        "5199474"
+      ],
+      "product_key": "5199474",
+      "product_name": "그린 플로우 브이넥 미니원피스",
+      "product_url": "https://www.musinsa.com/products/5199474",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "5279560"
+      ],
+      "product_key": "5279560",
+      "product_name": "​​블랙 커브드 절개라인 와이드 코튼 팬츠",
+      "product_url": "https://www.musinsa.com/products/5279560",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "5283519"
+      ],
+      "product_key": "5283519",
+      "product_name": "아이스 실키 브이넥 반팔 니트 가디건",
+      "product_url": "https://www.musinsa.com/products/5283519",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 셔츠 > 블라우스"
+      ],
+      "observed_ids": [
+        "5310167"
+      ],
+      "product_key": "5310167",
+      "product_name": "롤업 체크 셔츠 블랙",
+      "product_url": "https://www.musinsa.com/products/5310167",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 후드 집업"
+      ],
+      "observed_ids": [
+        "5329361"
+      ],
+      "product_key": "5329361",
+      "product_name": "후드 집업 - 그레이:블랙 / KC9317",
+      "product_url": "https://www.musinsa.com/products/5329361",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 후드 집업"
+      ],
+      "observed_ids": [
+        "5345115"
+      ],
+      "product_key": "5345115",
+      "product_name": "R:SIGNET OVER FIT 2-WAY ZIP-UP (4color)",
+      "product_url": "https://www.musinsa.com/products/5345115",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "5354512"
+      ],
+      "product_key": "5354512",
+      "product_name": "스트라이프 와이드 밴딩 슬랙스 블랙",
+      "product_url": "https://www.musinsa.com/products/5354512",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "5358816"
+      ],
+      "product_key": "5358816",
+      "product_name": "유주얼 세미 와이드 데님 팬츠 [RAW BLACK]",
+      "product_url": "https://www.musinsa.com/products/5358816",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "5413150"
+      ],
+      "product_key": "5413150",
+      "product_name": "코튼 와이드 스터드 팬츠 (스트라이프 버건디)",
+      "product_url": "https://www.musinsa.com/products/5413150",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 경량 패딩 > 패딩 베스트 > 경량 패딩"
+      ],
+      "observed_ids": [
+        "5479465"
+      ],
+      "product_key": "5479465",
+      "product_name": "에센셜 후디드 라이트 패딩 자켓 (8color)",
+      "product_url": "https://www.musinsa.com/products/5479465",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "5626716"
+      ],
+      "product_key": "5626716",
+      "product_name": "우먼즈 리브드 슬림 후디드 저지 가디건 [블랙]",
+      "product_url": "https://www.musinsa.com/products/5626716",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "5695795"
+      ],
+      "product_key": "5695795",
+      "product_name": "우먼즈 린넨 라이크 시어 저지 가디건 [블랙]",
+      "product_url": "https://www.musinsa.com/products/5695795",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미디스커트"
+      ],
+      "observed_ids": [
+        "5698175"
+      ],
+      "product_key": "5698175",
+      "product_name": "우먼즈 더블 레이어 미디 스커트 [아이보리]",
+      "product_url": "https://www.musinsa.com/products/5698175",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "5886363"
+      ],
+      "product_key": "5886363",
+      "product_name": "USAF UTILITY TROUSERS_SAGE GREEN",
+      "product_url": "https://www.musinsa.com/products/5886363",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 경량 패딩 > 패딩 베스트 > 경량 패딩"
+      ],
+      "observed_ids": [
+        "5894308"
+      ],
+      "product_key": "5894308",
+      "product_name": "[W]후드 경량 덕 다운 패딩 점퍼 - 2color",
+      "product_url": "https://www.musinsa.com/products/5894308",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 셔츠 > 블라우스"
+      ],
+      "observed_ids": [
+        "5897661"
+      ],
+      "product_key": "5897661",
+      "product_name": "멀티 스트라이프 셔츠 (SKY BLUE)",
+      "product_url": "https://www.musinsa.com/products/5897661",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "5946738"
+      ],
+      "product_key": "5946738",
+      "product_name": "루즈핏 부츠컷 데님 팬츠 화이트 COWPT002WHITE",
+      "product_url": "https://www.musinsa.com/products/5946738",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "5973119"
+      ],
+      "product_key": "5973119",
+      "product_name": "(W) 워터컬러 시어 윈드브레이커-스카이블루",
+      "product_url": "https://www.musinsa.com/products/5973119",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "5980112"
+      ],
+      "product_key": "5980112",
+      "product_name": "에센셜 라운드 니트 가디건 틸 블루",
+      "product_url": "https://www.musinsa.com/products/5980112",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 긴소매 티셔츠"
+      ],
+      "observed_ids": [
+        "5982920"
+      ],
+      "product_key": "5982920",
+      "product_name": "[SET] 사이드 셔링 레이어드 티셔츠 라이트그레이 MDTS067LGRAY",
+      "product_url": "https://www.musinsa.com/products/5982920",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "5987009"
+      ],
+      "product_key": "5987009",
+      "product_name": "[YOUHEEXOTZ] STAR PATTERN LAYERED BANDING TRACK PANTS_GREY",
+      "product_url": "https://www.musinsa.com/products/5987009",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "5990761"
+      ],
+      "product_key": "5990761",
+      "product_name": "[시티 레저] 시어 윈드브레이커 재킷 [오렌지]",
+      "product_url": "https://www.musinsa.com/products/5990761",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미디원피스"
+      ],
+      "observed_ids": [
+        "5991125"
+      ],
+      "product_key": "5991125",
+      "product_name": "프릴 레이어드 원피스_MIWOWG309C",
+      "product_url": "https://www.musinsa.com/products/5991125",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "5992470"
+      ],
+      "product_key": "5992470",
+      "product_name": "T-Light Jacket Grey",
+      "product_url": "https://www.musinsa.com/products/5992470",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "6005543"
+      ],
+      "product_key": "6005543",
+      "product_name": "그리드 체크 라이트 윈드브레이커 Sky Blue",
+      "product_url": "https://www.musinsa.com/products/6005543",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "스포츠 > 레저 > 상의 > 나시 > 민소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6008535"
+      ],
+      "product_key": "6008535",
+      "product_name": "RIM BREZ 싱글렛 - 블랙 / KR5093",
+      "product_url": "https://www.musinsa.com/products/6008535",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "6026203"
+      ],
+      "product_key": "6026203",
+      "product_name": "V넥 변형 자켓_MIWJKG311C MIWJKG51QC",
+      "product_url": "https://www.musinsa.com/products/6026203",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "6041618"
+      ],
+      "product_key": "6041618",
+      "product_name": "후드 경량 세미 오버핏 바람막이 - 3color",
+      "product_url": "https://www.musinsa.com/products/6041618",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 트레이닝 재킷"
+      ],
+      "observed_ids": [
+        "6048605"
+      ],
+      "product_key": "6048605",
+      "product_name": "[UV차단] 라이트 체크 후드 윈드브레이커_SPJJG25G11",
+      "product_url": "https://www.musinsa.com/products/6048605",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "6102673"
+      ],
+      "product_key": "6102673",
+      "product_name": "[ON]린넨 혼방 와이드 원턱 풀 밴딩 데일리 코튼 팬츠 - 3color",
+      "product_url": "https://www.musinsa.com/products/6102673",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 슈트 > 블레이저 재킷"
+      ],
+      "observed_ids": [
+        "6111537"
+      ],
+      "product_key": "6111537",
+      "product_name": "[여름셋업]Motion-Free 쿨터치 셋업 세트_그레이 (슬렌더핏)_SEJVB07SET",
+      "product_url": "https://www.musinsa.com/products/6111537",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6127741"
+      ],
+      "product_key": "6127741",
+      "product_name": "[에센셜] 린넨 시스루 골지 가디건_MIWCKG510T MIWCKG74QT",
+      "product_url": "https://www.musinsa.com/products/6127741",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6127744"
+      ],
+      "product_key": "6127744",
+      "product_name": "[에센셜] 썸머 시스루 가디건_MIWCKG520T",
+      "product_url": "https://www.musinsa.com/products/6127744",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 숏 팬츠"
+      ],
+      "observed_ids": [
+        "6146614"
+      ],
+      "product_key": "6146614",
+      "product_name": "백포켓 카고 버뮤다 팬츠 (BLACK)",
+      "product_url": "https://www.musinsa.com/products/6146614",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 기타 하의"
+      ],
+      "observed_ids": [
+        "6152463"
+      ],
+      "product_key": "6152463",
+      "product_name": "컴포트 썸머 와이드 팬츠 블랙",
+      "product_url": "https://www.musinsa.com/products/6152463",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6200629"
+      ],
+      "product_key": "6200629",
+      "product_name": "에센셜 골지 하프 티-레몬",
+      "product_url": "https://www.musinsa.com/products/6200629",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "6219777"
+      ],
+      "product_key": "6219777",
+      "product_name": "NJ3BS07J 화이트라벨 아이스펄스 자켓 BLACK",
+      "product_url": "https://www.musinsa.com/products/6219777",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6227070"
+      ],
+      "product_key": "6227070",
+      "product_name": "[ITALY] 펀칭 브이넥 하프 가디건 10 COLOR COWCD005",
+      "product_url": "https://www.musinsa.com/products/6227070",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 트레이닝 재킷"
+      ],
+      "observed_ids": [
+        "6271693"
+      ],
+      "product_key": "6271693",
+      "product_name": "헤리티지 저지 트랙탑 - 블랙",
+      "product_url": "https://www.musinsa.com/products/6271693",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6273570"
+      ],
+      "product_key": "6273570",
+      "product_name": "올데이 린넨 긴팔 골지가디건 RMCKG25R98",
+      "product_url": "https://www.musinsa.com/products/6273570",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 기타 아우터"
+      ],
+      "observed_ids": [
+        "6284785"
+      ],
+      "product_key": "6284785",
+      "product_name": "시어서커 체크 윈드브레이커_SPJJG37C03",
+      "product_url": "https://www.musinsa.com/products/6284785",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6291325"
+      ],
+      "product_key": "6291325",
+      "product_name": "키린드 썸머 긴팔 가디건",
+      "product_url": "https://www.musinsa.com/products/6291325",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 셔츠 > 블라우스"
+      ],
+      "observed_ids": [
+        "6305662"
+      ],
+      "product_key": "6305662",
+      "product_name": "엘로디 하프 체크 셔츠-블루",
+      "product_url": "https://www.musinsa.com/products/6305662",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 롱스커트"
+      ],
+      "observed_ids": [
+        "6305730"
+      ],
+      "product_key": "6305730",
+      "product_name": "지젤 저지 롱 스커트-올리브",
+      "product_url": "https://www.musinsa.com/products/6305730",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6314223"
+      ],
+      "product_key": "6314223",
+      "product_name": "Essential Linen Round Knit Cardigan_CTK231(16color)",
+      "product_url": "https://www.musinsa.com/products/6314223",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6319969"
+      ],
+      "product_key": "6319969",
+      "product_name": "Airy Raglan Cardigan [Sky Blue]",
+      "product_url": "https://www.musinsa.com/products/6319969",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6326050"
+      ],
+      "product_key": "6326050",
+      "product_name": "26 SS 워셔블 케이블 라운드 크롭 니트 가디건 (6컬러)",
+      "product_url": "https://www.musinsa.com/products/6326050",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "6373202"
+      ],
+      "product_key": "6373202",
+      "product_name": "카고 스트링 팬츠_MIWTCG603C",
+      "product_url": "https://www.musinsa.com/products/6373202",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 셔츠 > 블라우스"
+      ],
+      "observed_ids": [
+        "6385445"
+      ],
+      "product_key": "6385445",
+      "product_name": "셔링체크카라셔츠_P6BSH003M",
+      "product_url": "https://www.musinsa.com/products/6385445",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "6385539"
+      ],
+      "product_key": "6385539",
+      "product_name": "[COOL] 유니섹스 세미 와이드 쿨 터치 스트레치 밴딩 슬랙스",
+      "product_url": "https://www.musinsa.com/products/6385539",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "6390295"
+      ],
+      "product_key": "6390295",
+      "product_name": "[여름원단]르체 다크그레이 원 턱 와이드 팬츠",
+      "product_url": "https://www.musinsa.com/products/6390295",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6401860"
+      ],
+      "product_key": "6401860",
+      "product_name": "린넨 시스루 슬림 라운드 가디건 4 COLOR COWCD009",
+      "product_url": "https://www.musinsa.com/products/6401860",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6401861"
+      ],
+      "product_key": "6401861",
+      "product_name": "린넨 시스루 골지 라운드 가디건 5 COLOR COWCD008",
+      "product_url": "https://www.musinsa.com/products/6401861",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6402661"
+      ],
+      "product_key": "6402661",
+      "product_name": "링클 브이넥 크롭 가디건_2Colors",
+      "product_url": "https://www.musinsa.com/products/6402661",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6408788"
+      ],
+      "product_key": "6408788",
+      "product_name": "스냅 헨리넥 티셔츠 [KHAKI] / GF2LTS528",
+      "product_url": "https://www.musinsa.com/products/6408788",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니원피스"
+      ],
+      "observed_ids": [
+        "6411854"
+      ],
+      "product_key": "6411854",
+      "product_name": "Double Layer Lace Back Corset Slip (Ivory)",
+      "product_url": "https://www.musinsa.com/products/6411854",
+      "source": "musinsa"
+    },
+    {
+      "audience": "라이프",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6418260"
+      ],
+      "product_key": "6418260",
+      "product_name": "[반팔티셔츠 흘려도티안나]남여공용 오버핏",
+      "product_url": "https://www.musinsa.com/products/6418260",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 후드 집업"
+      ],
+      "observed_ids": [
+        "6426535"
+      ],
+      "product_key": "6426535",
+      "product_name": "피그먼트 4선 트랙 크롭 반팔 집업 후드 그레이",
+      "product_url": "https://www.musinsa.com/products/6426535",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6453592"
+      ],
+      "product_key": "6453592",
+      "product_name": "[S-XXL] 슬림 크롭 헨리넥 하프 티셔츠 (BLUE)",
+      "product_url": "https://www.musinsa.com/products/6453592",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "6454409"
+      ],
+      "product_key": "6454409",
+      "product_name": "[여름 기획 원단] 커브드 와이드 코튼 팬츠 (BEIGE)",
+      "product_url": "https://www.musinsa.com/products/6454409",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 맥시원피스"
+      ],
+      "observed_ids": [
+        "6458570"
+      ],
+      "product_key": "6458570",
+      "product_name": "스트라이프 브이넥 퍼프 롱 원피스 [SKY BLUE] / GF2LOP514",
+      "product_url": "https://www.musinsa.com/products/6458570",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6458651"
+      ],
+      "product_key": "6458651",
+      "product_name": "온도컷 쿨 에센셜 하프 가디건 [SAGE MINT] / GF2LKC541",
+      "product_url": "https://www.musinsa.com/products/6458651",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "6461382"
+      ],
+      "product_key": "6461382",
+      "product_name": "클래식 옥스포드 워크 팬츠 (BLACK)",
+      "product_url": "https://www.musinsa.com/products/6461382",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미디스커트"
+      ],
+      "observed_ids": [
+        "6472215"
+      ],
+      "product_key": "6472215",
+      "product_name": "도트 레이어 미디 스커트_Butter Cream",
+      "product_url": "https://www.musinsa.com/products/6472215",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "6480709"
+      ],
+      "product_key": "6480709",
+      "product_name": "시그니처 시스루 바람막이",
+      "product_url": "https://www.musinsa.com/products/6480709",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 맥시원피스"
+      ],
+      "observed_ids": [
+        "6488982"
+      ],
+      "product_key": "6488982",
+      "product_name": "썸머 셔링 스트랩 코튼 캉캉 원피스",
+      "product_url": "https://www.musinsa.com/products/6488982",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6499914"
+      ],
+      "product_key": "6499914",
+      "product_name": "포인텔 가디건 326540 [4color]",
+      "product_url": "https://www.musinsa.com/products/6499914",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 민소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6515855"
+      ],
+      "product_key": "6515855",
+      "product_name": "레터즈 라벨 홀터넥 탑 ( 올리브 )",
+      "product_url": "https://www.musinsa.com/products/6515855",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미디스커트"
+      ],
+      "observed_ids": [
+        "6515986"
+      ],
+      "product_key": "6515986",
+      "product_name": "레이어드 미디 스커트_SPWHG25W02",
+      "product_url": "https://www.musinsa.com/products/6515986",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 기타 하의"
+      ],
+      "observed_ids": [
+        "6518709"
+      ],
+      "product_key": "6518709",
+      "product_name": "CHAMBRAY EASY PANTS [INDIGO]",
+      "product_url": "https://www.musinsa.com/products/6518709",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "6532779"
+      ],
+      "product_key": "6532779",
+      "product_name": "LVS 린넨 라이크 세미 와이드 밴딩 팬츠 3color",
+      "product_url": "https://www.musinsa.com/products/6532779",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 민소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6534177"
+      ],
+      "product_key": "6534177",
+      "product_name": "Ohai Pirnt Muscle Navy",
+      "product_url": "https://www.musinsa.com/products/6534177",
+      "source": "musinsa"
+    },
+    {
+      "audience": "라이프",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6562698"
+      ],
+      "product_key": "6562698",
+      "product_name": "[토이스토리] 반팔 티셔츠(Mix)_SPRLG37U27",
+      "product_url": "https://www.musinsa.com/products/6562698",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 니트 > 스웨터"
+      ],
+      "observed_ids": [
+        "6590780"
+      ],
+      "product_key": "6590780",
+      "product_name": "워셔블 헨리넥 반팔 니트 - 4color",
+      "product_url": "https://www.musinsa.com/products/6590780",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 카디건"
+      ],
+      "observed_ids": [
+        "6593581"
+      ],
+      "product_key": "6593581",
+      "product_name": "우먼즈 슬럽 리브드 탑 가디건 세트 [아이보리]",
+      "product_url": "https://www.musinsa.com/products/6593581",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 코튼 팬츠"
+      ],
+      "observed_ids": [
+        "6609200"
+      ],
+      "product_key": "6609200",
+      "product_name": "썸머 와이드 커브드 린넨 라이크 팬츠[2COLORS]",
+      "product_url": "https://www.musinsa.com/products/6609200",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6609390"
+      ],
+      "product_key": "6609390",
+      "product_name": "EL 갬블 래글런 라인 반팔티셔츠 5Color",
+      "product_url": "https://www.musinsa.com/products/6609390",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "스포츠 > 레저 > 상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6632593"
+      ],
+      "product_key": "6632593",
+      "product_name": "[스노우피크 I 도라에몽] 캠핑 반팔 티셔츠 (S26MUFTS94) Off White",
+      "product_url": "https://www.musinsa.com/products/6632593",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "스포츠 > 레저 > 상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6632608"
+      ],
+      "product_key": "6632608",
+      "product_name": "[스노우피크 I 도라에몽] 캠프파이어 반팔 티셔츠 (S26MUFTS95) Dark Khaki",
+      "product_url": "https://www.musinsa.com/products/6632608",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 긴소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6656593"
+      ],
+      "product_key": "6656593",
+      "product_name": "[Pokémon] 심볼 서클 롱 슬리브 [블랙]",
+      "product_url": "https://www.musinsa.com/products/6656593",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 긴소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6656596"
+      ],
+      "product_key": "6656596",
+      "product_name": "[Pokémon] 리피트 팬텀 롱 슬리브 [블랙]",
+      "product_url": "https://www.musinsa.com/products/6656596",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6656624"
+      ],
+      "product_key": "6656624",
+      "product_name": "[Pokémon] 블랭크 티셔츠 [딥 차콜]",
+      "product_url": "https://www.musinsa.com/products/6656624",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6656633"
+      ],
+      "product_key": "6656633",
+      "product_name": "[Pokémon] 슬리핑 잠만보 티셔츠 [애쉬 그레이]",
+      "product_url": "https://www.musinsa.com/products/6656633",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 숏 팬츠"
+      ],
+      "observed_ids": [
+        "6656659"
+      ],
+      "product_key": "6656659",
+      "product_name": "[Pokémon] 그루핑 스웻 팬츠 [멜란지 그레이]",
+      "product_url": "https://www.musinsa.com/products/6656659",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6666875"
+      ],
+      "product_key": "6666875",
+      "product_name": "레이어드 셔링 반팔티 (RE)_SPRWG37G30",
+      "product_url": "https://www.musinsa.com/products/6666875",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "스포츠 > 레저 > 아우터 > 나일론 > 코치 재킷"
+      ],
+      "observed_ids": [
+        "6670811"
+      ],
+      "product_key": "6670811",
+      "product_name": "솔라노 후디 남성 - BLACK / AJQSM09568",
+      "product_url": "https://www.musinsa.com/products/6670811",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6673687"
+      ],
+      "product_key": "6673687",
+      "product_name": "피그먼트 헨리넥 머슬핏 반팔",
+      "product_url": "https://www.musinsa.com/products/6673687",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미디원피스"
+      ],
+      "observed_ids": [
+        "6677393"
+      ],
+      "product_key": "6677393",
+      "product_name": "웨스턴 데님 원피스 (RE)_SPOJG37G01",
+      "product_url": "https://www.musinsa.com/products/6677393",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "스포츠 > 레저 > 하의 > 기타 바지"
+      ],
+      "observed_ids": [
+        "6679899"
+      ],
+      "product_key": "6679899",
+      "product_name": "트레이닝 쇼츠 - 블랙",
+      "product_url": "https://www.musinsa.com/products/6679899",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6687292"
+      ],
+      "product_key": "6687292",
+      "product_name": "LACE CROSS T-SHIRT / PINK",
+      "product_url": "https://www.musinsa.com/products/6687292",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 긴소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6689485"
+      ],
+      "product_key": "6689485",
+      "product_name": "Deep V long sleeve t-shirt_4colors",
+      "product_url": "https://www.musinsa.com/products/6689485",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6689505"
+      ],
+      "product_key": "6689505",
+      "product_name": "Vintage estival t-shirt_3colors",
+      "product_url": "https://www.musinsa.com/products/6689505",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6693832"
+      ],
+      "product_key": "6693832",
+      "product_name": "Enter half sleeve button tee - Pink",
+      "product_url": "https://www.musinsa.com/products/6693832",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6693866"
+      ],
+      "product_key": "6693866",
+      "product_name": "피그먼트 세미 크롭 라운드 반팔 티셔츠_CHARCOAL",
+      "product_url": "https://www.musinsa.com/products/6693866",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니원피스"
+      ],
+      "observed_ids": [
+        "6693986"
+      ],
+      "product_key": "6693986",
+      "product_name": "[블루클로젯 X 미헤브] 체크 레이어드 슬리브리스 원피스 버터옐로우",
+      "product_url": "https://www.musinsa.com/products/6693986",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "6694431"
+      ],
+      "product_key": "6694431",
+      "product_name": "[SET]STAR CROSS 부츠컷팬츠+WAIST BAND",
+      "product_url": "https://www.musinsa.com/products/6694431",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 후드 집업"
+      ],
+      "observed_ids": [
+        "6695701"
+      ],
+      "product_key": "6695701",
+      "product_name": "Molly V-neck hoodie - Loose ver.",
+      "product_url": "https://www.musinsa.com/products/6695701",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6696689"
+      ],
+      "product_key": "6696689",
+      "product_name": "W 베이직 스퀘어넥 티셔츠 (3colors)",
+      "product_url": "https://www.musinsa.com/products/6696689",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니원피스"
+      ],
+      "observed_ids": [
+        "6696985"
+      ],
+      "product_key": "6696985",
+      "product_name": "폴로 드레스 - 나이트인디고 / KU0510",
+      "product_url": "https://www.musinsa.com/products/6696985",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 숏 팬츠"
+      ],
+      "observed_ids": [
+        "6697003"
+      ],
+      "product_key": "6697003",
+      "product_name": "W 베이직 마이크로 미니 데님 쇼츠_라이트블루",
+      "product_url": "https://www.musinsa.com/products/6697003",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "6697020"
+      ],
+      "product_key": "6697020",
+      "product_name": "SUNBURN X PAUL FRANK COTTON BANDING PANTS, MULTI",
+      "product_url": "https://www.musinsa.com/products/6697020",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6704378"
+      ],
+      "product_key": "6704378",
+      "product_name": "Gildan X 디자인컬렉션 세미 크롭티셔츠 모음전",
+      "product_url": "https://www.musinsa.com/products/6704378",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6706361"
+      ],
+      "product_key": "6706361",
+      "product_name": "(W) ZRS Symbol Applique Tee (MINT)",
+      "product_url": "https://www.musinsa.com/products/6706361",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6708096"
+      ],
+      "product_key": "6708096",
+      "product_name": "데일리 롤업 레이어드 크롭 티셔츠-3Color",
+      "product_url": "https://www.musinsa.com/products/6708096",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6708161"
+      ],
+      "product_key": "6708161",
+      "product_name": "데일리 롤업 레이어드 ST 크롭 티셔츠-3Color",
+      "product_url": "https://www.musinsa.com/products/6708161",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6708755"
+      ],
+      "product_key": "6708755",
+      "product_name": "SP2605 빈티지 캠핑 그래픽 피그먼트 오버핏 반팔티 블랙",
+      "product_url": "https://www.musinsa.com/products/6708755",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6709666"
+      ],
+      "product_key": "6709666",
+      "product_name": "C106 롤업 트림 링거 반팔 티셔츠_블랙",
+      "product_url": "https://www.musinsa.com/products/6709666",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6709673"
+      ],
+      "product_key": "6709673",
+      "product_name": "Flight 666 원 오프 숄더 보트넥 반팔 티셔츠 (민트)",
+      "product_url": "https://www.musinsa.com/products/6709673",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6715231"
+      ],
+      "product_key": "6715231",
+      "product_name": "GLOWNY X MY MELODY BIG BOW BOXY TEE (WHITE)",
+      "product_url": "https://www.musinsa.com/products/6715231",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "6719352"
+      ],
+      "product_key": "6719352",
+      "product_name": "[여름 기획 원단] 커브드 배럴 데님 팬츠 (BLACK)",
+      "product_url": "https://www.musinsa.com/products/6719352",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 후드 집업"
+      ],
+      "observed_ids": [
+        "6721671"
+      ],
+      "product_key": "6721671",
+      "product_name": "[우사하나] 크롭 후드 집업(Oatmeal Melange)_SPMZG37U06",
+      "product_url": "https://www.musinsa.com/products/6721671",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니스커트"
+      ],
+      "observed_ids": [
+        "6721706"
+      ],
+      "product_key": "6721706",
+      "product_name": "아일렛 캉캉이 미니 스커트 화이트",
+      "product_url": "https://www.musinsa.com/products/6721706",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성|여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6722931"
+      ],
+      "product_key": "6722931",
+      "product_name": "Happy 패밀리 크롭 티셔츠_PURPLE",
+      "product_url": "https://www.musinsa.com/products/6722931",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6723404"
+      ],
+      "product_key": "6723404",
+      "product_name": "RIDE HARD 헨리넥 크롭핏 반팔티 AST3680 (2COLOR)",
+      "product_url": "https://www.musinsa.com/products/6723404",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "6723562"
+      ],
+      "product_key": "6723562",
+      "product_name": "[2PACK][여름 기획 원단] 커브드 배럴 데님 팬츠 (2 COLORUS)",
+      "product_url": "https://www.musinsa.com/products/6723562",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "6724257"
+      ],
+      "product_key": "6724257",
+      "product_name": "1755 SOFT WHITE JEANS [WIDE FLARE]",
+      "product_url": "https://www.musinsa.com/products/6724257",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "스포츠 > 레저 > 하의 > 기타 바지"
+      ],
+      "observed_ids": [
+        "6729526"
+      ],
+      "product_key": "6729526",
+      "product_name": "여성요가복 하렘 와이드 팬츠 5PP6513",
+      "product_url": "https://www.musinsa.com/products/6729526",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "6729879"
+      ],
+      "product_key": "6729879",
+      "product_name": "윙즈 커프스 팬츠 (펄 그레이 멜란지) (펄 그레이 멜란지)",
+      "product_url": "https://www.musinsa.com/products/6729879",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6732631"
+      ],
+      "product_key": "6732631",
+      "product_name": "Hearts Slim Fit T-shirts Lime",
+      "product_url": "https://www.musinsa.com/products/6732631",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 데님 팬츠"
+      ],
+      "observed_ids": [
+        "6733025"
+      ],
+      "product_key": "6733025",
+      "product_name": "SUNFADE DENIM PANTS / LIGHT BLUE",
+      "product_url": "https://www.musinsa.com/products/6733025",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6737107"
+      ],
+      "product_key": "6737107",
+      "product_name": "SKETCH STAR T-SHIRTS (White)",
+      "product_url": "https://www.musinsa.com/products/6737107",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "스포츠 > 레저 > 상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6745094"
+      ],
+      "product_key": "6745094",
+      "product_name": "NBNEG35613 / UNI FROZEN 픽토그램 반팔티 (NAVY)",
+      "product_url": "https://www.musinsa.com/products/6745094",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니원피스"
+      ],
+      "observed_ids": [
+        "6746766"
+      ],
+      "product_key": "6746766",
+      "product_name": "퍼프 로제트 드레스 *네이비",
+      "product_url": "https://www.musinsa.com/products/6746766",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 트레이닝 > 조거 팬츠"
+      ],
+      "observed_ids": [
+        "6754165"
+      ],
+      "product_key": "6754165",
+      "product_name": "88 사이드 플래시 릴랙스 새깅 팬츠_3COL",
+      "product_url": "https://www.musinsa.com/products/6754165",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6755261"
+      ],
+      "product_key": "6755261",
+      "product_name": "레이스 트리밍 저지탑 그레이",
+      "product_url": "https://www.musinsa.com/products/6755261",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 셔츠 > 블라우스"
+      ],
+      "observed_ids": [
+        "6755330"
+      ],
+      "product_key": "6755330",
+      "product_name": "캉캉이 라운드넥 반소매 블라우스 네이비",
+      "product_url": "https://www.musinsa.com/products/6755330",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6760735"
+      ],
+      "product_key": "6760735",
+      "product_name": "배색 롤업 레이어드 반팔티 YT-3Y31",
+      "product_url": "https://www.musinsa.com/products/6760735",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6761404"
+      ],
+      "product_key": "6761404",
+      "product_name": "도트 듀얼스타 레귤러 반팔 티셔츠_7colors",
+      "product_url": "https://www.musinsa.com/products/6761404",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6768741"
+      ],
+      "product_key": "6768741",
+      "product_name": "One-Shoulder T-shirt(F) / WHRPG3723F",
+      "product_url": "https://www.musinsa.com/products/6768741",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6774915"
+      ],
+      "product_key": "6774915",
+      "product_name": "UNIVERSAL WASHED OVERSIZED TEE_CHARCOAL BLACK [LC262TS86CB]",
+      "product_url": "https://www.musinsa.com/products/6774915",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6778749"
+      ],
+      "product_key": "6778749",
+      "product_name": "PPG HEART CHERRY TEE CHARCOAL",
+      "product_url": "https://www.musinsa.com/products/6778749",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 기타 상의"
+      ],
+      "observed_ids": [
+        "6786576"
+      ],
+      "product_key": "6786576",
+      "product_name": "[빛오 x 일리오] Pink-Brown lace layered cardigan set",
+      "product_url": "https://www.musinsa.com/products/6786576",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 숏 팬츠"
+      ],
+      "observed_ids": [
+        "6786592"
+      ],
+      "product_key": "6786592",
+      "product_name": "[빛오 x 일리오] Black Lace Belted Shorts",
+      "product_url": "https://www.musinsa.com/products/6786592",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미디원피스"
+      ],
+      "observed_ids": [
+        "6786600"
+      ],
+      "product_key": "6786600",
+      "product_name": "[빛오 x 일리오] Gray Asymmetric Chiffon Dress",
+      "product_url": "https://www.musinsa.com/products/6786600",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "원피스 > 스커트 > 미니스커트"
+      ],
+      "observed_ids": [
+        "6786762"
+      ],
+      "product_key": "6786762",
+      "product_name": "G BOX MINI SKIRT (BLACK)",
+      "product_url": "https://www.musinsa.com/products/6786762",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6789405"
+      ],
+      "product_key": "6789405",
+      "product_name": "26/27 Mascompany United Jersey",
+      "product_url": "https://www.musinsa.com/products/6789405",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 후드 집업"
+      ],
+      "observed_ids": [
+        "6794273"
+      ],
+      "product_key": "6794273",
+      "product_name": "닉켈 동키 나그랑 후드집업",
+      "product_url": "https://www.musinsa.com/products/6794273",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6797265"
+      ],
+      "product_key": "6797265",
+      "product_name": "[SET] Charcoal Square Neck Lace Pocket T-shirt + Lace Belted Shorts",
+      "product_url": "https://www.musinsa.com/products/6797265",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6797266"
+      ],
+      "product_key": "6797266",
+      "product_name": "[SET] Black Square Neck Lace Pocket T-shirt + Lace Belted Shorts",
+      "product_url": "https://www.musinsa.com/products/6797266",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "상의 > 반소매 티셔츠"
+      ],
+      "observed_ids": [
+        "6797271"
+      ],
+      "product_key": "6797271",
+      "product_name": "[SET] Black dots Square Neck Lace Pocket T-shirt + Lace Belted Shorts",
+      "product_url": "https://www.musinsa.com/products/6797271",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "아우터 > 후드 집업"
+      ],
+      "observed_ids": [
+        "6806873"
+      ],
+      "product_key": "6806873",
+      "product_name": "코튼 블렌디드 후드집업_블랙",
+      "product_url": "https://www.musinsa.com/products/6806873",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "스포츠 > 레저 > 하의 > 숏팬츠"
+      ],
+      "observed_ids": [
+        "6809660"
+      ],
+      "product_key": "6809660",
+      "product_name": "NS6NS02A 남성 플렉스코어 쇼츠 BLACK",
+      "product_url": "https://www.musinsa.com/products/6809660",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 기타 하의"
+      ],
+      "observed_ids": [
+        "6829724"
+      ],
+      "product_key": "6829724",
+      "product_name": "워시드 레귤러 워크 팬츠_Blue",
+      "product_url": "https://www.musinsa.com/products/6829724",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 기타 하의"
+      ],
+      "observed_ids": [
+        "6837218"
+      ],
+      "product_key": "6837218",
+      "product_name": "CHAMBRAY EASY PANTS [BLUE]",
+      "product_url": "https://www.musinsa.com/products/6837218",
+      "source": "musinsa"
+    },
+    {
+      "audience": "남성",
+      "color_codes": [],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "바지 > 슈트 팬츠 > 슬랙스"
+      ],
+      "observed_ids": [
+        "750908"
+      ],
+      "product_key": "750908",
+      "product_name": "[여름원단추가] 유니섹스 세미 와이드 밴딩 슬랙스 블랙",
+      "product_url": "https://www.musinsa.com/products/750908",
+      "source": "musinsa"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E424873-000"
+      ],
+      "product_key": "E424873",
+      "product_name": "여성 크루넥T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E424873-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000",
+        "001"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E444557-000",
+        "E444557-001"
+      ],
+      "product_key": "E444557",
+      "product_name": "남성 감탄재킷(라이트) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E444557-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E448034-000"
+      ],
+      "product_key": "E448034",
+      "product_name": "남성 감탄재킷 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E448034-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E448040-000"
+      ],
+      "product_key": "E448040",
+      "product_name": "남성 감탄재킷(CUSTOM ORDER·사이즈M) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E448040-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E448041-000"
+      ],
+      "product_key": "E448041",
+      "product_name": "남성 감탄재킷(CUSTOM ORDER·사이즈L) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E448041-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E448042-000"
+      ],
+      "product_key": "E448042",
+      "product_name": "남성 감탄재킷(CUSTOM ORDER·사이즈XL) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E448042-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E448043-000"
+      ],
+      "product_key": "E448043",
+      "product_name": "남성 감탄재킷(CUSTOM ORDER·사이즈XXL) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E448043-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E448044-000"
+      ],
+      "product_key": "E448044",
+      "product_name": "남성 감탄재킷(CUSTOM ORDER·사이즈3XL) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E448044-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E450195-000"
+      ],
+      "product_key": "E450195",
+      "product_name": "젠더리스 후리스풀집재킷 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E450195-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E458325-000"
+      ],
+      "product_key": "E458325",
+      "product_name": "젠더리스 스트레치이지쇼트팬츠(시어서커) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E458325-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E465203-000"
+      ],
+      "product_key": "E465203",
+      "product_name": "남성 DRY-EX UV PROTECTION풀집파카 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E465203-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E465751-000"
+      ],
+      "product_key": "E465751",
+      "product_name": "여성 소프트립T(긴팔) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E465751-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E465755-000"
+      ],
+      "product_key": "E465755",
+      "product_name": "여성 AIRism코튼T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E465755-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E465760-000"
+      ],
+      "product_key": "E465760",
+      "product_name": "여성 미니T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E465760-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E468671-000"
+      ],
+      "product_key": "E468671",
+      "product_name": "남성 감탄재킷(패턴) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E468671-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000",
+        "001"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E469292-000",
+        "E469292-001"
+      ],
+      "product_key": "E469292",
+      "product_name": "남성 포켓터블UV PROTECTION파카 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E469292-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E469956-000"
+      ],
+      "product_key": "E469956",
+      "product_name": "젠더리스 후리스풀집재킷(컬러블록) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E469956-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E470143-000"
+      ],
+      "product_key": "E470143",
+      "product_name": "여성 소프트니트후리스크루넥T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E470143-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E473696-000"
+      ],
+      "product_key": "E473696",
+      "product_name": "여성 리넨코튼쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E473696-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E475386-000"
+      ],
+      "product_key": "E475386",
+      "product_name": "젠더리스 울트라스트레치액티브쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E475386-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E476225-000"
+      ],
+      "product_key": "E476225",
+      "product_name": "젠더리스 스웨트와이드쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E476225-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E477704-000"
+      ],
+      "product_key": "E477704",
+      "product_name": "젠더리스 감탄블레이저 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E477704-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E480054-000"
+      ],
+      "product_key": "E480054",
+      "product_name": "여성 AIRism코튼T(스트라이프) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E480054-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E480302-000"
+      ],
+      "product_key": "E480302",
+      "product_name": "여성 플리츠스코츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E480302-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E481582-000"
+      ],
+      "product_key": "E481582",
+      "product_name": "젠더리스 스트레치이지쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E481582-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E481583-000"
+      ],
+      "product_key": "E481583",
+      "product_name": "젠더리스 스트레치이지쇼트팬츠(데님) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E481583-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E482172-000"
+      ],
+      "product_key": "E482172",
+      "product_name": "여성 리넨코튼쇼트팬츠(스트라이프) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482172-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E482260-000"
+      ],
+      "product_key": "E482260",
+      "product_name": "남성 리넨블렌드이지쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482260-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E482443-000"
+      ],
+      "product_key": "E482443",
+      "product_name": "젠더리스 코튼리넨셔츠재킷 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482443-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E482646-000"
+      ],
+      "product_key": "E482646",
+      "product_name": "여성 코튼이지쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482646-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E482648-000"
+      ],
+      "product_key": "E482648",
+      "product_name": "여성 드레이프이지쇼트팬츠(프린트) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482648-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E482758-000"
+      ],
+      "product_key": "E482758",
+      "product_name": "젠더리스 스웨트와이드쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482758-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E482937-000"
+      ],
+      "product_key": "E482937",
+      "product_name": "젠더리스 기어쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482937-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E482944-000"
+      ],
+      "product_key": "E482944",
+      "product_name": "젠더리스 치노쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482944-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E482965-000"
+      ],
+      "product_key": "E482965",
+      "product_name": "젠더리스 턱와이드쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482965-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E482982-000"
+      ],
+      "product_key": "E482982",
+      "product_name": "여성 울트라스트레치AIRism원피스(슬리브리스) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482982-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E482983-000"
+      ],
+      "product_key": "E482983",
+      "product_name": "여성 콤비네이션원피스(슬리브리스) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E482983-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E483268-000"
+      ],
+      "product_key": "E483268",
+      "product_name": "여성 그래픽T A | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483268-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E483461-000"
+      ],
+      "product_key": "E483461",
+      "product_name": "여성 SUPIMA COTTON T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483461-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E483463-000"
+      ],
+      "product_key": "E483463",
+      "product_name": "여성 와플풀오픈미니T(패턴)딥넥 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483463-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E483479-000"
+      ],
+      "product_key": "E483479",
+      "product_name": "여성 소프트립탱크탑 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483479-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E483512-000"
+      ],
+      "product_key": "E483512",
+      "product_name": "여성 데님쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483512-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E483535-000"
+      ],
+      "product_key": "E483535",
+      "product_name": "여성 미니T(스트라이프)A | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483535-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E483564-000"
+      ],
+      "product_key": "E483564",
+      "product_name": "여성 코튼셔링원피스(슬리브리스)스트라이프 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483564-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E483576-000"
+      ],
+      "product_key": "E483576",
+      "product_name": "여성 슬러브저지V넥T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483576-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E483912-000"
+      ],
+      "product_key": "E483912",
+      "product_name": "여성 코튼이지쇼트팬츠(데님) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483912-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E483913-000"
+      ],
+      "product_key": "E483913",
+      "product_name": "여성 코튼이지쇼트팬츠(스트라이프) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483913-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E483975-000"
+      ],
+      "product_key": "E483975",
+      "product_name": "남성 DRY-EX UV PROTECTION풀집파카(프린트) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483975-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E483986-000"
+      ],
+      "product_key": "E483986",
+      "product_name": "여성 AIRism코튼T원피스(반팔) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E483986-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E484026-000"
+      ],
+      "product_key": "E484026",
+      "product_name": "여성 코튼셔링원피스(슬리브리스)프린트 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484026-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E484209-000"
+      ],
+      "product_key": "E484209",
+      "product_name": "젠더리스 데님쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484209-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E484226-000"
+      ],
+      "product_key": "E484226",
+      "product_name": "여성 프런트오픈셸탑T(슬리브리스) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484226-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E484227-000"
+      ],
+      "product_key": "E484227",
+      "product_name": "여성 포인텔탱크탑 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484227-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E484228-000"
+      ],
+      "product_key": "E484228",
+      "product_name": "여성 포인텔탱크탑(프린트) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484228-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E484249-000"
+      ],
+      "product_key": "E484249",
+      "product_name": "남성 집업블루종 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484249-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "001",
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E484418-001",
+        "E484418-000"
+      ],
+      "product_key": "E484418",
+      "product_name": "여성 셔링볼륨슬리브T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484418-001",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E484421-000"
+      ],
+      "product_key": "E484421",
+      "product_name": "여성 그래픽T B | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484421-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E484457-000"
+      ],
+      "product_key": "E484457",
+      "product_name": "여성 립미니T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484457-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E484598-000"
+      ],
+      "product_key": "E484598",
+      "product_name": "여성 나일론쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484598-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E484610-000"
+      ],
+      "product_key": "E484610",
+      "product_name": "젠더리스 해링턴재킷 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E484610-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E485025-000"
+      ],
+      "product_key": "E485025",
+      "product_name": "여성 포인텔라운드넥미니T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485025-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E485593-000"
+      ],
+      "product_key": "E485593",
+      "product_name": "여성 나일론큐롯 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485593-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E485610-000"
+      ],
+      "product_key": "E485610",
+      "product_name": "여성 소프트모달탱크탑(레이스포인텔) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485610-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E485642-000"
+      ],
+      "product_key": "E485642",
+      "product_name": "여성 소프트립탱크탑(스트라이프) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485642-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E485647-000"
+      ],
+      "product_key": "E485647",
+      "product_name": "여성 소프트립탱크탑(링거) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485647-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E485709-000"
+      ],
+      "product_key": "E485709",
+      "product_name": "여성 소프트모달캐미솔(스트라이프) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485709-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E485710-000"
+      ],
+      "product_key": "E485710",
+      "product_name": "여성 소프트모달캐미솔(플라워) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485710-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E485711-000"
+      ],
+      "product_key": "E485711",
+      "product_name": "여성 소프트모달캐미솔(하트) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485711-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E485739-000"
+      ],
+      "product_key": "E485739",
+      "product_name": "젠더리스 이지쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E485739-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E486164-000"
+      ],
+      "product_key": "E486164",
+      "product_name": "남성 포켓터블UV PROTECTION파카 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E486164-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E486167-000"
+      ],
+      "product_key": "E486167",
+      "product_name": "남성 윈드블럭스탠드블루종 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E486167-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E487277-000"
+      ],
+      "product_key": "E487277",
+      "product_name": "여성 미니T(스트라이프)B | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487277-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E487278-000"
+      ],
+      "product_key": "E487278",
+      "product_name": "여성 캐미솔원피스 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487278-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E487286-000"
+      ],
+      "product_key": "E487286",
+      "product_name": "여성 콤비네이션티어드원피스(슬리브리스) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487286-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E487579-000"
+      ],
+      "product_key": "E487579",
+      "product_name": "여성 미니T(긴팔) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487579-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E487688-000"
+      ],
+      "product_key": "E487688",
+      "product_name": "젠더리스 커버롤 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487688-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E487819-000"
+      ],
+      "product_key": "E487819",
+      "product_name": "여성 보트넥T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487819-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E487822-000"
+      ],
+      "product_key": "E487822",
+      "product_name": "여성 릴랙스원피스(반팔) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487822-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E487891-000"
+      ],
+      "product_key": "E487891",
+      "product_name": "젠더리스 와이드쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487891-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E487892-000"
+      ],
+      "product_key": "E487892",
+      "product_name": "젠더리스 턱쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487892-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E487908-000"
+      ],
+      "product_key": "E487908",
+      "product_name": "여성 립헨리넥T(긴팔) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E487908-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E488010-000"
+      ],
+      "product_key": "E488010",
+      "product_name": "여성 스마트큐롯 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488010-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E488087-000"
+      ],
+      "product_key": "E488087",
+      "product_name": "여성 프릴T | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488087-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000",
+        "001"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E488088-000",
+        "E488088-001"
+      ],
+      "product_key": "E488088",
+      "product_name": "여성 셔링T(슬리브리스) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488088-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000",
+        "001"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > dress-and-skirts"
+      ],
+      "observed_ids": [
+        "E488216-000",
+        "E488216-001"
+      ],
+      "product_key": "E488216",
+      "product_name": "여성 셔링원피스(슬리브리스) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488216-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E488298-000"
+      ],
+      "product_key": "E488298",
+      "product_name": "여성 후드립T(긴팔) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488298-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E488371-000"
+      ],
+      "product_key": "E488371",
+      "product_name": "젠더리스 기어쇼트팬츠 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488371-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > bottoms"
+      ],
+      "observed_ids": [
+        "E488694-000"
+      ],
+      "product_key": "E488694",
+      "product_name": "여성 데님큐롯 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488694-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E488828-000"
+      ],
+      "product_key": "E488828",
+      "product_name": "젠더리스 커버롤(데님) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488828-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E488829-000"
+      ],
+      "product_key": "E488829",
+      "product_name": "젠더리스 커버롤(데님) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488829-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E488997-000"
+      ],
+      "product_key": "E488997",
+      "product_name": "젠더리스 와이드쇼트팬츠(프린트) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E488997-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E489125-000"
+      ],
+      "product_key": "E489125",
+      "product_name": "젠더리스 턱쇼트팬츠(프린트체크) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E489125-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > bottoms"
+      ],
+      "observed_ids": [
+        "E489142-000"
+      ],
+      "product_key": "E489142",
+      "product_name": "젠더리스 턱쇼트팬츠(프린트플라워) | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E489142-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > women > tops > t-shirts"
+      ],
+      "observed_ids": [
+        "E489372-000"
+      ],
+      "product_key": "E489372",
+      "product_name": "여성 미니T(긴팔)래글런 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E489372-000",
+      "source": "uniqlo"
+    },
+    {
+      "audience": "여성",
+      "color_codes": [
+        "000"
+      ],
+      "evidence": "restored_survey_products.csv",
+      "exposure_paths": [
+        "kr > ko > men > outerwear"
+      ],
+      "observed_ids": [
+        "E491096-000"
+      ],
+      "product_key": "E491096",
+      "product_name": "젠더리스 집업블루종 | UNIQLO KR",
+      "product_url": "https://www.uniqlo.com/kr/ko/products/E491096-000",
+      "source": "uniqlo"
+    }
+  ]
+}

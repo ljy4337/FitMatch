@@ -1,0 +1,66 @@
+source,product_key,observed_id,color_code,category_path,category_url,evidence_url,evidence_type,category_evidence_source
+musinsa,1803235,1803235,,바지 > 슈트 팬츠/슬랙스,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/1803235,live_public_response,
+musinsa,1803462,1803462,,아우터 > 슈트/블레이저 재킷,https://www.musinsa.com/category/002/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/1803462,live_public_response,
+musinsa,1884480,1884480,,바지 > 숏 팬츠,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/1884480,live_public_response,
+musinsa,2124438,2124438,,바지 > 슈트 팬츠/슬랙스,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/2124438,live_public_response,
+musinsa,2398609,2398609,,아우터 > 슈트/블레이저 재킷,https://www.musinsa.com/category/002/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/2398609,live_public_response,
+musinsa,2444810,2444810,,아우터 > 슈트/블레이저 재킷,https://www.musinsa.com/category/002/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/2444810,live_public_response,
+musinsa,2578996,2578996,,바지 > 슈트 팬츠/슬랙스,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/2578996,live_public_response,
+musinsa,2609006,2609006,,바지 > 슈트 팬츠/슬랙스,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/2609006,live_public_response,
+musinsa,2737014,2737014,,아우터 > 사파리/헌팅 재킷,https://www.musinsa.com/category/002/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/2737014,live_public_response,
+musinsa,2796118,2796118,,바지 > 데님 팬츠,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/2796118,live_public_response,
+musinsa,3132891,3132891,,상의 > 반소매 티셔츠,https://www.musinsa.com/category/001/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3132891,live_public_response,
+musinsa,3135305,3135305,,원피스/스커트 > 롱스커트,https://www.musinsa.com/category/100/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3135305,live_public_response,
+musinsa,3154695,3154695,,바지 > 슈트 팬츠/슬랙스,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3154695,live_public_response,
+musinsa,3182421,3182421,,상의 > 반소매 티셔츠,https://www.musinsa.com/category/001/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3182421,live_public_response,
+musinsa,3201942,3201942,,바지 > 데님 팬츠,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3201942,live_public_response,
+musinsa,3298849,3298849,,바지 > 코튼 팬츠,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3298849,live_public_response,
+musinsa,3776694,3776694,,아우터 > 나일론/코치 재킷,https://www.musinsa.com/category/002/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3776694,live_public_response,
+musinsa,3791988,3791988,,바지 > 데님 팬츠,https://www.musinsa.com/category/003/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3791988,live_public_response,
+musinsa,3812607,3812607,,상의 > 반소매 티셔츠,https://www.musinsa.com/category/001/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/3812607,live_public_response,
+musinsa,4043491,4043491,,원피스/스커트 > 미니원피스,https://www.musinsa.com/category/100/goods?gf=A,https://goods-detail.musinsa.com/api2/goods/4043491,live_public_response,
+uniqlo,E422992,E422992-000,000,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,https://www.uniqlo.com/kr/ko/men/tops/t-shirts,https://www.uniqlo.com/kr/ko/products/E422992-000/00,live_public_response,uniqlo_hydration
+uniqlo,E422992,E422992-000,000,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,https://www.uniqlo.com/kr/ko/women/tops/t-shirts,https://www.uniqlo.com/kr/ko/products/E422992-000/00,live_public_response,uniqlo_hydration
+uniqlo,E424873,E424873-000,000,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,https://www.uniqlo.com/kr/ko/women/tops,https://www.uniqlo.com/kr/ko/products/E424873-000/00,live_public_response,uniqlo_hydration
+uniqlo,E424873,E424873-000,000,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,https://www.uniqlo.com/kr/ko/women/tops/t-shirts,https://www.uniqlo.com/kr/ko/products/E424873-000/00,live_public_response,uniqlo_hydration
+uniqlo,E444557,E444557-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (라이트),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E444557-000/00,live_public_response,uniqlo_hydration
+uniqlo,E444557,E444557-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (라이트),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E444557-000/00,live_public_response,uniqlo_hydration
+uniqlo,E444557,E444557-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (라이트),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E444557-000/00,live_public_response,uniqlo_hydration
+uniqlo,E444557,E444557-001,001,아우터 > 감탄 재킷 > 감탄 재킷 (라이트),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E444557-001/00,live_public_response,uniqlo_hydration
+uniqlo,E444557,E444557-001,001,아우터 > 감탄 재킷 > 감탄 재킷 (라이트),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E444557-001/00,live_public_response,uniqlo_hydration
+uniqlo,E444557,E444557-001,001,아우터 > 감탄 재킷 > 감탄 재킷 (라이트),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E444557-001/00,live_public_response,uniqlo_hydration
+uniqlo,E448034,E448034-000,000,아우터 > 감탄 재킷 > 감탄 재킷,https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E448034-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448034,E448034-000,000,아우터 > 감탄 재킷 > 감탄 재킷,https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E448034-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448034,E448034-000,000,아우터 > 감탄 재킷 > 감탄 재킷,https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E448034-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448039,E448039-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E448039-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448039,E448039-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E448039-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448039,E448039-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E448039-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448040,E448040-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E448040-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448040,E448040-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E448040-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448040,E448040-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E448040-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448041,E448041-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E448041-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448041,E448041-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E448041-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448041,E448041-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E448041-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448042,E448042-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E448042-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448042,E448042-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E448042-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448042,E448042-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E448042-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448043,E448043-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E448043-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448043,E448043-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E448043-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448043,E448043-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E448043-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448044,E448044-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E448044-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448044,E448044-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E448044-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448044,E448044-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E448044-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448045,E448045-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E448045-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448045,E448045-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/gamtan-jackets,https://www.uniqlo.com/kr/ko/products/E448045-000/00,live_public_response,uniqlo_hydration
+uniqlo,E448045,E448045-000,000,아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER),https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E448045-000/00,live_public_response,uniqlo_hydration
+uniqlo,E450179,E450179-000,000,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔,https://www.uniqlo.com/kr/ko/men/tops/t-shirts,https://www.uniqlo.com/kr/ko/products/E450179-000/00,live_public_response,uniqlo_hydration
+uniqlo,E450195,E450195-000,000,아우터 > 파카 & 블루종 > 후리스,https://www.uniqlo.com/kr/ko/men/outerwear,https://www.uniqlo.com/kr/ko/products/E450195-000/00,live_public_response,uniqlo_hydration
+uniqlo,E450195,E450195-000,000,아우터 > 파카 & 블루종 > 후리스,https://www.uniqlo.com/kr/ko/men/outerwear/jackets,https://www.uniqlo.com/kr/ko/products/E450195-000/00,live_public_response,uniqlo_hydration
+uniqlo,E450195,E450195-000,000,아우터 > 파카 & 블루종 > 후리스,https://www.uniqlo.com/kr/ko/men/outerwear/parkas-and-blousons,https://www.uniqlo.com/kr/ko/products/E450195-000/00,live_public_response,uniqlo_hydration
+uniqlo,E455365,E455365-000,000,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,https://www.uniqlo.com/kr/ko/men/tops/t-shirts,https://www.uniqlo.com/kr/ko/products/E455365-000/00,live_public_response,uniqlo_hydration
+uniqlo,E455365,E455365-000,000,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,https://www.uniqlo.com/kr/ko/women/tops/t-shirts,https://www.uniqlo.com/kr/ko/products/E455365-000/00,live_public_response,uniqlo_hydration
+uniqlo,E457111,E457111-000,000,티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,https://www.uniqlo.com/kr/ko/women/tops/peace-for-all,https://www.uniqlo.com/kr/ko/products/E457111-000/00,live_public_response,uniqlo_hydration
+uniqlo,E457119,E457119-000,000,티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,https://www.uniqlo.com/kr/ko/women/tops/peace-for-all,https://www.uniqlo.com/kr/ko/products/E457119-000/00,live_public_response,uniqlo_hydration
+uniqlo,E457120,E457120-000,000,티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,https://www.uniqlo.com/kr/ko/women/tops/peace-for-all,https://www.uniqlo.com/kr/ko/products/E457120-000/00,live_public_response,uniqlo_hydration
+uniqlo,E457122,E457122-000,000,티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,https://www.uniqlo.com/kr/ko/women/tops/peace-for-all,https://www.uniqlo.com/kr/ko/products/E457122-000/00,live_public_response,uniqlo_hydration
+uniqlo,E457517,E457517-000,000,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼,https://www.uniqlo.com/kr/ko/men/tops/t-shirts,https://www.uniqlo.com/kr/ko/products/E457517-000/00,live_public_response,uniqlo_hydration

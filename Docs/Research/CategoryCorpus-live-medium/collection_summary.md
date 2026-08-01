@@ -1,0 +1,10 @@
+# Category corpus live summary
+
+- Generated: 2026-07-27T22:17:28.580227+00:00
+- Network requests in this run: 126
+- Request metrics: {"attempts": 126, "successes": 126, "failures": 0, "retries": 0, "http_403": 0, "http_429": 0, "status_counts": {"200": 126}, "duration": {"count": 126, "min_ms": 67.008, "median_ms": 372.621, "p95_ms": 944.634, "max_ms": 1114.038}, "by_source_kind": {"musinsa/category_page": {"attempts": 4, "successes": 4, "failures": 0, "duration": {"count": 4, "min_ms": 351.132, "median_ms": 413.555, "p95_ms": 520.939, "max_ms": 537.924}}, "musinsa/product": {"attempts": 60, "successes": 60, "failures": 0, "duration": {"count": 60, "min_ms": 67.008, "median_ms": 104.173, "p95_ms": 149.95, "max_ms": 188.716}}, "uniqlo/category_page": {"attempts": 11, "successes": 11, "failures": 0, "duration": {"count": 11, "min_ms": 267.625, "median_ms": 679.415, "p95_ms": 1086.252, "max_ms": 1114.038}}, "uniqlo/product": {"attempts": 51, "successes": 51, "failures": 0, "duration": {"count": 51, "min_ms": 514.052, "median_ms": 718.624, "p95_ms": 960.639, "max_ms": 1076.885}}}, "progress_segments": [{"attempt_range": [1, 32], "attempts": 32, "failures": 0, "failure_rate": 0.0, "duration": {"count": 32, "min_ms": 71.615, "median_ms": 117.605, "p95_ms": 412.441, "max_ms": 537.924}}, {"attempt_range": [33, 64], "attempts": 32, "failures": 0, "failure_rate": 0.0, "duration": {"count": 32, "min_ms": 67.008, "median_ms": 103.62, "p95_ms": 150.927, "max_ms": 188.716}}, {"attempt_range": [65, 96], "attempts": 32, "failures": 0, "failure_rate": 0.0, "duration": {"count": 32, "min_ms": 267.625, "median_ms": 687.764, "p95_ms": 1066.755, "max_ms": 1114.038}}, {"attempt_range": [97, 126], "attempts": 30, "failures": 0, "failure_rate": 0.0, "duration": {"count": 30, "min_ms": 514.052, "median_ms": 711.442, "p95_ms": 936.686, "max_ms": 990.447}}]}
+- Unique base products in output: 111
+- Uniqlo hydration-confirmed accepted products: {"MEN": 20, "WOMEN": 20, "KIDS": 10, "BABY": 0}
+- Inventory nodes: 79
+- Unresolved nodes: 0
+- Checkpoint: /Users/jinyoung/Documents/Projects/FitMatch/FitMatch/Docs/Research/CategoryCorpus-live-medium/checkpoint.json

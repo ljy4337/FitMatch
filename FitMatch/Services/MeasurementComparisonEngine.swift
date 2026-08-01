@@ -45,17 +45,51 @@ struct MeasurementComparisonExclusion: Codable, Equatable {
 struct MeasurementComparisonItem: Equatable {
     let kind: MeasurementKind
     let measurementCode: MeasurementCode
+    let displayTitle: String?
     let productValue: Double
     let referenceValue: Double
     let signedDifference: Double
     let absoluteDifference: Double
     let score: Int
     let weight: Double
+
+    init(
+        kind: MeasurementKind,
+        measurementCode: MeasurementCode,
+        displayTitle: String? = nil,
+        productValue: Double,
+        referenceValue: Double,
+        signedDifference: Double,
+        absoluteDifference: Double,
+        score: Int,
+        weight: Double
+    ) {
+        self.kind = kind
+        self.measurementCode = measurementCode
+        self.displayTitle = displayTitle
+        self.productValue = productValue
+        self.referenceValue = referenceValue
+        self.signedDifference = signedDifference
+        self.absoluteDifference = absoluteDifference
+        self.score = score
+        self.weight = weight
+    }
 }
 
 struct MeasurementComparisonUsage: Codable, Equatable {
     let kind: MeasurementKind
     let measurementCode: MeasurementCode
+    let displayTitle: String?
+
+    init(
+        kind: MeasurementKind,
+        measurementCode: MeasurementCode,
+        displayTitle: String? = nil
+    ) {
+        self.kind = kind
+        self.measurementCode = measurementCode
+        self.displayTitle = displayTitle
+    }
 }
 
 struct MeasurementComparisonResult: Equatable {
@@ -76,7 +110,13 @@ struct MeasurementComparisonResult: Equatable {
     }
 
     var usages: [MeasurementComparisonUsage] {
-        comparedItems.map { MeasurementComparisonUsage(kind: $0.kind, measurementCode: $0.measurementCode) }
+        comparedItems.map {
+            MeasurementComparisonUsage(
+                kind: $0.kind,
+                measurementCode: $0.measurementCode,
+                displayTitle: $0.displayTitle
+            )
+        }
     }
 
     var comparisonCoverage: Double {
@@ -171,6 +211,7 @@ struct MeasurementComparisonEngine {
                 MeasurementComparisonItem(
                     kind: kind,
                     measurementCode: pair.comparisonCode,
+                    displayTitle: pair.displayTitle,
                     productValue: pair.productValue,
                     referenceValue: pair.referenceValue,
                     signedDifference: signedDifference,
@@ -191,6 +232,7 @@ struct MeasurementComparisonEngine {
                 return MeasurementComparisonItem(
                     kind: item.kind,
                     measurementCode: item.measurementCode,
+                    displayTitle: item.displayTitle,
                     productValue: item.productValue,
                     referenceValue: item.referenceValue,
                     signedDifference: item.signedDifference,
@@ -241,12 +283,77 @@ struct MeasurementComparisonEngine {
         in records: [GarmentMeasurementRecord]
     ) -> [GarmentMeasurementRecord] {
         records.filter {
-            $0.displayKindRawValue == kind.displayKind.rawValue && $0.value.isFinite && $0.value > 0
+            let resolvedKind = resolvedKind(for: $0)
+            let canonicalMatch = resolvedKind == kind
+            // 원본 필드 직접 비교는 canonical 의미를 알 수 없는 공식 필드에만 허용한다.
+            // 예: 과거 유니클로의 밑위가 displayKind=.totalLength로 저장된 경우처럼
+            // canonical code와 표시 필드가 충돌하면 canonical 의미가 우선되어야 한다.
+            let directPlatformFieldMatch = resolvedKind == nil
+                && platform(for: $0.methodSource) != nil
+                && $0.displayKind == kind.displayKind
+                && (normalizedSourceKey($0.rawCode) != nil
+                    || normalizedSourceKey($0.rawLabel) != nil)
+            return (canonicalMatch || directPlatformFieldMatch)
+                && $0.value.isFinite
+                && $0.value > 0
+        }
+    }
+
+    private func resolvedKind(
+        for record: GarmentMeasurementRecord
+    ) -> MeasurementKind? {
+        switch record.measurementCode {
+        case .standardBodyChestCircumference,
+             .chestWidthPitToPit,
+             .chestCircumferenceGarment,
+             .chestWidthUniqloBodyWidth:
+            return .chest
+        case .shoulderWidthSeamToSeam:
+            return .shoulder
+        case .bodyLengthHPSToHemFront,
+             .bodyLengthBackNeckToHem,
+             .bodyLengthMusinsaType5,
+             .bodyLengthMusinsaType20,
+             .bodyLengthMusinsaType21,
+             .bodyLengthUniqloBack,
+             .bodyLengthUniqloShirt,
+             .bodyLengthUniqloKnitFront,
+             .pantsOutseamWaistToHem,
+             .pantsInseamCrotchToHem,
+             .skirtLengthWaistToHem:
+            return .totalLength
+        case .sleeveShoulderSeamToCuff,
+             .sleeveCenterBackToCuff,
+             .sleeveRaglanNeckToCuff:
+            return .sleeveLength
+        case .upperAbdomenWidthEdgeToEdge:
+            return .upperAbdomen
+        case .upperWaistWidthEdgeToEdge:
+            return .upperWaist
+        case .waistWidthEdgeToEdge, .waistCircumferenceGarment:
+            return .waist
+        case .hipWidthAtWidest:
+            return .hip
+        case .thighWidthCrotchToOuter:
+            return .thigh
+        case .riseCrotchToWaistFront, .riseCrotchToWaistBack:
+            return .rise
+        case .hemWidthEdgeToEdge:
+            return .hem
+        case .footLengthHeelToToe:
+            return .footLength
+        case .underBustWidthEdgeToEdge:
+            return .underBust
+        case .unknown, .legacyUnknown:
+            return record.displayKind.flatMap { displayKind in
+                MeasurementKind.allCases.first { $0.displayKind == displayKind }
+            }
         }
     }
 
     private struct ComparableMeasurementPair {
         let comparisonCode: MeasurementCode
+        let displayTitle: String?
         let productValue: Double
         let referenceValue: Double
     }
@@ -256,26 +363,106 @@ struct MeasurementComparisonEngine {
         productRecords: [GarmentMeasurementRecord],
         referenceRecords: [GarmentMeasurementRecord]
     ) -> ComparableMeasurementPair? {
+        if recordsUseSamePlatformFormat(productRecords, referenceRecords),
+           let pair = matchingSourcePair(
+                productRecords: productRecords,
+                referenceRecords: referenceRecords
+           ) {
+            return pair
+        }
+
         if kind == .chest,
            let productRecord = preferredGarmentChestRecord(in: productRecords),
            let referenceRecord = preferredGarmentChestRecord(in: referenceRecords) {
-            return ComparableMeasurementPair(
-                comparisonCode: .chestWidthPitToPit,
-                productValue: garmentChestWidthValue(productRecord),
-                referenceValue: garmentChestWidthValue(referenceRecord)
+            return normalizedPair(
+                kind: kind,
+                productRecord: productRecord,
+                referenceRecord: referenceRecord
             )
         }
 
         for productRecord in productRecords {
             if let referenceRecord = referenceRecords.first(where: { $0.measurementCode == productRecord.measurementCode }) {
-                return ComparableMeasurementPair(
-                    comparisonCode: productRecord.measurementCode,
-                    productValue: productRecord.value,
-                    referenceValue: referenceRecord.value
+                return normalizedPair(
+                    kind: kind,
+                    productRecord: productRecord,
+                    referenceRecord: referenceRecord
                 )
             }
         }
         return nil
+    }
+
+    private func recordsUseSamePlatformFormat(
+        _ productRecords: [GarmentMeasurementRecord],
+        _ referenceRecords: [GarmentMeasurementRecord]
+    ) -> Bool {
+        guard let product = productRecords.first,
+              let reference = referenceRecords.first,
+              let productPlatform = platform(for: product.methodSource),
+              let referencePlatform = platform(for: reference.methodSource),
+              productPlatform == referencePlatform else {
+            return false
+        }
+        return product.methodSource == reference.methodSource
+            && product.methodProfile == reference.methodProfile
+    }
+
+    private func matchingSourcePair(
+        productRecords: [GarmentMeasurementRecord],
+        referenceRecords: [GarmentMeasurementRecord]
+    ) -> ComparableMeasurementPair? {
+        for productRecord in productRecords {
+            let productRawCode = normalizedSourceKey(productRecord.rawCode)
+            let referenceRecord: GarmentMeasurementRecord?
+            if let productRawCode {
+                referenceRecord = referenceRecords.first {
+                    normalizedSourceKey($0.rawCode) == productRawCode
+                }
+            } else {
+                guard let productLabel = normalizedSourceKey(productRecord.rawLabel) else {
+                    continue
+                }
+                referenceRecord = referenceRecords.first {
+                    normalizedSourceKey($0.rawLabel) == productLabel
+                }
+            }
+            if let referenceRecord {
+                let title = sourceDisplayTitle(
+                    kind: productRecord.displayKind.flatMap { displayKind in
+                        MeasurementKind.allCases.first { $0.displayKind == displayKind }
+                    },
+                    productRecord: productRecord,
+                    referenceRecord: referenceRecord
+                )
+                return ComparableMeasurementPair(
+                    comparisonCode: productRecord.measurementCode,
+                    displayTitle: title,
+                    productValue: officialCentimeterValue(productRecord),
+                    referenceValue: officialCentimeterValue(referenceRecord)
+                )
+            }
+        }
+        return nil
+    }
+
+    private func platform(for methodSource: String) -> String? {
+        let normalized = methodSource.lowercased()
+        if normalized.contains("uniqlo") { return "uniqlo" }
+        if normalized.contains("musinsa") { return "musinsa" }
+        if normalized.contains("fitmatch") || normalized.contains("manual") { return "fitmatch" }
+        return nil
+    }
+
+    private func normalizedSourceKey(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let normalized = value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "_", with: "")
+            .replacingOccurrences(of: "-", with: "")
+        return normalized.isEmpty ? nil : normalized
     }
 
     private func preferredGarmentChestRecord(
@@ -285,10 +472,147 @@ struct MeasurementComparisonEngine {
             ?? records.first { $0.measurementCode == .chestCircumferenceGarment }
     }
 
-    private func garmentChestWidthValue(_ record: GarmentMeasurementRecord) -> Double {
-        record.measurementCode == .chestCircumferenceGarment
-            ? record.value / 2
+    private enum HorizontalRepresentation {
+        case circumference
+        case width
+        case notApplicable
+    }
+
+    private func normalizedPair(
+        kind: MeasurementKind,
+        productRecord: GarmentMeasurementRecord,
+        referenceRecord: GarmentMeasurementRecord
+    ) -> ComparableMeasurementPair {
+        let productRepresentation = horizontalRepresentation(of: productRecord)
+        let referenceRepresentation = horizontalRepresentation(of: referenceRecord)
+        let bothCircumference = productRepresentation == .circumference
+            && referenceRepresentation == .circumference
+
+        if bothCircumference {
+            return ComparableMeasurementPair(
+                comparisonCode: productRecord.measurementCode,
+                displayTitle: circumferenceTitle(for: kind),
+                productValue: officialCentimeterValue(productRecord),
+                referenceValue: officialCentimeterValue(referenceRecord)
+            )
+        }
+
+        let hasHorizontalRepresentation = productRepresentation != .notApplicable
+            || referenceRepresentation != .notApplicable
+        return ComparableMeasurementPair(
+            comparisonCode: canonicalWidthCode(
+                for: kind,
+                fallback: productRecord.measurementCode
+            ),
+            displayTitle: hasHorizontalRepresentation ? widthTitle(for: kind) : nil,
+            productValue: normalizedWidthValue(productRecord),
+            referenceValue: normalizedWidthValue(referenceRecord)
+        )
+    }
+
+    private func canonicalWidthCode(
+        for kind: MeasurementKind,
+        fallback: MeasurementCode
+    ) -> MeasurementCode {
+        switch kind {
+        case .chest: return .chestWidthPitToPit
+        case .upperAbdomen: return .upperAbdomenWidthEdgeToEdge
+        case .upperWaist: return .upperWaistWidthEdgeToEdge
+        case .waist: return .waistWidthEdgeToEdge
+        case .hip: return .hipWidthAtWidest
+        case .thigh: return .thighWidthCrotchToOuter
+        case .hem: return .hemWidthEdgeToEdge
+        case .underBust: return .underBustWidthEdgeToEdge
+        default: return fallback
+        }
+    }
+
+    private func horizontalRepresentation(
+        of record: GarmentMeasurementRecord
+    ) -> HorizontalRepresentation {
+        let normalizedLabel = record.rawLabel
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        if normalizedLabel.contains("둘레") || normalizedLabel.contains("circumference") {
+            return .circumference
+        }
+        switch record.measurementCode {
+        case .standardBodyChestCircumference,
+             .chestCircumferenceGarment,
+             .waistCircumferenceGarment:
+            return .circumference
+        case .chestWidthPitToPit,
+             .chestWidthUniqloBodyWidth,
+             .upperAbdomenWidthEdgeToEdge,
+             .upperWaistWidthEdgeToEdge,
+             .waistWidthEdgeToEdge,
+             .hipWidthAtWidest,
+             .thighWidthCrotchToOuter,
+             .hemWidthEdgeToEdge,
+             .underBustWidthEdgeToEdge:
+            return .width
+        default:
+            return .notApplicable
+        }
+    }
+
+    private func normalizedWidthValue(_ record: GarmentMeasurementRecord) -> Double {
+        horizontalRepresentation(of: record) == .circumference
+            ? officialCentimeterValue(record) / 2
             : record.value
+    }
+
+    private func officialCentimeterValue(_ record: GarmentMeasurementRecord) -> Double {
+        guard let raw = record.rawValueText,
+              let match = raw.range(of: #"-?\d+(?:[.,]\d+)?"#, options: .regularExpression),
+              let number = Double(raw[match].replacingOccurrences(of: ",", with: ".")) else {
+            return record.value
+        }
+        return raw.lowercased().contains("mm") ? number / 10 : number
+    }
+
+    private func sourceDisplayTitle(
+        kind: MeasurementKind?,
+        productRecord: GarmentMeasurementRecord,
+        referenceRecord: GarmentMeasurementRecord
+    ) -> String? {
+        let productLabel = productRecord.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let referenceLabel = referenceRecord.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        if normalizedSourceKey(productLabel) == normalizedSourceKey(referenceLabel),
+           !productLabel.isEmpty {
+            return productLabel
+        }
+        guard let kind else { return nil }
+        let bothCircumference = horizontalRepresentation(of: productRecord) == .circumference
+            && horizontalRepresentation(of: referenceRecord) == .circumference
+        return bothCircumference ? circumferenceTitle(for: kind) : widthTitle(for: kind)
+    }
+
+    private func circumferenceTitle(for kind: MeasurementKind) -> String? {
+        switch kind {
+        case .chest: return "가슴둘레"
+        case .upperAbdomen: return "복부둘레"
+        case .upperWaist, .waist: return "허리둘레"
+        case .hip: return "엉덩이둘레"
+        case .thigh: return "허벅지둘레"
+        case .hem: return "밑단둘레"
+        case .underBust: return "밑가슴둘레"
+        default: return nil
+        }
+    }
+
+    private func widthTitle(for kind: MeasurementKind) -> String? {
+        switch kind {
+        case .chest: return "가슴단면"
+        case .upperAbdomen: return "복부단면"
+        case .upperWaist: return "상의 허리단면"
+        case .waist: return "허리단면"
+        case .hip: return "엉덩이단면"
+        case .thigh: return "허벅지단면"
+        case .hem: return "밑단단면"
+        case .underBust: return "밑가슴단면"
+        default: return nil
+        }
     }
 
     private func exclusion(

@@ -128,7 +128,10 @@ struct ParsedClosetClassification: Equatable {
             if containsAny(text, ["7부", "three quarter", "3/4 sleeve"]) { return "three_quarter_sleeve" }
             return "other_tops"
         case "bottoms":
-            if containsAny(sourceText, ["숏 팬츠", "쇼트 팬츠", "반바지", "쇼츠", "버뮤다", "shorts", "short pants"]) { return "shorts" }
+            if containsAny(sourceText, [
+                "숏 팬츠", "숏팬츠", "쇼트 팬츠", "쇼트팬츠",
+                "반바지", "쇼츠", "버뮤다", "shorts", "short pants"
+            ]) { return "shorts" }
             if containsAny(sourceText, ["크롭", "cropped"]) { return "cropped_pants" }
             if containsAny(sourceText, ["7부", "three quarter", "3/4 pants"]) { return "three_quarter_pants" }
             if containsAny(sourceText, ["9부", "ankle", "nine tenths"]) { return "nine_tenths_pants" }
@@ -137,7 +140,8 @@ struct ParsedClosetClassification: Equatable {
             }
             if containsAny(sourceText, [
                 "데님 팬츠", "코튼 팬츠", "트레이닝", "조거 팬츠",
-                "슈트 팬츠", "슬랙스", "denim", "jeans", "pants"
+                "슈트 팬츠", "슬랙스", "진(청바지)", "청바지",
+                "팬츠", "바지", "denim", "jeans", "pants", "trousers"
             ]) { return "long_pants" }
             if containsAny(text, ["긴바지", "롱 팬츠", "long pants"]) { return "long_pants" }
             return "other_bottoms"
