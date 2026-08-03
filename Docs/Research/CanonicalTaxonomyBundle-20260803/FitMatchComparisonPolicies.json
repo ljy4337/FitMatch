@@ -1,0 +1,868 @@
+{
+  "compatibility": [
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "denim",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "total_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "toFamily": "denim",
+      "weights": {
+        "hip": 1,
+        "waist": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": true,
+      "fallbackAllowed": true,
+      "fromFamily": "denim",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "total_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "toFamily": "pants",
+      "weights": {
+        "hip": 1,
+        "waist": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "dress",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "dress",
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "hoodie",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "hoodie",
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "knit_cardigan",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "knit_cardigan",
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "leggings",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "toFamily": "leggings",
+      "weights": {
+        "hip": 1,
+        "waist": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "outerwear",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "outerwear",
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": true,
+      "fallbackAllowed": true,
+      "fromFamily": "pants",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "total_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "toFamily": "denim",
+      "weights": {
+        "hip": 1,
+        "waist": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "pants",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "total_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "toFamily": "pants",
+      "weights": {
+        "hip": 1,
+        "waist": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "shirt",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "shirt",
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "shoes",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 1,
+      "requiredMeasurements": [
+        "foot_length"
+      ],
+      "toFamily": "shoes",
+      "weights": {
+        "foot_length": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "skirt",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "toFamily": "skirt",
+      "weights": {
+        "hip": 1,
+        "waist": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "sweatshirt",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "sweatshirt",
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      }
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": true,
+      "fromFamily": "tshirt",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [
+        "sleeve_length"
+      ],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "tshirt",
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      }
+    }
+  ],
+  "currentAppFamilyTransforms": {
+    "anorak": "outerwear",
+    "base_layer_top": "tshirt",
+    "blazer": "outerwear",
+    "blouson": "outerwear",
+    "bodysuit_top": "tshirt",
+    "bra": "underwear",
+    "cardigan": "knit_cardigan",
+    "cargo_pants": "pants",
+    "casual_pants": "pants",
+    "coat": "outerwear",
+    "denim_pants": "denim",
+    "fleece_jacket": "outerwear",
+    "jacket": "outerwear",
+    "knit_sweater": "knit_cardigan",
+    "knit_vest": "knit_cardigan",
+    "mouton": "outerwear",
+    "outer_vest": "outerwear",
+    "polo_shirt": "shirt",
+    "puffer_jacket": "outerwear",
+    "puffer_vest": "outerwear",
+    "shirt_blouse": "shirt",
+    "slacks_trousers": "pants",
+    "sports_bottom": "pants",
+    "sports_top": "tshirt",
+    "standard_pants": "pants",
+    "sweat_jogger_pants": "pants",
+    "tank_top": "tshirt",
+    "underwear_bottom": "underwear",
+    "underwear_top": "underwear",
+    "windbreaker": "outerwear",
+    "zip_hoodie": "hoodie"
+  },
+  "families": [
+    {
+      "code": "anorak",
+      "current_app_family_code": "anorak",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "base_layer_top",
+      "current_app_family_code": "base_layer_top",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "blazer",
+      "current_app_family_code": "blazer",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "blouson",
+      "current_app_family_code": "blouson",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "bodysuit_top",
+      "current_app_family_code": "bodysuit_top",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "bra",
+      "current_app_family_code": "bra",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "cardigan",
+      "current_app_family_code": "cardigan",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "cargo_pants",
+      "current_app_family_code": "cargo_pants",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "casual_pants",
+      "current_app_family_code": "casual_pants",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "coat",
+      "current_app_family_code": "coat",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "denim",
+      "current_app_family_code": "denim",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "denim_pants",
+      "current_app_family_code": "denim_pants",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "dress",
+      "current_app_family_code": "dress",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "fleece_jacket",
+      "current_app_family_code": "fleece_jacket",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "hoodie",
+      "current_app_family_code": "hoodie",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "jacket",
+      "current_app_family_code": "jacket",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "knit_cardigan",
+      "current_app_family_code": "knit_cardigan",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "knit_sweater",
+      "current_app_family_code": "knit_sweater",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "knit_vest",
+      "current_app_family_code": "knit_vest",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "leggings",
+      "current_app_family_code": "leggings",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "mouton",
+      "current_app_family_code": "mouton",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "outer_vest",
+      "current_app_family_code": "outer_vest",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "outerwear",
+      "current_app_family_code": "outerwear",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "pants",
+      "current_app_family_code": "pants",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "polo_shirt",
+      "current_app_family_code": "polo_shirt",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "puffer_jacket",
+      "current_app_family_code": "puffer_jacket",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "puffer_vest",
+      "current_app_family_code": "puffer_vest",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "shirt",
+      "current_app_family_code": "shirt",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "shirt_blouse",
+      "current_app_family_code": "shirt_blouse",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "shoes",
+      "current_app_family_code": "shoes",
+      "is_active": true,
+      "minimum_comparable_measurements": 1
+    },
+    {
+      "code": "skirt",
+      "current_app_family_code": "skirt",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "slacks_trousers",
+      "current_app_family_code": "slacks_trousers",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "sports_bottom",
+      "current_app_family_code": "sports_bottom",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "sports_top",
+      "current_app_family_code": "sports_top",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "standard_pants",
+      "current_app_family_code": "standard_pants",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "sweat_jogger_pants",
+      "current_app_family_code": "sweat_jogger_pants",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "sweatshirt",
+      "current_app_family_code": "sweatshirt",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "tank_top",
+      "current_app_family_code": "tank_top",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "tshirt",
+      "current_app_family_code": "tshirt",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "underwear_bottom",
+      "current_app_family_code": null,
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "underwear_top",
+      "current_app_family_code": null,
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "windbreaker",
+      "current_app_family_code": "windbreaker",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
+      "code": "zip_hoodie",
+      "current_app_family_code": "zip_hoodie",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    }
+  ],
+  "garmentPolicies": [
+    {
+      "comparisonFamily": "denim",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "thigh",
+        "rise",
+        "hem",
+        "total_length"
+      ],
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "dress",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "shoulder",
+        "waist",
+        "hip",
+        "sleeve_length"
+      ],
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "hoodie",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "shoulder",
+        "sleeve_length"
+      ],
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "knit_cardigan",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "shoulder",
+        "sleeve_length"
+      ],
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "leggings",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "total_length"
+      ],
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "outerwear",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "shoulder",
+        "sleeve_length"
+      ],
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "pants",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "thigh",
+        "rise",
+        "hem",
+        "total_length"
+      ],
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "shirt",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "shoulder",
+        "sleeve_length"
+      ],
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "shoes",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 1,
+      "optionalMeasurements": [],
+      "requiredMeasurements": [
+        "foot_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "skirt",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "total_length"
+      ],
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "sweatshirt",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "shoulder",
+        "sleeve_length"
+      ],
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "tshirt",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "shoulder",
+        "sleeve_length"
+      ],
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "underwear_bottom",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [],
+      "requiredMeasurements": [
+        "waist",
+        "hip"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
+      "comparisonFamily": "underwear_top",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "chest"
+      ],
+      "requiredMeasurements": [
+        "under_bust"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    }
+  ],
+  "policyVersion": "taxonomy-final-2026-08-03",
+  "schemaVersion": "1.0"
+}
