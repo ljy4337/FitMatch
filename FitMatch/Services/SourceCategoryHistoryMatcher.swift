@@ -176,9 +176,15 @@ enum SourceCategoryHistoryMatcher {
         switch detailCategory {
         case .sleeveless:
             return .sleeveless
-        case .shortSleeve, .shorts:
+        case .shortSleeve, .shortPants, .shorts, .shortLeggings:
             return .short
-        case .longSleeve:
+        case .threeQuarterSleeve, .threeQuarterPants, .threeQuarterLeggings:
+            return .threeQuarter
+        case .croppedPants:
+            return .cropped
+        case .nineTenthsPants, .nineTenthsLeggings:
+            return .nineTenths
+        case .longSleeve, .longPants, .longLeggings:
             return .long
         default:
             return nil

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "taxonomyVersion": "observed-official-2026-08-03",
+  "policyVersion": "taxonomy-final-2026-08-03",
+  "generatedAt": "2026-08-03T10:07:11.277219Z",
+  "sourceSnapshots": [
+    {
+      "source": "musinsa",
+      "snapshotID": "0a0fab7a-e6a6-45b9-ab5c-3426aba173e3",
+      "rowCount": 2277,
+      "activityState": "unknown"
+    },
+    {
+      "source": "uniqlo",
+      "snapshotID": "6b0627ec-e64b-44da-a403-6ae10976629c",
+      "rowCount": 1731,
+      "activityState": "unknown"
+    }
+  ],
+  "sourceRowCount": 4008,
+  "runtimeMappingRowCount": 3426,
+  "navigationNodesExcluded": 582,
+  "statusCounts": {
+    "navigation_only": 582,
+    "confirmed": 1089,
+    "review_required": 894,
+    "rejected": 1403,
+    "unsupported": 40
+  },
+  "mappingCounts": {
+    "direct": 1075,
+    "transform_required": 14
+  },
+  "extensionRegistryCount": 54,
+  "lookupValidation": {
+    "sourceExternalTargetDuplicateGroups": 0,
+    "sourceExternalDuplicateGroups": 0,
+    "sourceTargetPathDuplicateGroups": 30,
+    "sourcePathDuplicateGroups": 277,
+    "outcomeConflictGroups": 0,
+    "confirmedIdentifiable": 1089,
+    "confirmedUnidentifiable": 0
+  },
+  "files": {
+    "FitMatchSourceCategoryMappings.json": {
+      "rows": 3426,
+      "bytes": 5640948,
+      "sha256": "080a91615204a3d524f3785851b05f445840a314c004cab0dfb4aa4a5d62808b"
+    },
+    "FitMatchComparisonPolicies.json": {
+      "families": 43,
+      "compatibilityRules": 14,
+      "garmentPolicies": 14,
+      "bytes": 24126,
+      "sha256": "4dde761f4c00665c81a7fb6b7a7daa0b82fddf9bb0133e3d87e2673c0dec6228"
+    },
+    "FitMatchMeasurementPolicies.json": {
+      "measurements": 21,
+      "sourceAliases": 21,
+      "conversionRules": 5,
+      "bytes": 14351,
+      "sha256": "4cc7843fc753963cb4a0e8380836c3d386049f40d16f87870a7fad7aa63744d6"
+    }
+  },
+  "bundleChecksumAlgorithm": "sha256(sorted filename + NUL + file sha256 + LF)",
+  "bundleChecksum": "2611248b876daaccb96a5c9fd3840579c370bbf96030c52aee8b072694b806bf"
+}

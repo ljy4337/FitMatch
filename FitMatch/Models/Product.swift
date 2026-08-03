@@ -18,6 +18,11 @@ final class Product {
     var garmentTypeRawValue: String?
     var sleeveTypeRawValue: String?
     var constructionTypeRawValue: String?
+    var canonicalProfileSnapshotJSON: String?
+    var canonicalPolicyVersion: String?
+    var canonicalResolutionMethod: String?
+    var canonicalSourceIdentity: String?
+    var canonicalEligibility: Bool?
     var productCode: String?
     var sourceURLString: String?
     var imageURLString: String?
@@ -186,6 +191,10 @@ final class Product {
     var constructionType: ComparisonConstructionType {
         get { constructionTypeRawValue.flatMap { ComparisonConstructionType(rawValue: $0) } ?? .unknown }
         set { constructionTypeRawValue = newValue.rawValue }
+    }
+
+    var canonicalProfileSnapshot: CanonicalComparisonProfile? {
+        CanonicalProfileSnapshotCoder.decode(canonicalProfileSnapshotJSON)
     }
 
     var resolvedCategoryCode: String? {

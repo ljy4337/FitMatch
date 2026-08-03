@@ -3,6 +3,9 @@ import Foundation
 enum ComparisonLengthType: String, Codable, Equatable {
     case sleeveless
     case short = "short_sleeve"
+    case threeQuarter = "three_quarter"
+    case cropped
+    case nineTenths = "nine_tenths"
     case long = "long_sleeve"
     case unknown
 
@@ -10,6 +13,9 @@ enum ComparisonLengthType: String, Codable, Equatable {
         switch self {
         case .sleeveless: return "민소매"
         case .short: return "반팔"
+        case .threeQuarter: return "7부"
+        case .cropped: return "크롭"
+        case .nineTenths: return "9부"
         case .long: return "긴팔"
         case .unknown: return ""
         }
@@ -24,6 +30,7 @@ enum ComparisonGarmentFamily: String, Codable, Equatable {
     case hoodie
     case pants
     case denim
+    case leggings
     case skirt
     case outerwear
     case underwear
@@ -41,6 +48,7 @@ enum ComparisonGarmentFamily: String, Codable, Equatable {
         case .hoodie: return "후드"
         case .pants: return "팬츠"
         case .denim: return "데님"
+        case .leggings: return "레깅스"
         case .skirt: return "스커트"
         case .outerwear: return "아우터"
         case .underwear: return "속옷"

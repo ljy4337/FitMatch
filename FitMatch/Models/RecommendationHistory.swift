@@ -46,6 +46,9 @@ final class RecommendationHistory {
     var productCodeSnapshot: String?
     var productTargetGenderRawValueSnapshot: String?
     var sourceCategoryPathSnapshot: String?
+    var productCanonicalProfileSnapshotJSON: String?
+    var referenceCanonicalProfileSnapshotJSON: String?
+    var canonicalPolicyVersionSnapshot: String?
     var reason: String
     var createdAt: Date
 
@@ -124,6 +127,9 @@ final class RecommendationHistory {
         self.productCodeSnapshot = product.productCode
         self.productTargetGenderRawValueSnapshot = product.productTargetGender.rawValue
         self.sourceCategoryPathSnapshot = product.sourceCategoryDisplayText
+        self.productCanonicalProfileSnapshotJSON = product.canonicalProfileSnapshotJSON
+        self.referenceCanonicalProfileSnapshotJSON = userFit.canonicalProfileSnapshotJSON
+        self.canonicalPolicyVersionSnapshot = product.canonicalPolicyVersion ?? userFit.canonicalPolicyVersion
         self.reason = reason ?? "내 옷장에 있는 \(userFit.displayName)와 가장 비슷한 핏입니다."
         self.createdAt = createdAt
     }

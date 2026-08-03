@@ -193,7 +193,8 @@ struct ParsedClosetClassification: Equatable {
         if containsAny(source, ["셔츠", "블라우스", "shirt", "blouse"]) { return .shirt }
         if containsAny(source, ["데님", "청바지", "denim", "jeans"]) { return .denim }
         switch categoryCode {
-        case "bottoms", "leggings": return .pants
+        case "bottoms": return .pants
+        case "leggings": return .leggings
         case "skirts": return .skirt
         case "outerwear": return .outerwear
         case "underwear", "homewear": return .underwear
@@ -205,9 +206,15 @@ struct ParsedClosetClassification: Equatable {
     private static func inferredLength(from text: String, detailCode: String) -> ComparisonLengthType {
         if containsAny(text, ["민소매", "나시", "슬리브리스", "sleeveless"]) { return .sleeveless }
         if containsAny(text, ["반팔", "반소매", "숏슬리브", "short sleeve", "쇼츠", "숏 팬츠", "반바지"]) { return .short }
+        if containsAny(text, ["7부", "three quarter", "3/4"]) { return .threeQuarter }
+        if containsAny(text, ["크롭", "cropped"]) { return .cropped }
+        if containsAny(text, ["9부", "nine tenths", "ankle"]) { return .nineTenths }
         if containsAny(text, ["긴팔", "긴소매", "롱슬리브", "long sleeve", "긴바지", "롱 팬츠"]) { return .long }
         if ["sleeveless"].contains(detailCode) { return .sleeveless }
         if ["short_sleeve", "short_pants", "shorts", "short_leggings"].contains(detailCode) { return .short }
+        if ["three_quarter_sleeve", "three_quarter_pants", "three_quarter_leggings"].contains(detailCode) { return .threeQuarter }
+        if ["cropped_pants"].contains(detailCode) { return .cropped }
+        if ["nine_tenths_pants", "nine_tenths_leggings"].contains(detailCode) { return .nineTenths }
         if ["long_sleeve", "long_pants", "long_leggings"].contains(detailCode) { return .long }
         return .unknown
     }
