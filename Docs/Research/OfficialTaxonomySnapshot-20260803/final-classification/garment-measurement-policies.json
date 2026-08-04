@@ -1,0 +1,163 @@
+{
+  "policy_version": "taxonomy-final-2026-08-03",
+  "resolver_contract": {
+    "input": [
+      "canonical source identity",
+      "product name/detail",
+      "measurements",
+      "source format"
+    ],
+    "output": [
+      "canonical comparison profile"
+    ],
+    "shared_by": [
+      "closet storage",
+      "comparison product analysis"
+    ]
+  },
+  "families": {
+    "pants": {
+      "required": [
+        "waist",
+        "hip"
+      ],
+      "optional": [
+        "thigh",
+        "rise",
+        "hem",
+        "total_length"
+      ]
+    },
+    "denim": {
+      "required": [
+        "waist",
+        "hip"
+      ],
+      "optional": [
+        "thigh",
+        "rise",
+        "hem",
+        "total_length"
+      ]
+    },
+    "leggings": {
+      "required": [
+        "waist",
+        "hip"
+      ],
+      "optional": [
+        "total_length"
+      ]
+    },
+    "skirt": {
+      "required": [
+        "waist",
+        "hip"
+      ],
+      "optional": [
+        "total_length"
+      ]
+    },
+    "tshirt": {
+      "required": [
+        "chest",
+        "total_length"
+      ],
+      "optional": [
+        "shoulder",
+        "sleeve_length"
+      ]
+    },
+    "shirt": {
+      "required": [
+        "chest",
+        "total_length"
+      ],
+      "optional": [
+        "shoulder",
+        "sleeve_length"
+      ]
+    },
+    "knit_cardigan": {
+      "required": [
+        "chest",
+        "total_length"
+      ],
+      "optional": [
+        "shoulder",
+        "sleeve_length"
+      ]
+    },
+    "sweatshirt": {
+      "required": [
+        "chest",
+        "total_length"
+      ],
+      "optional": [
+        "shoulder",
+        "sleeve_length"
+      ]
+    },
+    "hoodie": {
+      "required": [
+        "chest",
+        "total_length"
+      ],
+      "optional": [
+        "shoulder",
+        "sleeve_length"
+      ]
+    },
+    "outerwear": {
+      "required": [
+        "chest",
+        "total_length"
+      ],
+      "optional": [
+        "shoulder",
+        "sleeve_length"
+      ]
+    },
+    "dress": {
+      "required": [
+        "chest",
+        "total_length"
+      ],
+      "optional": [
+        "shoulder",
+        "waist",
+        "hip",
+        "sleeve_length"
+      ]
+    },
+    "underwear_top": {
+      "required": [
+        "under_bust"
+      ],
+      "optional": [
+        "chest"
+      ]
+    },
+    "underwear_bottom": {
+      "required": [
+        "waist",
+        "hip"
+      ],
+      "optional": []
+    },
+    "shoes": {
+      "required": [
+        "foot_length"
+      ],
+      "optional": []
+    }
+  },
+  "format_policy": {
+    "same_platform_same_official_format": "compare original official labels and values",
+    "same_platform_different_format": "canonical conversion",
+    "cross_platform": "canonical conversion",
+    "both_circumference": "circumference comparison allowed",
+    "one_or_more_flat": "normalize comparable values to flat",
+    "provenance": "preserve raw and converted values"
+  }
+}

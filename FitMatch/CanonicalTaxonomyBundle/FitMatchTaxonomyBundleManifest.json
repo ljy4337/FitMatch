@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0",
   "taxonomyVersion": "observed-official-2026-08-03",
-  "policyVersion": "taxonomy-final-2026-08-03",
-  "generatedAt": "2026-08-03T10:07:11.277219Z",
+  "policyVersion": "taxonomy-refined-2026-08-03",
+  "generatedAt": "2026-08-03T15:01:55.164Z",
   "sourceSnapshots": [
     {
       "source": "musinsa",
@@ -22,14 +22,14 @@
   "navigationNodesExcluded": 582,
   "statusCounts": {
     "navigation_only": 582,
-    "confirmed": 1089,
-    "review_required": 894,
-    "rejected": 1403,
+    "confirmed": 1331,
+    "review_required": 608,
+    "rejected": 1447,
     "unsupported": 40
   },
   "mappingCounts": {
-    "direct": 1075,
-    "transform_required": 14
+    "direct": 1111,
+    "transform_required": 220
   },
   "extensionRegistryCount": 54,
   "lookupValidation": {
@@ -38,30 +38,30 @@
     "sourceTargetPathDuplicateGroups": 30,
     "sourcePathDuplicateGroups": 277,
     "outcomeConflictGroups": 0,
-    "confirmedIdentifiable": 1089,
+    "confirmedIdentifiable": 1331,
     "confirmedUnidentifiable": 0
   },
   "files": {
     "FitMatchSourceCategoryMappings.json": {
       "rows": 3426,
-      "bytes": 5640948,
-      "sha256": "080a91615204a3d524f3785851b05f445840a314c004cab0dfb4aa4a5d62808b"
+      "bytes": 5721707,
+      "sha256": "e68bb3a9f5ff4cfbfd1be2e5d25f8f53092a0536da1ff81c8ea0da85084895a1"
     },
     "FitMatchComparisonPolicies.json": {
-      "families": 43,
-      "compatibilityRules": 14,
-      "garmentPolicies": 14,
-      "bytes": 24126,
-      "sha256": "4dde761f4c00665c81a7fb6b7a7daa0b82fddf9bb0133e3d87e2673c0dec6228"
+      "families": 44,
+      "compatibilityRules": 19,
+      "garmentPolicies": 15,
+      "bytes": 27025,
+      "sha256": "1054ec278a5ba139d45212cc0b9c211740609143aea7475173509d079d521020"
     },
     "FitMatchMeasurementPolicies.json": {
       "measurements": 21,
       "sourceAliases": 21,
       "conversionRules": 5,
-      "bytes": 14351,
-      "sha256": "4cc7843fc753963cb4a0e8380836c3d386049f40d16f87870a7fad7aa63744d6"
+      "bytes": 14353,
+      "sha256": "c33170db3c6f164abca823af8f3db464f9984fd603738d1d63912ee24f206d5a"
     }
   },
   "bundleChecksumAlgorithm": "sha256(sorted filename + NUL + file sha256 + LF)",
-  "bundleChecksum": "2611248b876daaccb96a5c9fd3840579c370bbf96030c52aee8b072694b806bf"
+  "bundleChecksum": "23a4b0e0729fd869055246b2a9d9d53c94439587f6d7221c17d9a3be49f6c3a1"
 }

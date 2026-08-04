@@ -203,6 +203,26 @@ struct AutomaticComparisonMatchResult {
 }
 
 struct ComparisonProfileMatcher {
+    struct CandidateDiagnostic {
+        let itemName: String
+        let incomingGender: String
+        let candidateGender: String
+        let incomingFamily: ComparisonGarmentFamily
+        let candidateFamily: ComparisonGarmentFamily
+        let incomingLength: ComparisonLengthType
+        let candidateLength: ComparisonLengthType
+        let candidateEligibility: Bool?
+        let commonCoreMeasurementCount: Int
+        let minimumCommonMeasurementCount: Int
+        let exclusionReasons: [String]
+
+        var logDescription: String {
+            let result = exclusionReasons.isEmpty ? "compatible" : exclusionReasons.joined(separator: ",")
+            let eligibility = candidateEligibility.map(String.init) ?? "nil"
+            return "item=\(itemName), incomingGender=\(incomingGender), candidateGender=\(candidateGender), incomingFamily=\(incomingFamily.rawValue), candidateFamily=\(candidateFamily.rawValue), incomingLength=\(incomingLength.rawValue), candidateLength=\(candidateLength.rawValue), eligibility=\(eligibility), commonCore=\(commonCoreMeasurementCount)/\(minimumCommonMeasurementCount), result=\(result)"
+        }
+    }
+
     func match(
         product: Product,
         productDetailCategory: ClosetDetailCategory,
@@ -216,10 +236,7 @@ struct ComparisonProfileMatcher {
                 compatibleCandidates: []
             )
         }
-        let candidates = userFits.filter {
-            $0.canonicalEligibility != false
-                && gendersAreCompatible(product.productTargetGender.taxonomyCode, $0.resolvedGenderCode)
-        }
+        let candidates = userFits.filter { $0.canonicalEligibility != false }
         let profiled = candidates.map { ($0, profile(for: $0)) }
 
         guard incoming.garmentFamily != .unknown,
@@ -234,6 +251,11 @@ struct ComparisonProfileMatcher {
 
         let sameFamily = profiled.filter {
             garmentFamiliesAreCompatible($0.1.garmentFamily, incoming.garmentFamily)
+                && gendersAreCompatible(
+                    product.productTargetGender.taxonomyCode,
+                    $0.0.resolvedGenderCode,
+                    family: incoming.garmentFamily
+                )
         }
         let compatible = sameFamily
             .filter {
@@ -290,6 +312,48 @@ struct ComparisonProfileMatcher {
                 if lhs.isRepresentative != rhs.isRepresentative { return lhs.isRepresentative }
                 return lhs.updatedAt > rhs.updatedAt
             }
+    }
+
+    func candidateDiagnostics(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        userFits: [UserFit]
+    ) -> [CandidateDiagnostic] {
+        let incoming = profile(for: product, detailCategory: productDetailCategory)
+        let incomingGender = product.productTargetGender.taxonomyCode
+        let minimum = minimumCommonMeasurementCount(for: incoming.garmentFamily)
+
+        return userFits.map { item in
+            let candidate = profile(for: item)
+            var reasons: [String] = []
+            if product.canonicalEligibility == false { reasons.append("incoming_ineligible") }
+            if item.canonicalEligibility == false { reasons.append("candidate_ineligible") }
+            if !gendersAreCompatible(
+                incomingGender,
+                item.resolvedGenderCode,
+                family: incoming.garmentFamily
+            ) { reasons.append("gender_incompatible") }
+            if incoming.garmentFamily == .unknown { reasons.append("incoming_family_unknown") }
+            if !garmentFamiliesAreCompatible(candidate.garmentFamily, incoming.garmentFamily) { reasons.append("family_incompatible") }
+            if !lengthsAreCompatible(candidate, incoming) { reasons.append("length_incompatible") }
+            if !constructionsAreCompatible(incoming.constructionType, candidate.constructionType) { reasons.append("construction_incompatible") }
+            let commonCount = commonCoreMeasurementCount(incoming, candidate)
+            if commonCount < minimum { reasons.append("common_measurements_insufficient") }
+
+            return CandidateDiagnostic(
+                itemName: item.productName,
+                incomingGender: incomingGender,
+                candidateGender: item.resolvedGenderCode,
+                incomingFamily: incoming.garmentFamily,
+                candidateFamily: candidate.garmentFamily,
+                incomingLength: incoming.lengthType,
+                candidateLength: candidate.lengthType,
+                candidateEligibility: item.canonicalEligibility,
+                commonCoreMeasurementCount: commonCount,
+                minimumCommonMeasurementCount: minimum,
+                exclusionReasons: reasons
+            )
+        }
     }
 
     func manualMismatch(
@@ -381,7 +445,7 @@ struct ComparisonProfileMatcher {
     private func requiresLengthClassification(_ family: ComparisonGarmentFamily) -> Bool {
         switch family {
         case .knitCardigan, .tshirt, .shirt, .sweatshirt, .hoodie,
-             .pants, .denim, .leggings, .outerwear:
+             .pants, .denim, .leggings, .outerwear, .leatherJacket:
             return true
         case .skirt, .underwear, .dress, .shoes, .accessory, .unknown:
             return false
@@ -599,12 +663,25 @@ struct ComparisonProfileMatcher {
         }
     }
 
-    private func gendersAreCompatible(_ incoming: String, _ candidate: String) -> Bool {
+    private func gendersAreCompatible(
+        _ incoming: String,
+        _ candidate: String,
+        family: ComparisonGarmentFamily
+    ) -> Bool {
         if incoming == "unknown" || candidate == "unknown" { return true }
         if incoming == "unisex" || candidate == "unisex" { return true }
         let kids = Set(["boys", "girls", "kids_unisex"])
         if kids.contains(incoming) || kids.contains(candidate) {
             return kids.contains(incoming) && kids.contains(candidate)
+        }
+        let adults = Set(["male", "female"])
+        let adultCrossGenderFamilies: Set<ComparisonGarmentFamily> = [
+            .knitCardigan, .tshirt, .shirt, .sweatshirt, .hoodie,
+            .pants, .denim, .leggings, .skirt, .outerwear,
+            .leatherJacket, .shoes
+        ]
+        if adults.contains(incoming), adults.contains(candidate) {
+            return incoming == candidate || adultCrossGenderFamilies.contains(family)
         }
         return incoming == candidate
     }
@@ -612,6 +689,7 @@ struct ComparisonProfileMatcher {
     private func familyKeywordMatch(_ value: String) -> ComparisonGarmentFamily? {
         let value = normalized(value)
         let rules: [(ComparisonGarmentFamily, [String])] = [
+            (.leatherJacket, ["레더 재킷", "레더 자켓", "라이더스", "leather jacket", "riders jacket"]),
             (.knitCardigan, ["니트", "가디건", "스웨터", "knit", "cardigan", "sweater"]),
             (.hoodie, ["후드", "hoodie"]),
             (.sweatshirt, ["스웨트", "맨투맨", "sweatshirt"]),

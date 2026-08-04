@@ -188,6 +188,7 @@ struct ParsedClosetClassification: Equatable {
     }
 
     private static func inferredFamily(from source: String, categoryCode: String) -> ComparisonGarmentFamily {
+        if containsAny(source, ["레더", "라이더스", "leather jacket", "riders jacket"]) { return .leatherJacket }
         if containsAny(source, ["니트", "스웨터", "가디건", "knit", "sweater", "cardigan"]) { return .knitCardigan }
         if containsAny(source, ["티셔츠", "t-shirt", "tshirt"]) { return .tshirt }
         if containsAny(source, ["셔츠", "블라우스", "shirt", "blouse"]) { return .shirt }

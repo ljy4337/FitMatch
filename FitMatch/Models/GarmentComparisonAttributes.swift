@@ -33,6 +33,7 @@ enum ComparisonGarmentFamily: String, Codable, Equatable {
     case leggings
     case skirt
     case outerwear
+    case leatherJacket = "leather_jacket"
     case underwear
     case dress
     case shoes
@@ -51,6 +52,7 @@ enum ComparisonGarmentFamily: String, Codable, Equatable {
         case .leggings: return "레깅스"
         case .skirt: return "스커트"
         case .outerwear: return "아우터"
+        case .leatherJacket: return "레더/라이더스"
         case .underwear: return "속옷"
         case .dress: return "원피스"
         case .shoes: return "신발"

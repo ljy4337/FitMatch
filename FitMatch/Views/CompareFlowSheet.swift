@@ -1355,6 +1355,13 @@ private extension CompareFlowSheet {
         print("[CompareFlowSheet] same category count: \(sameCategory.count)")
         print("[CompareFlowSheet] same category/detail count: \(sameDetail.count)")
         print("[CompareFlowSheet] excluded missing measurements count: \(missingMeasurements.count)")
+        ComparisonProfileMatcher().candidateDiagnostics(
+            product: product,
+            productDetailCategory: viewModel.detailCategory,
+            userFits: userFits
+        ).forEach {
+            print("[CompareFlowSheet] reference candidate diagnostic: \($0.logDescription)")
+        }
     }
 
     func existingBrand(named name: String) -> Brand? {

@@ -1,0 +1,382 @@
+{
+  "policy_version": "taxonomy-final-2026-08-03",
+  "aliases": [
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "가슴단면",
+      "raw_label_normalized": "가슴단면",
+      "canonical_measurement_code": "chest_width",
+      "raw_representation": "chest_pit_to_pit",
+      "comparison_basis": "chest_pit_to_pit",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "tops",
+        "outerwear"
+      ],
+      "is_comparable": true,
+      "evidence": "Audited Musinsa actual-size type mappings.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "밑단단면",
+      "raw_label_normalized": "밑단단면",
+      "canonical_measurement_code": "hem_width",
+      "raw_representation": "hem_edge_to_edge",
+      "comparison_basis": "hem_edge_to_edge",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms",
+        "skirts"
+      ],
+      "is_comparable": true,
+      "evidence": "Bottom/skirt types only.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "밑위",
+      "raw_label_normalized": "밑위",
+      "canonical_measurement_code": "front_rise",
+      "raw_representation": "front_crotch_to_waist",
+      "comparison_basis": "front_crotch_to_waist",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms"
+      ],
+      "is_comparable": true,
+      "evidence": "Front rise; back rise must remain separate.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "소매길이",
+      "raw_label_normalized": "소매길이",
+      "canonical_measurement_code": "sleeve_length",
+      "raw_representation": "sleeve_shoulder_seam_to_cuff",
+      "comparison_basis": "sleeve_shoulder_seam_to_cuff",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "tops",
+        "outerwear"
+      ],
+      "is_comparable": true,
+      "evidence": "Set-in sleeve types only.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "어깨너비",
+      "raw_label_normalized": "어깨너비",
+      "canonical_measurement_code": "shoulder_width",
+      "raw_representation": "shoulder_seam_to_seam",
+      "comparison_basis": "shoulder_seam_to_seam",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "tops",
+        "outerwear"
+      ],
+      "is_comparable": true,
+      "evidence": "Audited Musinsa actual-size type mappings.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "엉덩이단면",
+      "raw_label_normalized": "엉덩이단면",
+      "canonical_measurement_code": "hip_width",
+      "raw_representation": "hip_at_widest",
+      "comparison_basis": "hip_at_widest",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms",
+        "skirts",
+        "dresses"
+      ],
+      "is_comparable": true,
+      "evidence": "Audited type-dependent mapping.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "총장",
+      "raw_label_normalized": "총장",
+      "canonical_measurement_code": "back_length",
+      "raw_representation": "back_neck_to_hem",
+      "comparison_basis": "back_neck_to_hem",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "tops",
+        "outerwear"
+      ],
+      "is_comparable": true,
+      "evidence": "Musinsa type diagram basis; generic 기장 is intentionally not included.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "허리너비",
+      "raw_label_normalized": "허리너비",
+      "canonical_measurement_code": "waist_width",
+      "raw_representation": "waist_edge_to_edge",
+      "comparison_basis": "waist_edge_to_edge",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms",
+        "skirts"
+      ],
+      "is_comparable": true,
+      "evidence": "Bottom/skirt audited types only.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "허리단면",
+      "raw_label_normalized": "허리단면",
+      "canonical_measurement_code": "waist_width",
+      "raw_representation": "waist_edge_to_edge",
+      "comparison_basis": "waist_edge_to_edge",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms",
+        "skirts"
+      ],
+      "is_comparable": true,
+      "evidence": "Bottom/skirt audited types only.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "허벅지단면",
+      "raw_label_normalized": "허벅지단면",
+      "canonical_measurement_code": "thigh_width",
+      "raw_representation": "thigh_crotch_to_outer",
+      "comparison_basis": "thigh_crotch_to_outer",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms"
+      ],
+      "is_comparable": true,
+      "evidence": "Bottom types only.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "화장",
+      "raw_label_normalized": "화장",
+      "canonical_measurement_code": "sleeve_length",
+      "raw_representation": "sleeve_raglan_neck_to_cuff",
+      "comparison_basis": null,
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "tops",
+        "outerwear"
+      ],
+      "is_comparable": false,
+      "evidence": "Not directly comparable with shoulder-seam or center-back sleeve length.",
+      "is_active": true
+    },
+    {
+      "source": "musinsa",
+      "parser_code": "actual_size",
+      "raw_code": "",
+      "raw_label": "힙단면",
+      "raw_label_normalized": "힙단면",
+      "canonical_measurement_code": "hip_width",
+      "raw_representation": "hip_at_widest",
+      "comparison_basis": "hip_at_widest",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms",
+        "skirts",
+        "dresses"
+      ],
+      "is_comparable": true,
+      "evidence": "Audited type-dependent mapping.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "bottom-width",
+      "raw_label": "밑단 너비",
+      "raw_label_normalized": "밑단 너비",
+      "canonical_measurement_code": "hem_width",
+      "raw_representation": "hem_edge_to_edge",
+      "comparison_basis": "hem_edge_to_edge",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms"
+      ],
+      "is_comparable": true,
+      "evidence": "Confirmed by parser rule and fixture.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "rising-length",
+      "raw_label": "밑위 길이",
+      "raw_label_normalized": "밑위 길이",
+      "canonical_measurement_code": "front_rise",
+      "raw_representation": "front_crotch_to_waist",
+      "comparison_basis": "front_crotch_to_waist",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms"
+      ],
+      "is_comparable": true,
+      "evidence": "Confirmed by parser rule and fixture.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "sleeve-length-cb",
+      "raw_label": "소매",
+      "raw_label_normalized": "소매",
+      "canonical_measurement_code": "sleeve_length",
+      "raw_representation": "sleeve_center_back_to_cuff",
+      "comparison_basis": null,
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "tops",
+        "outerwear"
+      ],
+      "is_comparable": false,
+      "evidence": "Not directly comparable with shoulder-seam or raglan sleeve length.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "sleeve-length",
+      "raw_label": "소매길이",
+      "raw_label_normalized": "소매길이",
+      "canonical_measurement_code": "sleeve_length",
+      "raw_representation": "sleeve_shoulder_seam_to_cuff",
+      "comparison_basis": "sleeve_shoulder_seam_to_cuff",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "tops",
+        "outerwear"
+      ],
+      "is_comparable": true,
+      "evidence": "Confirmed Uniqlo raw code.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "skirt-length",
+      "raw_label": "스커트 길이",
+      "raw_label_normalized": "스커트 길이",
+      "canonical_measurement_code": "total_length",
+      "raw_representation": "waist_to_skirt_hem",
+      "comparison_basis": "waist_to_skirt_hem",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "skirts"
+      ],
+      "is_comparable": true,
+      "evidence": "Raw code confirmed; Korean label was not fixture-confirmed.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "hip-product-size",
+      "raw_label": "엉덩이둘레",
+      "raw_label_normalized": "엉덩이둘레",
+      "canonical_measurement_code": "hip_circumference",
+      "raw_representation": "garment_hip_circumference",
+      "comparison_basis": "hip_at_widest",
+      "conversion_multiplier": "0.5",
+      "category_scopes": [
+        "bottoms",
+        "skirts"
+      ],
+      "is_comparable": true,
+      "evidence": "Confirmed by parser rule and fixture; stored raw semantic is circumference.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "inseam",
+      "raw_label": "인심",
+      "raw_label_normalized": "인심",
+      "canonical_measurement_code": "inseam",
+      "raw_representation": "crotch_to_inner_hem",
+      "comparison_basis": "crotch_to_inner_hem",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms"
+      ],
+      "is_comparable": true,
+      "evidence": "Confirmed by parser rule and fixture; outseam remains separate.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "waist-product-size",
+      "raw_label": "허리둘레",
+      "raw_label_normalized": "허리둘레",
+      "canonical_measurement_code": "waist_circumference",
+      "raw_representation": "garment_waist_circumference",
+      "comparison_basis": "waist_edge_to_edge",
+      "conversion_multiplier": "0.5",
+      "category_scopes": [
+        "bottoms",
+        "skirts"
+      ],
+      "is_comparable": true,
+      "evidence": "Confirmed by parser rule and fixture; stored raw semantic is circumference.",
+      "is_active": true
+    },
+    {
+      "source": "uniqlo",
+      "parser_code": "size_chart",
+      "raw_code": "thigh",
+      "raw_label": "허벅지 너비",
+      "raw_label_normalized": "허벅지 너비",
+      "canonical_measurement_code": "thigh_width",
+      "raw_representation": "thigh_crotch_to_outer",
+      "comparison_basis": "thigh_crotch_to_outer",
+      "conversion_multiplier": "1",
+      "category_scopes": [
+        "bottoms"
+      ],
+      "is_comparable": true,
+      "evidence": "Confirmed by parser rule and fixture.",
+      "is_active": true
+    }
+  ],
+  "format_policy": {
+    "preserve_raw": true,
+    "preserve_converted": true
+  }
+}

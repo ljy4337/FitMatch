@@ -514,7 +514,119 @@ struct FitMatchTests {
         #expect(profile.semanticCategoryCode == "tops")
         #expect(profile.appGarmentFamily == .tshirt)
         #expect(profile.appLengthType == .short)
-        #expect(profile.policyVersion == "taxonomy-final-2026-08-03")
+        #expect(profile.policyVersion == "taxonomy-refined-2026-08-03")
+    }
+
+    @Test func adultCrossGenderBottomsCanUseDirectMeasurements() throws {
+        var metadata = ProductMetadata(sourceCategoryPath: "팬츠 > 슬랙스(트라우저)")
+        metadata.genderCodes = ["WOMEN"]
+        let productSize = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 72, sleeveLength: 0,
+                waist: 36, hip: 52.5, thigh: 34.5
+            )
+        )
+        let product = Product(
+            name: "스마트와이드스트레이트팬츠",
+            category: .bottom,
+            metadata: metadata,
+            sourceName: "유니클로 공식몰",
+            sizes: [productSize]
+        )
+        product.garmentType = .pants
+        product.sleeveType = .long
+
+        let item = UserFit(
+            sourceName: "유니클로 공식몰",
+            sourceCategoryPath: "팬츠 > 진(청바지)",
+            brandName: "유니클로",
+            gender: .men,
+            productName: "스트레이트진(셀비지)",
+            category: .bottom,
+            detailCategory: .denim,
+            sizeName: "30",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 78.5, sleeveLength: 0,
+                waist: 41, hip: 51, thigh: 33
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.garmentType = .denim
+        item.sleeveType = .long
+
+        let matcher = ComparisonProfileMatcher()
+        let result = matcher.match(product: product, productDetailCategory: .longPants, userFits: [item])
+        let diagnostic = try #require(matcher.candidateDiagnostics(
+            product: product,
+            productDetailCategory: .longPants,
+            userFits: [item]
+        ).first)
+
+        #expect(result.state == .compatible)
+        #expect(result.compatibleCandidates.map(\.id) == [item.id])
+        #expect(diagnostic.exclusionReasons.isEmpty)
+        #expect(diagnostic.commonCoreMeasurementCount >= diagnostic.minimumCommonMeasurementCount)
+    }
+
+    @Test func adultCrossGenderUnderwearRemainsIncompatible() {
+        var metadata = ProductMetadata(sourceCategoryPath: "이너웨어 > 여성 속옷 하의")
+        metadata.genderCodes = ["WOMEN"]
+        let product = Product(
+            name: "여성 이너웨어",
+            category: .underwear,
+            metadata: metadata,
+            sourceName: "유니클로 공식몰",
+            sizes: [ProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0,
+                    waist: 34, hip: 44
+                )
+            )]
+        )
+        product.garmentType = .underwear
+
+        let item = UserFit(
+            sourceName: "유니클로 공식몰",
+            sourceCategoryPath: "이너웨어 > 남성 브리프",
+            brandName: "유니클로",
+            gender: .men,
+            productName: "남성 브리프",
+            category: .underwear,
+            detailCategory: .menBriefs,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0,
+                waist: 36, hip: 46
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.garmentType = .underwear
+
+        let matcher = ComparisonProfileMatcher()
+        let result = matcher.match(product: product, productDetailCategory: .womenPanty, userFits: [item])
+
+        #expect(result.state == .noCompatibleGarment)
+        #expect(result.compatibleCandidates.isEmpty)
+    }
+
+    @Test func refinedCanonicalTaxonomyKeepsLeatherJacketsInTheirOwnFamily() throws {
+        let store = try CanonicalTaxonomyBundleStore(bundle: .main)
+        let profile = try #require(store.profile(for: CanonicalTaxonomyLookupInput(
+            source: "musinsa", externalCategoryID: "002002", target: nil, sourceCategoryPath: nil
+        )))
+        let matcher = ComparisonProfileMatcher()
+
+        #expect(profile.decision == .confirmed)
+        #expect(profile.semanticGarmentType == "leather_jacket")
+        #expect(profile.appGarmentFamily == .leatherJacket)
+        #expect(profile.requiredMeasurements == ["chest", "total_length"])
+        #expect(profile.optionalMeasurements == ["shoulder", "sleeve_length"])
+        #expect(matcher.garmentFamiliesAreCompatible(.leatherJacket, .leatherJacket))
+        #expect(!matcher.garmentFamiliesAreCompatible(.leatherJacket, .outerwear))
     }
 
     @Test func canonicalTaxonomyBundleResolvesUniqloTargetPathAndRejectsUnsupportedUse() throws {

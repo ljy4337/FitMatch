@@ -81,6 +81,21 @@
       }
     },
     {
+      "allowed": false,
+      "directional": true,
+      "fallbackAllowed": false,
+      "fromFamily": "jacket",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "leather_jacket",
+      "weights": {}
+    },
+    {
       "allowed": true,
       "directional": false,
       "fallbackAllowed": true,
@@ -101,6 +116,54 @@
       }
     },
     {
+      "allowed": false,
+      "directional": true,
+      "fallbackAllowed": false,
+      "fromFamily": "leather_jacket",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "jacket",
+      "weights": {}
+    },
+    {
+      "allowed": true,
+      "directional": false,
+      "fallbackAllowed": false,
+      "fromFamily": "leather_jacket",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "leather_jacket",
+      "weights": {
+        "chest": 0.5,
+        "total_length": 0.5
+      }
+    },
+    {
+      "allowed": false,
+      "directional": true,
+      "fallbackAllowed": false,
+      "fromFamily": "leather_jacket",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "outerwear",
+      "weights": {}
+    },
+    {
       "allowed": true,
       "directional": false,
       "fallbackAllowed": true,
@@ -119,6 +182,21 @@
         "hip": 1,
         "waist": 1
       }
+    },
+    {
+      "allowed": false,
+      "directional": true,
+      "fallbackAllowed": false,
+      "fromFamily": "outerwear",
+      "lengthMatchRequired": false,
+      "lengthMismatchExcludedMeasurements": [],
+      "minimumCommonMeasurements": 2,
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "toFamily": "leather_jacket",
+      "weights": {}
     },
     {
       "allowed": true,
@@ -428,6 +506,12 @@
       "minimum_comparable_measurements": 2
     },
     {
+      "code": "leather_jacket",
+      "current_app_family_code": "leather_jacket",
+      "is_active": true,
+      "minimum_comparable_measurements": 2
+    },
+    {
       "code": "leggings",
       "current_app_family_code": "leggings",
       "is_active": true,
@@ -662,6 +746,27 @@
       }
     },
     {
+      "comparisonFamily": "leather_jacket",
+      "excludedMeasurements": [],
+      "minimumComparableMeasurements": 2,
+      "optionalMeasurements": [
+        "shoulder",
+        "sleeve_length"
+      ],
+      "requiredMeasurements": [
+        "chest",
+        "total_length"
+      ],
+      "sourceFormatPolicy": {
+        "both_circumference": "circumference comparison allowed",
+        "cross_platform": "canonical conversion",
+        "one_or_more_flat": "normalize comparable values to flat",
+        "provenance": "preserve raw and converted values",
+        "same_platform_different_format": "canonical conversion",
+        "same_platform_same_official_format": "compare original official labels and values"
+      }
+    },
+    {
       "comparisonFamily": "leggings",
       "excludedMeasurements": [],
       "minimumComparableMeasurements": 2,
@@ -863,6 +968,6 @@
       }
     }
   ],
-  "policyVersion": "taxonomy-final-2026-08-03",
+  "policyVersion": "taxonomy-refined-2026-08-03",
   "schemaVersion": "1.0"
 }
