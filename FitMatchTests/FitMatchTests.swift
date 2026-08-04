@@ -325,6 +325,344 @@ struct FitMatchTests {
         #expect(result.state == .sameFamilyLengthConflict)
     }
 
+    @Test func uniqloChinoLongPantsMatchesStoredUniqloStraightJeans() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 101, sleeveLength: 0,
+                waist: 40, hip: 52, thigh: 31
+            )
+        )
+        let metadata = ProductMetadata(
+            sourceCategoryPath: "팬츠 > 치노팬츠",
+            sourceCategoryDepth1: "팬츠",
+            sourceCategoryDepth2: "치노팬츠"
+        )
+        let chino = Product(
+            name: "와이드치노팬츠",
+            category: .bottom,
+            metadata: metadata,
+            sourceName: "유니클로 공식몰",
+            sizes: [size]
+        )
+        let straightJeans = UserFit(
+            sourceName: "유니클로 공식몰",
+            sourceCategoryPath: "팬츠 > 진(청바지) > 스트레이트",
+            sourceCategoryDepth1: "팬츠",
+            sourceCategoryDepth2: "진(청바지)",
+            sourceCategoryDepth3: "스트레이트",
+            brandName: "유니클로",
+            productName: "스트레이트진",
+            category: .bottom,
+            detailCategory: .longPants,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 100, sleeveLength: 0,
+                waist: 39, hip: 51, thigh: 30
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+
+        let result = ComparisonProfileMatcher().match(
+            product: chino,
+            productDetailCategory: .longPants,
+            userFits: [straightJeans]
+        )
+
+        #expect(result.incomingProfile.garmentFamily == .pants)
+        #expect(ComparisonProfileMatcher().profile(for: straightJeans).garmentFamily == .denim)
+        #expect(result.state == .compatible)
+        #expect(result.compatibleCandidates.map(\.id) == [straightJeans.id])
+    }
+
+    @Test func comparisonProfileCoversEverySupportedClosetDetailFamily() {
+        let cases: [(ClothingCategory, ClosetDetailCategory, ComparisonGarmentFamily)] = [
+            (.top, .sleeveless, .tshirt), (.top, .shortSleeve, .tshirt),
+            (.top, .threeQuarterSleeve, .tshirt), (.top, .longSleeve, .tshirt),
+            (.top, .shirt, .shirt), (.top, .blouse, .shirt),
+            (.top, .knitTop, .knitCardigan), (.top, .cardigan, .knitCardigan),
+            (.top, .sweatshirt, .sweatshirt), (.top, .hoodie, .hoodie),
+            (.bottom, .shortPants, .pants), (.bottom, .croppedPants, .pants),
+            (.bottom, .threeQuarterPants, .pants), (.bottom, .nineTenthsPants, .pants),
+            (.bottom, .longPants, .pants), (.bottom, .slacks, .pants),
+            (.bottom, .shorts, .pants), (.bottom, .trainingPants, .pants),
+            (.bottom, .denim, .denim), (.bottom, .skirt, .skirt),
+            (.bottom, .shortLeggings, .leggings), (.bottom, .threeQuarterLeggings, .leggings),
+            (.bottom, .nineTenthsLeggings, .leggings), (.bottom, .longLeggings, .leggings),
+            (.bottom, .leggings, .leggings),
+            (.outer, .windbreaker, .outerwear), (.outer, .anorak, .outerwear),
+            (.outer, .jacket, .outerwear), (.outer, .blazer, .outerwear),
+            (.outer, .jumper, .outerwear), (.outer, .blouson, .outerwear),
+            (.outer, .fleece, .outerwear), (.outer, .padding, .outerwear),
+            (.outer, .coat, .outerwear), (.outer, .trenchCoat, .outerwear),
+            (.outer, .mouton, .outerwear), (.outer, .paddedVest, .outerwear),
+            (.dress, .onePiece, .dress), (.underwear, .underwear, .underwear),
+            (.underwear, .menBriefs, .underwear), (.underwear, .menTrunks, .underwear),
+            (.underwear, .menUndershirt, .underwear), (.underwear, .womenBra, .underwear),
+            (.underwear, .womenPanty, .underwear), (.underwear, .womenCamisole, .underwear),
+            (.underwear, .womenSlip, .underwear),
+            (.shoes, .sneakers, .shoes), (.shoes, .runningShoes, .shoes),
+            (.shoes, .loafers, .shoes), (.shoes, .boots, .shoes),
+            (.shoes, .sandals, .shoes), (.shoes, .heels, .shoes),
+            (.accessory, .watch, .accessory), (.accessory, .ring, .accessory),
+            (.accessory, .bracelet, .accessory), (.accessory, .necklace, .accessory),
+            (.accessory, .bag, .accessory), (.accessory, .hat, .accessory),
+            (.accessory, .belt, .accessory), (.accessory, .scarf, .accessory)
+        ]
+        let matcher = ComparisonProfileMatcher()
+        for (category, detail, expectedFamily) in cases {
+            let product = Product(name: "테스트 상품", category: category)
+            let profile = matcher.profile(for: product, detailCategory: detail)
+            #expect(profile.garmentFamily == expectedFamily, "\(category.rawValue)/\(detail.rawValue)")
+        }
+    }
+
+    @Test func intermediateSleeveAndPantsLengthsDoNotCrossMatch() {
+        let matcher = ComparisonProfileMatcher()
+        let product = Product(
+            name: "테스트 팬츠",
+            category: .bottom,
+            metadata: ProductMetadata(sourceCategoryPath: "하의"),
+            sizes: [
+                ProductSize(
+                    name: "M",
+                    measurements: GarmentMeasurements(
+                        shoulder: 0, chest: 0, totalLength: 82, sleeveLength: 0,
+                        waist: 38, hip: 50, thigh: 30
+                    )
+                )
+            ]
+        )
+        let seven = comparisonUserFit(
+            name: "7부 팬츠", category: .bottom, sourceCategory: "하의",
+            detail: .threeQuarterPants, sleeve: 0, totalLength: 82
+        )
+        let nine = comparisonUserFit(
+            name: "9부 팬츠", category: .bottom, sourceCategory: "하의",
+            detail: .nineTenthsPants, sleeve: 0, totalLength: 92
+        )
+
+        let sameLength = matcher.match(
+            product: product, productDetailCategory: .threeQuarterPants, userFits: [seven]
+        )
+        let differentLength = matcher.match(
+            product: product, productDetailCategory: .threeQuarterPants, userFits: [nine]
+        )
+
+        #expect(sameLength.state == .compatible)
+        #expect(differentLength.state == .sameFamilyLengthConflict)
+    }
+
+    @Test func lengthIndependentCategoriesCanAutomaticallyMatch() {
+        func result(
+            category: ClothingCategory,
+            detail: ClosetDetailCategory,
+            name: String,
+            source: String,
+            measurements: GarmentMeasurements
+        ) -> AutomaticComparisonMatchResult {
+            let size = ProductSize(name: "M", measurements: measurements)
+            let product = Product(
+                name: name, category: category,
+                metadata: ProductMetadata(sourceCategoryPath: source), sizes: [size]
+            )
+            let item = UserFit(
+                sourceCategoryPath: source, brandName: "테스트", productName: name,
+                category: category, detailCategory: detail, sizeName: "M",
+                measurements: measurements, fitMemo: "", satisfaction: 3
+            )
+            return ComparisonProfileMatcher().match(
+                product: product, productDetailCategory: detail, userFits: [item]
+            )
+        }
+
+        let dress = result(
+            category: .dress, detail: .onePiece, name: "원피스", source: "원피스",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 48, totalLength: 110, sleeveLength: 0, waist: 40, hip: 50)
+        )
+        let skirt = result(
+            category: .bottom, detail: .skirt, name: "스커트", source: "하의 > 스커트",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 75, sleeveLength: 0, waist: 36, hip: 48, thigh: 28)
+        )
+        let underwear = result(
+            category: .underwear, detail: .menBriefs, name: "브리프", source: "속옷 > 브리프",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0, waist: 34, hip: 43)
+        )
+        let shoes = result(
+            category: .shoes, detail: .sneakers, name: "스니커즈", source: "신발 > 스니커즈",
+            measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0, footLength: 270)
+        )
+
+        #expect(dress.state == .compatible)
+        #expect(skirt.state == .compatible)
+        #expect(underwear.state == .compatible)
+        #expect(shoes.state == .compatible)
+    }
+
+    @Test func canonicalTaxonomyBundleDecodesAndResolvesMusinsaID() throws {
+        let store = try CanonicalTaxonomyBundleStore(bundle: .main)
+        let profile = try #require(store.profile(for: CanonicalTaxonomyLookupInput(
+            source: "무신사",
+            externalCategoryID: "001001",
+            target: nil,
+            sourceCategoryPath: "잘못된 경로"
+        )))
+
+        #expect(profile.decision == .confirmed)
+        #expect(profile.eligibility)
+        #expect(profile.semanticCategoryCode == "tops")
+        #expect(profile.appGarmentFamily == .tshirt)
+        #expect(profile.appLengthType == .short)
+        #expect(profile.policyVersion == "taxonomy-refined-2026-08-03")
+    }
+
+    @Test func adultCrossGenderBottomsCanUseDirectMeasurements() throws {
+        var metadata = ProductMetadata(sourceCategoryPath: "팬츠 > 슬랙스(트라우저)")
+        metadata.genderCodes = ["WOMEN"]
+        let productSize = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 72, sleeveLength: 0,
+                waist: 36, hip: 52.5, thigh: 34.5
+            )
+        )
+        let product = Product(
+            name: "스마트와이드스트레이트팬츠",
+            category: .bottom,
+            metadata: metadata,
+            sourceName: "유니클로 공식몰",
+            sizes: [productSize]
+        )
+        product.garmentType = .pants
+        product.sleeveType = .long
+
+        let item = UserFit(
+            sourceName: "유니클로 공식몰",
+            sourceCategoryPath: "팬츠 > 진(청바지)",
+            brandName: "유니클로",
+            gender: .men,
+            productName: "스트레이트진(셀비지)",
+            category: .bottom,
+            detailCategory: .denim,
+            sizeName: "30",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 78.5, sleeveLength: 0,
+                waist: 41, hip: 51, thigh: 33
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.garmentType = .denim
+        item.sleeveType = .long
+
+        let matcher = ComparisonProfileMatcher()
+        let result = matcher.match(product: product, productDetailCategory: .longPants, userFits: [item])
+        let diagnostic = try #require(matcher.candidateDiagnostics(
+            product: product,
+            productDetailCategory: .longPants,
+            userFits: [item]
+        ).first)
+
+        #expect(result.state == .compatible)
+        #expect(result.compatibleCandidates.map(\.id) == [item.id])
+        #expect(diagnostic.exclusionReasons.isEmpty)
+        #expect(diagnostic.commonCoreMeasurementCount >= diagnostic.minimumCommonMeasurementCount)
+    }
+
+    @Test func adultCrossGenderUnderwearRemainsIncompatible() {
+        var metadata = ProductMetadata(sourceCategoryPath: "이너웨어 > 여성 속옷 하의")
+        metadata.genderCodes = ["WOMEN"]
+        let product = Product(
+            name: "여성 이너웨어",
+            category: .underwear,
+            metadata: metadata,
+            sourceName: "유니클로 공식몰",
+            sizes: [ProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0,
+                    waist: 34, hip: 44
+                )
+            )]
+        )
+        product.garmentType = .underwear
+
+        let item = UserFit(
+            sourceName: "유니클로 공식몰",
+            sourceCategoryPath: "이너웨어 > 남성 브리프",
+            brandName: "유니클로",
+            gender: .men,
+            productName: "남성 브리프",
+            category: .underwear,
+            detailCategory: .menBriefs,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0,
+                waist: 36, hip: 46
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.garmentType = .underwear
+
+        let matcher = ComparisonProfileMatcher()
+        let result = matcher.match(product: product, productDetailCategory: .womenPanty, userFits: [item])
+
+        #expect(result.state == .noCompatibleGarment)
+        #expect(result.compatibleCandidates.isEmpty)
+    }
+
+    @Test func refinedCanonicalTaxonomyKeepsLeatherJacketsInTheirOwnFamily() throws {
+        let store = try CanonicalTaxonomyBundleStore(bundle: .main)
+        let profile = try #require(store.profile(for: CanonicalTaxonomyLookupInput(
+            source: "musinsa", externalCategoryID: "002002", target: nil, sourceCategoryPath: nil
+        )))
+        let matcher = ComparisonProfileMatcher()
+
+        #expect(profile.decision == .confirmed)
+        #expect(profile.semanticGarmentType == "leather_jacket")
+        #expect(profile.appGarmentFamily == .leatherJacket)
+        #expect(profile.requiredMeasurements == ["chest", "total_length"])
+        #expect(profile.optionalMeasurements == ["shoulder", "sleeve_length"])
+        #expect(matcher.garmentFamiliesAreCompatible(.leatherJacket, .leatherJacket))
+        #expect(!matcher.garmentFamiliesAreCompatible(.leatherJacket, .outerwear))
+    }
+
+    @Test func canonicalTaxonomyBundleResolvesUniqloTargetPathAndRejectsUnsupportedUse() throws {
+        let store = try CanonicalTaxonomyBundleStore(bundle: .main)
+        let uniqlo = try #require(store.profile(for: CanonicalTaxonomyLookupInput(
+            source: "유니클로 공식몰",
+            externalCategoryID: nil,
+            target: "MEN",
+            sourceCategoryPath: "팬츠  >  진(청바지) > UNIQLO : C"
+        )))
+        let rejected = try #require(store.profile(for: CanonicalTaxonomyLookupInput(
+            source: "musinsa",
+            externalCategoryID: "003010",
+            target: nil,
+            sourceCategoryPath: nil
+        )))
+
+        #expect(uniqlo.decision == .confirmed)
+        #expect(uniqlo.appGarmentFamily == .pants)
+        #expect(uniqlo.appLengthType == .long)
+        #expect(rejected.decision == .rejected)
+        #expect(!rejected.eligibility)
+    }
+
+    @Test func canonicalProfileSnapshotRoundTripsWithoutLosingPolicyIdentity() throws {
+        let store = try CanonicalTaxonomyBundleStore(bundle: .main)
+        let original = try #require(store.profile(for: CanonicalTaxonomyLookupInput(
+            source: "musinsa", externalCategoryID: "001001", target: nil, sourceCategoryPath: nil
+        )))
+        let encoded = try #require(CanonicalProfileSnapshotCoder.encode(original))
+        let decoded = try #require(CanonicalProfileSnapshotCoder.decode(encoded))
+
+        #expect(decoded == original)
+        #expect(decoded.sourceIdentity == original.sourceIdentity)
+    }
+
     @Test func unspecifiedSleeveLengthUsesMeasuredFallbackInsteadOfConfirmation() {
         let product = comparisonProduct(name: "베이직 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 40)
         let item = comparisonUserFit(name: "니트", detail: .knitTop, sleeve: 40)

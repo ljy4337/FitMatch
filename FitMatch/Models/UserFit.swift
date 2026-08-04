@@ -25,6 +25,11 @@ final class UserFit {
     var garmentTypeRawValue: String?
     var sleeveTypeRawValue: String?
     var constructionTypeRawValue: String?
+    var canonicalProfileSnapshotJSON: String?
+    var canonicalPolicyVersion: String?
+    var canonicalResolutionMethod: String?
+    var canonicalSourceIdentity: String?
+    var canonicalEligibility: Bool?
     var sizeName: String
     var shoulder: Double
     var chest: Double
@@ -126,6 +131,14 @@ final class UserFit {
         self.isRepresentative = isRepresentative
         self.sourceProduct = sourceProduct
         self.sourceProductSize = sourceProductSize
+        self.canonicalProfileSnapshotJSON = sourceProduct?.canonicalProfileSnapshotJSON
+        self.canonicalPolicyVersion = sourceProduct?.canonicalPolicyVersion
+        self.canonicalResolutionMethod = sourceProduct?.canonicalResolutionMethod
+        self.canonicalSourceIdentity = sourceProduct?.canonicalSourceIdentity
+        self.canonicalEligibility = sourceProduct?.canonicalEligibility
+        self.garmentTypeRawValue = sourceProduct?.garmentTypeRawValue
+        self.sleeveTypeRawValue = sourceProduct?.sleeveTypeRawValue
+        self.constructionTypeRawValue = sourceProduct?.constructionTypeRawValue
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -191,6 +204,10 @@ final class UserFit {
     var constructionType: ComparisonConstructionType {
         get { constructionTypeRawValue.flatMap { ComparisonConstructionType(rawValue: $0) } ?? .unknown }
         set { constructionTypeRawValue = newValue.rawValue }
+    }
+
+    var canonicalProfileSnapshot: CanonicalComparisonProfile? {
+        CanonicalProfileSnapshotCoder.decode(canonicalProfileSnapshotJSON)
     }
 
     var resolvedGenderCode: String {

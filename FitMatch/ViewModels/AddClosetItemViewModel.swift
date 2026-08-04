@@ -322,6 +322,21 @@ final class AddClosetItemViewModel: ObservableObject {
                 item.measurementMigrationErrorCode = nil
             }
         }
+        let canonicalTarget: String
+        switch gender {
+        case .men: canonicalTarget = "MEN"
+        case .women: canonicalTarget = "WOMEN"
+        case .baby: canonicalTarget = "BABY"
+        case .kids: canonicalTarget = "KIDS"
+        default: canonicalTarget = "UNKNOWN"
+        }
+        let canonicalProfile = CanonicalComparisonProfileResolver().resolve(
+            source: resolvedSourceName,
+            externalCategoryID: nil,
+            target: canonicalTarget,
+            sourceCategoryPath: item.sourceCategoryPath
+        )
+        CanonicalComparisonProfileResolver().apply(canonicalProfile, to: item)
         _ = ComparisonProfileMatcher().profile(for: item)
         return item
     }

@@ -1,0 +1,90 @@
+{
+  "id": "8f717eed-176f-43fc-91e9-838f88ab38ac",
+  "status": "validated",
+  "executed_at": "2026-08-03T09:55:03.343819+00:00",
+  "migration_id": "canonical_taxonomy_v1",
+  "validated_at": "2026-08-03T10:07:11.277219+00:00",
+  "actual_counts": {
+    "direct": 1075,
+    "rejected": 1403,
+    "confirmed": 1089,
+    "decisions": 4008,
+    "audit_rows": 2034,
+    "extensions": 54,
+    "unsupported": 40,
+    "app_mappings": 1089,
+    "source_nodes": 4008,
+    "source_aliases": 21,
+    "hierarchy_edges": 3978,
+    "navigation_only": 582,
+    "review_required": 894,
+    "activity_unknown": 4008,
+    "decision_evidence": 4008,
+    "transform_required": 14,
+    "compatibility_rules": 14,
+    "measurement_policies": 14
+  },
+  "import_run_id": "40677f85-e8a0-4a72-ad27-45524f385bcf",
+  "policy_version": "taxonomy-final-2026-08-03",
+  "schema_version": "1.0",
+  "skipped_counts": {
+    "decision_retry_idempotent": 100
+  },
+  "conflict_counts": {
+    "data_conflicts": 0,
+    "identity_nn_components_preserved": 1
+  },
+  "expected_counts": {
+    "direct": 1075,
+    "rejected": 1403,
+    "confirmed": 1089,
+    "decisions": 4008,
+    "extensions": 54,
+    "unsupported": 40,
+    "app_mappings": 1089,
+    "source_nodes": 4008,
+    "navigation_only": 582,
+    "review_required": 894,
+    "activity_unknown": 4008,
+    "transform_required": 14
+  },
+  "inserted_counts": {
+    "decisions": 4008,
+    "snapshots": 2,
+    "audit_rows": 2034,
+    "extensions": 54,
+    "app_mappings": 1089,
+    "source_nodes": 4008,
+    "source_aliases": 21,
+    "hierarchy_edges": 3978,
+    "decision_evidence": 4008,
+    "compatibility_rules": 14,
+    "decision_length_axes": 4008,
+    "measurement_policies": 14,
+    "legacy_identity_links": 2034
+  },
+  "source_checksums": {
+    "source_snapshot_hash": "bafb6ac0330f6bd44e523c74b417c142c9bf6ca22cff50b3c6f793a3685266fb"
+  },
+  "taxonomy_version": "observed-official-2026-08-03",
+  "manifest_checksum": "35b33e70765fea14f2329ea9bbceb868bc1c38624495b72dff73e30b63a98bb4",
+  "validation_result": {
+    "passed": true,
+    "legacy_changed": 0,
+    "policy_missing": 0,
+    "status_missing": 0,
+    "hierarchy_cycle": 0,
+    "orphan_category": 0,
+    "orphan_hierarchy": 0,
+    "rejected_invalid": 0,
+    "snapshot_missing": 0,
+    "evidence_fk_error": 0,
+    "identity_unresolved": 0,
+    "review_forced_mapping": 0,
+    "source_raw_hash_mismatch": 0,
+    "duplicate_source_identity": 0,
+    "confirmed_missing_required": 0,
+    "duplicate_normalized_conflict": 0
+  }
+}
+

@@ -708,9 +708,17 @@ struct RecommendationService {
         ).map(\.id))
         return userFits
             .compactMap { item -> RankedReferenceCandidate? in
+                guard product.canonicalEligibility != false,
+                      item.canonicalEligibility != false else { return nil }
                 let candidateProfile = comparisonMatcher.profile(for: item)
-                guard candidateProfile.garmentFamily == incomingProfile.garmentFamily,
-                      candidateProfile.lengthType == incomingProfile.lengthType,
+                guard comparisonMatcher.garmentFamiliesAreCompatible(
+                    candidateProfile.garmentFamily,
+                    incomingProfile.garmentFamily
+                ),
+                      comparisonMatcher.lengthsAreCompatible(
+                        candidateProfile,
+                        incomingProfile
+                      ),
                       let comparison = bestFitConfidence(
                         product: product,
                         userFit: item,

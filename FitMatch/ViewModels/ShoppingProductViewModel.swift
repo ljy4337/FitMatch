@@ -298,6 +298,21 @@ final class ShoppingProductViewModel: ObservableObject {
             product.sleeveType = canonical.lengthType
             product.constructionType = canonical.constructionType
         }
+        let canonicalTarget = productMetadata.genderCodes.first.map { code -> String in
+            let value = code.uppercased()
+            if value.contains("WOM") || value.contains("FEMALE") { return "WOMEN" }
+            if value.contains("MEN") || value.contains("MALE") { return "MEN" }
+            if value.contains("BABY") { return "BABY" }
+            if value.contains("KID") { return "KIDS" }
+            return value
+        }
+        let canonicalProfile = CanonicalComparisonProfileResolver().resolve(
+            source: resolvedSourceName,
+            externalCategoryID: productMetadata.mostSpecificExternalCategoryID,
+            target: canonicalTarget,
+            sourceCategoryPath: productMetadata.sourceCategoryPath ?? productMetadata.baseCategoryFullPath
+        )
+        CanonicalComparisonProfileResolver().apply(canonicalProfile, to: product)
         _ = ComparisonProfileMatcher().profile(for: product, detailCategory: detailCategory)
         return product
     }

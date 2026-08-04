@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "policy_version": "taxonomy-final-2026-08-03",
+  "generated_at": "2026-08-03T03:31:45.049Z",
+  "source_snapshot_nodes": 4008,
+  "source_snapshot_hash": "bafb6ac0330f6bd44e523c74b417c142c9bf6ca22cff50b3c6f793a3685266fb",
+  "artifacts": {
+    "canonical-source-categories.json": {
+      "rows": 4008,
+      "sha256": "223c414c18477804ebbb17d71ca0352c9e637527c43b10eea74ee57e5fcf763b"
+    },
+    "canonical-classification-decisions.json": {
+      "rows": 4008,
+      "sha256": "9b97e8b65bfeaa5fbee856ae4e70666f5c88f0bb9c9c1a8b7481e75504ffdac5"
+    },
+    "source-to-fitmatch-integrated-mapping.json": {
+      "rows": 4008,
+      "sha256": "f65c8eccc38b2556d520f3bf55413abcb3c747d3da95b171117373ebc177a6c9"
+    },
+    "category-app-mappings.json": {
+      "rows": 1089,
+      "sha256": "903f0c4dc8f033effe06c569b3ea3887f355500d40057ab9d739123bcd562de3"
+    },
+    "comparison-family-compatibility.json": {
+      "rows": 14,
+      "sha256": "0373b072920be609cf139a8246591c0979996d16a79dd0415c7991f2ede086f2"
+    },
+    "garment-measurement-policies.json": {
+      "rows": 14,
+      "sha256": "eef81dddd1e5f2b742446170a8ceed517cef735cf517b9054803b9a1058a005c"
+    },
+    "source-measurement-aliases.json": {
+      "rows": 21,
+      "sha256": "a20d6a9391a8bf79b99e3c2da0f7254f29fd1db2b4d9c41f3ddaa8252a447902"
+    },
+    "source-to-fitmatch-integrated-mapping.csv": {
+      "rows": 4008,
+      "sha256": "7078dc27d617264f2ffeec30f1bafe573d7c9de40b67cd337ad149f524e619ae"
+    },
+    "final-classification-report.md": {
+      "sha256": "08ff033d6106a2aa51c4d652894294ebd1f3c6e685e8d42e184cb4e618179289"
+    }
+  },
+  "counts": {
+    "navigation_only": 582,
+    "confirmed": 1089,
+    "review_required": 894,
+    "rejected": 1403,
+    "unsupported": 40
+  },
+  "activity_unknown": 4008,
+  "validation": {
+    "source_nodes": 4008,
+    "hierarchy_edges": 3978,
+    "unclassified": 0,
+    "identity_unresolved": 0,
+    "unsupported_as_rejected": 0,
+    "navigation_as_rejected": 0,
+    "rejected_with_comparison_policy": 0,
+    "confirmed_missing_semantic": 0,
+    "confirmed_missing_family": 0,
+    "status_total": 4008,
+    "duplicate_source_key_conflicts": 0,
+    "app_mapping_conflicts": 0
+  },
+  "canonical_promotion": {
+    "approved": false,
+    "executed": false,
+    "source_categories_eligible": true,
+    "decisions_eligible": true,
+    "app_mappings_eligible": true
+  }
+}

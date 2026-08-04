@@ -1,0 +1,283 @@
+{
+  "policy_version": "taxonomy-final-2026-08-03",
+  "rules": [
+    {
+      "from_family": "pants",
+      "to_family": "pants",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "total_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "waist",
+        "hip"
+      ],
+      "weights": {
+        "waist": 1,
+        "hip": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "denim",
+      "to_family": "denim",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "total_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "waist",
+        "hip"
+      ],
+      "weights": {
+        "waist": 1,
+        "hip": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "pants",
+      "to_family": "denim",
+      "allowed": true,
+      "directional": true,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "total_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "waist",
+        "hip"
+      ],
+      "weights": {
+        "waist": 1,
+        "hip": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "denim",
+      "to_family": "pants",
+      "allowed": true,
+      "directional": true,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "total_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "waist",
+        "hip"
+      ],
+      "weights": {
+        "waist": 1,
+        "hip": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "leggings",
+      "to_family": "leggings",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "waist",
+        "hip"
+      ],
+      "weights": {
+        "waist": 1,
+        "hip": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "skirt",
+      "to_family": "skirt",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "waist",
+        "hip"
+      ],
+      "weights": {
+        "waist": 1,
+        "hip": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "tshirt",
+      "to_family": "tshirt",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "chest",
+        "total_length"
+      ],
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "shirt",
+      "to_family": "shirt",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "chest",
+        "total_length"
+      ],
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "knit_cardigan",
+      "to_family": "knit_cardigan",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "chest",
+        "total_length"
+      ],
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "sweatshirt",
+      "to_family": "sweatshirt",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "chest",
+        "total_length"
+      ],
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "hoodie",
+      "to_family": "hoodie",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "chest",
+        "total_length"
+      ],
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "outerwear",
+      "to_family": "outerwear",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "chest",
+        "total_length"
+      ],
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "dress",
+      "to_family": "dress",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 2,
+      "required_measurements": [
+        "chest",
+        "total_length"
+      ],
+      "weights": {
+        "chest": 1,
+        "total_length": 1
+      },
+      "fallback_allowed": true
+    },
+    {
+      "from_family": "shoes",
+      "to_family": "shoes",
+      "allowed": true,
+      "directional": false,
+      "length_match_required": false,
+      "length_mismatch_excluded_measurements": [
+        "sleeve_length"
+      ],
+      "minimum_common_measurements": 1,
+      "required_measurements": [
+        "foot_length"
+      ],
+      "weights": {
+        "foot_length": 1
+      },
+      "fallback_allowed": true
+    }
+  ]
+}

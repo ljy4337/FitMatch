@@ -1,0 +1,23 @@
+{
+  "import_run_id": "40677f85-e8a0-4a72-ad27-45524f385bcf",
+  "import_key": "observed-official-taxonomy-20260803-v1",
+  "input_checksum": "c65ff8700bed46840f12f70af4ed138a8319abf49b00dabc387d83e2efcdc4be",
+  "source_snapshot_ids": {
+    "musinsa": "0a0fab7a-e6a6-45b9-ab5c-3426aba173e3",
+    "uniqlo": "6b0627ec-e64b-44da-a403-6ae10976629c"
+  },
+  "sampling_run_id": "6d15f604-5271-4309-a93a-1c7700f11fe3",
+  "expected": {
+    "source_snapshots": 2,
+    "nodes": 4008,
+    "hierarchy": 3978,
+    "candidates": 1976,
+    "components": 2029,
+    "edges": 2034,
+    "conflicts": 145,
+    "sampling_categories": 100,
+    "sampling_products": 906
+  },
+  "recovery": "delete from fitmatch_staging.import_runs where id = '40677f85-e8a0-4a72-ad27-45524f385bcf' and status <> 'completed'",
+  "canonical_promotion_authorized": false
+}

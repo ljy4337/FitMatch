@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-08-03T02:01:21.580Z",
+  "musinsa": {
+    "snapshot_total": 2277,
+    "id_target": 193,
+    "id_only": 121,
+    "path_target": 0,
+    "path_only": 0,
+    "missing_in_db": 1963,
+    "db_not_in_snapshot": 0,
+    "id_path_differences": 0,
+    "target_differences": 121
+  },
+  "uniqlo": {
+    "snapshot_total": 1731,
+    "id_target": 1717,
+    "id_only": 0,
+    "path_target": 1,
+    "path_only": 0,
+    "missing_in_db": 13,
+    "db_not_in_snapshot": 0,
+    "id_path_differences": 23,
+    "target_differences": 0
+  }
+}

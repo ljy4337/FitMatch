@@ -42,4 +42,10 @@ struct ProductMetadata {
     var season: String? = nil
     var checkedColorName: String? = nil
     var checkedSizeName: String? = nil
+
+    var mostSpecificExternalCategoryID: String? {
+        [categoryDepth4Code, categoryDepth3Code, categoryDepth2Code, categoryDepth1Code]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty }
+    }
 }

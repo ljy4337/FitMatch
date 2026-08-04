@@ -285,10 +285,10 @@ struct MeasurementComparisonEngine {
         records.filter {
             let resolvedKind = resolvedKind(for: $0)
             let canonicalMatch = resolvedKind == kind
-            // 원본 필드 직접 비교는 canonical 의미를 알 수 없는 공식 필드에만 허용한다.
-            // 예: 과거 유니클로의 밑위가 displayKind=.totalLength로 저장된 경우처럼
-            // canonical code와 표시 필드가 충돌하면 canonical 의미가 우선되어야 한다.
-            let directPlatformFieldMatch = resolvedKind == nil
+            // 동일 플랫폼의 공식 원본 필드는 raw code/명칭으로 직접 비교한다.
+            // 단, 과거 버전에서 canonical 의미와 표시 필드가 엇갈린
+            // 명시적 legacy 레코드(예: 유니클로 밑위→총장)는 직접 비교에서 제외한다.
+            let directPlatformFieldMatch = !isLegacyDisplayConflict($0, resolvedKind: resolvedKind)
                 && platform(for: $0.methodSource) != nil
                 && $0.displayKind == kind.displayKind
                 && (normalizedSourceKey($0.rawCode) != nil
@@ -297,6 +297,18 @@ struct MeasurementComparisonEngine {
                 && $0.value.isFinite
                 && $0.value > 0
         }
+    }
+
+    private func isLegacyDisplayConflict(
+        _ record: GarmentMeasurementRecord,
+        resolvedKind: MeasurementKind?
+    ) -> Bool {
+        guard let resolvedKind,
+              record.displayKind != resolvedKind.displayKind else {
+            return false
+        }
+        return record.mappingVersion.lowercased().contains("legacy")
+            || record.methodProfile?.lowercased().contains("legacy") == true
     }
 
     private func resolvedKind(
