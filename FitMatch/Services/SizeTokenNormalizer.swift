@@ -27,6 +27,10 @@ enum SizeTokenNormalizer {
             return isNumericSize(components.number) && letterSizes.contains(components.letter)
                 || letterSizes.contains(components.letter) && isNumericSize(components.number)
         }
+        if let components = letterSizeWithDescriptorComponents(value) {
+            return letterSizes.contains(components.letter)
+                && isValidDescriptor(components.descriptor)
+        }
 
         let slashParts = value.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
         if slashParts.count == 2 {
@@ -68,5 +72,23 @@ enum SizeTokenNormalizer {
             return (inside, outside)
         }
         return nil
+    }
+
+    private static func letterSizeWithDescriptorComponents(
+        _ value: String
+    ) -> (letter: String, descriptor: String)? {
+        guard let open = value.firstIndex(of: "("),
+              value.last == ")" else { return nil }
+        let letter = String(value[..<open])
+        let descriptor = String(value[value.index(after: open)..<value.index(before: value.endIndex)])
+        guard letterSizes.contains(letter) else { return nil }
+        return (letter, descriptor)
+    }
+
+    private static func isValidDescriptor(_ value: String) -> Bool {
+        guard !value.isEmpty, value.count <= 12 else { return false }
+        return value.allSatisfy {
+            $0.isLetter || $0.isNumber || ["&", ".", "_", "-"].contains($0)
+        }
     }
 }

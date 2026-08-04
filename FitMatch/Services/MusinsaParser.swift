@@ -72,11 +72,20 @@ struct MusinsaParser: ProductURLParsing {
             #endif
             actualSize = nil
         }
+        let actualParsedSizes = actualSize?.sizes ?? []
         var sizes = ParsedSizeValidator.validSizes(
-            actualSize?.sizes ?? [],
+            actualParsedSizes,
             category: metadata.category
         )
         metadata.applyActualSizeProfile(typeNumber: actualSize?.typeNumber, typeName: actualSize?.typeName)
+
+        #if DEBUG
+        FitMatchDebugLogger.detail(
+            screen: "상품 분석",
+            action: "무신사 실측 검증",
+            details: "API파싱수=\(actualParsedSizes.count), 유효수=\(sizes.count), 제외사이즈=\(actualParsedSizes.filter { candidate in !sizes.contains { $0.name == candidate.name } }.map(\.name).joined(separator: ","))"
+        )
+        #endif
 
         if sizes.isEmpty {
             let fallbackSizes = await fallbackSizeParser.parse(

@@ -1005,6 +1005,57 @@ struct FitMatchTests {
         #expect(length?.semanticStatus == .mapped)
     }
 
+    @Test func musinsaActualSizeAcceptsLetterSizesWithProductDescriptors() throws {
+        let json = """
+        {
+          "data": {
+            "typeName": "셔츠",
+            "typeNumber": 20,
+            "sizes": [
+              {
+                "name": "S(린넨)",
+                "items": [
+                  { "name": "총장", "value": 0 },
+                  { "name": "어깨너비", "value": 0 },
+                  { "name": "가슴단면", "value": 0 },
+                  { "name": "소매길이", "value": 0 }
+                ]
+              },
+              {
+                "name": "S(옥스포드)",
+                "items": [
+                  { "name": "총장", "value": 75 },
+                  { "name": "어깨너비", "value": 55 },
+                  { "name": "가슴단면", "value": 66 },
+                  { "name": "소매길이", "value": 60 }
+                ]
+              },
+              {
+                "name": "M(White)",
+                "items": [
+                  { "name": "총장", "value": 77 },
+                  { "name": "어깨너비", "value": 57 },
+                  { "name": "가슴단면", "value": 68 },
+                  { "name": "소매길이", "value": 61 }
+                ]
+              }
+            ]
+          }
+        }
+        """
+
+        let result = try MusinsaActualSizeAPIParser().parseActualSize(
+            from: Data(json.utf8),
+            isTopCategory: true
+        )
+        let valid = ParsedSizeValidator.validSizes(result.sizes, category: .shirt)
+
+        #expect(result.sizes.map(\.name) == ["S(옥스포드)", "M(White)"])
+        #expect(valid.map(\.name) == ["S(옥스포드)", "M(White)"])
+        #expect(valid.first?.measurements.chest == 66)
+        #expect(valid.first?.measurements.totalLength == 75)
+    }
+
     @Test func uniqloBottomCircumferencesBecomeWidthsAndPreserveRawValues() throws {
         let json = """
         {
@@ -4813,10 +4864,10 @@ struct FitMatchTests {
             "XS", "S", "M", "L", "XL", "XXL", "2XL", "3XL", "4XL", "5XL",
             "FREE", "ONE", "093(S)", "095(M)", "100(L)", "65 (S)", "70 (WM)",
             "85 / XS", "85/XS", "110 / 2XL", "115 / 3XL", "70/S/25~26",
-            "225", "230", "235"
+            "225", "230", "235", "S(옥스포드)", "M(White)", "XL(Navy)"
         ]
         #expect(valid.allSatisfy(SizeTokenNormalizer.isValid))
-        #expect(["85 / 일반", "가슴 / 113", "85 / XS 상품입니다", "6045676"].allSatisfy {
+        #expect(["85 / 일반", "가슴 / 113", "85 / XS 상품입니다", "6045676", "M()", "M(옵션/기타)"].allSatisfy {
             !SizeTokenNormalizer.isValid($0)
         })
         #expect(SizeTokenNormalizer.normalizedKey(for: "85 / XS") == "85/XS")
