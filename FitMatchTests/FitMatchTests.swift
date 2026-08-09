@@ -10,8 +10,101 @@ import UIKit
 import SwiftData
 @testable import FitMatch
 
+private final class FitMatchCorpusBundleToken {}
+
 @MainActor
 struct FitMatchTests {
+    @Test func productTargetTreatsCombinedAdultProviderCodesAsUnisex() {
+        #expect(UserGender.productTarget(from: ["M", "W"]) == .unisex)
+        #expect(UserGender.productTarget(from: ["MEN", "WOMEN"]) == .unisex)
+        #expect(UserGender.productTarget(from: ["W"]) == .women)
+        #expect(UserGender.productTarget(from: ["M"]) == .men)
+    }
+
+    @Test func parserServiceRejectsUnsupportedHostsWithoutCallingProviderParsers() async {
+        let musinsa = ProductURLParserSpy(canParse: false)
+        let uniqlo = ProductURLParserSpy(canParse: false)
+        let service = ProductURLParserService(musinsaParser: musinsa, uniqloParser: uniqlo)
+
+        do {
+            _ = try await service.parse(urlString: "https://example.com/products/1")
+            Issue.record("지원하지 않는 URL이 파싱에 성공했습니다.")
+        } catch let error as ProductURLParserError {
+            guard case .unsupportedURL = error else {
+                Issue.record("unsupportedURL이 아닌 오류가 반환됐습니다: \(error)")
+                return
+            }
+        } catch {
+            Issue.record("예상하지 못한 오류가 반환됐습니다: \(error)")
+        }
+
+        #expect(musinsa.parseCallCount == 0)
+        #expect(uniqlo.parseCallCount == 0)
+    }
+
+    @Test func parserServiceDoesNotRouteFailedMusinsaRequestToAnotherProvider() async {
+        let musinsa = ProductURLParserSpy(canParse: true, result: .failure(ParserSpyError.failed))
+        let uniqlo = ProductURLParserSpy(canParse: false)
+        let service = ProductURLParserService(musinsaParser: musinsa, uniqloParser: uniqlo)
+
+        do {
+            _ = try await service.parse(urlString: "https://www.musinsa.com/products/123")
+            Issue.record("실패하도록 설정한 무신사 파서가 성공했습니다.")
+        } catch let error as ProductURLParserError {
+            guard case .automaticParsingUnavailable = error else {
+                Issue.record("automaticParsingUnavailable이 아닌 오류가 반환됐습니다: \(error)")
+                return
+            }
+        } catch {
+            Issue.record("예상하지 못한 오류가 반환됐습니다: \(error)")
+        }
+
+        #expect(musinsa.parseCallCount == 1)
+        #expect(uniqlo.parseCallCount == 0)
+    }
+
+    @Test func cancelledProductLoadCannotApplyLateParserResult() async {
+        let parser = DelayedProductURLParserSpy(delays: ["cancelled": 80_000_000])
+        let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
+        let viewModel = ShoppingProductViewModel(
+            initialURL: "https://www.musinsa.com/products/cancelled",
+            parserService: service
+        )
+
+        let loadTask = Task { await viewModel.loadProductInfoFromURL() }
+        await waitUntilParserStarts(parser)
+        viewModel.cancelProductLoading()
+
+        #expect(await loadTask.value == false)
+        #expect(viewModel.hasLoadedProductInfo == false)
+        #expect(viewModel.productName.isEmpty)
+        #expect(viewModel.isLoadingProductInfo == false)
+    }
+
+    @Test func latestProductLoadOwnsViewModelState() async {
+        let parser = DelayedProductURLParserSpy(delays: [
+            "first": 120_000_000,
+            "second": 5_000_000
+        ])
+        let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
+        let viewModel = ShoppingProductViewModel(
+            initialURL: "https://www.musinsa.com/products/first",
+            parserService: service
+        )
+
+        let firstTask = Task { await viewModel.loadProductInfoFromURL() }
+        await waitUntilParserStarts(parser)
+
+        viewModel.productURL = "https://www.musinsa.com/products/second"
+        let secondTask = Task { await viewModel.loadProductInfoFromURL() }
+
+        #expect(await secondTask.value)
+        #expect(await firstTask.value == false)
+        #expect(viewModel.productName == "second")
+        #expect(viewModel.productURL.hasSuffix("/second"))
+        #expect(viewModel.isLoadingProductInfo == false)
+    }
+
     @Test func musinsaTopBottomSetIsExplicitlyUnsupported() {
         #expect(MusinsaUnsupportedProductPolicy.isTopBottomSet(
             categoryDepth2Name: "상하의세트"
@@ -454,7 +547,7 @@ struct FitMatchTests {
         #expect(differentLength.state == .sameFamilyLengthConflict)
     }
 
-    @Test func lengthIndependentCategoriesCanAutomaticallyMatch() {
+    @Test func lengthAwareAndLengthIndependentCategoriesUseTheirOwnRules() {
         func result(
             category: ClothingCategory,
             detail: ClosetDetailCategory,
@@ -494,7 +587,7 @@ struct FitMatchTests {
             measurements: GarmentMeasurements(shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0, footLength: 270)
         )
 
-        #expect(dress.state == .compatible)
+        #expect(dress.state == .requiresConfirmation)
         #expect(skirt.state == .compatible)
         #expect(underwear.state == .compatible)
         #expect(shoes.state == .compatible)
@@ -613,6 +706,116 @@ struct FitMatchTests {
         #expect(result.compatibleCandidates.isEmpty)
     }
 
+    @Test func automaticMatcherDoesNotTreatAdultUnisexAsKidsCompatible() {
+        var metadata = ProductMetadata(sourceCategoryPath: "팬츠 > 롱팬츠")
+        metadata.genderCodes = ["UNISEX"]
+        let product = Product(
+            name: "성인 공용 파라슈트팬츠",
+            category: .bottom,
+            metadata: metadata,
+            sourceName: "유니클로",
+            sizes: [ProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 0, chest: 0, totalLength: 101, sleeveLength: 0,
+                    waist: 38, hip: 53, thigh: 34
+                )
+            )]
+        )
+        product.garmentType = .pants
+        product.sleeveType = .long
+
+        let kidsItem = UserFit(
+            sourceName: "유니클로",
+            sourceCategoryPath: "KIDS > 팬츠 > 롱팬츠",
+            brandName: "유니클로",
+            gender: .kids,
+            productName: "KIDS 배럴팬츠",
+            category: .bottom,
+            detailCategory: .longPants,
+            sizeName: "140",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 81, sleeveLength: 0,
+                waist: 31, hip: 45, thigh: 29
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        kidsItem.garmentType = .pants
+        kidsItem.sleeveType = .long
+
+        let matcher = ComparisonProfileMatcher()
+        let result = matcher.match(
+            product: product,
+            productDetailCategory: .longPants,
+            userFits: [kidsItem]
+        )
+        let diagnostic = matcher.candidateDiagnostics(
+            product: product,
+            productDetailCategory: .longPants,
+            userFits: [kidsItem]
+        ).first
+
+        #expect(result.state == .noCompatibleGarment)
+        #expect(result.compatibleCandidates.isEmpty)
+        #expect(diagnostic?.exclusionReasons.contains("gender_incompatible") == true)
+    }
+
+    @Test func automaticMatcherDoesNotCrossMajorCategoriesForSamePantsFamily() {
+        let product = Product(
+            name: "코튼복서이지쇼트팬츠",
+            category: .other,
+            metadata: ProductMetadata(
+                sourceCategoryPath: "파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠"
+            ),
+            sourceName: "유니클로 공식몰",
+            sizes: [ProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 0, chest: 0, totalLength: 42, sleeveLength: 0,
+                    waist: 36, hip: 52, thigh: 34
+                )
+            )]
+        )
+        product.garmentType = .pants
+        product.sleeveType = .short
+
+        let item = UserFit(
+            sourceName: "유니클로 공식몰",
+            sourceCategoryPath: "팬츠 > 쇼트 팬츠(반바지) > 카고 & 기어",
+            brandName: "유니클로",
+            gender: .men,
+            productName: "기어쇼트팬츠",
+            category: .bottom,
+            detailCategory: .shorts,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 44, sleeveLength: 0,
+                waist: 38, hip: 54, thigh: 35
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.garmentType = .pants
+        item.sleeveType = .short
+
+        let matcher = ComparisonProfileMatcher()
+        let result = matcher.match(
+            product: product,
+            productDetailCategory: .loungewear,
+            userFits: [item]
+        )
+        let diagnostic = matcher.candidateDiagnostics(
+            product: product,
+            productDetailCategory: .loungewear,
+            userFits: [item]
+        ).first
+
+        #expect(result.state == .noCompatibleGarment)
+        #expect(result.compatibleCandidates.isEmpty)
+        #expect(diagnostic?.exclusionReasons.contains("major_category_incompatible") == true)
+    }
+
     @Test func refinedCanonicalTaxonomyKeepsLeatherJacketsInTheirOwnFamily() throws {
         let store = try CanonicalTaxonomyBundleStore(bundle: .main)
         let profile = try #require(store.profile(for: CanonicalTaxonomyLookupInput(
@@ -684,15 +887,92 @@ struct FitMatchTests {
         #expect(result.state == .sameFamilyLengthConflict)
     }
 
-    @Test func manualLengthMismatchExcludesLengthMeasurement() {
+    @Test func manualLengthMismatchBlocksInsteadOfDroppingLengthEvidence() {
         let matcher = ComparisonProfileMatcher()
         let topProduct = comparisonProduct(name: "긴팔 니트", sourceCategory: "상의 > 니트/가디건", sleeve: 60)
         let shortTop = comparisonUserFit(name: "반팔 니트", detail: .shortSleeve, sleeve: 24)
         let bottomProduct = comparisonProduct(name: "롱 팬츠", category: .bottom, sourceCategory: "바지 > 롱 팬츠", sleeve: 0, totalLength: 100)
         let shorts = comparisonUserFit(name: "쇼츠", category: .bottom, sourceCategory: "바지 > 숏 팬츠", detail: .shorts, sleeve: 0, totalLength: 55)
 
-        #expect(matcher.manualMismatch(product: topProduct, productDetailCategory: .knitTop, selectedItem: shortTop).excludedKinds == [.sleeveLength])
-        #expect(matcher.manualMismatch(product: bottomProduct, productDetailCategory: .slacks, selectedItem: shorts).excludedKinds == [.totalLength])
+        let topMismatch = matcher.manualMismatch(
+            product: topProduct,
+            productDetailCategory: .knitTop,
+            selectedItem: shortTop
+        )
+        let bottomMismatch = matcher.manualMismatch(
+            product: bottomProduct,
+            productDetailCategory: .slacks,
+            selectedItem: shorts
+        )
+
+        #expect(topMismatch.excludedKinds.isEmpty)
+        #expect(topMismatch.note != nil)
+        #expect(bottomMismatch.excludedKinds.isEmpty)
+        #expect(bottomMismatch.note != nil)
+    }
+
+    @Test func manualCrossDetailNoticeIsNotSkippedByDirectSleeveComparison() {
+        let productMeasurements = GarmentMeasurements(
+            shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 60
+        )
+        let size = ProductSize(name: "M", measurements: productMeasurements)
+        size.measurementRecords = [
+            comparisonRecord(
+                value: 60,
+                code: .sleeveShoulderSeamToCuff,
+                kind: .sleeveLength,
+                methodSource: "musinsa",
+                methodProfile: "musinsa_outer",
+                rawCode: "sleeve",
+                rawLabel: "소매길이",
+                productSize: size
+            )
+        ]
+        let product = Product(
+            name: "롱 재킷",
+            category: .outer,
+            metadata: ProductMetadata(sourceCategoryPath: "아우터 > 재킷"),
+            sourceName: "무신사",
+            sizes: [size]
+        )
+        product.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+
+        let item = UserFit(
+            sourceName: "무신사",
+            sourceCategoryPath: "아우터 > 코트",
+            brandName: "테스트",
+            productName: "반소매 코트",
+            category: .outer,
+            detailCategory: .coat,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        item.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+        item.measurementRecords = [
+            comparisonRecord(
+                value: 24,
+                code: .sleeveShoulderSeamToCuff,
+                kind: .sleeveLength,
+                methodSource: "musinsa",
+                methodProfile: "musinsa_outer",
+                rawCode: "sleeve",
+                rawLabel: "소매길이",
+                userFit: item
+            )
+        ]
+
+        let mismatch = ComparisonProfileMatcher().manualMismatch(
+            product: product,
+            productDetailCategory: .jacket,
+            selectedItem: item
+        )
+
+        #expect(mismatch.excludedKinds.isEmpty)
+        #expect(mismatch.note == "옷의 용도와 구조가 달라 비교할 수 없어요.")
     }
 
     @Test func example() async throws {
@@ -861,6 +1141,37 @@ struct FitMatchTests {
         #expect(colorCode == "00")
         #expect(resolver.normalizeAPIColorCode(colorCode ?? "") == "000")
         #expect(resolver.normalizeImageColorCode(colorCode ?? "") == "00")
+    }
+
+    @Test func uniqloEmptyColorSpecificSizeChartRetriesGenericProductID() {
+        let emptyResult = UniqloSizeAPIResult(sizes: [], imageURLString: nil)
+        let populatedResult = UniqloSizeAPIResult(
+            sizes: [ParsedProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 45, chest: 54, totalLength: 67, sleeveLength: 60
+                )
+            )],
+            imageURLString: nil
+        )
+        let genericID = UniqloSizeAPIParser.genericProductIDWithColorCode(for: "E475941")
+
+        #expect(genericID == "E475941-000")
+        #expect(UniqloSizeAPIParser.shouldRetryWithGenericColor(
+            preferredProductIDWithColorCode: "E475941-060",
+            genericProductIDWithColorCode: genericID,
+            result: emptyResult
+        ))
+        #expect(!UniqloSizeAPIParser.shouldRetryWithGenericColor(
+            preferredProductIDWithColorCode: genericID,
+            genericProductIDWithColorCode: genericID,
+            result: emptyResult
+        ))
+        #expect(!UniqloSizeAPIParser.shouldRetryWithGenericColor(
+            preferredProductIDWithColorCode: "E475941-060",
+            genericProductIDWithColorCode: genericID,
+            result: populatedResult
+        ))
     }
 
     @Test func uniqloSizeAPIParserUsesSizeChartAndRemovesDuplicateSizeNames() throws {
@@ -1414,6 +1725,10 @@ struct FitMatchTests {
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "sleeve-length")?.code == .sleeveShoulderSeamToCuff)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "sleeve-length-cb")?.code == .sleeveCenterBackToCuff)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "skirt-length")?.code == .skirtLengthWaistToHem)
+        let bottomsWaist = MeasurementSourceMappingPolicy.uniqlo(rawCode: "waist-product-size-bottoms")
+        #expect(bottomsWaist?.code == .waistWidthEdgeToEdge)
+        #expect(bottomsWaist?.valueMultiplier == 0.5)
+        #expect(bottomsWaist?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "body-width-gather-and-tack") == nil)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "neck-circumference") == nil)
     }
@@ -1638,13 +1953,13 @@ struct FitMatchTests {
             brandName: "유니클로",
             productName: "크루넥T",
             category: .top,
-            detailCategory: .longSleeve,
+            detailCategory: .shortSleeve,
             sizeName: "M",
             measurements: measurements,
             fitMemo: "",
             satisfaction: 3
         )
-        item.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+        item.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
         item.measurementRecords = fields.map { kind, code, rawCode, rawLabel in
             comparisonRecord(
                 value: measurements.value(for: kind),
@@ -2179,6 +2494,8 @@ struct FitMatchTests {
                 && $0.reason == .incompatibleMeasurementCode
                 && $0.productCode == .sleeveCenterBackToCuff
                 && $0.referenceCode == .sleeveShoulderSeamToCuff
+                && $0.productDefinition == "등 중심부터 소매 끝까지"
+                && $0.referenceDefinition == "어깨 봉제선부터 소매 끝까지"
         })
     }
 
@@ -2825,7 +3142,9 @@ struct FitMatchTests {
             userFits: [otherDetailRepresentative, richer]
         )
 
-        #expect(plan.automaticallySelectedCandidate?.id == richer.id)
+        #expect(plan.recommendedCandidates.first?.id == richer.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
     @Test func manualSelectionRecommendationIsUnaffectedByRepresentativePolicy() throws {
@@ -2857,7 +3176,52 @@ struct FitMatchTests {
         #expect(after.comparisonStatus == before.comparisonStatus)
     }
 
-    @Test func singleCompatibleReferenceIsAutomaticallySelected() {
+    @Test func poloAndTshirtAreCompatibleButStillRequireAReferenceChoice() throws {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 24,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "드라이컬러크루넥T", category: .top, sizes: [size])
+        product.garmentTypeRawValue = ComparisonGarmentFamily.tshirt.rawValue
+        product.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+
+        let polo = comparisonItem(
+            shoulder: 49,
+            sleeve: 23,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        polo.productName = "DRY-EX폴로셔츠"
+        polo.garmentTypeRawValue = ComparisonGarmentFamily.shirt.rawValue
+        polo.sleeveTypeRawValue = ComparisonLengthType.short.rawValue
+
+        let service = RecommendationService()
+        let automatic = service.automaticMatchResult(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [polo]
+        )
+        let plan = service.referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [polo]
+        )
+        let manual = try #require(service.recommend(
+            product: product,
+            selectedReferenceItem: polo,
+            productDetailCategory: .shortSleeve
+        ))
+
+        #expect(automatic.compatibleCandidates.map(\.id) == [polo.id])
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
+        #expect(manual.userFit.id == polo.id)
+        #expect(manual.comparisonStatus == .confirmed)
+    }
+
+    @Test func singleCompatibleNonReferenceStillRequiresUserSelection() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -2878,8 +3242,9 @@ struct FitMatchTests {
             userFits: [item]
         )
 
-        #expect(plan.automaticallySelectedCandidate?.id == item.id)
-        #expect(!plan.requiresUserSelection)
+        #expect(plan.recommendedCandidates.map(\.id) == [item.id])
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
     @Test func similarReferenceCandidatesRequireUserSelection() {
@@ -2914,7 +3279,7 @@ struct FitMatchTests {
         #expect(plan.requiresUserSelection)
     }
 
-    @Test func richerMeasurementEvidenceMakesReferenceClearlyBest() {
+    @Test func richerMeasurementEvidenceRanksFirstWithoutBypassingUserSelection() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -2943,7 +3308,9 @@ struct FitMatchTests {
             userFits: [basic, richer]
         )
 
-        #expect(plan.automaticallySelectedCandidate?.id == richer.id)
+        #expect(plan.recommendedCandidates.first?.id == richer.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
     @Test func differentGarmentTypeShowsManualComparisonLimit() {
@@ -2968,7 +3335,7 @@ struct FitMatchTests {
             item: hoodie
         )
 
-        #expect(note?.contains("다른 종류") == true)
+        #expect(note?.contains("달라 비교할 수 없어요") == true)
     }
 
     @Test func representativeOutranksSimilarityWhenEvidenceIsEqual() {
@@ -3246,7 +3613,7 @@ struct FitMatchTests {
         #expect(item.garmentTypeRawValue == ComparisonGarmentFamily.tshirt.rawValue)
     }
 
-    @Test func matchingComparisonAttributesCanCrossClosetCategories() {
+    @Test func matchingComparisonAttributesCannotCrossClosetCategories() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -3275,8 +3642,8 @@ struct FitMatchTests {
         )
 
         #expect(product.category != item.category)
-        #expect(match.state == .compatible)
-        #expect(match.compatibleCandidates.map(\.id) == [item.id])
+        #expect(match.state == .noCompatibleGarment)
+        #expect(match.compatibleCandidates.isEmpty)
     }
 
     @Test func sameClosetCategoryDoesNotOverrideDifferentGarmentType() {
@@ -3307,6 +3674,91 @@ struct FitMatchTests {
         #expect(product.category == knitItem.category)
         #expect(match.state == .noCompatibleGarment)
         #expect(match.compatibleCandidates.isEmpty)
+    }
+
+    @Test func exactDetailCategoryOutranksRepresentativeFromAnotherOuterwearDetail() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 62,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "테일러드 재킷", category: .outer, sizes: [size])
+        product.garmentTypeRawValue = ComparisonGarmentFamily.outerwear.rawValue
+        product.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+
+        let exactJacket = comparisonItem(
+            shoulder: 49,
+            sleeve: 61,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        exactJacket.category = .outer
+        exactJacket.detailCategory = .jacket
+        exactJacket.garmentTypeRawValue = ComparisonGarmentFamily.outerwear.rawValue
+        exactJacket.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+        exactJacket.updatedAt = .distantPast
+
+        let representativeCoat = comparisonItem(
+            shoulder: 49,
+            sleeve: 61,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        representativeCoat.category = .outer
+        representativeCoat.detailCategory = .coat
+        representativeCoat.garmentTypeRawValue = ComparisonGarmentFamily.outerwear.rawValue
+        representativeCoat.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+        representativeCoat.isRepresentative = true
+        representativeCoat.updatedAt = .now
+
+        let match = RecommendationService().automaticMatchResult(
+            product: product,
+            productDetailCategory: .jacket,
+            userFits: [representativeCoat, exactJacket]
+        )
+
+        #expect(match.state == .compatible)
+        #expect(match.compatibleCandidates.first?.id == exactJacket.id)
+    }
+
+    @Test func automaticMatcherRequiresCompatibleDetailCategoryWithinOuterwearFamily() {
+        let size = comparisonSize(
+            shoulder: 50,
+            sleeve: 62,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        let product = Product(name: "윈드브레이커", category: .outer, sizes: [size])
+        product.garmentTypeRawValue = ComparisonGarmentFamily.outerwear.rawValue
+        product.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+
+        let coat = comparisonItem(
+            shoulder: 49,
+            sleeve: 61,
+            shoulderCode: .shoulderWidthSeamToSeam,
+            sleeveCode: .sleeveShoulderSeamToCuff
+        )
+        coat.category = .outer
+        coat.detailCategory = .coat
+        coat.garmentTypeRawValue = ComparisonGarmentFamily.outerwear.rawValue
+        coat.sleeveTypeRawValue = ComparisonLengthType.long.rawValue
+
+        let matcher = ComparisonProfileMatcher()
+        let match = matcher.match(
+            product: product,
+            productDetailCategory: .windbreaker,
+            userFits: [coat]
+        )
+        let diagnostic = matcher.candidateDiagnostics(
+            product: product,
+            productDetailCategory: .windbreaker,
+            userFits: [coat]
+        ).first
+
+        #expect(match.state == .noCompatibleGarment)
+        #expect(match.compatibleCandidates.isEmpty)
+        #expect(diagnostic?.exclusionReasons.contains("detail_category_incompatible") == true)
     }
 
     @Test func closetCategoryChangeInvalidatesStoredComparisonAttributes() {
@@ -3417,9 +3869,15 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve,
             allowsGlobalFallback: false
         )
+        let manuallySelected = RecommendationService().recommend(
+            product: product,
+            selectedReferenceItem: compatibleOtherBrand,
+            productDetailCategory: .shortSleeve
+        )
 
         #expect(match.compatibleCandidates.map(\.id) == [compatibleOtherBrand.id])
-        #expect(history?.userFit.id == compatibleOtherBrand.id)
+        #expect(history == nil)
+        #expect(manuallySelected?.userFit.id == compatibleOtherBrand.id)
     }
 
     @Test func changingReferenceItemRecalculatesRecommendedSize() {
@@ -3482,6 +3940,31 @@ struct FitMatchTests {
         #expect(store.pendingProductURL() == url.absoluteString)
         #expect(store.consumePendingProductURL() == url.absoluteString)
         #expect(store.consumePendingProductURL() == nil)
+    }
+
+    @Test func sharedURLStoreClearsOnlyThePresentedURL() {
+        let suiteName = "FitMatchTests.SharedURLStore.Presented.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = SharedURLStore(defaults: defaults)
+        let pendingURL = URL(string: "https://www.musinsa.com/products/4668060")!
+
+        store.savePendingProductURL(pendingURL)
+
+        #expect(store.clearPendingProductURL(ifMatching: "https://www.uniqlo.com/kr/ko/products/E123456") == false)
+        #expect(store.pendingProductURL() == pendingURL.absoluteString)
+        #expect(store.clearPendingProductURL(ifMatching: pendingURL.absoluteString) == true)
+        #expect(store.pendingProductURL() == nil)
+    }
+
+    @Test func productURLSupportAcceptsOfficialHostsAndRejectsLookalikes() {
+        #expect(ProductURLSupport.supportedProviderName(for: "https://www.musinsa.com/products/4668060") == "무신사")
+        #expect(ProductURLSupport.supportedProviderName(for: "https://musinsa.onelink.me/PvkC/example") == "무신사")
+        #expect(ProductURLSupport.supportedProviderName(for: "https://www.uniqlo.com/kr/ko/products/E123456") == "유니클로")
+
+        #expect(ProductURLSupport.supportedProviderName(for: "https://musinsa.example.com/products/4668060") == nil)
+        #expect(ProductURLSupport.supportedProviderName(for: "https://example.com/?next=musinsa") == nil)
+        #expect(ProductURLSupport.supportedProviderName(for: "https://uniqlo.com.example.com/products/E123456") == nil)
     }
 
     @Test func manualClosetItemAndMeasurementRecordsPersistTogether() throws {
@@ -4308,12 +4791,61 @@ struct FitMatchTests {
 
         let metadata = parser.parse(resolved: resolved)
 
-        #expect(metadata.category == .top)
+        #expect(metadata.category == .outer)
         #expect(metadata.detailCategory == .cardigan)
         #expect(metadata.productMetadata.baseCategoryFullPath == "니트 & 가디건 > 니트 > 가디건")
         #expect(metadata.productMetadata.categoryDepth1Name == "니트 & 가디건")
         #expect(metadata.productMetadata.categoryDepth2Name == "니트")
         #expect(metadata.productMetadata.categoryDepth3Name == "가디건")
+        #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
+    }
+
+    @Test func uniqloExplicitUnisexAudienceOverridesFemaleCategoryTarget() {
+        let html = """
+        <script type="application/ld+json">
+        [{"@type":"BreadcrumbList","itemListElement":[
+          {"position":1,"name":"WOMEN"},{"position":2,"name":"니트 & 가디건"},
+          {"position":3,"name":"니트"},{"position":4,"name":"메리노V넥가디건"}
+        ]},{"@type":"Product","name":"메리노V넥가디건"}]
+        </script>
+        <script>window.product={"genderName":"unisex","genderCategory":"UNISEX","sizeGender":"MEN","topCategories":["men","women"]};</script>
+        """
+        let resolved = ResolvedUniqloURL(
+            originalURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E450540-000/00")!,
+            resolvedURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E450540-000/00")!,
+            productID: "E450540",
+            goodsID: "450540",
+            apiColorCode: "000",
+            imageColorCode: "00",
+            productIDWithColorCode: "E450540-000",
+            html: html
+        )
+
+        let metadata = UniqloProductMetadataParser().parse(resolved: resolved)
+
+        #expect(metadata.productMetadata.genderCodes == ["UNISEX"])
+        #expect(metadata.productMetadata.baseCategoryFullPath == "니트 & 가디건 > 니트")
+        #expect(metadata.productMetadata.categoryDepth1Name == "니트 & 가디건")
+    }
+
+    @Test func uniqloSizeGenderAloneDoesNotOverrideFemaleAudience() {
+        let html = """
+        <script type="application/ld+json">
+        [{"@type":"BreadcrumbList","itemListElement":[
+          {"position":1,"name":"WOMEN"},{"position":2,"name":"팬츠"},{"position":3,"name":"상품"}
+        ]},{"@type":"Product","name":"상품"}]
+        </script>
+        <script>window.product={"sizeGender":"MEN"};</script>
+        """
+        let resolved = ResolvedUniqloURL(
+            originalURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E000001")!,
+            resolvedURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E000001")!,
+            productID: "E000001", goodsID: "000001", apiColorCode: "000",
+            imageColorCode: "00", productIDWithColorCode: "E000001-000", html: html
+        )
+
+        let metadata = UniqloProductMetadataParser().parse(resolved: resolved)
+
         #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
     }
 
@@ -5825,6 +6357,42 @@ struct FitMatchTests {
         #expect(result.isValid)
     }
 
+    @Test func parsedCanonicalClassificationPreservesRefinedUniqloDetail() throws {
+        let graphicTeePath = "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠"
+        let graphicTee = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .shortSleeve,
+            sourceDepths: graphicTeePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: graphicTeePath,
+            productName: "PEACE FOR ALL 그래픽T(레귤러핏)Kei Nishikori"
+        ))
+        #expect(graphicTee.categoryCode == "tops")
+        #expect(graphicTee.detailCode == "short_sleeve")
+        #expect(graphicTee.garmentFamily == .tshirt)
+        #expect(graphicTee.lengthType == .short)
+
+        let unresolvedGraphicTee = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .other,
+            sourceDepths: graphicTeePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: graphicTeePath,
+            productName: "소매 정보 없는 그래픽T"
+        ))
+        #expect(unresolvedGraphicTee.detailCode == "other_tops")
+
+        let braCamisolePath = "이너웨어 > 브라탑 > 코튼"
+        let braCamisole = try #require(ParsedClosetClassification.resolve(
+            category: .underwear,
+            detailCategory: .womenBra,
+            sourceDepths: braCamisolePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: braCamisolePath,
+            productName: "스퀘어넥브라캐미솔"
+        ))
+        #expect(braCamisole.categoryCode == "underwear")
+        #expect(braCamisole.detailCode == "women_bra")
+        #expect(braCamisole.detailCategory == .womenBra)
+    }
+
     @Test func parsedCanonicalClassificationUsesDeepestPaddingCategory() throws {
         let fixtures: [([String?], String)] = [
             (["아우터", "경량 패딩/패딩 베스트", "경량 패딩", nil], "light_padding"),
@@ -5852,7 +6420,7 @@ struct FitMatchTests {
             ("원피스/스커트 > 원피스 > 미디", "미디 원피스", .dress, .onePiece, "dresses", "one_piece"),
             ("원피스/스커트 > 스커트 > 롱", "롱 스커트", .bottom, .skirt, "skirts", "skirt"),
             ("여성 > 여성 속옷 하의", "팬티", .bottom, .other, "underwear", "women_panty"),
-            ("속옷/홈웨어 > 여성 속옷 > 브라", "와이어리스 브라", .underwear, .underwear, "underwear", "underwear"),
+            ("속옷/홈웨어 > 여성 속옷 > 브라", "와이어리스 브라", .underwear, .underwear, "underwear", "women_bra"),
             ("홈웨어 > 파자마", "라운지 세트", .other, .other, "homewear", "loungewear"),
             ("아우터 > 카디건", "긴팔 카디건", .outer, .longSleeve, "outerwear", "cardigan"),
             ("Women > Bottoms > Short Pants", "협업 쇼트 팬츠", .bottom, .shorts, "bottoms", "shorts"),
@@ -5878,6 +6446,1235 @@ struct FitMatchTests {
         #expect(overshirt.categoryCode == "tops")
         #expect(overshirt.detailCode == "short_sleeve")
         #expect(overshirt.garmentFamily == .shirt)
+    }
+
+    @Test func genericMusinsaPathsUseProductNameForSpecificComparisonCategory() throws {
+        let fixtures: [(String, String, ClothingCategory, String)] = [
+            ("바지 > 기타 하의", "시어서커 원 턱 와이드 밴딩 팬츠", .bottom, "long_pants"),
+            ("바지 > 기타 하의", "CHAMBRAY EASY PANTS", .bottom, "long_pants"),
+            ("바지 > 기타 하의", "워시드 레귤러 워크 팬츠", .bottom, "long_pants"),
+            ("아우터 > 기타 아우터", "메트로폴리스 퍼텍스 오버셔츠 재킷", .outer, "jacket"),
+            ("아우터 > 기타 아우터", "시어서커 체크 윈드브레이커", .outer, "windbreaker"),
+            ("아우터 > 기타 아우터", "윈드러너 오버사이즈 데님 재킷", .outer, "jacket"),
+            ("아우터 > 기타 아우터", "아디컬러 트랙탑", .outer, "jacket")
+        ]
+
+        for fixture in fixtures {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: fixture.2,
+                detailCategory: .other,
+                sourceDepths: fixture.0.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.0,
+                productName: fixture.1
+            ))
+            #expect(result.detailCode == fixture.3, "\(fixture.1)의 세부 분류가 잘못됐습니다.")
+        }
+    }
+
+    @Test func genericBottomPathDoesNotTreatJumpsuitAsLongPants() throws {
+        let result = try #require(ParsedClosetClassification.resolve(
+            category: .bottom,
+            detailCategory: .other,
+            sourceDepths: ["바지", "기타 하의", nil, nil],
+            sourcePath: "바지 > 기타 하의",
+            productName: "유틸리티 오버올 점프수트 팬츠"
+        ))
+
+        #expect(result.detailCode == "other_bottoms")
+    }
+
+    @Test func genericBottomAndLeggingsPathsUseExplicitProductLength() throws {
+        let fixtures: [(String, String, ClothingCategory, ClosetDetailCategory, String)] = [
+            ("바지 > 코튼 팬츠", "우먼즈 코튼 카프리 팬츠", .bottom, .other, "cropped_pants"),
+            ("스포츠/레저 > 하의 > 레깅스", "포켓 로고 3.5 바이커 쇼츠", .bottom, .leggings, "short_leggings"),
+            ("스포츠/레저 > 하의 > 레깅스", "익스트림 프로 4.5부 레깅스", .bottom, .leggings, "short_leggings"),
+            ("스포츠/레저 > 하의 > 레깅스", "무브먼트 하프 타이즈", .bottom, .leggings, "short_leggings"),
+            ("스포츠/레저 > 하의 > 레깅스", "패스트 드라이 핏 러닝 하프 타이츠", .bottom, .leggings, "short_leggings"),
+            ("스포츠/레저 > 하의 > 레깅스", "사이드 셔링 카프리팬츠", .bottom, .leggings, "three_quarter_leggings"),
+            ("스포츠/레저 > 하의 > 레깅스", "컬러 블록 부츠컷 레깅스 팬츠", .bottom, .leggings, "long_leggings"),
+            ("팬츠 > 캐주얼 팬츠 > 큐롯", "코듀로이큐롯", .bottom, .other, "shorts")
+        ]
+
+        for fixture in fixtures {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: fixture.2,
+                detailCategory: fixture.3,
+                sourceDepths: fixture.0.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.0,
+                productName: fixture.1
+            ))
+            #expect(result.detailCode == fixture.4, "\(fixture.1)의 길이 분류가 잘못됐습니다.")
+        }
+    }
+
+    @Test func explicitOuterwearNameCorrectsGenericOrConflictingProviderPath() throws {
+        let coachJacket = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .shortSleeve,
+            sourceDepths: ["티셔츠 & UT", "티셔츠 (반팔 & 긴팔)", "그래픽 티셔츠", nil],
+            sourcePath: "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 그래픽 티셔츠",
+            productName: "KIDS PEANUTS코치재킷"
+        ))
+        #expect(coachJacket.categoryCode == "outerwear")
+        #expect(coachJacket.detailCode == "windbreaker")
+
+        let tailoredJacket = try #require(ParsedClosetClassification.resolve(
+            category: .outer,
+            detailCategory: .jacket,
+            sourceDepths: ["아우터", "재킷 & 코트", "캐주얼 재킷", nil],
+            sourcePath: "아우터 > 재킷 & 코트 > 캐주얼 재킷",
+            productName: "테일러드재킷(릴랙스핏)"
+        ))
+        #expect(tailoredJacket.categoryCode == "outerwear")
+        #expect(tailoredJacket.detailCode == "blazer")
+    }
+
+    @Test func productNameRefinesOuterwearWithoutTurningFleeceTopsIntoOuterwear() throws {
+        let fixtures: [(String, String, ClothingCategory, String, String)] = [
+            ("상의 > 맨투맨/스웨트", "라이트 플리스 로고 크루넥 맨투맨", .top, "tops", "other_tops"),
+            ("상의 > 후드 티셔츠", "OVER FIT FLEECE-LINED HOODIE", .top, "tops", "other_tops"),
+            ("아우터 > 환절기 코트", "Point Half Trench Coat", .outer, "outerwear", "trench_coat"),
+            ("아우터 > 환절기 코트", "하이넥 사파리 하프 자켓", .outer, "outerwear", "jacket"),
+            ("아우터 > 겨울 기타 코트", "포카포카 코듀로이 뽀글이 자켓", .outer, "outerwear", "fleece"),
+            ("아우터 > 겨울 기타 코트", "OVERFIT HALF LEATHER MUSTANG", .outer, "outerwear", "mouton"),
+            ("아우터 > 파카 & 블루종 > UNIQLO and JW ANDERSON", "패디드유틸리티쇼트재킷", .outer, "outerwear", "padding"),
+            ("아우터 > 나일론/코치 재킷", "Ray Yacht Parka Carrot", .outer, "outerwear", "windbreaker"),
+            ("아우터 > 겨울 기타 코트", "울 블렌드 오버 숄더 블레이저 코트", .outer, "outerwear", "coat")
+        ]
+
+        for fixture in fixtures {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: fixture.2,
+                detailCategory: .other,
+                sourceDepths: fixture.0.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.0,
+                productName: fixture.1
+            ))
+            #expect(result.categoryCode == fixture.3, "\(fixture.1)의 대분류가 잘못됐습니다.")
+            #expect(result.detailCode == fixture.4, "\(fixture.1)의 세부 분류가 잘못됐습니다.")
+        }
+    }
+
+    @Test func ambiguousUniqloTShirtPathUsesStrongProductFamily() throws {
+        let sourcePath = "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 그래픽 티셔츠"
+        let sweatshirtClassification = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .shortSleeve,
+            sourceDepths: sourcePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: sourcePath,
+            productName: "GIRLS CHIIKAWA스웨트셔츠C"
+        ))
+        let hoodieClassification = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .shortSleeve,
+            sourceDepths: sourcePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: sourcePath,
+            productName: "KIDS Mario Kart World스웨트후디D"
+        ))
+
+        #expect(sweatshirtClassification.detailCode == "other_tops")
+        #expect(sweatshirtClassification.garmentFamily == .sweatshirt)
+        #expect(hoodieClassification.detailCode == "other_tops")
+        #expect(hoodieClassification.garmentFamily == .hoodie)
+
+        let product = Product(
+            name: "GIRLS CHIIKAWA스웨트셔츠C",
+            category: .top,
+            metadata: ProductMetadata(sourceCategoryPath: sourcePath, genderCodes: ["KIDS"]),
+            sourceName: "유니클로 공식몰",
+            sizes: [ProductSize(
+                name: "130",
+                measurements: GarmentMeasurements(shoulder: 35, chest: 41, totalLength: 48, sleeveLength: 43)
+            )]
+        )
+        let graphicTee = UserFit(
+            sourceType: .officialStore,
+            sourceName: "유니클로 공식몰",
+            sourceCategoryPath: sourcePath,
+            brandName: "유니클로",
+            gender: .kids,
+            productName: "GIRLS CHIIKAWA UT(그래픽T)B",
+            category: .top,
+            detailCategory: .other,
+            sizeName: "130",
+            measurements: GarmentMeasurements(shoulder: 34, chest: 40, totalLength: 47, sleeveLength: 18),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        let match = ComparisonProfileMatcher().match(
+            product: product,
+            productDetailCategory: .other,
+            userFits: [graphicTee]
+        )
+
+        #expect(match.incomingProfile.garmentFamily == .sweatshirt)
+        #expect(match.state == .noCompatibleGarment)
+        #expect(match.compatibleCandidates.isEmpty)
+    }
+
+    @Test func explicitKnitNameOverridesStoredPoloShirtFamily() {
+        let sourcePath = "상의 > 피케/카라 티셔츠"
+        let product = Product(
+            name: "썸머 쿨 터치 카라 반팔 니트 [그레이]",
+            category: .top,
+            metadata: ProductMetadata(sourceCategoryPath: sourcePath, genderCodes: ["MEN"]),
+            sourceName: "무신사",
+            sizes: [ProductSize(
+                name: "L",
+                measurements: GarmentMeasurements(
+                    shoulder: 47, chest: 55, totalLength: 68, sleeveLength: 24
+                )
+            )]
+        )
+        let poloShirt = UserFit(
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            sourceCategoryPath: sourcePath,
+            brandName: "테스트",
+            gender: .men,
+            productName: "로고 코튼 피케 폴로셔츠",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "L",
+            measurements: GarmentMeasurements(
+                shoulder: 47, chest: 55, totalLength: 68, sleeveLength: 24
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+
+        let matcher = ComparisonProfileMatcher()
+        let match = matcher.match(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [poloShirt]
+        )
+
+        #expect(match.incomingProfile.garmentFamily == .knitCardigan)
+        #expect(matcher.profile(for: poloShirt).garmentFamily == .shirt)
+        #expect(match.state == .noCompatibleGarment)
+        #expect(match.compatibleCandidates.isEmpty)
+    }
+
+    @Test func uniqloSweatFullZipParkaRemainsHoodieFamily() {
+        let product = Product(
+            name: "KIDS드라이스웨트풀집파카(컬러블록)",
+            category: .top,
+            metadata: ProductMetadata(
+                sourceCategoryPath: "티셔츠 & UT > 스웨트셔츠 & 후드티 > 스웨트파카",
+                genderCodes: ["KIDS"]
+            ),
+            sourceName: "유니클로 공식몰",
+            sizes: [ProductSize(
+                name: "140",
+                measurements: GarmentMeasurements(
+                    shoulder: 39, chest: 48, totalLength: 55, sleeveLength: 52
+                )
+            )]
+        )
+
+        let profile = ComparisonProfileMatcher().profile(for: product, detailCategory: .other)
+
+        #expect(profile.garmentFamily == .hoodie)
+    }
+
+    @Test func cardiganNameUsesFitMatchOuterwearCardiganCategory() throws {
+        let fixtures = [
+            ("니트 & 가디건 > 가디건 > 스무드 코튼", "포인텔가디건(긴팔)"),
+            ("상의 > 니트/스웨터", "여성 브이넥 케이블 반팔 니트 가디건")
+        ]
+        for fixture in fixtures {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: .top,
+                detailCategory: .longSleeve,
+                sourceDepths: fixture.0.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.0,
+                productName: fixture.1
+            ))
+            #expect(result.categoryCode == "outerwear")
+            #expect(result.detailCode == "cardigan")
+            #expect(result.garmentFamily == .knitCardigan)
+        }
+    }
+
+    @Test func explicitHalfSleeveUsesShortSleeveDetail() throws {
+        for productName in [
+            "카울넥 하프 슬리브 카라티 블랙",
+            "ROUND COLLAR SHIRRING S/S TEE(STRIPE RED)",
+            "Cap sleeve V-neck knit"
+        ] {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: .top,
+                detailCategory: .other,
+                sourceDepths: ["상의", "피케/카라 티셔츠", nil, nil],
+                sourcePath: "상의 > 피케/카라 티셔츠",
+                productName: productName
+            ))
+            #expect(result.detailCode == "short_sleeve", "\(productName)의 반팔 분류가 누락됐습니다.")
+            #expect(result.lengthType == .short, "\(productName)의 길이 코드가 누락됐습니다.")
+        }
+
+        let seasonal = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .other,
+            sourceDepths: ["상의", "니트/스웨터", nil, nil],
+            sourcePath: "상의 > 니트/스웨터",
+            productName: "26 S/S 워셔블 니트"
+        ))
+        #expect(seasonal.detailCode == "other_tops")
+    }
+
+    @Test func explicitThreeQuarterFractionUsesThreeQuarterSleeveDetail() throws {
+        let result = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .longSleeve,
+            sourceDepths: ["상의", "후드 티셔츠", nil, nil],
+            sourcePath: "상의 > 후드 티셔츠",
+            productName: "3/4 LAYERED CONTRAST HOODIE (DUST BLUE)"
+        ))
+
+        #expect(result.detailCode == "three_quarter_sleeve")
+        #expect(result.lengthType == .threeQuarter)
+    }
+
+    @Test func explicitLengthOverridesConflictingCanonicalSourcePathLength() {
+        let fixtures: [(String, ClosetDetailCategory, ComparisonLengthType)] = [
+            ("Pleated Boat Neck Short Sleeve T-Shirt", .shortSleeve, .short),
+            ("레이어드 롱슬리브리스 세트", .sleeveless, .sleeveless),
+            ("Reversible 3/4 Sleeve Tee", .threeQuarterSleeve, .threeQuarter),
+        ]
+        let matcher = ComparisonProfileMatcher()
+
+        for (name, detail, expectedLength) in fixtures {
+            let classification = ParsedClosetClassification.resolve(
+                category: .top,
+                detailCategory: detail,
+                sourceDepths: ["상의", "긴소매 티셔츠", nil, nil],
+                sourcePath: "상의 > 긴소매 티셔츠",
+                productName: name
+            )
+            let product = Product(
+                name: name,
+                category: .top,
+                metadata: ProductMetadata(sourceCategoryPath: "상의 > 긴소매 티셔츠"),
+                sourceName: "무신사",
+                sizes: [ProductSize(
+                    name: "M",
+                    measurements: GarmentMeasurements(
+                        shoulder: 40, chest: 50, totalLength: 65, sleeveLength: 60
+                    )
+                )]
+            )
+            product.sleeveType = classification?.lengthType ?? .unknown
+
+            #expect(
+                matcher.profile(for: product, detailCategory: detail).lengthType == expectedLength,
+                "\(name)의 구체적인 길이 정보가 상위 카테고리 길이보다 우선해야 합니다."
+            )
+        }
+
+        let croppedLongSleeve = ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .longSleeve,
+            sourceDepths: ["상의", "긴소매 티셔츠", nil, nil],
+            sourcePath: "상의 > 긴소매 티셔츠",
+            productName: "와플 크롭 헨리넥 티셔츠"
+        )
+        #expect(croppedLongSleeve?.lengthType == .long)
+    }
+
+    @Test func skirtAndDressLengthConflictsDoNotAutoMatch() {
+        let longSkirt = Product(
+            name: "플레어롱스커트",
+            category: .bottom,
+            metadata: ProductMetadata(sourceCategoryPath: "원피스 & 스커트 > 스커트 > 롱 (맥시)"),
+            sizes: [ProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 0, chest: 0, totalLength: 90, sleeveLength: 0,
+                    waist: 36, hip: 50, thigh: 0
+                )
+            )]
+        )
+        let miniSkort = UserFit(
+            brandName: "테스트",
+            productName: "플리츠미니스코츠",
+            category: .bottom,
+            detailCategory: .skirt,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 38, sleeveLength: 0,
+                waist: 35, hip: 49, thigh: 0
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        let sleevelessDress = Product(
+            name: "GIRLS셔링원피스(슬리브리스)",
+            category: .dress,
+            sizes: [ProductSize(
+                name: "130",
+                measurements: GarmentMeasurements(shoulder: 30, chest: 38, totalLength: 70, sleeveLength: 0)
+            )]
+        )
+        let shortSleeveDress = UserFit(
+            brandName: "테스트",
+            productName: "GIRLS프릴원피스(반팔)",
+            category: .dress,
+            detailCategory: .onePiece,
+            sizeName: "130",
+            measurements: GarmentMeasurements(shoulder: 30, chest: 38, totalLength: 70, sleeveLength: 15),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        let matcher = ComparisonProfileMatcher()
+        let skirtResult = matcher.match(
+            product: longSkirt,
+            productDetailCategory: .skirt,
+            userFits: [miniSkort]
+        )
+        let dressResult = matcher.match(
+            product: sleevelessDress,
+            productDetailCategory: .onePiece,
+            userFits: [shortSleeveDress]
+        )
+
+        #expect(skirtResult.incomingProfile.lengthType == .long)
+        #expect(matcher.profile(for: miniSkort).lengthType == .short)
+        #expect(skirtResult.state == .sameFamilyLengthConflict)
+        #expect(dressResult.incomingProfile.lengthType == .sleeveless)
+        #expect(matcher.profile(for: shortSleeveDress).lengthType == .short)
+        #expect(dressResult.state == .sameFamilyLengthConflict)
+    }
+
+    @Test func outerwearBodyLengthPreventsLongAndShortGarmentPairing() {
+        let longCoat = Product(
+            name: "울 맥시 숄 코트",
+            category: .outer,
+            sizes: [ProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 48, chest: 60, totalLength: 127, sleeveLength: 61
+                )
+            )]
+        )
+        let halfCoat = UserFit(
+            brandName: "테스트",
+            productName: "울 부클 하프 코트",
+            category: .outer,
+            detailCategory: .coat,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 47, chest: 59, totalLength: 77, sleeveLength: 60
+            ),
+            fitMemo: "half",
+            satisfaction: 3
+        )
+        let measuredLongCoat = UserFit(
+            brandName: "테스트",
+            productName: "캐시미어 발마칸 코트",
+            category: .outer,
+            detailCategory: .coat,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 47, chest: 59, totalLength: 115, sleeveLength: 60
+            ),
+            fitMemo: "long",
+            satisfaction: 3
+        )
+        let matcher = ComparisonProfileMatcher()
+        let conflict = matcher.match(
+            product: longCoat,
+            productDetailCategory: .coat,
+            userFits: [halfCoat]
+        )
+        let compatible = matcher.match(
+            product: longCoat,
+            productDetailCategory: .coat,
+            userFits: [halfCoat, measuredLongCoat]
+        )
+        let shortTrench = Product(
+            name: "하이넥 숏 트렌치 코트",
+            category: .outer,
+            sizes: [ProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 47, chest: 58, totalLength: 72, sleeveLength: 60
+                )
+            )]
+        )
+        let halfTrench = UserFit(
+            brandName: "테스트",
+            productName: "Linen Blend High-neck Half Trench Coat",
+            category: .outer,
+            detailCategory: .trenchCoat,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 47, chest: 58, totalLength: 73, sleeveLength: 60
+            ),
+            fitMemo: "half-trench",
+            satisfaction: 3
+        )
+        let trenchConflict = matcher.match(
+            product: shortTrench,
+            productDetailCategory: .trenchCoat,
+            userFits: [halfTrench]
+        )
+
+        #expect(conflict.incomingProfile.bodyLengthType == .long)
+        #expect(matcher.profile(for: halfCoat).bodyLengthType == .threeQuarter)
+        #expect(conflict.state == .sameFamilyLengthConflict)
+        #expect(compatible.compatibleCandidates.map(\.fitMemo) == ["long"])
+        #expect(trenchConflict.incomingProfile.bodyLengthType == .short)
+        #expect(matcher.profile(for: halfTrench).bodyLengthType == .threeQuarter)
+        #expect(trenchConflict.state == .sameFamilyLengthConflict)
+    }
+
+    @Test func uniqloGenericPathsUseProductNameForHoodiesAndShortPants() throws {
+        let fixtures: [(String, String, ClothingCategory, String)] = [
+            ("영유아(6개월~5세) > 아우터 > UV Protection", "BT UV PROTECTION메쉬후디(긴팔)", .outer, "jumper"),
+            ("Special Collaborations > Uniqlo U > Bottoms", "턱와이드쇼트팬츠", .bottom, "shorts"),
+            ("스포츠 유틸리티 웨어 > 아우터 > 풀집 후디", "울트라스트레치AIRism UV PROTECTION풀집후디", .outer, "jumper"),
+            ("팬츠 > 조거팬츠", "W울트라스트레치AIRism조거팬츠", .bottom, "long_pants")
+        ]
+
+        for fixture in fixtures {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: fixture.2,
+                detailCategory: .other,
+                sourceDepths: fixture.0.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.0,
+                productName: fixture.1
+            ))
+            #expect(result.detailCode == fixture.3, "\(fixture.1)의 세부 분류가 잘못됐습니다.")
+        }
+    }
+
+    @Test func uniqloThirdCorpusUsesOfficialCutAndSewnAndLoungewearFamilies() throws {
+        let cutAndSewn = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .other,
+            sourceDepths: ["Special Collaborations", "UNIQLO and JW ANDERSON", "Cut & Sewn", nil],
+            sourcePath: "Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn",
+            productName: "바이컬러T"
+        ))
+        #expect(cutAndSewn.categoryCode == "tops")
+        #expect(cutAndSewn.detailCode == "short_sleeve")
+        #expect(cutAndSewn.isValid)
+
+        let loungewear = try #require(ParsedClosetClassification.resolve(
+            category: .other,
+            detailCategory: .loungewear,
+            sourceDepths: ["라운지 & 언더웨어 컬렉션", "Effortless Charm", "저스트 웨이스트", nil],
+            sourcePath: "라운지 & 언더웨어 컬렉션 > Effortless Charm > 저스트 웨이스트",
+            productName: "코튼저지쇼츠(저스트웨이스트)플라워C"
+        ))
+        #expect(loungewear.categoryCode == "homewear")
+        #expect(loungewear.detailCode == "loungewear")
+        #expect(loungewear.isValid)
+    }
+
+    @Test func storedMusinsaFourthCorpusActualSizesPassProductionParser() throws {
+        guard let root = ProcessInfo.processInfo.environment["FITMATCH_MUSINSA_SIZE_CORPUS_DIR"] else {
+            return
+        }
+        let directory = URL(fileURLWithPath: root).appendingPathComponent("raw/musinsa/actual_size")
+        let files = try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ).filter { $0.pathExtension == "json" }
+        #expect(files.count == 320)
+
+        let parser = MusinsaActualSizeAPIParser()
+        var parsedProducts = 0
+        var parsedSizeRows = 0
+        for file in files {
+            let result = try parser.parseActualSize(from: Data(contentsOf: file))
+            if !result.sizes.isEmpty { parsedProducts += 1 }
+            parsedSizeRows += result.sizes.count
+        }
+        #expect(parsedProducts >= 300)
+        #expect(parsedSizeRows >= 900)
+    }
+
+    @Test func storedLargeCorpusExportsProductionClassification() throws {
+        var output: [[String: Any]] = []
+        let uniqloParser = UniqloProductMetadataParser()
+        let bundle = Bundle(for: FitMatchCorpusBundleToken.self)
+        let resources = [
+            "LegacyMixed320ClassificationInputs",
+            "LegacyUniqloRetest320ClassificationInputs",
+            "LegacyUniqloThird320ClassificationInputs",
+            "LegacyMusinsaFourth320ClassificationInputs",
+            "Musinsa1037ClassificationInputs",
+            "Uniqlo243ClassificationInputs",
+        ]
+        for resource in resources {
+            let inputURL = try #require(bundle.url(forResource: resource, withExtension: "json"))
+            let inputs = try #require(
+                try JSONSerialization.jsonObject(with: Data(contentsOf: inputURL)) as? [[String: Any]]
+            )
+            for input in inputs {
+                let source = try #require(input["source"] as? String)
+                let productID = try #require(input["product_id"] as? String)
+                let name = try #require(input["product_name"] as? String)
+                let sourcePath = try #require(input["source_path"] as? String)
+                let depths = sourcePath.components(separatedBy: ">").map {
+                    $0.trimmingCharacters(in: .whitespacesAndNewlines)
+                }.filter { !$0.isEmpty }
+                let providerCategory: ClothingCategory
+                let providerDetail: ClosetDetailCategory
+                if source == "musinsa" {
+                    providerCategory = MusinsaProductMetadataParser.mapCategory(from: sourcePath)
+                    providerDetail = MusinsaProductMetadataParser.mapDetailCategory(
+                        from: depths.count > 1 ? depths[1] : sourcePath
+                    )
+                } else {
+                    providerCategory = uniqloParser.mapCategory(from: "\(sourcePath) \(name)")
+                    providerDetail = uniqloParser.mapDetailCategory(from: "\(sourcePath) \(name)")
+                }
+                let classification = try #require(ParsedClosetClassification.resolve(
+                    category: providerCategory, detailCategory: providerDetail,
+                    sourceDepths: depths.map(Optional.some), sourcePath: sourcePath,
+                    productName: name
+                ))
+                output.append([
+                    "source": source, "product_id": productID, "product_name": name,
+                    "source_path": sourcePath, "category_code": classification.categoryCode,
+                    "detail_code": classification.detailCode, "is_valid": classification.isValid
+                ])
+            }
+        }
+
+        #expect(output.count == 2560)
+        #expect(output.allSatisfy { ($0["is_valid"] as? Bool) == true })
+        let encoded = try JSONSerialization.data(withJSONObject: output, options: [.prettyPrinted, .sortedKeys])
+        let outputURL = try #require(
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        ).appendingPathComponent("fitmatch-cumulative-2560-swift-classification.json")
+        try encoded.write(to: outputURL, options: .atomic)
+    }
+
+    @Test func storedMusinsaCorpusBuildsActualMeasurementFitPairs() throws {
+        struct Specimen {
+            let productID: String
+            let productName: String
+            let category: ClothingCategory
+            let detail: ClosetDetailCategory
+            let length: ComparisonLengthType
+            let gender: UserGender
+            let sourcePath: String
+            let size: ParsedProductSize
+        }
+
+        let bundle = Bundle(for: FitMatchCorpusBundleToken.self)
+        let inputURL = try #require(bundle.url(
+            forResource: "Musinsa1037FitPairInputs", withExtension: "json"
+        ))
+        let inputs = try #require(
+            try JSONSerialization.jsonObject(with: Data(contentsOf: inputURL)) as? [[String: Any]]
+        )
+        #expect(inputs.count == 1037)
+
+        let parser = MusinsaActualSizeAPIParser()
+        var specimens: [Specimen] = []
+        var sourceProductsWithRows = 0
+        var parsedSizeRows = 0
+        for input in inputs {
+            let productID = try #require(input["product_id"] as? String)
+            let productName = try #require(input["product_name"] as? String)
+            let sourcePath = try #require(input["source_path"] as? String)
+            let genderCodes = input["gender_codes"] as? [String] ?? []
+            let response = try #require(input["response"])
+            let depths = sourcePath.components(separatedBy: ">").map {
+                $0.trimmingCharacters(in: .whitespacesAndNewlines)
+            }.filter { !$0.isEmpty }
+            let providerCategory = MusinsaProductMetadataParser.mapCategory(from: sourcePath)
+            let providerDetail = MusinsaProductMetadataParser.mapDetailCategory(
+                from: depths.count > 1 ? depths[1] : sourcePath
+            )
+            let classification = try #require(ParsedClosetClassification.resolve(
+                category: providerCategory,
+                detailCategory: providerDetail,
+                sourceDepths: depths.map(Optional.some),
+                sourcePath: sourcePath,
+                productName: productName
+            ))
+            let data = try JSONSerialization.data(withJSONObject: response)
+            let category = ClothingCategory.fromTaxonomyCode(classification.categoryCode)
+            let detail = ClosetDetailCategory.fromTaxonomyCode(classification.detailCode)
+            let parsed = try parser.parseActualSize(from: data, isTopCategory: category.serviceGroup == .top)
+            if !parsed.sizes.isEmpty { sourceProductsWithRows += 1 }
+            let validSizes = ParsedSizeValidator.validSizes(parsed.sizes, category: category)
+            parsedSizeRows += validSizes.count
+            guard !validSizes.isEmpty else { continue }
+            specimens.append(Specimen(
+                productID: productID,
+                productName: productName,
+                category: category,
+                detail: detail,
+                length: classification.lengthType,
+                gender: UserGender.productTarget(from: genderCodes),
+                sourcePath: sourcePath,
+                size: validSizes[validSizes.count / 2]
+            ))
+        }
+
+        var products: [String: Product] = [:]
+        var references: [String: UserFit] = [:]
+        for specimen in specimens {
+            let size = ParsedProductSizeNormalizer.makeProductSizes(from: [specimen.size])[0]
+            let product = Product(
+                name: specimen.productName,
+                category: specimen.category,
+                productCode: specimen.productID,
+                sourceURLString: "https://www.musinsa.com/products/\(specimen.productID)",
+                metadata: ProductMetadata(
+                    sourceCategoryPath: specimen.sourcePath,
+                    genderCodes: [specimen.gender.rawValue]
+                ),
+                sourceName: "무신사",
+                sizes: [size]
+            )
+            product.sleeveType = specimen.length
+            products[specimen.productID] = product
+            let item = UserFit(
+                sourceType: .marketplace,
+                sourceName: "무신사",
+                sourceCategoryPath: specimen.sourcePath,
+                brandName: "검증 코퍼스",
+                gender: specimen.gender,
+                productName: specimen.productName,
+                category: specimen.category,
+                detailCategory: specimen.detail,
+                sizeName: specimen.size.name,
+                measurements: specimen.size.measurements,
+                fitMemo: specimen.productID,
+                satisfaction: 3
+            )
+            item.sleeveType = specimen.length
+            item.measurementRecords = specimen.size.measurementRecords.map { $0.makeRecord(userFit: item) }
+            references[specimen.productID] = item
+        }
+
+        var pairResults: [[String: Any]] = []
+        var usedPairKeys = Set<String>()
+        let matcher = ComparisonProfileMatcher()
+        for specimen in specimens.sorted(by: { $0.productID < $1.productID }) {
+            guard let productObject = products[specimen.productID],
+                  let productSize = productObject.sizes.first else { continue }
+            let candidatePool = references.filter { $0.key != specimen.productID }.map(\.value)
+            let match = matcher.match(
+                product: productObject,
+                productDetailCategory: specimen.detail,
+                userFits: candidatePool
+            )
+            guard let referenceItem = match.compatibleCandidates.first else { continue }
+            let comparisonProfile = matcher.profile(for: productObject, detailCategory: specimen.detail)
+            let referenceProfile = matcher.profile(for: referenceItem)
+            let referenceID = referenceItem.fitMemo
+            let pairKey = [specimen.productID, referenceID].sorted().joined(separator: "|")
+            guard usedPairKeys.insert(pairKey).inserted else { continue }
+                let result = MeasurementComparisonEngine().compare(
+                    productSize: productSize,
+                    referenceItem: referenceItem,
+                    productCategory: specimen.category,
+                    productDetailCategory: specimen.detail
+                )
+                pairResults.append([
+                    "reference_product_id": referenceID,
+                    "reference_product_name": referenceItem.productName,
+                    "reference_size_name": referenceItem.sizeName,
+                    "reference_source_path": referenceItem.sourceCategoryPath ?? "",
+                    "reference_url": "https://www.musinsa.com/products/\(referenceID)",
+                    "reference_category_code": referenceItem.category.serviceGroup.taxonomyCode,
+                    "reference_detail_code": referenceItem.detailCategory.rawValue,
+                    "reference_gender_code": referenceItem.resolvedGenderCode,
+                    "reference_garment_family": referenceProfile.garmentFamily.rawValue,
+                    "reference_construction_type": referenceProfile.constructionType.rawValue,
+                    "reference_body_length_type": referenceProfile.bodyLengthType.rawValue,
+                    "reference_length_type": referenceProfile.lengthType.rawValue,
+                    "comparison_product_id": specimen.productID,
+                    "comparison_product_name": specimen.productName,
+                    "comparison_size_name": productSize.name,
+                    "comparison_source_path": specimen.sourcePath,
+                    "comparison_url": "https://www.musinsa.com/products/\(specimen.productID)",
+                    "comparison_category_code": specimen.category.serviceGroup.taxonomyCode,
+                    "comparison_detail_code": specimen.detail.rawValue,
+                    "comparison_gender_code": specimen.gender.taxonomyCode,
+                    "comparison_garment_family": comparisonProfile.garmentFamily.rawValue,
+                    "comparison_construction_type": comparisonProfile.constructionType.rawValue,
+                    "comparison_body_length_type": comparisonProfile.bodyLengthType.rawValue,
+                    "comparison_length_type": comparisonProfile.lengthType.rawValue,
+                    "category_code": specimen.category.serviceGroup.taxonomyCode,
+                    "detail_code": specimen.detail.rawValue,
+                    "status": result.status.rawValue,
+                    "score": result.score,
+                    "compared_item_count": result.comparedItems.count,
+                    "coverage": result.comparisonCoverage,
+                    "reliability": result.reliabilityTitle,
+                    "exclusion_count": result.exclusions.count,
+                    "exclusion_reasons": result.exclusions.map(\.reason.rawValue),
+                    "minimum_comparable_count": result.minimumComparableCount,
+                    "minimum_required_kind_count": result.minimumRequiredKindCount,
+                    "required_kinds": result.requiredKinds.map(\.rawValue),
+                    "required_all_kinds": result.requiredAllKinds.map(\.rawValue),
+                    "compared_items": result.comparedItems.map { item in
+                        [
+                            "kind": item.kind.rawValue,
+                            "measurement_code": item.measurementCode.rawValue,
+                            "display_title": item.displayTitle ?? item.kind.title,
+                            "reference_value_cm": item.referenceValue,
+                            "comparison_value_cm": item.productValue,
+                            "signed_difference_cm": item.signedDifference,
+                            "absolute_difference_cm": item.absoluteDifference,
+                            "item_score": item.score,
+                            "weight": item.weight,
+                        ] as [String: Any]
+                    },
+                    "exclusions": result.exclusions.map { exclusion in
+                        [
+                            "kind": exclusion.kind.rawValue,
+                            "reason": exclusion.reason.rawValue,
+                            "reference_code": exclusion.referenceCode?.rawValue ?? "",
+                            "comparison_code": exclusion.productCode?.rawValue ?? "",
+                        ]
+                    },
+                ])
+        }
+
+        #expect(sourceProductsWithRows == 914)
+        #expect(specimens.count == 914)
+        #expect(parsedSizeRows > 2000)
+        #expect(pairResults.count == 708)
+        #expect(pairResults.filter { ($0["status"] as? String) == "confirmed" }.count == 707)
+        #expect(pairResults.allSatisfy {
+            ($0["comparison_category_code"] as? String) == ($0["reference_category_code"] as? String)
+        })
+        let allowedSimilarFamilies: Set<Set<String>> = [
+            [ComparisonGarmentFamily.denim.rawValue, ComparisonGarmentFamily.pants.rawValue],
+            [ComparisonGarmentFamily.tshirt.rawValue, ComparisonGarmentFamily.shirt.rawValue],
+            [ComparisonGarmentFamily.sweatshirt.rawValue, ComparisonGarmentFamily.hoodie.rawValue],
+            [ComparisonGarmentFamily.outerwear.rawValue, ComparisonGarmentFamily.hoodie.rawValue],
+        ]
+        #expect(pairResults.allSatisfy { pair in
+            guard let comparisonFamily = pair["comparison_garment_family"] as? String,
+                  let referenceFamily = pair["reference_garment_family"] as? String else { return false }
+            return comparisonFamily == referenceFamily
+                || allowedSimilarFamilies.contains([comparisonFamily, referenceFamily])
+        })
+        #expect(pairResults.allSatisfy { pair in
+            guard (pair["comparison_garment_family"] as? String)
+                    != (pair["reference_garment_family"] as? String) else { return true }
+            return (pair["comparison_length_type"] as? String) != ComparisonLengthType.unknown.rawValue
+                && (pair["comparison_length_type"] as? String)
+                    == (pair["reference_length_type"] as? String)
+        })
+        #expect(pairResults.allSatisfy {
+            ($0["category_code"] as? String) != "outerwear"
+                || (($0["comparison_body_length_type"] as? String) != "unknown"
+                    && ($0["comparison_body_length_type"] as? String)
+                        == ($0["reference_body_length_type"] as? String))
+        })
+        let encoded = try JSONSerialization.data(
+            withJSONObject: pairResults, options: [.prettyPrinted, .sortedKeys]
+        )
+        let outputURL = try #require(
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        ).appendingPathComponent("fitmatch-musinsa-actual-measurement-pairs.json")
+        try encoded.write(to: outputURL, options: .atomic)
+    }
+
+    @Test func storedMusinsaCorpusExportsActualSizeAttritionDiagnostics() throws {
+        let bundle = Bundle(for: FitMatchCorpusBundleToken.self)
+        let inputURL = try #require(bundle.url(
+            forResource: "Musinsa1037FitPairInputs", withExtension: "json"
+        ))
+        let inputs = try #require(
+            try JSONSerialization.jsonObject(with: Data(contentsOf: inputURL)) as? [[String: Any]]
+        )
+        let parser = MusinsaActualSizeAPIParser()
+        var diagnostics: [[String: Any]] = []
+
+        for input in inputs {
+            let productID = try #require(input["product_id"] as? String)
+            let productName = try #require(input["product_name"] as? String)
+            let categoryCode = try #require(input["category_code"] as? String)
+            let detailCode = try #require(input["detail_code"] as? String)
+            let sourcePath = try #require(input["source_path"] as? String)
+            let response = try #require(input["response"] as? [String: Any])
+            let dataBody = response["data"] as? [String: Any]
+            let rawSizes = dataBody?["sizes"] as? [[String: Any]] ?? []
+            let rawSizeNames = rawSizes.compactMap { $0["name"] as? String }
+            let rawMeasurementLabels = Array(Set(rawSizes.flatMap { size -> [String] in
+                let items = size["items"] as? [[String: Any]] ?? []
+                return items.compactMap { $0["name"] as? String }
+            })).sorted()
+            let rawPositiveMeasurementCount = rawSizes.reduce(into: 0) { count, size in
+                let items = size["items"] as? [[String: Any]] ?? []
+                count += items.filter { item in
+                    if let value = item["value"] as? Double { return value > 0 }
+                    if let value = item["value"] as? Int { return value > 0 }
+                    if let value = item["value"] as? String,
+                       let number = Double(value) { return number > 0 }
+                    return false
+                }.count
+            }
+            let category = ClothingCategory.fromTaxonomyCode(categoryCode)
+            let responseData = try JSONSerialization.data(withJSONObject: response)
+            let parsed = try parser.parseActualSize(
+                from: responseData,
+                isTopCategory: category.serviceGroup == .top
+            )
+            let validSizes = ParsedSizeValidator.validSizes(parsed.sizes, category: category)
+            let parsedSizeNames = parsed.sizes.map(\.name)
+            let invalidTokenNames = parsed.sizes
+                .filter { !SizeTokenNormalizer.isValid($0.name) }
+                .map(\.name)
+            let maximumValue: Double = category.serviceGroup == .shoes ? 400 : 300
+            let sizesWithoutMappedMeasurement = parsed.sizes.filter { size in
+                !size.measurementRecords.contains {
+                    $0.semanticStatus == .mapped
+                        && $0.measurementCode != .unknown
+                        && $0.measurementCode != .legacyUnknown
+                        && $0.value.isFinite
+                        && $0.value > 0
+                        && $0.value <= maximumValue
+                }
+            }.map(\.name)
+            let parsedMeasurementRecords = parsed.sizes.flatMap(\.measurementRecords)
+            let unknownMeasurementRecords = parsedMeasurementRecords.filter { record in
+                record.semanticStatus != .mapped
+                    || record.measurementCode == .unknown
+                    || record.measurementCode == .legacyUnknown
+            }
+            let unknownRawLabels = unknownMeasurementRecords.compactMap { $0.rawLabel }
+            let unknownLabels = Array(Set(unknownRawLabels)).sorted()
+
+            let stage: String
+            var reasons: [String] = []
+            if rawSizes.isEmpty {
+                stage = "official_size_rows_missing"
+                reasons.append("official_response_has_no_size_rows")
+            } else if parsed.sizes.isEmpty {
+                stage = "official_measurement_values_missing"
+                reasons.append(rawPositiveMeasurementCount == 0
+                    ? "official_rows_have_no_positive_measurements"
+                    : "parser_produced_no_size")
+            } else if validSizes.isEmpty {
+                stage = "validator_rejected"
+                if invalidTokenNames.count == parsed.sizes.count {
+                    reasons.append("all_size_tokens_invalid")
+                } else if !invalidTokenNames.isEmpty {
+                    reasons.append("some_size_tokens_invalid")
+                }
+                if sizesWithoutMappedMeasurement.count == parsed.sizes.count {
+                    reasons.append("no_size_has_mapped_measurement_in_range")
+                } else if !sizesWithoutMappedMeasurement.isEmpty {
+                    reasons.append("some_sizes_have_no_mapped_measurement_in_range")
+                }
+                if category.serviceGroup == .shoes && parsed.sizes.count < 2 {
+                    reasons.append("shoe_requires_at_least_two_sizes")
+                }
+                if reasons.isEmpty { reasons.append("validator_rejected_unspecified") }
+            } else {
+                stage = "eligible"
+            }
+
+            diagnostics.append([
+                "product_id": productID,
+                "product_name": productName,
+                "category_code": categoryCode,
+                "detail_code": detailCode,
+                "source_path": sourcePath,
+                "stage": stage,
+                "reasons": reasons,
+                "raw_size_count": rawSizes.count,
+                "raw_positive_measurement_count": rawPositiveMeasurementCount,
+                "parsed_size_count": parsed.sizes.count,
+                "valid_size_count": validSizes.count,
+                "raw_size_names": rawSizeNames,
+                "parsed_size_names": parsedSizeNames,
+                "invalid_size_token_names": invalidTokenNames,
+                "sizes_without_mapped_measurement": sizesWithoutMappedMeasurement,
+                "raw_measurement_labels": rawMeasurementLabels,
+                "unknown_measurement_labels": unknownLabels,
+            ])
+        }
+
+        let stageCounts = Dictionary(grouping: diagnostics, by: { $0["stage"] as? String ?? "unknown" })
+            .mapValues(\.count)
+        #expect(diagnostics.count == 1037)
+        #expect(stageCounts["official_size_rows_missing"] == 113)
+        #expect(stageCounts["official_measurement_values_missing"] == 10)
+        #expect(stageCounts["validator_rejected", default: 0] == 0)
+        #expect(stageCounts["eligible"] == 914)
+
+        let encoded = try JSONSerialization.data(
+            withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]
+        )
+        let outputURL = try #require(
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        ).appendingPathComponent("fitmatch-musinsa-actual-size-attrition.json")
+        try encoded.write(to: outputURL, options: .atomic)
+    }
+
+    @Test func storedUniqloCorpusBuildsActualMeasurementFitPairs() throws {
+        struct Specimen {
+            let productID: String
+            let productName: String
+            let category: ClothingCategory
+            let detail: ClosetDetailCategory
+            let length: ComparisonLengthType
+            let gender: UserGender
+            let sourcePath: String
+            let size: ParsedProductSize
+        }
+
+        let bundle = Bundle(for: FitMatchCorpusBundleToken.self)
+        let inputURL = try #require(bundle.url(
+            forResource: "Uniqlo243FitPairInputs", withExtension: "json"
+        ))
+        let inputs = try #require(
+            try JSONSerialization.jsonObject(with: Data(contentsOf: inputURL)) as? [[String: Any]]
+        )
+        let sizeParser = UniqloSizeAPIParser()
+        let metadataParser = UniqloProductMetadataParser()
+        var diagnostics: [[String: Any]] = []
+        var specimens: [Specimen] = []
+        var parsedSizeRows = 0
+
+        for input in inputs {
+            let productID = try #require(input["product_id"] as? String)
+            let productName = try #require(input["product_name"] as? String)
+            let sourcePath = try #require(input["source_path"] as? String)
+            let genderCodes = input["gender_codes"] as? [String] ?? []
+            let response = try #require(input["response"])
+            let depths = sourcePath.components(separatedBy: ">").map {
+                $0.trimmingCharacters(in: .whitespacesAndNewlines)
+            }.filter { !$0.isEmpty }
+            let providerCategory = metadataParser.mapCategory(from: "\(sourcePath) \(productName)")
+            let providerDetail = metadataParser.mapDetailCategory(from: "\(sourcePath) \(productName)")
+            let classification = try #require(ParsedClosetClassification.resolve(
+                category: providerCategory,
+                detailCategory: providerDetail,
+                sourceDepths: depths.map(Optional.some),
+                sourcePath: sourcePath,
+                productName: productName
+            ))
+            let category = ClothingCategory.fromTaxonomyCode(classification.categoryCode)
+            let detail = ClosetDetailCategory.fromTaxonomyCode(classification.detailCode)
+            let data = try JSONSerialization.data(withJSONObject: response)
+            let parsedSizes = try sizeParser.parseSizes(from: data)
+            let validSizes = ParsedSizeValidator.validSizes(parsedSizes, category: category)
+            parsedSizeRows += validSizes.count
+            let stage: String
+            if parsedSizes.isEmpty {
+                stage = "official_size_rows_missing"
+            } else if validSizes.isEmpty {
+                stage = "validator_rejected"
+            } else {
+                stage = "eligible"
+                specimens.append(Specimen(
+                    productID: productID,
+                    productName: productName,
+                    category: category,
+                    detail: detail,
+                    length: classification.lengthType,
+                    gender: UserGender.productTarget(from: genderCodes),
+                    sourcePath: sourcePath,
+                    size: validSizes[validSizes.count / 2]
+                ))
+            }
+            diagnostics.append([
+                "product_id": productID,
+                "product_name": productName,
+                "category_code": classification.categoryCode,
+                "detail_code": classification.detailCode,
+                "source_path": sourcePath,
+                "stage": stage,
+                "parsed_size_count": parsedSizes.count,
+                "valid_size_count": validSizes.count,
+                "size_names": parsedSizes.map(\.name),
+                "unknown_measurement_codes": Array(Set(parsedSizes
+                    .flatMap(\.measurementRecords)
+                    .filter { $0.semanticStatus != .mapped }
+                    .compactMap(\.rawCode))).sorted(),
+            ])
+        }
+
+        var products: [String: Product] = [:]
+        var references: [String: UserFit] = [:]
+        for specimen in specimens {
+            let size = ParsedProductSizeNormalizer.makeProductSizes(from: [specimen.size])[0]
+            let product = Product(
+                name: specimen.productName,
+                category: specimen.category,
+                productCode: specimen.productID,
+                sourceURLString: "https://www.uniqlo.com/kr/ko/products/\(specimen.productID)-000",
+                metadata: ProductMetadata(
+                    sourceCategoryPath: specimen.sourcePath,
+                    genderCodes: [specimen.gender.rawValue]
+                ),
+                sourceName: "유니클로",
+                sizes: [size]
+            )
+            product.sleeveType = specimen.length
+            products[specimen.productID] = product
+            let item = UserFit(
+                sourceType: .officialStore,
+                sourceName: "유니클로",
+                sourceCategoryPath: specimen.sourcePath,
+                brandName: "유니클로",
+                gender: specimen.gender,
+                productName: specimen.productName,
+                category: specimen.category,
+                detailCategory: specimen.detail,
+                sizeName: specimen.size.name,
+                measurements: specimen.size.measurements,
+                fitMemo: specimen.productID,
+                satisfaction: 3
+            )
+            item.sleeveType = specimen.length
+            item.measurementRecords = specimen.size.measurementRecords.map { $0.makeRecord(userFit: item) }
+            references[specimen.productID] = item
+        }
+
+        var pairResults: [[String: Any]] = []
+        var usedPairKeys = Set<String>()
+        let matcher = ComparisonProfileMatcher()
+        for specimen in specimens.sorted(by: { $0.productID < $1.productID }) {
+            guard let product = products[specimen.productID],
+                  let productSize = product.sizes.first else { continue }
+            let candidates = references.filter { $0.key != specimen.productID }.map(\.value)
+            let match = matcher.match(
+                product: product,
+                productDetailCategory: specimen.detail,
+                userFits: candidates
+            )
+            guard let reference = match.compatibleCandidates.first else { continue }
+            let comparisonProfile = matcher.profile(for: product, detailCategory: specimen.detail)
+            let referenceProfile = matcher.profile(for: reference)
+            let pairKey = [specimen.productID, reference.fitMemo].sorted().joined(separator: "|")
+            guard usedPairKeys.insert(pairKey).inserted else { continue }
+            let result = MeasurementComparisonEngine().compare(
+                productSize: productSize,
+                referenceItem: reference,
+                productCategory: specimen.category,
+                productDetailCategory: specimen.detail
+            )
+            pairResults.append([
+                "reference_product_id": reference.fitMemo,
+                "reference_product_name": reference.productName,
+                "reference_size_name": reference.sizeName,
+                "reference_source_path": reference.sourceCategoryPath ?? "",
+                "reference_url": "https://www.uniqlo.com/kr/ko/products/\(reference.fitMemo)-000",
+                "reference_category_code": reference.category.serviceGroup.taxonomyCode,
+                "reference_detail_code": reference.detailCategory.rawValue,
+                "reference_gender_code": reference.resolvedGenderCode,
+                "reference_garment_family": referenceProfile.garmentFamily.rawValue,
+                "reference_construction_type": referenceProfile.constructionType.rawValue,
+                "reference_body_length_type": referenceProfile.bodyLengthType.rawValue,
+                "reference_length_type": referenceProfile.lengthType.rawValue,
+                "comparison_product_id": specimen.productID,
+                "comparison_product_name": specimen.productName,
+                "comparison_size_name": productSize.name,
+                "comparison_source_path": specimen.sourcePath,
+                "comparison_url": "https://www.uniqlo.com/kr/ko/products/\(specimen.productID)-000",
+                "comparison_category_code": specimen.category.serviceGroup.taxonomyCode,
+                "comparison_detail_code": specimen.detail.rawValue,
+                "comparison_gender_code": specimen.gender.taxonomyCode,
+                "comparison_garment_family": comparisonProfile.garmentFamily.rawValue,
+                "comparison_construction_type": comparisonProfile.constructionType.rawValue,
+                "comparison_body_length_type": comparisonProfile.bodyLengthType.rawValue,
+                "comparison_length_type": comparisonProfile.lengthType.rawValue,
+                "category_code": specimen.category.serviceGroup.taxonomyCode,
+                "detail_code": specimen.detail.rawValue,
+                "status": result.status.rawValue,
+                "score": result.score,
+                "compared_item_count": result.comparedItems.count,
+                "coverage": result.comparisonCoverage,
+                "reliability": result.reliabilityTitle,
+                "exclusion_count": result.exclusions.count,
+                "exclusion_reasons": result.exclusions.map(\.reason.rawValue),
+                "minimum_comparable_count": result.minimumComparableCount,
+                "minimum_required_kind_count": result.minimumRequiredKindCount,
+                "required_kinds": result.requiredKinds.map(\.rawValue),
+                "required_all_kinds": result.requiredAllKinds.map(\.rawValue),
+                "compared_items": result.comparedItems.map { item in
+                    [
+                        "kind": item.kind.rawValue,
+                        "measurement_code": item.measurementCode.rawValue,
+                        "display_title": item.displayTitle ?? item.kind.title,
+                        "reference_value_cm": item.referenceValue,
+                        "comparison_value_cm": item.productValue,
+                        "signed_difference_cm": item.signedDifference,
+                        "absolute_difference_cm": item.absoluteDifference,
+                        "item_score": item.score,
+                        "weight": item.weight,
+                    ] as [String: Any]
+                },
+                "exclusions": result.exclusions.map { exclusion in
+                    [
+                        "kind": exclusion.kind.rawValue,
+                        "reason": exclusion.reason.rawValue,
+                        "reference_code": exclusion.referenceCode?.rawValue ?? "",
+                        "comparison_code": exclusion.productCode?.rawValue ?? "",
+                    ]
+                },
+            ])
+        }
+
+        #expect(inputs.count == 243)
+        #expect(specimens.count == 242)
+        #expect(parsedSizeRows == 1_588)
+        #expect(pairResults.count == 182)
+        #expect(pairResults.allSatisfy { ($0["status"] as? String) == "confirmed" })
+        #expect(pairResults.allSatisfy {
+            ($0["comparison_category_code"] as? String) == ($0["reference_category_code"] as? String)
+        })
+        let allowedSimilarFamilies: Set<Set<String>> = [
+            [ComparisonGarmentFamily.denim.rawValue, ComparisonGarmentFamily.pants.rawValue],
+            [ComparisonGarmentFamily.tshirt.rawValue, ComparisonGarmentFamily.shirt.rawValue],
+            [ComparisonGarmentFamily.sweatshirt.rawValue, ComparisonGarmentFamily.hoodie.rawValue],
+            [ComparisonGarmentFamily.outerwear.rawValue, ComparisonGarmentFamily.hoodie.rawValue],
+        ]
+        #expect(pairResults.allSatisfy { pair in
+            guard let comparisonFamily = pair["comparison_garment_family"] as? String,
+                  let referenceFamily = pair["reference_garment_family"] as? String else { return false }
+            return comparisonFamily == referenceFamily
+                || allowedSimilarFamilies.contains([comparisonFamily, referenceFamily])
+        })
+        #expect(pairResults.allSatisfy { pair in
+            guard (pair["comparison_garment_family"] as? String)
+                    != (pair["reference_garment_family"] as? String) else { return true }
+            return (pair["comparison_length_type"] as? String) != ComparisonLengthType.unknown.rawValue
+                && (pair["comparison_length_type"] as? String)
+                    == (pair["reference_length_type"] as? String)
+        })
+        #expect(pairResults.allSatisfy {
+            ($0["category_code"] as? String) != "outerwear"
+                || (($0["comparison_body_length_type"] as? String) != "unknown"
+                    && ($0["comparison_body_length_type"] as? String)
+                        == ($0["reference_body_length_type"] as? String))
+        })
+        let diagnosticsData = try JSONSerialization.data(
+            withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]
+        )
+        let pairData = try JSONSerialization.data(
+            withJSONObject: pairResults, options: [.prettyPrinted, .sortedKeys]
+        )
+        let documents = try #require(
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        )
+        try diagnosticsData.write(
+            to: documents.appendingPathComponent("fitmatch-uniqlo-size-diagnostics.json"),
+            options: .atomic
+        )
+        try pairData.write(
+            to: documents.appendingPathComponent("fitmatch-uniqlo-actual-measurement-pairs.json"),
+            options: .atomic
+        )
     }
 
     @Test func musinsaSourceDepthPriorityKeepsUmbrellaFamiliesOutOfGenericBottoms() {
@@ -6046,6 +7843,47 @@ struct FitMatchTests {
         ).isEmpty)
     }
 
+    @Test func parsedSizeValidatorAllowsNonstandardNamesOnlyForTrustedProviderMeasurements() {
+        func measurement(methodSource: String, inputSource: MeasurementInputSource) -> ParsedMeasurement {
+            ParsedMeasurement(
+                value: 58,
+                measurementCode: .chestWidthPitToPit,
+                displayKind: .chest,
+                methodSource: methodSource,
+                inputSource: inputSource,
+                rawLabel: "가슴단면",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped
+            )
+        }
+        func size(_ name: String, measurement: ParsedMeasurement) -> ParsedProductSize {
+            ParsedProductSize(
+                name: name,
+                measurements: GarmentMeasurements(
+                    shoulder: 0, chest: 58, totalLength: 0, sleeveLength: 0
+                ),
+                measurementRecords: [measurement]
+            )
+        }
+
+        let officialMusinsa = size(
+            "세미오버핏_블레이저_M",
+            measurement: measurement(methodSource: "musinsa", inputSource: .importedSizeChart)
+        )
+        let transcribed = size(
+            "세미오버핏_블레이저_M",
+            measurement: measurement(methodSource: "html", inputSource: .transcribedSizeChart)
+        )
+        let officialUniqlo = size(
+            "WOMEN_090",
+            measurement: measurement(methodSource: "uniqlo_kr", inputSource: .importedSizeChart)
+        )
+
+        #expect(ParsedSizeValidator.validSizes([officialMusinsa], category: .outer).count == 1)
+        #expect(ParsedSizeValidator.validSizes([officialUniqlo], category: .top).count == 1)
+        #expect(ParsedSizeValidator.validSizes([transcribed], category: .outer).isEmpty)
+    }
+
     private func inMemoryModelContainer() throws -> ModelContainer {
         let schema = Schema([
             Brand.self,
@@ -6057,6 +7895,82 @@ struct FitMatchTests {
         ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [configuration])
+    }
+
+    private func waitUntilParserStarts(_ parser: DelayedProductURLParserSpy) async {
+        for _ in 0..<100 where parser.startedURLs.isEmpty {
+            await Task.yield()
+        }
+        #expect(!parser.startedURLs.isEmpty)
+    }
+
+}
+
+@MainActor
+private final class ProductURLParserSpy: ProductURLParsing {
+    let canParseResult: Bool
+    let result: Result<ParsedProductInfo, Error>
+    private(set) var parseCallCount = 0
+
+    init(
+        canParse: Bool,
+        result: Result<ParsedProductInfo, Error> = .failure(ParserSpyError.failed)
+    ) {
+        canParseResult = canParse
+        self.result = result
+    }
+
+    func canParse(_ url: URL) -> Bool {
+        canParseResult
+    }
+
+    func parse(from url: URL) async throws -> ParsedProductInfo {
+        parseCallCount += 1
+        return try result.get()
+    }
+}
+
+private enum ParserSpyError: Error {
+    case failed
+}
+
+@MainActor
+private final class DelayedProductURLParserSpy: ProductURLParsing {
+    let delays: [String: UInt64]
+    private(set) var startedURLs: [URL] = []
+
+    init(delays: [String: UInt64]) {
+        self.delays = delays
+    }
+
+    func canParse(_ url: URL) -> Bool {
+        true
+    }
+
+    func parse(from url: URL) async throws -> ParsedProductInfo {
+        startedURLs.append(url)
+        let productName = url.lastPathComponent
+        try await Task.sleep(nanoseconds: delays[productName] ?? 0)
+        return ParsedProductInfo(
+            sourceURL: url,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: productName,
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizes: [
+                ParsedProductSize(
+                    name: "M",
+                    measurements: GarmentMeasurements(
+                        shoulder: 45,
+                        chest: 52,
+                        totalLength: 68,
+                        sleeveLength: 22
+                    )
+                )
+            ]
+        )
     }
 
 }
