@@ -11,10 +11,11 @@ struct AddClosetItemView: View {
     @Query(sort: \Brand.name) private var brands: [Brand]
     @StateObject private var viewModel: AddClosetItemViewModel
     @State private var isShowingDeleteAlert = false
+    @State private var isShowingSaveError = false
     @State private var selectedMeasurementGuide: MeasurementKind?
 
-    let onSave: (UserFit) -> Void
-    let onDelete: (() -> Void)?
+    let onSave: (UserFit) -> Bool
+    let onDelete: (() -> Bool)?
     private let hasComparisonHistory: Bool
     private let isEditing: Bool
     private let presentationContext: AddClosetItemPresentationContext
@@ -31,8 +32,8 @@ struct AddClosetItemView: View {
         productImageURLString: String? = nil,
         presentationContext: AddClosetItemPresentationContext = .standard,
         hasComparisonHistory: Bool = false,
-        onDelete: (() -> Void)? = nil,
-        onSave: @escaping (UserFit) -> Void
+        onDelete: (() -> Bool)? = nil,
+        onSave: @escaping (UserFit) -> Bool
     ) {
         _viewModel = StateObject(
             wrappedValue: AddClosetItemViewModel(
@@ -80,11 +81,19 @@ struct AddClosetItemView: View {
         .alert("이 옷을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
             Button("취소", role: .cancel) {}
             Button("삭제", role: .destructive) {
-                onDelete?()
-                dismiss()
+                if onDelete?() == true {
+                    dismiss()
+                } else {
+                    isShowingSaveError = true
+                }
             }
         } message: {
             Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 함께 삭제됩니다. 그래도 삭제하시겠어요?")
+        }
+        .alert("저장 실패", isPresented: $isShowingSaveError) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text("내 옷장에 저장하지 못했습니다. 입력한 내용을 확인한 뒤 다시 시도해 주세요.")
         }
         .sheet(item: $selectedMeasurementGuide) { kind in
             DirectMeasurementGuideSheet(kind: kind, category: viewModel.category)
@@ -267,6 +276,7 @@ struct AddClosetItemView: View {
                                 subtitle: viewModel.measurementGuide(for: kind),
                                 placeholder: kind.placeholder,
                                 value: binding(for: kind),
+                                accessibilityIdentifier: "closet.measurement.\(kind.id)",
                                 onShowGuide: viewModel.measurementEntrySource == .fitmatchMeasured
                                     ? { selectedMeasurementGuide = kind }
                                     : nil
@@ -314,8 +324,11 @@ struct AddClosetItemView: View {
                 if hasComparisonHistory {
                     isShowingDeleteAlert = true
                 } else {
-                    onDelete?()
-                    dismiss()
+                    if onDelete?() == true {
+                        dismiss()
+                    } else {
+                        isShowingSaveError = true
+                    }
                 }
             } label: {
                 Text("삭제")
@@ -355,6 +368,7 @@ struct AddClosetItemView: View {
                         in: RoundedRectangle(cornerRadius: 18, style: .continuous)
                     )
             }
+            .accessibilityIdentifier("closet.manualSave")
             .buttonStyle(.plain)
             .disabled(!viewModel.canSave)
         }
@@ -369,8 +383,22 @@ struct AddClosetItemView: View {
             return
         }
 
-        onSave(item)
-        dismiss()
+        if onSave(item) {
+            if !isEditing {
+                let origin: FitMatchMetricClosetOrigin = presentationContext == .linkedProduct
+                    ? .linkedProduct
+                    : .manual
+                FitMatchMetricsRecorder.shared.record(
+                    .closetCreated(
+                        origin: origin,
+                        category: FitMatchMetricMajorCategory(category: item.category)
+                    )
+                )
+            }
+            dismiss()
+        } else {
+            isShowingSaveError = true
+        }
     }
 
     private var serviceCategories: [TaxonomyCategory] {
@@ -714,6 +742,7 @@ private struct AddClosetMeasurementField: View {
     let subtitle: String
     let placeholder: String
     @Binding var value: String
+    let accessibilityIdentifier: String
     let onShowGuide: (() -> Void)?
 
     var body: some View {
@@ -741,6 +770,7 @@ private struct AddClosetMeasurementField: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             TextField(placeholder, text: $value)
+                .accessibilityIdentifier(accessibilityIdentifier)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
                 .font(.title3.weight(.bold))

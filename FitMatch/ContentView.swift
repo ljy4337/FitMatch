@@ -16,7 +16,6 @@ struct ContentView: View {
     @Query private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    @AppStorage("FitMatch.bodyShape.completedVersion") private var bodyShapeCompletedVersion = 0
     @State private var selectedTab: AppTab = .home
     @State private var hasFinishedSplash = false
     @State private var isLoggedIn = false
@@ -24,6 +23,7 @@ struct ContentView: View {
     @State private var compareViewID: UUID?
     @State private var lastCompareLaunchKey: String?
     @State private var lastCompareLaunchDate = Date.distantPast
+    @State private var hasRecordedLaunch = false
     @State private var measurementMigrationErrorMessage: String?
     @State private var measurementMigrationRetryToken = UUID()
     private let sharedURLStore = SharedURLStore()
@@ -42,6 +42,11 @@ struct ContentView: View {
             #endif
         }
         .dismissesKeyboardOnBackgroundTap()
+        .onAppear {
+            guard !hasRecordedLaunch else { return }
+            hasRecordedLaunch = true
+            FitMatchMetricsRecorder.shared.record(.appLaunch)
+        }
         .task(id: measurementMigrationRetryToken) {
             do {
                 try MeasurementLegacyBackfillService.run(
@@ -88,10 +93,6 @@ struct ContentView: View {
         } else if !hasCompletedOnboarding {
             FitMatchOnboardingView {
                 hasCompletedOnboarding = true
-            }
-        } else if bodyShapeCompletedVersion < BodyShapeSettingsStore.dataVersion {
-            BodyShapeSetupFlow(isRequiredFlow: true) {
-                bodyShapeCompletedVersion = BodyShapeSettingsStore.dataVersion
                 _ = openPendingSharedURLIfNeeded()
             }
         // 로그인 화면은 추후 재사용을 위해 구현을 유지하고 현재 진입 분기만 비활성화합니다.
@@ -103,9 +104,17 @@ struct ContentView: View {
                 MainTabView(
                     selectedTab: $selectedTab,
                     compareURL: pendingCompareURL,
-                    onCompareURLConsumed: {
-                        pendingCompareURL = nil
-                        compareViewID = nil
+                    onCompareURLPresented: { presentedURL in
+                        let didConsumeSharedURL = sharedURLStore.clearPendingProductURL(ifMatching: presentedURL)
+                        if didConsumeSharedURL {
+                            FitMatchMetricsRecorder.shared.record(
+                                .shareConsumed(provider: FitMatchMetricProvider.resolve(urlString: presentedURL))
+                            )
+                        }
+                        if pendingCompareURL == presentedURL {
+                            pendingCompareURL = nil
+                            compareViewID = nil
+                        }
                     },
                     onRecompare: { urlString in
                         openCompare(with: urlString)
@@ -121,10 +130,14 @@ struct ContentView: View {
     }
 
     private func handleDeepLink(_ url: URL) {
+        #if DEBUG
         print("[FitMatch] onOpenURL: \(url.absoluteString)")
+        #endif
 
         guard isSupportedDeepLink(url) else {
+            #if DEBUG
             print("[FitMatch] unsupported deep link: \(url.absoluteString)")
+            #endif
             return
         }
 
@@ -163,25 +176,33 @@ struct ContentView: View {
     }
 
     private func openCompareFromDeepLink() {
-        if openPendingSharedURLIfNeeded() {
+        guard openPendingSharedURLIfNeeded() else {
+            #if DEBUG
+            print("[FitMatch] ignored compare deep link without pending shared URL")
+            #endif
             return
         }
-
-        print("[FitMatch] opening compare tab from deep link without pending URL")
-        isLoggedIn = true
-        pendingCompareURL = nil
-        compareViewID = UUID()
-        selectedTab = .home
     }
 
     @discardableResult
     private func openPendingSharedURLIfNeeded() -> Bool {
-        guard let urlString = sharedURLStore.consumePendingProductURL() else {
+        guard let urlString = sharedURLStore.pendingProductURL() else {
+            #if DEBUG
             print("[FitMatch] no pending shared URL")
+            #endif
             return false
         }
 
-        print("[FitMatch] consumed pending shared URL: \(urlString)")
+        if pendingCompareURL == urlString, compareViewID != nil {
+            #if DEBUG
+            print("[FitMatch] pending shared URL already queued: \(urlString)")
+            #endif
+            return true
+        }
+
+        #if DEBUG
+        print("[FitMatch] queued pending shared URL: \(urlString)")
+        #endif
         isLoggedIn = true
         selectedTab = .home
         openCompare(with: urlString)
@@ -893,7 +914,7 @@ private struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedTab: AppTab
     let compareURL: String?
-    let onCompareURLConsumed: () -> Void
+    let onCompareURLPresented: (String) -> Void
     let onRecompare: (String) -> Void
     let onLogout: () -> Void
     let compareViewID: UUID?
@@ -920,7 +941,9 @@ private struct MainTabView: View {
             handleCompareRequestIfNeeded(newValue)
         }
         .sheet(item: $activeSheet, onDismiss: {
+            #if DEBUG
             print("[MainTabView] activeSheet dismissed")
+            #endif
             if isAwaitingSheetDismissal {
                 isAwaitingSheetDismissal = false
                 if let request = pendingCompareRequest {
@@ -976,8 +999,13 @@ private struct MainTabView: View {
                         modelContext.insert(item)
                         do {
                             try modelContext.save()
+                            return true
                         } catch {
+                            modelContext.rollback()
+                            #if DEBUG
                             print("[MainTabView] manual closet add failed: \(error.localizedDescription)")
+                            #endif
+                            return false
                         }
                     }
                 }
@@ -1050,7 +1078,9 @@ private struct MainTabView: View {
     }
 
     private func presentSheet(_ sheet: MainActiveSheet) {
+        #if DEBUG
         print("[MainTabView] activeSheet -> \(sheet.logName)")
+        #endif
         tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: sheet.logName)
         activeSheet = nil
         DispatchQueue.main.async {
@@ -1060,7 +1090,9 @@ private struct MainTabView: View {
     }
 
     private func dismissSheet() {
+        #if DEBUG
         print("[MainTabView] activeSheet -> nil")
+        #endif
         activeSheet = nil
         tabBarVisibilityController.release(tab: selectedTab, reason: .modalFlow, source: "dismissSheet")
     }
@@ -1096,13 +1128,15 @@ private struct MainTabView: View {
         print("[화면: 홈/기록][동작: 상품 비교 요청][상태: 시작] URL포함=\(compareURL != nil), 요청ID=\(requestID)")
         #endif
         let initialURL = compareURL
-        onCompareURLConsumed()
         presentCompareFlow(initialURL: initialURL)
     }
 
     private func presentCompareRequest(_ request: CompareFlowRequest) {
         tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
         activeSheet = .compareFlow(request)
+        if let initialURL = request.initialURL {
+            onCompareURLPresented(initialURL)
+        }
         #if DEBUG
         print("[화면: 상품 비교][동작: 비교 시트 열기][상태: 완료] 탭바환경객체=전달됨, 요청ID=\(request.id)")
         #endif

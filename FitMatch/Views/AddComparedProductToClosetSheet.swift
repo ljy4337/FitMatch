@@ -535,6 +535,7 @@ struct AddComparedProductToClosetSheet: View {
                         in: RoundedRectangle(cornerRadius: 18, style: .continuous)
                     )
             }
+            .accessibilityIdentifier("closet.confirmAction")
             .buttonStyle(.plain)
             .disabled(!isBottomButtonEnabled)
         }
@@ -638,7 +639,13 @@ struct AddComparedProductToClosetSheet: View {
         let storedSizeDescriptor = FetchDescriptor<ProductSize>(
             predicate: #Predicate { $0.id == selectedSizeID }
         )
-        let storedSourceSize = try? modelContext.fetch(storedSizeDescriptor).first
+        let storedSourceSize: ProductSize?
+        do {
+            storedSourceSize = try modelContext.fetch(storedSizeDescriptor).first
+        } catch {
+            alertMessage = "저장된 상품 정보를 확인하지 못했습니다. 다시 시도해 주세요."
+            return
+        }
         let sourceSize = storedSourceSize ?? selectedSize
         let sourceProduct = storedSourceSize?.product ?? product
 
@@ -682,6 +689,7 @@ struct AddComparedProductToClosetSheet: View {
         item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
         _ = ComparisonProfileMatcher().profile(for: item)
 
+        #if DEBUG
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")
         print("[AddComparedProductToClosetSheet] parsed gender: \(selectedGender.rawValue)")
@@ -692,6 +700,7 @@ struct AddComparedProductToClosetSheet: View {
         print("[AddComparedProductToClosetSheet] sourceCategoryDepth3: \(item.sourceCategoryDepth3 ?? "nil")")
         print("[AddComparedProductToClosetSheet] sourceCategoryDepth4: \(item.sourceCategoryDepth4 ?? "nil")")
         print("[AddComparedProductToClosetSheet] sourceCategoryPath: \(item.sourceCategoryPath ?? "nil")")
+        #endif
 
         if isBasisItem {
             userFits
@@ -708,9 +717,16 @@ struct AddComparedProductToClosetSheet: View {
         do {
             try modelContext.save()
         } catch {
+            modelContext.rollback()
             alertMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
             return
         }
+        FitMatchMetricsRecorder.shared.record(
+            .closetCreated(
+                origin: .comparedProduct,
+                category: FitMatchMetricMajorCategory(category: item.category)
+            )
+        )
         onSaved?(item)
         dismiss()
     }

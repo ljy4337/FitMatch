@@ -6,14 +6,10 @@ enum ParsedSizeValidator {
         category: ClothingCategory
     ) -> [ParsedProductSize] {
         let valid = sizes.filter { size in
-            guard SizeTokenNormalizer.isValid(size.name) else { return false }
+            guard SizeTokenNormalizer.isValid(size.name)
+                    || hasTrustedProviderMeasurements(size) else { return false }
             return size.measurementRecords.contains { measurement in
-                measurement.semanticStatus == .mapped
-                    && measurement.measurementCode != .unknown
-                    && measurement.measurementCode != .legacyUnknown
-                    && measurement.value.isFinite
-                    && measurement.value > 0
-                    && measurement.value <= maximumValue(for: category)
+                isUsable(measurement, category: category)
             }
         }
 
@@ -26,16 +22,34 @@ enum ParsedSizeValidator {
         category: ClothingCategory
     ) -> Bool {
         sizes.contains { size in
-            SizeTokenNormalizer.isValid(size.name)
+            (SizeTokenNormalizer.isValid(size.name) || hasTrustedProviderMeasurements(size))
                 && size.measurementRecords.contains {
-                    $0.semanticStatus == .mapped
-                        && $0.measurementCode != .unknown
-                        && $0.measurementCode != .legacyUnknown
-                        && $0.value.isFinite
-                        && $0.value > 0
-                        && $0.value <= maximumValue(for: category)
+                    isUsable($0, category: category)
                 }
         }
+    }
+
+    private static func hasTrustedProviderMeasurements(_ size: ParsedProductSize) -> Bool {
+        size.measurementRecords.contains { measurement in
+            let methodSource = measurement.methodSource.lowercased()
+            return measurement.inputSource == .importedSizeChart
+                && (methodSource == "musinsa" || methodSource.hasPrefix("uniqlo"))
+                && measurement.semanticStatus == .mapped
+                && measurement.measurementCode != .unknown
+                && measurement.measurementCode != .legacyUnknown
+        }
+    }
+
+    private static func isUsable(
+        _ measurement: ParsedMeasurement,
+        category: ClothingCategory
+    ) -> Bool {
+        measurement.semanticStatus == .mapped
+            && measurement.measurementCode != .unknown
+            && measurement.measurementCode != .legacyUnknown
+            && measurement.value.isFinite
+            && measurement.value > 0
+            && measurement.value <= maximumValue(for: category)
     }
 
     private static func maximumValue(for category: ClothingCategory) -> Double {

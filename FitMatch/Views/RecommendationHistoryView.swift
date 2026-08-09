@@ -287,6 +287,8 @@ struct RecommendationHistoryView: View {
         do {
             try modelContext.save()
         } catch {
+            modelContext.rollback()
+            refreshFilteredHistories()
             saveErrorMessage = "비교 기록을 삭제하지 못했습니다."
         }
     }
@@ -657,23 +659,33 @@ private struct HistoryCard: View {
     }
 
     private func reliabilityStars(comparedCount: Int) -> String {
-        switch comparedCount {
-        case 4...: return "★★★★★"
-        case 3: return "★★★★☆"
-        case 2: return "★★★☆☆"
-        case 1: return "★★☆☆☆"
-        default: return "★☆☆☆☆"
-        }
+        let count = reliabilityStarCount(comparedCount: comparedCount)
+        return String(repeating: "★", count: count)
+            + String(repeating: "☆", count: 5 - count)
     }
 
     private func reliabilityTitle(comparedCount: Int) -> String {
-        switch comparedCount {
-        case 4...: return "매우 높음"
-        case 3: return "높음"
-        case 2: return "보통"
-        case 1: return "낮음"
-        default: return "매우 낮음"
+        let title: String
+        switch reliabilityStarCount(comparedCount: comparedCount) {
+        case 5: title = "매우 높음"
+        case 4: title = "높음"
+        case 3: title = "보통"
+        case 2: title = "낮음"
+        default: title = "매우 낮음"
         }
+        return history.comparisonMethod.contains("확장 비교") ? "확장 · \(title)" : title
+    }
+
+    private func reliabilityStarCount(comparedCount: Int) -> Int {
+        let base: Int
+        switch comparedCount {
+        case 4...: base = 5
+        case 3: base = 4
+        case 2: base = 3
+        case 1: base = 2
+        default: base = 1
+        }
+        return max(1, base - (history.comparisonMethod.contains("확장 비교") ? 1 : 0))
     }
 
     private var relativeDateText: String {

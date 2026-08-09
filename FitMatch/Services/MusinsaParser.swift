@@ -36,7 +36,7 @@ struct MusinsaParser: ProductURLParsing {
     private let fallbackSizeParser = MusinsaFallbackSizeParser()
 
     func canParse(_ url: URL) -> Bool {
-        url.absoluteString.lowercased().contains("musinsa")
+        ProductURLSupport.isMusinsaURL(url)
     }
 
     func parse(from url: URL) async throws -> ParsedProductInfo {
@@ -67,6 +67,7 @@ struct MusinsaParser: ProductURLParsing {
                 isTopCategory: metadata.category.isMusinsaUpperBodyCategory
             )
         } catch {
+            if Task.isCancelled { throw CancellationError() }
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
             #endif
@@ -93,6 +94,7 @@ struct MusinsaParser: ProductURLParsing {
                 category: metadata.category,
                 categoryDepth2Name: metadata.categoryDepth2Name
             )
+            try Task.checkCancellation()
             sizes = ParsedSizeValidator.validSizes(
                 fallbackSizes,
                 category: metadata.category

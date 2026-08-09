@@ -388,6 +388,7 @@ private struct HomeClosetPreviewCard: View {
         do {
             try modelContext.save()
         } catch {
+            modelContext.rollback()
             saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
         }
     }

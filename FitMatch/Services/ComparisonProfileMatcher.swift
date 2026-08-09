@@ -14,7 +14,7 @@ enum GarmentLengthInferencePolicy {
         fallbackMeasurements: [GarmentMeasurements] = []
     ) -> ComparisonLengthType {
         let major = category.serviceGroup
-        guard major == .top || major == .outer || major == .bottom else {
+        guard major == .top || major == .outer || major == .bottom || major == .dress else {
             return .unknown
         }
 
@@ -182,6 +182,7 @@ struct ComparisonProfile: Equatable {
     let majorCategory: ClothingCategory
     let garmentFamily: ComparisonGarmentFamily
     let lengthType: ComparisonLengthType
+    let bodyLengthType: ComparisonLengthType
     let constructionType: ComparisonConstructionType
     let availableMeasurements: [MeasurementKind]
 
@@ -241,7 +242,9 @@ struct ComparisonProfileMatcher {
 
         guard incoming.garmentFamily != .unknown,
               !requiresLengthClassification(incoming.garmentFamily)
-                || incoming.lengthType != .unknown else {
+                || incoming.lengthType != .unknown,
+              incoming.majorCategory.serviceGroup != .outer
+                || incoming.bodyLengthType != .unknown else {
             return AutomaticComparisonMatchResult(
                 state: .requiresConfirmation,
                 incomingProfile: incoming,
@@ -249,22 +252,44 @@ struct ComparisonProfileMatcher {
             )
         }
 
-        let sameFamily = profiled.filter {
-            garmentFamiliesAreCompatible($0.1.garmentFamily, incoming.garmentFamily)
+        let familyCompatible = profiled.filter {
+            $0.1.majorCategory == incoming.majorCategory
+                && garmentFamiliesAreCompatible($0.1.garmentFamily, incoming.garmentFamily)
                 && gendersAreCompatible(
                     product.productTargetGender.taxonomyCode,
                     $0.0.resolvedGenderCode,
                     family: incoming.garmentFamily
                 )
         }
-        let compatible = sameFamily
+        let directlyCompatible = familyCompatible.filter {
+            categoryCompatibilityLevel(
+                incoming: incoming,
+                incomingDetail: productDetailCategory,
+                incomingIsPolo: isPoloProduct(product),
+                candidate: $0.1,
+                candidateDetail: $0.0.detailCategory,
+                candidateIsPolo: isPoloItem($0.0)
+            ) == .direct
+        }
+        let profileCompatible = directlyCompatible
             .filter {
                 lengthsAreCompatible($0.1, incoming)
                     && constructionsAreCompatible(incoming.constructionType, $0.1.constructionType)
                     && commonCoreMeasurementCount(incoming, $0.1)
                         >= minimumCommonMeasurementCount(for: incoming.garmentFamily)
             }
+        let confirmedCompatible = profileCompatible.filter {
+            hasConfirmedMeasurementComparison(
+                product: product,
+                detailCategory: productDetailCategory,
+                referenceItem: $0.0
+            )
+        }
+        let compatible = (confirmedCompatible.isEmpty ? profileCompatible : confirmedCompatible)
             .sorted { lhs, rhs in
+                let lhsSameDetail = lhs.0.detailCategory == productDetailCategory
+                let rhsSameDetail = rhs.0.detailCategory == productDetailCategory
+                if lhsSameDetail != rhsSameDetail { return lhsSameDetail }
                 if lhs.0.isRepresentative != rhs.0.isRepresentative {
                     return lhs.0.isRepresentative
                 }
@@ -280,8 +305,13 @@ struct ComparisonProfileMatcher {
             return AutomaticComparisonMatchResult(state: .compatible, incomingProfile: incoming, compatibleCandidates: compatible)
         }
 
-        let hasLengthConflict = requiresLengthClassification(incoming.garmentFamily) && sameFamily.contains {
-            $0.1.lengthType != .unknown && $0.1.lengthType != incoming.lengthType
+        let hasLengthConflict = familyCompatible.contains {
+            (requiresLengthClassification(incoming.garmentFamily)
+                && $0.1.lengthType != .unknown
+                && $0.1.lengthType != incoming.lengthType)
+                || (incoming.majorCategory.serviceGroup == .outer
+                    && $0.1.bodyLengthType != .unknown
+                    && $0.1.bodyLengthType != incoming.bodyLengthType)
         }
         return AutomaticComparisonMatchResult(
             state: hasLengthConflict ? .sameFamilyLengthConflict : .noCompatibleGarment,
@@ -299,9 +329,41 @@ struct ComparisonProfileMatcher {
         guard product.canonicalEligibility != false else { return [] }
         return userFits
             .filter { $0.canonicalEligibility != false }
-            .sorted { lhs, rhs in
+            .compactMap { item -> (UserFit, GarmentComparisonCompatibility)? in
+                let compatibility = comparisonCompatibility(
+                    product: product,
+                    productDetailCategory: productDetailCategory,
+                    item: item
+                )
+                return compatibility.level.isAllowed ? (item, compatibility) : nil
+            }
+            .sorted { lhsPair, rhsPair in
+                let lhs = lhsPair.0
+                let rhs = rhsPair.0
+                let lhsLevel = lhsPair.1.level
+                let rhsLevel = rhsPair.1.level
+                if lhsLevel != rhsLevel { return lhsLevel.rawValue > rhsLevel.rawValue }
                 let lhsProfile = profile(for: lhs)
                 let rhsProfile = profile(for: rhs)
+                let lhsSameDetail = lhs.detailCategory == productDetailCategory
+                let rhsSameDetail = rhs.detailCategory == productDetailCategory
+                if lhsSameDetail != rhsSameDetail { return lhsSameDetail }
+                let lhsSameMajor = lhsProfile.majorCategory == incoming.majorCategory
+                let rhsSameMajor = rhsProfile.majorCategory == incoming.majorCategory
+                if lhsSameMajor != rhsSameMajor { return lhsSameMajor }
+                let lhsCompatibleDetail = detailCategoriesAreCompatible(
+                    lhs.detailCategory,
+                    productDetailCategory,
+                    family: incoming.garmentFamily,
+                    major: incoming.majorCategory
+                )
+                let rhsCompatibleDetail = detailCategoriesAreCompatible(
+                    rhs.detailCategory,
+                    productDetailCategory,
+                    family: incoming.garmentFamily,
+                    major: incoming.majorCategory
+                )
+                if lhsCompatibleDetail != rhsCompatibleDetail { return lhsCompatibleDetail }
                 let lhsFamily = garmentFamiliesAreCompatible(
                     lhsProfile.garmentFamily, incoming.garmentFamily
                 )
@@ -312,6 +374,7 @@ struct ComparisonProfileMatcher {
                 if lhs.isRepresentative != rhs.isRepresentative { return lhs.isRepresentative }
                 return lhs.updatedAt > rhs.updatedAt
             }
+            .map(\.0)
     }
 
     func candidateDiagnostics(
@@ -325,9 +388,15 @@ struct ComparisonProfileMatcher {
 
         return userFits.map { item in
             let candidate = profile(for: item)
+            let compatibility = comparisonCompatibility(
+                product: product,
+                productDetailCategory: productDetailCategory,
+                item: item
+            )
             var reasons: [String] = []
             if product.canonicalEligibility == false { reasons.append("incoming_ineligible") }
             if item.canonicalEligibility == false { reasons.append("candidate_ineligible") }
+            if candidate.majorCategory != incoming.majorCategory { reasons.append("major_category_incompatible") }
             if !gendersAreCompatible(
                 incomingGender,
                 item.resolvedGenderCode,
@@ -335,10 +404,18 @@ struct ComparisonProfileMatcher {
             ) { reasons.append("gender_incompatible") }
             if incoming.garmentFamily == .unknown { reasons.append("incoming_family_unknown") }
             if !garmentFamiliesAreCompatible(candidate.garmentFamily, incoming.garmentFamily) { reasons.append("family_incompatible") }
+            if !detailCategoriesAreCompatible(
+                item.detailCategory,
+                productDetailCategory,
+                family: incoming.garmentFamily,
+                major: incoming.majorCategory
+            ) { reasons.append("detail_category_incompatible") }
             if !lengthsAreCompatible(candidate, incoming) { reasons.append("length_incompatible") }
             if !constructionsAreCompatible(incoming.constructionType, candidate.constructionType) { reasons.append("construction_incompatible") }
             let commonCount = commonCoreMeasurementCount(incoming, candidate)
             if commonCount < minimum { reasons.append("common_measurements_insufficient") }
+            if compatibility.level == .blocked { reasons.append("comparison_blocked") }
+            if compatibility.level == .extended { reasons.append("extended_comparison_only") }
 
             return CandidateDiagnostic(
                 itemName: item.productName,
@@ -361,26 +438,16 @@ struct ComparisonProfileMatcher {
         productDetailCategory: ClosetDetailCategory,
         selectedItem: UserFit
     ) -> (excludedKinds: [MeasurementKind], note: String?) {
-        let incoming = profile(for: product, detailCategory: productDetailCategory)
-        let selected = profile(for: selectedItem)
-        guard incoming.lengthType != .unknown,
-              selected.lengthType != .unknown,
-              incoming.lengthType != selected.lengthType else {
-            return ([], nil)
+        let compatibility = comparisonCompatibility(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            item: selectedItem
+        )
+        if compatibility.level == .extended {
+            return ([], "유사한 다른 종류의 옷이라 공통 실측 중심으로 확장 비교했어요.")
         }
-
-        if incoming.majorCategory == .bottom {
-            return ([.totalLength], "바지 길이 형태가 달라 총장은 비교에서 제외했어요.")
-        }
-        if incoming.majorCategory == .top || incoming.majorCategory == .outer {
-            if hasDirectSourceComparison(
-                kind: .sleeveLength,
-                product: product,
-                selectedItem: selectedItem
-            ) {
-                return ([], nil)
-            }
-            return ([.sleeveLength], "소매 형태가 달라 소매 길이는 비교에서 제외했어요.")
+        if compatibility.level == .blocked {
+            return ([], compatibility.reason)
         }
         return ([], nil)
     }
@@ -400,21 +467,77 @@ struct ComparisonProfileMatcher {
     }
 
     func candidateNote(product: Product, productDetailCategory: ClosetDetailCategory, item: UserFit) -> String? {
+        comparisonCompatibility(
+            product: product,
+            productDetailCategory: productDetailCategory,
+            item: item
+        ).reason
+    }
+
+    func comparisonCompatibility(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        item: UserFit
+    ) -> GarmentComparisonCompatibility {
+        guard product.canonicalEligibility != false,
+              item.canonicalEligibility != false else {
+            return .blocked("분류 검증이 완료되지 않아 비교할 수 없어요.")
+        }
+
         let incoming = profile(for: product, detailCategory: productDetailCategory)
         let candidate = profile(for: item)
-        guard garmentFamiliesAreCompatible(incoming.garmentFamily, candidate.garmentFamily),
-              incoming.garmentFamily != .unknown else {
-            return "다른 종류 · 공통 실측만 참고"
+        guard incoming.majorCategory == candidate.majorCategory else {
+            return .blocked("착용 부위가 달라 비교할 수 없어요.")
         }
-        if incoming.lengthType != .unknown, candidate.lengthType != .unknown, incoming.lengthType != candidate.lengthType {
-            return "길이 형태 다름 · 일부 항목 제외"
+        guard incoming.garmentFamily != .unknown,
+              candidate.garmentFamily != .unknown else {
+            return .blocked("옷 종류를 확인할 수 없어 비교할 수 없어요.")
         }
-        if incoming.constructionType != .unknown,
-           candidate.constructionType != .unknown,
-           incoming.constructionType != candidate.constructionType {
-            return "봉제 구조 다름 · 호환 항목만 참고"
+        guard gendersAreCompatible(
+            product.productTargetGender.taxonomyCode,
+            item.resolvedGenderCode,
+            family: incoming.garmentFamily
+        ) else {
+            return .blocked("착용 대상이 달라 비교할 수 없어요.")
         }
-        return "같은 \(incoming.garmentFamily.displayName)"
+
+        var level = categoryCompatibilityLevel(
+            incoming: incoming,
+            incomingDetail: productDetailCategory,
+            incomingIsPolo: isPoloProduct(product),
+            candidate: candidate,
+            candidateDetail: item.detailCategory,
+            candidateIsPolo: isPoloItem(item)
+        )
+        guard level.isAllowed else {
+            return .blocked("옷의 용도와 구조가 달라 비교할 수 없어요.")
+        }
+        guard lengthsAreCompatible(candidate, incoming) else {
+            return .blocked("길이 형태가 달라 직접 비교할 수 없어요.")
+        }
+
+        let commonCount = commonCoreMeasurementCount(incoming, candidate)
+        guard commonCount >= minimumCommonMeasurementCount(for: incoming.garmentFamily) else {
+            return .blocked("공통 핵심 실측이 부족해 비교할 수 없어요.")
+        }
+
+        if !constructionsAreCompatible(incoming.constructionType, candidate.constructionType) {
+            level = .extended
+        }
+        switch level {
+        case .direct:
+            return GarmentComparisonCompatibility(
+                level: .direct,
+                reason: "유사 의류 직접 비교 · 실측 \(commonCount)개 호환"
+            )
+        case .extended:
+            return GarmentComparisonCompatibility(
+                level: .extended,
+                reason: "확장 비교 · 다른 구조 · 실측 \(commonCount)개 호환"
+            )
+        case .blocked:
+            return .blocked("비교할 수 없는 조합이에요.")
+        }
     }
 
     func garmentFamiliesAreCompatible(
@@ -422,15 +545,141 @@ struct ComparisonProfileMatcher {
         _ rhs: ComparisonGarmentFamily
     ) -> Bool {
         if lhs == rhs { return true }
-        // 데님과 치노·슬랙스·면바지는 원본 소재 분류는 다르지만,
-        // 모두 같은 길이의 하의 실측 항목으로 비교할 수 있다.
-        return Set([lhs, rhs]) == Set([.denim, .pants])
+        let pair = Set([lhs, rhs])
+        return pair == Set([.denim, .pants])
+            || pair == Set([.tshirt, .shirt])
+            || pair == Set([.sweatshirt, .hoodie])
+            || pair == Set([.outerwear, .hoodie])
+    }
+
+    private func categoryCompatibilityLevel(
+        incoming: ComparisonProfile,
+        incomingDetail: ClosetDetailCategory,
+        incomingIsPolo: Bool,
+        candidate: ComparisonProfile,
+        candidateDetail: ClosetDetailCategory,
+        candidateIsPolo: Bool
+    ) -> GarmentComparisonCompatibilityLevel {
+        guard incoming.majorCategory == candidate.majorCategory else { return .blocked }
+
+        let familyPair = Set([incoming.garmentFamily, candidate.garmentFamily])
+        if familyPair == Set([.denim, .pants]) { return .direct }
+        if familyPair == Set([.sweatshirt, .hoodie]) { return .direct }
+        if familyPair == Set([.tshirt, .shirt]) {
+            return incomingIsPolo || candidateIsPolo ? .direct : .blocked
+        }
+        if incoming.majorCategory.serviceGroup == .outer,
+           familyPair == Set([.outerwear, .hoodie]) {
+            return outerDetailsCanExpand(incomingDetail, candidateDetail) ? .extended : .blocked
+        }
+        guard incoming.garmentFamily == candidate.garmentFamily else { return .blocked }
+        if incomingDetail == candidateDetail { return .direct }
+        if detailCategoriesAreCompatible(
+            incomingDetail,
+            candidateDetail,
+            family: incoming.garmentFamily,
+            major: incoming.majorCategory
+        ) {
+            return .direct
+        }
+        if incoming.majorCategory.serviceGroup == .outer,
+           outerDetailsCanExpand(incomingDetail, candidateDetail) {
+            return .extended
+        }
+        return .blocked
+    }
+
+    private func outerDetailsCanExpand(
+        _ lhs: ClosetDetailCategory,
+        _ rhs: ClosetDetailCategory
+    ) -> Bool {
+        let casualLight: Set<ClosetDetailCategory> = [
+            .jumper, .jacket, .windbreaker, .anorak, .blouson, .fleece, .hoodie
+        ]
+        let tailoredLight: Set<ClosetDetailCategory> = [.jacket, .blazer, .blouson]
+        let padded: Set<ClosetDetailCategory> = [
+            .padding, .lightPadding, .shortPadding, .longPadding, .paddedVest
+        ]
+        let coat: Set<ClosetDetailCategory> = [.coat, .trenchCoat, .mouton]
+        return [casualLight, tailoredLight, padded, coat].contains {
+            $0.contains(lhs) && $0.contains(rhs)
+        }
+    }
+
+    private func isPoloProduct(_ product: Product) -> Bool {
+        let values: [String?] = [
+            product.name,
+            product.sourceCategoryPath,
+            product.baseCategoryFullPath,
+            product.resolvedNormalizedProductTypeCode
+        ]
+        let text = values.compactMap { $0 }.joined(separator: " ")
+        return isPoloText(text)
+    }
+
+    private func isPoloItem(_ item: UserFit) -> Bool {
+        let values: [String?] = [
+            item.productName,
+            item.sourceCategoryPath,
+            item.sourceProduct?.sourceCategoryPath,
+            item.sourceProduct?.resolvedNormalizedProductTypeCode
+        ]
+        let text = values.compactMap { $0 }.joined(separator: " ")
+        return isPoloText(text)
+    }
+
+    private func isPoloText(_ text: String) -> Bool {
+        let value = normalized(text)
+        if ["카라티", "카라 티", "폴로셔츠", "폴로 셔츠", "polo shirt", "polo_shirt"]
+            .contains(where: value.contains) {
+            return true
+        }
+        return value.contains("카라")
+            && ["티셔츠", "반팔티", "긴팔티", "tee"].contains(where: value.contains)
+    }
+
+    func detailCategoriesAreCompatible(
+        _ lhs: ClosetDetailCategory,
+        _ rhs: ClosetDetailCategory,
+        family: ComparisonGarmentFamily,
+        major: ClothingCategory
+    ) -> Bool {
+        if lhs == rhs { return true }
+        if lhs == .other || rhs == .other { return false }
+
+        switch major.serviceGroup {
+        case .top:
+            let sleeveDetails: Set<ClosetDetailCategory> = [
+                .sleeveless, .shortSleeve, .threeQuarterSleeve, .longSleeve
+            ]
+            // 셔츠·블라우스처럼 의류형 세부분류와 소매길이 세부분류가
+            // 서로 다른 축일 때는 이미 같은 family/length로 검증한다.
+            return !(sleeveDetails.contains(lhs) && sleeveDetails.contains(rhs))
+        case .bottom:
+            if Set([lhs, rhs]) == Set([.shortPants, .shorts]) { return true }
+            let longPantsDetails: Set<ClosetDetailCategory> = [
+                .longPants, .slacks, .denim, .trainingPants
+            ]
+            return (family == .pants || family == .denim)
+                && longPantsDetails.contains(lhs)
+                && longPantsDetails.contains(rhs)
+        case .outer, .underwear, .dress, .shoes, .accessory, .other:
+            return false
+        case .pants, .shirt, .knit:
+            return false
+        }
     }
 
     func lengthsAreCompatible(
         _ lhs: ComparisonProfile,
         _ rhs: ComparisonProfile
     ) -> Bool {
+        if lhs.majorCategory.serviceGroup == .outer || rhs.majorCategory.serviceGroup == .outer {
+            guard lhs.bodyLengthType != .unknown,
+                  lhs.bodyLengthType == rhs.bodyLengthType else {
+                return false
+            }
+        }
         guard requiresLengthClassification(lhs.garmentFamily)
                 || requiresLengthClassification(rhs.garmentFamily) else {
             return true
@@ -447,8 +696,10 @@ struct ComparisonProfileMatcher {
         case .knitCardigan, .tshirt, .shirt, .sweatshirt, .hoodie,
              .pants, .denim, .leggings, .outerwear, .leatherJacket:
             return true
-        case .skirt, .underwear, .dress, .shoes, .accessory, .unknown:
+        case .underwear, .shoes, .accessory, .unknown:
             return false
+        case .skirt, .dress:
+            return true
         }
     }
 
@@ -477,6 +728,7 @@ struct ComparisonProfileMatcher {
             detailCategory: detailCategory,
             major: major
         )
+        let productNameFamily = explicitProductFamilyKeywordMatch(product.name, major: major)
         let inferredLength = lengthType(
             productName: product.name,
             source: source,
@@ -487,7 +739,19 @@ struct ComparisonProfileMatcher {
             measurementRecords: product.sizes.flatMap(\.measurementRecords)
         )
         let inferredConstruction = constructionType(product.sizes.flatMap(\.measurementRecords))
-        let family = storedGarmentType(product.garmentTypeRawValue, fallback: inferredFamily)
+        let bodyLength = outerBodyLengthType(
+            productName: product.name,
+            source: source,
+            major: major,
+            gender: product.productTargetGender,
+            measurements: product.sizes.map(\.measurements)
+        )
+        let family = storedGarmentType(
+            product.garmentTypeRawValue,
+            fallback: inferredFamily,
+            productNameFamily: productNameFamily,
+            major: major
+        )
         let length = storedSleeveType(product.sleeveTypeRawValue, fallback: inferredLength)
         let construction = storedConstructionType(product.constructionTypeRawValue, fallback: inferredConstruction)
         storeResolvedAttributes(
@@ -500,6 +764,7 @@ struct ComparisonProfileMatcher {
             majorCategory: major,
             garmentFamily: family,
             lengthType: length,
+            bodyLengthType: bodyLength,
             constructionType: construction,
             availableMeasurements: availableMeasurements(product.sizes.map(\.measurements))
         )
@@ -532,6 +797,7 @@ struct ComparisonProfileMatcher {
             detailCategory: item.detailCategory,
             major: major
         )
+        let productNameFamily = explicitProductFamilyKeywordMatch(item.productName, major: major)
         let inferredLength = lengthType(
             productName: item.productName,
             source: source,
@@ -542,7 +808,19 @@ struct ComparisonProfileMatcher {
             measurementRecords: item.measurementRecords
         )
         let inferredConstruction = constructionType(item.measurementRecords)
-        let family = storedGarmentType(item.garmentTypeRawValue, fallback: inferredFamily)
+        let bodyLength = outerBodyLengthType(
+            productName: item.productName,
+            source: source,
+            major: major,
+            gender: item.gender,
+            measurements: [item.measurements]
+        )
+        let family = storedGarmentType(
+            item.garmentTypeRawValue,
+            fallback: inferredFamily,
+            productNameFamily: productNameFamily,
+            major: major
+        )
         let length = storedSleeveType(item.sleeveTypeRawValue, fallback: inferredLength)
         let construction = storedConstructionType(item.constructionTypeRawValue, fallback: inferredConstruction)
         storeResolvedAttributes(
@@ -555,6 +833,7 @@ struct ComparisonProfileMatcher {
             majorCategory: major,
             garmentFamily: family,
             lengthType: length,
+            bodyLengthType: bodyLength,
             constructionType: construction,
             availableMeasurements: availableMeasurements([item.measurements])
         )
@@ -562,12 +841,28 @@ struct ComparisonProfileMatcher {
 
     private func storedGarmentType(
         _ rawValue: String?,
-        fallback: ComparisonGarmentFamily
+        fallback: ComparisonGarmentFamily,
+        productNameFamily: ComparisonGarmentFamily?,
+        major: ClothingCategory
     ) -> ComparisonGarmentFamily {
         guard let rawValue,
               let stored = ComparisonGarmentFamily(rawValue: rawValue),
               stored != .unknown else {
             return fallback
+        }
+        if stored == .pants, fallback == .denim {
+            return fallback
+        }
+        let outerFamilies: [ComparisonGarmentFamily] = [.outerwear, .leatherJacket, .knitCardigan]
+        if major.serviceGroup == .outer,
+           outerFamilies.contains(fallback),
+           !outerFamilies.contains(stored) {
+            return fallback
+        }
+        if major.serviceGroup == .top,
+           let productNameFamily,
+           [.knitCardigan, .hoodie, .sweatshirt].contains(productNameFamily) {
+            return productNameFamily
         }
         return stored
     }
@@ -649,10 +944,41 @@ struct ComparisonProfileMatcher {
         detailCategory: ClosetDetailCategory,
         major: ClothingCategory
     ) -> ComparisonGarmentFamily {
-        normalizedProductTypeCode.flatMap(family(forNormalizedProductTypeCode:))
+        explicitProductFamilyKeywordMatch(productName, major: major)
+            ?? normalizedProductTypeCode.flatMap(family(forNormalizedProductTypeCode:))
             ?? familyKeywordMatch(source)
             ?? familyKeywordMatch(productName)
             ?? family(for: detailCategory, major: major)
+    }
+
+    private func explicitProductFamilyKeywordMatch(
+        _ productName: String,
+        major: ClothingCategory
+    ) -> ComparisonGarmentFamily? {
+        let value = normalized(productName)
+        switch major.serviceGroup {
+        case .top:
+            if [
+                "후디", "후드 티", "후드티", "hoodie",
+                "풀집파카", "풀집 파카", "스웨트파카", "스웨트 파카",
+                "full-zip parka", "full zip parka"
+            ].contains(where: value.contains) { return .hoodie }
+            if ["스웨트셔츠", "스웨트 셔츠", "스웨트", "맨투맨", "sweatshirt"].contains(where: value.contains) { return .sweatshirt }
+            if ["니트", "스웨터", "knit", "sweater"].contains(where: value.contains) { return .knitCardigan }
+            return nil
+        case .outer:
+            if ["가디건", "카디건", "cardigan"].contains(where: value.contains) { return .knitCardigan }
+            if ["레더 재킷", "레더 자켓", "가죽 재킷", "가죽 자켓", "라이더스", "leather jacket", "riders jacket"].contains(where: value.contains) {
+                return .leatherJacket
+            }
+            return .outerwear
+        case .bottom:
+            if ["레깅스", "타이즈", "타이츠", "leggings"].contains(where: value.contains) { return .leggings }
+            if ["데님", "청바지", "denim", "jeans"].contains(where: value.contains) { return .denim }
+            return nil
+        default:
+            return nil
+        }
     }
 
     private func family(forNormalizedProductTypeCode code: String) -> ComparisonGarmentFamily? {
@@ -669,11 +995,11 @@ struct ComparisonProfileMatcher {
         family: ComparisonGarmentFamily
     ) -> Bool {
         if incoming == "unknown" || candidate == "unknown" { return true }
-        if incoming == "unisex" || candidate == "unisex" { return true }
         let kids = Set(["boys", "girls", "kids_unisex"])
         if kids.contains(incoming) || kids.contains(candidate) {
             return kids.contains(incoming) && kids.contains(candidate)
         }
+        if incoming == "unisex" || candidate == "unisex" { return true }
         let adults = Set(["male", "female"])
         let adultCrossGenderFamilies: Set<ComparisonGarmentFamily> = [
             .knitCardigan, .tshirt, .shirt, .sweatshirt, .hoodie,
@@ -746,6 +1072,10 @@ struct ComparisonProfileMatcher {
         measurements: [GarmentMeasurements],
         measurementRecords: [GarmentMeasurementRecord]
     ) -> ComparisonLengthType {
+        if detailCategory == .skirt {
+            if let value = skirtLength(productName) { return value }
+            if let value = skirtLength(source) { return value }
+        }
         if let value = keywordLength(productName, major: major) { return value }
         if let value = keywordLength(source, major: major) { return value }
         if let value = detailLength(detailCategory, major: major) { return value }
@@ -757,10 +1087,92 @@ struct ComparisonProfileMatcher {
         )
     }
 
+    private func skirtLength(_ text: String) -> ComparisonLengthType? {
+        let value = normalized(text)
+        if ["미니 스커트", "미니스커트", "미니 스코츠", "미니스코츠", "스코츠", "skorts", "mini skirt"].contains(where: value.contains) { return .short }
+        if ["미디 스커트", "미디스커트", "midi skirt"].contains(where: value.contains) { return .threeQuarter }
+        if ["롱 스커트", "롱스커트", "맥시 스커트", "맥시스커트", "long skirt", "maxi skirt"].contains(where: value.contains) { return .long }
+        return nil
+    }
+
+    private func outerBodyLengthType(
+        productName: String,
+        source: String,
+        major: ClothingCategory,
+        gender: UserGender,
+        measurements: [GarmentMeasurements]
+    ) -> ComparisonLengthType {
+        guard major.serviceGroup == .outer else { return .unknown }
+        if let value = outerBodyLength(productName) { return value }
+        if let value = outerBodyLength(source) { return value }
+        let values = measurements
+            .map(\.totalLength)
+            .filter { $0.isFinite && $0 > 0 }
+            .sorted()
+        guard !values.isEmpty else { return .unknown }
+        let middle = values.count / 2
+        let value = values.count.isMultiple(of: 2)
+            ? (values[middle - 1] + values[middle]) / 2
+            : values[middle]
+        let boundaries: (cropped: Double, short: Double, threeQuarter: Double)
+        switch gender {
+        case .men:
+            boundaries = (58, 78, 100)
+        case .women:
+            boundaries = (52, 72, 95)
+        case .kids, .baby:
+            boundaries = (38, 52, 70)
+        case .unisex, .unknown:
+            boundaries = (55, 75, 98)
+        }
+        if value <= boundaries.cropped { return .cropped }
+        if value <= boundaries.short { return .short }
+        if value <= boundaries.threeQuarter { return .threeQuarter }
+        return .long
+    }
+
+    private func outerBodyLength(_ text: String) -> ComparisonLengthType? {
+        let value = normalized(text)
+        let padded = " \(value) "
+        if ["크롭", "crop jacket", "cropped jacket", "crop coat", "cropped coat",
+            "crop cardigan", "cropped cardigan"].contains(where: value.contains) {
+            return .cropped
+        }
+        if ["숏 재킷", "숏재킷", "숏 자켓", "숏자켓", "쇼트 재킷", "쇼트재킷",
+            "쇼트 자켓", "쇼트자켓", "숏 코트", "숏코트", "쇼트 코트", "쇼트코트",
+            "숏 패딩", "숏패딩", "쇼트 패딩", "쇼트패딩", "short jacket", "short coat",
+            "short parka", "short padding"].contains(where: value.contains) {
+            return .short
+        }
+        let hasShortSleeve = ["숏 슬리브", "숏슬리브", "쇼트 슬리브", "쇼트슬리브",
+                              "short sleeve"].contains(where: value.contains)
+        if !hasShortSleeve
+            && (value.contains("숏") || value.contains("쇼트") || padded.contains(" short ")) {
+            return .short
+        }
+        if ["하프 재킷", "하프재킷", "하프 자켓", "하프자켓", "하프 코트", "하프코트",
+            "미디 코트", "미디코트", "half jacket", "half coat", "midi coat"].contains(where: value.contains) {
+            return .threeQuarter
+        }
+        let hasNonLengthHalf = ["하프넥", "하프 넥", "하프집업", "하프 집업", "하프 슬리브", "하프슬리브",
+                                "half-neck", "half neck", "half-zip", "half zip", "half sleeve"].contains(where: value.contains)
+        if !hasNonLengthHalf && (value.contains("하프") || padded.contains(" half ")) {
+            return .threeQuarter
+        }
+        let hasLongSleeve = ["롱 슬리브", "롱슬리브", "long sleeve"].contains(where: value.contains)
+        if ["롱 코트", "롱코트", "롱 재킷", "롱재킷", "롱 자켓", "롱자켓",
+            "롱 패딩", "롱패딩", "long coat", "long jacket", "long parka", "맥시", "maxi"].contains(where: value.contains)
+            || (!hasLongSleeve && (value.contains("롱") || padded.contains(" long "))) {
+            return .long
+        }
+        return nil
+    }
+
     private func keywordLength(_ text: String, major: ClothingCategory) -> ComparisonLengthType? {
         let value = normalized(text)
         if major == .bottom {
-            if ["반바지", "쇼츠", "숏 팬츠", "쇼트 팬츠", "버뮤다", "shorts"].contains(where: value.contains) { return .short }
+            if ["반바지", "쇼츠", "숏 팬츠", "쇼트 팬츠", "버뮤다", "큐롯", "culotte",
+                "하프 타이즈", "하프타이즈", "하프 타이츠", "하프타이츠", "shorts"].contains(where: value.contains) { return .short }
             if ["7부", "three quarter", "3/4"].contains(where: value.contains) { return .threeQuarter }
             if ["크롭", "cropped"].contains(where: value.contains) { return .cropped }
             if ["9부", "nine tenths", "ankle"].contains(where: value.contains) { return .nineTenths }
@@ -768,9 +1180,16 @@ struct ComparisonProfileMatcher {
             return nil
         }
         if ["민소매", "나시", "슬리브리스", "sleeveless"].contains(where: value.contains) { return .sleeveless }
-        if ["반팔", "반소매", "숏슬리브", "short sleeve", "half sleeve"].contains(where: value.contains) { return .short }
+        let hasShort = [
+            "반팔", "반소매", "숏슬리브", "short sleeve", "half sleeve", "cap sleeve",
+            "s/s tee", "s/s t-shirt", "s/s tshirt"
+        ].contains(where: value.contains)
+        let hasLong = [
+            "긴팔", "긴소매", "롱슬리브", "long sleeve",
+            "l/s tee", "l/s t-shirt", "l/s tshirt"
+        ].contains(where: value.contains)
+        if hasShort != hasLong { return hasShort ? .short : .long }
         if ["7부", "three quarter", "3/4"].contains(where: value.contains) { return .threeQuarter }
-        if ["긴팔", "긴소매", "롱슬리브", "long sleeve"].contains(where: value.contains) { return .long }
         return nil
     }
 
@@ -799,6 +1218,21 @@ struct ComparisonProfileMatcher {
         default: core = lhs.availableMeasurements
         }
         return core.filter { lhs.availableMeasurements.contains($0) && rhs.availableMeasurements.contains($0) }.count
+    }
+
+    private func hasConfirmedMeasurementComparison(
+        product: Product,
+        detailCategory: ClosetDetailCategory,
+        referenceItem: UserFit
+    ) -> Bool {
+        product.sizes.contains { size in
+            MeasurementComparisonEngine().compare(
+                productSize: size,
+                referenceItem: referenceItem,
+                productCategory: product.category,
+                productDetailCategory: detailCategory
+            ).status == .confirmed
+        }
     }
 
     private func hasDirectSourceComparison(

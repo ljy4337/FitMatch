@@ -40,7 +40,10 @@ enum SampleDataService {
         do {
             try modelContext.save()
         } catch {
+            modelContext.rollback()
+            #if DEBUG
             print("[SampleDataService] legacy sample cleanup failed: \(error.localizedDescription)")
+            #endif
         }
     }
 }

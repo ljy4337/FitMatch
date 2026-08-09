@@ -447,19 +447,27 @@ private struct IOS17ScrollViewObserver: UIViewRepresentable {
             observations = [
                 candidate.observe(\.contentOffset, options: [.initial, .new]) {
                     [weak self] _, _ in
-                    self?.scrollViewDidChange()
+                    MainActor.assumeIsolated {
+                        self?.scrollViewDidChange()
+                    }
                 },
                 candidate.observe(\.contentSize, options: [.new]) {
                     [weak self] _, _ in
-                    self?.emitSnapshot()
+                    MainActor.assumeIsolated {
+                        self?.emitSnapshot()
+                    }
                 },
                 candidate.observe(\.bounds, options: [.new]) {
                     [weak self] _, _ in
-                    self?.emitSnapshot()
+                    MainActor.assumeIsolated {
+                        self?.emitSnapshot()
+                    }
                 },
                 candidate.observe(\.adjustedContentInset, options: [.new]) {
                     [weak self] _, _ in
-                    self?.emitSnapshot()
+                    MainActor.assumeIsolated {
+                        self?.emitSnapshot()
+                    }
                 }
             ]
             updatePhase()

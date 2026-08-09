@@ -53,8 +53,10 @@ struct ShoppingProductFormView: View {
                         modelContext.insert(item)
                         do {
                             try modelContext.save()
+                            return true
                         } catch {
-                            viewModel.errorMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+                            modelContext.rollback()
+                            return false
                         }
                     }
                 }
@@ -260,6 +262,7 @@ struct ShoppingProductFormView: View {
                 try saveUniqueHistory(history)
                 presentActiveSheet(.result(history))
             } catch {
+                modelContext.rollback()
                 viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
             }
         }
@@ -327,6 +330,7 @@ struct ShoppingProductFormView: View {
                 try saveUniqueHistory(history)
                 presentActiveSheet(.result(history))
             } catch {
+                modelContext.rollback()
                 viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
             }
         }
@@ -341,7 +345,9 @@ struct ShoppingProductFormView: View {
     }
 
     private func presentActiveSheet(_ sheet: ShoppingActiveSheet) {
+        #if DEBUG
         print("[ShoppingProductFormView] activeSheet -> \(sheet.logName)")
+        #endif
         activeSheet = nil
         DispatchQueue.main.async {
             activeSheet = sheet
@@ -349,7 +355,9 @@ struct ShoppingProductFormView: View {
     }
 
     private func dismissActiveSheet() {
+        #if DEBUG
         print("[ShoppingProductFormView] activeSheet -> nil")
+        #endif
         activeSheet = nil
     }
 

@@ -1,7 +1,7 @@
 import Foundation
 
 #if DEBUG
-enum FitMatchDebugLogger {
+nonisolated enum FitMatchDebugLogger {
     static func event(
         screen: String,
         action: String,

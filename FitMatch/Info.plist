@@ -22,7 +22,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>io.github.ljy4337.FitMatch</string>
+			<string>com.ljy4337.fitmatch</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>fitmatch</string>
@@ -31,6 +31,10 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FitMatchPrivacyPolicyURL</key>
+	<string></string>
+	<key>FitMatchSupportURL</key>
+	<string></string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>musinsa</string>

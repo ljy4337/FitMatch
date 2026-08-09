@@ -29,13 +29,28 @@ struct SharedURLStore {
         return urlString
     }
 
+    @discardableResult
+    func clearPendingProductURL(ifMatching expectedURLString: String? = nil) -> Bool {
+        guard let currentURLString = pendingProductURL() else {
+            return false
+        }
+
+        if let expectedURLString,
+           currentURLString != expectedURLString {
+            return false
+        }
+
+        defaults.removeObject(forKey: Key.pendingProductURL)
+        defaults.removeObject(forKey: Key.pendingProductURLCreatedAt)
+        return true
+    }
+
     func consumePendingProductURL() -> String? {
         guard let urlString = pendingProductURL() else {
             return nil
         }
 
-        defaults.removeObject(forKey: Key.pendingProductURL)
-        defaults.removeObject(forKey: Key.pendingProductURLCreatedAt)
+        clearPendingProductURL(ifMatching: urlString)
         return urlString
     }
 }

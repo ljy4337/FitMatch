@@ -307,17 +307,29 @@ enum ProductURLSupport {
             return nil
         }
 
-        let value = url.absoluteString.lowercased()
-        let host = url.host?.lowercased() ?? ""
-
-        if value.contains("musinsa") { return "무신사" }
-        if host.contains("uniqlo") { return "유니클로" }
+        if isMusinsaURL(url) { return "무신사" }
+        if isUniqloURL(url) { return "유니클로" }
 
         return nil
     }
 
     static func isSupportedProductURL(_ urlString: String) -> Bool {
         supportedProviderName(for: urlString) != nil
+    }
+
+    static func isMusinsaURL(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        return matches(host: host, domain: "musinsa.com")
+            || host == "musinsa.onelink.me"
+    }
+
+    static func isUniqloURL(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        return matches(host: host, domain: "uniqlo.com")
+    }
+
+    private static func matches(host: String, domain: String) -> Bool {
+        host == domain || host.hasSuffix(".\(domain)")
     }
 
     static func extractedURLString(from text: String) -> String? {
@@ -337,16 +349,13 @@ enum ProductURLSupport {
 struct ProductURLParserService {
     private let musinsaParser: ProductURLParsing
     private let uniqloParser: ProductURLParsing
-    private let genericParser: ProductURLParsing
 
     init(
         musinsaParser: ProductURLParsing? = nil,
-        uniqloParser: ProductURLParsing? = nil,
-        genericParser: ProductURLParsing? = nil
+        uniqloParser: ProductURLParsing? = nil
     ) {
         self.musinsaParser = musinsaParser ?? MusinsaParser()
         self.uniqloParser = uniqloParser ?? UniqloParser()
-        self.genericParser = genericParser ?? GenericProductParser()
     }
 
     func parse(
@@ -358,7 +367,13 @@ struct ProductURLParserService {
         }
         onProgress(.loadingProductInfo)
 
-        let isMusinsaURL = url.absoluteString.lowercased().contains("musinsa")
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-fitmatchOnboardingFixtures") {
+            return Self.onboardingFixture(for: url)
+        }
+        #endif
+
+        let isMusinsaURL = ProductURLSupport.isMusinsaURL(url)
         let isUniqloURL = uniqloParser.canParse(url)
         let detectedProvider = isMusinsaURL ? "musinsa" : (isUniqloURL ? "uniqlo" : "generic")
         #if DEBUG
@@ -376,17 +391,11 @@ struct ProductURLParserService {
                 #endif
                 throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
             } catch {
+                if Task.isCancelled { throw CancellationError() }
                 #if DEBUG
-                FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "대체 파싱", details: "오류=\(error.localizedDescription)")
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
                 #endif
-                do {
-                    return (try await genericParser.parse(from: url)).normalizedSizes()
-                } catch {
-                    #if DEBUG
-                    FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 대체 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
-                    #endif
-                    throw ProductURLParserError.automaticParsingUnavailable
-                }
+                throw ProductURLParserError.automaticParsingUnavailable
             }
         }
 
@@ -401,21 +410,15 @@ struct ProductURLParserService {
                 #endif
                 throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
             } catch {
+                if Task.isCancelled { throw CancellationError() }
                 #if DEBUG
-                FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "대체 파싱", details: "오류=\(error.localizedDescription)")
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
                 #endif
-                do {
-                    return (try await genericParser.parse(from: url)).normalizedSizes()
-                } catch {
-                    #if DEBUG
-                    FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 대체 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
-                    #endif
-                    throw ProductURLParserError.automaticParsingUnavailable
-                }
+                throw ProductURLParserError.automaticParsingUnavailable
             }
         }
 
-        return logParsedProductInfo((try await genericParser.parse(from: url)).normalizedSizes())
+        throw ProductURLParserError.unsupportedURL
     }
 
     private func logParsedProductInfo(_ productInfo: ParsedProductInfo) -> ParsedProductInfo {
@@ -436,6 +439,69 @@ struct ProductURLParserService {
     private func extractedURLString(from text: String) -> String? {
         ProductURLSupport.extractedURLString(from: text)
     }
+
+    #if DEBUG
+    private static func onboardingFixture(for url: URL) -> ParsedProductInfo {
+        let isMusinsa = ProductURLSupport.isMusinsaURL(url)
+        let provider = isMusinsa ? "musinsa" : "uniqlo_kr"
+        let measurements = GarmentMeasurements(
+            shoulder: 48,
+            chest: 54,
+            totalLength: 70,
+            sleeveLength: 24
+        )
+        let records: [(Double, MeasurementCode, MeasurementDisplayKind, String)] = [
+            (48, .shoulderWidthSeamToSeam, .shoulder, "어깨너비"),
+            (54, .chestWidthPitToPit, .chest, "가슴단면"),
+            (70, .bodyLengthBackNeckToHem, .totalLength, "총장"),
+            (24, .sleeveShoulderSeamToCuff, .sleeveLength, "소매길이")
+        ]
+        let size = ParsedProductSize(
+            name: "M",
+            measurements: measurements,
+            measurementRecords: records.map { value, code, kind, label in
+                ParsedMeasurement(
+                    value: value,
+                    measurementCode: code,
+                    displayKind: kind,
+                    methodSource: provider,
+                    methodProfile: isMusinsa ? "musinsa_type_6" : "uniqlo_official_top",
+                    inputSource: .importedSizeChart,
+                    rawCode: code.rawValue,
+                    rawLabel: label,
+                    rawValueText: String(value),
+                    evidenceLevel: .officialText,
+                    semanticStatus: .mapped
+                )
+            }
+        )
+        let sourcePath = isMusinsa ? "상의 > 반소매 티셔츠" : "상의 > 티셔츠 > 반팔"
+        return ParsedProductInfo(
+            sourceURL: url,
+            sourceType: isMusinsa ? .marketplace : .officialStore,
+            sourceName: isMusinsa ? "무신사" : "유니클로 공식몰",
+            brandName: isMusinsa ? "온보딩 무신사 브랜드" : "유니클로",
+            productName: isMusinsa ? "온보딩 무신사 기준옷" : "온보딩 유니클로 기준옷",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizes: [size],
+            productID: isMusinsa ? "onboarding-musinsa" : "E000001",
+            canonicalURLString: url.absoluteString,
+            sourceCategoryPath: sourcePath,
+            sourceCategoryDepth1: "상의",
+            sourceCategoryDepth2: isMusinsa ? "반소매 티셔츠" : "티셔츠",
+            sourceCategoryDepth3: isMusinsa ? nil : "반팔",
+            productTargetGender: .unisex,
+            productMetadata: ProductMetadata(
+                sourceCategoryPath: sourcePath,
+                sourceCategoryDepth1: "상의",
+                sourceCategoryDepth2: isMusinsa ? "반소매 티셔츠" : "티셔츠",
+                sourceCategoryDepth3: isMusinsa ? nil : "반팔",
+                genderCodes: [UserGender.unisex.rawValue]
+            )
+        )
+    }
+    #endif
 }
 
 extension ParsedProductInfo {

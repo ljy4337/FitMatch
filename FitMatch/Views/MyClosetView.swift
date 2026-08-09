@@ -65,8 +65,10 @@ struct MyClosetView: View {
                         modelContext.insert(item)
                         do {
                             try modelContext.save()
+                            return true
                         } catch {
-                            saveErrorMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+                            modelContext.rollback()
+                            return false
                         }
                     }
                 }
@@ -345,7 +347,9 @@ struct MyClosetView: View {
     }
 
     private func presentActiveSheet(_ sheet: ClosetActiveSheet) {
+        #if DEBUG
         print("[MyClosetView] activeSheet -> \(sheet.logName)")
+        #endif
         activeSheet = nil
         DispatchQueue.main.async {
             activeSheet = sheet
@@ -353,7 +357,9 @@ struct MyClosetView: View {
     }
 
     private func dismissActiveSheet() {
+        #if DEBUG
         print("[MyClosetView] activeSheet -> nil")
+        #endif
         activeSheet = nil
     }
 
@@ -378,6 +384,8 @@ struct MyClosetView: View {
                 try modelContext.save()
                 rebuildDisplayedItems()
             } catch {
+                modelContext.rollback()
+                rebuildDisplayedItems()
                 saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
             }
             return
@@ -449,6 +457,8 @@ struct MyClosetView: View {
         do {
             try modelContext.save()
         } catch {
+            modelContext.rollback()
+            rebuildDisplayedItems()
             saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
             clearPendingBasisChange()
             return
@@ -471,6 +481,8 @@ struct MyClosetView: View {
             try modelContext.save()
             rebuildDisplayedItems()
         } catch {
+            modelContext.rollback()
+            rebuildDisplayedItems()
             saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
         }
     }

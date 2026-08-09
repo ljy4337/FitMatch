@@ -29,7 +29,11 @@ struct CanonicalComparisonProfileResolver {
         product.canonicalSourceIdentity = profile.sourceIdentity
         product.canonicalEligibility = profile.eligibility
         if let family = profile.appGarmentFamily { product.garmentType = family }
-        if let length = profile.appLengthType { product.sleeveType = length }
+        // A provider-wide canonical path is a fallback. Keep a more specific
+        // product classification (name/detail/measurements) when it is already set.
+        if product.sleeveType == .unknown, let length = profile.appLengthType {
+            product.sleeveType = length
+        }
         if let construction = profile.appConstructionType, construction != .unknown {
             product.constructionType = construction
         }
@@ -43,7 +47,9 @@ struct CanonicalComparisonProfileResolver {
         item.canonicalSourceIdentity = profile.sourceIdentity
         item.canonicalEligibility = profile.eligibility
         if let family = profile.appGarmentFamily { item.garmentType = family }
-        if let length = profile.appLengthType { item.sleeveType = length }
+        if item.sleeveType == .unknown, let length = profile.appLengthType {
+            item.sleeveType = length
+        }
         if let construction = profile.appConstructionType, construction != .unknown {
             item.constructionType = construction
         }

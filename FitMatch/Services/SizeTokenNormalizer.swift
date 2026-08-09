@@ -1,6 +1,6 @@
 import Foundation
 
-enum SizeTokenNormalizer {
+nonisolated enum SizeTokenNormalizer {
     private static let letterSizes = Set([
         "XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL",
         "2XL", "3XL", "4XL", "5XL", "WM", "FREE", "ONE"

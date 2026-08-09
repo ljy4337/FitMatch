@@ -67,3 +67,21 @@ enum ComparisonConstructionType: String, Codable, Equatable {
     case raglan
     case unknown
 }
+
+enum GarmentComparisonCompatibilityLevel: Int, Codable, Equatable {
+    case blocked = 0
+    case extended = 1
+    case direct = 2
+
+    var isAllowed: Bool { self != .blocked }
+    var reliabilityStarPenalty: Int { self == .extended ? 1 : 0 }
+}
+
+struct GarmentComparisonCompatibility: Equatable {
+    let level: GarmentComparisonCompatibilityLevel
+    let reason: String
+
+    static func blocked(_ reason: String) -> GarmentComparisonCompatibility {
+        GarmentComparisonCompatibility(level: .blocked, reason: reason)
+    }
+}

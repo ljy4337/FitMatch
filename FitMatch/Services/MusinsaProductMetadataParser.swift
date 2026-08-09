@@ -113,6 +113,25 @@ struct MusinsaProductMetadataParser {
     func parse(productID: String, sourceURL: URL) async -> MusinsaProductMetadata {
         do {
             let response = try await fetchProductDetail(productID: productID)
+            return metadata(from: response, productID: productID, sourceURL: sourceURL)
+        } catch {
+            #if DEBUG
+            FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 상품 정보 조회", state: "실패", details: "오류=\(error.localizedDescription), HTML대체파싱=시작")
+            #endif
+            return await parseHTMLFallback(productID: productID, sourceURL: sourceURL)
+        }
+    }
+
+    func parseStoredProductDetail(data: Data, productID: String, sourceURL: URL) throws -> MusinsaProductMetadata {
+        metadata(from: try JSONDecoder().decode(MusinsaProductDetailResponse.self, from: data),
+                 productID: productID, sourceURL: sourceURL)
+    }
+
+    private func metadata(
+        from response: MusinsaProductDetailResponse,
+        productID: String,
+        sourceURL: URL
+    ) -> MusinsaProductMetadata {
             let sourcePath = Self.categoryPath(from: response.data)
             let depth1 = sourcePath.depth1
             let depth2 = sourcePath.depth2
@@ -152,12 +171,6 @@ struct MusinsaProductMetadataParser {
                 goodsContents: response.data.goodsContents ?? "",
                 productMetadata: metadata
             )
-        } catch {
-            #if DEBUG
-            FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 상품 정보 조회", state: "실패", details: "오류=\(error.localizedDescription), HTML대체파싱=시작")
-            #endif
-            return await parseHTMLFallback(productID: productID, sourceURL: sourceURL)
-        }
     }
 
     private func fetchProductDetail(productID: String) async throws -> MusinsaProductDetailResponse {

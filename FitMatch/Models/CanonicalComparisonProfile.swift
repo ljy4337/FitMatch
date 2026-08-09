@@ -55,11 +55,11 @@ struct CanonicalComparisonProfile: Codable, Equatable {
         guard let value = candidates.first(where: { $0 != "unknown" && $0 != "not_applicable" }) else { return nil }
         switch value {
         case "sleeveless": return .sleeveless
-        case "short_sleeve", "short_pants", "short_leggings", "short": return .short
-        case "three_quarter_sleeve", "three_quarter_pants", "three_quarter_leggings", "three_quarter": return .threeQuarter
-        case "cropped", "cropped_pants": return .cropped
-        case "nine_tenths", "nine_tenths_pants", "nine_tenths_leggings": return .nineTenths
-        case "long_sleeve", "long_pants", "long_leggings", "long": return .long
+        case "short_sleeve", "short_pants", "short_leggings", "short_length", "short": return .short
+        case "three_quarter_sleeve", "three_quarter_pants", "three_quarter_leggings", "three_quarter_length", "three_quarter": return .threeQuarter
+        case "cropped", "cropped_pants", "cropped_length": return .cropped
+        case "nine_tenths", "nine_tenths_pants", "nine_tenths_leggings", "ankle_length": return .nineTenths
+        case "long_sleeve", "long_pants", "long_leggings", "long_length", "long": return .long
         default: return nil
         }
     }

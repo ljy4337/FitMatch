@@ -51,10 +51,19 @@ enum UserGender: String, CaseIterable, Identifiable, Codable, Hashable {
         if normalizedCodes.contains(where: { ["KIDS", "KID", "키즈"].contains($0) }) {
             return .kids
         }
-        if normalizedCodes.contains(where: { ["WOMEN", "WOMAN", "FEMALE", "F", "여성"].contains($0) }) {
+        let targetsWomen = normalizedCodes.contains {
+            ["WOMEN", "WOMAN", "FEMALE", "F", "W", "여성"].contains($0)
+        }
+        let targetsMen = normalizedCodes.contains {
+            ["MEN", "MAN", "MALE", "M", "남성"].contains($0)
+        }
+        if targetsWomen && targetsMen {
+            return .unisex
+        }
+        if targetsWomen {
             return .women
         }
-        if normalizedCodes.contains(where: { ["MEN", "MAN", "MALE", "M", "남성"].contains($0) }) {
+        if targetsMen {
             return .men
         }
 

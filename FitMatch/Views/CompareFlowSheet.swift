@@ -29,6 +29,8 @@ struct CompareFlowSheet: View {
     @State private var hasConfirmedComparisonCategory = false
     @State private var isSheetHeaderVisible = true
     @State private var preparedComparison: PreparedComparison?
+    @State private var loadTask: Task<Void, Never>?
+    @State private var hasStartedInitialURL = false
     @FocusState private var isURLFocused: Bool
 
     init(initialURL: String? = nil) {
@@ -80,10 +82,17 @@ struct CompareFlowSheet: View {
         .onTapGesture {
             isURLFocused = false
         }
-        .task {
-            if let initialURL, !initialURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                await startCompare(with: initialURL)
-            }
+        .onAppear {
+            guard !hasStartedInitialURL,
+                  let initialURL,
+                  !initialURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+            hasStartedInitialURL = true
+            startCompareTask(with: initialURL)
+        }
+        .onDisappear {
+            loadTask?.cancel()
+            loadTask = nil
+            viewModel.cancelProductLoading()
         }
         .sheet(item: $registrationRoute) { route in
             AddComparedProductToClosetSheet(
@@ -215,7 +224,7 @@ private extension CompareFlowSheet {
                 .background(Color(.secondarySystemGroupedBackground), in: Circle())
 
             VStack(spacing: 8) {
-                Text("같은 분류의 옷이 없어요")
+                Text("자동 비교에 맞는 옷이 없어요")
                     .font(.title2.weight(.black))
                     .multilineTextAlignment(.center)
 
@@ -350,9 +359,9 @@ private extension CompareFlowSheet {
                 } else {
                     FitMatchCard {
                         VStack(alignment: .leading, spacing: 7) {
-                            Text("자동 추천할 기준 옷이 없어요")
+                            Text("같은 종류의 기준 옷이 없어요")
                                 .font(.headline.weight(.bold))
-                            Text("다른 종류의 옷은 호환되는 실측만 참고할 수 있어요.")
+                            Text("유사한 종류 중 비교 가능한 옷을 직접 선택할 수 있어요.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -360,12 +369,13 @@ private extension CompareFlowSheet {
                 }
 
                 if showsAllReferenceCandidates || recommendedReferenceCandidates.isEmpty {
-                    closetCandidateSection(title: "다른 옷 직접 선택", items: manualSelectionCandidates)
+                    closetCandidateSection(title: "추가 비교 가능 옷", items: additionalDirectSelectionCandidates)
+                    closetCandidateSection(title: "유사한 다른 종류", items: extendedSelectionCandidates)
                 }
 
                 if !manualSelectionCandidates.isEmpty, !recommendedReferenceCandidates.isEmpty {
                     SecondaryButton(
-                        title: showsAllReferenceCandidates ? "직접 선택 접기" : "다른 옷 직접 선택",
+                        title: showsAllReferenceCandidates ? "비교 범위 접기" : "비교 범위 넓히기",
                         systemImage: showsAllReferenceCandidates ? "chevron.up" : "list.bullet"
                     ) {
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -617,7 +627,7 @@ private extension CompareFlowSheet {
                 if isAutomaticMusinsaSizeFailure {
                     isShowingManualProductEntry = true
                 } else if viewModel.isNetworkFailure {
-                    Task { await startCompare(with: productURL) }
+                    startCompareTask(with: productURL)
                 } else {
                     setStep(.start)
                 }
@@ -691,6 +701,11 @@ private extension CompareFlowSheet {
                                 Text(exclusion.reason.userMessage)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                                if let detail = exclusion.definitionDetail {
+                                    Text(detail)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
                     }
@@ -719,6 +734,7 @@ private extension CompareFlowSheet {
                         setStep(.closetSelection)
                     }
                 }
+
             }
         }
     }
@@ -789,7 +805,7 @@ private extension CompareFlowSheet {
                         .focused($isURLFocused)
                         .onSubmit {
                             isURLFocused = false
-                            Task { await startCompare(with: productURL) }
+                            startCompareTask(with: productURL)
                         }
 
                     Button {
@@ -814,7 +830,7 @@ private extension CompareFlowSheet {
 
                 PrimaryButton(title: "비교하기", systemImage: "sparkles") {
                     isURLFocused = false
-                    Task { await startCompare(with: productURL) }
+                    startCompareTask(with: productURL)
                 }
                 .disabled(productURL.trimmedForCompareFlow.isEmpty || viewModel.isLoadingProductInfo)
             }
@@ -988,10 +1004,30 @@ private extension CompareFlowSheet {
     }
 
     var manualSelectionCandidates: [UserFit] {
+        additionalDirectSelectionCandidates + extendedSelectionCandidates
+    }
+
+    var additionalDirectSelectionCandidates: [UserFit] {
         let recommendedIDs = Set(recommendedReferenceCandidates.map(\.id))
         return allSimilarClosetCandidates.filter { item in
             !recommendedIDs.contains(item.id)
+                && referenceCompatibility(for: item)?.level == .direct
         }
+    }
+
+    var extendedSelectionCandidates: [UserFit] {
+        allSimilarClosetCandidates.filter {
+            referenceCompatibility(for: $0)?.level == .extended
+        }
+    }
+
+    func referenceCompatibility(for item: UserFit) -> GarmentComparisonCompatibility? {
+        guard let product = currentProduct else { return nil }
+        return RecommendationService().comparisonCompatibility(
+            product: product,
+            productDetailCategory: viewModel.detailCategory,
+            item: item
+        )
     }
 
     func recommendedCandidateBadge(_ candidate: FitMatchCandidate) -> String? {
@@ -1044,6 +1080,14 @@ private extension CompareFlowSheet {
 }
 
 private extension CompareFlowSheet {
+    func startCompareTask(with urlString: String) {
+        guard loadTask == nil, !viewModel.isLoadingProductInfo else { return }
+        loadTask = Task {
+            await startCompare(with: urlString)
+            loadTask = nil
+        }
+    }
+
     func startCompare(with urlString: String) async {
         let trimmedURL = urlString.trimmedForCompareFlow
         guard !trimmedURL.isEmpty else { return }
@@ -1068,6 +1112,7 @@ private extension CompareFlowSheet {
         setStep(.loading)
 
         let didLoad = await viewModel.loadProductInfoFromURL()
+        guard !Task.isCancelled else { return }
         guard didLoad else {
             errorMessage = viewModel.errorMessage ?? "상품 정보를 불러오지 못했어요. URL을 다시 확인해 주세요."
             #if DEBUG
@@ -1088,19 +1133,23 @@ private extension CompareFlowSheet {
         }
         rebuildPreparedComparison(using: product)
         errorMessage = nil
+        #if DEBUG
         print("[CompareFlowSheet] productName: \(product.name)")
         print("[CompareFlowSheet] category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] detailCategory: \(viewModel.detailCategory.rawValue)")
         print("[CompareFlowSheet] automaticMatchState before user confirmation: \(String(describing: automaticMatchResult?.state))")
-        #if DEBUG
         print("[화면: 상품 비교][동작: 상품 분석][상태: 성공] 상품=\(product.name), 출처=\(product.sourceDisplayName), 사이즈수=\(product.sizes.count), 분류=\(viewModel.category.rawValue)/\(viewModel.detailCategory.rawValue)")
         #endif
 
         let historyMatches = sourceCategoryHistoryMatches
+        #if DEBUG
         print("[CompareFlowSheet] source category history match count: \(historyMatches.count)")
+        #endif
         if historyMatches.count == 1, let match = historyMatches.first {
             applySourceCategoryHistoryMatch(match)
+            #if DEBUG
             print("[CompareFlowSheet] auto confirmed category from source history: \(match.category.rawValue) / \(match.detailCategory.rawValue)")
+            #endif
             confirmComparisonCategoryAndContinue()
             return
         }
@@ -1108,7 +1157,9 @@ private extension CompareFlowSheet {
         if historyMatches.isEmpty, canConfirmComparisonCategory {
             viewModel.category = viewModel.category.serviceGroup
             rebuildPreparedComparison()
+            #if DEBUG
             print("[CompareFlowSheet] auto confirmed inferred category: \(viewModel.category.rawValue) / \(viewModel.detailCategory.rawValue)")
+            #endif
             confirmComparisonCategoryAndContinue()
             return
         }
@@ -1131,12 +1182,19 @@ private extension CompareFlowSheet {
             category: viewModel.category,
             detailCategory: viewModel.detailCategory
         )
+        #if DEBUG
         print("[CompareFlowSheet] confirmed category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] confirmed detailCategory: \(viewModel.detailCategory.rawValue)")
         print("[CompareFlowSheet] automaticMatchState after user confirmation: \(String(describing: automaticMatchResult?.state))")
+        #endif
 
-        guard let plan = referenceSelectionPlan,
-              !plan.recommendedCandidates.isEmpty else {
+        guard let plan = referenceSelectionPlan else {
+            logMissingReferenceDiagnostics(product: product)
+            setStep(.missingReference)
+            return
+        }
+
+        guard !plan.recommendedCandidates.isEmpty || !allSimilarClosetCandidates.isEmpty else {
             logMissingReferenceDiagnostics(product: product)
             setStep(.missingReference)
             return
@@ -1208,8 +1266,7 @@ private extension CompareFlowSheet {
             product: product,
             userFits: userFits,
             productDetailCategory: viewModel.detailCategory,
-            allowsGlobalFallback: false,
-            bodyShapePreferences: BodyShapeSettingsStore().load()
+            allowsGlobalFallback: false
         ) else {
             insufficientEvidence = RecommendationService().insufficientEvidence(
                 product: product,
@@ -1234,6 +1291,7 @@ private extension CompareFlowSheet {
             #endif
             setStep(.result(history))
         } catch {
+            modelContext.rollback()
             #if DEBUG
             print("[화면: 상품 비교][동작: 추천 기록 저장][상태: 실패] 오류=\(error.localizedDescription), 상품=\(history.product.name)")
             #endif
@@ -1256,8 +1314,7 @@ private extension CompareFlowSheet {
         guard let history = RecommendationService().recommend(
                 product: product,
                 selectedReferenceItem: selectedReferenceItem,
-                productDetailCategory: viewModel.detailCategory,
-                bodyShapePreferences: BodyShapeSettingsStore().load()
+                productDetailCategory: viewModel.detailCategory
               ) else {
             insufficientEvidence = RecommendationService().insufficientEvidence(
                 product: product,
@@ -1281,6 +1338,7 @@ private extension CompareFlowSheet {
             #endif
             setStep(.result(history))
         } catch {
+            modelContext.rollback()
             #if DEBUG
             print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 실패] 오류=\(error.localizedDescription), 상품=\(history.product.name)")
             #endif
@@ -1345,6 +1403,7 @@ private extension CompareFlowSheet {
     }
 
     func logMissingReferenceDiagnostics(product: Product) {
+        #if DEBUG
         let sameCategory = userFits.filter { $0.category == product.category }
         let sameDetail = sameCategory.filter { $0.detailCategory == viewModel.detailCategory }
         let missingMeasurements = sameDetail.filter { !hasComparableMeasurements($0) }
@@ -1362,6 +1421,7 @@ private extension CompareFlowSheet {
         ).forEach {
             print("[CompareFlowSheet] reference candidate diagnostic: \($0.logDescription)")
         }
+        #endif
     }
 
     func existingBrand(named name: String) -> Brand? {

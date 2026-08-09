@@ -6,7 +6,7 @@ struct UniqloParser: ProductURLParsing {
     private let sizeParser = UniqloSizeAPIParser()
 
     func canParse(_ url: URL) -> Bool {
-        url.host?.lowercased().contains("uniqlo.com") == true
+        ProductURLSupport.isUniqloURL(url)
     }
 
     func parse(from url: URL) async throws -> ParsedProductInfo {
@@ -23,8 +23,12 @@ struct UniqloParser: ProductURLParsing {
 
         let sizeAPIResult: UniqloSizeAPIResult
         do {
-            sizeAPIResult = try await sizeParser.parse(productIDWithColorCode: resolved.productIDWithColorCode)
+            sizeAPIResult = try await sizeParser.parseWithGenericColorFallback(
+                productID: resolved.productID,
+                preferredProductIDWithColorCode: resolved.productIDWithColorCode
+            )
         } catch {
+            if Task.isCancelled { throw CancellationError() }
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
             #endif
@@ -223,6 +227,45 @@ struct UniqloSizeAPIResult {
 }
 
 struct UniqloSizeAPIParser {
+    static func genericProductIDWithColorCode(for productID: String) -> String {
+        "\(productID)-000"
+    }
+
+    static func shouldRetryWithGenericColor(
+        preferredProductIDWithColorCode: String,
+        genericProductIDWithColorCode: String,
+        result: UniqloSizeAPIResult
+    ) -> Bool {
+        result.sizes.isEmpty
+            && preferredProductIDWithColorCode != genericProductIDWithColorCode
+    }
+
+    func parseWithGenericColorFallback(
+        productID: String,
+        preferredProductIDWithColorCode: String
+    ) async throws -> UniqloSizeAPIResult {
+        let genericProductIDWithColorCode = Self.genericProductIDWithColorCode(for: productID)
+        do {
+            let preferredResult = try await parse(
+                productIDWithColorCode: preferredProductIDWithColorCode
+            )
+            guard Self.shouldRetryWithGenericColor(
+                preferredProductIDWithColorCode: preferredProductIDWithColorCode,
+                genericProductIDWithColorCode: genericProductIDWithColorCode,
+                result: preferredResult
+            ) else {
+                return preferredResult
+            }
+        } catch {
+            if Task.isCancelled { throw CancellationError() }
+            guard preferredProductIDWithColorCode != genericProductIDWithColorCode else {
+                throw error
+            }
+        }
+
+        return try await parse(productIDWithColorCode: genericProductIDWithColorCode)
+    }
+
     func parse(productIDWithColorCode: String) async throws -> UniqloSizeAPIResult {
         guard var components = URLComponents(string: "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/size-charts") else {
             throw ProductURLParserError.automaticParsingUnavailable
@@ -505,6 +548,10 @@ struct UniqloProductMetadataParser {
             ? initiallyMappedDetail
             : (canonical?.detailCategory ?? initiallyMappedDetail)
         let canonicalURL = canonicalURL(from: resolved.html) ?? resolved.resolvedURL.absoluteString
+        let productAudience = productAudience(from: resolved.html)
+        let genderCodes = productAudience.codes
+            ?? sourcePath.gender.map { [$0] }
+            ?? genderCodes(from: breadcrumb + htmlBreadcrumb)
 
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
@@ -518,7 +565,7 @@ struct UniqloProductMetadataParser {
             categoryDepth2Name: sourcePath.depth2,
             categoryDepth3Name: sourcePath.depth3,
             categoryDepth4Name: sourcePath.depth4,
-            genderCodes: sourcePath.gender.map { [$0] } ?? genderCodes(from: breadcrumb + htmlBreadcrumb),
+            genderCodes: genderCodes,
             imageURLStrings: [imageURLString].compactMap { $0 },
             normalPrice: priceInfo.normalPrice,
             salePrice: priceInfo.salePrice,
@@ -538,6 +585,7 @@ struct UniqloProductMetadataParser {
             rawSourceCategory: rawSourceCategory,
             gender: UserGender.productTarget(from: metadata.genderCodes),
             sourcePath: sourcePath,
+            audienceEvidence: productAudience.evidence,
             prefix: "[UniqloProductMetadataParser]"
         )
 
@@ -792,14 +840,45 @@ struct UniqloProductMetadataParser {
         return ["홈", "home", "유니클로", "uniqlo"].contains(normalized)
     }
 
-    private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, prefix: String) {
+    private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, audienceEvidence: String?, prefix: String) {
         #if DEBUG
         FitMatchDebugLogger.detail(
             screen: "상품 분석",
             action: "유니클로 원본 분류 해석",
-            details: "파서=\(prefix), 원본=\(rawSourceCategory), 성별=\(gender.rawValue), depth1=\(sourcePath.depth1 ?? "없음"), depth2=\(sourcePath.depth2 ?? "없음"), depth3=\(sourcePath.depth3 ?? "없음"), depth4=\(sourcePath.depth4 ?? "없음"), 경로=\(sourcePath.fullPath ?? "없음")"
+            details: "파서=\(prefix), 원본=\(rawSourceCategory), 카테고리대상=\(sourcePath.gender ?? "없음"), 상품성별=\(gender.rawValue), 성별근거=\(audienceEvidence ?? "카테고리 경로"), depth1=\(sourcePath.depth1 ?? "없음"), depth2=\(sourcePath.depth2 ?? "없음"), depth3=\(sourcePath.depth3 ?? "없음"), depth4=\(sourcePath.depth4 ?? "없음"), 경로=\(sourcePath.fullPath ?? "없음")"
         )
         #endif
+    }
+
+    private func productAudience(from html: String) -> (codes: [String]?, evidence: String?) {
+        for field in ["genderCategory", "genderName"] {
+            let pattern = #"\""# + field + #"\"\s*:\s*\"([^\"]+)\""#
+            if let value = firstMatch(in: html, pattern: pattern),
+               let codes = normalizedAudienceCodes(from: value) {
+                return (codes, "\(field):\(value)")
+            }
+        }
+
+        if firstMatch(in: html, pattern: #"\"code\"\s*:\s*\"(unisex)\""#) != nil {
+            return (["UNISEX"], "productFlag:unisex")
+        }
+
+        if let contents = firstMatch(in: html, pattern: #"\"topCategories\"\s*:\s*\[([^\]]*)\]"#) {
+            let values = allMatches(in: contents, pattern: #"\"([^\"]+)\""#).map { $0.uppercased() }
+            if values.contains("MEN"), values.contains("WOMEN") {
+                return (["UNISEX"], "topCategories:MEN+WOMEN")
+            }
+        }
+        return (nil, nil)
+    }
+
+    private func normalizedAudienceCodes(from value: String) -> [String]? {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if ["UNISEX", "COMMON", "U", "공용", "젠더리스"].contains(normalized) { return ["UNISEX"] }
+        if ["MEN", "MAN", "MALE", "남성"].contains(normalized) { return ["MEN"] }
+        if ["WOMEN", "WOMAN", "FEMALE", "여성"].contains(normalized) { return ["WOMEN"] }
+        if ["KIDS", "BABY"].contains(normalized) { return [normalized] }
+        return nil
     }
 
     private func splitCategoryPath(_ path: String?) -> [String] {
@@ -915,8 +994,10 @@ struct UniqloProductMetadataParser {
         }
     }
 
-    private func mapCategory(from text: String) -> ClothingCategory {
+    func mapCategory(from text: String) -> ClothingCategory {
         let value = text.lowercased()
+        if text.contains("홈웨어") || text.contains("라운지") || text.contains("파자마")
+            || value.contains("homewear") || value.contains("loungewear") { return .other }
         // Reversible previous order treated any denim token as bottoms, including denim overshirts.
         if value.contains("overshirt") || text.contains("오버셔츠") || value.contains("shirt") || text.contains("셔츠") {
             return .top
@@ -945,16 +1026,24 @@ struct UniqloProductMetadataParser {
         return .top
     }
 
-    private func mapDetailCategory(from text: String) -> ClosetDetailCategory {
+    func mapDetailCategory(from text: String) -> ClosetDetailCategory {
         let value = text.lowercased()
+        if text.contains("캐미솔") || value.contains("camisole") { return .womenCamisole }
+        if text.contains("슬립") || value.contains("slip") { return .womenSlip }
+        if text.contains("브라") || value.contains("bra") { return .womenBra }
+        if text.contains("팬티") || value.contains("panty") { return .womenPanty }
+        if text.contains("트렁크") || value.contains("trunks") || value.contains("boxer") { return .menTrunks }
+        if text.contains("브리프") || value.contains("brief") { return .menBriefs }
+        if text.contains("런닝") || value.contains("undershirt") { return .menUndershirt }
         if text.contains("스커트") || value.contains("skirt") { return .skirt }
         if text.contains("슬리브리스") || value.contains("sleeveless") { return .sleeveless }
-        if text.contains("쇼트 팬츠") || value.contains("short pants") { return .shorts }
+        if text.contains("쇼트 팬츠") || text.contains("쇼트팬츠") || value.contains("short pants") { return .shorts }
         if value.contains("overshirt") || text.contains("오버셔츠") { return .shirt }
         if text.contains("가디건") || value.contains("cardigan") { return .cardigan }
         if text.contains("민소매") || text.contains("나시") || value.contains("sleeveless") || value.contains("tank") { return .sleeveless }
         if text.contains("반팔") || text.contains("반소매") || value.contains("short sleeve") { return .shortSleeve }
         if text.contains("긴팔") || text.contains("긴소매") || value.contains("long sleeve") { return .longSleeve }
+        if value.contains("cut & sewn") || value.contains("cut and sewn") { return .shortSleeve }
         if text.contains("후드") || value.contains("hoodie") { return .hoodie }
         if text.contains("스웨트") || text.contains("맨투맨") || value.contains("sweat") { return .sweatshirt }
         if text.contains("셔츠") || value.contains("shirt") { return .shirt }

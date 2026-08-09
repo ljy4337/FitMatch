@@ -87,7 +87,9 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
                 }
             )
         } catch {
+            #if DEBUG
             print("[MusinsaActualSizeAPIParser] Actual size JSON decode failed: \(error)")
+            #endif
             throw ProductURLParserError.automaticParsingUnavailable
         }
     }

@@ -11,7 +11,7 @@ private struct MusinsaRedirectResponse {
     let body: String
 }
 
-enum MusinsaNetworkPolicy {
+nonisolated enum MusinsaNetworkPolicy {
     static let requestTimeout: TimeInterval = 12
 }
 
