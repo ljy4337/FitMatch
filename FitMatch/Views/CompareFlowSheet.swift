@@ -21,7 +21,7 @@ struct CompareFlowSheet: View {
     @State private var isShowingMeasurementGuide = false
     @State private var isShowingReferenceComparison = false
     @State private var isShowingManualProductEntry = false
-    @State private var isShowingReferenceRegistration = false
+    @State private var referenceRegistrationRoute: ReferenceRegistrationRoute?
     @State private var isPreparingManualComparison = false
     @State private var isShowingSizeTableRecovery = false
     @State private var usesLegacySizeFailureScreen = false
@@ -142,27 +142,44 @@ struct CompareFlowSheet: View {
             }
             .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $isShowingReferenceRegistration) {
-            NavigationStack {
-                AddClosetItemView(
-                    prefillCategory: viewModel.category,
-                    prefillDetailCategory: viewModel.detailCategory,
-                    prefillGender: currentProduct?.productTargetGender,
-                    prefersRepresentativeByDefault: true
-                ) { item in
-                    modelContext.insert(item)
-                    do {
-                        try modelContext.save()
-                        statusMessage = "비교할 기준 옷을 등록했어요."
-                        rebuildPreparedComparison()
-                        return true
-                    } catch {
-                        modelContext.rollback()
-                        return false
+        .sheet(item: $referenceRegistrationRoute) { route in
+            switch route {
+            case .method:
+                AddClosetMethodSheet(
+                    onLink: { presentReferenceRegistration(.link) },
+                    onManual: { presentReferenceRegistration(.manual) }
+                )
+                .presentationDetents([.height(290)])
+                .presentationDragIndicator(.visible)
+            case .link:
+                NavigationStack {
+                    LinkClosetRegistrationView(prefersRepresentativeByDefault: true) {
+                        completeReferenceRegistration()
                     }
                 }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            case .manual:
+                NavigationStack {
+                    AddClosetItemView(
+                        prefillCategory: viewModel.category,
+                        prefillDetailCategory: viewModel.detailCategory,
+                        prefillGender: currentProduct?.productTargetGender,
+                        prefersRepresentativeByDefault: true
+                    ) { item in
+                        modelContext.insert(item)
+                        do {
+                            try modelContext.save()
+                            completeReferenceRegistration()
+                            return true
+                        } catch {
+                            modelContext.rollback()
+                            return false
+                        }
+                    }
+                }
+                .presentationDragIndicator(.visible)
             }
-            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $isShowingSizeTableRecovery) {
             NavigationStack {
@@ -292,7 +309,7 @@ private extension CompareFlowSheet {
             VStack(spacing: 11) {
                 if allSimilarClosetCandidates.isEmpty {
                     PrimaryButton(title: missingReferencePresentation.registrationButtonTitle, systemImage: "plus.circle.fill") {
-                        isShowingReferenceRegistration = true
+                        referenceRegistrationRoute = .method
                     }
 
                     SecondaryButton(title: "다른 상품 비교하기", systemImage: "arrow.left.arrow.right") {
@@ -1301,7 +1318,28 @@ private struct MissingReferencePresentation {
     let registrationButtonTitle: String
 }
 
+private enum ReferenceRegistrationRoute: String, Identifiable {
+    case method
+    case link
+    case manual
+
+    var id: String { rawValue }
+}
+
 private extension CompareFlowSheet {
+    func presentReferenceRegistration(_ route: ReferenceRegistrationRoute) {
+        referenceRegistrationRoute = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            referenceRegistrationRoute = route
+        }
+    }
+
+    func completeReferenceRegistration() {
+        referenceRegistrationRoute = nil
+        statusMessage = "비교할 기준 옷을 등록했어요."
+        rebuildPreparedComparison()
+    }
+
     func startCompareTask(with urlString: String) {
         guard loadTask == nil, !viewModel.isLoadingProductInfo else { return }
         loadTask = Task {

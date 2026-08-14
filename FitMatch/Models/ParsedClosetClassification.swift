@@ -76,8 +76,19 @@ struct ParsedClosetClassification: Equatable {
         let resolvedCategory: ClothingCategory
         let resolvedDetail: ClosetDetailCategory
 
+        // Explicit underwear garment names win over merchandising buckets and
+        // generic lower-body words such as "쇼츠". AIRism itself is never a
+        // category signal.
+        if let explicitUnderwearDetail = explicitUnderwearDetail(
+            in: name,
+            source: source
+        ) {
+            resolvedCategoryCode = "underwear"
+            resolvedDetailCode = explicitUnderwearDetail
+            resolvedCategory = .underwear
+            resolvedDetail = ClosetDetailCategory.fromTaxonomyCode(explicitUnderwearDetail)
         // Exact source families are evaluated before generic words such as 하의/원피스.
-        if specificSource.contains("스커트") || specificSource.contains("skirt") {
+        } else if specificSource.contains("스커트") || specificSource.contains("skirt") {
             resolvedCategoryCode = "skirts"; resolvedDetailCode = "skirt"
             resolvedCategory = .bottom; resolvedDetail = .skirt
         } else if lowerBodyDeclaresLeggings
@@ -117,6 +128,15 @@ struct ParsedClosetClassification: Equatable {
         ])) {
             resolvedCategoryCode = "homewear"; resolvedDetailCode = "loungewear"
             resolvedCategory = .other; resolvedDetail = .loungewear
+        } else if isInnerwearStructuralTShirt(source: source, productName: name) {
+            // UNIQLO's Innerwear class is a merchandising bucket: it can contain
+            // both underwear and ordinary T-shirts. Explicit underwear garments
+            // are resolved above. A product explicitly named as a T-shirt is
+            // classified by garment structure; AIRism alone is never evidence.
+            resolvedCategoryCode = "tops"
+            resolvedDetailCode = explicitTopLengthDetail(in: name) ?? "short_sleeve"
+            resolvedCategory = .top
+            resolvedDetail = ClosetDetailCategory.fromTaxonomyCode(resolvedDetailCode)
         } else if containsAny(specificSource, ["여성 속옷", "남성 속옷", "언더웨어", "underwear"]) {
             resolvedCategoryCode = "underwear"
             let providerDetail = FitMatchTaxonomyProvider.shared.detailCode(
@@ -435,6 +455,44 @@ struct ParsedClosetClassification: Equatable {
             "l/s tee", "l/s t-shirt", "l/s tshirt"
         ]) { return "long_sleeve" }
         if containsAny(productName, ["7부", "three quarter", "3/4 sleeve", "3/4"]) { return "three_quarter_sleeve" }
+        return nil
+    }
+
+    private static func isInnerwearStructuralTShirt(source: String, productName: String) -> Bool {
+        let isInnerwearPath = containsAny(source, [
+            "이너웨어", "언더웨어", "innerwear", "underwear"
+        ])
+        let isCottonLine = containsAny(productName, ["코튼", "cotton"])
+        let isExplicitTShirt = containsAny(productName, [
+            "티셔츠", "크루넥t", "크루넥 t", "v넥t", "v넥 t", "u넥t", "u넥 t",
+            "t-shirt", "tshirt", "crew neck t", "crew-neck t",
+            "v neck t", "v-neck t", "u neck t", "u-neck t"
+        ]) || productName.range(
+            of: #"[가-힣0-9]t(?:$|[\s(])"#,
+            options: [.regularExpression, .caseInsensitive]
+        ) != nil
+        // Plain AIRism/mesh crew-neck and V-neck T products in Innerwear are
+        // undershirts. The known merchandising exception is the cotton T line.
+        return isInnerwearPath && isCottonLine && isExplicitTShirt
+    }
+
+    private static func explicitUnderwearDetail(in productName: String, source: String) -> String? {
+        if containsAny(productName, ["브라캐미솔", "bra camisole"]) { return "women_camisole" }
+        if containsAny(productName, ["브라탱크", "퍼스트브라", "와이어리스브라", "브라", "bra"]) {
+            return "women_bra"
+        }
+        if containsAny(productName, ["캐미솔", "camisole"]) && containsAny(source, ["이너웨어", "언더웨어", "innerwear", "underwear"]) {
+            return "women_camisole"
+        }
+        if containsAny(productName, ["트렁크스", "트렁크", "trunks"]) { return "men_trunks" }
+        if containsAny(productName, ["복서브리프", "boxer brief", "boxer-brief"]) {
+            return containsAny(productName, ["girls", "여아"]) ? "women_panty" : "men_briefs"
+        }
+        if containsAny(productName, ["브리프", "brief"]) { return "men_briefs" }
+        if containsAny(source, ["이너웨어", "언더웨어", "innerwear", "underwear"]),
+           containsAny(productName, ["심리스쇼츠", "쉐이퍼쇼츠", "속바지", "seamless shorts", "shaper shorts"]) {
+            return "women_panty"
+        }
         return nil
     }
 

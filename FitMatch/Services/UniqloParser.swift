@@ -94,7 +94,13 @@ struct UniqloURLResolver {
         }
 
         let goodsID = productID.dropFirstE
-        let rawColorCode = extractColorCode(from: haystack, productID: productID, goodsID: goodsID) ?? "00"
+        let rawColorCode = resolveColorCode(
+            originalURL: url,
+            resolvedURL: finalURL,
+            fallbackText: haystack,
+            productID: productID,
+            goodsID: goodsID
+        ) ?? "00"
         let apiColorCode = normalizeAPIColorCode(rawColorCode)
         let imageColorCode = normalizeImageColorCode(rawColorCode)
         let productIDWithColorCode = "\(productID)-\(apiColorCode)"
@@ -156,6 +162,18 @@ struct UniqloURLResolver {
         return nil
     }
 
+    func resolveColorCode(
+        originalURL: URL,
+        resolvedURL: URL,
+        fallbackText: String,
+        productID: String,
+        goodsID: String
+    ) -> String? {
+        queryColorCode(in: originalURL)
+            ?? queryColorCode(in: resolvedURL)
+            ?? extractColorCode(from: fallbackText, productID: productID, goodsID: goodsID)
+    }
+
     func normalizeAPIColorCode(_ colorCode: String) -> String {
         let digits = colorCode.filter(\.isNumber)
         if digits.count >= 3 {
@@ -190,6 +208,18 @@ struct UniqloURLResolver {
 
     private func canonicalURL(productID: String, colorCode: String, fallback: URL) -> URL {
         URL(string: "https://www.uniqlo.com/kr/ko/products/\(productID)?colorDisplayCode=\(colorCode)") ?? fallback
+    }
+
+    private func queryColorCode(in url: URL) -> String? {
+        guard let value = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?
+            .first(where: { $0.name.compare("colorDisplayCode", options: .caseInsensitive) == .orderedSame })?
+            .value?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+              !value.isEmpty else {
+            return nil
+        }
+        return value
     }
 
     private func firstMatch(in text: String, pattern: String) -> String? {

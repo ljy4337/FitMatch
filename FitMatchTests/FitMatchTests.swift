@@ -1429,6 +1429,25 @@ struct FitMatchTests {
         #expect(resolver.normalizeImageColorCode(colorCode ?? "") == "00")
     }
 
+    @Test func uniqloURLResolverPrefersSharedQueryColorOverGenericPathColor() throws {
+        let resolver = UniqloURLResolver()
+        let sharedURL = try #require(URL(string: "https://www.uniqlo.com/kr/ko/products/E487957-000/00?colorDisplayCode=08&sizeDisplayCode=004"))
+        let resolvedURL = try #require(URL(string: "https://www.uniqlo.com/kr/ko/products/E487957-000/00"))
+        let fallbackText = "\(sharedURL.absoluteString) \(resolvedURL.absoluteString) krgoods_00_487957_3x4.jpg"
+
+        let colorCode = resolver.resolveColorCode(
+            originalURL: sharedURL,
+            resolvedURL: resolvedURL,
+            fallbackText: fallbackText,
+            productID: "E487957",
+            goodsID: "487957"
+        )
+
+        #expect(colorCode == "08")
+        #expect(resolver.normalizeAPIColorCode(colorCode ?? "") == "008")
+        #expect(resolver.normalizeImageColorCode(colorCode ?? "") == "08")
+    }
+
     @Test func uniqloSelectedColorThumbnailIsNotReplacedByGenericSizeChartImage() {
         let selected = "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_03_465185_3x4.jpg"
         let generic = "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_00_465185_3x4.jpg"
@@ -7003,6 +7022,105 @@ struct FitMatchTests {
             #expect(result.category == .underwear)
             #expect(result.detailCategory == .menBriefs)
         }
+    }
+
+    @Test func uniqloAirismCottonCrewNeckTUsesTShirtStructureDespiteInnerwearPath() throws {
+        let sourcePath = "이너웨어 > 에어리즘 > 코튼"
+        let shortSleeve = try #require(ParsedClosetClassification.resolve(
+            category: .underwear,
+            detailCategory: .underwear,
+            sourceDepths: sourcePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: sourcePath,
+            productName: "AIRism코튼크루넥T"
+        ))
+        #expect(shortSleeve.categoryCode == "tops")
+        #expect(shortSleeve.detailCode == "short_sleeve")
+        #expect(shortSleeve.category == .top)
+        #expect(shortSleeve.detailCategory == .shortSleeve)
+        #expect(shortSleeve.garmentFamily == .tshirt)
+
+        let longSleeve = try #require(ParsedClosetClassification.resolve(
+            category: .underwear,
+            detailCategory: .underwear,
+            sourceDepths: sourcePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: sourcePath,
+            productName: "AIRism코튼크루넥T(긴팔)"
+        ))
+        #expect(longSleeve.categoryCode == "tops")
+        #expect(longSleeve.detailCode == "long_sleeve")
+        #expect(longSleeve.detailCategory == .longSleeve)
+
+        let vNeck = try #require(ParsedClosetClassification.resolve(
+            category: .underwear,
+            detailCategory: .underwear,
+            sourceDepths: sourcePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: sourcePath,
+            productName: "AIRism코튼V넥T(반팔)"
+        ))
+        #expect(vNeck.categoryCode == "tops")
+        #expect(vNeck.detailCode == "short_sleeve")
+        #expect(vNeck.garmentFamily == .tshirt)
+
+        for productName in ["AIRismU넥T", "AIRism메쉬크루넥T"] {
+            let undershirt = try #require(ParsedClosetClassification.resolve(
+                category: .underwear,
+                detailCategory: .underwear,
+                sourceDepths: ["이너웨어", "에어리즘", "에어리즘"].map(Optional.some),
+                sourcePath: "이너웨어 > 에어리즘 > 에어리즘",
+                productName: productName
+            ))
+            #expect(undershirt.categoryCode == "underwear", "\(productName)은 실제 이너웨어 라인을 유지해야 합니다.")
+        }
+
+        let explicitUnderwearFixtures: [(String, String)] = [
+            ("AIRism메쉬심리스복서브리프(프린트)A", "men_briefs"),
+            ("AIRism쉐이퍼쇼츠(스무드)", "women_panty"),
+            ("GIRLS AIRism퍼스트브라", "women_bra"),
+        ]
+        for fixture in explicitUnderwearFixtures {
+            let underwear = try #require(ParsedClosetClassification.resolve(
+                category: .top,
+                detailCategory: .other,
+                sourceDepths: ["이너웨어", "에어리즘", "언더웨어"].map(Optional.some),
+                sourcePath: "이너웨어 > 에어리즘 > 언더웨어",
+                productName: fixture.0
+            ))
+            #expect(underwear.categoryCode == "underwear")
+            #expect(underwear.detailCode == fixture.1)
+        }
+    }
+
+    @Test func uniqloAirismLineUsesGarmentCategoryInsteadOfAirismToken() throws {
+        let fixtures: [(ClothingCategory, ClosetDetailCategory, String, String, String)] = [
+            (.underwear, .menBriefs, "이너웨어 > 에어리즘 > 브리프", "AIRism복서브리프", "underwear"),
+            (.top, .shortSleeve, "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼", "AIRism코튼T", "tops"),
+            (.bottom, .other, "팬츠 > 조거팬츠", "W울트라스트레치AIRism조거팬츠", "bottoms"),
+            (.dress, .onePiece, "원피스 & 스커트 > 원피스 > 반팔원피스", "AIRism코튼T원피스(반팔)", "dresses")
+        ]
+
+        for fixture in fixtures {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: fixture.0,
+                detailCategory: fixture.1,
+                sourceDepths: fixture.2.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.2,
+                productName: fixture.3
+            ))
+            #expect(result.categoryCode == fixture.4, "\(fixture.3)의 AIRism 기능명이 의류 대분류를 덮어쓰면 안 됩니다.")
+        }
+    }
+
+    @Test func uniqloAirismInnerShortsRemainUnderwearDespitePantsToken() throws {
+        let sourcePath = "이너웨어 > 에어리즘 > 속바지"
+        let result = try #require(ParsedClosetClassification.resolve(
+            category: .bottom,
+            detailCategory: .other,
+            sourceDepths: sourcePath.components(separatedBy: " > ").map(Optional.some),
+            sourcePath: sourcePath,
+            productName: "AIRism속바지"
+        ))
+        #expect(result.categoryCode == "underwear")
+        #expect(result.detailCode == "women_panty")
     }
 
     @Test func uniqloGraphicTeeUsesSourceCategoryAndOfficialSleeveMeasurement() throws {

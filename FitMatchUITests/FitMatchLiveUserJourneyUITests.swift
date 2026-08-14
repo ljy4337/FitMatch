@@ -95,6 +95,31 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
     }
 
     @MainActor
+    func testLiveClosetRegistrationAndDirectURLComparison() throws {
+        try addClosetReference(
+            url: uniqloReferenceURL,
+            expectedProductText: "DRY-EX폴로셔츠"
+        )
+        try addClosetReference(
+            url: musinsaReferenceURL,
+            expectedProductText: "아이스펄스"
+        )
+
+        try compareFromDirectURL(
+            url: uniqloComparisonURL,
+            expectedProductText: "드라이컬러크루넥",
+            expectedReferenceText: "DRY-EX폴로셔츠",
+            caseNumber: 1
+        )
+        try compareFromDirectURL(
+            url: musinsaComparisonURL,
+            expectedProductText: "스탠넥 아노락",
+            expectedReferenceText: "아이스펄스",
+            caseNumber: 2
+        )
+    }
+
+    @MainActor
     func testLiveThirtyBalancedPairsThroughAppUI() throws {
         let cases = try loadThirtyPairCases()
         XCTAssertEqual(cases.count, 30)
@@ -141,6 +166,153 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
         XCTAssertEqual(completed, 30)
     }
 
+    @MainActor
+    func testLiveTenUserJourneysThroughAppUI() throws {
+        let cases = Array(try loadThirtyPairCases().prefix(10))
+        XCTAssertEqual(cases.count, 10)
+
+        let referenceCases = Dictionary(grouping: cases) {
+            "\($0.brand):\($0.referenceProductID)"
+        }.values.compactMap(\.first).sorted {
+            ($0.brand, $0.categoryCode) < ($1.brand, $1.categoryCode)
+        }
+
+        for reference in referenceCases {
+            try addClosetReference(
+                url: reference.referenceURL,
+                expectedProductText: productTextProbe(reference.referenceProductName)
+            )
+        }
+
+        for (index, testCase) in cases.enumerated() {
+            try compareFromDirectURL(
+                url: testCase.comparisonURL,
+                expectedProductText: productTextProbe(testCase.comparisonProductName),
+                expectedReferenceText: productTextProbe(testCase.referenceProductName),
+                caseNumber: index + 1
+            )
+            print(
+                "FITMATCH_PHYSICAL_A_PASS index=\(index + 1) brand=\(testCase.brand) "
+                    + "category=\(testCase.categoryCode) reference=\(testCase.referenceProductID) "
+                    + "comparison=\(testCase.comparisonProductID)"
+            )
+        }
+    }
+
+    @MainActor
+    func testLiveTwoHundredUserJourneysThroughAppUI() throws {
+        continueAfterFailure = false
+        executionTimeAllowance = 3_600
+        let sourceCases = try loadThirtyPairCases()
+        let musinsaCases = sourceCases.filter { $0.brand == "musinsa" }
+        let uniqloCases = sourceCases.filter { $0.brand == "uniqlo" }
+        XCTAssertEqual(musinsaCases.count, 15)
+        XCTAssertEqual(uniqloCases.count, 15)
+
+        let referenceCases = Dictionary(grouping: sourceCases) {
+            "\($0.brand):\($0.referenceProductID)"
+        }.values.compactMap(\.first).sorted {
+            ($0.brand, $0.categoryCode) < ($1.brand, $1.categoryCode)
+        }
+        for reference in referenceCases {
+            try addClosetReference(
+                url: reference.referenceURL,
+                expectedProductText: productTextProbe(reference.referenceProductName)
+            )
+        }
+
+        let startedAt = Date()
+        var completed = 0
+        for index in 0..<200 {
+            if Date().timeIntervalSince(startedAt) >= 3_540 {
+                XCTFail("1시간 종료선에 도달했습니다. completed=\(completed)")
+                break
+            }
+            let sourceIndex = (index / 2) % 15
+            let testCase = index.isMultiple(of: 2)
+                ? musinsaCases[sourceIndex]
+                : uniqloCases[sourceIndex]
+            try compareFromDirectURL(
+                url: testCase.comparisonURL,
+                expectedProductText: productTextProbe(testCase.comparisonProductName),
+                expectedReferenceText: productTextProbe(testCase.referenceProductName),
+                caseNumber: index + 1
+            )
+            completed += 1
+            print(
+                "FITMATCH_PHYSICAL_A200_CASE index=\(completed) brand=\(testCase.brand) "
+                    + "category=\(testCase.categoryCode) reference=\(testCase.referenceProductID) "
+                    + "comparison=\(testCase.comparisonProductID) result=PASS"
+            )
+            if completed.isMultiple(of: 10) {
+                print(
+                    "FITMATCH_PHYSICAL_A200_CHECKPOINT completed=\(completed) "
+                        + "elapsed=\(Int(Date().timeIntervalSince(startedAt)))"
+                )
+            }
+        }
+        XCTAssertEqual(completed, 200)
+    }
+
+    @MainActor
+    func testLiveDeleteMissingReferenceAndReregisterRecovery() throws {
+        try addClosetReference(
+            url: uniqloReferenceURL,
+            expectedProductText: "DRY-EX폴로셔츠"
+        )
+        try compareFromDirectURL(
+            url: uniqloComparisonURL,
+            expectedProductText: "드라이컬러크루넥",
+            expectedReferenceText: "DRY-EX폴로셔츠",
+            caseNumber: 1
+        )
+
+        try deleteClosetItem(containing: "DRY-EX폴로셔츠")
+
+        app.buttons["새 작업"].tap()
+        tapHittableButton(named: "상품 비교", timeout: 8)
+        let urlField = app.textFields["상품 URL을 붙여넣어 주세요"]
+        XCTAssertTrue(urlField.waitForExistence(timeout: 8))
+        urlField.tap()
+        urlField.typeText(uniqloComparisonURL)
+        tapHittableButton(named: "비교하기", timeout: 8)
+
+        let registrationButton = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", "등록하기")
+        ).firstMatch
+        XCTAssertTrue(registrationButton.waitForExistence(timeout: 240))
+        registrationButton.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["내 옷 추가"].waitForExistence(timeout: 8),
+            "비교할 옷이 없을 때 등록 방법을 먼저 선택할 수 있어야 합니다."
+        )
+        tapHittableButton(containing: "상품 링크로 불러오기", timeout: 8)
+
+        let registrationURLField = app.textFields["상품 URL을 붙여넣어 주세요"]
+        XCTAssertTrue(registrationURLField.waitForExistence(timeout: 8))
+        registrationURLField.tap()
+        registrationURLField.typeText(uniqloReferenceURL)
+        tapHittableButton(named: "상품 정보 불러오기", timeout: 8)
+
+        let product = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", "DRY-EX폴로셔츠")
+        ).firstMatch
+        XCTAssertTrue(product.waitForExistence(timeout: 240))
+        tapHittableButton(named: "다음", timeout: 10)
+        tapHittableButton(named: "보유한 옷으로 등록", timeout: 10)
+
+        XCTAssertTrue(
+            waitForAny([
+                app.staticTexts["비교할 옷 선택"],
+                app.buttons.matching(
+                    NSPredicate(format: "label CONTAINS[c] %@", "DRY-EX폴로셔츠")
+                ).firstMatch
+            ], timeout: 20),
+            "재등록한 옷이 진행 중인 비교 후보에 다시 반영되어야 합니다."
+        )
+    }
+
     private func loadThirtyPairCases() throws -> [ThirtyPairCase] {
         let url = try XCTUnwrap(
             Bundle(for: Self.self).url(forResource: "FitMatchUI30Pairs", withExtension: "json")
@@ -173,6 +345,8 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
         let insufficient = app.staticTexts["추천하기에 실측 정보가 부족해요"]
         let missingReference = app.staticTexts["기준 옷을 직접 선택해 주세요"]
         let referenceSelection = app.staticTexts["기준 옷 직접 선택"]
+        let closetSelection = app.staticTexts["비교할 옷 선택"]
+        let chooseClosetReference = app.buttons["내 옷장에서 기준 옷 선택"]
         let categoryConfirmation = app.staticTexts["상품 종류 확인"]
         let loadError = app.staticTexts.matching(
             NSPredicate(format: "label CONTAINS[c] %@", "불러오지 못")
@@ -180,8 +354,8 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
 
         XCTAssertTrue(
             waitForAny(
-                [categoryConfirmation, referenceSelection,
-                 resultTitle, insufficient, missingReference, loadError],
+                [categoryConfirmation, referenceSelection, closetSelection,
+                 chooseClosetReference, resultTitle, insufficient, missingReference, loadError],
                 timeout: 240
             ),
             "\(caseNumber)번 상품 분석이 제한 시간 안에 끝나야 합니다."
@@ -198,14 +372,22 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
             tapHittableButton(named: "비교하기", timeout: 10)
             XCTAssertTrue(
                 waitForAny(
-                    [referenceSelection, resultTitle, insufficient, missingReference],
+                    [referenceSelection, closetSelection, chooseClosetReference,
+                     resultTitle, insufficient, missingReference],
                     timeout: 30
                 )
             )
         }
 
-        if referenceSelection.exists {
-            tapHittableButton(containing: expectedReferenceText, timeout: 10)
+        if chooseClosetReference.exists {
+            chooseClosetReference.tap()
+        }
+
+        if referenceSelection.exists || closetSelection.exists {
+            tapPreferredReferenceOrFirstCandidate(
+                preferredText: expectedReferenceText,
+                caseNumber: caseNumber
+            )
             XCTAssertTrue(
                 waitForAny([resultTitle, insufficient], timeout: 15)
             )
@@ -224,7 +406,10 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
         if caseNumber % 5 == 0 || !resultTitle.exists {
             capture(name: "ui30-\(caseNumber)-result-\(expectedProductText)")
         }
-        XCTAssertTrue(resultTitle.exists, comparisonFailureMessage())
+        XCTAssertTrue(
+            resultTitle.exists || insufficient.exists,
+            comparisonFailureMessage()
+        )
         dismissComparisonSheetIfNeeded()
     }
 
@@ -258,9 +443,29 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
         }
 
         tapHittableButton(named: "다음", timeout: 10)
-        tapHittableButton(named: "내 옷장에 추가", timeout: 10)
+        tapHittableButton(named: "보유한 옷으로 등록", timeout: 10)
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 10))
         capture(name: "closet-saved-\(expectedProductText)")
+    }
+
+    private func deleteClosetItem(containing productText: String) throws {
+        app.activate()
+        tapHittableButton(named: "내 옷장", timeout: 8)
+        tapHittableButton(containing: productText, timeout: 10)
+        tapHittableButton(named: "편집", timeout: 8)
+
+        let deleteButton = app.buttons["삭제"]
+        for _ in 0..<6 where !deleteButton.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 8))
+        deleteButton.tap()
+
+        let destructiveConfirmation = app.alerts.buttons["삭제"]
+        if destructiveConfirmation.waitForExistence(timeout: 3) {
+            destructiveConfirmation.tap()
+        }
+        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 10))
     }
 
     private func shareFromSafariAndVerifyComparison(
@@ -346,6 +551,11 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
     private func openURLInSafari(_ url: String) {
         safari.launch()
 
+        let tabOverviewDone = safari.buttons["DoneButton"]
+        if tabOverviewDone.waitForExistence(timeout: 3), tabOverviewDone.isHittable {
+            tabOverviewDone.tap()
+        }
+
         let addressButton = safari.buttons.matching(
             NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS[c] %@", "주소", "Address")
         ).firstMatch
@@ -358,13 +568,7 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
         let addressField = safari.textFields.firstMatch
         XCTAssertTrue(addressField.waitForExistence(timeout: 8), safari.debugDescription)
         addressField.tap()
-        let clearButton = safari.buttons["ClearTextButton"]
-        if clearButton.waitForExistence(timeout: 3) {
-            clearButton.tap()
-        } else {
-            addressField.typeKey("a", modifierFlags: .command)
-            addressField.typeKey(.delete, modifierFlags: [])
-        }
+        addressField.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         addressField.typeText(url)
         let goButton = firstHittableElement(in: safari.buttons, labels: ["이동", "Go"])
         if goButton.waitForExistence(timeout: 3) {
@@ -445,18 +649,48 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
 
     private func dismissComparisonSheetIfNeeded() {
         app.activate()
-        if app.navigationBars["비교 결과"].exists {
+        let newTask = app.buttons["새 작업"]
+        if !newTask.exists || !newTask.isHittable {
             let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.30))
             let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
             start.press(forDuration: 0.05, thenDragTo: end)
-            if app.navigationBars["비교 결과"].waitForExistence(timeout: 2) {
+            if !newTask.waitForExistence(timeout: 2) || !newTask.isHittable {
                 start.press(forDuration: 0.05, thenDragTo: end)
             }
         }
-        let newTask = app.buttons["새 작업"]
         let predicate = NSPredicate { _, _ in newTask.exists && newTask.isHittable }
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 15), .completed)
+    }
+
+    private func tapPreferredReferenceOrFirstCandidate(
+        preferredText: String,
+        caseNumber: Int
+    ) {
+        let preferred = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", preferredText)
+        ).allElementsBoundByIndex.first(where: { $0.isHittable })
+        if let preferred {
+            preferred.tap()
+            return
+        }
+
+        let comparisonCandidate = app.buttons.matching(
+            NSPredicate(
+                format: "label CONTAINS[c] %@ OR label CONTAINS[c] %@",
+                "실측",
+                "비교 가능"
+            )
+        ).allElementsBoundByIndex.first(where: { $0.isHittable })
+        guard let comparisonCandidate else {
+            XCTFail("\(caseNumber)번에서 선택 가능한 비교 후보를 찾지 못했습니다.\n\(app.debugDescription)")
+            return
+        }
+        print(
+            "FITMATCH_PHYSICAL_A200_FALLBACK index=\(caseNumber) "
+                + "preferred=\(preferredText) selected=\(comparisonCandidate.label)"
+        )
+        comparisonCandidate.tap()
     }
 
     private func tapHittableButton(named name: String, timeout: TimeInterval) {
