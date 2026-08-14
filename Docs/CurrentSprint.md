@@ -1,211 +1,64 @@
 # Current Sprint
 
-Updated: 2026-07-16
+Updated: 2026-08-07
+Branch: `리뉴얼_1`
 
-## Branch
-feature/measurement-standardization
+## Goal
+
+기존 UX와 비교 구조를 유지하면서 저장 안정성, 비동기 요청 소유권, 파서 신뢰성, 자동 회귀 검증을 출시 가능한 수준으로 올립니다.
 
 ## Completed
-- Applied the audited 17-type Musinsa measurement policy: set-in, raglan, sleeveless/vest, pants, skirt, underwear-bottom, and dress records now use only verified common codes while unknown types/unsupported labels remain unknown.
-- Limited Musinsa Korean body-chest standard fallback to convertible top/outer/dress options, rejected ambiguous set options, and stopped unavailable products from generating synthetic 0% recommendations.
-- Added Uniqlo generic sleeve and skirt-length mappings while preserving CB sleeve and leaving gathered body width/neck circumference unsupported; comparison now calculates differences from the matched record pair.
-- Raised Musinsa mapping to v8, Uniqlo mapping to v6, and legacy migration to v9; imported records are re-evaluated without reapplying already-normalized Uniqlo v5 circumference conversion.
-- Added a validated canonical parsed-closet classification boundary so link registration, missing-reference registration, and compare auto-confirm use active taxonomy category/detail codes while preserving garment family, length, construction, and source metadata independently.
-- Corrected verified Musinsa/Uniqlo classification precedence for skirts, women’s underwear bottoms, homewear, denim overshirts, Bottoms shorts, sleeveless products, and structural outerwear without inventing measurement mappings.
-- Expanded exact Musinsa upper-body `총장` mapping to tops and outerwear with mapping v7 / migration v8 while retaining lower outseam/inseam, skirt length, cross-brand sleeve exclusions, and standard-size fallback behavior.
-- Aligned History detail fit-match display with its list card by showing the persisted recommendation score as `0%` instead of replacing zero with `정보 부족`; comparison and scoring logic remain unchanged.
-- Corrected the Home recent-comparison title behavior so any product name that would wrap onto a second line is instead kept to one line with a visible trailing ellipsis.
-- Fixed external-share replacement while an A-product result is already open: compare sheets now wait for actual dismissal, keep only the latest pending request, and recreate `CompareFlowSheet` with a request identity; cold-start requests are handled on MainTab appearance.
-- Refined only the Home preview cards: product names remain capped at two lines with tail truncation, the Closet reference action now reads `기준` and matches the favorite secondary style, and the recent-result summary no longer uses a gray fill.
-- Temporarily disabled and preserved as comments the History/My Closet leading swipe favorite/reference actions; trailing delete swipes remain active.
-- Rebuilt only the My Closet list card with brand/product/internal classification metadata, platform-aware Musinsa attribution, icon-only reference state, and equal-width two-column measurements; preserved the complete prior card as `closetItemCardLegacy` for rollback.
-- Reduced only the result-detail fit-match value to 33pt Black while retaining the 44pt recommendation-size value and shared row alignment.
-- Replaced the result-detail recommendation/fit cells with one centered three-row component using identical 44pt values and fixed title/value/detail heights; reliability remains leading-aligned.
-- Consolidated units in the result-detail measurement card by removing repeated `cm` suffixes from row values and adding a subtle top-trailing `(단위: cm)` label.
-- Restored equal-width result-detail metrics and rebuilt the recommendation-size cell as a 132pt ZStack so its value is geometrically centered while all metric titles remain leading-aligned.
-- Rebalanced result-detail metrics to equal 28% recommendation/fit columns and a 44% reliability column, restoring the full `N개 실측항목 비교` label.
-- Increased the History list recommended-size value from 22pt to 26pt Black while retaining single-line scaling for `XXL` on narrow widths.
-- Reduced the result-detail metric card's content height from 150pt to 132pt and added History-only compact badge typography/scaling so `매우 잘 맞아요` remains visible without ellipsis.
-- Increased only the History list recommended-size value to 22pt Black while retaining the 20pt fit-rate value and existing single-line scaling safeguards.
-- Tightened result-detail reliability star/grade spacing and shortened its coverage label to `N개 항목 비교` without truncation.
-- Kept result-detail recommendation size and fit rate centered while restoring only the reliability column to leading alignment.
-- Refined the History 2×2 result row with neutral app-color emphasis, balanced headline sizing, and bottom-trailing relative dates; restored centered result-detail recommendation metrics and compacted reliability spacing without changing History list alignment.
-- Removed the remaining History `정사이즈 추천` literal and recombined confidence, measurement count, measurement info, and icons into the single third result-metric column while preserving fixed empty detail-row space.
-- Added a History-only compact metric style using `title3.black`, monospaced digits, tightening, and 0.75 minimum scaling so 100% and XXL remain single-line without changing result-detail typography.
-- Swapped only the result reference/measurement card order and rebuilt the History 2×2 grid card with image date/favorite overlays, a restrained product block, separator, and emphasized bottom recommendation/fit row while retaining its legacy composition.
-- Reversed the prior centering policy: result metrics now use equal-width, fixed-height rows with identical leading insets, removed only the result-card `정사이즈 추천` label, removed History product-size metadata, and added Musinsa app-first product opening with web fallback.
-- Standardized every verified Musinsa upper-body measurement labeled exactly `총장` to `bodyLengthBackNeckToHem` using parsed FitMatch category context instead of a type-number whitelist, with mapping v6 and idempotent migration v7 recovery for qualified legacy records.
-- Unified History and result-detail recommendation size/fit columns through the shared `RecommendationMetricColumn`, eliminating divergent typography, spacing, and centering behavior.
-- Restored compact measurement icons beneath the result's measurement-count line, including the custom shoulder-line symbol, while removing redundant leading measurement icons from the detail sheet.
-- Fixed History result metrics to three identical calculated column widths, removed automatic recommended-size font scaling, retained centered size/fit metrics, and isolated reliability as the only leading-aligned column.
-- Tightened History card spacing, removed color snapshots, normalized centered metric typography, strengthened date contrast, added a light measurement-count reliability line, and split result confidence versus measurement-detail information sheets.
-- Updated History list cards with Musinsa source attribution beside the brand, centered and enlarged result metrics, one-line product names, Korean numeric weekday dates, and a dedicated shoulder-line icon in result reliability details.
-- Reworked the History list card into the supplied product-summary, three-metric result panel, and dated measurement footer while preserving taps, favorite/delete swipes, grid cards, and the prior list composition as `historyCardLegacy`.
-- Refined reliability measurement symbols so shoulder reads as horizontal width, total length as a vertical ruler, and sleeve length as a diagonal ruler.
-- Removed the comparison-result content's redundant bottom padding so the fixed safe-area action inset no longer creates unnecessary scrolling when the report fits on screen.
-- Moved comparison-result favorite control onto the product image, centered result metrics, moved comparison coverage into the reliability information sheet, unified neutral secondary button surfaces, and applied magnitude-based difference colors.
-- Compacted the comparison-result report so product information, dynamic reliability measurement icons, measurement differences, collapsible coverage, and the reference garment form one dense result flow with a single Closet-add action.
-- Rebuilt the comparison-result detail UI to match the supplied report layout while retaining the complete previous card composition as `comparisonResultScreenLegacy` for immediate rollback.
-- Added Musinsa standard-size-chart fallback for products without actual measurements, keeping body chest circumference separate from garment measurements and preserving the existing actual-measurement path.
-- Musinsa and Uniqlo now share canonical upper-body and verified lower-body width measurement codes while retaining distinct sleeve, pants-outseam, pants-inseam, and skirt-length paths.
-- Measurement migration v6 upgrades stored UserFit/ProductSize upper mappings and verified lower mappings; Uniqlo waist/hip circumferences are halved exactly once while source metadata and raw values remain intact.
-- History detail re-comparison now replaces the selected history route with the newly persisted history ID, so dismissing the garment picker keeps the recalculated result detail on screen instead of popping to the list.
-- Successful reference-garment changes from RecommendationResultView now replace the persisted same-product history through the existing graph-reuse store; insufficient evidence or save failure keeps the previous screen and record intact.
-- Consolidated recommendation and product-parser diagnostics behind a DEBUG-only Korean logger; per-size score output is now one line and duplicated parser metadata logs are removed from Release builds.
-- Recommendation result reference changes now dismiss only after a successful recalculation; insufficient measurement evidence keeps the picker open with comparable/excluded items and an optional reference-only comparison.
-- Compare flow sheets now receive the root TabBarVisibilityController, preventing RecommendationResultView environment-object crashes; DEBUG logs identify Korean screen/action/status transitions.
-- Selecting Uniqlo or Musinsa in new Closet registration now defaults measurement input to that platform's size chart; direct registration still defaults to FitMatch measurement.
-- Simplified new Closet registration to Uniqlo official store, Musinsa, or direct registration with source-specific measurement choices.
-- Direct registration now skips measurement-source selection and stores FitMatch-standard measurement records; legacy `otherSizeChart` remains editable without conversion.
-- Recompare persistence now reuses stored Product/ProductSize objects by identity or normalized size name and removes unreferenced duplicate product graphs.
-- Added 12-second request timeouts to Uniqlo parsing, matching the bounded Musinsa recompare requests.
-- Musinsa recompare now bypasses redirect-page loading for canonical product URLs and bounds all Musinsa requests with a 12-second timeout.
-- Recompare history saving now reuses the persisted deterministic ProductSize and Product graph instead of inserting duplicate SwiftData identities.
-- Updated the Musinsa launch shortcut to the current OneLink in Home and Compare flow.
-- Fixed the Closet edit measurement-label type inference and display-kind conversion build errors.
-- Restored file-local size/difference formatting used by Compare flow and removed cross-file `fileprivate` dependencies from Closet validation.
-- Added a four-page first-launch onboarding shown after Splash, persisted with AppStorage and hidden on later launches.
-- Added a settings replay path that presents onboarding without changing first-launch completion state.
-- Replaced the simple usage steps with an eleven-topic, single-expanded-item accordion matched to current FitMatch behavior.
-- Restored the MY tab root to My Closet; settings remains accessible from the existing top-header account navigation.
-- Replaced the mock signed-in profile header with FitMatch introductory copy.
-- Marked unavailable settings rows as `준비 중` without navigation affordances and added a five-step FitMatch usage guide.
-- Added the versioned, bundled FitMatch taxonomy JSON and provider abstraction with controlled fallback and legacy Korean aliases.
-- Added optional stable classification and normalized product-type codes without removing persisted Korean snapshots or source-category metadata.
-- Switched Closet add classification selectors to provider-backed gender/category/detail options and atomic length/form details.
-- Added centralized verified knit/sweater and T-shirt source mappings, gender-aware automatic matching, and normalized-type-aware reference uniqueness.
-- Added taxonomy contract/DB documentation and focused validation, migration, matching, reference, and fallback tests.
-- Source category UI now uses only `sourceCategoryPath`; internal category fallback was removed.
-- Closet comparison flow is `대분류 > 세부 카테고리 > 옷` with no source filter.
-- Candidates use `UserFit.category/detailCategory` across all shops and brands.
-- Resolved/history-matched categories are preselected.
-- Reference garments are prioritized; source is display-only metadata.
-- Added root `AGENTS.md`.
-- iOS Simulator build and `git diff --check` passed.
-- Replaced conditional top-header rendering with `CollapsibleTopChrome` in Home, Recommend, History, and My Closet while preserving the existing scroll modifiers.
-- Moved only `FitMatchNavigationHeader` into root-level `CollapsibleTopChrome` containers on all four screens so it can reappear while content remains scrolled.
-- Kept History and My Closet filter controls inside their `ScrollView` content; filters no longer collapse with the app header.
-- Kept `hidesBottomTabBarOnScroll(tab:topChrome:)` attached to each actual `ScrollView`.
-- Added persistent source-category-to-FitMatch mapping reuse with `sourceCategoryDepth1...4` as the primary key and `sourceCategoryPath` only as fallback.
-- Compare flow now skips category confirmation for a single stored/history mapping or a valid parser inference.
-- Unmapped categories show a dedicated FitMatch mapping screen; confirmed mappings are saved for subsequent products.
-- Reset unresolved picker values so the first picker always uses `ClothingCategory` and the second uses `ClosetDetailCategory`.
-- Updated the shared root chrome scroll handler so any meaningful upward scroll immediately restores both the app header and bottom tab bar.
-- Reverified that only `FitMatchNavigationHeader` is collapsible and History/My Closet filters remain ordinary scroll content.
-- Removed the per-event 3pt cutoff from root chrome tracking so slow, small scroll deltas accumulate and trigger header/tab hiding.
-- Simplified root chrome tracking to hide immediately on positive scroll delta and restore immediately on negative delta; bottom-boundary events are no longer discarded before hiding.
-- Replaced root chrome snapshot/clamping/boundary detection with direct `ScrollGeometry.contentOffset.y` tracking.
-- Removed synchronous animated header/tab mutations from the geometry callback after confirming they changed the parent height and fed layout-generated offsets back into direction detection.
-- Added a single root chrome coordinator that coalesces visibility decisions onto the next main run loop, ignores geometry during application, and resets the raw-offset baseline afterward.
-- Bottom overscroll rebound is ignored instead of being treated as an upward user scroll.
-- Root chrome direction tracking now stores `previousMaxOffset`; geometry events with a max-offset change over 1pt only refresh the baseline and never change visibility.
-- Stable-layout direction changes require at least 2pt raw-offset movement, and both raw/max baselines reset after visibility application.
-- Removed duplicate screen-level header animations.
-- Removed `CollapsibleTopChrome` animation entirely so header height changes immediately and cannot produce per-frame `maxOffset` changes near the bottom.
-- Replaced the no-same-category comparison UX with a dedicated `같은 분류의 옷이 없어요` screen and compare-cancel action.
-- Removed category/detail pickers from the similar-garment flow.
-- Similar garments now show only existing `UserFit` items, grouped by inferred exact classification, same main category, and remaining closet items.
-- Selected similar garments continue through the existing temporary reference comparison path.
-- Rebuilt Home as a personal dashboard with a wordmark-only header, conditional clipboard and latest-comparison cards, reference-garment readiness, and a reusable guide card.
-- Home reference-garment actions now open My Closet, while clipboard comparison and result-detail navigation reuse the existing flows.
-- Closet editing now supports changing internal category and detail category for both manual and URL-imported garments.
-- URL-imported garment edits keep parsed product fields and source measurements read-only while saving user-selected closet classification.
-- Moving a reference garment into a classification with an existing reference now requires confirmation before replacing it.
-- My Closet list cards now show the source platform with the parsed original category path, without the old `출처:` label or internal-category fallback.
-- Added a shared comparison-profile matcher derived from source category depth/path, product name, internal detail category, and valid measurements.
-- Automatic comparison now requires matching major category, known garment family, known compatible length type, and at least two common core measurements.
-- Reference garments now rank first only among compatible candidates; brand, shopping mall, and prior manual selections do not influence automatic compatibility.
-- Same-family length conflicts and unknown profiles now require manual selection, limited to the same major category with same-family items first.
-- Manual sleeve/pants-length mismatches exclude the incompatible measurement, lower confidence, and add a concise result explanation.
-- Added focused matcher tests for sleeve/pants conflicts, compatible long sleeves, unknown length, selection isolation, and manual exclusion.
-- Standardized all confirmed Closet-add action buttons to `내 옷장에 추가` while preserving navigation, save behavior, and distinct method-selection labels.
 
-## Current Task
-- Final audited product classification, standard-chart fallback, and measurement-code correction
+- 비교 화면 종료 시 진행 중 분석 작업 취소
+- 연속 분석 요청에서 최신 요청만 화면 상태를 소유하도록 보강
+- 저장 실패 시 SwiftData rollback 및 사용자 오류 안내
+- 저장소 생성 실패 시 데이터 삭제를 유도하지 않는 복구 화면
+- 지원하지 않는 URL과 허위 범용 파서 fallback 제거
+- 무신사·유니클로 분류 및 길이 프로파일 회귀 수정
+- Share Extension 실행 성공·실패 처리 보강
+- 앱과 공유 확장의 공유 scheme 구성
+- 비보호 코드의 Swift 6 actor-isolation 경고 정리
+- 취소된 요청과 최신 요청 소유권 자동 테스트
+- 실서버 제외 로컬 단위 테스트 `237/237` 통과
+- 무신사 대표 fallback 테스트 `2/2` 통과
+- 무신사 실서버 검증을 전용 `FitMatchLiveValidation` scheme의 실패 판정 테스트로 교체
+- 신규 설치, 하단 탭, 새 작업, 비교 입력, 미지원 URL UI 테스트 추가
+- UI 테스트 실행 시 사용자 저장소와 분리된 메모리 저장소 사용
+- 핵심 UI 테스트 `5/5` 시뮬레이터 실행 통과
+- 전체 단위 테스트 재실행: 로컬 `237/237` 통과, 실서버 2개는 일반 실행에서 명시적 skip 확인
+- `FitMatchLiveValidation` 실서버 검증 `2/2` 실제 실행 통과
+- 범용 iOS 기기 대상 앱·단위 테스트·UI 테스트·공유 확장 `build-for-testing` 통과
+- 보호된 스크롤 파일과 modifier 호출부 무변경 확인
+- 신규 1,280건을 포함한 누적 고유 상품 2,560건 운영 분류 및 Swift↔DB 규칙 미러 2,560/2,560 일치
+- 실제 공식 실측 비교 879쌍 독립 무결성 검사 오류 0건 및 사람 검수 후보 200쌍 준비
+- 개인·상품 원문을 저장하지 않는 로컬 집계형 출시 품질지표와 사용자 선택형 진단 내보내기 추가
+- 최신 전체 자동 회귀 `284개 / 통과 279개 / 실패 0개 / 실서버 전용 skip 5개`
+- 최신 코드 기준 arm64 Release archive `/tmp/FitMatch-AppStoreUnsigned-MetricsExport-20260807.xcarchive` 생성, 앱·공유 확장 1.0 (4), Privacy Manifest, dSYM 포함 확인
+- iPhone 14 Pro / iOS 26.5.2에서 개발 서명 빌드·설치·전면 실행·딥링크 수신 후 프로세스 생존 확인
+- URL scheme 식별자를 현재 앱 번들 ID와 일치시키고 최신 Release archive에서 재검증
+- Release 진단 로그의 상품·옷장·카테고리·실측·비교 상세 출력을 차단하고 전체 회귀와 arm64 archive 재검증
+- 활성 MY 화면에 개인정보처리방침·문의 및 지원 진입점을 연결하고 HTTPS URL 구성 검증 및 UI 회귀 통과
+- 최신 개인정보·지원 화면 포함 전체 284개 회귀와 arm64 Release archive 재검증
+- App Store archive 제출 게이트에 Apple Distribution 서명 검사를 추가하고 현재 공개 URL 2개·서명 2개만 실패함을 자동 판정
+- 품질 진단 내보내기 단위 테스트 `5/5`와 지원 화면 UI 테스트 `1/1` 통과
 
-## Remaining Bugs
-- The supplied corpus audit JSON files (`index.json`, `analysis.json`, category/fallback evidence) are not present locally; only `FULL_CORPUS_AUDIT.md` is available, so the 12,011-record and 111-category-pattern suites cannot be executed from raw fixtures yet.
-- Compare's source-category fallback still exposes compatibility enum bindings; it should adopt stable-code state when the compare ViewModel persistence contract is migrated.
-- Existing legacy garment-family details such as 셔츠/니트/후드 cannot be safely converted to the new length-only detail without source/name evidence, so their snapshots remain unresolved rather than being guessed.
-- Manual verification of scroll jitter/crash fix
-- Comparison-profile tests are compiled but simulator execution is blocked while the test runner waits for simulator workers to materialize.
-- Discount UI
+## Device-only QA
+
+- 실제 아이폰 데이터 보존 및 CRUD
+- Safari·무신사 앱·유니클로 공유 확장
+- 네트워크 단절과 복구
+- 하단 바운스·감속·방향 전환 스크롤 동작
+- 실제 쇼핑몰 앱 이동과 복귀
+
+상세 절차는 `Docs/HomeDeviceQAChecklist.md`에서 관리합니다.
+
+## Known Remaining Product Decision
+
+- 추천 탭은 현재 `준비중` 화면입니다. 출시 전에 실제 서비스로 구현할지 탭을 숨길지 기획 결정을 내려야 합니다.
+- 보호된 탭바 스크롤 파일의 기존 Swift 6 경고는 명시적 변경 승인 전까지 유지합니다.
 
 ## Rules
-- Do not commit
-- Do not push
-- Follow `AGENTS.md`.
 
-## Working Tree
-- Modified: `FitMatchCard.swift` and this sprint document.
-- No staged or untracked files.
-- No untracked files.
-- No commit or push performed in the latest task.
-
-## Verification
-- The official audit table accounts for all 788 Musinsa products with actual measurements; table-driven coverage compiles for all 17 observed types, exact supported labels, unknown type 999, Uniqlo supported/unsupported codes, safe fallback categories, ambiguous set options, record-value comparison, and unavailable-result behavior.
-- Generic iOS device Debug build and test-bundle compilation pass without launching a simulator; `git diff --check` and protected scroll-file/call-site checks pass.
-- Canonical classification and Musinsa upper-body total-length changes passed the generic iOS device Debug build and test-bundle compilation; focused fixtures cover invalid taxonomy combinations, Musinsa skirt/underwear/homewear/cardigan, Uniqlo denim overshirt/Bottoms/sleeveless/skirt, and top/outer total length. No simulator was launched.
-- Re-fetched all 1,200 manifest URLs with zero request errors and reran the current depth-first canonical rules: taxonomy-valid automatic selections improved from 486→662/1,000 for Musinsa and 77→175/200 for Uniqlo; 837/1,200 are now auto-selectable and 363 correctly require confirmation. The validation run also caught and fixed umbrella-path precedence for `원피스/스커트` and `속옷/홈웨어`.
-- External-share compare replacement passed the generic iOS device Debug build and `git diff --check`; the fix changes only compare request/sheet lifecycle and does not alter comparison logic or protected scroll code.
-- Repository-wide exact search confirms zero `"정사이즈 추천"` literals; the recombined confidence/measurement column passed the generic iOS device Debug build and `git diff --check`.
-- History compact metrics passed the generic iOS device Debug build and `git diff --check`; result-detail typography, 2×2 grid cards, and protected scroll code remain unchanged.
-- Result card-order swap and supplied-reference History 2×2 grid cards passed the generic iOS device Debug build and `git diff --check`; list cards, routing, comparison logic, and protected scroll code remain unchanged.
-- Equal-width leading-aligned result metrics, result-only label removal, History option removal, and Musinsa app-first opening passed the generic iOS device Debug build and `git diff --check`; device validation of the installed Musinsa route remains.
-- Musinsa top-length policy tests cover types 5/11/20/21/24, an unknown future type, type 5↔21 comparison, and qualified legacyUnknown recovery; the app and test bundles compile for generic iOS without launching a simulator.
-- Shared History/detail recommendation metric rendering passed the generic iOS device Debug build and `git diff --check`; the existing UserFit migration actor-isolation warning remains.
-- Restored result measurement icons and simplified measurement-sheet rows passed the generic iOS device Debug build and `git diff --check`.
-- Equal-width History metrics and fixed recommended-size typography passed the generic iOS device Debug build and `git diff --check`.
-- History density/metric refinements and split result confidence/measurement information sheets passed the generic iOS device Debug build and `git diff --check`.
-- History source/metric/date polish and the comparison-detail shoulder icon passed the generic iOS device Debug build and `git diff --check`; the existing UserFit migration actor-isolation warning remains.
-- The supplied-reference History list card passed the generic iOS device Debug build and `git diff --check`; grid rendering, detail routing, swipe actions, and protected scroll code remain unchanged.
-- The comparison-result control and measurement-visibility refinements passed the generic iOS device Debug build and protected-scroll diff checks.
-- The compact comparison-result UI passed the generic iOS device Debug build and `git diff --check`; no simulator was launched and protected scroll code/call sites remain unchanged.
-- The supplied-image comparison-result layout passed generic iOS device compilation and static diff checks; calculation, persistence, routing, history-list UI, and protected scroll code remain unchanged.
-- Musinsa standard-chart detection, option normalization, fallback/mixed comparison, and unavailable-result regression tests compile with the generic iOS device test bundle; no simulator was launched.
-- Home card polish differentiates Closet and recent-comparison purposes with restrained Material surfaces, tightens carousel density, and preserves result-first typography and existing actions.
-- Cross-platform measurement tests cover common upper measurements, sleeve exclusion, lower width conversion/comparison, outseam/inseam separation, raglan preservation, and idempotent v6 migration; app and test bundles compile for generic iOS devices.
-- History-detail route retention passed the generic iOS device Debug build; the picker dismissal remains local to RecommendationResultView and protected scroll files/call sites are unchanged.
-- Last-reference persistence tests cover latest UserFit/recommended-size replacement, single-history retention, stable ProductSize/measurement-record identities, and insufficient-evidence record preservation; app and test bundles compile for generic iOS devices.
-- Performance-diagnostic logging passed generic iOS device Debug and Release builds; Release binary inspection found no DEBUG logger or detailed recommendation-score strings.
-- Recommendation result reference-change regression tests cover compatible success and insufficient-evidence outcomes; the generic iOS device Debug build succeeded without launching a simulator.
-- Compare sheet environment injection and Korean DEBUG transition logs passed the generic iOS device Debug build and protected-scroll diff checks.
-- Closet source UX and repeated-comparison changes passed the generic iOS Simulator Debug build, test-target build, and `git diff --check`; selected simulator tests were stopped after the test runner did not return results.
-- Musinsa canonical-URL fast-path and request timeout changes passed the generic iOS Simulator Debug build and `git diff --check`.
-- Recompare deterministic-size regression coverage was added; the app Debug build succeeded, while test execution is blocked by a pre-existing Swift Testing macro compile error in `fitmatchMeasuredEntryCreatesComparableStandardRecords`.
-- Generic iOS Simulator Debug build succeeded after resolving the measurement-label and file-private helper compile errors; `git diff --check` passed.
-- Closet product saving now reuses an already persisted deterministic `ProductSize` and its source `Product`, avoiding SwiftData unique-ID conflicts when another size of the same product is added.
-- Home `기준 옷` now toggles immediately like the favorite action, uses a red selected state, and asks only when replacing a conflicting reference garment; the generic iOS Simulator Debug build and `git diff --check` passed.
-- Home recent Closet cards use the compact `기준 옷` label while preserving state-specific icons and accessibility actions; the generic iOS Simulator Debug build and `git diff --check` passed.
-- Home recent Closet cards replace the passive status footer with a safe reference-garment action and an edit action using the existing detail editor; the generic iOS Simulator Debug build and `git diff --check` passed.
-- Home Closet status now shows up to five recently registered garments using the same lazy horizontal 204pt card pattern as recent comparisons; the generic iOS Simulator Debug build and `git diff --check` passed.
-- Restored the recent comparison card width to 204pt while retaining lazy horizontal scrolling and the current card UI; the generic iOS Simulator Debug build and `git diff --check` passed.
-- Recent comparison uses a lazy horizontal list with viewport-relative cards, leaving roughly one-sixth of the next card visible while preserving the existing card UI; the generic iOS Simulator Debug build and `git diff --check` passed.
-- Recent comparison cards now use a softer result container and balanced bottom favorite/recompare actions while preserving result-first navigation; the generic iOS Simulator Debug build and `git diff --check` passed.
-- Home final polish improves result hierarchy, card density, empty-state affordance, and closet stat wording without changing navigation or section structure; the generic iOS Simulator Debug build and `git diff --check` passed.
-- Home dashboard now prioritizes comparison-ready closet counts, a full-card recent-comparison empty CTA, and result-first recent cards; the generic iOS Simulator Debug build and `git diff --check` passed.
-- First-launch onboarding, replay presentation, and accordion usage guide passed the generic iOS Simulator build and `git diff --check`.
-- MY settings navigation and usage guide passed the generic iOS Simulator build and `git diff --check`.
-- Protected scroll modifier call sites have no added or removed lines from this task.
-- Data-driven taxonomy app build and test-bundle compilation passed for the generic iOS Simulator destination.
-- Taxonomy, legacy mapping, reference uniqueness, and matcher tests executed successfully; Xcode's test runner stalled only while finalizing simulator workers after reporting passes.
-- Bundled `FitMatchTaxonomy.json` was verified inside the built app, and `git diff --check` passed.
-- `xcodebuild` passed for the generic iOS Simulator destination.
-- `git diff --check` passed.
-- Search confirmed all four target screens use root-level `CollapsibleTopChrome`, while History/My Closet filters remain in scroll content.
-- Category mapping persistence and automatic-skip changes passed the same build and diff checks.
-- Shared top/bottom chrome restoration change passed `xcodebuild` and `git diff --check`.
-- No-same-category and similar-garment selection changes passed the same build and diff checks.
-- Reentrant chrome fix passed `xcodebuild` and `git diff --check`; no AttributeGraph or SwiftUI recursive-update report was found in local logs.
-- Simulator boot was attempted on iPhone 17 Pro but remained blocked at `Waiting on System App`, so automated launch/gesture reproduction could not complete.
-- `5fdff00` was verified as the direct ancestor of current local/remote `Uniqlo` HEAD `8302869` before applying the max-offset stabilization patch.
-- Max-offset stabilization passed `xcodebuild` and `git diff --check`.
-- Immediate-height `CollapsibleTopChrome` change passed `xcodebuild` and `git diff --check`.
-- Home dashboard composition passed the iOS Simulator Debug build and `git diff --check`.
-- Closet category editing passed the iOS Simulator Debug build and `git diff --check`.
-- My Closet source-category card layout passed the iOS Simulator Debug build and `git diff --check`.
-- Comparison-profile matcher app build passed for the generic iOS Simulator destination; focused test bundle compiled successfully.
-- Closet-add button label standardization passed the generic iOS Simulator build and `git diff --check`.
-
-## Next Task
-Manually verify slow scroll, flick/inertia, top/bottom bounce, rapid direction changes, list/grid switches, and repeated tab changes without freezes or crashes. Then verify source category auto-mapping reuse.
+- `AGENTS.md` 준수
+- 보호된 스크롤 동작 변경 금지
+- 사용자 요청 없이 커밋·푸시 금지

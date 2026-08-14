@@ -58,11 +58,13 @@ final class AddClosetItemViewModel: ObservableObject {
         prefillGender: UserGender? = nil,
         prefillSourceOption: ClosetProductSourceOption? = nil,
         prefillBrand: String? = nil,
-        prefillProductName: String? = nil
+        prefillProductName: String? = nil,
+        prefersRepresentativeByDefault: Bool = false
     ) {
         isEditingExistingItem = item != nil
         guard let item else {
             measurementEntrySource = .fitmatchMeasured
+            isRepresentative = prefersRepresentativeByDefault
             if let prefillSourceOption {
                 selectProductSource(prefillSourceOption)
             }

@@ -1,0 +1,536 @@
+{
+  "selection_policy": "official live category discovery; production parser and numeric size table must validate",
+  "candidates": [
+    {
+      "source": "uniqlo",
+      "product_id": "E471808",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E471808-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481040",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481040-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483184",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483184-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483281",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483281-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E485735",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E485735-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486295",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486295-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486703",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486703-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486706",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486706-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487585",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487585-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488041",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488041-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489074",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489074-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489075",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489075-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489076",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489076-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491119",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E491119-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491209",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E491209-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491210",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E491210-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483281",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483281-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486703",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486703-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486706",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486706-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488041",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488041-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489074",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489074-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489075",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489075-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489076",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489076-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491119",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E491119-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491209",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E491209-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491210",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "상의 > 스웨트셔츠 & 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E491210-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489110",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "아우터 > PUFFTECH & 울트라라이트다운",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489110-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491988",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "아우터 > PUFFTECH & 울트라라이트다운",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E491988-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E473696",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E473696-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475386",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E475386-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E478702",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E478702-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482758",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482758-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482965",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482965-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483512",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483512-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483912",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483912-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483913",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483913-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E484209",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E484209-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E484598",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E484598-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E485593",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E485593-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E485739",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E485739-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486723",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486723-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486726",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486726-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487891",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487891-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488008",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488008-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488010",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488010-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488203",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488203-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488371",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488371-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488694",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488694-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488814",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488814-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488816",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488816-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488997",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488997-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489125",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489125-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489563",
+      "product_name": "공식 카테고리 신규 탐색 후보",
+      "source_path": "팬츠 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 100,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489563-000/00"
+    }
+  ],
+  "gaps": []
+}

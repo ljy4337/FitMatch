@@ -1,0 +1,458 @@
+{
+  "selection_policy": "official source-path candidate; production parser and actual size table must still validate",
+  "candidates_per_target": 10,
+  "candidates": [
+    {
+      "source": "uniqlo",
+      "product_id": "E450259",
+      "product_name": "옥스포드셔츠",
+      "source_path": "셔츠 > 캐주얼셔츠 > 옥스포드",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 4,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450259-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450260",
+      "product_name": "브로드클로스셔츠(버튼다운칼라)",
+      "source_path": "셔츠 > 캐주얼셔츠 > 브로드 클로스(코튼100%)",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 5,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450260-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E452298",
+      "product_name": "옥스포드셔츠(스트라이프)",
+      "source_path": "셔츠 > 캐주얼셔츠 > 옥스포드",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 6,
+      "url": "https://www.uniqlo.com/kr/ko/products/E452298-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E455365",
+      "product_name": "SUPIMA COTTON T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 7,
+      "url": "https://www.uniqlo.com/kr/ko/products/E455365-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E455957",
+      "product_name": "프리미엄리넨셔츠",
+      "source_path": "셔츠 > 캐주얼셔츠 > 리넨",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 8,
+      "url": "https://www.uniqlo.com/kr/ko/products/E455957-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E457111",
+      "product_name": "PEACE FOR ALL 그래픽T(레귤러핏)Haruki Murakami",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 9,
+      "url": "https://www.uniqlo.com/kr/ko/products/E457111-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E457517",
+      "product_name": "AIRism코튼슬리브리스T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 10,
+      "url": "https://www.uniqlo.com/kr/ko/products/E457517-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E457111",
+      "product_name": "PEACE FOR ALL 그래픽T(레귤러핏)Haruki Murakami",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 4,
+      "url": "https://www.uniqlo.com/kr/ko/products/E457111-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E457517",
+      "product_name": "AIRism코튼슬리브리스T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 5,
+      "url": "https://www.uniqlo.com/kr/ko/products/E457517-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E457857",
+      "product_name": "PEACE FOR ALL 그래픽T(레귤러핏)HANA TAJIMA",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 6,
+      "url": "https://www.uniqlo.com/kr/ko/products/E457857-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E459564",
+      "product_name": "PEACE FOR ALL 그래픽T(레귤러핏)Dick Bruna",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 7,
+      "url": "https://www.uniqlo.com/kr/ko/products/E459564-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E465185",
+      "product_name": "AIRism코튼오버사이즈크루넥T(5부)",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 에어리즘 코튼",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 8,
+      "url": "https://www.uniqlo.com/kr/ko/products/E465185-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E465187",
+      "product_name": "드라이컬러크루넥T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 9,
+      "url": "https://www.uniqlo.com/kr/ko/products/E465187-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E465189",
+      "product_name": "드라이립탱크탑",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 슬리브리스",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 10,
+      "url": "https://www.uniqlo.com/kr/ko/products/E465189-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481040",
+      "product_name": "오버사이즈스웨트셔츠",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 스웨트셔츠",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 4,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481040-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483184",
+      "product_name": "GU퍼프스웨트셔츠",
+      "source_path": "티셔츠 & UT > 스웨트셔츠 & 후드집업 > GU",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 5,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483184-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E485735",
+      "product_name": "스웨트오버사이즈풀집파카",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 6,
+      "url": "https://www.uniqlo.com/kr/ko/products/E485735-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486117",
+      "product_name": "스웨트셔츠",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 그 외",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 7,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486117-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486119",
+      "product_name": "스웨트풀집파카",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 8,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486119-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486295",
+      "product_name": "PEANUTS스웨트셔츠A",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > (X)그래픽 스웨트",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 9,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486295-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487585",
+      "product_name": "버튼업스웨트풀오버",
+      "source_path": "티셔츠 & UT > 스웨트셔츠 & 후드집업 > 후드집업",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 10,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487585-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482172",
+      "product_name": "리넨코튼쇼트팬츠(스트라이프)",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 반바지",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 4,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482172-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482260",
+      "product_name": "리넨블렌드이지쇼트팬츠",
+      "source_path": "라운지 팬츠 > 라운지 팬츠 > 쇼트 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 5,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482260-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482646",
+      "product_name": "코튼이지쇼트팬츠",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 반바지",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 6,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482646-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482648",
+      "product_name": "드레이프이지쇼트팬츠(프린트)",
+      "source_path": "파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 7,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482648-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482937",
+      "product_name": "기어쇼트팬츠",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 유니섹스",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 8,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482937-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482942",
+      "product_name": "카고쇼트팬츠",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 카고 & 기어",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 9,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482942-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482944",
+      "product_name": "치노쇼트팬츠",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 유니섹스",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 10,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482944-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E470118",
+      "product_name": "PUFFTECH파카",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 퍼프테크",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 4,
+      "url": "https://www.uniqlo.com/kr/ko/products/E470118-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E479755",
+      "product_name": "PUFFTECH재킷",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 퍼프테크",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 5,
+      "url": "https://www.uniqlo.com/kr/ko/products/E479755-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486171",
+      "product_name": "PUFFTECH재킷",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 퍼프테크",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 6,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486171-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486176",
+      "product_name": "심리스다운파카",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 그 외",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 7,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486176-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486819",
+      "product_name": "PUFFTECH컴팩트재킷",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 퍼프테크",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 8,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486819-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487348",
+      "product_name": "PUFFTECH베스트",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 베스트",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 9,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487348-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487404",
+      "product_name": "PUFFTECH컴팩트재킷",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 퍼프테크",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 10,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487404-000/00"
+    }
+  ],
+  "gaps": [
+    {
+      "source": "uniqlo",
+      "target_category": "bottoms",
+      "target_detail": "cropped_pants"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "bottoms",
+      "target_detail": "three_quarter_pants"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "bottoms",
+      "target_detail": "nine_tenths_pants"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "leggings",
+      "target_detail": "short_leggings"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "leggings",
+      "target_detail": "nine_tenths_leggings"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "leggings",
+      "target_detail": "other_leggings"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "windbreaker"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "anorak"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "jumper"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "short_padding"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "padding"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "long_padding"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "mouton"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "vest"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "padded_vest"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "other_outerwear"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "skirts",
+      "target_detail": "other_skirts"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "dresses",
+      "target_detail": "other_dresses"
+    }
+  ]
+}

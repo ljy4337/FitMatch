@@ -1,0 +1,833 @@
+{
+  "selection_policy": "official source-path candidate; production parser and actual size table must still validate",
+  "candidates_per_target": 50,
+  "candidates": [
+    {
+      "source": "musinsa",
+      "product_id": "3268283",
+      "product_name": "스톤카고포켓밴딩쇼츠(4col)",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 11,
+      "url": "https://www.musinsa.com/products/3268283"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3273265",
+      "product_name": "여성 5부 코튼 저지 숏팬츠 Normal Grey",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 12,
+      "url": "https://www.musinsa.com/products/3273265"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3276580",
+      "product_name": "[2PACK] 쿨믹스 와이드 린넨 라이크 카고 하프팬츠 4종 2PACK SMSP4562",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 13,
+      "url": "https://www.musinsa.com/products/3276580"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3287769",
+      "product_name": "Two Tuck Clean Denim Shorts [2 Colors]",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 14,
+      "url": "https://www.musinsa.com/products/3287769"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3388392",
+      "product_name": "Edition1. 3턱 벌룬핏 버뮤다 트레이닝 숏팬츠(7col)",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 15,
+      "url": "https://www.musinsa.com/products/3388392"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3758234",
+      "product_name": "백 사틴 오피서 쇼츠 [베이지]",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 16,
+      "url": "https://www.musinsa.com/products/3758234"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3858455",
+      "product_name": "[쿨패스]밴딩 와이드 원턱 스웻 하프 팬츠 3 COLOR",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 17,
+      "url": "https://www.musinsa.com/products/3858455"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3859191",
+      "product_name": "린넨라이크 데님 밴딩 숏 팬츠 5 COLOR",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 18,
+      "url": "https://www.musinsa.com/products/3859191"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3859198",
+      "product_name": "쿨 밴딩 와이드 나일론 팬츠 숏 3 COLOR",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 19,
+      "url": "https://www.musinsa.com/products/3859198"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3868162",
+      "product_name": "유니언잭 골지 쇼츠 블랙",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 20,
+      "url": "https://www.musinsa.com/products/3868162"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3908610",
+      "product_name": "[쿨탠다드] 복서 핏 스웨트 쇼츠 [미디엄 그레이]",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 21,
+      "url": "https://www.musinsa.com/products/3908610"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3908614",
+      "product_name": "[쿨탠다드] 복서 핏 스웨트 쇼츠 [크림]",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 22,
+      "url": "https://www.musinsa.com/products/3908614"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3911993",
+      "product_name": "레터링 데님 숏팬츠_3colors",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 23,
+      "url": "https://www.musinsa.com/products/3911993"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3920758",
+      "product_name": "시그니처 코튼 숏 팬츠 MDPT052_6 Colors",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 24,
+      "url": "https://www.musinsa.com/products/3920758"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3970381",
+      "product_name": "파이어버드 숏 팬츠 - 블랙:화이트 / IU2368",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 25,
+      "url": "https://www.musinsa.com/products/3970381"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4011917",
+      "product_name": "[냉감]83플래그 쿨 스윔 쇼츠 4부(5.5인치)(4colors) NSP7726",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 26,
+      "url": "https://www.musinsa.com/products/4011917"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4072869",
+      "product_name": "워싱 코튼 밴딩 원턱 하프 팬츠 [베이지]",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 27,
+      "url": "https://www.musinsa.com/products/4072869"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4082812",
+      "product_name": "(우먼) 스트라이프 테리 쇼츠_인디핑크",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 28,
+      "url": "https://www.musinsa.com/products/4082812"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4084922",
+      "product_name": "[2PACK] 버뮤다 와이드 카고 스웨트 숏 팬츠 (3COLOR)",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 29,
+      "url": "https://www.musinsa.com/products/4084922"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4096885",
+      "product_name": "워시드 하프 데님 팬츠 (LIGHT BLUE)",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 30,
+      "url": "https://www.musinsa.com/products/4096885"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4101711",
+      "product_name": "트윌 투 턱 숏 팬츠 [BLACK]",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 31,
+      "url": "https://www.musinsa.com/products/4101711"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4116246",
+      "product_name": "피그먼트 버뮤다 볼디 팬츠_3 Color",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 32,
+      "url": "https://www.musinsa.com/products/4116246"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4186123",
+      "product_name": "남성) 퀵드라이 쇼츠_MBF5PT1255",
+      "source_path": "Sportswear > 하의 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 33,
+      "url": "https://www.musinsa.com/products/4186123"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4190150",
+      "product_name": "3S 숏 팬츠 - 블랙 / IU2337",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 34,
+      "url": "https://www.musinsa.com/products/4190150"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4190655",
+      "product_name": "Deep One Tuck Sweat Shorts [Light Grey]",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 35,
+      "url": "https://www.musinsa.com/products/4190655"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4216287",
+      "product_name": "조던 브루클린 플리스 쇼츠 M - 블랙:화이트 / FV7287-010",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 36,
+      "url": "https://www.musinsa.com/products/4216287"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4286398",
+      "product_name": "유니언잭 골지 쇼츠 화이트 (long ver.)",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 37,
+      "url": "https://www.musinsa.com/products/4286398"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4421581",
+      "product_name": "하이퍼글램 우븐 쇼츠 IT4665",
+      "source_path": "스포츠/레저 > 하의 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 38,
+      "url": "https://www.musinsa.com/products/4421581"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4676385",
+      "product_name": "[시티 레저] CN 벨티드 멀티 포켓 카고 버뮤다 팬츠 [블랙]",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 39,
+      "url": "https://www.musinsa.com/products/4676385"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4719540",
+      "product_name": "투 턱 와이드 치노 쇼츠 [베이지]",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 40,
+      "url": "https://www.musinsa.com/products/4719540"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4800314",
+      "product_name": "프릴 언발란스 스커트 허리 밴딩 레깅스 바이크 팬츠 [블랙]",
+      "source_path": "Sportswear > 하의 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 41,
+      "url": "https://www.musinsa.com/products/4800314"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4816370",
+      "product_name": "카치온 워시드 더블니 카펜터 쇼츠 BLACK",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 42,
+      "url": "https://www.musinsa.com/products/4816370"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4948898",
+      "product_name": "Double Wrinkle Denim Shorts DEEP BLUE",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 43,
+      "url": "https://www.musinsa.com/products/4948898"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4950955",
+      "product_name": "Wide Cargo Half Denim Pants - 3COL",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 44,
+      "url": "https://www.musinsa.com/products/4950955"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4958989",
+      "product_name": "Signature Denim Shorts DCWPT007LBlueB",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 45,
+      "url": "https://www.musinsa.com/products/4958989"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4970624",
+      "product_name": "멀티스터드 숏팬츠 블랙",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 46,
+      "url": "https://www.musinsa.com/products/4970624"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4981531",
+      "product_name": "카모 버뮤다 볼디 팬츠_2 Color",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 47,
+      "url": "https://www.musinsa.com/products/4981531"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4989763",
+      "product_name": "에브리데이 버뮤다 데님 쇼츠 [블랙]",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 48,
+      "url": "https://www.musinsa.com/products/4989763"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4995109",
+      "product_name": "[DRAW FIT X DAILY ROOM] 로버스트 버뮤다 와이드 데님 팬츠 [BLACK]",
+      "source_path": "바지 > 숏 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 49,
+      "url": "https://www.musinsa.com/products/4995109"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4999963",
+      "product_name": "코튼 버뮤다 팬츠 베이지",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 50,
+      "url": "https://www.musinsa.com/products/4999963"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2300649",
+      "product_name": "겜빗 스타디움 자켓 블랙 JUOT4459",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 11,
+      "url": "https://www.musinsa.com/products/2300649"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2399002",
+      "product_name": "COATING JUMPER [GOLD]",
+      "source_path": "Clothing > 점퍼/재킷 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 12,
+      "url": "https://www.musinsa.com/products/2399002"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2403338",
+      "product_name": "로우 컬러  바시티 자켓_NAVY",
+      "source_path": "Clothing > 점퍼/재킷 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 13,
+      "url": "https://www.musinsa.com/products/2403338"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2715055",
+      "product_name": "깡 스타일리스트 X 플랙 자켓 K75 그레이 블랙",
+      "source_path": "Clothing > 점퍼/재킷 > 데님/트러커 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 14,
+      "url": "https://www.musinsa.com/products/2715055"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2723218",
+      "product_name": "ASI 2WAY 어센틱 후드 윈드브레이커 자켓_블랙",
+      "source_path": "Clothing > 점퍼/재킷 > 나일론/코치 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 15,
+      "url": "https://www.musinsa.com/products/2723218"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2724550",
+      "product_name": "MZ CROP STADIUM(BEIGE)",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 16,
+      "url": "https://www.musinsa.com/products/2724550"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2737008",
+      "product_name": "OSCAR FISHTAIL JACKET 003 _ OLIVE",
+      "source_path": "Clothing > 점퍼/재킷 > 사파리/헌팅 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 17,
+      "url": "https://www.musinsa.com/products/2737008"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2837405",
+      "product_name": "MATIN KIM LOGO COATING JUMPER",
+      "source_path": "Clothing > 점퍼/재킷 > 기타 점퍼/재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 18,
+      "url": "https://www.musinsa.com/products/2837405"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2859672",
+      "product_name": "NFND Logo Nylon Varsity Jacket - Black",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 19,
+      "url": "https://www.musinsa.com/products/2859672"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2862959",
+      "product_name": "W보이클럽 바시티_NAVY",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 20,
+      "url": "https://www.musinsa.com/products/2862959"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2935620",
+      "product_name": "타입 I 트러커 자켓 A3174-0004",
+      "source_path": "Clothing > 점퍼/재킷 > 데님/트러커 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 21,
+      "url": "https://www.musinsa.com/products/2935620"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3006733",
+      "product_name": "뉴시티 울블렌드 바시티 자켓 블랙 JDOT1379",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 22,
+      "url": "https://www.musinsa.com/products/3006733"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3028085",
+      "product_name": "리메인 바시티 자켓 네이비/크림 JUOT4536",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 23,
+      "url": "https://www.musinsa.com/products/3028085"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3030679",
+      "product_name": "울 스타디움 라인 자켓",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 24,
+      "url": "https://www.musinsa.com/products/3030679"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3042005",
+      "product_name": "워싱레더 리그 바시티 자켓",
+      "source_path": "Clothing > 점퍼/재킷 > 레더/라이더스 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 25,
+      "url": "https://www.musinsa.com/products/3042005"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3046279",
+      "product_name": "SELVEDGE DENIM 2ND JACKET_INDIGO",
+      "source_path": "Clothing > 점퍼/재킷 > 데님/트러커 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 26,
+      "url": "https://www.musinsa.com/products/3046279"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3047701",
+      "product_name": "두들 체리 스타디움 크롭 점퍼 [블랙]",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 27,
+      "url": "https://www.musinsa.com/products/3047701"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3048350",
+      "product_name": "챌린저 레이서 자켓 라임",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 28,
+      "url": "https://www.musinsa.com/products/3048350"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3049469",
+      "product_name": "SWEAT VARSITY JACKET NAVY",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 29,
+      "url": "https://www.musinsa.com/products/3049469"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3049731",
+      "product_name": "윈드브레이크 자켓 (라이트그레이)",
+      "source_path": "Clothing > 점퍼/재킷 > 트레이닝 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 30,
+      "url": "https://www.musinsa.com/products/3049731"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3098417",
+      "product_name": "깡스타일리스트 X 플랙 자켓 K45 미드 블루",
+      "source_path": "Clothing > 점퍼/재킷 > 데님/트러커 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 31,
+      "url": "https://www.musinsa.com/products/3098417"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3104458",
+      "product_name": "네크리스 라운드 핀턱 코튼 자켓 MJK116 [KHAKI]",
+      "source_path": "Clothing > 점퍼/재킷 > 사파리/헌팅 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 32,
+      "url": "https://www.musinsa.com/products/3104458"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3109051",
+      "product_name": "emma short sleeve tweed jacket - 2COL",
+      "source_path": "Clothing > 점퍼/재킷 > 기타 점퍼/재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 33,
+      "url": "https://www.musinsa.com/products/3109051"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3229386",
+      "product_name": "바시티 자켓 베이지",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 34,
+      "url": "https://www.musinsa.com/products/3229386"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3281590",
+      "product_name": "어스 반팔 아노락_Black",
+      "source_path": "Clothing > 점퍼/재킷 > 아노락 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 35,
+      "url": "https://www.musinsa.com/products/3281590"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3346284",
+      "product_name": "One Button Crop Linen jacket (Black)",
+      "source_path": "Clothing > 점퍼/재킷 > 슈트/블레이저 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 36,
+      "url": "https://www.musinsa.com/products/3346284"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3421059",
+      "product_name": "요세미티 퀼팅 재킷 - 블랙 / 23A28OAY16NYL00823001",
+      "source_path": "Clothing > 점퍼/재킷 > 사파리/헌팅 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 37,
+      "url": "https://www.musinsa.com/products/3421059"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3452955",
+      "product_name": "Nylon Baseball Jacket [GREEN]",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 38,
+      "url": "https://www.musinsa.com/products/3452955"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3455892",
+      "product_name": "타슬란 윈드 테이커 자켓-블랙",
+      "source_path": "Clothing > 점퍼/재킷 > 나일론/코치 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 39,
+      "url": "https://www.musinsa.com/products/3455892"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3515465",
+      "product_name": "코듀로이 폴라플리스 하프 집업 후리스 Turquoise Blue",
+      "source_path": "Clothing > 점퍼/재킷 > 플리스",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 40,
+      "url": "https://www.musinsa.com/products/3515465"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3515469",
+      "product_name": "C로고 폴라 플리스 봄버 재킷 Cream",
+      "source_path": "Clothing > 점퍼/재킷 > 플리스",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 41,
+      "url": "https://www.musinsa.com/products/3515469"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3538519",
+      "product_name": "모터사이클 챌린저 후드자켓_네이비",
+      "source_path": "Clothing > 점퍼/재킷 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 42,
+      "url": "https://www.musinsa.com/products/3538519"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3542873",
+      "product_name": "체리 보헤미안 후드 아노락 [아이보리]",
+      "source_path": "Clothing > 점퍼/재킷 > 아노락 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 43,
+      "url": "https://www.musinsa.com/products/3542873"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3542946",
+      "product_name": "SMOCK HOODED PARKA 002 _ BLACK",
+      "source_path": "Clothing > 점퍼/재킷 > 기타 점퍼/재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 44,
+      "url": "https://www.musinsa.com/products/3542946"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3585067",
+      "product_name": "WOOL VARSITY JACKET BLACK (VH2DWUB901A)",
+      "source_path": "Clothing > 점퍼/재킷 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 45,
+      "url": "https://www.musinsa.com/products/3585067"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3585549",
+      "product_name": "썬로프 바시티 자켓 네이비 MJOT7653",
+      "source_path": "Clothing > 점퍼/재킷 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 46,
+      "url": "https://www.musinsa.com/products/3585549"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3587483",
+      "product_name": "비커밍 바시티 자켓 블랙 JUOT4592",
+      "source_path": "Clothing > 점퍼/재킷 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 47,
+      "url": "https://www.musinsa.com/products/3587483"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3628160",
+      "product_name": "플라잉 홀스 바시티 자켓 네이비 JUOT4593",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 48,
+      "url": "https://www.musinsa.com/products/3628160"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3634710",
+      "product_name": "서클 로고 플라워 스타디움 자켓 MBJ103 / 2color",
+      "source_path": "Clothing > 점퍼/재킷 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 49,
+      "url": "https://www.musinsa.com/products/3634710"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3635454",
+      "product_name": "[3M 신슐레이트] 코스모폴리탄 울 바시티 자켓 그린",
+      "source_path": "아우터 > 스타디움 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 50,
+      "url": "https://www.musinsa.com/products/3635454"
+    }
+  ],
+  "gaps": [
+    {
+      "source": "musinsa",
+      "target_category": "bottoms",
+      "target_detail": "three_quarter_pants"
+    },
+    {
+      "source": "musinsa",
+      "target_category": "bottoms",
+      "target_detail": "nine_tenths_pants"
+    },
+    {
+      "source": "musinsa",
+      "target_category": "leggings",
+      "target_detail": "other_leggings"
+    },
+    {
+      "source": "musinsa",
+      "target_category": "skirts",
+      "target_detail": "other_skirts"
+    },
+    {
+      "source": "musinsa",
+      "target_category": "dresses",
+      "target_detail": "other_dresses"
+    }
+  ]
+}

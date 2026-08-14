@@ -316,7 +316,7 @@ private struct SearchHistoryResultRow: View {
 
                     HStack(spacing: 8) {
                         metadataPill("추천 \(history.recommendedSize.name)")
-                        metadataPill("핏 매칭률 \(history.recommendationScore)%")
+                        metadataPill("사이즈 유사도 \(history.recommendationScore)%")
                     }
 
                     Text("\(history.product.category.rawValue) / \(history.productDetailCategory.rawValue)")

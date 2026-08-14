@@ -113,7 +113,9 @@ final class MusinsaWebViewParser: NSObject, ProductURLParsing {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
+        #if DEBUG
         print("[MusinsaWebViewParser] ActualSizeTable text: \(tableText.prefix(240))")
+        #endif
         return tableText
     }
 

@@ -1,0 +1,16 @@
+.DS_Store
+DerivedData/
+*.xcresult
+*.xcuserstate
+xcuserdata/
+
+# Generated research corpora and test evidence are archived outside the repo.
+Docs/TestEvidence/
+Docs/CodexSessionHandoff-[0-9]*.md
+Docs/Research/CategoryCorpus-live-*/
+Docs/Research/NewClothingCorpus-*/
+Docs/Research/ReferenceCloset-*/
+Docs/Research/MusinsaNew*/
+Docs/Research/FitPairHumanReview-*/
+Docs/Research/CanonicalTaxonomyAudit-*/
+Docs/Research/CategoryEvidencePolicyAudit-*/

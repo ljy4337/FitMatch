@@ -9,6 +9,8 @@ final class ShareViewController: UIViewController {
     private enum Key {
         static let pendingProductURL = "pendingProductURL"
         static let pendingProductURLCreatedAt = "pendingProductURLCreatedAt"
+        static let metricsCounters = "FitMatch.metrics.aggregate.v1"
+        static let metricsLastUpdatedAt = "FitMatch.metrics.lastUpdatedAt.v1"
     }
 
     private enum DeepLink {
@@ -90,7 +92,7 @@ final class ShareViewController: UIViewController {
         }
 
         loadFirstURL(from: attachments) { [weak self] url in
-            if let url {
+            if let url, self?.isSupportedProductURL(url) == true {
                 self?.savePendingURL(url)
                 self?.showCompletedState()
             } else {
@@ -114,7 +116,7 @@ final class ShareViewController: UIViewController {
 
         if let provider = attachments.first(where: { $0.hasItemConformingToTypeIdentifier(plainTextType) }) {
             provider.loadItem(forTypeIdentifier: plainTextType, options: nil) { item, _ in
-                let url = (item as? String).flatMap(URL.init(string:))
+                let url = (item as? String).flatMap(self.firstURL(in:))
                 DispatchQueue.main.async {
                     completion(url)
                 }
@@ -125,11 +127,53 @@ final class ShareViewController: UIViewController {
         completion(nil)
     }
 
+    private func firstURL(in text: String) -> URL? {
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else {
+            return nil
+        }
+        return detector.firstMatch(in: text, range: range)?.url
+    }
+
+    private func isSupportedProductURL(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        return host == "musinsa.com"
+            || host.hasSuffix(".musinsa.com")
+            || host == "musinsa.onelink.me"
+            || host == "uniqlo.com"
+            || host.hasSuffix(".uniqlo.com")
+    }
+
     private func savePendingURL(_ url: URL) {
-        let defaults = UserDefaults(suiteName: AppGroup.identifier)
-        defaults?.set(url.absoluteString, forKey: Key.pendingProductURL)
-        defaults?.set(Date(), forKey: Key.pendingProductURLCreatedAt)
-        print("[FitMatchShareExtension] saved pending URL: \(url.absoluteString)")
+        guard let defaults = UserDefaults(suiteName: AppGroup.identifier) else { return }
+        defaults.set(url.absoluteString, forKey: Key.pendingProductURL)
+        defaults.set(Date(), forKey: Key.pendingProductURLCreatedAt)
+        recordShareReceived(url: url, defaults: defaults)
+        #if DEBUG
+        print("[FitMatchShareExtension] saved supported \(metricProvider(for: url)) URL")
+        #endif
+    }
+
+    private func recordShareReceived(url: URL, defaults: UserDefaults) {
+        let counterKey = "share.received|provider=\(metricProvider(for: url))"
+        var counters = defaults.dictionary(forKey: Key.metricsCounters)?.compactMapValues {
+            ($0 as? NSNumber)?.intValue
+        } ?? [:]
+        let current = counters[counterKey, default: 0]
+        counters[counterKey] = current == Int.max ? Int.max : current + 1
+        defaults.set(counters, forKey: Key.metricsCounters)
+        defaults.set(Date(), forKey: Key.metricsLastUpdatedAt)
+    }
+
+    private func metricProvider(for url: URL) -> String {
+        let host = url.host?.lowercased() ?? ""
+        if host == "musinsa.com" || host.hasSuffix(".musinsa.com") || host == "musinsa.onelink.me" {
+            return "musinsa"
+        }
+        if host == "uniqlo.com" || host.hasSuffix(".uniqlo.com") {
+            return "uniqlo"
+        }
+        return "unsupported"
     }
 
     private func completeRequest() {
@@ -137,9 +181,12 @@ final class ShareViewController: UIViewController {
     }
 
     private func showCompletedState() {
+        isAttemptingOpen = false
         activityIndicator.stopAnimating()
-        titleLabel.text = "FitMatch에 추가했어요!"
-        messageLabel.text = "보러가기를 누르면 비교 화면에서 바로 사이즈를 계산합니다."
+        titleLabel.text = "상품 링크를 FitMatch에 저장했어요"
+        messageLabel.text = "FitMatch 앱에서 내 옷과 사이즈 비교를 이어갈 수 있어요."
+        openButton.isEnabled = true
+        openButton.setTitle("보러가기", for: .normal)
         openButton.isHidden = false
         closeButton.isHidden = false
         closeButton.setTitle("닫기", for: .normal)
@@ -155,11 +202,16 @@ final class ShareViewController: UIViewController {
 
     @objc
     private func openButtonTapped() {
+        guard !isAttemptingOpen else { return }
         openButton.isEnabled = false
         openButton.setTitle("FitMatch 여는 중", for: .normal)
         messageLabel.text = "FitMatch 앱으로 이동하고 있습니다."
         isAttemptingOpen = true
         openContainingApp()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            guard self?.isAttemptingOpen == true else { return }
+            self?.showOpenRetryState()
+        }
     }
 
     @objc
@@ -169,68 +221,89 @@ final class ShareViewController: UIViewController {
 
     private func openContainingApp() {
         guard let url = URL(string: DeepLink.compareURLString) else {
-            showManualContinuationState()
+            showOpenRetryState()
             return
         }
 
-        print("[FitMatchShareExtension] try responder chain open: \(url.absoluteString)")
+        #if DEBUG
+        print("[FitMatchShareExtension] request containing app open")
+        #endif
 
-        let didRequestOpen = openURLUsingResponderChain(url)
-
-        if didRequestOpen {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                self.completeRequest()
-            }
-        } else {
-            showManualContinuationState()
+        let didRequestOpen = openURLUsingResponderChain(url) { [weak self] success in
+            self?.handleOpenResult(success, url: url, canTryExtensionContext: true)
         }
+        if didRequestOpen {
+            return
+        }
+
+        openURLUsingExtensionContext(url)
     }
 
     @discardableResult
-    private func openURLUsingResponderChain(_ url: URL) -> Bool {
+    private func openURLUsingResponderChain(
+        _ url: URL,
+        completion: @escaping (Bool) -> Void
+    ) -> Bool {
         var responder: UIResponder? = self
 
         while let currentResponder = responder {
-            print("[FitMatchShareExtension] responder: \(type(of: currentResponder))")
-
             if let application = currentResponder as? UIApplication {
-                print("[FitMatchShareExtension] UIApplication found, opening URL")
-                application.open(url, options: [:]) { success in
-                    print("[FitMatchShareExtension] UIApplication.open success: \(success)")
-                }
+                #if DEBUG
+                print("[FitMatchShareExtension] opening containing app through responder chain")
+                #endif
+                application.open(url, options: [:], completionHandler: completion)
                 return true
             }
 
             responder = currentResponder.next
         }
 
-        print("[FitMatchShareExtension] UIApplication not found in responder chain")
         return false
     }
 
-    private func waitForManualContinuationAfterFallback(_ didRequestOpen: Bool) {
-        print("[FitMatchShareExtension] responderChain didRequestOpen: \(didRequestOpen)")
+    private func openURLUsingExtensionContext(_ url: URL) {
+        guard let extensionContext else {
+            showOpenRetryState()
+            return
+        }
 
-        activityIndicator.startAnimating()
-        titleLabel.text = "FitMatch 앱을 여는 중..."
-        messageLabel.text = "앱으로 이동하지 않으면 FitMatch 앱을 직접 열어주세요."
-        openButton.isHidden = true
-        closeButton.isHidden = true
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.showManualContinuationState()
+        extensionContext.open(url) { [weak self] success in
+            self?.handleOpenResult(success, url: url, canTryExtensionContext: false)
         }
     }
 
-    private func showManualContinuationState() {
+    private func handleOpenResult(
+        _ success: Bool,
+        url: URL,
+        canTryExtensionContext: Bool
+    ) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            #if DEBUG
+            print("[FitMatchShareExtension] containing app open success: \(success)")
+            #endif
+            if success {
+                self.isAttemptingOpen = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    self?.completeRequest()
+                }
+            } else if canTryExtensionContext {
+                self.openURLUsingExtensionContext(url)
+            } else {
+                self.showOpenRetryState()
+            }
+        }
+    }
+
+    private func showOpenRetryState() {
         isAttemptingOpen = false
         activityIndicator.stopAnimating()
-        titleLabel.text = "FitMatch에 저장했어요"
-        messageLabel.text = "FitMatch 앱을 열면 공유한 상품으로 바로 비교를 이어갈 수 있어요."
-        openButton.isEnabled = false
-        openButton.setTitle("FitMatch 앱을 직접 열어주세요", for: .normal)
+        titleLabel.text = "상품 링크를 FitMatch에 저장했어요"
+        messageLabel.text = "앱을 자동으로 열지 못했어요. 다시 시도해 주세요."
+        openButton.isEnabled = true
+        openButton.setTitle("FitMatch 다시 열기", for: .normal)
         openButton.isHidden = false
-        closeButton.setTitle("확인", for: .normal)
+        closeButton.setTitle("닫기", for: .normal)
         closeButton.isHidden = false
     }
 }

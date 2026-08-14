@@ -28,6 +28,7 @@ struct AddComparedProductToClosetSheet: View {
     @State private var hasSelectedClosetCategory = false
     @State private var hasSelectedClosetDetailCategory = false
     @State private var isBasisItem = false
+    @State private var isSaving = false
     @State private var alertMessage: String?
 
     init(
@@ -37,6 +38,8 @@ struct AddComparedProductToClosetSheet: View {
         preselectedCategory: ClothingCategory? = nil,
         preselectedClassification: ParsedClosetClassification? = nil,
         isParsedProductReadOnly: Bool = false,
+        startsAtRegistrationConfirmation: Bool = false,
+        prefersRepresentativeByDefault: Bool = false,
         onSaved: ((UserFit) -> Void)? = nil
     ) {
         self.product = product
@@ -46,7 +49,8 @@ struct AddComparedProductToClosetSheet: View {
         self.preselectedClassification = preselectedClassification
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.onSaved = onSaved
-        _step = State(initialValue: isParsedProductReadOnly ? .productInfo : .size)
+        _step = State(initialValue: startsAtRegistrationConfirmation ? .confirm : (isParsedProductReadOnly ? .productInfo : .size))
+        _isBasisItem = State(initialValue: prefersRepresentativeByDefault)
         _brandName = State(initialValue: product.brand?.name ?? "")
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
@@ -181,7 +185,7 @@ struct AddComparedProductToClosetSheet: View {
                 }
                 normalizeSelectedSize()
             }
-            .alert("내 옷장 추가", isPresented: Binding(
+            .alert("보유한 옷 등록", isPresented: Binding(
                 get: { alertMessage != nil },
                 set: { if !$0 { alertMessage = nil } }
             )) {
@@ -200,7 +204,7 @@ struct AddComparedProductToClosetSheet: View {
 
             AddComparedSectionCard(
                 title: "사이즈 선택",
-                subtitle: "실제로 가지고 있는 사이즈를 선택하세요."
+                subtitle: "실제로 가지고 있는 사이즈를 선택해 주세요."
             ) {
                 VStack(alignment: .leading, spacing: 16) {
                     if availableSizes.isEmpty {
@@ -232,7 +236,7 @@ struct AddComparedProductToClosetSheet: View {
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("이 옷을 내 옷장에 등록합니다")
+                        Text("실제로 보유한 옷으로 등록합니다")
                             .font(.title3.weight(.black))
                             .foregroundStyle(.primary)
                         Text(product.brand?.name ?? "정보 없음")
@@ -252,7 +256,7 @@ struct AddComparedProductToClosetSheet: View {
 
             AddComparedSectionCard(
                 title: "상품 확인",
-                subtitle: "쇼핑몰에서 불러온 정보입니다. 다음 단계에서 내 옷장 분류를 선택합니다."
+                subtitle: "쇼핑몰에서 불러온 정보예요. 실제 가지고 있는 상품인 경우에만 계속해 주세요."
             ) {
                 parsedProductReadOnlyRows
             }
@@ -273,7 +277,7 @@ struct AddComparedProductToClosetSheet: View {
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("이 옷을 내 옷장에 등록합니다")
+                        Text("실제로 보유한 옷으로 등록합니다")
                             .font(.title3.weight(.black))
                             .foregroundStyle(.primary)
                         Text(product.name)
@@ -299,8 +303,8 @@ struct AddComparedProductToClosetSheet: View {
             }
 
             AddComparedSectionCard(
-                title: isParsedProductReadOnly ? "내 옷장 분류" : "등록 정보",
-                subtitle: isParsedProductReadOnly ? "내 옷장에 저장할 성별, 카테고리, 사이즈를 선택하세요." : "자동 입력된 정보를 확인하고 저장하세요."
+                title: isParsedProductReadOnly ? "보유한 옷 정보" : "등록 정보",
+                subtitle: isParsedProductReadOnly ? "실제로 가지고 있는 사이즈와 분류를 선택해 주세요. 구매를 고민 중인 상품은 등록하지 마세요." : "자동 입력된 정보를 확인하고 저장하세요."
             ) {
                 registrationInformationFields
             }
@@ -322,7 +326,7 @@ struct AddComparedProductToClosetSheet: View {
                 )
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("내 옷장에 추가")
+                    Text("보유한 옷으로 등록")
                         .font(.title2.weight(.black))
                         .foregroundStyle(.primary)
                     Text(product.brand?.name ?? "브랜드 미상")
@@ -522,6 +526,8 @@ struct AddComparedProductToClosetSheet: View {
                         step = .confirm
                     }
                 case .confirm:
+                    guard !isSaving else { return }
+                    isSaving = true
                     saveSelectedSize()
                 }
             } label: {
@@ -535,8 +541,9 @@ struct AddComparedProductToClosetSheet: View {
                         in: RoundedRectangle(cornerRadius: 18, style: .continuous)
                     )
             }
+            .accessibilityIdentifier("closet.confirmAction")
             .buttonStyle(.plain)
-            .disabled(!isBottomButtonEnabled)
+            .disabled(!isBottomButtonEnabled || isSaving)
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -552,7 +559,7 @@ struct AddComparedProductToClosetSheet: View {
         case .size:
             return "다음"
         case .confirm:
-            return "내 옷장에 추가"
+            return isSaving ? "저장 중" : "보유한 옷으로 등록"
         }
     }
 
@@ -638,7 +645,14 @@ struct AddComparedProductToClosetSheet: View {
         let storedSizeDescriptor = FetchDescriptor<ProductSize>(
             predicate: #Predicate { $0.id == selectedSizeID }
         )
-        let storedSourceSize = try? modelContext.fetch(storedSizeDescriptor).first
+        let storedSourceSize: ProductSize?
+        do {
+            storedSourceSize = try modelContext.fetch(storedSizeDescriptor).first
+        } catch {
+            alertMessage = "저장된 상품 정보를 확인하지 못했습니다. 다시 시도해 주세요."
+            isSaving = false
+            return
+        }
         let sourceSize = storedSourceSize ?? selectedSize
         let sourceProduct = storedSourceSize?.product ?? product
 
@@ -667,13 +681,17 @@ struct AddComparedProductToClosetSheet: View {
         item.genderCode = selectedGenderCode
         item.categoryCode = selectedCategoryCode
         item.detailCategoryCode = selectedDetailCategoryCode
-        item.normalizedProductTypeCode = sourceProduct.resolvedNormalizedProductTypeCode
-            ?? preselectedClassification?.normalizedProductTypeCode
-        let savedClassification = preselectedClassification
-            ?? ParsedClosetClassification.resolve(
-                product: sourceProduct,
-                detailCategory: selectedDetailCategory
-            )
+        // Once the user confirms a closet category, rebuild all comparison
+        // metadata from that answer. A stale parser classification must not
+        // survive invisibly behind the category shown in the closet UI.
+        let savedClassification = ParsedClosetClassification.resolve(
+            category: selectedCategory.serviceGroup,
+            detailCategory: selectedDetailCategory,
+            sourceDepths: [],
+            sourcePath: nil,
+            productName: savedProductName
+        )
+        item.normalizedProductTypeCode = savedClassification?.normalizedProductTypeCode
         if let savedClassification {
             item.garmentType = savedClassification.garmentFamily
             item.sleeveType = savedClassification.lengthType
@@ -682,6 +700,7 @@ struct AddComparedProductToClosetSheet: View {
         item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
         _ = ComparisonProfileMatcher().profile(for: item)
 
+        #if DEBUG
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")
         print("[AddComparedProductToClosetSheet] parsed gender: \(selectedGender.rawValue)")
@@ -692,6 +711,7 @@ struct AddComparedProductToClosetSheet: View {
         print("[AddComparedProductToClosetSheet] sourceCategoryDepth3: \(item.sourceCategoryDepth3 ?? "nil")")
         print("[AddComparedProductToClosetSheet] sourceCategoryDepth4: \(item.sourceCategoryDepth4 ?? "nil")")
         print("[AddComparedProductToClosetSheet] sourceCategoryPath: \(item.sourceCategoryPath ?? "nil")")
+        #endif
 
         if isBasisItem {
             userFits
@@ -708,9 +728,22 @@ struct AddComparedProductToClosetSheet: View {
         do {
             try modelContext.save()
         } catch {
+            modelContext.rollback()
             alertMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+            isSaving = false
             return
         }
+        SourceCategoryHistoryMatcher.saveMapping(
+            for: sourceProduct,
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory
+        )
+        FitMatchMetricsRecorder.shared.record(
+            .closetCreated(
+                origin: .comparedProduct,
+                category: FitMatchMetricMajorCategory(category: item.category)
+            )
+        )
         onSaved?(item)
         dismiss()
     }
@@ -1038,14 +1071,11 @@ private struct BasisToggleRow: View {
 private extension String {
     var displaySizeName: String {
         let value = trimmingCharacters(in: .whitespacesAndNewlines)
-        guard value.contains("/") else {
-            return value
-        }
-
-        return value
+        let finalComponent = value
             .split(separator: "/")
             .last
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             ?? value
+        return SizeTokenNormalizer.displayName(for: finalComponent)
     }
 }

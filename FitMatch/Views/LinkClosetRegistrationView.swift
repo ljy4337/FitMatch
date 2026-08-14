@@ -2,6 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct LinkClosetRegistrationView: View {
+    let onSaved: (() -> Void)?
+    let prefersRepresentativeByDefault: Bool
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Brand.name) private var brands: [Brand]
@@ -17,12 +20,20 @@ struct LinkClosetRegistrationView: View {
     @State private var recoveryViewModel: ShoppingProductViewModel?
     @State private var isShowingSizeTableRecovery = false
     @State private var recoveredSelectedSizeID: UUID?
-    @State private var isShowingSavedAlert = false
+    @State private var shouldCompleteAfterSheetDismissal = false
+    @State private var isShowingSavedToast = false
+    @State private var saveErrorMessage: String?
     @State private var isShowingEmptyPasteboardMessage = false
     @State private var emptyPasteboardShake = 0
+    @State private var loadTask: Task<Void, Never>?
     @FocusState private var isURLFocused: Bool
 
     private let parserService = ProductURLParserService()
+
+    init(prefersRepresentativeByDefault: Bool = false, onSaved: (() -> Void)? = nil) {
+        self.prefersRepresentativeByDefault = prefersRepresentativeByDefault
+        self.onSaved = onSaved
+    }
 
     private var normalizedURLString: String {
         productURL.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -61,9 +72,11 @@ struct LinkClosetRegistrationView: View {
                         product: parsedProduct,
                         detailCategory: parsedDetailCategory
                     ),
-                    isParsedProductReadOnly: true
+                    isParsedProductReadOnly: true,
+                    startsAtRegistrationConfirmation: true,
+                    prefersRepresentativeByDefault: prefersRepresentativeByDefault
                 ) { _ in
-                    isShowingSavedAlert = true
+                    shouldCompleteAfterSheetDismissal = true
                 }
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
@@ -95,21 +108,46 @@ struct LinkClosetRegistrationView: View {
                         prefillSourceOption: closetSourceOption(for: partialProduct),
                         prefillBrand: partialProduct.brand?.name,
                         prefillProductName: partialProduct.name,
+                        prefersRepresentativeByDefault: prefersRepresentativeByDefault,
                         productImageURLString: partialProduct.imageURLString,
                         presentationContext: .linkedProduct
                     ) { item in
                         modelContext.insert(item)
-                        try? modelContext.save()
-                        isShowingSavedAlert = true
+                        do {
+                            try modelContext.save()
+                            shouldCompleteAfterSheetDismissal = true
+                            return true
+                        } catch {
+                            modelContext.rollback()
+                            return false
+                        }
                     }
                 }
                 .presentationDragIndicator(.visible)
             }
         }
-        .alert("내 옷장에 추가했어요.", isPresented: $isShowingSavedAlert) {
-            Button("확인") {
-                dismiss()
+        .onChange(of: isShowingAddToClosetSheet) { _, isPresented in
+            if !isPresented { completeSaveIfNeeded() }
+        }
+        .onChange(of: isShowingManualAddSheet) { _, isPresented in
+            if !isPresented { completeSaveIfNeeded() }
+        }
+        .overlay(alignment: .top) {
+            if isShowingSavedToast {
+                FitMatchSuccessToast(message: "내 옷장에 추가했어요.")
+                    .padding(.top, 18)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
+        }
+        .alert("저장 실패", isPresented: Binding(
+            get: { saveErrorMessage != nil },
+            set: { if !$0 { saveErrorMessage = nil } }
+        )) {
+            Button("확인", role: .cancel) {
+                saveErrorMessage = nil
+            }
+        } message: {
+            Text(saveErrorMessage ?? "")
         }
         .onChange(of: productURL) { _, _ in
             parsedProduct = nil
@@ -120,6 +158,21 @@ struct LinkClosetRegistrationView: View {
             if ProductURLSupport.isSupportedProductURL(productURL) {
                 isShowingEmptyPasteboardMessage = false
             }
+        }
+        .onDisappear {
+            loadTask?.cancel()
+            loadTask = nil
+        }
+    }
+
+    private func completeSaveIfNeeded() {
+        guard shouldCompleteAfterSheetDismissal else { return }
+        shouldCompleteAfterSheetDismissal = false
+        withAnimation { isShowingSavedToast = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.2))
+            onSaved?()
+            dismiss()
         }
     }
 
@@ -158,6 +211,7 @@ struct LinkClosetRegistrationView: View {
 
                 HStack(spacing: 10) {
                     TextField("상품 URL을 붙여넣어 주세요", text: $productURL)
+                        .accessibilityIdentifier("closet.linkURL")
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -167,9 +221,7 @@ struct LinkClosetRegistrationView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                         .onSubmit {
                             if canLoadProduct {
-                                Task {
-                                    await loadProduct()
-                                }
+                                startLoadingProduct()
                             }
                         }
 
@@ -207,10 +259,9 @@ struct LinkClosetRegistrationView: View {
                     systemImage: "sparkles",
                     isLoading: isLoading
                 ) {
-                    Task {
-                        await loadProduct()
-                    }
+                    startLoadingProduct()
                 }
+                .accessibilityIdentifier("closet.linkLoad")
                 .disabled(!canLoadProduct)
             }
         }
@@ -254,6 +305,7 @@ struct LinkClosetRegistrationView: View {
                     PrimaryButton(title: "다음", systemImage: "chevron.right") {
                         isShowingAddToClosetSheet = true
                     }
+                    .accessibilityIdentifier("closet.linkNext")
                 }
             }
         }
@@ -270,7 +322,7 @@ struct LinkClosetRegistrationView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Label(
-                            partialProduct == nil ? errorMessage : "상품 정보를 불러왔습니다.",
+                            partialProduct == nil ? errorMessage : "상품 정보를 불러왔어요.",
                             systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
                         )
                         .font(.headline)
@@ -278,7 +330,7 @@ struct LinkClosetRegistrationView: View {
                     }
 
                     if let partialProduct, !isUnsupportedTopBottomSet {
-                        Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
+                        Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했어요. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -333,6 +385,7 @@ struct LinkClosetRegistrationView: View {
 
         do {
             let parsedInfo = try await parserService.parse(urlString: trimmedURL)
+            guard !Task.isCancelled else { return }
             let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
 
             let sizes = ParsedProductSizeNormalizer.makeProductSizes(from: parsedInfo.sizes)
@@ -363,6 +416,7 @@ struct LinkClosetRegistrationView: View {
             }
             parsedProduct = product
         } catch let partialError as ProductURLParserPartialError {
+            guard !Task.isCancelled else { return }
             let parsedInfo = partialError.productInfo
             let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
             let product = Product(
@@ -384,7 +438,16 @@ struct LinkClosetRegistrationView: View {
             recoveryViewModel = viewModel
             errorMessage = parsedInfo.parserNotice ?? partialError.errorDescription
         } catch {
+            guard !Task.isCancelled else { return }
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
+        }
+    }
+
+    private func startLoadingProduct() {
+        guard loadTask == nil, !isLoading else { return }
+        loadTask = Task {
+            await loadProduct()
+            loadTask = nil
         }
     }
 

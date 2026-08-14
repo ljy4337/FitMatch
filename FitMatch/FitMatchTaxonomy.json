@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "taxonomyVersion": "2026.07.1",
+  "taxonomyVersion": "2026.08.2",
   "genders": [
     {"code":"male","displayName":"남성","sortOrder":0,"isActive":true},
     {"code":"female","displayName":"여성","sortOrder":1,"isActive":true},
@@ -16,7 +16,13 @@
       {"code":"short_sleeve","displayName":"반팔","sortOrder":1,"isActive":true},
       {"code":"three_quarter_sleeve","displayName":"7부","sortOrder":2,"isActive":true},
       {"code":"long_sleeve","displayName":"긴팔","sortOrder":3,"isActive":true},
-      {"code":"other_tops","displayName":"기타 상의","sortOrder":99,"isActive":true}
+      {"code":"polo_shirt","displayName":"폴로셔츠","sortOrder":4,"isActive":true},
+      {"code":"shirt","displayName":"셔츠","sortOrder":5,"isActive":true},
+      {"code":"blouse","displayName":"블라우스","sortOrder":6,"isActive":true},
+      {"code":"knit_top","displayName":"니트","sortOrder":7,"isActive":true},
+      {"code":"sweatshirt","displayName":"맨투맨·스웨트셔츠","sortOrder":8,"isActive":true},
+      {"code":"hoodie","displayName":"후드티","sortOrder":9,"isActive":true},
+      {"code":"other_tops","displayName":"미분류 상의","sortOrder":99,"isActive":false}
     ]},
     {"code":"bottoms","displayName":"하의","sortOrder":1,"isActive":true,"details":[
       {"code":"short_pants","displayName":"숏팬츠","sortOrder":0,"isActive":true},
@@ -69,6 +75,6 @@
   "legacyAliases": [
     {"type":"gender","value":"남성","targetCode":"male"},{"type":"gender","value":"여성","targetCode":"female"},{"type":"gender","value":"공용","targetCode":"unisex"},{"type":"gender","value":"키즈","targetCode":"kids_unisex"},{"type":"gender","value":"베이비","targetCode":"kids_unisex"},{"type":"gender","value":"남아","targetCode":"boys"},{"type":"gender","value":"여아","targetCode":"girls"},{"type":"gender","value":"키즈 공용","targetCode":"kids_unisex"},{"type":"gender","value":"미분류","targetCode":"unknown"},
     {"type":"category","value":"상의","targetCode":"tops"},{"type":"category","value":"셔츠","targetCode":"tops"},{"type":"category","value":"니트","targetCode":"tops"},{"type":"category","value":"하의","targetCode":"bottoms"},{"type":"category","value":"팬츠","targetCode":"bottoms"},{"type":"category","value":"레깅스","targetCode":"leggings"},{"type":"category","value":"아우터","targetCode":"outerwear"},{"type":"category","value":"스커트","targetCode":"skirts"},{"type":"category","value":"원피스","targetCode":"dresses"},{"type":"category","value":"속옷","targetCode":"underwear"},{"type":"category","value":"신발","targetCode":"shoes"},{"type":"category","value":"액세서리","targetCode":"accessories"},{"type":"category","value":"홈웨어","targetCode":"homewear"},{"type":"category","value":"기타","targetCode":"other"},
-    {"type":"detailCategory","value":"나시","categoryCode":"tops","targetCode":"sleeveless"},{"type":"detailCategory","value":"민소매","categoryCode":"tops","targetCode":"sleeveless"},{"type":"detailCategory","value":"반팔","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"반팔티","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"반팔 티셔츠","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"긴팔","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"긴팔티","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"긴팔 티셔츠","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"반바지","categoryCode":"bottoms","targetCode":"shorts"},{"type":"detailCategory","value":"레깅스","categoryCode":"leggings","targetCode":"long_leggings"}
+    {"type":"detailCategory","value":"나시","categoryCode":"tops","targetCode":"sleeveless"},{"type":"detailCategory","value":"민소매","categoryCode":"tops","targetCode":"sleeveless"},{"type":"detailCategory","value":"반팔","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"반팔티","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"반팔 티셔츠","categoryCode":"tops","targetCode":"short_sleeve"},{"type":"detailCategory","value":"긴팔","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"긴팔티","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"긴팔 티셔츠","categoryCode":"tops","targetCode":"long_sleeve"},{"type":"detailCategory","value":"폴로셔츠","categoryCode":"tops","targetCode":"polo_shirt"},{"type":"detailCategory","value":"카라티","categoryCode":"tops","targetCode":"polo_shirt"},{"type":"detailCategory","value":"셔츠","categoryCode":"tops","targetCode":"shirt"},{"type":"detailCategory","value":"블라우스","categoryCode":"tops","targetCode":"blouse"},{"type":"detailCategory","value":"니트","categoryCode":"tops","targetCode":"knit_top"},{"type":"detailCategory","value":"스웨트","categoryCode":"tops","targetCode":"sweatshirt"},{"type":"detailCategory","value":"맨투맨","categoryCode":"tops","targetCode":"sweatshirt"},{"type":"detailCategory","value":"스웨트셔츠","categoryCode":"tops","targetCode":"sweatshirt"},{"type":"detailCategory","value":"후드","categoryCode":"tops","targetCode":"hoodie"},{"type":"detailCategory","value":"후드티","categoryCode":"tops","targetCode":"hoodie"},{"type":"detailCategory","value":"반바지","categoryCode":"bottoms","targetCode":"shorts"},{"type":"detailCategory","value":"레깅스","categoryCode":"leggings","targetCode":"long_leggings"}
   ]
 }

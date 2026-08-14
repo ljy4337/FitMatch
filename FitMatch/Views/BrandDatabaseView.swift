@@ -14,10 +14,10 @@ struct BrandDatabaseView: View {
                         .frame(width: 64, height: 64)
                         .background(Color(.secondarySystemGroupedBackground), in: Circle())
 
-                    Text("브랜드 데이터가 없습니다")
+                    Text("브랜드 데이터가 없어요")
                         .font(.headline.weight(.bold))
 
-                    Text("상품 비교를 진행하면 브랜드와 상품이 저장됩니다.")
+                    Text("상품을 비교하면 브랜드와 상품 정보가 저장돼요.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

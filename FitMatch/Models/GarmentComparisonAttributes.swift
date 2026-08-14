@@ -20,6 +20,31 @@ enum ComparisonLengthType: String, Codable, Equatable {
         case .unknown: return ""
         }
     }
+
+    func displayName(for garmentFamily: ComparisonGarmentFamily) -> String {
+        switch garmentFamily {
+        case .pants, .denim:
+            switch self {
+            case .short: return "반바지"
+            case .cropped: return "크롭 팬츠"
+            case .threeQuarter: return "7부 팬츠"
+            case .nineTenths: return "9부 팬츠"
+            case .long: return "긴바지"
+            case .sleeveless, .unknown: return ""
+            }
+        case .leggings:
+            switch self {
+            case .short: return "숏 레깅스"
+            case .cropped: return "크롭 레깅스"
+            case .threeQuarter: return "7부 레깅스"
+            case .nineTenths: return "9부 레깅스"
+            case .long: return "롱 레깅스"
+            case .sleeveless, .unknown: return ""
+            }
+        default:
+            return displayName
+        }
+    }
 }
 
 enum ComparisonGarmentFamily: String, Codable, Equatable {
@@ -66,4 +91,22 @@ enum ComparisonConstructionType: String, Codable, Equatable {
     case setIn = "set_in"
     case raglan
     case unknown
+}
+
+enum GarmentComparisonCompatibilityLevel: Int, Codable, Equatable {
+    case blocked = 0
+    case extended = 1
+    case direct = 2
+
+    var isAllowed: Bool { self != .blocked }
+    var reliabilityStarPenalty: Int { self == .extended ? 1 : 0 }
+}
+
+struct GarmentComparisonCompatibility: Equatable {
+    let level: GarmentComparisonCompatibilityLevel
+    let reason: String
+
+    static func blocked(_ reason: String) -> GarmentComparisonCompatibility {
+        GarmentComparisonCompatibility(level: .blocked, reason: reason)
+    }
 }

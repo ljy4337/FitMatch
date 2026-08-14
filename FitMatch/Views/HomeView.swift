@@ -21,7 +21,6 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     closetDashboardSection
                     recentComparisonSection
-                    homeGuideSection
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 18)
@@ -92,7 +91,7 @@ struct HomeView: View {
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("아직 등록된 옷이 없어요")
                                     .font(.headline.weight(.bold))
-                                Text("잘 맞는 옷을 등록하면 상품 사이즈를 비교할 수 있어요.")
+                                Text("잘 맞는 내 옷을 등록하면 새 상품과 사이즈를 비교할 수 있어요.")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
@@ -172,7 +171,7 @@ struct HomeView: View {
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("첫 상품을 비교해 보세요")
                                     .font(.headline.weight(.bold))
-                                Text("상품 링크를 가져오면 내 옷과 맞는 사이즈를 찾아드려요.")
+                                Text("상품 링크를 가져오면 내 옷과 가장 비슷한 사이즈를 찾아드려요.")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -225,7 +224,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("지금 찾는 상품인가요?")
                     .font(.headline.weight(.bold))
-                Text("상품 링크를 붙여넣고 내 기준 옷과 사이즈를 비교해보세요.")
+                Text("상품 링크를 붙여넣고 내 옷과 사이즈를 비교해보세요.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -326,15 +325,15 @@ private struct HomeClosetPreviewCard: View {
             Button("취소", role: .cancel) {}
         } message: {
             if let existingReferenceItem {
-                Text("기존 기준 옷 ‘\(existingReferenceItem.displayName)’은 자동으로 해제됩니다.")
+                Text("기존 기준 옷 ‘\(existingReferenceItem.displayName)’은 자동으로 해제돼요.")
             } else {
-                Text("같은 종류의 상품을 비교할 때 이 옷을 먼저 사용합니다.")
+                Text("같은 종류의 상품을 비교할 때 이 옷을 우선 기준으로 사용해요.")
             }
         }
         .alert("저장할 수 없습니다", isPresented: saveErrorBinding) {
             Button("확인", role: .cancel) {}
         } message: {
-            Text(saveErrorMessage ?? "기준 옷 설정을 저장하지 못했습니다.")
+            Text(saveErrorMessage ?? "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요.")
         }
     }
 
@@ -388,7 +387,8 @@ private struct HomeClosetPreviewCard: View {
         do {
             try modelContext.save()
         } catch {
-            saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
+            modelContext.rollback()
+            saveErrorMessage = "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요."
         }
     }
 
@@ -768,7 +768,7 @@ struct RecentProductPreviewCard: View {
         VStack(alignment: .leading, spacing: 2) {
             Text("추천 \(history.recommendedSize.name.displaySizeName)")
                 .font(.subheadline.weight(.bold))
-            Text("핏 매칭률 \(history.recommendationScore)%")
+            Text("사이즈 유사도 \(history.recommendationScore)%")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
@@ -790,7 +790,7 @@ struct RecentProductPreviewCard: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 3) {
-                Text("핏 매칭률")
+                Text("사이즈 유사도")
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.secondary)
                 Text("\(history.recommendationScore)%")
@@ -861,14 +861,11 @@ struct RecentProductPreviewCard: View {
 private extension String {
     var displaySizeName: String {
         let value = trimmingCharacters(in: .whitespacesAndNewlines)
-        guard value.contains("/") else {
-            return value
-        }
-
-        return value
+        let finalComponent = value
             .split(separator: "/")
             .last
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             ?? value
+        return SizeTokenNormalizer.displayName(for: finalComponent)
     }
 }

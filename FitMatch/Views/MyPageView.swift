@@ -8,8 +8,9 @@ struct MyPageView: View {
 
     private let menuItems: [MyMenuItem] = [
         // MyMenuItem(title: "내 정보", systemImage: "person.circle", destination: .comingSoon),
-        MyMenuItem(title: "체형 설정", systemImage: "figure.stand", destination: .bodyShape),
         MyMenuItem(title: "핏매치 사용 방법", systemImage: "questionmark.circle", destination: .guide),
+        MyMenuItem(title: "문의 및 지원", systemImage: "envelope", destination: .support),
+        MyMenuItem(title: "개인정보처리방침", systemImage: "lock.shield", destination: .privacy),
         // MyMenuItem(title: "앱 설정", systemImage: "gearshape", destination: .comingSoon)
         // 로그인 기능을 다시 사용할 때 함께 복구합니다.
         // MyMenuItem(title: "로그아웃", systemImage: "rectangle.portrait.and.arrow.right", destination: .logout)
@@ -64,10 +65,19 @@ struct MyPageView: View {
                                     menuRow(item)
                                 }
                                 .buttonStyle(.plain)
-                            case .bodyShape:
+                            case .support:
                                 NavigationLink {
-                                    MyNavigationDetailContainer(source: "body shape settings") {
-                                        BodyShapeSetupFlow(isRequiredFlow: false)
+                                    MyNavigationDetailContainer(source: "support") {
+                                        FitMatchSupportView()
+                                    }
+                                } label: {
+                                    menuRow(item)
+                                }
+                                .buttonStyle(.plain)
+                            case .privacy:
+                                NavigationLink {
+                                    MyNavigationDetailContainer(source: "privacy policy") {
+                                        FitMatchPrivacyPolicyView()
                                     }
                                 } label: {
                                     menuRow(item)
@@ -113,7 +123,7 @@ struct MyPageView: View {
                 Text("준비 중")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
-            } else if item.destination == .closet || item.destination == .guide || item.destination == .bodyShape {
+            } else if item.destination.isNavigable {
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
@@ -181,9 +191,19 @@ private struct MyMenuItem {
 private enum MyMenuDestination: Equatable {
     case closet
     case guide
-    case bodyShape
+    case support
+    case privacy
     case logout
     case comingSoon
+
+    var isNavigable: Bool {
+        switch self {
+        case .closet, .guide, .support, .privacy:
+            return true
+        case .logout, .comingSoon:
+            return false
+        }
+    }
 }
 
 private struct FitMatchUsageGuideView: View {
@@ -213,7 +233,7 @@ private struct FitMatchUsageGuideView: View {
         ),
         FitMatchGuideItem(
             title: "비교할 옷이 없을 때",
-            description: "호환되는 옷이 없으면 같은 대분류의 내 옷을 직접 선택해 비교하거나, 쇼핑 상품을 내 옷장에 추가할 수 있습니다."
+            description: "호환되는 옷이 없으면 필요한 종류의 기준 옷을 등록하거나, 호환 가능한 내 옷을 직접 선택할 수 있습니다. 비교한 쇼핑 상품은 실제로 보유한 경우에만 내 옷장에 등록해 주세요."
         ),
         FitMatchGuideItem(
             title: "결과 화면 보는 방법",

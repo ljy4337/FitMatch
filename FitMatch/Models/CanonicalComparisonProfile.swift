@@ -42,7 +42,8 @@ struct CanonicalComparisonProfile: Codable, Equatable {
         case "short_pants", "cropped_pants", "three_quarter_pants", "nine_tenths_pants", "long_pants", "slacks", "training_pants": transformed = "pants"
         case "standard_pants": transformed = "pants"
         case "knit_sweater": transformed = "knit_cardigan"
-        case "shirt_blouse", "polo_shirt": transformed = "shirt"
+        case "shirt_blouse": transformed = "shirt"
+        case "polo_shirt": transformed = "tshirt"
         case "base_layer_top": transformed = "underwear"
         case "short_leggings", "three_quarter_leggings", "nine_tenths_leggings", "long_leggings": transformed = "leggings"
         default: transformed = comparisonFamily
@@ -55,11 +56,11 @@ struct CanonicalComparisonProfile: Codable, Equatable {
         guard let value = candidates.first(where: { $0 != "unknown" && $0 != "not_applicable" }) else { return nil }
         switch value {
         case "sleeveless": return .sleeveless
-        case "short_sleeve", "short_pants", "short_leggings", "short": return .short
-        case "three_quarter_sleeve", "three_quarter_pants", "three_quarter_leggings", "three_quarter": return .threeQuarter
-        case "cropped", "cropped_pants": return .cropped
-        case "nine_tenths", "nine_tenths_pants", "nine_tenths_leggings": return .nineTenths
-        case "long_sleeve", "long_pants", "long_leggings", "long": return .long
+        case "short_sleeve", "short_pants", "short_leggings", "short_length", "short": return .short
+        case "three_quarter_sleeve", "three_quarter_pants", "three_quarter_leggings", "three_quarter_length", "three_quarter": return .threeQuarter
+        case "cropped", "cropped_pants", "cropped_length": return .cropped
+        case "nine_tenths", "nine_tenths_pants", "nine_tenths_leggings", "ankle_length": return .nineTenths
+        case "long_sleeve", "long_pants", "long_leggings", "long_length", "long": return .long
         default: return nil
         }
     }

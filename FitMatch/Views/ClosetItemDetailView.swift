@@ -93,7 +93,7 @@ struct ClosetItemDetailView: View {
                 applyPendingReferenceChange()
             }
         } message: {
-            Text("같은 분류의 기존 기준 옷은 자동으로 해제됩니다.")
+            Text("같은 분류의 기존 기준 옷은 자동으로 해제돼요.")
         }
         .onAppear {
             tabBarVisibilityController.hide(reason: .navigationDetail, source: "closet detail")
@@ -242,7 +242,7 @@ struct ClosetItemDetailView: View {
         )?.cmText ?? "-"
     }
 
-    private func applyChanges(from editedItem: UserFit) {
+    private func applyChanges(from editedItem: UserFit) -> Bool {
         if editedItem.isRepresentative,
            userFits.contains(where: {
                $0.id != item.id
@@ -255,13 +255,14 @@ struct ClosetItemDetailView: View {
                 category: editedItem.category,
                 detailCategory: editedItem.detailCategory
             )
-            return
+            return true
         }
 
-        applyChangesImmediately(from: editedItem)
+        return applyChangesImmediately(from: editedItem)
     }
 
-    private func applyChangesImmediately(from editedItem: UserFit) {
+    @discardableResult
+    private func applyChangesImmediately(from editedItem: UserFit) -> Bool {
         item.sourceType = editedItem.sourceType
         item.sourceName = editedItem.sourceName
         item.brandName = editedItem.brandName
@@ -297,8 +298,11 @@ struct ClosetItemDetailView: View {
         item.updatedAt = Date()
         do {
             try modelContext.save()
+            return true
         } catch {
+            modelContext.rollback()
             saveErrorMessage = "수정 내용을 저장하지 못했습니다."
+            return false
         }
     }
 
@@ -306,7 +310,7 @@ struct ClosetItemDetailView: View {
         _ selectedSize: ProductSize,
         category: ClothingCategory,
         detailCategory: ClosetDetailCategory
-    ) {
+    ) -> Bool {
         if item.isRepresentative,
            hasAnotherReference(category: category, detailCategory: detailCategory) {
             pendingReferenceChange = PendingClosetEdit(
@@ -315,17 +319,17 @@ struct ClosetItemDetailView: View {
                 category: category,
                 detailCategory: detailCategory
             )
-            return
+            return true
         }
 
-        applyImportedChanges(selectedSize, category: category, detailCategory: detailCategory)
+        return applyImportedChanges(selectedSize, category: category, detailCategory: detailCategory)
     }
 
     private func applyImportedChanges(
         _ selectedSize: ProductSize,
         category: ClothingCategory,
         detailCategory: ClosetDetailCategory
-    ) {
+    ) -> Bool {
         item.category = category
         item.detailCategory = detailCategory
         item.sizeName = selectedSize.name.fitMatchDisplaySizeName
@@ -337,8 +341,11 @@ struct ClosetItemDetailView: View {
         item.updatedAt = Date()
         do {
             try modelContext.save()
+            return true
         } catch {
+            modelContext.rollback()
             saveErrorMessage = "수정 내용을 저장하지 못했습니다."
+            return false
         }
     }
 
@@ -375,9 +382,9 @@ struct ClosetItemDetailView: View {
             }
 
         if let editedItem = pendingReferenceChange.editedItem {
-            applyChangesImmediately(from: editedItem)
+            _ = applyChangesImmediately(from: editedItem)
         } else if let selectedSize = pendingReferenceChange.selectedSize {
-            applyImportedChanges(
+            _ = applyImportedChanges(
                 selectedSize,
                 category: pendingReferenceChange.category,
                 detailCategory: pendingReferenceChange.detailCategory
@@ -414,7 +421,7 @@ struct ClosetItemDetailView: View {
         return candidate
     }
 
-    private func deleteItemAndDismiss() {
+    private func deleteItemAndDismiss() -> Bool {
         histories
             .filter { $0.userFit.id == item.id }
             .forEach { modelContext.delete($0) }
@@ -423,8 +430,11 @@ struct ClosetItemDetailView: View {
         do {
             try modelContext.save()
             dismiss()
+            return true
         } catch {
-            saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
+            modelContext.rollback()
+            saveErrorMessage = "옷을 삭제하지 못했어요. 다시 시도해 주세요."
+            return false
         }
     }
 
@@ -533,8 +543,8 @@ private struct ImportedClosetItemEditView: View {
     @Environment(\.dismiss) private var dismiss
     let item: UserFit
     let hasComparisonHistory: Bool
-    let onDelete: () -> Void
-    let onSave: (ProductSize, ClothingCategory, ClosetDetailCategory) -> Void
+    let onDelete: () -> Bool
+    let onSave: (ProductSize, ClothingCategory, ClosetDetailCategory) -> Bool
 
     @State private var selectedSizeID: UUID?
     @State private var selectedCategory: ClothingCategory
@@ -542,12 +552,13 @@ private struct ImportedClosetItemEditView: View {
     @State private var selectedCategoryCode: String
     @State private var selectedDetailCategoryCode: String
     @State private var isShowingDeleteAlert = false
+    @State private var isShowingSaveError = false
 
     init(
         item: UserFit,
         hasComparisonHistory: Bool,
-        onDelete: @escaping () -> Void,
-        onSave: @escaping (ProductSize, ClothingCategory, ClosetDetailCategory) -> Void
+        onDelete: @escaping () -> Bool,
+        onSave: @escaping (ProductSize, ClothingCategory, ClosetDetailCategory) -> Bool
     ) {
         self.item = item
         self.hasComparisonHistory = hasComparisonHistory
@@ -589,11 +600,19 @@ private struct ImportedClosetItemEditView: View {
         .alert("이 옷을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
             Button("취소", role: .cancel) {}
             Button("삭제", role: .destructive) {
-                onDelete()
-                dismiss()
+                if onDelete() {
+                    dismiss()
+                } else {
+                    isShowingSaveError = true
+                }
             }
         } message: {
-            Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 함께 삭제됩니다. 그래도 삭제하시겠어요?")
+            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 함께 삭제돼요. 그래도 삭제할까요?")
+        }
+        .alert("저장하지 못했습니다", isPresented: $isShowingSaveError) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text("입력한 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.")
         }
     }
 
@@ -719,8 +738,11 @@ private struct ImportedClosetItemEditView: View {
             if hasComparisonHistory {
                 isShowingDeleteAlert = true
             } else {
-                onDelete()
-                dismiss()
+                if onDelete() {
+                    dismiss()
+                } else {
+                    isShowingSaveError = true
+                }
             }
         } label: {
             Text("삭제")
@@ -750,8 +772,11 @@ private struct ImportedClosetItemEditView: View {
                 guard let selectedSize else { return }
                 item.categoryCode = selectedCategoryCode
                 item.detailCategoryCode = selectedDetailCategoryCode
-                onSave(selectedSize, selectedCategory, selectedDetailCategory)
-                dismiss()
+                if onSave(selectedSize, selectedCategory, selectedDetailCategory) {
+                    dismiss()
+                } else {
+                    isShowingSaveError = true
+                }
             } label: {
                 Text("수정 저장")
                     .font(.headline.weight(.bold))

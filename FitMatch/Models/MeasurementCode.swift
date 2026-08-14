@@ -35,6 +35,40 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case legacyUnknown = "legacy_unknown"
 }
 
+extension MeasurementCode {
+    var comparisonDefinition: String? {
+        switch self {
+        case .standardBodyChestCircumference: return "신체 가슴둘레"
+        case .shoulderWidthSeamToSeam: return "양쪽 어깨 봉제선 사이"
+        case .chestWidthPitToPit, .chestWidthUniqloBodyWidth: return "겨드랑이 사이 가슴 단면"
+        case .chestCircumferenceGarment: return "옷의 가슴둘레"
+        case .bodyLengthHPSToHemFront: return "어깨 최고점부터 앞 밑단까지"
+        case .bodyLengthBackNeckToHem, .bodyLengthMusinsaType5,
+             .bodyLengthMusinsaType20, .bodyLengthMusinsaType21,
+             .bodyLengthUniqloBack, .bodyLengthUniqloShirt:
+            return "뒤 목점부터 밑단까지"
+        case .bodyLengthUniqloKnitFront: return "앞 목점부터 밑단까지"
+        case .sleeveShoulderSeamToCuff: return "어깨 봉제선부터 소매 끝까지"
+        case .sleeveCenterBackToCuff: return "등 중심부터 소매 끝까지"
+        case .sleeveRaglanNeckToCuff: return "목점부터 소매 끝까지(래글런)"
+        case .upperAbdomenWidthEdgeToEdge: return "복부 단면"
+        case .upperWaistWidthEdgeToEdge, .waistWidthEdgeToEdge: return "허리 단면"
+        case .waistCircumferenceGarment: return "옷의 허리둘레"
+        case .hipWidthAtWidest: return "엉덩이 최대 단면"
+        case .thighWidthCrotchToOuter: return "밑위점부터 바깥선까지 허벅지 단면"
+        case .riseCrotchToWaistFront: return "앞 밑위"
+        case .riseCrotchToWaistBack: return "뒤 밑위"
+        case .hemWidthEdgeToEdge: return "밑단 단면"
+        case .pantsOutseamWaistToHem: return "허리부터 밑단까지 바깥쪽 총장"
+        case .pantsInseamCrotchToHem: return "밑위부터 밑단까지 안쪽 길이"
+        case .skirtLengthWaistToHem: return "허리부터 밑단까지 스커트 길이"
+        case .footLengthHeelToToe: return "뒤꿈치부터 발끝까지"
+        case .underBustWidthEdgeToEdge: return "밑가슴 단면"
+        case .unknown, .legacyUnknown: return nil
+        }
+    }
+}
+
 enum MeasurementDisplayKind: String, Codable, CaseIterable, Hashable {
     case unknown
     case shoulder
@@ -104,7 +138,7 @@ struct SourceMeasurementMapping: Equatable {
 
 enum MeasurementSourceMappingPolicy {
     static let musinsaVersion = "musinsa_actual_size_mapping_v8"
-    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v6"
+    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v7"
 
     static func musinsa(
         typeNumber: Int?,
@@ -250,7 +284,7 @@ enum MeasurementSourceMappingPolicy {
         case "sleevelength": code = .sleeveShoulderSeamToCuff
         case "sleevelengthcb": code = .sleeveCenterBackToCuff
         case "skirtlength": code = .skirtLengthWaistToHem
-        case "waistproductsize":
+        case "waistproductsize", "waistproductsizebottoms":
             return SourceMeasurementMapping(
                 code: .waistWidthEdgeToEdge,
                 evidence: .officialText,

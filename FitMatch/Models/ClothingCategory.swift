@@ -42,7 +42,7 @@ enum ClothingCategory: String, CaseIterable, Identifiable, Codable, Hashable {
         }
     }
 
-    var serviceGroup: ClothingCategory {
+    nonisolated var serviceGroup: ClothingCategory {
         switch self {
         case .pants:
             return .bottom

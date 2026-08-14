@@ -53,8 +53,10 @@ struct ShoppingProductFormView: View {
                         modelContext.insert(item)
                         do {
                             try modelContext.save()
+                            return true
                         } catch {
-                            viewModel.errorMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+                            modelContext.rollback()
+                            return false
                         }
                     }
                 }
@@ -145,7 +147,7 @@ struct ShoppingProductFormView: View {
         if viewModel.needsDetailCategoryBasis(userFits: userFits) {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("비교 가능한 상품이 없습니다.")
+                    Text("비교할 \(viewModel.detailCategory.rawValue) 기준 옷이 없어요")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.primary)
                     Text(missingBasisMessage)
@@ -154,7 +156,7 @@ struct ShoppingProductFormView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                ComparePrimaryActionButton(title: "내 옷장에 추가", systemImage: "plus") {
+                ComparePrimaryActionButton(title: "비교할 기준 옷 등록하기", systemImage: "plus") {
                     presentActiveSheet(.addBaseline)
                 }
 
@@ -183,10 +185,10 @@ struct ShoppingProductFormView: View {
 
     private var missingBasisMessage: String {
         if userFits.isEmpty {
-            return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 상품을 등록하면 이 상품과 비교할 수 있습니다."
+            return "내 옷장이 비어 있어요. 평소 잘 맞는 \(viewModel.detailCategory.rawValue) 옷을 등록하면 이 상품과 비교할 수 있어요."
         }
 
-        return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 상품을 등록하거나, 내 옷장에 있는 다른 옷을 직접 선택하여 비교할 수 있습니다."
+        return "현재 내 옷장에는 다른 종류의 옷만 있어요. 평소 잘 맞는 \(viewModel.detailCategory.rawValue) 옷을 등록하거나, 비교 가능한 다른 옷을 직접 선택해 주세요."
     }
 
     @ViewBuilder
@@ -260,6 +262,7 @@ struct ShoppingProductFormView: View {
                 try saveUniqueHistory(history)
                 presentActiveSheet(.result(history))
             } catch {
+                modelContext.rollback()
                 viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
             }
         }
@@ -327,6 +330,7 @@ struct ShoppingProductFormView: View {
                 try saveUniqueHistory(history)
                 presentActiveSheet(.result(history))
             } catch {
+                modelContext.rollback()
                 viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
             }
         }
@@ -341,7 +345,9 @@ struct ShoppingProductFormView: View {
     }
 
     private func presentActiveSheet(_ sheet: ShoppingActiveSheet) {
+        #if DEBUG
         print("[ShoppingProductFormView] activeSheet -> \(sheet.logName)")
+        #endif
         activeSheet = nil
         DispatchQueue.main.async {
             activeSheet = sheet
@@ -349,7 +355,9 @@ struct ShoppingProductFormView: View {
     }
 
     private func dismissActiveSheet() {
+        #if DEBUG
         print("[ShoppingProductFormView] activeSheet -> nil")
+        #endif
         activeSheet = nil
     }
 
@@ -445,7 +453,7 @@ private struct TemporaryReferencePickerView: View {
                     Text("어떤 옷과 비교할까요?")
                         .font(.title2.weight(.black))
                         .foregroundStyle(.primary)
-                    Text("등록된 \(productDetailCategory.rawValue)가 없어 직접 선택한 옷을 기준으로 비교합니다.")
+                    Text("자동으로 선택할 \(productDetailCategory.rawValue) 기준 옷이 없어요. 내 옷장에서 비교할 옷을 직접 선택해 주세요.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -456,13 +464,13 @@ private struct TemporaryReferencePickerView: View {
                 if candidates.isEmpty {
                     FitMatchCard {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("비교 가능한 상품이 없습니다.")
+                            Text("비교할 기준 옷이 없어요")
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.primary)
-                            Text("내 옷장에 옷을 먼저 등록하면 상품과 비교할 수 있습니다.")
+                            Text("평소 잘 맞는 \(productDetailCategory.rawValue) 옷을 등록해 주세요.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
-                            ComparePrimaryActionButton(title: "내 옷장에 추가", systemImage: "plus") {
+                            ComparePrimaryActionButton(title: "비교할 기준 옷 등록하기", systemImage: "plus") {
                                 dismiss()
                                 onRegister()
                             }
@@ -516,7 +524,7 @@ private struct TemporaryReferencePickerView: View {
                 dismiss()
             }
         } message: {
-            Text("현재 등록된 \(productDetailCategory.rawValue)가 없어 선택한 옷을 기준으로 비교합니다.\n\n같은 종류의 옷보다 정확도가 낮아질 수 있습니다.")
+            Text("두 옷에서 함께 비교할 수 있는 실측만 사용해요. 구조나 측정 방식이 다른 항목은 결과에서 제외됩니다.")
         }
     }
 }
@@ -535,7 +543,7 @@ private struct MissingBasisBottomSheet: View {
     var body: some View {
         VStack(spacing: 18) {
             VStack(spacing: 10) {
-                Text("비교 가능한 상품이 없습니다.")
+                    Text("비교할 \(detailCategory.rawValue) 기준 옷이 없어요")
                     .font(.title2.weight(.black))
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
@@ -573,7 +581,7 @@ private struct MissingBasisBottomSheet: View {
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             VStack(spacing: 10) {
-                ComparePrimaryActionButton(title: "내 옷장에 추가", systemImage: "plus") {
+                ComparePrimaryActionButton(title: "비교할 기준 옷 등록하기", systemImage: "plus") {
                     onRegister()
                 }
 
@@ -624,10 +632,10 @@ private struct MissingBasisBottomSheet: View {
 
     private var descriptionText: String {
         if hasClosetItems {
-            return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 상품을 등록하거나, 내 옷장에 있는 다른 옷을 직접 선택하여 비교할 수 있습니다."
+            return "현재 내 옷장에는 이 상품과 바로 비교할 \(detailCategory.rawValue) 기준 옷이 없어요. 기준 옷을 등록하거나 호환 가능한 다른 옷을 직접 선택해 주세요."
         }
 
-        return "FitMatch는 같은 종류의 옷끼리 비교할 때 가장 정확한 결과를 제공합니다.\n\n먼저 상품을 등록하면 이 상품과 비교할 수 있습니다."
+        return "내 옷장이 비어 있어요. 평소 잘 맞는 \(detailCategory.rawValue) 옷을 등록하면 이 상품과 비교할 수 있어요."
     }
 }
 
@@ -741,7 +749,7 @@ private struct ClothingSizeEditor: View {
                         value: binding(for: kind)
                     )
                 }
-                Text("둘레 표기만 있다면 2로 나눈 단면 값을 입력하세요.")
+                Text("둘레와 단면은 변환하지 말고, 화면에 표시된 항목과 같은 의미의 값만 입력해 주세요.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

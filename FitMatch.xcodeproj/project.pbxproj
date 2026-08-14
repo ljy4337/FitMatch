@@ -394,7 +394,7 @@
 				DEVELOPMENT_TEAM = Y344H87QC5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FitMatchShareExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = FitMatchShareExtension;
+				INFOPLIST_KEY_CFBundleDisplayName = "FitMatch로 비교";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -424,7 +424,7 @@
 				DEVELOPMENT_TEAM = Y344H87QC5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FitMatchShareExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = FitMatchShareExtension;
+				INFOPLIST_KEY_CFBundleDisplayName = "FitMatch로 비교";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17;
 				LD_RUNPATH_SEARCH_PATHS = (

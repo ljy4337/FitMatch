@@ -13,9 +13,9 @@ struct RecommendationHistoryView: View {
     @State private var selectedHistoryForCloset: RecommendationHistory?
     @State private var selectedHistoryIDForDetail: UUID?
     @State private var opensReferencePickerOnDetail = false
-    @State private var isShowingClosetSavedAlert = false
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
+    @State private var isShowingClosetSavedToast = false
     @State private var cachedFilteredHistories: [RecommendationHistory] = []
     @State private var cachedAvailableCategories: [ClothingCategory] = []
     private let favoriteStore = FavoriteProductStore()
@@ -58,15 +58,13 @@ struct RecommendationHistoryView: View {
             AddComparedProductToClosetSheet(
                 product: history.product,
                 productDetailCategory: history.productDetailCategory,
-                recommendedSize: history.recommendedSize
+                recommendedSize: history.recommendedSize,
+                startsAtRegistrationConfirmation: true
             ) { _ in
-                isShowingClosetSavedAlert = true
+                showClosetSavedToast()
             }
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
-        }
-        .alert("내 옷장에 추가했어요.", isPresented: $isShowingClosetSavedAlert) {
-            Button("확인", role: .cancel) {}
         }
         .alert("저장 실패", isPresented: Binding(
             get: { saveErrorMessage != nil },
@@ -77,6 +75,13 @@ struct RecommendationHistoryView: View {
             }
         } message: {
             Text(saveErrorMessage ?? "")
+        }
+        .overlay(alignment: .top) {
+            if isShowingClosetSavedToast {
+                FitMatchSuccessToast(message: "보유한 옷으로 등록했어요.")
+                    .padding(.top, 18)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
         .onAppear {
             refreshFilteredHistories()
@@ -92,6 +97,14 @@ struct RecommendationHistoryView: View {
         }
         .onChange(of: selectedCategory) {
             refreshFilteredHistories()
+        }
+    }
+
+    private func showClosetSavedToast() {
+        withAnimation { isShowingClosetSavedToast = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.8))
+            withAnimation { isShowingClosetSavedToast = false }
         }
     }
 
@@ -287,7 +300,9 @@ struct RecommendationHistoryView: View {
         do {
             try modelContext.save()
         } catch {
-            saveErrorMessage = "비교 기록을 삭제하지 못했습니다."
+            modelContext.rollback()
+            refreshFilteredHistories()
+            saveErrorMessage = "비교 기록을 삭제하지 못했어요. 다시 시도해 주세요."
         }
     }
 
@@ -377,7 +392,7 @@ private enum HistorySortOption: String, CaseIterable {
         case .latest: return "최신순"
         case .oldest: return "오래된순"
         case .brand: return "브랜드순"
-        case .fitConfidence: return "핏 매칭률 높은순"
+        case .fitConfidence: return "사이즈 유사도 높은순"
         }
     }
 }
@@ -408,10 +423,10 @@ private struct EmptyRecommendationHistoryView: View {
                     .frame(width: 132, height: 132)
 
                 VStack(spacing: 6) {
-                    Text("상품 비교 기록이 없습니다.")
+                    Text("아직 비교한 상품이 없어요.")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(.primary)
-                    Text("상품을 비교하면 비교 결과가 여기에 쌓입니다.")
+                    Text("상품을 비교하면 결과가 여기에 저장돼요.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -523,7 +538,7 @@ private struct HistoryCard: View {
                         .frame(width: primaryMetricWidth)
                     Divider().frame(width: dividerWidth, height: 88)
                     RecommendationMetricColumn(
-                        title: "핏 매칭률",
+                        title: "사이즈 유사도",
                         value: "\(history.recommendationScore)%",
                         detail: fitMatchBadge,
                         isPrimary: true,
@@ -617,7 +632,7 @@ private struct HistoryCard: View {
             }
             HStack {
                 historyMetric(title: "추천 사이즈", value: history.recommendedSize.name.displaySizeName)
-                historyMetric(title: "핏 매칭률", value: "\(history.recommendationScore)%")
+                historyMetric(title: "사이즈 유사도", value: "\(history.recommendationScore)%")
             }
             .padding(14)
             .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -657,23 +672,33 @@ private struct HistoryCard: View {
     }
 
     private func reliabilityStars(comparedCount: Int) -> String {
-        switch comparedCount {
-        case 4...: return "★★★★★"
-        case 3: return "★★★★☆"
-        case 2: return "★★★☆☆"
-        case 1: return "★★☆☆☆"
-        default: return "★☆☆☆☆"
-        }
+        let count = reliabilityStarCount(comparedCount: comparedCount)
+        return String(repeating: "★", count: count)
+            + String(repeating: "☆", count: 5 - count)
     }
 
     private func reliabilityTitle(comparedCount: Int) -> String {
-        switch comparedCount {
-        case 4...: return "매우 높음"
-        case 3: return "높음"
-        case 2: return "보통"
-        case 1: return "낮음"
-        default: return "매우 낮음"
+        let title: String
+        switch reliabilityStarCount(comparedCount: comparedCount) {
+        case 5: title = "매우 높음"
+        case 4: title = "높음"
+        case 3: title = "보통"
+        case 2: title = "낮음"
+        default: title = "매우 낮음"
         }
+        return history.comparisonMethod.contains("확장 비교") ? "확장 · \(title)" : title
+    }
+
+    private func reliabilityStarCount(comparedCount: Int) -> Int {
+        let base: Int
+        switch comparedCount {
+        case 4...: base = 5
+        case 3: base = 4
+        case 2: base = 3
+        case 1: base = 2
+        default: base = 1
+        }
+        return max(1, base - (history.comparisonMethod.contains("확장 비교") ? 1 : 0))
     }
 
     private var relativeDateText: String {
@@ -835,7 +860,7 @@ private struct HistoryGridCard: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 gridResult(title: "추천", value: history.recommendedSize.name.displaySizeName)
                 Spacer(minLength: 4)
-                gridResult(title: "핏 매칭률", value: "\(history.recommendationScore)%")
+                gridResult(title: "사이즈 유사도", value: "\(history.recommendationScore)%")
             }
         }
     }
@@ -883,7 +908,7 @@ private struct HistoryGridCard: View {
             Text(history.productNameForDisplay)
                 .font(.subheadline.weight(.bold))
                 .lineLimit(2)
-            Text("추천 \(history.recommendedSize.name.displaySizeName) · 핏 매칭률 \(history.recommendationScore)%")
+            Text("추천 \(history.recommendedSize.name.displaySizeName) · 사이즈 유사도 \(history.recommendationScore)%")
                 .font(.caption.weight(.bold))
         }
     }
@@ -892,14 +917,11 @@ private struct HistoryGridCard: View {
 private extension String {
     var displaySizeName: String {
         let value = trimmingCharacters(in: .whitespacesAndNewlines)
-        guard value.contains("/") else {
-            return value
-        }
-
-        return value
+        let finalComponent = value
             .split(separator: "/")
             .last
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             ?? value
+        return SizeTokenNormalizer.displayName(for: finalComponent)
     }
 }

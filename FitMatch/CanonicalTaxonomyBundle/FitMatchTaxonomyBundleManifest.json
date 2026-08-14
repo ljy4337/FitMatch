@@ -22,16 +22,16 @@
   "navigationNodesExcluded": 582,
   "statusCounts": {
     "navigation_only": 582,
-    "confirmed": 1331,
+    "confirmed": 1327,
     "review_required": 608,
-    "rejected": 1447,
+    "rejected": 1451,
     "unsupported": 40
   },
   "mappingCounts": {
     "direct": 1111,
-    "transform_required": 220
+    "transform_required": 216
   },
-  "extensionRegistryCount": 54,
+  "extensionRegistryCount": 50,
   "lookupValidation": {
     "sourceExternalTargetDuplicateGroups": 0,
     "sourceExternalDuplicateGroups": 0,
@@ -44,8 +44,8 @@
   "files": {
     "FitMatchSourceCategoryMappings.json": {
       "rows": 3426,
-      "bytes": 5721707,
-      "sha256": "e68bb3a9f5ff4cfbfd1be2e5d25f8f53092a0536da1ff81c8ea0da85084895a1"
+      "bytes": 5719947,
+      "sha256": "4e2ec825e1e341928381cd08d280164fc0c6bdd542415dd8c6719a2384ee925a"
     },
     "FitMatchComparisonPolicies.json": {
       "families": 44,
@@ -55,13 +55,13 @@
       "sha256": "1054ec278a5ba139d45212cc0b9c211740609143aea7475173509d079d521020"
     },
     "FitMatchMeasurementPolicies.json": {
-      "measurements": 21,
+      "measurements": 22,
       "sourceAliases": 21,
       "conversionRules": 5,
-      "bytes": 14353,
-      "sha256": "c33170db3c6f164abca823af8f3db464f9984fd603738d1d63912ee24f206d5a"
+      "bytes": 14502,
+      "sha256": "5bcec02403caeb389efafffb7cd3dde6cefa15f49c8f6098ee1a40c036ce8883"
     }
   },
   "bundleChecksumAlgorithm": "sha256(sorted filename + NUL + file sha256 + LF)",
-  "bundleChecksum": "23a4b0e0729fd869055246b2a9d9d53c94439587f6d7221c17d9a3be49f6c3a1"
+  "bundleChecksum": "acb5d29f00840773f3283fc9ea5e8703078d7bb205a844e4da245940fdca0467"
 }

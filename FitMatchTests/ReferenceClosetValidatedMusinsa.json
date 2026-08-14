@@ -1,0 +1,351 @@
+{
+  "selection_policy": "Simulator registration probe passed; official numeric table required",
+  "candidates": [
+    {
+      "source": "musinsa",
+      "product_id": "1010259",
+      "product_name": "여성 요가복 DEVI-B0013-블랙 필라테스 군살제로 바이커 5부",
+      "source_path": "Sportswear > 하의 > 숏 레깅스",
+      "target_category": "leggings",
+      "target_detail": "short_leggings",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1010259"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1015441",
+      "product_name": "테크 스트링 맨투맨 블랙",
+      "source_path": "Clothing > 티셔츠 > 맨투맨/스웨트셔츠",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1015441"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1108007",
+      "product_name": "베이식 블레이저 [블랙]",
+      "source_path": "아우터 > 슈트/블레이저 재킷",
+      "target_category": "outerwear",
+      "target_detail": "blazer",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1108007"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1115290",
+      "product_name": "와이드 치노 팬츠 [베이지]",
+      "source_path": "Clothing > 바지 > 코튼 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "long_pants",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1115290"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1115974",
+      "product_name": "캐시미어 더블 롱 코트 BLACK",
+      "source_path": "Clothing > 코트 > 겨울 더블 코트",
+      "target_category": "outerwear",
+      "target_detail": "coat",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1115974"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1275020",
+      "product_name": "스트라이프 와펜 로고 롱슬리브 네이비그린",
+      "source_path": "Clothing > 티셔츠 > 긴소매 티셔츠",
+      "target_category": "tops",
+      "target_detail": "long_sleeve",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1275020"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1291017",
+      "product_name": "리치 오버 MA-1 자켓 블랙 YHJK2269",
+      "source_path": "아우터 > 블루종/MA-1",
+      "target_category": "outerwear",
+      "target_detail": "blouson",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1291017"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1387524",
+      "product_name": "슬릿 넥 피케 폴로 셔츠 [블랙]",
+      "source_path": "Clothing > 티셔츠 > 피케/카라 티셔츠",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 3,
+      "url": "https://www.musinsa.com/products/1387524"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1388516",
+      "product_name": "와이드 핏 치노 쇼츠 [화이트]",
+      "source_path": "Clothing > 바지 > 숏팬츠",
+      "target_category": "bottoms",
+      "target_detail": "shorts",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1388516"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1452270",
+      "product_name": "우먼즈 베이식 슬리브리스 탑 [화이트]",
+      "source_path": "Clothing > 티셔츠 > 나시/민소매 티셔츠",
+      "target_category": "tops",
+      "target_detail": "sleeveless",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1452270"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1567317",
+      "product_name": "2WAY 레트로 마운틴 1941 플리스 집업 (JR5TZU191BK)",
+      "source_path": "Clothing > 점퍼/재킷 > 플리스",
+      "target_category": "outerwear",
+      "target_detail": "fleece",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1567317"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1572220",
+      "product_name": "SCOUTS LETTERING 후드티 Forest Green",
+      "source_path": "상의 > 후드 티셔츠",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1572220"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1576682",
+      "product_name": "오버핏 램스킨 싱글 자켓",
+      "source_path": "아우터 > 레더/라이더스 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jacket",
+      "selection_rank": 2,
+      "url": "https://www.musinsa.com/products/1576682"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1620287",
+      "product_name": "바이스윙 윈드브레이커 - 블랙",
+      "source_path": "Clothing > 점퍼/재킷 > 나일론/코치 재킷",
+      "target_category": "outerwear",
+      "target_detail": "windbreaker",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1620287"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1828938",
+      "product_name": "RUBBER TEE (U26BTTS624)",
+      "source_path": "Clothing > 티셔츠 > 반소매 티셔츠",
+      "target_category": "tops",
+      "target_detail": "short_sleeve",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1828938"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2222924",
+      "product_name": "롱 다운 벤치 파카 [블랙]",
+      "source_path": "Clothing > 패딩/헤비 아우터 > 롱 패딩/롱 헤비 아우터",
+      "target_category": "outerwear",
+      "target_detail": "long_padding",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/2222924"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2292653",
+      "product_name": "leopard fur zip up_brown",
+      "source_path": "Clothing > 무스탕/퍼",
+      "target_category": "outerwear",
+      "target_detail": "mouton",
+      "selection_rank": 3,
+      "url": "https://www.musinsa.com/products/2292653"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2387085",
+      "product_name": "와일드 부츠컷 레깅스 (9colors)",
+      "source_path": "스포츠/레저 > 하의 > 레깅스",
+      "target_category": "leggings",
+      "target_detail": "long_leggings",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/2387085"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2477836",
+      "product_name": "[쿨탠다드] 릴렉스드 테이퍼드 히든 밴딩 크롭 슬랙스 [블랙]",
+      "source_path": "Clothing > 바지 > 슈트 팬츠/슬랙스",
+      "target_category": "bottoms",
+      "target_detail": "cropped_pants",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/2477836"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2550443",
+      "product_name": "매쉬 썸머 니트 카키",
+      "source_path": "상의 > 니트/스웨터",
+      "target_category": "tops",
+      "target_detail": "knit_top",
+      "selection_rank": 2,
+      "url": "https://www.musinsa.com/products/2550443"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2833372",
+      "product_name": "하프 트렌치 코트 - 아이보리",
+      "source_path": "Clothing > 코트 > 봄 가을 코트",
+      "target_category": "outerwear",
+      "target_detail": "trench_coat",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/2833372"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3135305",
+      "product_name": "FOG LONG MESH SKIRT_PURPLE",
+      "source_path": "원피스/스커트 > 롱스커트",
+      "target_category": "skirts",
+      "target_detail": "skirt",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/3135305"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3177520",
+      "product_name": "7JD1463 공용 호보스 메쉬 베스트",
+      "source_path": "Sportswear > 아우터 > 베스트",
+      "target_category": "outerwear",
+      "target_detail": "vest",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/3177520"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3281590",
+      "product_name": "어스 반팔 아노락_Black",
+      "source_path": "Clothing > 점퍼/재킷 > 아노락 재킷",
+      "target_category": "outerwear",
+      "target_detail": "anorak",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/3281590"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4154184",
+      "product_name": "프리무브 2in1러닝팬츠 스포츠 (짐웨어 런닝 워터) 투인원 여성9부 레깅스 바지 W(2컬러)",
+      "source_path": "Sportswear > 하의 > 레깅스",
+      "target_category": "leggings",
+      "target_detail": "nine_tenths_leggings",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/4154184"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4568168",
+      "product_name": "멀티포켓 후드 다운 점퍼 카키 ZG6JP606KK",
+      "source_path": "Clothing > 패딩/헤비 아우터 > 숏 패딩/숏 헤비 아우터",
+      "target_category": "outerwear",
+      "target_detail": "short_padding",
+      "selection_rank": 10,
+      "url": "https://www.musinsa.com/products/4568168"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4644652",
+      "product_name": "우먼즈 시어 라운드 넥 가디건 [블랙]",
+      "source_path": "아우터 > 카디건",
+      "target_category": "outerwear",
+      "target_detail": "cardigan",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/4644652"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4661063",
+      "product_name": "우먼즈 코튼 자카드 퍼프 슬리브 블라우스 [블랙]",
+      "source_path": "상의 > 셔츠/블라우스",
+      "target_category": "tops",
+      "target_detail": "blouse",
+      "selection_rank": 8,
+      "url": "https://www.musinsa.com/products/4661063"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4787764",
+      "product_name": "Capri Leggings Black",
+      "source_path": "스포츠/레저 > 하의 > 레깅스",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "selection_rank": 25,
+      "url": "https://www.musinsa.com/products/4787764"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5386464",
+      "product_name": "SIDE BUTTON LEATHER JUMPER_BLACK",
+      "source_path": "아우터 > 레더/라이더스 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 23,
+      "url": "https://www.musinsa.com/products/5386464"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5563288",
+      "product_name": "ALTAVIA DOWN PARKA _ GUN METAL",
+      "source_path": "Clothing > 패딩/헤비 아우터 > 하프 패딩/하프 헤비 아우터",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 2,
+      "url": "https://www.musinsa.com/products/5563288"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5859198",
+      "product_name": "3/4 G WAFFLE BUTTON FLY TEE (MELANGE GRAY)",
+      "source_path": "Clothing > 티셔츠 > 긴소매 티셔츠",
+      "target_category": "tops",
+      "target_detail": "three_quarter_sleeve",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/5859198"
+    }
+  ],
+  "unvalidated_targets_in_candidate_pool": [
+    {
+      "target_category": "bottoms",
+      "target_detail": "short_pants"
+    },
+    {
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms"
+    },
+    {
+      "target_category": "outerwear",
+      "target_detail": "light_padding"
+    },
+    {
+      "target_category": "outerwear",
+      "target_detail": "padded_vest"
+    },
+    {
+      "target_category": "outerwear",
+      "target_detail": "other_outerwear"
+    },
+    {
+      "target_category": "dresses",
+      "target_detail": "one_piece"
+    }
+  ]
+}

@@ -65,8 +65,10 @@ struct MyClosetView: View {
                         modelContext.insert(item)
                         do {
                             try modelContext.save()
+                            return true
                         } catch {
-                            saveErrorMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
+                            modelContext.rollback()
+                            return false
                         }
                     }
                 }
@@ -117,7 +119,7 @@ struct MyClosetView: View {
                 deleteItem(item)
             }
         } message: {
-            Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 함께 삭제됩니다. 그래도 삭제하시겠어요?")
+            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 함께 삭제돼요. 그래도 삭제할까요?")
         }
         .onAppear {
             rebuildDisplayedItems()
@@ -345,7 +347,9 @@ struct MyClosetView: View {
     }
 
     private func presentActiveSheet(_ sheet: ClosetActiveSheet) {
+        #if DEBUG
         print("[MyClosetView] activeSheet -> \(sheet.logName)")
+        #endif
         activeSheet = nil
         DispatchQueue.main.async {
             activeSheet = sheet
@@ -353,7 +357,9 @@ struct MyClosetView: View {
     }
 
     private func dismissActiveSheet() {
+        #if DEBUG
         print("[MyClosetView] activeSheet -> nil")
+        #endif
         activeSheet = nil
     }
 
@@ -378,7 +384,9 @@ struct MyClosetView: View {
                 try modelContext.save()
                 rebuildDisplayedItems()
             } catch {
-                saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
+                modelContext.rollback()
+                rebuildDisplayedItems()
+                saveErrorMessage = "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요."
             }
             return
         }
@@ -417,8 +425,8 @@ struct MyClosetView: View {
             새 기준 옷
             \(pendingBasisItem.displayName)
 
-            기준 옷은 같은 종류별로 1개만 설정할 수 있습니다.
-            변경하면 기존 기준 옷은 자동으로 해제됩니다.
+            기준 옷은 같은 종류마다 1개만 설정할 수 있어요.
+            변경하면 기존 기준 옷은 자동으로 해제돼요.
             """
         }
 
@@ -449,7 +457,9 @@ struct MyClosetView: View {
         do {
             try modelContext.save()
         } catch {
-            saveErrorMessage = "기준 옷 설정을 저장하지 못했습니다."
+            modelContext.rollback()
+            rebuildDisplayedItems()
+            saveErrorMessage = "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요."
             clearPendingBasisChange()
             return
         }
@@ -471,7 +481,9 @@ struct MyClosetView: View {
             try modelContext.save()
             rebuildDisplayedItems()
         } catch {
-            saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
+            modelContext.rollback()
+            rebuildDisplayedItems()
+            saveErrorMessage = "옷을 삭제하지 못했어요. 다시 시도해 주세요."
         }
     }
 
@@ -589,9 +601,9 @@ private struct FilterChip: View {
 private struct EmptyFilterResultView: View {
     var body: some View {
         ContentUnavailableView(
-            "조건에 맞는 옷이 없습니다.",
+            "조건에 맞는 옷이 없어요.",
             systemImage: "line.3.horizontal.decrease.circle",
-            description: Text("검색어 또는 필터를 조정해 주세요.")
+            description: Text("검색어나 필터를 조정해 주세요.")
         )
     }
 }
@@ -607,7 +619,7 @@ struct AddClosetMethodSheet: View {
                 Text("내 옷 추가")
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
-                Text("상품 링크로 불러오거나 직접 입력할 수 있습니다.")
+                Text("상품 링크로 불러오거나 직접 입력할 수 있어요.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -692,10 +704,10 @@ private struct EmptyClosetView: View {
                     .frame(width: 132, height: 132)
 
                 VStack(spacing: 6) {
-                    Text("옷장이 비었습니다.")
+                    Text("아직 등록된 옷이 없어요.")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(.primary)
-                    Text("핏이 마음에 드는 옷을 먼저 추가해 주세요.")
+                    Text("잘 맞는 옷을 먼저 추가해 주세요.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

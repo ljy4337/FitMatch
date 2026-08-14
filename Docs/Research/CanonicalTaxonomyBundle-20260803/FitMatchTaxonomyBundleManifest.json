@@ -22,16 +22,16 @@
   "navigationNodesExcluded": 582,
   "statusCounts": {
     "navigation_only": 582,
-    "confirmed": 1331,
+    "confirmed": 1327,
     "review_required": 608,
-    "rejected": 1447,
+    "rejected": 1451,
     "unsupported": 40
   },
   "mappingCounts": {
     "direct": 1111,
-    "transform_required": 220
+    "transform_required": 216
   },
-  "extensionRegistryCount": 54,
+  "extensionRegistryCount": 50,
   "lookupValidation": {
     "sourceExternalTargetDuplicateGroups": 0,
     "sourceExternalDuplicateGroups": 0,
@@ -44,8 +44,8 @@
   "files": {
     "FitMatchSourceCategoryMappings.json": {
       "rows": 3426,
-      "bytes": 5721707,
-      "sha256": "e68bb3a9f5ff4cfbfd1be2e5d25f8f53092a0536da1ff81c8ea0da85084895a1"
+      "bytes": 5719947,
+      "sha256": "4e2ec825e1e341928381cd08d280164fc0c6bdd542415dd8c6719a2384ee925a"
     },
     "FitMatchComparisonPolicies.json": {
       "families": 44,
@@ -63,5 +63,5 @@
     }
   },
   "bundleChecksumAlgorithm": "sha256(sorted filename + NUL + file sha256 + LF)",
-  "bundleChecksum": "23a4b0e0729fd869055246b2a9d9d53c94439587f6d7221c17d9a3be49f6c3a1"
+  "bundleChecksum": "5ea51021c8befdf4c2c01db09d63b2396317709f6d5d822b7c5a214754ee653d"
 }

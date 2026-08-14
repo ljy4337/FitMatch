@@ -6,7 +6,7 @@ struct UniqloParser: ProductURLParsing {
     private let sizeParser = UniqloSizeAPIParser()
 
     func canParse(_ url: URL) -> Bool {
-        url.host?.lowercased().contains("uniqlo.com") == true
+        ProductURLSupport.isUniqloURL(url)
     }
 
     func parse(from url: URL) async throws -> ParsedProductInfo {
@@ -23,21 +23,29 @@ struct UniqloParser: ProductURLParsing {
 
         let sizeAPIResult: UniqloSizeAPIResult
         do {
-            sizeAPIResult = try await sizeParser.parse(productIDWithColorCode: resolved.productIDWithColorCode)
+            sizeAPIResult = try await sizeParser.parseWithGenericColorFallback(
+                productID: resolved.productID,
+                preferredProductIDWithColorCode: resolved.productIDWithColorCode
+            )
         } catch {
+            if Task.isCancelled { throw CancellationError() }
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
             #endif
             throw ProductURLParserPartialError(
                 productInfo: metadata.parsedProductInfo(
                     sizes: [],
-                    parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했습니다. 상품 URL을 다시 확인해 주세요."
+                    parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했어요. 상품 URL을 다시 확인해 주세요."
                 )
             )
         }
         let sizes = sizeAPIResult.sizes
         let resolvedMetadata = metadata
-            .withPreferredImageURL(sizeAPIResult.imageURLString)
+            .withPreferredImageURL(
+                sizeAPIResult.imageURLString,
+                selectedColorCode: resolved.imageColorCode,
+                goodsID: resolved.goodsID
+            )
             .withInferredSleeveDetail(from: sizes)
 
         #if DEBUG
@@ -52,7 +60,7 @@ struct UniqloParser: ProductURLParsing {
             throw ProductURLParserPartialError(
                 productInfo: resolvedMetadata.parsedProductInfo(
                     sizes: [],
-                    parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했습니다. 상품 URL을 다시 확인해 주세요."
+                    parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했어요. 상품 URL을 다시 확인해 주세요."
                 )
             )
         }
@@ -223,6 +231,45 @@ struct UniqloSizeAPIResult {
 }
 
 struct UniqloSizeAPIParser {
+    static func genericProductIDWithColorCode(for productID: String) -> String {
+        "\(productID)-000"
+    }
+
+    static func shouldRetryWithGenericColor(
+        preferredProductIDWithColorCode: String,
+        genericProductIDWithColorCode: String,
+        result: UniqloSizeAPIResult
+    ) -> Bool {
+        result.sizes.isEmpty
+            && preferredProductIDWithColorCode != genericProductIDWithColorCode
+    }
+
+    func parseWithGenericColorFallback(
+        productID: String,
+        preferredProductIDWithColorCode: String
+    ) async throws -> UniqloSizeAPIResult {
+        let genericProductIDWithColorCode = Self.genericProductIDWithColorCode(for: productID)
+        do {
+            let preferredResult = try await parse(
+                productIDWithColorCode: preferredProductIDWithColorCode
+            )
+            guard Self.shouldRetryWithGenericColor(
+                preferredProductIDWithColorCode: preferredProductIDWithColorCode,
+                genericProductIDWithColorCode: genericProductIDWithColorCode,
+                result: preferredResult
+            ) else {
+                return preferredResult
+            }
+        } catch {
+            if Task.isCancelled { throw CancellationError() }
+            guard preferredProductIDWithColorCode != genericProductIDWithColorCode else {
+                throw error
+            }
+        }
+
+        return try await parse(productIDWithColorCode: genericProductIDWithColorCode)
+    }
+
     func parse(productIDWithColorCode: String) async throws -> UniqloSizeAPIResult {
         guard var components = URLComponents(string: "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/size-charts") else {
             throw ProductURLParserError.automaticParsingUnavailable
@@ -426,8 +473,19 @@ struct UniqloProductMetadata {
         )
     }
 
-    func withPreferredImageURL(_ preferredImageURLString: String?) -> UniqloProductMetadata {
+    func withPreferredImageURL(
+        _ preferredImageURLString: String?,
+        selectedColorCode: String,
+        goodsID: String
+    ) -> UniqloProductMetadata {
         guard let preferredImageURLString, !preferredImageURLString.isEmpty else {
+            return self
+        }
+
+        // The size-chart API can fall back to the generic `000` color. Do not
+        // let that response replace the thumbnail selected from the shared URL.
+        let expectedToken = "_\(selectedColorCode)_\(goodsID)_"
+        guard preferredImageURLString.localizedCaseInsensitiveContains(expectedToken) else {
             return self
         }
 
@@ -443,7 +501,7 @@ struct UniqloProductMetadata {
         from sizes: [ParsedProductSize]
     ) -> UniqloProductMetadata {
         guard category.serviceGroup == .top,
-              detailCategory == .other || detailCategory == .shirt else {
+              detailCategory == .other else {
             return self
         }
 
@@ -479,8 +537,11 @@ struct UniqloProductMetadataParser {
             ?? "유니클로 상품 \(resolved.goodsID)"
         let productName = sanitizedProductName(rawProductName, fallback: "유니클로 상품 \(resolved.goodsID)")
         let brandName = brandName(from: productGroupObject) ?? brandName(from: productObject) ?? "유니클로"
-        let imageURLString = normalizeImageURL(firstImage(from: productGroupObject) ?? firstImage(from: productObject))
-            ?? fallbackImageURL(goodsID: resolved.goodsID, colorCode: resolved.imageColorCode)
+        let structuredImageURL = normalizeImageURL(firstImage(from: productGroupObject) ?? firstImage(from: productObject))
+        let expectedImageToken = "_\(resolved.imageColorCode)_\(resolved.goodsID)_"
+        let imageURLString = structuredImageURL?.localizedCaseInsensitiveContains(expectedImageToken) == true
+            ? structuredImageURL
+            : fallbackImageURL(goodsID: resolved.goodsID, colorCode: resolved.imageColorCode)
         let priceInfo = priceInfo(productGroupObject: productGroupObject, productObject: productObject, resolved: resolved)
         let breadcrumb = breadcrumbItems(from: breadcrumbObject, productName: productName)
         let htmlBreadcrumb = htmlBreadcrumbItems(from: resolved.html, productName: productName)
@@ -490,9 +551,24 @@ struct UniqloProductMetadataParser {
             : (!htmlBreadcrumb.isEmpty
                 ? htmlBreadcrumb.joined(separator: " / ")
                 : (stringValue(productGroupObject?["category"]) ?? "nil"))
-        let categoryText = sourcePath.depths.joined(separator: " ")
-        let initiallyMappedCategory = mapCategory(from: "\(categoryText) \(productName)")
-        let initiallyMappedDetail = mapDetailCategory(from: "\(categoryText) \(productName)")
+        let categoryText = sourcePath.fullPath ?? sourcePath.depths.joined(separator: " ")
+        // Official category evidence determines the major category. Product
+        // names may refine an ambiguous detail later, but must not silently
+        // flip a clear provider major category.
+        let mixedKnitCardiganBucket = sourcePath.depths.contains {
+            $0.contains("니트") && ($0.contains("가디건") || $0.contains("카디건"))
+        }
+        let explicitCardiganProduct = productName.contains("가디건")
+            || productName.contains("카디건")
+            || productName.localizedCaseInsensitiveContains("cardigan")
+        let initiallyMappedCategory: ClothingCategory = mixedKnitCardiganBucket
+            && explicitCardiganProduct
+            ? .outer
+            : mapCategory(from: categoryText)
+        let initiallyMappedDetail: ClosetDetailCategory = mixedKnitCardiganBucket
+            && explicitCardiganProduct
+            ? .cardigan
+            : mapDetailCategory(from: "\(categoryText) \(productName)")
         let canonical = ParsedClosetClassification.resolve(
             category: initiallyMappedCategory,
             detailCategory: initiallyMappedDetail,
@@ -505,6 +581,10 @@ struct UniqloProductMetadataParser {
             ? initiallyMappedDetail
             : (canonical?.detailCategory ?? initiallyMappedDetail)
         let canonicalURL = canonicalURL(from: resolved.html) ?? resolved.resolvedURL.absoluteString
+        let productAudience = productAudience(from: resolved.html)
+        let genderCodes = productAudience.codes
+            ?? sourcePath.gender.map { [$0] }
+            ?? genderCodes(from: breadcrumb + htmlBreadcrumb)
 
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
@@ -518,7 +598,7 @@ struct UniqloProductMetadataParser {
             categoryDepth2Name: sourcePath.depth2,
             categoryDepth3Name: sourcePath.depth3,
             categoryDepth4Name: sourcePath.depth4,
-            genderCodes: sourcePath.gender.map { [$0] } ?? genderCodes(from: breadcrumb + htmlBreadcrumb),
+            genderCodes: genderCodes,
             imageURLStrings: [imageURLString].compactMap { $0 },
             normalPrice: priceInfo.normalPrice,
             salePrice: priceInfo.salePrice,
@@ -538,6 +618,7 @@ struct UniqloProductMetadataParser {
             rawSourceCategory: rawSourceCategory,
             gender: UserGender.productTarget(from: metadata.genderCodes),
             sourcePath: sourcePath,
+            audienceEvidence: productAudience.evidence,
             prefix: "[UniqloProductMetadataParser]"
         )
 
@@ -792,14 +873,45 @@ struct UniqloProductMetadataParser {
         return ["홈", "home", "유니클로", "uniqlo"].contains(normalized)
     }
 
-    private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, prefix: String) {
+    private func logSourceCategory(rawSourceCategory: String, gender: UserGender, sourcePath: SourceCategoryPath, audienceEvidence: String?, prefix: String) {
         #if DEBUG
         FitMatchDebugLogger.detail(
             screen: "상품 분석",
             action: "유니클로 원본 분류 해석",
-            details: "파서=\(prefix), 원본=\(rawSourceCategory), 성별=\(gender.rawValue), depth1=\(sourcePath.depth1 ?? "없음"), depth2=\(sourcePath.depth2 ?? "없음"), depth3=\(sourcePath.depth3 ?? "없음"), depth4=\(sourcePath.depth4 ?? "없음"), 경로=\(sourcePath.fullPath ?? "없음")"
+            details: "파서=\(prefix), 원본=\(rawSourceCategory), 카테고리대상=\(sourcePath.gender ?? "없음"), 상품성별=\(gender.rawValue), 성별근거=\(audienceEvidence ?? "카테고리 경로"), depth1=\(sourcePath.depth1 ?? "없음"), depth2=\(sourcePath.depth2 ?? "없음"), depth3=\(sourcePath.depth3 ?? "없음"), depth4=\(sourcePath.depth4 ?? "없음"), 경로=\(sourcePath.fullPath ?? "없음")"
         )
         #endif
+    }
+
+    private func productAudience(from html: String) -> (codes: [String]?, evidence: String?) {
+        for field in ["genderCategory", "genderName"] {
+            let pattern = #"\""# + field + #"\"\s*:\s*\"([^\"]+)\""#
+            if let value = firstMatch(in: html, pattern: pattern),
+               let codes = normalizedAudienceCodes(from: value) {
+                return (codes, "\(field):\(value)")
+            }
+        }
+
+        if firstMatch(in: html, pattern: #"\"code\"\s*:\s*\"(unisex)\""#) != nil {
+            return (["UNISEX"], "productFlag:unisex")
+        }
+
+        if let contents = firstMatch(in: html, pattern: #"\"topCategories\"\s*:\s*\[([^\]]*)\]"#) {
+            let values = allMatches(in: contents, pattern: #"\"([^\"]+)\""#).map { $0.uppercased() }
+            if values.contains("MEN"), values.contains("WOMEN") {
+                return (["UNISEX"], "topCategories:MEN+WOMEN")
+            }
+        }
+        return (nil, nil)
+    }
+
+    private func normalizedAudienceCodes(from value: String) -> [String]? {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if ["UNISEX", "COMMON", "U", "공용", "젠더리스"].contains(normalized) { return ["UNISEX"] }
+        if ["MEN", "MAN", "MALE", "남성"].contains(normalized) { return ["MEN"] }
+        if ["WOMEN", "WOMAN", "FEMALE", "여성"].contains(normalized) { return ["WOMEN"] }
+        if ["KIDS", "BABY"].contains(normalized) { return [normalized] }
+        return nil
     }
 
     private func splitCategoryPath(_ path: String?) -> [String] {
@@ -915,8 +1027,33 @@ struct UniqloProductMetadataParser {
         }
     }
 
-    private func mapCategory(from text: String) -> ClothingCategory {
+    func mapCategory(from text: String) -> ClothingCategory {
         let value = text.lowercased()
+        // 상위 경로에 "티셔츠"가 포함되어도 최하위 공식 카테고리와
+        // 상품명이 스웨트팬츠처럼 더 구체적이면 그 대분류를 우선한다.
+        let terminal = text.components(separatedBy: ">").last?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? text
+        let terminalValue = terminal.lowercased()
+        if terminal.contains("스커트") || terminalValue.contains("skirt") { return .bottom }
+        if terminalValue.contains("women") && terminalValue.contains("dress")
+            || terminal.contains("원피스") { return .dress }
+        if terminalValue.contains("bottoms") || terminal.contains("팬츠")
+            || terminal.contains("바지") || terminal.contains("쇼츠")
+            || terminalValue.contains("pants") || terminalValue.contains("jeans")
+            || terminalValue.contains("shorts") { return .bottom }
+        if terminal.contains("아우터") || terminal.contains("재킷")
+            || terminal.contains("자켓") || terminal.contains("코트")
+            || terminal.contains("파카") || terminal.contains("점퍼")
+            || terminalValue.contains("outer") || terminalValue.contains("jacket")
+            || terminalValue.contains("coat") { return .outer }
+        if terminal.contains("가디건") || terminal.contains("카디건")
+            || terminalValue.contains("cardigan") { return .outer }
+        if terminal.contains("니트") || terminal.contains("스웨터")
+            || terminalValue.contains("knit") || terminalValue.contains("sweater") {
+            return .knit
+        }
+        if text.contains("홈웨어") || text.contains("라운지") || text.contains("파자마")
+            || value.contains("homewear") || value.contains("loungewear") { return .other }
         // Reversible previous order treated any denim token as bottoms, including denim overshirts.
         if value.contains("overshirt") || text.contains("오버셔츠") || value.contains("shirt") || text.contains("셔츠") {
             return .top
@@ -942,19 +1079,48 @@ struct UniqloProductMetadataParser {
         if text.contains("가방") || text.contains("모자") || text.contains("벨트") || text.contains("액세서리") || value.contains("accessories") {
             return .accessory
         }
-        return .top
+        // 공식 분류 근거가 없으면 상의로 추정하지 않는다. 호출부가 제한된
+        // 상품명 보완을 시도한 뒤에도 모호하면 사용자 선택으로 넘긴다.
+        return .other
     }
 
-    private func mapDetailCategory(from text: String) -> ClosetDetailCategory {
+    func mapDetailCategory(from text: String) -> ClosetDetailCategory {
         let value = text.lowercased()
+        let terminal = text.components(separatedBy: ">").last?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? text
+        let terminalValue = terminal.lowercased()
+        if terminal.contains("가디건") || terminal.contains("카디건")
+            || terminalValue.contains("cardigan") { return .cardigan }
+        if terminal.contains("니트") || terminal.contains("스웨터")
+            || terminalValue.contains("knit") || terminalValue.contains("sweater") {
+            return .knitTop
+        }
+        if text.contains("캐미솔") || value.contains("camisole") { return .womenCamisole }
+        if text.contains("슬립") || value.contains("slip") { return .womenSlip }
+        if text.contains("브라") || value.contains("bra") { return .womenBra }
+        if text.contains("팬티") || value.contains("panty") { return .womenPanty }
+        if text.contains("트렁크") || value.contains("trunks") || value.contains("boxer") { return .menTrunks }
+        if text.contains("브리프") || value.contains("brief") { return .menBriefs }
+        if text.contains("런닝") || value.contains("undershirt") { return .menUndershirt }
         if text.contains("스커트") || value.contains("skirt") { return .skirt }
         if text.contains("슬리브리스") || value.contains("sleeveless") { return .sleeveless }
-        if text.contains("쇼트 팬츠") || value.contains("short pants") { return .shorts }
+        if text.contains("쇼트 팬츠") || text.contains("쇼트팬츠") || value.contains("short pants") { return .shorts }
         if value.contains("overshirt") || text.contains("오버셔츠") { return .shirt }
         if text.contains("가디건") || value.contains("cardigan") { return .cardigan }
         if text.contains("민소매") || text.contains("나시") || value.contains("sleeveless") || value.contains("tank") { return .sleeveless }
         if text.contains("반팔") || text.contains("반소매") || value.contains("short sleeve") { return .shortSleeve }
         if text.contains("긴팔") || text.contains("긴소매") || value.contains("long sleeve") { return .longSleeve }
+        if value.contains("cut & sewn") || value.contains("cut and sewn") { return .shortSleeve }
+        // 티셔츠는 "셔츠"를 문자열로 포함하지만 서로 다른 의류 계열이다.
+        // 소매 길이는 이 단계에서 추정하지 않고, 공식 실측 사이즈표를 받은 후
+        // withInferredSleeveDetail/normalizedSizes에서 반팔·긴팔로 확정한다.
+        if text.contains("티셔츠")
+            || text.contains("그래픽T")
+            || text.contains("그래픽t")
+            || value.contains("t-shirt")
+            || value.contains("tshirt") {
+            return .other
+        }
         if text.contains("후드") || value.contains("hoodie") { return .hoodie }
         if text.contains("스웨트") || text.contains("맨투맨") || value.contains("sweat") { return .sweatshirt }
         if text.contains("셔츠") || value.contains("shirt") { return .shirt }
@@ -1166,6 +1332,8 @@ private enum UniqloMeasurementColumn {
     func firstValue(in values: [String: Double]) -> Double? {
         for alias in aliases {
             if let exact = values[alias] { return exact }
+        }
+        for alias in aliases where alias != "length" {
             if let key = values.keys.sorted().first(where: { $0.contains(alias) }) {
                 return values[key]
             }

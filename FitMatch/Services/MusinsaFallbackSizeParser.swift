@@ -109,7 +109,7 @@ nonisolated enum MusinsaFallbackGarmentFamily {
     }
 }
 
-struct MusinsaFallbackImage {
+nonisolated struct MusinsaFallbackImage {
     let url: URL
     let sourceText: String
     let declaredWidth: Double?
@@ -139,7 +139,7 @@ struct MusinsaFallbackImage {
     }
 }
 
-enum MusinsaFallbackImageExtractor {
+nonisolated enum MusinsaFallbackImageExtractor {
     static func images(in html: String) -> [MusinsaFallbackImage] {
         guard let regex = try? NSRegularExpression(
             pattern: #"<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>"#,
@@ -189,7 +189,7 @@ enum MusinsaFallbackImageExtractor {
     }
 }
 
-enum MusinsaFallbackTableParser {
+nonisolated enum MusinsaFallbackTableParser {
     static func parseHTML(_ html: String, family: MusinsaFallbackGarmentFamily) -> [ParsedProductSize] {
         guard let tableRegex = try? NSRegularExpression(
             pattern: #"<table\b[^>]*>(.*?)</table>"#,
@@ -599,9 +599,9 @@ enum MusinsaFallbackTableParser {
                 options: .regularExpression
             )
         let hits = [
-            normalized.range(of: #"(?<![a-z])cm(?![a-z])|센티미터"#, options: .regularExpression) != nil ? 1.0 : nil,
-            normalized.range(of: #"(?<![a-z])mm(?![a-z])|밀리미터"#, options: .regularExpression) != nil ? 0.1 : nil,
-            normalized.range(of: #"(?<![a-z])inch(?:es)?(?![a-z])|인치"#, options: .regularExpression) != nil ? 2.54 : nil
+            normalized.range(of: #"(?:^|[^a-z])cm(?![a-z])|센티미터"#, options: .regularExpression) != nil ? 1.0 : nil,
+            normalized.range(of: #"(?:^|[^a-z])mm(?![a-z])|밀리미터"#, options: .regularExpression) != nil ? 0.1 : nil,
+            normalized.range(of: #"(?:^|[^a-z])inch(?:es)?(?![a-z])|인치"#, options: .regularExpression) != nil ? 2.54 : nil
         ].compactMap { $0 }
         if hits.isEmpty { return 1 }
         return Set(hits).count == 1 ? hits[0] : nil
@@ -680,7 +680,7 @@ enum MusinsaFallbackTableParser {
     }
 }
 
-private enum FallbackColumn: Equatable {
+nonisolated private enum FallbackColumn: Equatable {
     case chestWidth, chestCircumference, shoulder, length, frontLength, backLength, sleeve, centerBackSleeve
     case outseam
     case waistWidth, waistCircumference, hip, hipCircumference
@@ -1463,7 +1463,7 @@ nonisolated enum MusinsaFallbackImageOCR {
 }
 
 private extension GarmentMeasurements {
-    mutating func set(_ value: Double, for kind: MeasurementDisplayKind) {
+    nonisolated mutating func set(_ value: Double, for kind: MeasurementDisplayKind) {
         switch kind {
         case .shoulder: shoulder = value
         case .chest: chest = value
@@ -1484,12 +1484,12 @@ private extension GarmentMeasurements {
 }
 
 private extension String {
-    var trimmedCell: String {
+    nonisolated var trimmedCell: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "\u{00a0}", with: " ")
     }
 
-    var normalizedSizeHeader: String {
+    nonisolated var normalizedSizeHeader: String {
         var value = trimmedCell.lowercased()
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "_", with: "")
@@ -1504,7 +1504,7 @@ private extension String {
         return value
     }
 
-    var strippingHTML: String {
+    nonisolated var strippingHTML: String {
         replacingOccurrences(of: #"<br\s*/?>"#, with: " ", options: [.regularExpression, .caseInsensitive])
             .replacingOccurrences(of: #"<[^>]+>"#, with: " ", options: .regularExpression)
             .htmlEntityDecoded
@@ -1512,7 +1512,7 @@ private extension String {
             .trimmedCell
     }
 
-    var htmlEntityDecoded: String {
+    nonisolated var htmlEntityDecoded: String {
         replacingOccurrences(of: "&amp;", with: "&")
             .replacingOccurrences(of: "&quot;", with: "\"")
             .replacingOccurrences(of: "&#39;", with: "'")

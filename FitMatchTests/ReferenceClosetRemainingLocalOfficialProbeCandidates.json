@@ -1,0 +1,575 @@
+{
+  "selection_policy": "All not-previously-probed local official-measurement products classified into currently missing 43-code references",
+  "candidates": [
+    {
+      "source": "uniqlo",
+      "product_id": "E465203",
+      "product_name": "DRY-EX UV PROTECTION풀집파카",
+      "source_path": "스포츠 유틸리티 웨어 > 아우터 > 파카",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E465203-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E473633",
+      "product_name": "BT릴랙스핏크롭레깅스(7부)AIRism",
+      "source_path": "신생아(0개월~2세) > 레깅스 & 팬츠 > 크롭레깅스",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E473633-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E478123",
+      "product_name": "KIDS PUFFTECH워셔블파카A",
+      "source_path": "아우터 > 재킷 & 파카 > 패딩",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E478123-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E480861",
+      "product_name": "KIDS포켓터블UV PROTECTION파카(컬러블록)",
+      "source_path": "아우터 > 재킷 & 파카 > 파카",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 4,
+      "url": "https://www.uniqlo.com/kr/ko/products/E480861-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481779",
+      "product_name": "BT AIRism크롭레깅스(7부·릴랙스핏)",
+      "source_path": "영유아(6개월~5세) > 레깅스 & 팬츠 > 크롭레깅스",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "selection_rank": 5,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481779-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481780",
+      "product_name": "BT AIRism크롭레깅스(7부·립)",
+      "source_path": "영유아(6개월~5세) > 레깅스 & 팬츠 > 크롭레깅스",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "selection_rank": 6,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481780-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481786",
+      "product_name": "BT이지쇼트팬츠(트윌)",
+      "source_path": "영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠",
+      "target_category": "leggings",
+      "target_detail": "short_leggings",
+      "selection_rank": 7,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481786-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481787",
+      "product_name": "BT데님이지쇼트팬츠",
+      "source_path": "영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠",
+      "target_category": "leggings",
+      "target_detail": "short_leggings",
+      "selection_rank": 8,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481787-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481788",
+      "product_name": "BT이지쇼트팬츠(스트라이프)",
+      "source_path": "신생아(0개월~2세) > 레깅스 & 팬츠 > 쇼트팬츠",
+      "target_category": "leggings",
+      "target_detail": "short_leggings",
+      "selection_rank": 9,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481788-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481791",
+      "product_name": "BT이지쇼트팬츠(스코츠)",
+      "source_path": "신생아(0개월~2세) > 레깅스 & 팬츠 > 쇼트팬츠",
+      "target_category": "leggings",
+      "target_detail": "short_leggings",
+      "selection_rank": 10,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481791-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482045",
+      "product_name": "BT UV PROTECTION메쉬후디(긴팔)",
+      "source_path": "영유아(6개월~5세) > 아우터 > UV Protection",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 11,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482045-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483975",
+      "product_name": "DRY-EX UV PROTECTION풀집파카(프린트)",
+      "source_path": "스포츠 유틸리티 웨어 > 아우터 > 파카",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 12,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483975-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E484664",
+      "product_name": "유틸리티쇼트재킷(데님)",
+      "source_path": "아우터 > 파카 & 블루종 > 재킷",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 13,
+      "url": "https://www.uniqlo.com/kr/ko/products/E484664-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E485322",
+      "product_name": "BT이지쇼트팬츠(프린트)",
+      "source_path": "영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠",
+      "target_category": "leggings",
+      "target_detail": "short_leggings",
+      "selection_rank": 14,
+      "url": "https://www.uniqlo.com/kr/ko/products/E485322-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486416",
+      "product_name": "BT PUFFTECH워셔블파카",
+      "source_path": "영유아(6개월~5세) > 아우터 > 패딩",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 15,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486416-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486417",
+      "product_name": "BT PUFFTECH워셔블파카(프린트)",
+      "source_path": "영유아(6개월~5세) > 아우터 > 패딩",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 16,
+      "url": "https://www.uniqlo.com/kr/ko/products/E486417-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487394",
+      "product_name": "포켓터블UV PROTECTION파카",
+      "source_path": "UV Protection > 재킷 & 파카 > 포켓터블",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 17,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487394-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487396",
+      "product_name": "유틸리티코튼블렌드파카",
+      "source_path": "아우터 > 파카 & 블루종 > 파카",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 18,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487396-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487406",
+      "product_name": "PUFFTECH파카",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 파카",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 19,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487406-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487408",
+      "product_name": "PUFFTECH재킷",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 재킷",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 20,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487408-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487518",
+      "product_name": "패디드유틸리티쇼트재킷",
+      "source_path": "아우터 > 파카 & 블루종 > UNIQLO and JW ANDERSON",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 21,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487518-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487689",
+      "product_name": "패디드쇼트블루종",
+      "source_path": "아우터 > 파카 & 블루종 > 코치재킷",
+      "target_category": "outerwear",
+      "target_detail": "windbreaker",
+      "selection_rank": 22,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487689-000/00"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5386464",
+      "product_name": "SIDE BUTTON LEATHER JUMPER_BLACK",
+      "source_path": "아우터 > 레더/라이더스 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 23,
+      "url": "https://www.musinsa.com/products/5386464"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5872665",
+      "product_name": "워시드 레더 헤링턴 점퍼 브라운 ZI2LT204BR",
+      "source_path": "아우터 > 레더/라이더스 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "selection_rank": 24,
+      "url": "https://www.musinsa.com/products/5872665"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4787764",
+      "product_name": "Capri Leggings Black",
+      "source_path": "스포츠/레저 > 하의 > 레깅스",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "selection_rank": 25,
+      "url": "https://www.musinsa.com/products/4787764"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4807050",
+      "product_name": "워크 오버롤 (S25SUFOP10) Mustard",
+      "source_path": "스포츠/레저 > 하의 > 오버롤",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 26,
+      "url": "https://www.musinsa.com/products/4807050"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4879531",
+      "product_name": "여성용 루즈핏 점프슈트 블랙",
+      "source_path": "스포츠/레저 > 하의 > 점프 슈트",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 27,
+      "url": "https://www.musinsa.com/products/4879531"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4989019",
+      "product_name": "7JD1563 공용 경량 반팔 점프수트 (2color)",
+      "source_path": "스포츠/레저 > 하의 > 점프 슈트",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 28,
+      "url": "https://www.musinsa.com/products/4989019"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5157384",
+      "product_name": "데님 카고 오버롤 팬츠 (중청)",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 29,
+      "url": "https://www.musinsa.com/products/5157384"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5340818",
+      "product_name": "유니 오버롤 인디고 다크",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 30,
+      "url": "https://www.musinsa.com/products/5340818"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5365896",
+      "product_name": "Vintage Combi Cotton Overall - Vintage Brown",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 31,
+      "url": "https://www.musinsa.com/products/5365896"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5473646",
+      "product_name": "Motorcycle Long sleeve Overall Red",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 32,
+      "url": "https://www.musinsa.com/products/5473646"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5519618",
+      "product_name": "[5부/7부] 트임 카프리 팬츠",
+      "source_path": "스포츠/레저 > 하의 > 레깅스",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "selection_rank": 33,
+      "url": "https://www.musinsa.com/products/5519618"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5876452",
+      "product_name": "데님 오버롤 M32 아이보리",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 34,
+      "url": "https://www.musinsa.com/products/5876452"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5929977",
+      "product_name": "DENIM OVERALL PANTS blue",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 35,
+      "url": "https://www.musinsa.com/products/5929977"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5986234",
+      "product_name": "파번 5810 피그먼트 오버핏 그레이 점프수트",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 36,
+      "url": "https://www.musinsa.com/products/5986234"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6143934",
+      "product_name": "조이 코튼 오버롤 원피스_Navy",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 37,
+      "url": "https://www.musinsa.com/products/6143934"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6143938",
+      "product_name": "커브드 킹크 오버롤_Middle Blue",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 38,
+      "url": "https://www.musinsa.com/products/6143938"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6148695",
+      "product_name": "Signature Bib Overalls DCWOP001BROWN",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 39,
+      "url": "https://www.musinsa.com/products/6148695"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6263726",
+      "product_name": "빈티지 워크웨어 데님 팬츠 오버롤",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 40,
+      "url": "https://www.musinsa.com/products/6263726"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6293624",
+      "product_name": "아웃 포켓 아메카지 점프수트 투피스 오버롤 셋업 (블랙)",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 41,
+      "url": "https://www.musinsa.com/products/6293624"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6293629",
+      "product_name": "아웃 포켓 아메카지 점프수트 투피스 오버롤 셋업 (카키)",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 42,
+      "url": "https://www.musinsa.com/products/6293629"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6293632",
+      "product_name": "아웃 포켓 아메카지 점프수트 투피스 오버롤 셋업 (소라)",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 43,
+      "url": "https://www.musinsa.com/products/6293632"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6372851",
+      "product_name": "CLOUD CLEAN TWO-PIECE_WHITE",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 44,
+      "url": "https://www.musinsa.com/products/6372851"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6436617",
+      "product_name": "벨트 레이스 점프수트 화이트",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 45,
+      "url": "https://www.musinsa.com/products/6436617"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6488721",
+      "product_name": "르니 자수 포켓 지퍼 스트링 점프수트 MM08OP005HJY",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 46,
+      "url": "https://www.musinsa.com/products/6488721"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6494281",
+      "product_name": "Henley Neck Side Rib Bodysuit (Black) / 26SMJS001BK",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 47,
+      "url": "https://www.musinsa.com/products/6494281"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6624131",
+      "product_name": "[7부] 체크 트임 카프리 팬츠 (2colors)",
+      "source_path": "스포츠/레저 > 하의 > 레깅스",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "selection_rank": 48,
+      "url": "https://www.musinsa.com/products/6624131"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6627405",
+      "product_name": "Jenny Soft Drape Blouse&Pants Set-up (Shadow Black)",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 49,
+      "url": "https://www.musinsa.com/products/6627405"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6743696",
+      "product_name": "Mellow Romper (Ice Blue)",
+      "source_path": "스포츠/레저 > 하의 > 점프 슈트",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 50,
+      "url": "https://www.musinsa.com/products/6743696"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6819100",
+      "product_name": "사이드 셔링 카프리팬츠 (4colors)",
+      "source_path": "스포츠/레저 > 하의 > 레깅스",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "selection_rank": 51,
+      "url": "https://www.musinsa.com/products/6819100"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6842494",
+      "product_name": "겨울 웜업 점프수트 (2color)",
+      "source_path": "스포츠/레저 > 하의 > 점프 슈트",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 52,
+      "url": "https://www.musinsa.com/products/6842494"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488787",
+      "product_name": "집업쇼트재킷(데님)",
+      "source_path": "아우터 > 파카 & 블루종 > 재킷",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 53,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488787-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488828",
+      "product_name": "커버롤(데님)",
+      "source_path": "아우터 > 파카 & 블루종 > 재킷",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 54,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488828-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488829",
+      "product_name": "커버롤(데님)",
+      "source_path": "아우터 > 파카 & 블루종 > 재킷",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 55,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488829-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489026",
+      "product_name": "패디드유틸리티쇼트재킷(패턴)",
+      "source_path": "아우터 > 파카 & 블루종 > UNIQLO and JW ANDERSON",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "selection_rank": 56,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489026-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491320",
+      "product_name": "KIDS PEANUTS코치재킷",
+      "source_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 그래픽 티셔츠",
+      "target_category": "outerwear",
+      "target_detail": "windbreaker",
+      "selection_rank": 57,
+      "url": "https://www.uniqlo.com/kr/ko/products/E491320-000/00"
+    }
+  ]
+}

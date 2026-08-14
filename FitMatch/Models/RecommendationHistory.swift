@@ -1,6 +1,12 @@
 import Foundation
 import SwiftData
 
+struct RecommendationHistoryComparisonData {
+    let calculationSnapshot: RecommendationCalculationSnapshot?
+    let comparedMeasurementUsages: [MeasurementComparisonUsage]
+    let measurementExclusions: [MeasurementComparisonExclusion]
+}
+
 @Model
 final class RecommendationHistory {
     @Attribute(.unique)
@@ -70,7 +76,6 @@ final class RecommendationHistory {
         fallbackReason: String = "",
         productDetailCategory: ClosetDetailCategory = .other,
         comparisonResult: MeasurementComparisonResult? = nil,
-        bodyShapeSettings: BodyShapePreferences = .none,
         reason: String? = nil,
         createdAt: Date = Date()
     ) {
@@ -100,8 +105,7 @@ final class RecommendationHistory {
             self.comparisonSchemaVersion = 2
             self.comparisonStatusRawValue = comparisonResult.status.rawValue
             let snapshot = RecommendationCalculationSnapshot.make(
-                comparison: comparisonResult,
-                bodyShapeSettings: bodyShapeSettings
+                comparison: comparisonResult
             )
             self.comparedMeasurementUsagesJSON = Self.encode(
                 RecommendationComparisonEnvelope(snapshot: snapshot)
@@ -182,6 +186,25 @@ final class RecommendationHistory {
 
     var measurementExclusions: [MeasurementComparisonExclusion] {
         Self.decode([MeasurementComparisonExclusion].self, from: measurementExclusionsJSON) ?? []
+    }
+
+    var comparisonData: RecommendationHistoryComparisonData {
+        let snapshot = Self.decode(
+            RecommendationComparisonEnvelope.self,
+            from: comparedMeasurementUsagesJSON
+        )?.snapshot
+        let usages = snapshot?.usages
+            ?? Self.decode([MeasurementComparisonUsage].self, from: comparedMeasurementUsagesJSON)
+            ?? []
+
+        return RecommendationHistoryComparisonData(
+            calculationSnapshot: snapshot,
+            comparedMeasurementUsages: usages,
+            measurementExclusions: Self.decode(
+                [MeasurementComparisonExclusion].self,
+                from: measurementExclusionsJSON
+            ) ?? []
+        )
     }
 
     var displayComparisonMethod: String {

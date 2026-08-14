@@ -1,0 +1,615 @@
+{
+  "generated_from": [
+    "musinsa_actual_measurement_pair_results_real_flow_after_fix.json",
+    "uniqlo_actual_measurement_pair_results.json"
+  ],
+  "selection_policy": "3 per measured detail category; 10 for other; deterministic product_id order",
+  "products": [
+    {
+      "source": "musinsa",
+      "product_id": "1572220",
+      "product_name": "SCOUTS LETTERING 후드티 Forest Green",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/1572220",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1755605",
+      "product_name": "[360g] M-Logo 반집업 맨투맨 (JR5TSU838BK)",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/1755605",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2080488",
+      "product_name": "하프 집업 스웻셔츠-네이비",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/2080488",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2709228",
+      "product_name": "BLUER TEAM SWEATSHIRTS DUSTY BLUE",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/2709228",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2713976",
+      "product_name": "리버스위브 C로고 기모 후드 티셔츠 Normal Red",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/2713976",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2738737",
+      "product_name": "시그니처 레더 패치드 스웻셔츠 CHARCOAL",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/2738737",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3030274",
+      "product_name": "[기모 Ver.] CGP 아치 로고 후드티_라이트그레이",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/3030274",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3033870",
+      "product_name": "여성 리버스위브 100 크롭 후드 티셔츠 Black",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/3033870",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3033915",
+      "product_name": "여성 리버스위브 프렌치테리 포켓 스웨트셔츠 Black",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/3033915",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3052874",
+      "product_name": "여성 리버스위브 프렌치테리 스웨트셔츠 Light Blue",
+      "expected_detail": "기타",
+      "url": "https://www.musinsa.com/products/3052874",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1311988",
+      "product_name": "라이트웨이트 테이퍼드 히든 밴딩 10부 슬랙스 [블랙]",
+      "expected_detail": "긴바지",
+      "url": "https://www.musinsa.com/products/1311988",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1945314",
+      "product_name": "우먼즈 라이트웨이트 하이 웨이스트 와이드 히든 밴딩 슬랙스 [블랙]",
+      "expected_detail": "긴바지",
+      "url": "https://www.musinsa.com/products/1945314",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1960628",
+      "product_name": "[쿨탠다드] 우먼즈 와이드 히든 밴딩 슬랙스 [블랙]",
+      "expected_detail": "긴바지",
+      "url": "https://www.musinsa.com/products/1960628",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3666383",
+      "product_name": "쿼터 지퍼 점퍼 - 네이비:레드 / IR7128",
+      "expected_detail": "긴팔",
+      "url": "https://www.musinsa.com/products/3666383",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3845218",
+      "product_name": "시어 카라 탑_옐로우",
+      "expected_detail": "긴팔",
+      "url": "https://www.musinsa.com/products/3845218",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4322503",
+      "product_name": "Funk Mesh Top - Ivory",
+      "expected_detail": "긴팔",
+      "url": "https://www.musinsa.com/products/4322503",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2387085",
+      "product_name": "와일드 부츠컷 레깅스 (9colors)",
+      "expected_detail": "롱 레깅스",
+      "url": "https://www.musinsa.com/products/2387085",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2481313",
+      "product_name": "[SWL22006-01] 익스트림 프로 4.5부 레깅스 젠틀블랙",
+      "expected_detail": "롱 레깅스",
+      "url": "https://www.musinsa.com/products/2481313",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2587349",
+      "product_name": "여성 요가복 DEVI-B0056-블랙 필라테스 군살제로 원포켓 바이커",
+      "expected_detail": "롱 레깅스",
+      "url": "https://www.musinsa.com/products/2587349",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1983800",
+      "product_name": "[3PACK] B-에어로쉬 이너 민소매/반팔 2종",
+      "expected_detail": "민소매",
+      "url": "https://www.musinsa.com/products/1983800",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4120242",
+      "product_name": "홀터넥 PK 탑 크림",
+      "expected_detail": "민소매",
+      "url": "https://www.musinsa.com/products/4120242",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4170414",
+      "product_name": "오버핏 크루넥 슬리브리스 썸머비치 민소매 티셔츠 화이트블루",
+      "expected_detail": "민소매",
+      "url": "https://www.musinsa.com/products/4170414",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3034336",
+      "product_name": "Ray Yacht Parka Carrot",
+      "expected_detail": "바람막이",
+      "url": "https://www.musinsa.com/products/3034336",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3758213",
+      "product_name": "[시티 레저] 라이트웨이트 패커블 윈드브레이커 재킷 [그레이]",
+      "expected_detail": "바람막이",
+      "url": "https://www.musinsa.com/products/3758213",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3793566",
+      "product_name": "[시티 레저] 시어 윈드브레이커 재킷 [라이트 그레이]",
+      "expected_detail": "바람막이",
+      "url": "https://www.musinsa.com/products/3793566",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2273549",
+      "product_name": "우먼즈 나일론 밴딩 쇼츠 [블랙]",
+      "expected_detail": "반바지",
+      "url": "https://www.musinsa.com/products/2273549",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3170559",
+      "product_name": "루트 우먼스 핀턱 쇼츠 Navy (S23MWRHP67)",
+      "expected_detail": "반바지",
+      "url": "https://www.musinsa.com/products/3170559",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3273265",
+      "product_name": "여성 5부 코튼 저지 숏팬츠 Normal Grey",
+      "expected_detail": "반바지",
+      "url": "https://www.musinsa.com/products/3273265",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3074973",
+      "product_name": "우먼즈 더블 니트 칼라드 반소매 스웨트셔츠 [멜란지 라이트 그레이]",
+      "expected_detail": "반팔",
+      "url": "https://www.musinsa.com/products/3074973",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3101626",
+      "product_name": "우먼즈 팬시 얀 크루 넥 반팔 니트 [블랙]",
+      "expected_detail": "반팔",
+      "url": "https://www.musinsa.com/products/3101626",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3989452",
+      "product_name": "케이블 라운드 반팔 니트 - 3color",
+      "expected_detail": "반팔",
+      "url": "https://www.musinsa.com/products/3989452",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1108007",
+      "product_name": "베이식 블레이저 [블랙]",
+      "expected_detail": "블레이저",
+      "url": "https://www.musinsa.com/products/1108007",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1558197",
+      "product_name": "릴렉스드 베이식 블레이저 [블랙]",
+      "expected_detail": "블레이저",
+      "url": "https://www.musinsa.com/products/1558197",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1803462",
+      "product_name": "우먼즈 베이식 블레이저 [블랙]",
+      "expected_detail": "블레이저",
+      "url": "https://www.musinsa.com/products/1803462",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2109990",
+      "product_name": "베이직 스타디움 자켓 - 네이비",
+      "expected_detail": "재킷",
+      "url": "https://www.musinsa.com/products/2109990",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2300649",
+      "product_name": "겜빗 스타디움 자켓 블랙 JUOT4459",
+      "expected_detail": "재킷",
+      "url": "https://www.musinsa.com/products/2300649",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2724550",
+      "product_name": "MZ CROP STADIUM(BEIGE)",
+      "expected_detail": "재킷",
+      "url": "https://www.musinsa.com/products/2724550",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1641129",
+      "product_name": "우먼즈 캐시미어 블렌드 핸드메이드 로브 코트 [블랙]",
+      "expected_detail": "코트",
+      "url": "https://www.musinsa.com/products/1641129",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2042638",
+      "product_name": "Washed Cotton Oversized Coat [Purple]",
+      "expected_detail": "코트",
+      "url": "https://www.musinsa.com/products/2042638",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2098325",
+      "product_name": "프리미어 퓨어 캐시미어 발마칸 코트 [BLACK]",
+      "expected_detail": "코트",
+      "url": "https://www.musinsa.com/products/2098325",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489398",
+      "product_name": "립V넥가디건(스트라이프)",
+      "expected_detail": "가디건",
+      "url": "https://www.uniqlo.com/kr/ko/products/E489398-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489399",
+      "product_name": "립V넥가디건(플라워)",
+      "expected_detail": "가디건",
+      "url": "https://www.uniqlo.com/kr/ko/products/E489399-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E491115",
+      "product_name": "포인텔가디건(긴팔)",
+      "expected_detail": "가디건",
+      "url": "https://www.uniqlo.com/kr/ko/products/E491115-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475941",
+      "product_name": "슈퍼논아이론셔츠(세미와이드칼라)",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E475941-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475943",
+      "product_name": "슈퍼논아이론셔츠(세미와이드칼라)",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E475943-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475945",
+      "product_name": "슈퍼논아이론셔츠(레귤러칼라)",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E475945-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E478018",
+      "product_name": "슈퍼논아이론셔츠(레귤러칼라)스트라이프",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E478018-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E478023",
+      "product_name": "슈퍼논아이론셔츠(세미와이드칼라)체크",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E478023-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E478025",
+      "product_name": "슈퍼논아이론셔츠(버튼다운칼라)스트라이프A",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E478025-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482415",
+      "product_name": "슈퍼논아이론저지셔츠(레귤러칼라)",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E482415-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482419",
+      "product_name": "슈퍼논아이론저지셔츠(레귤러칼라)스트라이프B",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E482419-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482424",
+      "product_name": "슈퍼논아이론저지셔츠(레귤러칼라)스트라이프A",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E482424-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E486499",
+      "product_name": "슈퍼논아이론셔츠(버튼다운칼라)",
+      "expected_detail": "기타",
+      "url": "https://www.uniqlo.com/kr/ko/products/E486499-000",
+      "sample_kind": "other_focus"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488202",
+      "product_name": "코듀로이배럴레그팬츠",
+      "expected_detail": "긴바지",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488202-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488397",
+      "product_name": "EZY배럴진",
+      "expected_detail": "긴바지",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488397-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488630",
+      "product_name": "EZY배럴진",
+      "expected_detail": "긴바지",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488630-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488206",
+      "product_name": "데님블라우스",
+      "expected_detail": "긴팔",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488206-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488298",
+      "product_name": "후드립T(긴팔)",
+      "expected_detail": "긴팔",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488298-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488520",
+      "product_name": "옥스포드박시셔츠",
+      "expected_detail": "긴팔",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488520-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488922",
+      "product_name": "BT릴랙스핏레깅스(무지)",
+      "expected_detail": "롱 레깅스",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488922-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488923",
+      "product_name": "BT릴랙스핏레깅스(10부·프린트)",
+      "expected_detail": "롱 레깅스",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488923-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488925",
+      "product_name": "BT레깅스(셋업가능)",
+      "expected_detail": "롱 레깅스",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488925-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488203",
+      "product_name": "코듀로이큐롯",
+      "expected_detail": "반바지",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488203-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488371",
+      "product_name": "기어쇼트팬츠",
+      "expected_detail": "반바지",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488371-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488694",
+      "product_name": "데님큐롯",
+      "expected_detail": "반바지",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488694-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488280",
+      "product_name": "스트라이프미니폴로셔츠",
+      "expected_detail": "반팔",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488280-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488448",
+      "product_name": "나일론박시쇼트셔츠(5부)",
+      "expected_detail": "반팔",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488448-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488648",
+      "product_name": "BT PEANUTS AIRism코튼UT(그래픽T)B",
+      "expected_detail": "반팔",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488648-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488204",
+      "product_name": "코듀로이미니스커트",
+      "expected_detail": "스커트",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488204-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488364",
+      "product_name": "와이드플리츠미디스커트(치마길이67~71cm·짧은기장)",
+      "expected_detail": "스커트",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488364-000",
+      "sample_kind": "category_three"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488738",
+      "product_name": "GIRLS데님미니스코츠",
+      "expected_detail": "스커트",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488738-000",
+      "sample_kind": "category_three"
+    }
+  ],
+  "coverage_gaps": [
+    {
+      "source": "musinsa",
+      "expected_detail": "숏 레깅스",
+      "available": 2,
+      "required": 3
+    },
+    {
+      "source": "uniqlo",
+      "expected_detail": "라운지웨어",
+      "available": 2,
+      "required": 3
+    },
+    {
+      "source": "uniqlo",
+      "expected_detail": "블레이저",
+      "available": 1,
+      "required": 3
+    },
+    {
+      "source": "uniqlo",
+      "expected_detail": "원피스",
+      "available": 1,
+      "required": 3
+    },
+    {
+      "source": "uniqlo",
+      "expected_detail": "재킷",
+      "available": 2,
+      "required": 3
+    },
+    {
+      "source": "uniqlo",
+      "expected_detail": "패딩",
+      "available": 2,
+      "required": 3
+    }
+  ]
+}

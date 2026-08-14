@@ -33,15 +33,19 @@ final class ShoppingProductViewModel: ObservableObject {
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
+    private let metricsRecorder: FitMatchMetricsRecording
+    private var activeLoadID: UUID?
 
     init(
         initialURL: String? = nil,
         recommendationService: RecommendationService? = nil,
-        parserService: ProductURLParserService? = nil
+        parserService: ProductURLParserService? = nil,
+        metricsRecorder: FitMatchMetricsRecording? = nil
     ) {
         productURL = initialURL ?? ""
         self.recommendationService = recommendationService ?? RecommendationService()
         self.parserService = parserService ?? ProductURLParserService()
+        self.metricsRecorder = metricsRecorder ?? FitMatchMetricsRecorder.shared
     }
 
     func addSizeOption() {
@@ -57,6 +61,10 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     func loadProductInfoFromURL() async -> Bool {
+        let loadID = UUID()
+        let metricProvider = FitMatchMetricProvider.resolve(urlString: productURL)
+        metricsRecorder.record(.parserAttempt(provider: metricProvider))
+        activeLoadID = loadID
         errorMessage = nil
         parserNotice = nil
         hasLoadedProductInfo = false
@@ -66,20 +74,37 @@ final class ShoppingProductViewModel: ObservableObject {
         isNetworkFailure = false
         analysisPhase = .loadingProductInfo
         isLoadingProductInfo = true
-        defer { isLoadingProductInfo = false }
+        defer {
+            if activeLoadID == loadID {
+                activeLoadID = nil
+                isLoadingProductInfo = false
+            }
+        }
 
         do {
             let parsedProduct = try await parserService.parse(
                 urlString: productURL,
                 onProgress: { [weak self] phase in
+                    guard self?.activeLoadID == loadID else { return }
                     self?.analysisPhase = phase
                 }
             )
+            guard !Task.isCancelled, activeLoadID == loadID else { return false }
             analysisPhase = .preparingComparison
             apply(parsedProduct)
+            metricsRecorder.record(
+                .parserSuccess(
+                    provider: metricProvider,
+                    category: FitMatchMetricMajorCategory(category: category),
+                    detail: detailCategory == .other ? .catchAll : .specific,
+                    measurement: FitMatchMetricMeasurementAvailability(measurementAvailability)
+                )
+            )
             return true
         } catch let partialError as ProductURLParserPartialError {
+            guard !Task.isCancelled, activeLoadID == loadID else { return false }
             apply(partialError.productInfo)
+            metricsRecorder.record(.parserFailure(provider: metricProvider, reason: .partial))
             if partialError.productInfo.sourceName == "무신사",
                partialError.productInfo.sizes.isEmpty {
                 errorMessage = partialError.productInfo.parserNotice
@@ -89,12 +114,24 @@ final class ShoppingProductViewModel: ObservableObject {
             }
             return false
         } catch {
+            guard !Task.isCancelled, activeLoadID == loadID else { return false }
             let nsError = error as NSError
             isNetworkFailure = nsError.domain == NSURLErrorDomain
                 || (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain == NSURLErrorDomain
+            metricsRecorder.record(
+                .parserFailure(
+                    provider: metricProvider,
+                    reason: parserFailureReason(error: error, isNetworkFailure: isNetworkFailure)
+                )
+            )
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
             return false
         }
+    }
+
+    func cancelProductLoading() {
+        activeLoadID = nil
+        isLoadingProductInfo = false
     }
 
     func analyzeRecoveryImage(url: URL) async -> Bool {
@@ -150,14 +187,18 @@ final class ShoppingProductViewModel: ObservableObject {
         allowsGlobalFallback: Bool = false
     ) -> RecommendationHistory? {
         errorMessage = nil
+        let metricMode = FitMatchMetricComparisonMode.automatic
+        metricsRecorder.record(.comparisonAttempt(mode: metricMode))
 
         guard !userFits.isEmpty else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .missingReference))
             errorMessage = "먼저 내 옷장에 기준 옷을 추가해 주세요."
             recommendation = nil
             return nil
         }
 
         guard let product = makeProduct(brand: brand) else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
             errorMessage = "상품명과 최소 1개 사이즈의 실측값을 입력해 주세요."
             recommendation = nil
             return nil
@@ -167,15 +208,16 @@ final class ShoppingProductViewModel: ObservableObject {
             product: product,
             userFits: userFits,
             productDetailCategory: detailCategory,
-            allowsGlobalFallback: allowsGlobalFallback,
-            bodyShapePreferences: BodyShapeSettingsStore().load()
+            allowsGlobalFallback: allowsGlobalFallback
         ) else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
             errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
             return nil
         }
 
         recommendation = history
+        recordComparisonResult(history, mode: metricMode)
         return history
     }
 
@@ -185,8 +227,11 @@ final class ShoppingProductViewModel: ObservableObject {
         brand: Brand? = nil
     ) -> RecommendationHistory? {
         errorMessage = nil
+        let metricMode = FitMatchMetricComparisonMode.selectedReference
+        metricsRecorder.record(.comparisonAttempt(mode: metricMode))
 
         guard let product = makeProduct(brand: brand) else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
             errorMessage = "상품명과 최소 1개 사이즈의 실측값을 입력해 주세요."
             recommendation = nil
             return nil
@@ -195,15 +240,16 @@ final class ShoppingProductViewModel: ObservableObject {
         guard let history = recommendationService.recommend(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: detailCategory,
-            bodyShapePreferences: BodyShapeSettingsStore().load()
+            productDetailCategory: detailCategory
         ) else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
             errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
             recommendation = nil
             return nil
         }
 
         recommendation = history
+        recordComparisonResult(history, mode: metricMode)
         return history
     }
 
@@ -258,6 +304,39 @@ final class ShoppingProductViewModel: ObservableObject {
         }
 
         return Brand(name: trimmedBrand)
+    }
+
+    private func parserFailureReason(error: Error, isNetworkFailure: Bool) -> FitMatchMetricParserFailure {
+        if isNetworkFailure {
+            return .network
+        }
+        guard let parserError = error as? ProductURLParserError else {
+            return .other
+        }
+        switch parserError {
+        case .invalidURL: return .invalidURL
+        case .unsupportedURL: return .unsupportedURL
+        case .automaticParsingUnavailable: return .other
+        }
+    }
+
+    private func recordComparisonResult(
+        _ history: RecommendationHistory,
+        mode: FitMatchMetricComparisonMode
+    ) {
+        let outcome: FitMatchMetricComparisonOutcome
+        switch history.comparisonStatus {
+        case .confirmed: outcome = .confirmed
+        case .insufficientEvidence: outcome = .insufficientEvidence
+        case .legacy: outcome = .legacy
+        }
+        metricsRecorder.record(
+            .comparisonResult(
+                mode: mode,
+                outcome: outcome,
+                reliability: FitMatchMetricComparisonReliability(history: history)
+            )
+        )
     }
 
     func makeProductForClosetRegistration(brand: Brand?) -> Product? {
@@ -380,7 +459,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 && $0.value > 0
         }
         return ClothingSizeForm(
-            sizeName: size.name,
+            sizeName: SizeTokenNormalizer.displayName(for: size.name),
             shoulder: MeasurementResolver.value(for: .shoulder, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
             chest: MeasurementResolver.value(for: .chest, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
             totalLength: MeasurementResolver.value(for: .totalLength, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",

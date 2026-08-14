@@ -8,6 +8,8 @@ enum MeasurementComparisonStatus: String, Codable, Equatable {
 
 enum MeasurementExclusionReason: String, Codable, Equatable {
     case categoryPolicy = "category_policy"
+    case sleeveLengthMismatch = "sleeve_length_mismatch"
+    case garmentLengthMismatch = "garment_length_mismatch"
     case missingProductValue = "missing_product_value"
     case missingReferenceValue = "missing_reference_value"
     case missingBothValues = "missing_both_values"
@@ -18,19 +20,32 @@ enum MeasurementExclusionReason: String, Codable, Equatable {
     var userMessage: String {
         switch self {
         case .categoryPolicy:
-            return "의류 구조가 달라 제외했습니다."
+            return "의류 구조가 달라 비교에서 제외했어요."
+        case .sleeveLengthMismatch:
+            return "반팔과 긴팔은 소매 구조가 달라 비교에서 제외했어요."
+        case .garmentLengthMismatch:
+            return "긴바지와 반바지는 길이 구조가 달라 비교에서 제외했어요."
         case .missingProductValue:
-            return "비교 상품의 실측값이 없습니다."
+            return "비교 상품의 실측값이 없어요."
         case .missingReferenceValue:
-            return "기준 옷의 실측값이 없습니다."
+            return "기준 옷의 실측값이 없어요."
         case .missingBothValues:
-            return "상품과 기준 옷 모두 실측값이 없습니다."
+            return "상품과 기준 옷 모두 실측값이 없어요."
         case .unverifiedProductDefinition:
-            return "비교 상품의 측정 방식을 확인할 수 없습니다."
+            return "비교 상품의 측정 방식을 확인할 수 없어요."
         case .unverifiedReferenceDefinition:
-            return "기준 옷의 측정 방식을 확인할 수 없습니다."
+            return "기준 옷의 측정 방식을 확인할 수 없어요."
         case .incompatibleMeasurementCode:
-            return "측정 방식이 서로 달라 제외했습니다."
+            return "측정 방식이 서로 달라 비교에서 제외했어요."
+        }
+    }
+
+    var badgeTitle: String {
+        switch self {
+        case .incompatibleMeasurementCode, .unverifiedProductDefinition, .unverifiedReferenceDefinition:
+            return "측정 기준 다름"
+        default:
+            return "비교 제외"
         }
     }
 }
@@ -40,6 +55,16 @@ struct MeasurementComparisonExclusion: Codable, Equatable {
     let reason: MeasurementExclusionReason
     let productCode: MeasurementCode?
     let referenceCode: MeasurementCode?
+
+    var productDefinition: String? { productCode?.comparisonDefinition }
+    var referenceDefinition: String? { referenceCode?.comparisonDefinition }
+
+    var definitionDetail: String? {
+        guard reason == .incompatibleMeasurementCode else { return nil }
+        let product = productDefinition ?? "측정 기준 미확인"
+        let reference = referenceDefinition ?? "측정 기준 미확인"
+        return "상품: \(product) · 내 옷: \(reference)"
+    }
 }
 
 struct MeasurementComparisonItem: Equatable {
@@ -153,19 +178,23 @@ struct MeasurementComparisonEngine {
         productCategory: ClothingCategory,
         productDetailCategory: ClosetDetailCategory,
         excludedKinds: [MeasurementKind] = [],
-        bodyShapePreferences: BodyShapePreferences = .none
+        excludedKindReasons: [MeasurementKind: MeasurementExclusionReason] = [:]
     ) -> MeasurementComparisonResult {
         let policy = policy(
             for: productCategory,
-            detailCategory: productDetailCategory,
-            bodyShapePreferences: bodyShapePreferences
+            detailCategory: productDetailCategory
         )
         var comparedItems: [MeasurementComparisonItem] = []
         var exclusions: [MeasurementComparisonExclusion] = []
 
         for kind in policy.kinds {
             if excludedKinds.contains(kind) {
-                exclusions.append(exclusion(kind: kind, reason: .categoryPolicy, productRecords: productSize.measurementRecords, referenceRecords: referenceItem.measurementRecords))
+                exclusions.append(exclusion(
+                    kind: kind,
+                    reason: excludedKindReasons[kind] ?? .categoryPolicy,
+                    productRecords: productSize.measurementRecords,
+                    referenceRecords: referenceItem.measurementRecords
+                ))
                 continue
             }
 
@@ -220,27 +249,6 @@ struct MeasurementComparisonEngine {
                     weight: policy.weight(for: kind)
                 )
             )
-        }
-
-        let availableAbdomenKinds = comparedItems.filter {
-            $0.kind == .upperAbdomen || $0.kind == .upperWaist
-        }.map(\.kind)
-        if !availableAbdomenKinds.isEmpty {
-            let dividedWeight = 1.4 * 1.25 / Double(availableAbdomenKinds.count)
-            comparedItems = comparedItems.map { item in
-                guard availableAbdomenKinds.contains(item.kind) else { return item }
-                return MeasurementComparisonItem(
-                    kind: item.kind,
-                    measurementCode: item.measurementCode,
-                    displayTitle: item.displayTitle,
-                    productValue: item.productValue,
-                    referenceValue: item.referenceValue,
-                    signedDifference: item.signedDifference,
-                    absoluteDifference: item.absoluteDifference,
-                    score: item.score,
-                    weight: dividedWeight
-                )
-            }
         }
 
         let weightSum = comparedItems.map(\.weight).reduce(0, +)
@@ -643,18 +651,8 @@ struct MeasurementComparisonEngine {
 
     private func policy(
         for category: ClothingCategory,
-        detailCategory: ClosetDetailCategory,
-        bodyShapePreferences: BodyShapePreferences
+        detailCategory: ClosetDetailCategory
     ) -> MeasurementComparisonPolicy {
-        let preferredKinds = bodyShapePreferences.preferredMeasurementKinds
-        func weighted(_ weights: [MeasurementKind: Double]) -> [MeasurementKind: Double] {
-            weights.mapValues { $0 }.reduce(into: [:]) { result, pair in
-                result[pair.key] = pair.value * (preferredKinds.contains(pair.key) ? 1.25 : 1)
-            }
-        }
-        let abdomenKinds: [MeasurementKind] = bodyShapePreferences.hasProminentAbdomen
-            ? [.upperAbdomen, .upperWaist]
-            : []
         switch category.serviceGroup {
         case .top, .shirt, .knit:
             var weights: [MeasurementKind: Double] = [
@@ -663,8 +661,8 @@ struct MeasurementComparisonEngine {
             if detailCategory == .sleeveless { weights[.sleeveLength] = 0 }
             if detailCategory == .shortSleeve { weights[.sleeveLength] = 0.2 }
             return MeasurementComparisonPolicy(
-                kinds: ([.shoulder, .chest, .totalLength, .sleeveLength].filter { (weights[$0] ?? 0) > 0 }) + abdomenKinds,
-                weights: weighted(weights),
+                kinds: [.shoulder, .chest, .totalLength, .sleeveLength].filter { (weights[$0] ?? 0) > 0 },
+                weights: weights,
                 minimumComparableCount: 2,
                 requiredAnyKinds: [.shoulder, .chest],
                 minimumRequiredKindCount: 1,
@@ -672,8 +670,8 @@ struct MeasurementComparisonEngine {
             )
         case .outer:
             return MeasurementComparisonPolicy(
-                kinds: [.shoulder, .chest, .totalLength, .sleeveLength, .hem] + abdomenKinds,
-                weights: weighted([.shoulder: 1.1, .chest: 1.5, .totalLength: 0.8, .sleeveLength: 1.0, .hem: 0.6]),
+                kinds: [.shoulder, .chest, .totalLength, .sleeveLength, .hem],
+                weights: [.shoulder: 1.1, .chest: 1.5, .totalLength: 0.8, .sleeveLength: 1.0, .hem: 0.6],
                 minimumComparableCount: 2,
                 requiredAnyKinds: [],
                 minimumRequiredKindCount: 0,
@@ -682,7 +680,7 @@ struct MeasurementComparisonEngine {
         case .bottom, .pants:
             return MeasurementComparisonPolicy(
                 kinds: [.waist, .hip, .thigh, .rise, .hem, .totalLength],
-                weights: weighted([.waist: 1.4, .hip: 1.2, .thigh: 0.9, .rise: 0.7, .hem: 0.6, .totalLength: 1.0]),
+                weights: [.waist: 1.4, .hip: 1.2, .thigh: 0.9, .rise: 0.7, .hem: 0.6, .totalLength: 1.0],
                 minimumComparableCount: 2,
                 requiredAnyKinds: [.waist, .hip, .thigh],
                 minimumRequiredKindCount: 2,
@@ -743,10 +741,7 @@ private struct MeasurementComparisonPolicy {
     }
 
     var expectedWeightSum: Double {
-        let regularKinds = kinds.filter { $0 != .upperAbdomen && $0 != .upperWaist }
-        let regularWeight = regularKinds.map(weight(for:)).reduce(0, +)
-        let includesAbdomenGroup = kinds.contains(.upperAbdomen) || kinds.contains(.upperWaist)
-        return regularWeight + (includesAbdomenGroup ? 1.4 * 1.25 : 0)
+        kinds.map(weight(for:)).reduce(0, +)
     }
 }
 
