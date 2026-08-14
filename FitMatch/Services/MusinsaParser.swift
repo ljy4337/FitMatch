@@ -26,9 +26,9 @@ enum MusinsaSizeAvailabilityResolver {
 
 struct MusinsaParser: ProductURLParsing {
     static let automaticSizeFailureNotice =
-        "일부 상품은 사이즈 제공 방식에 따라 자동 분석이 제한될 수 있습니다.\n판매 페이지에서 사이즈표를 직접 확인해 주세요."
+        "판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했어요. 사이즈표를 추가하면 바로 비교할 수 있어요."
     static let unsupportedTopBottomSetNotice =
-        "죄송합니다. 상·하의가 함께 구성된 세트 상품은 아직 핏 비교를 지원하지 않아요."
+        "상·하의가 함께 구성된 세트 상품은 아직 사이즈 비교를 지원하지 않아요."
 
     private let urlResolver = MusinsaURLResolver()
     private let metadataParser = MusinsaProductMetadataParser()

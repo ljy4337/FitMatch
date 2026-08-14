@@ -7,7 +7,7 @@ nonisolated enum SizeTokenNormalizer {
     ])
 
     static func normalizedKey(for rawValue: String) -> String {
-        rawValue
+        displayName(for: rawValue)
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .uppercased()
             .replacingOccurrences(of: "–", with: "~")
@@ -15,8 +15,34 @@ nonisolated enum SizeTokenNormalizer {
             .replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
     }
 
+    static func displayName(for rawValue: String) -> String {
+        let value = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let range = value.range(
+            of: #"^\d+\.\s+"#,
+            options: .regularExpression
+        ) else { return value }
+        let candidate = String(value[range.upperBound...])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isValidWithoutDisplayNormalization(candidate) else { return value }
+        return candidate
+    }
+
     static func isValid(_ rawValue: String) -> Bool {
         let value = normalizedKey(for: rawValue)
+        return isValidNormalizedKey(value)
+    }
+
+    private static func isValidWithoutDisplayNormalization(_ rawValue: String) -> Bool {
+        let value = rawValue
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
+            .replacingOccurrences(of: "–", with: "~")
+            .replacingOccurrences(of: "—", with: "~")
+            .replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+        return isValidNormalizedKey(value)
+    }
+
+    private static func isValidNormalizedKey(_ value: String) -> Bool {
         guard !value.isEmpty, value.count <= 20 else { return false }
         if letterSizes.contains(value) { return true }
         if isNumericSize(value) { return true }

@@ -192,7 +192,12 @@ final class FitMatchTaxonomyProvider {
             .init(code: "tops", displayName: "상의", sortOrder: 0, isActive: true, details: [
                 .init(code: "sleeveless", displayName: "민소매", sortOrder: 0, isActive: true),
                 .init(code: "short_sleeve", displayName: "반팔", sortOrder: 1, isActive: true),
-                .init(code: "long_sleeve", displayName: "긴팔", sortOrder: 3, isActive: true)
+                .init(code: "long_sleeve", displayName: "긴팔", sortOrder: 3, isActive: true),
+                .init(code: "shirt", displayName: "셔츠", sortOrder: 4, isActive: true),
+                .init(code: "blouse", displayName: "블라우스", sortOrder: 5, isActive: true),
+                .init(code: "knit_top", displayName: "니트", sortOrder: 6, isActive: true),
+                .init(code: "sweatshirt", displayName: "맨투맨·스웨트셔츠", sortOrder: 7, isActive: true),
+                .init(code: "hoodie", displayName: "후드티", sortOrder: 8, isActive: true)
             ]),
             .init(code: "bottoms", displayName: "하의", sortOrder: 1, isActive: true, details: [
                 .init(code: "shorts", displayName: "반바지", sortOrder: 1, isActive: true),

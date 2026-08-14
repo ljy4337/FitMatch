@@ -3,6 +3,7 @@ import SwiftData
 
 struct LinkClosetRegistrationView: View {
     let onSaved: (() -> Void)?
+    let prefersRepresentativeByDefault: Bool
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -19,7 +20,8 @@ struct LinkClosetRegistrationView: View {
     @State private var recoveryViewModel: ShoppingProductViewModel?
     @State private var isShowingSizeTableRecovery = false
     @State private var recoveredSelectedSizeID: UUID?
-    @State private var isShowingSavedAlert = false
+    @State private var shouldCompleteAfterSheetDismissal = false
+    @State private var isShowingSavedToast = false
     @State private var saveErrorMessage: String?
     @State private var isShowingEmptyPasteboardMessage = false
     @State private var emptyPasteboardShake = 0
@@ -28,7 +30,8 @@ struct LinkClosetRegistrationView: View {
 
     private let parserService = ProductURLParserService()
 
-    init(onSaved: (() -> Void)? = nil) {
+    init(prefersRepresentativeByDefault: Bool = false, onSaved: (() -> Void)? = nil) {
+        self.prefersRepresentativeByDefault = prefersRepresentativeByDefault
         self.onSaved = onSaved
     }
 
@@ -69,9 +72,11 @@ struct LinkClosetRegistrationView: View {
                         product: parsedProduct,
                         detailCategory: parsedDetailCategory
                     ),
-                    isParsedProductReadOnly: true
+                    isParsedProductReadOnly: true,
+                    startsAtRegistrationConfirmation: true,
+                    prefersRepresentativeByDefault: prefersRepresentativeByDefault
                 ) { _ in
-                    isShowingSavedAlert = true
+                    shouldCompleteAfterSheetDismissal = true
                 }
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
@@ -103,13 +108,14 @@ struct LinkClosetRegistrationView: View {
                         prefillSourceOption: closetSourceOption(for: partialProduct),
                         prefillBrand: partialProduct.brand?.name,
                         prefillProductName: partialProduct.name,
+                        prefersRepresentativeByDefault: prefersRepresentativeByDefault,
                         productImageURLString: partialProduct.imageURLString,
                         presentationContext: .linkedProduct
                     ) { item in
                         modelContext.insert(item)
                         do {
                             try modelContext.save()
-                            isShowingSavedAlert = true
+                            shouldCompleteAfterSheetDismissal = true
                             return true
                         } catch {
                             modelContext.rollback()
@@ -120,10 +126,17 @@ struct LinkClosetRegistrationView: View {
                 .presentationDragIndicator(.visible)
             }
         }
-        .alert("내 옷장에 추가했어요.", isPresented: $isShowingSavedAlert) {
-            Button("확인") {
-                onSaved?()
-                dismiss()
+        .onChange(of: isShowingAddToClosetSheet) { _, isPresented in
+            if !isPresented { completeSaveIfNeeded() }
+        }
+        .onChange(of: isShowingManualAddSheet) { _, isPresented in
+            if !isPresented { completeSaveIfNeeded() }
+        }
+        .overlay(alignment: .top) {
+            if isShowingSavedToast {
+                FitMatchSuccessToast(message: "내 옷장에 추가했어요.")
+                    .padding(.top, 18)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .alert("저장 실패", isPresented: Binding(
@@ -149,6 +162,17 @@ struct LinkClosetRegistrationView: View {
         .onDisappear {
             loadTask?.cancel()
             loadTask = nil
+        }
+    }
+
+    private func completeSaveIfNeeded() {
+        guard shouldCompleteAfterSheetDismissal else { return }
+        shouldCompleteAfterSheetDismissal = false
+        withAnimation { isShowingSavedToast = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.2))
+            onSaved?()
+            dismiss()
         }
     }
 
@@ -298,7 +322,7 @@ struct LinkClosetRegistrationView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Label(
-                            partialProduct == nil ? errorMessage : "상품 정보를 불러왔습니다.",
+                            partialProduct == nil ? errorMessage : "상품 정보를 불러왔어요.",
                             systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
                         )
                         .font(.headline)
@@ -306,7 +330,7 @@ struct LinkClosetRegistrationView: View {
                     }
 
                     if let partialProduct, !isUnsupportedTopBottomSet {
-                        Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했습니다. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
+                        Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했어요. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 

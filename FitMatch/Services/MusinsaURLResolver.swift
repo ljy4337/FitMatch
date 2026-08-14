@@ -44,6 +44,11 @@ struct MusinsaURLResolver {
     }
 
     func extractProductID(from url: URL) -> String? {
+        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let selectedProductID = selectedProductID(in: components.queryItems ?? []) {
+            return selectedProductID
+        }
+
         if let productID = firstProductID(in: decodedVariants(of: url.absoluteString).joined(separator: " ")) {
             return productID
         }
@@ -76,6 +81,16 @@ struct MusinsaURLResolver {
             }
         }
 
+        return nil
+    }
+
+    private func selectedProductID(in queryItems: [URLQueryItem]) -> String? {
+        let variantKeys = Set(["goodsno", "goods_no", "productid", "product_id"])
+        for item in queryItems where variantKeys.contains(item.name.lowercased()) {
+            guard let value = item.value else { continue }
+            let digits = value.filter(\.isNumber)
+            if !digits.isEmpty { return digits }
+        }
         return nil
     }
 

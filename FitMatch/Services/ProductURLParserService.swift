@@ -24,7 +24,9 @@ enum StandardBodySizeChart {
 
     static func normalizedSize(from optionName: String) -> String? {
         let uppercased = optionName.uppercased()
-        let pattern = #"(?<![A-Z0-9])(XXL|XL|XS|L|M|S)(?![A-Z])"#
+        // ICU on physical iOS devices rejects lookbehind in this API even
+        // though the same expression can pass macOS-hosted tests.
+        let pattern = #"(?:^|[^A-Z0-9])(XXL|XL|XS|L|M|S)(?![A-Z])"#
         if let regex = try? NSRegularExpression(pattern: pattern) {
             let matches = regex.matches(
                 in: uppercased,
@@ -218,7 +220,7 @@ enum ParsedProductSizeNormalizer {
         uniqueSizes(sizes).enumerated().map { index, size in
             let productSize = ProductSize(
                 id: size.id,
-                name: size.name.trimmingCharacters(in: .whitespacesAndNewlines),
+                name: SizeTokenNormalizer.displayName(for: size.name),
                 measurements: size.measurements,
                 displayOrder: index
             )
@@ -264,9 +266,9 @@ enum ProductURLParserError: LocalizedError {
         case .invalidURL:
             return "올바른 상품 URL을 입력해 주세요."
         case .unsupportedURL:
-            return "아직 지원하지 않는 상품 링크입니다. 현재는 무신사와 유니클로 상품 URL을 우선 지원합니다."
+            return "아직 지원하지 않는 상품 링크예요. 현재는 무신사와 유니클로 상품 URL을 지원합니다."
         case .automaticParsingUnavailable:
-            return "상품 정보를 불러오지 못했습니다. 잠시 후 다시 시도하거나 지원 쇼핑몰 상품 URL인지 확인해 주세요."
+            return "상품 정보를 불러오지 못했어요. 잠시 후 다시 시도하거나 지원하는 쇼핑몰의 상품 URL인지 확인해 주세요."
         }
     }
 }
@@ -275,7 +277,7 @@ struct ProductURLParserPartialError: LocalizedError {
     let productInfo: ParsedProductInfo
 
     var errorDescription: String? {
-        "상품 정보 일부만 불러왔습니다. 사이즈 정보를 찾지 못했어요."
+        "상품 정보 일부만 불러왔어요. 사이즈 정보를 찾지 못했어요."
     }
 }
 
@@ -368,6 +370,9 @@ struct ProductURLParserService {
         onProgress(.loadingProductInfo)
 
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-fitmatchAmbiguousCategoryFixture") {
+            return Self.ambiguousCategoryFixture(for: url)
+        }
         if ProcessInfo.processInfo.arguments.contains("-fitmatchOnboardingFixtures") {
             return Self.onboardingFixture(for: url)
         }
@@ -420,6 +425,40 @@ struct ProductURLParserService {
 
         throw ProductURLParserError.unsupportedURL
     }
+
+    #if DEBUG
+    private static func ambiguousCategoryFixture(for url: URL) -> ParsedProductInfo {
+        let isSiblingProduct = url.lastPathComponent.contains("sibling")
+        return ParsedProductInfo(
+            sourceURL: url,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "분류 검증 브랜드",
+            productName: isSiblingProduct
+                ? "같은 경로의 다른 모호 상품"
+                : "모호한 카테고리 UI 검증 상품",
+            category: .top,
+            detailCategory: .other,
+            sizes: [ParsedProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 48,
+                    chest: 54,
+                    totalLength: 70,
+                    sleeveLength: 24
+                )
+            )],
+            productID: isSiblingProduct
+                ? "fitmatch-ambiguous-category-ui-sibling"
+                : "fitmatch-ambiguous-category-ui",
+            sourceCategoryPath: "스포츠/레저 > 상의 > 기타상의",
+            sourceCategoryDepth1: "스포츠/레저",
+            sourceCategoryDepth2: "상의",
+            sourceCategoryDepth3: "기타상의",
+            productTargetGender: .unisex
+        )
+    }
+    #endif
 
     private func logParsedProductInfo(_ productInfo: ParsedProductInfo) -> ParsedProductInfo {
         #if DEBUG
@@ -508,7 +547,8 @@ extension ParsedProductInfo {
     func normalizedSizes() -> ParsedProductInfo {
         var copy = self
         copy.sizes = ParsedProductSizeNormalizer.uniqueSizes(sizes)
-        if copy.detailCategory == .other {
+        let shouldInferLengthDetail = copy.detailCategory == .other
+        if shouldInferLengthDetail {
             let length = GarmentLengthInferencePolicy.infer(
                 category: copy.category,
                 gender: copy.productTargetGender,

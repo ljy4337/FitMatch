@@ -20,6 +20,31 @@ enum ComparisonLengthType: String, Codable, Equatable {
         case .unknown: return ""
         }
     }
+
+    func displayName(for garmentFamily: ComparisonGarmentFamily) -> String {
+        switch garmentFamily {
+        case .pants, .denim:
+            switch self {
+            case .short: return "반바지"
+            case .cropped: return "크롭 팬츠"
+            case .threeQuarter: return "7부 팬츠"
+            case .nineTenths: return "9부 팬츠"
+            case .long: return "긴바지"
+            case .sleeveless, .unknown: return ""
+            }
+        case .leggings:
+            switch self {
+            case .short: return "숏 레깅스"
+            case .cropped: return "크롭 레깅스"
+            case .threeQuarter: return "7부 레깅스"
+            case .nineTenths: return "9부 레깅스"
+            case .long: return "롱 레깅스"
+            case .sleeveless, .unknown: return ""
+            }
+        default:
+            return displayName
+        }
+    }
 }
 
 enum ComparisonGarmentFamily: String, Codable, Equatable {

@@ -78,6 +78,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         comparisonMethod: String,
         excludedKinds: [MeasurementKind],
+        excludedKindReasons: [MeasurementKind: MeasurementExclusionReason] = [:],
         scorePenalty: Int
     ) -> TemporarySizeAnalysis? {
         if comparisonMethod == "기준표 가슴둘레 비교" {
@@ -128,7 +129,8 @@ struct RecommendationService {
             referenceItem: referenceItem,
             productCategory: product.category,
             productDetailCategory: productDetailCategory,
-            excludedKinds: excludedKinds
+            excludedKinds: excludedKinds,
+            excludedKindReasons: excludedKindReasons
         )
         guard comparison.status == .confirmed else { return nil }
         return TemporarySizeAnalysis(
@@ -185,7 +187,8 @@ struct RecommendationService {
             product: product,
             userFits: [selectedReferenceItem],
             productDetailCategory: productDetailCategory,
-            excludedKinds: mismatch.excludedKinds
+            excludedKinds: mismatch.excludedKinds,
+            excludedKindReasons: exclusionReasons(for: mismatch.excludedKinds)
         )
     }
 
@@ -219,11 +222,26 @@ struct RecommendationService {
                 scorePenalty: manualComparisonScorePenalty(
                     product: product,
                     selectedReferenceItem: selectedReferenceItem
-                ),
+                ) + (compatibility.level == .extended ? 10 : 0),
                 fallbackReason: fallbackReason,
-                excludedMeasurementKinds: mismatch.excludedKinds
+                excludedMeasurementKinds: mismatch.excludedKinds,
+                excludedMeasurementReasons: exclusionReasons(for: mismatch.excludedKinds)
             )
         )
+    }
+
+    private func exclusionReasons(
+        for kinds: [MeasurementKind]
+    ) -> [MeasurementKind: MeasurementExclusionReason] {
+        Dictionary(uniqueKeysWithValues: kinds.map { kind in
+            if kind == .sleeveLength {
+                return (kind, .sleeveLengthMismatch)
+            }
+            if kind == .totalLength || kind == .hem {
+                return (kind, .garmentLengthMismatch)
+            }
+            return (kind, .categoryPolicy)
+        })
     }
 
     func automaticMatchResult(
@@ -278,7 +296,7 @@ struct RecommendationService {
                 reason: "같은 의류군 · 기준표 가슴둘레 비교"
             )
         }
-        return comparisonMatcher.comparisonCompatibility(
+        return comparisonMatcher.manualComparisonCompatibility(
             product: product,
             productDetailCategory: productDetailCategory,
             item: item
@@ -428,7 +446,8 @@ struct RecommendationService {
                     referenceItem: userFit,
                     productCategory: product.category,
                     productDetailCategory: productDetailCategory,
-                    excludedKinds: basis.excludedMeasurementKinds
+                    excludedKinds: basis.excludedMeasurementKinds,
+                    excludedKindReasons: basis.excludedMeasurementReasons
                 )
                 guard fitConfidence.status == .confirmed else { continue }
                 let signedDifferences = fitConfidence.signedDifferences
@@ -570,7 +589,8 @@ struct RecommendationService {
         product: Product,
         userFits: [UserFit],
         productDetailCategory: ClosetDetailCategory,
-        excludedKinds: [MeasurementKind]
+        excludedKinds: [MeasurementKind],
+        excludedKindReasons: [MeasurementKind: MeasurementExclusionReason] = [:]
     ) -> InsufficientComparisonEvidence? {
         var bestEvidence: InsufficientComparisonEvidence?
 
@@ -582,7 +602,8 @@ struct RecommendationService {
                     referenceItem: userFit,
                     productCategory: product.category,
                     productDetailCategory: productDetailCategory,
-                    excludedKinds: excludedKinds
+                    excludedKinds: excludedKinds,
+                    excludedKindReasons: excludedKindReasons
                 )
                 guard result.status == .insufficientEvidence else { continue }
 
@@ -753,9 +774,14 @@ struct RecommendationService {
                 }
                 let sameBrand = matchesBrand(item, product: product)
                 let sameDetail = item.detailCategory == productDetailCategory
+                let directSourceMeasurementCount = comparisonMatcher.directSourceComparisonCount(
+                    product: product,
+                    selectedItem: item
+                )
                 let reasonParts = [
                     compatibility.reason,
                     incomingProfile.lengthType.displayName.isEmpty ? nil : "같은 \(incomingProfile.lengthType.displayName)",
+                    directSourceMeasurementCount > 0 ? "측정 방식 \(directSourceMeasurementCount)개 일치" : nil,
                     constructionRank == 2 ? "같은 봉제 구조" : nil,
                     sameBrand ? "같은 브랜드" : nil
                 ].compactMap { $0 }
@@ -768,6 +794,7 @@ struct RecommendationService {
                     ),
                     compatibilityRank: compatibility.level.rawValue,
                     constructionRank: constructionRank,
+                    directSourceMeasurementCount: directSourceMeasurementCount,
                     isSameDetail: sameDetail,
                     isSameBrand: sameBrand
                 )
@@ -780,6 +807,9 @@ struct RecommendationService {
                     return lhs.compatibilityRank > rhs.compatibilityRank
                 }
                 if lhs.isSameDetail != rhs.isSameDetail { return lhs.isSameDetail }
+                if lhs.directSourceMeasurementCount != rhs.directSourceMeasurementCount {
+                    return lhs.directSourceMeasurementCount > rhs.directSourceMeasurementCount
+                }
                 if lhs.constructionRank != rhs.constructionRank { return lhs.constructionRank > rhs.constructionRank }
                 if lhs.candidate.compatibleMeasurementCount != rhs.candidate.compatibleMeasurementCount {
                     return lhs.candidate.compatibleMeasurementCount > rhs.candidate.compatibleMeasurementCount
@@ -1074,12 +1104,14 @@ private struct RecommendationBasis {
     let scorePenalty: Int
     var fallbackReason: String = ""
     var excludedMeasurementKinds: [MeasurementKind] = []
+    var excludedMeasurementReasons: [MeasurementKind: MeasurementExclusionReason] = [:]
 }
 
 private struct RankedReferenceCandidate {
     let candidate: FitMatchCandidate
     let compatibilityRank: Int
     let constructionRank: Int
+    let directSourceMeasurementCount: Int
     let isSameDetail: Bool
     let isSameBrand: Bool
 }

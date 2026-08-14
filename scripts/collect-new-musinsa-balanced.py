@@ -14,7 +14,9 @@ def old_ids(paths):
     out=set()
     for p in paths:
         for x in json.loads(p.read_text(encoding='utf-8'))['products']:
-            if x['source']=='musinsa': out.add(core(x['product_key']))
+            if x['source']=='musinsa':
+                product_id=x.get('product_key') or x.get('product_id')
+                if product_id is not None: out.add(core(product_id))
     return out
 
 class Limiter:

@@ -8,6 +8,8 @@ enum MeasurementComparisonStatus: String, Codable, Equatable {
 
 enum MeasurementExclusionReason: String, Codable, Equatable {
     case categoryPolicy = "category_policy"
+    case sleeveLengthMismatch = "sleeve_length_mismatch"
+    case garmentLengthMismatch = "garment_length_mismatch"
     case missingProductValue = "missing_product_value"
     case missingReferenceValue = "missing_reference_value"
     case missingBothValues = "missing_both_values"
@@ -18,19 +20,23 @@ enum MeasurementExclusionReason: String, Codable, Equatable {
     var userMessage: String {
         switch self {
         case .categoryPolicy:
-            return "의류 구조가 달라 제외했습니다."
+            return "의류 구조가 달라 비교에서 제외했어요."
+        case .sleeveLengthMismatch:
+            return "반팔과 긴팔은 소매 구조가 달라 비교에서 제외했어요."
+        case .garmentLengthMismatch:
+            return "긴바지와 반바지는 길이 구조가 달라 비교에서 제외했어요."
         case .missingProductValue:
-            return "비교 상품의 실측값이 없습니다."
+            return "비교 상품의 실측값이 없어요."
         case .missingReferenceValue:
-            return "기준 옷의 실측값이 없습니다."
+            return "기준 옷의 실측값이 없어요."
         case .missingBothValues:
-            return "상품과 기준 옷 모두 실측값이 없습니다."
+            return "상품과 기준 옷 모두 실측값이 없어요."
         case .unverifiedProductDefinition:
-            return "비교 상품의 측정 방식을 확인할 수 없습니다."
+            return "비교 상품의 측정 방식을 확인할 수 없어요."
         case .unverifiedReferenceDefinition:
-            return "기준 옷의 측정 방식을 확인할 수 없습니다."
+            return "기준 옷의 측정 방식을 확인할 수 없어요."
         case .incompatibleMeasurementCode:
-            return "측정 방식이 서로 달라 제외했습니다."
+            return "측정 방식이 서로 달라 비교에서 제외했어요."
         }
     }
 
@@ -171,7 +177,8 @@ struct MeasurementComparisonEngine {
         referenceItem: UserFit,
         productCategory: ClothingCategory,
         productDetailCategory: ClosetDetailCategory,
-        excludedKinds: [MeasurementKind] = []
+        excludedKinds: [MeasurementKind] = [],
+        excludedKindReasons: [MeasurementKind: MeasurementExclusionReason] = [:]
     ) -> MeasurementComparisonResult {
         let policy = policy(
             for: productCategory,
@@ -182,7 +189,12 @@ struct MeasurementComparisonEngine {
 
         for kind in policy.kinds {
             if excludedKinds.contains(kind) {
-                exclusions.append(exclusion(kind: kind, reason: .categoryPolicy, productRecords: productSize.measurementRecords, referenceRecords: referenceItem.measurementRecords))
+                exclusions.append(exclusion(
+                    kind: kind,
+                    reason: excludedKindReasons[kind] ?? .categoryPolicy,
+                    productRecords: productSize.measurementRecords,
+                    referenceRecords: referenceItem.measurementRecords
+                ))
                 continue
             }
 

@@ -24,11 +24,13 @@ enum SourceCategoryHistoryMatcher {
         detectedDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> [SourceCategoryHistoryMatch] {
+        // An explicit choice saved for this exact provider product is the
+        // user's final answer. A later parser inference must not veto it.
         if let storedMatch = storedMatch(for: product),
            isCompatible(
-            storedMatch,
-            product: product,
-            detectedDetailCategory: detectedDetailCategory
+                storedMatch,
+                product: product,
+                detectedDetailCategory: detectedDetailCategory
            ) {
             return [storedMatch]
         }
@@ -59,7 +61,10 @@ enum SourceCategoryHistoryMatcher {
         detailCategory: ClosetDetailCategory
     ) {
         guard category != .other, detailCategory != .other else { return }
-        guard let key = depthKey(for: product) ?? pathKey(for: product) else { return }
+        // A user's choice is authoritative for this product. Do not silently
+        // generalize one choice across an ambiguous provider bucket such as
+        // "기타 상의"; path-level reuse is learned separately from closet history.
+        guard let key = productKey(for: product) ?? depthKey(for: product) ?? pathKey(for: product) else { return }
 
         var mappings = storedMappings()
         mappings[key] = StoredSourceCategoryMapping(
@@ -195,7 +200,16 @@ enum SourceCategoryHistoryMatcher {
 
     private static func storedMatch(for product: Product) -> SourceCategoryHistoryMatch? {
         let mappings = storedMappings()
-        guard let key = depthKey(for: product) ?? pathKey(for: product),
+        let key: String?
+        if let productKey = productKey(for: product) {
+            // Products with a stable provider identity only reuse an explicit
+            // choice made for that exact product. Historical path mappings must
+            // not override another product from the same mixed source category.
+            key = productKey
+        } else {
+            key = depthKey(for: product) ?? pathKey(for: product)
+        }
+        guard let key,
               let mapping = mappings[key],
               let category = ClothingCategory(rawValue: mapping.categoryRawValue),
               let detailCategory = ClosetDetailCategory(rawValue: mapping.detailCategoryRawValue) else {
@@ -224,6 +238,19 @@ enum SourceCategoryHistoryMatcher {
                 product.sourceCategoryDepth4
             ]
         )
+    }
+
+    private static func productKey(for product: Product) -> String? {
+        guard let productCode = normalizedCategoryComponent(product.productCode),
+              !productCode.isEmpty else {
+            return nil
+        }
+        return [
+            "product",
+            normalizedSourceComponent(product.sourceTypeRawValue),
+            normalizedSourceComponent(product.sourceName),
+            productCode
+        ].joined(separator: "|")
     }
 
     private static func pathKey(for product: Product) -> String? {

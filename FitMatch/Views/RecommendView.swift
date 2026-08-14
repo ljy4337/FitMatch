@@ -17,10 +17,10 @@ struct RecommendView: View {
                                 .background(Color.primary, in: Circle())
 
                             VStack(alignment: .center, spacing: 8) {
-                                Text("추천 서비스 준비중")
+                                Text("추천 서비스 준비 중")
                                     .font(.title2.weight(.black))
                                     .foregroundStyle(.primary)
-                                Text("내 옷장과 비교 기록이 쌓이면\n나에게 맞는 상품을 추천할 예정입니다.")
+                                Text("내 옷장과 비교 기록을 바탕으로 나에게 맞는 상품을 추천할 예정이에요.")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
@@ -30,7 +30,7 @@ struct RecommendView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "clock")
                                     .font(.caption.weight(.bold))
-                                Text("상품추가 준비중")
+                                Text("상품 추가 준비 중")
                                     .font(.caption.weight(.black))
                             }
                             .foregroundStyle(.secondary)

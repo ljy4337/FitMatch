@@ -278,6 +278,21 @@ struct MusinsaProductMetadataParser {
         if text.contains("스커트") { return .bottom }
         if text.contains("홈웨어") { return .other }
         if text.contains("신발") || text.contains("슈즈") { return .shoes }
+        // 공급사의 의류 종류가 명확한 경우 소재명(예: 데님)보다 먼저 판정한다.
+        // 그렇지 않으면 "데님/트러커 재킷"이 하의로 잘못 분류된다.
+        if text.contains("아우터") ||
+            text.contains("재킷") ||
+            text.contains("자켓") ||
+            text.contains("코트") ||
+            text.contains("점퍼") ||
+            text.contains("후드 집업") ||
+            text.contains("후드집업") ||
+            text.contains("무스탕") ||
+            text.contains("퍼 재킷") ||
+            text.contains("퍼 자켓") ||
+            text.contains("퍼 코트") {
+            return .outer
+        }
         if text.contains("팬츠") ||
             text.contains("바지") ||
             text.contains("데님") ||
@@ -285,9 +300,6 @@ struct MusinsaProductMetadataParser {
             text.contains("쇼츠") ||
             text.localizedCaseInsensitiveContains("shorts") {
             return .bottom
-        }
-        if text.contains("아우터") || text.contains("재킷") || text.contains("자켓") || text.contains("코트") || text.contains("점퍼") {
-            return .outer
         }
         if text.contains("셔츠") {
             return .shirt
@@ -297,6 +309,11 @@ struct MusinsaProductMetadataParser {
         }
         if text.contains("티셔츠") || text.contains("상의") || text.contains("반소매") || text.contains("긴소매") || text.contains("민소매") {
             return .top
+        }
+        // 무신사의 독립 "베스트" 카테고리는 아우터다. "니트 베스트"는
+        // 위의 니트 판정을 먼저 통과하므로 기존 니트 분류를 침범하지 않는다.
+        if text.contains("베스트") || text.localizedCaseInsensitiveContains("vest") {
+            return .outer
         }
         return nil
     }

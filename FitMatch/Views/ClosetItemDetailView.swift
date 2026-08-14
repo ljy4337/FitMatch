@@ -93,7 +93,7 @@ struct ClosetItemDetailView: View {
                 applyPendingReferenceChange()
             }
         } message: {
-            Text("같은 분류의 기존 기준 옷은 자동으로 해제됩니다.")
+            Text("같은 분류의 기존 기준 옷은 자동으로 해제돼요.")
         }
         .onAppear {
             tabBarVisibilityController.hide(reason: .navigationDetail, source: "closet detail")
@@ -433,7 +433,7 @@ struct ClosetItemDetailView: View {
             return true
         } catch {
             modelContext.rollback()
-            saveErrorMessage = "옷장 항목을 삭제하지 못했습니다."
+            saveErrorMessage = "옷을 삭제하지 못했어요. 다시 시도해 주세요."
             return false
         }
     }
@@ -607,7 +607,7 @@ private struct ImportedClosetItemEditView: View {
                 }
             }
         } message: {
-            Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 함께 삭제됩니다. 그래도 삭제하시겠어요?")
+            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 함께 삭제돼요. 그래도 삭제할까요?")
         }
         .alert("저장하지 못했습니다", isPresented: $isShowingSaveError) {
             Button("확인", role: .cancel) {}

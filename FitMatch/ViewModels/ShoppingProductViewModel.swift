@@ -459,7 +459,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 && $0.value > 0
         }
         return ClothingSizeForm(
-            sizeName: size.name,
+            sizeName: SizeTokenNormalizer.displayName(for: size.name),
             shoulder: MeasurementResolver.value(for: .shoulder, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
             chest: MeasurementResolver.value(for: .chest, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",
             totalLength: MeasurementResolver.value(for: .totalLength, measurements: size.measurements, records: size.measurementRecords)?.extractedFormText ?? "",

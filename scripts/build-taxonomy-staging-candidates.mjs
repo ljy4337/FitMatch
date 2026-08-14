@@ -75,6 +75,7 @@ function classify(node) {
   const path = node.raw_full_path;
   let groupCode, reason;
   if (!node.is_leaf) { groupCode="F"; reason="navigation grouping/non-leaf"; }
+  else if (/(^| > )(가방|지갑\/가방)( > |$)|브리프\s*케이스|briefcase/i.test(path)) { groupCode="A"; reason="path denotes a bag/briefcase, not underwear"; }
   else if (obviousNonGarment.test(path) && !clearGarment.test(path)) { groupCode="A"; reason="path denotes non-garment merchandise"; }
   else if (unsupportedGarment.test(path)) { groupCode="B"; reason="garment requires FitMatch support review"; }
   else if (clearGarment.test(path) && !mixed.test(node.raw_name)) { groupCode="C"; reason="leaf path has stable garment term"; }

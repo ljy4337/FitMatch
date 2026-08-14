@@ -1,0 +1,378 @@
+{
+  "generated_from": [
+    "Docs/Research/NewClothingCorpus-1280-FifthEighth-20260806/swift_production_classification_results_cumulative_2560.json",
+    "Docs/Research/NewClothingCorpus-1037-MusinsaFifthEighth-20260806/raw/musinsa/actual_size",
+    "Docs/Research/NewClothingCorpus-300-UniqloFifth-20260806/raw/uniqlo/products",
+    "Docs/Research/NewClothingCorpus-320-20260806/raw/uniqlo/products",
+    "Docs/Research/NewClothingCorpus-320-Third-20260806/raw/uniqlo/products",
+    "Docs/Research/NewClothingCorpus-320-Retest-20260806/raw/uniqlo/products"
+  ],
+  "selection_policy": "one deterministic product per user-approved 43 detail codes, intersected with local official-measurement products; setup only, no comparisons",
+  "target_detail_count": 43,
+  "uncovered_target_details": [
+    "blouse",
+    "hoodie",
+    "knit_top",
+    "light_padding",
+    "long_padding",
+    "nine_tenths_leggings",
+    "nine_tenths_pants",
+    "other_dresses",
+    "other_leggings",
+    "other_outerwear",
+    "other_skirts",
+    "padded_vest",
+    "shirt",
+    "short_padding",
+    "short_pants",
+    "sweatshirt",
+    "three_quarter_pants",
+    "vest"
+  ],
+  "candidates": [
+    {
+      "source": "musinsa",
+      "product_id": "6032712",
+      "product_name": "테크라인 립포켓 아노락 팬츠 라이트그레이",
+      "target_category": "outerwear",
+      "target_detail": "anorak",
+      "url": "https://www.musinsa.com/products/6032712"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1108007",
+      "product_name": "베이식 블레이저 [블랙]",
+      "target_category": "outerwear",
+      "target_detail": "blazer",
+      "url": "https://www.musinsa.com/products/1108007"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4351736",
+      "product_name": "MA1 JACKET BLAK",
+      "target_category": "outerwear",
+      "target_detail": "blouson",
+      "url": "https://www.musinsa.com/products/4351736"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6075283",
+      "product_name": "크로셰니트가디건 J1KT322E",
+      "target_category": "outerwear",
+      "target_detail": "cardigan",
+      "url": "https://www.musinsa.com/products/6075283"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1641129",
+      "product_name": "우먼즈 캐시미어 블렌드 핸드메이드 로브 코트 [블랙]",
+      "target_category": "outerwear",
+      "target_detail": "coat",
+      "url": "https://www.musinsa.com/products/1641129"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3054927",
+      "product_name": "[쿨탠다드] 릴렉스드 테이퍼드 히든 밴딩 크롭 슬랙스 [더스티 카키]",
+      "target_category": "bottoms",
+      "target_detail": "cropped_pants",
+      "url": "https://www.musinsa.com/products/3054927"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5586703",
+      "product_name": "WXJ024 포카포카 코듀로이 뽀글이 자켓 (BROWN)",
+      "target_category": "outerwear",
+      "target_detail": "fleece",
+      "url": "https://www.musinsa.com/products/5586703"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2109990",
+      "product_name": "베이직 스타디움 자켓 - 네이비",
+      "target_category": "outerwear",
+      "target_detail": "jacket",
+      "url": "https://www.musinsa.com/products/2109990"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2387085",
+      "product_name": "와일드 부츠컷 레깅스 (9colors)",
+      "target_category": "leggings",
+      "target_detail": "long_leggings",
+      "url": "https://www.musinsa.com/products/2387085"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1311988",
+      "product_name": "라이트웨이트 테이퍼드 히든 밴딩 10부 슬랙스 [블랙]",
+      "target_category": "bottoms",
+      "target_detail": "long_pants",
+      "url": "https://www.musinsa.com/products/1311988"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3666383",
+      "product_name": "쿼터 지퍼 점퍼 - 네이비:레드 / IR7128",
+      "target_category": "tops",
+      "target_detail": "long_sleeve",
+      "url": "https://www.musinsa.com/products/3666383"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5635659",
+      "product_name": "(CT-1472)OVERFIT HALF LEATHER MUSTANG",
+      "target_category": "outerwear",
+      "target_detail": "mouton",
+      "url": "https://www.musinsa.com/products/5635659"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1958464",
+      "product_name": "린넨 오버롤 / 네이비",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "url": "https://www.musinsa.com/products/1958464"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4503394",
+      "product_name": "바시티 5703 웨스턴 울 패딩 네이비 스타디움재킷",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "url": "https://www.musinsa.com/products/4503394"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2481313",
+      "product_name": "[SWL22006-01] 익스트림 프로 4.5부 레깅스 젠틀블랙",
+      "target_category": "leggings",
+      "target_detail": "short_leggings",
+      "url": "https://www.musinsa.com/products/2481313"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3074973",
+      "product_name": "우먼즈 더블 니트 칼라드 반소매 스웨트셔츠 [멜란지 라이트 그레이]",
+      "target_category": "tops",
+      "target_detail": "short_sleeve",
+      "url": "https://www.musinsa.com/products/3074973"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2273549",
+      "product_name": "우먼즈 나일론 밴딩 쇼츠 [블랙]",
+      "target_category": "bottoms",
+      "target_detail": "shorts",
+      "url": "https://www.musinsa.com/products/2273549"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1983800",
+      "product_name": "[3PACK] B-에어로쉬 이너 민소매/반팔 2종",
+      "target_category": "tops",
+      "target_detail": "sleeveless",
+      "url": "https://www.musinsa.com/products/1983800"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4787764",
+      "product_name": "Capri Leggings Black",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "url": "https://www.musinsa.com/products/4787764"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "6071257",
+      "product_name": "3/4 LAYERED CONTRAST HOODIE (DUST BLUE)",
+      "target_category": "tops",
+      "target_detail": "three_quarter_sleeve",
+      "url": "https://www.musinsa.com/products/6071257"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "2360891",
+      "product_name": "Mac half trench coat",
+      "target_category": "outerwear",
+      "target_detail": "trench_coat",
+      "url": "https://www.musinsa.com/products/2360891"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "3034336",
+      "product_name": "Ray Yacht Parka Carrot",
+      "target_category": "outerwear",
+      "target_detail": "windbreaker",
+      "url": "https://www.musinsa.com/products/3034336"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E477704",
+      "product_name": "감탄블레이저",
+      "target_category": "outerwear",
+      "target_detail": "blazer",
+      "url": "https://www.uniqlo.com/kr/ko/products/E477704-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E469292",
+      "product_name": "포켓터블UV PROTECTION파카",
+      "target_category": "outerwear",
+      "target_detail": "blouson",
+      "url": "https://www.uniqlo.com/kr/ko/products/E469292-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450540",
+      "product_name": "메리노V넥가디건",
+      "target_category": "outerwear",
+      "target_detail": "cardigan",
+      "url": "https://www.uniqlo.com/kr/ko/products/E450540-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450195",
+      "product_name": "후리스풀집재킷",
+      "target_category": "outerwear",
+      "target_detail": "fleece",
+      "url": "https://www.uniqlo.com/kr/ko/products/E450195-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E444557",
+      "product_name": "감탄재킷(라이트)",
+      "target_category": "outerwear",
+      "target_detail": "jacket",
+      "url": "https://www.uniqlo.com/kr/ko/products/E444557-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482045",
+      "product_name": "BT UV PROTECTION메쉬후디(긴팔)",
+      "target_category": "outerwear",
+      "target_detail": "jumper",
+      "url": "https://www.uniqlo.com/kr/ko/products/E482045-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E444715",
+      "product_name": "BT레깅스(10부·데님라이크)",
+      "target_category": "leggings",
+      "target_detail": "long_leggings",
+      "url": "https://www.uniqlo.com/kr/ko/products/E444715-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E447780",
+      "product_name": "감탄팬츠",
+      "target_category": "bottoms",
+      "target_detail": "long_pants",
+      "url": "https://www.uniqlo.com/kr/ko/products/E447780-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450179",
+      "product_name": "소프트브러시드크루넥T(긴팔)",
+      "target_category": "tops",
+      "target_detail": "long_sleeve",
+      "url": "https://www.uniqlo.com/kr/ko/products/E450179-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482982",
+      "product_name": "울트라스트레치AIRism원피스(슬리브리스)",
+      "target_category": "dresses",
+      "target_detail": "one_piece",
+      "url": "https://www.uniqlo.com/kr/ko/products/E482982-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E484664",
+      "product_name": "유틸리티쇼트재킷(데님)",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "url": "https://www.uniqlo.com/kr/ko/products/E484664-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E465203",
+      "product_name": "DRY-EX UV PROTECTION풀집파카",
+      "target_category": "outerwear",
+      "target_detail": "padding",
+      "url": "https://www.uniqlo.com/kr/ko/products/E465203-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481786",
+      "product_name": "BT이지쇼트팬츠(트윌)",
+      "target_category": "leggings",
+      "target_detail": "short_leggings",
+      "url": "https://www.uniqlo.com/kr/ko/products/E481786-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E465196",
+      "product_name": "AIRism코튼피케폴로셔츠(반팔)",
+      "target_category": "tops",
+      "target_detail": "short_sleeve",
+      "url": "https://www.uniqlo.com/kr/ko/products/E465196-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E458325",
+      "product_name": "스트레치이지쇼트팬츠(시어서커)",
+      "target_category": "bottoms",
+      "target_detail": "shorts",
+      "url": "https://www.uniqlo.com/kr/ko/products/E458325-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482286",
+      "product_name": "티어드맥시스커트(치마길이87~91cm)",
+      "target_category": "skirts",
+      "target_detail": "skirt",
+      "url": "https://www.uniqlo.com/kr/ko/products/E482286-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E457517",
+      "product_name": "AIRism코튼슬리브리스T",
+      "target_category": "tops",
+      "target_detail": "sleeveless",
+      "url": "https://www.uniqlo.com/kr/ko/products/E457517-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E473633",
+      "product_name": "BT릴랙스핏크롭레깅스(7부)AIRism",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings",
+      "url": "https://www.uniqlo.com/kr/ko/products/E473633-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475649",
+      "product_name": "프리미엄리넨스키퍼칼라셔츠(7부)",
+      "target_category": "tops",
+      "target_detail": "three_quarter_sleeve",
+      "url": "https://www.uniqlo.com/kr/ko/products/E475649-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487420",
+      "product_name": "트렌치코트",
+      "target_category": "outerwear",
+      "target_detail": "trench_coat",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487420-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487689",
+      "product_name": "패디드쇼트블루종",
+      "target_category": "outerwear",
+      "target_detail": "windbreaker",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487689-000/00"
+    }
+  ]
+}

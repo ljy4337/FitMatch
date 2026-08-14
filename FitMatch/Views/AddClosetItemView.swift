@@ -29,6 +29,7 @@ struct AddClosetItemView: View {
         prefillSourceOption: ClosetProductSourceOption? = nil,
         prefillBrand: String? = nil,
         prefillProductName: String? = nil,
+        prefersRepresentativeByDefault: Bool = false,
         productImageURLString: String? = nil,
         presentationContext: AddClosetItemPresentationContext = .standard,
         hasComparisonHistory: Bool = false,
@@ -43,7 +44,8 @@ struct AddClosetItemView: View {
                 prefillGender: prefillGender,
                 prefillSourceOption: prefillSourceOption,
                 prefillBrand: prefillBrand,
-                prefillProductName: prefillProductName
+                prefillProductName: prefillProductName,
+                prefersRepresentativeByDefault: prefersRepresentativeByDefault
             )
         )
         self.isEditing = item != nil
@@ -287,7 +289,7 @@ struct AddClosetItemView: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
-                        Text("측정 방식이 다른 값을 잘못 비교하지 않도록 출처를 먼저 선택해 주세요.")
+                        Text("측정 방식이 다른 값을 비교하지 않도록 실측 정보의 출처를 먼저 선택해 주세요.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -435,11 +437,11 @@ struct AddClosetItemView: View {
         }
 
         if viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "브랜드명을 입력하면 저장할 수 있습니다."
+            return "브랜드명을 입력해 주세요."
         }
 
         if viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "상품명을 입력하면 저장할 수 있습니다."
+            return "상품명을 입력해 주세요."
         }
 
         if !measurementKinds.isEmpty, viewModel.measurementEntrySource == nil {

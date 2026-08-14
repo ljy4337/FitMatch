@@ -599,9 +599,9 @@ nonisolated enum MusinsaFallbackTableParser {
                 options: .regularExpression
             )
         let hits = [
-            normalized.range(of: #"(?<![a-z])cm(?![a-z])|센티미터"#, options: .regularExpression) != nil ? 1.0 : nil,
-            normalized.range(of: #"(?<![a-z])mm(?![a-z])|밀리미터"#, options: .regularExpression) != nil ? 0.1 : nil,
-            normalized.range(of: #"(?<![a-z])inch(?:es)?(?![a-z])|인치"#, options: .regularExpression) != nil ? 2.54 : nil
+            normalized.range(of: #"(?:^|[^a-z])cm(?![a-z])|센티미터"#, options: .regularExpression) != nil ? 1.0 : nil,
+            normalized.range(of: #"(?:^|[^a-z])mm(?![a-z])|밀리미터"#, options: .regularExpression) != nil ? 0.1 : nil,
+            normalized.range(of: #"(?:^|[^a-z])inch(?:es)?(?![a-z])|인치"#, options: .regularExpression) != nil ? 2.54 : nil
         ].compactMap { $0 }
         if hits.isEmpty { return 1 }
         return Set(hits).count == 1 ? hits[0] : nil

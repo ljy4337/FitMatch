@@ -6,6 +6,285 @@ private let runsLiveMusinsaValidation =
     ProcessInfo.processInfo.arguments.contains("-fitmatchRunLiveTests")
     || ProcessInfo.processInfo.environment["FITMATCH_RUN_LIVE_TESTS"] == "1"
 
+private let runsLiveUniqloValidation = runsLiveMusinsaValidation
+
+@MainActor
+@Suite(.enabled(
+    if: runsLiveUniqloValidation,
+    "유니클로 실서버 검증은 명시적으로만 실행합니다."
+))
+struct LiveUniqloValidationTests {
+    @Test func koreanUnderwearProductsUseUnderwearBriefsClassification() async throws {
+        let parser = ProductURLParserService()
+        for productID in ["E478656", "E482565", "E484997"] {
+            let url = "https://store-kr.uniqlo.com/kr/ko/products/\(productID)-000/00"
+            let result = try await parser.parse(urlString: url)
+            let canonical = try #require(ParsedClosetClassification.resolve(
+                category: result.category,
+                detailCategory: result.detailCategory,
+                sourceDepths: [result.sourceCategoryDepth1, result.sourceCategoryDepth2,
+                               result.sourceCategoryDepth3, result.sourceCategoryDepth4],
+                sourcePath: result.sourceCategoryPath,
+                productName: result.productName
+            ))
+            #expect(canonical.categoryCode == "underwear")
+            #expect(canonical.detailCode == "men_briefs")
+            #expect(canonical.category == .underwear)
+            #expect(canonical.detailCategory == .menBriefs)
+        }
+    }
+
+    @Test func graphicTeesUseOfficialCategoryAndMeasurementsForShortSleeve() async throws {
+        let parser = ProductURLParserService()
+        for productID in ["E493045", "E493046"] {
+            let url = "https://store-kr.uniqlo.com/kr/ko/products/\(productID)-000/00"
+            let result = try await parser.parse(urlString: url)
+
+            #expect(result.productID == productID)
+            #expect(result.sourceCategoryPath?.contains("그래픽") == true)
+            #expect(result.detailCategory == .shortSleeve)
+
+            let canonical = try #require(ParsedClosetClassification.resolve(
+                category: result.category,
+                detailCategory: result.detailCategory,
+                sourceDepths: [result.sourceCategoryDepth1, result.sourceCategoryDepth2,
+                               result.sourceCategoryDepth3, result.sourceCategoryDepth4],
+                sourcePath: result.sourceCategoryPath,
+                productName: result.productName
+            ))
+            #expect(canonical.detailCode == "short_sleeve")
+            #expect(canonical.garmentFamily == .tshirt)
+            #expect(canonical.lengthType == .short)
+        }
+    }
+}
+
+@MainActor
+@Suite(.enabled(
+    if: runsLiveUniqloValidation,
+    "직접 확인 상품 분류는 실서버 검증에서만 실행합니다."
+))
+struct LiveManualProductClassificationTests {
+    @Test func reclassifiesStoredUnknownsThroughLiveProductionAPI() async throws {
+        struct Candidate {
+            let source: String
+            let productID: String
+            let productName: String
+            let sourcePath: String
+
+            var url: String {
+                source == "musinsa"
+                    ? "https://www.musinsa.com/products/\(productID)"
+                    : "https://store-kr.uniqlo.com/kr/ko/products/\(productID)-000/00"
+            }
+        }
+
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let resources = [
+            "LegacyMixed320ClassificationInputs",
+            "LegacyUniqloRetest320ClassificationInputs",
+            "LegacyUniqloThird320ClassificationInputs",
+            "LegacyMusinsaFourth320ClassificationInputs",
+            "Musinsa1037ClassificationInputs",
+            "Uniqlo243ClassificationInputs",
+        ]
+        let uniqloMetadataParser = UniqloProductMetadataParser()
+        var candidates: [Candidate] = []
+
+        for resource in resources {
+            let inputURL = repositoryRoot
+                .appendingPathComponent("FitMatchTests")
+                .appendingPathComponent(resource)
+                .appendingPathExtension("json")
+            let inputs = try #require(
+                try JSONSerialization.jsonObject(with: Data(contentsOf: inputURL)) as? [[String: Any]]
+            )
+            for input in inputs {
+                let source = try #require(input["source"] as? String)
+                let productID = try #require(input["product_id"] as? String)
+                let productName = try #require(input["product_name"] as? String)
+                let sourcePath = try #require(input["source_path"] as? String)
+                let depths = sourcePath.components(separatedBy: ">").map {
+                    $0.trimmingCharacters(in: .whitespacesAndNewlines)
+                }.filter { !$0.isEmpty }
+                let providerCategory: ClothingCategory
+                let providerDetail: ClosetDetailCategory
+                if source == "musinsa" {
+                    providerCategory = MusinsaProductMetadataParser.mapCategory(from: sourcePath)
+                    providerDetail = MusinsaProductMetadataParser.mapDetailCategory(
+                        from: depths.count > 1 ? depths[1] : sourcePath
+                    )
+                } else {
+                    providerCategory = uniqloMetadataParser.mapCategory(from: "\(sourcePath) \(productName)")
+                    providerDetail = uniqloMetadataParser.mapDetailCategory(from: "\(sourcePath) \(productName)")
+                }
+                if ParsedClosetClassification.resolve(
+                    category: providerCategory,
+                    detailCategory: providerDetail,
+                    sourceDepths: depths.map(Optional.some),
+                    sourcePath: sourcePath,
+                    productName: productName
+                ) == nil {
+                    candidates.append(.init(
+                        source: source,
+                        productID: productID,
+                        productName: productName,
+                        sourcePath: sourcePath
+                    ))
+                }
+            }
+        }
+
+        let parser = ProductURLParserService()
+        var unknown: [[String: Any]] = []
+        var apiFailures: [[String: Any]] = []
+        var classifiedCount = 0
+
+        for (index, candidate) in candidates.enumerated() {
+            let result: ParsedProductInfo
+            do {
+                result = try await parser.parse(urlString: candidate.url)
+            } catch let error as ProductURLParserPartialError {
+                result = error.productInfo.normalizedSizes()
+            } catch {
+                apiFailures.append([
+                    "source": candidate.source,
+                    "product_id": candidate.productID,
+                    "product_name": candidate.productName,
+                    "product_url": candidate.url,
+                    "error": error.localizedDescription,
+                ])
+                continue
+            }
+
+            let classification = ParsedClosetClassification.resolve(
+                category: result.category,
+                detailCategory: result.detailCategory,
+                sourceDepths: [result.sourceCategoryDepth1, result.sourceCategoryDepth2,
+                               result.sourceCategoryDepth3, result.sourceCategoryDepth4],
+                sourcePath: result.sourceCategoryPath,
+                productName: result.productName
+            )
+            if let classification {
+                classifiedCount += 1
+                #expect(classification.detailCode != "other_tops")
+            } else {
+                unknown.append([
+                    "source": candidate.source,
+                    "product_id": candidate.productID,
+                    "product_name": result.productName,
+                    "product_url": candidate.url,
+                    "source_path": result.sourceCategoryPath ?? candidate.sourcePath,
+                    "provider_category": result.category.rawValue,
+                    "provider_detail": result.detailCategory.rawValue,
+                    "size_count": result.sizes.count,
+                    "reason": "현재 로컬 운영 파서가 API 원본과 실측을 적용한 뒤에도 세부 카테고리를 확정하지 못함",
+                ])
+            }
+
+            if (index + 1).isMultiple(of: 25) || index + 1 == candidates.count {
+                print("FITMATCH_LIVE_UNKNOWN_PROGRESS \(index + 1)/\(candidates.count)")
+            }
+        }
+
+        let documentDirectory = try #require(
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        )
+        let unknownURL = documentDirectory.appendingPathComponent("fitmatch-live-api-unknown-2560.json")
+        let failureURL = documentDirectory.appendingPathComponent("fitmatch-live-api-failures-2560.json")
+        try JSONSerialization.data(withJSONObject: unknown, options: [.prettyPrinted, .sortedKeys])
+            .write(to: unknownURL, options: .atomic)
+        try JSONSerialization.data(withJSONObject: apiFailures, options: [.prettyPrinted, .sortedKeys])
+            .write(to: failureURL, options: .atomic)
+
+        print("FITMATCH_LIVE_UNKNOWN_RESULT candidates=\(candidates.count) classified=\(classifiedCount) unknown=\(unknown.count) api_failures=\(apiFailures.count)")
+        print("FITMATCH_LIVE_UNKNOWN_PATH \(unknownURL.path)")
+        print("FITMATCH_LIVE_FAILURE_PATH \(failureURL.path)")
+        #expect(classifiedCount + unknown.count + apiFailures.count == candidates.count)
+        #expect(apiFailures.isEmpty)
+    }
+
+    @Test func classifiesManualConfirmationProductsThroughProductionPipeline() async {
+        let products: [(provider: String, id: String, url: String)] = [
+            ("MUSINSA", "5005347", "https://www.musinsa.com/products/5005347"),
+            ("UNIQLO", "E493045", "https://store-kr.uniqlo.com/kr/ko/products/E493045-000/00"),
+            ("UNIQLO", "E493046", "https://store-kr.uniqlo.com/kr/ko/products/E493046-000/00"),
+            ("UNIQLO", "E488206", "https://store-kr.uniqlo.com/kr/ko/products/E488206-000/00"),
+            ("MUSINSA", "3666383", "https://www.musinsa.com/products/3666383"),
+            ("UNIQLO", "E488652", "https://store-kr.uniqlo.com/kr/ko/products/E488652-000/00"),
+            ("MUSINSA", "1108007", "https://www.musinsa.com/products/1108007"),
+            ("UNIQLO", "E489074", "https://store-kr.uniqlo.com/kr/ko/products/E489074-000/00"),
+            ("MUSINSA", "1572220", "https://www.musinsa.com/products/1572220"),
+            ("UNIQLO", "E488397", "https://store-kr.uniqlo.com/kr/ko/products/E488397-000/00"),
+            ("MUSINSA", "1945314", "https://www.musinsa.com/products/1945314"),
+            ("UNIQLO", "E488202", "https://store-kr.uniqlo.com/kr/ko/products/E488202-000/00"),
+            ("MUSINSA", "5166592", "https://www.musinsa.com/products/5166592"),
+            ("MUSINSA", "3033915", "https://www.musinsa.com/products/3033915"),
+            ("UNIQLO", "E488200", "https://store-kr.uniqlo.com/kr/ko/products/E488200-000/00"),
+            ("MUSINSA", "3229386", "https://www.musinsa.com/products/3229386"),
+            ("MUSINSA", "6555227", "https://www.musinsa.com/products/6555227"),
+            ("MUSINSA", "4702435", "https://www.musinsa.com/products/4702435"),
+            ("MUSINSA", "3452955", "https://www.musinsa.com/products/3452955"),
+            ("UNIQLO", "E489075", "https://store-kr.uniqlo.com/kr/ko/products/E489075-000/00"),
+            ("UNIQLO", "E489399", "https://store-kr.uniqlo.com/kr/ko/products/E489399-000/00"),
+            ("UNIQLO", "E489398", "https://store-kr.uniqlo.com/kr/ko/products/E489398-000/00")
+        ]
+        let confirmedDetails: [String: ClosetDetailCategory] = [
+            "5005347": .shortSleeve,
+            "E489074": .sweatshirt,
+            "3033915": .sweatshirt,
+            "4702435": .sweatshirt,
+            "E489075": .sweatshirt
+        ]
+        let parser = ProductURLParserService()
+        var completedCount = 0
+        var completedIDs = Set<String>()
+
+        for product in products {
+            do {
+                let result = try await parser.parse(urlString: product.url)
+                let canonical = ParsedClosetClassification.resolve(
+                    category: result.category,
+                    detailCategory: result.detailCategory,
+                    sourceDepths: [result.sourceCategoryDepth1, result.sourceCategoryDepth2,
+                                   result.sourceCategoryDepth3, result.sourceCategoryDepth4],
+                    sourcePath: result.sourceCategoryPath,
+                    productName: result.productName
+                )
+                if let expectedDetail = confirmedDetails[product.id] {
+                    #expect(
+                        canonical?.detailCategory == expectedDetail,
+                        "\(product.id): 확인된 분류 \(expectedDetail.rawValue)와 달라졌습니다."
+                    )
+                }
+                let fields = [
+                    "LIVE_CATEGORY_RESULT", product.provider, product.id,
+                    result.productName.replacingOccurrences(of: "\t", with: " "),
+                    canonical?.category.rawValue ?? result.category.rawValue,
+                    canonical?.detailCategory.rawValue ?? result.detailCategory.rawValue,
+                    canonical?.categoryCode ?? "unresolved",
+                    canonical?.detailCode ?? "unresolved",
+                    canonical?.garmentFamily.rawValue ?? "unknown",
+                    canonical?.lengthType.rawValue ?? "unknown",
+                    result.sourceCategoryPath?.replacingOccurrences(of: "\t", with: " ") ?? ""
+                ]
+                print(fields.joined(separator: "\t"))
+                completedCount += 1
+                completedIDs.insert(product.id)
+            } catch {
+                print(["LIVE_CATEGORY_ERROR", product.provider, product.id,
+                       error.localizedDescription.replacingOccurrences(of: "\t", with: " ")]
+                    .joined(separator: "\t"))
+            }
+        }
+
+        #expect(completedCount > 0)
+        #expect(Set(confirmedDetails.keys).isSubset(of: completedIDs))
+    }
+}
+
 @MainActor
 @Suite(.enabled(
     if: runsLiveMusinsaValidation,

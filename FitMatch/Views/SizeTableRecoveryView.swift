@@ -100,13 +100,13 @@ struct SizeTableRecoveryView: View {
                 selectedPhotoItems = []
             }
         }
-        .alert("이미지를 분석할 수 없습니다", isPresented: $showsAnalysisFailureAlert) {
-            Button("수동으로 입력하기") {
+        .alert("이미지를 분석할 수 없어요", isPresented: $showsAnalysisFailureAlert) {
+            Button("직접 입력") {
                 prepareManualEntry()
             }
             Button("취소", role: .cancel) {}
         } message: {
-            Text("죄송합니다. 이미지를 분석할 수 없습니다. 수동으로 사이즈를 입력하시겠습니까?")
+            Text("이미지에서 사이즈 정보를 확인하지 못했어요. 사이즈를 직접 입력해 주세요.")
         }
     }
 

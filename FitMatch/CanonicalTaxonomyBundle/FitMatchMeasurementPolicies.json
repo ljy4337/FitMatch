@@ -55,6 +55,13 @@
       "unit": "cm"
     },
     {
+      "code": "foot_length",
+      "displayName": null,
+      "preserveRaw": true,
+      "representation": "linear",
+      "unit": "cm"
+    },
+    {
       "code": "hem",
       "displayName": null,
       "preserveRaw": true,

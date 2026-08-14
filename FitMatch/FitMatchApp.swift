@@ -23,6 +23,9 @@ struct FitMatchApp: App {
         if arguments.contains("-fitmatchResetOnboarding") {
             UserDefaults.standard.removeObject(forKey: "FitMatch.hasCompletedOnboarding")
         }
+        if arguments.contains("-fitmatchResetCategoryMappings") {
+            UserDefaults.standard.removeObject(forKey: "FitMatch.sourceCategoryMappings")
+        }
         #endif
 
         do {

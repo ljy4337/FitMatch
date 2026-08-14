@@ -42,7 +42,8 @@ struct CanonicalComparisonProfile: Codable, Equatable {
         case "short_pants", "cropped_pants", "three_quarter_pants", "nine_tenths_pants", "long_pants", "slacks", "training_pants": transformed = "pants"
         case "standard_pants": transformed = "pants"
         case "knit_sweater": transformed = "knit_cardigan"
-        case "shirt_blouse", "polo_shirt": transformed = "shirt"
+        case "shirt_blouse": transformed = "shirt"
+        case "polo_shirt": transformed = "tshirt"
         case "base_layer_top": transformed = "underwear"
         case "short_leggings", "three_quarter_leggings", "nine_tenths_leggings", "long_leggings": transformed = "leggings"
         default: transformed = comparisonFamily

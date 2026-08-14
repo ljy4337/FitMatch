@@ -1,0 +1,45 @@
+{
+  "selection_policy": "Official numeric table and stored taxonomy passed, but canonical comparison eligibility is false",
+  "candidates": [
+    {
+      "source": "musinsa",
+      "product_id": "1958464",
+      "product_name": "린넨 오버롤 / 네이비",
+      "source_path": "바지 > 점프 슈트/오버올",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1958464"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "4154987",
+      "product_name": "블룸 오브 조이 아노락 원피스_42ON1801",
+      "source_path": "원피스/스커트 > 맥시원피스",
+      "target_category": "dresses",
+      "target_detail": "one_piece",
+      "selection_rank": 2,
+      "url": "https://www.musinsa.com/products/4154987"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "1195307",
+      "product_name": "2001 SLOW WORKER DENIM WASH JACKET [BLACK INDIGO]",
+      "source_path": "Clothing > 점퍼/재킷 > 데님/트러커 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jacket",
+      "selection_rank": 1,
+      "url": "https://www.musinsa.com/products/1195307"
+    },
+    {
+      "source": "musinsa",
+      "product_id": "5320032",
+      "product_name": "2WAY 절개 라인 빈티지 피그먼트 스웨트 집업 [챠콜]",
+      "source_path": "Clothing > 점퍼/재킷 > 기타 점퍼/재킷",
+      "target_category": "outerwear",
+      "target_detail": "other_outerwear",
+      "selection_rank": 10,
+      "url": "https://www.musinsa.com/products/5320032"
+    }
+  ]
+}

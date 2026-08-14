@@ -114,6 +114,7 @@ enum ClosetDetailCategory: String, CaseIterable, Identifiable, Codable, Hashable
     case threeQuarterLeggings = "7부 레깅스"
     case nineTenthsLeggings = "9부 레깅스"
     case longLeggings = "롱 레깅스"
+    case poloShirt = "폴로셔츠"
     case shirt = "셔츠"
     case blouse = "블라우스"
     case knitTop = "니트"
@@ -181,6 +182,12 @@ enum ClosetDetailCategory: String, CaseIterable, Identifiable, Codable, Hashable
         case "short_sleeve": return .shortSleeve
         case "three_quarter_sleeve": return .threeQuarterSleeve
         case "long_sleeve": return .longSleeve
+        case "polo_shirt": return .poloShirt
+        case "shirt": return .shirt
+        case "blouse": return .blouse
+        case "knit_top": return .knitTop
+        case "sweatshirt": return .sweatshirt
+        case "hoodie": return .hoodie
         case "short_pants": return .shortPants
         case "shorts": return .shorts
         case "cropped_pants": return .croppedPants
@@ -245,7 +252,7 @@ enum ClosetDetailCategory: String, CaseIterable, Identifiable, Codable, Hashable
     static func options(for category: ClothingCategory, gender: UserGender) -> [ClosetDetailCategory] {
         switch category.serviceGroup {
         case .top:
-            var options: [ClosetDetailCategory] = [.sleeveless, .shortSleeve, .longSleeve, .shirt, .knitTop, .sweatshirt, .hoodie]
+            var options: [ClosetDetailCategory] = [.sleeveless, .shortSleeve, .longSleeve, .poloShirt, .shirt, .knitTop, .sweatshirt, .hoodie]
             if gender == .women || gender == .unisex {
                 options.insert(.blouse, at: 4)
             }

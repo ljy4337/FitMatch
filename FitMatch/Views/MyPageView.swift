@@ -233,7 +233,7 @@ private struct FitMatchUsageGuideView: View {
         ),
         FitMatchGuideItem(
             title: "비교할 옷이 없을 때",
-            description: "호환되는 옷이 없으면 같은 대분류의 내 옷을 직접 선택해 비교하거나, 쇼핑 상품을 내 옷장에 추가할 수 있습니다."
+            description: "호환되는 옷이 없으면 필요한 종류의 기준 옷을 등록하거나, 호환 가능한 내 옷을 직접 선택할 수 있습니다. 비교한 쇼핑 상품은 실제로 보유한 경우에만 내 옷장에 등록해 주세요."
         ),
         FitMatchGuideItem(
             title: "결과 화면 보는 방법",

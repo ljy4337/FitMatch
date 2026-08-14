@@ -17,6 +17,7 @@ const rejectedRootPattern = /^(F&amp;B|뷰티|디지털\/라이프|모터스|K-�
 const mixedRootPattern = /^(스포츠 구단|만화\/애니메이션|캐릭터|영화\/드라마|음악|콘텐츠|Special Collaborations)$/i;
 const ambiguousPattern = /(^|\s|>|\/)(기타|그 외|전체|컬렉션|굿즈|유니폼)(\s|$|>|\/)/i;
 const nonHumanPattern = /반려동물|드레스룸가구|조명|키친웨어|테이블웨어|텍스타일|쥬얼리|악세서리|머플러|벨트|앨범|아트 토이/i;
+const nonGarmentContainerPattern = /(^| > )(가방|지갑\/가방)( > |$)|브리프\s*케이스|briefcase/i;
 
 const rules = [
   { pattern: /블루종|MA-1|스타디움 재킷/i, garment: "blouson", family: "blouson", category: "outerwear", detail: "blouson" },
@@ -63,7 +64,7 @@ function classify(record) {
   const leaf = segments.at(-1);
   const parent = segments.at(-2) ?? "";
 
-  if (rejectedRootPattern.test(rootName) || nonHumanPattern.test(path)) {
+  if (rejectedRootPattern.test(rootName) || nonHumanPattern.test(path) || nonGarmentContainerPattern.test(path)) {
     return { outcome: "rejected", reason: "명확한 비의류 또는 사람용 핏 비교 대상이 아님" };
   }
 

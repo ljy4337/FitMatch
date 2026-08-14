@@ -1,0 +1,779 @@
+{
+  "selection_policy": "official source-path candidate; production parser and actual size table must still validate",
+  "target_count_per_source": 43,
+  "candidates_per_target": 3,
+  "candidates": [
+    {
+      "source": "uniqlo",
+      "product_id": "E465189",
+      "product_name": "드라이립탱크탑",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 슬리브리스",
+      "target_category": "tops",
+      "target_detail": "sleeveless",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E465189-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483479",
+      "product_name": "소프트립탱크탑",
+      "source_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 슬리브리스",
+      "target_category": "tops",
+      "target_detail": "sleeveless",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483479-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E484226",
+      "product_name": "프런트오픈셸탑T(슬리브리스)",
+      "source_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 슬리브리스",
+      "target_category": "tops",
+      "target_detail": "sleeveless",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E484226-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E422992",
+      "product_name": "크루넥T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "short_sleeve",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E422992-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E424873",
+      "product_name": "크루넥T",
+      "source_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "short_sleeve",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E424873-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450179",
+      "product_name": "소프트브러시드크루넥T(긴팔)",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+      "target_category": "tops",
+      "target_detail": "short_sleeve",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450179-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E479073",
+      "product_name": "레이온스키퍼칼라블라우스(7부)",
+      "source_path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 7부",
+      "target_category": "tops",
+      "target_detail": "three_quarter_sleeve",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E479073-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475649",
+      "product_name": "프리미엄리넨스키퍼칼라셔츠(7부)",
+      "source_path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨",
+      "target_category": "tops",
+      "target_detail": "three_quarter_sleeve",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E475649-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482825",
+      "product_name": "레이온스키퍼칼라블라우스(7부)스트라이프",
+      "source_path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 레이온",
+      "target_category": "tops",
+      "target_detail": "three_quarter_sleeve",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482825-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E422992",
+      "product_name": "크루넥T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "long_sleeve",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E422992-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E424873",
+      "product_name": "크루넥T",
+      "source_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "long_sleeve",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E424873-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450179",
+      "product_name": "소프트브러시드크루넥T(긴팔)",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+      "target_category": "tops",
+      "target_detail": "long_sleeve",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450179-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E422992",
+      "product_name": "크루넥T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E422992-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E424873",
+      "product_name": "크루넥T",
+      "source_path": "티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E424873-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450179",
+      "product_name": "소프트브러시드크루넥T(긴팔)",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+      "target_category": "tops",
+      "target_detail": "shirt",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450179-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475647",
+      "product_name": "프리미엄리넨셔츠",
+      "source_path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨",
+      "target_category": "tops",
+      "target_detail": "blouse",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E475647-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475649",
+      "product_name": "프리미엄리넨스키퍼칼라셔츠(7부)",
+      "source_path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨",
+      "target_category": "tops",
+      "target_detail": "blouse",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E475649-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E479071",
+      "product_name": "레이온블라우스",
+      "source_path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 레이온",
+      "target_category": "tops",
+      "target_detail": "blouse",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E479071-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450535",
+      "product_name": "메리노크루넥스웨터",
+      "source_path": "니트 & 가디건 > 니트 > 메리노",
+      "target_category": "tops",
+      "target_detail": "knit_top",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450535-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450536",
+      "product_name": "메리노V넥스웨터",
+      "source_path": "니트 & 가디건 > 니트 > 메리노",
+      "target_category": "tops",
+      "target_detail": "knit_top",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450536-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450540",
+      "product_name": "메리노V넥가디건",
+      "source_path": "니트 & 가디건 > 니트 > 유니섹스",
+      "target_category": "tops",
+      "target_detail": "knit_top",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450540-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E422992",
+      "product_name": "크루넥T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E422992-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450179",
+      "product_name": "소프트브러시드크루넥T(긴팔)",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450179-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E455365",
+      "product_name": "SUPIMA COTTON T",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔",
+      "target_category": "tops",
+      "target_detail": "sweatshirt",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E455365-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E471808",
+      "product_name": "스웨트오버사이즈풀파카",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 후드",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E471808-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E475800",
+      "product_name": "UNIQLO로고스웨트셔츠",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 스웨트셔츠",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E475800-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E480346",
+      "product_name": "STUDIO GHIBLI스웨트셔츠A",
+      "source_path": "티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 스웨트셔츠",
+      "target_category": "tops",
+      "target_detail": "hoodie",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E480346-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E458325",
+      "product_name": "스트레치이지쇼트팬츠(시어서커)",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩)",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E458325-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481582",
+      "product_name": "스트레치이지쇼트팬츠",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩)",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481582-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481583",
+      "product_name": "스트레치이지쇼트팬츠(데님)",
+      "source_path": "라운지 팬츠 > 라운지 팬츠 > 쇼트 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "short_pants",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481583-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E458325",
+      "product_name": "스트레치이지쇼트팬츠(시어서커)",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩)",
+      "target_category": "bottoms",
+      "target_detail": "shorts",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E458325-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E481582",
+      "product_name": "스트레치이지쇼트팬츠",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩)",
+      "target_category": "bottoms",
+      "target_detail": "shorts",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E481582-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482172",
+      "product_name": "리넨코튼쇼트팬츠(스트라이프)",
+      "source_path": "팬츠 > 쇼트 팬츠(반바지) > 반바지",
+      "target_category": "bottoms",
+      "target_detail": "shorts",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482172-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E447780",
+      "product_name": "감탄팬츠",
+      "source_path": "팬츠 > 감탄 팬츠 > 감탄 팬츠",
+      "target_category": "bottoms",
+      "target_detail": "long_pants",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E447780-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E455476",
+      "product_name": "EZY진",
+      "source_path": "팬츠 > 진(청바지) > 슬림",
+      "target_category": "bottoms",
+      "target_detail": "long_pants",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E455476-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E455942",
+      "product_name": "W울트라스트레치AIRism조거팬츠",
+      "source_path": "팬츠 > 조거팬츠",
+      "target_category": "bottoms",
+      "target_detail": "long_pants",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E455942-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E474481",
+      "product_name": "울트라스트레치액티브와이드팬츠(다리길이68.5~71.5cm)",
+      "source_path": "UV Protection > 팬츠 & 레깅스 > 팬츠",
+      "target_category": "leggings",
+      "target_detail": "long_leggings",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E474481-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E477869",
+      "product_name": "울트라스트레치액티브와이드팬츠(다리길이73.5~76.5cm·긴기장)",
+      "source_path": "UV Protection > 팬츠 & 레깅스 > 팬츠",
+      "target_category": "leggings",
+      "target_detail": "long_leggings",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E477869-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E483001",
+      "product_name": "이지유틸리티팬츠",
+      "source_path": "UV Protection > 팬츠 & 레깅스 > 팬츠",
+      "target_category": "leggings",
+      "target_detail": "long_leggings",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E483001-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450535",
+      "product_name": "메리노크루넥스웨터",
+      "source_path": "니트 & 가디건 > 니트 > 메리노",
+      "target_category": "outerwear",
+      "target_detail": "cardigan",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450535-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450536",
+      "product_name": "메리노V넥스웨터",
+      "source_path": "니트 & 가디건 > 니트 > 메리노",
+      "target_category": "outerwear",
+      "target_detail": "cardigan",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450536-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450540",
+      "product_name": "메리노V넥가디건",
+      "source_path": "니트 & 가디건 > 니트 > 유니섹스",
+      "target_category": "outerwear",
+      "target_detail": "cardigan",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450540-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E444557",
+      "product_name": "감탄재킷(라이트)",
+      "source_path": "아우터 > 감탄 재킷 > 감탄 재킷 (라이트)",
+      "target_category": "outerwear",
+      "target_detail": "jacket",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E444557-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E448034",
+      "product_name": "감탄재킷",
+      "source_path": "아우터 > 감탄 재킷 > 감탄 재킷",
+      "target_category": "outerwear",
+      "target_detail": "jacket",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E448034-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E448039",
+      "product_name": "감탄재킷(CUSTOM ORDER·사이즈S)",
+      "source_path": "아우터 > 감탄 재킷 > 감탄 재킷 (CUSTOM ORDER)",
+      "target_category": "outerwear",
+      "target_detail": "jacket",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E448039-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E477704",
+      "product_name": "감탄블레이저",
+      "source_path": "아우터 > 재킷 & 블레이저 > UNIQLO and JW ANDERSON",
+      "target_category": "outerwear",
+      "target_detail": "blazer",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E477704-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488652",
+      "product_name": "테일러드재킷(릴랙스핏)",
+      "source_path": "아우터 > 재킷 & 코트 > 캐주얼 재킷",
+      "target_category": "outerwear",
+      "target_detail": "blazer",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488652-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489025",
+      "product_name": "테일러드재킷(릴랙스핏)패턴",
+      "source_path": "아우터 > 재킷 & 코트 > 캐주얼 재킷",
+      "target_category": "outerwear",
+      "target_detail": "blazer",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489025-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450195",
+      "product_name": "후리스풀집재킷",
+      "source_path": "아우터 > 파카 & 블루종 > 후리스",
+      "target_category": "outerwear",
+      "target_detail": "blouson",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450195-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E469292",
+      "product_name": "포켓터블UV PROTECTION파카",
+      "source_path": "아우터 > 파카 & 블루종 > 포켓터블",
+      "target_category": "outerwear",
+      "target_detail": "blouson",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E469292-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E469956",
+      "product_name": "후리스풀집재킷(컬러블록)",
+      "source_path": "아우터 > 파카 & 블루종 > 후리스",
+      "target_category": "outerwear",
+      "target_detail": "blouson",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E469956-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E450195",
+      "product_name": "후리스풀집재킷",
+      "source_path": "아우터 > 파카 & 블루종 > 후리스",
+      "target_category": "outerwear",
+      "target_detail": "fleece",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E450195-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E469956",
+      "product_name": "후리스풀집재킷(컬러블록)",
+      "source_path": "아우터 > 파카 & 블루종 > 후리스",
+      "target_category": "outerwear",
+      "target_detail": "fleece",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E469956-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487517",
+      "product_name": "후리스스탠드블루종",
+      "source_path": "아우터 > 파카 & 블루종 > 그 외",
+      "target_category": "outerwear",
+      "target_detail": "fleece",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487517-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E469863",
+      "product_name": "PUFFTECH컴팩트베스트",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 퍼프테크",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E469863-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E469871",
+      "product_name": "PUFFTECH파카",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 퍼프테크",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E469871-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E470061",
+      "product_name": "PUFFTECH컴팩트베스트",
+      "source_path": "아우터 > 경량 패딩 (PUFFTECH) > 퍼프테크",
+      "target_category": "outerwear",
+      "target_detail": "light_padding",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E470061-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487420",
+      "product_name": "트렌치코트",
+      "source_path": "아우터 > 재킷 & 코트 > 그 외",
+      "target_category": "outerwear",
+      "target_detail": "coat",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487420-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E488652",
+      "product_name": "테일러드재킷(릴랙스핏)",
+      "source_path": "아우터 > 재킷 & 코트 > 캐주얼 재킷",
+      "target_category": "outerwear",
+      "target_detail": "coat",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E488652-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E489025",
+      "product_name": "테일러드재킷(릴랙스핏)패턴",
+      "source_path": "아우터 > 재킷 & 코트 > 캐주얼 재킷",
+      "target_category": "outerwear",
+      "target_detail": "coat",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E489025-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E487420",
+      "product_name": "트렌치코트",
+      "source_path": "아우터 > 재킷 & 코트 > 그 외",
+      "target_category": "outerwear",
+      "target_detail": "trench_coat",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E487420-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482286",
+      "product_name": "티어드맥시스커트(치마길이87~91cm)",
+      "source_path": "원피스 & 스커트 > 스커트 > 플레어",
+      "target_category": "skirts",
+      "target_detail": "skirt",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482286-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482658",
+      "product_name": "와이드플리츠미디스커트(치마길이69~73cm)",
+      "source_path": "원피스 & 스커트 > 스커트 > 플리츠",
+      "target_category": "skirts",
+      "target_detail": "skirt",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482658-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482982",
+      "product_name": "울트라스트레치AIRism원피스(슬리브리스)",
+      "source_path": "원피스 & 스커트 > 원피스 > 슬리브리스 원피스",
+      "target_category": "skirts",
+      "target_detail": "skirt",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482982-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482286",
+      "product_name": "티어드맥시스커트(치마길이87~91cm)",
+      "source_path": "원피스 & 스커트 > 스커트 > 플레어",
+      "target_category": "dresses",
+      "target_detail": "one_piece",
+      "selection_rank": 1,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482286-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482658",
+      "product_name": "와이드플리츠미디스커트(치마길이69~73cm)",
+      "source_path": "원피스 & 스커트 > 스커트 > 플리츠",
+      "target_category": "dresses",
+      "target_detail": "one_piece",
+      "selection_rank": 2,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482658-000/00"
+    },
+    {
+      "source": "uniqlo",
+      "product_id": "E482982",
+      "product_name": "울트라스트레치AIRism원피스(슬리브리스)",
+      "source_path": "원피스 & 스커트 > 원피스 > 슬리브리스 원피스",
+      "target_category": "dresses",
+      "target_detail": "one_piece",
+      "selection_rank": 3,
+      "url": "https://www.uniqlo.com/kr/ko/products/E482982-000/00"
+    }
+  ],
+  "gaps": [
+    {
+      "source": "uniqlo",
+      "target_category": "bottoms",
+      "target_detail": "cropped_pants"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "bottoms",
+      "target_detail": "three_quarter_pants"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "bottoms",
+      "target_detail": "nine_tenths_pants"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "bottoms",
+      "target_detail": "other_bottoms"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "leggings",
+      "target_detail": "short_leggings"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "leggings",
+      "target_detail": "three_quarter_leggings"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "leggings",
+      "target_detail": "nine_tenths_leggings"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "leggings",
+      "target_detail": "other_leggings"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "windbreaker"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "anorak"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "jumper"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "short_padding"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "padding"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "long_padding"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "mouton"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "vest"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "padded_vest"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "outerwear",
+      "target_detail": "other_outerwear"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "skirts",
+      "target_detail": "other_skirts"
+    },
+    {
+      "source": "uniqlo",
+      "target_category": "dresses",
+      "target_detail": "other_dresses"
+    }
+  ]
+}

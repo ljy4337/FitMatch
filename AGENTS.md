@@ -33,6 +33,34 @@ After implementation output only:
 - Prefer fixing over rewriting.
 - Stop if requirements are ambiguous.
 
+## Cumulative Handoff
+
+- At the start of every new session, read `Docs/CodexSessionHandoff.md` completely before changing code.
+- `Docs/CodexSessionHandoff.md` is the single current cumulative handoff; dated handoff files are historical detail only.
+- Before finishing meaningful work, update the cumulative handoff with production changes, product/UX decisions, tests actually run, unverified areas, and remaining issues.
+- Preserve prior history. When a policy changes, mark the old state as superseded and record the new current state instead of silently deleting context.
+- Never describe skipped, interrupted, environment-blocked, or unexecuted tests as passed.
+
+## Decision Collaboration
+- Do not agree with the user reflexively or mirror the user's latest opinion.
+- For product, UX, architecture, and testing decisions, present both the strongest supporting case and the strongest opposing case when a real tradeoff exists.
+- Clearly say no when a proposal would worsen UX, correctness, safety, maintainability, or FitMatch's product principles, and explain the concrete reason.
+- Distinguish verified facts, inference, and preference instead of presenting them as equally certain.
+- Recommend the best synthesized option after evaluating tradeoffs; optimize for the product outcome, not agreement.
+- If the user's revised idea is better, say why it is better. If it is not, defend the stronger alternative with evidence.
+
+## Budgeted Work Proposals
+
+- When a request has a usage, time, cost, or test-scope constraint, do not start with the cheapest compromise.
+- Present estimates in this mandatory order before recommending a plan:
+  1. **Sufficient budget**: the expected usage/time needed to complete the user's stated goal with the required verification scope.
+  2. **Safe budget**: sufficient budget plus realistic retry, collection failure, and regression margin.
+  3. **User-budget option**: what can be completed within the user's proposed cap.
+  4. **Explicit tradeoff**: the exact coverage, evidence, or risk that the lower-budget option gives up.
+- State whether each estimate is measured evidence, an inference from prior runs, or a planning assumption.
+- For budgeted testing, give expected output and product-quality effect separately from execution cost. Do not imply that a partial sample validates the complete stated goal.
+- If the user asks for a compromise, first state the full-goal estimate; only then offer the compromise and recommend one.
+
 ## FitMatch Rules
 - Preserve Reference Garment concept.
 - Respect category/detailCategory structure.

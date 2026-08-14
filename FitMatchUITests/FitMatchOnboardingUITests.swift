@@ -114,6 +114,33 @@ final class FitMatchOnboardingUITests: XCTestCase {
     }
 
     @MainActor
+    func test07RapidSaveTapCreatesOneClosetItemAndShowsToast() throws {
+        let app = launchFreshOnboardingApp()
+        advanceToRegistrationGuide(in: app)
+        app.buttons["onboarding.shoppingLink"].tap()
+
+        let urlField = app.textFields["closet.linkURL"]
+        XCTAssertTrue(urlField.waitForExistence(timeout: 3))
+        urlField.tap()
+        urlField.typeText("https://www.musinsa.com/products/onboarding-ui-test")
+        app.buttons["closet.linkLoad"].tap()
+        XCTAssertTrue(app.staticTexts["온보딩 무신사 기준옷"].waitForExistence(timeout: 5))
+        app.buttons["closet.linkNext"].tap()
+
+        let actionButton = app.buttons["closet.confirmAction"]
+        XCTAssertTrue(actionButton.waitForExistence(timeout: 3))
+        actionButton.doubleTap()
+
+        XCTAssertTrue(app.staticTexts["내 옷장에 추가했어요."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 5))
+        app.buttons["내 옷장"].tap()
+        XCTAssertTrue(app.staticTexts["온보딩 무신사 기준옷"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.staticTexts.matching(
+            NSPredicate(format: "label == %@", "온보딩 무신사 기준옷")
+        ).count, 1)
+    }
+
+    @MainActor
     private func launchFreshOnboardingApp() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -158,15 +185,10 @@ final class FitMatchOnboardingUITests: XCTestCase {
 
         let actionButton = app.buttons["closet.confirmAction"]
         XCTAssertTrue(actionButton.waitForExistence(timeout: 3))
-        actionButton.tap()
         let addPredicate = NSPredicate(format: "label CONTAINS %@", "내 옷장에 추가")
         expectation(for: addPredicate, evaluatedWith: actionButton)
         waitForExpectations(timeout: 3)
         actionButton.tap()
-
-        let savedAlert = app.alerts["내 옷장에 추가했어요."]
-        XCTAssertTrue(savedAlert.waitForExistence(timeout: 5))
-        savedAlert.buttons["확인"].tap()
 
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts[expectedProductName].waitForExistence(timeout: 3))

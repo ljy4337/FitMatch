@@ -24,6 +24,10 @@ struct RecommendationCalculationPresentation {
             return "측정 기준이 달라 비교 제외"
         case .categoryPolicy:
             return "해당 카테고리의 비교 대상이 아님"
+        case .sleeveLengthMismatch:
+            return "반팔·긴팔 소매 구조 차이로 비교 제외"
+        case .garmentLengthMismatch:
+            return "긴바지·반바지 길이 구조 차이로 비교 제외"
         }
     }
 }
