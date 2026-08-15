@@ -1,0 +1,43 @@
+-- DESTRUCTIVE AND LOCKED.
+-- Do not run until 30_archive_legacy.sql.txt and 90_postflight_read_only.sql.txt pass.
+-- To authorize, change v_allow_destructive from false to true after reviewing targets.
+begin;
+
+do $guard$
+declare v_allow_destructive boolean := false;
+begin
+  if not v_allow_destructive then
+    raise exception 'LOCKED: set v_allow_destructive=true only after explicit review';
+  end if;
+
+  if to_regclass('fitmatch_archive.public_source_category_mappings_20260815') is null
+     or to_regclass('fitmatch_archive.public_client_source_category_mappings_20260815') is null
+     or to_regclass('fitmatch_archive.private_pre_full_review_20260802') is null
+     or to_regclass('fitmatch_archive.private_pre_taxonomy_audit_20260802') is null then
+    raise exception 'Required archive tables are missing';
+  end if;
+
+  if (select count(*) from fitmatch_archive.public_source_category_mappings_20260815) <> 2031
+     or (select count(*) from fitmatch_archive.public_client_source_category_mappings_20260815) <> 2031
+     or (select count(*) from fitmatch_archive.private_pre_full_review_20260802) <> 1822
+     or (select count(*) from fitmatch_archive.private_pre_taxonomy_audit_20260802) <> 2031 then
+    raise exception 'Archive counts differ from the audited baseline';
+  end if;
+end
+$guard$;
+
+-- These two views depend on the legacy public mapping tables.
+drop view if exists public.v_category_mapping_review;
+
+-- No CASCADE: execution must stop if an unknown dependency exists.
+drop table public.client_source_category_mappings;
+drop table public.source_category_mappings;
+drop table private.source_category_mappings_pre_full_review_20260802;
+drop table private.source_category_mappings_pre_taxonomy_audit_20260802;
+
+commit;
+
+select to_regclass('public.source_category_mappings') old_mapping_table,
+       to_regclass('public.client_source_category_mappings') old_client_mapping_table,
+       to_regclass('fitmatch_catalog.source_category_mappings') canonical_mapping_table;
+

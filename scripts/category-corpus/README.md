@@ -29,6 +29,36 @@ python3 scripts/category-corpus/corpus_collector.py live \
 The dry-run prints the request upper bound and checkpoint location. It performs
 zero requests.
 
+## Incremental Musinsa catalog batch
+
+```bash
+python3 scripts/run-musinsa-incremental-catalog.py \
+  --state Docs/TestEvidence/MusinsaCatalogIncremental/state.json \
+  --run-root Docs/TestEvidence/MusinsaCatalogIncremental/runs
+```
+
+The batch visits public Musinsa category pages, compares the discovered product
+IDs with the persistent state, and requests product detail, actual-size, and
+option responses only for unseen IDs. The main human-readable outputs are
+`summary.json`, `new_products.csv`, `missing_product_ids.csv`, and
+`pending_retry.csv`. A missing product is reported for review and is not deleted
+from state automatically.
+
+## Full Musinsa apparel catalog batch
+
+```bash
+python3 scripts/run-musinsa-full-catalog.py
+```
+
+This long-running batch follows Musinsa-provided signed pagination URLs for all
+confirmed or review-required apparel taxonomy categories. It stores normalized
+metadata, measurements, and options in
+`~/Desktop/무신사_전체의류_데이터/state.sqlite3` without retaining raw HTML,
+images, or API JSON. It can be interrupted with Control-C and rerun to resume.
+Compact exports are regenerated as `musinsa_products.csv.gz`,
+`musinsa_sizes.csv.gz`, `musinsa_options.csv.gz`, `musinsa_failures.csv`, and
+`summary.json`.
+
 ## Limited live collection (explicit network use)
 
 Do not run this until live collection is separately approved.

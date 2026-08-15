@@ -12,6 +12,12 @@ struct ClosetItemDetailView: View {
     @State private var pendingReferenceChange: PendingClosetEdit?
 
     let item: UserFit
+    private let diagnosticsStartedAt: TimeInterval
+
+    init(item: UserFit) {
+        self.item = item
+        self.diagnosticsStartedAt = DetailPerformanceDiagnostics.now()
+    }
 
     var body: some View {
         ScrollView {
@@ -28,6 +34,7 @@ struct ClosetItemDetailView: View {
             .padding(20)
             .padding(.bottom, 120)
         }
+        .diagnosesScrollPerformance(screen: "closet_item_detail")
         .background(Color(.systemGroupedBackground))
         .navigationTitle("내 옷 정보")
         .navigationBarTitleDisplayMode(.inline)
@@ -96,6 +103,7 @@ struct ClosetItemDetailView: View {
             Text("같은 분류의 기존 기준 옷은 자동으로 해제돼요.")
         }
         .onAppear {
+            logInitialPerformance()
             tabBarVisibilityController.hide(reason: .navigationDetail, source: "closet detail")
         }
         .onDisappear {
@@ -112,7 +120,8 @@ struct ClosetItemDetailView: View {
                         category: item.category,
                         width: 320,
                         height: 260,
-                        cornerRadius: 22
+                        cornerRadius: 22,
+                        diagnosticContext: "closet_item_detail"
                     )
                     .frame(maxWidth: .infinity)
                 } else {
@@ -440,6 +449,29 @@ struct ClosetItemDetailView: View {
 
     private var hasComparisonHistory: Bool {
         histories.contains { $0.userFit.id == item.id }
+    }
+
+    private func logInitialPerformance() {
+        DetailPerformanceDiagnostics.log(
+            screen: "closet_item_detail",
+            event: "on_appear",
+            startedAt: diagnosticsStartedAt,
+            metadata: "user_fits=\(userFits.count) histories=\(histories.count) measurements=\(item.measurementRecords.count) imported=\(item.isImportedFromURL)"
+        )
+        DispatchQueue.main.async {
+            DetailPerformanceDiagnostics.log(
+                screen: "closet_item_detail",
+                event: "next_main_runloop",
+                startedAt: diagnosticsStartedAt
+            )
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            DetailPerformanceDiagnostics.log(
+                screen: "closet_item_detail",
+                event: "settled_250ms",
+                startedAt: diagnosticsStartedAt
+            )
+        }
     }
 }
 

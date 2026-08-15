@@ -344,8 +344,27 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     private func makeProduct(brand: Brand?) -> Product? {
+        // Resolve the canonical garment before converting parsed rows into
+        // ProductSize. Provider buckets such as UNIQLO Innerwear/AIRism can
+        // have a generic provider detail even though the source path and name
+        // safely identify a supported garment. Waiting until after size
+        // conversion used to discard those rows because `.other` exposes no
+        // comparable measurement schema.
+        let canonical = ParsedClosetClassification.resolve(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [productMetadata.sourceCategoryDepth1, productMetadata.sourceCategoryDepth2,
+                           productMetadata.sourceCategoryDepth3, productMetadata.sourceCategoryDepth4],
+            sourcePath: productMetadata.sourceCategoryPath,
+            productName: productName
+        )
+        let resolvedCategory = canonical?.category ?? category
+        let resolvedDetailCategory = canonical?.detailCategory ?? detailCategory
         let validOptions = sizeOptions.compactMap {
-            $0.makeSizeOption(category: category, detailCategory: detailCategory)
+            $0.makeSizeOption(
+                category: resolvedCategory,
+                detailCategory: resolvedDetailCategory
+            )
         }
         guard !productName.trimmed.isEmpty, !validOptions.isEmpty else {
             return nil
@@ -354,7 +373,7 @@ final class ShoppingProductViewModel: ObservableObject {
         let product = Product(
             name: productName.trimmed,
             brand: brand,
-            category: category,
+            category: resolvedCategory,
             productCode: productCode,
             sourceURLString: productCanonicalURLString ?? (productURL.trimmed.isEmpty ? nil : productURL.trimmed),
             imageURLString: productImageURLString,
@@ -363,14 +382,7 @@ final class ShoppingProductViewModel: ObservableObject {
             sourceName: resolvedSourceName,
             sizes: validOptions
         )
-        if let canonical = ParsedClosetClassification.resolve(
-            category: category,
-            detailCategory: detailCategory,
-            sourceDepths: [productMetadata.sourceCategoryDepth1, productMetadata.sourceCategoryDepth2,
-                           productMetadata.sourceCategoryDepth3, productMetadata.sourceCategoryDepth4],
-            sourcePath: productMetadata.sourceCategoryPath,
-            productName: productName
-        ) {
+        if let canonical {
             product.categoryCode = canonical.categoryCode
             product.normalizedProductTypeCode = canonical.normalizedProductTypeCode
             product.garmentType = canonical.garmentFamily

@@ -155,12 +155,12 @@ struct RecommendationHistoryView: View {
                         openShoppingMall(history)
                     } onRecompare: {
                         opensReferencePickerOnDetail = true
-                        selectedHistoryIDForDetail = history.id
+                        showDetail(history)
                     } onAddToCloset: {
                         selectedHistoryForCloset = history
                     } onShowDetail: {
                         opensReferencePickerOnDetail = false
-                        selectedHistoryIDForDetail = history.id
+                        showDetail(history)
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
@@ -202,7 +202,7 @@ struct RecommendationHistoryView: View {
                             },
                             onShowDetail: {
                                 opensReferencePickerOnDetail = false
-                                selectedHistoryIDForDetail = history.id
+                                showDetail(history)
                             }
                         )
                     }
@@ -219,6 +219,13 @@ struct RecommendationHistoryView: View {
     private var historyLayout: ContentListLayout {
         get { ContentListLayout(rawValue: historyViewLayoutRaw) ?? .list }
         nonmutating set { historyViewLayoutRaw = newValue.rawValue }
+    }
+
+    private func showDetail(_ history: RecommendationHistory) {
+        DetailPerformanceDiagnostics.beginHistoryResultNavigation(
+            productName: history.productNameForDisplay
+        )
+        selectedHistoryIDForDetail = history.id
     }
 
     private var historyLayoutBinding: Binding<ContentListLayout> {

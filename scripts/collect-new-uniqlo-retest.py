@@ -42,7 +42,11 @@ def core_id(value: str) -> str:
     return value.split("-")[0]
 
 
-def load_candidates(checkpoint: Path, old_manifests: list[Path]) -> list[tuple[str, list[str]]]:
+def load_candidates(
+    checkpoint: Path,
+    old_manifests: list[Path],
+    include_all_catalog_items: bool,
+) -> list[tuple[str, list[str]]]:
     state = json.loads(checkpoint.read_text(encoding="utf-8"))
     old_ids = set()
     for old_manifest in old_manifests:
@@ -59,9 +63,11 @@ def load_candidates(checkpoint: Path, old_manifests: list[Path]) -> list[tuple[s
         product_core = core_id(observed_id)
         if product_core in old_ids:
             continue
-        clothing_urls = sorted(url for url in urls if not NON_CLOTHING.search(url))
-        if clothing_urls and product_core not in candidates_by_core:
-            candidates_by_core[product_core] = (observed_id, clothing_urls)
+        eligible_urls = sorted(urls) if include_all_catalog_items else sorted(
+            url for url in urls if not NON_CLOTHING.search(url)
+        )
+        if eligible_urls and product_core not in candidates_by_core:
+            candidates_by_core[product_core] = (observed_id, eligible_urls)
     return [candidates_by_core[key] for key in sorted(candidates_by_core)]
 
 
@@ -80,7 +86,12 @@ class LaunchLimiter:
             time.sleep(delay)
 
 
-def fetch(candidate: tuple[str, list[str]], raw_dir: Path, limiter: LaunchLimiter) -> dict:
+def fetch(
+    candidate: tuple[str, list[str]],
+    raw_dir: Path,
+    limiter: LaunchLimiter,
+    include_all_catalog_items: bool,
+) -> dict:
     observed_id, exposure_urls = candidate
     url = f"https://www.uniqlo.com/kr/ko/products/{observed_id}"
     existing_path = raw_dir / f"{observed_id}.html"
@@ -93,7 +104,7 @@ def fetch(candidate: tuple[str, list[str]], raw_dir: Path, limiter: LaunchLimite
             and len(body) > 10_000
             and category["status"] == "resolved"
             and bool(category["path"])
-            and not NON_CLOTHING.search(category["path"])
+            and (include_all_catalog_items or not NON_CLOTHING.search(category["path"]))
         )
         return {
             "observed_id": observed_id,
@@ -129,7 +140,7 @@ def fetch(candidate: tuple[str, list[str]], raw_dir: Path, limiter: LaunchLimite
                 and len(body) > 10_000
                 and category["status"] == "resolved"
                 and bool(category["path"])
-                and not NON_CLOTHING.search(category["path"])
+                and (include_all_catalog_items or not NON_CLOTHING.search(category["path"]))
             )
             return {
                 "observed_id": observed_id,
@@ -163,9 +174,19 @@ def fetch(candidate: tuple[str, list[str]], raw_dir: Path, limiter: LaunchLimite
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=Path, required=True)
-    parser.add_argument("--old-manifest", action="append", type=Path, required=True)
+    parser.add_argument("--old-manifest", action="append", type=Path, default=[])
+    parser.add_argument(
+        "--include-all-catalog-items",
+        action="store_true",
+        help="Include accessories and other non-clothing listings for exclusion-policy QA.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--target", type=int, default=320)
+    parser.add_argument(
+        "--select-all-complete",
+        action="store_true",
+        help="Keep every complete response and report failures without enforcing --target.",
+    )
     parser.add_argument("--attempt-limit", type=int, default=500)
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--delay-ms", type=int, default=250)
@@ -174,23 +195,36 @@ def main() -> int:
     args.output.mkdir(parents=True, exist_ok=True)
     raw_dir = args.output / "raw" / "uniqlo" / "products"
     raw_dir.mkdir(parents=True, exist_ok=True)
-    candidates = load_candidates(args.checkpoint, args.old_manifest)[: args.attempt_limit]
-    if len(candidates) < args.target:
+    candidates = load_candidates(
+        args.checkpoint,
+        args.old_manifest,
+        args.include_all_catalog_items,
+    )[: args.attempt_limit]
+    if not args.select_all_complete and len(candidates) < args.target:
         raise SystemExit(f"only {len(candidates)} non-overlapping clothing candidates")
 
     limiter = LaunchLimiter(args.delay_ms / 1000)
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
-        futures = [executor.submit(fetch, candidate, raw_dir, limiter) for candidate in candidates]
+        futures = [
+            executor.submit(
+                fetch,
+                candidate,
+                raw_dir,
+                limiter,
+                args.include_all_catalog_items,
+            )
+            for candidate in candidates
+        ]
         for index, future in enumerate(concurrent.futures.as_completed(futures), start=1):
             results.append(future.result())
             if index % 25 == 0:
                 print(json.dumps({"completed": index, "complete": sum(r["complete"] for r in results)}))
 
     complete = sorted((result for result in results if result["complete"]), key=lambda item: item["observed_id"])
-    if len(complete) < args.target:
+    if not args.select_all_complete and len(complete) < args.target:
         raise SystemExit(f"only {len(complete)} complete responses from {len(candidates)} attempts")
-    selected = complete[: args.target]
+    selected = complete if args.select_all_complete else complete[: args.target]
     products = []
     for result in selected:
         products.append({

@@ -1,0 +1,40 @@
+-- READ ONLY: execute after 10 and 20, and again after any optional cleanup.
+begin transaction read only;
+
+select count(*) active_releases
+from fitmatch_catalog.releases where status='active';
+
+select release_key,status,activated_at
+from fitmatch_catalog.releases order by created_at;
+
+select count(*) active_mapping_view_rows
+from fitmatch_catalog.source_to_fitmatch_mappings;
+
+select source,count(*) total,count(source_mapping_identity) linked,
+       count(*) filter(where source_mapping_identity is null) gaps
+from fitmatch_catalog.current_source_products
+group by source;
+
+select external_product_id,product_name,source_category_path,
+       fitmatch_category_label,fitmatch_detail_label
+from fitmatch_catalog.product_mapping_gaps
+order by external_product_id;
+
+select conname,convalidated,pg_get_constraintdef(oid) definition
+from pg_constraint
+where conrelid='fitmatch_catalog.source_product_snapshots'::regclass
+order by conname;
+
+select schemaname,viewname
+from pg_views
+where schemaname='fitmatch_catalog'
+order by viewname;
+
+select count(*) orphan_product_mapping_links
+from fitmatch_catalog.source_product_snapshots p
+left join fitmatch_catalog.source_category_mappings m
+  on m.release_id=p.mapping_release_id and m.source_identity=p.source_mapping_identity
+where p.source_mapping_identity is not null and m.source_identity is null;
+
+rollback;
+

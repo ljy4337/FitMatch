@@ -1,0 +1,67 @@
+-- Activate corrected mapping release and make runtime mapping view active-only.
+begin;
+
+do $check$
+declare v_count integer;
+begin
+  select count(*) into v_count
+  from fitmatch_catalog.source_category_mappings m
+  join fitmatch_catalog.releases r on r.id=m.release_id
+  where r.release_key='observed-official-2026-08-03__taxonomy-corrected-2026-08-14';
+  if v_count <> 3426 then
+    raise exception 'Corrected release must contain 3426 mappings; got %',v_count;
+  end if;
+end
+$check$;
+
+update fitmatch_catalog.releases
+set status='retired', activated_at=null
+where release_key='observed-official-2026-08-03__taxonomy-refined-2026-08-03'
+  and status <> 'retired';
+
+update fitmatch_catalog.releases
+set status='active', activated_at=coalesce(activated_at,now())
+where release_key='observed-official-2026-08-03__taxonomy-corrected-2026-08-14';
+
+create or replace view fitmatch_catalog.source_to_fitmatch_mappings
+with (security_invoker = true)
+as
+select
+  m.release_id,m.source_identity,m.source,m.snapshot_id,m.external_category_id,
+  m.target,m.normalized_path,m.decision_status,m.runtime_lookup_eligible,
+  case when m.decision_status='confirmed' then m.semantic_category_code end app_category_code,
+  null::text app_detail_code,
+  case when m.decision_status='confirmed' then m.semantic_garment_type end semantic_garment_type,
+  case when m.decision_status='confirmed' then m.comparison_family end comparison_family,
+  case
+    when m.decision_status='confirmed' then 'product_classifier_required'
+    when m.decision_status='review_required' then 'user_or_product_review_required'
+    else 'not_applicable'
+  end detail_resolution_strategy,
+  m.raw_record->'appMapping' legacy_app_mapping
+from fitmatch_catalog.source_category_mappings m
+join fitmatch_catalog.releases r on r.id=m.release_id
+where r.status='active';
+
+revoke all on fitmatch_catalog.source_to_fitmatch_mappings from anon,authenticated;
+grant select on fitmatch_catalog.source_to_fitmatch_mappings to service_role;
+
+create index if not exists product_collection_runs_mapping_release_idx
+  on fitmatch_catalog.product_collection_runs(mapping_release_id);
+
+do $verify$
+declare v_active integer; v_view integer;
+begin
+  select count(*) into v_active from fitmatch_catalog.releases where status='active';
+  select count(*) into v_view from fitmatch_catalog.source_to_fitmatch_mappings;
+  if v_active <> 1 or v_view <> 3426 then
+    raise exception 'Core verification failed: active %, view rows %',v_active,v_view;
+  end if;
+end
+$verify$;
+
+commit;
+
+select release_key,status,activated_at from fitmatch_catalog.releases order by created_at;
+select count(*) active_mapping_rows from fitmatch_catalog.source_to_fitmatch_mappings;
+

@@ -10,6 +10,7 @@ struct ProductThumbnailView: View {
     var width: CGFloat = 80
     var height: CGFloat = 96
     var cornerRadius: CGFloat = 16
+    var diagnosticContext: String? = nil
     @StateObject private var imageLoader = ProductThumbnailImageLoader()
 
     var body: some View {
@@ -41,7 +42,8 @@ struct ProductThumbnailView: View {
         .task(id: imageURL) {
             await imageLoader.load(
                 imageURL,
-                maxPixelSize: max(width, height) * displayScale
+                maxPixelSize: max(width, height) * displayScale,
+                diagnosticContext: diagnosticContext
             )
         }
     }
@@ -105,7 +107,7 @@ private final class ProductThumbnailImageLoader: ObservableObject {
 
     private var currentURL: URL?
 
-    func load(_ url: URL?, maxPixelSize: CGFloat) async {
+    func load(_ url: URL?, maxPixelSize: CGFloat, diagnosticContext: String?) async {
         guard currentURL != url || (image == nil && !didFail) else {
             return
         }
@@ -117,13 +119,32 @@ private final class ProductThumbnailImageLoader: ObservableObject {
         guard let url else {
             return
         }
+        let startedAt = DetailPerformanceDiagnostics.now()
         if let cachedImage = Self.cache.object(forKey: url as NSURL) {
             image = cachedImage
+            if let diagnosticContext {
+                DetailPerformanceDiagnostics.log(
+                    screen: diagnosticContext,
+                    event: "thumbnail_cache_hit",
+                    startedAt: startedAt,
+                    metadata: "pixels=\(Int(maxPixelSize))"
+                )
+            }
             return
         }
 
         do {
+            let networkStartedAt = DetailPerformanceDiagnostics.now()
             let (data, response) = try await URLSession.shared.data(from: url)
+            if let diagnosticContext {
+                DetailPerformanceDiagnostics.log(
+                    screen: diagnosticContext,
+                    event: "thumbnail_downloaded",
+                    startedAt: networkStartedAt,
+                    metadata: "bytes=\(data.count) status=\((response as? HTTPURLResponse)?.statusCode ?? 0)"
+                )
+            }
+            let decodeStartedAt = DetailPerformanceDiagnostics.now()
             guard !Task.isCancelled,
                   currentURL == url,
                   ((response as? HTTPURLResponse)?.statusCode ?? 200) < 400,
@@ -136,15 +157,39 @@ private final class ProductThumbnailImageLoader: ObservableObject {
                 }
                 return
             }
+            if let diagnosticContext {
+                DetailPerformanceDiagnostics.log(
+                    screen: diagnosticContext,
+                    event: "thumbnail_decoded",
+                    startedAt: decodeStartedAt,
+                    metadata: "width=\(Int(loadedImage.size.width * loadedImage.scale)) height=\(Int(loadedImage.size.height * loadedImage.scale))"
+                )
+            }
 
             let pixelWidth = loadedImage.size.width * loadedImage.scale
             let pixelHeight = loadedImage.size.height * loadedImage.scale
             let cost = max(1, Int(pixelWidth * pixelHeight * 4))
             Self.cache.setObject(loadedImage, forKey: url as NSURL, cost: cost)
             image = loadedImage
+            if let diagnosticContext {
+                DetailPerformanceDiagnostics.log(
+                    screen: diagnosticContext,
+                    event: "thumbnail_ready",
+                    startedAt: startedAt,
+                    metadata: "cache=false"
+                )
+            }
         } catch {
             guard !Task.isCancelled, currentURL == url else { return }
             didFail = true
+            if let diagnosticContext {
+                DetailPerformanceDiagnostics.log(
+                    screen: diagnosticContext,
+                    event: "thumbnail_failed",
+                    startedAt: startedAt,
+                    metadata: "error=\(String(describing: error))"
+                )
+            }
         }
     }
 

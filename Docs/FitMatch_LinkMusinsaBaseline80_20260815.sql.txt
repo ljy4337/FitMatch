@@ -1,0 +1,99 @@
+-- Link 80 legacy MUSINSA baseline products (18 path aliases) to confirmed active mappings.
+-- The batch's 183 newly collected products are not modified. Safe to rerun.
+
+begin;
+
+with aliases(source_category_path,source_identity) as (
+  values
+    ('아우터 > 나일론 > 코치 재킷','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|002006|UNKNOWN|아우터 > 나일론/코치 재킷'),
+    ('바지 > 슈트 팬츠 > 슬랙스','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|003008|UNKNOWN|바지 > 슈트 팬츠/슬랙스'),
+    ('바지 > 트레이닝 > 조거 팬츠','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|017020003|UNKNOWN|스포츠/레저 > 하의 > 조거 팬츠'),
+    ('아우터 > 슈트 > 블레이저 재킷','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|002003|UNKNOWN|아우터 > 슈트/블레이저 재킷'),
+    ('상의 > 셔츠 > 블라우스','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|001002|UNKNOWN|상의 > 셔츠/블라우스'),
+    ('원피스 > 스커트 > 미니원피스','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|105001004001|UNKNOWN|부티크 > 의류 > 원피스 > 미니원피스'),
+    ('원피스 > 스커트 > 맥시원피스','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|105001004003|UNKNOWN|부티크 > 의류 > 원피스 > 맥시원피스'),
+    ('스포츠 > 레저 > 상의 > 반소매 티셔츠','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|017016005|UNKNOWN|스포츠/레저 > 상의 > 반소매 티셔츠'),
+    ('원피스 > 스커트 > 미니스커트','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|017017002|UNKNOWN|스포츠/레저 > 스커트 > 미니스커트'),
+    ('원피스 > 스커트 > 미디스커트','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|017017003|UNKNOWN|스포츠/레저 > 스커트 > 미디스커트'),
+    ('원피스 > 스커트 > 미디원피스','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|105001004002|UNKNOWN|부티크 > 의류 > 원피스 > 미디원피스'),
+    ('스포츠 > 레저 > 하의 > 기타 바지','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|017020001|UNKNOWN|스포츠/레저 > 하의 > 기타 바지'),
+    ('아우터 > 경량 패딩 > 패딩 베스트 > 경량 패딩','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|002027001|UNKNOWN|아우터 > 경량 패딩/패딩 베스트 > 경량 패딩'),
+    ('상의 > 니트 > 스웨터','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|001006|UNKNOWN|상의 > 니트/스웨터'),
+    ('스포츠 > 레저 > 상의 > 나시 > 민소매 티셔츠','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|001011|UNKNOWN|상의 > 민소매 티셔츠'),
+    ('스포츠 > 레저 > 아우터 > 나일론 > 코치 재킷','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|017018003|UNKNOWN|스포츠/레저 > 아우터 > 나일론/코치 재킷'),
+    ('스포츠 > 레저 > 하의 > 숏팬츠','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|017020002|UNKNOWN|스포츠/레저 > 하의 > 숏팬츠'),
+    ('원피스 > 스커트 > 롱스커트','musinsa|0a0fab7a-e6a6-45b9-ab5c-3426aba173e3|100006|UNKNOWN|원피스/스커트 > 롱스커트')
+), active_release as (
+  select id from fitmatch_catalog.releases where status='active'
+), resolved as (
+  select a.source_category_path,m.release_id,m.source_identity,
+         m.external_category_id,m.semantic_category_code,c.display_name category_display_name
+  from aliases a
+  cross join active_release r
+  join fitmatch_catalog.source_category_mappings m
+    on m.release_id=r.id and m.source_identity=a.source_identity
+   and m.source='musinsa' and m.decision_status='confirmed'
+  join fitmatch_catalog.app_categories c
+    on c.release_id=m.release_id and c.code=m.semantic_category_code
+)
+update fitmatch_catalog.source_product_snapshots p
+set mapping_release_id=r.release_id,
+    source_mapping_identity=r.source_identity,
+    fitmatch_category_label=r.category_display_name,
+    fitmatch_detail_label=null,
+    classification_status='conditional',
+    raw_summary=p.raw_summary || jsonb_build_object(
+      'legacy_path_alias_resolution','confirmed',
+      'legacy_path_alias_external_category_id',r.external_category_id,
+      'detail_resolution','product_classifier_required'
+    )
+from resolved r
+where p.run_id='a141f6bf-5218-4c87-9ce2-e77557472f37'::uuid
+  and p.raw_summary->>'cumulative_source'='baseline_manifest'
+  and p.source_category_path=r.source_category_path
+  and p.source_mapping_identity is distinct from r.source_identity;
+
+do $verify$
+declare
+  v_total integer;
+  v_gaps integer;
+  v_alias_linked integer;
+  v_unclassified integer;
+begin
+  select count(*),
+         count(*) filter(where source_mapping_identity is null),
+         count(*) filter(where raw_summary->>'legacy_path_alias_resolution'='confirmed'),
+         count(*) filter(where classification_status='unclassified')
+  into v_total,v_gaps,v_alias_linked,v_unclassified
+  from fitmatch_catalog.source_product_snapshots
+  where run_id='a141f6bf-5218-4c87-9ce2-e77557472f37'::uuid;
+
+  if v_total<>383 or v_gaps<>0 or v_alias_linked<>80 or v_unclassified<>14 then
+    raise exception 'Verification failed: total %, gaps %, alias linked %, unclassified %',
+      v_total,v_gaps,v_alias_linked,v_unclassified;
+  end if;
+end
+$verify$;
+
+commit;
+
+select
+  count(*) total,
+  count(source_mapping_identity) linked,
+  count(*) filter(where source_mapping_identity is null) mapping_gaps,
+  count(*) filter(where classification_status='conditional') conditional,
+  count(*) filter(where classification_status='excluded_review') excluded_review,
+  count(*) filter(where classification_status='unclassified') unclassified,
+  count(*) filter(where raw_summary->>'legacy_path_alias_resolution'='confirmed') legacy_alias_linked
+from fitmatch_catalog.source_product_snapshots
+where run_id='a141f6bf-5218-4c87-9ce2-e77557472f37'::uuid;
+
+select
+  raw_summary->>'cumulative_source' data_source,
+  classification_status,
+  count(*) products,
+  count(*) filter(where source_mapping_identity is null) mapping_gaps
+from fitmatch_catalog.source_product_snapshots
+where run_id='a141f6bf-5218-4c87-9ce2-e77557472f37'::uuid
+group by 1,2
+order by 1,2;

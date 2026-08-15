@@ -136,7 +136,10 @@ struct MusinsaProductMetadataParser {
             let depth1 = sourcePath.depth1
             let depth2 = sourcePath.depth2
             let categoryText = sourcePath.depths.joined(separator: " ")
-            let productName = response.data.goodsNm
+            let productName = Self.preferredProductName(
+                localized: response.data.goodsNm,
+                english: response.data.goodsNmEng
+            )
             let brandName = response.data.brandInfo?.brandName
                 ?? response.data.brandInfo?.brandEnglishName
                 ?? response.data.brand
@@ -453,6 +456,22 @@ struct MusinsaProductMetadataParser {
             seasonYear: data.seasonYear,
             season: data.season
         )
+    }
+
+    private static func preferredProductName(localized: String, english: String?) -> String {
+        let localized = localized.trimmingCharacters(in: .whitespacesAndNewlines)
+        let english = english?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let suspiciousMarkers = [
+            "http://", "https://", "admin/", "admin.",
+            "goods/edit", "goods/view", "상품관리"
+        ]
+        let isSuspicious = suspiciousMarkers.contains {
+            localized.range(of: $0, options: .caseInsensitive) != nil
+        }
+        if isSuspicious, let english, !english.isEmpty {
+            return english
+        }
+        return localized
     }
 
     private static func categoryPath(from data: MusinsaProductDetailResponse.DataBody) -> SourceCategoryPath {

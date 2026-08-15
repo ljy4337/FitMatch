@@ -5,6 +5,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import urllib.parse
 from argparse import Namespace
 from pathlib import Path
 from unittest.mock import patch
@@ -588,6 +589,61 @@ class CategoryCorpusTests(unittest.TestCase):
         rejected = evidence["rejected_category_urls"][0]
         self.assertEqual(rejected["raw_href"], "undefined/kr/ko")
         self.assertIn("undefined/null", rejected["reason"])
+
+    def test_strict_uniqlo_category_evidence_requires_matching_search_route(self):
+        requested = "https://www.uniqlo.com/kr/ko/men/tops/t-shirts"
+        matching_state = {
+            "search": {
+                "/v2/men/tops/t-shirts0.0.0": {
+                    "search": {"productIds": ["E488001-000-00"]},
+                    "pagination": {"count": 1, "total": 1, "offset": 0},
+                }
+            }
+        }
+        mismatched_state = {
+            "search": {
+                "/v2/women/innerwear0.0.0": {
+                    "search": {"productIds": ["E499999-000-00"]},
+                    "pagination": {"count": 1, "total": 1, "offset": 0},
+                }
+            }
+        }
+        matching_body = (
+            "<script>window.__PRELOADED_STATE__ = "
+            + json.dumps(matching_state)
+            + ";</script>"
+        ).encode()
+        mismatched_body = (
+            '<a href="/kr/ko/products/E499999-000">wrong</a>'
+            "<script>window.__PRELOADED_STATE__ = "
+            + json.dumps(mismatched_state)
+            + ";</script>"
+        ).encode()
+
+        accepted = collector.strict_uniqlo_category_page_evidence(requested, matching_body)
+        rejected = collector.strict_uniqlo_category_page_evidence(requested, mismatched_body)
+
+        self.assertTrue(accepted["response_matches_requested_category"])
+        self.assertEqual(accepted["product_ids"], ["E488001-000"])
+        self.assertFalse(rejected["response_matches_requested_category"])
+        self.assertEqual(rejected["product_ids"], [])
+
+    def test_uniqlo_semantic_retry_url_preserves_path_and_replaces_cache_buster(self):
+        original = (
+            "https://www.uniqlo.com/kr/ko/men/shirts-and-polo-shirts/casual-shirts"
+            "?color=blue&fitmatch_refresh=old"
+        )
+        retry = collector.uniqlo_semantic_retry_url(original, 2)
+        parsed = urllib.parse.urlsplit(retry)
+        query = urllib.parse.parse_qs(parsed.query)
+
+        self.assertEqual(
+            parsed.path,
+            "/kr/ko/men/shirts-and-polo-shirts/casual-shirts",
+        )
+        self.assertEqual(query["color"], ["blue"])
+        self.assertEqual(len(query["fitmatch_refresh"]), 1)
+        self.assertTrue(query["fitmatch_refresh"][0].endswith("-2"))
 
     def test_resume_sanitizes_invalid_queue_and_preserves_rejection_provenance(self):
         state = {

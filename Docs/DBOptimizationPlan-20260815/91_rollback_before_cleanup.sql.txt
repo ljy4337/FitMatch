@@ -1,0 +1,51 @@
+-- Roll back steps 10 and 20 only. Do not use after destructive cleanup (40).
+begin;
+
+drop view if exists fitmatch_catalog.product_mapping_gaps;
+
+alter table fitmatch_catalog.source_product_snapshots
+  drop constraint if exists source_product_snapshots_mapping_fkey;
+drop index if exists fitmatch_catalog.source_product_snapshots_mapping_idx;
+
+create or replace view fitmatch_catalog.current_source_products
+with (security_invoker = true)
+as
+select p.run_id,p.source,p.external_product_id,p.product_name,p.canonical_url,
+       p.audience,p.observed_ids,p.source_category_path,p.source_category_codes,
+       p.fitmatch_category_label,p.fitmatch_detail_label,p.classification_status,
+       p.size_count,p.image_url,p.raw_summary,p.collected_at
+from fitmatch_catalog.source_product_snapshots p
+where p.run_id=(
+  select r.id from fitmatch_catalog.product_collection_runs r
+  where r.source=p.source and r.status in ('succeeded','partial')
+  order by r.snapshot_date desc,r.created_at desc limit 1
+);
+
+alter table fitmatch_catalog.source_product_snapshots
+  drop column if exists source_mapping_identity,
+  drop column if exists mapping_release_id;
+
+create or replace view fitmatch_catalog.source_to_fitmatch_mappings
+with (security_invoker = true)
+as
+select m.release_id,m.source_identity,m.source,m.snapshot_id,m.external_category_id,
+       m.target,m.normalized_path,m.decision_status,m.runtime_lookup_eligible,
+       case when m.decision_status='confirmed' then m.semantic_category_code end app_category_code,
+       null::text app_detail_code,
+       case when m.decision_status='confirmed' then m.semantic_garment_type end semantic_garment_type,
+       case when m.decision_status='confirmed' then m.comparison_family end comparison_family,
+       case when m.decision_status='confirmed' then 'product_classifier_required'
+            when m.decision_status='review_required' then 'user_or_product_review_required'
+            else 'not_applicable' end detail_resolution_strategy,
+       m.raw_record->'appMapping' legacy_app_mapping
+from fitmatch_catalog.source_category_mappings m;
+
+update fitmatch_catalog.releases
+set status='validated',activated_at=null
+where release_key in (
+ 'observed-official-2026-08-03__taxonomy-refined-2026-08-03',
+ 'observed-official-2026-08-03__taxonomy-corrected-2026-08-14'
+);
+
+commit;
+

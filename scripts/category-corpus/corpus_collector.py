@@ -764,8 +764,56 @@ def discover_links(source: str, page_url: str, body: bytes) -> tuple[set[str], s
     return categories, products
 
 
-def uniqlo_category_page_evidence(page_url: str, body: bytes) -> dict[str, Any]:
+def strict_uniqlo_category_page_evidence(page_url: str, body: bytes) -> dict[str, Any]:
     """Extract only audience-grounded category/product evidence from saved PLP HTML."""
+    audience = audience_from_uniqlo_url(page_url)
+    parsed_page = urllib.parse.urlsplit(page_url)
+    if parsed_page.path.rstrip("/").casefold() == f"/kr/ko/{audience.lower()}":
+        result = uniqlo_category_page_evidence(page_url, body)
+        state = hydration_state(body.decode("utf-8", errors="replace"))
+        cms = state.get("cms", {}) if state else {}
+        result["matching_search_keys"] = []
+        result["search_product_observations"] = []
+        result["response_matches_requested_category"] = isinstance(cms, dict) and "/home/v2" in cms
+        if not result["response_matches_requested_category"]:
+            result["product_ids"] = []
+            result["evidence_source"] = "audience_root_response_mismatch"
+        return result
+    categories, linked_products, rejected_urls = uniqlo_link_evidence(page_url, body)
+    audience_categories = {
+        url for url in categories if audience_from_uniqlo_url(url) == audience
+    }
+    result: dict[str, Any] = {
+        "audience": audience,
+        "category_urls": sorted(audience_categories),
+        "product_ids": sorted(linked_products),
+        "cms_product_observations": [],
+        "taxonomy_nodes": [],
+        "rejected_category_urls": rejected_urls,
+        "evidence_source": "html_links",
+    }
+    search_observations = uniqlo_search_product_observations(page_url, body)
+    matching_search_keys = uniqlo_matching_search_keys(page_url, body)
+    if matching_search_keys:
+        result["product_ids"] = sorted({
+            observation["base_product_id"]
+            for observation in search_observations
+        })
+        result["search_product_observations"] = search_observations
+        result["matching_search_keys"] = matching_search_keys
+        result["response_matches_requested_category"] = True
+        result["evidence_source"] = "uniqlo_hydration_search"
+    else:
+        result["product_ids"] = []
+        result["search_product_observations"] = []
+        result["matching_search_keys"] = []
+        result["response_matches_requested_category"] = False
+        result["evidence_source"] = "category_response_mismatch"
+    return result
+
+
+def uniqlo_category_page_evidence(page_url: str, body: bytes) -> dict[str, Any]:
+    """Legacy-compatible evidence used by the historical limited probes."""
     audience = audience_from_uniqlo_url(page_url)
     categories, linked_products, rejected_urls = uniqlo_link_evidence(page_url, body)
     audience_categories = {
@@ -1386,6 +1434,33 @@ def baby_probe(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def uniqlo_matching_search_keys(page_url: str, body: bytes) -> list[str]:
+    audience = audience_from_uniqlo_url(page_url)
+    if audience not in AUDIENCE_VALUES:
+        return []
+    state = hydration_state(body.decode("utf-8", errors="replace"))
+    search_root = state.get("search", {}) if state else {}
+    if not isinstance(search_root, dict):
+        return []
+    parsed = urllib.parse.urlsplit(page_url)
+    expected_prefix = "/v2" + parsed.path.removeprefix("/kr/ko").rstrip("/")
+    return sorted(
+        str(search_key)
+        for search_key in search_root
+        if str(search_key).startswith(expected_prefix)
+        and re.fullmatch(r"[0-9.]+", str(search_key)[len(expected_prefix):])
+    )
+
+
+def uniqlo_semantic_retry_url(page_url: str, attempt: int) -> str:
+    """Bypass a stale CDN response while preserving the requested category path."""
+    parsed = urllib.parse.urlsplit(page_url)
+    query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+    query = [(key, value) for key, value in query if key != "fitmatch_refresh"]
+    query.append(("fitmatch_refresh", f"{time.time_ns()}-{attempt}"))
+    return urllib.parse.urlunsplit(parsed._replace(query=urllib.parse.urlencode(query)))
+
+
 def uniqlo_search_product_observations(
     page_url: str,
     body: bytes,
@@ -1397,12 +1472,11 @@ def uniqlo_search_product_observations(
     search_root = state.get("search", {}) if state else {}
     if not isinstance(search_root, dict):
         return []
-    parsed = urllib.parse.urlsplit(page_url)
-    expected_prefix = "/v2" + parsed.path.removeprefix("/kr/ko")
+    matching_keys = set(uniqlo_matching_search_keys(page_url, body))
     observations: list[dict[str, Any]] = []
     raw_order = 0
     for search_key, container in search_root.items():
-        if not str(search_key).startswith(expected_prefix):
+        if str(search_key) not in matching_keys:
             continue
         search = container.get("search", {}) if isinstance(container, dict) else {}
         raw_ids = search.get("productIds", []) if isinstance(search, dict) else []
@@ -2619,8 +2693,8 @@ def live_collect(args: argparse.Namespace) -> dict[str, Any]:
     }
     if args.dry_run:
         product_limit = (
-            (args.musinsa_limit if "musinsa" in source_names else 0)
-            + (args.uniqlo_limit if "uniqlo" in source_names else 0)
+            (args.musinsa_limit if "musinsa" in source_names and not args.discovery_only else 0)
+            + (args.uniqlo_limit if "uniqlo" in source_names and not args.discovery_only else 0)
         )
         category_limit = args.max_category_pages * len(source_names)
         result = {
@@ -2644,6 +2718,8 @@ def live_collect(args: argparse.Namespace) -> dict[str, Any]:
             "uniqlo_total_product_request_limit": args.uniqlo_limit,
             "uniqlo_confirmed_audience_limits": audience_limits,
             "limit_rule": (
+                "Discovery-only mode makes no product detail requests."
+                if args.discovery_only else
                 "Uniqlo detail requests stop at --uniqlo-limit. Hydration-confirmed "
                 "audience observations are accepted until that audience limit; the "
                 "first reached limit applies."
@@ -2706,6 +2782,20 @@ def live_collect(args: argparse.Namespace) -> dict[str, Any]:
                 key: sorted(value) for key, value in sorted(product_exposures.items())
             }
             write_json(checkpoint_path, state)
+
+        if args.discovery_only:
+            request_metrics = summarize_request_events(state.get("request_events", []))
+            write_json(output_dir / "request_metrics.json", request_metrics)
+            discovery_summary = {
+                "mode": "live-discovery-only",
+                "generated_at": utc_now(),
+                "network_requests": fetcher.request_count,
+                "category_pages_visited": len(visited),
+                "unique_products": len(product_exposures),
+                "checkpoint": str(checkpoint_path),
+            }
+            write_json(output_dir / "discovery_summary.json", discovery_summary)
+            return discovery_summary
 
         processed = set(source_state["processed_products"])
         for observed_id in sorted(product_exposures):
@@ -2878,6 +2968,44 @@ def live_collect(args: argparse.Namespace) -> dict[str, Any]:
                     write_json(checkpoint_path, state)
                     progressed = True
                     continue
+                page_evidence = strict_uniqlo_category_page_evidence(page_url, result.body)
+                semantic_attempt = 0
+                while (
+                    not page_evidence["response_matches_requested_category"]
+                    and semantic_attempt < args.retries
+                ):
+                    mismatch_evidence = save_raw(
+                        raw_path(
+                            raw_dir,
+                            source,
+                            "category-page-mismatches",
+                            hashlib.sha256(page_url.encode()).hexdigest()[:20]
+                            + f"-attempt-{semantic_attempt}",
+                            result.content_type,
+                        ),
+                        result,
+                    )
+                    source_state.setdefault("category_response_mismatches", []).append({
+                        "page_url": page_url,
+                        "queue_audience": queue_audience,
+                        "attempt": semantic_attempt,
+                        "matching_search_keys": page_evidence["matching_search_keys"],
+                        "raw_path": mismatch_evidence["path"],
+                        "raw_sha256": mismatch_evidence["sha256"],
+                    })
+                    semantic_attempt += 1
+                    retry_url = uniqlo_semantic_retry_url(page_url, semantic_attempt)
+                    result = fetcher.fetch(
+                        retry_url,
+                        context={
+                            "source": source,
+                            "kind": "category_page_semantic_retry",
+                            "queue_audience": queue_audience,
+                            "canonical_page_url": page_url,
+                        },
+                    )
+                    page_evidence = strict_uniqlo_category_page_evidence(page_url, result.body)
+
                 evidence = save_raw(
                     raw_path(
                         raw_dir,
@@ -2890,7 +3018,15 @@ def live_collect(args: argparse.Namespace) -> dict[str, Any]:
                 )
                 state["raw_records"].append(evidence)
                 visited.add(page_url)
-                page_evidence = uniqlo_category_page_evidence(page_url, result.body)
+                if not page_evidence["response_matches_requested_category"]:
+                    source_state.setdefault("category_response_failures", []).append({
+                        "page_url": page_url,
+                        "queue_audience": queue_audience,
+                        "attempts": semantic_attempt + 1,
+                        "matching_search_keys": page_evidence["matching_search_keys"],
+                        "raw_path": evidence["path"],
+                        "raw_sha256": evidence["sha256"],
+                    })
                 for rejected_url in page_evidence.get("rejected_category_urls", []):
                     record = {
                         **rejected_url,
@@ -2903,13 +3039,14 @@ def live_collect(args: argparse.Namespace) -> dict[str, Any]:
                         values.append(record)
                 categories = set(page_evidence["category_urls"])
                 products = set(page_evidence["product_ids"])
-                merge_uniqlo_category_discovery(
-                    audience_states,
-                    queue_audience,
-                    queue,
-                    visited,
-                    categories,
-                )
+                if page_evidence["response_matches_requested_category"]:
+                    merge_uniqlo_category_discovery(
+                        audience_states,
+                        queue_audience,
+                        queue,
+                        visited,
+                        categories,
+                    )
                 source_state.setdefault("category_discovery_evidence", []).append(
                     {
                         "page_url": page_url,
@@ -2928,6 +3065,37 @@ def live_collect(args: argparse.Namespace) -> dict[str, Any]:
                 write_json(checkpoint_path, state)
             if not progressed:
                 break
+
+        if args.discovery_only:
+            discovered_by_audience = {
+                audience: len(audience_states[audience]["discovered_products"])
+                for audience in AUDIENCE_ORDER
+            }
+            discovered_core_ids = {
+                product_identity("uniqlo", observed_id)[0]
+                for audience in AUDIENCE_ORDER
+                for observed_id in audience_states[audience]["discovered_products"]
+            }
+            request_metrics = summarize_request_events(state.get("request_events", []))
+            write_json(output_dir / "request_metrics.json", request_metrics)
+            discovery_summary = {
+                "mode": "live-discovery-only",
+                "generated_at": utc_now(),
+                "network_requests": fetcher.request_count,
+                "category_pages_visited": total_visited,
+                "observed_products_by_audience": discovered_by_audience,
+                "unique_core_products": len(discovered_core_ids),
+                "category_response_mismatches": len(
+                    source_state.get("category_response_mismatches", [])
+                ),
+                "category_response_failures": len(
+                    source_state.get("category_response_failures", [])
+                ),
+                "discovery_complete": not source_state.get("category_response_failures"),
+                "checkpoint": str(checkpoint_path),
+            }
+            write_json(output_dir / "discovery_summary.json", discovery_summary)
+            return discovery_summary
 
         processed = set(source_state["processed_products"])
         while len(processed) < args.uniqlo_limit:
@@ -3539,6 +3707,14 @@ def build_parser() -> argparse.ArgumentParser:
     live_parser.add_argument("--uniqlo-women-limit", type=int)
     live_parser.add_argument("--uniqlo-kids-limit", type=int)
     live_parser.add_argument("--uniqlo-baby-limit", type=int)
+    live_parser.add_argument(
+        "--discovery-only",
+        action="store_true",
+        help=(
+            "Visit category pages and persist discovered product IDs, but do not "
+            "request product detail pages. Intended for incremental catalog batches."
+        ),
+    )
 
     offline_parser = subparsers.add_parser(
         "offline-reprocess",

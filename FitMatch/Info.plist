@@ -31,6 +31,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>FitMatchPrivacyPolicyURL</key>
 	<string></string>
 	<key>FitMatchSupportURL</key>

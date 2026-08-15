@@ -1,0 +1,46 @@
+-- Copy confirmed legacy-only objects before optional cleanup.
+-- This keeps the backup inside the same DB; export it separately for disaster recovery.
+begin;
+
+create schema if not exists fitmatch_archive;
+revoke all on schema fitmatch_archive from public,anon,authenticated;
+grant usage on schema fitmatch_archive to service_role;
+
+create table if not exists fitmatch_archive.public_source_category_mappings_20260815
+as table public.source_category_mappings with data;
+create table if not exists fitmatch_archive.public_client_source_category_mappings_20260815
+as table public.client_source_category_mappings with data;
+create table if not exists fitmatch_archive.private_pre_full_review_20260802
+as table private.source_category_mappings_pre_full_review_20260802 with data;
+create table if not exists fitmatch_archive.private_pre_taxonomy_audit_20260802
+as table private.source_category_mappings_pre_taxonomy_audit_20260802 with data;
+
+revoke all on all tables in schema fitmatch_archive from public,anon,authenticated;
+grant select on all tables in schema fitmatch_archive to service_role;
+
+do $verify$
+begin
+  if (select count(*) from fitmatch_archive.public_source_category_mappings_20260815)
+       <> (select count(*) from public.source_category_mappings)
+     or (select count(*) from fitmatch_archive.public_client_source_category_mappings_20260815)
+       <> (select count(*) from public.client_source_category_mappings)
+     or (select count(*) from fitmatch_archive.private_pre_full_review_20260802)
+       <> (select count(*) from private.source_category_mappings_pre_full_review_20260802)
+     or (select count(*) from fitmatch_archive.private_pre_taxonomy_audit_20260802)
+       <> (select count(*) from private.source_category_mappings_pre_taxonomy_audit_20260802) then
+    raise exception 'Archive row count mismatch';
+  end if;
+end
+$verify$;
+
+commit;
+
+select 'public_source_category_mappings' object_name,count(*) archived_rows
+from fitmatch_archive.public_source_category_mappings_20260815
+union all select 'public_client_source_category_mappings',count(*)
+from fitmatch_archive.public_client_source_category_mappings_20260815
+union all select 'private_pre_full_review',count(*)
+from fitmatch_archive.private_pre_full_review_20260802
+union all select 'private_pre_taxonomy_audit',count(*)
+from fitmatch_archive.private_pre_taxonomy_audit_20260802;
+

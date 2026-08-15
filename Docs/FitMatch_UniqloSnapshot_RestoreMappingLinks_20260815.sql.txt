@@ -1,0 +1,65 @@
+-- Restore mapping links accidentally cleared while carrying forward 813 existing products.
+-- Scoped to the completed incremental run only. Safe to rerun.
+
+begin;
+
+with target_run as (
+  select id, mapping_release_id
+  from fitmatch_catalog.product_collection_runs
+  where id = '6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid
+), previous_run as (
+  select r.id
+  from fitmatch_catalog.product_collection_runs r
+  cross join target_run t
+  where r.source = 'uniqlo'
+    and r.status in ('succeeded','partial')
+    and r.id <> t.id
+  order by r.snapshot_date desc, r.created_at desc
+  limit 1
+)
+update fitmatch_catalog.source_product_snapshots current_row
+set source_mapping_identity = previous_row.source_mapping_identity
+from fitmatch_catalog.source_product_snapshots previous_row
+cross join target_run t
+cross join previous_run old
+where current_row.run_id = t.id
+  and previous_row.run_id = old.id
+  and previous_row.external_product_id = current_row.external_product_id
+  and current_row.source_mapping_identity is distinct from previous_row.source_mapping_identity;
+
+do $verify$
+declare
+  v_total integer;
+  v_linked integer;
+  v_gaps integer;
+begin
+  select count(*), count(source_mapping_identity),
+         count(*) filter (where source_mapping_identity is null)
+  into v_total, v_linked, v_gaps
+  from fitmatch_catalog.source_product_snapshots
+  where run_id = '6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid;
+
+  if v_total <> 1039 then
+    raise exception 'Expected 1039 snapshot rows, got %', v_total;
+  end if;
+  if v_gaps > 6 then
+    raise exception 'Unexpected mapping gaps after restore: linked %, gaps %', v_linked, v_gaps;
+  end if;
+end
+$verify$;
+
+commit;
+
+select
+  count(*) total,
+  count(source_mapping_identity) linked,
+  count(*) filter (where source_mapping_identity is null) mapping_gaps
+from fitmatch_catalog.source_product_snapshots
+where run_id = '6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid;
+
+select external_product_id, product_name, source_category_path,
+       source_category_codes, classification_status
+from fitmatch_catalog.source_product_snapshots
+where run_id = '6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid
+  and source_mapping_identity is null
+order by external_product_id;

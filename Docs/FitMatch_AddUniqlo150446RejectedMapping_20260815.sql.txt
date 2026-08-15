@@ -1,0 +1,171 @@
+-- Register UNIQLO KIDS category 150446 as an intentional exclusion.
+-- Policy basis: existing category 58650 (KIDS boxer briefs) is rejected.
+-- Safe to rerun.
+
+begin;
+
+do $preflight$
+declare
+  v_template_count integer;
+begin
+  select count(*) into v_template_count
+  from fitmatch_catalog.source_category_mappings m
+  join fitmatch_catalog.releases r on r.id=m.release_id
+  where r.status='active'
+    and m.source='uniqlo'
+    and m.external_category_id='58650'
+    and m.target='KIDS'
+    and m.decision_status='rejected';
+
+  if v_template_count <> 1 then
+    raise exception 'Expected one active rejected template for UNIQLO 58650/KIDS, got %',v_template_count;
+  end if;
+end
+$preflight$;
+
+with template as (
+  select m.*,
+         '남아 & 공용 > 이너웨어 > 언더웨어'::text new_path,
+         concat(
+           'uniqlo|',m.snapshot_id,'|150446|KIDS|',
+           '남아 & 공용 > 이너웨어 > 언더웨어'
+         ) new_identity
+  from fitmatch_catalog.source_category_mappings m
+  join fitmatch_catalog.releases r on r.id=m.release_id
+  where r.status='active'
+    and m.source='uniqlo'
+    and m.external_category_id='58650'
+    and m.target='KIDS'
+    and m.decision_status='rejected'
+), prepared as (
+  select
+    release_id,new_identity source_identity,source,snapshot_id,
+    '150446'::text external_category_id,target,new_path normalized_path,
+    decision_status,mapping_status,runtime_lookup_eligible,eligibility,
+    semantic_category_code,semantic_garment_type,comparison_family,
+    replace(source_external_key,'58650','150446') source_external_key,
+    replace(source_external_target_key,'58650','150446') source_external_target_key,
+    concat('uniqlo|',new_path) source_path_key,
+    concat('uniqlo|KIDS|',new_path) source_target_path_key,
+    jsonb_set(
+      jsonb_set(
+        jsonb_set(
+          jsonb_set(
+            jsonb_set(
+              jsonb_set(raw_record,'{externalCategoryID}',to_jsonb('150446'::text),true),
+              '{normalizedPath}',to_jsonb(new_path),true
+            ),
+            '{sourceIdentity}',to_jsonb(new_identity),true
+          ),
+          '{lookupKeys,sourcePath}',to_jsonb(concat('uniqlo|',new_path)),true
+        ),
+        '{lookupKeys,sourceTargetPath}',to_jsonb(concat('uniqlo|KIDS|',new_path)),true
+      ),
+      '{resolutionMethod}',to_jsonb('equivalent_rejected_category_58650'::text),true
+    ) raw_record
+  from template
+)
+insert into fitmatch_catalog.source_category_mappings (
+  release_id,source_identity,source,snapshot_id,external_category_id,target,
+  normalized_path,decision_status,mapping_status,runtime_lookup_eligible,
+  eligibility,semantic_category_code,semantic_garment_type,comparison_family,
+  source_external_key,source_external_target_key,source_path_key,
+  source_target_path_key,raw_record
+)
+select
+  p.release_id,p.source_identity,p.source,p.snapshot_id,p.external_category_id,p.target,
+  p.normalized_path,p.decision_status,p.mapping_status,p.runtime_lookup_eligible,
+  p.eligibility,p.semantic_category_code,p.semantic_garment_type,p.comparison_family,
+  p.source_external_key,p.source_external_target_key,p.source_path_key,
+  p.source_target_path_key,p.raw_record
+from prepared p
+where not exists (
+  select 1
+  from fitmatch_catalog.source_category_mappings existing
+  where existing.release_id=p.release_id
+    and existing.source_identity=p.source_identity
+);
+
+with mapping as (
+  select m.release_id,m.source_identity
+  from fitmatch_catalog.source_category_mappings m
+  join fitmatch_catalog.releases r on r.id=m.release_id
+  where r.status='active'
+    and m.source='uniqlo'
+    and m.external_category_id='150446'
+    and m.target='KIDS'
+    and m.decision_status='rejected'
+)
+update fitmatch_catalog.source_product_snapshots p
+set mapping_release_id=m.release_id,
+    source_mapping_identity=m.source_identity,
+    fitmatch_category_label=null,
+    fitmatch_detail_label=null,
+    classification_status='excluded_review',
+    raw_summary=p.raw_summary || jsonb_build_object(
+      'db_category_resolution','rejected',
+      'exclusion_reason_code','not_fitmatch_comparable',
+      'mapping_reference_category','58650'
+    )
+from mapping m
+where p.run_id='6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid
+  and p.external_product_id='E485389';
+
+do $verify$
+declare
+  v_mapping integer;
+  v_product integer;
+  v_unclassified integer;
+  v_actual_gaps integer;
+begin
+  select count(*) into v_mapping
+  from fitmatch_catalog.source_category_mappings m
+  join fitmatch_catalog.releases r on r.id=m.release_id
+  where r.status='active' and m.source='uniqlo'
+    and m.external_category_id='150446' and m.target='KIDS'
+    and m.decision_status='rejected';
+
+  select count(*) into v_product
+  from fitmatch_catalog.source_product_snapshots
+  where run_id='6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid
+    and external_product_id='E485389'
+    and classification_status='excluded_review'
+    and source_mapping_identity is not null;
+
+  select count(*) into v_unclassified
+  from fitmatch_catalog.source_product_snapshots
+  where run_id='6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid
+    and classification_status='unclassified';
+
+  select count(*) into v_actual_gaps
+  from fitmatch_catalog.source_product_snapshots
+  where run_id='6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid
+    and source_mapping_identity is null
+    and classification_status<>'excluded_review';
+
+  if v_mapping<>1 or v_product<>1 or v_unclassified<>0 or v_actual_gaps<>0 then
+    raise exception 'Verification failed: mapping %, product %, unclassified %, actual gaps %',
+      v_mapping,v_product,v_unclassified,v_actual_gaps;
+  end if;
+end
+$verify$;
+
+commit;
+
+select
+  count(*) total,
+  count(source_mapping_identity) linked,
+  count(*) filter(where source_mapping_identity is null) intentional_unlinked,
+  count(*) filter(where classification_status='unclassified') unclassified,
+  count(*) filter(
+    where source_mapping_identity is null
+      and classification_status<>'excluded_review'
+  ) actual_gaps
+from fitmatch_catalog.source_product_snapshots
+where run_id='6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid;
+
+select external_product_id,product_name,classification_status,
+       source_mapping_identity,raw_summary->>'exclusion_reason_code' exclusion_reason
+from fitmatch_catalog.source_product_snapshots
+where run_id='6618738d-d0c5-4a7a-b630-848119c9bc9b'::uuid
+  and external_product_id='E485389';

@@ -7110,6 +7110,80 @@ struct FitMatchTests {
         }
     }
 
+    @Test func uniqloNestedKnitStructureSurvivesGenericLeafCategories() throws {
+        let parser = UniqloProductMetadataParser()
+        let fixtures = [
+            ("니트 & 가디건 > 니트 > 브이넥", "메리노V넥스웨터", "knit_top"),
+            ("니트 & 가디건 > 니트 > 터틀넥", "캐시미어터틀넥스웨터", "knit_top"),
+            ("니트 & 가디건 > 니트 > 워셔블", "워셔블니트V넥스웨터(스무드)", "knit_top"),
+            ("니트 & 가디건 > 니트 > GU", "GU워셔블니트폴로셔츠 (반팔)", "polo_shirt"),
+        ]
+
+        for fixture in fixtures {
+            let category = parser.mapCategory(from: fixture.0)
+            let detail = parser.mapDetailCategory(from: "\(fixture.0) \(fixture.1)")
+            let classification = try #require(ParsedClosetClassification.resolve(
+                category: category,
+                detailCategory: detail,
+                sourceDepths: fixture.0.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.0,
+                productName: fixture.1
+            ))
+            #expect(category == .knit)
+            #expect(classification.categoryCode == "tops")
+            #expect(classification.detailCode == fixture.2)
+        }
+
+        #expect(parser.mapCategory(
+            from: "Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn"
+        ) == .top)
+    }
+
+    @Test func uniqloGenericInnerwearTMeasurementsSurviveProductCreation() throws {
+        let sourcePath = "이너웨어 > 에어리즘 > 에어리즘"
+        let parser = UniqloProductMetadataParser()
+        let info = ParsedProductInfo(
+            sourceURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E454311-000/00")!,
+            sourceType: .officialStore,
+            sourceName: "유니클로 공식몰",
+            brandName: "유니클로",
+            productName: "AIRism V넥T",
+            category: parser.mapCategory(from: sourcePath),
+            detailCategory: parser.mapDetailCategory(from: "\(sourcePath) AIRism V넥T"),
+            sizes: [ParsedProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 0,
+                    chest: 49,
+                    totalLength: 68,
+                    sleeveLength: 0
+                )
+            )],
+            productID: "E454311",
+            sourceCategoryPath: sourcePath,
+            sourceCategoryDepth1: "이너웨어",
+            sourceCategoryDepth2: "에어리즘",
+            sourceCategoryDepth3: "에어리즘",
+            productTargetGender: .men,
+            productMetadata: ProductMetadata(
+                sourceCategoryPath: sourcePath,
+                sourceCategoryDepth1: "이너웨어",
+                sourceCategoryDepth2: "에어리즘",
+                sourceCategoryDepth3: "에어리즘",
+                genderCodes: ["MEN"]
+            )
+        )
+        let viewModel = ShoppingProductViewModel(initialURL: info.sourceURL.absoluteString)
+        viewModel.apply(info)
+        let product = try #require(viewModel.makeProductForClosetRegistration(brand: nil as Brand?))
+
+        #expect(product.category == .underwear)
+        #expect(product.categoryCode == "underwear")
+        #expect(product.sizes.count == 1)
+        #expect(product.sizes[0].measurements.chest == 49)
+        #expect(product.sizes[0].measurements.totalLength == 68)
+    }
+
     @Test func uniqloAirismInnerShortsRemainUnderwearDespitePantsToken() throws {
         let sourcePath = "이너웨어 > 에어리즘 > 속바지"
         let result = try #require(ParsedClosetClassification.resolve(
@@ -7485,7 +7559,7 @@ struct FitMatchTests {
         #expect(classification.garmentFamily == .outerwear)
     }
 
-    @Test func cardiganNameRespectsProviderMajorCategoryPolicy() throws {
+    @Test func explicitCardiganNameUsesCardiganStructureAcrossProviderBuckets() throws {
         let parser = UniqloProductMetadataParser()
 
         let cardiganPath = "니트 & 가디건 > 가디건 > 스무드 코튼"
@@ -7510,9 +7584,9 @@ struct FitMatchTests {
             sourcePath: officialTopPath,
             productName: officialTopName
         ))
-        #expect(officialTop.categoryCode == "tops")
-        #expect(officialTop.detailCode == "short_sleeve")
-        #expect(officialTop.garmentFamily == .tshirt)
+        #expect(officialTop.categoryCode == "outerwear")
+        #expect(officialTop.detailCode == "cardigan")
+        #expect(officialTop.garmentFamily == .knitCardigan)
     }
 
     @Test func explicitHalfSleeveUsesShortSleeveDetail() throws {
@@ -7798,6 +7872,115 @@ struct FitMatchTests {
             ))
             #expect(result.categoryCode == "bottoms")
             #expect(result.detailCode == "shorts")
+        }
+    }
+
+    @Test func briefLinedRunningBottomsDoNotBecomeUnderwear() throws {
+        for fixture in [
+            ("프로 드라이 핏 브리프 쇼츠", "스포츠/레저 > 하의 > 숏 팬츠", "shorts"),
+            ("Brief Lined Running Tights", "스포츠/레저 > 하의 > 숏 레깅스", "short_leggings")
+        ] {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: .bottom,
+                detailCategory: .other,
+                sourceDepths: fixture.1.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.1,
+                productName: fixture.0
+            ))
+            #expect(result.categoryCode != "underwear")
+            #expect(result.detailCode == fixture.2)
+        }
+    }
+
+    @Test func explicitShirtAndBlouseStructureWinsOverSleeveLength() throws {
+        for fixture in [
+            ("옥스포드쇼트셔츠(반팔)", "shirt"),
+            ("볼륨슬리브블라우스(긴팔)", "blouse")
+        ] {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: .top,
+                detailCategory: .other,
+                sourceDepths: ["상의", "셔츠/블라우스"],
+                sourcePath: "상의 > 셔츠/블라우스",
+                productName: fixture.0
+            ))
+            #expect(result.detailCode == fixture.1)
+            #expect(result.garmentFamily == .shirt)
+        }
+    }
+
+    @Test func compositeAndOptionDependentGarmentsRequireConfirmation() {
+        for name in [
+            "[SET] T-shirt + Shorts",
+            "탑 가디건 세트",
+            "민소매/반팔 2종",
+            "나시 레이어드 반팔티",
+            "[나시 선택] 반팔 셔츠"
+        ] {
+            let result = ParsedClosetClassification.resolve(
+                category: .top,
+                detailCategory: .other,
+                sourceDepths: ["상의", "기타 상의"],
+                sourcePath: "상의 > 기타 상의",
+                productName: name
+            )
+            #expect(result == nil, "\(name)은 단일 의류로 자동 확정하면 안 됩니다.")
+        }
+    }
+
+    @Test func hyphenatedSleeveNamesResolveLength() throws {
+        for fixture in [("Short-Sleeve Shirt", "shirt", ComparisonLengthType.short),
+                        ("Long-Sleeve Blouse", "blouse", ComparisonLengthType.long)] {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: .top,
+                detailCategory: .other,
+                sourceDepths: ["상의", "셔츠/블라우스"],
+                sourcePath: "상의 > 셔츠/블라우스",
+                productName: fixture.0
+            ))
+            #expect(result.detailCode == fixture.1)
+            #expect(result.lengthType == fixture.2)
+        }
+    }
+
+    @Test func explicitLeggingsAndCoachJacketOverrideWrongProviderBuckets() throws {
+        let leggings = try #require(ParsedClosetClassification.resolve(
+            category: .underwear,
+            detailCategory: .underwear,
+            sourceDepths: ["이너웨어", "히트텍"],
+            sourcePath: "이너웨어 > 히트텍",
+            productName: "히트텍울트라웜레깅스"
+        ))
+        #expect(leggings.categoryCode == "leggings")
+        #expect(leggings.garmentFamily == .leggings)
+
+        let coachJacket = try #require(ParsedClosetClassification.resolve(
+            category: .top,
+            detailCategory: .shortSleeve,
+            sourceDepths: ["티셔츠 & UT", "UT 그래픽 티셔츠"],
+            sourcePath: "티셔츠 & UT > UT 그래픽 티셔츠",
+            productName: "KIDS PEANUTS코치재킷"
+        ))
+        #expect(coachJacket.categoryCode == "outerwear")
+        #expect(coachJacket.detailCode == "jacket")
+        #expect(coachJacket.garmentFamily == .outerwear)
+    }
+
+    @Test func skortsResolveAsSkirts() throws {
+        for fixture in [
+            ("GIRLS데님미니스코츠", "팬츠 > 쇼트 팬츠(반바지) > 스코츠"),
+            ("플리츠스코츠", "원피스 & 스커트 > 스커트 > 스코츠")
+        ] {
+            let result = try #require(ParsedClosetClassification.resolve(
+                category: .bottom,
+                detailCategory: .shortPants,
+                sourceDepths: fixture.1.components(separatedBy: " > ").map(Optional.some),
+                sourcePath: fixture.1,
+                productName: fixture.0
+            ))
+            #expect(result.categoryCode == "skirts")
+            #expect(result.detailCode == "skirt")
+            #expect(result.garmentFamily == .skirt)
         }
     }
 

@@ -12,8 +12,7 @@ struct RecommendationResultView: View {
     private let resultComparedMeasurementUsages: [MeasurementComparisonUsage]
     private let resultMeasurementExclusions: [MeasurementComparisonExclusion]
     private let resultProductSizes: [ProductSize]
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
-    @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
+    private let diagnosticsStartedAt: TimeInterval
     @State private var comparisonResult: RecommendationHistory?
     @State private var activeSheet: RecommendationResultActiveSheet?
     @State private var isShowingComparisonDetails = false
@@ -41,6 +40,7 @@ struct RecommendationResultView: View {
         onResultPersisted: ((RecommendationHistory) -> Void)? = nil
     ) {
         let comparisonData = result.comparisonData
+        self.diagnosticsStartedAt = DetailPerformanceDiagnostics.now()
         self.result = result
         self.opensReferencePickerOnAppear = opensReferencePickerOnAppear
         self.onResultPersisted = onResultPersisted
@@ -59,7 +59,7 @@ struct RecommendationResultView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
-                VStack(spacing: 10) {
+                LazyVStack(spacing: 10) {
                     reportProductCard
                         .id("resultTop")
                     reportRecommendationCard
@@ -73,6 +73,7 @@ struct RecommendationResultView: View {
                 .padding(.top, 10)
                 .frame(maxWidth: .infinity)
             }
+            .diagnosesScrollPerformance(screen: "recommendation_result")
             .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             .background(Color(.systemBackground))
             .navigationTitle("비교 결과")
@@ -84,7 +85,6 @@ struct RecommendationResultView: View {
                 case .referencePicker:
                 NavigationStack {
                     ResultReferencePickerView(
-                        userFits: userFits,
                         currentUserFit: currentResult.userFit,
                         product: currentResult.product,
                         productDetailCategory: currentResult.productDetailCategory
@@ -137,6 +137,8 @@ struct RecommendationResultView: View {
                     .presentationDragIndicator(.visible)
             }
             .onAppear {
+                DetailPerformanceDiagnostics.logHistoryResultNavigation(event: "result_on_appear")
+                logInitialPerformance()
                 #if DEBUG
                 print("[화면: 비교 결과][동작: 결과 화면 진입][상태: 성공] 상품=\(currentResult.product.name), 추천사이즈=\(currentResult.recommendedSize.name), 기준옷=\(currentResult.userFit.displayName)")
                 #endif
@@ -213,7 +215,8 @@ struct RecommendationResultView: View {
             category: currentResult.product.category,
             width: 96,
             height: 112,
-            cornerRadius: 16
+            cornerRadius: 16,
+            diagnosticContext: "recommendation_result_product"
         )
         .overlay(alignment: .topTrailing) {
             Button {
@@ -250,7 +253,10 @@ struct RecommendationResultView: View {
     }
 
     private var reportRecommendationCard: some View {
-        CardView(radius: 20, padding: 12, shadowRadius: 10) {
+        let measurementKinds = comparedMeasurementKinds
+        let reliability = comparisonReliability
+
+        return CardView(radius: 20, padding: 12, shadowRadius: 10) {
             VStack(alignment: .leading, spacing: 8) {
                 GeometryReader { geometry in
                     let dividerWidth: CGFloat = 1
@@ -316,21 +322,21 @@ struct RecommendationResultView: View {
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: 18)
-                            Text(comparisonReliability.stars)
+                            Text(reliability.stars)
                                 .font(.title3.weight(.bold))
                                 .foregroundStyle(.orange.opacity(0.85))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .frame(height: 28)
-                            Text(comparisonReliability.title)
+                            Text(reliability.title)
                                 .font(.caption.weight(.bold))
                                 .lineLimit(1)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .frame(height: 18)
                             Divider()
                             HStack(spacing: 3) {
-                                Text("\(comparedMeasurementKinds.count)개 실측항목 비교")
+                                Text("\(measurementKinds.count)개 실측항목 비교")
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
@@ -342,8 +348,8 @@ struct RecommendationResultView: View {
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("비교 실측 항목")
                             }
-                            HStack(spacing: comparedMeasurementKinds.count > 4 ? 2 : 5) {
-                                ForEach(comparedMeasurementKinds) { kind in
+                            HStack(spacing: measurementKinds.count > 4 ? 2 : 5) {
+                                ForEach(measurementKinds) { kind in
                                     VStack(spacing: 2) {
                                         reportMeasurementIcon(for: kind)
                                         Text(reportShortTitle(for: kind))
@@ -372,7 +378,11 @@ struct RecommendationResultView: View {
     }
 
     private var reportMeasurementCard: some View {
-        CardView(radius: 20, padding: 12, shadowRadius: 10) {
+        let measurementKinds = comparedMeasurementKinds
+        let measurementExclusions = displayedMeasurementExclusions
+        let measurementDifferences = displayedMeasurementDifferences
+
+        return CardView(radius: 20, padding: 12, shadowRadius: 10) {
             VStack(alignment: .leading, spacing: 7) {
                 HStack(alignment: .firstTextBaseline) {
                     SectionHeader(
@@ -389,7 +399,7 @@ struct RecommendationResultView: View {
 
                 if currentResult.comparisonMode == .standardSizeFallback {
                     InfoRow(title: "가슴", value: displayedTrueToSizeRecommendation)
-                } else if comparedMeasurementKinds.isEmpty {
+                } else if measurementKinds.isEmpty {
                     ContentUnavailableView(
                         "비교 가능한 항목이 없어요",
                         systemImage: "ruler",
@@ -397,22 +407,23 @@ struct RecommendationResultView: View {
                     )
                 } else {
                     VStack(spacing: 4) {
-                        ForEach(comparedMeasurementKinds) { kind in
+                        ForEach(measurementKinds) { kind in
+                            let values = displayedMeasurementValues(for: kind)
                             ReportMeasurementRow(
                                 kind: kind,
                                 title: reportMeasurementTitle(for: kind),
-                                productValue: displayedMeasurementValues(for: kind).product,
-                                referenceValue: displayedMeasurementValues(for: kind).reference,
-                                difference: displayedMeasurementDifferences.value(for: kind)
+                                productValue: values.product,
+                                referenceValue: values.reference,
+                                difference: measurementDifferences.value(for: kind)
                             )
                         }
                     }
                 }
 
-                if !displayedMeasurementExclusions.isEmpty {
+                if !measurementExclusions.isEmpty {
                     Divider().padding(.vertical, 3)
                     VStack(alignment: .leading, spacing: 8) {
-                        ForEach(displayedMeasurementExclusions, id: \.kind) { exclusion in
+                        ForEach(measurementExclusions, id: \.kind) { exclusion in
                             VStack(alignment: .leading, spacing: 3) {
                                 HStack(spacing: 6) {
                                     Text(exclusion.kind.title)
@@ -451,7 +462,8 @@ struct RecommendationResultView: View {
                         category: currentResult.userFit.category,
                         width: 48,
                         height: 54,
-                        cornerRadius: 12
+                        cornerRadius: 12,
+                        diagnosticContext: "recommendation_result_reference"
                     )
                     VStack(alignment: .leading, spacing: 5) {
                         Text(currentResult.userFit.brandName)
@@ -1681,6 +1693,7 @@ struct RecommendationResultView: View {
     }
 
     private var fitMatchRanking: [FitMatchCandidate] {
+        let userFits = (try? modelContext.fetch(FetchDescriptor<UserFit>())) ?? []
         let targetGroup = currentResult.product.category.serviceGroup
         let sameCategoryFits = userFits.filter {
             $0.category.serviceGroup == targetGroup
@@ -1757,11 +1770,14 @@ struct RecommendationResultView: View {
         print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 시작] 기존기준옷=\(currentResult.userFit.displayName), 선택기준옷=\(item.displayName)")
         #endif
 
+        let existingHistories = (
+            try? modelContext.fetch(FetchDescriptor<RecommendationHistory>())
+        ) ?? []
         let outcome = ResultReferenceComparisonPersistence.resolveAndSave(
             product: currentResult.product,
             selectedReferenceItem: item,
             productDetailCategory: currentResult.productDetailCategory,
-            existingHistories: histories,
+            existingHistories: existingHistories,
             modelContext: modelContext
         )
 
@@ -1793,6 +1809,30 @@ struct RecommendationResultView: View {
         activeSheet = nil
         DispatchQueue.main.async {
             activeSheet = sheet
+        }
+    }
+
+    private func logInitialPerformance() {
+        DetailPerformanceDiagnostics.log(
+            screen: "recommendation_result",
+            event: "on_appear",
+            startedAt: diagnosticsStartedAt,
+            metadata: "sizes=\(resultProductSizes.count) usages=\(resultComparedMeasurementUsages.count) exclusions=\(resultMeasurementExclusions.count)"
+        )
+        DispatchQueue.main.async {
+            DetailPerformanceDiagnostics.logHistoryResultNavigation(event: "first_main_runloop")
+            DetailPerformanceDiagnostics.log(
+                screen: "recommendation_result",
+                event: "next_main_runloop",
+                startedAt: diagnosticsStartedAt
+            )
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            DetailPerformanceDiagnostics.log(
+                screen: "recommendation_result",
+                event: "settled_250ms",
+                startedAt: diagnosticsStartedAt
+            )
         }
     }
 
@@ -2900,7 +2940,7 @@ enum ResultReferenceComparisonResolver {
 
 private struct ResultReferencePickerView: View {
     @Environment(\.dismiss) private var dismiss
-    let userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     let currentUserFit: UserFit
     let product: Product
     let productDetailCategory: ClosetDetailCategory

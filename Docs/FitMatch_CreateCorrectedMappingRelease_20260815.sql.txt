@@ -1,0 +1,182 @@
+-- FitMatch corrected mapping release creation + verification
+-- Safe to rerun. Existing release is not duplicated or overwritten.
+-- Scope: mapping release only. Activation and 5,026-case QA are intentionally excluded.
+
+begin;
+
+do $release$
+declare
+  v_source_release_id uuid;
+  v_new_release_id uuid;
+  v_mapping_count integer;
+  v_category_count integer;
+  v_detail_count integer;
+  v_missing_count integer;
+  v_extra_count integer;
+begin
+  select id into strict v_source_release_id
+  from fitmatch_catalog.releases
+  where release_key = 'observed-official-2026-08-03__taxonomy-refined-2026-08-03';
+
+  if not exists (
+    select 1
+    from fitmatch_taxonomy.policy_versions
+    where code = 'taxonomy-corrected-2026-08-14'
+      and taxonomy_version = 'observed-official-2026-08-03'
+      and status = 'validated'
+  ) then
+    raise exception 'Validated corrected policy version is missing';
+  end if;
+
+  select id into v_new_release_id
+  from fitmatch_catalog.releases
+  where release_key = 'observed-official-2026-08-03__taxonomy-corrected-2026-08-14';
+
+  if v_new_release_id is null then
+    insert into fitmatch_catalog.releases (
+      release_key,
+      taxonomy_version,
+      policy_version,
+      status,
+      bundle_checksum,
+      app_taxonomy_checksum,
+      expected_mapping_count,
+      expected_qa_count,
+      metadata
+    )
+    values (
+      'observed-official-2026-08-03__taxonomy-corrected-2026-08-14',
+      'observed-official-2026-08-03',
+      'taxonomy-corrected-2026-08-14',
+      'loading',
+      'acb5d29f00840773f3283fc9ea5e8703078d7bb205a844e4da245940fdca0467',
+      '123c693fc38c01d8edf877dbe9b651a6c40451a06752eed4bca3d14c2ac3bd57',
+      3426,
+      0,
+      jsonb_build_object(
+        'release_scope', 'mapping_only_snapshot',
+        'copied_from_release_key', 'observed-official-2026-08-03__taxonomy-refined-2026-08-03',
+        'documents_copied', false,
+        'qa_full_validation_included', false,
+        'created_reason', 'separate corrected relational mappings from stale refined release metadata'
+      )
+    )
+    returning id into v_new_release_id;
+
+    insert into fitmatch_catalog.app_categories (
+      release_id, code, display_name, sort_order, is_active
+    )
+    select v_new_release_id, code, display_name, sort_order, is_active
+    from fitmatch_catalog.app_categories
+    where release_id = v_source_release_id;
+
+    insert into fitmatch_catalog.app_category_details (
+      release_id, category_code, code, display_name, sort_order, is_active
+    )
+    select v_new_release_id, category_code, code, display_name, sort_order, is_active
+    from fitmatch_catalog.app_category_details
+    where release_id = v_source_release_id;
+
+    insert into fitmatch_catalog.source_category_mappings (
+      release_id, source_identity, source, snapshot_id, external_category_id,
+      target, normalized_path, decision_status, mapping_status,
+      runtime_lookup_eligible, eligibility, semantic_category_code,
+      semantic_garment_type, comparison_family, source_external_key,
+      source_external_target_key, source_path_key, source_target_path_key,
+      raw_record
+    )
+    select
+      v_new_release_id, source_identity, source, snapshot_id, external_category_id,
+      target, normalized_path, decision_status, mapping_status,
+      runtime_lookup_eligible, eligibility, semantic_category_code,
+      semantic_garment_type, comparison_family, source_external_key,
+      source_external_target_key, source_path_key, source_target_path_key,
+      raw_record
+    from fitmatch_catalog.source_category_mappings
+    where release_id = v_source_release_id;
+  end if;
+
+  select count(*) into v_mapping_count
+  from fitmatch_catalog.source_category_mappings
+  where release_id = v_new_release_id;
+
+  select count(*) into v_category_count
+  from fitmatch_catalog.app_categories
+  where release_id = v_new_release_id;
+
+  select count(*) into v_detail_count
+  from fitmatch_catalog.app_category_details
+  where release_id = v_new_release_id;
+
+  select count(*) into v_missing_count
+  from (
+    select source_identity, source, snapshot_id, external_category_id, target,
+      normalized_path, decision_status, mapping_status, runtime_lookup_eligible,
+      eligibility, semantic_category_code, semantic_garment_type, comparison_family,
+      source_external_key, source_external_target_key, source_path_key,
+      source_target_path_key, raw_record
+    from fitmatch_catalog.source_category_mappings
+    where release_id = v_source_release_id
+    except
+    select source_identity, source, snapshot_id, external_category_id, target,
+      normalized_path, decision_status, mapping_status, runtime_lookup_eligible,
+      eligibility, semantic_category_code, semantic_garment_type, comparison_family,
+      source_external_key, source_external_target_key, source_path_key,
+      source_target_path_key, raw_record
+    from fitmatch_catalog.source_category_mappings
+    where release_id = v_new_release_id
+  ) missing_rows;
+
+  select count(*) into v_extra_count
+  from (
+    select source_identity, source, snapshot_id, external_category_id, target,
+      normalized_path, decision_status, mapping_status, runtime_lookup_eligible,
+      eligibility, semantic_category_code, semantic_garment_type, comparison_family,
+      source_external_key, source_external_target_key, source_path_key,
+      source_target_path_key, raw_record
+    from fitmatch_catalog.source_category_mappings
+    where release_id = v_new_release_id
+    except
+    select source_identity, source, snapshot_id, external_category_id, target,
+      normalized_path, decision_status, mapping_status, runtime_lookup_eligible,
+      eligibility, semantic_category_code, semantic_garment_type, comparison_family,
+      source_external_key, source_external_target_key, source_path_key,
+      source_target_path_key, raw_record
+    from fitmatch_catalog.source_category_mappings
+    where release_id = v_source_release_id
+  ) extra_rows;
+
+  if v_mapping_count <> 3426
+     or v_category_count <> 11
+     or v_detail_count <> 75
+     or v_missing_count <> 0
+     or v_extra_count <> 0 then
+    raise exception
+      'Release verification failed: mappings %, categories %, details %, missing %, extra %',
+      v_mapping_count, v_category_count, v_detail_count, v_missing_count, v_extra_count;
+  end if;
+
+  update fitmatch_catalog.releases
+  set status = 'validated',
+      validated_at = coalesce(validated_at, now())
+  where id = v_new_release_id
+    and status = 'loading';
+end
+$release$;
+
+commit;
+
+select
+  r.release_key,
+  r.policy_version,
+  r.status,
+  r.activated_at,
+  count(*) as mapping_count,
+  count(*) filter (where m.decision_status = 'confirmed') as confirmed,
+  count(*) filter (where m.decision_status = 'review_required') as review_required,
+  count(*) filter (where m.decision_status = 'rejected') as rejected,
+  count(*) filter (where m.decision_status = 'unsupported') as unsupported
+from fitmatch_catalog.releases r
+join fitmatch_catalog.source_category_mappings m on m.release_id = r.id
+where r.release_key = 'observed-official-2026-08-03__taxonomy-corrected-2026-08-14'
+group by r.id, r.release_key, r.policy_version, r.status, r.activated_at;

@@ -1,5 +1,130 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-08-15 커밋 대상 생성 SQL 정리
+
+- 재생성 가능한 최신 누적/유니클로/무신사 스냅샷 SQL 출력 3개를 `../FitMatchArchive/Docs/GeneratedSQL/`로 이동하고 `.gitignore`에 패턴을 추가했다.
+- SQL 생성기, 운영 복구·매핑 SQL, DB 최적화 계획, 보고서, 앱 코드와 테스트가 직접 읽는 `CurrentUniqloCatalogInputs.json`은 커밋 대상에 유지했다.
+- 코드와 테스트 동작은 변경하지 않았으며 테스트는 실행하지 않았다.
+
+## 2026-08-15 최신 누적 상품 스냅샷 운영 DB 실행 결과
+
+- 사용자가 `FitMatch_LatestCumulativeSnapshots_20260815.sql.txt`를 Supabase SQL Editor에서 실행했다.
+- 현재 무신사 스냅샷은 total/distinct 384/384, mapping gaps 0, conditional 342, excluded_review 28, unclassified 14다. 신규 `6842888`은 conditional이며 매핑 연결됐다.
+- 현재 유니클로 스냅샷은 total/distinct 1,156/1,156, mapping gaps 5, conditional 326, excluded_review 221, unclassified 0이다. 나머지 609개는 comparable이다.
+- 로컬 상세 반영 대상 53건은 유니클로 52 + 무신사 1이며 중복 0, 매핑 미연결 0이다. 유니클로 신규 52건은 conditional 27, excluded_review 25다.
+- 유니클로 mapping gaps 5는 직전 운영 상태의 의도적 미연결 액세서리 5건과 수가 같지만, 최종 종료 전에 현재 5개 ID와 상태를 조회해 동일한지 확인해야 한다.
+
+## 2026-08-15 최신 유니클로·무신사 누적 스냅샷 SQL 생성
+
+- 바탕화면 최신 결과를 기반으로 `Docs/FitMatch_LatestCumulativeSnapshots_20260815.sql.txt`와 재생성기 `scripts/generate-latest-cumulative-snapshots-sql.mjs`를 추가했다. 운영 DB에는 실행하지 않았다.
+- 유니클로 `20260815-181456`은 발견 1,157개 중 상세 실패 `E479751`을 제외한 1,156개를 `partial` 스냅샷으로 만든다. 로컬 상세 52개를 삽입하고 나머지 1,104개는 DB 전체 성공/부분성공 이력에서 상품별 최신 행을 복원한다. 최신 실행 한 건에만 의존하지 않아 재등장 상품을 보존한다.
+- 무신사 `20260815-120901`은 기존 누적 383개를 유지하고 `6842888` 1개를 추가해 384개 성공 스냅샷을 만든다. 98만 건 전체 인덱스는 적재하지 않는다.
+- SQL은 advisory transaction lock, 활성 릴리스/기존 행 수 preflight, 배치 범위 재실행, 총행·고유 ID·로컬 신규 수 검증을 포함한다. 하나라도 맞지 않으면 두 공급사 변경 전체가 롤백된다.
+- 생성기 입력 검증 결과 유니클로 discovered 1,157/stored 1,156/local payload 52, 무신사 total 384/new 1이었다. SQL은 아직 Supabase에서 실행·검증되지 않았다.
+
+## 2026-08-15 무신사 전체 인덱스·선택 상세 배치 전환
+
+- `scripts/run-musinsa-full-catalog.py`의 기본 실행을 전상품 상세 수집에서 전체 상품 인덱스 탐색(`--phase discover`)으로 변경했다. 상품 상세·실측·옵션은 `--phase collect`와 명시적인 `--product-id` 또는 `--max-products`가 있을 때만 수집한다.
+- 카테고리 한 건의 파싱·네트워크 실패가 전체 탐색을 중단하지 않고 해당 카테고리만 현재 실행에서 보류한 뒤 다음 카테고리를 계속 처리한다. 보류 카테고리는 다음 실행 시작 시 재시도된다.
+- 상세 수집은 기본 500개 단위로만 메모리에 올려 기존처럼 수십만 개 Future를 한꺼번에 생성하지 않는다.
+- 요약에 `index_complete`와 `detail_collection_complete`를 분리했다. 전체 상품 인덱스 완료가 배치 성공 기준이며, 모든 상품 상세 선행 수집은 완료 조건이 아니다.
+- 기존 바탕화면 SQLite 약 62만 건은 삭제하지 않고 그대로 이어 쓸 수 있다. 다만 변경 전 이미 실행 중인 Python 프로세스에는 새 코드가 적용되지 않으므로 Control-C 종료 후 바탕화면 command를 다시 실행해야 한다.
+- Python 컴파일과 전용 단위 테스트 3건이 통과했다. 새 테스트는 첫 카테고리 파싱 실패 후 다음 카테고리가 정상 완료되는 것을 검증한다. 실제 네트워크 전체 737개 재실행은 수행하지 않았다.
+
+## 2026-08-15 카테고리 DB 적재·앱스토어 출시 진단 최신 상태
+
+### Supabase 상품 스냅샷과 매핑
+
+- 사용자가 Supabase SQL Editor에서 제공된 SQL을 직접 실행하는 방식으로 진행했다. Codex가 운영 DB를 직접 변경하지 않았다.
+- 활성 카테고리 릴리스 기반 `fitmatch_catalog.product_collection_runs`, `source_product_snapshots`, `source_category_mappings` 연결을 사용한다. `current_source_products`는 공급사별 최신 `succeeded/partial` 실행 전체를 보여주므로, 신규 행만 별도 성공 실행으로 만들면 기존 상품이 최신 조회에서 사라진다는 점을 반드시 지킨다.
+- 유니클로 증분 배치 `20260815-111623`은 현재 발견 1,039, 신규 상세 226/226 성공, 재시도 0, 이전 목록 미발견 67이었다. DB 실행 ID는 `6618738d-d0c5-4a7a-b630-848119c9bc9b`이며 최신 스냅샷 1,039개가 저장됐다.
+- 최초 유니클로 SQL이 기존 813개를 carry-forward하면서 `source_mapping_identity`를 null로 복사한 결함이 있었고 복구 SQL로 기존 링크를 복원했다. 원본 생성기도 이후 기존 링크를 보존하도록 수정했다.
+- 신규 유니클로 `E485389`의 leaf `150446`은 기존 KIDS 복서브리프 `58650`과 같은 `rejected / not_fitmatch_comparable` 정책으로 활성 릴리스에 명시적 거부 매핑을 추가했다. 상품은 `excluded_review`이며 매핑 identity가 연결됐다.
+- 유니클로 최종 운영 의도는 1,039개 중 실제 매핑 누락 0이다. 스카프·장갑 5개는 `excluded_review` 상태의 의도적 미연결이며 오류로 세지 않는다.
+- 무신사 증분 배치 `20260815-115051`은 상위 카테고리 4개 첫 페이지에서 188개를 발견했고, 기존 200과 중복 5, 신규 183/183 상세·실측·옵션 수집 성공, 재시도 0이었다. 이 탐색은 전체 무신사 카탈로그가 아니므로 미발견 195개를 판매 종료 또는 삭제로 처리하지 않는다.
+- 무신사는 baseline 200개를 유지하고 신규 183개를 더한 누적 스냅샷 383개를 실행 ID `a141f6bf-5218-4c87-9ce2-e77557472f37`로 저장했다.
+- baseline 200개 중 category code가 없던 legacy path 18종/80개를 의미가 같은 활성 confirmed mapping에 alias로 연결했다. 최종 무신사 결과는 total 383, linked 383, mapping gaps 0, conditional 341, excluded_review 28, unclassified 14, legacy alias linked 80이다.
+- 무신사 unclassified 14개는 링크 실패가 아니라 연결된 `review_required` 정책 결과다. baseline 8, incremental 6이며 상품 분류기 또는 사용자 확인 대상이다.
+- 현재 상품 스냅샷은 유니클로 1,039 + 무신사 383 = 1,422개다. DB는 카테고리 후보·정책·이력을 제공하지만 앱 런타임은 아직 DB를 조회하지 않는다.
+
+관련 실행 SQL·생성기:
+
+- `Docs/FitMatch_UniqloCurrentSnapshot_20260815_111623.sql.txt`
+- `Docs/FitMatch_UniqloSnapshot_RestoreMappingLinks_20260815.sql.txt`
+- `Docs/FitMatch_AddUniqlo150446RejectedMapping_20260815.sql.txt`
+- `Docs/FitMatch_MusinsaCumulativeSnapshot_20260815_115051.sql.txt`
+- `Docs/FitMatch_LinkMusinsaBaseline80_20260815.sql.txt`
+- `scripts/generate-uniqlo-current-snapshot-sql.mjs`
+- `scripts/generate-musinsa-cumulative-snapshot-sql.mjs`
+
+### 배치 인수 규칙
+
+- 이후 배치 결과를 받을 때 `summary.json`, `discovered_products.csv`, `new_product_inputs.json`, `pending_retry.csv`를 우선 확인한다.
+- 신규 수, 상세 endpoint 성공, 중복 ID, retry, category mapping gap을 검증한다. 탐색이 전체 카탈로그임이 증명되지 않으면 미발견 상품을 삭제하거나 inactive로 확정하지 않는다.
+- `current_source_products`에 노출할 성공 실행은 기존 유지 상품과 신규 상품이 모두 포함된 완전한 누적 스냅샷이어야 한다.
+- 신규 category code는 기존 의미 동등 mapping을 확인한다. 확실하지 않으면 잘못 confirmed로 만들지 말고 `review_required` 또는 `excluded_review`로 남긴다.
+
+### DB와 앱 통합 상태
+
+- 현재 앱은 `ParsedClosetClassification`, canonical bundle, parser와 matcher의 로컬 규칙으로 동작한다. Supabase 카테고리·상품 스냅샷을 앱이 직접 조회하거나 DB procedure로 최종 분류하는 연결은 아직 없다.
+- 권장 최종 흐름은 `상품 API 데이터 → DB category mapping/version 조회 → 기존 상품명·실측 classifier → category/detail/comparisonFamily/status 반환`이다.
+- 상품명·실측 규칙 전체를 PL/pgSQL로 복제하면 Swift와 DB 규칙이 갈라질 위험이 크므로, 1차 출시 후 단일 앱 분류 서비스에 읽기 전용 DB lookup, 버전 고정, 캐시, timeout, 오프라인 embedded fallback을 붙이는 방향이 우선이다.
+
+### 1차 App Store 출시 진단
+
+- 진단 기준은 로컬 `main`, HEAD `9264814ea2a8c535ba82de495a69ce75336f16d0`과 현재 미커밋 작업 트리다. 앱·테스트·문서 변경과 untracked 생성물이 많으므로 출시 전 정확한 source revision을 커밋·태그로 고정해야 한다.
+- `FitMatch/Info.plist`의 `FitMatchPrivacyPolicyURL`, `FitMatchSupportURL`은 여전히 빈 문자열이다. 공개 HTTPS URL을 넣기 전에는 archive 감사와 App Store 제출 게이트를 통과할 수 없다.
+- 로그인 진입은 `ContentView`에서 의도적으로 비활성화됐고 MY의 계정·로그아웃 UI도 비활성화됐다. 현재 1.0은 계정 없는 로컬 SwiftData 앱으로 출시할 수 있으며 로그인은 필수 기능이 아니다.
+- iPhone 17 Pro/iOS 26.3 Simulator에서 현재 작업본 Debug build/install/launch가 성공했다. Bundle ID는 `com.ljy4337.fitmatch`, 홈 화면 접근성 요소까지 확인했다. UI 자동화 중 지원 화면 탭 이후 예상과 다른 등록 온보딩 화면으로 전환돼 전체 핵심 흐름 통과로 계산하지 않는다.
+- XcodeBuildMCP 전체 test 호출은 300초 제한으로 결과를 받지 못했다. 이후 `-only-testing:FitMatchTests`로 실행했으며 362개를 발견했지만 테스트 프로세스가 조기 종료돼 실제 집계는 passed 6, failed 7, skipped 0이었다. 결과 번들은 `~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-e60223af795a/result-bundles/test_sim_2026-08-15T03-33-38-128Z_pid47700_95ea5f21.xcresult`이다.
+- 실패 7건 중 `LiveReleaseQA1200Tests/testSelectedTenCaseBatchOnPhysicalDevice`는 `FITMATCH_LIVE_QA_BATCH` 환경변수 없이 일반 suite에 포함돼 unwrap 실패했다. `FitPairCorpusXCTests/testUniqlo243OfficialMeasurementCorpus`는 expectation failure다. Current Uniqlo audit와 여러 대형 live/corpus test는 signal kill 또는 test host early exit이므로 제품 실패로 단정할 수 없지만 통과로도 계산할 수 없다.
+- 따라서 현재 상태는 빌드 가능이나 자동 회귀 green이 아니며, 오늘 즉시 제출은 NO다. 이전 2026-08-06의 279 pass/0 fail 기록은 최신 P0 수정 이후 현재 작업본의 출시 증거를 대신하지 않는다.
+
+### 출시 전략 결정
+
+- 권고는 DB·로그인을 기다리지 않고 현재 로컬형 MVP를 안정화해 1.0을 먼저 출시하는 것이다. 이미 일정이 약 2주 지연됐으므로 1.0에 Supabase Auth·동기화까지 추가하는 범위 확대는 권하지 않는다.
+- 1.0 전 필수: 테스트를 빠른 오프라인 회귀/전수 분류/라이브 네트워크로 분리, 병렬 대형 테스트로 인한 signal kill 제거, 실제 expectation failure 해결, 전체 핵심 회귀 실패 0, 공개 privacy/support URL 연결, 실제 iPhone 6개 핵심 동선, Distribution archive 감사, TestFlight 확인이다.
+- 1.1에서 DB mapping lookup과 오프라인 fallback을 연결한다. 로그인·다기기 동기화가 실제 제품 요구로 확정될 때 1.2에서 Auth/RLS/소유권 정책/로컬 데이터 migration/충돌 해결/앱 내 계정 삭제/개인정보 문서와 App Privacy 갱신을 함께 제공한다.
+- 계획 추정은 1.0 안정화·제출 준비 2~4일, DB 연동 포함 시 추가 1~2주, DB+로그인+동기화 포함 시 추가 2~3주다. Apple 심사 시간은 별도다.
+
+### 다음 테스트 순서
+
+1. 빠른 오프라인 회귀: 외부 네트워크·환경변수 필요 테스트를 제외하고 병렬 비활성화, 실패 0을 만든다.
+2. 상품 전수 분류: 기존 5,026 semantic oracle, 유니클로 현재 상품, 무신사 누적 상품을 공급사/fixture shard별 순차 실행한다. 위험 자동 확정·invalid·parser 계약 오류는 0이어야 하며 `review_required`는 별도 집계한다.
+3. 실제 iPhone 수동 6개: 신규 설치/온보딩, 내 옷 직접 등록, 유니클로 링크 비교, 무신사 링크 비교, Share Sheet 왕복, 네트워크 단절·복구. 앱 재실행 후 옷장·기록 보존도 확인한다.
+4. 공개 URL 입력 후 Release archive → `scripts/audit-app-store-archive.sh` → Validate App → TestFlight → 동일 핵심 동선 재확인 → 심사 제출 순으로 진행한다.
+
+### 작업 안전 상태
+
+- 이번 출시 진단과 인수인계 갱신에서 앱 소스·DB를 변경하지 않았다. `Docs/CodexSessionHandoff.md`만 갱신한다.
+- 보호 파일 `FitMatch/Components/TabBarScrollVisibilityModifier.swift`와 보호 modifier call site에는 diff가 없다.
+- commit, push, archive 업로드, App Store 제출은 수행하지 않았다.
+
+## 2026-08-15 무신사 전체 공개 의류 수집 배치
+
+- `scripts/run-musinsa-full-catalog.py`를 추가했다. canonical taxonomy에서 무신사 `confirmed` 및 `review_required` 의류 후보 카테고리 코드 737개를 구성하고, 각 공개 카테고리 응답이 제공하는 서명된 `nextPageUrl`을 마지막 페이지까지 따른다.
+- 무신사 현재 목록 응답은 페이지당 60개였다. 서명 URL의 `size=60`을 임의로 `size=200`으로 바꾸면 HTTP 403이므로 고정 200 수집을 가정하지 않는다.
+- 원본 HTML·API JSON·이미지는 영구 저장하지 않는다. 상품 메타데이터, 쇼핑몰 카테고리, 성별, 사이즈 실측, 옵션을 바탕화면 `무신사_전체의류_데이터/state.sqlite3`에 저장하고 gzip CSV 3개와 실패 CSV, `summary.json`을 생성한다.
+- SQLite에 카테고리별 다음 서명 URL·페이지와 상품별 endpoint 완료 상태를 저장하므로 Control-C 중단 뒤 동일 배치를 다시 실행하면 이어서 수행한다. lock 파일로 동시 중복 실행을 차단한다.
+- 실제 소량 검증에서 카테고리 `001001` 1페이지 60개 발견, 상품 1개 상세·실측·옵션 완료, 재실행 시 다음 상품 1개 완료로 58개가 남는 것을 확인했다. 2상품 기준 실측 20행, API 실패 0이며 gzip CSV를 실제 해제해 헤더·행을 확인했다.
+- 바탕화면에 `무신사_전체의류_수집.command`를 생성했다. `caffeinate -i`로 실행 중 시스템 유휴 잠자기를 방지한다. 전체 배치는 아직 시작하지 않았다.
+
+## 2026-08-15 무신사 증분 카탈로그 배치
+
+- `scripts/run-musinsa-incremental-catalog.py`를 추가했다. 무신사 공개 카테고리에서 현재 노출 상품 ID를 찾고 누적 state와 비교한 뒤, 신규 ID에만 공식 상품 상세·실측·옵션 API를 요청한다.
+- 결과는 `summary.json`, `new_products.csv`, `missing_product_ids.csv`, `pending_retry.csv`로 확인한다. 현재 카탈로그에서 사라진 상품은 검토 목록에만 기록하며 state에서 자동 삭제하지 않는다. 실패한 신규 상품도 state에 저장하지 않아 다음 실행에서 재시도된다.
+- 공용 corpus collector의 Musinsa `--discovery-only`가 상세 API를 호출하지 않고 탐색 요약과 요청 지표를 저장하도록 수정했다. dry-run 상세 요청 예상치도 0으로 맞췄다.
+- Python 컴파일, 과거 Musinsa checkpoint 기반 신규/누락 오프라인 비교, 실제 상품 994588의 상세·실측·옵션 HTTP 200과 8개 사이즈 행을 확인했다. 전용 단위 테스트 2건은 통과했다.
+- 기존 category corpus 전체 단위 테스트 38건 중 29건 통과, 7건 skip, 2건은 아카이브로 이동된 `Docs/Research/CategoryCorpus-live-medium` 원본 fixture 부재로 오류였다. 이번 변경 로직 실패는 아니다.
+- 실제 전체 무신사 증분 배치는 아직 실행하지 않았다. 첫 실행은 기본 baseline의 무신사 200개를 기준으로 현재 노출 상품을 신규 수집하므로 요청량과 실행 시간이 클 수 있다.
+
+## 2026-08-14 상세 화면 실기기 성능 진단 로그
+
+- Simulator를 사용하지 않고 실기기에서 내 옷 상세 및 비교 결과 상세 진입 버벅임을 구간별로 확인하도록 `[DetailPerformance]` 로그를 추가했다.
+- 화면 생성 기준 `on_appear`, 다음 main run loop, 250ms 안정화까지 elapsed_ms와 SwiftData 조회 개수, 상품 사이즈·실측 사용·제외 개수를 기록한다.
+- 상세 화면의 상품·기준 옷 썸네일에 한해 메모리 캐시 적중, 다운로드 시간·바이트·HTTP 상태, 백그라운드 디코딩 시간·픽셀, 전체 준비 시간을 기록한다. 목록 썸네일에는 로그를 켜지 않아 출력 폭증을 막았다.
+- 현재 코드 검토상 두 상세 화면 모두 진입 즉시 전체 UserFit/RecommendationHistory 정렬 Query를 수행하는 점이 우선 의심 대상이지만, 로그 증거 전에는 구조를 변경하지 않는다.
+
 ## 2026-08-14 유니클로 에어리즘 크루넥 T 분류 보정
 
 - 상품 `E482522`(`AIRism코튼크루넥T`)는 유니클로 원본 경로가 `이너웨어 > 에어리즘 > 코튼`이어서 기존 canonical resolver가 실제 티셔츠 구조를 속옷으로 확정했고, 티셔츠 기준 옷과의 비교가 차단됐다.
@@ -1426,3 +1551,113 @@ git diff -- '*.swift' | grep -E \
 - DB 기대 집계와 새 XCTest 결과가 일치했다. 결과 bundle은 `/tmp/FitMatchDBBackedATest-20260814-2.xcresult`다.
 - Supabase `fitmatch_qa.validation_runs`에 validator `db_backed_a_test_v1`, run id `51943e7b-9068-4dcb-8584-606181db2c8f`로 기록했다. status `passed`, mapping_count 3,426, qa_count 5,026, error_count 0이다.
 - 최초 sandbox 실행은 CoreSimulatorService 권한 및 SwiftSoup 네트워크 해석 제한으로 실행 전 실패했다. 권한이 허용된 정상 환경에서 재실행한 결과만 A테스트 실적으로 기록했다.
+
+## 42. 2026-08-14 실기기 비교 결과 화면 진입 성능 진단 및 1차 보완
+
+- 실기기 로그 3건에서 비교 결과 화면 `on_appear`는 52.1~93.3ms, 다음 main runloop 도달은 30.7~65.2ms 추가 지연됐다. 등록 데이터는 user fit 3건/history 3건으로 작아 현재 병목을 대량 SwiftData 조회로 보기는 어렵다.
+- 상품·기준 옷 썸네일은 cache hit 0.0ms였고 첫 기준 옷 이미지도 download 4.8ms + decode 3.1ms, 총 7.9ms였다. 따라서 이번 재현의 주 병목은 네트워크나 이미지가 아니라 결과 화면의 초기 SwiftUI 구성·계산·layout이다.
+- `settled_250ms`의 311.6~355.9ms는 의도적으로 예약한 250ms 타이머를 포함하므로 300ms 정지 시간으로 해석하지 않는다.
+- `RecommendationResultView`의 최상위 결과 카드 스택을 `LazyVStack`으로 바꿔 화면 아래 카드를 최초 프레임에 모두 만들지 않도록 했다. 추천 카드와 실측 카드에서는 실측 종류, 신뢰도, 차이·제외 목록을 한 렌더링 안에서 재사용하고 각 행의 실측값 조회 중복을 제거했다.
+- 로그에 별도로 `<OnScrollGeometryChange Modifier> tried to update multiple times per frame` 경고가 1회 있다. 이는 결과 화면 진입 병목과 분리된 스크롤 상태 갱신 경고이므로 보호 대상 tab bar scroll modifier는 이번 변경에서 건드리지 않았다.
+- Simulator는 사용하지 않았다. generic iOS device 무서명 빌드가 통과했으며, 동일한 실기기 동작을 다시 실행해 `on_appear`와 `next_main_runloop` 전후 수치를 비교해야 체감 개선을 확정할 수 있다.
+
+## 43. 2026-08-14 상세 화면 스크롤 성능 진단 추가
+
+- 비교 결과와 내 옷 상세의 실제 ScrollView에 DEBUG 전용 `ScrollPerformanceDiagnostics`를 추가했다. 공용 탭바/상단 헤더의 보호된 스크롤 modifier와 해당 call site는 변경하지 않았다.
+- CADisplayLink 기준으로 스크롤 중 24ms 이상 프레임은 `long_frame`, 40ms 이상은 `severe_frame`으로 기록한다. 화면 종료 시 전체 프레임 수, 긴 프레임 수, 심한 프레임 수, 동일 프레임 geometry 중복 갱신 수, 최장 프레임을 `monitor_summary`로 출력한다.
+- iOS 18 이상에서는 스크롤 phase 전환, 0.25초 간격 offset/velocity/content/container 표본, 한 display frame 안의 geometry 중복 갱신도 `[ScrollPerformance]` 로그로 남긴다. Release에서는 진단 modifier가 제거돼 출시 성능에 영향을 주지 않는다.
+- Simulator는 사용하지 않았다. generic iOS device 무서명 빌드가 통과했다. 실기기에서 비교 결과와 내 옷 상세를 각각 위아래로 빠르게 2~3회 스크롤한 로그가 있어야 실제 병목 위치를 판정할 수 있다.
+
+## 44. 2026-08-14 실기기 스크롤 로그 판정 및 ProMotion 허용
+
+- 비교 결과 실제 스크롤 로그에서 40ms 이상 severe frame은 0건이었다. 대표 실행은 3.714초/229 frames/long frame 6/스크롤 중 worst 25.0ms, 다른 실행은 1.972초/117 frames/long frame 2였다. 반복적인 메인 스레드 정지가 스크롤 병목이라는 증거는 없었다.
+- 실기기 `maximumFramesPerSecond`는 120인데 측정 cadence는 약 60fps였고 앱 Info.plist에 `CADisableMinimumFrameDurationOnPhone`이 없었다. Apple 공식 정의상 기본값 NO에서는 iPhone의 시스템 기본값보다 높은 프레임률에 접근할 수 없으므로 해당 키를 YES로 추가했다.
+- 이 설정은 120Hz를 강제 고정하지 않고 높은 프레임률 접근만 허용한다. 실제 주사율은 저전력 모드, 발열, 화면 상태 등에 따라 iOS가 동적으로 조정한다.
+- 최초 진단기의 `multiple_geometry_updates_in_frame` 14~73건은 120Hz geometry callback을 60Hz CADisplayLink tick으로 묶어 과대 집계했을 가능성이 높다. DEBUG monitor가 기기 최대 FPS를 요청하도록 보정하고 monitor 시작 전 callback은 무시하도록 수정했다.
+- 내 옷 상세 기록에는 `interacting/decelerating` phase가 없어 실제 스크롤 동작이 포함되지 않았다. 화면 진입 성능만 확인됐고 내 옷 상세 스크롤 자체는 아직 미검증이다.
+- plist lint와 generic iOS device 무서명 빌드가 통과했다. Simulator는 사용하지 않았고 보호된 tab bar scroll modifier와 call site는 변경하지 않았다.
+
+## 45. 2026-08-14 기록→결과 전환 및 결과 스크롤 진단 보정
+
+- ProMotion 적용 후 결과 화면의 대표 실제 드래그는 2.636초/291 frames로 약 110fps였고 long/severe frame은 모두 0, worst 19.0ms였다. 따라서 지속적인 렌더링 성능 부족은 재현되지 않았다.
+- 결과 화면 콘텐츠 685pt/컨테이너 619pt로 실제 스크롤 범위가 약 66pt뿐인데 드래그는 bottom 150pt, top -69pt까지 overscroll했다. 사용자가 느낀 일부 저항감은 대부분 정상 스크롤보다 짧은 콘텐츠의 양 끝 bounce 구간일 가능성이 있다. UX 변경 없이 bounce 정책은 아직 바꾸지 않았다.
+- DEBUG 진단기가 navigation transition 첫 260ms 동안 `multiple_geometry_updates_in_frame`을 26회 개별 print하고 있었다. 메인 스레드 콘솔 출력이 진입 애니메이션을 방해할 수 있어 개별 출력은 제거하고 summary 집계만 유지했다.
+- 스크롤 monitor 시작을 화면 onAppear 즉시에서 350ms 뒤로 늦춰 navigation transition과 초기 safe-area/content layout 측정에 진단기가 개입하지 않도록 했다.
+- 기록 카드 탭부터 결과 `onAppear`, 첫 main runloop까지 `[NavigationPerformance] route=history_to_result`로 측정하는 로그를 list/grid/recompare 경로에 추가했다. 다음 실기기 로그에서 실제 탭→화면 전환 지연과 결과 화면 내부 렌더 지연을 분리할 수 있다.
+- generic iOS device 무서명 빌드가 통과했다. Simulator는 사용하지 않았고 보호된 tab bar scroll modifier와 call site는 변경하지 않았다.
+
+## 46. 2026-08-14 결과 화면 초기 SwiftData 조회 지연 로딩
+
+- 보정된 실기기 로그에서 기록 카드 탭→결과 onAppear는 58.1~107.1ms, 첫 main runloop는 95.9~155.9ms였다. 이미지 cache miss도 총 6.9ms뿐이라 전환 병목은 결과 화면 생성 전후의 메인 스레드 작업으로 확정했다.
+- 결과 스크롤 monitor는 1.707초/194 frames와 2.739초/317 frames로 약 114~116fps였고 long/severe frame 0, duplicate update 0이었다. 지속적인 드래그 렌더링 병목은 재현되지 않았다.
+- `RecommendationResultView`가 진입 즉시 실행하던 `UserFit` 전체 @Query와 `RecommendationHistory` 전체 @Query를 제거했다. 기준 옷 목록은 picker sheet 내부 @Query로 옮기고, 기존 비교 기록은 사용자가 실제로 다른 기준 옷을 선택해 저장할 때만 fetch한다.
+- legacy ranking 계산도 해당 UI가 실제 평가될 때만 UserFit을 fetch하도록 바꿨다. 현재 결과 화면의 기능·저장 방식·추천 결과는 변경하지 않았다.
+- generic iOS device 무서명 빌드가 통과했다. Simulator는 사용하지 않았고 보호된 tab bar scroll modifier와 call site는 변경하지 않았다.
+
+## 47. 2026-08-14 root visibility 레이아웃 영향 대조 로그 판정
+
+- 새 실기기 캡처에서 history root visibility가 true→false로 바뀔 때와 bottom overscroll 이후 false→true로 바뀔 때 `contentSize=1252`, `containerSize=852`, `insetTop=59`, `insetBottom=34`, `maxOffset=493`가 모두 유지됐다. visibility 변경이 ScrollView safe area/frame/padding/content size를 바꾸는 피드백 루프 증거는 이번 캡처에서 없었다.
+- visibility 재표시는 bottom overscroll offset 498.3에서 새 upward drag로 460.7까지 돌아온 시점이었다. bottomLock 해제와 visibility=true가 같은 사용자 드래그에서 발생해 현재 요구 동작과 일치했다. 원인으로 확정되지 않았으므로 보호된 scroll modifier 및 UI는 변경하지 않았다.
+- 결과 화면 실제 드래그 3건은 각각 401/299/210 frames, long 0, severe 0, duplicate 0, worst 19.8~22.1ms였다. 측정 구간 평균은 약 117~119fps로 카드 렌더링·LazyVStack·스크롤 엔진을 우선 수정할 근거가 없다.
+- SwiftData 초기 조회 지연 적용 후 history→result warm path의 first main runloop는 70.3/97.4/86.1ms로 기존 95.9~155.9ms보다 개선됐다. 다만 첫 cold path는 152.7ms로 남아 있다.
+- 남은 우선 조사 대상은 첫 cold navigation의 99.3ms pre-onAppear와 이후 53.4ms main-runloop 구간이다. 이미지 miss는 6.7ms라 우선순위가 낮고, UI 변경 전에 실제 기기 Time Profiler로 destination 생성, SwiftData relationship fault, SwiftUI body/layout, navigation transition stack을 분리해야 한다.
+
+## 48. 2026-08-14 실제 iPhone Time Profiler 캡처
+
+- 연결된 `iPhone 14 Pro`의 실행 중 FitMatch 프로세스(pid 29267)에 Instruments Time Profiler를 20초간 attach해 기록→결과 진입을 실제 기기에서 캡처했다. Simulator는 사용하지 않았다.
+- trace는 `/tmp/FitMatchHistoryColdNavigation-2.trace`에 저장됐고 크기는 약 14MB다. 대상 OS는 iOS 26.6, Instruments/Xcode는 26.0이며 time-profile/time-sample/runloop/hang 테이블이 포함됐다.
+- `xcrun xctrace export --toc`는 성공했지만 time-profile call tree를 XML로 내보내는 Xcode 26 CLI가 Bus error 10으로 종료됐다. 따라서 trace 캡처는 성공했으나 상위 CPU stack을 CLI에서 판독해 원인을 확정하지 못했다. Instruments GUI에서 해당 trace의 Main Thread, 기록 카드 탭 시점 전후 약 160ms 범위를 열어 SwiftUI/SwiftData/navigation stack을 확인해야 한다.
+- call tree 증거가 아직 없으므로 카드, LazyVStack, root scroll visibility, safe area, bounce 동작은 추가 변경하지 않았다.
+
+## 49. 2026-08-15 실제 iPhone Time Profiler GUI 1차 판독
+
+- `/tmp/FitMatchHistoryColdNavigation-2.trace`를 Instruments GUI에서 열어 전체 22초 구간의 Main Thread call tree를 확인했다. FitMatch 전체 sample weight는 5.90초, Main Thread는 2.87초(48.7%)였다.
+- Main Thread에서는 UIKit update sequence와 SwiftUI `AttributeGraph` 갱신, `NavigationStackCoordinator.update`, `UIHostingController`, layout/view-size cache 및 preference 결합 계열 stack이 주로 관찰됐다. 전체 구간 기준으로 SwiftData fetch나 이미지 decode가 최상위 CPU 병목이라는 증거는 보이지 않았다.
+- 이 결과는 첫 cold navigation의 원인 후보를 SwiftUI destination 생성·AttributeGraph·UIKit layout/update로 좁히지만, 22초 전체 aggregate이므로 약 150ms 전환 구간의 단일 원인을 확정하는 증거는 아니다.
+- macOS 화면 기록 권한은 정상 동작했지만 `System Events` 자동화가 오류 `-10827`로 응답하지 않았고, CoreGraphics 입력 이벤트도 Instruments 타임라인 선택에 반영되지 않았다. 선택 구간 call tree를 확보하기 전에는 UI/동작을 추가 변경하지 않는다.
+
+## 50. 2026-08-15 무신사·유니클로 3시간 출시 A테스트 전수 감사
+
+- 로컬 `main` HEAD `9264814` 기준으로 프로젝트의 공식 상품 corpus 5,026개(무신사 4,011/유니클로 1,015)를 production `ParsedClosetClassification`에 다시 통과시켰다. 입력/고유/출력 5,026, 구조적으로 유효 4,701, 사용자 확인 325, invalid 0, placeholder other 79였다. 상품별 쇼핑몰 경로→FitMatch 대분류/세부분류/family/length 내역은 archive CSV에 저장했다.
+- 실제 iPhone 14 Pro(iOS 26.6, arm64)에서 5,026개 production 분류 테스트와 애매/other 325개 production live parser 재검증을 완료했다. 두 XCTest 모두 실패 0이었다. 325개는 parsing 325/325, 최종 사용자 확인 49, 위험한 other 자동 확정 0, parser 실패 0이었다. 이 중 최신 무신사 경로에서 `bottoms/other_bottoms`로 구조 분류된 점프수트·오버올 55개는 embedded canonical mapping이 `rejected`, `eligibility=false`, app mapping 없음이라 최종 비교 후보에서 제외된다. Simulator는 사용하지 않았다.
+- 공식 endpoint 5,026개를 저속 재조회했다. 전체 도달, rate limit 0, unavailable 0, 공식 실측 즉시 확인 4,569(무신사 3,561/유니클로 1,008), 직접 실측 응답 없음 457(무신사 450/유니클로 7)이다. 무신사 450개는 HTML/OCR fallback 또는 수동 입력 대상이므로 곧바로 앱 parser 실패로 해석하지 않는다.
+- 현재 의미 분류 결함은 고유 233개이며, canonical bundle과 matcher의 최종 product-level 교정을 적용한 뒤에도 비교 후보 선택·차단에 직접 영향을 주는 P0는 128개(무신사 113/유니클로 15)다. 이 중 116개는 현재 공식 실측까지 즉시 내려온다. family 방향 교차감사에서 `E480966`, `E485369`, `E487201` 히트텍 레깅스 3개가 `base_layer_top`/T-shirt family로 라우팅되는 결함도 확인했다.
+- 가장 치명적인 회귀는 최신 로컬 커밋 `9264814`가 추가한 `explicitUnderwearDetail`의 부분 문자열 검사다. `브라운`/`브라이트`/`CHAMBRAY`/`무브라이트` 87개를 여성 브라로, `brief lined` 러닝 하의 3개를 남성 브리프로 바꿨다. 90개 모두 이전 corpus에서는 속옷이 아니었고 84개는 현재 공식 실측이 직접 제공된다. 안전한 `containsExplicitBra` 함수가 이미 있지만 새 helper가 그보다 먼저 실행된다.
+- 기존 Swift Testing 회귀 `brownBottomNamesDoNotBecomeBras()`는 실제 두 브라운 팬츠를 하의로 요구하지만 현재 production 5,026 출력은 둘 다 `underwear/women_bra`다. 최신 HEAD가 기존 테스트 계약과 모순되므로 전체 suite green을 주장할 수 없다.
+- 그 외 활성 P0는 명시적 가디건 10, 다중 구조 세트 11, 스코츠 major/family 8, 상의 경로 브라탑 major/family 6, 블라우스→T-shirt 4, 히트텍 레깅스→상체 base-layer 3, 하이픈 소매 길이 2, 옵션/레이어/다중 길이 3, 유니클로 코치재킷 1이다. 일반 셔츠 83, 블라우스 22 등의 구조 세부분류 손실과 긴바지를 `같은 긴팔`로 표시할 수 있는 문구 1곳은 P1이다.
+- 유니클로 AIRism 이름 97개를 별도 전수 확인했다. 속옷 경로 54개만 속옷이고 나머지는 티셔츠·폴로·팬츠·원피스·레깅스·아우터 등 공식 경로대로 분리되어, AIRism 문자열만으로 모두 속옷 처리하는 문제는 재현되지 않았다.
+- 명시적 폴로셔츠 140개(무신사 122/유니클로 18)를 추가 대조했다. bundle이 중간에 `shirt`를 저장하지만 비교 직전 `storedGarmentType`이 inferred T-shirt family로 교정하며 Product/UserFit 양쪽에 적용된다. 기존 테스트도 저장값 `shirt`인 폴로↔티셔츠 허용과 폴로↔우븐 셔츠 차단을 검증한다. 내장 정책과 생성 스크립트의 레거시 표기는 정리 권장이지만 실행 P0는 아니다.
+- 무신사 상품 4534935는 공식 `goodsNm` 자체에 `https://bizest...detailCMD...` 관리자 URL이 붙어 있고 앱 parser가 이를 그대로 사용한다. 정상 `goodsNmEng`가 있으므로 URL/관리자 패턴 검출 후 fallback하는 방어가 필요하다.
+- 기존 5,000건 A테스트는 위험 상품이 포함된 520건을 출시 근거에서 제외하고 안전한 4,480/4,480만 유효 PASS로 재판정했다. 신규 라이브 700건도 위험 상품 86건을 제외한 614/614가 유효 PASS다. 정상 분류 상품의 정책 흐름은 대체로 안정적이지만 현재 P0 때문에 전체 출시는 보류다.
+- Release arm64 generic iPhone 무서명 빌드는 성공했다. Debug generic iPhone arm64 `build-for-testing`도 앱·Share Extension·unit/UI test 타깃 전부 컴파일되어 `TEST BUILD SUCCEEDED`를 확인했다. 추가 P0 실제 iPhone 회귀 실행은 build/sign까지 완료됐으나 기기가 잠겨 launch 전 대기하여 중단했으므로 테스트 실적으로 계산하지 않는다.
+- 최종 보고서 정리 후에도 Simulator 없이 generic iOS Release를 새로 전체 빌드했고 앱·Share Extension 포함 `BUILD SUCCEEDED`와 store validation 단계를 다시 확인했다.
+- 추적 보고서는 `Docs/ReleaseATestReport-20260815.md`, machine-readable evidence는 `../FitMatchArchive/Docs/TestEvidence/ReleaseATest-20260815/`에 있다. 앱 로직·DB는 이번 감사에서 수정하지 않았다. 다음 작업은 P0/P1 로직 수정 → 233개 fixture 고정 → 5,026 semantic oracle와 A테스트 재실행 → 실제 iPhone 핵심 사용자 여정 6건이다.
+- 감사 기준 local `main`은 `origin/main`보다 1커밋 앞이고, 기존 상세 화면 성능 진단 관련 작업 트리가 미커밋 상태다. 분류기·matcher·canonical bundle의 미커밋 변경은 없지만 build 검증은 현재 작업 트리를 포함하므로, 출시 전 정확한 source revision을 커밋으로 고정해야 한다.
+
+## 51. 2026-08-15 A테스트 P0 분류 결함 소스 보정
+
+- 사용자 지시에 따라 재전수검사보다 소스 수정을 먼저 진행했다. `ParsedClosetClassification`에서 `브라운`·`브라이트`·`CHAMBRAY`를 브라로 보던 부분 문자열 검사를 명시적 브라 토큰 검사로 교체했고, 일반 하의의 `brief lined`는 속옷 경로에서만 브리프로 확정하도록 제한했다.
+- 일반 셔츠·블라우스 상품명 구조가 반팔·긴팔 속성보다 먼저 세부분류에 반영되도록 우선순위를 고쳤다. `short-sleeve`/`long-sleeve` 하이픈 표기도 길이 속성으로 인식한다.
+- 명시적 가디건은 쇼핑몰의 상의 merchandising bucket과 무관하게 아우터/가디건 구조로 통일했다. 스코츠는 팬츠 상위 경로에서도 스커트 family로 통일하고, canonical 저장값이 pants여도 비교 직전 스커트로 교정한다.
+- 상품명에 명시된 레깅스는 히트텍/이너웨어 경로보다 우선해 하의 레깅스로 분류하며, 하의 화면 분류에 상체 canonical family가 저장된 경우 matcher가 하체 inferred family로 복구한다. 속옷 화면 분류는 비교 family도 underwear로 고정한다.
+- 공식 metadata가 그래픽 티 경로로 내려온 `KIDS PEANUTS코치재킷` 같은 강한 아우터 상품명은 상의/기타 경로에서 아우터로 복구한다.
+- `[SET] T-shirt + Shorts`, 탑+가디건 세트처럼 서로 다른 의류 구조가 함께 있는 세트와 민소매/반팔 옵션·레이어 충돌 상품은 단일 의류로 자동 확정하지 않고 사용자 분류 확인으로 보낸다.
+- 무신사 `goodsNm`에 URL·관리자 경로가 섞인 경우 정상 `goodsNmEng`가 있으면 이를 표시 상품명으로 선택하는 방어를 추가했다.
+- 위 정책을 고정하는 Swift Testing 회귀를 추가했다. Simulator와 실제 iPhone 데이터는 사용하지 않았다. generic iOS Debug `build-for-testing`을 두 번 실행했고 앱, Share Extension, unit/UI test 타깃이 모두 `TEST BUILD SUCCEEDED`로 컴파일됐다. 테스트 실행과 5,026건 semantic oracle 재검사는 다음 단계이며, 이 결과만으로 출시 가능 판정을 내리지는 않는다.
+
+## 52. 2026-08-15 유니클로 현재 판매 상품 전수 A테스트
+
+- 유니클로 한국 공식몰 MEN/WOMEN/KIDS/BABY 공개 카테고리 199페이지를 수집했다. 1,028개 노출, 상품 ID 914개, 정규화 identity 881개 중 상세 페이지가 현재 열리는 상품은 880개였다. `E479751-000` 한 건은 공식 카테고리에 남아 있지만 상세가 404라 활성 상품과 분리했다.
+- 880개 원본 사이즈 행 5,193개를 production 파서로 통과시켜 고유 사이즈 행 5,181개를 만들었다. 차이 12개는 동일 상품·색상 안의 중복 사이즈 표기이며 파싱 누락이 아니다. 사용할 수 있는 사이즈가 있는 상품은 752개다.
+- 중간 의미 감사에서 `니트 > 브이넥/터틀넥/워셔블/GU`처럼 일반 leaf 아래의 니트 구조가 사라지는 경계, `Cut & Sewn` 상의 경계, 일반 이너웨어 T가 canonical 분류 전에 사이즈 변환돼 가슴·총장 실측이 소실되는 결함을 발견해 수정했다. AIRism/HEATTECH 기능명은 의류 구조가 아니라 공식 경로를 우선하도록 유지했고, AIRism 코튼 외출용 T 예외도 보존했다.
+- 연결된 iPhone 14 Pro(iOS 26.6)에서 최종 production 사용자 흐름을 실행했다. 활성 880개, raw 5,193, parsed 5,181, 자동 비교 정책 검사 대상 610개, A테스트 2,288건이 모두 통과했다. 구성은 빈 옷장 752, 기준 옷 없음/수동 후보 512, 동일 프로필 기준 옷 자동 비교 512, 타 대분류 오비교 차단 512다.
+- FitMatch 대분류 결과는 상의 340, 하의 108, 아우터 95, 속옷 98, 홈웨어 36, 레깅스 24, 스커트 23, 원피스 15, 자동 분류·비교 제외 또는 사용자 확인 141이다. 마지막 141건은 양말·벨트·우산·모자·신발 등 비의류와 브라·바디수트·커버올·수납 파우치 등 현재 전용 비교 정책 밖 항목으로 별도 CSV에 이유를 전수 기록했다.
+- Simulator, 개인 iPhone 옷장 데이터, Supabase 운영 데이터는 사용하지 않았다. 최종 원본 결과는 `/tmp/FitMatchCurrentUniqloCatalog-20260815-7.xcresult`, 보고서는 `Docs/CurrentUniqloCatalogATestReport-20260815.md`, 전수 CSV/JSON은 `Docs/TestEvidence/CurrentUniqloCatalog-20260815/`에 있다.
+- 자동화 범위에서는 유니클로 경로를 출시 가능(GO)으로 판정했다. 실제 공유 시트 진입·색상 썸네일·안내 버튼 이동·네트워크 재시도는 화면/OS 통합 영역이라 출시 전 실기기 수동 4개 흐름을 별도로 확인해야 한다.
+
+## 53. 2026-08-15 유니클로 증분 수집기 신뢰성 보정
+
+- 동일한 유니클로 카테고리 URL이 HTTP 200을 반환하면서도 hydration에는 다른 카테고리 검색 결과가 들어오는 사례를 확인했다. 요청 경로와 정확히 일치하는 `search` hydration key가 있을 때만 해당 페이지의 상품 ID를 수집하도록 엄격 검증을 추가했다.
+- 응답 경로가 다르면 고유 캐시 우회 query로 수집기가 허용하는 최대값인 기본 5회 의미 재시도를 수행하고 원본을 `category-page-mismatches`에 보존한다. 실제 동일 URL 병렬 표본 4회 중 정상 3회/오염 1회로 변동성이 확인됐다. 재시도 후에도 불일치하면 그 페이지의 상품·하위 카테고리를 합치지 않고 `category_response_failures`와 `discovery_complete=false`를 결과에 남긴 뒤 종료 코드 2로 실패를 알린다. 불완전 수집에서는 기존 상품을 `not seen`으로 판정하지 않는다.
+- 증분 상태는 상세 HTML뿐 아니라 공식 사이즈 응답의 `result_found`까지 확인된 상품만 `stored`로 승격한다. 과거 `known_unavailable` 상품은 다시 노출되면 재수집하며 실제 상품명을 상태에 보존한다.
+- 상태 JSON 저장을 임시 파일 교체 방식으로 바꾸고 state별 비차단 파일 잠금을 추가해 중단·동시 실행 시 손상 가능성을 줄였다. 결과 용어도 `newly_seen`, `not_seen_this_run`, `pending_retry`로 바꿔 판매 시작·종료를 단정하지 않도록 했다.

@@ -14,3 +14,8 @@ Docs/Research/MusinsaNew*/
 Docs/Research/FitPairHumanReview-*/
 Docs/Research/CanonicalTaxonomyAudit-*/
 Docs/Research/CategoryEvidencePolicyAudit-*/
+
+# Reproducible SQL snapshot outputs (keep their generators in scripts/).
+Docs/FitMatch_LatestCumulativeSnapshots_*.sql.txt
+Docs/FitMatch_MusinsaCumulativeSnapshot_*.sql.txt
+Docs/FitMatch_UniqloCurrentSnapshot_*.sql.txt

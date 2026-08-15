@@ -1,0 +1,55 @@
+-- READ ONLY: FitMatch DB optimization preflight
+begin transaction read only;
+
+select now() as checked_at, current_database() as database_name,
+       current_setting('server_version') as postgres_version;
+
+select release_key, policy_version, status, expected_mapping_count,
+       expected_qa_count, created_at, validated_at, activated_at
+from fitmatch_catalog.releases
+order by created_at;
+
+select r.release_key, count(*) mapping_count,
+       count(*) filter (where m.decision_status='confirmed') confirmed,
+       count(*) filter (where m.decision_status='review_required') review_required,
+       count(*) filter (where m.decision_status='rejected') rejected,
+       count(*) filter (where m.decision_status='unsupported') unsupported
+from fitmatch_catalog.releases r
+join fitmatch_catalog.source_category_mappings m on m.release_id=r.id
+group by r.id,r.release_key
+order by r.release_key;
+
+select source, run_kind, status, snapshot_date, expected_count,
+       discovered_count, stored_count, failed_count, mapping_release_id
+from fitmatch_catalog.product_collection_runs
+order by created_at;
+
+select source, count(*) rows, count(distinct external_product_id) unique_products,
+       count(*) filter(where classification_status='comparable') comparable,
+       count(*) filter(where classification_status='conditional') conditional,
+       count(*) filter(where classification_status='excluded_review') excluded_review,
+       count(*) filter(where classification_status='unclassified') unclassified
+from fitmatch_catalog.source_product_snapshots
+group by source;
+
+select 'public.closet_items' object_name,count(*) row_count from public.closet_items
+union all select 'public.comparison_history',count(*) from public.comparison_history
+union all select 'public.profiles',count(*) from public.profiles
+union all select 'public.source_categories',count(*) from public.source_categories
+union all select 'public.source_category_mappings',count(*) from public.source_category_mappings
+union all select 'public.client_source_category_mappings',count(*) from public.client_source_category_mappings
+union all select 'fitmatch_staging.source_category_nodes',count(*) from fitmatch_staging.source_category_nodes
+union all select 'fitmatch_qa.classification_cases',count(*) from fitmatch_qa.classification_cases;
+
+select schemaname, viewname, definition
+from pg_views
+where (schemaname,viewname) in (
+  ('fitmatch_catalog','source_to_fitmatch_mappings'),
+  ('fitmatch_catalog','current_source_products'),
+  ('public','source_categories_readable'),
+  ('public','v_category_mapping_review')
+)
+order by schemaname,viewname;
+
+rollback;
+

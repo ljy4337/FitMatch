@@ -66,6 +66,10 @@ def main() -> None:
             output_path = output_dir / f"{product_key}.json"
             output_path.write_bytes(encoded)
             size_chart = (item or {}).get("sizeChart") or []
+            try:
+                recorded_path = str(output_path.relative_to(ROOT))
+            except ValueError:
+                recorded_path = str(output_path)
             details.append({
                 "product_id": product_key,
                 "requested_id": requested_id,
@@ -74,7 +78,7 @@ def main() -> None:
                 "measurement_count": sum(
                     len(size.get("sizeParts") or []) for size in size_chart
                 ),
-                "path": str(output_path.relative_to(ROOT)),
+                "path": recorded_path,
                 "bytes": len(encoded),
                 "sha256": hashlib.sha256(encoded).hexdigest(),
             })

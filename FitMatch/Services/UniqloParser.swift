@@ -1059,6 +1059,9 @@ struct UniqloProductMetadataParser {
 
     func mapCategory(from text: String) -> ClothingCategory {
         let value = text.lowercased()
+        let pathSegments = text.components(separatedBy: ">").map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }.filter { !$0.isEmpty }
         // 상위 경로에 "티셔츠"가 포함되어도 최하위 공식 카테고리와
         // 상품명이 스웨트팬츠처럼 더 구체적이면 그 대분류를 우선한다.
         let terminal = text.components(separatedBy: ">").last?
@@ -1081,6 +1084,21 @@ struct UniqloProductMetadataParser {
         if terminal.contains("니트") || terminal.contains("스웨터")
             || terminalValue.contains("knit") || terminalValue.contains("sweater") {
             return .knit
+        }
+        // V넥·터틀넥·램스울·GU처럼 말단이 소재/넥/기획명인 경우에도
+        // 바로 위 공식 구조가 "니트"이면 니트 상의로 확정할 수 있다.
+        // "니트 & 가디건" 혼합 상위 버킷만으로는 추정하지 않는다.
+        let structuralSegments = pathSegments.dropFirst().map { $0.lowercased() }
+        if structuralSegments.contains(where: { segment in
+            (segment.contains("니트") || segment.contains("스웨터")
+                || segment.contains("knit") || segment.contains("sweater"))
+                && !segment.contains("가디건")
+                && !segment.contains("cardigan")
+        }) {
+            return .knit
+        }
+        if terminalValue.contains("cut & sewn") || terminalValue.contains("cut and sewn") {
+            return .top
         }
         if text.contains("홈웨어") || text.contains("라운지") || text.contains("파자마")
             || value.contains("homewear") || value.contains("loungewear") { return .other }

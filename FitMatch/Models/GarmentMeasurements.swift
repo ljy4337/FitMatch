@@ -140,6 +140,11 @@ extension ClothingCategory {
         }
 
         switch detailCategory {
+        case .underwear:
+            // Generic provider buckets can contain undershirts as well as
+            // lower-body underwear. Keep both structural axes available; the
+            // imported measurement records decide which values are present.
+            return [.chest, .totalLength, .waist, .hip]
         case .menBriefs, .menTrunks:
             return [.waist, .hip]
         case .menUndershirt:

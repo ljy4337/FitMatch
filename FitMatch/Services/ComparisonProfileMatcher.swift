@@ -1021,6 +1021,20 @@ struct ComparisonProfileMatcher {
         if major.serviceGroup == .top, stored == .shirt, fallback == .tshirt {
             return fallback
         }
+        if major.serviceGroup == .underwear, stored != .underwear {
+            return .underwear
+        }
+        let lowerBodyFamilies: Set<ComparisonGarmentFamily> = [.pants, .denim, .leggings, .skirt]
+        if major.serviceGroup == .bottom,
+           lowerBodyFamilies.contains(fallback),
+           !lowerBodyFamilies.contains(stored) {
+            return fallback
+        }
+        if major.serviceGroup == .bottom,
+           stored == .pants,
+           productNameFamily == .skirt {
+            return .skirt
+        }
         let outerFamilies: [ComparisonGarmentFamily] = [.outerwear, .leatherJacket, .knitCardigan]
         if major.serviceGroup == .outer,
            outerFamilies.contains(fallback),
@@ -1164,6 +1178,7 @@ struct ComparisonProfileMatcher {
             }
             return .outerwear
         case .bottom:
+            if ["스코츠", "skorts", "skort"].contains(where: value.contains) { return .skirt }
             if ["레깅스", "타이즈", "타이츠", "leggings"].contains(where: value.contains) { return .leggings }
             if ["데님", "청바지", "denim", "jeans"].contains(where: value.contains) { return .denim }
             if ["팬츠", "바지", "슬랙스", "pants", "trousers", "slacks"].contains(where: value.contains) { return .pants }

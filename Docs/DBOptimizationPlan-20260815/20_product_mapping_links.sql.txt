@@ -1,0 +1,91 @@
+-- Link product observations to the exact release mapping when a unique leaf match exists.
+begin;
+
+alter table fitmatch_catalog.source_product_snapshots
+  add column if not exists mapping_release_id uuid,
+  add column if not exists source_mapping_identity text;
+
+update fitmatch_catalog.source_product_snapshots p
+set mapping_release_id=r.mapping_release_id
+from fitmatch_catalog.product_collection_runs r
+where r.id=p.run_id and p.mapping_release_id is distinct from r.mapping_release_id;
+
+with unique_match as (
+  select p.run_id,p.external_product_id,min(m.source_identity) source_identity
+  from fitmatch_catalog.source_product_snapshots p
+  join fitmatch_catalog.source_category_mappings m
+    on m.release_id=p.mapping_release_id
+   and m.source=p.source
+   and m.external_category_id=p.source_category_codes[cardinality(p.source_category_codes)]
+  group by p.run_id,p.external_product_id
+  having count(*)=1
+)
+update fitmatch_catalog.source_product_snapshots p
+set source_mapping_identity=u.source_identity
+from unique_match u
+where p.run_id=u.run_id and p.external_product_id=u.external_product_id
+  and p.source_mapping_identity is distinct from u.source_identity;
+
+create index if not exists source_product_snapshots_mapping_idx
+  on fitmatch_catalog.source_product_snapshots(mapping_release_id,source_mapping_identity)
+  where source_mapping_identity is not null;
+
+create or replace view fitmatch_catalog.current_source_products
+with (security_invoker = true)
+as
+select p.*
+from fitmatch_catalog.source_product_snapshots p
+where p.run_id=(
+  select r.id from fitmatch_catalog.product_collection_runs r
+  where r.source=p.source and r.status in ('succeeded','partial')
+  order by r.snapshot_date desc,r.created_at desc
+  limit 1
+);
+revoke all on fitmatch_catalog.current_source_products from anon,authenticated;
+grant select on fitmatch_catalog.current_source_products to service_role;
+
+do $constraint$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid='fitmatch_catalog.source_product_snapshots'::regclass
+      and conname='source_product_snapshots_mapping_fkey'
+  ) then
+    alter table fitmatch_catalog.source_product_snapshots
+      add constraint source_product_snapshots_mapping_fkey
+      foreign key(mapping_release_id,source_mapping_identity)
+      references fitmatch_catalog.source_category_mappings(release_id,source_identity)
+      on delete restrict not valid;
+    alter table fitmatch_catalog.source_product_snapshots
+      validate constraint source_product_snapshots_mapping_fkey;
+  end if;
+end
+$constraint$;
+
+create or replace view fitmatch_catalog.product_mapping_gaps
+with (security_invoker = true)
+as
+select p.*
+from fitmatch_catalog.current_source_products p
+where p.source_mapping_identity is null;
+
+revoke all on fitmatch_catalog.product_mapping_gaps from anon,authenticated;
+grant select on fitmatch_catalog.product_mapping_gaps to service_role;
+
+do $verify$
+declare v_total integer; v_linked integer; v_gaps integer;
+begin
+  select count(*),count(source_mapping_identity),count(*) filter(where source_mapping_identity is null)
+  into v_total,v_linked,v_gaps
+  from fitmatch_catalog.source_product_snapshots where source='uniqlo';
+  if v_total <> 880 or v_linked <> 875 or v_gaps <> 5 then
+    raise exception 'Product linkage mismatch: total %, linked %, gaps %',v_total,v_linked,v_gaps;
+  end if;
+end
+$verify$;
+
+commit;
+
+select source,count(*) total,count(source_mapping_identity) linked,
+       count(*) filter(where source_mapping_identity is null) gaps
+from fitmatch_catalog.source_product_snapshots group by source;
