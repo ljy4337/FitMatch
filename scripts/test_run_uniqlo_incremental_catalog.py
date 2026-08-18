@@ -59,6 +59,7 @@ class UniqloIncrementalCatalogTests(unittest.TestCase):
                 "--run-id", "incomplete",
                 "--checkpoint", str(checkpoint),
                 "--no-fetch-new",
+                "--no-db-sync",
             ]
             with mock.patch.object(sys, "argv", arguments):
                 self.assertEqual(runner.main(), 2)

@@ -94,6 +94,7 @@ def fetch(
 ) -> dict:
     observed_id, exposure_urls = candidate
     url = f"https://www.uniqlo.com/kr/ko/products/{observed_id}"
+    candidate_urls = [url, f"{url}/01", f"{url}/00"]
     existing_path = raw_dir / f"{observed_id}.html"
     if existing_path.exists():
         body = existing_path.read_bytes()
@@ -120,10 +121,10 @@ def fetch(
             "error": "" if complete else category["unresolved_reason"] or "product_identity_or_body_missing",
         }
     error = ""
-    for attempt in range(3):
+    for attempt, request_url in enumerate(candidate_urls):
         limiter.wait()
         request = urllib.request.Request(
-            url,
+            request_url,
             headers={"User-Agent": USER_AGENT, "Referer": exposure_urls[0]},
         )
         try:

@@ -1,5 +1,30 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-08-16 DB·앱 207건 판정 적용
+
+- 사용자 명시 승인으로 운영 DB에 074를 직접 실행했고, 이어 최신 production XCTest 첨부 5,026건 전체를 QA와 `product_classification_decisions` 양쪽에 `swift-production-2026-08-16-v3`로 직접 동기화했다. 최초 전 필드 대조에서 133건의 잔여 차이를 발견해 일부만 맞추는 방식을 중단하고 전수 결과를 canonical source로 사용했다.
+- 최종 검증은 앱 첨부, DB decision, DB QA를 source/product/category/detail/family/length/confirmation 순으로 정렬하고 동일 NULL 표기 체크섬으로 비교했다. 세 집합 모두 5,026행, MD5 `d314b6d208ffed1d0d4282786e62ff94`, exact 5,026, mismatch 0, review_required 329다. 따라서 보유 corpus에서 앱↔DB 전 필드 동등성은 100%로 확정했다.
+- 사용자가 072·073을 실행했다. DB QA↔canonical decision 자체는 5,026/5,026이었지만 최신 앱 첨부 결과와 확인 여부 총계가 DB 327/앱 329로 달라 추가 대조했다. 레이어드 세트 3개(5979739, 6247131, 6361801)는 앱처럼 확인 필요가 정답이고, 명시적 `METAL HALF T-SHIRT` 6833691은 앱의 `tops/short_sleeve/tshirt/short_sleeve` 자동확정이 정답이다.
+- 위 4건을 QA와 product decision 양쪽에 맞추고 5,026 DB 내부 postcondition을 검사하는 `supabase/sql/074_post_parity_four_case_alignment.sql`을 생성했다. 사용자가 실행한 뒤 review_required=329인지 확인해야 최종 앱↔DB 완료다.
+- 후속으로 `supabase/sql/073_product_classification_decisions_runtime.sql`을 추가했다. 072 적용을 선행조건으로 검사한 뒤 검증된 5,026개 상품 decision을 `fitmatch_catalog.product_classification_decisions`에 승격하고, 상품 ID뿐 아니라 상품명·공식 경로 fingerprint까지 동일할 때만 canonical 결과를 반환하는 service-role 전용 함수를 생성한다.
+- 새 함수는 현재 5,026건을 전 필드로 다시 조회해 5,026/5,026이 아니면 transaction 전체를 예외로 중단한다. 신상품 또는 이름·경로 변경 상품은 오래된 규칙 결과를 자동 확정하지 않고 suggestion만 포함한 `requires_user_confirmation=true`로 반환한다.
+- 운영 DB에는 072와 073 모두 아직 실행하지 않았다. 사용자가 순서대로 실행한 뒤 마지막 집계와 `E492123` 결과를 받아야 DB 100% 완료로 확정할 수 있다.
+- 사용자 승인 후 `ParsedClosetClassification`의 일반 규칙을 보정했다. 셔츠·블라우스 family, 상의 경로 BRA-IN/브라탑, 명시적 T셔츠와 아우터 단어 충돌, `sweat shirt`, 9부 상의 길이, 속옷·홈웨어 길이 오염, 복합 레이어드 세트를 수정했으며 상품 ID별 예외는 추가하지 않았다.
+- 독립 판정 207건을 번들 fixture와 XCTest로 고정했다. production parser와 resolver를 실제 실행해 207/207의 대분류·세부분류·family·길이·확인 여부가 모두 일치했고 실패 0이었다. 전체 5,026건도 입력/출력 5,026, 사용자 확인 329, invalid 0, 실패 0으로 다시 통과했다. xcresult는 `/tmp/FitMatchDBLogicAdjudication-After2.xcresult`, `/tmp/FitMatchDBLogicGlobal-20260816.xcresult`다.
+- DB QA release `568c3153-a45e-4d4e-b9a7-59c2179733be`의 207건을 같은 정답으로 맞추는 idempotent transaction SQL을 `supabase/sql/072_db_app_adjudication_qa_alignment.sql`로 생성했다. 5,026행/207개 target 사전조건과 207개 postcondition을 포함한다. 운영 DB에는 아직 실행하지 않았다.
+- 원격 읽기 전용 점검에서 `fitmatch_taxonomy.evaluate_runtime_classification`과 규칙 세트 `app-hardcoded-parity-2026-08-06-v1`(활성 84개)을 확인했다. 이 별도 DB 실행 함수는 최신 Swift 분류기보다 오래되어 현재 5,026 QA와 런타임 동등하지 않다. QA 정답 데이터 정렬과 DB 실행 함수 동등화를 같은 완료로 보고하면 안 된다.
+- `E492123 데님릴렉스셔츠재킷`의 최종 정답은 사용자 확정대로 `tops / shirt / shirt / long_sleeve / 자동확정`이다.
+
+## 2026-08-15 DB·앱 분류 신뢰성 감사
+
+- Supabase와 앱 production 코드는 수정하지 않고 읽기 전용으로 비교했다. 기존 QA 5,026개와 오늘 최신 배치 중 QA에 없던 346개를 합쳐 총 5,372개 고유 상품을 검사했다.
+- 현재 main 5,026건 XCTest는 5,026 output, 자동분류 4,703, 확인 필요 323, invalid 0으로 통과했다. DB QA 기대값과 대분류·세부분류·family·길이·확인 여부를 상품별 비교한 결과 4,819개 완전 일치, 207개 불일치, 동등성 95.88%였다.
+- 공식 상품 의미 근거가 확정된 challenge 231개에서 앱은 220개, DB는 91개가 근거와 일치했다. 앱만 맞음 129, DB만 맞음 0, 양쪽 모두 맞음 91, 양쪽 모두 잔여 오류 11이다. 전체 신뢰도 우세 판정은 현재 앱 로직이다.
+- 오늘 신규 346개는 무신사 148/유니클로 198이며 앱 자동분류 280, 확인 필요 66이다. raw 앱 분류기는 DB rejected 양말 88개를 속옷으로 분류하지만 실제 비교 경로에서는 내장 canonical eligibility가 차단한다. DB는 제외·버전 정책이 강하고 앱은 상품명 구조·세부분류가 강하다.
+- 공식 경로·명시적 구조로 확정한 잔여 오류를 보수적으로 102/5,372로 잡은 제품 분류 신뢰도는 98.10%다. 사용자가 정한 90% 분류 기준은 통과하지만 앱 전체 출시 승인은 privacy/support URL, 전체 회귀, 실제 iPhone 동선, archive/TestFlight 게이트와 별개다.
+- 근거는 `Docs/TestEvidence/DBLogicReliability-20260815/`의 `report.md`, `summary.json`, 207개 mismatch CSV, 신규 346개 JSON과 `/tmp/FitMatchDBLogicReliability-20260815.xcresult`, `/tmp/FitMatchCurrentBatchReliability-20260815.xcresult`다. 분류/DB 수정은 사용자 승인 전 수행하지 않는다.
+- 207개 불일치를 상품명·공식 경로·FitMatch 비교 정책으로 전수 판정했다. 앱 정답 153, DB 정답 16, 양쪽 수정 38, 실물 확인 필요 0이다. `E492123 데님릴렉스셔츠재킷`은 사용자 결정으로 `상의 / 셔츠 / shirt family / 긴팔`로 확정했다. 정답 목표값과 근거는 `db-app-5026-adjudication.csv`에 있으며 아직 앱·DB에는 적용하지 않았다.
+
 ## 2026-08-15 커밋 대상 생성 SQL 정리
 
 - 재생성 가능한 최신 누적/유니클로/무신사 스냅샷 SQL 출력 3개를 `../FitMatchArchive/Docs/GeneratedSQL/`로 이동하고 `.gitignore`에 패턴을 추가했다.
@@ -1661,3 +1686,58 @@ git diff -- '*.swift' | grep -E \
 - 응답 경로가 다르면 고유 캐시 우회 query로 수집기가 허용하는 최대값인 기본 5회 의미 재시도를 수행하고 원본을 `category-page-mismatches`에 보존한다. 실제 동일 URL 병렬 표본 4회 중 정상 3회/오염 1회로 변동성이 확인됐다. 재시도 후에도 불일치하면 그 페이지의 상품·하위 카테고리를 합치지 않고 `category_response_failures`와 `discovery_complete=false`를 결과에 남긴 뒤 종료 코드 2로 실패를 알린다. 불완전 수집에서는 기존 상품을 `not seen`으로 판정하지 않는다.
 - 증분 상태는 상세 HTML뿐 아니라 공식 사이즈 응답의 `result_found`까지 확인된 상품만 `stored`로 승격한다. 과거 `known_unavailable` 상품은 다시 노출되면 재수집하며 실제 상품명을 상태에 보존한다.
 - 상태 JSON 저장을 임시 파일 교체 방식으로 바꾸고 state별 비차단 파일 잠금을 추가해 중단·동시 실행 시 손상 가능성을 줄였다. 결과 용어도 `newly_seen`, `not_seen_this_run`, `pending_retry`로 바꿔 판매 시작·종료를 단정하지 않도록 했다.
+
+## 54. 2026-08-18 DB 기반 상품 런타임 기반 완성
+
+- Supabase 운영 프로젝트 `hnkplvyegonlhumlejst`에 migration 5개를 적용했다: `create_product_runtime_foundation_v1`(20260818011818), `create_product_runtime_procedures_v1`(20260818012026), `align_product_runtime_policy_v1`(20260818013019), `validate_product_runtime_v1`(20260818013251), `index_product_runtime_foreign_keys_v1`(20260818013611).
+- 공용 상품·분류 이력·variant·size·canonical measurement 저장소와 사용자별 상품 intake, 옷장 canonical snapshot/override, 비교 run/result/measurement result를 추가했다. 기존 `source_product_snapshots` 3,842건은 공용 상품 1,542개에 모두 연결했고 현재 분류 이력 1,195건을 생성했다.
+- 앱 공개 RPC는 `fitmatch_resolve_product`, `fitmatch_register_closet_item`, `fitmatch_set_closet_classification_override`, `fitmatch_clear_closet_classification_override`, `fitmatch_begin_comparison`, `fitmatch_complete_comparison`이다. 신규/변경 상품은 공개 클라이언트가 공용 catalog를 직접 쓰지 않고 `product_intake_requests`에 넣으며, 검증된 batch/Edge Function/service role만 공용 상품과 실측을 승격한다.
+- `SECURITY DEFINER` RPC는 빈 `search_path`, `auth.uid()` 검증, 소유권 검증, anon 실행권 제거를 적용했다. 공용 상품 내부 schema는 RLS+무정책 기본 거부이며 authenticated 직접 쓰기를 차단했다. FK 인덱스 advisor 지적은 `086`에서 해소했다.
+- 최종 Supabase advisor의 신규 runtime 관련 보안 표시는 private table의 의도적 `RLS+무정책` INFO와, 위 6개 인증 사용자용 `SECURITY DEFINER` RPC WARN뿐이다. 둘 다 설계 의도이며 공개 권한 검증을 통과했다. 프로젝트 설정에는 별도로 leaked-password protection 미활성 WARN이 남아 있어 Auth 출시 점검에서 활성화해야 한다. 새 runtime FK의 미인덱스 지적은 0건이고, 막 생성된 인덱스의 unused INFO는 트래픽 전이므로 삭제 근거가 아니다.
+- 정책 버전 `db-runtime-2026-08-18-v1`을 추가하고 비교 허용을 family compatibility뿐 아니라 `required_any_measurements`/최소 충족 개수로 fail-closed 처리했다. Uniqlo/Musinsa 실측 alias와 단면·둘레 변환을 검증했다.
+- 명확한 기존 DB 모순 4건을 교정했다. Uniqlo `E482204`, `E489180`은 underwear family, `E488163`, `E488426`은 pants family가 정답이다. DB QA gold도 같은 기준으로 갱신됐으므로 앱 연결 브랜치에서 로컬 JSON fixture와 분류 출력의 4건 parity를 반드시 맞춰야 한다.
+- 최종 `fitmatch_qa.validate_product_runtime()`은 `passed=true`, 상품 1,542, snapshot 3,842/연결 3,842, 현재 분류 1,195, duplicate current 0, gold 5,026/5,026(100%), category-family contradiction 0, invalid comparable measurement 0, 공개 definer 권한 누수 0을 반환했다.
+- 실제 인증 사용자로 known/unknown resolve, 옷장 등록/override/복원, 비교 시작, idempotent ingest, 동시 upsert 동일 UUID, Uniqlo↔Musinsa canonical 실측 3개 비교를 검증했고 임시 데이터는 모두 제거했다. exact lookup은 약 0.204ms, 최근 상품+현재 분류 조회는 약 2.143ms였다.
+- 현재 운영 `product_sizes`와 `product_measurements`는 0건이다. 기존 batch snapshot에 실제 사이즈표 행이 없기 때문이다. 따라서 DB 구조·권한·프로시저는 준비됐지만, 앱에서 DB 비교를 활성화하기 전에 신뢰된 backend/batch가 실제 variant/size/measurement payload를 적재해야 한다.
+- 구현 계약과 AS-IS/TO-BE, RPC 입출력, Swift 연동 순서, 실패 상태는 `Docs/FitMatchDBRuntimeContract-20260818.md`에 정리했다. 앱 출시용 현재 로컬 엔진은 이번 작업에서 변경하지 않았다. DB 전환은 새 브랜치에서 feature flag/dual-run parity로 단계적으로 수행한다.
+- 관련 파일: `supabase/migrations/082_product_runtime_foundation.sql`부터 `086_product_runtime_fk_indexes.sql`, 안전 rollback `supabase/sql/087_product_runtime_safe_rollback.sql`, 운영 검증 쿼리 `supabase/sql/088_product_runtime_validation_queries.sql`.
+
+## 55. 2026-08-18 신규 상품 자동 분류·비교 후보 정책 보완
+
+- 사용자의 `보완해` 지시에 따라 앱 코드는 수정하지 않고 Supabase DB 구조/프로시저만 보완했다. 운영 프로젝트 `hnkplvyegonlhumlejst`에 `trusted_product_auto_classification_v2`, `comparison_candidate_policy_parity_v2`, `validate_product_runtime_v2`, `fix_product_exclusion_resolution_v3`, `backfill_product_runtime_v2_classifications` 5개 migration을 적용했다. 로컬 재현 파일은 `supabase/migrations/089`~`093`이다.
+- 신규/변경 상품 자동 분류는 공개 앱 payload와 신뢰된 backend payload를 분리했다. `public.fitmatch_resolve_product`는 API가 보낸 audience/category codes까지 기존 공용 상품과 비교하지만 불일치 시 intake만 만들고 공용 사실을 쓰지 않는다. 검증된 batch/Edge Function만 `fitmatch_catalog.runtime_resolve_and_promote_product(jsonb)`를 호출해 상품·분류 이력을 승격한다.
+- 5,026 Gold에서 `source+normalized path` 및 `source+path+product-name structural signature`별로 최소 2건 이상, 사용자 확인 0건, 최종 tuple 1종인 경우만 immutable profile로 만들었다. 신상품 ID로 바꾼 재생 기준 자동 확정 2,536건, 2,536/2,536 일치, 자동 오답 0이다. 나머지는 old runtime suggestion으로 확정하지 않고 `review_required`다.
+- 최신 snapshot에서 동일 상품이 `excluded_review`로 검증된 경우와 동일 path의 2개 이상 상품이 전부 제외인 경우를 `not_comparable`로 승격한다. 유니클로 스카프 5개 같은 의도적 제외가 mapping row 부재 때문에 단순 gap으로 보이지 않게 했다. 자동 제외 path는 40개다.
+- 기존 공용 상품 1,542개 중 current 분류가 없던 347개를 새 정책으로 backfill했다. 최종 current는 1,542/1,542이고 confirmed 1,114, not_comparable 184, review_required 244, current 중복 0이다. review 244는 제거 대상 데이터가 아니라 자동 확정 근거가 부족해 의도적으로 막힌 상태다.
+- 비교 정책에 major category, gender/age, family, detail, sleeve/pants length, outer body length, canonical measurement overlap을 모두 포함했다. `fitmatch_find_reference_candidates(uuid)`는 `automatic`, `manual_selection`, `measurements_required`, `no_compatible_garment`를 구분한다. 반팔↔긴팔 상의는 자동 차단 후 소매길이 제외 manual extended, 긴바지↔반바지는 총장·밑단 제외 manual extended, sweatshirt↔hoodie는 direct, 상의↔하의는 항상 차단한다.
+- 실제 인증 사용자 컨텍스트의 rollback 통합 검사에서 유니클로 `E422992` 반팔 T를 옷장 기준으로, `E492123` 긴팔 셔츠를 대상으로 넣었을 때 후보 상태 `manual_selection`, 자동 begin `blocked`, manual begin `pending`, 공통 실측 3개를 확인했다. `E447780` 하의 대상은 `no_compatible_garment`였다. 생성한 size/measurement/closet/run은 rollback 후 모두 0건임을 확인했다.
+- trusted promotion rollback 검사에서 신규 긴팔 셔츠는 `verified_path_profile`로 confirmed, 기존 `E492123`의 category code 일치는 current 재사용, 다른 code는 `catalog_state=changed`+intake로 분리됐다. 공용 데이터 오염 없이 모두 rollback됐다.
+- 최종 `fitmatch_qa.validate_product_runtime_v3()`은 `passed=true`, Gold 5,026/5,026, 신상품 자동 profile mismatch 0, category-family contradiction 0, invalid comparable measurement 0, cross-major blocked true, manual extended supported true, anon candidate RPC execute false를 반환한다.
+- Supabase advisor의 새 항목은 비공개 profile 세 테이블의 `RLS enabled/no policy` INFO와 인증 사용자용 `fitmatch_find_reference_candidates` SECURITY DEFINER WARN이다. 전자는 deny-by-default, 후자는 `auth.uid()`와 user ownership filter를 가진 의도된 공개 RPC다. 신규 migration 관련 performance advisor 항목은 없었다.
+- 계약서는 `Docs/FitMatchDBRuntimeContract-20260818.md`에 v2 흐름/상태/수량을 반영했고, `supabase/sql/087_product_runtime_safe_rollback.sql`과 `088_product_runtime_validation_queries.sql`도 신규 RPC/validator/profile 검증을 포함하도록 갱신했다.
+- 남은 핵심은 운영 size/measurement 적재다. 현재 이 두 테이블은 0건이므로 앱 연결 브랜치에서 retailer fetch 결과를 trusted ingest로 적재하기 전에는 실제 DB 비교 점수 경로를 켜면 안 된다. 또한 신상품 자동 분류는 검증 가능한 2,536 profile 범위만 자동이며 모든 미래 상품 100% 자동 확정을 보장하지 않는다. 미지원/충돌은 review로 막는 것이 현재의 의도된 안전 동작이다.
+
+## 56. 2026-08-18 유니클로·무신사 로컬 증분 배치 실행
+
+- 앱 코드와 Supabase 운영 DB는 변경하지 않고 로컬 배치만 실행했다. 유니클로는 `python3 scripts/run-uniqlo-incremental-catalog.py --run-id 20260818-152230`, 무신사는 `python3 scripts/run-musinsa-incremental-catalog.py --run-id 20260818-152745`로 실행했다.
+- 유니클로 최초 실행 `20260818-152132`는 샌드박스 네트워크 연속 실패로 수집 시작 전에 종료됐다. 상태 원장은 갱신되지 않았고 실패 증거로 `Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152132/discovery/checkpoint.json`만 남겼다. 외부 네트워크가 허용된 재실행은 정상 완료됐다.
+- 유니클로 재실행은 카테고리 200페이지, 요청 248회, 고유 상품 1,223개를 관측했다. category hydration 경로 불일치 47회는 의미 재요청으로 모두 복구됐고 `category_response_failures=0`, `discovery_complete=true`다. 요청 상태는 HTTP 200 247회, 404 1회였으며 최종 탐색 완전성에는 영향을 주지 않았다.
+- 유니클로 상태 원장은 1,159개에서 1,235개로 늘었다. 신규/재시도 후보 77개 중 76개는 상품명·경로·상세·공식 사이즈표를 모두 확보했고, 공식 사이즈 행 471개와 실측 항목 2,219개가 수집됐다. MEN 22, WOMEN 40, KIDS 8, BABY 6이며 상품 ID 중복과 빈 상품명·빈 경로는 0개다.
+- 유니클로 미완료 1개 `E479751`은 신규 상품이 아니라 2026-08-15부터 반복 노출되지만 상세를 가져올 수 없는 기존 `known_unavailable` 항목이다. 이번에도 `pending_retry`로 유지했다. 이번 탐색에서 보이지 않은 기존 상품 12개는 `missing_product_ids.csv`에만 기록했으며 삭제나 판매 종료 처리는 하지 않았다.
+- 무신사 실행은 카테고리 감시 페이지 5개, 요청 5회, 고유 상품 230개를 관측했다. HTTP 200 5/5, 신규 48개, 상품 상세 저장 48개, 재시도 0개이며 상태 원장은 384개에서 432개로 늘었다. 상품 ID 중복과 빈 상품명·빈 카테고리 경로는 0개다.
+- 무신사 신규 48개 중 공식 실측 행이 있는 상품은 34개이고 총 121개 사이즈 행을 확보했다. 실측 행이 0개인 14개는 모두 나일론/코치 재킷 계열 상품이며 상세 정보는 정상 저장됐지만 현재 공식 actual-size 응답에 실측이 없다. 이 14개는 상품·카테고리 증거로는 쓸 수 있지만 DB 실측 비교 데이터로 승격하면 안 된다.
+- 무신사 `missing_from_current_catalog=202`는 판매 종료 수가 아니다. 현재 증분 수집기가 무신사 전체 약 62만 상품을 탐색하지 않고 제한된 5개 감시 페이지만 확인하므로, 기존 원장에 있으나 이번 표본에 없던 수량일 뿐이다. 삭제·비활성 판단에 사용하지 않는다.
+- 최종 산출물은 `Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/`과 `Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260818-152745/`에 있다. 핵심 인수 파일은 각 폴더의 `summary.json`, `discovered_products.csv`, `new_product_ids.csv`, `new_product_inputs.json`, `new_products.csv`, `missing_product_ids.csv`이며 무신사는 `pending_retry.csv`, 유니클로는 `new_products/uniqlo_size_evidence.json`을 추가 확인한다.
+- 이번 단계는 수집과 로컬 상태 원장 갱신까지만 완료했다. 신규 124개(유니클로 76, 무신사 48)를 Supabase `products`/`product_sizes`/`product_measurements`에 적재하거나 canonical 분류 프로시저를 실행하지 않았다. 운영 DB 반영은 별도 승인 후 trusted ingest 경로에서 수행해야 한다.
+
+## 57. 2026-08-18 retailer 배치의 Supabase 적재·자동 분류 연결
+
+- 바탕화면 사용자 진입점을 유니클로 command 1개, 무신사 command 1개로 유지했고 결과 폴더도 쇼핑몰별 1개씩 유지했다. 관련 사용자 항목은 총 4개다. 내부 연구/테스트 helper는 삭제하지 않았다.
+- 두 증분 배치가 Supabase에서 현재 관측 ID의 batch marker/current 분류 존재 여부를 먼저 확인한다. 로컬 신규와 DB 미적재를 합쳐 상세·공식 사이즈를 수집하고, 상품별 DB 적재가 성공한 경우에만 로컬 원장을 완료 처리한다. DB 미완료가 하나라도 있으면 종료 코드 3과 재시도 ID를 남긴다.
+- 공통 Python adapter `scripts/catalog_batch_common.py`를 추가했다. 유니클로 official sizeChart와 무신사 actual-size를 공용 product/variant/size/measurement payload로 변환하며 key는 환경/Keychain에서만 읽는다.
+- 운영 DB migration `batch_product_ingest_api_v1`, `batch_measurement_scope_and_uniqlo_aliases_v1`, `grant_batch_taxonomy_read_v1`을 적용했다. public batch RPC 두 개는 `service_role`만 실행 가능하고 anon/authenticated는 모두 false다.
+- `fitmatch_batch_ingest_product`는 한 트랜잭션에서 trusted product promotion/canonical classification 후 실측 적재를 수행한다. 분류 category를 measurement scope로 주입해 무신사 `허리단면`의 tops/bottoms 의미를 구분한다. 유니클로 현재 official sizeChart raw label 12개를 canonical alias로 보강했고 등 중심~소매는 기준이 달라 비교 불가로 보수 처리했다.
+- service-role rollback 통합 테스트에서 신규 유니클로 반팔 T가 `tops/short_sleeve`, `가슴너비 55cm`가 `chest_width=55`, comparable=true로 기록됐다. rollback 후 테스트 상품 0건, 운영 product 1,542/size 0/measurement 0은 유지됐다.
+- 최근 로컬 결과 124건을 adapter로 변환한 결과 유니클로 76상품/471사이즈/2,216 numeric 실측, 무신사 48상품/121사이즈/398실측, 빈 상품명·경로 0이다. 아직 Keychain에 secret key가 없어 실제 124건 backfill 배치는 실행하지 않았다. 최초 command 실행 때 키를 한 번 입력하면 현재 관측 범위를 backfill하고 이후 batch version 기준 증분 처리한다.
+- 유니클로 `E479751`처럼 base URL이 `/00` 404로 잘못 redirect되는 경우를 위해 상세 수집기가 base → `/01` → `/00` 후보를 순서대로 재시도하도록 보완했다.
+- 앱/Swift 연결 로직은 이번 작업에서 수정하지 않았다. Supabase advisor에 새 batch 관련 보안/성능 경고는 없고 기존 private RLS INFO, 인증 사용자용 definer WARN, leaked-password protection WARN만 유지된다.

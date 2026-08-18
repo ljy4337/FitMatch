@@ -13,6 +13,11 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from catalog_batch_common import SupabaseBatchClient, sync_payloads, uniqlo_payload
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BASELINE = ROOT / "Docs/TestEvidence/CurrentUniqloCatalog-20260815/CurrentUniqloCatalogURLs.csv"
@@ -125,6 +130,10 @@ def main() -> int:
     parser.add_argument("--run-id", default=datetime.now().strftime("%Y%m%d-%H%M%S"))
     parser.add_argument("--checkpoint", type=Path, help="Use an existing discovery checkpoint without network crawling.")
     parser.add_argument("--no-fetch-new", action="store_true", help="Report deltas without downloading new details.")
+    parser.add_argument(
+        "--no-db-sync", action="store_true",
+        help="Testing only: collect locally without trusted Supabase ingest/classification.",
+    )
     parser.add_argument("--delay-ms", type=int, default=350)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument(
@@ -177,6 +186,12 @@ def main() -> int:
     current_ids = set(current)
     newly_seen_ids = sorted(current_ids - stored_ids)
     not_seen_ids = sorted(stored_ids - current_ids) if discovery_complete else []
+    db_client = None
+    db_needing_ingest: set[str] = set()
+    if not args.no_db_sync and not args.no_fetch_new:
+        db_client = SupabaseBatchClient()
+        db_needing_ingest = db_client.products_needing_ingest("uniqlo", sorted(current_ids))
+    collection_target_ids = sorted(set(newly_seen_ids) | db_needing_ingest)
 
     discovery_rows = []
     for product_id in sorted(current):
@@ -206,19 +221,21 @@ def main() -> int:
 
     collected_ids: set[str] = set()
     collection_dir = run_dir / "new_products"
-    if newly_seen_ids and not args.no_fetch_new:
+    db_succeeded_ids: set[str] = set()
+    db_rows: list[dict] = []
+    if collection_target_ids and not args.no_fetch_new:
         baseline_manifest = run_dir / "known_product_manifest.json"
         write_json(baseline_manifest, {
             "products": [
                 {"source": "uniqlo", "product_key": product_id}
-                for product_id in sorted(stored_ids)
+                for product_id in sorted(current_ids - set(collection_target_ids))
             ]
         })
         run([
             sys.executable, str(ROOT / "scripts/collect-new-uniqlo-retest.py"),
             "--checkpoint", str(checkpoint), "--old-manifest", str(baseline_manifest),
             "--include-all-catalog-items", "--select-all-complete",
-            "--attempt-limit", str(len(newly_seen_ids)), "--workers", str(args.workers),
+            "--attempt-limit", str(len(collection_target_ids)), "--workers", str(args.workers),
             "--delay-ms", str(args.delay_ms), "--output", str(collection_dir),
         ])
         manifest = read_json(collection_dir / "clothing_product_manifest.json")
@@ -242,6 +259,26 @@ def main() -> int:
                 if item["result_found"]
             }
             collected_ids = html_collected_ids & size_complete_ids
+
+        input_path = run_dir / "new_product_inputs.json"
+        if input_path.is_file():
+            raw_inputs = read_json(input_path)
+            selected_inputs = [
+                item for item in raw_inputs
+                if str(item.get("product_id") or "") in set(collection_target_ids)
+            ]
+            if db_client is not None:
+                db_succeeded_ids, db_rows = sync_payloads(
+                    db_client,
+                    (uniqlo_payload(item) for item in selected_inputs),
+                    run_dir / "db_ingest_results.json",
+                )
+            else:
+                db_succeeded_ids = {str(item["product_id"]) for item in selected_inputs}
+
+    if db_client is not None:
+        collected_ids &= db_succeeded_ids
+    db_pending_ids = sorted(set(collection_target_ids) - db_succeeded_ids) if db_client is not None else []
 
     completed_at = now()
     for product_id in current_ids & known_ids:
@@ -271,8 +308,20 @@ def main() -> int:
         "category_response_mismatches": discovery_summary.get("category_response_mismatches", 0),
         "category_response_failures": discovery_summary.get("category_response_failures", 0),
         "newly_seen": len(newly_seen_ids),
+        "db_needing_ingest": len(db_needing_ingest),
+        "collection_targets": len(collection_target_ids),
         "newly_seen_detail_and_size_collected": len(collected_ids),
         "newly_seen_pending_retry": sorted(set(newly_seen_ids) - collected_ids),
+        "db_ingest_succeeded": len(db_succeeded_ids) if db_client is not None else None,
+        "db_ingest_failed": sum(row.get("status") == "failed" for row in db_rows),
+        "db_ingest_pending_product_ids": db_pending_ids,
+        "db_classification_statuses": {
+            status: sum(
+                row.get("status") == "succeeded" and row.get("classification_status") == status
+                for row in db_rows
+            )
+            for status in ("confirmed", "not_comparable", "review_required", "unclassified")
+        },
         "not_seen_this_run": len(not_seen_ids) if discovery_complete else None,
         "state_product_count_after": len(ledger["products"]),
         "state_updated": not args.no_fetch_new,
@@ -290,6 +339,9 @@ def main() -> int:
         )
         lock_stream.close()
         return 2
+    if db_pending_ids:
+        lock_stream.close()
+        return 3
     lock_stream.close()
     return 0
 

@@ -16,6 +16,11 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from catalog_batch_common import SupabaseBatchClient, musinsa_payload, sync_payloads
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BASELINE = ROOT / "Docs/Research/CategoryCorpus-bootstrap/product_manifest.json"
@@ -163,6 +168,10 @@ def main() -> int:
     parser.add_argument("--run-id", default=datetime.now().strftime("%Y%m%d-%H%M%S"))
     parser.add_argument("--checkpoint", type=Path, help="Use an existing discovery checkpoint without crawling.")
     parser.add_argument("--no-fetch-new", action="store_true")
+    parser.add_argument(
+        "--no-db-sync", action="store_true",
+        help="Testing only: collect locally without trusted Supabase ingest/classification.",
+    )
     parser.add_argument("--delay-ms", type=int, default=350)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--max-category-pages", type=int, default=500)
@@ -191,6 +200,12 @@ def main() -> int:
     known_ids = set(ledger["products"])
     current_ids = set(current)
     new_ids = sorted(current_ids - known_ids, key=int)
+    db_client = None
+    db_needing_ingest: set[str] = set()
+    if not args.no_db_sync and not args.no_fetch_new:
+        db_client = SupabaseBatchClient()
+        db_needing_ingest = db_client.products_needing_ingest("musinsa", sorted(current_ids, key=int))
+    collection_target_ids = sorted(set(new_ids) | db_needing_ingest, key=int)
     missing_ids = sorted(
         (product_id for product_id in known_ids - current_ids if ledger["products"][product_id]["status"] == "stored"),
         key=int,
@@ -210,11 +225,16 @@ def main() -> int:
     )
 
     results: list[dict] = []
-    if new_ids and not args.no_fetch_new:
+    if collection_target_ids and not args.no_fetch_new:
         limiter = Limiter(args.delay_ms / 1000)
         detail_dir = run_dir / "new_products"
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
-            futures = [executor.submit(collect_product, product_id, current[product_id]["exposure_urls"], detail_dir, limiter) for product_id in new_ids]
+            futures = [
+                executor.submit(
+                    collect_product, product_id, current[product_id]["exposure_urls"], detail_dir, limiter
+                )
+                for product_id in collection_target_ids
+            ]
             for index, future in enumerate(concurrent.futures.as_completed(futures), 1):
                 results.append(future.result())
                 if index % 25 == 0 or index == len(futures):
@@ -224,6 +244,18 @@ def main() -> int:
 
     stored = [item for item in results if item["status"] == "stored"]
     pending = [item for item in results if item["status"] != "stored"]
+    db_succeeded_ids: set[str] = set()
+    db_rows: list[dict] = []
+    if stored:
+        if db_client is not None:
+            db_succeeded_ids, db_rows = sync_payloads(
+                db_client,
+                (musinsa_payload(item) for item in stored),
+                run_dir / "db_ingest_results.json",
+            )
+        else:
+            db_succeeded_ids = {str(item["product_id"]) for item in stored}
+    db_pending_ids = sorted(set(collection_target_ids) - db_succeeded_ids, key=int) if db_client is not None else []
     write_csv(
         run_dir / "new_products.csv",
         ["product_id", "product_name", "brand", "category_path", "size_type", "size_row_count", "product_url"],
@@ -240,6 +272,8 @@ def main() -> int:
         ledger["products"][product_id]["last_seen_at"] = completed_at
     for item in stored:
         product_id = item["product_id"]
+        if db_client is not None and product_id not in db_succeeded_ids:
+            continue
         ledger["products"][product_id] = {
             "status": "stored",
             "first_seen_at": completed_at,
@@ -257,18 +291,30 @@ def main() -> int:
         "known_before": len(known_ids),
         "currently_discovered": len(current_ids),
         "new_discovered": len(new_ids),
+        "db_needing_ingest": len(db_needing_ingest),
+        "collection_targets": len(collection_target_ids),
         "new_detail_collected": len(stored),
         "new_pending_retry": [item["product_id"] for item in pending] if not args.no_fetch_new else new_ids,
         "missing_from_current_catalog": len(missing_ids),
         "state_product_count_after": len(ledger["products"]),
         "state_updated": not args.no_fetch_new,
+        "db_ingest_succeeded": len(db_succeeded_ids) if db_client is not None else None,
+        "db_ingest_failed": sum(row.get("status") == "failed" for row in db_rows),
+        "db_ingest_pending_product_ids": db_pending_ids,
+        "db_classification_statuses": {
+            status: sum(
+                row.get("status") == "succeeded" and row.get("classification_status") == status
+                for row in db_rows
+            )
+            for status in ("confirmed", "not_comparable", "review_required", "unclassified")
+        },
     }
     write_json(run_dir / "summary.json", summary)
     if not args.no_fetch_new:
         ledger["last_run"] = summary
         write_json(state_path, ledger)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
-    return 0
+    return 3 if db_pending_ids else 0
 
 
 if __name__ == "__main__":
