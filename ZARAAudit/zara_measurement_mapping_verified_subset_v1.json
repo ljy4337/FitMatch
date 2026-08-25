@@ -1,0 +1,62 @@
+{
+  "version": "zara-measurement-2026-08-21-v1",
+  "source": "zara",
+  "parser_code": "zara_kr_size_measure_guide_v1",
+  "evidence": {
+    "captured_at": "2026-08-21T00:00:00+09:00",
+    "official_notice_ko": "사이즈는 생산 공정으로 인해 약간 다를 수 있습니다.. 옷을 평평하게 편 상태에서 측정합니다.",
+    "measurement_source": "measureGuideInfo",
+    "unit": "cm"
+  },
+  "mappings": [
+    {
+      "raw_code": "zone-name-waist",
+      "category_scopes": ["bottoms"],
+      "measurement_code": "waist_width",
+      "comparison_basis": "waist_edge_to_edge",
+      "conversion_multiplier": 1,
+      "status": "VERIFIED"
+    },
+    {
+      "raw_code": "zone-name-hips",
+      "category_scopes": ["bottoms", "dresses"],
+      "measurement_code": "hip_width",
+      "comparison_basis": "hip_at_widest",
+      "conversion_multiplier": 1,
+      "status": "VERIFIED"
+    },
+    {
+      "raw_code": "zone-name-front-rise",
+      "category_scopes": ["bottoms"],
+      "measurement_code": "front_rise",
+      "comparison_basis": "front_crotch_to_waist",
+      "conversion_multiplier": 1,
+      "status": "VERIFIED"
+    },
+    {
+      "raw_code": "zone-name-chest",
+      "category_scopes": ["dresses"],
+      "measurement_code": "chest_width",
+      "comparison_basis": "chest_pit_to_pit",
+      "conversion_multiplier": 1,
+      "status": "VERIFIED"
+    },
+    {
+      "raw_code": "zone-name-waist-full-body",
+      "category_scopes": ["dresses"],
+      "measurement_code": "waist_width",
+      "comparison_basis": "waist_edge_to_edge",
+      "conversion_multiplier": 1,
+      "status": "VERIFIED"
+    }
+  ],
+  "raw_only": [
+    "zone-name-front-length",
+    "zone-name-sleeve-length",
+    "zone-name-arm-width",
+    "zone-name-back-width",
+    "zone-name-front-length-lower",
+    "zone-name-back-rise",
+    "zone-name-front-length-full-body"
+  ]
+}

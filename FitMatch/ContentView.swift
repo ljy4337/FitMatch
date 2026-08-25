@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import AuthenticationServices
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -18,7 +19,9 @@ struct ContentView: View {
     @AppStorage("FitMatch.hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab: AppTab = .home
     @State private var hasFinishedSplash = false
-    @State private var isLoggedIn = false
+    @StateObject private var authSession = FitMatchAuthSessionStore()
+    @StateObject private var closetSync = FitMatchClosetSyncCoordinator()
+    @StateObject private var comparisonSync = FitMatchComparisonSyncCoordinator()
     @State private var pendingCompareURL: String?
     @State private var compareViewID: UUID?
     @State private var lastCompareLaunchKey: String?
@@ -46,6 +49,19 @@ struct ContentView: View {
             guard !hasRecordedLaunch else { return }
             hasRecordedLaunch = true
             FitMatchMetricsRecorder.shared.record(.appLaunch)
+        }
+        .task {
+            await authSession.observeAuthChanges()
+        }
+        .task(id: closetSyncTaskID) {
+            guard hasFinishedSplash, let userID = signedInUserID else { return }
+            await closetSync.synchronize(userID: userID, modelContext: modelContext)
+        }
+        .task(id: comparisonSyncTaskID) {
+            guard hasFinishedSplash,
+                  let userID = signedInUserID,
+                  closetSync.state == .synced else { return }
+            await comparisonSync.synchronize(userID: userID, histories: histories)
         }
         .task(id: measurementMigrationRetryToken) {
             do {
@@ -95,11 +111,21 @@ struct ContentView: View {
                 hasCompletedOnboarding = true
                 _ = openPendingSharedURLIfNeeded()
             }
-        // 로그인 화면은 추후 재사용을 위해 구현을 유지하고 현재 진입 분기만 비활성화합니다.
-        // } else if !isLoggedIn {
-        //     LoginView {
-        //         isLoggedIn = true
-        //     }
+        } else if authSession.state == .loading {
+            ProgressView("로그인 확인 중")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemGroupedBackground))
+        } else if !authSession.isAuthenticated {
+            LoginView(
+                isSigningIn: authSession.isSigningIn,
+                errorMessage: authSession.errorMessage,
+                onAppleRequest: authSession.prepareAppleSignIn,
+                onAppleCompletion: { result in
+                    Task {
+                        await authSession.completeAppleSignIn(result)
+                    }
+                }
+            )
         } else {
                 MainTabView(
                     selectedTab: $selectedTab,
@@ -120,13 +146,42 @@ struct ContentView: View {
                         openCompare(with: urlString)
                     },
                     onLogout: {
-                        isLoggedIn = false
                         selectedTab = .home
                         pendingCompareURL = nil
+                        Task {
+                            await authSession.signOut()
+                        }
                     },
                     compareViewID: compareViewID
                 )
+                .environment(\.fitMatchClosetSyncCoordinator, closetSync)
+                .environmentObject(authSession)
         }
+    }
+
+    private var signedInUserID: UUID? {
+        guard case .signedIn(let userID) = authSession.state else { return nil }
+        return userID
+    }
+
+    private var closetSyncTaskID: String {
+        guard let userID = signedInUserID else { return "signed-out" }
+        let localRevision = userFits
+            .sorted { $0.id.uuidString < $1.id.uuidString }
+            .map {
+                "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970):\($0.isRepresentative)"
+            }
+            .joined(separator: "|")
+        return "\(userID.uuidString)|\(hasFinishedSplash)|\(localRevision)"
+    }
+
+    private var comparisonSyncTaskID: String {
+        guard let userID = signedInUserID else { return "signed-out" }
+        let localRevision = histories
+            .sorted { $0.id.uuidString < $1.id.uuidString }
+            .map { "\($0.id.uuidString):\($0.createdAt.timeIntervalSince1970)" }
+            .joined(separator: "|")
+        return "\(userID.uuidString)|\(hasFinishedSplash)|\(closetSync.state)|\(localRevision)"
     }
 
     private func handleDeepLink(_ url: URL) {
@@ -203,7 +258,6 @@ struct ContentView: View {
         #if DEBUG
         print("[FitMatch] queued pending shared URL: \(urlString)")
         #endif
-        isLoggedIn = true
         selectedTab = .home
         openCompare(with: urlString)
         return true
@@ -1382,7 +1436,11 @@ private struct SplashView: View {
 }
 
 private struct LoginView: View {
-    let onLogin: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    let isSigningIn: Bool
+    let errorMessage: String?
+    let onAppleRequest: (ASAuthorizationAppleIDRequest) -> Void
+    let onAppleCompletion: (Result<ASAuthorization, Error>) -> Void
 
     var body: some View {
         VStack(spacing: 28) {
@@ -1396,10 +1454,32 @@ private struct LoginView: View {
             }
 
             VStack(spacing: 12) {
-                LoginButton(title: "Apple로 계속하기", systemImage: "apple.logo", action: onLogin)
-                LoginButton(title: "Google로 계속하기", systemImage: "g.circle", action: onLogin)
-                LoginButton(title: "Kakao로 계속하기", systemImage: "message.fill", action: onLogin)
-                LoginButton(title: "Naver로 계속하기", systemImage: "n.circle", action: onLogin)
+                SignInWithAppleButton(
+                    .continue,
+                    onRequest: onAppleRequest,
+                    onCompletion: onAppleCompletion
+                )
+                .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+                .frame(height: 54)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .disabled(isSigningIn)
+
+                // LoginButton(title: "Google로 계속하기", systemImage: "g.circle", action: onLogin)
+                // LoginButton(title: "Kakao로 계속하기", systemImage: "message.fill", action: onLogin)
+                // LoginButton(title: "Naver로 계속하기", systemImage: "n.circle", action: onLogin)
+
+                if isSigningIn {
+                    ProgressView("로그인 중")
+                        .font(.footnote)
+                }
+
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .accessibilityIdentifier("login.error")
+                }
             }
             .padding(.horizontal, 24)
             Spacer()

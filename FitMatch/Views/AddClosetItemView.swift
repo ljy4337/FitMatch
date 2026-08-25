@@ -156,6 +156,10 @@ struct AddClosetItemView: View {
                         .foregroundStyle(.secondary)
                 case .musinsa:
                     AddClosetTextField(title: "입점 브랜드", placeholder: "브랜드명 입력", text: $viewModel.brand)
+                case .zara:
+                    Text("상품 출처와 브랜드가 ZARA 공식몰로 저장됩니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 case .manual:
                     AddClosetTextField(title: "브랜드", placeholder: "브랜드명 입력", text: $viewModel.brand)
                 case nil:

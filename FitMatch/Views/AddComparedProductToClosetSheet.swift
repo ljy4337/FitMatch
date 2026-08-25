@@ -228,7 +228,7 @@ struct AddComparedProductToClosetSheet: View {
             CardView(radius: 26, padding: 20) {
                 HStack(alignment: .top, spacing: 14) {
                     ProductThumbnailView(
-                        imageURLString: product.imageURLString,
+                        imageURLString: product.imageURLStringForDisplay,
                         category: product.category,
                         width: 104,
                         height: 128,
@@ -269,7 +269,7 @@ struct AddComparedProductToClosetSheet: View {
             CardView(radius: 26, padding: 20) {
                 HStack(alignment: .top, spacing: 14) {
                     ProductThumbnailView(
-                        imageURLString: product.imageURLString,
+                        imageURLString: product.imageURLStringForDisplay,
                         category: product.category,
                         width: 104,
                         height: 128,
@@ -318,7 +318,7 @@ struct AddComparedProductToClosetSheet: View {
         CardView(radius: 26, padding: 20) {
             HStack(alignment: .center, spacing: 16) {
                 ProductThumbnailView(
-                    imageURLString: product.imageURLString,
+                    imageURLString: product.imageURLStringForDisplay,
                     category: product.category,
                     width: 72,
                     height: 86,
@@ -641,20 +641,35 @@ struct AddComparedProductToClosetSheet: View {
             return
         }
 
-        let selectedSizeID = selectedSize.id
-        let storedSizeDescriptor = FetchDescriptor<ProductSize>(
-            predicate: #Predicate { $0.id == selectedSizeID }
-        )
-        let storedSourceSize: ProductSize?
+        let storedProducts: [Product]
         do {
-            storedSourceSize = try modelContext.fetch(storedSizeDescriptor).first
+            storedProducts = try modelContext.fetch(FetchDescriptor<Product>())
         } catch {
             alertMessage = "저장된 상품 정보를 확인하지 못했습니다. 다시 시도해 주세요."
             isSaving = false
             return
         }
-        let sourceSize = storedSourceSize ?? selectedSize
-        let sourceProduct = storedSourceSize?.product ?? product
+
+        // ProductSize.id is a size-chart identifier, not a retailer-product
+        // identity. Resolve an existing row by the retailer product first so
+        // saving "M" never attaches this closet item to another product's M.
+        let storedProduct = storedProducts.first {
+            Self.isSameRetailerProduct($0, product)
+        }
+        let sourceProduct = storedProduct ?? product
+        storedProduct?.refreshExternalPresentation(from: product)
+
+        let selectedSizeKey = ParsedProductSizeNormalizer.normalizedSizeKey(for: selectedSize.name)
+        let sourceSize = storedProduct?.sizes.first {
+            ParsedProductSizeNormalizer.normalizedSizeKey(for: $0.name) == selectedSizeKey
+        } ?? selectedSize
+
+        if sourceProduct.modelContext == nil {
+            modelContext.insert(sourceProduct)
+        }
+        if sourceSize.product !== sourceProduct {
+            sourceSize.product = sourceProduct
+        }
 
         let item = UserFit(
             sourceType: sourceProduct.sourceType,
@@ -754,6 +769,39 @@ struct AddComparedProductToClosetSheet: View {
             selectedDetailCategoryCode = first.code
             selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(first.code)
         }
+    }
+
+    /// Retailer products must be matched before their sizes. A size label such
+    /// as M is not globally unique across products.
+    static func isSameRetailerProduct(_ lhs: Product, _ rhs: Product) -> Bool {
+        if let lhsURL = normalizedSourceURL(lhs.sourceURLString),
+           let rhsURL = normalizedSourceURL(rhs.sourceURLString) {
+            return lhsURL == rhsURL
+        }
+
+        guard let lhsCode = normalizedText(lhs.productCode), !lhsCode.isEmpty,
+              let rhsCode = normalizedText(rhs.productCode), !rhsCode.isEmpty,
+              lhsCode == rhsCode else {
+            return false
+        }
+
+        let lhsPlatform = normalizedText(lhs.sourcePlatformCode)
+        let rhsPlatform = normalizedText(rhs.sourcePlatformCode)
+        return lhsPlatform == nil || rhsPlatform == nil || lhsPlatform == rhsPlatform
+    }
+
+    private static func normalizedSourceURL(_ value: String?) -> String? {
+        guard var value = normalizedText(value)?.lowercased(), !value.isEmpty else {
+            return nil
+        }
+        if value.hasSuffix("/") {
+            value.removeLast()
+        }
+        return value
+    }
+
+    private static func normalizedText(_ value: String?) -> String? {
+        value?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func normalizeCategory() {

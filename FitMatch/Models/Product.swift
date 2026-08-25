@@ -178,6 +178,68 @@ final class Product {
         constructionTypeRawValue = nil
     }
 
+    /// Keeps the persisted product identity while refreshing presentation data
+    /// that can legitimately become more complete on a later retailer fetch.
+    func refreshExternalPresentation(from incoming: Product) {
+        if let incomingImageURL = incoming.imageURLString?.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        ), !incomingImageURL.isEmpty {
+            imageURLString = incomingImageURL
+        }
+
+        let incomingImageURLs = incoming.imageURLStrings.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        if !incomingImageURLs.isEmpty {
+            imageURLStrings = incoming.imageURLStrings
+        }
+
+        if let incomingSourceURL = incoming.sourceURLString?.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        ), !incomingSourceURL.isEmpty {
+            sourceURLString = incomingSourceURL
+        }
+        updatedAt = Date()
+    }
+
+    /// Keeps older saved UNIQLO items from becoming permanent placeholders.
+    /// New imports preserve the selected-colour URL, while legacy rows with no
+    /// image can still display the retailer's generic colour thumbnail.
+    var imageURLStringForDisplay: String? {
+        if let primary = imageURLString?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !primary.isEmpty {
+            return primary
+        }
+        if let storedCandidate = imageURLStrings
+            .split(whereSeparator: \.isNewline)
+            .map(String.init)
+            .map({ $0.trimmingCharacters(in: .whitespacesAndNewlines) })
+            .first(where: { !$0.isEmpty }) {
+            return storedCandidate
+        }
+        guard isUniqloImageFallbackEligible else { return nil }
+        return UniqloImageURLPolicy.defaultImageURLString(productCode: productCode)
+    }
+
+    private var isUniqloImageFallbackEligible: Bool {
+        if sourcePlatformCode?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            == "uniqlo" {
+            return true
+        }
+        if let sourceURLString,
+           let host = URL(string: sourceURLString)?.host?.lowercased(),
+           host == "uniqlo.com" || host.hasSuffix(".uniqlo.com") {
+            return true
+        }
+        let normalizedSourceName = sourceName
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return normalizedSourceName == "uniqlo"
+            || normalizedSourceName == "uniqlo official store"
+            || normalizedSourceName == "유니클로"
+            || normalizedSourceName == "유니클로 공식몰"
+    }
+
     var garmentType: ComparisonGarmentFamily {
         get { garmentTypeRawValue.flatMap { ComparisonGarmentFamily(rawValue: $0) } ?? .unknown }
         set { garmentTypeRawValue = newValue.rawValue }

@@ -258,7 +258,7 @@ private struct SearchClosetResultRow: View {
     @ViewBuilder
     private var thumbnail: some View {
         ProductThumbnailView(
-            imageURLString: item.sourceProduct?.imageURLString,
+            imageURLString: item.sourceProduct?.imageURLStringForDisplay,
             category: item.category,
             width: 76,
             height: 92,
@@ -285,7 +285,7 @@ private struct SearchHistoryResultRow: View {
         CardView(radius: 22, padding: 14) {
             HStack(spacing: 14) {
                 ProductThumbnailView(
-                    imageURLString: history.product.imageURLString,
+                    imageURLString: history.product.imageURLStringForDisplay,
                     category: history.product.category,
                     width: 76,
                     height: 92,

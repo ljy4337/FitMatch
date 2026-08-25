@@ -458,7 +458,7 @@ struct RecommendationResultView: View {
                 SectionHeader(title: "비교 기준 옷")
                 HStack(spacing: 14) {
                     ProductThumbnailView(
-                        imageURLString: currentResult.userFit.sourceProduct?.imageURLString,
+                        imageURLString: currentResult.userFit.sourceProduct?.imageURLStringForDisplay,
                         category: currentResult.userFit.category,
                         width: 48,
                         height: 54,
@@ -1035,7 +1035,7 @@ struct RecommendationResultView: View {
                 HStack(alignment: .top, spacing: 12) {
                     ComparisonTargetColumn(
                         title: "상품",
-                        imageURLString: currentResult.product.imageURLString,
+                        imageURLString: currentResult.product.imageURLStringForDisplay,
                         category: currentResult.product.category,
                         brand: currentResult.product.brand?.name ?? "브랜드 미상",
                         name: currentResult.product.name,
@@ -1045,7 +1045,7 @@ struct RecommendationResultView: View {
 
                     ComparisonTargetColumn(
                         title: "내 옷",
-                        imageURLString: currentResult.userFit.sourceProduct?.imageURLString,
+                        imageURLString: currentResult.userFit.sourceProduct?.imageURLStringForDisplay,
                         category: currentResult.userFit.category,
                         brand: currentResult.userFit.brandName,
                         name: currentResult.userFit.displayName,
@@ -1345,7 +1345,7 @@ struct RecommendationResultView: View {
 
     private var productThumbnail: some View {
         ProductThumbnailView(
-            imageURLString: currentResult.product.imageURLString,
+            imageURLString: currentResult.product.imageURLStringForDisplay,
             category: currentResult.product.category,
             width: 90,
             height: 104,
@@ -3347,7 +3347,7 @@ private struct ResultReferencePickerCard: View {
     @ViewBuilder
     private var thumbnail: some View {
         ProductThumbnailView(
-            imageURLString: item.sourceProduct?.imageURLString,
+            imageURLString: item.sourceProduct?.imageURLStringForDisplay,
             category: item.category,
             width: 68,
             height: 82,

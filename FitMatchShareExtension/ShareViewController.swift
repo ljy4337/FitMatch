@@ -142,6 +142,8 @@ final class ShareViewController: UIViewController {
             || host == "musinsa.onelink.me"
             || host == "uniqlo.com"
             || host.hasSuffix(".uniqlo.com")
+            || host == "zara.com"
+            || host.hasSuffix(".zara.com")
     }
 
     private func savePendingURL(_ url: URL) {
@@ -172,6 +174,9 @@ final class ShareViewController: UIViewController {
         }
         if host == "uniqlo.com" || host.hasSuffix(".uniqlo.com") {
             return "uniqlo"
+        }
+        if host == "zara.com" || host.hasSuffix(".zara.com") {
+            return "zara"
         }
         return "unsupported"
     }

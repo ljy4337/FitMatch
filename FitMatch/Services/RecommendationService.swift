@@ -52,6 +52,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory = .other,
         allowsGlobalFallback: Bool = true
     ) -> RecommendationHistory? {
+        guard product.canonicalEligibility != false else { return nil }
         let basis = selectBasis(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -81,6 +82,10 @@ struct RecommendationService {
         excludedKindReasons: [MeasurementKind: MeasurementExclusionReason] = [:],
         scorePenalty: Int
     ) -> TemporarySizeAnalysis? {
+        guard product.canonicalEligibility != false,
+              referenceItem.canonicalEligibility != false else {
+            return nil
+        }
         if comparisonMethod == "기준표 가슴둘레 비교" {
             guard let productChest = StandardBodySizeChart.chestCircumferenceCm(for: size.name),
                   let referenceChest = StandardBodySizeChart.chestCircumferenceCm(for: referenceItem.sizeName) else {
@@ -147,6 +152,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory = .other,
         allowsGlobalFallback: Bool = true
     ) -> InsufficientComparisonEvidence? {
+        guard product.canonicalEligibility != false else { return nil }
         let profileResult = comparisonMatcher.match(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -197,6 +203,10 @@ struct RecommendationService {
         selectedReferenceItem: UserFit,
         productDetailCategory: ClosetDetailCategory
     ) -> RecommendationHistory? {
+        guard product.canonicalEligibility != false,
+              selectedReferenceItem.canonicalEligibility != false else {
+            return nil
+        }
         let compatibility = comparisonCompatibility(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -287,6 +297,10 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         item: UserFit
     ) -> GarmentComparisonCompatibility {
+        guard product.canonicalEligibility != false,
+              item.canonicalEligibility != false else {
+            return .blocked("분류 검증이 완료되지 않아 비교할 수 없어요.")
+        }
         if product.sizeType == StandardBodySizeChart.metadataMarker {
             guard item.category.serviceGroup == product.category.serviceGroup else {
                 return .blocked("착용 부위가 달라 비교할 수 없어요.")
@@ -426,6 +440,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         basis: RecommendationBasis
     ) -> RecommendationHistory? {
+        guard product.canonicalEligibility != false else { return nil }
         if usesStandardSizeFallback(product: product, userFits: userFits) {
             return standardSizeRecommendation(
                 product: product,
@@ -440,7 +455,7 @@ struct RecommendationService {
         var bestAverageDifference = Double.greatestFiniteMagnitude
 
         for size in product.sizes.sorted(by: { $0.displayOrder < $1.displayOrder }) where !size.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            for userFit in userFits {
+            for userFit in userFits where userFit.canonicalEligibility != false {
                 let fitConfidence = measurementComparisonEngine.compare(
                     productSize: size,
                     referenceItem: userFit,
@@ -509,13 +524,14 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         basis: RecommendationBasis
     ) -> RecommendationHistory? {
+        guard product.canonicalEligibility != false else { return nil }
         let sizes = product.sizes.sorted { $0.displayOrder < $1.displayOrder }
         var bestHistory: RecommendationHistory?
         var bestDifference = Double.greatestFiniteMagnitude
 
         for size in sizes {
             guard let productChest = StandardBodySizeChart.chestCircumferenceCm(for: size.name) else { continue }
-            for userFit in userFits {
+            for userFit in userFits where userFit.canonicalEligibility != false {
                 guard let referenceChest = StandardBodySizeChart.chestCircumferenceCm(for: userFit.sizeName) else { continue }
                 let signedDifference = productChest - referenceChest
                 let absoluteDifference = abs(signedDifference)
@@ -592,11 +608,12 @@ struct RecommendationService {
         excludedKinds: [MeasurementKind],
         excludedKindReasons: [MeasurementKind: MeasurementExclusionReason] = [:]
     ) -> InsufficientComparisonEvidence? {
+        guard product.canonicalEligibility != false else { return nil }
         var bestEvidence: InsufficientComparisonEvidence?
 
         for size in product.sizes.sorted(by: { $0.displayOrder < $1.displayOrder })
         where !size.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            for userFit in userFits {
+            for userFit in userFits where userFit.canonicalEligibility != false {
                 let result = measurementComparisonEngine.compare(
                     productSize: size,
                     referenceItem: userFit,
@@ -641,6 +658,13 @@ struct RecommendationService {
         userFits: [UserFit],
         allowsGlobalFallback: Bool
     ) -> RecommendationBasis {
+        guard product.canonicalEligibility != false else {
+            return RecommendationBasis(
+                userFits: [],
+                methodText: "분류 검증 필요",
+                scorePenalty: 0
+            )
+        }
         if product.sizeType == StandardBodySizeChart.metadataMarker {
             let candidates = standardSizeCandidates(product: product, userFits: userFits)
             let representatives = candidates.filter {
@@ -692,6 +716,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
+        guard product.canonicalEligibility != false else { return false }
         if product.sizeType == StandardBodySizeChart.metadataMarker {
             return standardSizeCandidates(product: product, userFits: userFits)
                 .filter { $0.userFit.isRepresentative && $0.compatibleMeasurementCount > 0 }
@@ -718,8 +743,10 @@ struct RecommendationService {
     }
 
     private func standardSizeCandidates(product: Product, userFits: [UserFit]) -> [FitMatchCandidate] {
+        guard product.canonicalEligibility != false else { return [] }
         let sameCategory = userFits.filter {
-            $0.category.serviceGroup == product.category.serviceGroup
+            $0.canonicalEligibility != false
+                && $0.category.serviceGroup == product.category.serviceGroup
                 && StandardBodySizeChart.chestCircumferenceCm(for: $0.sizeName) != nil
         }
         let sorted = sameCategory.sorted { lhs, rhs in

@@ -4,6 +4,7 @@ import Combine
 enum ClosetProductSourceOption: String, CaseIterable, Hashable, Identifiable {
     case uniqlo
     case musinsa
+    case zara
     case manual
 
     var id: String { rawValue }
@@ -12,6 +13,7 @@ enum ClosetProductSourceOption: String, CaseIterable, Hashable, Identifiable {
         switch self {
         case .uniqlo: return "유니클로 공식몰"
         case .musinsa: return "무신사"
+        case .zara: return "ZARA 공식몰"
         case .manual: return "직접 등록"
         }
     }
@@ -143,6 +145,9 @@ final class AddClosetItemViewModel: ObservableObject {
             return .uniqlo
         case .marketplace where resolvedSourceName.localizedCaseInsensitiveContains("무신사"):
             return .musinsa
+        case .officialStore where resolvedSourceName.localizedCaseInsensitiveContains("zara")
+            || resolvedSourceName.localizedCaseInsensitiveContains("자라"):
+            return .zara
         case .manual:
             return .manual
         default:
@@ -160,6 +165,8 @@ final class AddClosetItemViewModel: ObservableObject {
             return [.uniqloSizeChart, .fitmatchMeasured]
         case .musinsa:
             return [.musinsaSizeChart, .fitmatchMeasured]
+        case .zara:
+            return [.fitmatchMeasured]
         case .manual, nil:
             return [.fitmatchMeasured]
         }
@@ -185,6 +192,12 @@ final class AddClosetItemViewModel: ObservableObject {
             }
             usesCustomBrand = true
             measurementEntrySource = .musinsaSizeChart
+        case .zara:
+            sourceType = .officialStore
+            sourceName = "ZARA 공식몰"
+            brand = "ZARA"
+            usesCustomBrand = false
+            measurementEntrySource = .fitmatchMeasured
         case .manual:
             sourceType = .manual
             sourceName = "직접 입력"

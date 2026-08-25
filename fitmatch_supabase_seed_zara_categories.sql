@@ -1,0 +1,5 @@
+-- ZARA category data is tracked as an idempotent migration so repository and
+-- connected Supabase migration history stay aligned.
+--
+-- Source of truth:
+--   supabase/migrations/107_seed_zara_verified_categories.sql

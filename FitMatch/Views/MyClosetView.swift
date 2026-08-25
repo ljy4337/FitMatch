@@ -5,6 +5,7 @@ struct MyClosetView: View {
     var onLogout: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
     @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.closetViewLayout") private var closetViewLayoutRaw = ContentListLayout.list.rawValue
@@ -475,10 +476,12 @@ struct MyClosetView: View {
     }
 
     private func deleteItem(_ item: UserFit) {
+        let clientItemID = item.id
         deleteHistoriesReferencing(item)
         modelContext.delete(item)
         do {
             try modelContext.save()
+            closetSync?.enqueueDeletion(clientItemID: clientItemID)
             rebuildDisplayedItems()
         } catch {
             modelContext.rollback()
@@ -734,7 +737,7 @@ private struct ClosetItemCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLString,
+                        imageURLString: item.sourceProduct?.imageURLStringForDisplay,
                         category: item.category,
                         width: 72,
                         height: 88,
@@ -800,7 +803,7 @@ private struct ClosetItemCard: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLString,
+                        imageURLString: item.sourceProduct?.imageURLStringForDisplay,
                         category: item.category,
                         width: 72,
                         height: 88,
@@ -1000,7 +1003,7 @@ private struct ClosetGridCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 ZStack(alignment: .topTrailing) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLString,
+                        imageURLString: item.sourceProduct?.imageURLStringForDisplay,
                         category: item.category,
                         width: 126,
                         height: 142,

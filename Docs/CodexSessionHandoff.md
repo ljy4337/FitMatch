@@ -1,5 +1,412 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-08-24 Category Engine v2.3 ZIP — 신규 Shadow 데이터만 흡수
+
+### 쉽게 설명한 결론
+
+- **사용자 화면, 분류 규칙, 비교점수, 추천 순위는 바꾸지 않았다.** 이번 작업은 실제 판매 목록 표본 300개를 개발 검사용 문제지로 추가한 것이다.
+- 이 300개에는 사람이 확인한 정답이 0개다. 따라서 Gold 정답지가 아니라 Shadow 검사 자료이며, 운영 상품·분류 규칙·DB seed로 자동 승격할 수 없다.
+- 새 ZIP의 분류엔진, 비교엔진, `fm_*` DB schema, 자동 생성 `manual PASS`, “오분류 0건” 주장은 흡수하지 않았다.
+
+### 흡수한 데이터
+
+- `Docs/Research/FitMatchCategoryMappingV2-20260824-shadow/live300-v2_3/live_products_300.jsonl`
+  - Musinsa 100, Uniqlo 100, ZARA 100, 합계 300건.
+  - 기존 corpus와 비교하면 Musinsa 43건 중복/57건 신규, Uniqlo 100건 중복, ZARA 100건 중복이다.
+  - Uniqlo/ZARA sitemap 확인은 공식 목록 노출을 뜻할 뿐 현재 PDP category·재고 상태의 독립 증명은 아니다.
+- `official_source_evidence.json`은 ZIP이 기록한 수집 URL/status/checksum 출처 메타데이터다. 원격 응답 본문은 없으므로 provenance이지 독립 재현 증명은 아니다.
+- archive SHA256 `9bf813ae7d2dbd250fffe8ff8ea7fa634e994458540185b358cb826e5d7d4cfa`와 입력/evidence checksum을 기존 manifest에 고정했다.
+
+### 안전장치
+
+- manifest의 live sample 계약에 `independentLabelCount=0`, `productionImportAllowed=false`, `goldFixtureApprovalAllowed=false`를 고정했다.
+- `scripts/audit-category-mapping-shadow-corpus.mjs`가 300행/쇼핑몰별 100행, 중복, 상품명, HTTPS URL, URL↔상품 ID, Gold label 부재, 기존 corpus overlap/new count, checksum을 검사한다.
+- ZARA `ZARA_KR_*`는 계속 archive-local pseudo identity로만 허용한다. verified runtime `catentryId`로 취급하면 검사가 실패한다.
+- ZIP의 `build_live_manual_audit.mjs`는 모든 행에 `silent_misclassification_observed=false`를 자동 입력하므로 결과와 정확도 주장은 폐기했다.
+
+### 현재 FitMatch Shadow 실행 결과
+
+- 신규 `CategoryLive300ShadowAuditTests`가 현재 Musinsa/Uniqlo parser mapping과 `ParsedClosetClassification`을 사용해 source fact를 감사한다.
+- 300건 결과: provisional confirmed 243, `review_required` 29, `unclassified` 28, 사람 Gold 검토 후보 57건.
+  - Musinsa 94/6/0, Uniqlo 83/14/3, ZARA 66/9/25 순서로 confirmed/review/unclassified다.
+- explicit conflict silent confirmation 0, strict comparison conflict leak 0이다.
+- `current_fitmatch_gold_review_candidates.json`에 57건을 별도 저장했다. 이 목록도 정답이 아니라 사람이 정답을 붙일 후보 목록이다.
+- ZARA는 ZIP에 현재 PDP HTML과 verified `catentryId`가 없으므로 current runtime parser 검증 0건이다. archive source candidate로 fail-closed 안전성만 검사했고, ZARA 정확도라고 해석하지 않는다.
+
+### 테스트
+
+- `node scripts/audit-category-mapping-shadow-corpus.mjs` → base 5,723행 + live 300행 integrity/safety audit passed.
+- `xcodebuild build-for-testing -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchP3DerivedData` → `TEST BUILD SUCCEEDED`.
+- `xcodebuild test-without-building ... -resultBundlePath /tmp/FitMatch-Live300Shadow-20260824-v1.xcresult -only-testing:FitMatchTests/CategoryLive300ShadowAuditTests` → 1/1 passed.
+- `xcodebuild test-without-building ... -resultBundlePath /tmp/FitMatch-Live300-P1-ZARA-Regression-20260824-v1.xcresult -only-testing:FitMatchTests/FitMatchP0ProductionPathTests -only-testing:FitMatchTests/ZARAParserPhase1_5Tests` → 48/48 passed.
+- 최초 sandbox build는 CoreSimulator/SwiftPM cache 접근 권한으로 실패했고 동일 명령을 승인된 Xcode 권한으로 재실행해 성공했다. 코드 실패가 아니었다.
+
+### 남은 작업 — 사람이 해야 하는 것
+
+- 57개 후보에 실제 정답 category/detail을 사람이 붙여야 한다. 확인 전에는 Gold 테스트나 운영 규칙으로 승격하면 안 된다.
+- ZARA 후보는 공식 PDP를 현재 runtime parser로 다시 읽어 verified `catentryId`, family/subfamily, product name parity를 확인해야 한다.
+- Production DB write/migration/seed/commit/push는 0건이다.
+
+## 2026-08-24 외부 Category Mapping v2 유효 요소 4건 흡수
+
+### 결론 — 쉽게 설명
+
+- **사용자가 보는 화면·점수·추천 순위는 바뀌지 않았다.** 이번 변경은 잘못된 상품 데이터나 미검증 release가 사용자 추천으로 들어가기 전에 개발 단계에서 잡는 안전장치다.
+- 첨부 ZIP의 엔진·DB table·상태값은 현재 FitMatch보다 약하거나 중복돼 버렸다. 실제로 도움이 되는 상품 corpus, 출시 차단 기준, 검수 방식, parser 출처 기록만 현재 구조에 흡수했다.
+- Swift 변경은 build와 67개 회귀가 통과했다. DB 변경은 migration 파일만 작성했고 Production에는 적용하지 않았다.
+
+### 흡수 1 — 새 상품 shadow 검증 자료
+
+- `Docs/Research/FitMatchCategoryMappingV2-20260824-shadow`에 Musinsa 51건, Uniqlo 1,689건, ZARA 3,983건을 편입했다.
+- Musinsa 51건은 명시적 기대 garment label이 있어 신규 regression 후보로 쓸 수 있다.
+- Uniqlo와 ZARA는 독립적인 사람 정답이 0건이므로 자동 Gold 승격을 금지했다. ZARA의 `ZARA_KR_*` ID는 runtime `catentryId`가 아닌 pseudo ID이고 상품명 누락도 8건 있어 production identity import를 금지했다.
+- `node scripts/audit-category-mapping-shadow-corpus.mjs`가 5,723행의 checksum, row count, 중복 ID, label 등급, ZARA pseudo-ID 계약을 검사하며 통과했다.
+
+### 흡수 2 — 미검증 release 활성화 차단
+
+- `supabase/migrations/114_release_gate_and_quality_review_queue.sql`은 기존 `fitmatch_catalog.releases`를 확장한다. 새 release/master/status table은 만들지 않았다.
+- activation 전에 checksum, mapping count parity, QA fixture 수, 전체 회귀, 현재 동작 parity, product identity 검증, 독립 label 충분성, unsafe auto accept 0건, classification conflict leak 0건, measurement alias conflict 0건을 모두 확인한다.
+- 하나라도 빠지면 trigger와 `runtime_activate_validated_release`가 `active` 전환을 거부하고 blocker 목록을 남긴다. 현재 Production active release는 `expected_qa_count=0`, `qa_full_validation_included=false`라 새 gate 기준으로 재활성화할 수 없는 상태임을 read-only 감사에서 확인했다.
+- Production migration apply/write는 0건이다. 실행 검증용 `supabase/sql/114_release_gate_and_quality_review_queue_verification.sql`은 local/staging 전용이며 rollback한다.
+
+### 흡수 3 — 문제 상품 검수 큐
+
+- 새 `review_queue` table 대신 기존 `fitmatch_catalog.data_quality_issues`에 담당자, 우선순위, 검수 메모, 확인 시각을 추가했다.
+- `data_quality_review_queue` view는 open/acknowledged 이슈를 위험도와 우선순위 순으로 보여 준다. `runtime_triage_data_quality_issue`로 open/acknowledged/resolved/ignored를 관리하며 resolved/ignored는 이유 없이는 처리할 수 없다.
+- P3 fingerprint/occurrence_count 집계를 그대로 재사용하므로 동일 문제가 상품마다 무한히 새 행으로 쌓이지 않는다. app role은 release 활성화나 검수 mutation을 실행할 수 없고 service role만 사용한다.
+
+### 흡수 4 — parser 데이터 출처 기록
+
+- `ParsedProductInfo`에 optional `ProductParserProvenance`를 추가하고 Musinsa/Uniqlo/ZARA/COS parser route의 성공·partial 결과에 parser code를 기록한다.
+- source URL은 사용자 입력, 상품명/브랜드/source category는 retailer parser, category/detail은 iOS parser classification, measurement는 기존 `ParsedMeasurement.evidence`라는 구분을 observation payload에 보존한다.
+- 확인되지 않은 parser implementation version은 추측하지 않고 `not_declared`로 기록한다. parser service를 거치지 않은 과거/legacy record는 `legacy_unknown`으로 남겨 잘못된 출처 추정을 막는다.
+
+### 테스트 결과
+
+- `xcodebuild build-for-testing -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchP3DerivedData` → `TEST BUILD SUCCEEDED`.
+- 같은 prefix의 `test-without-building -resultBundlePath /tmp/FitMatchAbsorbFour-Resolver-Final-20260824.xcresult -only-testing:FitMatchTests/FitMatchSupabaseProductResolverTests` → 10/10 passed.
+- 같은 prefix의 `test-without-building -resultBundlePath /tmp/FitMatchAbsorbFour-P1P2Regression-Final-20260824.xcresult -only-testing:FitMatchTests/FitMatchP0ProductionPathTests -only-testing:FitMatchTests/ZARAParserPhase1_5Tests -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests -only-testing:FitMatchTests/MeasurementPolicyConsolidationTests -only-testing:FitMatchTests/FitMatchComparisonSyncCoordinatorTests` → 57/57 passed.
+- shadow corpus audit → 5,723/5,723 integrity/safety checks passed.
+
+### 아직 실제 서비스에서 안 켜진 것
+
+- migration 114는 Production에 적용하지 않았으므로 release gate와 검수 큐는 아직 운영 DB에서 작동하지 않는다.
+- 이 환경의 `psql/initdb`는 client-only 설치로 PostgreSQL server binary가 없어 migration 114와 rollback verification SQL을 실제 local DB에서 실행하지 못했다. staging/local Supabase에서 migration 113→114 적용, verification SQL, security/performance advisor 확인이 필요하다.
+- 첨부 corpus는 자동 분류 정답이나 production 상품으로 import하지 않았다. Musinsa 51건은 현재 FitMatch classifier와 대조해 사람이 불일치 이유를 확인한 뒤 regression으로 승격해야 하며, Uniqlo/ZARA는 독립 label 확보가 먼저다.
+- 사용자 착용 테스트나 UX 변경은 이번 네 가지 흡수 작업과 무관하다. production score와 화면 연결은 0건이다.
+
+## 2026-08-24 P3 Experimental Scoring & Data Quality Observability
+
+### 1. Executive Conclusion
+
+- Production `MeasurementComparisonEngine.compare()`와 추천 정렬에는 P3 변경이 없다. 사용자가 보는 점수·추천 1위·comparison eligibility는 그대로다.
+- test target에만 `ExperimentalMeasurementScoreV2`를 두어 production이 이미 선택·정규화한 comparable measurement와 weight를 재사용하고, 차이를 점수로 바꾸는 단계만 shadow 계산한다.
+- 실제 fixture에서는 Musinsa 4개 후보 중 중간 순위 2개가 바뀌고 1위는 유지됐다. Uniqlo 7개와 validated ZARA 5개는 순위가 모두 유지됐다. 사용자 정답 데이터가 없으므로 experimental verdict는 `NEEDS_USER_VALIDATION`이다.
+- 기존 `fitmatch_catalog.data_quality_issues`를 source+issue+raw signature로 집계하는 migration과 rollback verification SQL을 작성했다. Production DB에는 적용하지 않았다.
+
+### 2. Production Score Baseline
+
+- production item score는 계속 `round(clamp(100 - abs(candidate-reference) * 5, 0...100))`이고 기존 weight의 weighted average다.
+- 9개 measurement kind × `-3/-1/0/+1/+3cm`, 총 45개 대칭 case에서 parity configuration의 shadow score와 production score가 정확히 일치했다.
+- 기존 same/cross-source 비교 parity 16/16도 통과했다. production score 파일은 P3에서 수정하지 않았다.
+
+### 3. Experimental Algorithm
+
+- production result의 `comparedItems`만 입력으로 받는다. record 선택, canonical code, same/cross-source compatibility, width/circumference와 unit normalization, exclusion, required gating, coverage, weight는 다시 구현하지 않는다.
+- 각 item은 `effectiveDelta=max(0, abs(delta)-tolerance)`와 방향별 multiplier, 명시적으로 검증된 stretch multiplier만 적용한다. production 호출 경로와 연결되지 않는다.
+
+### 4. Experimental Parameters
+
+- version은 `EXPERIMENTAL-fixture-hypothesis-2026-08-24-v1`이다. production policy가 아니다.
+- 기본 tolerance 0.5cm/방향 multiplier 1.0, chest·waist `1.2/0.8`, hip `1.15/0.85`, thigh `1.1/0.9`, length·sleeve `1.0/1.0`을 오직 deterministic shadow fixture 가설로 사용했다.
+- 별도 production-parity config는 tolerance 0, 양 방향 1.0이다.
+
+### 5. Synthetic Test Results
+
+- 45개 measurement 방향/차이 case가 production parity를 통과했다.
+- tolerance 1cm에서 +1cm는 100점, -3cm×1.5는 85점, +3cm×0.5는 95점으로 경계와 방향이 분리됨을 확인했다.
+- 일반 상의, 셔츠, 니트, 아우터, 팬츠, 데님, 레깅스, 스커트, 원피스 9종은 production eligibility/weight를 그대로 재사용해 모두 confirmed/recommendable이었다.
+
+### 6. Real Fixture Results
+
+- Musinsa: `L 84→87`, `M 84→85`, `S 79→80`, `XL 83→86`.
+- Uniqlo E475941: `3XL 51→58`, `4XL 40→48`, `L 89→92`, `M 100→100`, `S 89→90`, `XL 74→79`, `XXL 62→68`.
+- validated ZARA pants `08372248/582770476`: `L 91→94`, `M 100→100`, `S 91→92`, `XL 81→86`, `XS 81→81`.
+
+### 7. Candidate Ranking Changes
+
+- 전체 16개 candidate 중 동일 rank 14, 변경 2, top recommendation 변경 0이다.
+- Musinsa는 `XL 3→2`, `M 2→3`; Uniqlo와 ZARA는 전부 동일하다. 전체 평균 score delta는 `+2.94`다.
+- pants fixture 기준 9개 중 2개 rank 변경, shirt fixture 7개 중 변경 0이다. rank 변화 자체를 개선으로 판정하지 않는다.
+
+### 8. Coverage / Eligibility Findings
+
+- 기존 `MeasurementComparisonResult.score`, `comparisonCoverage`, `status`를 그대로 사용한다. 새 production DTO/필드를 만들지 않았다.
+- similarity 100, coverage 0.25여도 production status가 `insufficientEvidence`면 experimental `recommendable=false`임을 회귀로 고정했다.
+
+### 9. Undersize vs Oversize Findings
+
+- measurement별 undersize/oversize multiplier를 독립 실험할 수 있다. 낮은 쪽이 항상 나쁘다고 production 전제하지 않았다.
+- 방향별 행동 차이는 확인했지만 사용자 fit 정답이 없어 어느 쪽이 더 적절한지는 검증되지 않았다.
+
+### 10. Stretch Findings
+
+- 현재 parser/product metadata에 scoring에 쓸 수 있는 검증된 stretch flag/composition contract가 없다. `KNIT == VERIFIED_STRETCH`로 추측하지 않는다.
+- shadow scorer도 호출자가 명시적 evidence와 multiplier를 전달할 때만 반영한다. synthetic test에서만 `85→93`을 확인했고 실제 fixture에는 stretch를 쓰지 않았다.
+
+### 11. Experimental Verdict
+
+- `NEEDS_USER_VALIDATION`. 행동 차이는 있으나 사용자 선호/착용 ground truth가 없어 `PROMISING`, `BETTER`, `MORE_ACCURATE`라고 결론 내리지 않는다.
+
+### 12. Data Quality Existing Architecture
+
+- 신규 `unmapped_observation` table을 만들지 않고 migration 105의 private/RLS-enabled `fitmatch_catalog.data_quality_issues`를 확장한다.
+- 기존 `occurrence_count`, `first_seen_at`, `last_seen_at`, `evidence`, `resolution`, `status`를 유지한다.
+
+### 13. Unknown Category Observation
+
+- source category path/code signature가 active source mapping에 없으면 `UNKNOWN_SOURCE_CATEGORY`를 기록하고, 같은 mapping이 생긴 뒤 재관측되면 resolved로 전환하는 경로를 migration에 추가했다.
+- unknown category를 억지 canonical category로 승격하지 않는다.
+
+### 14. Unknown Measurement Observation
+
+- 최신 `runtime_normalize_measurement_v2`를 raw code, raw label, unit, classification category scope와 함께 사용한다.
+- `measurement_alias_not_found`만 `UNKNOWN_MEASUREMENT_ALIAS`로 기록한다. unsupported unit/comparison basis/measurement kind는 `UNSUPPORTED_MEASUREMENT_BASIS`로 분리하고, intentional non-comparable alias와 섞지 않는다.
+- Swift observation payload가 unknown raw code/label/value/representation/evidence를 손실 없이 보존하는 test가 통과했다.
+
+### 15. Classification Conflict Observation
+
+- P1 `ParsedClosetClassification.auditExplicitContradictions` 결과를 observation `raw_payload`에 dimension, trusted→explicit evidence, safety policy version으로 보존한다.
+- backend processing migration은 이를 `CLASSIFICATION_CONFLICT` high-severity issue로 집계하고 최신 observation/product/classification history ID를 evidence에 남긴다.
+- `CATEGORY_NAME_CONTRADICTION`은 같은 사실을 중복 row로 만들지 않고 `CLASSIFICATION_CONFLICT` evidence로 표현한다.
+
+### 16. Aggregation / Fingerprint Behavior
+
+- fingerprint는 normalized `source + issue_code + raw_signature`의 MD5다. unique partial index와 upsert로 상품별 무한 row 생성을 막는다.
+- 재관측 시 같은 ID의 `occurrence_count`를 올리고 `last_seen_at`/latest evidence를 갱신한다. resolved issue 재관측은 이전 resolution을 evidence에 보존하고 active resolution을 비운 뒤 open으로 재개방한다.
+- rollback verification SQL에 1→2회 집계, resolve, 3회째 reopen 및 anon/authenticated execute 차단 검증을 포함했다.
+
+### 17. Semantic Feature Decision
+
+- FIT/MATERIAL/LEG_SHAPE/STRETCH/NECKLINE의 현재 typed consumer가 확인되지 않았고 stretch source도 검증되지 않았다. `product_classification_features` 같은 신규 schema를 만들지 않았다.
+- category/detail/comparison family/length/body length 핵심 계약은 그대로 typed 구조다.
+
+### 18. Evidence Storage Decision
+
+- 현재 `product_classification_history.evidence`와 `data_quality_issues.evidence` JSONB로 rule/conflict/source 분석 근거를 보존할 수 있다. 검증된 별도 analytics query 요구가 없어 normalized evidence table을 만들지 않았다.
+
+### 19. DB/Migration Files Created
+
+- `supabase/migrations/113_p3_data_quality_observability.sql`: 기존 issue ledger에 source/signature/fingerprint, service-role helper, observation issue 연결을 추가한다.
+- `supabase/sql/113_p3_data_quality_observability_verification.sql`: staging/local 전용이며 항상 rollback한다.
+- Supabase 공식 함수 보안 원칙에 맞춰 app role execute를 revoke하고 helper는 empty search path/security invoker로 작성했다. Production apply/write는 0건이다.
+
+### 20. Changed Files
+
+- `FitMatch/Services/FitMatchSupabaseProductResolver.swift`
+- `FitMatchTests/ExperimentalMeasurementScoreV2Tests.swift`
+- `supabase/migrations/113_p3_data_quality_observability.sql`
+- `supabase/sql/113_p3_data_quality_observability_verification.sql`
+- `Docs/CodexSessionHandoff.md`
+
+### 21. Exact Test Commands and Results
+
+- build: `xcodebuild build-for-testing -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchP3DerivedData` → `TEST BUILD SUCCEEDED`.
+- P3: 같은 prefix의 `test-without-building -resultBundlePath /tmp/FitMatchP3Shadow-20260824-v3.xcresult -only-testing:FitMatchTests/ExperimentalMeasurementScoreV2Tests` → 9/9 passed. 실제 fixture log에 candidate별 reference/product 값, signed/absolute delta, tolerance/effective delta, 방향/multiplier, old/new item score, weight, coverage, eligibility, old/new rank를 저장했다.
+- P1/P2/ZARA/sync: `-resultBundlePath /tmp/FitMatchP3-P1P2Regression-20260824.xcresult -only-testing:FitMatchTests/FitMatchP0ProductionPathTests -only-testing:FitMatchTests/ZARAParserPhase1_5Tests -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests -only-testing:FitMatchTests/MeasurementPolicyConsolidationTests -only-testing:FitMatchTests/FitMatchComparisonSyncCoordinatorTests` → 57/57 passed.
+- comparison parity: `/tmp/FitMatchP3-ComparisonParity-20260824.xcresult`에 P2 handoff의 16개 exact identifier를 `-only-testing`으로 실행 → 16/16 passed.
+- 5,026 corpus: `-resultBundlePath /tmp/FitMatchP3-Classification5026-20260824.xcresult -only-testing:'FitMatchTests/CategoryValidation5026AuditTests/testCurrentProductionClassifierReclassifiesAll5026Products()'` → 1/1 passed, `invalid_classification_count=0`, `user_confirmation_required_count=329`.
+- `git diff --check` → clean. SQL은 delimiter/static contract check만 통과했고 DB 실행은 하지 않았다.
+
+### 22. P1/P2 Regression Results
+
+- P1 fail-closed 분류, ZARA parser, closet/sync 경로 57건과 5,026 corpus가 모두 통과했다.
+- P2 source identity/policy 5건은 57건 묶음에 포함됐고, same/cross-source/width-circumference/required gating 16건도 전부 통과했다.
+- production score와 top recommendation을 바꾸는 P3 연결은 0건이다.
+
+### 23. NOT_VERIFIED Items
+
+- 사용자 착용 선호 ground truth가 없어 experimental accuracy는 검증하지 않았다.
+- 실제 source의 verified stretch/material contract가 없어 stretch 실데이터 평가는 하지 않았다.
+- COS/H&M 또는 미검증 ZARA measurement 의미를 추측하지 않았다.
+- `UNMAPPED_PRODUCT`, `UNKNOWN_ATTRIBUTE_VALUE`는 현재 확인된 별도 consumer/signature가 없어 신규 중복 issue를 만들지 않았다. 실제 운영 요구가 확인되면 기존 ledger code로 추가한다.
+
+### 24. Remaining Blockers
+
+- Supabase CLI와 local PostgreSQL server가 없어 migration 113 및 rollback verification SQL을 실제 DB에서 실행하지 못했다. Production apply는 요청상 금지다.
+- staging/local migration apply, verification SQL 실행, advisor 재확인 전에는 DB 관측 경로를 production-ready로 판정할 수 없다.
+- shadow score의 채택 여부는 실제 사용자 pairwise 선호/착용 결과로 검증해야 한다.
+
+### 25. P3 Verdict
+
+- `INCOMPLETE`: Swift shadow infrastructure와 회귀는 완료됐지만 DB migration의 실행 검증이 남아 있다. Production score/rank는 안전하게 그대로이며, migration을 적용하거나 실험 점수를 노출하지 않았다.
+
+### 사용자용 남은 작업 체크리스트 — 쉽게 설명
+
+#### 아직 실제 서비스에 구현되지 않은 기능
+
+- [ ] **새 실험 점수로 추천하기**
+  - 현재 상태: 새 계산법은 테스트 안에서만 결과를 비교할 수 있다. 사용자가 보는 점수와 추천에는 연결하지 않았다.
+  - 왜 안 켰나: Musinsa에서 중간 사이즈 순위가 바뀌었지만 어느 결과가 실제로 더 잘 맞는지 착용 정답이 없다.
+  - 완료 기준: 사용자가 여러 후보를 직접 입어 보고 선호 결과를 제공한 뒤, 기존 점수보다 안전하다는 근거와 별도 승인까지 있어야 한다.
+
+- [ ] **운영 DB에서 미등록 category·measurement·분류 충돌 자동 집계**
+  - 현재 상태: 구현 migration은 작성됐지만 Production DB에 적용하지 않았으므로 실제 운영에서는 아직 작동하지 않는다.
+  - 구현 예정 동작: 같은 미등록 문제가 상품마다 새 행으로 쌓이지 않고 한 건의 발생 횟수로 누적된다.
+  - 완료 기준: staging/local DB에서 migration과 rollback verification이 통과하고, 승인 후 별도 배포 절차로 Production에 적용해야 한다.
+
+- [ ] **stretch를 반영한 실제 추천 점수**
+  - 현재 상태: 테스트용 구조만 있고 실제 상품에는 사용하지 않는다.
+  - 왜 안 켰나: 현재 상품 데이터에 검증된 stretch 값이 없다. 상품명이 ‘니트’라는 이유만으로 잘 늘어난다고 추측하면 잘못된 추천이 될 수 있다.
+  - 완료 기준: 판매처 공식 stretch/material 속성과 그 의미가 검증돼야 한다.
+
+- [ ] **서버가 스스로 category와 상품명 충돌을 재검사하는 기능**
+  - 현재 상태: 최신 iOS 앱이 발견한 충돌 근거를 DB로 전달하는 경로는 구현했다. 하지만 구버전 앱이나 별도 backend batch가 충돌 표시를 보내지 않으면 서버가 독립적으로 다시 찾아내지는 않는다.
+  - 완료 기준: 기존 DB classifier 계약 안에서 동일한 P1 conflict 판정을 재현하고 iOS 결과와 parity test를 통과해야 한다.
+
+- [ ] **DB measurement policy를 앱 비교의 완전한 source of truth로 사용**
+  - 현재 상태: 앱은 검증된 embedded fallback을 사용하므로 offline 비교는 안전하다. DB policy와 Swift policy가 일부 다르고 richer DB metadata가 local record까지 완전히 hydration되지 않는다.
+  - 완료 기준: DB↔embedded policy의 필드별 parity, version 동기화, hydration 손실 없음이 확인돼야 한다.
+
+#### 개발환경에서 직접 실행해야 하는 테스트
+
+- [ ] **migration 113 실제 DB 실행 테스트 — 개발자/AI 작업**
+  - 할 일: local 또는 staging DB에 migration 113을 적용한 뒤 `supabase/sql/113_p3_data_quality_observability_verification.sql`을 실행한다.
+  - 확인할 것: 동일 issue 집계, occurrence 1→2→3 증가, resolve 후 재발 시 reopen, unknown category/measurement/conflict 3종 생성, app role 접근 차단.
+  - 현재 blocker: 이 환경에는 Supabase CLI와 실행 중인 local PostgreSQL server가 없다.
+
+- [ ] **Supabase advisor 재확인 — 개발자/AI 작업**
+  - 할 일: staging 적용 뒤 security/performance advisor를 확인한다.
+  - 확인할 것: RLS/권한 노출, 잘못된 index, function execute 권한 문제가 새로 생기지 않았는지 확인한다.
+
+- [ ] **전체 FitMatch test suite 실행 — 개발자/AI 작업**
+  - 현재 완료: P3 9건, P1/P2/ZARA/sync 57건, 비교 parity 16건, 5,026개 분류 corpus 1건은 통과했다.
+  - 아직 필요한 것: repository 전체 unit suite를 최종 코드로 완주하고 기존에 알려진 unrelated failure와 신규 failure를 구분한다.
+
+- [ ] **실제 관측 E2E — 실제 iPhone·로그인 필요**
+  - 할 일: 승인된 staging 환경에서 로그인한 실제 앱으로 unknown category 상품, unknown measurement 상품, category/name 충돌 상품을 각각 한 번 분석한다.
+  - 확인할 것: 앱은 계속 fail-closed이고, backend issue만 누적되며, 사용자 추천이 잘못 열리지 않는지 확인한다.
+
+#### 사용자가 직접 확인해야 하는 테스트
+
+- [ ] **사이즈 추천 착용 비교**
+  - 가장 필요한 데이터: 같은 기준 옷에 대해 한 단계 작은 후보, 비슷한 후보, 한 단계 큰 후보를 직접 입어 본 결과.
+  - 알려줄 내용: 어떤 사이즈가 가장 적절했는지, 작은 쪽과 큰 쪽 중 어느 불편이 더 컸는지, 가슴·허리·총장 중 무엇이 결정적이었는지.
+  - 이 결과가 있어야 undersize/oversize penalty와 tolerance가 실제로 도움이 되는지 판단할 수 있다.
+
+- [ ] **실제 iPhone 상품 분석 확인**
+  - 확인할 화면: Musinsa·Uniqlo·검증된 ZARA 상품 분석과 비교 화면.
+  - 확인할 내용: 기존 추천 점수와 1위가 바뀌지 않았는지, 분류 충돌 상품은 확인 요청으로 멈추는지, offline에서도 기존 비교가 되는지.
+
+#### 지금 당장 사용자에게 바뀌는 것
+
+- 현재 앱 화면과 추천 결과에는 의도적인 변화가 없다.
+- 잘못 검증된 새 점수를 사용자에게 보여 주지 않도록 막아 둔 상태다.
+- 이번에 완성된 것은 **안전하게 실험하고 문제를 추적하기 위한 개발 기반**이며, DB migration과 새 점수의 production 활성화는 아직 남은 작업이다.
+
+## 2026-08-24 P2 측정 출처·비교 정책 안전 통합
+
+- 실제 로컬 경로는 parser의 `ParsedMeasurement` → `GarmentMeasurementRecord`/SwiftData → `MeasurementComparisonEngine`이며, DB runtime DTO의 richer measurement metadata는 아직 이 로컬 비교 record로 hydration되지 않는다. 앱의 production score와 추천 순위 source of truth는 계속 로컬 엔진이다.
+- `MeasurementComparisonEngine`과 직접 비교 가능성 판정에 있던 `uniqlo`/`musinsa`/`fitmatch`/`manual` 문자열 분기를 제거했다. 먼저 `Product.sourcePlatformCode`, `UserFit.sourcePlatformCode`의 canonical source를 사용하고, 없는 과거 로컬 record만 `methodSource` 첫 machine token으로 해석한다. `html`, `actual-size`, `unknown` 같은 generic channel은 source로 인정하지 않으며 `manual_*`만 기존 동작을 위해 `fitmatch` legacy fallback으로 유지한다.
+- canonical source가 있는 검증된 신규 merchant는 공통 엔진에 이름을 추가하지 않아도 동일 source/profile/raw field 비교가 가능하다. canonical source도 없고 generic `methodSource`뿐인 record는 raw field 직접 비교를 열지 않아 fail-closed다. 기존 `methodSource`, `methodProfile`, `rawCode`, `rawLabel`, `rawValueText`는 삭제하거나 변경하지 않았다.
+- 기존 Swift policy 수치를 `MeasurementComparisonPolicySnapshot.embeddedProductionV1`으로 분리하고 버전 `fitmatch-production-measurement-policy-2026-08-24-v1`, source `embedded_fallback`을 엔진에서 조회할 수 있게 했다. 비교 때 Supabase를 조회하지 않으며 DB/offline 장애가 비교 기능을 막지 않는다. 점수식 `100 - abs(delta) * 5`, clamp/round, weight 합산과 순위 로직은 변경하지 않았다.
+- DB↔Swift policy 감사 결과는 다음과 같다.
+
+| 항목 | 판정 | 근거/처리 |
+|---|---|---|
+| measurement weight | `SWIFT_MORE_SPECIFIC` | Swift production 값은 category/detail별 수치가 완전하나 현재 local DB bundle의 garment policy와 완전 parity가 아니다. 값은 변경 없이 versioned embedded fallback으로 이동했다. |
+| required measurement | `CONFLICT` | bundle은 예: tshirt/shirt에 chest+total length를 요구하지만 Swift는 shoulder/chest 중 1개와 총 2개를 요구한다. production 결과 보존을 위해 DB 값을 활성화하지 않았다. |
+| required-any/minimum-required-any | `SWIFT_MORE_SPECIFIC` | 상의·하의의 any-gating이 Swift에 더 구체적이다. 그대로 유지했다. |
+| minimum common measurement | `SAME`/category별 `CONFLICT` | 공통적으로 2개인 범위가 많지만 outer/dress 등 필수 축 의미는 다르다. 숫자만 같다고 parity로 간주하지 않았다. |
+| short/sleeveless detail override | `SWIFT_MORE_SPECIFIC` | 소매 weight 0/0.2 override가 Swift에 있다. 유지했다. |
+| source alias/raw representation/comparison basis | `DB_MORE_SPECIFIC` | DB DTO는 richer metadata를 제공하지만 local hydration이 아직 없어 Swift가 raw label legacy 판정을 사용한다. 이번 변경에서 추측 매핑하지 않았다. |
+| policy version/source trace | `MISSING_IN_SWIFT` → 보완 | embedded fallback의 version/source를 명시했다. validated DB snapshot 연결은 parity 완료 전까지 비활성이다. |
+
+- 새 회귀 `MeasurementPolicyConsolidationTests` 5/5는 canonical source 우선, merchant-agnostic legacy fallback, generic unknown fail-closed, 신규 merchant raw direct comparison, embedded policy 값/버전을 검증한다. 기존 measurement/무신사/유니클로 회귀 16/16, P0+ZARA+closet hydration 50/50, build-for-testing이 모두 통과했다. 최종 코드 기준 xcresult는 `/tmp/FitMatchP2BaselineDerivedData/Logs/Test/Test-FitMatch-2026.08.24_12-08-58-+0900.xcresult`(새 회귀 5건), `/tmp/FitMatchP2BaselineDerivedData/Logs/Test/Test-FitMatch-2026.08.24_12-10-02-+0900.xcresult`(기존 측정 회귀 16건), `/tmp/FitMatchP2BaselineDerivedData/Logs/Test/Test-FitMatch-2026.08.24_12-04-06-+0900.xcresult`(P0+ZARA+closet 50건)다.
+- 정확한 공통 명령 prefix는 `xcodebuild test-without-building -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchP2BaselineDerivedData`다. 여기에 새 회귀는 `-only-testing:FitMatchTests/MeasurementPolicyConsolidationTests`, 50건 회귀는 `-only-testing:FitMatchTests/FitMatchP0ProductionPathTests -only-testing:FitMatchTests/ZARAParserPhase1_5Tests -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests`를 사용했다. 16건 회귀 identifier는 `samePlatformAndFormatUsesMatchingSourceFieldsDirectly()`, `comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat()`, `differentPlatformFormatsRequireCanonicalMeasurementCodes()`, `measurementComparisonUsesOnlyIdenticalVerifiedCodes()`, `measurementComparisonExcludesDifferentSleeveDefinitions()`, `bottomComparisonRequiresTwoCoreWidthMeasurements()`, `bottomWidthAndLengthAloneDoNotConfirmRecommendation()`, `outerComparisonRequiresChestAndOneAdditionalMeasurement()`, `outerShoulderAndSleeveWithoutChestAreInsufficient()`, `musinsaAndUniqloCompareCommonUpperMeasurementsButExcludeSleeve()`, `crossPlatformBottomWidthsCompareWhileOutseamAndInseamStaySeparate()`, `uniqloBottomCircumferencesBecomeWidthsAndPreserveRawValues()`, `musinsaActualSizePreservesRawFieldsAndRaglanMeaning()`, `uniqloOfficialTopComparisonKeepsSleeveAndHasNoManualPenalty()`, `musinsaBottomWidthsAndExplicitLengthsUseCommonCodes()`, `migrationVersionSevenHalvesUniqloCircumferencesExactlyOnce()`이며 각각 `-only-testing:FitMatchTests/FitMatchTests/<identifier>`로 지정했다. 첫 변경 전 명령은 identifier에 `()`를 빠뜨려 0건 실행됐으므로 baseline 통과 근거에 포함하지 않았다.
+- 운영 Supabase write, migration apply/create, seed, UPDATE, DELETE, backfill, commit, push는 수행하지 않았다. DB policy와 embedded policy가 현재 내용상 충돌하므로 validated snapshot을 production provider로 연결하지 않았다.
+- 남은 P2 blocker는 (1) production DB policy export와 embedded fallback의 필드별 parity 확정, (2) DB runtime measurement의 `comparison_basis`/policy version을 local record로 손실 없이 hydration하는 backward-compatible 계약, (3) raw representation을 SwiftData schema 변경 없이 보존할 방법 또는 명시적 schema migration, (4) `GarmentLengthInferencePolicy`의 merchant별 길이 threshold를 검증된 policy data로 옮기는 작업이다. 외부 측정 의미를 추측하지 않고 `NOT_VERIFIED_EXTERNAL`로 유지한다. 따라서 전체 P2 verdict는 현재 `INCOMPLETE`이며, 이번 적용분 자체는 production score/rank를 바꾸지 않는 안전한 기반 보완이다.
+
+## 2026-08-24 P1 명시적 분류 충돌 fail-closed 보완
+
+- `ParsedClosetClassification`의 기존 상품명·source 해석기를 재사용해 공식 source category/detail과 상품명이 명시적으로 반대되는 category, garment family, length를 별도 safety audit로 기록한다. 새 generic engine이나 taxonomy table은 만들지 않았고, 기존 분류 결과 및 점수식은 변경하지 않았다.
+- 긴소매 source/반팔 상품명, 반소매 source/긴팔 니트 가디건, 상의/스커트, 속옷/그래픽 티셔츠는 자동 확정 대신 `classification_conflict`와 `canonicalEligibility=false`로 표시된다. 비교 화면은 기존 카테고리 확인 UI로 보내며, 사용자가 직접 확인한 뒤 제품을 다시 만들 때만 비교가 가능하다.
+- standard-size fallback을 포함한 모든 `RecommendationService` 진입점에서 product/reference의 canonical eligibility를 확인한다. 따라서 분류 충돌 상품이나 기준 옷은 실측 비교뿐 아니라 기준표 우회 경로로도 추천·strict comparison에 진입하지 않는다. canonical profile hydration도 이미 기록된 conflict 상태를 덮어쓰지 않는다.
+- 조거 팬츠/파라슈트 카고 팬츠, ZARA Sleeveless Tops/Fine Knit Top, 복합 셔츠재킷, UNIQLO Innerwear의 검증된 cotton T 예외, 민소매 T source의 bra-construction 예외는 오탐으로 차단하지 않는 regression fixture로 고정했다.
+- 검증 결과: `build-for-testing` 성공. `FitMatchP0ProductionPathTests` 28/28, `ZARAParserPhase1_5Tests` 20/20, `CategoryValidation5026AuditTests.testCurrentProductionClassifierReclassifiesAll5026Products` 1/1 통과했다. 결과 번들은 `/tmp/FitMatchP1P0Tests-20260824-v2.xcresult`, `/tmp/FitMatchP1ZARATests-20260824.xcresult`, `/tmp/FitMatchP1Corpus5026-20260824.xcresult`다.
+- Production Supabase write/migration/seed/backfill/commit/push는 수행하지 않았다. 현재 conflict는 앱 로컬 eligibility/debug trace까지 연결되며 `data_quality_issues` 영속 집계에는 아직 쓰지 않는다. 운영 DB runtime resolver 자체의 conflict 판정 동등화와 read-only production 재검증은 별도 승인·연결 환경이 필요하다.
+
+## 2026-08-21 ZARA 식별자 정정·사용자 가시 WKWebView PoC (현재 권위 상태)
+
+- 아래의 `ZARA KR 공식 실측·카테고리 연동 초안`에서 `analytics.productId`를 size API ID로 본 결론은 폐기됐다. 실제 endpoint는 URL `v1`과 일치하는 `analytics.catentryId`를 사용한다. style, v1/catentry, 내부 productId, productRef는 서로 별도로 보존한다.
+- DEBUG 전용 `ZARAWebViewMetadataAudit`를 추가했다. 일반 browser 동작의 ephemeral WKWebView를 사용자에게 보이게 렌더링하고, 사용자가 `비필수 쿠키 거부 후 읽기`를 명시적으로 선택한 뒤 analytics/JSON-LD를 읽는다. CAPTCHA/challenge 우회, custom fingerprint, private cookie는 사용하지 않는다.
+- iPhone 17 Pro Simulator(iOS 26.3)에서 티셔츠 `04087432/585646273`, 셔츠 `04166166/545490346`, 팬츠 `06861017/555813567` 3개가 identity 검증과 `catentryId` size API `garment_measure` 응답에 성공했다. 최초 쿠키 선택 전 자동 capture는 `identity_unresolved`였고, 선택 후 성공했다.
+- `ZARAParser`는 이제 size API에 catentry만 전달한다. targeted ZARA 15/15, URL dispatch·기존 ZARA·provider 선택 회귀 5/5가 통과했다. 전체 unit suite와 실제 iPhone은 미실행이다.
+- 일반 사용자 ZARA 지원은 `ZARAIntegrationAvailability` gate로 닫혀 있다. 공개 공식 metadata API/제휴 권한, 실제 iPhone 안정성, measurement basis, staging DB mapping이 검증되기 전에는 production 지원으로 표시하지 않는다. 운영 Supabase migration/seed/write는 수행하지 않았다.
+- 현재 증거 manifest는 `ZARAAudit/zara_webview_poc_samples.jsonl`, 상세 정정은 `FitMatch-ZARA-Phase1.5-Blocker-Resolution-20260821.md`에 있다. 과거 internal productId cache/body-only 결과는 잘못된 API ID의 역사적 증거로만 남긴다.
+
+## 2026-08-21 ZARA KR 공식 실측·카테고리 연동 초안
+
+> 후속 상태: 위 `ZARA 식별자 정정·사용자 가시 WKWebView PoC`로 식별자와 API coverage 결론이 대체됐다.
+
+- 공식 실측 endpoint `itxrest/4/catalog/store/11717/product/{productId}/size-measure-guide?locale=ko_KR`를 확인했다. 명시적 iPhone User-Agent, JSON Accept, 한국어 Accept-Language로 실제 `498702922` 응답은 200 JSON이었고, 헤더 없는 기본 요청은 403이었다. `measureGuideInfo`만 의류 실측으로 쓰고 `sizeGuideInfo` 단독 응답은 신체 권장치이므로 절대 비교 데이터로 대체하지 않는다.
+- `ZARAParser`는 명확한 chest/front-back length/sleeve/shoulder/하의 실측 코드만 매핑한다. `back-width`와 `arm-width` 같은 불명확 정의는 unknown record로 보존하며 다른 치수로 추정하지 않는다. measure guide가 없거나 body-size guide만 있으면 partial/자동 비교 불가로 fail-closed다.
+- 공식 상품 UI에는 `zara.analyticsData.productId`가 있지만, 앱과 같은 URLSession으로 상품 HTML을 직접 받으면 Akamai interstitial이 관찰됐다. 따라서 현재 URL parser는 challenge를 감지해 중단한다. URL에서 내부 productId를 안정적으로 resolver하는 공식 계약 또는 실기기 검증 전에는 ZARA URL 붙여넣기 성공을 보장할 수 없다.
+- 공식 KR GNB와 product metadata `MAN/WOMAN + family`를 기준으로 남성 11개·여성 15개 의미 기반 의류 category seed를 `fitmatch_supabase_seed_zara_categories.sql`에 만들었다. 혼합 landing category는 자동 매핑하지 않는다. `supabase/migrations/20260820223726_add_zara_observation_source.sql`은 observation source allowlist에 zara를 추가한다.
+- 운영 Supabase에는 migration/seed를 아직 적용하지 않았고, ZARA parser XCTest는 빌드가 진행 중인 derived data lock 때문에 완료 판정을 내리지 못했다. 상세 근거와 적용 순서는 `Docs/ZARAIntegrationAnalysis-20260821.md`에 있다.
+
+## 2026-08-21 COS KR 공식 실측·카테고리 연동 초안
+
+- COS KR 실제 상품 페이지 `1349394002`에서 article 번호와 색상 상품 코드가 다름을 확인했다. 페이지의 `slitmCd=40B1490048`와 `sectId=254652`로 공식 `getSizeGuide` 엔드포인트를 요청해야 하며, article 번호는 `styleNo`로만 보존한다.
+- 해당 상품의 공식 사이즈 가이드는 S–XXL 의류 실측이다. M 기준 어깨 43.0cm, 가슴단면 53.5cm, 등기장 64.0cm, 소매 25.25cm를 실제 COS UI에서 확인했다. `COSParser`는 공식 페이지에서 두 API 식별자를 추출하고, 공식 차트의 어깨·가슴단면·등기장·소매 등 정의가 명확한 값만 FitMatch comparison measurement로 매핑한다. 실패 시 추정하지 않고 partial/자동 비교 불가로 반환한다.
+- 서버 직접 요청은 COS Akamai 403이었으나 브라우저의 공식 상품 페이지/사이즈 가이드는 정상 확인됐다. 따라서 API 응답의 실제 JSON 원문 계약을 별도 실기기에서 재검증해야 한다. 현재 decoder는 HTML 표와 header/row 형식 JSON을 보수적으로 처리하며, 맞지 않으면 fail-closed다.
+- 공식 GNB는 여성·남성 합계 99개 노드였다. 캠페인/에디트/신상품/모두보기처럼 여러 구조를 혼합한 landing node를 제외하고 FitMatch 의류 분류에 쓸 60개 노드를 `fitmatch_supabase_seed_cos_categories.sql`로 생성했다. COS `sectId`를 external ID로 보존하고, leaf의 FitMatch 대·세부 카테고리를 모두 채운다. `public.sources(code='cos')` 선행이 필요하며 운영 DB에는 아직 실행하지 않았다.
+- COS 접근 URL, 식별자, 매핑 원칙과 실행 순서는 `Docs/COSIntegrationAnalysis-20260821.md`에 있다. `COSParser` size guide fixture 테스트 2건을 추가했다. 코드 컴파일은 진행됐으나 Simulator 서비스/SwiftPM cache 권한 오류로 테스트 실행 완료 판정을 내리지 못했다.
+
+## 2026-08-20 connectDB 회원 탈퇴 및 로그인 제공자 확장 경계
+
+- My 화면에 복구 불가능한 삭제 범위를 알리는 2차 확인형 `회원 탈퇴`를 추가했다. 성공 시 Supabase 계정과 사용자 소유 서버 row를 삭제하고, 로컬 `UserFit`·`RecommendationHistory`·동기화 owner/pending-delete 캐시를 제거한 뒤 로그인 화면으로 돌아간다. 공용 쇼핑몰 상품 카탈로그는 삭제하지 않는다.
+- 앱은 `FitMatchAccountDeletionServicing` 경계를 통해 인증된 `delete-account` Edge Function만 호출한다. 앱에는 publishable key만 유지하며 service-role key는 서버 함수 안에서만 사용한다. 함수는 confirmation token, gateway JWT, `auth.getUser()`를 모두 확인한 뒤 hard delete한다.
+- 운영 Supabase에 `delete-account` v1을 배포했다. 상태 `ACTIVE`, `verify_jwt=true`, 함수 ID `8ce51490-2669-46ca-b4aa-44a9ec538bce`, 인증 헤더 없는 실제 호출은 `401 UNAUTHORIZED_NO_AUTH_HEADER`로 차단됐다.
+- `auth.users` 참조를 재검증한 결과 사용자 소유 FK 18개는 `ON DELETE CASCADE`, 분류 감사의 `product_classification_history.reviewed_by` 1개만 의도적으로 `SET NULL`, Storage bucket은 0개다. 따라서 현재 DB에는 계정 hard delete를 막는 restrict/storage owner가 없다. 기존 advisor INFO/WARN 외 이번 함수 때문에 생긴 DB schema 문제는 없으며 DDL은 변경하지 않았다.
+- `FitMatchAuthSessionStoreTests`와 `FitMatchClosetSyncCoordinatorTests` 6개가 통과했다. 최초 실행은 새 테스트 파일의 Foundation import 누락으로 빌드 중단됐고 보완 후 최종 `/tmp/FitMatchAccountDeletion-20260820-3.xcresult`에서 6/6 통과했다.
+- Apple 공식 요구사항상 Sign in with Apple 계정은 가능하면 Apple REST API로 provider token도 revoke해야 한다. 현재 Supabase `signInWithIdToken`/admin user delete만으로 Apple token은 자동 revoke되지 않으며, 기존 로그인은 Apple authorization code/refresh token을 저장하지 않아 자동 revoke가 불가능하다. Apple 공식 fallback에 따라 탈퇴 확인창과 앱 개인정보처리방침에 `iPhone 설정 > Apple 계정 > Apple로 로그인 > FitMatch 제거` 안내를 추가했다. 완전 자동화를 하려면 후속 단계에서 authorization code를 서버로 보내 Apple token을 교환·암호화 보관하고 삭제 전에 revoke하는 별도 보안 작업이 필요하다.
+- 카카오·네이버는 지금 버튼/SDK를 추가하지 않았다. 추후 각 identity를 같은 Supabase user에 명시적으로 link하고, FitMatch 계정 삭제는 현재 provider-neutral 함수를 재사용하되 각 제공자의 원격 권한 revoke adapter를 삭제 전 단계에 추가한다. 이메일이 같다는 이유만으로 계정을 자동 병합하면 안 된다.
+- 앱 내 개인정보처리방침과 `Docs/AppStorePrivacyPolicyDraft-20260806.md`를 계정·Supabase 동기화·회원 탈퇴 기준으로 갱신했다. 실제 Apple 계정 가입→데이터 저장→탈퇴 destructive E2E, 공개 웹 개인정보처리방침 게시, App Store Connect App Privacy 답변 갱신은 아직 수행하지 않았다.
+
+## 2026-08-19 connectDB Apple 정식 로그인 1단계
+
+- 기존 `ContentView.LoginView`를 그대로 사용하면서 가짜 로컬 로그인 분기를 제거하고, `SignInWithAppleButton`의 native credential을 Supabase `signInWithIdToken(provider: .apple)`에 nonce와 함께 전달하도록 연결했다. Google·Kakao·Naver 버튼 호출부는 요청대로 주석 처리했다.
+- `FitMatchAuthSessionStore`가 Supabase 세션 복구/auth state 변화/로그아웃을 단일 관리한다. `ContentView`는 인증 전 로그인 화면, 인증 후 기존 메인 탭을 표시하며 My 화면의 로그아웃 메뉴도 실제 Supabase 로그아웃에 연결됐다.
+- 앱 entitlement에 `com.apple.developer.applesignin = Default`를 추가했다. 앱에는 기존 publishable key만 사용하고 secret/service-role key는 사용하지 않는다. DB 도메인 클라이언트의 자동 anonymous sign-in은 제거해 정식 사용자 세션만 사용자 전용 RPC에 전달되도록 했다.
+- generic iOS Simulator `build-for-testing`이 성공했고, Apple nonce 생성/해시 단위 테스트 2/2가 iPhone 17 Pro Simulator에서 통과했다. 결과는 `/tmp/FitMatchAuthTests-20260819-0728.xcresult`다.
+- 사용자가 Apple Developer App ID capability와 Supabase Apple provider/Client ID 설정을 완료했다고 확인했다. 이후 generic iOS 실기기용 자동 서명 빌드도 성공했으며, 서명 결과에 `application-identifier=Y344H87QC5.com.ljy4337.fitmatch`, `com.apple.developer.applesignin=[Default]`, 기존 App Group이 모두 포함됐다. 연결된 iPhone 14 Pro가 `unavailable` 상태여서 설치·실제 계정 로그인 검증은 아직 수행하지 못했다.
+- 실제 계정 E2E의 남은 작업은 iPhone 연결 복구 후 최초 로그인·앱 재실행 세션 복구·로그아웃 확인이다.
+- 옷장/비교 UI의 DB source-of-truth 전환은 사용자 지시대로 아직 시작하지 않았다. Apple 로그인 실기기 검증을 통과한 뒤 별도 단계로 진행한다.
+
+## 2026-08-19 connectDB 도메인 경계·상품 런타임 조회 계약
+
+- 2026-08-18의 `FitMatchSupabaseProductResolver` 단일 RPC 구현을 확장해 `FitMatchSupabaseDomainClient`와 `FitMatchDatabaseDomainServicing` 경계를 만들었다. 하나의 인증 세션으로 상품 resolve/runtime 조회, 옷장 등록, 기준 옷 후보 조회, 비교 시작, 비교 결과 저장 RPC를 호출한다. 기존 resolver 이름은 typealias로 유지했다.
+- 상품 runtime DTO에 공용 상품, 현재 canonical 분류, variant, DB `product_size_id`, raw/canonical 실측, 비교 가능 여부·정규화 정책 버전을 포함했다. 이 단계는 계약/클라이언트 구현이며 옷장·비교 화면의 source of truth는 아직 로컬 엔진에서 DB로 전환하지 않았다.
+- UUID만 알면 private catalog 전체를 읽는 초기 RPC 안은 보안 검토에서 폐기했다. 운영 Supabase에 `add_scoped_product_runtime_read_contract`(20260818154520)를 적용했다. 같은 retailer API payload의 source/product ID/name/path fingerprint와 제공된 audience/category codes가 DB current와 일치할 때만 `fitmatch_get_product_runtime(jsonb)`가 필요한 projection을 반환한다. anon 실행권은 없고 authenticated/service_role만 실행 가능하다.
+- 운영 인증 컨텍스트에서 `E492538`은 `ready`, comparison ready, variant 2, size 12, measurement 72를 반환했다. 이름·경로를 변조한 동일 ID 호출은 `product_evidence_mismatch`로 차단됐다. DB 테스트 transaction은 rollback됐고 운영 상품/사용자 데이터는 변경하지 않았다. 적용 후 `fitmatch_qa.validate_product_runtime_v3()`도 `passed=true`, Gold 5,026/5,026, 모순/공개 권한 누수 0을 유지했다.
+- 앱 전체 generic iOS Simulator `build-for-testing`이 성공했다. `FitMatchSupabaseProductResolverTests` 6건이 iPhone 17 Pro Simulator에서 모두 통과했다. 새 검증은 runtime JSON의 size UUID와 canonical measurement decoding을 포함한다. xcresult는 `/tmp/FitMatchConnectDBDomain/Logs/Test/Test-FitMatch-2026.08.19_00-49-26-+0900.xcresult`다.
+- Supabase advisor에 새 schema/index 오류는 없고, 새 공개 RPC는 기존 앱 RPC와 같은 `authenticated SECURITY DEFINER` WARN이 추가됐다. 고정 search path, auth 확인, strict payload evidence, anon revoke로 의도적으로 제한했다. private catalog의 RLS+무정책 INFO와 leaked-password protection WARN은 기존대로 남아 있다.
+- 남은 실제 전환 작업은 정식 로그인 또는 anonymous auth 선택, 옷장/비교 화면 orchestration 연결, DB 입력↔Swift 입력 및 결과 전 필드 shadow parity다. 인증과 parity 없이 DB 결과를 사용자-facing source of truth로 켜면 안 된다.
+
+## 2026-08-18 connectDB 1단계 shadow 연동
+
+> 후속 상태: 위 2026-08-19 도메인 경계·상품 런타임 조회 계약으로 확장됐다.
+
+- `connectDB` 브랜치에 공식 `supabase-swift` 2.53.0을 추가하고 `fitmatch_resolve_product` RPC용 DTO/클라이언트를 구현했다. 앱에는 publishable key만 포함하며 secret/service-role key는 포함하지 않는다.
+- 상품 API 파싱 완료 후 `ShoppingProductViewModel`이 DB를 shadow 조회한다. 현 단계에서는 로컬 분류/추천 결과를 사용자에게 그대로 제공하고, DB 결과는 `matched`, `mismatch`, `reviewRequired`, `unavailable` 상태와 Debug 로그로만 기록한다. DB 장애가 기존 앱 동작을 막지 않는다.
+- 알려진 상품의 DB current+confirmed 결과가 로컬과 완전 일치할 때만 matched다. 신규·변경·검토 필요·미분류·비교 불가 결과는 자동 채택하지 않고 reviewRequired로 남긴다.
+- DB 검증에서 `E482202 립브라탑(컬러블록)`이 `underwear/women_bra`인데 family만 `tshirt`인 모순 1건을 발견했다. migration 097을 운영 DB에 적용해 family를 `underwear`로 교정했고, 로컬 분류도 쇼핑몰 T셔츠 경로보다 확정된 속옷 major를 우선하도록 수정했다.
+- 적용 후 `fitmatch_qa.validate_product_runtime_v3()`는 `passed=true`, 상품 1,577, 스냅샷 3,842, Gold 5,026/5,026, category-family 모순 0이다.
+- 신규 테스트 3건은 iPhone 17 Pro Simulator에서 모두 통과했고 generic iOS `build-for-testing`과 서명 제외 Release iOS 빌드도 성공했다. 기존 DB 판정 207건과 현재 production 5,026건 분류 회귀도 각각 통과했다. 5,026건 결과는 output 5,026, invalid 0, 사용자 확인 필요 329다. 현재 유니클로 전체 카탈로그 감사는 첫 상품 처리 직후 simulator test host가 잘못된 포인터 free로 종료되어 통과로 계산하지 않는다. 실패 결과 번들은 `/tmp/FitMatchConnectDBSimulator/Logs/Test/Test-FitMatch-2026.08.18_23-45-57-+0900.xcresult`, 5,026 통과 번들은 `/tmp/FitMatchConnectDBSimulator/Logs/Test/Test-FitMatch-2026.08.18_23-48-27-+0900.xcresult`다.
+- 현재 Supabase 프로젝트는 anonymous sign-in이 비활성화되어 있다. `fitmatch_resolve_product`는 authenticated 전용이므로 실제 앱 shadow 호출을 사용하려면 Dashboard에서 anonymous sign-in을 활성화하거나 정식 로그인 세션을 먼저 도입해야 한다. 권한을 anon으로 낮추거나 secret key를 앱에 넣으면 안 된다.
+- 아직 DB 분류를 사용자 결과의 source of truth로 전환하지 않았고, 옷장 저장·비교 후보·실측 준비·결과 저장 RPC도 앱에 연결하지 않았다. 다음 단계는 shadow 로그 표본 검증 후 승인받아 진행한다.
+
 ## 2026-08-16 DB·앱 207건 판정 적용
 
 - 사용자 명시 승인으로 운영 DB에 074를 직접 실행했고, 이어 최신 production XCTest 첨부 5,026건 전체를 QA와 `product_classification_decisions` 양쪽에 `swift-production-2026-08-16-v3`로 직접 동기화했다. 최초 전 필드 대조에서 133건의 잔여 차이를 발견해 일부만 맞추는 방식을 중단하고 전수 결과를 canonical source로 사용했다.
@@ -1741,3 +2148,535 @@ git diff -- '*.swift' | grep -E \
 - 최근 로컬 결과 124건을 adapter로 변환한 결과 유니클로 76상품/471사이즈/2,216 numeric 실측, 무신사 48상품/121사이즈/398실측, 빈 상품명·경로 0이다. 아직 Keychain에 secret key가 없어 실제 124건 backfill 배치는 실행하지 않았다. 최초 command 실행 때 키를 한 번 입력하면 현재 관측 범위를 backfill하고 이후 batch version 기준 증분 처리한다.
 - 유니클로 `E479751`처럼 base URL이 `/00` 404로 잘못 redirect되는 경우를 위해 상세 수집기가 base → `/01` → `/00` 후보를 순서대로 재시도하도록 보완했다.
 - 앱/Swift 연결 로직은 이번 작업에서 수정하지 않았다. Supabase advisor에 새 batch 관련 보안/성능 경고는 없고 기존 private RLS INFO, 인증 사용자용 definer WARN, leaked-password protection WARN만 유지된다.
+
+## 58. 2026-08-19 인증 사용자 옷장 CRUD 계약 적용
+
+- 운영 Supabase 프로젝트 `hnkplvyegonlhumlejst`에 `authenticated_closet_crud_contract_v1`을 적용했다. 로컬 재현 파일은 `supabase/migrations/099_authenticated_closet_crud_contract.sql`이다.
+- `closet_items`에 앱 UUID 기반 멱등 키 `client_item_id`, fit memo/preference/satisfaction, 원본 실측 record, client snapshot/timestamp, `sync_revision`을 추가했다. `(user_id, client_item_id)` 중복과 동일 사용자·성별·category/detail 내 복수 대표 옷을 DB constraint/index로 막는다.
+- 앱 공개 RPC는 `fitmatch_upsert_closet_item`, `fitmatch_list_closet_items`, `fitmatch_set_closet_reference`, `fitmatch_delete_closet_item` 네 개다. 모든 함수는 authenticated 전용, `auth.uid()`/소유권 검증, 빈 `search_path`를 적용했다. authenticated의 `closet_items` 직접 DML 권한은 회수했다.
+- catalog-linked 옷장은 current canonical classification을 snapshot으로 사용한다. 수동/unlinked 옷장은 안전하게 번역 가능한 broad family만 garment type으로 연결하며 지원하지 못하는 조합은 `review_required`로 저장해 자동 비교를 fail-closed한다.
+- Swift의 `FitMatchSupabaseDomainClient`에 네 RPC용 DTO와 호출 API를 추가했다. 기존 `MyClosetView`와 SwiftData CRUD는 사용자의 별도 앱 연결 지시 전까지 변경하지 않았다.
+- unauthenticated list 호출은 `authentication_required`를 반환했고 새 RPC 네 개의 anon execute=false/authenticated execute=true를 확인했다. generic iOS Simulator Debug build가 성공했고 `FitMatchSupabaseProductResolverTests` 7/7이 통과했다. 새 옷장 응답의 canonical snapshot, null 축, 원본 실측 record 디코딩도 회귀로 고정했다.
+- 다음 단계는 실제 Apple 로그인 세션으로 upsert→list→reference 전환→soft delete를 통합 검증한 뒤, SwiftData를 캐시/outbox로 두는 화면 sync 계층을 연결하는 것이다.
+
+## 59. 2026-08-19 SwiftData 옷장과 Supabase 동기화 연결
+
+- 운영 Supabase에 `closet_sync_hydration_contract_v1`을 적용했다. 로컬 재현 파일은 `supabase/migrations/100_closet_sync_hydration_contract.sql`이다. `fitmatch_list_closet_items`가 재설치 복원에 필요한 `external_product_id`, `product_audience`, `source_category_codes`를 사용자 소유 옷장 행을 통해 반환한다. anon execute=false/authenticated execute=true와 함수 본문을 재검증했다.
+- `FitMatchClosetSyncCoordinator`를 추가하고 `ContentView`의 로그인 세션·SwiftData 변경 감지에 연결했다. `UserFit.id`를 서버 `client_item_id`로 재사용해 SwiftData schema 변경 없이 멱등 upsert한다. 기존 화면은 로컬 SwiftData를 계속 읽고 서버는 장기 원본 역할을 한다.
+- 서버 최신 항목은 로컬에 적용하고, 로컬 최신/신규 항목은 catalog resolve 후 옷장 RPC로 저장한다. catalog가 없거나 안전한 family를 만들 수 없는 항목은 공용 상품을 오염시키지 않고 unlinked/manual snapshot으로 저장한다. 부분 실패는 `pendingRetry`로 남겨 다음 pass에서 재시도한다.
+- `MyClosetView`와 `ClosetItemDetailView`의 로컬 삭제 뒤 사용자별 tombstone을 기록하고 서버 soft-delete가 성공할 때 제거하도록 연결했다. 계정이 바뀌면 이전 계정의 옷장·비교 기록을 지운 뒤 새 계정 서버 데이터를 복원하며, 공용 상품 캐시는 유지한다.
+- 서버 단독 유니클로 옷장 행을 빈 SwiftData에 복원하는 회귀 테스트를 추가했다. stable item UUID, 공용 상품/사이즈 FK, `E492123`, 원본 category code, FitMatch tops/shirt, 실측값 복원을 검증했다.
+- generic iOS Simulator Debug 전체 build가 통과했고 Supabase DTO/옷장 동기화 targeted test는 8/8 통과했다. 결과 bundle은 `/tmp/FitMatchClosetSyncDerivedData/Logs/Test/Test-FitMatch-2026.08.19_09-39-19-+0900.xcresult`다.
+- 남은 작업은 (1) 현재 추천 화면에 reference-candidate/begin/complete comparison RPC를 연결하면서 수동 측정 옷의 overlap 판정을 보완하고, (2) 실제 Apple 로그인 계정으로 저장·재조회·삭제·계정 전환·오프라인 재시도를 실기기 검증하는 것이다.
+
+## 60. 2026-08-19 로컬 비교 결과와 Supabase 비교 이력 동기화 연결
+
+- 운영 Supabase에 `comparison_sync_contract_v1`, `manual_closet_comparison_fallback`을 순서대로 적용했다. 로컬 재현 파일은 `supabase/migrations/101_comparison_sync_contract.sql`, `102_manual_closet_comparison_fallback.sql`이다.
+- `comparison_runs.client_history_id`와 `(user_id, client_history_id)` unique partial index를 추가했다. 앱의 `RecommendationHistory.id`를 멱등 키로 보내므로 네트워크 재시도나 앱 재실행이 같은 비교 run을 중복 생성하지 않는다.
+- 수동 옷장은 catalog `product_size_id`가 없어도 정규화된 `measurement_records` 또는 숫자 `measurements`에서 canonical 실측 겹침을 계산한다. 수동 옷의 유효 분류는 사용자 override → canonical snapshot → `app_category/app_detail_category` 순으로 읽어 기존 수동 옷장도 후보/비교 시작에 사용할 수 있게 했다.
+- `FitMatchComparisonSyncCoordinator`를 추가하고 로그인 완료 및 옷장 동기화 성공 뒤 실행하도록 `ContentView`에 연결했다. 기존 로컬 비교 엔진과 화면 결과는 그대로 유지하고, DB에는 대상 상품 resolve/runtime UUID, reference closet UUID, 추천 size UUID, 점수·신뢰도·사용/제외 실측 근거를 저장한다.
+- 대상 상품은 retailer `source + external_product_id + 이름/카테고리 증거`로 다시 확인하며 current+confirmed runtime만 사용한다. 추천 로컬 size가 색상·표기까지 고려해 DB size 하나로 확정되지 않으면 저장을 재시도 상태로 남긴다.
+- 서버 안전 정책이 로컬 결과를 차단하면 결과를 억지로 완료하지 않고 `blocked` run과 parity warning으로 남긴다. 수동/지원 외 쇼핑몰처럼 DB 대상 상품 UUID를 만들 수 없는 비교는 로컬 UX를 유지하되 서버 비교 이력에는 넣지 않는다.
+- 운영 rollback probe에서 수동 반팔 상의가 유니클로 반팔 대상의 automatic 후보가 되고 공통 실측 3개로 평가되는 것을 확인했다. 같은 `client_history_id`로 비교 시작을 두 번 호출했을 때 동일 run UUID가 반환됐고, 테스트 run/closet row는 모두 삭제했다.
+- generic iOS Simulator Debug build가 통과했다. 인증 nonce, 옷장 hydration, 상품/RPC DTO, 비교 성공·차단 동기화 targeted test는 12/12 통과했다. 결과 bundle은 `/Users/jinyoung/Library/Developer/Xcode/DerivedData/FitMatch-gykzeotdbwpwwsdieiheccopizfu/Logs/Test/Test-FitMatch-2026.08.19_10-11-57-+0900.xcresult`다.
+- 남은 단계는 실제 Apple 로그인 계정으로 옷장 upsert/list/reference/delete, 비교 begin/complete, 재로그인·계정 전환·오프라인 재시도를 실기기에서 검증하는 것이다. 서버 comparison 이력을 재설치 후 로컬 `RecommendationHistory`로 복원하는 read/hydration API는 아직 구현하지 않았다.
+
+## 61. 다음 세션 즉시 인수 체크리스트
+
+- 현재 로컬 브랜치는 `connectDB`다. 2026-08-19 인증·옷장·비교 연동 변경은 아직 커밋하지 않았으므로 현재 dirty worktree를 보존하고 사용자가 요청하기 전 commit/push/merge하지 않는다.
+- 운영 Supabase 적용 완료 범위는 migration `097`~`102`다. 마지막 두 운영 migration 이름은 `comparison_sync_contract_v1`, `manual_closet_comparison_fallback`이며 migration history에서 확인됐다.
+- 앱에는 publishable key만 사용한다. secret/service-role key는 배치의 macOS Keychain 외에는 넣지 않으며 iOS bundle·Info.plist·소스에 절대 추가하지 않는다.
+- 다음 작업의 첫 순서는 실제 iPhone에서 Apple 로그인 성공 확인이다. 그 뒤 수동 옷 1개 등록 → 앱 재실행 후 유지 → 대표 옷 전환 → 유니클로/무신사 비교 1건씩 생성 → Supabase `closet_items`, `comparison_runs`, `comparison_results`, `comparison_measurement_results` 저장 확인 → 삭제/로그아웃/재로그인/다른 계정 전환 → 오프라인 생성 후 온라인 재시도를 검증한다.
+- 통과 기준은 사용자 간 row 혼합 0, 중복 `client_history_id` 0, 삭제 항목 재등장 0, 서버 차단 비교의 완료 결과 0, 네트워크 실패 시 로컬 UX 손실 0이다. 실패하면 UI를 먼저 바꾸지 말고 coordinator 상태와 RPC 응답을 추적한다.
+- 현재 자동화 증거는 Debug build 성공과 targeted test 12/12다. 실계정·실기기 통합 검증은 아직 수행하지 않았으므로 운영 완료라고 표현하지 않는다.
+- 재설치 후 옷장은 복원되지만 서버 비교 기록을 로컬 `RecommendationHistory` 화면으로 복원하는 read RPC/coordinator는 미구현이다. 이는 출시 필수 여부를 사용자와 결정한 뒤 별도 단계로 구현한다.
+- Supabase advisor의 비교 RPC `SECURITY DEFINER` WARN은 authenticated 진입을 의도한 것이다. 함수 내부 `auth.uid()`·소유권 검사, 빈 `search_path`, anon execute=false를 유지한다. 막 생성된 인덱스의 unused INFO는 삭제 근거로 사용하지 않는다.
+- 보호 대상 `FitMatch/Components/TabBarScrollVisibilityModifier.swift`와 `fitMatchHidesTabBarWhenScrolling` 호출부는 변경하지 않았다. 다음 수정 후에도 반드시 diff 0을 확인한다.
+
+## 62. Remaining issues / Next To Do
+
+### Remaining issues
+
+- 현재 3단계 DB 연결 목표의 필수 미완료는 실제 Apple 계정·실기기 end-to-end 검증 하나다. 자동 테스트가 통과했어도 실제 Auth token, 네트워크, 앱 lifecycle까지 검증하기 전에는 운영 완료로 판정하지 않는다.
+- 재설치 후 옷장 복원은 구현됐지만 서버의 과거 비교 결과를 로컬 `RecommendationHistory` 화면으로 복원하는 기능은 미구현이다. 현재 출시 필수 blocker가 아니라 후속 기능 후보다.
+
+### Next To Do
+
+1. 실제 iPhone에서 Apple 로그인하고 Supabase Auth 사용자 생성·세션 유지 여부를 확인한다.
+2. 수동 옷 1개와 쇼핑몰 연동 옷 1개를 등록하고 `closet_items` 저장·앱 재실행 복원을 확인한다.
+3. 대표 옷 변경과 삭제를 실행해 단일 대표 constraint, soft delete, 삭제 항목 미복원을 확인한다.
+4. 유니클로·무신사 비교를 각 1건 생성해 `comparison_runs` → `comparison_results` → `comparison_measurement_results` 저장을 확인한다.
+5. 동일 비교 재시도로 run 중복 0, 서버 차단 비교의 완료 result 0을 확인한다.
+6. 로그아웃·동일 계정 재로그인·다른 계정 전환으로 사용자 데이터 혼합 0을 확인한다.
+7. 오프라인에서 옷장/비교를 만든 뒤 온라인 복귀하여 outbox 재시도와 로컬 UX 보존을 확인한다.
+8. 위 검증이 모두 통과하면 현재 3단계를 완료 처리하고, 비교기록 hydration을 출시 전 포함할지 후속 버전으로 미룰지 결정한다.
+
+## 63. 2026-08-19 상품 원본 관측·정규화 백엔드 파이프라인
+
+- 운영 Supabase에 migration `product_observation_pipeline`을 적용했다. 로컬 재현 파일은 `supabase/migrations/103_product_observation_pipeline.sql`이며 마지막 운영 migration으로 확인됐다.
+- `product_observations`는 동일 payload를 fingerprint로 중복 제거하면서 최초/최종 관측 시각과 횟수를 보존한다. payload가 바뀌면 새 immutable 이력으로 남는다. 제출 사용자와 원본 실측 행은 각각 `product_observation_submissions`, `product_observation_measurements`에 분리했다.
+- 인증 사용자는 검증 RPC로 원본만 제출할 수 있고 private 관측 테이블을 직접 읽거나 공용 상품 current row를 승격할 수 없다. backend 전용 처리 RPC만 분류 후 category scope를 사용해 원본 실측을 canonical 실측으로 정규화한다.
+- JWT 검증이 켜진 Edge Function `product-observation` version 1을 배포했고 ACTIVE 상태를 확인했다. iOS에는 service-role key를 넣지 않고 사용자 세션으로 Edge Function만 호출한다.
+- `ShoppingProductViewModel`의 기존 로컬 분류·비교 결과를 바꾸지 않고 DB shadow 작업에서 파서가 얻은 상품/사이즈/`measurementRecords`를 먼저 제출하도록 연결했다. 관측 저장 실패는 로컬 사용자 흐름과 기존 DB 조회를 차단하지 않는다.
+- 운영 rollback probe에서 동일 payload 2회 제출은 observation UUID 1개/observation_count 2/raw row 2로 확인했다. 실제 등록상품 `E492123` probe는 raw 2행을 `chest_width`, `back_length` canonical 2행으로 변환했고 confirmed 분류를 유지했다. 두 probe의 QA 상품·관측은 rollback되어 운영 잔존 0이다.
+- generic iOS Simulator Debug build와 전체 `build-for-testing`이 성공했다. Supabase security advisor의 신규 WARN은 `fitmatch_submit_product_observation` SECURITY DEFINER authenticated 진입점 1개이며, `auth.uid()` 필수·입력 상한·private table no-grant·빈 search_path를 둔 의도된 경계다. 신규 unused-index INFO는 생성 직후라 삭제 근거가 아니다.
+- 아직 실기기 Apple 로그인 세션으로 Edge Function의 실제 HTTP 호출을 끝까지 실행하지 않았다. 또한 현재 payload는 파서가 추출한 모든 실측 원본을 보존하지만 쇼핑몰 HTTP 응답 body 전체를 보존하는 구조는 아니다.
+
+## 64. Remaining issues / Next To Do
+
+### Remaining issues
+
+- 필수: 실제 iPhone + Apple 로그인 계정으로 유니클로/무신사 링크 각 1개를 분석해 Edge Function 호출, observation 생성, canonical measurement 승격을 end-to-end 확인한다.
+- 필수: DB canonical runtime을 실제 추천 계산 입력으로 사용하고 기존 Swift 엔진 결과와 parity를 자동 검증하는 전환은 아직 남았다. 현재는 로컬 결과 유지 + DB 관측/정규화/shadow 단계다.
+- 후속 후보: 서버 비교 기록을 앱 재설치 후 `RecommendationHistory`로 복원하는 hydration API는 미구현이다.
+- 선택 사항: 쇼핑몰 HTTP 원문 body 전체 보관은 용량·개인정보·약관을 먼저 검토해야 한다. 비교에 필요한 파서 추출 실측 원본은 이번 단계에서 이미 보존한다.
+
+### Next To Do
+
+1. 실기기에서 Apple 로그인 후 유니클로 `E492123`과 무신사 실측 보유 상품 1개를 분석한다.
+2. `product_observations.processing_status=promoted`, 원본 실측 행 수, `product_measurements.is_comparable` 및 canonical code를 확인한다.
+3. 옷장 CRUD·대표 옷·비교 begin/complete·로그아웃/계정 전환·오프라인 재시도를 기존 체크리스트대로 검증한다.
+4. DB runtime DTO를 추천 입력 adapter에 연결하되 로컬 계산도 동시에 실행해 category/detail/family/length/실측/추천 size/score 전 필드 parity를 저장한다.
+5. 충분한 parity 표본에서 차이가 0이고 fail-closed가 유지될 때만 DB/backend 입력을 기본 경로로 승격한다.
+
+## 65. 2026-08-20 유니클로 E485454 분류·내 옷장 썸네일 보완
+
+- 상품 `E485454`(`바이컬러T`)의 공식 `__PRELOADED_STATE__`에는 `Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn`과 category ID `107543/107552/107621`이 있었지만, 기존 iOS 파서는 더 짧은 JSON-LD breadcrumb를 먼저 선택해 leaf와 ID를 버렸다. 그 결과 로컬은 `기타/기타`, DB는 검수 정답 fingerprint 불일치로 `review_required`가 됐다.
+- `UniqloProductMetadataParser`가 embedded product breadcrumb를 읽고, JSON-LD/HTML/product-group 후보 중 가장 구체적인 공식 경로를 사용하도록 수정했다. category ID도 `ProductMetadata.categoryDepth1Code...4Code`에 전달한다. E485454는 `상의/반팔/tshirt/short_sleeve`로 판정된다.
+- 운영 Supabase에 `preserve_specific_uniqlo_category_evidence` migration을 적용했다. `runtime_upsert_product`는 category ID가 호환되는 기존 상세 경로를 새 parent-only 관측으로 덮어쓰지 않으며 fingerprint도 실제 보존 경로로 계산한다. 로컬 재현 파일은 `supabase/migrations/104_preserve_specific_uniqlo_category_evidence.sql`이다.
+- 기존 검수 결정을 재사용해 운영 E485454 current를 `confirmed`, `tops/short_sleeve/tshirt/short_sleeve`, `canonical_product_decision`, 사용자 확인 불필요로 복구했다. 짧은 경로 재입력 rollback probe에서도 `Cut & Sewn` 경로와 fingerprint가 유지됐다.
+- 유니클로 이미지 CDN과 E485454 색상 65 이미지가 HTTP 200 JPEG임을 확인했다. 앱의 썸네일 문제는 CDN 부재가 아니라 (1) 같은 상품/사이즈의 과거 SwiftData 상품을 재사용할 때 새 이미지 URL을 버릴 수 있고, (2) 최초 다운로드 실패 후 같은 화면에서 재시도하지 않는 두 경로였다.
+- `Product.refreshExternalPresentation`을 추가하고 추천 기록 병합 및 비교상품→옷장 등록 시 새 retailer 이미지/URL을 기존 상품에 반영한다. 빈 후속 값은 정상 이미지를 지우지 않는다. `ProductThumbnailImageLoader`는 이미지 요청 헤더와 1회 짧은 재시도를 사용하고 화면 재진입 시 실패 URL도 다시 시도할 수 있게 했다.
+- iPhone 17 Pro Simulator에서 신규 회귀 테스트 2개(`embedded breadcrumb/category ID/E485454 image URL`, `persisted product thumbnail refresh`)가 2/2 통과했다. 기존 선택 색상 이미지 보존 테스트도 1/1 통과했다. Supabase `validate_product_runtime_v3()`은 `passed=true`, Gold 5,026/5,026, 자동 profile mismatch 0이다.
+- Supabase advisor에는 이번 migration으로 생긴 신규 치명/성능 경고가 없다. 기존 authenticated SECURITY DEFINER RPC WARN과 leaked-password protection WARN, 생성 직후/미사용 index INFO는 유지된다.
+- 보호 대상 `FitMatch/Components/TabBarScrollVisibilityModifier.swift`와 관련 호출부는 변경하지 않았다.
+
+## 66. Remaining issues / Next To Do
+
+### Remaining issues
+
+- 이번 증상의 코드·DB 원인은 수정됐고 자동 회귀 검사는 통과했다. 다만 실제 iPhone 네트워크에서 `E485454` 링크 등록 전 미리보기와 저장 후 내 옷장 썸네일까지 보는 수동 확인은 남아 있다.
+- 기존 전체 연결 작업의 필수 잔여 항목인 Apple 로그인 실기기 E2E와 DB canonical runtime↔Swift 추천 parity 전환은 그대로 남아 있다.
+
+### Next To Do
+
+1. 실제 iPhone에서 E485454 색상 65 링크를 입력해 불러오기 화면 썸네일, 저장 확인 화면, 내 옷장 목록/상세 썸네일을 확인한다.
+2. 같은 상품을 먼저 비교 기록에 저장한 뒤 내 옷장에 추가해 과거 SwiftData 상품 재사용 경로에서도 이미지가 유지되는지 확인한다.
+3. 이후 기존 체크리스트대로 Apple 로그인, observation 승격, 옷장/비교 동기화, DB↔Swift parity를 진행한다.
+
+## 67. 2026-08-20 회원 탈퇴 완료 및 현재 인수 상태
+
+> 이 절과 아래 68절이 현재 권위 상태다. 61~66절의 체크리스트는 작업 당시 이력이며, 완료 여부가 충돌하면 68절을 따른다.
+
+- `connectDB` 브랜치에 로그인 사용자용 회원 탈퇴를 구현했다. My 화면에서 2차 확인 후 인증된 `delete-account` Edge Function을 호출하고, 성공하면 Supabase 계정과 사용자 소유 서버 row, 로컬 `UserFit`·`RecommendationHistory`·동기화 캐시를 제거한다. 공용 쇼핑몰 상품 카탈로그는 보존한다.
+- 운영 프로젝트 `hnkplvyegonlhumlejst`에 `delete-account` version 1을 배포했다. 상태는 `ACTIVE`, `verify_jwt=true`, 함수 ID는 `8ce51490-2669-46ca-b4aa-44a9ec538bce`이며 인증 헤더 없는 호출은 HTTP 401로 차단된다.
+- 앱은 publishable key로 사용자 세션만 전달하고, 계정 hard delete에 필요한 service-role key는 Edge Function 환경에서만 사용한다. iOS 소스와 bundle에는 secret/service-role key를 넣지 않았다.
+- `auth.users` 참조 FK 19개를 재확인했다. 사용자 소유 FK 18개는 `ON DELETE CASCADE`, 분류 감사의 `product_classification_history.reviewed_by`만 `ON DELETE SET NULL`이고 Storage bucket은 0개다. 현재 DB에는 사용자 hard delete를 막는 참조가 없다.
+- `FitMatchAuthSessionStoreTests`와 `FitMatchClosetSyncCoordinatorTests`는 최종 6/6 통과했다. 결과 번들은 `/tmp/FitMatchAccountDeletion-20260820-3.xcresult`다. 실제 Apple 계정 destructive E2E는 아직 실행하지 않았다.
+- 카카오·네이버는 아직 로그인 버튼이나 SDK를 추가하지 않았다. 추후 동일 Supabase user에 identity를 명시적으로 연결하고, FitMatch 계정 삭제는 현재 provider-neutral 삭제 함수를 재사용한다. 동일 이메일만으로 자동 계정 병합하지 않는다.
+- Apple provider token 자동 revoke는 아직 미구현이다. 현재 로그인 경로가 authorization code/refresh token을 서버에 보존하지 않기 때문이다. 앱에는 Apple 설정에서 FitMatch 연결을 직접 제거하는 안내를 넣었지만, 로그인 포함 버전을 App Store에 제출하기 전에는 자동 revoke 구현 또는 심사 정책상 허용 가능한 최종 방식을 다시 확정해야 한다.
+- 앱 내 개인정보처리방침과 `Docs/AppStorePrivacyPolicyDraft-20260806.md`는 Supabase 저장·동기화·탈퇴 기준으로 갱신했다. 공개 HTTPS 문서 게시와 App Store Connect App Privacy 답변 갱신은 남아 있다.
+
+## 68. 현재 Remaining issues / Next To Do 체크리스트
+
+### 완료
+
+- [x] Apple 로그인용 Supabase 세션 관리와 기존 로그인 화면 연결
+- [x] SwiftData 옷장 ↔ Supabase `closet_items` 동기화 계약 및 coordinator 구현
+- [x] 로컬 비교 결과 → Supabase 비교 run/result/measurement 결과 저장 구현
+- [x] 상품 원본 실측 보존 → canonical 실측 정규화 backend 경계 구현
+- [x] 인증 사용자 회원 탈퇴 Edge Function, 앱 UI, 로컬 사용자 데이터 정리 구현
+- [x] 회원 탈퇴 DB FK 삭제 정책, 무인증 차단, targeted test 6/6 검증
+- [x] 향후 카카오·네이버를 추가해도 재사용 가능한 provider-neutral FitMatch 계정 삭제 경계 마련
+
+### 체크 규칙
+
+- `[x]`는 실행 증거까지 확인된 경우에만 표시한다. 코드가 있다는 이유만으로 실기기 검증을 완료 처리하지 않는다.
+- Developer가 실제 기기 흐름을 실행한 뒤 실행 시각과 화면 결과를 전달하면, AI가 같은 시각의 Supabase row와 로그를 대조해 완료 여부를 판정한다.
+- access token, refresh token, Supabase secret/service-role key, Apple private key는 채팅이나 저장소에 붙이지 않는다. 외부 Dashboard, Keychain 또는 Edge Function Secret에만 설정한다.
+
+### Developer To Do — 사용자가 직접 수행
+
+#### P0 — 로그인 포함 버전 출시 전에 필수
+
+- [ ] `DEV-P0-01` 실제 iPhone에서 Apple 신규 로그인 → 앱 완전 종료/재실행 → 세션 복구 → 로그아웃 → 동일 계정 재로그인을 실행한다.
+- [ ] `DEV-P0-02` 실제 계정으로 수동 옷 1개와 쇼핑몰 상품 1개를 등록하고, 대표 옷 변경·삭제·앱 재실행 복원을 실행한다.
+- [ ] `DEV-P0-03` 유니클로와 무신사 비교를 각각 1건 실행한다. AI가 DB를 대조할 수 있도록 실행 시각, 쇼핑몰, 상품 코드, 성공/실패 화면만 전달한다.
+- [ ] `DEV-P0-04` 테스트용 Apple 계정으로 회원 탈퇴를 실행한다. 탈퇴 전 필요한 테스트 데이터만 만들고, 실행 시각과 화면 결과를 전달한다.
+- [ ] `DEV-P0-05` Apple provider token 자동 revoke에 필요한 Apple Developer 설정과 서버 Secret 사용을 승인·준비한다. private key 자체는 AI에게 전달하지 않는다.
+- [ ] `DEV-P0-06` 공개 개인정보처리방침/고객지원 HTTPS URL을 게시하고 URL을 확정한다.
+- [ ] `DEV-P0-07` AI가 제공하는 최종 체크표에 따라 App Store Connect App Privacy 답변과 로그인 포함 빌드 설정을 반영한다.
+
+#### P1 — 제품 결정·수동 화면 확인
+
+- [ ] `DEV-P1-01` 실제 iPhone에서 `E485454` 링크의 미리보기·저장·옷장 목록/상세 썸네일과 기존 상품 재사용 경로를 확인한다.
+- [ ] `DEV-P1-02` 서버 비교 기록을 재설치 후 앱 기록 화면으로 복원하는 기능을 로그인 포함 첫 버전에 넣을지 후속 버전으로 미룰지 결정한다.
+- [ ] `DEV-P1-03` 카카오·네이버 로그인 도입 순서와 계정 연결 UX를 확정하고 각 제공자 개발자 콘솔을 설정한다.
+
+### AI To Do — Codex가 수행
+
+#### P0 — Developer 실기기 테스트 지원 및 출시 차단 해소
+
+- [x] `AI-P0-01` Developer가 그대로 따라 할 수 있는 실기기 E2E 체크표와 Supabase 확인 쿼리를 작성했다. `Docs/ConnectDBPhysicalE2EChecklist-20260820.md`, `supabase/sql/connectdb_e2e_readonly_verification.sql`을 사용한다.
+- [ ] `AI-P0-02` `DEV-P0-01~04` 실행 결과를 받아 Auth session, `product_observations`, `closet_items`, 비교 3개 테이블, 계정 삭제 cascade를 DB에서 대조한다.
+- [ ] `AI-P0-03` E2E에서 발견된 앱·RPC·동기화 결함을 수정하고 영향 범위 자동 회귀를 실행한다.
+- [ ] `AI-P0-04` `DEV-P0-05` 준비 후 Apple authorization code 교환·refresh token 보안 보관·탈퇴 전 provider token revoke를 서버에 구현하고 검증한다.
+- [ ] `AI-P0-05` 확정된 개인정보처리방침/고객지원 URL의 앱 연결 상태와 App Store Privacy 답변 체크표를 최종 감사한다.
+
+#### P1 — DB를 추천의 기본 경로로 전환
+
+- [ ] `AI-P1-01` DB runtime DTO와 Swift 추천 입력을 dual-run으로 실행해 category/detail/family/length/canonical measurement/추천 size/score 전 필드 parity를 기록한다.
+- [ ] `AI-P1-02` 충분한 실제 표본에서 parity 차이 0, 사용자 간 데이터 혼합 0, false-compatible 0을 확인한 뒤 사용자 승인 후 DB/backend 결과를 source of truth로 승격한다.
+- [ ] `AI-P1-03` 오프라인 옷장 등록·비교 후 온라인 복귀 시 outbox 재시도와 로컬 UX 보존을 자동화하고 실기기 결과와 대조한다.
+- [ ] `AI-P1-04` `DEV-P1-02` 결정이 출시 포함이면 비교 기록 hydration RPC/coordinator와 회귀 테스트를 구현한다.
+
+#### P2 — 후속 로그인 제공자
+
+- [ ] `AI-P2-01` `DEV-P1-03` 설정 후 카카오·네이버 OAuth/SDK callback과 명시적 Supabase identity link를 구현한다.
+- [ ] `AI-P2-02` 각 제공자의 원격 동의·토큰 해제가 필요하면 `delete-account` 실행 전 provider revoke adapter로 연결한다.
+- [ ] `AI-P2-03` Apple·카카오·네이버 조합의 계정 연결, 로그아웃, 탈퇴, 재가입, 동일 이메일 충돌 회귀를 추가한다.
+- [ ] `AI-P2-04` 이메일/비밀번호 로그인을 도입하는 경우 Supabase leaked-password protection과 관련 Auth 정책을 감사한다. OAuth-only 상태에서는 현재 출시 blocker가 아니다.
+
+## 69. 2026-08-20 실기기 E2E 실행서·읽기 전용 DB 스냅샷
+
+- 복잡했던 실기기 작업을 Apple 로그인, 내 옷장 저장, 유니클로·무신사 비교, 탈퇴 전 DB 기록, 회원 탈퇴의 5단계로 줄인 `Docs/ConnectDBPhysicalE2EChecklist-20260820.md`를 추가했다.
+- `supabase/sql/connectdb_e2e_readonly_verification.sql`은 테스트 사용자 UUID 하나로 Auth identity/session, 사용자 소유 옷장·비교·관측 제출, 최근 상세 행과 공용 catalog 총계를 JSON 하나로 반환한다. `SELECT`만 사용하며 운영 데이터를 변경하지 않는다.
+- 같은 SQL을 탈퇴 전후에 실행한다. 탈퇴 후 Auth와 모든 사용자 소유 count는 0, 최근 사용자 배열은 빈 배열이어야 하며 공용 상품·관측·실측 총계는 줄어들면 안 된다.
+- 운영 Supabase의 실제 `auth`, `public`, `fitmatch_catalog` 컬럼과 다시 대조해 쿼리를 작성했다. 사용자 UUID를 비운 안전한 상태로 운영 DB에서 실제 실행해 문법·테이블·컬럼 오류가 없음을 확인했다. 2026-08-20 22:49 KST 기준 공용 총계는 상품 1,578, 상품 관측 2, 원본 관측 실측 56, canonical 실측 27,548이다.
+- 다음 작업은 Developer가 체크표 1~5단계를 실제 iPhone에서 실행하고 결과를 전달하는 것이다. 그 전에는 P1 DB 기본 경로 전환이나 P2 로그인 제공자 확장을 시작하지 않는다.
+
+## 70. 2026-08-20 비교 품질 지표 분리·데이터 품질 이슈 원장
+
+> 이 절이 첨부 Master Package 검토 후 실제로 선별 반영한 최신 DB 상태다. 앱의 추천 source of truth는 아직 로컬 Swift 엔진이며, 이 변경은 결과를 바꾸지 않고 DB 감사 가능성을 높인다.
+
+- 패키지 제안 중 `원본 실측 → 정규화 실측`, 상품 분류의 method/confidence/version/evidence, 비교 불가 fail-closed, 실측별 포함·제외 근거는 기존 `product_observation_measurements` → `product_measurements`, `product_classification_history`, comparison RPC, `comparison_measurement_results`에 이미 구현되어 있어 중복 구조를 만들지 않았다.
+- 운영 Supabase에 migration `comparison_quality_and_data_issue_contract`(version `20260820141731`)를 적용했다. 로컬 재현 파일은 `supabase/migrations/105_comparison_quality_and_data_issue_contract.sql`이다.
+- `comparison_results.similarity_score`는 0~100의 핏 유사도 점수로 유지하고, `coverage_ratio`, `data_quality_score`, `confidence_score`, 사용/제외 실측 수, `quality_metrics_version`을 별도 컬럼으로 추가했다. 이제 “핏이 비슷한가”와 “근거를 얼마나 믿을 수 있는가”를 한 점수로 섞지 않는다.
+- `fitmatch_complete_comparison`은 새 지표가 없는 기존 앱 요청도 계속 허용한다. 새 앱 요청에서는 지표를 0~1 constraint로 검증하고, 사용/제외 실측 수는 클라이언트 숫자를 믿지 않고 `measurements[].included`에서 DB가 다시 계산한다.
+- Swift `FitMatchComparisonSyncCoordinator`는 coverage, 측정 정의 품질, 사용 실측 개수에 따른 evidence breadth를 분리 계산한다. 최종 confidence는 confirmed 결과만 `min(coverage, dataQuality) × evidenceBreadth`로 계산하고, 버전 `fitmatch-comparison-quality-2026-08-20-v1`과 함께 전송한다.
+- backend-only `fitmatch_catalog.data_quality_issues` 원장을 추가했다. observation/product/classification/measurement 중 정확히 하나만 대상이 되며, issue code별 발생 횟수·심각도·증거·해결 상태를 보존한다. authenticated/anon은 직접 접근할 수 없고 service role만 관리한다.
+- `fitmatch_process_product_observation` 실패는 `observation_processing_failed` 이슈를 중복 행 없이 누적하고, 동일 관측을 재처리해 성공하면 기존 이슈를 resolved로 전환한다.
+- 운영 rollback probe에서 이슈 2회 누적 → 발생 횟수 2 → 해결 상태 전환, 비교 지표 0.75/0.90/0.675 저장, 포함/제외 실측 수 1/1 DB 재계산을 확인했다. 테스트 행은 전부 rollback되어 운영 잔존 데이터는 없다.
+- iPhone 17 Pro Simulator에서 새 JSON key까지 확인하는 `FitMatchComparisonSyncCoordinatorTests` 2/2가 통과했다. 최종 결과 bundle은 `/tmp/FitMatchComparisonQuality-20260820-2.xcresult`다.
+- 현재 1,578상품/2,578 variant/6,559 size/27,548 measurement에서 실측 signature가 완전히 같은 중복 size chart는 0건이었다. 따라서 `measurement_set` 공용화는 현재 이득 없이 FK·ingest·조회 복잡도만 늘리므로 도입하지 않았다. 실제 중복률이 의미 있게 증가할 때 다시 측정한 뒤 결정한다.
+- Supabase advisor의 신규 대상 결과는 private 원장의 `RLS enabled/no policy` INFO와 생성 직후 `unused index` INFO뿐이다. no-policy는 authenticated 접근을 차단하려는 의도이며, 기존 authenticated SECURITY DEFINER RPC WARN은 함수 내부 `auth.uid()`·소유권 검사·빈 search path를 둔 의도된 API 경계다.
+
+## 71. 현재 Remaining issues / Next To Do
+
+### 완료
+
+- [x] 비교 결과의 핏 점수·coverage·데이터 품질·confidence 분리 저장
+- [x] 비교 근거 사용/제외 개수를 DB에서 재계산하는 하위 호환 RPC
+- [x] 상품 관측 처리 실패의 backend-only 품질 이슈 누적·해결 원장
+- [x] Swift 요청 계약, targeted test 2/2, 운영 rollback probe
+
+### Developer To Do
+
+- [ ] 68절 `DEV-P0-01~07` 실기기 로그인·옷장·비교·탈퇴·출시 설정 검증을 진행한다.
+- [ ] 유니클로와 무신사 비교 각 1건 후 실행 시각·상품 코드·화면 결과를 전달한다. AI가 새 quality 컬럼과 measurement 결과를 함께 대조한다.
+
+### AI To Do
+
+- [ ] 실기기 비교 결과에서 `similarity_score`, `coverage_ratio`, `data_quality_score`, `confidence_score`, 사용/제외 실측 수와 원본 상세 행의 일관성을 확인한다.
+- [ ] 68절 `AI-P1-01~02`의 DB runtime↔Swift dual-run parity를 구현하고 충분한 실제 표본을 검증한 뒤에만 사용자 승인으로 DB/backend를 기본 경로로 승격한다.
+- [ ] 상품 실측 signature 중복률을 운영 지표로 관찰한다. 현재 0건이므로 `measurement_set` 구조는 만들지 않는다.
+
+## 72. 2026-08-20 COS 1단계 링크·DB 수용 경계
+
+- COS는 유니클로·무신사와 달리 현재 확인된 공식 웹 계약에서 안정적인 상품별 사이즈/실측 API를 제공하지 않는다. 개발 환경의 일반 HTTP 요청은 COS CDN에서 `Access Denied`로 응답했다. 비공개 API를 추측해 사용하지 않는다.
+- 앱은 `cos.com` 공식 URL과 URL 안의 10자리 COS 상품번호를 인식한다. 공식 페이지가 허용될 때 JSON-LD/Open Graph의 상품명·이미지·가격과 URL 경로의 성별·카테고리 단서를 보존한다.
+- 완전한 **사이즈별 의류 실측표**가 없으면 `ProductURLParserPartialError`로 종료한다. 즉 상품 정보는 보일 수 있어도 자동 비교·억지 실측 변환은 하지 않는 fail-closed 정책이다.
+- `FitMatchSupabaseProductResolver`, 옷장 동기화, 비교 기록 동기화가 source `cos`를 기존 상품 resolve/runtime 경계로 전달한다. 기존 로컬 추천 엔진과 유니클로·무신사 처리에는 새 분기를 넣지 않았다.
+- 운영 Supabase에 migration `add_cos_observation_source`를 적용했다. `product_observations`와 authenticated observation RPC, service-role batch inquiry RPC가 `cos`를 명시적으로 허용한다. 다른 임의 source는 계속 거절한다. DB probe에서 source constraint에 COS 포함, `fitmatch_batch_products_needing_ingest('cos', ...)` 1건 반환, observation RPC 본문 COS 허용을 확인했다.
+- 새 COS fixture는 상품번호·공식 메타데이터·경로 분류 단서 보존 및 실측 부재 시 fail-closed를 검증한다. Swift 컴파일은 통과했으나 후속 Simulator service가 중단되어 실제 XCTest 실행은 아직 재시도 필요하다.
+
+## 73. 2026-08-21 유니클로 내 옷장 저장 후 썸네일 보존
+
+- 상품 정보 화면의 유니클로 썸네일 URL은 정상이나, 내 옷장 저장 경로가 `ProductSize.id`만으로 기존 행을 찾아 같은 사이즈명(M 등)의 다른 상품을 `UserFit.sourceProduct`로 연결할 수 있었다.
+- `AddComparedProductToClosetSheet`는 이제 상품 URL(우선)과 쇼핑몰·상품코드(대체)로 동일 상품을 먼저 찾는다. 저장된 동일 상품에는 새 썸네일 URL을 보충하고, 새 상품은 먼저 SwiftData context에 삽입한 뒤 선택한 사이즈를 그 상품에 연결한다.
+- 회귀 테스트는 같은 유니클로 상품 URL의 끝 슬래시는 동일 상품으로, 다른 상품코드는 다른 상품으로 판정하도록 추가했다. Simulator XCTest는 CoreSimulator/build database 동시 실행 상태가 해소된 뒤 재실행한다.
+
+## 74. 2026-08-21 ZARA 검증 표본 category DB staging
+
+- 사용자의 명시적 승인 후 운영 Supabase에 migration `seed_zara_verified_categories`(version `20260821032148`)를 적용했다. 로컬 재현 파일은 `supabase/migrations/107_seed_zara_verified_categories.sql`이다.
+- `public.sources`에 `zara`를 등록했지만 `is_active=false`로 유지했다. API 사용 허가, 실제 iPhone, staging E2E가 끝나기 전에는 production provider로 활성화하지 않는다.
+- 실제 ZARA structured analytics 표본에서 확인한 section/family/subfamily만 `public.source_categories`에 36건 저장했다: 남성 17, 여성 19. 전체 ZARA taxonomy라고 간주하지 않는다.
+- FitMatch canonical detail이 명확한 27건만 연결했다. 분류 상태는 `EXACT=26`, `RULE_BASED=1`, `AMBIGUOUS=7`, root `UNMAPPED=2`다. 티셔츠·일반 바지처럼 세부 유형이 갈리는 항목은 category까지만 저장하고 detail을 비웠다.
+- 사후 DB 검증에서 부모 누락 0, identity 중복 0, canonical FK 오류 0, production eligible 0을 확인했다. migration은 먼저 동일 SQL을 rollback probe로 실행한 뒤 적용했다.
+- active `fitmatch_catalog.source_category_mappings`의 ZARA row는 0, ZARA product observation은 0이다. observation source CHECK도 계속 `uniqlo`, `musinsa`, `cos`만 허용한다. 따라서 이 작업은 catalog staging이며 runtime 분류/수집 활성화가 아니다.
+- 다음 DB 작업은 실제 iPhone metadata/guide E2E, 공식 API 사용 권한, measurement basis 검증 뒤에만 진행한다: ZARA runtime release mapping, observation allowlist, raw measurement mapping 순서다.
+
+## 75. 2026-08-21 ZARA 테스트용 category·observation DB 연결 완료
+
+> 이 절이 74절보다 최신 권위 상태다. 74절의 비활성/source mapping 0/observation 미허용 상태는 이후 사용자 승인 작업으로 변경됐다.
+
+- 사용자가 제공한 `zara_fitmatch_collection_20260813.zip`을 별도 temp directory에서 검증했다. validator 전체 `PASS`, generator 재실행 `PASS_BYTE_IDENTICAL`, category 213행과 mapping 213행의 manifest SHA-256 일치를 확인했다.
+- 운영 Supabase `hnkplvyegonlhumlejst`에 다음 migration을 순서대로 적용했다.
+  - `add_zara_observation_source` version `20260821042246`
+  - `enable_zara_testing_categories` version `20260821042251`
+  - `seed_zara_official_category_tree` version `20260821042258`
+  - `publish_zara_client_category_mappings` version `20260821042806`
+- `public.sources.zara.is_active=true`다. category는 현재 parser가 보내는 analytics namespace 36건과 공식 숫자 ID namespace 213건, 총 249건이다. 두 namespace는 metadata로 구분하며 서로 덮어쓰지 않는다.
+- `public.source_category_mappings`와 `public.client_source_category_mappings`는 각각 confirmed 56, review_required 51, rejected 142로 일치한다. canonical 근거가 없는 원피스·점프수트·란제리, 혼합/집계 category는 confirmed로 올리지 않았다.
+- active runtime release는 `fitmatch-active-with-zara-official-tree-2026-08-13-v1`이다. expected/actual 3,483건이 일치하며 provider별 Musinsa 1,922, Uniqlo 1,505, ZARA 56이다. 기존 provider row는 복제 보존했다.
+- runtime source resolver probe는 analytics 셔츠와 숫자형 공식 셔츠를 confirmed로 찾았다. 원피스 review 표본과 unknown code는 `found=false`였다. batch ingest inquiry는 ZARA probe ID를 정상 반환했다.
+- observation CHECK와 submit/batch RPC allowlist에 `zara`가 포함됐다. authenticated submit의 실제 사용자 row 생성은 사용자가 실기기에서 로그인한 뒤 확인한다.
+- 공통 product classifier는 positive source mapping만으로 신규 상품을 자동 confirmed하지 않으므로 현재 ZARA product resolution은 `review_required`다. measurement basis도 미검증이어서 ZARA measurement mapping은 만들지 않았다. 따라서 category/observation DB 테스트는 가능하지만 추천 사이즈·매칭률 production 출시는 불가하다.
+- Supabase advisor에는 이번 작업으로 만든 신규 table/index가 없다. 표시된 private schema RLS-no-policy INFO와 authenticated SECURITY DEFINER RPC WARN은 기존 구조이며, 이번 migration은 기존 권한/RLS를 완화하지 않았다.
+- iPhone 17 Pro Simulator(iOS 26.3.1)에서 `ZARAParserPhase1_5Tests`와 `FitMatchSupabaseProductResolverTests`를 함께 재실행해 24/24 통과했다. 결과 bundle은 `/tmp/FitMatchZARADBReadyDerivedData/Logs/Test/Test-FitMatch-2026.08.21_13-31-37-+0900.xcresult`다.
+
+## 76. 2026-08-21 ZARA 운영 30상품 A-test 적재
+
+> 이 절이 ZARA DB 표본과 비교 가능 여부에 대한 최신 권위 상태다. 75절의 249 category/56 confirmed mapping은 이번 작업 후 262 category/65 confirmed mapping으로 증가했다.
+
+- 사용자의 명시적 승인에 따라 제공된 ZARA 수집 패키지에서 실제 상품 30건을 선정하고, 공개 size guide를 동시성 1/cache 우선/5xx 최대 1회 재시도로 수집했다.
+- 운영 canonical DB에는 ZARA product 30, 실제 source variant 45, size 188, raw measurement 870건이 존재한다. runtime 계약이 만든 빈 `__default__` placeholder variant 30건은 실제 색상 variant 수에 포함하지 않는다.
+- guide 결과는 42 variant garment-measure, 3 variant body-only다. body-only 값은 garment measurement로 변환하지 않았다. garment raw field도 공식 basis가 미검증이므로 870건 전부 `is_comparable=false`, `measurement_alias_not_found`로 보존했다.
+- product classification은 29건 confirmed, `자수 프린트 스커트 팬츠` 1건 review-required다. 신규 상품의 general classifier를 느슨하게 만들지 않고, bounded A-test의 실제 structured metadata를 근거로 product-specific decision을 사용했다.
+- 인증 사용자를 가장하지 않고 service-role 전용 `fitmatch_batch_ingest_product`를 사용했다. 따라서 ZARA `product_observations`는 0건이며, 이 30건은 사용자 observation이 아니라 관리자 canonical preload 표본이다.
+- 실제 앱 parser 경로 `ZARA > 남성/여성 > family > subfamily` 및 `SECTION:FAMILY:SUBFAMILY` code로 payload를 정렬했다. app-path source resolver와 product resolver probe가 confirmed category를 찾고 `comparison_ready=false`를 반환하는 것을 확인했다.
+- migration `extend_zara_production_sample_categories` version `20260821080945`를 운영 적용했다. 로컬 파일은 `supabase/migrations/111_extend_zara_production_sample_categories.sql`이다. 신규 leaf 13건 중 9 confirmed, 4 review-required이며, 최종 ZARA category 262, public/client mapping 각각 confirmed 65/review 55/rejected 142, active runtime ZARA mapping 65다.
+- ZARA structured category를 product-name heuristic으로 재분류하지 않게 했고, `지퍼 재킷`이 `퍼 재킷` substring 때문에 mouton이 되는 오류를 word-boundary 규칙으로 수정했다.
+- 테스트 결과는 ZARA Phase 1.5 targeted 17/17, `FitMatchP0ProductionPathTests` + `FitMatchSupabaseProductResolverTests` 32/32 통과다. 결과 bundle은 각각 `/tmp/FitMatchZARA30DerivedData/Logs/Test/Test-FitMatch-2026.08.21_16-56-31-+0900.xcresult`, `/tmp/FitMatchZARA30DerivedData/Logs/Test/Test-FitMatch-2026.08.21_17-13-04-+0900.xcresult`다.
+- 운영 advisor에는 ERROR가 없다. 기존 RLS-no-policy INFO, authenticated SECURITY DEFINER RPC WARN, leaked-password protection WARN, unused/unindexed index INFO는 유지되며 이번 ZARA category migration이 신규 table/RLS 경계를 만들지는 않았다. 일반 참고: https://supabase.com/docs/guides/database/database-linter
+
+### 현재 ZARA 판정
+
+- [x] 30상품 canonical 적재
+- [x] structured category와 FitMatch category 결정 29건 확정, 1건 fail-closed review
+- [x] variant/size/raw measurement 원형 보존
+- [x] ZARA category/client/runtime mapping 확장
+- [ ] canonical measurement alias 및 공식 basis 검증
+- [ ] ZARA↔무신사·유니클로 comparison-ready 전환
+- [ ] 공식 API 사용 권한, 실제 iPhone resolver, staging E2E, App Store build 검증
+
+산출물은 `ZARAAudit/zara_production_sample_30_manifest.jsonl`(variant 45행), `zara_production_sample_30_payloads.jsonl`(상품 30행), `zara_production_sample_30_decisions.jsonl`(결정 30행), `prepare_production_sample_30.mjs`다. 전체 결과는 `FitMatch-ZARA-Phase1.5-Blocker-Resolution-20260821.md` M절에 기록했다.
+
+## 77. 2026-08-21 ZARA category별 measurement mapping 승인 전 감사
+
+- 이번 절은 읽기 전용 조사다. 앱 코드, 운영 DB alias, 기존 870개 measurement row는 변경하지 않았다.
+- 30상품/45 variant 표본의 garment guide는 세 가지 schema로 수렴한다.
+  - 티셔츠·셔츠·가디건·아우터: `chest`, `front-length`, `sleeve-length`, `arm-width`, `back-width`
+  - 팬츠: `waist`, `hips`, `front-length-lower`, `front-rise`, `back-rise`
+  - 원피스: `chest`, `waist-full-body`, `hips`, `front-length-full-body`
+- 실제 ZARA KR 제품 사이즈 UI에서 상의·팬츠·원피스를 열어 모두 “옷을 평평하게 편 상태에서 측정”한다는 공식 문구와 cm 표를 확인했다. UI는 `가슴/허리/엉덩이 둘레`라고 표시하지만 값은 평평하게 놓은 한쪽 폭이다. 따라서 canonical width로 확정되는 경우 multiplier는 `1.0`이며 2로 나누거나 2를 곱하지 않는다. cm도 단위 변환이 없다.
+- 다만 공식 UI 본문만으로 가슴선의 정확한 양 끝점, 앞면/총 기장의 시작점, 소매의 set-in/raglan 시작점은 아직 확인되지 않았다. 따라서 `chest→pit-to-pit`, `front-length→HPS-to-hem`, `sleeve→shoulder-seam-to-cuff`, `front-length-lower→waist-to-hem`은 현재 PROBABLE이며 바로 comparable alias로 승격하지 않는다.
+- `back-width`는 shoulder가 아니고 `arm-width`는 현재 FitMatch canonical key가 없으므로 raw-only를 유지한다. `back-rise`도 front rise와 한 kind로 섞지 않고 raw-only가 안전하다. `sizeGuideInfo` body-only 3 variant는 계속 비교에서 제외한다.
+- 운영 DB의 ZARA raw row는 `raw_code=A/B/C/D/E`, `raw_label=zone-name-*`로 저장돼 있다. A~E는 category별 의미가 다르고 upper schema에서도 D/E 순서가 바뀌므로 위치 문자를 alias key로 사용하면 안 된다. 현재 normalization 함수는 raw_code가 존재하면 label fallback을 하지 않으므로, 구현 시 ZARA의 `raw_code`를 stable `tableTitleZone`으로 바꾸고 원래 `zoneId`는 evidence에 보존해야 한다. `category_scope`도 payload에 명시해야 한다.
+- 현재 parser candidate table은 실제 표본의 복수형 `zone-name-hips`, `waist-full-body`, `front-length-full-body`, `front-length-lower`를 처리하지 않는다. 검증된 항목만 typed mapping에 추가하고 mapping version을 올려야 한다.
+- FitMatch 비교 최소 조건은 상의/셔츠/가디건 2개(shoulder 또는 chest 중 1개 포함), 아우터 2개(chest 필수), 팬츠 2개(waist/hip/thigh 중 2개), 원피스 2개(chest/waist/hip 중 1개)다. 따라서 팬츠는 waist+hip, 원피스는 chest+waist/hip이 검증되면 비교 가능하다. 상의·아우터는 chest만으로 부족하므로 front-length 또는 다른 두 번째 항목의 측정 기준 검증이 필요하다.
+- 전체 검증 후 예상 최대치는 confirmed 29상품 중 garment guide가 있는 27상품이다. body-only 상품 2건과 review-required 상품 1건은 계속 제외한다. 수평 폭만 먼저 승인하고 상의 길이를 보류하면 팬츠 6상품+원피스 2상품, 총 8상품만 정책 최소 조건을 만족한다.
+- 승인 후 권장 순서는 (1) upper/pants/dress 공식 측정 도식·설명 근거 확보, (2) ZARA raw identity/category_scope 및 Swift typed mapping 수정, (3) category-scoped alias migration과 기존 30상품 재정규화, (4) ZARA↔Musinsa↔Uniqlo pair regression과 rollback probe다. comparison score/weight와 기존 provider 로직은 변경하지 않는다.
+
+## 78. 2026-08-21 ZARA 검증 measurement subset 운영 반영
+
+> 이 절이 77절의 승인 전 상태를 대체하는 최신 권위 상태다. 전체 ZARA가 아니라 공식 근거가 확인된 팬츠·원피스 subset만 활성화했다.
+
+- ZARA KR 공식 상품 사이즈 UI의 “옷을 평평하게 편 상태에서 측정” 문구와 category별 표를 대조했다. 활성 mapping은 전부 cm 단면→cm 단면 `×1.0`이며 나누기·곱하기 변환이 없다.
+- 팬츠는 `waist→waist_width`, `hips→hip_width`, `front-rise→front_rise`; 원피스는 `chest→chest_width`, `waist-full-body→waist_width`, `hips→hip_width`만 comparable이다.
+- 상의 length/sleeve/arm/back, 팬츠 total length/back rise, 원피스 full-body length는 측정 endpoint 또는 canonical 대응이 부족해 raw-only다. `sizeGuideInfo` body guidance도 계속 제외한다.
+- `ZARAParser`는 stable `tableTitleZone`을 raw code로 사용하고 기존 A~E `zoneId`를 `raw_zone_id` evidence로 보존한다. 팬츠 waist+hip, 원피스 chest/waist/hip 중 2개라는 최소 조건을 parser가 다시 검사한다.
+- 운영 migration `seed_zara_verified_measurement_subset` version `20260821090138`을 적용했다. 로컬 재현 파일은 `supabase/migrations/112_seed_zara_verified_measurement_subset.sql`이다. policy version은 `zara-measurement-2026-08-21-v1`, source alias는 category-scoped 5건이다.
+- 30상품을 service-role ingest로 재정규화한 현재 DB는 measurement 870, comparable 177, raw-only 693이다. `raw_zone_id`와 full `source_dimensions`는 870건 모두 보존됐고 A~E raw code는 0건이다. classification은 confirmed 29/review-required 1을 유지한다.
+- runtime DB probe는 ZARA↔ZARA 팬츠와 ZARA↔Uniqlo 팬츠를 comparison-ready로 판정했다. ZARA↔Musinsa 팬츠는 핵심 공통 폭이 waist 하나뿐이라 `required_any_measurements_missing`, ZARA 원피스끼리는 공식 length classification이 없어 `length_classification_missing`, review 상품은 `classification_not_confirmed`로 fail-closed다.
+- 기존 Uniqlo↔Musinsa 팬츠 probe는 comparison-ready다. 점수·reliability·comparison policy와 기존 provider 분기는 변경하지 않았다.
+- targeted ZARA suite 20/20, closet hydration suite 2/2가 iPhone 17 Pro Simulator(iOS 26.3.1)에서 통과했다. 전체 `FitMatchTests` struct는 260 passed, 기존 COS/category taxonomy expectation 9 failed, 장시간 Musinsa corpus 1 canceled다. ZARA 실패는 없었지만 전체 suite 통과로 표현하지 않는다. bundle은 `/tmp/FitMatchZARACommonFinalDerivedData/Logs/Test/Test-FitMatch-2026.08.21_18-16-04-+0900.xcresult`다.
+- Supabase advisor는 ZARA 관련 신규 항목 0건이다. 전체 security는 INFO 47/WARN 14, performance는 INFO 89이며 기존 RLS-no-policy, SECURITY DEFINER, leaked-password protection, unused/unindexed index 항목이다: https://supabase.com/docs/guides/database/database-linter
+- 남은 blocker는 (1) ZARA↔Musinsa의 두 번째 공통 핵심 팬츠 치수 부족, (2) 원피스 공식 length classification, (3) 상의 두 번째 verified 치수, (4) API 사용 허가, 실제 iPhone/App Store/staging E2E다. production release는 계속 NO다.
+## 2026-08-24 ZARA URL variant·카테고리 출시 준비 보완
+
+- ZARA URL `-p########.html` reference, URL `v1`, page `zara.analyticsData.catentryId`, 내부 `productId`, `productRef`의 기존 분리 계약을 유지했다. URL `v1`이 있으면 embedded analytics의 현재 `catentryId`와 정확히 일치할 때만 `url_variant_verified_by_embedded_analytics`로 확정하고, `v1`이 없으면 페이지가 명시한 현재 variant를 `embedded_analytics_selected_variant`로 기록한다. ID를 계산하거나 불일치 variant를 추측하지 않는다.
+- `ProductMetadata`에 `variantSelectionMethod`, `variantSelectionConfidence`, `categoryMappingPolicyVersion` provenance를 추가했다. URL variant 검증은 confidence 1.0, page-selected variant는 0.9로 구분한다. 기존 raw URL/reference/variant/internal product ID는 모두 보존한다.
+- ZARA category parser에 production sample DB migration 111에서 `confirmed`로 검토된 9개 exact `section|family|subfamily` mapping을 우선 적용하는 versioned embedded snapshot을 추가했다. exact mapping 다음에만 기존 broad structured-family fallback을 사용하며 unknown/mixed/excluded category는 계속 `.other`로 fail-closed다. 새 generic engine/table은 만들지 않았고 production DB write/migration apply는 하지 않았다.
+- `measureGuideInfo`만 의류 실측으로 사용하는 기존 계약, `sizeGuideInfo` 비교 금지, challenge/access failure 중단, 검증되지 않은 상의 실측 raw-only 처리는 변경하지 않았다. ZARA release gate도 아직 열지 않았다.
+- 검증: `xcodebuild build-for-testing ... -derivedDataPath /tmp/FitMatchZARAURLCategoryDerivedData` → `TEST BUILD SUCCEEDED`. `ZARAParserPhase1_5Tests` → 22/22 passed (`/tmp/FitMatchZARAURLCategory-20260824.xcresult`). `FitMatchP0ProductionPathTests` + `FitMatchSupabaseProductResolverTests` → 38/38 passed (`/tmp/FitMatchZARAURLCategoryRegression-20260824.xcresult`). `git diff --check` clean.
+- 남은 출시 blocker: (1) 확인된 공식 structured product/variant API 계약이 없어 현재는 페이지 embedded analytics가 권위 경로다. CSS DOM 텍스트 파싱은 사용하지 않는다. (2) 여러 variant 목록에서 URL color를 별도 선택하는 공식 payload는 아직 검증되지 않았다. 현재 URL/page가 선택한 variant만 처리한다. (3) DB의 ZARA 249개 source mapping 중 client snapshot 기준 confirmed 56, review_required 51, rejected 142이므로 전체 category 자동 확정 상태가 아니다. 앱 embedded exact snapshot은 실제 production sample로 검증된 9개만 포함한다. (4) 실제 iPhone에서 ZARA KR URL 공유→페이지 metadata→size guide→비교 E2E와 접근 안정성이 미검증이다. (5) 이 네 항목 검증 전 release `ZARAIntegrationAvailability`는 의도적으로 닫혀 있다.
+
+## 2026-08-24 ZARA 사용자 확정 4상품 카테고리 반영
+
+- 사용자 검토로 다음 네 상품의 분류를 확정했고 원본 링크와 근거를 `ZARAAudit/zara_user_adjudicated_category_decisions_20260824.jsonl`에 보존했다.
+  - [JEANS Z1975 로우라이즈 레귤러](https://www.zara.com/kr/ko/jeans-z1975-%E1%84%85%E1%85%A9%E1%84%8B%E1%85%AE%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%8C%E1%85%B3-%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5-p01934230.html?v1=585050955): 데님팬츠
+  - [봄바초 팬츠](https://www.zara.com/kr/ko/%E1%84%87%E1%85%A5%E1%86%AF%E1%84%85%E1%85%AE%E1%86%AB-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p05644812.html): 긴바지
+  - [자수 프린트 스커트 팬츠](https://www.zara.com/kr/ko/%E1%84%8C%E1%85%A1%E1%84%89%E1%85%AE-%E1%84%91%E1%85%A2%E1%84%90%E1%85%A5%E1%86%AB-%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p01377700.html): 긴바지
+  - [스트라이프 봄버 재킷](https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%87%E1%85%A9%E1%86%B7%E1%84%87%E1%85%A5-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p07782343.html): 재킷
+- `C.PTON-LEGGING`, `L. PANT. PIJAMA`는 검증된 source path 단위로 긴바지에 연결했다. 현재 production canonical taxonomy는 조거를 별도 비교 family로 나누지 않고 `bottoms/long_pants/pants`로 비교하므로 봄바초 팬츠도 긴바지로 저장한다. 앱의 `트레이닝 팬츠` 표시 enum을 새 taxonomy 계약으로 승격하지 않았다.
+- `B.FOLDER PANTS`와 `B.BLAZER`는 한 source subfamily 안에 다른 구조의 상품이 존재하므로 전체 subfamily를 데님/재킷으로 바꾸지 않았다. URL의 안정적인 8자리 style number `01934230`, `07782343`에만 사용자 확정 override를 적용한다. `02753522` 같은 실제 `B.BLAZER` 블레이저는 계속 블레이저다.
+- ZARA embedded category snapshot 버전은 `zara-kr-structured-category-2026-08-24-v3`이며 parser가 URL style number를 classifier에 전달한다. ID를 계산하거나 상품명만으로 확정하지 않는다.
+- 검증: `ZARAParserPhase1_5Tests` 25/25 통과(`/tmp/FitMatchZARAUserConfirmedV2-20260824.xcresult`), `FitMatchP0ProductionPathTests` + `FitMatchSupabaseProductResolverTests` 38/38 통과(`/tmp/FitMatchZARAUserConfirmedRegression-20260824.xcresult`), adjudication JSONL 전체 `jq` parse 통과, `git diff --check` clean.
+- 운영 Supabase write/migration apply는 하지 않았다. 따라서 앱 로컬 분류는 반영됐지만 운영 DB의 기존 `자수 프린트 스커트 팬츠=review_required`, `스트라이프 봄버 재킷=blazer` product decision은 아직 사용자 확정값으로 승격되지 않았다. 다음 DB 작업은 이 JSONL을 근거로 기존 history를 보존한 새 manual-review history/decision을 staging에서 먼저 검증한 뒤 별도 승인을 받아 적용해야 한다.
+- ZARA 전체 서비스 출시는 여전히 별도 문제다. 이번 작업은 사용자 확정 4건의 카테고리 ambiguity를 닫았고, 공식 API/접근 안정성·실제 iPhone 공유 E2E·나머지 review/rejected category·일부 measurement basis blocker는 그대로 남는다.
+
+## 2026-08-24 ZARA 쉐도우 3,983건 실제 분류기 안전성 흡수
+
+- 외부 파일의 ZARA 3,983건을 정답/Gold로 자동 승인하지 않고, 현재 앱의 실제 `ZARACategoryClassifier`에 통과시키는 회귀 테스트로 흡수했다. 3,983건 중 구조화된 일반상품 3,691건을 평가했고, 2,931건은 현재 계약으로 분류됐으며 760건은 안전하게 미분류로 남았다.
+- 최초 감사에서 외부 파일의 대분류 후보와 앱 분류가 다른 항목은 187건이었다. 이 수치는 곧 오류 187건이 아니다. 가디건·니트 베스트를 외부 파일은 상의로, FitMatch 기존 계약은 아우터로 보는 기준 차이와 외부 후보 자체의 모순이 포함돼 있어 자동으로 덮어쓰지 않았다.
+- 실제 안전 결함은 부분 문자열과 구조 충돌이었다. `WAISTCOAT`의 `coat`, `OVERSHIRT`의 `shirt`, `OVERALL|B.PANTS`의 `pants` 때문에 각각 아우터·상의·하의로 조용히 확정될 수 있었고, `SHIRT|F. Jacket`, `WIND-JACKET|ATH BSweatshirt`처럼 family와 subfamily가 다른 옷 구조를 말해도 한쪽 키워드가 이길 수 있었다.
+- 정책 v4에서는 `OVERALL/점프수트`, `TOPS AND OTHERS`, `WAISTCOAT`, `OVERSHIRT`를 검토 전용 family로 fail-closed 처리한다. 이 선택은 운영 DB의 공식 ZARA 메뉴 자료에서도 점프수트·오버셔츠가 `review_required/unresolved`인 상태와 일치한다. 새 taxonomy나 generic engine은 만들지 않았다.
+- exact source mapping이 없는 generic fallback에서는 family와 subfamily가 서로 다른 대분류를 명시하면 내부 `미확정` sentinel로 보류한다. 이 값은 사용자 카테고리 `기타/기타`로 확정하거나 표시하기 위한 값이 아니며 자동 비교 차단에만 사용한다. 사용자에게는 `분류 미확정` 또는 카테고리 선택 요청으로 표현해야 한다. 검토된 exact mapping과 사용자가 확정한 4상품 결과는 유지한다.
+- 최종 전체-corpus 결과는 `rows=3983`, `evaluated=3691`, `structured_paths=152`, `classified=2931`, `unclassified=760`, `source_domain_mismatches=0`, `ambiguous_family_leaks=0`, `shadow_candidate_differences=66`이다. 마지막 66건은 Gold 오류 수가 아니라 현재 FitMatch 계약과 독립 정답이 없는 외부 후보의 차이이므로 NOT_VERIFIED로 유지한다.
+- 검증: `node scripts/audit-category-mapping-shadow-corpus.mjs` 통과. `ZARAParserPhase1_5Tests` 27/27 통과(`/tmp/FitMatchZARAShadowAuditSuiteV3-20260824.xcresult`). `FitMatchP0ProductionPathTests` + `FitMatchSupabaseProductResolverTests` 38/38 통과(`/tmp/FitMatchZARAShadowRegression-20260824.xcresult`). `CategoryLive300ShadowAuditTests` 1/1 통과(`/tmp/FitMatchZARAShadowLive300-20260824.xcresult`), silent conflict 0, strict comparison conflict leak 0을 유지했다.
+- 운영 Supabase write, migration apply, seed, backfill, commit, push는 하지 않았다. 신규 migration도 만들지 않았다. 현재 작업은 앱의 embedded fail-closed fallback과 로컬 테스트/문서만 보완했다.
+- 남은 일: (1) 760 미분류 중 서비스할 source family를 현재 ZARA KR PDP/구조화 응답으로 재검증해 exact mapping 후보로 승격, (2) 66 계약 차이는 상품별 사람 검수 또는 독립 Gold로 판정, (3) 실제 iPhone에서 ZARA URL 공유→상품/variant→size guide→비교 E2E, (4) 공식 structured product/variant API 계약 및 다중 색상 선택 payload 확인, (5) 승인된 사용자 4상품의 운영 DB history/decision 반영은 별도 쓰기 승인 후 staging-first로 수행한다.
+
+## 2026-08-24 ZARA 미확정 분류 UX를 무신사·유니클로 흐름과 통일
+
+- 문제 근거: ZARA parser는 구조화 category가 미확정이면 size guide 조회 전에 `ProductURLParserPartialError`를 던졌고, `CompareFlowSheet`는 모든 partial error를 오류 화면으로 보냈다. 반면 무신사·유니클로는 실측 상품을 만든 뒤 기존 `categoryConfirmation` 화면으로 연결할 수 있었다. 결과적으로 같은 fail-closed 분류인데 ZARA만 사용자가 복구할 수 없었다.
+- `ProductAnalysisRecoveryAction`을 추가해 `confirmCategoryBeforeMeasurements`와 `enterMeasurementsManually`를 오류 문구와 분리했다. UI는 sourceName 또는 문자열 비교로 ZARA를 추론하지 않고 typed recovery state만 사용한다.
+- 미확정 ZARA는 이제 오류 화면 대신 기존 “상품 종류 확인” 화면으로 간다. category/detail 선택지에서 내부 `.other`는 계속 제외되므로 사용자에게 `기타/기타`가 표시·선택·저장되지 않는다. 디버그 로그도 내부 sentinel을 `분류 미확정`으로 표현한다.
+- 사용자가 category/detail을 선택하면 같은 URL을 ZARA parser capability로 다시 분석한다. 선택한 category는 재조회 중 유지한다. 팬츠·원피스의 검증된 measurement subset이 최소 조건을 충족하면 자동 비교를 계속하고, 상의·아우터처럼 canonical measurement basis가 부족하면 추측하지 않고 기존 직접 입력 sheet를 연다.
+- ZARA 초기 production release gate는 그대로 닫혀 있다. 이번 변경은 debug/staging에서의 복구 UX와 내부 경로를 완성한 것이며 실제 iPhone·접근 안정성·공식 사용 조건 확인 없이 production provider를 활성화하지 않는다.
+- DB/schema/migration 변경과 production DB write는 없었다. comparison score, ranking, Musinsa/Uniqlo parser 정책도 변경하지 않았다.
+- 검증:
+  - `ZARAParserPhase1_5Tests` 30/30 통과. 미확정 recovery state, 사용자 확정 팬츠의 waist/hip 자동 재개, 미검증 상의의 직접 입력 전환, ViewModel의 사용자 category 보존을 포함한다. 결과: `/tmp/FitMatchZARARecovery-Final2-20260824.xcresult`.
+  - 같은 suite의 3,983 shadow corpus 결과는 `source_domain_mismatches=0`, `ambiguous_family_leaks=0` 유지.
+  - `FitMatchP0ProductionPathTests` + `FitMatchReleaseConfigurationTests` + `FitMatchSupabaseProductResolverTests` 39/39 통과. 결과: `/tmp/FitMatchZARARecovery-P0-20260824.xcresult`.
+  - `git diff --check` clean.
+- 남은 출시 작업: (1) 실제 iPhone에서 ZARA URL 공유→미확정 category 선택→size guide→비교/직접 입력 전환을 눈으로 확인, (2) ZARA 상의·아우터의 두 번째 canonical measurement endpoint 검증, (3) 공식 structured product/variant API 계약과 다중 색상 payload 검증, (4) release gate 활성화는 위 조건 통과 후 별도 결정한다.
+
+## 2026-08-24 ZARA 상의·아우터 공식 측정 기준 반영
+
+- 사용자가 제공한 ZARA KR 공식 상품 화면 캡처 4장으로 상의·아우터 측정 endpoint를 확인했다. 화면의 공식 설명은 (1) 가슴 둘레=`암홀 높이에서 한쪽 끝부터 다른 쪽 끝`, (2) 등 너비=`한쪽 어깨 소매 심라인에서 반대쪽 어깨 소매 심라인`, (3) 소매 길이=`한쪽 어깨 소매 심라인에서 소매 하단`이다. 따라서 각각 기존 typed contract인 `chest_width_pit_to_pit`, `shoulder_width_seam_to_seam`, `sleeve_shoulder_seam_to_cuff`와 일치한다.
+- 같은 화면의 앞면 길이는 `어깨 심라인에서 밑단`으로 설명된다. 현재 FitMatch의 상의 앞길이 코드는 `어깨 최고점(HPS)에서 앞 밑단`이므로 동일하다고 보지 않았다. 팔 너비도 현재 typed canonical code가 없다. 두 항목은 값과 raw code/label/info를 그대로 보존하지만 비교·점수에서는 제외한다.
+- `ZARASizeGuideParser` mapping version을 `zara_kr_measure_guide_verified_subset_v4`로 올렸다. 상의는 verified field 2개 이상이며 shoulder/chest 중 하나가 있을 때, 아우터는 2개 이상이며 chest가 있을 때만 `actualMeasurements`로 통과한다. 한 항목만 있거나 단위/값이 불완전하면 기존처럼 manual/fail-closed다.
+- 실제 표본 링크:
+  - [숏 슬리브 티셔츠](https://www.zara.com/kr/ko/%E1%84%89%E1%85%AD%E1%86%BA-%E1%84%89%E1%85%B3%E1%86%AF%E1%84%85%E1%85%B5%E1%84%87%E1%85%B3-%E1%84%90%E1%85%B5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p03431633.html): 공식 표의 S/M 값 `가슴 43/46, 앞면 길이 55/56.5, 소매 16.5/17, 등 너비 39/40, 팔 너비 13.5/14`와 저장 fixture가 일치한다.
+  - [스트라이프 봄버 재킷](https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%87%E1%85%A9%E1%86%B7%E1%84%87%E1%85%A5-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p07782343.html): 공식 표의 S/M 값 `가슴 56/58, 앞면 길이 58/59, 소매 49/50, 등 너비 60.5/61.5, 팔 너비 25.5/26`과 저장 fixture가 일치한다.
+- 기존 공통 `MeasurementComparisonEngine`에는 `zara` 분기를 추가하지 않았다. ZARA가 만든 canonical code를 기존 cross-source 경로가 Musinsa와 비교하는 회귀를 추가했고 confirmed/score 95를 확인했다. production score 공식, weight, ranking은 변경하지 않았다.
+- 운영 Supabase는 read-only로 확인했다. 현재 `source_measurement_aliases`의 ZARA comparable row는 기존 policy `zara-measurement-2026-08-21-v1` 5개뿐이다. `measurement_definitions`에는 `chest_width`, `shoulder_width`, `sleeve_length`가 존재하고, runtime resolver도 새 basis를 각각 `chest`, `shoulder`, `sleeve_length`로 해석함을 SELECT로 검증했다.
+- 로컬 migration 후보 `20260824100350_extend_zara_verified_upper_measurements.sql`을 Supabase CLI로 생성했다. 새 policy `zara-measurement-2026-08-24-v2`에 기존 5개와 upper/outer `back-width`, `sleeve-length`, 확장된 `chest` scope를 합쳐 comparable alias 7개를 versioned insert한다. 새 table/EAV/engine은 없으며 migration apply, seed, backfill, UPDATE, DELETE, production write는 실행하지 않았다.
+- 검증:
+  - `ZARAParserPhase1_5Tests` 31/31 통과: `/tmp/FitMatchZARAUpperMeasurements-Final-20260824.xcresult`.
+  - `MeasurementPolicyConsolidationTests` 6/6 통과: `/tmp/FitMatchZARACrossSource-20260824.xcresult`.
+  - `FitMatchP0ProductionPathTests + FitMatchReleaseConfigurationTests + FitMatchSupabaseProductResolverTests + MeasurementPolicyConsolidationTests + ZARAParserPhase1_5Tests` 76/76 통과: `/tmp/FitMatchZARAUpperP0Regression-20260824.xcresult`.
+- 남은 출시 작업: (1) migration은 staging에서 parity/rollback 검증 후 별도 승인으로 production 적용, (2) 기존 ZARA 저장 measurement 재정규화는 별도 backfill 승인이 필요, (3) 실제 iPhone URL 공유→선택 variant→상의/아우터 자동 비교 E2E, (4) 앞면 길이의 HPS 대응 여부와 팔 너비 consumer는 추가 공식 근거/제품 요구가 생기기 전까지 raw-only, (5) 공식 structured product/variant API 계약·다중 색상 payload·release gate는 여전히 미완료다.
+
+## 2026-08-24 connectDB → main 조건부 머지·출시 점검
+
+- 사용자 지시는 현재 브랜치 테스트에 이상이 없을 때만 main에 머지하는 것이었다. 점검 시작 시 `connectDB`, `main`, `origin/connectDB`, `origin/main`은 모두 동일 HEAD `43add48bf083dd0e01036038ee34254e8579025f`였고, 이후 작업은 대규모 미커밋 변경으로 존재했다.
+- XcodeBuildMCP로 iPhone 17 Pro Simulator(iOS 26.3.1) Debug 앱을 새로 빌드·설치·실행했다. 빌드와 실행은 성공했고 최초 화면의 Apple 로그인 CTA까지 확인했다. 파서 actor-isolation 경고는 ZARA 1건, COS 7건이었다.
+- `xcodebuild build -project FitMatch.xcodeproj -scheme FitMatch -configuration Release -destination 'generic/platform=iOS' -derivedDataPath /tmp/FitMatchReleaseCandidateDevice-20260824 CODE_SIGNING_ALLOWED=NO`는 `BUILD SUCCEEDED`였다. 이는 무서명 Release 컴파일 성공 근거이며 배포 서명·archive·Validate App 통과 근거는 아니다.
+- 전체 `FitMatchTests` 실행은 green이 아니었다. XcodeBuildMCP 실행은 300초 도구 제한으로 결과 번들 없이 종료됐고, 결과 번들을 남기는 직접 재실행에서는 다음이 관찰됐다.
+  - `CategoryLive300ShadowAuditTests` 1/1 통과. silent conflict confirmation 0, strict comparison conflict leak 0.
+  - 5,026개 production 분류 XCTest 1/1 통과. invalid 0, 사용자 확인 329.
+  - `CurrentUniqloCatalogAuditTests` 중 test host가 `pointer being freed was not allocated`로 종료 후 재시작했다.
+  - 대형 Musinsa/Uniqlo corpus 실행에서도 test host가 반복 재시작됐다.
+  - `LiveReleaseQA1200Tests.testSelectedTenCaseBatchOnPhysicalDevice`는 일반 scheme에서 필수 batch 환경변수가 없어 `XCTUnwrap` 1건 실패했다. 실기기 전용 테스트를 일반 회귀에서 skip/격리하지 못한 하네스 문제다.
+  - 이어진 `testMusinsaDeepReferenceCandidateProbe`에서는 현재 parser 결과와 저장된 target taxonomy 사이의 다수 mismatch 로그가 발생했고 네트워크 장시간 실행이 이어져, 이미 확인된 실패·crash 뒤 수동 중단했다. 중단 실행을 전체 통과로 계산하지 않는다.
+- 운영 Supabase migration ledger를 read-only로 재확인했다. 최신 적용은 `20260821090138 seed_zara_verified_measurement_subset`이다. 로컬 `113_p3_data_quality_observability`, `114_release_gate_and_quality_review_queue`, `20260824100350_extend_zara_verified_upper_measurements`는 운영에 적용되지 않았다.
+- Release 앱의 `FitMatchPrivacyPolicyURL`, `FitMatchSupportURL`은 여전히 빈 문자열이고, `ZARAIntegrationAvailability`는 Release에서 항상 false다.
+- 결론: 사용자 조건인 “테스트 이상 없음”이 충족되지 않아 commit/merge/push를 실행하지 않았다. main은 `43add48`에 그대로 있고 working tree도 보존했다. 현재 코드는 Debug/Release 컴파일 가능하지만 출시 승인은 NO다.
+- 다음 순서: (1) 일반 회귀에서 실기기·환경 의존 테스트를 명시적으로 skip/전용 scheme으로 격리, (2) test host 메모리 종료를 단독 재현·원인 수정, (3) Musinsa deep-reference 기대 taxonomy의 현재 정책 적합성 검수, (4) 전체 offline unit/UI regression 실패 0 재실행, (5) 실제 iPhone Apple 로그인·옷장·비교·탈퇴·공유 E2E, (6) 공개 privacy/support URL, 배포 서명 archive, archive audit, Validate App, TestFlight 확인 후에만 출시 승인한다.
+
+## 2026-08-24 조건부 머지 재검수 결과와 남은 사용자 판정
+
+- 이전 전체 테스트의 메모리 종료는 앱 실행 중 메모리 누수로 확인된 것이 아니라, 수백~수천 개 상품을 한 프로세스에서 순차 분석하는 대형 감사 테스트와 실시간 네트워크 테스트가 일반 회귀에 함께 들어가 test host가 재시작한 문제였다. 장시간 corpus·Vision OCR·실기기/네트워크 감사에는 명시적 환경변수 gate를 추가해 기본 offline 회귀에서 격리했다. 해당 테스트 자체를 삭제하거나 기대값을 완화하지 않았다.
+- `ShoppingProductViewModel`은 deinit 시 진행 중인 `databaseResolutionTask`를 취소하도록 보완했다. Intel Simulator에서 관찰된 `ShoppingProductViewModel.__deallocating_deinit` invalid-free 재현 경로를 제거했고, 현재 Uniqlo catalog 감사의 단독 재실행이 정상 종료됐다.
+- 현재 Uniqlo 880상품 감사 결과는 `raw_size_rows=5193`, `parsed_size_rows=5181`, `eligible=439`, `scenarios=2237`, `pass=2237`, `fail=0`이다. Musinsa 1,037 corpus는 1/1 통과(428.059초), Uniqlo 243 corpus는 1/1 통과(57.7초), 장시간 이미지 OCR 감사도 1/1 통과(30.5초)했다.
+- 분류 안전성은 다음을 보완했다. 셔츠/블라우스 같은 typed detail이 broad `tops.tshirt` source family에 의해 티셔츠로 덮이지 않는다. 민소매 구조가 저장된 긴소매 추론에 밀리지 않는다. product name의 명시적 polo는 일반 셔츠보다 먼저 판정하되, broad source umbrella의 polo 문구는 typed 셔츠를 덮지 않는다. trusted 상의 taxonomy와 `코치재킷` 상품명이 충돌하는 경우 상품명만으로 아우터를 자동 확정하지 않는다. COS `/t-shirts/`도 generic `shirt` 부분 문자열에 오분류되지 않는다.
+- ZARA 상의 공식 화면에서 검증된 가슴·등 너비·소매만 canonical measurement로 사용하고, endpoint가 다른 앞면 길이와 typed code가 없는 팔 너비는 raw-only로 유지하는 regression을 고정했다. production score·weight·ranking 계산식은 변경하지 않았다.
+- 일반 offline 전체 suite에서 오래된 adjudication 1개만 제외한 결과는 441 tests, 407 passed, 34 skipped, 0 failed다. 결과 번들은 `/tmp/FitMatchFullOfflineSerialExceptStaleGold-r4-20260824.xcresult`이다. skipped 34건은 환경변수/실기기/네트워크가 필요한 명시적 감사 테스트다.
+- 제외한 `DBLogicReliabilityAuditTests.testDBLogicAdjudicationMatchesProductionClassifier`는 207개 판정 중 31상품에서 64개 assertion이 현재 안전 정책과 과거 fixture가 다르다. 주요 차이는 과거 fixture가 반팔/민소매 셔츠·블라우스를 `tshirt` family로 저장한 반면 현재 typed contract는 종류를 `shirt`/`blouse`로 유지하고 길이를 `short_sleeve`/`sleeveless`로 별도 저장한다는 점이다. 또 `uniqlo|E491320 KIDS PEANUTS코치재킷`은 과거 fixture가 outerwear/windbreaker지만 현재 authority 정책은 trusted top 분류를 상품명 하나로 덮지 않는다.
+- 영향 상품은 Musinsa `5049615, 5155214, 6405582`, Uniqlo `E474152, E482479, E482480, E482481, E482483, E482497, E482498, E482502, E483875, E483881, E483890, E484240, E484256, E484849, E484876, E485584, E486701, E486734, E486736, E486738, E486834, E487989, E489136, E489138, E489229, E489230, E490285, E491320`이다. 이 fixture는 과거 사람 판정이 포함된 Gold 성격이라 사용자 승인 없이 기대값을 바꾸지 않았다.
+- 권장 판정은 셔츠/블라우스의 garment type을 유지하고 반팔/민소매는 length로 분리하는 현재 정책을 승인해 fixture를 재판정하는 것이다. `E491320`은 공식 trusted category가 상의라면 자동 비교를 차단하고 review 대상으로 두는 현재 fail-closed 정책을 권장한다. 사용자가 이 의미를 승인해야 fixture 갱신 후 진짜 전체 suite 0 failure를 확인할 수 있다.
+- 정확한 주요 명령과 결과:
+  - `env TEST_RUNNER_FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT=1 xcodebuild ... -only-testing:FitMatchTests/FitMatchTests/fitPairRuleCorpusMusinsa1037` → 1 passed, 428.059s.
+  - `env TEST_RUNNER_FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT=1 xcodebuild ... -only-testing:FitMatchTests/FitMatchTests/fitPairRuleCorpusUniqlo243` → 1 passed, 57.7s.
+  - `env TEST_RUNNER_FITMATCH_RUN_LONG_IMAGE_AUDIT=1 xcodebuild ... -only-testing:FitMatchTests/FitMatchTests/longImageAudit` → 1 passed, 30.5s.
+  - `xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchCrashIsolation-20260824 -parallel-testing-enabled NO -collect-test-diagnostics never -only-testing:FitMatchTests -skip-testing:FitMatchTests/DBLogicReliabilityAuditTests/testDBLogicAdjudicationMatchesProductionClassifier -resultBundlePath /tmp/FitMatchFullOfflineSerialExceptStaleGold-r4-20260824.xcresult` → 441 total, 407 passed, 34 skipped, 0 failed.
+- 출시 blocker는 추가로 남아 있다. `FitMatchPrivacyPolicyURL`과 `FitMatchSupportURL`은 빈 문자열이고 Release의 `ZARAIntegrationAvailability.isEnabled`는 `false`다. 운영 DB 최신 migration은 `20260821090138`이며 로컬 `113`, `114`, `20260824100350`은 미적용이다. 실제 iPhone에서 ZARA 공유 URL·variant·size guide·카테고리 확인·자동 비교/직접 입력 전환 E2E도 아직 수행하지 않았다.
+- 결론: 현재 branch는 `connectDB`, HEAD는 `43add48bf083dd0e01036038ee34254e8579025f`다. Gold 판정 31상품 승인 전에는 전체 테스트 실패 0 조건이 아니므로 commit/merge/push와 출시를 하지 않는다.
+
+## 2026-08-24 ZARA 99% 신뢰성 추가 감사
+
+- ZARA KR 공식 상품 페이지 5개(티셔츠·셔츠·팬츠·재킷·원피스)를 실제 브라우저에서 열어 구조화 데이터 계약을 다시 확인했다. 각 페이지에서 JSON-LD `ProductGroup.productGroupID`, variant URL의 `v1`, embedded analytics의 `catentryId`, 내부 `productId`, `productRef`가 함께 제공됐다. 이는 CSS DOM 텍스트에 의존하지 않고 상품 reference와 선택 variant를 상호 검증할 수 있는 근거다.
+- `ZARAProductPageParser.identity()`는 JSON-LD가 제공될 경우 analytics style이 `productGroupID`와 일치하고, analytics `catentryId`가 JSON-LD variant URL 목록 안에 있을 때만 identity를 확정하도록 보강했다. 과거 저장 fixture처럼 richer JSON-LD 필드가 없는 자료는 계속 읽되, 서로 모순되는 최신 구조화 데이터는 fail-closed한다.
+- 정상 상품 페이지의 JavaScript bundle 안에 문자열 `triggerInterstitialChallenge`가 포함돼 있다는 이유만으로 CAPTCHA로 오판하던 실제 결함을 발견했다. challenge 판정은 이제 `bm-verify`, 화면의 Access Denied title/body 같은 강한 신호를 우선하고, 해당 bundle 문자열만 있을 때는 유효한 analytics와 Product JSON-LD가 모두 없는 경우에만 차단한다. 회귀 테스트를 추가했다.
+- iPhone 17 Pro Simulator에서 visible WebView 감사를 실행한 결과, 수정 전에는 정상 페이지가 `challenge_detected`로 실패했으나 수정 후에는 공식 티셔츠 URL에서 `style=04174325`, `v1/catentry=547793140`, `productId=545408873`, `productRef=04174325-I2026`과 `garment_measure` 응답까지 확인했다. 즉 공식 페이지를 사용자 브라우저와 같은 WebView로 읽는 경로 자체는 동작한다.
+- 다만 실제 기본 `ZARAProductPageLoader`는 여전히 background `URLSession` 경로다. opt-in live production-loader test를 추가해 같은 공식 URL을 호출한 결과 `automaticParsingUnavailable`로 실패했다. 별도 DEBUG WebView 감사만 성공하고 production/default import path는 실패하므로 현재 상태를 ZARA 서비스 준비 완료 또는 99% 신뢰성이라고 판정할 수 없다.
+- 검증 결과: 구조화 identity/challenge 회귀를 포함한 기본 `ZARAParserPhase1_5Tests`는 최종 35개 중 34 통과, 명시적 live 1개 skip으로 성공했다(`/tmp/FitMatchZARA99DefaultFinal-20260824.xcresult`). P0/release/resolver/measurement/ZARA focused regression은 79/79 통과했다(`/tmp/FitMatchZARA99FocusedRegression-20260824.xcresult`). opt-in live default-loader 감사는 35개 중 34 통과, live 1건 실패(`/tmp/FitMatchZARALiveDefaultLoader-r5-20260824.xcresult`)이며 이 실패가 현재 출시 blocker다.
+- 99% 수치도 아직 입증할 수 없다. 현재 ZARA shadow corpus 3,983건은 독립 정답이 아니라 후보 데이터이고, 사용자가 직접 확정한 Gold는 4상품뿐이다. 객관적인 99% precision 근거를 만들려면 분류군·성별·구조·미확정 사례가 섞인 대표 표본을 독립 검수해야 한다. 권장 최소 검증팩은 약 300상품이며, 오류 0건일 때도 이를 운영 전체에 대한 절대 보장으로 표현하지 않고 표본 기반 신뢰 근거로만 사용한다.
+- 아래 2026-08-25 작업으로 앞서 적은 WebView-first 제안은 폐기하고 `URL v1 실측 API 우선 + WebKit fallback`으로 구현했다. 남은 우선순위는 (1) 300상품 독립 Gold 검수팩과 오분류/보류율 집계, (2) 7일 반복 drift 감사, (3) 실제 iPhone 공유 확장 E2E다. production score, ranking, DB 데이터는 변경하지 않았고 commit/merge/push도 하지 않았다.
+
+## 2026-08-25 ZARA URL v1·실측 API 우선 경로와 WebKit fallback 구현
+
+- 사용자 승인에 따라 수집 순서를 `URL identity 우선 → v1 실측 API 선조회 → 일반 HTTP 상품 구조 확인 → 필요한 경우에만 WebKit 구조화 데이터 fallback`으로 변경했다. URL `p########`은 style reference, query `v1`은 선택 색상의 catalog-entry ID로 계속 분리하며 서로 계산하지 않는다.
+- `v1`이 있으면 `size-measure-guide`를 상품 페이지보다 먼저 호출한다. 다만 선조회 응답은 이후 공식 상품 페이지의 analytics와 JSON-LD가 같은 style/variant를 독립적으로 확인한 경우에만 소비한다. URL의 임의·오래된 `v1`을 그대로 신뢰하거나 다른 색상 ID로 바꾸지 않는다.
+- `v1`이 없으면 기존처럼 상품 구조화 데이터에서 현재 `catentryId`를 확인한 후 실측 API를 호출한다. 따라서 다중 색상 상품에서 reference만 보고 임의 variant를 고르는 동작은 없다.
+- 일반 `URLSession` 상품 페이지가 403/빈 구조/JavaScript 미실행 등으로 identity를 만들지 못할 때만 `ZARAWebViewProductPageLoader`를 사용한다. fallback은 비영구 WebKit data store, JavaScript 활성화, 공식 ZARA host 제한으로 동작하고 DOM 문구 전체가 아니라 `zara.analyticsData` script와 Product JSON-LD만 캡처한다. URL의 `bm-verify`, 화면 Access Denied, navigation 401/403/429는 실패로 종료하며 challenge 해결·쿠키 복제·우회 로직은 없다.
+- ZARA가 짧은 `/item-p...` URL을 localized canonical 상품명 URL로 교체할 때 WebKit이 이전 navigation을 `NSURLErrorCancelled(-999)`로 알리는 정상 동작을 실제 라이브 검사에서 발견했다. 이 취소만 계속 기다리고 실제 네트워크 오류는 실패시키도록 수정했다.
+- 신규 회귀 테스트는 (1) `v1`이 있으면 guide→page 순서, (2) `v1`이 없으면 page→guide 순서, (3) direct page가 유효하지 않을 때 fallback을 사용하면서 같은 variant를 유지하는지 검증한다. 기본 focused regression에서는 opt-in live test 2개만 skip되고 나머지가 모두 통과했다.
+- 이전에 `automaticParsingUnavailable`로 실패했던 공식 티셔츠 URL `https://www.zara.com/kr/ko/item-p04174325.html?v1=547793140`을 실제 기본 `ZARAParser()`로 재실행했다. 수정 후 상품명, style `04174325`, catentry `547793140`, internal product ID `545408873`, 상의/반팔, `actualMeasurements`와 비어 있지 않은 사이즈를 확인했다. 또한 `v1=547793140`을 `ZARASizeGuideLoader`에 직접 전달하는 별도 live test가 상품 페이지를 읽지 않고 공식 `measureGuideInfo`의 cm 실측 행을 받는 것도 확인했다. live ZARA suite 39/39 통과(`/tmp/FitMatchZARAURLFirstDirectAPILive-r2-20260825.xcresult`).
+- P0/release/resolver/measurement/ZARA final focused regression은 총 84건에서 실패 0건이었다(기본 실행에서 opt-in live 2건 skip, 나머지 통과, `/tmp/FitMatchZARAURLFirstFinalFocused-20260825.xcresult`). XcodeBuildMCP로 iPhone 17 Pro Simulator에 새 Debug 앱을 빌드·설치·실행했고 Apple 로그인 시작 화면을 확인했다. arm64 generic iOS Release 무서명 빌드도 `BUILD SUCCEEDED`였다(`/tmp/FitMatchZARAURLFirstRelease-20260825`).
+- 사용자 영향: `v1` 포함 링크는 실측 조회를 먼저 시작하므로 불필요한 WebKit 의존을 줄이고, 일반 HTTP 상품 페이지가 실패해도 공식 브라우저 구조화 데이터로 자동 복구할 수 있다. fallback은 내부 비표시 WebKit 세션이므로 추가 페이지 화면을 사용자에게 강제로 노출하지 않는다.
+- 변경하지 않은 것: production score·weight·ranking, category taxonomy, 운영 DB, migration, release gate. `ZARAIntegrationAvailability`는 Release에서 여전히 false이며 실제 iPhone 공유 확장 E2E, 300상품 독립 Gold, 반복 drift 검증, 운영 migration/release 승인 전에는 99% 또는 production 출시 완료로 판정하지 않는다. commit/merge/push도 실행하지 않았다.
+
+## 2026-08-25 UNIQLO 색상별 상품 이미지 복구
+
+- 사용자 캡처의 `크루넥T`, `E422992`, `XXL`은 현재 UNIQLO fixture의 실측값과 일치하며 저장된 `Product.imageURLString`이 비어 있어 홈·옷장 목록·상세 화면이 모두 같은 placeholder를 표시하는 문제였다. UI 세 곳의 개별 문제가 아니라 legacy 저장 상품의 이미지 복구 경로가 없던 공통 결함이었다.
+- 선택 색상 이미지가 있으면 계속 최우선으로 사용한다. 해당 URL 로딩이 실패하면 같은 goods ID의 공식 기본색 `_00_` URL을 두 번째 후보로 시도한다. 다른 판매처나 알 수 없는 URL을 UNIQLO로 추정하지 않는다.
+- 공유 URL이 generic color `00`이고 size API가 실제 대표 색상 이미지(이 상품은 `_11_`)를 제공하면, 같은 goods ID임을 확인한 뒤 그 공식 이미지를 채택한다. 명시적으로 선택된 색상(예: `03`)은 generic/다른 색상 이미지로 덮어쓰지 않는다.
+- 이미 저장된 legacy UNIQLO 상품의 이미지가 nil이어도 canonical source code, 공식 URL host 또는 제한된 legacy source name으로 UNIQLO임이 확인된 경우에만 `productCode`에서 같은 상품의 공식 `_00_` 표시 URL을 런타임에 파생한다. 6자리 코드만 같은 Musinsa/unknown 상품에는 적용하지 않는다. DB/local backfill 없이 앱 업데이트만으로 기존 옷장 카드가 복구된다. 원본 `methodSource`, 상품 데이터, 비교 점수·순위는 변경하지 않았다.
+- 공통 표시 경로(Home, My Closet 카드/목록, Closet 상세, 비교/추천/검색)를 `imageURLStringForDisplay`로 통일했다. 저장된 원본 URL은 그대로 보존하고 화면 표시에서만 복구 후보를 사용한다.
+- 실제 CDN 확인: `E422992` 기본색 `_00_`과 size API 대표색 `_11_` 모두 2026-08-25 기준 HTTP 200 `image/jpeg`였다.
+- 검증: iPhone 17 Pro Simulator Debug build/install/launch 성공. 최종 `FitMatchTests/FitMatchTests` 실행 결과 287 total, 284 passed, 3 explicit skips, 0 failed (`/tmp/FitMatchUniqloImageFallbackSuite-r2-20260825.xcresult`). 신규 회귀는 선택 색상 보존, generic 00의 공식 대표색 채택, 선택색→기본색 fallback 순서, nil legacy 상품의 기본 썸네일 파생, non-UNIQLO 6자리 코드 오탐 방지를 고정한다.
+- 남은 확인: 로그인된 실제 사용자 데이터가 있는 iPhone에서 앱 업데이트 후 동일 `E422992` 카드가 홈·옷장·상세에서 표시되는지 눈으로 확인해야 한다. Simulator는 Apple 로그인 화면까지만 접근 가능해 사용자 계정의 기존 저장 row를 직접 재현하지 못했다. 이 확인은 구현 blocker가 아니라 실제 계정 데이터/UI 최종 확인이다.
+
+## 2026-08-25 ZARA 공식 300상품 A 분류 테스트
+
+- `scripts/collect-zara-live-300.mjs`로 공식 ZARA KR sitemap과 현재 구조화 상품 자료가 교차 확인된 300개 고유 style reference를 수집했고, 원본은 `ZARAAudit/live_zara_300_20260825/zara_live_300.jsonl`, 사람이 링크를 열어 판정할 표는 `zara_live_300_review.csv`에 보존했다. 전부 `official_listed=true`, `PENDING_HUMAN_REVIEW`, `gold_approved=false`이며 자동 Gold 승격은 하지 않았다.
+- A 테스트는 300개 snapshot을 현재 실제 `ZARACategoryClassifier`와 `ParsedClosetClassification`의 conflict/atomic category 조건에 통과시켰다. 대분류 또는 세부분류가 `기타`이면 confirmed로 세지 않고 안전 미분류로 집계하도록 테스트 기준을 강화했다.
+- 최종 결과: 300건 중 `confirmed=147`(49.0%), `review_required=19`(6.3%), `unclassified=134`(44.7%). `source_domain_mismatches=0`, `silent_conflict_confirmations=0`, `strict_conflict_leaks=0`이다. 따라서 잘못된 대분류 확정/충돌 비교 유출은 발견되지 않았지만 자동 서비스 범위는 절반 수준이라 99% 준비 완료로 볼 수 없다.
+- 자동 확정 세부 분류: 스커트 26, 긴바지 23, 블레이저 21, 원피스 18, 재킷 16, 셔츠 15, 반팔 11, 데님 6, 스웨트 5, 코트 3, 가디건/반바지/폴로셔츠 각 1.
+- 미분류가 가장 많이 몰린 source family: `SWIMSUIT|Swimwear` 23, `PANTY/UNDERPANT|Underwear` 20, `SWIMSUIT|BIKINI` 13, `SWIMSUIT|SWIMSUIT BIKINI` 9, `BERMUDA|B.BERMUDAS` 5, `BODYSUIT|BODY` 4, `OVERSHIRT|Overshirt` 4, `WAISTCOAT|B.VEST` 3. 수영복/바디수트처럼 현재 FitMatch 비교 계약 밖인 항목은 억지 매핑하지 않고, 버뮤다·오버셔츠·베스트·속옷은 상품 링크 사람 검수 후 exact source rule 후보로 분리해야 한다.
+- `ZARAParserPhase1_5Tests` 최종 40 total, 38 passed, 2 explicit live-network skips, 0 failed(`/tmp/FitMatchZARALive300-A-final-20260825.xcresult`). 300건 A 분류 audit 자체는 실행·통과했다. production DB write/migration apply, score/ranking 변경, commit/push는 하지 않았다.
+- 다음 단계: review CSV의 링크를 보고 300건에 `human_category`, `human_detail`, `reviewer_notes`, `gold_approved`를 채우는 독립 사람 판정이 필요하다. 그 뒤 A 결과와 Gold를 비교해야 precision/오분류율을 말할 수 있다. 현재 결과는 안전성과 coverage 결과이지 accuracy 99% 근거가 아니다.
+
+## 2026-08-25 ZARA 공유 URL 버튼 비활성화 수정
+
+- 사용자 실제 기기에서 ZARA 공유 URL `p05372320.html?v1=549582583&utm_...`을 입력해도 “상품 정보 불러오기”가 비활성화되고 “복사된 상품 링크가 없어요”가 남는 문제를 재현 근거로 조사했다. URL 형식이나 tracking query 문제가 아니라 `ZARAIntegrationAvailability`가 Debug launch argument에서만 true이고 Release에서는 항상 false였기 때문에 정상 `zara.com` URL도 `ProductURLSupport`에서 unsupported로 판정한 것이 직접 원인이었다.
+- 사용자 승인으로 ZARA URL import를 공용 지원 provider로 활성화했다. gate만 제거했으며 parser 내부의 공식 host/style/variant 상호검증, category conflict 보류, verified measurement 부족 시 partial/manual 전환, 401/403/429/challenge fail-closed는 유지했다.
+- 붙여넣기 UX도 수정했다. 입력창에 이미 URL이 있으면 pasteboard가 비어 있어도 “복사된 링크 없음”을 표시하지 않는다. 비어 있지 않은 입력은 empty-pasteboard 경고를 즉시 지우며, 실제 unsupported host일 때는 별도의 “지원하지 않는 상품 링크” 안내를 표시한다.
+- 사용자가 제공한 전체 percent-encoded URL과 `v1`, `utm_campaign`, `utm_medium`, `utm_source`를 그대로 넣은 지원 판정 regression을 추가했다. ZARA 공식 URL은 `supportedProviderName == ZARA`, lookalike `zara.com.example.com`은 계속 거부한다.
+- iPhone 17 Pro Simulator Debug build/install/launch 성공. `FitMatchTests/FitMatchTests` 287 total, 284 passed, 3 explicit skips, 0 failed. arm64 generic iOS Release 무서명 build도 `BUILD SUCCEEDED`(`/tmp/FitMatchZARALinkRelease-20260825`).
+- 실제 사용자 URL을 `ProductURLParserService`에 전달하는 opt-in live regression도 추가했다. style `05372320`, selected variant `549582583`, source `ZARA 공식몰`을 확인했고 ZARA suite는 live network 포함 41/41 통과했다(`XcodeBuildMCP .../result-bundles/test_sim_2026-08-24T23-33-04-725Z_pid15783_affc597a.xcresult`).
+- UI-testing 인증 상태의 iPhone 17 Pro Simulator에서 링크 추가 sheet를 직접 열고 동일 style/variant/utm 형식 URL을 입력했다. `closet.linkLoad`가 enabled target으로 나타났고, 버튼을 누른 뒤 공식 상품명 `와플 텍스처 레귤러핏 스웨트셔츠`와 활성 `다음` 버튼까지 확인했다. production DB write/migration apply, score/ranking 변경, commit/push는 하지 않았다. 실제 사용자 iPhone에는 이 수정이 포함된 새 빌드를 설치해야 하며, 설치 후 같은 링크로 한 번 확인하면 된다.
+
+## 2026-08-25 세 쇼핑몰 내일 실기기 테스트 준비 감사
+
+- ZARA 앱 내부 URL 입력 경로는 활성화돼 있었지만 `FitMatchShareExtension/ShareViewController.swift`가 무신사와 유니클로 host만 허용해 Safari/ZARA 앱의 공유하기에서 공식 ZARA URL을 거부하는 누락을 발견했다. 공식 `zara.com`과 그 하위 host를 공유 확장 허용 목록 및 metric provider에 추가했다. lookalike host는 허용하지 않는다.
+- ZARA가 partial/manual recovery로 넘어갈 때 source가 `manual`로 바뀌는 문제도 수정했다. `ClosetProductSourceOption.zara`를 추가해 상품 출처·브랜드를 `ZARA 공식몰`/`ZARA`로 보존하고, 검증되지 않은 ZARA 자체 사이즈표를 주장하지 않도록 측정 방식은 FitMatch 직접 측정만 허용했다.
+- 운영 Supabase를 read-only로 확인했다. source는 musinsa/uniqlo/zara 모두 active다. 상품은 Musinsa 394, Uniqlo 1,184, ZARA 30개이며 현재 분류는 Musinsa confirmed 311/review 82/not-comparable 1, Uniqlo confirmed 766/review 250/not-comparable 168, ZARA confirmed 29/review 1이다. 측정 row는 Musinsa 2,229, Uniqlo 25,319, ZARA 870이다.
+- 운영 migration ledger 최신은 `20260821090138 seed_zara_verified_measurement_subset`이다. 로컬 `113_p3_data_quality_observability`, `114_release_gate_and_quality_review_queue`, `20260824100350_extend_zara_verified_upper_measurements`는 운영 미적용 상태다. 운영 `data_quality_issues`는 0건이라 unknown category/measurement/conflict 집계가 실제로 작동한다고 아직 입증할 수 없다. production DB write나 migration apply는 수행하지 않았다.
+- 변경 후 focused 회귀는 live ZARA parser를 포함해 88/88 통과했다. `FitMatchTests/FitMatchTests`는 288 total, 285 passed, 3 explicit skips, 0 failed다. 전체 offline `FitMatchTests`는 과거 Gold 판정 1개를 명시 제외하고 457 total, 420 passed, 37 explicit skips, 0 failed(`/tmp/FitMatchTomorrowReadiness-20260825.xcresult`)다. 제외된 Gold는 이전부터 남은 31상품/64 assertion 정책 재판정 항목이며 기대값을 임의 변경하지 않았다.
+- 첫 focused 빌드에서 `AddClosetItemView`의 새 ZARA enum case를 switch에 표시하지 않아 exhaustive-switch compile error가 발생했고 즉시 ZARA 안내 case를 추가했다. 같은 명령을 다시 실행해 88/88 통과로 확인했다.
+- 내일 실제 iPhone에서는 새 빌드를 설치한 뒤 무신사/유니클로/ZARA 공유하기와 직접 붙여넣기, 유니클로 선택 색상 이미지, ZARA style/v1 유지, 자동 실측 비교와 직접 입력 전환을 각각 확인해야 한다. 이를 `Docs/ConnectDBPhysicalE2EChecklist-20260820.md`에 쉬운 확인표로 추가했다.
+- arm64 generic iOS Release 무서명 빌드는 공유 확장을 앱에 포함하고 embedded binary validation까지 통과해 `BUILD SUCCEEDED`였다(`/tmp/FitMatchTomorrowRelease-20260825`). 수정 후 iPhone 17 Pro Simulator Debug build/install/launch도 성공했다.
+- 정확한 최종 명령과 결과:
+  - `xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchTomorrowReadiness-20260825 -parallel-testing-enabled NO -collect-test-diagnostics never -only-testing:FitMatchTests -skip-testing:FitMatchTests/DBLogicReliabilityAuditTests/testDBLogicAdjudicationMatchesProductionClassifier -resultBundlePath /tmp/FitMatchTomorrowReadiness-20260825.xcresult` → 457 total, 420 passed, 37 skipped, 0 failed.
+  - `xcodebuild build -project FitMatch.xcodeproj -scheme FitMatch -configuration Release -destination 'generic/platform=iOS' -derivedDataPath /tmp/FitMatchTomorrowRelease-20260825 CODE_SIGNING_ALLOWED=NO` → `BUILD SUCCEEDED`.
+- 남은 출시 blocker는 실제 iPhone 공유 확장 E2E, 빈 `FitMatchPrivacyPolicyURL`/`FitMatchSupportURL`, 과거 Gold fixture 31상품 사용자 판정, ZARA 300상품 독립 사람 Gold, 운영 미적용 migration의 승인·검증이다. production score/ranking은 변경하지 않았고 commit/merge/push도 수행하지 않았다.
+
+## 2026-08-25 자동 처리 가능한 잔여 작업 보완
+
+- ZARA 공식 300건의 `section|family|subfamily`와 상품명을 다시 대조했다. 동일 공식 경로 안의 관측 상품이 전부 같은 의류 구조인 경우만 category snapshot `zara-kr-structured-category-2026-08-25-v5`에 추가했다.
+  - 남성 버뮤다 10건: 쇼츠 8, 데님 2
+  - 남성 브리프 21건
+  - 여성 브라 4건, 팬티 2건
+  - 여성 버뮤다 4건
+- 여성 `BERMUDA|B.BERMUDAS` 5건은 일반 버뮤다와 스커트형 팬츠가 섞여 있어 계속 미분류다. `BERMUDA|W.FOLDER PANTS` 1건은 구조 경로가 긴바지 후보지만 상품명이 쇼츠라서 계속 `review_required`다. 둘 다 자동 비교로 넘어가지 않는 회귀 테스트를 추가했다.
+- ZARA 300건 분류 결과는 `confirmed 147 → 188`, `review_required 19`, `unclassified 134 → 93`이다. `source_domain_mismatch=0`, `silent_conflict_confirmation=0`, `strict_conflict_leak=0`을 정확한 fixture 기대값으로 고정했다. 즉 안전성을 낮추지 않고 자동 처리 가능 건만 41건 늘었다.
+- parser의 Swift concurrency 경고를 없애기 위해 상태를 읽지 않는 ZARA/COS JSON·문자열 helper만 `nonisolated`로 표시했다. 파싱 규칙이나 결과는 변경하지 않았다.
+- 미적용 migration `114_release_gate_and_quality_review_queue.sql`에 active release가 동시에 둘 생기지 못하는 partial unique index와 activation advisory lock을 추가했다. production에는 적용하지 않았다. migration 113/114 및 ZARA measurement migration과 verification SQL 총 5개는 PostgreSQL parser 문법 검사를 통과했다. 로컬 PostgreSQL server/Supabase CLI/Docker가 없어 실제 transaction 실행 검증은 아직 못 했다.
+- 개인정보 처리방침 초안의 쇼핑몰 외부 통신 설명에 현재 활성 provider인 ZARA를 추가했다. 운영자명, 지원 이메일, 시행일과 공개 HTTPS URL은 소유자가 확정해야 하므로 빈 값은 임의로 채우지 않았다.
+- 검증 결과:
+  - `ZARAParserPhase1_5Tests`: 41 tests, 38 passed, 3 explicit live-network skips, 0 failed. `/tmp/FitMatchZaraV5Retry.xcresult`
+  - 전체 `FitMatchTests`: 458 total, 420 passed, 37 skipped, 기존 Gold 판정 1 test failed. 실패 내용은 이전부터 남아 있던 31상품(무신사 3, 유니클로 28)의 과거 기대값과 현재 분류 차이이며 ZARA 변경 회귀가 아니다. `/tmp/FitMatchAllUnit-20260825.xcresult`
+  - 위 기존 Gold test 1개만 명시 제외한 전체 회귀: 457 total, 420 passed, 37 skipped, 0 failed. `/tmp/FitMatchAllUnitExceptKnownGold-20260825.xcresult`
+  - arm64 generic iOS Release 무서명 빌드와 공유 확장 embedded binary validation: `BUILD SUCCEEDED`. `/tmp/FitMatchTomorrowReleaseV5-20260825`
+- 사람 또는 외부 환경이 꼭 필요한 남은 작업:
+  1. 실제 iPhone에 새 빌드를 설치해 무신사·유니클로·ZARA 공유하기/붙여넣기와 유니클로 색상 이미지를 눈으로 확인한다.
+  2. ZARA 300건 review CSV의 링크를 열어 독립 Gold를 입력한다. 현재 188건은 분류 가능 coverage이지 99% 정확도 근거가 아니다.
+  3. 과거 Gold 불일치 31상품의 분류를 사람이 확정한 뒤에만 fixture를 갱신한다. 실패 기대값을 자동으로 바꾸지 않았다.
+  4. 운영자명·지원 이메일·시행일·공개 개인정보/지원 HTTPS URL을 확정하고 `Info.plist`와 App Store Connect에 입력한다.
+  5. migration 113/114/ZARA 상의 measurement 확장은 local/staging PostgreSQL에서 verification SQL을 통과시키고 별도 승인 후에만 production 적용한다.
+- production score, weight, ranking, production DB 데이터는 변경하지 않았고 production migration apply, seed, backfill, UPDATE, DELETE, commit, merge, push도 수행하지 않았다.

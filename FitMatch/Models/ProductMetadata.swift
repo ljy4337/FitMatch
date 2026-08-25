@@ -2,6 +2,18 @@ import Foundation
 
 struct ProductMetadata {
     var styleNo: String? = nil
+    /// Provider variant identity when it is distinct from the product identity.
+    /// ZARA uses this for the URL `v1` / analytics `catentryId` value.
+    var externalVariantID: String? = nil
+    /// Provider-native product reference kept separately from style, variant,
+    /// and internal product identities. ZARA publishes this as `productRef`.
+    var externalProductReference: String? = nil
+    /// How a provider variant was selected. Kept as provenance rather than UI copy.
+    var variantSelectionMethod: String? = nil
+    /// Provider variant confidence in the closed 0...1 range.
+    var variantSelectionConfidence: Double? = nil
+    /// Versioned category mapping source used by the parser.
+    var categoryMappingPolicyVersion: String? = nil
     var englishName: String? = nil
     var brandCode: String? = nil
     var brandEnglishName: String? = nil

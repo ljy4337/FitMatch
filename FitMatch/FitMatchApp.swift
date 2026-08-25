@@ -161,8 +161,18 @@ struct FitMatchApp: App {
     var body: some Scene {
         WindowGroup {
             if let modelContainer {
+                #if DEBUG
+                if let zaraAuditURL = ZARAWebViewAuditFeature.requestedURL {
+                    ZARAWebViewAuditScreen(requestedURL: zaraAuditURL)
+                        .modelContainer(modelContainer)
+                } else {
+                    ContentView()
+                        .modelContainer(modelContainer)
+                }
+                #else
                 ContentView()
                     .modelContainer(modelContainer)
+                #endif
             } else {
                 ModelContainerRecoveryView(error: modelContainerError)
             }

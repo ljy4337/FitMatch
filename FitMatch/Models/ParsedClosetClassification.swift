@@ -1,5 +1,27 @@
 import Foundation
 
+enum ParsedClosetClassificationConflictDimension: String, Equatable {
+    case category
+    case garmentFamily = "garment_family"
+    case length
+}
+
+struct ParsedClosetClassificationConflict: Equatable {
+    let dimension: ParsedClosetClassificationConflictDimension
+    let trustedValue: String
+    let explicitValue: String
+}
+
+struct ParsedClosetClassificationSafetyAudit: Equatable {
+    static let conflictResolutionMethod = "classification_conflict"
+    static let policyVersion = "local-classification-safety-2026-08-24-v1"
+    static let safe = ParsedClosetClassificationSafetyAudit(conflicts: [])
+
+    let conflicts: [ParsedClosetClassificationConflict]
+
+    var requiresReview: Bool { !conflicts.isEmpty }
+}
+
 /// Canonical parser output used at Closet/Compare boundaries. Stable taxonomy
 /// codes remain independent from source garment structure and length attributes.
 struct ParsedClosetClassification: Equatable {
@@ -91,6 +113,15 @@ struct ParsedClosetClassification: Equatable {
             resolvedDetailCode = "sleeveless"
             resolvedCategory = .top
             resolvedDetail = .sleeveless
+        } else if category.serviceGroup == .underwear,
+                  detailCategory == .womenBra,
+                  containsExplicitBra(in: source) {
+            // A verified retailer bra leaf remains authoritative when the
+            // product name describes an attached camisole construction.
+            resolvedCategoryCode = "underwear"
+            resolvedDetailCode = "women_bra"
+            resolvedCategory = .underwear
+            resolvedDetail = .womenBra
         } else if let explicitUnderwearDetail = explicitUnderwearDetail(
             in: name,
             source: source
@@ -181,13 +212,22 @@ struct ParsedClosetClassification: Equatable {
             // Words such as "스타디움" may describe a T-shirt design rather
             // than a jacket. An explicit T-shirt structure keeps the top major.
             resolvedCategoryCode = "tops"
-            resolvedDetailCode = explicitTopGarmentDetail(in: name)
+            resolvedDetailCode = explicitProviderTopDetail(
+                in: specificSource,
+                productName: name
+            )
+                ?? explicitTopGarmentDetail(in: name)
                 ?? explicitTopLengthDetail(in: name)
+                ?? explicitTopLengthDetail(in: source)
                 ?? "short_sleeve"
             resolvedCategory = .top
             resolvedDetail = ClosetDetailCategory.fromTaxonomyCode(resolvedDetailCode)
         } else if let explicitOuterwearDetail = crossCategoryOuterwearDetail(in: name),
-                  [.top, .other].contains(category.serviceGroup) {
+                  [.top, .other].contains(category.serviceGroup),
+                  !(category.serviceGroup == .top && containsAny(source, [
+                      "반팔", "반소매", "긴팔", "긴소매", "숏슬리브", "롱슬리브",
+                      "short sleeve", "long sleeve"
+                  ])) {
             // 코치재킷·바람막이처럼 구조가 명시된 상품명은 공식 경로가
             // 그래픽 티 등으로 잘못 내려오더라도 아우터 구조를 우선한다.
             resolvedCategoryCode = "outerwear"
@@ -270,6 +310,85 @@ struct ParsedClosetClassification: Equatable {
                 constructionType: product.constructionType)
     }
 
+    /// Audits explicit product-name evidence after the normal classifier has
+    /// made its decision. Product-name evidence may corroborate a trusted
+    /// source fact, but it cannot silently replace an incompatible critical
+    /// category, garment family, or length.
+    static func auditExplicitContradictions(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        sourceDepths: [String?],
+        sourcePath: String?,
+        productName: String
+    ) -> ParsedClosetClassificationSafetyAudit {
+        let depths = sourceDepths.compactMap {
+            $0?.trimmingCharacters(in: .whitespacesAndNewlines)
+        }.filter { !$0.isEmpty }
+        let source = (depths.isEmpty ? (sourcePath ?? "") : depths.joined(separator: " > "))
+            .lowercased()
+        let name = productName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !source.isEmpty, !name.isEmpty, category.serviceGroup != .other else {
+            return .safe
+        }
+
+        var conflicts: [ParsedClosetClassificationConflict] = []
+        let trustedMajor = category.serviceGroup
+        let explicitMajors = explicitNameMajorCategories(in: name)
+        let isVerifiedInnerwearTShirtException = trustedMajor == .underwear
+            && isInnerwearStructuralTShirt(source: source, productName: name)
+        let isVerifiedSleevelessBraConstruction = trustedMajor == .top
+            && isSleevelessTopMerchandisingPath(source)
+            && containsExplicitBra(in: name)
+            && !containsAny(name, ["스포츠브라", "sports bra"])
+        let isVerifiedMerchandisingException = isVerifiedInnerwearTShirtException
+            || isVerifiedSleevelessBraConstruction
+        if !isVerifiedMerchandisingException,
+           !explicitMajors.isEmpty,
+           !explicitMajors.contains(trustedMajor) {
+            conflicts.append(ParsedClosetClassificationConflict(
+                dimension: .category,
+                trustedValue: trustedMajor.taxonomyCode,
+                explicitValue: explicitMajors.map(\.taxonomyCode).sorted().joined(separator: ",")
+            ))
+        }
+
+        let categoryCode = trustedMajor.taxonomyCode
+        let detailCode = FitMatchTaxonomyProvider.shared.detailCode(
+            for: detailCategory.rawValue,
+            categoryCode: categoryCode
+        ) ?? "other"
+        let trustedLength = explicitLength(for: detailCategory)
+            ?? inferredLength(from: source, detailCode: detailCode, categoryCode: categoryCode)
+        let explicitNameLength = inferredLength(
+            from: name,
+            detailCode: "other",
+            categoryCode: categoryCode
+        )
+        if trustedLength != .unknown,
+           explicitNameLength != .unknown,
+           trustedLength != explicitNameLength {
+            conflicts.append(ParsedClosetClassificationConflict(
+                dimension: .length,
+                trustedValue: trustedLength.rawValue,
+                explicitValue: explicitNameLength.rawValue
+            ))
+        }
+
+        if !isVerifiedMerchandisingException,
+           let trustedFamily = explicitFamily(for: detailCategory) {
+            let explicitFamilies = explicitNameFamilies(in: name)
+            if !explicitFamilies.isEmpty, !explicitFamilies.contains(trustedFamily) {
+                conflicts.append(ParsedClosetClassificationConflict(
+                    dimension: .garmentFamily,
+                    trustedValue: trustedFamily.rawValue,
+                    explicitValue: explicitFamilies.map(\.rawValue).sorted().joined(separator: ",")
+                ))
+            }
+        }
+
+        return ParsedClosetClassificationSafetyAudit(conflicts: conflicts)
+    }
+
     static func isConsistent(category: ClothingCategory, detailCategory: ClosetDetailCategory,
                              categoryCode: String, detailCode: String) -> Bool {
         ClothingCategory.fromTaxonomyCode(categoryCode).serviceGroup == category.serviceGroup
@@ -282,6 +401,17 @@ struct ParsedClosetClassification: Equatable {
                                             productNameText: String) -> String? {
         switch categoryCode {
         case "tops":
+            let providerDetailCode = FitMatchTaxonomyProvider.shared.detailCode(
+                for: detail.rawValue,
+                categoryCode: categoryCode
+            )
+            let providerUsesLengthAxis = [
+                "sleeveless", "short_sleeve", "three_quarter_sleeve", "long_sleeve"
+            ].contains(providerDetailCode)
+            if providerUsesLengthAxis,
+               let productLength = explicitTopLengthDetail(in: productNameText) {
+                return productLength
+            }
             if let providerDetail = explicitProviderTopDetail(
                 in: specificSourceText,
                 productName: productNameText
@@ -302,13 +432,9 @@ struct ParsedClosetClassification: Equatable {
             if containsAny(sourceText, ["민소매", "나시", "슬리브리스", "sleeveless", "tank"]) { return "sleeveless" }
             if containsAny(sourceText, ["7부", "three quarter", "3/4 sleeve"]) { return "three_quarter_sleeve" }
             if containsAny(sourceText, ["cut & sewn", "cut and sewn"]) { return "short_sleeve" }
-            let providerDetail = FitMatchTaxonomyProvider.shared.detailCode(
-                for: detail.rawValue,
-                categoryCode: categoryCode
-            )
-            if providerDetail != "other_tops",
-               FitMatchTaxonomyProvider.shared.isValidDetail(providerDetail, for: categoryCode) {
-                return providerDetail
+            if providerDetailCode != "other_tops",
+               FitMatchTaxonomyProvider.shared.isValidDetail(providerDetailCode, for: categoryCode) {
+                return providerDetailCode
             }
             return nil
         case "bottoms":
@@ -387,7 +513,7 @@ struct ParsedClosetClassification: Equatable {
                 "코치 재킷", "코치재킷", "코치 자켓", "코치자켓",
                 "windbreaker", "coach jacket"
             ]),
-            ("mouton", ["무스탕", "퍼 재킷", "퍼 자켓", "퍼 코트", "mouton", "mustang"]),
+            ("mouton", ["무스탕", "mouton", "mustang"]),
             ("trench_coat", ["트렌치", "trench"]),
             ("padding", ["패딩", "패디드", "파카", "헤비 아우터", "padding", "padded", "parka"]),
             ("vest", ["베스트", "조끼", "vest"]),
@@ -416,7 +542,7 @@ struct ParsedClosetClassification: Equatable {
             ("fleece", ["플리스", "후리스", "뽀글이", "fleece"]),
             ("anorak", ["아노락", "anorak"]),
             ("windbreaker", ["바람막이", "윈드브레이커", "코치 재킷", "코치재킷", "코치 자켓", "코치자켓", "windbreaker", "coach jacket"]),
-            ("mouton", ["무스탕", "퍼 재킷", "퍼 자켓", "퍼 코트", "mouton", "mustang"]),
+            ("mouton", ["무스탕", "mouton", "mustang"]),
             ("trench_coat", ["트렌치", "trench"]),
             ("padding", [
                 "패딩", "패디드", "padding", "padded",
@@ -429,6 +555,9 @@ struct ParsedClosetClassification: Equatable {
         ]
         for (detail, tokens) in rules where containsAny(productName, tokens) {
             matches.insert(detail)
+        }
+        if containsStandaloneFurOuterwear(in: productName) {
+            matches.insert("mouton")
         }
 
         if matches.contains("padded_vest") {
@@ -461,7 +590,14 @@ struct ParsedClosetClassification: Equatable {
             "tailored jacket", "blazer", "windbreaker", "coach jacket", "blouson",
             "anorak", "trench", "mouton", "zip hoodie", "zip-up hoodie", "full zip hoodie", "full-zip hoodie"
         ]) else { return nil }
-        return explicitOuterwearDetail(in: productName)
+        let detail = explicitOuterwearDetail(in: productName)
+        if detail == "windbreaker",
+           containsAny(productName, ["코치 재킷", "코치재킷", "코치 자켓", "코치자켓", "coach jacket"]) {
+            // Outside an official outerwear path, "coach jacket" establishes
+            // jacket structure but not the retailer-specific windbreaker leaf.
+            return "jacket"
+        }
+        return detail
     }
 
     private static func preferredOuterwearNameDetail(
@@ -682,6 +818,12 @@ struct ParsedClosetClassification: Equatable {
 
     private static func inferredFamily(from source: String, productName: String,
                                        categoryCode: String, detailCode: String) -> ComparisonGarmentFamily {
+        // The resolved canonical major wins over retailer merchandising path
+        // tokens. For example, UNIQLO bra tops can live under a T-shirt path,
+        // but an underwear/women_bra decision must use the underwear family.
+        if categoryCode == "underwear" || categoryCode == "homewear" {
+            return .underwear
+        }
         if categoryCode == "outerwear" {
             if containsAny(productName, ["가디건", "카디건", "cardigan"]) { return .knitCardigan }
             return containsAny(productName, ["레더", "가죽", "라이더스", "leather jacket", "riders jacket"])
@@ -715,9 +857,141 @@ struct ParsedClosetClassification: Equatable {
         case "leggings": return .leggings
         case "skirts": return .skirt
         case "outerwear": return .outerwear
-        case "underwear", "homewear": return .underwear
         case "dresses": return .dress
         default: return .unknown
+        }
+    }
+
+    private static func explicitNameMajorCategories(
+        in productName: String
+    ) -> Set<ClothingCategory> {
+        var categories = Set<ClothingCategory>()
+
+        if containsExplicitTShirt(in: productName)
+            || explicitTopGarmentDetail(in: productName) != nil
+            || containsAny(productName, [
+                "폴로셔츠", "폴로 셔츠", "카라티", "polo shirt",
+                "민소매 탑", "슬리브리스 탑", "sleeveless top"
+            ]) {
+            categories.insert(.top)
+        }
+        if explicitOuterwearDetail(in: productName) != nil {
+            categories.insert(.outer)
+        }
+        if containsAny(productName, ["스커트", "스코츠", "skirt", "skort"]) {
+            categories.insert(.bottom)
+        }
+        if containsAny(productName, [
+            "레깅스", "leggings", "팬츠", "바지", "쇼츠", "반바지",
+            "pants", "trousers", "shorts", "슬랙스", "slacks"
+        ]) {
+            categories.insert(.bottom)
+        }
+        if containsAny(productName, ["원피스", "점프수트", "점프 슈트", "jumpsuit"])
+            || containsEnglishWord("dress", in: productName) {
+            categories.insert(.dress)
+        }
+        if containsExplicitBra(in: productName)
+            || containsAny(productName, [
+                "브리프", "트렁크", "복서", "팬티", "속바지",
+                "briefs", "trunks", "boxer", "panty"
+            ]) {
+            categories.insert(.underwear)
+        }
+
+        return Set(categories.map(\.serviceGroup))
+    }
+
+    private static func explicitNameFamilies(
+        in productName: String
+    ) -> [ComparisonGarmentFamily] {
+        var families: [ComparisonGarmentFamily] = []
+        func append(_ family: ComparisonGarmentFamily) {
+            if !families.contains(family) { families.append(family) }
+        }
+        if containsExplicitTShirt(in: productName) { append(.tshirt) }
+        if let detail = explicitTopGarmentDetail(in: productName) {
+            switch detail {
+            case "shirt", "blouse": append(.shirt)
+            case "sweatshirt": append(.sweatshirt)
+            case "hoodie": append(.hoodie)
+            default: break
+            }
+        }
+        if let detail = explicitOuterwearDetail(in: productName) {
+            append(detail == "cardigan" ? .knitCardigan : .outerwear)
+        }
+        if containsAny(productName, ["레깅스", "leggings"]) { append(.leggings) }
+        if containsAny(productName, ["스커트", "스코츠", "skirt", "skort"]) { append(.skirt) }
+        if containsAny(productName, ["데님", "청바지", "denim", "jeans"]) { append(.denim) }
+        if containsAny(productName, [
+            "팬츠", "바지", "쇼츠", "반바지", "pants", "trousers", "shorts", "슬랙스", "slacks"
+        ]) {
+            append(.pants)
+        }
+        if containsAny(productName, ["원피스", "점프수트", "점프 슈트", "jumpsuit"])
+            || containsEnglishWord("dress", in: productName) {
+            append(.dress)
+        }
+        if containsExplicitBra(in: productName)
+            || containsAny(productName, [
+                "브리프", "트렁크", "복서", "팬티", "속바지",
+                "briefs", "trunks", "boxer", "panty"
+            ]) {
+            append(.underwear)
+        }
+        return families
+    }
+
+    private static func explicitFamily(
+        for detail: ClosetDetailCategory
+    ) -> ComparisonGarmentFamily? {
+        switch detail {
+        case .sleeveless, .shortSleeve, .threeQuarterSleeve, .longSleeve, .poloShirt:
+            return .tshirt
+        case .shirt, .blouse:
+            return .shirt
+        case .knitTop, .cardigan:
+            return .knitCardigan
+        case .sweatshirt:
+            return .sweatshirt
+        case .hoodie:
+            return .hoodie
+        case .shortPants, .croppedPants, .threeQuarterPants, .nineTenthsPants,
+             .longPants, .shorts, .slacks, .trainingPants:
+            return .pants
+        case .denim:
+            return .denim
+        case .shortLeggings, .threeQuarterLeggings, .nineTenthsLeggings,
+             .longLeggings, .leggings:
+            return .leggings
+        case .skirt:
+            return .skirt
+        case .jumper, .jacket, .coat, .padding, .windbreaker, .anorak,
+             .blazer, .blouson, .fleece, .lightPadding, .shortPadding,
+             .longPadding, .trenchCoat, .mouton, .paddedVest, .vest:
+            return .outerwear
+        case .underwear, .menBriefs, .menTrunks, .menUndershirt,
+             .womenBra, .womenPanty, .womenCamisole, .womenSlip:
+            return .underwear
+        case .onePiece:
+            return .dress
+        default:
+            return nil
+        }
+    }
+
+    private static func explicitLength(
+        for detail: ClosetDetailCategory
+    ) -> ComparisonLengthType? {
+        switch detail {
+        case .sleeveless: return .sleeveless
+        case .shortSleeve, .shortPants, .shorts, .shortLeggings: return .short
+        case .threeQuarterSleeve, .threeQuarterPants, .threeQuarterLeggings: return .threeQuarter
+        case .croppedPants: return .cropped
+        case .nineTenthsPants, .nineTenthsLeggings: return .nineTenths
+        case .longSleeve, .longPants, .longLeggings: return .long
+        default: return nil
         }
     }
 
@@ -738,11 +1012,11 @@ struct ParsedClosetClassification: Equatable {
                 return .sleeveless
             }
             let hasShort = containsAny(text, [
-                "반팔", "반소매", "숏슬리브", "하프 슬리브", "short sleeve", "half sleeve",
+                "반팔", "반소매", "숏슬리브", "하프 슬리브", "short sleeve", "short-sleeve", "half sleeve",
                 "cap sleeve", "s/s tee", "s/s t-shirt", "s/s tshirt"
             ])
             let hasLong = containsAny(text, [
-                "긴팔", "긴소매", "롱슬리브", "long sleeve",
+                "긴팔", "긴소매", "롱슬리브", "long sleeve", "long-sleeve",
                 "l/s tee", "l/s t-shirt", "l/s tshirt"
             ])
             if hasShort != hasLong { return hasShort ? .short : .long }
@@ -786,6 +1060,13 @@ struct ParsedClosetClassification: Equatable {
         return text.range(
             of: "(?i)(?:^|[^a-z])\(escaped)(?![a-z])",
             options: .regularExpression
+        ) != nil
+    }
+
+    private static func containsStandaloneFurOuterwear(in text: String) -> Bool {
+        text.range(
+            of: #"(?:^|[^가-힣A-Za-z0-9])퍼\s*(?:재킷|자켓|코트)(?:$|[^가-힣A-Za-z0-9])"#,
+            options: [.regularExpression, .caseInsensitive]
         ) != nil
     }
 

@@ -15,7 +15,7 @@ struct ProductThumbnailView: View {
 
     var body: some View {
         Group {
-            if imageURL != nil {
+            if !imageURLs.isEmpty {
                 if let image = imageLoader.image {
                     Image(uiImage: image)
                         .resizable()
@@ -39,9 +39,9 @@ struct ProductThumbnailView: View {
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .task(id: imageURL) {
+        .task(id: imageRequestIdentity) {
             await imageLoader.load(
-                imageURL,
+                imageURLs,
                 maxPixelSize: max(width, height) * displayScale,
                 diagnosticContext: diagnosticContext
             )
@@ -55,6 +55,14 @@ struct ProductThumbnailView: View {
         }
 
         return URL(string: imageURLString)
+    }
+
+    private var imageURLs: [URL] {
+        UniqloImageURLPolicy.candidateURLs(primaryURL: imageURL)
+    }
+
+    private var imageRequestIdentity: String {
+        imageURLs.map(\.absoluteString).joined(separator: "|")
     }
 
     private func placeholder<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -105,92 +113,127 @@ private final class ProductThumbnailImageLoader: ObservableObject {
         return cache
     }()
 
-    private var currentURL: URL?
+    private var currentURLs: [URL] = []
 
-    func load(_ url: URL?, maxPixelSize: CGFloat, diagnosticContext: String?) async {
-        guard currentURL != url || (image == nil && !didFail) else {
+    func load(_ urls: [URL], maxPixelSize: CGFloat, diagnosticContext: String?) async {
+        guard currentURLs != urls || image == nil else {
             return
         }
 
-        currentURL = url
+        currentURLs = urls
         image = nil
         didFail = false
 
-        guard let url else {
+        guard !urls.isEmpty else {
             return
         }
         let startedAt = DetailPerformanceDiagnostics.now()
-        if let cachedImage = Self.cache.object(forKey: url as NSURL) {
-            image = cachedImage
-            if let diagnosticContext {
-                DetailPerformanceDiagnostics.log(
-                    screen: diagnosticContext,
-                    event: "thumbnail_cache_hit",
-                    startedAt: startedAt,
-                    metadata: "pixels=\(Int(maxPixelSize))"
-                )
-            }
-            return
-        }
-
-        do {
-            let networkStartedAt = DetailPerformanceDiagnostics.now()
-            let (data, response) = try await URLSession.shared.data(from: url)
-            if let diagnosticContext {
-                DetailPerformanceDiagnostics.log(
-                    screen: diagnosticContext,
-                    event: "thumbnail_downloaded",
-                    startedAt: networkStartedAt,
-                    metadata: "bytes=\(data.count) status=\((response as? HTTPURLResponse)?.statusCode ?? 0)"
-                )
-            }
-            let decodeStartedAt = DetailPerformanceDiagnostics.now()
-            guard !Task.isCancelled,
-                  currentURL == url,
-                  ((response as? HTTPURLResponse)?.statusCode ?? 200) < 400,
-                  let loadedImage = await Self.decodeThumbnail(
-                    data,
-                    maxPixelSize: maxPixelSize
-                  ) else {
-                if !Task.isCancelled, currentURL == url {
-                    didFail = true
+        for (candidateIndex, url) in urls.enumerated() {
+            if let cachedImage = Self.cache.object(forKey: url as NSURL) {
+                image = cachedImage
+                if let diagnosticContext {
+                    DetailPerformanceDiagnostics.log(
+                        screen: diagnosticContext,
+                        event: "thumbnail_cache_hit",
+                        startedAt: startedAt,
+                        metadata: "candidate=\(candidateIndex + 1) pixels=\(Int(maxPixelSize))"
+                    )
                 }
                 return
             }
-            if let diagnosticContext {
-                DetailPerformanceDiagnostics.log(
-                    screen: diagnosticContext,
-                    event: "thumbnail_decoded",
-                    startedAt: decodeStartedAt,
-                    metadata: "width=\(Int(loadedImage.size.width * loadedImage.scale)) height=\(Int(loadedImage.size.height * loadedImage.scale))"
-                )
-            }
 
-            let pixelWidth = loadedImage.size.width * loadedImage.scale
-            let pixelHeight = loadedImage.size.height * loadedImage.scale
-            let cost = max(1, Int(pixelWidth * pixelHeight * 4))
-            Self.cache.setObject(loadedImage, forKey: url as NSURL, cost: cost)
-            image = loadedImage
-            if let diagnosticContext {
-                DetailPerformanceDiagnostics.log(
-                    screen: diagnosticContext,
-                    event: "thumbnail_ready",
-                    startedAt: startedAt,
-                    metadata: "cache=false"
-                )
-            }
-        } catch {
-            guard !Task.isCancelled, currentURL == url else { return }
-            didFail = true
-            if let diagnosticContext {
-                DetailPerformanceDiagnostics.log(
-                    screen: diagnosticContext,
-                    event: "thumbnail_failed",
-                    startedAt: startedAt,
-                    metadata: "error=\(String(describing: error))"
-                )
+            for attempt in 1...2 {
+                do {
+                    let networkStartedAt = DetailPerformanceDiagnostics.now()
+                    let (data, response) = try await URLSession.shared.data(for: Self.request(for: url))
+                    let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 200
+                    if let diagnosticContext {
+                        DetailPerformanceDiagnostics.log(
+                            screen: diagnosticContext,
+                            event: "thumbnail_downloaded",
+                            startedAt: networkStartedAt,
+                            metadata: "candidate=\(candidateIndex + 1) attempt=\(attempt) bytes=\(data.count) status=\(statusCode)"
+                        )
+                    }
+                    guard (200..<400).contains(statusCode) else {
+                        throw URLError(.badServerResponse)
+                    }
+
+                    let decodeStartedAt = DetailPerformanceDiagnostics.now()
+                    guard !Task.isCancelled,
+                          currentURLs == urls,
+                          let loadedImage = await Self.decodeThumbnail(
+                            data,
+                            maxPixelSize: maxPixelSize
+                          ) else {
+                        throw CancellationError()
+                    }
+                    if let diagnosticContext {
+                        DetailPerformanceDiagnostics.log(
+                            screen: diagnosticContext,
+                            event: "thumbnail_decoded",
+                            startedAt: decodeStartedAt,
+                            metadata: "width=\(Int(loadedImage.size.width * loadedImage.scale)) height=\(Int(loadedImage.size.height * loadedImage.scale))"
+                        )
+                    }
+
+                    let pixelWidth = loadedImage.size.width * loadedImage.scale
+                    let pixelHeight = loadedImage.size.height * loadedImage.scale
+                    let cost = max(1, Int(pixelWidth * pixelHeight * 4))
+                    Self.cache.setObject(loadedImage, forKey: url as NSURL, cost: cost)
+                    image = loadedImage
+                    if let diagnosticContext {
+                        DetailPerformanceDiagnostics.log(
+                            screen: diagnosticContext,
+                            event: "thumbnail_ready",
+                            startedAt: startedAt,
+                            metadata: "cache=false candidate=\(candidateIndex + 1) attempt=\(attempt)"
+                        )
+                    }
+                    return
+                } catch {
+                    guard !Task.isCancelled, currentURLs == urls else { return }
+                    if attempt == 1 {
+                        try? await Task.sleep(for: .milliseconds(250))
+                        continue
+                    }
+                    if let diagnosticContext {
+                        DetailPerformanceDiagnostics.log(
+                            screen: diagnosticContext,
+                            event: "thumbnail_candidate_failed",
+                            startedAt: startedAt,
+                            metadata: "candidate=\(candidateIndex + 1) attempts=\(attempt) error=\(String(describing: error))"
+                        )
+                    }
+                }
             }
         }
+        didFail = true
+        if let diagnosticContext {
+            DetailPerformanceDiagnostics.log(
+                screen: diagnosticContext,
+                event: "thumbnail_failed",
+                startedAt: startedAt,
+                metadata: "candidates=\(urls.count)"
+            )
+        }
+    }
+
+    private static func request(for url: URL) -> URLRequest {
+        var request = URLRequest(
+            url: url,
+            cachePolicy: .returnCacheDataElseLoad,
+            timeoutInterval: 15
+        )
+        request.setValue("image/avif,image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
+        request.setValue(
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
+            forHTTPHeaderField: "User-Agent"
+        )
+        if url.host?.localizedCaseInsensitiveContains("uniqlo.com") == true {
+            request.setValue("https://www.uniqlo.com/kr/ko/", forHTTPHeaderField: "Referer")
+        }
+        return request
     }
 
     private static func decodeThumbnail(_ data: Data, maxPixelSize: CGFloat) async -> UIImage? {

@@ -1,0 +1,96 @@
+{
+  "contractVersion": "fitmatch-shadow-category-corpus-v1",
+  "sourceArchive": "FitMatch_Category_Mapping_v2_20260824.zip",
+  "sourceArchiveSha256": "e492c059bdf17aedc81c0999dda8cc13e108635382da2ba127f2a1f47eac0c4f",
+  "additionalSourceArchives": [
+    {
+      "name": "FitMatch_category_engine_system_auto_v2_3_20260824_complete.zip",
+      "sha256": "9bf813ae7d2dbd250fffe8ff8ea7fa634e994458540185b358cb826e5d7d4cfa",
+      "absorptionPolicy": "live_sample_inputs_and_source_evidence_only"
+    }
+  ],
+  "capturedAt": "2026-08-24",
+  "mode": "shadow_only",
+  "productionImportAllowed": false,
+  "goldFixtureApprovalAllowed": false,
+  "files": [
+    {
+      "source": "musinsa",
+      "path": "musinsa_products.jsonl",
+      "rowCount": 51,
+      "sha256": "9df62c78aa7a1933d9e54407a2e77a9b09e08fb38bf9033520a331009bd11ccd",
+      "independentLabelCount": 51,
+      "expectedMissingProductNameCount": 0,
+      "identityPolicy": "official_numeric_product_id"
+    },
+    {
+      "source": "uniqlo",
+      "path": "uniqlo_products.jsonl",
+      "rowCount": 1689,
+      "sha256": "b9f3c1c881c95fc701b9bfc5af29858fe5605fd03ede24ea8423af18c0af5f71",
+      "independentLabelCount": 0,
+      "expectedMissingProductNameCount": 0,
+      "identityPolicy": "official_product_code",
+      "limitation": "source_app_category fields are source-derived candidates, not independently approved Gold labels"
+    },
+    {
+      "source": "zara",
+      "path": "zara_products.jsonl",
+      "rowCount": 3983,
+      "sha256": "2f74de504f6c5aaad515d62f9caa3c9e0e71bca1accdef4246cf4fd99f3348bb",
+      "independentLabelCount": 0,
+      "expectedMissingProductNameCount": 8,
+      "identityPolicy": "shadow_pseudo_id_only",
+      "limitation": "ZARA_KR_* source_product_id is not the verified runtime catentryId, and 8 rows have no product name; these rows must never be promoted as canonical products without revalidation"
+    }
+  ],
+  "liveSamples": [
+    {
+      "contractVersion": "fitmatch-live-shadow-sample-v1",
+      "path": "live300-v2_3/live_products_300.jsonl",
+      "sha256": "ac000dbef9c4b88a816f5ca03ed9dfc8b24499489d56a1a9fdecc0c88a2cab06",
+      "evidencePath": "live300-v2_3/official_source_evidence.json",
+      "evidenceSha256": "035d990f8e765acee9767a0536fab7f7dff381a6992f8302f35951b8de48df04",
+      "capturedAt": "2026-08-24",
+      "rowCount": 300,
+      "perSourceRowCount": {
+        "musinsa": 100,
+        "uniqlo": 100,
+        "zara": 100
+      },
+      "independentLabelCount": 0,
+      "productionImportAllowed": false,
+      "goldFixtureApprovalAllowed": false,
+      "expectedOverlapWithBaseCorpus": {
+        "musinsa": 43,
+        "uniqlo": 100,
+        "zara": 100
+      },
+      "expectedNewRowsAgainstBaseCorpus": {
+        "musinsa": 57,
+        "uniqlo": 0,
+        "zara": 0
+      },
+      "identityPolicies": {
+        "musinsa": "official_numeric_product_id",
+        "uniqlo": "official_product_code",
+        "zara": "shadow_pseudo_id_only"
+      },
+      "limitations": [
+        "No row has an independent human-approved category label.",
+        "UNIQLO and ZARA sitemap presence proves listing presence, not current PDP category or stock state.",
+        "ZARA_KR_* source_product_id remains an archive-local pseudo identity, not the verified runtime catentryId.",
+        "The archive-generated manual PASS and zero-misclassification claims are intentionally excluded."
+      ],
+      "currentFitMatchShadowAudit": {
+        "test": "CategoryLive300ShadowAuditTests/testCurrentClassifierAuditsLive300WithoutGoldPromotion",
+        "summaryPath": "live300-v2_3/current_fitmatch_shadow_summary.json",
+        "goldReviewCandidatesPath": "live300-v2_3/current_fitmatch_gold_review_candidates.json",
+        "goldReviewCandidatesSha256": "f6a277b8e7d69484bcfde1e17de3c6dff207cc0ed2b3fb171d2f1adf441dafdf",
+        "goldReviewCandidateCount": 57,
+        "silentConflictConfirmationCount": 0,
+        "strictComparisonConflictLeakCount": 0
+      }
+    }
+  ]
+}

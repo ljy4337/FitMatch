@@ -30,6 +30,7 @@ enum RecommendationHistoryStore {
         if let storedProduct {
             let incomingProduct = history.product
             let incomingSize = history.recommendedSize
+            storedProduct.refreshExternalPresentation(from: incomingProduct)
             let recommendedSizeKey = ParsedProductSizeNormalizer.normalizedSizeKey(for: history.recommendedSize.name)
             let storedSize = storedSizeByID ?? storedProduct.sizes.first {
                 ParsedProductSizeNormalizer.normalizedSizeKey(for: $0.name) == recommendedSizeKey

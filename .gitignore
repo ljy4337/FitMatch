@@ -3,6 +3,7 @@ DerivedData/
 *.xcresult
 *.xcuserstate
 xcuserdata/
+supabase/.temp/
 
 # Generated research corpora and test evidence are archived outside the repo.
 Docs/TestEvidence/

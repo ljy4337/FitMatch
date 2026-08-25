@@ -60,7 +60,7 @@ private struct BrandProductCard: View {
         CardView(radius: 20, padding: 16) {
             HStack(alignment: .center, spacing: 14) {
                 ProductThumbnailView(
-                    imageURLString: product.imageURLString,
+                    imageURLString: product.imageURLStringForDisplay,
                     category: product.category,
                     width: 58,
                     height: 72,

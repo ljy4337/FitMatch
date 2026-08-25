@@ -1024,11 +1024,13 @@ struct CategoryLiveComparisonAuditTests {
 @MainActor
 final class ReferenceClosetSetupXCTests: XCTestCase {
     func testOfficialMeasurementReferenceRegistration() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests()
             .registersOneOfficialMeasurementReferencePerStoredCategoryWithoutComparing()
     }
 
     func testUniqloReferenceCandidateProbe() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests().auditReferenceRegistrationManifest(
             resourceName: "ReferenceClosetUniqloProbeCandidates",
             auditName: "UNIQLO_REFERENCE_PROBE"
@@ -1036,6 +1038,7 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
     }
 
     func testMusinsaReferenceCandidateProbe() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests().auditReferenceRegistrationManifest(
             resourceName: "ReferenceClosetMusinsaProbeCandidates",
             auditName: "MUSINSA_REFERENCE_PROBE"
@@ -1043,6 +1046,7 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
     }
 
     func testUniqloExpandedReferenceCandidateProbe() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests().auditReferenceRegistrationManifest(
             resourceName: "ReferenceClosetUniqloExpandedProbeCandidates",
             auditName: "UNIQLO_EXPANDED_REFERENCE_PROBE"
@@ -1050,6 +1054,7 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
     }
 
     func testMusinsaExpandedReferenceCandidateProbe() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests().auditReferenceRegistrationManifest(
             resourceName: "ReferenceClosetMusinsaExpandedProbeCandidates",
             auditName: "MUSINSA_EXPANDED_REFERENCE_PROBE"
@@ -1057,6 +1062,7 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
     }
 
     func testUniqloLiveDiscoveryReferenceCandidateProbe() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests().auditReferenceRegistrationManifest(
             resourceName: "ReferenceClosetUniqloLiveDiscoveryProbeCandidates",
             auditName: "UNIQLO_LIVE_DISCOVERY_REFERENCE_PROBE"
@@ -1064,6 +1070,7 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
     }
 
     func testMusinsaDeepReferenceCandidateProbe() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests().auditReferenceRegistrationManifest(
             resourceName: "ReferenceClosetMusinsaDeepProbeCandidates",
             auditName: "MUSINSA_DEEP_REFERENCE_PROBE"
@@ -1071,6 +1078,7 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
     }
 
     func testMusinsaEligibleReplacementReferenceCandidateProbe() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests().auditReferenceRegistrationManifest(
             resourceName: "ReferenceClosetMusinsaEligibleReplacementProbeCandidates",
             auditName: "MUSINSA_ELIGIBLE_REPLACEMENT_PROBE"
@@ -1078,6 +1086,7 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
     }
 
     func testRemainingLocalOfficialReferenceCandidateProbe() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests().auditReferenceRegistrationManifest(
             resourceName: "ReferenceClosetRemainingLocalOfficialProbeCandidates",
             auditName: "REMAINING_LOCAL_OFFICIAL_REFERENCE_PROBE"
@@ -1097,11 +1106,13 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
     }
 
     func testUniqloReferenceCrossPlatformComparison() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests()
             .auditsAllProductsAgainstUniqloReferenceCloset()
     }
 
     func testMusinsaReferenceCrossPlatformComparison() async throws {
+        try requireLiveReferenceAudit()
         try await CategoryLiveComparisonAuditTests()
             .auditsAllProductsAgainstMusinsaReferenceCloset()
     }
@@ -1288,5 +1299,21 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
             sourcePath: "영유아(6개월~5세) > 레깅스 & 팬츠 > 레깅스",
             productName: "BT레깅스(셋업가능)"
         ))
+    }
+
+    private func requireLiveReferenceAudit() throws {
+        let process = ProcessInfo.processInfo
+        let isEnabled = process.arguments.contains("-fitmatchRunCategoryLiveAudit")
+            || process.arguments.contains("-fitmatchRunLiveTests")
+            || process.arguments.contains("-fitmatchRunUniqloReferenceAudit")
+            || process.arguments.contains("-fitmatchRunMusinsaReferenceAudit")
+            || process.arguments.contains("-fitmatchRunReferenceClosetSetup")
+            || process.environment["FITMATCH_RUN_CATEGORY_LIVE_AUDIT"] == "1"
+            || process.environment["FITMATCH_RUN_UNIQLO_REFERENCE_AUDIT"] == "1"
+            || process.environment["FITMATCH_RUN_MUSINSA_REFERENCE_AUDIT"] == "1"
+            || process.environment["FITMATCH_RUN_REFERENCE_CLOSET_SETUP"] == "1"
+        guard isEnabled else {
+            throw XCTSkip("실서버 기준 옷 감사는 전용 scheme 또는 FITMATCH_RUN_* 환경 변수로 실행하세요.")
+        }
     }
 }

@@ -4,6 +4,7 @@ import SwiftData
 struct ClosetItemDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
@@ -234,7 +235,8 @@ struct ClosetItemDetailView: View {
     }
 
     private var imageURLString: String? {
-        item.sourceProduct?.imageURLString?.trimmingCharacters(in: .whitespacesAndNewlines)
+        item.sourceProduct?.imageURLStringForDisplay?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var sourceDescription: String {
@@ -431,6 +433,7 @@ struct ClosetItemDetailView: View {
     }
 
     private func deleteItemAndDismiss() -> Bool {
+        let clientItemID = item.id
         histories
             .filter { $0.userFit.id == item.id }
             .forEach { modelContext.delete($0) }
@@ -438,6 +441,7 @@ struct ClosetItemDetailView: View {
         modelContext.delete(item)
         do {
             try modelContext.save()
+            closetSync?.enqueueDeletion(clientItemID: clientItemID)
             dismiss()
             return true
         } catch {
@@ -691,7 +695,7 @@ private struct ImportedClosetItemEditView: View {
         CardView(radius: 26, padding: 20) {
             HStack(alignment: .center, spacing: 16) {
                 ProductThumbnailView(
-                    imageURLString: item.sourceProduct?.imageURLString,
+                    imageURLString: item.sourceProduct?.imageURLStringForDisplay,
                     category: item.category,
                     width: 72,
                     height: 88,

@@ -2,9 +2,14 @@ import SwiftUI
 import SwiftData
 
 struct MyPageView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     let onLogout: () -> Void
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
+    @State private var isShowingAccountDeletionConfirmation = false
+    @State private var accountDeletionErrorMessage: String?
 
     private let menuItems: [MyMenuItem] = [
         // MyMenuItem(title: "내 정보", systemImage: "person.circle", destination: .comingSoon),
@@ -12,8 +17,8 @@ struct MyPageView: View {
         MyMenuItem(title: "문의 및 지원", systemImage: "envelope", destination: .support),
         MyMenuItem(title: "개인정보처리방침", systemImage: "lock.shield", destination: .privacy),
         // MyMenuItem(title: "앱 설정", systemImage: "gearshape", destination: .comingSoon)
-        // 로그인 기능을 다시 사용할 때 함께 복구합니다.
-        // MyMenuItem(title: "로그아웃", systemImage: "rectangle.portrait.and.arrow.right", destination: .logout)
+        MyMenuItem(title: "로그아웃", systemImage: "rectangle.portrait.and.arrow.right", destination: .logout),
+        MyMenuItem(title: "회원 탈퇴", systemImage: "person.crop.circle.badge.minus", destination: .deleteAccount)
     ]
 
     var body: some View {
@@ -90,6 +95,15 @@ struct MyPageView: View {
                                     menuRow(item)
                                 }
                                 .buttonStyle(.plain)
+                            case .deleteAccount:
+                                Button {
+                                    isShowingAccountDeletionConfirmation = true
+                                } label: {
+                                    menuRow(item)
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(authSession.isDeletingAccount)
+                                .accessibilityIdentifier("account.delete")
                             case .comingSoon:
                                 menuRow(item)
                                     .foregroundStyle(.secondary)
@@ -108,6 +122,28 @@ struct MyPageView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("My")
+        .alert(
+            "FitMatch 계정을 삭제할까요?",
+            isPresented: $isShowingAccountDeletionConfirmation
+        ) {
+            Button("취소", role: .cancel) {}
+            Button("계정 및 데이터 삭제", role: .destructive) {
+                deleteAccount()
+            }
+        } message: {
+            Text("내 옷장, 비교 기록, 설정이 서버와 이 기기에서 영구 삭제되며 복구할 수 없습니다. Apple 로그인 권한도 해제하려면 삭제 후 iPhone 설정 > Apple 계정 > Apple로 로그인에서 FitMatch를 제거해 주세요.")
+        }
+        .alert(
+            "계정 삭제 실패",
+            isPresented: Binding(
+                get: { accountDeletionErrorMessage != nil },
+                set: { if !$0 { accountDeletionErrorMessage = nil } }
+            )
+        ) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text(accountDeletionErrorMessage ?? "잠시 후 다시 시도해 주세요.")
+        }
     }
 
     private var representativeFitCount: Int {
@@ -128,11 +164,35 @@ struct MyPageView: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
             }
+            if item.destination == .deleteAccount, authSession.isDeletingAccount {
+                ProgressView()
+                    .controlSize(.small)
+            }
         }
-        .foregroundStyle(.primary)
+        .foregroundStyle(item.destination == .deleteAccount ? Color.red : Color.primary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 14)
         .contentShape(Rectangle())
+    }
+
+    private func deleteAccount() {
+        Task { @MainActor in
+            let didDelete = await authSession.deleteAccount()
+            guard didDelete else {
+                accountDeletionErrorMessage = authSession.errorMessage
+                    ?? "잠시 후 다시 시도해 주세요."
+                return
+            }
+
+            do {
+                try closetSync?.purgeLocalAccountData(modelContext: modelContext)
+            } catch {
+                modelContext.rollback()
+                #if DEBUG
+                print("[MyPage] local account data cleanup failed: \(error.localizedDescription)")
+                #endif
+            }
+        }
     }
 }
 
@@ -194,13 +254,14 @@ private enum MyMenuDestination: Equatable {
     case support
     case privacy
     case logout
+    case deleteAccount
     case comingSoon
 
     var isNavigable: Bool {
         switch self {
         case .closet, .guide, .support, .privacy:
             return true
-        case .logout, .comingSoon:
+        case .logout, .deleteAccount, .comingSoon:
             return false
         }
     }

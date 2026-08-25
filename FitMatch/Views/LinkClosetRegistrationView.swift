@@ -155,7 +155,7 @@ struct LinkClosetRegistrationView: View {
             recoveryViewModel = nil
             recoveredSelectedSizeID = nil
             errorMessage = nil
-            if ProductURLSupport.isSupportedProductURL(productURL) {
+            if !normalizedURLString.isEmpty {
                 isShowingEmptyPasteboardMessage = false
             }
         }
@@ -252,6 +252,11 @@ struct LinkClosetRegistrationView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .modifier(ClosetLinkPasteShakeEffect(animatableData: CGFloat(emptyPasteboardShake)))
                         .transition(.opacity)
+                } else if !normalizedURLString.isEmpty && !ProductURLSupport.isSupportedProductURL(normalizedURLString) {
+                    Text("지원하지 않는 상품 링크예요. 공식 상품 URL인지 확인해 주세요.")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 PrimaryButton(
@@ -454,6 +459,10 @@ struct LinkClosetRegistrationView: View {
     private func pasteProductURL() {
         guard let value = UIPasteboard.general.string,
               !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            if !normalizedURLString.isEmpty {
+                isShowingEmptyPasteboardMessage = false
+                return
+            }
             isShowingEmptyPasteboardMessage = true
             withAnimation(.linear(duration: 0.45)) {
                 emptyPasteboardShake += 1
@@ -516,6 +525,10 @@ struct LinkClosetRegistrationView: View {
     private func closetSourceOption(for product: Product) -> ClosetProductSourceOption {
         if product.sourceName == "무신사" { return .musinsa }
         if product.sourceName.contains("유니클로") { return .uniqlo }
+        if product.sourceName.localizedCaseInsensitiveContains("zara")
+            || product.sourceName.localizedCaseInsensitiveContains("자라") {
+            return .zara
+        }
         return .manual
     }
 

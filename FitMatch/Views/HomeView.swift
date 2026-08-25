@@ -259,7 +259,7 @@ private struct HomeClosetPreviewCard: View {
                         .background(Color(.systemBackground).opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                         ProductThumbnailView(
-                            imageURLString: item.sourceProduct?.imageURLString,
+                            imageURLString: item.sourceProduct?.imageURLStringForDisplay,
                             category: item.category,
                             width: 168,
                             height: 78,
@@ -704,7 +704,7 @@ struct RecentProductPreviewCard: View {
             resultSummary
 
             ProductThumbnailView(
-                imageURLString: history.product.imageURLString,
+                imageURLString: history.product.imageURLStringForDisplay,
                 category: history.product.category,
                 width: 168,
                 height: 78,
@@ -718,7 +718,7 @@ struct RecentProductPreviewCard: View {
     private var compactContent: some View {
         HStack(alignment: .top, spacing: 14) {
             ProductThumbnailView(
-                imageURLString: history.product.imageURLString,
+                imageURLString: history.product.imageURLStringForDisplay,
                 category: history.product.category,
                 width: 86,
                 height: 108,

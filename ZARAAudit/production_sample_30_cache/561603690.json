@@ -1,0 +1,478 @@
+{
+  "captured_at": "2026-08-21T07:56:47.463Z",
+  "request_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/561603690/size-measure-guide?locale=ko_KR",
+  "http_status": 200,
+  "challenge_detected": false,
+  "response_hash": "2f0119922527ea455df000ccad18c6343aa7ac783712f60f41ed752ebb5aba36",
+  "response": {
+    "sizeGuideInfo": null,
+    "measureGuideInfo": {
+      "id": "50e349bc-d47b-4525-b1b5-2b2a4014e840",
+      "name": "깅엄 체크 미디 원피스",
+      "sizes": [
+        {
+          "id": "1",
+          "name": "XS (KR 44)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "XS (KR 44)"
+            },
+            {
+              "units": "in",
+              "value": "XS (KR 44)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "32.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "12.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "29.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "11.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist-full-body",
+              "descriptionZone": "zone-name-waist-full-body-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "41.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "16.3"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "125.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "49.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-full-body",
+              "descriptionZone": "zone-name-front-length-full-body-description"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "name": "S (KR 55)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "S (KR 55)"
+            },
+            {
+              "units": "in",
+              "value": "S (KR 55)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "34.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "13.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "31.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "12.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist-full-body",
+              "descriptionZone": "zone-name-waist-full-body-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "43.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "16.9"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "126.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "49.8"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-full-body",
+              "descriptionZone": "zone-name-front-length-full-body-description"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "M (KR 66)"
+            },
+            {
+              "units": "in",
+              "value": "M (KR 66)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "36.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "14.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "33.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "13.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist-full-body",
+              "descriptionZone": "zone-name-waist-full-body-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "44.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "17.5"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "127.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "50.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-full-body",
+              "descriptionZone": "zone-name-front-length-full-body-description"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "L (KR 77)"
+            },
+            {
+              "units": "in",
+              "value": "L (KR 77)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "38.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "15.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "35.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "13.8"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist-full-body",
+              "descriptionZone": "zone-name-waist-full-body-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "46.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "18.1"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "128.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "50.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-full-body",
+              "descriptionZone": "zone-name-front-length-full-body-description"
+            }
+          ]
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "XL (KR 88)"
+            },
+            {
+              "units": "in",
+              "value": "XL (KR 88)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "40.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "15.7"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "37.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "14.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist-full-body",
+              "descriptionZone": "zone-name-waist-full-body-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "47.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "18.7"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "129.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "51.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-full-body",
+              "descriptionZone": "zone-name-front-length-full-body-description"
+            }
+          ]
+        }
+      ],
+      "image": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "image",
+            "path": "../../../assets/public/0012/3462/48e147e8bc0b/1eb9e69cc1da/",
+            "name": "../../8352800e35a3",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": null
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "cm",
+          "type": "measure",
+          "name": "cm",
+          "default": true
+        },
+        {
+          "id": "in",
+          "type": "measure",
+          "name": "in",
+          "default": false
+        }
+      ],
+      "comments": [],
+      "defaultSize": "XS (KR 44)",
+      "cleanImage": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "image",
+            "path": "../../assets/public/ec76/1bc4/35764ca29a40/ad72465a9462",
+            "name": "../../SraVestido",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": null
+          }
+        ]
+      },
+      "section": {
+        "id": "1",
+        "name": "WOMAN"
+      },
+      "productImages": [
+        {
+          "xmedia": [
+            {
+              "datatype": "xmedia",
+              "set": 2,
+              "type": "image",
+              "kind": "image",
+              "path": "../../../assets/public/a96a/d3a5/f5fa42d99701/1d4336245246/07953524087-e1/",
+              "name": "../../07953524087-e1",
+              "width": 2048,
+              "height": 3072,
+              "timestamp": "1585094400000",
+              "allowedScreens": [
+                "small",
+                "large"
+              ],
+              "isArrowsImage": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

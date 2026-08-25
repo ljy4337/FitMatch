@@ -23,11 +23,16 @@ struct CanonicalComparisonProfileResolver {
 
     func apply(_ profile: CanonicalComparisonProfile?, to product: Product) {
         guard let profile else { return }
+        let preservesClassificationConflict = product.canonicalEligibility == false
+            && product.canonicalResolutionMethod
+                == ParsedClosetClassificationSafetyAudit.conflictResolutionMethod
         product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(profile)
-        product.canonicalPolicyVersion = profile.policyVersion
-        product.canonicalResolutionMethod = profile.resolutionMethod
+        if !preservesClassificationConflict {
+            product.canonicalPolicyVersion = profile.policyVersion
+            product.canonicalResolutionMethod = profile.resolutionMethod
+            product.canonicalEligibility = profile.eligibility
+        }
         product.canonicalSourceIdentity = profile.sourceIdentity
-        product.canonicalEligibility = profile.eligibility
         if let family = profile.appGarmentFamily { product.garmentType = family }
         // A provider-wide canonical path is a fallback. Keep a more specific
         // product classification (name/detail/measurements) when it is already set.
@@ -41,11 +46,16 @@ struct CanonicalComparisonProfileResolver {
 
     func apply(_ profile: CanonicalComparisonProfile?, to item: UserFit) {
         guard let profile else { return }
+        let preservesClassificationConflict = item.canonicalEligibility == false
+            && item.canonicalResolutionMethod
+                == ParsedClosetClassificationSafetyAudit.conflictResolutionMethod
         item.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(profile)
-        item.canonicalPolicyVersion = profile.policyVersion
-        item.canonicalResolutionMethod = profile.resolutionMethod
+        if !preservesClassificationConflict {
+            item.canonicalPolicyVersion = profile.policyVersion
+            item.canonicalResolutionMethod = profile.resolutionMethod
+            item.canonicalEligibility = profile.eligibility
+        }
         item.canonicalSourceIdentity = profile.sourceIdentity
-        item.canonicalEligibility = profile.eligibility
         if let family = profile.appGarmentFamily { item.garmentType = family }
         if item.sleeveType == .unknown, let length = profile.appLengthType {
             item.sleeveType = length

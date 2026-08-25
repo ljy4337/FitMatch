@@ -136,6 +136,213 @@ struct FitMatchP0ProductionPathTests {
         #expect(classification.detailCode != "other_tops")
     }
 
+    // PATH-CLASSIFICATION-SAFETY-01 · Explicit critical contradictions must
+    // require review instead of silently entering comparison.
+    @Test func p1ExplicitCriticalClassificationContradictionsRequireReview() {
+        let fixtures: [(
+            category: ClothingCategory,
+            detail: ClosetDetailCategory,
+            path: String,
+            name: String
+        )] = [
+            (.top, .longSleeve, "상의 > 긴소매 티셔츠", "반팔 티셔츠"),
+            (.top, .shortSleeve, "상의 > 반소매 티셔츠", "긴팔 니트 가디건"),
+            (.top, .other, "상의", "플리츠 스커트"),
+            (.underwear, .underwear, "속옷", "그래픽 티셔츠")
+        ]
+
+        for fixture in fixtures {
+            let audit = ParsedClosetClassification.auditExplicitContradictions(
+                category: fixture.category,
+                detailCategory: fixture.detail,
+                sourceDepths: sourceDepths(fixture.path).map(Optional.some),
+                sourcePath: fixture.path,
+                productName: fixture.name
+            )
+
+            #expect(audit.requiresReview, "\(fixture.path) / \(fixture.name)이 자동 확정됐습니다.")
+            #expect(!audit.conflicts.isEmpty)
+        }
+    }
+
+    // PATH-CLASSIFICATION-SAFETY-01 · Compatible corroboration and reviewed
+    // compound names must not be reopened by the contradiction guard.
+    @Test func p1CompatibleAndAdjudicatedClassificationEvidenceRemainsSafe() {
+        let safeFixtures: [(
+            category: ClothingCategory,
+            detail: ClosetDetailCategory,
+            path: String,
+            name: String
+        )] = [
+            (.bottom, .longPants, "하의 > 조거 팬츠", "파라슈트 카고 팬츠"),
+            (.top, .sleeveless, "WOMAN > Sleeveless Tops", "Sleeveless Fine Knit Top"),
+            (.top, .shirt, "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔", "데님릴렉스셔츠재킷"),
+            (.underwear, .underwear, "MEN > Innerwear", "AIRism Cotton Crew Neck T-Shirt"),
+            (.top, .sleeveless, "상의 > 나시/민소매 티셔츠", "브라탑 민소매 티셔츠"),
+            (.top, .longSleeve, "상의 > 긴소매 티셔츠", "그래픽 긴팔 티셔츠")
+        ]
+
+        for fixture in safeFixtures {
+            let audit = ParsedClosetClassification.auditExplicitContradictions(
+                category: fixture.category,
+                detailCategory: fixture.detail,
+                sourceDepths: sourceDepths(fixture.path).map(Optional.some),
+                sourcePath: fixture.path,
+                productName: fixture.name
+            )
+
+            #expect(!audit.requiresReview, "\(fixture.path) / \(fixture.name)이 오탐으로 차단됐습니다.")
+        }
+    }
+
+    // PATH-CLASSIFICATION-SAFETY-01 · The conflict decision is applied after
+    // the canonical profile and remains fail-closed until explicit review.
+    @Test func p1ProductCreationPreservesConflictEligibilityUntilUserConfirmation() throws {
+        let parsed = ParsedProductInfo(
+            sourceURL: URL(string: "https://www.musinsa.com/products/p1-conflict")!,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "P1",
+            productName: "반팔 티셔츠",
+            category: .top,
+            detailCategory: .longSleeve,
+            sizes: [ParsedProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 48,
+                    chest: 54,
+                    totalLength: 70,
+                    sleeveLength: 24
+                )
+            )],
+            productID: "p1-conflict",
+            sourceCategoryPath: "상의 > 긴소매 티셔츠",
+            sourceCategoryDepth1: "상의",
+            sourceCategoryDepth2: "긴소매 티셔츠",
+            productTargetGender: .unisex
+        )
+        let viewModel = ShoppingProductViewModel(metricsRecorder: P0NoopMetricsRecorder())
+        viewModel.apply(parsed)
+
+        let blocked = try #require(viewModel.makeProductForClosetRegistration(brand: nil))
+        #expect(viewModel.classificationSafetyAudit.requiresReview)
+        #expect(blocked.canonicalEligibility == false)
+        #expect(blocked.canonicalResolutionMethod
+            == ParsedClosetClassificationSafetyAudit.conflictResolutionMethod)
+        #expect(ComparisonProfileMatcher().match(
+            product: blocked,
+            productDetailCategory: .shortSleeve,
+            userFits: []
+        ).state == .requiresConfirmation)
+
+        let adjudicated = try #require(viewModel.makeProductForClosetRegistration(
+            brand: nil,
+            classificationWasUserConfirmed: true
+        ))
+        #expect(adjudicated.canonicalEligibility != false)
+        #expect(adjudicated.canonicalResolutionMethod
+            != ParsedClosetClassificationSafetyAudit.conflictResolutionMethod)
+    }
+
+    // PATH-COMPARE-ELIGIBILITY-01 · Standard-size fallback must honor the same
+    // classification eligibility gate as canonical measurement comparison.
+    @Test func p1ClassificationConflictCannotBypassStandardSizeComparison() {
+        let product = comparisonProduct(
+            name: "분류 충돌 반팔 티셔츠",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "상의 > 긴소매 티셔츠",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
+        )
+        product.sizeType = StandardBodySizeChart.metadataMarker
+        product.canonicalEligibility = false
+        product.canonicalResolutionMethod = ParsedClosetClassificationSafetyAudit.conflictResolutionMethod
+
+        let item = comparisonItem(
+            name: "내 기준 반팔 티셔츠",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "상의 > 반소매 티셔츠",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
+        )
+        let service = RecommendationService()
+
+        #expect(service.comparisonCompatibility(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            item: item
+        ).level == .blocked)
+        #expect(service.temporaryComparisonCandidates(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [item]
+        ).isEmpty)
+        #expect(service.referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [item]
+        ).recommendedCandidates.isEmpty)
+        #expect(service.recommend(
+            product: product,
+            userFits: [item],
+            productDetailCategory: .shortSleeve
+        ) == nil)
+        #expect(service.recommend(
+            product: product,
+            selectedReferenceItem: item,
+            productDetailCategory: .shortSleeve
+        ) == nil)
+        #expect(service.analyzeSizeWithoutSaving(
+            product.sizes[0],
+            product: product,
+            referenceItem: item,
+            productDetailCategory: .shortSleeve,
+            comparisonMethod: "기준표 가슴둘레 비교",
+            excludedKinds: [],
+            scorePenalty: 0
+        ) == nil)
+    }
+
+    // PATH-COMPARE-ELIGIBILITY-01 · An ineligible reference must also be
+    // excluded from every standard-size candidate path.
+    @Test func p1IneligibleReferenceCannotBypassStandardSizeComparison() {
+        let product = comparisonProduct(
+            name: "정상 반팔 티셔츠",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "상의 > 반소매 티셔츠",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
+        )
+        product.sizeType = StandardBodySizeChart.metadataMarker
+        product.canonicalEligibility = true
+
+        let item = comparisonItem(
+            name: "분류 충돌 기준 옷",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "상의 > 긴소매 티셔츠",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24)
+        )
+        item.canonicalEligibility = false
+        item.canonicalResolutionMethod = ParsedClosetClassificationSafetyAudit.conflictResolutionMethod
+
+        let service = RecommendationService()
+        #expect(service.temporaryComparisonCandidates(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [item]
+        ).isEmpty)
+        #expect(service.recommend(
+            product: product,
+            userFits: [item],
+            productDetailCategory: .shortSleeve
+        ) == nil)
+    }
+
     // PATH-UNIQLO-PARSE-01 · Rise and length are different measurements.
     @Test func p0UniqloBottomLegacyLengthDoesNotReuseRise() throws {
         let inputs = try corpus(named: "Uniqlo243FitPairInputs")

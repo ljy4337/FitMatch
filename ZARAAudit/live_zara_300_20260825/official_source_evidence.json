@@ -1,0 +1,77 @@
+{
+  "contract_version": "fitmatch-zara-live-300-review-v1",
+  "observed_at": "2026-08-24T22:40:58.274Z",
+  "mode": "shadow_review_only",
+  "production_import_allowed": false,
+  "gold_fixture_approval_allowed": false,
+  "independent_human_label_count": 0,
+  "method": "official ZARA KR product sitemap intersected with archived structured source facts; no PDP bulk crawl",
+  "official_source": {
+    "sitemap_index": {
+      "requested_url": "https://www.zara.com/sitemaps/sitemap-index.xml.gz",
+      "resolved_url": "https://www.zara.com/sitemaps/sitemap-index.xml.gz",
+      "http_status": 200,
+      "content_type": "application/octet-stream",
+      "bytes": 4480,
+      "sha256": "8979197d901f8b9f9bfbab415ebe5b9dc911036b3e4eb7e2476b21b3b40d8e1a"
+    },
+    "product_sitemap": {
+      "requested_url": "https://www.zara.com/sitemaps/sitemap-product-kr-ko.xml.gz",
+      "resolved_url": "https://www.zara.com/sitemaps/sitemap-product-kr-ko.xml.gz",
+      "http_status": 200,
+      "content_type": "application/octet-stream",
+      "bytes": 215565,
+      "sha256": "a462d35c8e6a047fc038a75c7d9be144e9e2f08f8dc518eb14a90d01bb399c22"
+    },
+    "sitemap_url_count": 12237,
+    "unique_style_reference_count": 11881
+  },
+  "archive_row_count": 3983,
+  "live_structured_intersection_count": 3436,
+  "sample_count": 300,
+  "unique_sample_reference_count": 300,
+  "section_counts": {
+    "MAN": 114,
+    "WOMAN": 186
+  },
+  "major_candidate_counts": {
+    "BOTTOM": 48,
+    "DRESS": 24,
+    "OUTER": 46,
+    "SET_OR_MULTI_PIECE": 23,
+    "SKIRT": 23,
+    "SWIMWEAR": 46,
+    "TOP": 46,
+    "UNDERWEAR": 44
+  },
+  "section_major_counts": {
+    "MAN|BOTTOM": 24,
+    "MAN|OUTER": 23,
+    "MAN|SWIMWEAR": 23,
+    "MAN|TOP": 23,
+    "MAN|UNDERWEAR": 21,
+    "WOMAN|BOTTOM": 24,
+    "WOMAN|DRESS": 24,
+    "WOMAN|OUTER": 23,
+    "WOMAN|SET_OR_MULTI_PIECE": 23,
+    "WOMAN|SKIRT": 23,
+    "WOMAN|SWIMWEAR": 23,
+    "WOMAN|TOP": 23,
+    "WOMAN|UNDERWEAR": 23
+  },
+  "family_count": 38,
+  "structured_path_count": 137,
+  "pending_human_review_count": 300,
+  "files": {
+    "jsonl": {
+      "path": "zara_live_300.jsonl",
+      "bytes": 383057,
+      "sha256": "283ae7f8a0a13c9993e508ae6b0fb1c59770ec32a833b72d334ac8fd20164fe4"
+    },
+    "review_csv": {
+      "path": "zara_live_300_review.csv",
+      "bytes": 248380,
+      "sha256": "8e1ab36af6a9dfa40cc112644726bc12470c7a5f128e533ef4dcdee7413d57be"
+    }
+  }
+}

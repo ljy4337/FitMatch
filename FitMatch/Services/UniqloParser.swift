@@ -260,6 +260,65 @@ struct UniqloSizeAPIResult {
     var imageURLString: String?
 }
 
+enum UniqloImageURLPolicy {
+    static func defaultImageURLString(productCode: String?) -> String? {
+        guard let goodsID = goodsID(productCode: productCode) else { return nil }
+        return "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/\(goodsID)/item/krgoods_00_\(goodsID)_3x4.jpg?width=400"
+    }
+
+    static func candidateURLs(primaryURL: URL?) -> [URL] {
+        var candidates: [URL] = []
+        if let primaryURL {
+            candidates.append(primaryURL)
+        }
+        if let primaryURL,
+           let fallback = defaultImageURL(from: primaryURL),
+           fallback != primaryURL {
+            candidates.append(fallback)
+        }
+        return candidates
+    }
+
+    static func containsGoodsID(_ imageURLString: String, goodsID: String) -> Bool {
+        imageURLString.localizedCaseInsensitiveContains("_\(goodsID)_")
+            || imageURLString.localizedCaseInsensitiveContains("/imagesgoods/\(goodsID)/")
+    }
+
+    private static func defaultImageURL(from primaryURL: URL) -> URL? {
+        guard primaryURL.host?.localizedCaseInsensitiveContains("uniqlo.com") == true,
+              let goodsID = firstMatch(
+                in: primaryURL.path,
+                pattern: #"/imagesgoods/(\d{6})/"#
+              ) else {
+            return nil
+        }
+        return defaultImageURLString(productCode: "E\(goodsID)").flatMap(URL.init(string:))
+    }
+
+    private static func goodsID(productCode: String?) -> String? {
+        guard let normalized = productCode?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased(),
+              let goodsID = firstMatch(in: normalized, pattern: #"^E?(\d{6})$"#) else {
+            return nil
+        }
+        return goodsID
+    }
+
+    private static func firstMatch(in text: String, pattern: String) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(
+                in: text,
+                range: NSRange(text.startIndex..<text.endIndex, in: text)
+              ),
+              match.numberOfRanges > 1,
+              let range = Range(match.range(at: 1), in: text) else {
+            return nil
+        }
+        return String(text[range])
+    }
+}
+
 struct UniqloSizeAPIParser {
     static func genericProductIDWithColorCode(for productID: String) -> String {
         "\(productID)-000"
@@ -515,7 +574,14 @@ struct UniqloProductMetadata {
         // The size-chart API can fall back to the generic `000` color. Do not
         // let that response replace the thumbnail selected from the shared URL.
         let expectedToken = "_\(selectedColorCode)_\(goodsID)_"
-        guard preferredImageURLString.localizedCaseInsensitiveContains(expectedToken) else {
+        let isSelectedColorImage = preferredImageURLString
+            .localizedCaseInsensitiveContains(expectedToken)
+        let mayUseOfficialDefault = selectedColorCode == "00"
+            && UniqloImageURLPolicy.containsGoodsID(
+                preferredImageURLString,
+                goodsID: goodsID
+            )
+        guard isSelectedColorImage || mayUseOfficialDefault else {
             return self
         }
 
@@ -575,7 +641,16 @@ struct UniqloProductMetadataParser {
         let priceInfo = priceInfo(productGroupObject: productGroupObject, productObject: productObject, resolved: resolved)
         let breadcrumb = breadcrumbItems(from: breadcrumbObject, productName: productName)
         let htmlBreadcrumb = htmlBreadcrumbItems(from: resolved.html, productName: productName)
-        let sourcePath = categoryPath(productGroupObject: productGroupObject, breadcrumb: breadcrumb, htmlBreadcrumb: htmlBreadcrumb)
+        let embeddedBreadcrumb = embeddedProductBreadcrumb(
+            from: resolved.html,
+            productID: resolved.productID
+        )
+        let sourcePath = categoryPath(
+            productGroupObject: productGroupObject,
+            breadcrumb: breadcrumb,
+            htmlBreadcrumb: htmlBreadcrumb,
+            embeddedBreadcrumb: embeddedBreadcrumb
+        )
         let rawSourceCategory = !breadcrumb.isEmpty
             ? breadcrumb.joined(separator: " / ")
             : (!htmlBreadcrumb.isEmpty
@@ -624,9 +699,13 @@ struct UniqloProductMetadataParser {
             sourceCategoryDepth3: sourcePath.depth3,
             sourceCategoryDepth4: sourcePath.depth4,
             baseCategoryFullPath: sourcePath.fullPath,
+            categoryDepth1Code: sourcePath.code1,
             categoryDepth1Name: sourcePath.depth1,
+            categoryDepth2Code: sourcePath.code2,
             categoryDepth2Name: sourcePath.depth2,
+            categoryDepth3Code: sourcePath.code3,
             categoryDepth3Name: sourcePath.depth3,
+            categoryDepth4Code: sourcePath.code4,
             categoryDepth4Name: sourcePath.depth4,
             genderCodes: genderCodes,
             imageURLStrings: [imageURLString].compactMap { $0 },
@@ -829,25 +908,70 @@ struct UniqloProductMetadataParser {
     private func categoryPath(
         productGroupObject: [String: Any]?,
         breadcrumb: [String],
-        htmlBreadcrumb: [String]
+        htmlBreadcrumb: [String],
+        embeddedBreadcrumb: SourceCategoryPath?
     ) -> SourceCategoryPath {
-        let breadcrumbPath = sourceCategoryPath(from: breadcrumb)
-        if !breadcrumbPath.depths.isEmpty {
-            return breadcrumbPath
-        }
-
-        let htmlBreadcrumbPath = sourceCategoryPath(from: htmlBreadcrumb)
-        if !htmlBreadcrumbPath.depths.isEmpty {
-            return htmlBreadcrumbPath
-        }
-
         let productGroupCategory = stringValue(productGroupObject?["category"])
         let productGroupPath = sourceCategoryPath(from: splitCategoryPath(productGroupCategory))
-        if !productGroupPath.depths.isEmpty {
-            return productGroupPath
+        let candidates = [
+            embeddedBreadcrumb,
+            sourceCategoryPath(from: breadcrumb),
+            sourceCategoryPath(from: htmlBreadcrumb),
+            productGroupPath
+        ].compactMap { $0 }.filter { !$0.depths.isEmpty }
+
+        // UNIQLO's visible/JSON-LD breadcrumb can stop at a collaboration page,
+        // while __PRELOADED_STATE__ still contains the official leaf and IDs.
+        // Keep source order for ties, but never discard the deeper evidence.
+        return candidates.max { lhs, rhs in
+            lhs.depths.count < rhs.depths.count
+        } ?? sourceCategoryPath(from: [])
+    }
+
+    private func embeddedProductBreadcrumb(
+        from html: String,
+        productID: String
+    ) -> SourceCategoryPath? {
+        guard let json = firstMatch(
+            in: html,
+            pattern: #"window\.__PRELOADED_STATE__\s*=\s*(\{.*?\})\s*;?\s*</script>"#
+        ),
+        let data = json.data(using: .utf8),
+        let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        let entity = root["entity"] as? [String: Any],
+        let pdpEntity = entity["pdpEntity"] as? [String: Any] else {
+            return nil
         }
 
-        return sourceCategoryPath(from: [])
+        let normalizedProductID = productID.uppercased()
+        guard let entry = pdpEntity.first(where: { key, _ in
+            key.uppercased().hasPrefix(normalizedProductID + "-")
+        })?.value as? [String: Any],
+        let product = entry["product"] as? [String: Any],
+        let breadcrumbs = product["breadcrumbs"] as? [String: Any] else {
+            return nil
+        }
+
+        let orderedKeys = ["gender", "class", "category", "subcategory"]
+        let nodes: [(name: String, code: String?)] = orderedKeys.compactMap { key in
+            guard let node = breadcrumbs[key] as? [String: Any],
+                  let name = stringValue(node["locale"] ?? node["name"])?.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                  ),
+                  !name.isEmpty else {
+                return nil
+            }
+            return (name, stringValue(node["id"]))
+        }
+        guard !nodes.isEmpty else { return nil }
+
+        let gender = audienceCode(from: nodes[0].name)
+        let categoryNodes = gender == nil ? nodes : Array(nodes.dropFirst())
+        return SourceCategoryPath(
+            gender: gender,
+            depths: categoryNodes.map(\.name),
+            codes: categoryNodes.map(\.code)
+        )
     }
 
     private func htmlBreadcrumbItems(from html: String, productName: String) -> [String] {
@@ -958,7 +1082,7 @@ struct UniqloProductMetadataParser {
         if gender != nil {
             parts.removeFirst()
         }
-        return SourceCategoryPath(gender: gender, depths: parts)
+        return SourceCategoryPath(gender: gender, depths: parts, codes: [])
     }
 
     private func audienceCode(from value: String) -> String? {
@@ -1243,6 +1367,7 @@ struct UniqloProductMetadataParser {
 private struct SourceCategoryPath {
     let gender: String?
     let depths: [String]
+    let codes: [String?]
 
     var fullPath: String? {
         depths.isEmpty ? nil : depths.joined(separator: " > ")
@@ -1252,10 +1377,19 @@ private struct SourceCategoryPath {
     var depth2: String? { depth(at: 1) }
     var depth3: String? { depth(at: 2) }
     var depth4: String? { depth(at: 3) }
+    var code1: String? { code(at: 0) }
+    var code2: String? { code(at: 1) }
+    var code3: String? { code(at: 2) }
+    var code4: String? { code(at: 3) }
 
     private func depth(at index: Int) -> String? {
         guard depths.indices.contains(index) else { return nil }
         return depths[index]
+    }
+
+    private func code(at index: Int) -> String? {
+        guard codes.indices.contains(index) else { return nil }
+        return codes[index]
     }
 }
 

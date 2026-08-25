@@ -13,7 +13,16 @@ import SwiftData
 
 private final class FitMatchCorpusBundleToken {}
 
+private let runsLongImageAudit =
+    ProcessInfo.processInfo.arguments.contains("-fitmatchRunLongImageAudit")
+    || ProcessInfo.processInfo.environment["FITMATCH_RUN_LONG_IMAGE_AUDIT"] == "1"
+
+private let runsFitPairCorpusAudit =
+    ProcessInfo.processInfo.arguments.contains("-fitmatchRunFitPairCorpusAudit")
+    || ProcessInfo.processInfo.environment["FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT"] == "1"
+
 @MainActor
+@Suite(.serialized)
 struct FitMatchTests {
     @Test func comparisonLengthDisplayUsesGarmentContext() {
         #expect(ComparisonLengthType.long.displayName(for: .pants) == "긴바지")
@@ -690,6 +699,44 @@ struct FitMatchTests {
             let profile = matcher.profile(for: product, detailCategory: detail)
             #expect(profile.garmentFamily == expectedFamily, "\(category.rawValue)/\(detail.rawValue)")
         }
+    }
+
+    @Test func typedBlouseDetailOverridesBroadTShirtSourceFamily() {
+        let product = Product(
+            name: "레이온블라우스",
+            category: .top,
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E489227-000",
+            metadata: ProductMetadata(
+                sourceCategoryPath: "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔"
+            ),
+            sourceName: "유니클로",
+            sizes: []
+        )
+        product.normalizedProductTypeCode = "tops.tshirt"
+
+        let profile = ComparisonProfileMatcher().profile(for: product, detailCategory: .blouse)
+
+        #expect(profile.garmentFamily == .shirt)
+
+        let closetItem = UserFit(
+            sourceType: .officialStore,
+            sourceName: "유니클로",
+            sourceCategoryPath: "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+            brandName: "유니클로",
+            gender: .women,
+            productName: "레이온블라우스",
+            category: .top,
+            detailCategory: .blouse,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0
+            ),
+            fitMemo: "fixture",
+            satisfaction: 3
+        )
+        closetItem.normalizedProductTypeCode = "tops.tshirt"
+
+        #expect(ComparisonProfileMatcher().profile(for: closetItem).garmentFamily == .shirt)
     }
 
     @Test func intermediateSleeveAndPantsLengthsDoNotCrossMatch() {
@@ -1472,6 +1519,72 @@ struct FitMatchTests {
 
         #expect(resolved.imageURLString == selected)
         #expect(resolved.productMetadata.imageURLStrings == [selected])
+    }
+
+    @Test func uniqloGenericColorUsesOfficialSizeAPIRepresentativeImage() {
+        let generatedGeneric = "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/422992/item/krgoods_00_422992_3x4.jpg"
+        let officialRepresentative = "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/422992/item/krgoods_11_422992_3x4.jpg"
+        var metadata = UniqloProductMetadata(
+            sourceURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E422992-000/00")!,
+            productID: "E422992",
+            goodsID: "422992",
+            colorCode: "00",
+            brandName: "유니클로",
+            productName: "크루넥T",
+            category: .top,
+            detailCategory: .shortSleeve,
+            imageURLString: generatedGeneric
+        )
+        metadata.productMetadata.imageURLStrings = [generatedGeneric]
+
+        let resolved = metadata.withPreferredImageURL(
+            officialRepresentative,
+            selectedColorCode: "00",
+            goodsID: "422992"
+        )
+
+        #expect(resolved.imageURLString == officialRepresentative)
+        #expect(resolved.productMetadata.imageURLStrings == [officialRepresentative])
+    }
+
+    @Test func uniqloThumbnailCandidatesRetainSelectedColorThenDefaultColor() throws {
+        let selected = try #require(URL(
+            string: "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_03_465185_3x4.jpg?width=400"
+        ))
+        let candidates = UniqloImageURLPolicy.candidateURLs(primaryURL: selected)
+
+        #expect(candidates.map(\.absoluteString) == [
+            selected.absoluteString,
+            "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_00_465185_3x4.jpg?width=400"
+        ])
+    }
+
+    @Test func legacyUniqloProductWithoutImageDerivesDefaultThumbnail() {
+        let product = Product(
+            name: "크루넥T",
+            category: .top,
+            productCode: "E422992",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E422992-000/00",
+            imageURLString: nil,
+            sourceType: .officialStore,
+            sourceName: "유니클로"
+        )
+
+        #expect(product.imageURLStringForDisplay ==
+            "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/422992/item/krgoods_00_422992_3x4.jpg?width=400")
+    }
+
+    @Test func nonUniqloSixDigitProductDoesNotDeriveUniqloThumbnail() {
+        let product = Product(
+            name: "무신사 테스트 상품",
+            category: .top,
+            productCode: "422992",
+            imageURLString: nil,
+            sourceType: .marketplace,
+            sourceName: "무신사"
+        )
+
+        #expect(product.imageURLStringForDisplay == nil)
     }
 
     @Test func musinsaURLResolverPrefersExplicitVariantProductID() {
@@ -4350,10 +4463,166 @@ struct FitMatchTests {
         #expect(ProductURLSupport.supportedProviderName(for: "https://www.musinsa.com/products/4668060") == "무신사")
         #expect(ProductURLSupport.supportedProviderName(for: "https://musinsa.onelink.me/PvkC/example") == "무신사")
         #expect(ProductURLSupport.supportedProviderName(for: "https://www.uniqlo.com/kr/ko/products/E123456") == "유니클로")
+        #expect(ProductURLSupport.isZARAURL(URL(string: "https://www.zara.com/kr/ko/example-p01165305.html")!))
+        #expect(ProductURLSupport.supportedProviderName(for: "https://www.zara.com/kr/ko/example-p01165305.html") == "ZARA")
+        let sharedZARAURL = "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%AA%E1%84%91%E1%85%B3%E1%86%AF-p05372320.html?v1=549582583&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil"
+        #expect(ProductURLSupport.supportedProviderName(for: sharedZARAURL) == "ZARA")
+        #expect(ProductURLSupport.isSupportedProductURL(sharedZARAURL))
+        #expect(ProductURLSupport.supportedProviderName(for: "https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html") == "COS")
 
         #expect(ProductURLSupport.supportedProviderName(for: "https://musinsa.example.com/products/4668060") == nil)
         #expect(ProductURLSupport.supportedProviderName(for: "https://example.com/?next=musinsa") == nil)
         #expect(ProductURLSupport.supportedProviderName(for: "https://uniqlo.com.example.com/products/E123456") == nil)
+        #expect(ProductURLSupport.supportedProviderName(for: "https://zara.com.example.com/kr/ko/example-p01165305.html") == nil)
+        #expect(ProductURLSupport.supportedProviderName(for: "https://cos.com.example.com/product.1229297007.html") == nil)
+    }
+
+    @Test func zaraParserMapsOnlyVerifiedUpperGarmentBasis() async {
+        let url = URL(string: "https://www.zara.com/kr/ko/heart-stamping-t-shirt-p06224446.html?v1=498706001")!
+        let html = """
+        <html><head>
+        <script type="application/ld+json">{"@type":"ProductGroup","name":"하트 스탬핑 티셔츠","image":["https://static.zara.net/example.jpg"],"offers":{"price":"49900"}}</script>
+        <script>zara.analyticsData = {"productId":498702922,"productRef":"06224446-000","catentryId":498706001,"section":"MAN","family":"티셔츠","subfamily":"F. Camiseta"};</script>
+        </head><body></body></html>
+        """
+        let guide = """
+        {"sizeGuideInfo":{"name":"신체 사이즈표"},"measureGuideInfo":{"name":"하트 스탬핑 티셔츠","sizes":[
+          {"id":"2","name":"S (KR 90)","measures":[
+            {"zoneId":"A","tableTitleZone":"zone-name-chest","descriptionZone":"zone-name-chest-description","dimensions":[{"unitId":"cm","value":"48.5"}]},
+            {"zoneId":"B","tableTitleZone":"zone-name-front-length","descriptionZone":"zone-name-front-length-description","dimensions":[{"unitId":"cm","value":"62.5"}]},
+            {"zoneId":"C","tableTitleZone":"zone-name-sleeve-length","descriptionZone":"zone-name-sleeve-length-description","dimensions":[{"unitId":"cm","value":"15.0"}]},
+            {"zoneId":"D","tableTitleZone":"zone-name-back-width","descriptionZone":"zone-name-back-width-description","dimensions":[{"unitId":"cm","value":"42.5"}]}
+          ]}
+        ]}}
+        """.data(using: .utf8)!
+        let parser = ZARAParser(
+            pageLoader: ZARAProductPageLoaderSpy(page: ZARAProductPage(url: url, statusCode: 200, html: html)),
+            sizeGuideLoader: ZARASizeGuideLoaderSpy(data: guide)
+        )
+
+        do {
+            let info = try await parser.parse(from: url)
+            #expect(info.productID == "498702922")
+            #expect(info.productMetadata.styleNo == "06224446")
+            #expect(info.sourceName == "ZARA 공식몰")
+            #expect(info.productTargetGender == .men)
+            #expect(info.category == .top)
+            #expect(info.detailCategory == .shortSleeve)
+            #expect(info.measurementAvailability == .actualMeasurements)
+            #expect(info.sizes.map(\.name) == ["S (KR 90)"])
+            #expect(info.sizes[0].measurements.chest == 48.5)
+            #expect(info.sizes[0].measurements.totalLength == 0)
+            #expect(info.sizes[0].measurements.sleeveLength == 15.0)
+            #expect(info.sizes[0].measurements.shoulder == 42.5)
+            #expect(info.sizes[0].measurementRecords.count == 4)
+            let chestCandidate = info.sizes[0].measurementRecords.first {
+                $0.rawCode == "zone-name-chest"
+            }
+            #expect(chestCandidate?.measurementCode == .chestWidthPitToPit)
+            #expect(chestCandidate?.semanticStatus == .mapped)
+            #expect(chestCandidate?.evidenceLevel == .officialText)
+            #expect(chestCandidate?.rawValueText == "48.5")
+            #expect(chestCandidate?.rawInfo?.contains("raw_zone_id=A") == true)
+            let frontLengthCandidate = info.sizes[0].measurementRecords.first {
+                $0.rawCode == "zone-name-front-length"
+            }
+            #expect(frontLengthCandidate?.measurementCode == .unknown)
+            #expect(frontLengthCandidate?.semanticStatus == .unknownDefinition)
+            #expect(frontLengthCandidate?.evidenceLevel == .unknown)
+        } catch {
+            Issue.record("예상하지 못한 ZARA 파서 오류: \(error)")
+        }
+    }
+
+    @Test func zaraParserFailsClosedWhenOnlyBodySizeGuideExists() async {
+        let url = URL(string: "https://www.zara.com/kr/ko/striped-t-shirt-p01165305.html?v1=557391091")!
+        let html = """
+        <html><head>
+        <script type="application/ld+json">{"@type":"ProductGroup","name":"스트라이프 티셔츠"}</script>
+        <script>zara.analyticsData = {"productId":557391090,"productRef":"01165305-000","catentryId":557391091,"section":"MAN","family":"티셔츠"};</script>
+        </head><body></body></html>
+        """
+        let bodyGuideOnly = """
+        {"sizeGuideInfo":{"name":"신체 사이즈표","sizes":[{"name":"M (KR 95-100)"}]},"measureGuideInfo":null}
+        """.data(using: .utf8)!
+        let parser = ZARAParser(
+            pageLoader: ZARAProductPageLoaderSpy(page: ZARAProductPage(url: url, statusCode: 200, html: html)),
+            sizeGuideLoader: ZARASizeGuideLoaderSpy(data: bodyGuideOnly)
+        )
+
+        do {
+            _ = try await parser.parse(from: url)
+            Issue.record("ZARA 신체 사이즈표를 의류 실측으로 처리했습니다.")
+        } catch let error as ProductURLParserPartialError {
+            #expect(error.productInfo.productID == "557391090")
+            #expect(error.productInfo.measurementAvailability == .unavailable)
+            #expect(error.productInfo.sizes.isEmpty)
+        } catch {
+            Issue.record("예상하지 못한 ZARA 파서 오류: \(error)")
+        }
+    }
+
+    @Test func cosParserPreservesOfficialMetadataButFailsClosedWithoutSizeChart() async {
+        let url = URL(string: "https://www.cos.com/ko-kr/men/t-shirts/product.slim-ribbed-cotton-t-shirt.1229297007.html")!
+        let html = """
+        <html><head>
+        <meta property="og:title" content="슬림 리브드 코튼 티셔츠" />
+        <meta property="og:image" content="https://images.cos.com/example.jpg" />
+        <meta property="og:url" content="https://www.cos.com/ko-kr/men/t-shirts/product.slim-ribbed-cotton-t-shirt.1229297007.html" />
+        <script type="application/ld+json">{"@type":"Product","name":"슬림 리브드 코튼 티셔츠","offers":{"price":"59000"}}</script>
+        </head><body></body></html>
+        """
+        let parser = COSParser(pageLoader: COSProductPageLoaderSpy(page: COSProductPage(url: url, statusCode: 200, html: html)))
+
+        do {
+            _ = try await parser.parse(from: url)
+            Issue.record("실측표 없는 COS 상품이 자동 비교용 파싱에 성공했습니다.")
+        } catch let error as ProductURLParserPartialError {
+            let info = error.productInfo
+            #expect(info.sourceName == "COS 공식몰")
+            #expect(info.productID == "1229297007")
+            #expect(info.productName == "슬림 리브드 코튼 티셔츠")
+            #expect(info.category == .top)
+            #expect(info.detailCategory == .other)
+            #expect(info.productMetadata.categoryDepth2Code == "t-shirts")
+            #expect(info.measurementAvailability == .unavailable)
+        } catch {
+            Issue.record("예상하지 못한 COS 파서 오류: \(error)")
+        }
+    }
+
+    @Test func cosParserUsesOfficialSizeGuideForGarmentMeasurements() async throws {
+        let url = URL(string: "https://www.cos.com/ko-kr/men/view-all/product.ribbed-wool-cotton-t-shirt-cobalt-blue.1349394002.html")!
+        let html = """
+        <html><head>
+        <script type="application/ld+json">{"@type":"Product","name":"리브드 메리노 울 코튼 티셔츠","offers":{"price":115000}}</script>
+        </head><body>
+        <script>window.__DATA__ = {"productInfo":{"slitmCd":"40B1490048","sectId":"254652"}};</script>
+        </body></html>
+        """
+        let guide = """
+        {"data":{"sizeHeaders":["S","M"],"rows":[
+          {"name":"Shoulder to shoulder","values":["41.5","43.0"]},
+          {"name":"½ Chest","values":["50.5","53.5"]},
+          {"name":"Sleeve length","values":["24.75","25.25"]},
+          {"name":"Back length","values":["63.0","64.0"]}
+        ]}}
+        """.data(using: .utf8)!
+        let parser = COSParser(
+            pageLoader: COSProductPageLoaderSpy(page: COSProductPage(url: url, statusCode: 200, html: html)),
+            sizeGuideLoader: COSSizeGuideLoaderSpy(data: guide)
+        )
+
+        let info = try await parser.parse(from: url)
+
+        #expect(info.productID == "40B1490048")
+        #expect(info.productMetadata.styleNo == "1349394002")
+        #expect(info.measurementAvailability == .actualMeasurements)
+        #expect(info.sizes.map(\.name) == ["S", "M"])
+        #expect(info.sizes[1].measurements.shoulder == 43.0)
+        #expect(info.sizes[1].measurements.chest == 53.5)
+        #expect(info.sizes[1].measurements.totalLength == 64.0)
+        #expect(info.sizes[1].measurements.sleeveLength == 25.25)
     }
 
     @Test func manualClosetItemAndMeasurementRecordsPersistTogether() throws {
@@ -4890,6 +5159,17 @@ struct FitMatchTests {
         #expect(viewModel.skipsMeasurementSourceSelection)
     }
 
+    @Test func zaraClosetSourcePreservesRetailerIdentityWithoutClaimingAnUnverifiedChart() {
+        let viewModel = AddClosetItemViewModel(prefillSourceOption: .zara)
+
+        #expect(viewModel.sourceType == .officialStore)
+        #expect(viewModel.sourceName == "ZARA 공식몰")
+        #expect(viewModel.brand == "ZARA")
+        #expect(viewModel.productSourceOption == .zara)
+        #expect(viewModel.measurementEntrySource == .fitmatchMeasured)
+        #expect(viewModel.measurementEntrySourceOptions == [.fitmatchMeasured])
+    }
+
     @Test func manualClosetSourceStoresFitMatchStandardVersion() throws {
         let viewModel = AddClosetItemViewModel()
         viewModel.selectProductSource(.manual)
@@ -5187,6 +5467,129 @@ struct FitMatchTests {
         #expect(metadata.productMetadata.categoryDepth2Name == "니트")
         #expect(metadata.productMetadata.categoryDepth3Name == "가디건")
         #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
+    }
+
+    @Test func uniqloEmbeddedBreadcrumbRestoresOfficialLeafAndCategoryCodes() throws {
+        let html = """
+        <script type="application/ld+json">
+        [{"@type":"BreadcrumbList","itemListElement":[
+          {"position":1,"name":"MEN"},
+          {"position":2,"name":"Special Collaborations"},
+          {"position":3,"name":"UNIQLO and JW ANDERSON"},
+          {"position":4,"name":"바이컬러T"}
+        ]},{"@type":"Product","name":"바이컬러T"}]
+        </script>
+        <script>
+        window.__PRELOADED_STATE__ = {
+          "entity": {
+            "pdpEntity": {
+              "E485454-000-00": {
+                "product": {
+                  "breadcrumbs": {
+                    "gender": {"id":"57893","level":1,"name":"men","locale":"MEN"},
+                    "class": {"id":"107543","level":2,"name":"special collaboration","locale":"Special Collaborations"},
+                    "category": {"id":"107552","level":3,"name":"uniqlo and jw anderson","locale":"UNIQLO and JW ANDERSON"},
+                    "subcategory": {"id":"107621","level":4,"name":"t-shirts","locale":"Cut & Sewn"}
+                  }
+                }
+              }
+            }
+          }
+        };
+        </script>
+        """
+        let resolved = ResolvedUniqloURL(
+            originalURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E485454-000/00?colorDisplayCode=65&sizeDisplayCode=004")!,
+            resolvedURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E485454-000/00")!,
+            productID: "E485454",
+            goodsID: "485454",
+            apiColorCode: "065",
+            imageColorCode: "65",
+            productIDWithColorCode: "E485454-065",
+            html: html
+        )
+
+        let metadata = UniqloProductMetadataParser().parse(resolved: resolved)
+        let canonical = try #require(ParsedClosetClassification.resolve(
+            category: metadata.category,
+            detailCategory: metadata.detailCategory,
+            sourceDepths: [
+                metadata.productMetadata.sourceCategoryDepth1,
+                metadata.productMetadata.sourceCategoryDepth2,
+                metadata.productMetadata.sourceCategoryDepth3,
+                metadata.productMetadata.sourceCategoryDepth4
+            ],
+            sourcePath: metadata.productMetadata.sourceCategoryPath,
+            productName: metadata.productName
+        ))
+
+        #expect(metadata.productMetadata.sourceCategoryPath == "Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn")
+        #expect(metadata.productMetadata.categoryDepth1Code == "107543")
+        #expect(metadata.productMetadata.categoryDepth2Code == "107552")
+        #expect(metadata.productMetadata.categoryDepth3Code == "107621")
+        #expect(metadata.imageURLString == "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/485454/item/krgoods_65_485454_3x4.jpg?width=400")
+        #expect(metadata.category == .top)
+        #expect(metadata.detailCategory == .shortSleeve)
+        #expect(canonical.categoryCode == "tops")
+        #expect(canonical.detailCode == "short_sleeve")
+        #expect(canonical.garmentFamily == .tshirt)
+        #expect(canonical.isValid)
+    }
+
+    @Test func persistedProductReceivesNewRetailerThumbnailWithoutLosingItLater() {
+        let stored = Product(
+            name: "바이컬러T",
+            category: .top,
+            productCode: "E485454",
+            imageURLString: nil
+        )
+        let incoming = Product(
+            name: "바이컬러T",
+            category: .top,
+            productCode: "E485454",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E485454",
+            imageURLString: "https://image.uniqlo.com/example.jpg",
+            metadata: ProductMetadata(imageURLStrings: ["https://image.uniqlo.com/example.jpg"])
+        )
+
+        stored.refreshExternalPresentation(from: incoming)
+
+        #expect(stored.imageURLString == "https://image.uniqlo.com/example.jpg")
+        #expect(stored.imageURLStrings == "https://image.uniqlo.com/example.jpg")
+        #expect(stored.sourceURLString == "https://www.uniqlo.com/kr/ko/products/E485454")
+
+        stored.refreshExternalPresentation(from: Product(name: "바이컬러T", category: .top))
+        #expect(stored.imageURLString == "https://image.uniqlo.com/example.jpg")
+    }
+
+    @Test func closetSaveMatchesStoredProductBeforeMatchingSize() {
+        let stored = Product(
+            name: "크루넥T",
+            category: .top,
+            productCode: "E485454",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E485454-000/00",
+            sourceType: .officialStore,
+            sourceName: "유니클로"
+        )
+        let sameProductFromNewFetch = Product(
+            name: "크루넥T",
+            category: .top,
+            productCode: "E485454",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E485454-000/00/",
+            sourceType: .officialStore,
+            sourceName: "유니클로"
+        )
+        let differentProductWithSameSizeLabel = Product(
+            name: "에어리즘T",
+            category: .top,
+            productCode: "E465185",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E465185-000/00",
+            sourceType: .officialStore,
+            sourceName: "유니클로"
+        )
+
+        #expect(AddComparedProductToClosetSheet.isSameRetailerProduct(stored, sameProductFromNewFetch))
+        #expect(!AddComparedProductToClosetSheet.isSameRetailerProduct(stored, differentProductWithSameSizeLabel))
     }
 
     @Test func uniqloExplicitUnisexAudienceOverridesFemaleCategoryTarget() {
@@ -6633,7 +7036,11 @@ struct FitMatchTests {
         ) == nil)
     }
 
-    @Test func musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage() throws {
+    @Test(.enabled(
+        if: runsLongImageAudit,
+        "Vision 긴이미지 스트레스 검증은 독립 프로세스로 실행합니다."
+    ))
+    func musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage() throws {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         format.opaque = true
@@ -8208,7 +8615,11 @@ struct FitMatchTests {
         print("FITMATCH_2560_UNCLASSIFIED_PATH \(unclassifiedURL.path)")
     }
 
-    @Test func storedMusinsaCorpusBuildsActualMeasurementFitPairs() throws {
+    @Test(.enabled(
+        if: runsFitPairCorpusAudit,
+        "1,037건 Musinsa corpus 검증은 독립 프로세스로 실행합니다."
+    ))
+    func storedMusinsaCorpusBuildsActualMeasurementFitPairs() throws {
         struct Specimen {
             let productID: String
             let productName: String
@@ -8581,7 +8992,11 @@ struct FitMatchTests {
         try encoded.write(to: outputURL, options: .atomic)
     }
 
-    @Test func storedUniqloCorpusBuildsActualMeasurementFitPairs() throws {
+    @Test(.enabled(
+        if: runsFitPairCorpusAudit,
+        "243건 Uniqlo corpus 검증은 독립 프로세스로 실행합니다."
+    ))
+    func storedUniqloCorpusBuildsActualMeasurementFitPairs() throws {
         struct Specimen {
             let productID: String
             let productName: String
@@ -8822,6 +9237,26 @@ struct FitMatchTests {
                     + "reason=\(diagnostic["stage"] ?? "") name=\(diagnostic["product_name"] ?? "")"
             )
         }
+        // Persist the diagnostic artifacts before enforcing the frozen totals so
+        // a legitimate safety-policy change can be compared with the previous
+        // corpus result instead of hiding the changed pair behind a count error.
+        let diagnosticsData = try JSONSerialization.data(
+            withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]
+        )
+        let pairData = try JSONSerialization.data(
+            withJSONObject: pairResults, options: [.prettyPrinted, .sortedKeys]
+        )
+        let documents = try #require(
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        )
+        try diagnosticsData.write(
+            to: documents.appendingPathComponent("fitmatch-uniqlo-size-diagnostics.json"),
+            options: .atomic
+        )
+        try pairData.write(
+            to: documents.appendingPathComponent("fitmatch-uniqlo-actual-measurement-pairs.json"),
+            options: .atomic
+        )
         try #require(inputs.count == 243)
         try #require(specimens.count == 238)
         try #require(parsedSizeRows == 1_574)
@@ -8855,23 +9290,6 @@ struct FitMatchTests {
                     && ($0["comparison_body_length_type"] as? String)
                         == ($0["reference_body_length_type"] as? String))
         })
-        let diagnosticsData = try JSONSerialization.data(
-            withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]
-        )
-        let pairData = try JSONSerialization.data(
-            withJSONObject: pairResults, options: [.prettyPrinted, .sortedKeys]
-        )
-        let documents = try #require(
-            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-        )
-        try diagnosticsData.write(
-            to: documents.appendingPathComponent("fitmatch-uniqlo-size-diagnostics.json"),
-            options: .atomic
-        )
-        try pairData.write(
-            to: documents.appendingPathComponent("fitmatch-uniqlo-actual-measurement-pairs.json"),
-            options: .atomic
-        )
     }
 
     @Test func musinsaSourceDepthPriorityKeepsUmbrellaFamiliesOutOfGenericBottoms() {
@@ -9176,6 +9594,38 @@ private enum ParserSpyError: Error {
     case failed
 }
 
+private struct COSProductPageLoaderSpy: COSProductPageLoading {
+    let page: COSProductPage
+
+    func load(url: URL) async throws -> COSProductPage {
+        page
+    }
+}
+
+private struct COSSizeGuideLoaderSpy: COSSizeGuideLoading {
+    let data: Data
+
+    func load(request: COSSizeGuideRequest, referringProductURL: URL) async throws -> Data {
+        data
+    }
+}
+
+private struct ZARAProductPageLoaderSpy: ZARAProductPageLoading {
+    let page: ZARAProductPage
+
+    func load(url: URL) async throws -> ZARAProductPage {
+        page
+    }
+}
+
+private struct ZARASizeGuideLoaderSpy: ZARASizeGuideLoading {
+    let data: Data
+
+    func load(productID: String) async throws -> Data {
+        data
+    }
+}
+
 @MainActor
 private final class DelayedProductURLParserSpy: ProductURLParsing {
     let delays: [String: UInt64]
@@ -9267,10 +9717,18 @@ private func comparisonUserFit(
 @MainActor
 final class FitPairCorpusXCTests: XCTestCase {
     func testMusinsa1037OfficialMeasurementCorpus() throws {
+        try XCTSkipUnless(
+            runsFitPairCorpusAudit,
+            "1,037건 Musinsa corpus 검증은 FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT=1로 독립 실행합니다."
+        )
         try FitMatchTests().storedMusinsaCorpusBuildsActualMeasurementFitPairs()
     }
 
     func testUniqlo243OfficialMeasurementCorpus() throws {
+        try XCTSkipUnless(
+            runsFitPairCorpusAudit,
+            "243건 Uniqlo corpus 검증은 FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT=1로 독립 실행합니다."
+        )
         try FitMatchTests().storedUniqloCorpusBuildsActualMeasurementFitPairs()
     }
 }

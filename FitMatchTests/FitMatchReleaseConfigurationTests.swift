@@ -15,4 +15,18 @@ struct FitMatchReleaseConfigurationTests {
         #expect(FitMatchReleaseConfiguration.httpsURL(from: "") == nil)
         #expect(FitMatchReleaseConfiguration.httpsURL(from: nil) == nil)
     }
+
+    @Test func shareExtensionAcceptsAllReleasedRetailerHosts() throws {
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let sourceURL = repositoryRoot
+            .appendingPathComponent("FitMatchShareExtension/ShareViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        #expect(source.contains(#"host == "musinsa.com""#))
+        #expect(source.contains(#"host == "uniqlo.com""#))
+        #expect(source.contains(#"host == "zara.com""#))
+        #expect(source.contains(#"return "zara""#))
+    }
 }

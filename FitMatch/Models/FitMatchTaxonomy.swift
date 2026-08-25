@@ -157,6 +157,8 @@ final class FitMatchTaxonomyProvider {
         let value = "\(sourceName) \(sourceURLString ?? "")".lowercased()
         if value.contains("musinsa") || value.contains("무신사") { return "musinsa" }
         if value.contains("uniqlo") || value.contains("유니클로") { return "uniqlo" }
+        if value.contains("zara") || value.contains("자라") { return "zara" }
+        if value.contains("cos") { return "cos" }
         return nil
     }
 

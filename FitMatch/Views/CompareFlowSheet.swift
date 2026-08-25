@@ -337,6 +337,16 @@ private extension CompareFlowSheet {
                 subtitle: "이 상품의 종류를 선택해 주세요."
             )
 
+            if viewModel.productAnalysisRecoveryAction == .confirmCategoryBeforeMeasurements,
+               let notice = viewModel.parserNotice {
+                FitMatchCard {
+                    Label(notice, systemImage: "checklist")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
             if let product = currentProduct {
                 productCompactCard(product)
             }
@@ -939,7 +949,7 @@ private extension CompareFlowSheet {
     func productCompactRow(product: Product) -> some View {
         HStack(alignment: .top, spacing: 13) {
             ProductThumbnailView(
-                imageURLString: product.imageURLString,
+                imageURLString: product.imageURLStringForDisplay,
                 category: product.category,
                 width: 72,
                 height: 88,
@@ -1374,6 +1384,16 @@ private extension CompareFlowSheet {
         let didLoad = await viewModel.loadProductInfoFromURL()
         guard !Task.isCancelled else { return }
         guard didLoad else {
+            if viewModel.productAnalysisRecoveryAction == .confirmCategoryBeforeMeasurements {
+                // Keep the parser's `.other` value as an internal fail-closed
+                // sentinel only. The customer sees explicit category choices,
+                // never a saved or comparable "기타/기타" product.
+                viewModel.category = .other
+                viewModel.detailCategory = .other
+                errorMessage = nil
+                setStep(.categoryConfirmation)
+                return
+            }
             errorMessage = viewModel.errorMessage ?? "상품 정보를 불러오지 못했어요. URL을 다시 확인해 주세요."
             #if DEBUG
             print("[화면: 상품 비교][동작: 상품 분석][상태: 실패] 오류=\(errorMessage ?? "알 수 없음")")
@@ -1416,7 +1436,8 @@ private extension CompareFlowSheet {
 
         if historyMatches.isEmpty,
            let classification = currentParsedClassification,
-           classification.isValid {
+           classification.isValid,
+           !viewModel.classificationSafetyAudit.requiresReview {
             // Continue with the canonical decision itself, not the parser's
             // raw category. This is essential when a missing official major
             // category was safely resolved by the limited fallback policy.
@@ -1437,8 +1458,18 @@ private extension CompareFlowSheet {
     }
 
     func confirmComparisonCategoryAndContinue() {
-        guard canConfirmComparisonCategory, let product = currentProduct else {
+        guard canConfirmComparisonCategory else {
             errorMessage = "내 옷장 분류를 선택해 주세요."
+            return
+        }
+
+        if viewModel.productAnalysisRecoveryAction == .confirmCategoryBeforeMeasurements {
+            resumeZARAComparisonAfterCategoryConfirmation()
+            return
+        }
+
+        guard let product = currentProduct else {
+            errorMessage = "상품 사이즈 정보를 확인해 주세요."
             return
         }
 
@@ -1448,6 +1479,10 @@ private extension CompareFlowSheet {
             category: viewModel.category,
             detailCategory: viewModel.detailCategory
         )
+        // Recreate the prepared product after the user (or an exact local
+        // product history match) adjudicates the conflict. The pre-confirmation
+        // product is intentionally ineligible and must never be reused.
+        rebuildPreparedComparison()
         #if DEBUG
         print("[CompareFlowSheet] confirmed category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] confirmed detailCategory: \(viewModel.detailCategory.rawValue)")
@@ -1475,6 +1510,45 @@ private extension CompareFlowSheet {
         selectedReferenceItemID = nil
         showsAllReferenceCandidates = false
         setStep(.closetSelection)
+    }
+
+    func resumeZARAComparisonAfterCategoryConfirmation() {
+        guard loadTask == nil, !viewModel.isLoadingProductInfo else { return }
+        let confirmedCategory = viewModel.category
+        let confirmedDetailCategory = viewModel.detailCategory
+        errorMessage = nil
+        setStep(.loading)
+
+        loadTask = Task {
+            let didLoad = await viewModel.resumeZARAParsingAfterCategoryConfirmation()
+            guard !Task.isCancelled else {
+                loadTask = nil
+                return
+            }
+
+            // `apply` deliberately re-runs the safety resolver. Restore the
+            // explicit user adjudication before building the comparison item.
+            viewModel.category = confirmedCategory
+            viewModel.detailCategory = confirmedDetailCategory
+
+            if didLoad {
+                rebuildPreparedComparison()
+                loadTask = nil
+                confirmComparisonCategoryAndContinue()
+                return
+            }
+
+            loadTask = nil
+            if viewModel.productAnalysisRecoveryAction == .enterMeasurementsManually {
+                statusMessage = "상품 종류를 적용했어요. 비교할 실측값을 확인해 주세요."
+                setStep(.categoryConfirmation)
+                isShowingManualProductEntry = true
+                return
+            }
+
+            errorMessage = viewModel.errorMessage ?? "ZARA 실측 정보를 불러오지 못했어요."
+            setStep(.error)
+        }
     }
 
     func applySourceCategoryHistoryMatch(_ match: SourceCategoryHistoryMatch) {
@@ -1621,7 +1695,10 @@ private extension CompareFlowSheet {
         if insertBrandIfNeeded, let brand, existingBrand(named: brand.name) == nil {
             modelContext.insert(brand)
         }
-        return viewModel.makeProductForClosetRegistration(brand: brand)
+        return viewModel.makeProductForClosetRegistration(
+            brand: brand,
+            classificationWasUserConfirmed: hasConfirmedComparisonCategory
+        )
     }
 
     func presentProductRegistration(
@@ -1908,7 +1985,7 @@ private struct ClosetReferenceChoiceCard: View {
         FitMatchCard {
             HStack(alignment: .top, spacing: 12) {
                 ProductThumbnailView(
-                    imageURLString: item.sourceProduct?.imageURLString,
+                    imageURLString: item.sourceProduct?.imageURLStringForDisplay,
                     category: item.category,
                     width: 58,
                     height: 70,

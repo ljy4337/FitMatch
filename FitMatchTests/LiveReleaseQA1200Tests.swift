@@ -68,10 +68,13 @@ final class LiveReleaseQA1200Tests: XCTestCase {
 
     func testSelectedTenCaseBatchOnPhysicalDevice() async throws {
         executionTimeAllowance = 600
-        let batchIndex = try XCTUnwrap(
-            Int(ProcessInfo.processInfo.environment["FITMATCH_LIVE_QA_BATCH"] ?? "")
-        )
-        XCTAssertTrue((0..<120).contains(batchIndex))
+        guard let batchValue = ProcessInfo.processInfo.environment["FITMATCH_LIVE_QA_BATCH"],
+              let batchIndex = Int(batchValue),
+              (0..<120).contains(batchIndex) else {
+            throw XCTSkip(
+                "실기기 live QA 전용 테스트입니다. FITMATCH_LIVE_QA_BATCH=0...119를 지정해 실행하세요."
+            )
+        }
         let bundle = Bundle(for: LiveReleaseQA1200Tests.self)
         let url = try XCTUnwrap(
             bundle.url(forResource: "LiveReleaseQA1200Inputs", withExtension: "json")
