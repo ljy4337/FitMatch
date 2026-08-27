@@ -353,6 +353,15 @@ final class AddClosetItemViewModel: ObservableObject {
         )
         CanonicalComparisonProfileResolver().apply(canonicalProfile, to: item)
         _ = ComparisonProfileMatcher().profile(for: item)
+        // The form records an explicit user selection for a single garment,
+        // but the existing composite-set safety gate always wins. A manual set
+        // may remain in Closet; it cannot become a reference or comparison
+        // authority without a server not-comparable result.
+        if ParsedClosetClassification.isExplicitCompositeGarmentSet(item.productName) {
+            item.markClassificationAuthority(.localHint)
+        } else {
+            item.markClassificationAuthority(.userExplicit)
+        }
         return item
     }
 

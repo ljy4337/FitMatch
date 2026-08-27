@@ -65,6 +65,7 @@ struct FitMatchMetricsRecorderTests {
                 category: .top,
                 detailCategory: .shortSleeve,
                 sizes: [],
+                productID: "123",
                 measurementAvailability: .actualMeasurements
             )
         )
@@ -75,7 +76,10 @@ struct FitMatchMetricsRecorderTests {
         let viewModel = ShoppingProductViewModel(
             initialURL: "https://www.musinsa.com/products/123",
             parserService: service,
-            metricsRecorder: metrics
+            metricsRecorder: metrics,
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: FitMatchEchoServerAuthorityRemote()
+            )
         )
 
         #expect(await viewModel.loadProductInfoFromURL())
@@ -92,11 +96,11 @@ struct FitMatchMetricsRecorderTests {
         #expect(metrics.events.allSatisfy { !$0.counterKey.contains("기록되면") })
     }
 
-    @Test func blockedComparisonRecordsFunnelExit() {
+    @Test func blockedComparisonRecordsFunnelExit() async {
         let metrics = MetricsRecorderSpy()
         let viewModel = ShoppingProductViewModel(metricsRecorder: metrics)
 
-        #expect(viewModel.calculateRecommendation(userFits: []) == nil)
+        #expect(await viewModel.calculateRecommendation(userFits: []) == nil)
         #expect(metrics.events == [
             .comparisonAttempt(mode: .automatic),
             .comparisonBlocked(mode: .automatic, reason: .missingReference)

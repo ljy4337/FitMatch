@@ -279,14 +279,10 @@ struct ComparisonProfileMatcher {
                     && commonCoreMeasurementCount(incoming, $0.1)
                         >= minimumCommonMeasurementCount(for: incoming.garmentFamily)
             }
-        let confirmedCompatible = profileCompatible.filter {
-            hasConfirmedMeasurementComparison(
-                product: product,
-                detailCategory: productDetailCategory,
-                referenceItem: $0.0
-            )
-        }
-        let compatible = (confirmedCompatible.isEmpty ? profileCompatible : confirmedCompatible)
+        // Profile matching is a pre-evaluator UI hint only. Running the
+        // measurement scorer here would score target/reference pairs before
+        // evaluator v4 has created a comparison permit.
+        let compatible = profileCompatible
             .sorted { lhs, rhs in
                 let lhsSameDetail = lhs.0.detailCategory == productDetailCategory
                 let rhsSameDetail = rhs.0.detailCategory == productDetailCategory
@@ -809,7 +805,9 @@ struct ComparisonProfileMatcher {
     }
 
     func profile(for product: Product, detailCategory: ClosetDetailCategory) -> ComparisonProfile {
-        if product.canonicalProfileSnapshotJSON == nil {
+        let preservesAuthoritativeTuple = product.classificationAuthorityProvenance?
+            .isComparisonAuthority == true
+        if product.canonicalProfileSnapshotJSON == nil && !preservesAuthoritativeTuple {
             let resolver = CanonicalComparisonProfileResolver()
             let profile = resolver.resolve(
                 source: product.sourceName,
@@ -852,31 +850,45 @@ struct ComparisonProfileMatcher {
             gender: product.productTargetGender,
             measurements: product.sizes.map(\.measurements)
         )
-        let family = storedGarmentType(
-            product.garmentTypeRawValue,
-            fallback: inferredFamily,
-            productNameFamily: productNameFamily,
-            major: major,
-            allowsProductNameOverride: !product.sourceName.localizedCaseInsensitiveContains("무신사")
-                || sourceCategoryIsGeneric(source)
-        )
-        let length = detailLength(detailCategory, major: major) == .sleeveless
-            ? .sleeveless
-            : storedSleeveType(product.sleeveTypeRawValue, fallback: inferredLength)
-        let construction = storedConstructionType(product.constructionTypeRawValue, fallback: inferredConstruction)
-        storeResolvedAttributes(
-            garmentType: family,
-            sleeveType: length,
-            constructionType: construction,
-            on: product
-        )
-        recoverProductLevelFallbackEligibility(
-            product,
-            major: major,
-            family: family,
-            length: length,
-            availableMeasurements: availableMeasurements(product.sizes.map(\.measurements))
-        )
+        let family = preservesAuthoritativeTuple
+            ? product.garmentType
+            : storedGarmentType(
+                product.garmentTypeRawValue,
+                fallback: inferredFamily,
+                productNameFamily: productNameFamily,
+                major: major,
+                allowsProductNameOverride: !product.sourceName.localizedCaseInsensitiveContains("무신사")
+                    || sourceCategoryIsGeneric(source)
+            )
+        let length: ComparisonLengthType
+        if preservesAuthoritativeTuple {
+            length = product.sleeveType
+        } else {
+            length = detailLength(detailCategory, major: major) == .sleeveless
+                ? .sleeveless
+                : storedSleeveType(product.sleeveTypeRawValue, fallback: inferredLength)
+        }
+        let construction = preservesAuthoritativeTuple
+            ? product.constructionType
+            : storedConstructionType(
+                product.constructionTypeRawValue,
+                fallback: inferredConstruction
+            )
+        if !preservesAuthoritativeTuple {
+            storeResolvedAttributes(
+                garmentType: family,
+                sleeveType: length,
+                constructionType: construction,
+                on: product
+            )
+            recoverProductLevelFallbackEligibility(
+                product,
+                major: major,
+                family: family,
+                length: length,
+                availableMeasurements: availableMeasurements(product.sizes.map(\.measurements))
+            )
+        }
         return ComparisonProfile(
             majorCategory: major,
             garmentFamily: family,
@@ -888,7 +900,9 @@ struct ComparisonProfileMatcher {
     }
 
     func profile(for item: UserFit) -> ComparisonProfile {
-        if item.canonicalProfileSnapshotJSON == nil {
+        let preservesAuthoritativeTuple = item.classificationAuthorityProvenance?
+            .isComparisonAuthority == true
+        if item.canonicalProfileSnapshotJSON == nil && !preservesAuthoritativeTuple {
             if let sourceProfile = item.sourceProduct?.canonicalProfileSnapshot {
                 CanonicalComparisonProfileResolver().apply(sourceProfile, to: item)
             } else {
@@ -933,31 +947,45 @@ struct ComparisonProfileMatcher {
             gender: item.gender,
             measurements: [item.measurements]
         )
-        let family = storedGarmentType(
-            item.garmentTypeRawValue,
-            fallback: inferredFamily,
-            productNameFamily: productNameFamily,
-            major: major,
-            allowsProductNameOverride: !item.sourceName.localizedCaseInsensitiveContains("무신사")
-                || sourceCategoryIsGeneric(source)
-        )
-        let length = detailLength(item.detailCategory, major: major) == .sleeveless
-            ? .sleeveless
-            : storedSleeveType(item.sleeveTypeRawValue, fallback: inferredLength)
-        let construction = storedConstructionType(item.constructionTypeRawValue, fallback: inferredConstruction)
-        storeResolvedAttributes(
-            garmentType: family,
-            sleeveType: length,
-            constructionType: construction,
-            on: item
-        )
-        recoverProductLevelFallbackEligibility(
-            item,
-            major: major,
-            family: family,
-            length: length,
-            availableMeasurements: availableMeasurements([item.measurements])
-        )
+        let family = preservesAuthoritativeTuple
+            ? item.garmentType
+            : storedGarmentType(
+                item.garmentTypeRawValue,
+                fallback: inferredFamily,
+                productNameFamily: productNameFamily,
+                major: major,
+                allowsProductNameOverride: !item.sourceName.localizedCaseInsensitiveContains("무신사")
+                    || sourceCategoryIsGeneric(source)
+            )
+        let length: ComparisonLengthType
+        if preservesAuthoritativeTuple {
+            length = item.sleeveType
+        } else {
+            length = detailLength(item.detailCategory, major: major) == .sleeveless
+                ? .sleeveless
+                : storedSleeveType(item.sleeveTypeRawValue, fallback: inferredLength)
+        }
+        let construction = preservesAuthoritativeTuple
+            ? item.constructionType
+            : storedConstructionType(
+                item.constructionTypeRawValue,
+                fallback: inferredConstruction
+            )
+        if !preservesAuthoritativeTuple {
+            storeResolvedAttributes(
+                garmentType: family,
+                sleeveType: length,
+                constructionType: construction,
+                on: item
+            )
+            recoverProductLevelFallbackEligibility(
+                item,
+                major: major,
+                family: family,
+                length: length,
+                availableMeasurements: availableMeasurements([item.measurements])
+            )
+        }
         return ComparisonProfile(
             majorCategory: major,
             garmentFamily: family,
@@ -1462,21 +1490,6 @@ struct ComparisonProfileMatcher {
         [.waist, .hip, .thigh, .rise]
             .filter { lhs.availableMeasurements.contains($0) && rhs.availableMeasurements.contains($0) }
             .count
-    }
-
-    private func hasConfirmedMeasurementComparison(
-        product: Product,
-        detailCategory: ClosetDetailCategory,
-        referenceItem: UserFit
-    ) -> Bool {
-        product.sizes.contains { size in
-            MeasurementComparisonEngine().compare(
-                productSize: size,
-                referenceItem: referenceItem,
-                productCategory: product.category,
-                productDetailCategory: detailCategory
-            ).status == .confirmed
-        }
     }
 
     private func hasDirectSourceComparison(

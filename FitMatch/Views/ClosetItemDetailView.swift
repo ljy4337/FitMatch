@@ -56,11 +56,14 @@ struct ClosetItemDetailView: View {
                         onDelete: {
                             deleteItemAndDismiss()
                         }
-                    ) { selectedSize, category, detailCategory in
+                    ) { selectedSize, category, detailCategory, categoryCode, detailCode, didExplicitlyChangeClassification in
                         saveImportedChanges(
                             selectedSize,
                             category: category,
-                            detailCategory: detailCategory
+                            detailCategory: detailCategory,
+                            categoryCode: categoryCode,
+                            detailCode: detailCode,
+                            didExplicitlyChangeClassification: didExplicitlyChangeClassification
                         )
                     }
                 } else {
@@ -264,7 +267,10 @@ struct ClosetItemDetailView: View {
                 editedItem: editedItem,
                 selectedSize: nil,
                 category: editedItem.category,
-                detailCategory: editedItem.detailCategory
+                detailCategory: editedItem.detailCategory,
+                categoryCode: editedItem.resolvedCategoryCode,
+                detailCode: editedItem.resolvedDetailCategoryCode,
+                didExplicitlyChangeClassification: false
             )
             return true
         }
@@ -320,35 +326,96 @@ struct ClosetItemDetailView: View {
     private func saveImportedChanges(
         _ selectedSize: ProductSize,
         category: ClothingCategory,
-        detailCategory: ClosetDetailCategory
+        detailCategory: ClosetDetailCategory,
+        categoryCode: String,
+        detailCode: String,
+        didExplicitlyChangeClassification: Bool
     ) -> Bool {
+        let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
+            current: item.classificationAuthorityProvenance,
+            isSourced: FitMatchClosetClassificationEditPolicy.isSourced(item),
+            isExplicitSet: FitMatchClosetClassificationEditPolicy.isExplicitSet(item),
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+        )
+        let appliesUserClassification = didExplicitlyChangeClassification
+            && resultingAuthority == .userExplicit
+        let effectiveCategory = appliesUserClassification ? category : item.category
+        let effectiveDetail = appliesUserClassification ? detailCategory : item.detailCategory
+        let effectiveCategoryCode = appliesUserClassification
+            ? categoryCode
+            : (item.resolvedCategoryCode ?? item.category.taxonomyCode)
+        let effectiveDetailCode = appliesUserClassification
+            ? detailCode
+            : (item.resolvedDetailCategoryCode ?? "")
+
         if item.isRepresentative,
-           hasAnotherReference(category: category, detailCategory: detailCategory) {
+           resultingAuthority.isComparisonAuthority,
+           hasAnotherReference(
+                category: effectiveCategory,
+                detailCategory: effectiveDetail,
+                categoryCode: effectiveCategoryCode,
+                detailCode: effectiveDetailCode
+           ) {
             pendingReferenceChange = PendingClosetEdit(
                 editedItem: nil,
                 selectedSize: selectedSize,
-                category: category,
-                detailCategory: detailCategory
+                category: effectiveCategory,
+                detailCategory: effectiveDetail,
+                categoryCode: effectiveCategoryCode,
+                detailCode: effectiveDetailCode,
+                didExplicitlyChangeClassification: didExplicitlyChangeClassification
             )
             return true
         }
 
-        return applyImportedChanges(selectedSize, category: category, detailCategory: detailCategory)
+        return applyImportedChanges(
+            selectedSize,
+            category: effectiveCategory,
+            detailCategory: effectiveDetail,
+            categoryCode: effectiveCategoryCode,
+            detailCode: effectiveDetailCode,
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+        )
     }
 
     private func applyImportedChanges(
         _ selectedSize: ProductSize,
         category: ClothingCategory,
-        detailCategory: ClosetDetailCategory
+        detailCategory: ClosetDetailCategory,
+        categoryCode: String,
+        detailCode: String,
+        didExplicitlyChangeClassification: Bool
     ) -> Bool {
-        item.category = category
-        item.detailCategory = detailCategory
+        let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
+            current: item.classificationAuthorityProvenance,
+            isSourced: FitMatchClosetClassificationEditPolicy.isSourced(item),
+            isExplicitSet: FitMatchClosetClassificationEditPolicy.isExplicitSet(item),
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+        )
+        if didExplicitlyChangeClassification, resultingAuthority == .userExplicit {
+            item.category = category
+            item.detailCategory = detailCategory
+            item.categoryCode = categoryCode
+            item.detailCategoryCode = detailCode
+            item.normalizedProductTypeCode = detailCode
+            _ = ComparisonProfileMatcher().profile(for: item)
+            item.markClassificationAuthority(
+                .userExplicit,
+                sourceIdentity: "user_explicit_closet_edit"
+            )
+        } else {
+            item.markClassificationAuthority(
+                resultingAuthority,
+                sourceIdentity: resultingAuthority == .localHint
+                    ? "ios_existing_set_validation"
+                    : item.canonicalSourceIdentity
+            )
+        }
         item.sizeName = selectedSize.name.fitMatchDisplaySizeName
         item.measurements = selectedSize.measurements
         item.sourceProductSize = selectedSize
         item.measurementRecords.forEach(modelContext.delete)
         item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
-        _ = ComparisonProfileMatcher().profile(for: item)
         item.updatedAt = Date()
         do {
             try modelContext.save()
@@ -362,12 +429,22 @@ struct ClosetItemDetailView: View {
 
     private func hasAnotherReference(
         category: ClothingCategory,
-        detailCategory: ClosetDetailCategory
+        detailCategory: ClosetDetailCategory,
+        categoryCode: String,
+        detailCode: String
     ) -> Bool {
         userFits.contains {
             $0.id != item.id
                 && $0.isRepresentative
-                && ReferenceGarmentPolicy.conflicts($0, referenceCandidate(category: category, detailCategory: detailCategory))
+                && ReferenceGarmentPolicy.conflicts(
+                    $0,
+                    referenceCandidate(
+                        category: category,
+                        detailCategory: detailCategory,
+                        categoryCode: categoryCode,
+                        detailCode: detailCode
+                    )
+                )
         }
     }
 
@@ -375,7 +452,9 @@ struct ClosetItemDetailView: View {
         guard let pendingReferenceChange else { return }
         let referenceCandidate = pendingReferenceChange.editedItem ?? referenceCandidate(
             category: pendingReferenceChange.category,
-            detailCategory: pendingReferenceChange.detailCategory
+            detailCategory: pendingReferenceChange.detailCategory,
+            categoryCode: pendingReferenceChange.categoryCode ?? item.resolvedCategoryCode,
+            detailCode: pendingReferenceChange.detailCode ?? item.resolvedDetailCategoryCode
         )
 
         userFits
@@ -398,7 +477,15 @@ struct ClosetItemDetailView: View {
             _ = applyImportedChanges(
                 selectedSize,
                 category: pendingReferenceChange.category,
-                detailCategory: pendingReferenceChange.detailCategory
+                detailCategory: pendingReferenceChange.detailCategory,
+                categoryCode: pendingReferenceChange.categoryCode
+                    ?? item.resolvedCategoryCode
+                    ?? item.category.taxonomyCode,
+                detailCode: pendingReferenceChange.detailCode
+                    ?? item.resolvedDetailCategoryCode
+                    ?? "",
+                didExplicitlyChangeClassification: pendingReferenceChange
+                    .didExplicitlyChangeClassification
             )
         }
         self.pendingReferenceChange = nil
@@ -406,7 +493,9 @@ struct ClosetItemDetailView: View {
 
     private func referenceCandidate(
         category: ClothingCategory,
-        detailCategory: ClosetDetailCategory
+        detailCategory: ClosetDetailCategory,
+        categoryCode: String?,
+        detailCode: String?
     ) -> UserFit {
         let candidate = UserFit(
             sourceType: item.sourceType,
@@ -425,9 +514,9 @@ struct ClosetItemDetailView: View {
             sourceProductSize: item.sourceProductSize
         )
         candidate.genderCode = item.resolvedGenderCode
-        candidate.categoryCode = item.resolvedCategoryCode
-        candidate.detailCategoryCode = item.resolvedDetailCategoryCode
-        candidate.normalizedProductTypeCode = item.resolvedNormalizedProductTypeCode
+        candidate.categoryCode = categoryCode
+        candidate.detailCategoryCode = detailCode
+        candidate.normalizedProductTypeCode = detailCode
         candidate.replaceMeasurementRecords(with: item.measurementRecords)
         return candidate
     }
@@ -580,13 +669,21 @@ private struct ImportedClosetItemEditView: View {
     let item: UserFit
     let hasComparisonHistory: Bool
     let onDelete: () -> Bool
-    let onSave: (ProductSize, ClothingCategory, ClosetDetailCategory) -> Bool
+    let onSave: (
+        ProductSize,
+        ClothingCategory,
+        ClosetDetailCategory,
+        String,
+        String,
+        Bool
+    ) -> Bool
 
     @State private var selectedSizeID: UUID?
     @State private var selectedCategory: ClothingCategory
     @State private var selectedDetailCategory: ClosetDetailCategory
     @State private var selectedCategoryCode: String
     @State private var selectedDetailCategoryCode: String
+    @State private var didExplicitlyChangeClassification = false
     @State private var isShowingDeleteAlert = false
     @State private var isShowingSaveError = false
 
@@ -594,7 +691,14 @@ private struct ImportedClosetItemEditView: View {
         item: UserFit,
         hasComparisonHistory: Bool,
         onDelete: @escaping () -> Bool,
-        onSave: @escaping (ProductSize, ClothingCategory, ClosetDetailCategory) -> Bool
+        onSave: @escaping (
+            ProductSize,
+            ClothingCategory,
+            ClosetDetailCategory,
+            String,
+            String,
+            Bool
+        ) -> Bool
     ) {
         self.item = item
         self.hasComparisonHistory = hasComparisonHistory
@@ -669,6 +773,7 @@ private struct ImportedClosetItemEditView: View {
                         set: { option in
                             selectedCategoryCode = option.code
                             selectedCategory = ClothingCategory.fromTaxonomyCode(option.code)
+                            didExplicitlyChangeClassification = true
                         }
                     )
                 ) { _ in
@@ -684,6 +789,7 @@ private struct ImportedClosetItemEditView: View {
                         set: { option in
                             selectedDetailCategoryCode = option.code
                             selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
+                            didExplicitlyChangeClassification = true
                         }
                     )
                 )
@@ -806,9 +912,14 @@ private struct ImportedClosetItemEditView: View {
 
             Button {
                 guard let selectedSize else { return }
-                item.categoryCode = selectedCategoryCode
-                item.detailCategoryCode = selectedDetailCategoryCode
-                if onSave(selectedSize, selectedCategory, selectedDetailCategory) {
+                if onSave(
+                    selectedSize,
+                    selectedCategory,
+                    selectedDetailCategory,
+                    selectedCategoryCode,
+                    selectedDetailCategoryCode,
+                    didExplicitlyChangeClassification
+                ) {
                     dismiss()
                 } else {
                     isShowingSaveError = true
@@ -913,6 +1024,9 @@ private struct PendingClosetEdit {
     let selectedSize: ProductSize?
     let category: ClothingCategory
     let detailCategory: ClosetDetailCategory
+    let categoryCode: String?
+    let detailCode: String?
+    let didExplicitlyChangeClassification: Bool
 }
 
 private struct MeasurementValueTile: View {

@@ -131,7 +131,10 @@ final class Product {
         self.categoryDepth4Name = metadata.categoryDepth4Name
         self.sizeType = metadata.sizeType
         self.genderCodes = metadata.genderCodes.joined(separator: ",")
-        self.labelNames = metadata.labelNames.joined(separator: ",")
+        self.labelNames = FitMatchStoredRetailerFacts.encode(
+            labelNames: metadata.labelNames,
+            structuredFacts: metadata.structuredFacts
+        )
         self.imageURLStrings = metadata.imageURLStrings.joined(separator: "\n")
         self.normalPrice = metadata.normalPrice
         self.salePrice = metadata.salePrice
@@ -198,6 +201,9 @@ final class Product {
             in: .whitespacesAndNewlines
         ), !incomingSourceURL.isEmpty {
             sourceURLString = incomingSourceURL
+        }
+        if FitMatchStoredRetailerFacts.decode(incoming.labelNames).hasVersionedPayload {
+            labelNames = incoming.labelNames
         }
         updatedAt = Date()
     }

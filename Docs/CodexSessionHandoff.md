@@ -1,5 +1,280 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-08-26 Classification Authority Phase 1B-2 — Candidate Data + 1,608 Shadow PASS
+
+> 이 절이 아래 Phase 1B-1/1B-1V의 “다음 Phase” 상태를 대체한다. Phase 1B-2 repository/local artifact는 GO지만 Production activation은 NO-GO다.
+
+### 결론과 산출물
+
+- Branch/HEAD는 `connectDB` / `c251b2a824b9a99e2f99b809f2cb23cb1721c9ab`이며 commit/push는 하지 않았다.
+- Migration `supabase/migrations/116_classification_candidate_release.sql`, validation `supabase/sql/116_classification_candidate_release_validation.sql`, local fixture `supabase/sql/116_classification_candidate_release_local_fixture.sql`을 추가했다.
+- Exact machine input은 `supabase/sql/fixtures/116_classification_candidate_manifest.jsonl` 4,644 rows, SHA-256 `f542025c3cd84a4b785903e746b276f4f07ad1b9152d2c4c0301e4983d6d66ea`다.
+- Shadow는 `Docs/FitMatchClassificationPhase1B2Shadow-20260826.jsonl` 1,608 rows, SHA-256 `b1b49b767efe2ca6be1441703fa38bb9235135d1235a9b1f94f8d86ddbb10385`다.
+- 전체 보고서는 `Docs/FitMatchClassificationPhase1B2Candidate-20260826.md`다.
+
+### Candidate contract
+
+- Local candidate release ID/key는 `9f9c8155-61d9-41ce-9dd1-bf695ecc2140` / `fitmatch-classification-authority-candidate-2026-08-26-v1`, parent는 Production active `65d72393-4a40-4e99-b701-fdc1ff865774`다.
+- Active mapping 3,492 exact successor는 CATEGORY_DIRECT 34 / PRODUCT_REQUIRED 989 / INVALID_MAPPING 369 / OTHER_EXISTING 2,100이다. Identity loss/overlap 0, direct tuple invalid 0이다.
+- Decision manifest 114는 verified 113 + revoked ZARA 1이다. Production/non-transactional decision write는 0이다. Gold E482514/E454311/E456567은 3/3 exact, collision 0이다.
+- Review issue 1,037은 existing `data_quality_issues` contract로 적재한다. 일괄 product decision/history downgrade는 하지 않았다. Shadow에서 1,009 review, verified direct mapping 근거가 있는 28 confirmed이며 review issue는 유지한다.
+- BOTH_UNTRUSTED original 310 중 owner Gold E482514 1만 exact verified로 해소되고, 나머지 309는 review_required다. Untrusted authority path unsafe confirm은 0이다.
+- Phase 1A.5의 E450536/E486066 `knit_top`은 candidate validation 값이었으나 current taxonomy에서 inactive/missing detail이라 115 validator가 차단했다. Verified tuple은 validator-valid `knit_sweater/knit_sweater/knit_sweater/long_sleeve`로 고정했고 independent expected는 수정하지 않았다.
+
+### Runtime gate와 local validation
+
+- Runtime versions는 classifier `db-auto-classifier-2026-08-18-v2`, comparison `v1`, compatibility `db-comparison-2026-08-18-v2`, measurement `2026.07.1`로 분리 고정한다.
+- Policy row/checksum, `runtime_policy_contract_validated`, mapping/decision/review parity, shadow/Gold/fail-closed evidence를 114 gate에 additive로 확장했다. 기존 114 blocker는 제거하지 않았다.
+- Homebrew PostgreSQL 17.11, cluster `/tmp/FitMatchPostgres17-20260826-01`, port 55432에서 production-shaped non-user fixture→113→114→115→116 actual apply PASS(4.06s)다.
+- Validation transaction은 manifest/SQL parity, field/row/checksum/flag negative gates, negative trigger, exact decision upsert, positive gate/activation, recorder append/supersede를 실행하고 ROLLBACK했다.
+- 116 reapply는 insert 0/0/0, 0.33s PASS다. Reapply 후 validation output은 1차와 byte-identical이다.
+- Post-rollback local state는 products 1,608, decisions 5,056, history 0, parent active, candidate validated, candidate decision exact matches 0이다. Trigger/FK/service grant PASS, anon gate execute false다.
+- 검증 후 local server를 중지하고 cluster와 temporary support symlink를 삭제했다. `brew services start`, port 5432, 추가 설치, user/auth/closet/comparison-history copy는 0이다.
+
+### Shadow 결과와 다음 gate
+
+- Status는 confirmed 177 / review_required 1,431 / not_comparable 0 / unclassified 0이다. Method는 verified decision 113 / verified category mapping 64 / unknown 1,431이다.
+- Current transition은 confirmed→confirmed 172, confirmed→review 934, notComparable→review 169, review→confirmed 5, review→review 328이다.
+- Confirmed invalid tuple, product-required-alone confirm, invalid-mapping-alone confirm, BOTH_UNTRUSTED unsafe confirm, unknown arbitrary fallback, generic underwear leak, tshirt/base-layer leak은 모두 0이다.
+- Independent expected 207은 수정 0. Current overlap 137의 literal exact/mismatch/review는 16/121/27이다. 기존 31 failure corpus는 overlap 28 + current-missing 3이며 전부 Phase 2 대상이다. DB target 5는 confirmed verified지만 legacy/canonical vocabulary 때문에 literal exact 2, mismatch 3을 그대로 기록했다.
+- Production postflight는 products 1,608, decisions 5,056, history/current 1,860/1,608, active mapping 3,492, candidate release 0, latest ledger `20260821090138`다. Production write/apply/temp/RPC mutation/activation/history change 0, Swift production diff 0이다.
+- 다음 정확한 단계는 `Phase 1B-3 — Controlled Activation Transaction + Rollback Successor Dry Run (Local/Staging Only, Production Apply 0)`이다. Exact 114-row preimage, v2 gate rollback successor, v4/v2/evaluator call-site switch를 한 transaction의 cutover/rollback으로 검증한다. Production apply/activation, history backfill, Phase 2 Swift는 자동 시작하지 않는다.
+
+## 2026-08-26 Migration 115 Final Correction — Local Runtime PASS
+
+> 이 절이 아래 Phase 1B-1V 절의 policy-version contract를 대체하는 최신 권위 상태다.
+
+### 결론
+
+- **Phase 1B-2 candidate-data 작업은 GO, production migration/activation은 NO-GO**다. Phase 1B-2를 자동 시작하지 않았다.
+- 지정된 두 결함만 수정했다. Resolver v4의 raw `p_payload.classifier_policy_version` override는 완전히 제거됐고 classifier version은 selected release contract만 사용한다.
+- Evaluator v4는 `comparison_policy_version`, `compatibility_rule_version`, `measurement_policy_version`을 분리한다. 이전 단일 `compatibility_policy_version` shadow key/lookup은 제거했다.
+- Production SELECT-only vocabulary는 classifier `db-auto-classifier-2026-08-18-v2`, comparison policy `v1`, current compatibility rule `db-comparison-2026-08-18-v2`, measurement `2026.07.1`로 서로 다름을 재확인했다.
+- 보고서: `Docs/FitMatchClassificationPhase1B1Validation-20260825.md`.
+- Final SHA256: migration 115 `1d09dcde02a2d1728322b2bcb5b1eb567f4918ecbd9936f386a817f5d0a1e799`; validation `06a54982540da4b6ffa8f3ea05ffe1e662072bb3e8cf40e90b06c3ace230d0e4`; fixture `2830bea1fe32018b04b55a53a647707ac6677a3e9a82f461e5b62bd114d66980`.
+
+### Contract와 fixture
+
+- Runtime policy contract는 classifier/comparison-policy/compatibility-rule/measurement 네 field다.
+- Missing contract/row reason은 `runtime_policy_contract_missing`, `comparison_policy_version_missing`, `compatibility_rule_version_missing`, `measurement_policy_version_missing`으로 구분한다.
+- Fixture vocabulary는 classifier `classifier-v1`, comparison `comparison-policy-v1`, rule `compatibility-rule-v1`/wrong `compatibility-rule-wrong`, measurement `measure-v1`/wrong `measure-v2`다.
+- Payload spoof assertion: selected release `classifier-v2`에 raw payload `classifier-v1`을 넣어도 result는 review, returned version은 `classifier-v2`, source는 release contract였다. Spoof-confirmed 0이다.
+- Good comparison/rule version pair, missing comparison, missing rule, missing measurement, wrong-row non-use, multiple measurement-version non-mixing을 모두 runtime assertion으로 고정했다.
+
+### Local actual validation
+
+- PostgreSQL `17.11 (Homebrew)` formula binaries만 사용했다. Cluster `/tmp/FitMatchPostgres17-20260826-072435`, port `55432`, Unix socket only였다. `brew services start`, port 5432, cloud preview branch, 추가 설치는 사용하지 않았다.
+- Fixture `0.11s`, 113 `0.04s`, 114 `0.03s`, corrected 115 initial apply `0.04s` PASS.
+- Validation은 두 번 explicit `ROLLBACK` PASS(`0.10s`, `0.09s`), current exact-file 115 reapply `0.04s` PASS다.
+- 114 gate/trigger/view/grants 및 115 four functions/CHECK/FK/recorder/evaluator 실제 compile/runtime PASS다.
+- Post-rollback counts는 `1/1/1/1/1/0/0/0`, old internal/public eight-function hash는 pre/post `dc9e989eb233b066d6c7a973b57e9010`으로 동일했다.
+- service_role foundation grants 4/4, anon/authenticated grants 0/8, evaluator 16-arg overload 1, duplicate object 0, waiting lock 0이다.
+- 검증 후 local server를 stop하고 cluster root와 temporary formula support symlink를 삭제했다.
+
+### Production unchanged와 다음 gate
+
+- Final production SELECT-only counts: products 1,608, decisions 5,056, history/current 1,860/1,608, measurements 28,418, active release 1. Latest ledger는 `20260821090138`다.
+- Production 114/115 columns/functions는 계속 absent이고 existing eight-function combined hash는 `0551eee819d6ae2db5ccd40c0f66a275`다. Production DDL/DML/RPC write/apply/temp object 0이다.
+- Production activation 전에 gate가 네 runtime policy field 존재, 각 required row/checksum, `runtime_policy_contract_validated=true` 또는 동등 evidence를 검증해야 한다. Migration 114는 이번에 수정하지 않았다.
+- Candidate 작업에서도 BOTH_UNTRUSTED 310, manual review 1,037, invalid replacement 미확정, live network 71을 자동 confirmed로 올리지 않는다.
+- 다음 작업은 사용자 별도 명령이 있을 때만 Phase 1B-2 candidate release/data migration 작성 및 local-only validation이다. Production apply/activation, history backfill, public RPC/iOS 전환은 자동 시작하지 않는다.
+
+## 2026-08-26 Classification Authority Phase 1B-1V — Final Contract + Local Runtime PASS
+
+### 결론
+
+- **Phase 1B-2 candidate-data 작업은 GO, production migration/activation은 아직 NO-GO**다. Phase 1B-2를 자동 시작하지 않았다.
+- PostgreSQL 17.11 Homebrew formula 전용 binary로 `/tmp/FitMatchPostgres17-20260826-035209`, port `55432` disposable cluster를 사용했다. `brew services start`, port 5432, existing libpq 18 client는 사용하지 않았다.
+- Production DB는 SELECT/introspection only다. 종료 postflight는 products 1,608, decisions 5,056, history/current 1,860/1,608, measurements 28,418, active release 1이며 114/115 objects는 계속 absent다. Production write/apply/release/history 변경 0이다.
+- 보고서: `Docs/FitMatchClassificationPhase1B1Validation-20260825.md`.
+- Final SHA256: migration 115 `b4464bca6549c76f794a8d7eee522f68ada012fdf47070fefd53e30bed8f5bbd`; validation `2627dde9fdf29e38a6be838f4727ce7870654df14e9b07b31ea5ae2fb64b260d`; local fixture `7b82e5dfcb7492cb28c0e003247354dd0bd9d3704a3f5885690d5b3ec393068b`.
+
+### Contract correction
+
+- Resolver v4 classifier version은 trusted payload override -> selected release `validation_report.runtime_policy_contract.classifier_policy_version` 순서다. `release.policy_version` fallback을 제거했다. Missing version은 name/path/exclusion을 사용하지 않고 evidence에 남긴다.
+- Evaluator v4 최종 signature는 기존 15 arguments 뒤 `p_release_id uuid default null`을 추가한 16 arguments다. Compatibility/measurement versions는 selected release contract에 exact pin된다.
+- Hard-coded compatibility version과 multi-version measurement aggregation을 제거했다.
+- `allowed`, `fallback_allowed`, `length_match_required`, mismatch exclusions, minimum/required/required-any/weights, directional, policy version을 모두 사용한다. Tshirt/base-layer explicit block과 dresses/underwear/homewear fail-close는 유지한다.
+- Verified direct/profile과 conflicting legacy decision은 계속 review다.
+
+### Local actual validation
+
+- Synthetic production-shaped fixture: `supabase/sql/115_authoritative_classification_foundation_local_fixture.sql`. Production/user/auth/closet/comparison-history data copy 0이다.
+- 113 apply/compile PASS (`0.04s`), 114 PASS (`0.03s`), 115 PASS (`0.04s`).
+- 114 signature issue/triage/view, release gate trigger deny/allow, grants runtime PASS.
+- 115 tuple/resolver/recorder/evaluator, CHECK/FK RESTRICT, service-only grants runtime PASS.
+- Validation은 두 차례 `BEGIN ... ROLLBACK` PASS (`0.09s`), post-rollback counts/hash 불변.
+- Final 115 reapply PASS (`0.05s`), duplicate columns/constraints/functions/triggers 0. Evaluator v4 16-arg overload 1, old 15-arg overload 0.
+- Waiting locks 0. Synthetic one-row EXPLAIN만으로 garment FK child index 필요성이 입증되지 않아 index 추가 0이다.
+- Cluster와 temporary Homebrew share/lib support symlink는 검증 종료 후 제거했다.
+
+### 다음 작업 제한
+
+- 다음 명령은 Phase 1B-2 candidate release/data migration을 작성하고 동일 local 방식으로 검증하는 것이다.
+- Candidate release에 classifier/compatibility/measurement 세 runtime policy version을 명시한다.
+- Active release mutation/activation, production apply, history backfill, Swift production 변경은 별도 승인 전 금지다.
+- BOTH_UNTRUSTED 310, manual review 1,037, invalid replacement 미확정, live network 71은 자동 확정하지 않는다.
+- Foundation의 exact activation map을 그대로 사용하며 v5/parallel resolver/evaluator를 만들지 않는다.
+
+## 2026-08-25 Classification Authority Phase 1B-1 — DB Foundation & Shadow Contract
+
+### 결론과 산출물
+
+- **Repository-level Phase 1B-1 foundation은 구현 완료, Phase 1B-2 실행 gate는 현재 NO-GO**다. 안전한 local/staging DB에서 113 -> 114 -> 115 actual apply와 validation SQL을 실행하지 못한 것이 단일 foundation 검증 blocker다.
+- Migration: `supabase/migrations/115_authoritative_classification_foundation.sql`; SHA256 `d782e98d03320e99feb9ccfa6ac4125a988ea012093be3d2a5d4f9cafec8d072`.
+- Validation: `supabase/sql/115_authoritative_classification_foundation_validation.sql`; SHA256 `25da75261eb51592b1f76adff11403e30ee02bb6c5a85d7cd1e4f6133c8da19a`.
+- 보고서: `Docs/FitMatchClassificationPhase1B1Foundation-20260825.md`.
+- 시작/종료 branch/HEAD는 `connectDB` / `c251b2a824b9a99e2f99b809f2cb23cb1721c9ab`다.
+- Production DB에는 SELECT/introspection만 사용했다. DB write 0, migration apply 0, active release/history change 0, Swift production 수정 0이다. Phase 1B-2를 시작하지 않았다.
+
+### Migration 114와 production 상태
+
+- Repository의 `114_release_gate_and_quality_review_queue.sql`을 수정하거나 115에서 중복 정의하지 않았다.
+- Production ledger latest는 `20260821090138`이며 local 113/114/115는 미적용이다. 114 gate functions/view/columns도 production에 없다. 기존 single-active index만 pre-114 object로 존재한다.
+- Repository numeric migration과 production timestamp ledger version은 동일하지 않다. Numeric 113–115는 latest timestamp보다 정렬상 과거이므로 일반 `db push`가 자동으로 순서 적용한다고 가정하지 말고 preview에서 controlled apply와 ledger reconciliation을 검증해야 한다.
+- 115는 114 functions/view와 trusted grant boundary를 hard prerequisite로 검사한다. 114 view가 113 columns를 사용하므로 apply 순서는 113 -> 114 -> 115다.
+- Supabase CLI, container runtime, local PostgreSQL server, preview branch가 없고 repository migration이 080부터 시작해 pre-080 production baseline schema도 포함하지 않으므로 실제 fresh apply는 SKIP했다. PostgreSQL static parser에서는 113/114/115/validation top-level SQL과 115/validation PL/pgSQL이 PASS했다. 114 trigger function 보조 parse는 `NEW`/`OLD` record에 대한 parser JSON serializer 한계로 actual DB compile 검증에 남겼다.
+
+### 115 final candidate contract
+
+- `product_classification_decisions`: nullable `garment_type_code`, non-null default `authority_status='legacy'`, authority/verified-completeness checks, safe nullable FK를 추가한다. Existing 5,056 row update는 없다.
+- `product_classification_history`: nullable `garment_type_code`만 추가한다. Existing 1,860 row update/current supersede/append는 없다.
+- 신규 table 0, DROP/TRUNCATE/data DML 0이다.
+- 최종 후보 internal functions:
+  - `runtime_validate_classification_tuple_v1`
+  - `runtime_resolve_product_classification_v4`
+  - `runtime_record_product_classification_v2`
+  - `runtime_evaluate_comparison_profiles_v4`
+- 모두 PUBLIC/anon/authenticated execute를 revoke하고 service_role만 허용한다. Public preview RPC는 만들지 않았고, existing v2/v3/public RPC caller는 전환하지 않았다.
+- Resolver는 verified exact -> verified direct -> independently verified profile -> conflict-free legacy -> verified exclusion -> review 순서다. Current mapping은 새 authority contract가 없으므로 자동 trusted로 승격되지 않는다.
+- Evaluator는 tuple/garment/group/measurement policy를 검증하고 tshirt/base-layer를 차단한다. Dresses/underwear/homewear는 policy-ready 전 fail-close다.
+
+### Homewear owner 결정 반영
+
+- 이전 Phase 1A.5의 homewear owner 질문은 이번 사용자 결정으로 해소됐다.
+- Option A: display/canonical major `homewear` 유지, future `homewear_top`/`homewear_bottom`/`homewear_set`, Phase 1B auto=false다.
+- Tops/bottoms 강제 이동, generic homewear family 자동 비교, 이번 migration taxonomy/policy seed는 모두 하지 않았다.
+- Current `garment_types`/`comparison_groups` major CHECK는 dresses/underwear/homewear를 허용하지 않는다. Future seed 전 non-destructive constraint 확장 정책을 별도 승인해야 하며, 승인 전에는 v4가 fail-close한다.
+
+### 검증
+
+- Production validators v1/v2/v3는 SELECT-only PASS, 5,026/5,026 parity mismatch 0이다.
+- Local `CategoryValidation5026AuditTests`: 1/1 PASS, input/unique/output 5,026, invalid 0.
+- Local `CategoryLive300ShadowAuditTests`: 1/1 PASS, confirmed/review/unclassified 243/29/28, silent conflict 0, strict leak 0.
+- 5,026/Live300은 regression/self-consistency 증거이며 Phase 1A.5 semantic error가 해소됐다는 뜻이 아니다.
+- Validation SQL은 columns/count/hash, old/new role grant matrix, 114 security, tuple cases, resolver authority cases, recorder rollback, comparison fail-close를 전부 assertion하지만 safe DB가 없어 실제 실행은 SKIP했다.
+- 115 idempotency guard static check는 PASS했다: 3 columns `IF NOT EXISTS`, named constraint guards, 4 `CREATE OR REPLACE FUNCTION`, repeat-safe grants/comments. Actual reapply는 staging에서 아직 SKIP이다.
+- PostgreSQL best-practices audit에서 nullable garment FK supporting index를 검토했지만 exact columns/functions scope를 넘어 추가하지 않았다. Existing 5,056 garment 값은 모두 NULL이며, staging advisor/EXPLAIN 후 별도 additive index 승인 여부를 결정한다.
+
+### Activation과 다음 작업
+
+- Phase 1B-2는 active 3,492 mapping clone에 direct 34/product-required 989/invalid 369 authority metadata를 연결하고, targeted decision 114에 garment/verified|revoked authority를 채우는 candidate-only 작업이다. BOTH_UNTRUSTED 310과 manual review 1,037은 자동 확정하지 않는다.
+- Activation에서는 `runtime_resolve_and_promote_product`와 public resolve/runtime을 v4+recorder v2로, product compatibility/candidate/begin comparison을 evaluator v4로 연결한다. v5/parallel algorithm은 계획하지 않는다.
+- Phase 2 Swift는 `FitMatchSupabaseProductResolver`, closet/comparison sync, shopping/compare recommendation call sites가 additive garment/authority/release/tuple/policy fields와 server measurement gate를 소비한다. Local classifier/matcher는 server-confirmed authority가 아니라 offline/UI/manual 보조로 내린다.
+- 이번 네 object는 Phase 1B-1 production caller가 의도적으로 0이지만 activation consumer가 전부 지정되어 dead code가 아니다.
+- 다음 명령은 pre-080 production baseline schema가 있는 disposable clone/staging에서 113 -> 114 -> 115 apply와 `115_authoritative_classification_foundation_validation.sql` rollback fixture를 실행하는 검증이어야 한다. PASS 전 Phase 1B-2, production push, activation, history backfill은 금지다.
+
+## 2026-08-25 Classification Authority Phase 1A.5 — Root Cause Adjudication
+
+### 결론과 산출물
+
+- **Phase 1B gate는 NO-GO**다. Phase 1B를 시작하지 않았다.
+- 보고서: `Docs/FitMatchClassificationPhase1A5Adjudication-20260825.md`.
+- machine manifest: `Docs/FitMatchClassificationPhase1A5Adjudication-20260825.jsonl`; 5,700 JSONL rows; SHA256 `029ca5a036ad4884d7735672ad7a9b8ff23a91a0cd5fcd4613430a4a9a3ccecc`.
+- 기준은 `connectDB` / `c251b2a824b9a99e2f99b809f2cb23cb1721c9ab`, Supabase `hnkplvyegonlhumlejst`다.
+- Production DB에는 SELECT만 사용했다. DB write 0, migration apply 0, Swift production 수정 0이다.
+
+### 전수 root cause
+
+- invalid confirmed 952 = category/detail mismatch 167 + required length axis 109 + legacy taxonomy shape 640 + actual product misclassification 4 + conflict를 tuple invalidity에 합친 행 32. Structural tuple error는 920이다.
+- stale 1,472 = old mapping release only 201 + old decision only 35 + fingerprint changed 94 + current mapping changed 761 + metadata-only combined stale 381. Stale 원인 기준 metadata-only는 617, re-resolve는 855다.
+- conflict 573 = product decision correct 105 + source mapping correct 1 + product-required mixed 72 + source mapping wrong 85 + both untrusted 310.
+- risky mapping 1,358 = product-required 989 + structurally invalid 369. Phase 1A invalid semantic 238 외에 current `app_categories` detail/major mismatch 173을 찾았고 overlap 42라 union이 369다.
+- 전체 active confirmed mapping 1,392는 category direct 34 / product-required 989 / invalid 369다.
+- mixed 59/285 = safe with existing evidence 3/21 + product-required 46/202 + already rejected/excluded 10/62.
+
+### Verified product truth와 review
+
+- independently verified actual current product error는 8: Gold E482514/E454311/E456567, musinsa 6800912, UNIQLO E450536/E465193/E486066/E486103.
+- Phase 1A manual-review preview 1,147 중 conflict verified 105와 DB mismatch 5를 해소해 remaining manual-review product는 1,037이다.
+- 207 adjudicated expected는 모두 independent manual evidence다. Current DB overlap 137, exact 132, DB change target 5다.
+- 기존 31 products / 64 assertions는 local Swift logic regression이며 전부 iOS Phase 2 대상이다. Test expectation correction 0이다.
+
+### Current UNIQLO 880 / live 71
+
+- `CurrentUniqloCatalogAuditTests`를 실제 실행했다: 880/880 fixture·local·DB coverage, raw 5,193, parsed 5,181, A-test 2,246/2,246 PASS, test 1/1 PASS(135.907s).
+- Local operational proxy는 confirmed 439 / review 0 / notComparable 300 / unclassified 141. DB current는 670 / 100 / 110 / 0이다.
+- Local/DB exact 482, mismatch 398; conflict 431; mixed product 102; missing DB measurement policy 196.
+- Gold 3은 fixture에 모두 존재하며 local classification도 모두 충돌한다. 따라서 A-test PASS는 semantic accuracy가 아니라 self-consistency다.
+- Live fixture 71(M 40/U 31)은 DB coverage 33, historical detail match/mismatch 18/15, DB invalid 31, conflict 17이다. Runtime ready 21 / strict 18이며 E488204/E488364/E488738 3건이 silent propagation risk다.
+- 새 network/live parse/measurement/recommendation 71건은 전부 SKIP이며 PASS로 기록하지 않았다.
+
+### Dresses / underwear / homewear
+
+- Base-layer top은 `tops/base_layer_top/base_layer_top`, sleeve required, upper_core min 2다. Bra/panty underwear family와 합치지 않는다.
+- Dresses는 `dresses/dress/dress`, body-length required, Phase 1B auto=false로 fail-close한다.
+- Underwear는 bottom/bra/top subtype group으로 분리하고 Phase 1B auto=false다. Functional base layer는 product-level로 tops에 보낸다.
+- Owner 질문은 homewear의 display/canonical major 1건만 남긴다. 권장 A는 homewear major를 유지하되 non-auto top/bottom/set group을 두는 방식이다. B는 canonical tops/bottoms와 display metadata 분리, C는 전부 review/notComparable이다.
+- Current policy scope는 dresses 48 + underwear 142 + homewear 47 = 237 products; linked closet 0, comparison history 0이다.
+
+### Phase 1B blocker와 exact scope
+
+- Blocker: homewear owner 결정, BOTH_UNTRUSTED conflict 310, manual review 1,037, invalid mapping 369의 미확정 replacement 값.
+- Schema/RPC/mapping/history/release exact object와 rollback/acceptance는 Phase 1A.5 보고서 10–12절에 있다. Baseline 11–15절의 원칙을 유지했다.
+- Targeted product-decision plan은 114 rows(verified/corrected 113 + ZARA supersede-to-review 1)이며 JSONL에 전수 기록했다.
+- Mapping successor는 active 3,492를 clone한다. Active release in-place 수정, legacy decision bulk revoke, invalid confirmed bulk review, history delete는 금지다.
+- History expected append/supersede는 1,601–1,608; 기존 1,860을 보존하고 current는 항상 1,608이다. Closet linked migration 0, comparison history migration 0이다.
+- Swift `CanonicalComparisonProfile.appGarmentFamily`의 `base_layer_top -> underwear`와 adjudicated 31/64는 iOS Phase 2로 defer한다.
+
+## 2026-08-25 Classification Authority Phase 1A — Global Baseline Audit
+
+### 범위와 산출물
+
+- 기준 branch/HEAD는 `connectDB` / `c251b2a824b9a99e2f99b809f2cb23cb1721c9ab`로 exact match했다.
+- Supabase project `hnkplvyegonlhumlejst`를 SELECT-only로 감사했다. migration/seed/RPC/production DB write와 Swift production 변경은 0건이다.
+- 보고서: `Docs/FitMatchClassificationGlobalBaseline-20260825.md`
+- 1,608-product manifest: `Docs/FitMatchClassificationGlobalBaseline-20260825.jsonl`; 1,608 rows, unique source+external ID 1,608, required key 누락 0.
+- Phase 1B는 시작하지 않았다.
+
+### Production baseline
+
+- active release: `65d72393-4a40-4e99-b701-fdc1ff865774` / `fitmatch-active-with-zara-official-tree-2026-08-13-v1__zara-sample30-2026-08-21`.
+- active mappings expected/actual 3,492/3,492. release QA count는 0이고 `qa_full_validation_included=false`.
+- latest production migration ledger는 `20260821090138`. local numeric 114의 `data_quality_review_queue`/release gate는 production에 없다.
+- products 1,608, current history 1,608, decisions 5,056, snapshots 3,842, closet items 6(active 1, linked product 0), comparison history 0.
+- decision/history에 `garment_type_code`, decision에 `authority_status`가 없다.
+
+### 전수 결과
+
+- current status: confirmed 1,106, review_required 333, not_comparable 169.
+- confirmed 1,106 중 strict canonical tuple valid 154, invalid confirmed 952.
+- stale current history 1,472; source mapping/product decision conflict products 573.
+- active mapping: confirmed 1,392, review 608, rejected 1,452, unsupported 40.
+- category-only confirmed 위험 mapping 1,358; mapping/product-decision conflict rows 182.
+- mapping row target duplicate/mixed target은 0이지만 observed product decision tuple mixed bucket은 59개/285 products다. 실제 non-null family 2개 이상은 14 buckets/56 products.
+- decisions는 authority column이 없어 5,056건 모두 implicit legacy. active release 30, retired 5,026, independent evidence 237, strict auto-eligible 8, must-review 5,048.
+- comparison readiness: current runtime ready 622, strict policy ready 504; runtime가 118건 과대 허용.
+- 보수적 preview: confirmed 192, review_required 1,120, not_comparable 296.
+
+### Golden과 회귀
+
+- current Gold 3건은 모두 `underwear/underwear/underwear/unknown/confirmed`로 잘못됐다.
+- preview:
+  - E482514 → `tops/short_sleeve/tshirt/tshirt/short_sleeve/confirmed`, fingerprint `33119909d27567ab432c0b27c6f6aae8`.
+  - E454311 → `tops/base_layer_top/base_layer_top/base_layer_top/short_sleeve/confirmed`, fingerprint `670669aa2beb25167e781f721ed7d9ed`.
+  - E456567 → E454311과 동일, fingerprint `67852370ebdc165b23b66e497ac074fc`.
+- production DB validators v1/v2/v3 PASS, 5,026 parity 100%, profile cases 2,536/mismatch 0. 같은 QA corpus 계보의 self-consistency이므로 semantic correctness 증거로 해석하지 않는다.
+- local run: 5,026 PASS, live300 shadow PASS, adjudicated 207 FAIL(31 products/64 assertions), CurrentUniqlo 880 SKIP.
+- sync/DTO 14/14 PASS. 추가 category/Closet/Compare offline boundary run은 24 total, 13 PASS/11 live-only SKIP/0 FAIL.
+- 5,026 local/DB divergence는 92 products: category 1, detail 86, family 39, length 42, eligibility 0.
+
+### Phase 1B 전에 필요한 결론
+
+- dresses/underwear/homewear를 canonical garment/group row로 추가할지 review/not_comparable로 내릴지 owner taxonomy 결정이 필요하다.
+- 82144는 successor release에서 product-level resolution required로 바꿔야 하며 active release를 직접 수정하거나 gate를 우회하면 안 된다.
+- legacy 5,026 decisions를 일괄 revoke/차단하지 말고 authority_status=legacy로 보존한다.
+- Phase 1B exact DB object, backfill 순서, rollback, acceptance criteria는 baseline 보고서 11–15절에 고정했다.
+
 ## 2026-08-24 Category Engine v2.3 ZIP — 신규 Shadow 데이터만 흡수
 
 ### 쉽게 설명한 결론
@@ -2680,3 +2955,114 @@ git diff -- '*.swift' | grep -E \
   4. 운영자명·지원 이메일·시행일·공개 개인정보/지원 HTTPS URL을 확정하고 `Info.plist`와 App Store Connect에 입력한다.
   5. migration 113/114/ZARA 상의 measurement 확장은 local/staging PostgreSQL에서 verification SQL을 통과시키고 별도 승인 후에만 production 적용한다.
 - production score, weight, ranking, production DB 데이터는 변경하지 않았고 production migration apply, seed, backfill, UPDATE, DELETE, commit, merge, push도 수행하지 않았다.
+
+## 2026-08-26 Classification Review-Required Evidence Audit
+
+- Phase 1B-2 shadow SHA-256 `b1b49b767efe2ca6be1441703fa38bb9235135d1235a9b1f94f8d86ddbb10385`가 지정 baseline과 일치했다. `review_required`는 정확히 1,431건이며 Musinsa 391 / UNIQLO 1,010 / ZARA 30이다.
+- `Docs/FitMatchClassificationReviewEvidenceAudit-20260826.jsonl`에 1 product = 1 row로 1,431행을 생성했다. unique `source+external_product_id` 1,431, primary root cause와 NO_NAME verdict는 각 product당 정확히 하나다. JSONL SHA-256은 `cbcfa931a01c152f6b8205cf26a3d2696af73ad5b3ec0f9585f52831eec81ddb`다.
+- Primary root cause는 authority conflict 718, unused stored typed evidence 160, unverified/incomplete path 153, incomplete legacy decision 112, product-required without authority 99, invalid mapping 86, no mapping 53, name-only candidate 49, revoked exact decision 1이다.
+- 엄격한 `SAFE_NO_NAME_RESOLVABLE`은 0이다. NO_NAME 상호배타 verdict는 structured-present-but-unverified 143, structured-missing 219, name-adds-only 47, manual 1,001, Phase 1A.5 exact evidence가 있지만 complete v4 tuple이 없어 blocked 21이다. Candidate manifest manual flag는 별도로 1,009이며 exact-blocked와 8건 겹친다.
+- 실제 stored typed evidence는 Musinsa `size_type` informative 165, UNIQLO `product_type_kr` informative 47, ZARA family/subfamily/official category 30이다. ZARA 30은 path/codes에 동일 taxonomy가 있어 additive raw-only signal은 Musinsa 165 + UNIQLO 47 = 212다. 이를 직접 소비하려면 backend contract change가 필요하지만 confirmed coverage로 계산하지 않았다.
+- 동일 deterministic tokenizer로 name signature와 structured-evidence signature를 비교했을 때 상품명이 추가 token을 제공한 상품은 246건(Musinsa 86 / UNIQLO 152 / ZARA 8)이다. Verified-complete name/path profile은 모두 0이므로 S4/S5 confirmed credit는 0이며 새 profile을 만들지 않았다.
+- 보수적 DB-data-only 후보는 105건이다: Resolver에서 적용되지 않은 related verified category-direct 84건과 Phase 1A.5 expected-confirmed지만 v4 garment tuple이 incomplete한 21건. 이는 자동 승격 허가가 아니다.
+- Production full-parity SELECT `2026-08-26T01:22:24.475019Z`, final postflight `2026-08-26T01:37:23.496830Z`: Phase 1B-2 product key/fingerprint 1,608/1,608 exact, mismatch 0; products 1,608, decisions 5,056, history/current 1,860/1,608, active release `65d72393-4a40-4e99-b701-fdc1ff865774`, active mappings 3,492, candidate release/review issue 0, latest migration `20260821090138`로 불변이다.
+- 생성 보고서는 `Docs/FitMatchClassificationReviewEvidenceAudit-20260826.md`다. Production write/apply/activation/history change, migration/Swift/Resolver/Evaluator 변경, live retailer API 호출, Phase 1B-3 시작은 모두 0이다. Owner는 name 금지, verified name 보조, structured API 확대 후 name 최후 보조 중 정책을 결정해야 한다.
+
+## 2026-08-26 Classification Authority Conflict Cohort Adjudication
+
+- 지정 baseline checksum 두 개가 exact match했다: Phase 1B-2 shadow `b1b49b767efe2ca6be1441703fa38bb9235135d1235a9b1f94f8d86ddbb10385`, Review Evidence Audit `cbcfa931a01c152f6b8205cf26a3d2696af73ad5b3ec0f9585f52831eec81ddb`. A conflict 718, B DB-only 105, C invalid products 171도 exact다.
+- A/B/C overlap은 A only 621, B only 91, C only 84, A∩B only 12, A∩C only 85, B∩C only 2, triple 0이며 unique union은 895다. Manual flag는 union 719 / conflict 599 / DB-only 37 / invalid 171이다.
+- Conflict 718은 source + mapping identity + decision version + conflict dimensions + Phase1A.5 class로 압축했다. Independent exact-but-incomplete winner를 unverified peer와 섞지 않도록 Phase1A.5 class를 우선 분리해 최종 279 cohorts(UNIQLO 267 / ZARA 12)다. Verdict는 cohort/product 기준 `BOTH_UNTRUSTED 137/394`, `PRODUCT_REQUIRED 67/165`, `NEEDS_PRODUCT_ADJUDICATION 64/147`, `VERIFIED_DECISION_WINS 11/12`다. Verified semantic winner 12 중 conflict에서 immediate safe v4 completion은 E482522 1건뿐이고 잔여 conflict는 717이다.
+- DB-only 105는 safe 86 / owner vocabulary 확인 7 / semantic adjudication 12로 재판정했다. Musinsa related `CATEGORY_DIRECT` 84는 6개 verified base mapping이 모두 `target=UNKNOWN`인데 Resolver v4가 이를 wildcard로 쓰지 않고 product audience와 exact-match하는 것이 공통 root cause다. Code가 빈 45건은 path exact, path 표기가 다른 2건은 leaf code exact라서, observed literal target별 17 candidate mapping clone이 84건을 안전하게 커버한다.
+- Phase1A.5 exact-but-incomplete 21은 `SAFE_TUPLE_COMPLETION_DB_ONLY 2`(UNIQLO E482522/E485454), `VOCABULARY_TRANSLATION_NEEDS_OWNER_CONFIRM 7`, `SEMANTIC_ADJUDICATION_REQUIRED 12`다. Expected 값을 active taxonomy로 자동 번역하지 않았다.
+- Invalid products 171은 64 unique mapping rows(Musinsa 6/50 products, UNIQLO 58/121)다. Verified replacement 0, `SHOULD_BE_PRODUCT_REQUIRED` 10 rows/25 products, `SHOULD_BE_REVOKED_NO_REPLACEMENT` 30/75, `TAXONOMY_VOCABULARY_REPAIR` 24/71이다. Invalid mapping verified-safe Top1/5/10/all coverage는 모두 0이다.
+- Proposal manifest는 concrete logical row 102개다: P0 17, P1 0, P2 33, P3 40, P4 12. Independently verified safe gain은 P0 84, P0+P1 84, P0+P1+P2 86, all verified-safe 86이다. 실제 적용을 가정한 projection만 `confirmed 177→263`, `review_required 1,431→1,345`이며 실제 승격은 0이다.
+- 산출물은 `Docs/FitMatchClassificationConflictCohortAdjudication-20260826.md`, `Docs/FitMatchClassificationConflictCohorts-20260826.jsonl` 279 rows, `Docs/FitMatchClassificationDBOnly105-20260826.jsonl` 105 rows, `Docs/FitMatchClassificationInvalidMappingRows-20260826.jsonl` 64 rows, `Docs/FitMatchClassificationRemediationPlan-20260826.jsonl` 102 rows다.
+- Production final SELECT postflight `2026-08-26T04:30:33.040547Z`: product key/fingerprint 1,608/1,608 exact, mismatch 0; products 1,608, decisions 5,056, history/current 1,860/1,608, active release `65d72393-4a40-4e99-b701-fdc1ff865774`, active mappings 3,492, candidate release/issues 0, latest migration `20260821090138`로 불변이다. Resolver v4와 decision authority/garment columns도 Production에 없다.
+- Structured typed signal 212, Musinsa `size_type` 165, UNIQLO `product_type_kr` 47, name-add 246, clean name-only 47은 safe gain에서 제외했다. Production write/DDL, migration create/apply, release/decision/mapping/profile/history write, Swift/Resolver/Evaluator 변경, live retailer API, Phase 1B-3는 모두 0이며 owner 승인 전 중지한다.
+
+## 2026-08-26 Classification Candidate Revision + Full Shadow Revalidation
+
+- 지정한 6개 baseline SHA-256이 모두 exact match했다. Additive revision manifest는 84 records(meta 1, clone 17, decision 2, product-required 10, revoke 30, untouched invalid-vocabulary parity 24), SHA-256 `997f8fca3726ef38b728e5bc0c2e2dcd4cb72e578a70d3a26d3d3fda6aee3f16`이다.
+- Approved delta는 exact하다: Musinsa observed-target clone 17 rows/84 products, UNIQLO E482522/E485454 exact decisions 2, PRODUCT_REQUIRED 10 rows/25 products, revoke/no-replacement 30 rows/75 products. Baseline mapping identities 3,492/3,492 retained, revision mappings 3,509, unintended identity/base-row mismatch와 clone semantic diff는 0이다.
+- Full resolver v4 shadow는 1,608/1,608 unique, fingerprint mismatch 0이다. 실제 결과는 confirmed 256 / review_required 1,352이며 source별 Musinsa 80/314, UNIQLO 176/1,008, ZARA 0/30이다. Shadow SHA-256은 `bb580926f819e9f144e6fdee8dc4a4dbf869fab81783c07b9a20d892ee522916`이다.
+- 예상 263/1,345가 재현되지 않아 최종 판정은 `NO-GO (PARTIAL)`이다. Clone mapping은 84/84 exact selected됐지만 77만 confirmed됐다. `musinsa:5982920`, `6515855`, `6534177`, `6781113`, `6797265`, `6797266`, `6797271`은 existing incomplete `swift-production-2026-08-16-v3` decision과 새 verified mapping의 `product_decision_source_mapping_conflict`로 fail-closed한다. Exact decisions 2/2는 confirmed여서 approved safe gain은 79/86이다.
+- Transition은 confirmed→confirmed 177, review→confirmed 79, review→review 1,352다. Approved 86 밖 unexpected transition 0, 기존 177의 status/tuple/method/authority/comparison allowed-reason regression 0이다. Gold 3/3, confirmed invalid tuple/product-required mapping-alone/revoked mapping/BOTH_UNTRUSTED/unknown fallback/generic underwear/tshirt-base-layer leak는 모두 0이다. Original conflict 718 중 E482522만 approved exact decision으로 confirmed, 717은 review다.
+- Unapproved parity는 vocabulary 7 review, invalid vocabulary 24 rows/71 products review, name-add 246 review, clean name-only 47 review다. Structured typed 212의 authority는 추가하지 않았다. 이 cohort 중 33은 category clone으로 confirmed됐고 typed signal을 사용하지 않은 것이며, unresolved typed subset은 179다.
+- PostgreSQL 17.11 fresh DB에서 fixture→113→114→115→116→117→validation ROLLBACK→117 reapply→validation ROLLBACK을 exact 실행했다. First/reapply mapping count 3,509, persistent decisions 5,056, history 0, mapping checksum `bb968aa7b7acb23a4d48693b4596aeff09a57dd7fe26b3d04b22658bf05c0dd0`, 두 shadow output은 byte-identical이다. PRODUCT_REQUIRED reasonCodes 재적용 중복 가능성을 발견해 order-preserving dedup으로 고쳤고 clean first/reapply checksum parity를 확인했다.
+- Local release row는 `validated`지만 revision gate는 exact-decision validation transaction 안에서도 blocker `approved_transition_shortfall` 하나로 `eligible=false`다. Production postflight `2026-08-26T05:41:28.451116Z`: products 1,608, decisions 5,056, history/current 1,860/1,608, releases 5, active release `65d72393-4a40-4e99-b701-fdc1ff865774`, mappings 3,492, candidate v1/v2 release/mapping 0, migration 117 absent, latest migration `20260821090138`로 불변이다.
+- Production write/DDL/apply/activation, decision/mapping/profile/history write, Swift/Resolver/Evaluator/Recorder diff, structured/name authority, retailer live API, Phase 1B-3는 모두 0이다. Owner가 7 legacy decisions의 exact disposition 또는 실제 256/1,352 baseline 수용을 새로 승인하기 전까지 중지한다. Structured Typed Evidence 212 read-only validation도 자동 시작하지 않았다.
+
+## 2026-08-26 DB Classification Final Closure
+
+- 117 shadow checksum `bb580926f819e9f144e6fdee8dc4a4dbf869fab81783c07b9a20d892ee522916`과 1,608 product key/fingerprint checksum `c1ed8a45c6548149b1b434c3551a4a674b41e627a642f6ed72db7ea55bee061a`가 exact parity다. 이전 Phase 1B-2/audit/conflict/DB-only/invalid/remediation checksum도 모두 지정값과 일치했다.
+- `118_classification_db_final_closure.sql`은 local validated/inactive release만 만든다. generic structured discriminator table 1개, resolver v4 in-place precedence, legacy incomplete non-authority, exhaustive mapping scope, verified path/exclusion data, taxonomy/comparison/measurement completion을 구현했다. resolver v5/DSL/ML/source-specific resolver branch/name keyword authority는 만들지 않았다.
+- 최종 mappings 3,509는 `CATEGORY_DIRECT 55 / PRODUCT_REQUIRED 1,019 / REVOKED 2,435`로 other/invalid/legacy runtime scope 0이다. Musinsa mixed sleeveless `001011/017016003` 7 rows는 PRODUCT_REQUIRED로 safety downgrade했다. Structured rules 21은 Musinsa canonical 5 rules(현 상품 7 confirmations), UNIQLO accessory exclusion 14 values(47 products), generic set/non-apparel 2다.
+- set validation은 기존 `ParsedClosetClassification.isExplicitCompositeGarmentSet`와 `MusinsaUnsupportedProductPolicy.isTopBottomSet` 의미를 adapter fact `structured_facts.product_structure=set`으로 전달하는 contract다. 알려진 set 7개는 모두 `not_comparable`; set garment-confirmed/comparison-allowed 0이다. Swift behavior는 수정하지 않았다.
+- taxonomy active comparison groups 44/auto 39, explicit unordered comparison matrix 990(allow 40/block 950, generic fallback 0), active measurement policy rows 63이고 active comparable family의 comparison/measurement policy gap은 모두 0이다. base-layer top은 tops이며 tshirt/underwear cross는 explicit block, homewear set은 non-auto/excluded다. MeasurementComparisonEngine score/weight algorithm diff 0이다.
+- full final shadow는 1,608/1,608, fingerprint drift 0, `confirmed 348 / review_required 1,113 / not_comparable 147`; source는 Musinsa `121/266/7`, UNIQLO `227/817/140`, ZARA `0/30/0`이다. confirmed authority는 exact 120/category 156/structured 7/path 65, exclusions는 path 93/structured 54다. comparison possible 179, insufficient measurements 169다. Shadow SHA-256 `fa836a5d45c73da135e4c2b5f064b7291b4babbe20f5571ad66eff31cc77c93e`.
+- 117 transition은 confirmed→confirmed 248, intentional mixed-sleeveless confirmed→review 8, review→confirmed 100, review→not-comparable 147, review→review 1,105다. Existing valid confirmed unintended regression 0, unexpected confirmed gain 0. Gold E482514/E454311/E456567 exact 3/3다.
+- future/synthetic fixtures 29/29 PASS. confirmed invalid/arbitrary fallback/set leak/revoked-invalid leak/PRODUCT_REQUIRED-alone/BOTH_UNTRUSTED/unverified name-path/base-layer-tshirt/generic underwear leak는 전부 0이다. Real name profile은 0이고 verified-name-last-resort contract만 synthetic으로 검증했다.
+- PostgreSQL 17.11 fresh disposable DB에서 fixture→113→114→115→116→117→118→validation ROLLBACK→118 reapply→validation ROLLBACK을 PASS했고 manifest 보완 후 118 reapply/full validation도 동일 결과로 PASS했다. Closure gate eligible true/blockers empty. Manifest 442 rows SHA-256 `f21e61545f194347aec02f620daefc9ea5dd56645fd1b9a77b0bc56f897163be`.
+- Production SELECT-only pre/post는 products 1,608, decisions 5,056, history/current 1,860/1,608, releases 5, active release `65d72393-4a40-4e99-b701-fdc1ff865774`, active mappings 3,492, latest ledger `20260821090138`로 exact 불변이다. Production write/DDL/migration/apply/activation/history write 0, live retailer network 0, Swift/public RPC call-site switch 0이다.
+- Closure 판정은 owner stop condition B를 만족하는 `DB CLASSIFICATION CLOSURE = GO`다. 남은 1,113은 DB 설계 gap이 아니라 independent product truth 부족으로 명시 review다. 산출물은 final migration/validation/manifest/shadow, `FitMatchClassificationDBClosure-20260826.md`, `FitMatchClassificationProductionDeploymentReady-20260826.md`다. 다음은 별도 승인된 controlled Production deployment, iOS server-authority integration, 실제 사용자 검증뿐이며 추가 DB audit Phase는 제안하지 않는다.
+
+## 2026-08-26 Controlled Production Deployment — 118 FK Gate Rollback
+
+- Owner가 승인한 SHA-256 `ac4f20b37b543f25e9557e7bf41f7a4fe96bba4247651991d976816fbdb770fc`의 118을 controlled transaction으로 시도했으나, `comparison_compatibility_rules.to_family_code=unclassified_outerwear`가 Production `fitmatch_taxonomy.comparison_families`에 없다는 FK gate에서 실패했다. 같은 transaction의 ledger insert 전 오류여서 118 전체가 자동 ROLLBACK됐다.
+- Rollback 확인값은 ledger 118 = 0, final candidate = 0, rollback successor = 0, active release 정확히 1(`65d72393-4a40-4e99-b701-fdc1ff865774`), active mappings 3,492, decisions 5,056, history/current 1,860/1,608이다. candidate gate·successor·activation은 Production에서 시작하지 않았다.
+- 원인은 `public.comparison_groups`와 legacy FK registry `fitmatch_taxonomy.comparison_families` 간 active-code parity를 118이 보장하지 않은 migration defect다. source/garment 분기 없이 active comparison group을 legacy family registry에 보완하고 parity를 assert하는 generic data sync를 118에 추가했다. validation에도 같은 conditional parity gate를 추가했다.
+- 수정된 118 SHA-256은 `8934f427523c736f4e506ad65e4540625c36ce64904b6a05eee46091b8b2ddd3`, validation SHA-256은 `4d0a9b28fc3e830552f8789d12150d0a6da95ee00a998841a3218986fd99e376`이다. 승인 checksum과 달라 Production에는 재시도하지 않았다.
+- PostgreSQL 17.11에서 legacy policy-version/comparison-family FK를 재현한 fresh production-shaped copy로 113→118, 118 reapply/idempotency, full 1,608 validation을 통과했다. 결과는 348/1,113/147, Gold 3/3, synthetic 29/29, matrix 990, family registry gap 0, safety leaks 0이다. Local xmin/role만 local 값으로 치환한 atomic activation dry-run도 candidate 단일 active/mappings 3,509/decisions 5,056/history write 0으로 PASS했다.
+- 암호화 preimage cipher는 mode 0600, SHA-256 `844fec409490a04c4a14ea0ccdb22da6c130facf806ff27b8be8bd288522e22b`; decrypt read-back plain SHA-256 `22d34b6889f14dcf4de66eeed649be85e981dfcd6290ca10b3954da169c3314d`가 재확인됐다. history bulk backfill, history DELETE, Swift/iOS 변경, commit/push는 수행하지 않았다.
+- SHA `8934f427523c736f4e506ad65e4540625c36ce64904b6a05eee46091b8b2ddd3`는 owner가 재승인했지만 두 번째 controlled transaction이 `classification_path_profiles_policy_version_fkey`에서 실패했다. `db-classifier-2026-08-26-final`이 Production `fitmatch_taxonomy.policy_versions`에 먼저 등록되지 않은 순서 결함이며, ledger insert 전 오류라 118 전체가 다시 자동 ROLLBACK됐다.
+- 두 번째 rollback 뒤에도 ledger 118/candidate/successor는 0/0/0, 기존 active release 1, active mappings 3,492, decisions 5,056, history/current 1,860/1,608이다. Production candidate gate·successor·activation은 여전히 시작하지 않았다.
+- 118 registry block이 exact classifier checksum `0b7d91f4726c413bb169659cda749de44992070d4ba31bcbf3b6731c5f8712f4`와 comparison checksum을 모두 FK-dependent row보다 먼저 등록하고 기존 row drift를 fail하도록 보강했다. 새 migration SHA-256은 `b1f2e35a584e05a64e31e53886aad04dd6cad6d619f8f8c69d50683dfdf03e30`이다.
+- 모든 relevant Production policy-version/family FK를 재현한 새 PostgreSQL 17.11 copy에서 113→118, 118 reapply/idempotency, full validation 2회, candidate gate, rollback-successor gate, local atomic activation과 post-activation full validation이 PASS했다. 1,608 = 348/1,113/147, Gold 3/3, synthetic 29/29, profile 12/0/15, matrix 990, policy/family registry gap 0, safety leak/history write 0이다.
+- legacy taxonomy supplemental preimage를 평문 파일 없이 `/private/tmp/FitMatchClassificationProductionPreimage-20260826/classification-preimage-legacy-taxonomy-v1.json.enc`에 AES-256-CBC/PBKDF2로 저장했다. mode 0600, plaintext/read-back SHA-256 `64c248aeb55692adb362e5db8735c6c22c796b1bb77bdf07eaeaab92fe1dcd39`, cipher SHA-256 `253a088456b9a34e58bc9a53b55dd38c23fe860dfb1f45e860e08f5a5a00a6f2`다.
+- 다음 Production write는 최신 118 exact SHA `b1f2e35a584e05a64e31e53886aad04dd6cad6d619f8f8c69d50683dfdf03e30`에 대한 owner 재승인 후에만 가능하다.
+- SHA `b1f2e35a584e05a64e31e53886aad04dd6cad6d619f8f8c69d50683dfdf03e30`도 owner가 재승인했지만 세 번째 controlled transaction이 Production `classification_exclusion_profiles_sample_check(sample_count >= 2)`에서 실패했다. Final manifest의 independently verified UNIQLO singleton accessory path 4개가 sample_count 1이기 때문이다. ledger insert 전 오류로 118 전체가 다시 자동 ROLLBACK됐고 Production state는 ledger/candidate/successor 0/0/0, old active 1, mappings 3,492, decisions 5,056, history/current 1,860/1,608로 불변이다.
+- 기존 two-sample 품질 기준을 일반적으로 제거하지 않고, sample_count=1이면서 auto-eligible, non-apparel/accessory, evidence authority verified, complete-profile인 경우에만 허용하도록 check를 좁게 확장했다. Validation은 singleton exact 4와 해당 authority 조건을 별도 gate로 고정한다.
+- Production sample/FK constraints를 모두 재현한 fresh PostgreSQL 17.11 copy에서 113→118, full validation, 118 reapply/idempotency, 두 번째 full validation이 348/1,113/147, Gold 3/3, synthetic 29/29, exclusions 15(singleton 4), safety leak 0으로 PASS했다.
+- 최신 migration SHA-256은 `0eb9bfe801fd26bc33c084f5b9921aaf32aa5dc9b9c44a7ebfa17b7a3ccf5fb6`, validation SHA-256은 `5920e74cdfa6cead8e18557e4d11c76c7d3235bf7f7905a24900955ae0c36b5b`다. 다음 Production write는 이 최신 migration SHA에 대한 owner 재승인 후에만 가능하다.
+
+## 2026-08-26 Controlled Production Deployment — 118 Applied, Candidate Gate NO-GO
+
+- Owner가 재승인한 `118_classification_db_final_closure.sql` SHA-256 `0eb9bfe801fd26bc33c084f5b9921aaf32aa5dc9b9c44a7ebfa17b7a3ccf5fb6`을 exact 확인하고 Production에 controlled transaction으로 적용했다. Ledger `20260826090118 / classification_db_final_closure`가 같은 source/idempotency SHA와 함께 기록됐다.
+- 118 apply 뒤에도 기존 release `65d72393-4a40-4e99-b701-fdc1ff865774`가 유일한 active release이고 active mappings는 3,492다. Final candidate `11800000-0000-4000-8000-000000000118`은 validated/inactive, mappings 3,509 상태다.
+- Mandatory candidate gate 두 개가 모두 `eligible=false`로 실패했다. 유일한 blocker는 `measurement_policy_checksum_mismatch`이며 Production actual은 `6ad654049b08f6d19bd6a59c2a50482f550ee9edf6a0b9faad5d6f74b31a18a2`, candidate expected는 `d2a98b24f29ddfb57c0e2afa3215a7d9920a2a5f110fe50e301267c443ec4713`이다. Row count 63과 classifier/comparison/compatibility/structured/mapping contract는 일치한다.
+- Owner stop rule에 따라 rollback successor 생성, atomic activation, Gold/set/structured/comparison/RPC Production smoke를 시작하지 않았다. 따라서 activation commit 0, half-active 0이며 기존 runtime은 v4 resolver/evaluator로 전환되지 않았다.
+- Final read-only postflight `2026-08-26T12:17:13.873069Z`: active releases 1, active mappings 3,492, decisions 5,056, history/current 1,860/1,608, history write/delete 0, rollback successor 0이다. Swift/iOS 변경, history bulk backfill, Git commit/push는 수행하지 않았다.
+- 최종 판정은 `PRODUCTION CLASSIFICATION AUTHORITY DEPLOYMENT = NO-GO`다. 118 additive migration/ledger는 적용됐지만 runtime은 기존 safe authority 그대로다. Measurement policy checksum 불일치를 우회하거나 자동 rebaseline하지 않고 중단했다.
+
+## 2026-08-26 Measurement Policy Checksum Blocker — Targeted Resolution
+
+- Production `2026.07.1` measurement policies 63행과 candidate 63행을 `(category_code,measurement_key,dimension_code)` logical key로 전수 비교했다. Missing/extra/duplicate 0, runtime-semantic diff 0, metadata/evidence_note diff 0이다. 63행 모두 유일한 차이는 `weight` text scale이며 Production `numeric(6,3)`의 `0.700/1.200/1.000`과 unconstrained-numeric fixture의 `0.7/1.2/1 또는 1.0` 표현 차이다.
+- Raw checksums는 Production `6ad654049b08f6d19bd6a59c2a50482f550ee9edf6a0b9faad5d6f74b31a18a2`, candidate `d2a98b24f29ddfb57c0e2afa3215a7d9920a2a5f110fe50e301267c443ec4713`이지만 `trim_scale(weight)`와 explicit C collation을 적용한 semantic checksum은 양쪽 모두 `42d5aa308b2138e0aa844ae12268125a0f5ef47ce35f9f187e082be7511c13f0`이다. Production policy data가 맞고 candidate raw checksum contract가 fixture typmod에 종속된 것이 root cause다.
+- 신규 `supabase/migrations/119_classification_measurement_policy_checksum_correction.sql`은 적용된 118을 건드리지 않고 `runtime_policy_contract_report_v1(uuid)`의 measurement checksum만 scale/collation canonicalization하도록 동일 signature로 `CREATE OR REPLACE`한다. Measurement row write는 0이며 candidate validation report의 checksum만 canonical value로 교정한다. SHA-256은 `0c873e441eed10e68b01fbaaed24b420e84395140fe8eff495f879e87b417df5`다.
+- Validation SQL SHA-256은 `20ec007f925099e82b82742769a554616fc1b84dcfd72d5c9d921d09df686860`. Exact 63-row diff JSONL은 63/63 unique, SHA-256 `4074f8389d0ba19f3e50bce35115019684f1a9fec2f1f74be6db58f31f9f3756`이다.
+- PostgreSQL 17 production-shaped copies에서 119 apply/reapply, candidate policy/final/release gates, rollback-successor gate, atomic activation, post-activation full validation, atomic rollback을 모두 PASS했다. Full result는 1,608 = confirmed 348 / review 1,113 / not-comparable 147, Gold 3/3, synthetic 29/29, mappings 55/1,019/2,435, structured 21, path/name/exclusion 12/0/15, comparison 990, safety leaks 0, history write/delete 0으로 불변이다.
+- Production final SELECT-only postflight `2026-08-26T12:56:35.010754Z`: ledger 118/119 `1/0`, active release exactly 1 (`65d72393-4a40-4e99-b701-fdc1ff865774`), active mappings 3,492, candidate validated/inactive 3,509 mappings, successor absent, products/decisions 1,608/5,056, history/current 1,860/1,608다. Sole gate blocker도 기존 checksum mismatch 그대로다.
+- 이번 turn Production write/DDL/migration apply/activation/history write/delete 0, Swift/iOS diff 0, Git commit/push 0이다. 다음 action은 owner가 119 exact SHA를 승인한 뒤 기존 controlled deployment를 119 apply부터 재개하는 것뿐이다.
+
+## 2026-08-26 Controlled Production Deployment — 119 + Atomic v4 Activation GO
+
+- Owner-approved 119 SHA-256 `0c873e441eed10e68b01fbaaed24b420e84395140fe8eff495f879e87b417df5`를 exact 확인했다. Immutable 118은 SHA `0eb9bfe801fd26bc33c084f5b9921aaf32aa5dc9b9c44a7ebfa17b7a3ccf5fb6` 그대로이며 수정/재적용하지 않았다.
+- 첫 write 전 encrypted preimage 두 개를 AES-256-CBC/PBKDF2 read-back했다. Main cipher/plain SHA는 `844fec409490a04c4a14ea0ccdb22da6c130facf806ff27b8be8bd288522e22b` / `22d34b6889f14dcf4de66eeed649be85e981dfcd6290ca10b3954da169c3314d`; legacy taxonomy는 `253a088456b9a34e58bc9a53b55dd38c23fe860dfb1f45e860e08f5a5a00a6f2` / `64c248aeb55692adb362e5db8735c6c22c796b1bb77bdf07eaeaab92fe1dcd39`다. Files/key mode는 0600이고 mappings 3,492, decisions 121, functions 19 logical-key recovery scope를 확인했다.
+- 119는 Production ledger `20260826131310 / classification_measurement_policy_checksum_correction`으로 controlled apply됐다. Measurement rows는 63 그대로이고 raw checksum은 `6ad654...` 불변, semantic checksum은 `42d5aa...`로 gate와 일치했다. Policy/final/release gates가 eligible true/blockers empty다.
+- Rollback successor `11800000-0000-4000-8000-00000000b001`은 old active bundle 3,492 mappings를 exact clone했다. Source/successor checksum `28a7700805e95d9e643b0cb860770fde8e12acd86057cace879082ff82a307f2`, status validated/inactive, gate PASS다.
+- SHA `177b57b242d65a7f5817b0cdf060cec6d99acf9b9539cadd2d3401a7173b13a9` atomic activation artifact가 내부 advisory lock/preimage/gate/full-shadow/Gold/set/comparison/security/history smoke를 통과해 COMMIT했다. Final candidate `11800000-0000-4000-8000-000000000118`이 sole active, old parent는 retired, active mappings 3,509다. Targeted decisions 121/121 null-safe exact, total decisions 5,056 불변이다.
+- Production SELECT-only full shadow는 1,608 unique/fingerprint exact, `348 confirmed / 1,113 review_required / 147 not_comparable`; source는 Musinsa `121/266/7`, UNIQLO `227/817/140`, ZARA `0/30/0`이다. Gold 3/3, set 7/7 excluded, structured confirmed/excluded 7/54, UNIQLO typed accessory exclusion 47, invalid/conflict/arbitrary/unverified leaks 0이다. Comparison tshirt↔base-layer BLOCK, sweatshirt↔hoodie ALLOW, homewear cross BLOCK이다.
+- RPC/security smoke PASS: isolated non-customer authenticated claim에서 get-runtime은 active 118/E482514 confirmed exact, find-reference는 history backfill이 없어서 expected `target_classification_required`, list-closet은 0 rows였다. Public/internal resolver/promoter/evaluator call chains가 v4/v4/recorder v2를 사용하며 owner/search_path/grants/anon boundary가 contract와 일치한다. Dummy customer write는 만들지 않았다.
+- Final stability postflight `2026-08-26T13:28:36.784812Z`: active release count 1, active ID final candidate, mappings 3,509, decisions 5,056, history/current 1,860/1,608, successor validated/gated, all candidate gates PASS다. Product intake/closet/comparison rows는 3/6/0으로 smoke 전후 불변이다. History bulk backfill/delete, Swift/iOS change, Git commit/push는 0이고 rollback은 필요하지 않았다.
+- 최종 판정은 `PRODUCTION CLASSIFICATION AUTHORITY DEPLOYMENT = GO`. 남은 것은 별도 iOS Closet/Compare server-authority integration과 app/device validation뿐이다.
+
+## 2026-08-27 iOS Closet/Compare Server-Authority Integration
+
+- Production classification authority v4를 iOS 실제 sourced Closet 등록과 Compare 경로에 연결했다. Parser/adapter raw facts는 `structured_facts`로 전달되고, 앱은 resolve → 필요한 경우 기존 product-observation Edge promoter → runtime 재조회 결과를 최종 authority로 사용한다.
+- Authority provenance를 `server_confirmed / user_explicit / local_hint / server_review_required / server_not_comparable / server_unavailable`로 분리했다. Server confirmed tuple이 local hint를 덮고, review/not-comparable/network·promotion failure는 comparison/reference 불가로 fail-closed한다. 실제 사용자 picker/manual 입력만 override가 되며 sourced stale v3와 remote-only automatic row는 active-v4 lazy resolve 전 authority가 아니다.
+- 기존 set semantics를 재사용해 `structured_facts.product_structure=set`을 전달한다. sourced/manual/legacy explicit set은 canonical comparison authority와 representative/reference 후보가 될 수 없다.
+- Musinsa literal `size_type`, UNIQLO selected hydration product의 verbatim `productTypeKr`, ZARA structured taxonomy facts를 generic payload로 보존·재전달한다. Numeric Musinsa size type을 typed discriminator로 대체하는 경로는 제거했다.
+- Compare는 target/reference active-v4 authority와 local/remote tuple·measurement parity를 확인하고 evaluator v4 candidate/begin permit가 ALLOW한 뒤에만 기존 `MeasurementComparisonEngine` scorer를 실행한다. tshirt↔base-layer 및 homewear cross는 block, sweatshirt↔hoodie는 allow로 검증했다. `MeasurementComparisonEngine.swift` scoring/weight diff는 0이다.
+- Gold E482514/E454311/E456567 3/3, promotion, set, malformed/network failure, stale authority, manual override, Musinsa/UNIQLO/ZARA, comparison sequencing 및 measurement regression focused suite는 147 total / 144 PASS / 3 explicit live-opt-in SKIP / 0 failure다. Full offline `FitMatchTests`는 517 total / 480 PASS / 37 explicit live-opt-in SKIP / 0 failure다. Debug build-for-testing PASS이며 Release unsigned generic iOS build를 별도로 검증했다.
+- 이번 작업의 Production DB migration/schema/data write, classification history bulk write/delete, SwiftData schema migration, Git commit/push는 모두 0이다. 남은 단계는 실제 iPhone에서 Musinsa/UNIQLO/manual/set/network-error Closet 등록과 Compare 사용자 흐름을 검증하는 것뿐이다.

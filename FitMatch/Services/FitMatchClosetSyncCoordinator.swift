@@ -3,14 +3,9 @@ import Foundation
 import SwiftData
 import SwiftUI
 
-protocol FitMatchClosetRemoteServicing: Sendable {
-    func resolve(_ request: FitMatchProductResolutionRequest) async throws
-        -> FitMatchProductResolutionResponse
-    func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
-        -> FitMatchProductRuntimeResponse
+nonisolated protocol FitMatchClosetRemoteServicing: FitMatchServerAuthorityRemoteServicing {
     func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
         -> FitMatchUpsertClosetItemResponse
-    func listClosetItems() async throws -> FitMatchClosetItemsResponse
     func deleteClosetItem(closetItemID: UUID) async throws
         -> FitMatchDeleteClosetItemResponse
 }
@@ -24,12 +19,30 @@ enum FitMatchClosetSyncState: Equatable {
     case pendingRetry
 }
 
+enum FitMatchClosetAuthorityError: LocalizedError {
+    case classificationReviewRequired
+    case notComparable
+    case unavailableClassification
+
+    var errorDescription: String? {
+        switch self {
+        case .classificationReviewRequired:
+            return "서버에서 상품 분류 검토가 필요합니다."
+        case .notComparable:
+            return "이 상품은 비교 대상이 아닙니다."
+        case .unavailableClassification:
+            return "서버 상품 분류를 확인하지 못했습니다."
+        }
+    }
+}
+
 @MainActor
 final class FitMatchClosetSyncCoordinator: ObservableObject {
     @Published private(set) var state: FitMatchClosetSyncState = .idle
     @Published private(set) var lastErrorMessage: String?
 
     private let remote: any FitMatchClosetRemoteServicing
+    private let authorityCoordinator: FitMatchServerAuthorityCoordinator
     private let defaults: UserDefaults
     private var activeUserID: UUID?
     private var isSynchronizing = false
@@ -43,7 +56,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         remote: (any FitMatchClosetRemoteServicing)? = nil,
         defaults: UserDefaults = .standard
     ) {
-        self.remote = remote ?? FitMatchSupabaseDomainClient.shared
+        let remote = remote ?? FitMatchSupabaseDomainClient.shared
+        self.remote = remote
+        authorityCoordinator = FitMatchServerAuthorityCoordinator(remote: remote)
         self.defaults = defaults
     }
 
@@ -118,11 +133,15 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
 
             let localItems = try modelContext.fetch(FetchDescriptor<UserFit>())
             var failedUpsert = false
+            var failedAutomaticAuthorityValidationIDs = Set<UUID>()
             for localItem in localItems {
                 if let remoteItem = remoteItemsByClientID[localItem.id],
                    remoteDate(remoteItem) > localItem.updatedAt.addingTimeInterval(1) {
                     try apply(remoteItem, to: localItem, modelContext: modelContext)
-                    continue
+                    if remoteItem.classificationStatus == "confirmed",
+                       remoteItem.classificationSource == "manual_override" {
+                        continue
+                    }
                 }
 
                 do {
@@ -130,6 +149,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                     _ = try await remote.upsertClosetItem(request)
                 } catch {
                     failedUpsert = true
+                    if localItem.sourceProduct != nil,
+                       localItem.classificationAuthorityProvenance == .serverUnavailable {
+                        failedAutomaticAuthorityValidationIDs.insert(localItem.id)
+                    }
                     #if DEBUG
                     print("[FitMatchClosetSync] upsert failed item=\(localItem.id): \(error.localizedDescription)")
                     #endif
@@ -148,6 +171,13 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             let currentByID = Dictionary(uniqueKeysWithValues: currentLocalItems.map { ($0.id, $0) })
             for remoteItem in authoritative.items {
                 if let localItem = currentByID[remoteItem.clientItemID] {
+                    if failedAutomaticAuthorityValidationIDs.contains(remoteItem.clientItemID),
+                       remoteItem.classificationSource != "manual_override" {
+                        // The list snapshot can still point at stale v3 current
+                        // history. Do not let it undo the fail-closed state set
+                        // by a failed active-v4 resolve in this same pass.
+                        continue
+                    }
                     try apply(remoteItem, to: localItem, modelContext: modelContext)
                 } else {
                     let localItem = try makeLocalItem(from: remoteItem, modelContext: modelContext)
@@ -202,40 +232,73 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     }
 
     private func makeUpsertRequest(for item: UserFit) async throws -> FitMatchUpsertClosetItemRequest {
+        // Older direct-entry rows predate explicit authority provenance. A row
+        // with no linked retailer product can only have come from the manual
+        // Closet form, so migrate that user choice lazily without a bulk write.
+        if item.classificationAuthorityProvenance == nil,
+           item.sourceProduct == nil,
+           item.sourceType == .manual {
+            item.markClassificationAuthority(.userExplicit)
+        }
+
         var productID = remoteItemsByClientID[item.id]?.productID
         var productSizeID = remoteItemsByClientID[item.id]?.productSizeID
-        var databaseClassification: FitMatchDatabaseClassification?
+        let existingRemoteItem = remoteItemsByClientID[item.id]
 
-        if productID == nil, let request = databaseRequest(for: item) {
-            let resolution = try await remote.resolve(request)
-            if resolution.catalogState == "current", let resolvedProductID = resolution.productID {
-                productID = resolvedProductID
-                databaseClassification = resolution.classification
-                if let runtime = try? await remote.fetchProductRuntime(request) {
-                    productSizeID = uniqueRuntimeSizeID(
-                        in: runtime,
-                        matching: item.sizeName,
-                        colorName: item.sourceProduct?.checkedColorName
-                    )
+        if let existingRemoteItem,
+           existingRemoteItem.classificationStatus == "confirmed",
+           existingRemoteItem.classificationSource == "manual_override" {
+            // A persisted user override is already explicit authority. Every
+            // sourced automatic classification (including an old v3 history
+            // row) must still pass through the active v4 runtime below.
+            try applyRemoteAuthority(existingRemoteItem, to: item)
+        } else if let product = item.sourceProduct,
+                  let request = product.fitMatchDatabaseResolutionRequest() {
+            do {
+                let authority = try await authorityCoordinator.resolveProductAuthority(
+                    request: request,
+                    observation: product.fitMatchProductObservationRequest()
+                )
+                try applyServerAuthority(authority, to: item)
+                productID = authority.productID
+                productSizeID = uniqueRuntimeSizeID(
+                    in: authority.runtime,
+                    matching: item.sizeName,
+                    colorName: product.checkedColorName
+                )
+            } catch {
+                if item.classificationAuthorityProvenance != .userExplicit,
+                   !(error is FitMatchClosetAuthorityError) {
+                    item.markClassificationAuthority(.serverUnavailable)
                 }
+                throw error
             }
+        } else if let existingRemoteItem {
+            switch existingRemoteItem.classificationStatus {
+            case "review_required", "unclassified", "not_comparable":
+                try applyRemoteAuthority(existingRemoteItem, to: item)
+            default:
+                // An automatic remote snapshot can point at pre-v4 current
+                // history. Without source facts it cannot prove active-runtime
+                // authority, so keep the item fail-closed until it can be
+                // resolved again. Only a persisted manual_override bypasses
+                // this validation path.
+                item.markClassificationAuthority(
+                    .serverUnavailable,
+                    sourceIdentity: existingRemoteItem.classificationSource
+                )
+                throw FitMatchClosetAuthorityError.unavailableClassification
+            }
+        } else if item.classificationAuthorityProvenance != .userExplicit {
+            item.markClassificationAuthority(.localHint)
+            throw FitMatchClosetAuthorityError.unavailableClassification
         }
 
         var override: FitMatchClosetClassificationOverride?
         if productID != nil,
-           let databaseClassification,
-           databaseClassification.status == "confirmed",
-           classificationDiffers(item, database: databaseClassification) {
+           item.classificationAuthorityProvenance == .userExplicit {
             guard let familyCode = resolvedFamilyCode(for: item) else {
-                productID = nil
-                productSizeID = nil
-                return FitMatchUpsertClosetItemRequest(
-                    clientItemID: item.id,
-                    item: payload(for: item),
-                    productID: nil,
-                    productSizeID: nil,
-                    override: nil
-                )
+                throw FitMatchClosetAuthorityError.unavailableClassification
             }
             override = FitMatchClosetClassificationOverride(
                 categoryCode: item.resolvedCategoryCode ?? item.category.taxonomyCode,
@@ -243,7 +306,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 familyCode: familyCode,
                 lengthCode: resolvedLengthCode(for: item),
                 reason: "user_confirmed_closet_classification",
-                evidence: ["client_item_id": item.id.uuidString]
+                evidence: [
+                    "classification_authority": FitMatchClassificationAuthorityProvenance
+                        .userExplicit.rawValue,
+                    "client_item_id": item.id.uuidString
+                ]
             )
         }
 
@@ -280,6 +347,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             "local_model": "UserFit",
             "local_schema": "1"
         ]
+        if let authority = item.classificationAuthorityProvenance {
+            clientSnapshot["classification_authority"] = authority.rawValue
+        }
         if let productCode = item.sourceProduct?.productCode, !productCode.isEmpty {
             clientSnapshot["external_product_id"] = productCode
         }
@@ -311,31 +381,6 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         )
     }
 
-    private func databaseRequest(for item: UserFit) -> FitMatchProductResolutionRequest? {
-        guard let product = item.sourceProduct,
-              let externalProductID = product.productCode?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !externalProductID.isEmpty else { return nil }
-        let source = resolvedSourceCode(for: item)
-        guard source == "uniqlo" || source == "musinsa" || source == "zara" || source == "cos" else { return nil }
-        let categoryCodes = [
-            product.categoryDepth1Code,
-            product.categoryDepth2Code,
-            product.categoryDepth3Code,
-            product.categoryDepth4Code
-        ].compactMap { $0?.nilIfBlank }
-        return FitMatchProductResolutionRequest(
-            source: source,
-            externalProductID: externalProductID,
-            productName: product.name,
-            sourceCategoryPath: product.sourceCategoryPath?.nilIfBlank,
-            audience: product.genderCodes
-                .split(separator: ",")
-                .map(String.init)
-                .first,
-            sourceCategoryCodes: categoryCodes.isEmpty ? nil : categoryCodes
-        )
-    }
-
     private func uniqueRuntimeSizeID(
         in runtime: FitMatchProductRuntimeResponse,
         matching sizeName: String,
@@ -357,14 +402,109 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         return matches.count == 1 ? matches[0].productSizeID : nil
     }
 
-    private func classificationDiffers(
-        _ item: UserFit,
-        database: FitMatchDatabaseClassification
-    ) -> Bool {
-        item.resolvedCategoryCode != database.categoryCode
-            || item.resolvedDetailCategoryCode != database.detailCode
-            || resolvedFamilyCode(for: item) != database.familyCode
-            || resolvedLengthCode(for: item) != database.lengthCode
+    private func applyRemoteAuthority(
+        _ record: FitMatchClosetItemRecord,
+        to item: UserFit
+    ) throws {
+        switch record.classificationStatus {
+        case "confirmed":
+            if item.classificationAuthorityProvenance == .userExplicit,
+               record.classificationSource != "manual_override" {
+                // Preserve a newer explicit local selection long enough to send
+                // it as an override. A server classification must never turn an
+                // unrelated local inference into an override.
+                return
+            }
+            applyClassification(record, to: item)
+        case "review_required", "unclassified":
+            guard item.classificationAuthorityProvenance != .userExplicit else { return }
+            applyClassification(record, to: item)
+            throw FitMatchClosetAuthorityError.classificationReviewRequired
+        case "not_comparable":
+            applyClassification(record, to: item)
+            throw FitMatchClosetAuthorityError.notComparable
+        default:
+            item.markClassificationAuthority(
+                .serverUnavailable,
+                sourceIdentity: record.classificationSource
+            )
+            throw FitMatchClosetAuthorityError.unavailableClassification
+        }
+    }
+
+    private func applyServerAuthority(
+        _ authority: FitMatchServerProductAuthority,
+        to item: UserFit
+    ) throws {
+        let userExplicit = item.classificationAuthorityProvenance == .userExplicit
+
+        switch authority.status {
+        case .confirmed:
+            if !userExplicit {
+                applyDatabaseClassification(
+                    authority.classification,
+                    provenance: .serverConfirmed,
+                    to: item
+                )
+            }
+        case .reviewRequired:
+            guard userExplicit else {
+                applyDatabaseClassification(
+                    authority.classification,
+                    provenance: .serverReviewRequired,
+                    to: item
+                )
+                throw FitMatchClosetAuthorityError.classificationReviewRequired
+            }
+        case .notComparable:
+            applyDatabaseClassification(
+                authority.classification,
+                provenance: .serverNotComparable,
+                to: item
+            )
+            throw FitMatchClosetAuthorityError.notComparable
+        }
+    }
+
+    private func applyDatabaseClassification(
+        _ classification: FitMatchDatabaseClassification,
+        provenance: FitMatchClassificationAuthorityProvenance,
+        to item: UserFit
+    ) {
+        if let categoryCode = classification.categoryCode {
+            item.category = ClothingCategory.fromTaxonomyCode(categoryCode)
+            item.categoryCode = categoryCode
+        }
+        if let detailCode = classification.detailCode {
+            item.detailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCode)
+            item.detailCategoryCode = detailCode
+            item.normalizedProductTypeCode = detailCode
+        }
+        item.garmentTypeRawValue = classification.familyCode
+        item.sleeveTypeRawValue = classification.lengthCode
+        item.canonicalPolicyVersion = classification.taxonomyPolicyVersion
+            ?? classification.decisionVersion
+        item.markClassificationAuthority(
+            provenance,
+            sourceIdentity: classification.method
+        )
+
+        guard provenance != .userExplicit, let product = item.sourceProduct else { return }
+        if let categoryCode = classification.categoryCode {
+            product.category = ClothingCategory.fromTaxonomyCode(categoryCode)
+            product.categoryCode = categoryCode
+        }
+        if let detailCode = classification.detailCode {
+            product.normalizedProductTypeCode = detailCode
+        }
+        product.garmentTypeRawValue = classification.familyCode
+        product.sleeveTypeRawValue = classification.lengthCode
+        product.canonicalPolicyVersion = classification.taxonomyPolicyVersion
+            ?? classification.decisionVersion
+        product.markClassificationAuthority(
+            provenance,
+            sourceIdentity: classification.method
+        )
     }
 
     private func makeLocalItem(
@@ -401,7 +541,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             createdAt: decodeDate(record.clientCreatedAt ?? record.createdAt) ?? Date(),
             updatedAt: decodeDate(record.clientUpdatedAt ?? record.updatedAt) ?? Date()
         )
-        applyClassification(record, to: item)
+        applyClassification(
+            record,
+            to: item,
+            automaticConfirmedIsActiveRuntimeValidated: false
+        )
         item.replaceMeasurementRecords(with: restoredMeasurementRecords(from: record, item: item))
         item.updatedAt = decodeDate(record.clientUpdatedAt ?? record.updatedAt) ?? item.updatedAt
         return item
@@ -442,14 +586,56 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         item.updatedAt = decodeDate(record.clientUpdatedAt ?? record.updatedAt) ?? item.updatedAt
     }
 
-    private func applyClassification(_ record: FitMatchClosetItemRecord, to item: UserFit) {
+    private func applyClassification(
+        _ record: FitMatchClosetItemRecord,
+        to item: UserFit,
+        automaticConfirmedIsActiveRuntimeValidated: Bool = true
+    ) {
+        item.category = ClothingCategory.fromTaxonomyCode(record.categoryCode)
+        item.detailCategory = ClosetDetailCategory.fromTaxonomyCode(record.detailCode)
         item.categoryCode = record.categoryCode
         item.detailCategoryCode = record.detailCode
+        item.normalizedProductTypeCode = record.detailCode
         item.garmentTypeRawValue = record.familyCode
         item.sleeveTypeRawValue = record.lengthCode
-        item.canonicalEligibility = record.classificationStatus == "confirmed"
-        item.canonicalResolutionMethod = record.classificationSource
         item.canonicalPolicyVersion = record.classificationSnapshot["decision_version"] ?? nil
+        let provenance: FitMatchClassificationAuthorityProvenance
+        switch record.classificationStatus {
+        case "confirmed":
+            if record.classificationSource == "manual_override" {
+                provenance = .userExplicit
+            } else {
+                // A remote-only automatic row can still be backed by stale v3
+                // current history. It becomes server-confirmed only after the
+                // sourced item has passed the active-v4 lazy-resolution path.
+                provenance = automaticConfirmedIsActiveRuntimeValidated
+                    ? .serverConfirmed
+                    : .serverUnavailable
+            }
+        case "review_required", "unclassified":
+            provenance = .serverReviewRequired
+        case "not_comparable":
+            provenance = .serverNotComparable
+        default:
+            provenance = .serverUnavailable
+        }
+        item.markClassificationAuthority(
+            provenance,
+            sourceIdentity: record.classificationSource
+        )
+
+        guard provenance != .userExplicit, let product = item.sourceProduct else { return }
+        let productCategoryCode = record.canonicalCategoryCode ?? record.categoryCode
+        product.category = ClothingCategory.fromTaxonomyCode(productCategoryCode)
+        product.categoryCode = productCategoryCode
+        product.normalizedProductTypeCode = record.canonicalDetailCode ?? record.detailCode
+        product.garmentTypeRawValue = record.familyCode
+        product.sleeveTypeRawValue = record.lengthCode
+        product.canonicalPolicyVersion = record.classificationSnapshot["decision_version"] ?? nil
+        product.markClassificationAuthority(
+            provenance,
+            sourceIdentity: record.classificationSource
+        )
     }
 
     private func restoredProduct(

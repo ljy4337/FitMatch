@@ -240,6 +240,153 @@ struct RecommendationService {
         )
     }
 
+    /// Runs the unchanged measurement scorer only after evaluator v4 has
+    /// authorized this exact target/reference pair. Local profile matching is
+    /// intentionally bypassed here: it may provide UI hints, but it cannot
+    /// overturn or narrow the server comparison decision.
+    func recommendAfterServerAuthorization(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        permit: FitMatchServerComparisonPermit
+    ) -> RecommendationHistory? {
+        authorizedRecommendation(
+            product: product,
+            selectedReferenceItem: selectedReferenceItem,
+            productDetailCategory: productDetailCategory,
+            authorization: permit.referenceAuthorization,
+            compatibility: permit.compatibility,
+            clientHistoryID: permit.clientHistoryID
+        )
+    }
+
+    #if DEBUG
+    /// Debug-only compatibility seam for isolated scorer regressions. Runtime
+    /// call sites must first create a server comparison run and pass a permit.
+    func recommendAfterServerAuthorization(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        authorization: FitMatchServerReferenceAuthorization
+    ) -> RecommendationHistory? {
+        let compatibility = authorization.decision == .automatic
+            ? authorization.candidate?.automaticCompatibility
+            : authorization.candidate?.manualCompatibility
+        guard let compatibility else { return nil }
+        return authorizedRecommendation(
+            product: product,
+            selectedReferenceItem: selectedReferenceItem,
+            productDetailCategory: productDetailCategory,
+            authorization: authorization,
+            compatibility: compatibility,
+            clientHistoryID: nil
+        )
+    }
+    #endif
+
+    private func authorizedRecommendation(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        authorization: FitMatchServerReferenceAuthorization,
+        compatibility: FitMatchDatabaseCompatibility,
+        clientHistoryID: UUID?
+    ) -> RecommendationHistory? {
+        guard authorization.isAllowed,
+              product.classificationAuthorityProvenance == .serverConfirmed,
+              selectedReferenceItem.classificationAuthorityProvenance?
+                .isComparisonAuthority == true else {
+            return nil
+        }
+
+        guard compatibility.allowed else { return nil }
+
+        let excludedKinds = serverExcludedMeasurementKinds(
+            compatibility.excludedMeasurements
+        )
+        let isExtended = compatibility.level == "extended"
+        let scorePenalty: Int
+        if authorization.decision == .manualSelection {
+            scorePenalty = manualComparisonScorePenalty(
+                product: product,
+                selectedReferenceItem: selectedReferenceItem
+            ) + (isExtended ? 10 : 0)
+        } else {
+            scorePenalty = 0
+        }
+
+        guard let history = bestRecommendation(
+            product: product,
+            userFits: [selectedReferenceItem],
+            productDetailCategory: productDetailCategory,
+            basis: RecommendationBasis(
+                userFits: [selectedReferenceItem],
+                methodText: isExtended
+                    ? "서버 승인 확장 비교"
+                    : "서버 승인 직접 비교",
+                scorePenalty: scorePenalty,
+                fallbackReason: isExtended
+                    ? "서버 비교 정책에서 허용한 공통 실측만 사용했습니다."
+                    : "",
+                excludedMeasurementKinds: excludedKinds,
+                excludedMeasurementReasons: exclusionReasons(for: excludedKinds)
+            )
+        ) else { return nil }
+        if let clientHistoryID {
+            history.id = clientHistoryID
+        }
+        return history
+    }
+
+    private func serverExcludedMeasurementKinds(
+        _ values: [String]
+    ) -> [MeasurementKind] {
+        var result: [MeasurementKind] = []
+        for rawValue in values {
+            let normalized = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            let kind: MeasurementKind?
+            switch normalized {
+            case "shoulder", "shoulder_width", "shoulder_width_seam_to_seam":
+                kind = .shoulder
+            case "chest", "chest_width", "chest_width_pit_to_pit",
+                 "chest_width_uniqlo_body_width", "chest_circumference_garment":
+                kind = .chest
+            case "total_length", "body_length", "body_length_back_neck_to_hem",
+                 "body_length_hps_to_hem_front", "pants_outseam_waist_to_hem",
+                 "pants_inseam_crotch_to_hem", "skirt_length_waist_to_hem":
+                kind = .totalLength
+            case "sleeve_length", "sleeve_shoulder_seam_to_cuff",
+                 "sleeve_center_back_to_cuff", "sleeve_raglan_neck_to_cuff":
+                kind = .sleeveLength
+            case "upper_abdomen", "upper_abdomen_width_edge_to_edge":
+                kind = .upperAbdomen
+            case "upper_waist", "upper_waist_width_edge_to_edge":
+                kind = .upperWaist
+            case "waist", "waist_width", "waist_width_edge_to_edge",
+                 "waist_circumference_garment":
+                kind = .waist
+            case "hip", "hip_width", "hip_width_at_widest":
+                kind = .hip
+            case "thigh", "thigh_width", "thigh_width_crotch_to_outer":
+                kind = .thigh
+            case "rise", "front_rise", "rise_crotch_to_waist_front",
+                 "rise_crotch_to_waist_back":
+                kind = .rise
+            case "hem", "hem_width", "hem_width_edge_to_edge":
+                kind = .hem
+            case "foot_length", "foot_length_heel_to_toe":
+                kind = .footLength
+            case "under_bust", "under_bust_width", "under_bust_width_edge_to_edge":
+                kind = .underBust
+            default:
+                kind = nil
+            }
+            if let kind, !result.contains(kind) { result.append(kind) }
+        }
+        return result
+    }
+
     private func exclusionReasons(
         for kinds: [MeasurementKind]
     ) -> [MeasurementKind: MeasurementExclusionReason] {

@@ -645,6 +645,11 @@ struct UniqloProductMetadataParser {
             from: resolved.html,
             productID: resolved.productID
         )
+        let productTypeKr = embeddedProductTypeKr(
+            from: resolved.html,
+            productID: resolved.productID,
+            productIDWithColorCode: resolved.productIDWithColorCode
+        )
         let sourcePath = categoryPath(
             productGroupObject: productGroupObject,
             breadcrumb: breadcrumb,
@@ -707,6 +712,7 @@ struct UniqloProductMetadataParser {
             categoryDepth3Name: sourcePath.depth3,
             categoryDepth4Code: sourcePath.code4,
             categoryDepth4Name: sourcePath.depth4,
+            structuredFacts: productTypeKr.map { ["product_type_kr": $0] } ?? [:],
             genderCodes: genderCodes,
             imageURLStrings: [imageURLString].compactMap { $0 },
             normalPrice: priceInfo.normalPrice,
@@ -974,6 +980,65 @@ struct UniqloProductMetadataParser {
         )
     }
 
+    /// Returns UNIQLO's retailer-owned Korean product type verbatim from the
+    /// selected hydration product. A unique exact variant match wins; when no
+    /// exact variant is present, there must be exactly one matching core
+    /// product. Ambiguous or missing evidence is deliberately omitted.
+    private func embeddedProductTypeKr(
+        from html: String,
+        productID: String,
+        productIDWithColorCode: String
+    ) -> String? {
+        guard let json = firstMatch(
+            in: html,
+            pattern: #"window\.__PRELOADED_STATE__\s*=\s*(\{.*?\})\s*;?\s*</script>"#
+        ),
+        let data = json.data(using: .utf8),
+        let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        let entity = root["entity"] as? [String: Any],
+        let pdpEntity = entity["pdpEntity"] as? [String: Any] else {
+            return nil
+        }
+
+        let normalizedProductID = productID.uppercased()
+        let normalizedVariantID = productIDWithColorCode.uppercased()
+        let candidates: [(key: String, productID: String?, product: [String: Any])] =
+            pdpEntity.compactMap { key, rawEntry in
+                guard let entry = rawEntry as? [String: Any],
+                      let product = entry["product"] as? [String: Any] else {
+                    return nil
+                }
+                let normalizedKey = key.uppercased()
+                let embeddedProductID = stringValue(product["productId"])?.uppercased()
+                let matchesCore = normalizedKey == normalizedProductID
+                    || normalizedKey.hasPrefix(normalizedProductID + "-")
+                    || embeddedProductID == normalizedProductID
+                    || embeddedProductID?.hasPrefix(normalizedProductID + "-") == true
+                guard matchesCore else { return nil }
+                return (normalizedKey, embeddedProductID, product)
+            }
+
+        let exactMatches = candidates.filter { candidate in
+            candidate.key == normalizedVariantID
+                || candidate.key.hasPrefix(normalizedVariantID + "-")
+                || candidate.productID == normalizedVariantID
+        }
+        let selectedProduct: [String: Any]
+        if exactMatches.count == 1 {
+            selectedProduct = exactMatches[0].product
+        } else if exactMatches.isEmpty, candidates.count == 1 {
+            selectedProduct = candidates[0].product
+        } else {
+            return nil
+        }
+
+        guard let rawValue = selectedProduct["productTypeKr"] as? String,
+              !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return rawValue
+    }
+
     private func htmlBreadcrumbItems(from html: String, productName: String) -> [String] {
         let patterns = [
             #"<nav[^>]*(?:breadcrumb|Breadcrumb)[^>]*>(.*?)</nav>"#,
@@ -1060,12 +1125,10 @@ struct UniqloProductMetadataParser {
     }
 
     private func normalizedAudienceCodes(from value: String) -> [String]? {
-        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        if ["UNISEX", "COMMON", "U", "공용", "젠더리스"].contains(normalized) { return ["UNISEX"] }
-        if ["MEN", "MAN", "MALE", "남성"].contains(normalized) { return ["MEN"] }
-        if ["WOMEN", "WOMAN", "FEMALE", "여성"].contains(normalized) { return ["WOMEN"] }
-        if ["KIDS", "BABY"].contains(normalized) { return [normalized] }
-        return nil
+        let canonical = FitMatchCanonicalAudience.code(from: value)
+        return canonical == FitMatchCanonicalAudience.unknown.rawValue
+            ? nil
+            : [canonical]
     }
 
     private func splitCategoryPath(_ path: String?) -> [String] {
@@ -1086,8 +1149,10 @@ struct UniqloProductMetadataParser {
     }
 
     private func audienceCode(from value: String) -> String? {
-        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        return ["MEN", "WOMEN", "KIDS", "BABY"].contains(normalized) ? normalized : nil
+        let canonical = FitMatchCanonicalAudience.code(from: value)
+        return canonical == FitMatchCanonicalAudience.unknown.rawValue
+            ? nil
+            : canonical
     }
 
     private func titleFallback(from html: String) -> String? {

@@ -23,6 +23,9 @@ struct CanonicalComparisonProfileResolver {
 
     func apply(_ profile: CanonicalComparisonProfile?, to product: Product) {
         guard let profile else { return }
+        guard product.classificationAuthorityProvenance?.isComparisonAuthority != true else {
+            return
+        }
         let preservesClassificationConflict = product.canonicalEligibility == false
             && product.canonicalResolutionMethod
                 == ParsedClosetClassificationSafetyAudit.conflictResolutionMethod
@@ -46,6 +49,9 @@ struct CanonicalComparisonProfileResolver {
 
     func apply(_ profile: CanonicalComparisonProfile?, to item: UserFit) {
         guard let profile else { return }
+        guard item.classificationAuthorityProvenance?.isComparisonAuthority != true else {
+            return
+        }
         let preservesClassificationConflict = item.canonicalEligibility == false
             && item.canonicalResolutionMethod
                 == ParsedClosetClassificationSafetyAudit.conflictResolutionMethod

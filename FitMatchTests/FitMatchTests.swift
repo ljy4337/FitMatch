@@ -106,7 +106,10 @@ struct FitMatchTests {
         let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
         let viewModel = ShoppingProductViewModel(
             initialURL: "https://www.musinsa.com/products/first",
-            parserService: service
+            parserService: service,
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: FitMatchEchoServerAuthorityRemote()
+            )
         )
 
         let firstTask = Task { await viewModel.loadProductInfoFromURL() }
@@ -4508,6 +4511,13 @@ struct FitMatchTests {
             #expect(info.productTargetGender == .men)
             #expect(info.category == .top)
             #expect(info.detailCategory == .shortSleeve)
+            #expect(info.productMetadata.structuredFacts["section"] == "MAN")
+            #expect(info.productMetadata.structuredFacts["family"] == "티셔츠")
+            #expect(info.productMetadata.structuredFacts["subfamily"] == "F. Camiseta")
+            #expect(
+                info.fitMatchDatabaseResolutionRequest()?.structuredFacts["family"]
+                    == "티셔츠"
+            )
             #expect(info.measurementAvailability == .actualMeasurements)
             #expect(info.sizes.map(\.name) == ["S (KR 90)"])
             #expect(info.sizes[0].measurements.chest == 48.5)
@@ -5534,6 +5544,106 @@ struct FitMatchTests {
         #expect(canonical.detailCode == "short_sleeve")
         #expect(canonical.garmentFamily == .tshirt)
         #expect(canonical.isValid)
+    }
+
+    @Test func uniqloHydrationProductTypeKrIsForwardedVerbatimAsStructuredFact() throws {
+        let fixtures = [
+            (productID: "E478307", variantID: "E478307-000", value: "캡/모자"),
+            (productID: "E485008", variantID: "E485008-001", value: "선글라스"),
+            (productID: "E482815", variantID: "E482815-000", value: "슈즈/신발")
+        ]
+
+        for fixture in fixtures {
+            let html = """
+            <script>
+            window.__PRELOADED_STATE__ = {
+              "entity": {
+                "pdpEntity": {
+                  "\(fixture.variantID)-00": {
+                    "product": {
+                      "productId": "\(fixture.variantID)",
+                      "productTypeKr": "\(fixture.value)",
+                      "breadcrumbs": {
+                        "gender": {"id":"57893","level":1,"name":"men","locale":"MEN"},
+                        "class": {"id":"57972","level":2,"name":"accessories","locale":"액세서리"},
+                        "category": {"id":"58071","level":3,"name":"headwear","locale":"모자"},
+                        "subcategory": {"id":"58558","level":4,"name":"caps","locale":"캡"}
+                      }
+                    }
+                  }
+                }
+              }
+            };
+            </script>
+            """
+            let resolved = ResolvedUniqloURL(
+                originalURL: try #require(URL(string: "https://www.uniqlo.com/kr/ko/products/\(fixture.variantID)")),
+                resolvedURL: try #require(URL(string: "https://www.uniqlo.com/kr/ko/products/\(fixture.variantID)")),
+                productID: fixture.productID,
+                goodsID: String(fixture.productID.dropFirst()),
+                apiColorCode: String(fixture.variantID.suffix(3)),
+                imageColorCode: String(fixture.variantID.suffix(2)),
+                productIDWithColorCode: fixture.variantID,
+                html: html
+            )
+
+            let metadata = UniqloProductMetadataParser().parse(resolved: resolved)
+            let request = try #require(
+                metadata.parsedProductInfo(sizes: []).fitMatchDatabaseResolutionRequest()
+            )
+
+            #expect(metadata.productMetadata.structuredFacts == ["product_type_kr": fixture.value])
+            #expect(request.structuredFacts == ["product_type_kr": fixture.value])
+        }
+    }
+
+    @Test func uniqloHydrationProductTypeKrOmitsMissingOrAmbiguousEvidence() throws {
+        func parsedFacts(pdpEntityJSON: String) -> [String: String] {
+            let html = """
+            <script>
+            window.__PRELOADED_STATE__ = {
+              "entity": {"pdpEntity": {\(pdpEntityJSON)}}
+            };
+            </script>
+            """
+            let resolved = ResolvedUniqloURL(
+                originalURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E478307-000")!,
+                resolvedURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E478307-000")!,
+                productID: "E478307",
+                goodsID: "478307",
+                apiColorCode: "000",
+                imageColorCode: "00",
+                productIDWithColorCode: "E478307-000",
+                html: html
+            )
+            return UniqloProductMetadataParser()
+                .parse(resolved: resolved)
+                .productMetadata
+                .structuredFacts
+        }
+
+        let missing = parsedFacts(pdpEntityJSON: """
+        "E478307-000-00": {
+          "product": {"productId":"E478307-000","breadcrumbs":{}}
+        }
+        """)
+        let ambiguous = parsedFacts(pdpEntityJSON: """
+        "E478307-001-00": {
+          "product": {"productId":"E478307-001","productTypeKr":"캡/모자","breadcrumbs":{}}
+        },
+        "E478307-002-00": {
+          "product": {"productId":"E478307-002","productTypeKr":"선글라스","breadcrumbs":{}}
+        }
+        """)
+        let malformed = parsedFacts(pdpEntityJSON: """
+        "E478307-000-00": {
+          "product": {"productId":"E478307-000","productTypeKr":123,"breadcrumbs":{}}
+        }
+        """)
+
+        #expect(missing["product_type_kr"] == nil)
+        #expect(ambiguous["product_type_kr"] == nil)
+        #expect(malformed["product_type_kr"] == nil)
     }
 
     @Test func persistedProductReceivesNewRetailerThumbnailWithoutLosingItLater() {
@@ -9661,7 +9771,8 @@ private final class DelayedProductURLParserSpy: ProductURLParsing {
                         sleeveLength: 22
                     )
                 )
-            ]
+            ],
+            productID: productName
         )
     }
 

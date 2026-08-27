@@ -653,6 +653,14 @@ enum ZARAProductPageParser {
         metadata.categoryDepth2Name = family
         metadata.categoryDepth3Code = subfamily.map { "\(section):\(family ?? "unknown"):\($0)" }
         metadata.categoryDepth3Name = subfamily
+        metadata.structuredFacts = [
+            "section": section,
+            "family": family,
+            "subfamily": subfamily
+        ].compactMapValues { value in
+            let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed?.isEmpty == false ? trimmed : nil
+        }
         metadata.genderCodes = [classification.gender.taxonomyCode]
         metadata.imageURLStrings = imageURL.map { [$0] } ?? []
         metadata.finalPrice = price

@@ -99,6 +99,10 @@ struct MusinsaProductMetadata {
         if let typeNumber {
             productMetadata.sizeType = String(typeNumber)
         }
+        if let typeName = typeName?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !typeName.isEmpty {
+            productMetadata.structuredFacts["size_type"] = typeName
+        }
         applyActualSizeTypeName(typeName)
     }
 }

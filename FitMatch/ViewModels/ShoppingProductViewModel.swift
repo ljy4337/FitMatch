@@ -1,6 +1,26 @@
 import Foundation
 import Combine
 
+enum FitMatchIOSServerAuthorityState: Equatable {
+    case idle
+    case resolving
+    case confirmed(FitMatchServerProductAuthority)
+    case reviewRequired(FitMatchServerProductAuthority)
+    case notComparable(FitMatchServerProductAuthority)
+    case unavailable(String)
+
+    var productLoadFailureTitle: String? {
+        switch self {
+        case .reviewRequired:
+            return "이 상품은 분류 확인이 필요해요."
+        case .notComparable:
+            return "이 상품은 비교할 수 없는 상품이에요."
+        case .idle, .resolving, .confirmed, .unavailable:
+            return nil
+        }
+    }
+}
+
 @MainActor
 final class ShoppingProductViewModel: ObservableObject {
     @Published var productURL = ""
@@ -32,40 +52,43 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var analysisPhase: ProductAnalysisPhase = .loadingProductInfo
     @Published private(set) var productAnalysisRecoveryAction: ProductAnalysisRecoveryAction?
     @Published private(set) var databaseShadowState: FitMatchDatabaseShadowState = .idle
+    @Published private(set) var serverAuthorityState: FitMatchIOSServerAuthorityState = .idle
     @Published private(set) var classificationSafetyAudit: ParsedClosetClassificationSafetyAudit = .safe
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
     private let metricsRecorder: FitMatchMetricsRecording
-    private let databaseProductResolver: any FitMatchProductResolving
+    private let serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator?
     private var activeLoadID: UUID?
-    private var databaseResolutionTask: Task<Void, Never>?
-    private var databaseResolutionID: UUID?
+    private var parsedProductForServerAuthority: ParsedProductInfo?
 
     init(
         initialURL: String? = nil,
         recommendationService: RecommendationService? = nil,
         parserService: ProductURLParserService? = nil,
         metricsRecorder: FitMatchMetricsRecording? = nil,
-        databaseProductResolver: (any FitMatchProductResolving)? = nil
+        databaseProductResolver: (any FitMatchProductResolving)? = nil,
+        serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator? = nil
     ) {
         productURL = initialURL ?? ""
         self.recommendationService = recommendationService ?? RecommendationService()
         self.parserService = parserService ?? ProductURLParserService()
         self.metricsRecorder = metricsRecorder ?? FitMatchMetricsRecorder.shared
-        self.databaseProductResolver = databaseProductResolver
-            ?? FitMatchSupabaseProductResolver.shared
+        if let serverAuthorityCoordinator {
+            self.serverAuthorityCoordinator = serverAuthorityCoordinator
+        } else if let remote = databaseProductResolver as? any FitMatchServerAuthorityRemoteServicing {
+            self.serverAuthorityCoordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+        } else if databaseProductResolver == nil {
+            self.serverAuthorityCoordinator = FitMatchServerAuthorityCoordinator()
+        } else {
+            // A legacy resolve-only test double cannot satisfy promotion and
+            // runtime persistence. Treat it as unavailable instead of falling
+            // back to a local canonical result.
+            self.serverAuthorityCoordinator = nil
+        }
     }
 
     // This view model owns only Sendable task state at teardown. Keeping the
-    // destructor nonisolated avoids the back-deployed MainActor destructor
-    // thunk that crashes when a fully populated imported size chart is
-    // released on Intel simulators. It also prevents a detached DB shadow
-    // lookup from outliving the screen that requested it.
-    nonisolated deinit {
-        databaseResolutionTask?.cancel()
-    }
-
     func addSizeOption() {
         sizeOptions.append(ClothingSizeForm())
     }
@@ -83,9 +106,9 @@ final class ShoppingProductViewModel: ObservableObject {
         let metricProvider = FitMatchMetricProvider.resolve(urlString: productURL)
         metricsRecorder.record(.parserAttempt(provider: metricProvider))
         activeLoadID = loadID
-        databaseResolutionTask?.cancel()
-        databaseResolutionID = nil
         databaseShadowState = .idle
+        serverAuthorityState = .idle
+        parsedProductForServerAuthority = nil
         classificationSafetyAudit = .safe
         errorMessage = nil
         parserNotice = nil
@@ -115,7 +138,7 @@ final class ShoppingProductViewModel: ObservableObject {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             analysisPhase = .preparingComparison
             apply(parsedProduct)
-            startDatabaseShadowResolution(for: parsedProduct)
+            let isServerConfirmed = await resolveServerAuthority(for: parsedProduct)
             metricsRecorder.record(
                 .parserSuccess(
                     provider: metricProvider,
@@ -124,11 +147,11 @@ final class ShoppingProductViewModel: ObservableObject {
                     measurement: FitMatchMetricMeasurementAvailability(measurementAvailability)
                 )
             )
-            return true
+            return isServerConfirmed
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             apply(partialError.productInfo)
-            startDatabaseShadowResolution(for: partialError.productInfo)
+            _ = await resolveServerAuthority(for: partialError.productInfo)
             metricsRecorder.record(.parserFailure(provider: metricProvider, reason: .partial))
             if partialError.productInfo.sourceName == "무신사",
                partialError.productInfo.sizes.isEmpty {
@@ -156,9 +179,9 @@ final class ShoppingProductViewModel: ObservableObject {
 
     func cancelProductLoading() {
         activeLoadID = nil
-        databaseResolutionTask?.cancel()
-        databaseResolutionID = nil
         databaseShadowState = .idle
+        serverAuthorityState = .idle
+        parsedProductForServerAuthority = nil
         classificationSafetyAudit = .safe
         isLoadingProductInfo = false
     }
@@ -204,8 +227,7 @@ final class ShoppingProductViewModel: ObservableObject {
             category = selectedCategory
             detailCategory = selectedDetailCategory
             productAnalysisRecoveryAction = nil
-            startDatabaseShadowResolution(for: parsedProduct)
-            return true
+            return await resolveServerAuthority(for: parsedProduct)
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             apply(partialError.productInfo)
@@ -213,7 +235,7 @@ final class ShoppingProductViewModel: ObservableObject {
             detailCategory = selectedDetailCategory
             productAnalysisRecoveryAction = partialError.productInfo.recoveryAction
                 ?? .enterMeasurementsManually
-            startDatabaseShadowResolution(for: partialError.productInfo)
+            _ = await resolveServerAuthority(for: partialError.productInfo)
             errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
             return false
         } catch {
@@ -225,96 +247,125 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
-    private func startDatabaseShadowResolution(for product: ParsedProductInfo) {
+    private func resolveServerAuthority(for product: ParsedProductInfo) async -> Bool {
+        parsedProductForServerAuthority = product
         guard let request = product.fitMatchDatabaseResolutionRequest() else {
             databaseShadowState = .skipped
-            return
+            serverAuthorityState = .unavailable("retailer_identity_missing")
+            errorMessage = "서버에서 확인할 상품 식별 정보가 없습니다."
+            return false
         }
-        let resolutionID = UUID()
-        let local = product.fitMatchLocalClassificationSnapshot()
-        databaseResolutionID = resolutionID
+        guard let serverAuthorityCoordinator else {
+            databaseShadowState = .unavailable
+            serverAuthorityState = .unavailable("server_authority_unavailable")
+            errorMessage = "서버 상품 분류를 확인할 수 없습니다."
+            return false
+        }
+
         databaseShadowState = .checking
-        databaseResolutionTask = Task { [weak self, databaseProductResolver] in
-            do {
-                if let submitter = databaseProductResolver as? any FitMatchProductObservationSubmitting,
-                   let observation = product.fitMatchProductObservationRequest() {
-                    do {
-                        _ = try await submitter.submitProductObservation(observation)
-                    } catch {
-                        #if DEBUG
-                        FitMatchDebugLogger.event(
-                            screen: "상품 분석",
-                            action: "상품 원본 관측 저장",
-                            state: "저장 실패",
-                            details: "오류=\(error.localizedDescription), 로컬 분류와 DB 조회는 계속 진행"
-                        )
-                        #endif
-                    }
-                }
-                let response = try await databaseProductResolver.resolve(request)
-                guard !Task.isCancelled,
-                      let self,
-                      self.databaseResolutionID == resolutionID else { return }
-                if response.catalogState != "current"
-                    || response.classification.status != "confirmed" {
-                    self.databaseShadowState = .reviewRequired(response)
-                } else if local.matches(response.classification) {
-                    self.databaseShadowState = .matched(response)
-                } else {
-                    self.databaseShadowState = .mismatch(response, local)
-                }
-                #if DEBUG
-                self.logDatabaseShadowResult(response: response, local: local)
-                #endif
-            } catch {
-                guard !Task.isCancelled,
-                      let self,
-                      self.databaseResolutionID == resolutionID else { return }
-                self.databaseShadowState = .unavailable
-                #if DEBUG
-                FitMatchDebugLogger.event(
-                    screen: "상품 분석",
-                    action: "DB shadow 분류",
-                    state: "연결 실패",
-                    details: "오류=\(error.localizedDescription), 로컬 분류 유지"
-                )
-                #endif
+        serverAuthorityState = .resolving
+        do {
+            let authority = try await serverAuthorityCoordinator.resolveProductAuthority(
+                request: request,
+                observation: product.fitMatchProductObservationRequest()
+            )
+            guard !Task.isCancelled else { return false }
+            switch authority.status {
+            case .confirmed:
+                applyServerClassification(authority.classification)
+                serverAuthorityState = .confirmed(authority)
+                // Kept only as a compatibility/debug signal. It is no longer a
+                // shadow decision: the server tuple below is the actual input.
+                databaseShadowState = .checking
+                errorMessage = nil
+                return true
+            case .reviewRequired:
+                serverAuthorityState = .reviewRequired(authority)
+                databaseShadowState = .unavailable
+                errorMessage = "현재 상품 분류를 확정할 수 없어 비교를 진행할 수 없습니다."
+                return false
+            case .notComparable:
+                serverAuthorityState = .notComparable(authority)
+                databaseShadowState = .unavailable
+                errorMessage = "세트 또는 비교 대상이 아닌 상품이라 비교를 진행할 수 없습니다."
+                return false
             }
+        } catch {
+            guard !Task.isCancelled else { return false }
+            databaseShadowState = .unavailable
+            serverAuthorityState = .unavailable(error.localizedDescription)
+            errorMessage = "서버 상품 분류를 확인하지 못했습니다. 네트워크 연결 후 다시 시도해 주세요."
+            #if DEBUG
+            FitMatchDebugLogger.event(
+                screen: "상품 분석",
+                action: "서버 v4 분류",
+                state: "안전 차단",
+                details: "오류=\(error.localizedDescription), 로컬 확정 fallback=사용 안 함"
+            )
+            #endif
+            return false
         }
     }
 
-    #if DEBUG
-    private func logDatabaseShadowResult(
-        response: FitMatchProductResolutionResponse,
-        local: FitMatchLocalClassificationSnapshot
-    ) {
-        let state: String
-        switch databaseShadowState {
-        case .matched: state = "일치"
-        case .mismatch: state = "불일치"
-        case .reviewRequired: state = "검토 필요"
-        default: state = "기타"
+    private func applyServerClassification(_ classification: FitMatchDatabaseClassification) {
+        if let categoryCode = classification.categoryCode {
+            category = ClothingCategory.fromTaxonomyCode(categoryCode)
         }
-        let databaseCodes = [
-            response.classification.categoryCode,
-            response.classification.detailCode,
-            response.classification.familyCode,
-            response.classification.lengthCode
-        ].map { $0 ?? "nil" }.joined(separator: "/")
-        let localCodes = [
-            local.categoryCode,
-            local.detailCode,
-            local.familyCode,
-            local.lengthCode
-        ].map { $0 ?? "nil" }.joined(separator: "/")
-        FitMatchDebugLogger.event(
-            screen: "상품 분석",
-            action: "DB shadow 분류",
-            state: state,
-            details: "상품=\(response.productID?.uuidString ?? "미등록"), catalog=\(response.catalogState), DB=\(databaseCodes), local=\(localCodes)"
-        )
+        if let detailCode = classification.detailCode {
+            detailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCode)
+        }
     }
-    #endif
+
+    var hasServerConfirmedAuthority: Bool {
+        if case .confirmed = serverAuthorityState { return true }
+        return false
+    }
+
+    private var confirmedServerAuthority: FitMatchServerProductAuthority? {
+        guard case .confirmed(let authority) = serverAuthorityState else { return nil }
+        return authority
+    }
+
+    func authorizeReferenceForComparison(
+        _ item: UserFit,
+        allowsManualSelection: Bool
+    ) async -> FitMatchServerComparisonPermit? {
+        guard let coordinator = serverAuthorityCoordinator,
+              let product = parsedProductForServerAuthority,
+              let request = product.fitMatchDatabaseResolutionRequest(),
+              let localReferenceSnapshot = item.fitMatchServerReferenceSnapshot() else {
+            errorMessage = "서버 비교 정책을 확인할 수 없습니다."
+            return nil
+        }
+        do {
+            let usesExplicitUserAuthority = item.classificationAuthorityProvenance
+                == .userExplicit
+            let authorization = try await coordinator.authorizeReferenceCandidate(
+                referenceClientItemID: item.id,
+                localReferenceSnapshot: localReferenceSnapshot,
+                targetRequest: request,
+                targetObservation: product.fitMatchProductObservationRequest(),
+                referenceRequest: usesExplicitUserAuthority
+                    ? nil
+                    : item.sourceProduct?.fitMatchDatabaseResolutionRequest(),
+                referenceObservation: usesExplicitUserAuthority
+                    ? nil
+                    : item.sourceProduct?.fitMatchProductObservationRequest()
+            )
+            let allowed = authorization.decision == .automatic
+                || (allowsManualSelection && authorization.decision == .manualSelection)
+            guard allowed else {
+                errorMessage = authorization.decision == .measurementsRequired
+                    ? "서버 비교 정책에 필요한 공통 실측값이 부족합니다."
+                    : "서버 비교 정책상 선택한 옷과 비교할 수 없습니다."
+                return nil
+            }
+            return try await coordinator.beginAuthorizedComparison(authorization)
+        } catch {
+            errorMessage = "서버 비교 가능 여부를 확인하지 못했습니다. 다시 시도해 주세요."
+            return nil
+        }
+    }
 
     func analyzeRecoveryImage(url: URL) async -> Bool {
         do {
@@ -367,7 +418,7 @@ final class ShoppingProductViewModel: ObservableObject {
         userFits: [UserFit],
         brand: Brand? = nil,
         allowsGlobalFallback: Bool = false
-    ) -> RecommendationHistory? {
+    ) async -> RecommendationHistory? {
         errorMessage = nil
         let metricMode = FitMatchMetricComparisonMode.automatic
         metricsRecorder.record(.comparisonAttempt(mode: metricMode))
@@ -386,28 +437,58 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
 
-        guard let history = recommendationService.recommend(
-            product: product,
-            userFits: userFits,
-            productDetailCategory: detailCategory,
-            allowsGlobalFallback: allowsGlobalFallback
-        ) else {
-            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
-            errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
+        guard product.classificationAuthorityProvenance == .serverConfirmed else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
+            errorMessage = "서버에서 확정된 상품만 비교할 수 있습니다."
             recommendation = nil
             return nil
         }
 
-        recommendation = history
-        recordComparisonResult(history, mode: metricMode)
-        return history
+        let authoritativeFits = userFits.filter {
+            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
+        }
+        let automaticCandidates = authoritativeFits
+            .filter(\.isRepresentative)
+            .sorted {
+                if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
+                return $0.id.uuidString < $1.id.uuidString
+            }
+        guard !automaticCandidates.isEmpty else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .missingReference))
+            errorMessage = "서버 정책으로 자동 비교할 기준 옷을 선택하지 못했습니다."
+            recommendation = nil
+            return nil
+        }
+
+        for reference in automaticCandidates {
+            guard let permit = await authorizeReferenceForComparison(
+                reference,
+                allowsManualSelection: false
+            ) else { continue }
+            guard let history = recommendationService.recommendAfterServerAuthorization(
+                product: product,
+                selectedReferenceItem: reference,
+                productDetailCategory: detailCategory,
+                permit: permit
+            ) else { continue }
+
+            recommendation = history
+            recordComparisonResult(history, mode: metricMode)
+            return history
+        }
+
+        metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
+        errorMessage = errorMessage
+            ?? "서버 비교 정책 또는 실측 조건을 충족하는 기준 옷이 없습니다."
+        recommendation = nil
+        return nil
     }
 
     @discardableResult
     func calculateTemporaryRecommendation(
         selectedReferenceItem: UserFit,
         brand: Brand? = nil
-    ) -> RecommendationHistory? {
+    ) async -> RecommendationHistory? {
         errorMessage = nil
         let metricMode = FitMatchMetricComparisonMode.selectedReference
         metricsRecorder.record(.comparisonAttempt(mode: metricMode))
@@ -419,10 +500,22 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
 
-        guard let history = recommendationService.recommend(
+
+        guard product.classificationAuthorityProvenance == .serverConfirmed,
+              let permit = await authorizeReferenceForComparison(
+                selectedReferenceItem,
+                allowsManualSelection: true
+              ) else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
+            recommendation = nil
+            return nil
+        }
+
+        guard let history = recommendationService.recommendAfterServerAuthorization(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: detailCategory
+            productDetailCategory: detailCategory,
+            permit: permit
         ) else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
             errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
@@ -440,43 +533,36 @@ final class ShoppingProductViewModel: ObservableObject {
             return false
         }
 
-        guard !userFits.isEmpty else {
-            return true
+        let authoritativeFits = userFits.filter {
+            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
         }
-
-        guard let product = makeProduct(brand: makeBrand()) else {
-            return false
-        }
-
-        return !recommendationService.hasRelevantClosetItem(
-            product: product,
-            productDetailCategory: detailCategory,
-            userFits: userFits
-        )
+        // Candidate compatibility is evaluator-v4 authority. Before that RPC,
+        // UI routing may only ask whether an authoritative reference exists;
+        // it must not run the measurement scorer or local matcher.
+        return !authoritativeFits.contains(where: \.isRepresentative)
     }
 
     func temporaryComparisonCandidates(userFits: [UserFit], brand: Brand? = nil) -> [UserFit] {
-        guard let product = makeProduct(brand: brand) else {
+        guard makeProduct(brand: brand) != nil else {
             return []
         }
 
-        return recommendationService.temporaryComparisonCandidates(
-            product: product,
-            productDetailCategory: detailCategory,
-            userFits: userFits
-        )
+        return userFits.filter {
+            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
+        }.sorted {
+            if $0.isRepresentative != $1.isRepresentative {
+                return $0.isRepresentative
+            }
+            if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
+            return $0.id.uuidString < $1.id.uuidString
+        }
     }
 
     func needsFallbackDecision(userFits: [UserFit], brand: Brand? = nil) -> Bool {
-        guard let product = makeProduct(brand: brand), !userFits.isEmpty else {
-            return false
+        let authoritativeFits = userFits.filter {
+            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
         }
-
-        return !recommendationService.hasRelevantClosetItem(
-            product: product,
-            productDetailCategory: detailCategory,
-            userFits: userFits
-        )
+        return makeProduct(brand: brand) != nil && authoritativeFits.isEmpty
     }
 
     func makeBrand() -> Brand? {
@@ -535,22 +621,25 @@ final class ShoppingProductViewModel: ObservableObject {
         brand: Brand?,
         classificationWasUserConfirmed: Bool = false
     ) -> Product? {
-        // Resolve the canonical garment before converting parsed rows into
-        // ProductSize. Provider buckets such as UNIQLO Innerwear/AIRism can
-        // have a generic provider detail even though the source path and name
-        // safely identify a supported garment. Waiting until after size
-        // conversion used to discard those rows because `.other` exposes no
-        // comparable measurement schema.
-        let canonical = ParsedClosetClassification.resolve(
+        let serverClassification = confirmedServerAuthority?.classification
+        let localHint = ParsedClosetClassification.resolve(
             category: category,
             detailCategory: detailCategory,
-            sourceDepths: [productMetadata.sourceCategoryDepth1, productMetadata.sourceCategoryDepth2,
-                           productMetadata.sourceCategoryDepth3, productMetadata.sourceCategoryDepth4],
+            sourceDepths: [
+                productMetadata.sourceCategoryDepth1,
+                productMetadata.sourceCategoryDepth2,
+                productMetadata.sourceCategoryDepth3,
+                productMetadata.sourceCategoryDepth4
+            ],
             sourcePath: productMetadata.sourceCategoryPath,
             productName: canonicalClassificationProductNameHint
         )
-        let resolvedCategory = canonical?.category ?? category
-        let resolvedDetailCategory = canonical?.detailCategory ?? detailCategory
+        let resolvedCategory = serverClassification?.categoryCode.map(
+            ClothingCategory.fromTaxonomyCode
+        ) ?? localHint?.category ?? category
+        let resolvedDetailCategory = serverClassification?.detailCode.map(
+            ClosetDetailCategory.fromTaxonomyCode
+        ) ?? localHint?.detailCategory ?? detailCategory
         let validOptions = sizeOptions.compactMap {
             $0.makeSizeOption(
                 category: resolvedCategory,
@@ -573,47 +662,49 @@ final class ShoppingProductViewModel: ObservableObject {
             sourceName: resolvedSourceName,
             sizes: validOptions
         )
-        if let canonical {
-            product.categoryCode = canonical.categoryCode
-            product.normalizedProductTypeCode = canonical.normalizedProductTypeCode
-            product.garmentType = canonical.garmentFamily
-            product.sleeveType = canonical.lengthType
-            product.constructionType = canonical.constructionType
-        }
-        let canonicalTarget = productMetadata.genderCodes.first.map { code -> String in
-            let value = code.uppercased()
-            if value.contains("WOM") || value.contains("FEMALE") { return "WOMEN" }
-            if value.contains("MEN") || value.contains("MALE") { return "MEN" }
-            if value.contains("BABY") { return "BABY" }
-            if value.contains("KID") { return "KIDS" }
-            return value
-        }
-        let canonicalProfile = CanonicalComparisonProfileResolver().resolve(
-            source: resolvedSourceName,
-            externalCategoryID: productMetadata.mostSpecificExternalCategoryID,
-            target: canonicalTarget,
-            sourceCategoryPath: productMetadata.sourceCategoryPath ?? productMetadata.baseCategoryFullPath
-        )
-        CanonicalComparisonProfileResolver().apply(canonicalProfile, to: product)
-        if classificationSafetyAudit.requiresReview,
-           !classificationWasUserConfirmed {
-            product.canonicalEligibility = false
-            product.canonicalResolutionMethod = ParsedClosetClassificationSafetyAudit.conflictResolutionMethod
-            product.canonicalPolicyVersion = product.canonicalPolicyVersion
-                ?? ParsedClosetClassificationSafetyAudit.policyVersion
-            #if DEBUG
-            let dimensions = classificationSafetyAudit.conflicts
-                .map(\.dimension.rawValue)
-                .joined(separator: ",")
-            FitMatchDebugLogger.event(
-                screen: "상품 분석",
-                action: "분류 충돌 안전 차단",
-                state: "사용자 확인 필요",
-                details: "상품=\(product.name), 충돌축=\(dimensions)"
+
+        if let serverClassification {
+            product.category = resolvedCategory
+            product.categoryCode = serverClassification.categoryCode
+            product.normalizedProductTypeCode = serverClassification.detailCode
+            product.garmentTypeRawValue = serverClassification.familyCode
+            product.sleeveTypeRawValue = serverClassification.lengthCode
+            product.canonicalPolicyVersion = serverClassification.taxonomyPolicyVersion
+                ?? serverClassification.decisionVersion
+            product.markClassificationAuthority(
+                .serverConfirmed,
+                sourceIdentity: serverClassification.classificationID?.uuidString
+                    ?? serverClassification.method
             )
-            #endif
+            return product
         }
-        _ = ComparisonProfileMatcher().profile(for: product, detailCategory: detailCategory)
+
+        // Local parsing may still populate a UI/offline hint, but it can never
+        // manufacture persisted server authority for a sourced product.
+        if let localHint {
+            product.categoryCode = localHint.categoryCode
+            product.normalizedProductTypeCode = localHint.normalizedProductTypeCode
+            product.garmentType = localHint.garmentFamily
+            product.sleeveType = localHint.lengthType
+            product.constructionType = localHint.constructionType
+        }
+        let isExplicitManualEntry = sourceType == .manual
+            && parsedProductForServerAuthority == nil
+            && classificationWasUserConfirmed
+        if isExplicitManualEntry {
+            product.markClassificationAuthority(.userExplicit)
+        } else {
+            switch serverAuthorityState {
+            case .reviewRequired:
+                product.markClassificationAuthority(.serverReviewRequired)
+            case .notComparable:
+                product.markClassificationAuthority(.serverNotComparable)
+            case .unavailable:
+                product.markClassificationAuthority(.serverUnavailable)
+            default:
+                product.markClassificationAuthority(.localHint)
+            }
+        }
         return product
     }
 

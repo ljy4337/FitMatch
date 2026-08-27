@@ -760,7 +760,7 @@ struct ParsedClosetClassification: Equatable {
         ])
     }
 
-    private static func isExplicitCompositeGarmentSet(_ productName: String) -> Bool {
+    static func isExplicitCompositeGarmentSet(_ productName: String) -> Bool {
         // "셋업 가능" and a single "셋업 자켓" describe one garment or a
         // coordination option. Only explicit bundles or names that enumerate
         // multiple garment structures are held for user confirmation.

@@ -1238,12 +1238,24 @@ struct ZARAParserPhase1_5Tests {
                         semanticStatus: .mapped
                     )
                 ]
-            )]
+            )],
+            productID: "900000011"
         )
         let service = ProductURLParserService(
             zaraParser: Phase15ResumableZARAParser(result: resumedProduct)
         )
-        let viewModel = ShoppingProductViewModel(parserService: service)
+        let authorityRemote = FitMatchEchoServerAuthorityRemote(
+            categoryCode: "bottoms",
+            detailCode: "long_pants",
+            familyCode: "pants",
+            lengthCode: "long"
+        )
+        let viewModel = ShoppingProductViewModel(
+            parserService: service,
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: authorityRemote
+            )
+        )
         var unresolved = resumedProduct
         unresolved.category = .other
         unresolved.detailCategory = .other

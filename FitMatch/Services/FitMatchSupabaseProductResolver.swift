@@ -8,6 +8,41 @@ nonisolated struct FitMatchProductResolutionRequest: Codable, Equatable, Sendabl
     let sourceCategoryPath: String?
     let audience: String?
     let sourceCategoryCodes: [String]?
+    let structuredFacts: [String: String]
+
+    init(
+        source: String,
+        externalProductID: String,
+        productName: String,
+        sourceCategoryPath: String?,
+        audience: String?,
+        sourceCategoryCodes: [String]?,
+        structuredFacts: [String: String] = [:]
+    ) {
+        self.source = source
+        self.externalProductID = externalProductID
+        self.productName = productName
+        self.sourceCategoryPath = sourceCategoryPath
+        self.audience = FitMatchCanonicalAudience.code(from: audience)
+        self.sourceCategoryCodes = sourceCategoryCodes
+        self.structuredFacts = structuredFacts
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        source = try container.decode(String.self, forKey: .source)
+        externalProductID = try container.decode(String.self, forKey: .externalProductID)
+        productName = try container.decode(String.self, forKey: .productName)
+        sourceCategoryPath = try container.decodeIfPresent(String.self, forKey: .sourceCategoryPath)
+        audience = FitMatchCanonicalAudience.code(
+            from: try container.decodeIfPresent(String.self, forKey: .audience)
+        )
+        sourceCategoryCodes = try container.decodeIfPresent([String].self, forKey: .sourceCategoryCodes)
+        structuredFacts = try container.decodeIfPresent(
+            [String: String].self,
+            forKey: .structuredFacts
+        ) ?? [:]
+    }
 
     enum CodingKeys: String, CodingKey {
         case source
@@ -16,6 +51,7 @@ nonisolated struct FitMatchProductResolutionRequest: Codable, Equatable, Sendabl
         case sourceCategoryPath = "source_category_path"
         case audience
         case sourceCategoryCodes = "source_category_codes"
+        case structuredFacts = "structured_facts"
     }
 }
 
@@ -23,25 +59,61 @@ nonisolated struct FitMatchDatabaseClassification: Decodable, Equatable, Sendabl
     let classificationID: UUID?
     let categoryCode: String?
     let detailCode: String?
+    let garmentTypeCode: String?
     let familyCode: String?
     let lengthCode: String?
     let bodyLengthCode: String?
     let status: String
     let method: String?
+    let authorityStatus: String?
     let confidence: Double?
     let requiresUserConfirmation: Bool
     let taxonomyPolicyVersion: String?
     let decisionVersion: String?
 
+    init(
+        classificationID: UUID?,
+        categoryCode: String?,
+        detailCode: String?,
+        garmentTypeCode: String? = nil,
+        familyCode: String?,
+        lengthCode: String?,
+        bodyLengthCode: String?,
+        status: String,
+        method: String?,
+        authorityStatus: String? = nil,
+        confidence: Double?,
+        requiresUserConfirmation: Bool,
+        taxonomyPolicyVersion: String?,
+        decisionVersion: String?
+    ) {
+        self.classificationID = classificationID
+        self.categoryCode = categoryCode
+        self.detailCode = detailCode
+        self.garmentTypeCode = garmentTypeCode
+        self.familyCode = familyCode
+        self.lengthCode = lengthCode
+        self.bodyLengthCode = bodyLengthCode
+        self.status = status
+        self.method = method
+        self.authorityStatus = authorityStatus
+        self.confidence = confidence
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.taxonomyPolicyVersion = taxonomyPolicyVersion
+        self.decisionVersion = decisionVersion
+    }
+
     enum CodingKeys: String, CodingKey {
         case classificationID = "classification_id"
         case categoryCode = "category_code"
         case detailCode = "detail_code"
+        case garmentTypeCode = "garment_type_code"
         case familyCode = "family_code"
         case lengthCode = "length_code"
         case bodyLengthCode = "body_length_code"
         case status
         case method
+        case authorityStatus = "authority_status"
         case confidence
         case requiresUserConfirmation = "requires_user_confirmation"
         case taxonomyPolicyVersion = "taxonomy_policy_version"
@@ -54,14 +126,34 @@ nonisolated struct FitMatchProductResolutionResponse: Decodable, Equatable, Send
     let intakeRequestID: UUID?
     let catalogState: String
     let categoryEvidenceMatches: Bool?
+    let authorityPersisted: Bool?
     let classification: FitMatchDatabaseClassification
     let comparisonReady: Bool
+
+    init(
+        productID: UUID?,
+        intakeRequestID: UUID?,
+        catalogState: String,
+        categoryEvidenceMatches: Bool?,
+        authorityPersisted: Bool? = nil,
+        classification: FitMatchDatabaseClassification,
+        comparisonReady: Bool
+    ) {
+        self.productID = productID
+        self.intakeRequestID = intakeRequestID
+        self.catalogState = catalogState
+        self.categoryEvidenceMatches = categoryEvidenceMatches
+        self.authorityPersisted = authorityPersisted
+        self.classification = classification
+        self.comparisonReady = comparisonReady
+    }
 
     enum CodingKeys: String, CodingKey {
         case productID = "product_id"
         case intakeRequestID = "intake_request_id"
         case catalogState = "catalog_state"
         case categoryEvidenceMatches = "category_evidence_matches"
+        case authorityPersisted = "authority_persisted"
         case classification
         case comparisonReady = "comparison_ready"
     }
@@ -132,6 +224,7 @@ nonisolated struct FitMatchProductObservationPayload: Encodable, Equatable, Send
     let imageURL: String?
     let observedAt: String
     let rawPayload: [String: String]
+    let structuredFacts: [String: String]
     let variants: [FitMatchProductObservationVariant]
 
     enum CodingKeys: String, CodingKey {
@@ -145,6 +238,7 @@ nonisolated struct FitMatchProductObservationPayload: Encodable, Equatable, Send
         case imageURL = "image_url"
         case observedAt = "observed_at"
         case rawPayload = "raw_payload"
+        case structuredFacts = "structured_facts"
         case variants
     }
 }
@@ -1124,14 +1218,31 @@ extension ParsedProductInfo {
                   !value.isEmpty else { return nil }
             return value
         }
-        let audience = metadata.genderCodes.first?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let audience = FitMatchCanonicalAudience.code(from: metadata.genderCodes)
+        var structuredFacts = metadata.structuredFacts.reduce(into: [String: String]()) {
+            facts,
+            entry in
+            let key = entry.key.trimmingCharacters(in: .whitespacesAndNewlines)
+            let value = entry.value.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !key.isEmpty, !value.isEmpty else { return }
+            facts[key] = value
+        }
+        let isExplicitSet = ParsedClosetClassification.isExplicitCompositeGarmentSet(productName)
+            || (source == "musinsa" && MusinsaUnsupportedProductPolicy.isTopBottomSet(
+                categoryDepth2Name: metadata.categoryDepth2Name
+                    ?? sourceCategoryDepth2
+            ))
+        if isExplicitSet {
+            structuredFacts["product_structure"] = "set"
+        }
         return FitMatchProductResolutionRequest(
             source: source,
             externalProductID: productID,
             productName: productName.trimmingCharacters(in: .whitespacesAndNewlines),
             sourceCategoryPath: path?.trimmingCharacters(in: .whitespacesAndNewlines),
-            audience: audience?.isEmpty == false ? audience : nil,
-            sourceCategoryCodes: codes.isEmpty ? nil : codes
+            audience: audience,
+            sourceCategoryCodes: codes.isEmpty ? nil : codes,
+            structuredFacts: structuredFacts
         )
     }
 
@@ -1281,6 +1392,7 @@ extension ParsedProductInfo {
                 imageURL: imageURLString,
                 observedAt: formatter.string(from: observedAt),
                 rawPayload: rawPayload,
+                structuredFacts: resolution.structuredFacts,
                 variants: [
                     FitMatchProductObservationVariant(
                         externalVariantID: variantID,

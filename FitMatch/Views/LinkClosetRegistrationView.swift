@@ -28,8 +28,6 @@ struct LinkClosetRegistrationView: View {
     @State private var loadTask: Task<Void, Never>?
     @FocusState private var isURLFocused: Bool
 
-    private let parserService = ProductURLParserService()
-
     init(prefersRepresentativeByDefault: Bool = false, onSaved: (() -> Void)? = nil) {
         self.prefersRepresentativeByDefault = prefersRepresentativeByDefault
         self.onSaved = onSaved
@@ -388,64 +386,20 @@ struct LinkClosetRegistrationView: View {
         isLoading = true
         defer { isLoading = false }
 
-        do {
-            let parsedInfo = try await parserService.parse(urlString: trimmedURL)
-            guard !Task.isCancelled else { return }
-            let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
+        let viewModel = ShoppingProductViewModel(initialURL: trimmedURL)
+        _ = await viewModel.loadProductInfoFromURL()
+        guard !Task.isCancelled else { return }
 
-            let sizes = ParsedProductSizeNormalizer.makeProductSizes(from: parsedInfo.sizes)
-
-            let product = Product(
-                name: parsedInfo.productName,
-                brand: brand,
-                category: parsedInfo.category,
-                productCode: parsedInfo.productID,
-                sourceURLString: parsedInfo.canonicalURLString ?? parsedInfo.sourceURL.absoluteString,
-                imageURLString: parsedInfo.imageURLString,
-                metadata: parsedInfo.productMetadata,
-                sourceType: parsedInfo.sourceType,
-                sourceName: parsedInfo.sourceName,
-                sizes: sizes
-            )
-
-            parsedDetailCategory = parsedInfo.detailCategory
-            if let canonical = ParsedClosetClassification.resolve(
-                product: product,
-                detailCategory: parsedInfo.detailCategory
-            ) {
-                product.categoryCode = canonical.categoryCode
-                product.normalizedProductTypeCode = canonical.normalizedProductTypeCode
-                product.garmentType = canonical.garmentFamily
-                product.sleeveType = canonical.lengthType
-                product.constructionType = canonical.constructionType
-            }
-            parsedProduct = product
-        } catch let partialError as ProductURLParserPartialError {
-            guard !Task.isCancelled else { return }
-            let parsedInfo = partialError.productInfo
-            let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
-            let product = Product(
-                name: parsedInfo.productName,
-                brand: brand,
-                category: parsedInfo.category,
-                productCode: parsedInfo.productID,
-                sourceURLString: parsedInfo.canonicalURLString ?? parsedInfo.sourceURL.absoluteString,
-                imageURLString: parsedInfo.imageURLString,
-                metadata: parsedInfo.productMetadata,
-                sourceType: parsedInfo.sourceType,
-                sourceName: parsedInfo.sourceName,
-                sizes: []
-            )
-            parsedDetailCategory = parsedInfo.detailCategory
-            partialProduct = product
-            let viewModel = ShoppingProductViewModel(initialURL: parsedInfo.sourceURL.absoluteString)
-            viewModel.apply(parsedInfo)
-            recoveryViewModel = viewModel
-            errorMessage = parsedInfo.parserNotice ?? partialError.errorDescription
-        } catch {
-            guard !Task.isCancelled else { return }
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
-        }
+        let brand = existingBrand(named: viewModel.brand) ?? Brand(name: viewModel.brand)
+        let preparation = LinkClosetRegistrationPreparation.make(
+            from: viewModel,
+            brand: brand
+        )
+        parsedProduct = preparation.parsedProduct
+        partialProduct = preparation.partialProduct
+        parsedDetailCategory = preparation.detailCategory
+        recoveryViewModel = preparation.recoveryViewModel
+        errorMessage = preparation.errorMessage
     }
 
     private func startLoadingProduct() {
@@ -532,6 +486,84 @@ struct LinkClosetRegistrationView: View {
         return .manual
     }
 
+}
+
+/// Converts a parsed link into a Closet-registration input without creating a
+/// second local classification authority. A fully measured product keeps the
+/// exact server status on `Product`; measurement recovery is offered only when
+/// the server has already confirmed the canonical tuple.
+@MainActor
+struct LinkClosetRegistrationPreparation {
+    let parsedProduct: Product?
+    let partialProduct: Product?
+    let detailCategory: ClosetDetailCategory
+    let recoveryViewModel: ShoppingProductViewModel?
+    let errorMessage: String?
+
+    static func make(
+        from viewModel: ShoppingProductViewModel,
+        brand: Brand?
+    ) -> LinkClosetRegistrationPreparation {
+        if let product = viewModel.makeProductForClosetRegistration(brand: brand) {
+            return LinkClosetRegistrationPreparation(
+                parsedProduct: product,
+                partialProduct: nil,
+                detailCategory: viewModel.detailCategory,
+                recoveryViewModel: nil,
+                errorMessage: product.classificationAuthorityProvenance == .serverConfirmed
+                    ? nil
+                    : viewModel.errorMessage
+            )
+        }
+
+        guard viewModel.hasLoadedProductInfo,
+              viewModel.hasServerConfirmedAuthority,
+              !viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              case .confirmed(let authority) = viewModel.serverAuthorityState else {
+            return LinkClosetRegistrationPreparation(
+                parsedProduct: nil,
+                partialProduct: nil,
+                detailCategory: viewModel.detailCategory,
+                recoveryViewModel: nil,
+                errorMessage: viewModel.errorMessage ?? "서버 상품 분류를 확인하지 못했습니다."
+            )
+        }
+
+        let partial = Product(
+            name: viewModel.productName,
+            brand: brand,
+            category: viewModel.category,
+            productCode: viewModel.productCode,
+            sourceURLString: viewModel.productCanonicalURLString ?? viewModel.productURL,
+            imageURLString: viewModel.productImageURLString,
+            metadata: viewModel.productMetadata,
+            sourceType: viewModel.sourceType,
+            sourceName: viewModel.sourceName,
+            sizes: []
+        )
+        let classification = authority.classification
+        partial.categoryCode = classification.categoryCode
+        partial.normalizedProductTypeCode = classification.detailCode
+        partial.garmentTypeRawValue = classification.familyCode
+        partial.sleeveTypeRawValue = classification.lengthCode
+        partial.canonicalPolicyVersion = classification.taxonomyPolicyVersion
+            ?? classification.decisionVersion
+        partial.markClassificationAuthority(
+            .serverConfirmed,
+            sourceIdentity: classification.classificationID?.uuidString
+                ?? classification.method
+        )
+
+        return LinkClosetRegistrationPreparation(
+            parsedProduct: nil,
+            partialProduct: partial,
+            detailCategory: viewModel.detailCategory,
+            recoveryViewModel: viewModel,
+            errorMessage: viewModel.errorMessage
+                ?? viewModel.parserNotice
+                ?? "사이즈표를 찾지 못했습니다. 실측값을 확인해 주세요."
+        )
+    }
 }
 
 private struct ClosetLinkPasteShakeEffect: GeometryEffect {

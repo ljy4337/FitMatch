@@ -33,6 +33,233 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(request.sourceCategoryPath == "상의 > 셔츠 > 긴팔")
         #expect(request.audience == "MEN")
         #expect(request.sourceCategoryCodes == ["001", "001002", "001002003"])
+        #expect(request.structuredFacts.isEmpty)
+    }
+
+    @Test func typedRetailerFactsAreEncodedAtTheResolutionAndObservationPayloadLevel() throws {
+        let metadata = ProductMetadata(
+            sourceCategoryPath: "상의 > 반소매 티셔츠",
+            categoryDepth1Code: "001",
+            categoryDepth2Code: "001001",
+            categoryDepth2Name: "반소매 티셔츠",
+            structuredFacts: ["size_type": " 반소매티셔츠 "]
+        )
+        let product = ParsedProductInfo(
+            sourceURL: try #require(URL(string: "https://www.musinsa.com/products/123")),
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "반소매 티셔츠",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizes: [],
+            productID: "123",
+            sourceCategoryPath: "상의 > 반소매 티셔츠",
+            productMetadata: metadata
+        )
+
+        let resolution = try #require(product.fitMatchDatabaseResolutionRequest())
+        #expect(resolution.structuredFacts == ["size_type": "반소매티셔츠"])
+        let resolutionJSON = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(resolution)) as? [String: Any]
+        )
+        let resolutionFacts = try #require(
+            resolutionJSON["structured_facts"] as? [String: Any]
+        )
+        #expect(resolutionFacts["size_type"] as? String == "반소매티셔츠")
+
+        let observation = try #require(product.fitMatchProductObservationRequest())
+        #expect(observation.payload.structuredFacts == ["size_type": "반소매티셔츠"])
+        let observationJSON = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(observation)) as? [String: Any]
+        )
+        let payloadJSON = try #require(observationJSON["payload"] as? [String: Any])
+        let observationFacts = try #require(
+            payloadJSON["structured_facts"] as? [String: Any]
+        )
+        #expect(observationFacts["size_type"] as? String == "반소매티셔츠")
+    }
+
+    @Test func musinsaActualSizeTypeNameIsForwardedWithoutReplacingNumericSizeType() throws {
+        let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/123"))
+        var metadata = MusinsaProductMetadata(
+            sourceURL: sourceURL,
+            productID: "123",
+            brandName: "테스트",
+            productName: "반소매 티셔츠",
+            category: .top,
+            detailCategory: .shortSleeve,
+            categoryDepth1Name: "상의",
+            categoryDepth2Name: "반소매 티셔츠",
+            imageURLString: nil,
+            price: nil,
+            canonicalURLString: sourceURL.absoluteString
+        )
+
+        metadata.applyActualSizeProfile(typeNumber: 5, typeName: " 반소매티셔츠 ")
+        let parsed = metadata.parsedProductInfo(sizes: [])
+
+        #expect(parsed.productMetadata.sizeType == "5")
+        #expect(parsed.productMetadata.structuredFacts["size_type"] == "반소매티셔츠")
+        #expect(
+            parsed.fitMatchDatabaseResolutionRequest()?.structuredFacts["size_type"]
+                == "반소매티셔츠"
+        )
+    }
+
+    @Test func persistedProductReplayPreservesStructuredFactsExactly() throws {
+        let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/123"))
+        let metadata = ProductMetadata(
+            sourceCategoryPath: "상의 > 반소매 티셔츠",
+            categoryDepth1Code: "001",
+            categoryDepth2Code: "001001",
+            categoryDepth2Name: "반소매 티셔츠",
+            structuredFacts: [
+                "product_structure": "single",
+                "retailer_fit": "oversized / relaxed",
+                "size_type": " 반소매티셔츠 "
+            ],
+            sizeType: "5",
+            genderCodes: ["MEN"],
+            labelNames: ["단독", "리미티드"]
+        )
+        let parsed = ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "반소매 티셔츠",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizes: [],
+            productID: "123",
+            sourceCategoryPath: metadata.sourceCategoryPath,
+            productMetadata: metadata
+        )
+        let initialRequest = try #require(parsed.fitMatchDatabaseResolutionRequest())
+        let persisted = Product(
+            name: parsed.productName,
+            category: parsed.category,
+            productCode: parsed.productID,
+            sourceURLString: parsed.canonicalURLString ?? parsed.sourceURL.absoluteString,
+            metadata: metadata,
+            sourceType: parsed.sourceType,
+            sourceName: parsed.sourceName,
+            source: .catalog
+        )
+        let replayRequest = try #require(persisted.fitMatchDatabaseResolutionRequest())
+        let storedEnvelope = FitMatchStoredRetailerFacts.decode(persisted.labelNames)
+
+        #expect(replayRequest.structuredFacts == initialRequest.structuredFacts)
+        #expect(replayRequest.structuredFacts["size_type"] == "반소매티셔츠")
+        #expect(replayRequest.structuredFacts["size_type"] != persisted.sizeType)
+        #expect(storedEnvelope.hasVersionedPayload)
+        #expect(storedEnvelope.structuredFacts == metadata.structuredFacts)
+        #expect(storedEnvelope.labelNames == metadata.labelNames)
+    }
+
+    @Test func numericSizeTypeIsNeverSynthesizedAsStructuredAuthorityOnReplay() throws {
+        let persisted = Product(
+            name: "실측 프로필 상품",
+            category: .top,
+            productCode: "124",
+            sourceURLString: "https://www.musinsa.com/products/124",
+            metadata: ProductMetadata(
+                sourceCategoryPath: "상의 > 반소매 티셔츠",
+                categoryDepth1Code: "001",
+                categoryDepth2Code: "001001",
+                sizeType: "5",
+                labelNames: ["일반 라벨"]
+            ),
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            source: .catalog
+        )
+
+        let replayRequest = try #require(persisted.fitMatchDatabaseResolutionRequest())
+        #expect(replayRequest.structuredFacts.isEmpty)
+        #expect(FitMatchStoredRetailerFacts.decode(persisted.labelNames).labelNames == ["일반 라벨"])
+    }
+
+    @Test func persistedReplayReusesExistingSetSemantics() throws {
+        let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/5982920"))
+        let metadata = ProductMetadata(
+            sourceCategoryPath: "상의 > 반소매 티셔츠",
+            categoryDepth1Code: "001",
+            categoryDepth2Code: "001001",
+            structuredFacts: ["size_type": "반소매티셔츠"]
+        )
+        let parsed = ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "티셔츠 팬츠 세트",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizes: [],
+            productID: "5982920",
+            sourceCategoryPath: metadata.sourceCategoryPath,
+            productMetadata: metadata
+        )
+        let persisted = Product(
+            name: parsed.productName,
+            category: parsed.category,
+            productCode: parsed.productID,
+            sourceURLString: sourceURL.absoluteString,
+            metadata: metadata,
+            sourceType: parsed.sourceType,
+            sourceName: parsed.sourceName,
+            source: .catalog
+        )
+
+        let initialFacts = try #require(parsed.fitMatchDatabaseResolutionRequest()).structuredFacts
+        let replayFacts = try #require(persisted.fitMatchDatabaseResolutionRequest()).structuredFacts
+        #expect(initialFacts == replayFacts)
+        #expect(replayFacts["product_structure"] == "set")
+    }
+
+    @Test func existingSetSemanticsEmitProductStructureWithoutGarmentInference() throws {
+        let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/5982920"))
+        let namedSet = ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "티셔츠 팬츠 세트",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizes: [],
+            productID: "5982920",
+            sourceCategoryPath: "상의 > 반소매 티셔츠"
+        )
+        #expect(
+            namedSet.fitMatchDatabaseResolutionRequest()?.structuredFacts["product_structure"]
+                == "set"
+        )
+        #expect(
+            namedSet.fitMatchProductObservationRequest()?.payload
+                .structuredFacts["product_structure"] == "set"
+        )
+
+        let categorySet = ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "코디 상품",
+            category: .top,
+            detailCategory: .other,
+            sizes: [],
+            productID: "5982920",
+            sourceCategoryPath: "상의 > 상하의 세트",
+            sourceCategoryDepth2: "상하의 세트",
+            productMetadata: ProductMetadata(categoryDepth2Name: "상하의 세트")
+        )
+        #expect(
+            categorySet.fitMatchDatabaseResolutionRequest()?.structuredFacts["product_structure"]
+                == "set"
+        )
     }
 
     @Test func productObservationPreservesRawSizeChartEvidence() throws {
@@ -103,6 +330,7 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(raw.evidence["mapping_version"] == "uniqlo_kr_size_chart_mapping_v7")
         #expect(request.payload.rawPayload["parser_provenance_available"] == "false")
         #expect(request.payload.rawPayload["parser_code"] == "legacy_unknown")
+        #expect(request.payload.structuredFacts.isEmpty)
     }
 
     @Test func parserServiceRecordsTypedProvenanceInObservationPayload() async throws {
@@ -128,7 +356,7 @@ struct FitMatchSupabaseProductResolverTests {
             productID: "123",
             sourceCategoryPath: "상의 > 반소매 티셔츠"
         )
-        let parser = DatabaseShadowParserStub(product: product)
+        let parser = DatabaseAuthorityParserStub(product: product)
         let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
 
         let parsed = try await service.parse(urlString: product.sourceURL.absoluteString)
@@ -204,59 +432,186 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(local.requiresUserConfirmation == false)
     }
 
-    @Test func productLoadRecordsMatchingDatabaseShadowWithoutChangingLocalResult() async throws {
-        let product = ParsedProductInfo(
-            sourceURL: try #require(URL(string: "https://www.musinsa.com/products/123")),
-            sourceType: .marketplace,
-            sourceName: "무신사",
-            brandName: "테스트",
-            productName: "반팔 티셔츠",
-            category: .top,
-            detailCategory: .shortSleeve,
-            sizes: [],
-            productID: "123",
-            sourceCategoryPath: "상의 > 반소매 티셔츠"
+    @Test func shoppingProductUsesServerConfirmedTupleOverConflictingLocalInference() async throws {
+        let parsed = try Self.authorityTestProduct(
+            source: "musinsa",
+            externalProductID: "123",
+            localCategory: .bottom,
+            localDetail: .longPants
         )
-        let parser = DatabaseShadowParserStub(product: product)
-        let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
-        let response = FitMatchProductResolutionResponse(
-            productID: UUID(),
-            intakeRequestID: nil,
-            catalogState: "current",
-            categoryEvidenceMatches: true,
-            classification: FitMatchDatabaseClassification(
-                classificationID: UUID(),
-                categoryCode: "tops",
-                detailCode: "short_sleeve",
-                familyCode: "tshirt",
-                lengthCode: "short_sleeve",
-                bodyLengthCode: nil,
-                status: "confirmed",
-                method: nil,
-                confidence: nil,
-                requiresUserConfirmation: false,
-                taxonomyPolicyVersion: nil,
-                decisionVersion: "test"
-            ),
-            comparisonReady: true
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "123",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
         )
-        let viewModel = ShoppingProductViewModel(
-            initialURL: product.sourceURL.absoluteString,
-            parserService: service,
-            metricsRecorder: DatabaseShadowNoopMetricsRecorder(),
-            databaseProductResolver: DatabaseShadowResolverStub(response: response)
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution()],
+            observations: [],
+            runtimes: [fixture.runtime]
         )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
 
         #expect(await viewModel.loadProductInfoFromURL())
-        for _ in 0..<100 where viewModel.databaseShadowState == .checking {
-            await Task.yield()
-        }
-        guard case .matched = viewModel.databaseShadowState else {
-            Issue.record("DB shadow 결과가 matched가 아닙니다: \(viewModel.databaseShadowState)")
-            return
-        }
+        #expect(viewModel.hasServerConfirmedAuthority)
         #expect(viewModel.category == .top)
         #expect(viewModel.detailCategory == .shortSleeve)
+
+        let product = try #require(
+            viewModel.makeProductForClosetRegistration(brand: nil)
+        )
+        #expect(product.category == .top)
+        #expect(product.categoryCode == "tops")
+        #expect(product.normalizedProductTypeCode == "short_sleeve")
+        #expect(product.garmentTypeRawValue == "tshirt")
+        #expect(product.sleeveTypeRawValue == "short_sleeve")
+        #expect(product.classificationAuthorityProvenance == .serverConfirmed)
+        #expect(product.canonicalEligibility == true)
+    }
+
+    @Test func reviewAndNotComparableServerResultsNeverBecomeEligibleProducts() async throws {
+        let scenarios: [(
+            status: FitMatchServerProductAuthorityStatus,
+            provenance: FitMatchClassificationAuthorityProvenance
+        )] = [
+            (.reviewRequired, .serverReviewRequired),
+            (.notComparable, .serverNotComparable)
+        ]
+
+        for scenario in scenarios {
+            let externalID = scenario.status.rawValue
+            let parsed = try Self.authorityTestProduct(
+                source: "musinsa",
+                externalProductID: externalID,
+                localCategory: .top,
+                localDetail: .shortSleeve
+            )
+            let fixture = DatabaseAuthorityFixture(
+                source: "musinsa",
+                externalProductID: externalID,
+                status: scenario.status
+            )
+            let remote = DatabaseAuthorityRemoteStub(
+                resolutions: [fixture.resolution()],
+                observations: [],
+                runtimes: [fixture.runtime]
+            )
+            let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+            #expect(!(await viewModel.loadProductInfoFromURL()))
+            #expect(!viewModel.hasServerConfirmedAuthority)
+            let product = try #require(
+                viewModel.makeProductForClosetRegistration(brand: nil)
+            )
+            #expect(product.classificationAuthorityProvenance == scenario.provenance)
+            #expect(product.canonicalEligibility == false)
+        }
+    }
+
+    @Test func networkAndRejectedPromotionRemainUnavailableWithoutLocalConfirmation() async throws {
+        let networkProduct = try Self.authorityTestProduct(
+            source: "musinsa",
+            externalProductID: "network-failure",
+            localCategory: .top,
+            localDetail: .shortSleeve
+        )
+        let networkRemote = DatabaseAuthorityRemoteStub(
+            resolutions: [],
+            observations: [],
+            runtimes: [],
+            resolveFailure: .network
+        )
+        let networkViewModel = Self.authorityViewModel(
+            product: networkProduct,
+            remote: networkRemote
+        )
+
+        #expect(!(await networkViewModel.loadProductInfoFromURL()))
+        let networkResult = try #require(
+            networkViewModel.makeProductForClosetRegistration(brand: nil)
+        )
+        #expect(networkResult.classificationAuthorityProvenance == .serverUnavailable)
+        #expect(networkResult.canonicalEligibility == false)
+
+        let promotionProduct = try Self.authorityTestProduct(
+            source: "musinsa",
+            externalProductID: "promotion-failure",
+            localCategory: .top,
+            localDetail: .shortSleeve
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "promotion-failure",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let promotionRemote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "new")],
+            observations: [fixture.observation(status: "rejected")],
+            runtimes: []
+        )
+        let promotionViewModel = Self.authorityViewModel(
+            product: promotionProduct,
+            remote: promotionRemote
+        )
+
+        #expect(!(await promotionViewModel.loadProductInfoFromURL()))
+        let promotionResult = try #require(
+            promotionViewModel.makeProductForClosetRegistration(brand: nil)
+        )
+        #expect(promotionResult.classificationAuthorityProvenance == .serverUnavailable)
+        #expect(promotionResult.canonicalEligibility == false)
+        #expect(await promotionRemote.observationCallCount == 1)
+        #expect(await promotionRemote.runtimeCallCount == 0)
+    }
+
+    @Test func shoppingProductGoldThreePersistExactServerTuples() async throws {
+        let gold: [(id: String, detail: String, family: String)] = [
+            ("E482514", "short_sleeve", "tshirt"),
+            ("E454311", "base_layer_top", "base_layer_top"),
+            ("E456567", "base_layer_top", "base_layer_top")
+        ]
+
+        for expected in gold {
+            let parsed = try Self.authorityTestProduct(
+                source: "uniqlo",
+                externalProductID: expected.id,
+                localCategory: .bottom,
+                localDetail: .longPants
+            )
+            let fixture = DatabaseAuthorityFixture(
+                source: "uniqlo",
+                externalProductID: expected.id,
+                status: .confirmed,
+                categoryCode: "tops",
+                detailCode: expected.detail,
+                familyCode: expected.family,
+                lengthCode: "short_sleeve"
+            )
+            let remote = DatabaseAuthorityRemoteStub(
+                resolutions: [fixture.resolution()],
+                observations: [],
+                runtimes: [fixture.runtime]
+            )
+            let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+            #expect(await viewModel.loadProductInfoFromURL())
+            let product = try #require(
+                viewModel.makeProductForClosetRegistration(brand: nil)
+            )
+            #expect(product.categoryCode == "tops")
+            #expect(product.normalizedProductTypeCode == expected.detail)
+            #expect(product.garmentTypeRawValue == expected.family)
+            #expect(product.sleeveTypeRawValue == "short_sleeve")
+            #expect(product.classificationAuthorityProvenance == .serverConfirmed)
+            #expect(product.canonicalEligibility == true)
+        }
     }
 
     @Test func referenceCandidateContractDecodesDatabasePolicyEvidence() throws {
@@ -505,10 +860,199 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(bodyLengthEntry! == nil)
         #expect(item.syncRevision == 2)
     }
+
+    @Test func linkClosetPreparationUsesExactServerTupleInsteadOfLocalParserHint() async throws {
+        let parsed = try Self.authorityTestProduct(
+            source: "musinsa",
+            externalProductID: "link-server-wins",
+            localCategory: .bottom,
+            localDetail: .longPants
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "link-server-wins",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution()],
+            observations: [],
+            runtimes: [fixture.runtime]
+        )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        let preparation = LinkClosetRegistrationPreparation.make(
+            from: viewModel,
+            brand: nil
+        )
+        let product = try #require(preparation.parsedProduct)
+        #expect(preparation.partialProduct == nil)
+        #expect(product.categoryCode == "tops")
+        #expect(product.normalizedProductTypeCode == "short_sleeve")
+        #expect(product.garmentTypeRawValue == "tshirt")
+        #expect(product.sleeveTypeRawValue == "short_sleeve")
+        #expect(product.classificationAuthorityProvenance == .serverConfirmed)
+        #expect(product.canonicalEligibility == true)
+    }
+
+    @Test func linkClosetPreparationKeepsReviewRequiredFailClosed() async throws {
+        let parsed = try Self.authorityTestProduct(
+            source: "musinsa",
+            externalProductID: "link-review",
+            localCategory: .top,
+            localDetail: .shortSleeve
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "link-review",
+            status: .reviewRequired
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution()],
+            observations: [],
+            runtimes: [fixture.runtime]
+        )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+        #expect(!(await viewModel.loadProductInfoFromURL()))
+        let preparation = LinkClosetRegistrationPreparation.make(
+            from: viewModel,
+            brand: nil
+        )
+        let product = try #require(preparation.parsedProduct)
+        #expect(product.classificationAuthorityProvenance == .serverReviewRequired)
+        #expect(product.canonicalEligibility == false)
+        #expect(preparation.errorMessage != nil)
+    }
+
+    @Test func linkClosetMeasurementRecoveryRequiresServerConfirmedAuthority() async throws {
+        var parsed = try Self.authorityTestProduct(
+            source: "uniqlo",
+            externalProductID: "E499998",
+            localCategory: .bottom,
+            localDetail: .longPants
+        )
+        parsed.sizes = []
+        parsed.recoveryAction = .enterMeasurementsManually
+        let fixture = DatabaseAuthorityFixture(
+            source: "uniqlo",
+            externalProductID: "E499998",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "base_layer_top",
+            familyCode: "base_layer_top",
+            lengthCode: "short_sleeve"
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution()],
+            observations: [],
+            runtimes: [fixture.runtime]
+        )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        let preparation = LinkClosetRegistrationPreparation.make(
+            from: viewModel,
+            brand: nil
+        )
+        #expect(preparation.parsedProduct == nil)
+        let recoveryProduct = try #require(preparation.partialProduct)
+        #expect(preparation.recoveryViewModel === viewModel)
+        #expect(recoveryProduct.categoryCode == "tops")
+        #expect(recoveryProduct.normalizedProductTypeCode == "base_layer_top")
+        #expect(recoveryProduct.garmentTypeRawValue == "base_layer_top")
+        #expect(recoveryProduct.classificationAuthorityProvenance == .serverConfirmed)
+        #expect(recoveryProduct.canonicalEligibility == true)
+    }
+
+    private static func authorityViewModel(
+        product: ParsedProductInfo,
+        remote: DatabaseAuthorityRemoteStub
+    ) -> ShoppingProductViewModel {
+        let parser = DatabaseAuthorityParserStub(product: product)
+        let service = ProductURLParserService(
+            musinsaParser: parser,
+            uniqloParser: parser
+        )
+        return ShoppingProductViewModel(
+            initialURL: product.sourceURL.absoluteString,
+            parserService: service,
+            metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+    }
+
+    private static func authorityTestProduct(
+        source: String,
+        externalProductID: String,
+        localCategory: ClothingCategory,
+        localDetail: ClosetDetailCategory
+    ) throws -> ParsedProductInfo {
+        let sourceURL: URL
+        let sourceType: ProductSourceType
+        let sourceName: String
+        switch source {
+        case "uniqlo":
+            sourceURL = try #require(
+                URL(string: "https://www.uniqlo.com/kr/ko/products/\(externalProductID)-000/01")
+            )
+            sourceType = .officialStore
+            sourceName = "유니클로 공식몰"
+        default:
+            sourceURL = try #require(
+                URL(string: "https://www.musinsa.com/products/\(externalProductID)")
+            )
+            sourceType = .marketplace
+            sourceName = "무신사"
+        }
+
+        return ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: sourceType,
+            sourceName: sourceName,
+            brandName: "테스트",
+            productName: localCategory.serviceGroup == .bottom
+                ? "로컬 데님 긴바지"
+                : "로컬 반팔 티셔츠",
+            category: localCategory,
+            detailCategory: localDetail,
+            sizes: [
+                ParsedProductSize(
+                    name: "M",
+                    measurements: GarmentMeasurements(
+                        shoulder: 46,
+                        chest: 54,
+                        totalLength: 70,
+                        sleeveLength: 24,
+                        waist: 39,
+                        hip: 52,
+                        thigh: 31,
+                        rise: 28,
+                        hem: 20
+                    )
+                )
+            ],
+            productID: externalProductID,
+            sourceCategoryPath: localCategory.serviceGroup == .bottom
+                ? "하의 > 데님 > 긴바지"
+                : "상의 > 반소매 티셔츠",
+            productMetadata: ProductMetadata(
+                sourceCategoryPath: localCategory.serviceGroup == .bottom
+                    ? "하의 > 데님 > 긴바지"
+                    : "상의 > 반소매 티셔츠",
+                categoryDepth1Code: localCategory.serviceGroup == .bottom ? "003" : "001",
+                categoryDepth2Code: localCategory.serviceGroup == .bottom ? "003002" : "001001"
+            )
+        )
+    }
 }
 
 @MainActor
-private final class DatabaseShadowParserStub: ProductURLParsing {
+private final class DatabaseAuthorityParserStub: ProductURLParsing {
     let product: ParsedProductInfo
 
     init(product: ParsedProductInfo) {
@@ -520,19 +1064,167 @@ private final class DatabaseShadowParserStub: ProductURLParsing {
     func parse(from url: URL) async throws -> ParsedProductInfo { product }
 }
 
-private actor DatabaseShadowResolverStub: FitMatchProductResolving {
-    let response: FitMatchProductResolutionResponse
+private final class DatabaseAuthorityNoopMetricsRecorder: FitMatchMetricsRecording {
+    func record(_ event: FitMatchMetricEvent) {}
+}
 
-    init(response: FitMatchProductResolutionResponse) {
-        self.response = response
+private struct DatabaseAuthorityFixture {
+    let source: String
+    let externalProductID: String
+    let status: FitMatchServerProductAuthorityStatus
+    let productID = UUID()
+    let classification: FitMatchDatabaseClassification
+
+    init(
+        source: String,
+        externalProductID: String,
+        status: FitMatchServerProductAuthorityStatus,
+        categoryCode: String? = nil,
+        detailCode: String? = nil,
+        familyCode: String? = nil,
+        lengthCode: String? = nil
+    ) {
+        self.source = source
+        self.externalProductID = externalProductID
+        self.status = status
+        classification = FitMatchDatabaseClassification(
+            classificationID: UUID(),
+            categoryCode: categoryCode,
+            detailCode: detailCode,
+            garmentTypeCode: familyCode,
+            familyCode: familyCode,
+            lengthCode: lengthCode,
+            bodyLengthCode: nil,
+            status: status.rawValue,
+            method: status == .notComparable
+                ? "structured_exclusion"
+                : status == .confirmed ? "canonical_product_decision" : "unknown",
+            authorityStatus: status == .confirmed ? "verified" : nil,
+            confidence: status == .confirmed ? 1 : nil,
+            requiresUserConfirmation: status == .reviewRequired,
+            taxonomyPolicyVersion: "db-classifier-2026-08-26-final",
+            decisionVersion: "classification-db-final-closure-2026-08-26-v1"
+        )
+    }
+
+    func resolution(catalogState: String = "current") -> FitMatchProductResolutionResponse {
+        FitMatchProductResolutionResponse(
+            productID: catalogState == "new" ? nil : productID,
+            intakeRequestID: catalogState == "current" ? nil : UUID(),
+            catalogState: catalogState,
+            categoryEvidenceMatches: catalogState == "current",
+            authorityPersisted: catalogState == "current",
+            classification: classification,
+            comparisonReady: catalogState == "current" && status == .confirmed
+        )
+    }
+
+    var runtime: FitMatchProductRuntimeResponse {
+        let runtimeState: String
+        switch status {
+        case .confirmed: runtimeState = "ready"
+        case .reviewRequired: runtimeState = "classification_required"
+        case .notComparable: runtimeState = "not_comparable"
+        }
+        return FitMatchProductRuntimeResponse(
+            runtimeState: runtimeState,
+            comparisonReady: status == .confirmed,
+            product: FitMatchRuntimeProduct(
+                productID: productID,
+                source: source,
+                externalProductID: externalProductID,
+                productName: "Server Product",
+                canonicalURL: nil,
+                audience: "UNISEX",
+                sourceCategoryPath: "server > category",
+                sourceCategoryCodes: ["server-category"],
+                imageURL: nil,
+                lifecycleStatus: "active",
+                inputFingerprint: "fixture"
+            ),
+            classification: classification,
+            variants: []
+        )
+    }
+
+    func observation(status: String) -> FitMatchProductObservationResponse {
+        let observationID = UUID()
+        return FitMatchProductObservationResponse(
+            observation: .init(
+                observationID: observationID,
+                status: status == "promoted" ? "promoted" : "pending",
+                rawMeasurementCount: 0
+            ),
+            processing: .init(
+                observationID: observationID,
+                status: status,
+                productID: status == "promoted" ? productID : nil
+            )
+        )
+    }
+}
+
+private actor DatabaseAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing {
+    enum ResolveFailure: Sendable {
+        case network
+    }
+
+    private var resolutions: [FitMatchProductResolutionResponse]
+    private var observations: [FitMatchProductObservationResponse]
+    private var runtimes: [FitMatchProductRuntimeResponse]
+    private let resolveFailure: ResolveFailure?
+
+    private(set) var observationCallCount = 0
+    private(set) var runtimeCallCount = 0
+
+    init(
+        resolutions: [FitMatchProductResolutionResponse],
+        observations: [FitMatchProductObservationResponse],
+        runtimes: [FitMatchProductRuntimeResponse],
+        resolveFailure: ResolveFailure? = nil
+    ) {
+        self.resolutions = resolutions
+        self.observations = observations
+        self.runtimes = runtimes
+        self.resolveFailure = resolveFailure
     }
 
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductResolutionResponse {
-        response
+        if resolveFailure == .network {
+            throw URLError(.notConnectedToInternet)
+        }
+        guard !resolutions.isEmpty else { throw StubError.missingResolution }
+        return resolutions.removeFirst()
     }
-}
 
-private final class DatabaseShadowNoopMetricsRecorder: FitMatchMetricsRecording {
-    func record(_ event: FitMatchMetricEvent) {}
+    func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
+        -> FitMatchProductObservationResponse {
+        observationCallCount += 1
+        guard !observations.isEmpty else { throw StubError.missingObservation }
+        return observations.removeFirst()
+    }
+
+    func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> FitMatchProductRuntimeResponse {
+        runtimeCallCount += 1
+        guard !runtimes.isEmpty else { throw StubError.missingRuntime }
+        return runtimes.removeFirst()
+    }
+
+    func listClosetItems() async throws -> FitMatchClosetItemsResponse {
+        .init(state: "ready", items: [])
+    }
+
+    func findReferenceCandidates(targetProductID: UUID) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        throw StubError.unexpectedCandidateLookup
+    }
+
+    enum StubError: Error {
+        case missingResolution
+        case missingObservation
+        case missingRuntime
+        case unexpectedCandidateLookup
+    }
 }

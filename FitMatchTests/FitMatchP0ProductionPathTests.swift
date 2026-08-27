@@ -195,9 +195,10 @@ struct FitMatchP0ProductionPathTests {
         }
     }
 
-    // PATH-CLASSIFICATION-SAFETY-01 · The conflict decision is applied after
-    // the canonical profile and remains fail-closed until explicit review.
-    @Test func p1ProductCreationPreservesConflictEligibilityUntilUserConfirmation() throws {
+    // PATH-CLASSIFICATION-SAFETY-01 · A sourced local parser conflict stays
+    // a UI hint. Even the legacy confirmation parameter cannot promote it to
+    // persisted authority without a server result or a manual Closet action.
+    @Test func p1SourcedProductConflictCannotBecomeAuthorityLocally() throws {
         let parsed = ParsedProductInfo(
             sourceURL: URL(string: "https://www.musinsa.com/products/p1-conflict")!,
             sourceType: .marketplace,
@@ -227,21 +228,229 @@ struct FitMatchP0ProductionPathTests {
         let blocked = try #require(viewModel.makeProductForClosetRegistration(brand: nil))
         #expect(viewModel.classificationSafetyAudit.requiresReview)
         #expect(blocked.canonicalEligibility == false)
-        #expect(blocked.canonicalResolutionMethod
-            == ParsedClosetClassificationSafetyAudit.conflictResolutionMethod)
+        #expect(blocked.classificationAuthorityProvenance == .localHint)
         #expect(ComparisonProfileMatcher().match(
             product: blocked,
             productDetailCategory: .shortSleeve,
             userFits: []
-        ).state == .requiresConfirmation)
+        ).state == .noCompatibleGarment)
 
-        let adjudicated = try #require(viewModel.makeProductForClosetRegistration(
+        let legacyConfirmedFlag = try #require(viewModel.makeProductForClosetRegistration(
             brand: nil,
             classificationWasUserConfirmed: true
         ))
-        #expect(adjudicated.canonicalEligibility != false)
-        #expect(adjudicated.canonicalResolutionMethod
-            != ParsedClosetClassificationSafetyAudit.conflictResolutionMethod)
+        #expect(legacyConfirmedFlag.canonicalEligibility == false)
+        #expect(legacyConfirmedFlag.classificationAuthorityProvenance == .localHint)
+    }
+
+    @Test func p0CanonicalProfileApplyPreservesTrustedAuthorityTuples() {
+        let product = comparisonProduct(
+            name: "AIRism Base Layer T-Shirt",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "상의 > 기능성 이너",
+            measurements: GarmentMeasurements(
+                shoulder: 48,
+                chest: 54,
+                totalLength: 70,
+                sleeveLength: 24
+            )
+        )
+        product.categoryCode = "tops"
+        product.normalizedProductTypeCode = "base_layer_top"
+        product.garmentTypeRawValue = "base_layer_top"
+        product.sleeveTypeRawValue = "short_sleeve"
+        product.canonicalPolicyVersion = "server-v4"
+        product.markClassificationAuthority(
+            .serverConfirmed,
+            sourceIdentity: "server-classification"
+        )
+
+        let item = comparisonItem(
+            name: "User Explicit Base Layer",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "상의 > 기능성 이너",
+            measurements: GarmentMeasurements(
+                shoulder: 48,
+                chest: 54,
+                totalLength: 70,
+                sleeveLength: 24
+            )
+        )
+        item.categoryCode = "tops"
+        item.detailCategoryCode = "base_layer_top"
+        item.normalizedProductTypeCode = "base_layer_top"
+        item.garmentTypeRawValue = "base_layer_top"
+        item.sleeveTypeRawValue = "short_sleeve"
+        item.canonicalPolicyVersion = "user-v1"
+        item.markClassificationAuthority(
+            .userExplicit,
+            sourceIdentity: "user-selection"
+        )
+
+        let conflictingLocalProfile = CanonicalComparisonProfile(
+            decision: .confirmed,
+            semanticCategoryCode: "underwear",
+            semanticGarmentType: "underwear",
+            comparisonFamily: "underwear",
+            appComparisonFamily: "underwear",
+            lengthAxes: CanonicalLengthAxes(
+                sleeve: "long_sleeve",
+                pants: "not_applicable",
+                leggings: "not_applicable",
+                skirt: "not_applicable",
+                body: "not_applicable"
+            ),
+            constructionType: "unknown",
+            eligibility: true,
+            requiredMeasurements: ["chest_width"],
+            optionalMeasurements: [],
+            excludedMeasurements: [],
+            policyVersion: "local-profile",
+            resolutionMethod: "local_profile",
+            sourceIdentity: "local-source"
+        )
+
+        let resolver = CanonicalComparisonProfileResolver()
+        resolver.apply(conflictingLocalProfile, to: product)
+        resolver.apply(conflictingLocalProfile, to: item)
+
+        #expect(product.classificationAuthorityProvenance == .serverConfirmed)
+        #expect(product.categoryCode == "tops")
+        #expect(product.normalizedProductTypeCode == "base_layer_top")
+        #expect(product.garmentTypeRawValue == "base_layer_top")
+        #expect(product.sleeveTypeRawValue == "short_sleeve")
+        #expect(product.canonicalPolicyVersion == "server-v4")
+        #expect(product.canonicalSourceIdentity == "server-classification")
+        #expect(product.canonicalProfileSnapshotJSON == nil)
+
+        #expect(item.classificationAuthorityProvenance == .userExplicit)
+        #expect(item.categoryCode == "tops")
+        #expect(item.detailCategoryCode == "base_layer_top")
+        #expect(item.normalizedProductTypeCode == "base_layer_top")
+        #expect(item.garmentTypeRawValue == "base_layer_top")
+        #expect(item.sleeveTypeRawValue == "short_sleeve")
+        #expect(item.canonicalPolicyVersion == "user-v1")
+        #expect(item.canonicalSourceIdentity == "user-selection")
+        #expect(item.canonicalProfileSnapshotJSON == nil)
+    }
+
+    @Test func p0ReferencePlanAndRecommendationPreserveTrustedTShirtTuples() throws {
+        let measurements = GarmentMeasurements(
+            shoulder: 48,
+            chest: 54,
+            totalLength: 70,
+            sleeveLength: 24
+        )
+        let product = comparisonProduct(
+            name: "Local Name Says Hoodie",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "상의 > 기타 상의",
+            measurements: measurements
+        )
+        product.normalizedProductTypeCode = "short_sleeve"
+        product.garmentTypeRawValue = "tshirt"
+        product.sleeveTypeRawValue = "short_sleeve"
+        product.canonicalPolicyVersion = "server-v4"
+        product.markClassificationAuthority(.serverConfirmed)
+
+        let item = comparisonItem(
+            name: "Local Name Says Hoodie",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "상의 > 기타 상의",
+            measurements: measurements
+        )
+        item.detailCategoryCode = "short_sleeve"
+        item.normalizedProductTypeCode = "short_sleeve"
+        item.garmentTypeRawValue = "tshirt"
+        item.sleeveTypeRawValue = "short_sleeve"
+        item.canonicalPolicyVersion = "user-v1"
+        item.markClassificationAuthority(.userExplicit)
+
+        let productBefore = authoritativeProductTuple(product)
+        let itemBefore = authoritativeItemTuple(item)
+        let service = RecommendationService()
+        let plan = service.referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [item]
+        )
+        let history = try #require(service.recommend(
+            product: product,
+            userFits: [item],
+            productDetailCategory: .shortSleeve,
+            allowsGlobalFallback: false
+        ))
+
+        #expect(plan.automaticallySelectedCandidate?.userFit.id == item.id)
+        #expect(history.userFit.id == item.id)
+        #expect(authoritativeProductTuple(product) == productBefore)
+        #expect(authoritativeItemTuple(item) == itemBefore)
+    }
+
+    @Test func p0BaseLayerServerFamilyIsNeverRewrittenByLocalComparison() {
+        let measurements = GarmentMeasurements(
+            shoulder: 48,
+            chest: 54,
+            totalLength: 70,
+            sleeveLength: 24
+        )
+        let product = comparisonProduct(
+            name: "AIRism Cotton Crew Neck T-Shirt",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "속옷 > 이너웨어",
+            measurements: measurements
+        )
+        product.normalizedProductTypeCode = "base_layer_top"
+        product.garmentTypeRawValue = "base_layer_top"
+        product.sleeveTypeRawValue = "short_sleeve"
+        product.markClassificationAuthority(.serverConfirmed)
+
+        let item = comparisonItem(
+            name: "AIRism Inner T-Shirt",
+            category: .top,
+            detail: .shortSleeve,
+            family: .tshirt,
+            sourcePath: "속옷 > 이너웨어",
+            measurements: measurements
+        )
+        item.detailCategoryCode = "base_layer_top"
+        item.normalizedProductTypeCode = "base_layer_top"
+        item.garmentTypeRawValue = "base_layer_top"
+        item.sleeveTypeRawValue = "short_sleeve"
+        item.markClassificationAuthority(.userExplicit)
+
+        let productBefore = authoritativeProductTuple(product)
+        let itemBefore = authoritativeItemTuple(item)
+        let service = RecommendationService()
+        let plan = service.referenceSelectionPlan(
+            product: product,
+            productDetailCategory: .shortSleeve,
+            userFits: [item]
+        )
+        let recommendation = service.recommend(
+            product: product,
+            selectedReferenceItem: item,
+            productDetailCategory: .shortSleeve
+        )
+
+        #expect(plan.recommendedCandidates.isEmpty)
+        #expect(recommendation == nil)
+        #expect(authoritativeProductTuple(product) == productBefore)
+        #expect(authoritativeItemTuple(item) == itemBefore)
+        #expect(product.garmentTypeRawValue != "tshirt")
+        #expect(product.garmentTypeRawValue != "underwear")
+        #expect(item.garmentTypeRawValue != "tshirt")
+        #expect(item.garmentTypeRawValue != "underwear")
     }
 
     // PATH-COMPARE-ELIGIBILITY-01 · Standard-size fallback must honor the same
@@ -869,10 +1078,14 @@ struct FitMatchP0ProductionPathTests {
     @Test func p0LateFirstRequestCannotOverwriteTheLatestProduct() async throws {
         let parser = P0ControlledProductParser()
         let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
+        let authorityRemote = FitMatchEchoServerAuthorityRemote()
         let viewModel = ShoppingProductViewModel(
             initialURL: "https://www.musinsa.com/products/first",
             parserService: service,
-            metricsRecorder: P0NoopMetricsRecorder()
+            metricsRecorder: P0NoopMetricsRecorder(),
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: authorityRemote
+            )
         )
 
         let first = Task { await viewModel.loadProductInfoFromURL() }
@@ -894,10 +1107,14 @@ struct FitMatchP0ProductionPathTests {
     @Test func p0SequentialAToBToARestoresTheOriginalProductState() async {
         let parser = P0ControlledProductParser()
         let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
+        let authorityRemote = FitMatchEchoServerAuthorityRemote()
         let viewModel = ShoppingProductViewModel(
             initialURL: "https://www.musinsa.com/products/A",
             parserService: service,
-            metricsRecorder: P0NoopMetricsRecorder()
+            metricsRecorder: P0NoopMetricsRecorder(),
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: authorityRemote
+            )
         )
 
         let firstA = Task { await viewModel.loadProductInfoFromURL() }
@@ -937,10 +1154,14 @@ struct FitMatchP0ProductionPathTests {
     @Test func p0FailureThenSuccessClearsStaleError() async {
         let parser = P0ControlledProductParser()
         let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
+        let authorityRemote = FitMatchEchoServerAuthorityRemote()
         let viewModel = ShoppingProductViewModel(
             initialURL: "https://www.musinsa.com/products/failure",
             parserService: service,
-            metricsRecorder: P0NoopMetricsRecorder()
+            metricsRecorder: P0NoopMetricsRecorder(),
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: authorityRemote
+            )
         )
 
         let failedLoad = Task { await viewModel.loadProductInfoFromURL() }
@@ -962,10 +1183,14 @@ struct FitMatchP0ProductionPathTests {
     @Test func p0PartialProductLoadExplainsMissingSizesAndRetryRecovers() async {
         let parser = P0ControlledProductParser()
         let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
+        let authorityRemote = FitMatchEchoServerAuthorityRemote()
         let viewModel = ShoppingProductViewModel(
             initialURL: "https://www.musinsa.com/products/partial",
             parserService: service,
-            metricsRecorder: P0NoopMetricsRecorder()
+            metricsRecorder: P0NoopMetricsRecorder(),
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: authorityRemote
+            )
         )
 
         let partialLoad = Task { await viewModel.loadProductInfoFromURL() }
@@ -1004,6 +1229,37 @@ struct FitMatchP0ProductionPathTests {
         path.components(separatedBy: ">").map {
             $0.trimmingCharacters(in: .whitespacesAndNewlines)
         }.filter { !$0.isEmpty }
+    }
+
+    private func authoritativeProductTuple(_ product: Product) -> [String] {
+        [
+            product.classificationAuthorityProvenance?.rawValue ?? "nil",
+            product.categoryCode ?? "nil",
+            product.normalizedProductTypeCode ?? "nil",
+            product.garmentTypeRawValue ?? "nil",
+            product.sleeveTypeRawValue ?? "nil",
+            product.constructionTypeRawValue ?? "nil",
+            product.canonicalProfileSnapshotJSON ?? "nil",
+            product.canonicalPolicyVersion ?? "nil",
+            product.canonicalSourceIdentity ?? "nil",
+            product.canonicalEligibility.map(String.init) ?? "nil"
+        ]
+    }
+
+    private func authoritativeItemTuple(_ item: UserFit) -> [String] {
+        [
+            item.classificationAuthorityProvenance?.rawValue ?? "nil",
+            item.categoryCode ?? "nil",
+            item.detailCategoryCode ?? "nil",
+            item.normalizedProductTypeCode ?? "nil",
+            item.garmentTypeRawValue ?? "nil",
+            item.sleeveTypeRawValue ?? "nil",
+            item.constructionTypeRawValue ?? "nil",
+            item.canonicalProfileSnapshotJSON ?? "nil",
+            item.canonicalPolicyVersion ?? "nil",
+            item.canonicalSourceIdentity ?? "nil",
+            item.canonicalEligibility.map(String.init) ?? "nil"
+        ]
     }
 
     private func comparisonProduct(

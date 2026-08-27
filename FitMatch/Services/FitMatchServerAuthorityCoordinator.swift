@@ -1,0 +1,816 @@
+import Foundation
+
+protocol FitMatchServerAuthorityRemoteServicing: Sendable {
+    func resolve(_ request: FitMatchProductResolutionRequest) async throws
+        -> FitMatchProductResolutionResponse
+    func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
+        -> FitMatchProductObservationResponse
+    func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> FitMatchProductRuntimeResponse
+    func listClosetItems() async throws -> FitMatchClosetItemsResponse
+    func findReferenceCandidates(targetProductID: UUID) async throws
+        -> FitMatchReferenceCandidatesResponse
+    func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
+        -> FitMatchBeginComparisonResponse
+}
+
+extension FitMatchSupabaseDomainClient: FitMatchServerAuthorityRemoteServicing {}
+
+extension FitMatchServerAuthorityRemoteServicing {
+    func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
+        -> FitMatchBeginComparisonResponse {
+        throw FitMatchServerAuthorityError.comparisonBeginUnavailable
+    }
+}
+
+enum FitMatchServerProductAuthorityStatus: String, Equatable, Sendable {
+    case confirmed
+    case reviewRequired = "review_required"
+    case notComparable = "not_comparable"
+}
+
+struct FitMatchServerProductAuthority: Equatable, Sendable {
+    let status: FitMatchServerProductAuthorityStatus
+    let productID: UUID
+    let classification: FitMatchDatabaseClassification
+    let runtime: FitMatchProductRuntimeResponse
+
+    var comparisonReady: Bool {
+        status == .confirmed && runtime.comparisonReady
+    }
+}
+
+enum FitMatchServerReferenceAuthority: String, Equatable, Sendable {
+    case serverConfirmed = "server_confirmed"
+    case userExplicit = "user_explicit"
+}
+
+enum FitMatchServerReferenceDecision: String, Equatable, Sendable {
+    case automatic
+    case manualSelection = "manual_selection"
+    case measurementsRequired = "measurements_required"
+    case blocked
+}
+
+struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
+    let decision: FitMatchServerReferenceDecision
+    let reason: String?
+    let target: FitMatchServerProductAuthority
+    let reference: FitMatchClosetItemRecord?
+    let referenceAuthority: FitMatchServerReferenceAuthority?
+    let candidate: FitMatchReferenceCandidate?
+    let candidateState: String?
+
+    nonisolated var isAllowed: Bool {
+        decision == .automatic || decision == .manualSelection
+    }
+
+    nonisolated var allowsExtendedComparison: Bool {
+        decision == .manualSelection
+    }
+}
+
+/// A server-created comparison run is the final precondition for invoking the
+/// local measurement engine. The history ID is allocated before scoring so the
+/// existing post-save sync can idempotently reopen and complete this exact run.
+struct FitMatchServerComparisonPermit: Equatable, Sendable {
+    let referenceAuthorization: FitMatchServerReferenceAuthorization
+    let clientHistoryID: UUID
+    let runID: UUID
+    let compatibility: FitMatchDatabaseCompatibility
+
+    nonisolated var isAllowed: Bool {
+        referenceAuthorization.isAllowed && compatibility.allowed
+    }
+}
+
+/// The exact local Closet state that will be handed to the measurement engine.
+/// Server candidate authorization is rejected when this snapshot differs from
+/// the freshly fetched remote Closet row, preventing a stale/local edit from
+/// being scored against an older server-approved tuple or measurement payload.
+struct FitMatchLocalReferenceSnapshot: Equatable, Sendable {
+    let productName: String
+    let sizeName: String?
+    let categoryCode: String
+    let detailCode: String
+    let familyCode: String?
+    let lengthCode: String?
+    let bodyLengthCode: String?
+    let measurements: [String: Double]
+}
+
+enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendable {
+    case unsupportedCatalogState(String)
+    case missingObservationForPromotion
+    case observationIdentityMismatch
+    case promotionRejected(String)
+    case promotionResponseMalformed
+    case promotedProductMismatch
+    case runtimeResponseMalformed(String)
+    case unknownClassificationStatus(String)
+    case inconsistentRuntimeState(state: String, status: String)
+    case closetRuntimeUnavailable(String)
+    case referenceItemNotFound
+    case targetClassificationRequired
+    case unknownCandidateState(String)
+    case inconsistentCandidateState(state: String, reason: String)
+    case comparisonBeginUnavailable
+    case comparisonNotAuthorized
+    case comparisonBeginRejected(String)
+    case comparisonBeginMalformed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .unsupportedCatalogState(let state):
+            return "지원하지 않는 서버 상품 상태입니다: \(state)"
+        case .missingObservationForPromotion:
+            return "서버 분류 승격에 필요한 상품 관측 정보가 없습니다."
+        case .observationIdentityMismatch:
+            return "상품 관측 정보가 분류 요청과 일치하지 않습니다."
+        case .promotionRejected(let status):
+            return "서버 분류 승격이 완료되지 않았습니다: \(status)"
+        case .promotionResponseMalformed:
+            return "서버 분류 승격 응답이 올바르지 않습니다."
+        case .promotedProductMismatch:
+            return "승격된 서버 상품 식별자가 요청과 일치하지 않습니다."
+        case .runtimeResponseMalformed(let reason):
+            return "서버 상품 런타임 응답이 올바르지 않습니다: \(reason)"
+        case .unknownClassificationStatus(let status):
+            return "알 수 없는 서버 분류 상태입니다: \(status)"
+        case .inconsistentRuntimeState(let state, let status):
+            return "서버 런타임과 분류 상태가 일치하지 않습니다: \(state)/\(status)"
+        case .closetRuntimeUnavailable(let state):
+            return "서버 옷장 상태를 사용할 수 없습니다: \(state)"
+        case .referenceItemNotFound:
+            return "서버 옷장에서 기준 의류를 찾지 못했습니다."
+        case .targetClassificationRequired:
+            return "대상 상품의 서버 분류 승격이 필요합니다."
+        case .unknownCandidateState(let state):
+            return "알 수 없는 서버 비교 후보 상태입니다: \(state)"
+        case .inconsistentCandidateState(let state, let reason):
+            return "서버 비교 후보 응답이 일관되지 않습니다: \(state)/\(reason)"
+        case .comparisonBeginUnavailable:
+            return "서버 비교 시작 API를 사용할 수 없습니다."
+        case .comparisonNotAuthorized:
+            return "서버에서 승인되지 않은 비교입니다."
+        case .comparisonBeginRejected(let reason):
+            return "서버 비교 시작이 차단되었습니다: \(reason)"
+        case .comparisonBeginMalformed(let reason):
+            return "서버 비교 시작 응답이 올바르지 않습니다: \(reason)"
+        }
+    }
+}
+
+actor FitMatchServerAuthorityCoordinator {
+    private let remote: any FitMatchServerAuthorityRemoteServicing
+
+    @MainActor
+    init() {
+        remote = FitMatchSupabaseDomainClient.shared
+    }
+
+    init(remote: any FitMatchServerAuthorityRemoteServicing) {
+        self.remote = remote
+    }
+
+    func resolveProductAuthority(
+        request: FitMatchProductResolutionRequest,
+        observation: FitMatchProductObservationRequest?
+    ) async throws -> FitMatchServerProductAuthority {
+        let resolution = try await remote.resolve(request)
+        _ = try classificationStatus(resolution.classification.status)
+
+        let expectedProductID: UUID?
+        var didPromote = false
+        switch resolution.catalogState {
+        case "current":
+            guard let productID = resolution.productID else {
+                throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                    "current_catalog_missing_product_id"
+                )
+            }
+            expectedProductID = productID
+            if resolution.authorityPersisted != true {
+                _ = try await promote(
+                    request: request,
+                    observation: observation,
+                    expectedProductID: productID
+                )
+                didPromote = true
+            }
+        case "new", "changed":
+            if resolution.catalogState == "changed", resolution.productID == nil {
+                throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                    "changed_catalog_missing_product_id"
+                )
+            }
+            expectedProductID = try await promote(
+                request: request,
+                observation: observation,
+                expectedProductID: resolution.productID
+            )
+            didPromote = true
+        default:
+            throw FitMatchServerAuthorityError.unsupportedCatalogState(
+                resolution.catalogState
+            )
+        }
+
+        var runtime = try await remote.fetchProductRuntime(request)
+        if runtime.runtimeState == "classification_promotion_required" {
+            guard !didPromote else {
+                throw FitMatchServerAuthorityError.inconsistentRuntimeState(
+                    state: runtime.runtimeState,
+                    status: runtime.classification?.status ?? "missing"
+                )
+            }
+            _ = try await promote(
+                request: request,
+                observation: observation,
+                expectedProductID: expectedProductID
+            )
+            runtime = try await remote.fetchProductRuntime(request)
+        }
+
+        if !didPromote,
+           observationCanImproveRuntime(
+            observation,
+            runtimeState: runtime.runtimeState
+           ) {
+            _ = try await promote(
+                request: request,
+                observation: observation,
+                expectedProductID: expectedProductID
+            )
+            didPromote = true
+            runtime = try await remote.fetchProductRuntime(request)
+        }
+
+        return try validatedAuthority(
+            runtime,
+            request: request,
+            expectedProductID: expectedProductID
+        )
+    }
+
+    func authorizeReferenceCandidate(
+        referenceClientItemID: UUID,
+        localReferenceSnapshot: FitMatchLocalReferenceSnapshot,
+        targetRequest: FitMatchProductResolutionRequest,
+        targetObservation: FitMatchProductObservationRequest?,
+        referenceRequest: FitMatchProductResolutionRequest? = nil,
+        referenceObservation: FitMatchProductObservationRequest? = nil
+    ) async throws -> FitMatchServerReferenceAuthorization {
+        var target = try await resolveProductAuthority(
+            request: targetRequest,
+            observation: targetObservation
+        )
+
+        let resolvedReference: FitMatchServerProductAuthority?
+        if let referenceRequest {
+            resolvedReference = try await resolveProductAuthority(
+                request: referenceRequest,
+                observation: referenceObservation
+            )
+        } else {
+            resolvedReference = nil
+        }
+
+        let closet = try await remote.listClosetItems()
+        guard closet.state == "ready" else {
+            throw FitMatchServerAuthorityError.closetRuntimeUnavailable(closet.state)
+        }
+        guard let reference = closet.items.first(where: {
+            $0.clientItemID == referenceClientItemID
+        }) else {
+            throw FitMatchServerAuthorityError.referenceItemNotFound
+        }
+
+        guard target.status == .confirmed else {
+            return blockedAuthorization(
+                reason: target.status == .notComparable
+                    ? "target_not_comparable"
+                    : "target_review_required",
+                target: target,
+                reference: reference
+            )
+        }
+
+        guard let referenceAuthority = referenceAuthority(
+            for: reference,
+            request: referenceRequest,
+            resolvedAuthority: resolvedReference
+        ) else {
+            return blockedAuthorization(
+                reason: reference.classificationStatus == "confirmed"
+                    ? "reference_authority_unverified"
+                    : "reference_classification_not_confirmed",
+                target: target,
+                reference: reference
+            )
+        }
+
+        guard referenceMatchesLocalSnapshot(
+            reference,
+            snapshot: localReferenceSnapshot
+        ) else {
+            return blockedAuthorization(
+                reason: "local_reference_snapshot_mismatch",
+                target: target,
+                reference: reference,
+                referenceAuthority: referenceAuthority
+            )
+        }
+
+        var candidates = try await remote.findReferenceCandidates(
+            targetProductID: target.productID
+        )
+        if candidates.state == "target_classification_required" {
+            target = try await resolveProductAuthority(
+                request: targetRequest,
+                observation: targetObservation
+            )
+            guard target.status == .confirmed else {
+                return blockedAuthorization(
+                    reason: "target_classification_not_confirmed_after_retry",
+                    target: target,
+                    reference: reference,
+                    referenceAuthority: referenceAuthority,
+                    candidateState: candidates.state
+                )
+            }
+            candidates = try await remote.findReferenceCandidates(
+                targetProductID: target.productID
+            )
+            if candidates.state == "target_classification_required" {
+                throw FitMatchServerAuthorityError.targetClassificationRequired
+            }
+        }
+
+        let knownStates: Set<String> = [
+            "automatic",
+            "manual_selection",
+            "measurements_required",
+            "no_compatible_garment"
+        ]
+        guard knownStates.contains(candidates.state) else {
+            throw FitMatchServerAuthorityError.unknownCandidateState(candidates.state)
+        }
+        try validateCandidateResponse(candidates)
+
+        guard let candidate = candidates.candidates.first(where: {
+            $0.closetItemID == reference.closetItemID
+        }) else {
+            return blockedAuthorization(
+                reason: "reference_not_authorized_by_server_evaluator",
+                target: target,
+                reference: reference,
+                referenceAuthority: referenceAuthority,
+                candidateState: candidates.state
+            )
+        }
+
+        if candidate.automaticReady && candidate.automaticCompatibility.allowed {
+            return FitMatchServerReferenceAuthorization(
+                decision: .automatic,
+                reason: nil,
+                target: target,
+                reference: reference,
+                referenceAuthority: referenceAuthority,
+                candidate: candidate,
+                candidateState: candidates.state
+            )
+        }
+        if candidate.manualReady && candidate.manualCompatibility.allowed {
+            return FitMatchServerReferenceAuthorization(
+                decision: .manualSelection,
+                reason: nil,
+                target: target,
+                reference: reference,
+                referenceAuthority: referenceAuthority,
+                candidate: candidate,
+                candidateState: candidates.state
+            )
+        }
+        if candidate.automaticCompatibility.allowed
+            || candidate.manualCompatibility.allowed {
+            return FitMatchServerReferenceAuthorization(
+                decision: .measurementsRequired,
+                reason: "insufficient_common_measurements",
+                target: target,
+                reference: reference,
+                referenceAuthority: referenceAuthority,
+                candidate: candidate,
+                candidateState: candidates.state
+            )
+        }
+        return blockedAuthorization(
+            reason: candidate.manualCompatibility.reason
+                ?? candidate.automaticCompatibility.reason
+                ?? "comparison_blocked",
+            target: target,
+            reference: reference,
+            referenceAuthority: referenceAuthority,
+            candidate: candidate,
+            candidateState: candidates.state
+        )
+    }
+
+    func beginAuthorizedComparison(
+        _ authorization: FitMatchServerReferenceAuthorization,
+        clientHistoryID: UUID = UUID()
+    ) async throws -> FitMatchServerComparisonPermit {
+        guard authorization.isAllowed,
+              let reference = authorization.reference else {
+            throw FitMatchServerAuthorityError.comparisonNotAuthorized
+        }
+        let allowExtended = authorization.decision == .manualSelection
+        let response = try await remote.beginComparison(
+            FitMatchBeginComparisonRequest(
+                referenceItemID: reference.closetItemID,
+                targetProductID: authorization.target.productID,
+                allowExtended: allowExtended,
+                clientHistoryID: clientHistoryID
+            )
+        )
+        guard response.status == "pending" || response.status == "completed" else {
+            if response.status == "blocked" {
+                throw FitMatchServerAuthorityError.comparisonBeginRejected(
+                    response.compatibility.reason ?? "comparison_blocked"
+                )
+            }
+            throw FitMatchServerAuthorityError.comparisonBeginMalformed(
+                "unknown_status_\(response.status)"
+            )
+        }
+        guard response.compatibility.allowed else {
+            throw FitMatchServerAuthorityError.comparisonBeginMalformed(
+                "allowed_status_with_denied_compatibility"
+            )
+        }
+        if authorization.decision == .automatic,
+           response.compatibility.level != "direct" {
+            throw FitMatchServerAuthorityError.comparisonBeginMalformed(
+                "automatic_requires_direct_compatibility"
+            )
+        }
+        return FitMatchServerComparisonPermit(
+            referenceAuthorization: authorization,
+            clientHistoryID: clientHistoryID,
+            runID: response.runID,
+            compatibility: response.compatibility
+        )
+    }
+
+    /// Recomputes the aggregate state using the exact predicates in
+    /// `fitmatch_find_reference_candidates`. A malformed response must never
+    /// authorize the measurement engine merely because one candidate carries
+    /// a permissive flag.
+    private func validateCandidateResponse(
+        _ response: FitMatchReferenceCandidatesResponse
+    ) throws {
+        guard response.policyVersion == "classification-comparison-v4" else {
+            throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                state: response.state,
+                reason: "policy_version_mismatch"
+            )
+        }
+        guard response.automaticCount >= 0,
+              response.manualCount >= 0,
+              response.structuralCount >= 0 else {
+            throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                state: response.state,
+                reason: "negative_aggregate_count"
+            )
+        }
+
+        var candidateIDs = Set<UUID>()
+        for candidate in response.candidates {
+            guard candidateIDs.insert(candidate.closetItemID).inserted else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: response.state,
+                    reason: "duplicate_candidate"
+                )
+            }
+            guard candidate.measurementOverlapCount >= 0 else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: response.state,
+                    reason: "negative_measurement_overlap"
+                )
+            }
+
+            let automaticMinimum = candidate.automaticCompatibility
+                .minimumCommonMeasurements ?? 2
+            let manualMinimum = candidate.manualCompatibility
+                .minimumCommonMeasurements ?? 2
+            guard automaticMinimum >= 0, manualMinimum >= 0 else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: response.state,
+                    reason: "negative_measurement_minimum"
+                )
+            }
+
+            let expectedAutomaticReady = candidate.automaticCompatibility.allowed
+                && candidate.automaticCompatibility.level == "direct"
+                && candidate.measurementOverlapCount >= automaticMinimum
+            guard candidate.automaticReady == expectedAutomaticReady else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: response.state,
+                    reason: "automatic_readiness_mismatch"
+                )
+            }
+
+            let expectedManualReady = candidate.manualCompatibility.allowed
+                && candidate.measurementOverlapCount >= manualMinimum
+            guard candidate.manualReady == expectedManualReady else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: response.state,
+                    reason: "manual_readiness_mismatch"
+                )
+            }
+        }
+
+        let automaticCount = response.candidates.filter(\.automaticReady).count
+        let manualCount = response.candidates.filter(\.manualReady).count
+        let structuralCount = response.candidates.filter {
+            $0.manualCompatibility.allowed
+        }.count
+        guard response.automaticCount == automaticCount,
+              response.manualCount == manualCount,
+              response.structuralCount == structuralCount else {
+            throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                state: response.state,
+                reason: "aggregate_count_mismatch"
+            )
+        }
+
+        let expectedState: String
+        if automaticCount > 0 {
+            expectedState = "automatic"
+        } else if manualCount > 0 {
+            expectedState = "manual_selection"
+        } else if structuralCount > 0 {
+            expectedState = "measurements_required"
+        } else {
+            expectedState = "no_compatible_garment"
+        }
+        guard response.state == expectedState else {
+            throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                state: response.state,
+                reason: "expected_\(expectedState)"
+            )
+        }
+    }
+
+    private func promote(
+        request: FitMatchProductResolutionRequest,
+        observation: FitMatchProductObservationRequest?,
+        expectedProductID: UUID?
+    ) async throws -> UUID {
+        guard let observation else {
+            throw FitMatchServerAuthorityError.missingObservationForPromotion
+        }
+        guard observation.payload.source
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() == request.source
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased(),
+              observation.payload.externalProductID
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                == request.externalProductID
+                    .trimmingCharacters(in: .whitespacesAndNewlines),
+              observation.payload.productName
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                == request.productName
+                    .trimmingCharacters(in: .whitespacesAndNewlines) else {
+            throw FitMatchServerAuthorityError.observationIdentityMismatch
+        }
+
+        let response = try await remote.submitProductObservation(observation)
+        guard response.observation.observationID == response.processing.observationID else {
+            throw FitMatchServerAuthorityError.promotionResponseMalformed
+        }
+        guard response.processing.status == "promoted" else {
+            throw FitMatchServerAuthorityError.promotionRejected(
+                response.processing.status
+            )
+        }
+        guard let productID = response.processing.productID else {
+            throw FitMatchServerAuthorityError.promotionResponseMalformed
+        }
+        if let expectedProductID, expectedProductID != productID {
+            throw FitMatchServerAuthorityError.promotedProductMismatch
+        }
+        return productID
+    }
+
+    private func observationCanImproveRuntime(
+        _ observation: FitMatchProductObservationRequest?,
+        runtimeState: String
+    ) -> Bool {
+        guard let observation else { return false }
+        switch runtimeState {
+        case "sizes_required":
+            return observation.payload.variants.contains { !$0.sizes.isEmpty }
+        case "measurements_required":
+            return observation.payload.variants.contains { variant in
+                variant.sizes.contains { !$0.measurements.isEmpty }
+            }
+        default:
+            return false
+        }
+    }
+
+    private func validatedAuthority(
+        _ runtime: FitMatchProductRuntimeResponse,
+        request: FitMatchProductResolutionRequest,
+        expectedProductID: UUID?
+    ) throws -> FitMatchServerProductAuthority {
+        if let expectedProductID, runtime.product.productID != expectedProductID {
+            throw FitMatchServerAuthorityError.promotedProductMismatch
+        }
+        guard runtime.product.source.lowercased() == request.source.lowercased(),
+              runtime.product.externalProductID == request.externalProductID else {
+            throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                "product_identity_mismatch"
+            )
+        }
+        guard let classification = runtime.classification else {
+            throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                "classification_missing"
+            )
+        }
+        guard classification.classificationID != nil else {
+            throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                "classification_not_persisted"
+            )
+        }
+        let status = try classificationStatus(classification.status)
+
+        switch status {
+        case .confirmed:
+            guard !classification.requiresUserConfirmation,
+                  hasText(classification.categoryCode),
+                  hasText(classification.detailCode),
+                  hasText(classification.garmentTypeCode),
+                  hasText(classification.familyCode) else {
+                throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                    "confirmed_tuple_incomplete"
+                )
+            }
+            guard ["ready", "sizes_required", "measurements_required"]
+                .contains(runtime.runtimeState) else {
+                throw FitMatchServerAuthorityError.inconsistentRuntimeState(
+                    state: runtime.runtimeState,
+                    status: status.rawValue
+                )
+            }
+            if runtime.comparisonReady != (runtime.runtimeState == "ready") {
+                throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                    "comparison_readiness_mismatch"
+                )
+            }
+        case .reviewRequired:
+            guard runtime.runtimeState == "classification_required",
+                  !runtime.comparisonReady else {
+                throw FitMatchServerAuthorityError.inconsistentRuntimeState(
+                    state: runtime.runtimeState,
+                    status: status.rawValue
+                )
+            }
+        case .notComparable:
+            guard runtime.runtimeState == "not_comparable",
+                  !runtime.comparisonReady else {
+                throw FitMatchServerAuthorityError.inconsistentRuntimeState(
+                    state: runtime.runtimeState,
+                    status: status.rawValue
+                )
+            }
+        }
+
+        return FitMatchServerProductAuthority(
+            status: status,
+            productID: runtime.product.productID,
+            classification: classification,
+            runtime: runtime
+        )
+    }
+
+    private func classificationStatus(
+        _ rawValue: String
+    ) throws -> FitMatchServerProductAuthorityStatus {
+        guard let status = FitMatchServerProductAuthorityStatus(rawValue: rawValue) else {
+            throw FitMatchServerAuthorityError.unknownClassificationStatus(rawValue)
+        }
+        return status
+    }
+
+    private func referenceAuthority(
+        for reference: FitMatchClosetItemRecord,
+        request: FitMatchProductResolutionRequest?,
+        resolvedAuthority: FitMatchServerProductAuthority?
+    ) -> FitMatchServerReferenceAuthority? {
+        guard reference.classificationStatus == "confirmed",
+              hasText(reference.categoryCode),
+              hasText(reference.detailCode),
+              hasText(reference.familyCode) else {
+            return nil
+        }
+        switch reference.classificationSource {
+        case "product_metadata":
+            guard let productID = reference.productID,
+                  let externalProductID = reference.externalProductID,
+                  let request,
+                  let authority = resolvedAuthority,
+                  request.source.caseInsensitiveCompare(reference.source) == .orderedSame,
+                  request.externalProductID == externalProductID,
+                  request.productName == reference.productName else {
+                return nil
+            }
+            guard authority.status == .confirmed,
+                  authority.productID == productID,
+                  referenceTupleMatches(
+                    reference,
+                    classification: authority.classification
+                  ) else {
+                return nil
+            }
+            return .serverConfirmed
+        case "manual_override":
+            return .userExplicit
+        default:
+            return nil
+        }
+    }
+
+    private func referenceTupleMatches(
+        _ reference: FitMatchClosetItemRecord,
+        classification: FitMatchDatabaseClassification
+    ) -> Bool {
+        let category = reference.canonicalCategoryCode ?? reference.categoryCode
+        let detail = reference.canonicalDetailCode ?? reference.detailCode
+        return category == classification.categoryCode
+            && detail == classification.detailCode
+            && reference.familyCode == classification.familyCode
+            && reference.lengthCode == classification.lengthCode
+            && reference.bodyLengthCode == classification.bodyLengthCode
+    }
+
+    private func referenceMatchesLocalSnapshot(
+        _ reference: FitMatchClosetItemRecord,
+        snapshot: FitMatchLocalReferenceSnapshot
+    ) -> Bool {
+        let category = reference.canonicalCategoryCode ?? reference.categoryCode
+        let detail = reference.canonicalDetailCode ?? reference.detailCode
+        guard reference.productName.trimmingCharacters(in: .whitespacesAndNewlines)
+                == snapshot.productName.trimmingCharacters(in: .whitespacesAndNewlines),
+              reference.sizeName?.trimmingCharacters(in: .whitespacesAndNewlines)
+                == snapshot.sizeName?.trimmingCharacters(in: .whitespacesAndNewlines),
+              category == snapshot.categoryCode,
+              detail == snapshot.detailCode,
+              reference.familyCode == snapshot.familyCode,
+              reference.lengthCode == snapshot.lengthCode else {
+            return false
+        }
+        if let bodyLengthCode = snapshot.bodyLengthCode,
+           reference.bodyLengthCode != bodyLengthCode {
+            return false
+        }
+
+        let localMeasurements = snapshot.measurements.filter {
+            $0.value.isFinite && $0.value > 0
+        }
+        let remoteMeasurements = reference.measurements.filter {
+            $0.value.isFinite && $0.value > 0
+        }
+        guard localMeasurements.keys == remoteMeasurements.keys else { return false }
+        return localMeasurements.allSatisfy { key, value in
+            guard let remoteValue = remoteMeasurements[key] else { return false }
+            return abs(value - remoteValue) < 0.000_001
+        }
+    }
+
+    private func hasText(_ value: String?) -> Bool {
+        guard let value else { return false }
+        return !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func blockedAuthorization(
+        reason: String,
+        target: FitMatchServerProductAuthority,
+        reference: FitMatchClosetItemRecord?,
+        referenceAuthority: FitMatchServerReferenceAuthority? = nil,
+        candidate: FitMatchReferenceCandidate? = nil,
+        candidateState: String? = nil
+    ) -> FitMatchServerReferenceAuthorization {
+        FitMatchServerReferenceAuthorization(
+            decision: .blocked,
+            reason: reason,
+            target: target,
+            reference: reference,
+            referenceAuthority: referenceAuthority,
+            candidate: candidate,
+            candidateState: candidateState
+        )
+    }
+}

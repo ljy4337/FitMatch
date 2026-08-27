@@ -243,6 +243,9 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
         for history: RecommendationHistory
     ) -> FitMatchProductResolutionRequest? {
         let product = history.product
+        if let request = product.fitMatchDatabaseResolutionRequest() {
+            return request
+        }
         let externalProductID = (history.productCodeSnapshot ?? product.productCode)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard let externalProductID, !externalProductID.isEmpty else { return nil }
@@ -258,10 +261,9 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
             let normalized = value?.trimmingCharacters(in: .whitespacesAndNewlines)
             return normalized?.isEmpty == false ? normalized : nil
         }
-        let audience = product.genderCodes
-            .split(separator: ",")
-            .map(String.init)
-            .first
+        let audience = FitMatchCanonicalAudience.code(
+            from: product.genderCodes.split(separator: ",").map(String.init)
+        )
 
         return FitMatchProductResolutionRequest(
             source: source,

@@ -78,7 +78,11 @@ struct ShoppingProductFormView: View {
                     ) { item in
                         dismissActiveSheet()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                            calculateAndSaveTemporaryRecommendation(selectedReferenceItem: item)
+                            Task {
+                                await calculateAndSaveTemporaryRecommendation(
+                                    selectedReferenceItem: item
+                                )
+                            }
                         }
                     } onRegister: {
                         presentAddBaselineAfterReferencePicker()
@@ -228,7 +232,7 @@ struct ShoppingProductFormView: View {
         if didLoad && viewModel.needsDetailCategoryBasis(userFits: userFits) {
             presentActiveSheet(.missingBasis)
         } else if didLoad {
-            calculateAndSaveRecommendation()
+            await calculateAndSaveRecommendation()
         }
     }
 
@@ -241,7 +245,7 @@ struct ShoppingProductFormView: View {
         await loadProductAndCalculate()
     }
 
-    private func calculateAndSaveRecommendation(allowsGlobalFallback: Bool = false) {
+    private func calculateAndSaveRecommendation(allowsGlobalFallback: Bool = false) async {
         let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
 
         if !allowsGlobalFallback && viewModel.needsDetailCategoryBasis(userFits: userFits) {
@@ -253,7 +257,7 @@ struct ShoppingProductFormView: View {
             modelContext.insert(brand)
         }
 
-        if let history = viewModel.calculateRecommendation(
+        if let history = await viewModel.calculateRecommendation(
             userFits: userFits,
             brand: brand,
             allowsGlobalFallback: allowsGlobalFallback
@@ -265,6 +269,8 @@ struct ShoppingProductFormView: View {
                 modelContext.rollback()
                 viewModel.errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
             }
+        } else if !temporaryReferenceCandidates.isEmpty {
+            presentActiveSheet(.referencePicker)
         }
     }
 
@@ -304,7 +310,9 @@ struct ShoppingProductFormView: View {
     }
 
     private var temporaryReferenceCandidates: [UserFit] {
-        userFits.sorted {
+        userFits.filter {
+            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
+        }.sorted {
             if $0.category.serviceGroup != $1.category.serviceGroup {
                 return $0.category.serviceGroup.rawValue < $1.category.serviceGroup.rawValue
             }
@@ -315,14 +323,16 @@ struct ShoppingProductFormView: View {
         }
     }
 
-    private func calculateAndSaveTemporaryRecommendation(selectedReferenceItem: UserFit) {
+    private func calculateAndSaveTemporaryRecommendation(
+        selectedReferenceItem: UserFit
+    ) async {
         let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
 
         if let brand, existingBrand(named: brand.name) == nil {
             modelContext.insert(brand)
         }
 
-        if let history = viewModel.calculateTemporaryRecommendation(
+        if let history = await viewModel.calculateTemporaryRecommendation(
             selectedReferenceItem: selectedReferenceItem,
             brand: brand
         ) {
