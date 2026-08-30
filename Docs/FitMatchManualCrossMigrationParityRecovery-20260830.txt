@@ -1,0 +1,159 @@
+FitMatch — Git ↔ Production Manual Cross-Comparison Migration Lineage Recovery
+Date: 2026-08-30 (Asia/Seoul)
+Mode: ACTUAL DEPLOYED SOURCE RECOVERY / PRODUCTION READ-ONLY / NO COMMIT OR PUSH
+
+FINAL VERDICT
+
+GIT ↔ PRODUCTION MANUAL-CROSS PARITY READY
+
+1. Environment
+
+Repository: ljy4337/FitMatch
+Branch: connectDB
+HEAD: 1d53c0ca3d92a2012686655ec309dcd2c3764ca5
+origin/connectDB: 1d53c0ca3d92a2012686655ec309dcd2c3764ca5
+Initial working tree: clean
+Reset/revert/stash/clean: 0
+Commit/push: 0
+
+2. Production baseline (SELECT-only)
+
+Project: hnkplvyegonlhumlejst
+Schema: fitmatch_vnext
+
+Migration ledger:
+- 20260830003812 / add_manual_cross_comparison_rules
+  - statement_count: 1
+  - payload bytes: 9,883
+  - payload SHA-256: d309886152575a991e1b234652c492e893ddd22716d729eeb4d6689386bad229
+- 20260830003907 / constrain_manual_cross_comparisons_by_sleeve
+  - statement_count: 1
+  - payload bytes: 9,349
+  - payload SHA-256: 024e47eff6a924ee063b368a22bd3150ee87881a079ac4b0aaf8fc5cb04489a4
+
+Production table contract:
+- fitmatch_vnext.manual_cross_comparison_rules exists.
+- Columns: policy_code_a, policy_code_b, reason, is_active, created_at, updated_at, require_same_sleeve.
+- All seven columns have the requested nullability/default semantics.
+- CHECK: policy_code_a < policy_code_b.
+- PRIMARY KEY: (policy_code_a, policy_code_b).
+
+Production rules:
+- polo_shirt / tshirt: active=true, require_same_sleeve=true.
+- hoodie / sweatshirt: active=true, require_same_sleeve=true.
+- knit_sweater / sweatshirt: active=true, require_same_sleeve=true.
+
+Production authorize_comparison contract:
+- Signature: fitmatch_vnext.authorize_comparison(uuid,uuid,uuid,boolean).
+- SECURITY DEFINER: true.
+- Fixed empty search_path: true.
+- manual_cross_comparison_rules lookup: present.
+- same-sleeve guard: present.
+- MANUAL_EXTENDED result path: present.
+- authorization marker: fitmatch-vnext-authorization-v3.
+- pg_get_functiondef SHA-256: 4dd5c5fc4e6ba824fedbb079824032b0d46decb2b780f3975387c4513b6e2b0d.
+
+3. Source recovery
+
+Local pre-recovery search classification:
+- CASE A: not found.
+- CASE B: not found.
+- CASE C: not found.
+- CASE D: confirmed before Production ledger recovery.
+
+Search scope included:
+- supabase/migrations exact version filenames.
+- tracked and untracked workspace content.
+- all Git refs/log/reflog markers.
+- local temporary/session/history locations for exact migration markers.
+
+Actual source recovery location:
+- supabase_migrations.schema_migrations.statements[1] in Production.
+- The ledger preserved one exact SQL statement payload for each migration.
+- Current Production schema/function definitions were used only for parity inspection, not as migration source.
+- No approximate or newly designed migration SQL was created.
+
+Recovered files:
+- supabase/migrations/20260830003812_add_manual_cross_comparison_rules.sql
+- supabase/migrations/20260830003907_constrain_manual_cross_comparisons_by_sleeve.sql
+
+Exact-source proof:
+- Local file 20260830003812: 9,883 bytes and SHA-256 d309886152575a991e1b234652c492e893ddd22716d729eeb4d6689386bad229.
+- Local file 20260830003907: 9,349 bytes and SHA-256 024e47eff6a924ee063b368a22bd3150ee87881a079ac4b0aaf8fc5cb04489a4.
+- Both byte counts and hashes exactly equal their Production ledger payloads.
+
+4. Git ↔ Production parity
+
+Migration identity: PASS
+- Version and name match both Production ledger rows exactly.
+
+Schema parity: PASS
+- Recovered SQL creates the exact seven-column table contract, order CHECK, and composite primary key observed in Production.
+
+Rule parity: PASS
+- Exact three normalized policy pairs are present.
+- All remain active and require_same_sleeve=true.
+- Seed reasons explicitly limit the rules to user-explicit selection and state that automatic reference selection remains disabled.
+
+Runtime function parity: PASS
+- Local replay resulting authorize_comparison definition SHA-256 exactly equals Production: 4dd5c5fc4e6ba824fedbb079824032b0d46decb2b780f3975387c4513b6e2b0d.
+- Manual cross lookup uses the normalized policy pair.
+- p_manual_explicit=false does not open cross-policy comparison.
+- Active same-sleeve explicit rule continues through measurement minimum enforcement and returns MANUAL_EXTENDED when other gates pass.
+- A sleeve mismatch is rejected when require_same_sleeve=true.
+
+5. Disposable replay
+
+Result: PASS
+PostgreSQL server/client: PostgreSQL 17.11 (Homebrew)
+Disposable path: /tmp/FitMatchManualCrossPG17-fyqULDUP
+Port: 55449 (non-default)
+Persistent brew service: not started
+Production/user data copied: 0
+Fixture: minimal non-user production-shaped dependency fixture in local DB only
+
+First apply:
+- 20260830003812: PASS, 0.04 seconds.
+- 20260830003907: PASS, 0.04 seconds.
+- Table: 7 columns / 2 constraints.
+- Rules: 3 total / 3 active same-sleeve.
+- Function compile: PASS.
+- Local function SHA-256 equals Production.
+
+Runtime assertions:
+- short tshirt ↔ short polo, automatic path: BLOCKED.
+- short tshirt ↔ short polo, explicit manual path with measurement gates met: MANUAL_EXTENDED.
+- short tshirt ↔ long polo, explicit manual path: BLOCKED.
+
+Reapply:
+- Both recovered migrations reapplied without duplicate rules or object conflicts.
+- Rules remained exactly 3.
+- Runtime assertions remained PASS.
+- Function SHA-256 remained equal to Production.
+
+Cleanup:
+- Local server stopped.
+- Exact disposable directory deleted.
+- Port 55449 listener after cleanup: 0.
+
+6. Safety and diff audit
+
+Production SELECT/introspection calls only: confirmed.
+Production writes: 0
+Production migration apply: 0
+Production function replace: 0
+Ledger repair/fake marking: 0
+Swift changes: 0
+Edge changes/deploys: 0
+Classification/mapping/taxonomy/data changes: 0
+Git commit/push: 0
+
+7. Remaining issue
+
+The recovered files are present in the local working tree but remain untracked and are not yet published to origin/connectDB because commit/push was explicitly prohibited. This is the only operational parity-publishing step; it does not alter the recovered source or Production runtime.
+
+8. Final verdict
+
+GIT ↔ PRODUCTION MANUAL-CROSS PARITY READY
+
+Next authorized stage: rerun the existing Chat 5.6 Pro REVIEW_REQUIRED Recovery READ-ONLY audit. No Production write or additional comparison-policy design was started.
