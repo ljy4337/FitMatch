@@ -1025,6 +1025,8 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
     let targetVariantID: UUID?
     let authorizationProductSizeID: UUID?
     let candidateProductSizeIDs: [UUID]?
+    let effectiveAuthorityFingerprint: String?
+    let personalOverrideRevision: Int?
 
     init(
         referenceItemID: UUID,
@@ -1033,7 +1035,9 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
         clientHistoryID: UUID,
         targetVariantID: UUID? = nil,
         authorizationProductSizeID: UUID? = nil,
-        candidateProductSizeIDs: [UUID]? = nil
+        candidateProductSizeIDs: [UUID]? = nil,
+        effectiveAuthorityFingerprint: String? = nil,
+        personalOverrideRevision: Int? = nil
     ) {
         self.referenceItemID = referenceItemID
         self.targetProductID = targetProductID
@@ -1042,7 +1046,27 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
         self.targetVariantID = targetVariantID
         self.authorizationProductSizeID = authorizationProductSizeID
         self.candidateProductSizeIDs = candidateProductSizeIDs
+        self.effectiveAuthorityFingerprint = effectiveAuthorityFingerprint
+        self.personalOverrideRevision = personalOverrideRevision
     }
+}
+
+nonisolated struct FitMatchSetUserProductClassificationRequest:
+    Equatable, Sendable {
+    let productID: UUID
+    let selectedCandidateFingerprint: String
+    let expectedCandidateSetHash: String
+    let expectedProductInputFingerprint: String
+    let expectedProductEvidenceFingerprint: String
+    let mutationID: UUID
+    let expectedRevision: Int
+}
+
+nonisolated struct FitMatchClearUserProductClassificationRequest:
+    Equatable, Sendable {
+    let productID: UUID
+    let mutationID: UUID
+    let expectedRevision: Int
 }
 
 nonisolated struct FitMatchBeginComparisonResponse: Decodable, Equatable, Sendable {
@@ -1206,6 +1230,14 @@ protocol FitMatchDatabaseDomainServicing:
     FitMatchProductObservationSubmitting {
     func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductRuntimeResponse
+    func classificationRecoveryOptions(productID: UUID) async throws
+        -> VNextClassificationRecoveryContractDTO
+    func setUserProductClassification(
+        _ request: FitMatchSetUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO
+    func clearUserProductClassification(
+        _ request: FitMatchClearUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO
     func registerClosetItem(_ request: FitMatchRegisterClosetItemRequest) async throws -> UUID
     func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
         -> FitMatchUpsertClosetItemResponse
@@ -1503,6 +1535,48 @@ nonisolated private struct VNextEligibleCandidateParameters: Encodable, Sendable
     }
 }
 
+nonisolated private struct VNextRecoveryOptionsParameters: Encodable, Sendable {
+    let pProductID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case pProductID = "p_product_id"
+    }
+}
+
+nonisolated private struct VNextSetUserProductClassificationParameters:
+    Encodable, Sendable {
+    let pProductID: UUID
+    let pSelectedCandidateFingerprint: String
+    let pExpectedCandidateSetHash: String
+    let pExpectedProductInputFingerprint: String
+    let pExpectedProductEvidenceFingerprint: String
+    let pMutationID: UUID
+    let pExpectedRevision: Int
+
+    enum CodingKeys: String, CodingKey {
+        case pProductID = "p_product_id"
+        case pSelectedCandidateFingerprint = "p_selected_candidate_fingerprint"
+        case pExpectedCandidateSetHash = "p_expected_candidate_set_hash"
+        case pExpectedProductInputFingerprint = "p_expected_product_input_fingerprint"
+        case pExpectedProductEvidenceFingerprint = "p_expected_product_evidence_fingerprint"
+        case pMutationID = "p_mutation_id"
+        case pExpectedRevision = "p_expected_revision"
+    }
+}
+
+nonisolated private struct VNextClearUserProductClassificationParameters:
+    Encodable, Sendable {
+    let pProductID: UUID
+    let pMutationID: UUID
+    let pExpectedRevision: Int
+
+    enum CodingKeys: String, CodingKey {
+        case pProductID = "p_product_id"
+        case pMutationID = "p_mutation_id"
+        case pExpectedRevision = "p_expected_revision"
+    }
+}
+
 nonisolated private struct VNextBeginComparisonPayload: Encodable, Sendable {
     let clientComparisonID: UUID
     let referenceClosetItemID: UUID
@@ -1511,6 +1585,8 @@ nonisolated private struct VNextBeginComparisonPayload: Encodable, Sendable {
     let authorizationProductSizeID: UUID?
     let manualExplicit: Bool
     let candidateProductSizeIDs: [UUID]?
+    let effectiveAuthorityFingerprint: String?
+    let personalOverrideRevision: Int?
 
     enum CodingKeys: String, CodingKey {
         case clientComparisonID = "client_comparison_id"
@@ -1520,6 +1596,8 @@ nonisolated private struct VNextBeginComparisonPayload: Encodable, Sendable {
         case authorizationProductSizeID = "authorization_product_size_id"
         case manualExplicit = "manual_explicit"
         case candidateProductSizeIDs = "candidate_product_size_ids"
+        case effectiveAuthorityFingerprint = "effective_authority_fingerprint"
+        case personalOverrideRevision = "personal_override_revision"
     }
 }
 
@@ -1721,6 +1799,59 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         try Self.mapRuntime(try await fetchVNextRuntime(request))
     }
 
+    func classificationRecoveryOptions(productID: UUID) async throws
+        -> VNextClassificationRecoveryContractDTO {
+        let client = try await authenticatedClient()
+        return try await client
+            .rpc(
+                "fitmatch_vnext_get_classification_recovery_options",
+                params: VNextRecoveryOptionsParameters(pProductID: productID)
+            )
+            .execute()
+            .value
+    }
+
+    func setUserProductClassification(
+        _ request: FitMatchSetUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO {
+        let client = try await authenticatedClient()
+        return try await client
+            .rpc(
+                "fitmatch_vnext_set_user_product_classification",
+                params: VNextSetUserProductClassificationParameters(
+                    pProductID: request.productID,
+                    pSelectedCandidateFingerprint:
+                        request.selectedCandidateFingerprint,
+                    pExpectedCandidateSetHash: request.expectedCandidateSetHash,
+                    pExpectedProductInputFingerprint:
+                        request.expectedProductInputFingerprint,
+                    pExpectedProductEvidenceFingerprint:
+                        request.expectedProductEvidenceFingerprint,
+                    pMutationID: request.mutationID,
+                    pExpectedRevision: request.expectedRevision
+                )
+            )
+            .execute()
+            .value
+    }
+
+    func clearUserProductClassification(
+        _ request: FitMatchClearUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO {
+        let client = try await authenticatedClient()
+        return try await client
+            .rpc(
+                "fitmatch_vnext_clear_user_product_classification",
+                params: VNextClearUserProductClassificationParameters(
+                    pProductID: request.productID,
+                    pMutationID: request.mutationID,
+                    pExpectedRevision: request.expectedRevision
+                )
+            )
+            .execute()
+            .value
+    }
+
     func findReferenceCandidates(targetProductID: UUID) async throws
         -> FitMatchReferenceCandidatesResponse {
         throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
@@ -1779,7 +1910,10 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     targetVariantID: targetVariantID,
                     authorizationProductSizeID: request.authorizationProductSizeID,
                     manualExplicit: request.allowExtended,
-                    candidateProductSizeIDs: request.candidateProductSizeIDs
+                    candidateProductSizeIDs: request.candidateProductSizeIDs,
+                    effectiveAuthorityFingerprint:
+                        request.effectiveAuthorityFingerprint,
+                    personalOverrideRevision: request.personalOverrideRevision
                 ))
             )
             .execute()
@@ -1857,27 +1991,69 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
               let readiness = exact.readiness else {
             throw FitMatchSupabaseProductResolverError.invalidVNextResponse
         }
+        let effective = exact.effectiveClassification
+        if let effective, effective.productID != product.id {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        let serverStatus = effective?.classificationStatus
+            ?? product.classificationStatus
         let normalizedStatus: String
-        switch product.classificationStatus {
+        switch serverStatus {
         case "CONFIRMED": normalizedStatus = "confirmed"
         case "REVIEW_REQUIRED": normalizedStatus = "review_required"
         case "NOT_APPLICABLE": normalizedStatus = "not_comparable"
-        default: normalizedStatus = product.classificationStatus.lowercased()
+        default: throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        if let effective {
+            let validState: Bool
+            switch (effective.state, effective.classificationStatus, effective.effectiveSource) {
+            case ("GLOBAL_CONFIRMED", "CONFIRMED", "GLOBAL_CONFIRMED"),
+                 ("SUPERSEDED_MATCH", "CONFIRMED", "GLOBAL_CONFIRMED"),
+                 ("SUPERSEDED_CONFLICT", "CONFIRMED", "GLOBAL_CONFIRMED"),
+                 ("PERSONAL_CONFIRMED", "CONFIRMED", "USER_EXPLICIT"),
+                 ("REVIEW_REQUIRED", "REVIEW_REQUIRED", "NONE"),
+                 ("STALE_RECONFIRM_REQUIRED", "REVIEW_REQUIRED", "NONE"),
+                 ("GLOBAL_NOT_APPLICABLE", "NOT_APPLICABLE", "GLOBAL_NOT_APPLICABLE"):
+                validState = true
+            default:
+                validState = false
+            }
+            guard validState else {
+                throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+            }
+        }
+        let effectiveCategory = effective?.categoryCode ?? product.categoryCode
+        let effectiveGarment = effective?.garmentTypeCode ?? product.garmentTypeCode
+        let effectivePolicy = effective?.comparisonPolicyCode
+            ?? product.comparisonPolicyCode
+        let effectiveSleeve = effective?.sleeveLengthCode
+            ?? product.sleeveLengthCode
+        let effectiveLower = effective?.lowerLengthCode
+            ?? product.lowerLengthCode
+        let effectiveBody = effective?.bodyLengthCode ?? product.bodyLengthCode
+        if normalizedStatus == "confirmed" {
+            guard effectiveCategory?.isEmpty == false,
+                  effectiveGarment?.isEmpty == false,
+                  effectivePolicy?.isEmpty == false else {
+                throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+            }
         }
         let classification = FitMatchDatabaseClassification(
             classificationID: product.id,
-            categoryCode: product.categoryCode,
-            detailCode: product.garmentTypeCode,
-            garmentTypeCode: product.garmentTypeCode,
-            familyCode: product.garmentTypeCode,
-            lengthCode: product.sleeveLengthCode ?? product.lowerLengthCode,
-            bodyLengthCode: product.bodyLengthCode,
+            categoryCode: effectiveCategory,
+            detailCode: effectiveGarment,
+            garmentTypeCode: effectiveGarment,
+            familyCode: effectivePolicy,
+            lengthCode: effectiveSleeve ?? effectiveLower,
+            bodyLengthCode: effectiveBody,
             status: normalizedStatus,
-            method: product.resolverVersion,
-            authorityStatus: "server",
+            method: effective?.effectiveContractVersion ?? product.resolverVersion,
+            authorityStatus: effective?.effectiveSource == "USER_EXPLICIT"
+                ? "user_explicit" : "server",
             confidence: nil,
             requiresUserConfirmation: normalizedStatus != "confirmed",
-            taxonomyPolicyVersion: product.resolverVersion,
+            taxonomyPolicyVersion: effective?.effectiveContractVersion
+                ?? product.resolverVersion,
             decisionVersion: nil
         )
         let variants = exact.variants.enumerated().map { variantIndex, variant in

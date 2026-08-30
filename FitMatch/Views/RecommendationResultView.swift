@@ -8,6 +8,8 @@ struct RecommendationResultView: View {
     let result: RecommendationHistory
     private let opensReferencePickerOnAppear: Bool
     private let onResultPersisted: ((RecommendationHistory) -> Void)?
+    private let onReselectClassification: (() -> Void)?
+    private let onClearClassification: (() -> Void)?
     private let resultCalculationSnapshot: RecommendationCalculationSnapshot?
     private let resultComparedMeasurementUsages: [MeasurementComparisonUsage]
     private let resultMeasurementExclusions: [MeasurementComparisonExclusion]
@@ -37,13 +39,17 @@ struct RecommendationResultView: View {
     init(
         result: RecommendationHistory,
         opensReferencePickerOnAppear: Bool = false,
-        onResultPersisted: ((RecommendationHistory) -> Void)? = nil
+        onResultPersisted: ((RecommendationHistory) -> Void)? = nil,
+        onReselectClassification: (() -> Void)? = nil,
+        onClearClassification: (() -> Void)? = nil
     ) {
         let comparisonData = result.comparisonData
         self.diagnosticsStartedAt = DetailPerformanceDiagnostics.now()
         self.result = result
         self.opensReferencePickerOnAppear = opensReferencePickerOnAppear
         self.onResultPersisted = onResultPersisted
+        self.onReselectClassification = onReselectClassification
+        self.onClearClassification = onClearClassification
         self.resultCalculationSnapshot = comparisonData.calculationSnapshot
         self.resultComparedMeasurementUsages = comparisonData.comparedMeasurementUsages
         self.resultMeasurementExclusions = comparisonData.measurementExclusions
@@ -1339,7 +1345,41 @@ struct RecommendationResultView: View {
     }
 
     private var resultBottomActionBar: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
+            if onReselectClassification != nil || onClearClassification != nil {
+                HStack(spacing: 10) {
+                    if let onReselectClassification {
+                        Button(action: onReselectClassification) {
+                            Label("상품 종류 다시 확인", systemImage: "arrow.triangle.2.circlepath")
+                                .font(.subheadline.weight(.bold))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 42)
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.primary)
+                        .background(
+                            Color(.secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                    }
+
+                    if let onClearClassification {
+                        Button(role: .destructive, action: onClearClassification) {
+                            Text("내 선택 초기화")
+                                .font(.subheadline.weight(.bold))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 42)
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.red)
+                        .background(
+                            Color(.secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                    }
+                }
+            }
+
             Button {
                 presentActiveSheet(.addToCloset)
             } label: {

@@ -1,0 +1,220 @@
+FitMatch REVIEW_REQUIRED Recovery Implementation
+Generated: 2026-08-30 Asia/Seoul
+
+1. Final Git branch / HEAD / status
+
+- Branch: connectDB
+- Start HEAD: b419f159962e1447ae2981be3747436117d7faef
+- End HEAD: b419f159962e1447ae2981be3747436117d7faef
+- origin/connectDB at preflight: b419f159962e1447ae2981be3747436117d7faef
+- Working tree: intentionally dirty with only the implementation, tests, validation artifacts, this report, and handoff update. No reset, restore, stash, clean, commit, or push was performed.
+- git diff --check: PASS
+
+2. Changed files
+
+- FitMatch/Services/FitMatchVNextDTOs.swift
+- FitMatch/Services/FitMatchSupabaseProductResolver.swift
+- FitMatch/Services/FitMatchServerAuthorityCoordinator.swift
+- FitMatch/ViewModels/ShoppingProductViewModel.swift
+- FitMatch/Views/CompareFlowSheet.swift
+- FitMatchTests/FitMatchReviewRequiredRecoveryTests.swift
+- supabase/migrations/20260830090000_vnext_leaf_specificity_correction.sql
+- supabase/migrations/20260830091000_vnext_review_required_recovery.sql
+- supabase/sql/124_vnext_review_required_recovery_local_fixture.sql
+- supabase/sql/124_vnext_review_required_recovery_validation.sql
+- Docs/FitMatchReviewRequiredRecoveryImplementation-20260830.txt
+- Docs/CodexSessionHandoff.md
+
+Protected areas remained unchanged: MeasurementComparisonEngine scoring, comparison weights/formulas, manual-cross rule rows, Edge Function, SwiftData persisted schema, navigation structure, Share Extension, TabBar/header scrolling, and existing Production migrations.
+
+3. DB migrations added
+
+20260830090000_vnext_leaf_specificity_correction.sql
+- Corrects only demonstrable false REVIEW_REQUIRED cases where a verified DIRECT signal is a real descendant, through parent_signal_id, of a competing PRODUCT_REQUIRED ancestor at the same authority/rank/priority.
+- Does not use product names, path-prefix guesses, or evidence_order as specificity.
+- Contains corpus preconditions proving existing CONFIRMED and NOT_APPLICABLE classifications are unchanged and every new CONFIRMED tuple is valid.
+
+20260830091000_vnext_review_required_recovery.sql
+- Adds user_product_classification_overrides as the current user/product-scoped USER_EXPLICIT projection.
+- Adds append-only user_classification_feedback_evidence.
+- Adds server-owned bounded recovery options, set/clear mutations, effective classification resolution, effective-context measurements/readiness, comparison-chain integration, and immutable begin snapshot schema v4.
+- Existing global CONFIRMED and NOT_APPLICABLE paths retain precedence. No global Product is promoted by feedback.
+
+4. Production writes actually performed
+
+- Production INSERT/UPDATE/DELETE/DDL/migration apply: 0
+- Production active release, mapping, classification, measurement, availability, history, Edge, and Auth changes: 0
+- Production access during this work was SELECT/introspection only.
+
+5. Before/after classification counts
+
+Actual Production, unchanged:
+- Products: 1,608
+- CONFIRMED: 203
+- REVIEW_REQUIRED: 1,308
+- NOT_APPLICABLE: 97
+- Invalid CONFIRMED tuple: 0
+- Deterministic replay mismatch: 0
+- Duplicate Product / variant orphan / size orphan / measurement orphan: 0 / 0 / 0 / 0
+
+Full-corpus dry-run after applying only the leaf-specificity correction:
+- CONFIRMED: 346 (+143)
+- REVIEW_REQUIRED: 1,165 (-143)
+- NOT_APPLICABLE: 97 (unchanged)
+- Existing CONFIRMED tuple changes: 0
+- NOT_APPLICABLE changes: 0
+- Newly invalid tuples: 0
+
+The projected counts are not Production state; the migration was not applied.
+
+At the final SELECT-only timestamp, readiness was NO_AVAILABLE_SIZE 201 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97 / READY 0. The three Golden availability rows had naturally expired at 2026-08-30 01:42:43.426905Z, moving READY 3 to READY 0 and NO_AVAILABLE_SIZE 198 to 201 without any write or identity/classification change. This temporal result is reported as observed and is not labeled PASS.
+
+6. False-review correction result
+
+- Current REVIEW_REQUIRED reason distribution was independently recalculated: equal-top different outcomes 143; no active verified mapping candidate 352; exact product evidence required 389; UNKNOWN product structure 424.
+- Exact hierarchy dry-run moved all and only 143 demonstrable descendant-DIRECT/ancestor-PRODUCT_REQUIRED conflicts to CONFIRMED.
+- No hard-coded product count drives the migration; 143 is the current-corpus result of the hierarchy contract.
+- The other 1,165 REVIEW_REQUIRED products remain fail-closed.
+
+7. Recovery eligibility distribution
+
+For the current 389 exact-product-evidence-required cases, verified descendant DIRECT candidates were recalculated as:
+- 0 candidates: 270
+- 1 candidate: 7
+- 2 candidates: 5
+- 3 candidates: 107
+- More than 3 candidates: 0
+- Recoverable v1 envelope (1...3 candidates): 119
+- Unrecoverable: 270
+
+UNKNOWN structure and no verified descendant candidate remain unrecoverable. Candidate generation does not walk upward to broad ancestors and never emits a generic 47-type picker.
+
+8. USER_EXPLICIT authority contract
+
+- The client selects only an opaque server-issued candidate fingerprint and returns the server candidate-set hash plus expected product/evidence fingerprints and revision.
+- The server authenticates, recomputes the current envelope, validates tuple/fixed facts/hash/fingerprints/revision, then writes a user/product-scoped projection and appends feedback evidence transactionally.
+- A raw client garment tuple cannot become authority.
+- CLEAR deactivates only the personal projection and appends CLEARED evidence.
+- Two users may select different candidates without changing fitmatch_vnext.products or global classification.
+- Feedback never becomes a global mapping, exact-product decision, or global CONFIRMED state.
+
+9. Effective classification precedence
+
+- Global NOT_APPLICABLE: block.
+- Global CONFIRMED: use global authority; an older personal projection becomes SUPERSEDED_MATCH or SUPERSEDED_CONFLICT evidence but does not control future comparison.
+- Global REVIEW_REQUIRED plus a current valid owned projection: PERSONAL_CONFIRMED / USER_EXPLICIT.
+- Global REVIEW_REQUIRED without a valid projection: REVIEW_REQUIRED.
+- Stale fingerprints, candidate contract, or revision: STALE_RECONFIRM_REQUIRED.
+- Historical evidence is preserved; completed comparison meaning is never rewritten.
+
+10. Measurement-context implementation
+
+- Effective-context canonical measurement and readiness paths use the same effective tuple used by discovery and authorization.
+- USER_EXPLICIT creates no measurement data and invents no aliases or mappings.
+- Only existing canonical/raw measurements and verified semantic mappings are used; missing data and semantic conflicts remain fail-closed.
+- SQL regression proves an equivalent global CONFIRMED polo/short product and REVIEW_REQUIRED plus USER_EXPLICIT polo/short product produce identical canonical measurements, eligible size UUIDs, policy, exclusions, and comparison engine inputs, excluding provenance fields.
+
+11. Auto-resume sequence
+
+The iOS release path is:
+global/effective runtime resolve
+→ recovery options when required
+→ opaque USER_EXPLICIT selection saved
+→ effective runtime refetched
+→ find_reference_candidates
+→ automatic or explicit reference decision
+→ authorize_comparison
+→ eligible_candidate_sizes
+→ begin_comparison
+→ MeasurementComparisonEngine
+→ complete_comparison
+→ immutable server History and local cache.
+
+The coordinator owns the sequence. CompareFlowSheet renders only server-known fixed facts and constrained server candidates. Choosing a target classification never sets manual-explicit comparison intent and never calls the scorer directly.
+
+12. Manual-cross regression results
+
+- Existing rules remain exactly: tshirt↔polo_shirt, sweatshirt↔hoodie, sweatshirt↔knit_sweater; explicit manual selection only; require_same_sleeve=true.
+- USER_EXPLICIT short polo target + short polo reference: AUTOMATIC path available when all other gates pass.
+- USER_EXPLICIT short polo target + short tshirt: automatic BLOCK; explicit reference selection may return MANUAL_EXTENDED.
+- USER_EXPLICIT short polo target + long tshirt: BLOCK even when manual-explicit.
+- Manual-cross policy rows and authorization-v3 migration lineage were not modified.
+
+13. History snapshot version/provenance
+
+- New comparisons use begin snapshot schema v4; old rows are not rewritten.
+- The snapshot records global classification at begin, personal projection ID/revision/candidate provenance, effective classification, policy/checksum, candidate authority fingerprint, excluded metrics, reference provenance, target-size evidence, and deterministic manual-cross rule fingerprint when used.
+- Later personal edit/clear or global reclassification cannot alter an existing completed History.
+- Swift DTOs decode v4 while preserving older snapshot compatibility.
+
+14. RLS/security results
+
+Disposable PostgreSQL tests PASS:
+- other-user override read/mutation blocked
+- arbitrary raw tuple impossible through the public mutation contract
+- invalid candidate fingerprint, stale candidate-set hash, stale product/evidence fingerprint, stale revision, and cleared/stale authority rejected
+- append-only feedback cannot be updated/deleted by authenticated users
+- global Product/classification unchanged across two-user divergent choices
+- public wrappers are controlled SECURITY DEFINER boundaries with fixed search_path; anon is denied; broad table writes are not granted
+- begin independently recomputes authority and rejects subset/superset/duplicate/unavailable/expired/stale inputs.
+
+15. Swift build results
+
+- Xcode: 26.3
+- Destination: iPhone 17 Pro simulator, iOS 26.3.1, x86_64
+- App target build: PASS
+- Test target build-for-testing: PASS
+- SwiftData schema build impact: none
+
+16. Test counts PASS / FAIL / SKIP
+
+PostgreSQL 17.11 disposable validation, final run:
+- Cluster: /tmp/FitMatchReviewRecoveryPG17-final2
+- Port: 55469
+- Fixture → 90000 → 91000 first apply: PASS
+- Contract/security/lifecycle validation: PASS
+- Validation transaction ROLLBACK: PASS
+- Both migrations reapply: PASS
+- Validation after reapply + ROLLBACK: PASS
+- Post-rollback override / feedback / comparison rows: 0 / 0 / 0
+- Cluster stopped and exact temporary directory deleted.
+
+Focused Xcode suites:
+- PASS 90 / FAIL 0 / SKIP 0
+- Includes 4 new Recovery tests and all critical vNext authority, comparison sequencing, Closet, resolver, and prior P0-remediation suites.
+
+Full FitMatchTests:
+- Total 544
+- PASS 506 / FAIL 1 / SKIP 37
+- The only failure remains the unchanged legacy DBLogicReliabilityAuditTests/testDBLogicAdjudicationMatchesProductionClassifier corpus mismatch (first reported MUSINSA 5049615 sleeveless vs expected blouse). No expected value was changed and no new Recovery/critical failure was added.
+
+17. Unverified areas
+
+- Production migration application and Production runtime/RLS mutation probes: NOT RUN; Production writes were forbidden by scope.
+- Physical signed-in iPhone Recovery E2E and cross-device/device-restart behavior: NOT RUN.
+- Full scorer→complete path using a Production USER_EXPLICIT row: NOT RUN. The local SQL fixture validates through immutable begin snapshot v4; the unchanged completion security contract is covered by existing critical Swift/server tests.
+- UI test target: NOT RUN in this implementation pass.
+- Golden provider readiness regression is not currently verifiable as 3/3 because the existing availability evidence expired naturally; fresh retailer evidence was not written.
+
+18. Remaining P0 / P1 / P2
+
+P0:
+- Repository/local implementation P0: 0.
+- Production readiness is not claimed until the two new migrations are explicitly reviewed/applied and postflight succeeds.
+
+P1:
+- New migration and Swift artifacts remain local/unpublished because commit/push were prohibited.
+- Physical signed-in iPhone and multi-device Recovery E2E remains the deployment-stage gate.
+- Golden availability evidence must be refreshed through normal retailer ingestion before asserting READY 3/3; no manual availability repair should be used.
+- The existing legacy adjudication unit mismatch remains unchanged.
+
+P2:
+- No new P2 remediation was undertaken; unrelated prior cleanup/observability/performance debt remains outside scope.
+
+19. Final verdict
+
+IMPLEMENTATION PASS
+
+The repository implementation satisfies the required product invariant locally: it asks only server-bounded unresolved facts, scopes the answer to the authenticated user, and restarts the existing server-authorized comparison chain without a scorer shortcut, global promotion, hidden Closet row, stale personal authority, or historical rewrite.
+
+This verdict is not a Production deployment or physical-iPhone verification claim. The exact next controlled step is owner review of the two migrations and their validation artifacts, followed by an explicitly approved Production apply/security-data postflight and then signed-in physical iPhone E2E.

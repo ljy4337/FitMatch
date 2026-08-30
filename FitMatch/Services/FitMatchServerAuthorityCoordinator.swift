@@ -7,6 +7,14 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
         -> FitMatchProductObservationResponse
     func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductRuntimeResponse
+    func classificationRecoveryOptions(productID: UUID) async throws
+        -> VNextClassificationRecoveryContractDTO
+    func setUserProductClassification(
+        _ request: FitMatchSetUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO
+    func clearUserProductClassification(
+        _ request: FitMatchClearUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO
     func listClosetItems() async throws -> FitMatchClosetItemsResponse
     func findReferenceCandidates(targetProductID: UUID) async throws
         -> FitMatchReferenceCandidatesResponse
@@ -29,6 +37,23 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
 extension FitMatchSupabaseDomainClient: FitMatchServerAuthorityRemoteServicing {}
 
 extension FitMatchServerAuthorityRemoteServicing {
+    func classificationRecoveryOptions(productID: UUID) async throws
+        -> VNextClassificationRecoveryContractDTO {
+        throw FitMatchServerAuthorityError.classificationRecoveryUnavailable
+    }
+
+    func setUserProductClassification(
+        _ request: FitMatchSetUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO {
+        throw FitMatchServerAuthorityError.classificationRecoveryUnavailable
+    }
+
+    func clearUserProductClassification(
+        _ request: FitMatchClearUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO {
+        throw FitMatchServerAuthorityError.classificationRecoveryUnavailable
+    }
+
     func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID) async throws
         -> FitMatchReferenceCandidatesResponse {
         try await findReferenceCandidates(targetProductID: targetProductID)
@@ -167,6 +192,9 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
     case runtimeResponseMalformed(String)
     case unknownClassificationStatus(String)
     case inconsistentRuntimeState(state: String, status: String)
+    case classificationRecoveryUnavailable
+    case invalidClassificationRecoveryContract(String)
+    case classificationRecoveryRejected(String)
     case closetRuntimeUnavailable(String)
     case referenceItemNotFound
     case targetClassificationRequired
@@ -199,6 +227,12 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
             return "알 수 없는 서버 분류 상태입니다: \(status)"
         case .inconsistentRuntimeState(let state, let status):
             return "서버 런타임과 분류 상태가 일치하지 않습니다: \(state)/\(status)"
+        case .classificationRecoveryUnavailable:
+            return "서버 상품 분류 확인 기능을 사용할 수 없습니다."
+        case .invalidClassificationRecoveryContract(let reason):
+            return "서버 상품 분류 선택지가 올바르지 않습니다: \(reason)"
+        case .classificationRecoveryRejected(let reason):
+            return "상품 분류 선택을 저장하지 못했습니다: \(reason)"
         case .closetRuntimeUnavailable(let state):
             return "서버 옷장 상태를 사용할 수 없습니다: \(state)"
         case .referenceItemNotFound:
@@ -235,6 +269,101 @@ actor FitMatchServerAuthorityCoordinator {
 
     init(remote: any FitMatchServerAuthorityRemoteServicing) {
         self.remote = remote
+    }
+
+    func classificationRecoveryOptions(
+        productID: UUID
+    ) async throws -> VNextClassificationRecoveryContractDTO {
+        let contract = try await remote.classificationRecoveryOptions(
+            productID: productID
+        )
+        guard contract.productID == productID,
+              contract.globalStatus == "REVIEW_REQUIRED" else {
+            throw FitMatchServerAuthorityError.invalidClassificationRecoveryContract(
+                "product_or_global_status_mismatch"
+            )
+        }
+        if contract.recoverability == .recoverable {
+            guard contract.isSafelyRecoverable,
+                  Set(contract.candidates.map(\.candidateFingerprint)).count
+                    == contract.candidates.count,
+                  contract.candidates.allSatisfy({ candidate in
+                      !candidate.candidateFingerprint.isEmpty
+                          && !candidate.categoryCode.isEmpty
+                          && !candidate.garmentTypeCode.isEmpty
+                          && !candidate.comparisonPolicyCode.isEmpty
+                  }) else {
+                throw FitMatchServerAuthorityError.invalidClassificationRecoveryContract(
+                    "unbounded_or_incomplete_candidate_set"
+                )
+            }
+        } else if !contract.candidates.isEmpty {
+            throw FitMatchServerAuthorityError.invalidClassificationRecoveryContract(
+                "unrecoverable_contract_contains_candidates"
+            )
+        }
+        return contract
+    }
+
+    func setUserProductClassification(
+        contract: VNextClassificationRecoveryContractDTO,
+        candidate: VNextClassificationRecoveryCandidateDTO,
+        expectedRevision: Int,
+        mutationID: UUID = UUID()
+    ) async throws -> VNextUserClassificationMutationDTO {
+        guard contract.isSafelyRecoverable,
+              let candidateSetHash = contract.candidateSetHash,
+              contract.candidates.contains(where: {
+                  $0.candidateFingerprint == candidate.candidateFingerprint
+              }) else {
+            throw FitMatchServerAuthorityError.invalidClassificationRecoveryContract(
+                "candidate_not_in_server_contract"
+            )
+        }
+        let result = try await remote.setUserProductClassification(
+            FitMatchSetUserProductClassificationRequest(
+                productID: contract.productID,
+                selectedCandidateFingerprint: candidate.candidateFingerprint,
+                expectedCandidateSetHash: candidateSetHash,
+                expectedProductInputFingerprint: contract.productInputFingerprint,
+                expectedProductEvidenceFingerprint:
+                    contract.productEvidenceFingerprint,
+                mutationID: mutationID,
+                expectedRevision: expectedRevision
+            )
+        )
+        guard result.saved == true,
+              result.effectiveClassification.productID == contract.productID,
+              result.effectiveClassification.isPersonalComparisonAuthority,
+              result.effectiveClassification.garmentTypeCode
+                == candidate.garmentTypeCode else {
+            throw FitMatchServerAuthorityError.classificationRecoveryRejected(
+                "effective_authority_not_personal_confirmed"
+            )
+        }
+        return result
+    }
+
+    func clearUserProductClassification(
+        productID: UUID,
+        expectedRevision: Int,
+        mutationID: UUID = UUID()
+    ) async throws -> VNextUserClassificationMutationDTO {
+        let result = try await remote.clearUserProductClassification(
+            FitMatchClearUserProductClassificationRequest(
+                productID: productID,
+                mutationID: mutationID,
+                expectedRevision: expectedRevision
+            )
+        )
+        guard result.cleared == true,
+              result.effectiveClassification.productID == productID,
+              !result.effectiveClassification.isPersonalComparisonAuthority else {
+            throw FitMatchServerAuthorityError.classificationRecoveryRejected(
+                "clear_did_not_remove_personal_authority"
+            )
+        }
+        return result
     }
 
     func resolveProductAuthority(
@@ -567,7 +696,11 @@ actor FitMatchServerAuthorityCoordinator {
                 authorizationProductSizeID: exactCandidates?
                     .authorizedCandidateProductSizeIDs.first,
                 candidateProductSizeIDs: exactCandidates?
-                    .authorizedCandidateProductSizeIDs
+                    .authorizedCandidateProductSizeIDs,
+                effectiveAuthorityFingerprint: exactCandidates?
+                    .effectiveAuthorityFingerprint,
+                personalOverrideRevision: exactCandidates?
+                    .personalOverrideRevision
             )
         )
         guard response.status == "pending" || response.status == "completed" else {
@@ -596,10 +729,20 @@ actor FitMatchServerAuthorityCoordinator {
                   Set(exact.authorizedCandidateProductSizeIDs) == Set(
                     exactCandidates?.authorizedCandidateProductSizeIDs ?? []
                   ),
-                  exact.snapshot.target.variantID == authorization.targetVariantID else {
+                  exact.snapshot.target.variantID == authorization.targetVariantID,
+                  exact.snapshot.snapshotSchemaVersion >= 3 else {
                 throw FitMatchServerAuthorityError.comparisonBeginMalformed(
                     "vnext_snapshot_or_candidate_set_missing"
                 )
+            }
+            if exactCandidates?.effectiveSource == "USER_EXPLICIT" {
+                guard exact.snapshot.snapshotSchemaVersion >= 4,
+                      exact.effectiveAuthorityFingerprint
+                        == exactCandidates?.effectiveAuthorityFingerprint else {
+                    throw FitMatchServerAuthorityError.comparisonBeginMalformed(
+                        "personal_authority_snapshot_missing"
+                    )
+                }
             }
         }
         return FitMatchServerComparisonPermit(

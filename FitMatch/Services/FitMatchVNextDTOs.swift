@@ -210,13 +210,220 @@ nonisolated struct VNextRuntimeVariantDTO: Decodable, Equatable, Sendable {
     }
 }
 
+nonisolated enum VNextClassificationRecoverability: String, Decodable, Sendable {
+    case recoverable = "RECOVERABLE"
+    case unrecoverable = "UNRECOVERABLE"
+}
+
+nonisolated enum VNextUnknownClassificationField: String, Decodable, Sendable {
+    case garmentType = "garment_type"
+    case sleeveLength = "sleeve_length"
+    case lowerLength = "lower_length"
+    case bodyLength = "body_length"
+}
+
+nonisolated struct VNextKnownClassificationFactsDTO: Decodable, Equatable, Sendable {
+    let audienceCode: String?
+    let productStructureCode: String?
+    let categoryCode: String?
+    let garmentTypeCode: String?
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let comparisonPolicyCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case audienceCode = "audience_code"
+        case productStructureCode = "product_structure_code"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+        case comparisonPolicyCode = "comparison_policy_code"
+    }
+}
+
+nonisolated struct VNextClassificationRecoveryCandidateDTO:
+    Decodable, Equatable, Identifiable, Sendable {
+    let candidateID: String
+    let candidateFingerprint: String
+    let displayName: String
+    let categoryCode: String
+    let garmentTypeCode: String
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let comparisonPolicyCode: String
+
+    var id: String { candidateID }
+
+    enum CodingKeys: String, CodingKey {
+        case candidateID = "candidate_id"
+        case candidateFingerprint = "candidate_fingerprint"
+        case displayName = "display_name"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+        case comparisonPolicyCode = "comparison_policy_code"
+    }
+}
+
+nonisolated struct VNextClassificationRecoveryContractDTO:
+    Decodable, Equatable, Sendable {
+    let productID: UUID
+    let globalStatus: String
+    let recoverability: VNextClassificationRecoverability
+    let unrecoverableReason: String?
+    let fixedFacts: VNextKnownClassificationFactsDTO
+    let unknownFields: [VNextUnknownClassificationField]
+    let candidates: [VNextClassificationRecoveryCandidateDTO]
+    let candidateCount: Int
+    let productInputFingerprint: String
+    let productEvidenceFingerprint: String
+    let resolverVersion: String
+    let candidateContractVersion: String
+    let candidateSetHash: String?
+    let currentReviewReason: String?
+
+    enum CodingKeys: String, CodingKey {
+        case productID = "product_id"
+        case globalStatus = "global_status"
+        case recoverability
+        case unrecoverableReason = "unrecoverable_reason"
+        case fixedFacts = "fixed_facts"
+        case unknownFields = "unknown_fields"
+        case candidates
+        case candidateCount = "candidate_count"
+        case productInputFingerprint = "product_input_fingerprint"
+        case productEvidenceFingerprint = "product_evidence_fingerprint"
+        case resolverVersion = "resolver_version"
+        case candidateContractVersion = "candidate_contract_version"
+        case candidateSetHash = "candidate_set_hash"
+        case currentReviewReason = "current_review_reason"
+    }
+
+    var isSafelyRecoverable: Bool {
+        recoverability == .recoverable
+            && (1...3).contains(candidates.count)
+            && candidateCount == candidates.count
+            && candidateSetHash?.isEmpty == false
+    }
+}
+
+nonisolated struct VNextUserProductClassificationOverrideDTO:
+    Decodable, Equatable, Sendable {
+    let id: UUID
+    let productID: UUID
+    let classificationSource: String
+    let audienceCode: String
+    let categoryCode: String
+    let garmentTypeCode: String
+    let comparisonPolicyCode: String
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let selectedCandidateFingerprint: String
+    let candidateContractVersion: String
+    let candidateSetHash: String
+    let revision: Int
+    let clearedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case productID = "product_id"
+        case classificationSource = "classification_source"
+        case audienceCode = "audience_code"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case comparisonPolicyCode = "comparison_policy_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+        case selectedCandidateFingerprint = "selected_candidate_fingerprint"
+        case candidateContractVersion = "candidate_contract_version"
+        case candidateSetHash = "candidate_set_hash"
+        case revision
+        case clearedAt = "cleared_at"
+    }
+}
+
+nonisolated struct VNextEffectiveTargetClassificationDTO:
+    Decodable, Equatable, Sendable {
+    let productID: UUID
+    let state: String
+    let classificationStatus: String
+    let effectiveSource: String
+    let categoryCode: String?
+    let garmentTypeCode: String?
+    let audienceCode: String
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let comparisonPolicyCode: String?
+    let productStructureCode: String
+    let personalProjection: FitMatchJSONValue?
+    let overrideRevision: Int?
+    let effectiveAuthorityFingerprint: String
+    let effectiveContractVersion: String
+
+    enum CodingKeys: String, CodingKey {
+        case productID = "product_id"
+        case state
+        case classificationStatus = "classification_status"
+        case effectiveSource = "effective_source"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case audienceCode = "audience_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+        case comparisonPolicyCode = "comparison_policy_code"
+        case productStructureCode = "product_structure_code"
+        case personalProjection = "personal_projection"
+        case overrideRevision = "override_revision"
+        case effectiveAuthorityFingerprint = "effective_authority_fingerprint"
+        case effectiveContractVersion = "effective_contract_version"
+    }
+
+    var isPersonalComparisonAuthority: Bool {
+        state == "PERSONAL_CONFIRMED"
+            && classificationStatus == "CONFIRMED"
+            && effectiveSource == "USER_EXPLICIT"
+    }
+}
+
+nonisolated struct VNextUserClassificationMutationDTO:
+    Decodable, Equatable, Sendable {
+    let saved: Bool?
+    let cleared: Bool?
+    let idempotent: Bool
+    let event: String?
+    let override: VNextUserProductClassificationOverrideDTO?
+    let overrideID: UUID?
+    let revision: Int?
+    let effectiveClassification: VNextEffectiveTargetClassificationDTO
+
+    enum CodingKeys: String, CodingKey {
+        case saved, cleared, idempotent, event, override, revision
+        case overrideID = "override_id"
+        case effectiveClassification = "effective_classification"
+    }
+}
+
 nonisolated struct VNextProductRuntimeDTO: Decodable, Equatable, Sendable {
     let found: Bool
     let product: VNextRuntimeProductDTO?
     let readiness: VNextProductReadinessDTO?
     let variants: [VNextRuntimeVariantDTO]
+    let effectiveClassification: VNextEffectiveTargetClassificationDTO?
 
-    enum CodingKeys: String, CodingKey { case found, product, readiness, variants }
+    enum CodingKeys: String, CodingKey {
+        case found, product, readiness, variants
+        case effectiveClassification = "effective_classification"
+    }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -227,6 +434,10 @@ nonisolated struct VNextProductRuntimeDTO: Decodable, Equatable, Sendable {
             [VNextRuntimeVariantDTO].self,
             forKey: .variants
         ) ?? []
+        effectiveClassification = try container.decodeIfPresent(
+            VNextEffectiveTargetClassificationDTO.self,
+            forKey: .effectiveClassification
+        )
     }
 }
 
@@ -457,6 +668,9 @@ nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendabl
     let authorizedCandidateProductSizeIDs: [UUID]
     let candidates: [VNextAuthorizedCandidateDTO]
     let candidateAuthorityFingerprint: String?
+    let effectiveAuthorityFingerprint: String?
+    let effectiveSource: String?
+    let personalOverrideRevision: Int?
 
     enum CodingKeys: String, CodingKey {
         case allowed, decision, mode, reason, candidates
@@ -465,6 +679,9 @@ nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendabl
         case targetVariantID = "target_variant_id"
         case authorizedCandidateProductSizeIDs = "authorized_candidate_product_size_ids"
         case candidateAuthorityFingerprint = "candidate_authority_fingerprint"
+        case effectiveAuthorityFingerprint = "effective_authority_fingerprint"
+        case effectiveSource = "classification_source"
+        case personalOverrideRevision = "override_revision"
     }
 }
 
@@ -555,6 +772,8 @@ nonisolated struct VNextBeginComparisonDTO: Decodable, Equatable, Sendable {
     let authorization: VNextComparisonAuthorizationDTO?
     let authorizedCandidateProductSizeIDs: [UUID]
     let candidateAuthorityFingerprint: String?
+    let effectiveAuthorityFingerprint: String?
+    let snapshotSchemaVersion: Int?
     let snapshot: VNextComparisonBeginSnapshotDTO
 
     enum CodingKeys: String, CodingKey {
@@ -564,6 +783,8 @@ nonisolated struct VNextBeginComparisonDTO: Decodable, Equatable, Sendable {
         case authorization
         case authorizedCandidateProductSizeIDs = "authorized_candidate_product_size_ids"
         case candidateAuthorityFingerprint = "candidate_authority_fingerprint"
+        case effectiveAuthorityFingerprint = "effective_authority_fingerprint"
+        case snapshotSchemaVersion = "snapshot_schema_version"
         case snapshot
     }
 }
@@ -796,6 +1017,10 @@ nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {
                 targetSnapshot.authorizedCandidateProductSizeIDs,
             candidateAuthorityFingerprint:
                 targetSnapshot.candidateAuthorityFingerprint,
+            effectiveAuthorityFingerprint: inputSnapshot.objectValue?[
+                "effective_authority_fingerprint"
+            ]?.stringValue,
+            snapshotSchemaVersion: snapshotSchemaVersion,
             snapshot: VNextComparisonBeginSnapshotDTO(
                 snapshotSchemaVersion: snapshotSchemaVersion,
                 target: targetSnapshot,

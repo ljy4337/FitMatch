@@ -21,6 +21,16 @@ enum FitMatchIOSServerAuthorityState: Equatable {
     }
 }
 
+enum FitMatchReviewRecoveryState: Equatable {
+    case idle
+    case loading
+    case recoverable(VNextClassificationRecoveryContractDTO)
+    case unrecoverable(VNextClassificationRecoveryContractDTO)
+    case saving
+    case resuming
+    case failed(String)
+}
+
 @MainActor
 final class ShoppingProductViewModel: ObservableObject {
     @Published var productURL = ""
@@ -53,6 +63,7 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published private(set) var productAnalysisRecoveryAction: ProductAnalysisRecoveryAction?
     @Published private(set) var databaseShadowState: FitMatchDatabaseShadowState = .idle
     @Published private(set) var serverAuthorityState: FitMatchIOSServerAuthorityState = .idle
+    @Published private(set) var reviewRecoveryState: FitMatchReviewRecoveryState = .idle
     @Published private(set) var classificationSafetyAudit: ParsedClosetClassificationSafetyAudit = .safe
 
     private let recommendationService: RecommendationService
@@ -108,6 +119,7 @@ final class ShoppingProductViewModel: ObservableObject {
         activeLoadID = loadID
         databaseShadowState = .idle
         serverAuthorityState = .idle
+        reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
         classificationSafetyAudit = .safe
         errorMessage = nil
@@ -181,6 +193,7 @@ final class ShoppingProductViewModel: ObservableObject {
         activeLoadID = nil
         databaseShadowState = .idle
         serverAuthorityState = .idle
+        reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
         classificationSafetyAudit = .safe
         isLoadingProductInfo = false
@@ -283,7 +296,21 @@ final class ShoppingProductViewModel: ObservableObject {
             case .reviewRequired:
                 serverAuthorityState = .reviewRequired(authority)
                 databaseShadowState = .unavailable
-                errorMessage = "현재 상품 분류를 확정할 수 없어 비교를 진행할 수 없습니다."
+                reviewRecoveryState = .loading
+                do {
+                    let contract = try await serverAuthorityCoordinator
+                        .classificationRecoveryOptions(productID: authority.productID)
+                    if contract.isSafelyRecoverable {
+                        reviewRecoveryState = .recoverable(contract)
+                        errorMessage = nil
+                    } else {
+                        reviewRecoveryState = .unrecoverable(contract)
+                        errorMessage = "이 상품은 아직 정확하게 분류하기 어려워요. 현재는 비교할 수 없습니다."
+                    }
+                } catch {
+                    reviewRecoveryState = .failed(error.localizedDescription)
+                    errorMessage = "상품 분류 선택지를 확인하지 못했습니다. 네트워크 연결 후 다시 시도해 주세요."
+                }
                 return false
             case .notComparable:
                 serverAuthorityState = .notComparable(authority)
@@ -434,6 +461,168 @@ final class ShoppingProductViewModel: ObservableObject {
         return false
     }
 
+    var hasActiveUserExplicitClassification: Bool {
+        guard case .confirmed(let authority) = serverAuthorityState else {
+            return false
+        }
+        return authority.classification.authorityStatus == "user_explicit"
+            && authority.runtime.vnext?.effectiveClassification?
+                .isPersonalComparisonAuthority == true
+    }
+
+    var reviewRecoveryContract: VNextClassificationRecoveryContractDTO? {
+        switch reviewRecoveryState {
+        case .recoverable(let contract), .unrecoverable(let contract):
+            return contract
+        case .idle, .loading, .saving, .resuming, .failed:
+            return nil
+        }
+    }
+
+    var isReviewRecoverySaving: Bool {
+        switch reviewRecoveryState {
+        case .saving, .resuming: true
+        default: false
+        }
+    }
+
+    var hasServerReviewRequiredAuthority: Bool {
+        if case .reviewRequired = serverAuthorityState { return true }
+        return false
+    }
+
+    @discardableResult
+    func beginReviewRecoveryReselection() async -> Bool {
+        guard case .confirmed(let authority) = serverAuthorityState,
+              authority.classification.authorityStatus == "user_explicit",
+              authority.runtime.vnext?.effectiveClassification?
+                .isPersonalComparisonAuthority == true,
+              let coordinator = serverAuthorityCoordinator else {
+            errorMessage = "현재 개인 분류를 다시 확인할 수 없습니다."
+            return false
+        }
+
+        reviewRecoveryState = .loading
+        errorMessage = nil
+        do {
+            let contract = try await coordinator.classificationRecoveryOptions(
+                productID: authority.productID
+            )
+            guard contract.isSafelyRecoverable else {
+                reviewRecoveryState = .unrecoverable(contract)
+                errorMessage = "이 상품은 현재 안전한 선택지로 다시 분류할 수 없습니다."
+                return false
+            }
+            reviewRecoveryState = .recoverable(contract)
+            return true
+        } catch {
+            if let parsedProduct = parsedProductForServerAuthority {
+                _ = await resolveServerAuthority(for: parsedProduct)
+            }
+            reviewRecoveryState = .failed(error.localizedDescription)
+            errorMessage = "최신 상품 분류 선택지를 확인하지 못했습니다. 다시 시도해 주세요."
+            return false
+        }
+    }
+
+    @discardableResult
+    func confirmReviewRecovery(
+        _ candidate: VNextClassificationRecoveryCandidateDTO
+    ) async -> Bool {
+        guard case .recoverable(let contract) = reviewRecoveryState,
+              let coordinator = serverAuthorityCoordinator,
+              let parsedProduct = parsedProductForServerAuthority,
+              let request = parsedProduct.fitMatchDatabaseResolutionRequest() else {
+            errorMessage = "서버 상품 분류 선택지를 다시 불러와 주세요."
+            return false
+        }
+        let expectedRevision: Int = {
+            switch serverAuthorityState {
+            case .confirmed(let authority), .reviewRequired(let authority):
+                return authority.runtime.vnext?.effectiveClassification?
+                    .overrideRevision ?? 0
+            case .idle, .resolving, .notComparable, .unavailable:
+                return 0
+            }
+        }()
+
+        reviewRecoveryState = .saving
+        errorMessage = nil
+        do {
+            _ = try await coordinator.setUserProductClassification(
+                contract: contract,
+                candidate: candidate,
+                expectedRevision: expectedRevision
+            )
+            reviewRecoveryState = .resuming
+            let authority = try await coordinator.resolveProductAuthority(
+                request: request,
+                observation: parsedProduct.fitMatchProductObservationRequest()
+            )
+            guard authority.status == .confirmed,
+                  authority.classification.authorityStatus == "user_explicit" else {
+                throw FitMatchServerAuthorityError.classificationRecoveryRejected(
+                    "runtime_did_not_return_user_explicit_authority"
+                )
+            }
+            applyServerClassification(authority.classification)
+            applyServerRuntime(authority.runtime)
+            serverAuthorityState = .confirmed(authority)
+            databaseShadowState = .checking
+            reviewRecoveryState = .idle
+            errorMessage = nil
+            return true
+        } catch {
+            let message = (error as? LocalizedError)?.errorDescription
+                ?? "상품 분류를 저장하지 못했습니다. 다시 시도해 주세요."
+            if let parsedProduct = parsedProductForServerAuthority {
+                _ = await resolveServerAuthority(for: parsedProduct)
+                if hasActiveUserExplicitClassification {
+                    _ = await beginReviewRecoveryReselection()
+                } else if reviewRecoveryContract == nil {
+                    reviewRecoveryState = .failed(message)
+                }
+            } else {
+                reviewRecoveryState = .failed(message)
+            }
+            errorMessage = message
+            return false
+        }
+    }
+
+    @discardableResult
+    func clearReviewRecovery() async -> Bool {
+        guard case .confirmed(let authority) = serverAuthorityState,
+              authority.classification.authorityStatus == "user_explicit",
+              let revision = authority.runtime.vnext?.effectiveClassification?
+                .overrideRevision,
+              let coordinator = serverAuthorityCoordinator,
+              let parsedProduct = parsedProductForServerAuthority else {
+            return false
+        }
+        reviewRecoveryState = .saving
+        errorMessage = nil
+        do {
+            _ = try await coordinator.clearUserProductClassification(
+                productID: authority.productID,
+                expectedRevision: revision
+            )
+            reviewRecoveryState = .idle
+            _ = await resolveServerAuthority(for: parsedProduct)
+            switch serverAuthorityState {
+            case .reviewRequired, .confirmed, .notComparable:
+                return true
+            case .idle, .resolving, .unavailable:
+                return false
+            }
+        } catch {
+            reviewRecoveryState = .idle
+            errorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "개인 분류를 해제하지 못했습니다."
+            return false
+        }
+    }
+
     private var confirmedServerAuthority: FitMatchServerProductAuthority? {
         guard case .confirmed(let authority) = serverAuthorityState else { return nil }
         return authority
@@ -550,7 +739,7 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
 
-        guard product.classificationAuthorityProvenance == .serverConfirmed else {
+        guard product.classificationAuthorityProvenance?.isComparisonAuthority == true else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
             errorMessage = "서버에서 확정된 상품만 비교할 수 있습니다."
             recommendation = nil
@@ -613,7 +802,7 @@ final class ShoppingProductViewModel: ObservableObject {
         }
 
 
-        guard product.classificationAuthorityProvenance == .serverConfirmed,
+        guard product.classificationAuthorityProvenance?.isComparisonAuthority == true,
               let permit = await authorizeReferenceForComparison(
                 selectedReferenceItem,
                 allowsManualSelection: true
@@ -817,20 +1006,33 @@ final class ShoppingProductViewModel: ObservableObject {
             product.garmentTypeRawValue = serverClassification.garmentTypeCode
             product.sleeveTypeRawValue = serverClassification.lengthCode
             if let exact = confirmedServerAuthority?.runtime.vnext?.product {
-                product.normalizedProductTypeCode = exact.garmentTypeCode
+                let effective = confirmedServerAuthority?.runtime.vnext?
+                    .effectiveClassification
+                let garmentTypeCode = effective?.garmentTypeCode
+                    ?? exact.garmentTypeCode
+                let categoryCode = effective?.categoryCode ?? exact.categoryCode
+                let policyCode = effective?.comparisonPolicyCode
+                    ?? exact.comparisonPolicyCode
+                let sleeveLengthCode = effective?.sleeveLengthCode
+                    ?? exact.sleeveLengthCode
+                let lowerLengthCode = effective?.lowerLengthCode
+                    ?? exact.lowerLengthCode
+                let bodyLengthCode = effective?.bodyLengthCode
+                    ?? exact.bodyLengthCode
+                product.normalizedProductTypeCode = garmentTypeCode
                 product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
                     CanonicalComparisonProfile(
                         decision: .confirmed,
-                        semanticCategoryCode: exact.categoryCode,
-                        semanticGarmentType: exact.garmentTypeCode,
-                        comparisonFamily: exact.comparisonPolicyCode,
-                        appComparisonFamily: exact.comparisonPolicyCode,
+                        semanticCategoryCode: categoryCode,
+                        semanticGarmentType: garmentTypeCode,
+                        comparisonFamily: policyCode,
+                        appComparisonFamily: policyCode,
                         lengthAxes: CanonicalLengthAxes(
-                            sleeve: exact.sleeveLengthCode ?? "not_applicable",
-                            pants: exact.lowerLengthCode ?? "not_applicable",
+                            sleeve: sleeveLengthCode ?? "not_applicable",
+                            pants: lowerLengthCode ?? "not_applicable",
                             leggings: "not_applicable",
                             skirt: "not_applicable",
-                            body: exact.bodyLengthCode ?? "not_applicable"
+                            body: bodyLengthCode ?? "not_applicable"
                         ),
                         constructionType: "unknown",
                         eligibility: confirmedServerAuthority?.comparisonReady == true,
@@ -846,7 +1048,8 @@ final class ShoppingProductViewModel: ObservableObject {
             product.canonicalPolicyVersion = serverClassification.taxonomyPolicyVersion
                 ?? serverClassification.decisionVersion
             product.markClassificationAuthority(
-                .serverConfirmed,
+                serverClassification.authorityStatus == "user_explicit"
+                    ? .userExplicit : .serverConfirmed,
                 sourceIdentity: serverClassification.classificationID?.uuidString
                     ?? serverClassification.method
             )

@@ -1,0 +1,44 @@
+FITMATCH — REVIEW_REQUIRED RECOVERY FINAL UX / LIFECYCLE PATCH
+Date: 2026-08-30 Asia/Seoul
+Branch / HEAD: connectDB / b419f159962e1447ae2981be3747436117d7faef
+Final verdict: FINAL RECOVERY PATCH PASS
+
+Changed files
+
+- FitMatch/ViewModels/ShoppingProductViewModel.swift
+- FitMatch/Views/CompareFlowSheet.swift
+- FitMatch/Views/RecommendationResultView.swift
+- FitMatchTests/FitMatchReviewRequiredRecoveryTests.swift
+- supabase/migrations/20260830091000_vnext_review_required_recovery.sql
+- supabase/sql/124_vnext_review_required_recovery_validation.sql
+- Docs/CodexSessionHandoff.md
+- Docs/FitMatchReviewRequiredRecoveryFinalPatch-20260830.txt
+- Docs/FitMatchReviewRequiredRecoveryFinalPatchChangedFiles-20260830.zip
+
+Summary
+
+- Existing REVIEW_REQUIRED Recovery UI reused: YES. Candidate selection continues to use the existing `CompareFlowSheet.categoryConfirmationContent` → `reviewRecoveryContent` surface.
+- Second Recovery screen created: NO. No new Recovery View, modal, sheet, navigation destination, route, or parallel picker was added. The two actions only re-enter the existing CompareFlow state machine.
+- Reselect UX: PASS. An active USER_EXPLICIT shopping classification now exposes “상품 종류 다시 확인”. The action discards transient comparison preparation, fetches a fresh server Recovery contract, displays only that contract’s constrained candidates, and sends the current override revision. A successful edit refreshes effective authority and restarts the existing reference-discovery comparison flow; no direct scorer path was added.
+- Clear UX: PASS. An active USER_EXPLICIT classification now exposes “내 선택 초기화”. Clear calls the existing server RPC, invalidates local Recovery state, refetches runtime/effective authority, and routes REVIEW_REQUIRED back to constrained confirmation without starting comparison. Global CONFIRMED resumes the normal server comparison flow; NOT_APPLICABLE remains blocked. Closet rows and completed History are untouched.
+- Cleared-override reconciliation: PASS. effective_target_classification now selects only active override rows (`cleared_at is null`). A cleared row and its append-only feedback remain historical evidence, but it cannot become comparison authority or surface as current SUPERSEDED_MATCH/SUPERSEDED_CONFLICT. Active personal rows retain the intended superseded match/conflict behavior when Global later becomes CONFIRMED.
+- Revision behavior: PASS. SQL validation covered polo revision 1 → tshirt revision 2 with EDITED evidence, stale revision 1 rejection, clear revision 2 → 3, and preserved CLEARED evidence. Swift tests independently covered current-revision submission, fresh-contract replacement, stale candidate rejection, stale revision rejection, and server state winning over cached UI state.
+- Auto-resume behavior: PASS. Reselection success follows effective-authority refresh → reference discovery → authorization → eligible sizes → begin → scorer → complete through the existing coordinator/view flow. Target classification confirmation never sets manual reference intent. Clear to REVIEW_REQUIRED makes zero reference-discovery/begin calls in focused tests.
+- Global Product mutation count: 0 in Production. Synthetic local Product changes occurred only inside the validation transaction and were rolled back. Post-rollback override / feedback / comparison fixture rows were 0 / 0 / 0.
+- Production writes / migration applies: 0 / 0.
+- PostgreSQL: Homebrew PostgreSQL 17.11 disposable cluster, port 55473. Fixture → 90000 → patched 91000 → validation PASS; validation ROLLBACK PASS; 90000/91000 reapply PASS; validation rerun and second ROLLBACK PASS. The cluster was stopped and deleted.
+- Focused Recovery tests: 6 PASS / 0 FAIL / 0 SKIP.
+- Critical vNext + Recovery suites: 88 PASS / 0 FAIL / 0 SKIP.
+- App Simulator build: PASS.
+- Test-target build-for-testing: PASS.
+- Full FitMatchTests: 508 PASS / 1 FAIL / 37 SKIP. The sole failed test is the pre-existing DBLogicReliabilityAuditTests adjudication corpus with 64 unchanged assertion mismatches; this patch added no full-suite failure and changed no expected value.
+- Static/protected audit: git diff --check PASS. MeasurementComparisonEngine, score formulas, manual-cross rows, SwiftData schema, Share Extension, navigation, protected TabBar/header-scroll behavior, and product-observation Edge Function were not modified by this patch.
+
+Remaining issues
+
+- `20260830090000_vnext_leaf_specificity_correction.sql` and `20260830091000_vnext_review_required_recovery.sql` remain unapplied to Production.
+- Physical signed-in iPhone Recovery E2E remains pending.
+- Physical multi-device revision/reselection/clear E2E remains pending.
+- The pre-existing legacy DBLogic adjudication test failure remains unchanged and is not hidden as PASS.
+
+FINAL RECOVERY PATCH PASS
