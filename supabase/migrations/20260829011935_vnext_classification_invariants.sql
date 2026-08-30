@@ -236,3 +236,4 @@ revoke all on function fitmatch_vnext.classification_tuple_validation(text,text,
     from public, anon, authenticated;
 grant execute on function fitmatch_vnext.classification_tuple_validation(text,text,text,text,text,text)
     to service_role;
+;

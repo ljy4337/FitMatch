@@ -139,3 +139,5 @@ grant execute on function fitmatch_vnext.validate_ingestion_receipt_facts()
     to service_role;
 grant execute on function fitmatch_vnext.validate_comparison_completion_payload()
     to service_role;
+
+;

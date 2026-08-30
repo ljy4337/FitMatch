@@ -171,3 +171,4 @@ grant execute on function fitmatch_vnext.resolve_measurement(text,text,text,text
     to service_role;
 grant execute on function fitmatch_vnext.canonical_measurements_for_size(uuid)
     to service_role;
+;

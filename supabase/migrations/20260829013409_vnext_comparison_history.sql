@@ -320,3 +320,4 @@ revoke all on function fitmatch_vnext.comparison_history() from public,anon;
 grant execute on function fitmatch_vnext.begin_comparison(jsonb),
  fitmatch_vnext.complete_comparison(uuid,jsonb),fitmatch_vnext.comparison_history()
  to authenticated,service_role;
+;

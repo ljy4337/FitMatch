@@ -189,4 +189,4 @@ begin
         'authorization_version', 'fitmatch-vnext-authorization-v3'
     );
 end
-$function$;
+$function$;;

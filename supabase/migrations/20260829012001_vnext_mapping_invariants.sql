@@ -109,3 +109,4 @@ create index if not exists classification_signal_mappings_resolver_idx
 
 revoke all on function fitmatch_vnext.validate_classification_mapping()
     from public, anon, authenticated;
+;

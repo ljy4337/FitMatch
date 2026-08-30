@@ -215,3 +215,4 @@ grant execute on function fitmatch_vnext.find_reference_candidates(uuid,uuid)
 
 -- Verification query is exercised transactionally by
 -- supabase/sql/121_vnext_final_remediation_tests.sql.
+;

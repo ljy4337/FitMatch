@@ -229,3 +229,4 @@ grant execute on function fitmatch_vnext.eligible_candidate_sizes(uuid,uuid,uuid
 
 -- Verification query is exercised transactionally by
 -- supabase/sql/121_vnext_final_remediation_tests.sql.
+;

@@ -112,3 +112,4 @@ $verify$;
 -- select p.proname,p.prosecdef,p.proconfig
 -- from pg_proc p join pg_namespace n on n.oid=p.pronamespace
 -- where n.nspname='fitmatch_vnext' and p.prosecdef order by p.proname;
+;

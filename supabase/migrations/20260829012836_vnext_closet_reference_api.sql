@@ -257,3 +257,4 @@ revoke all on function fitmatch_vnext.set_closet_reference(uuid) from public, an
 grant execute on function fitmatch_vnext.upsert_closet_item(jsonb),
     fitmatch_vnext.list_closet_items(), fitmatch_vnext.set_closet_reference(uuid)
     to authenticated, service_role;
+;

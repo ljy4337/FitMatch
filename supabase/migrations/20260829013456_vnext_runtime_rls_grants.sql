@@ -60,3 +60,4 @@ grant execute on function fitmatch_vnext.classification_tuple_validation(text,te
 alter default privileges in schema fitmatch_vnext revoke execute on functions from public;
 alter default privileges in schema fitmatch_vnext revoke all on tables from anon;
 alter default privileges in schema fitmatch_vnext revoke all on sequences from anon, authenticated;
+;

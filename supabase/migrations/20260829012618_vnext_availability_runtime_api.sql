@@ -337,3 +337,4 @@ revoke all on function fitmatch_vnext.get_product_runtime(text,text)
     from public, anon;
 grant execute on function fitmatch_vnext.get_product_runtime(text,text)
     to authenticated, service_role;
+;

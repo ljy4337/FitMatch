@@ -923,3 +923,4 @@ grant execute on function fitmatch_vnext.get_product_runtime(text,text)
 -- Verification query (read-only after deployment):
 -- select count(*) from fitmatch_vnext.product_ingestion_receipts
 -- where processing_status not in ('PROCESSED','IGNORED_STALE');
+;

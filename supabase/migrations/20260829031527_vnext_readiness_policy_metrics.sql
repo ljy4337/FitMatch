@@ -186,3 +186,4 @@ grant execute on function fitmatch_vnext.product_readiness(uuid) to service_role
 -- from fitmatch_vnext.products p
 -- where (p.source_code,p.source_product_key) in
 -- (('musinsa','6805433'),('uniqlo','E482856'),('zara','561264931'));
+;

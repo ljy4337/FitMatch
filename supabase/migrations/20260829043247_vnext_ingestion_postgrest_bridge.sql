@@ -58,4 +58,4 @@ begin
         raise exception 'vNext ingestion transport bridge is unavailable to service_role';
     end if;
 end
-$verify$;
+$verify$;;

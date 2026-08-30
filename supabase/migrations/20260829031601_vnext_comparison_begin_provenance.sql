@@ -329,3 +329,4 @@ grant execute on function fitmatch_vnext.begin_comparison(jsonb)
 
 -- Verification query is exercised transactionally by
 -- supabase/sql/121_vnext_final_remediation_tests.sql.
+;

@@ -217,3 +217,4 @@ revoke all on function fitmatch_vnext.resolve_product_classification(text,text,b
     from public, anon, authenticated;
 grant execute on function fitmatch_vnext.resolve_product_classification(text,text,boolean)
     to service_role;
+;
