@@ -1,0 +1,22 @@
+-- fitmatch_vnext P0-11: harden pre-existing trigger/helper functions.
+
+alter function fitmatch_vnext.set_updated_at()
+    set search_path = '';
+alter function fitmatch_vnext.validate_comparison_ownership_and_target()
+    set search_path = '';
+alter function fitmatch_vnext.protect_fitmatch_measurement_semantics()
+    set search_path = '';
+alter function fitmatch_vnext.protect_source_measurement_semantics()
+    set search_path = '';
+alter function fitmatch_vnext.validate_source_measurement_alias_source()
+    set search_path = '';
+alter function fitmatch_vnext.validate_closet_product_hierarchy()
+    set search_path = '';
+alter function fitmatch_vnext.validate_closet_measurement_mode()
+    set search_path = '';
+alter function fitmatch_vnext.validate_source_signal_parent()
+    set search_path = '';
+alter function fitmatch_vnext.validate_product_signal_source()
+    set search_path = '';
+alter function fitmatch_vnext.validate_source_identifier_owner()
+    set search_path = '';

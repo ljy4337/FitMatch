@@ -1,0 +1,424 @@
+{
+  "source_file": "FitMatch_Hardcoded_Product_Classification_Ledger_20260828.jsonl",
+  "source_rows": 149475,
+  "source_bytes": 154087701,
+  "source_sha256": "ea83fbf3a2141108b5842022b85b742c4d0846a37fcdbf4d1d566c37add08c53",
+  "maximum_part_bytes": 4194304,
+  "part_count": 46,
+  "parts": [
+    {
+      "file_name": "DEBUG_ONLY__MUSINSA__part_001.jsonl",
+      "runtime_scope": "DEBUG_ONLY",
+      "source": "MUSINSA",
+      "part": 1,
+      "rows": 1,
+      "bytes": 1021,
+      "sha256": "b2caa13313f242ce1542398f0f2f598cf14db063e9567bafaf9f592b2a90537d"
+    },
+    {
+      "file_name": "DEBUG_ONLY__UNIQLO__part_001.jsonl",
+      "runtime_scope": "DEBUG_ONLY",
+      "source": "UNIQLO",
+      "part": 1,
+      "rows": 1,
+      "bytes": 1011,
+      "sha256": "8a69783816e21868205097d35d258274d0c5424cc8d6473f470c2439b5ba10d3"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_001.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 1,
+      "rows": 4076,
+      "bytes": 4193724,
+      "sha256": "83cadf488bb8d543e48a2539b00fca4abc217a8bf88d8f970c48bf91046e77c8"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_002.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 2,
+      "rows": 4076,
+      "bytes": 4193420,
+      "sha256": "bfdd4eb62866d5de36c4f70b8b640c1c68a68a4c0338be23c5840156e441da00"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_003.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 3,
+      "rows": 4076,
+      "bytes": 4193510,
+      "sha256": "4ea2f1325145b2cf3f8a2ab0e7c70f8fcecbc913977fe863c79535736c6a7632"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_004.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 4,
+      "rows": 4072,
+      "bytes": 4193392,
+      "sha256": "fddb2f07a7a6bc8d5bcad129e362fd5eb5e721356ba6f1f69817595df6add230"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_005.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 5,
+      "rows": 4078,
+      "bytes": 4193913,
+      "sha256": "a65015d12bd29b7ff7f39aab87de1dac77dc1f352be872036aae84be687b3477"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_006.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 6,
+      "rows": 4078,
+      "bytes": 4193586,
+      "sha256": "16ea2ce65351fa60d797a9c824ea122353924b422dd38cb91b0b74993f4f4a7e"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_007.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 7,
+      "rows": 4077,
+      "bytes": 4193551,
+      "sha256": "00891aa8a6abcac52a2977d3cf673d2d34f78c695e371fab228d66898939c0c6"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_008.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 8,
+      "rows": 4077,
+      "bytes": 4194136,
+      "sha256": "0d26fe291e75b38889c1b7d6c48639b5a49597cc7fbca2f7b4c646a4bfcb46d3"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_009.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 9,
+      "rows": 4078,
+      "bytes": 4193605,
+      "sha256": "9487a7334b9a8034731be3d2116b1d5573421de92adadf3a8f7d2b5b7a0c0a2d"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_010.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 10,
+      "rows": 4077,
+      "bytes": 4194273,
+      "sha256": "fcbec2db929c85c20925600b143c0882cb80c1d92ab3385896bb1709b49f4bb4"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_011.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 11,
+      "rows": 4077,
+      "bytes": 4193341,
+      "sha256": "db320d80a98fe403997f540129ac59f2631f8f3f7da866950af2c664354ec2c4"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_012.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 12,
+      "rows": 4076,
+      "bytes": 4193685,
+      "sha256": "d34054f01d18c2f14aa150afd3d9237e0adb7d7000eac26a988bb0e4459096d8"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_013.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 13,
+      "rows": 4076,
+      "bytes": 4193468,
+      "sha256": "a29eb2edbaca967fdeef82c95da448cec007d52ebdd932921e083ef81b2b917a"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_014.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 14,
+      "rows": 4076,
+      "bytes": 4194012,
+      "sha256": "9c36d44f2f84fb61d1581142013f53b275d85091554ca4ff6e57205f4ea41da1"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_015.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 15,
+      "rows": 4074,
+      "bytes": 4193433,
+      "sha256": "bf9c4f38ba3c796f9d624132af367188c46014129d38216027a58eafbdb5133a"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_016.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 16,
+      "rows": 4079,
+      "bytes": 4194187,
+      "sha256": "70f1649c37d9a39adce1d7d3b8a1bbe0091df4cc1761338dd4201d5591d1a9d6"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_017.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 17,
+      "rows": 4077,
+      "bytes": 4193833,
+      "sha256": "cd971d6f25701afb8b8bb5cf69ad6963fed604644a199d5cf073c0be62655e42"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_018.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 18,
+      "rows": 4077,
+      "bytes": 4193490,
+      "sha256": "b29f38744473ea58dbbbdb5379163db154fca1e5a5eddb17cae41936b572bd7f"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_019.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 19,
+      "rows": 4078,
+      "bytes": 4193776,
+      "sha256": "b28a1e749c1074c82cb1b78056e0e21fe42a00e2f72635128d6d2bebb032b13b"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_020.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 20,
+      "rows": 4077,
+      "bytes": 4193409,
+      "sha256": "fe929c4565799fc0932df75dbe06b5df1b6674596bc0829d473f17676af2e8b3"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_021.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 21,
+      "rows": 4075,
+      "bytes": 4193599,
+      "sha256": "d87c4fb88cb1349ac9aab9a8863a168a83f704a8d4df5b2bc3b5331e9b8fc02e"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_022.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 22,
+      "rows": 4077,
+      "bytes": 4193638,
+      "sha256": "72ccbbf07771ce0313df4297e6bde1343e6ac8dc240c215eb3de6705126197da"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_023.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 23,
+      "rows": 4079,
+      "bytes": 4193781,
+      "sha256": "e326b88fa282e5ca1b54ff2420272831fe6223f670c77170a20085c12cf60476"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_024.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 24,
+      "rows": 4078,
+      "bytes": 4193555,
+      "sha256": "0bc91c111f60faf42de08d56efabb7849b47773018fe12c0e14190f0a0e2070f"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_025.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 25,
+      "rows": 4089,
+      "bytes": 4193800,
+      "sha256": "3947f71ca73570c73fb1226a0c61c7ef6c520eca07af6bde79b2877375491f52"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_026.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 26,
+      "rows": 4081,
+      "bytes": 4193576,
+      "sha256": "0a2a03e8dcb13ad00074a64151ba2d3d71d8236deb280449a9851d23d99a1861"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_027.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 27,
+      "rows": 4076,
+      "bytes": 4193338,
+      "sha256": "004d1eaf34eded41ce1d40021313ed5b67d9ab46b2143080a333dead1b097d57"
+    },
+    {
+      "file_name": "DOC_ONLY__MUSINSA__part_028.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "MUSINSA",
+      "part": 28,
+      "rows": 3236,
+      "bytes": 3320619,
+      "sha256": "ea2274b6520365eb6cf009120e3f9f5eae3573d14ad0cc6c706a9ef72b33f842"
+    },
+    {
+      "file_name": "DOC_ONLY__UNIQLO__part_001.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "UNIQLO",
+      "part": 1,
+      "rows": 3803,
+      "bytes": 4194173,
+      "sha256": "e8f0ad1fdc641a1ca5fe5b8427c9fc375a99caa9649254c7f568bffc9f6daab7"
+    },
+    {
+      "file_name": "DOC_ONLY__UNIQLO__part_002.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "UNIQLO",
+      "part": 2,
+      "rows": 3895,
+      "bytes": 4193320,
+      "sha256": "eb155885d45f95c03806f9e6ba91a69f0dc06189842395d31895c96b44362d76"
+    },
+    {
+      "file_name": "DOC_ONLY__UNIQLO__part_003.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "UNIQLO",
+      "part": 3,
+      "rows": 3904,
+      "bytes": 4193502,
+      "sha256": "bd6a1044a03a2994a29ab35125026e731956b2543ebc35d4cd11081adfbabd91"
+    },
+    {
+      "file_name": "DOC_ONLY__UNIQLO__part_004.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "UNIQLO",
+      "part": 4,
+      "rows": 3928,
+      "bytes": 4194281,
+      "sha256": "1d805e36e2c73e90265e4dcd5b356408b90a98623bfa71dacc446ff6f1052c58"
+    },
+    {
+      "file_name": "DOC_ONLY__UNIQLO__part_005.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "UNIQLO",
+      "part": 5,
+      "rows": 734,
+      "bytes": 776633,
+      "sha256": "9dfac1087648a77b3fe8ca31a3e24e5336c6675d05e569f034e9e738a233415e"
+    },
+    {
+      "file_name": "DOC_ONLY__ZARA__part_001.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "ZARA",
+      "part": 1,
+      "rows": 4274,
+      "bytes": 4193420,
+      "sha256": "8f15a981eec8e277321e55744f4de0614d5ffb2116f34b7eda82c2c60034618a"
+    },
+    {
+      "file_name": "DOC_ONLY__ZARA__part_002.jsonl",
+      "runtime_scope": "DOC_ONLY",
+      "source": "ZARA",
+      "part": 2,
+      "rows": 928,
+      "bytes": 917164,
+      "sha256": "dd359100c7e21d527e2cb550796a25b8571ac20d450dad2131498ef2326c4cd3"
+    },
+    {
+      "file_name": "FIXTURE_ONLY__MUSINSA__part_001.jsonl",
+      "runtime_scope": "FIXTURE_ONLY",
+      "source": "MUSINSA",
+      "part": 1,
+      "rows": 4108,
+      "bytes": 4194242,
+      "sha256": "496dc770b88cde7ad4a5e0767adbf8548355f05a52ca96159fb92bb538d40f20"
+    },
+    {
+      "file_name": "FIXTURE_ONLY__MUSINSA__part_002.jsonl",
+      "runtime_scope": "FIXTURE_ONLY",
+      "source": "MUSINSA",
+      "part": 2,
+      "rows": 4112,
+      "bytes": 4193444,
+      "sha256": "7b6bf59fd14e51168986659b005a6cd53b1b2b8f57bef12b4b5931247fec0c84"
+    },
+    {
+      "file_name": "FIXTURE_ONLY__MUSINSA__part_003.jsonl",
+      "runtime_scope": "FIXTURE_ONLY",
+      "source": "MUSINSA",
+      "part": 3,
+      "rows": 740,
+      "bytes": 755566,
+      "sha256": "f34471dc47e5cfb31ea71c163a0636c70c82a41be71386291404aa286d7cfbf1"
+    },
+    {
+      "file_name": "FIXTURE_ONLY__UNIQLO__part_001.jsonl",
+      "runtime_scope": "FIXTURE_ONLY",
+      "source": "UNIQLO",
+      "part": 1,
+      "rows": 4182,
+      "bytes": 4193991,
+      "sha256": "daf31ef1a908fa00689281ae089177794a2579e22594f5b0ecc8c9867acfa36f"
+    },
+    {
+      "file_name": "FIXTURE_ONLY__UNIQLO__part_002.jsonl",
+      "runtime_scope": "FIXTURE_ONLY",
+      "source": "UNIQLO",
+      "part": 2,
+      "rows": 1231,
+      "bytes": 1226816,
+      "sha256": "0023daf7621aabf4c595bd8793708e6b4449966fc24b7fb49f017f618555471c"
+    },
+    {
+      "file_name": "PRODUCTION__ZARA__part_001.jsonl",
+      "runtime_scope": "PRODUCTION",
+      "source": "ZARA",
+      "part": 1,
+      "rows": 2,
+      "bytes": 2668,
+      "sha256": "d792349b55e0f97588fba2cc8e655ba9959e56abf4c1accd63eac4759b8c7269"
+    },
+    {
+      "file_name": "TEST_ONLY__MUSINSA__part_001.jsonl",
+      "runtime_scope": "TEST_ONLY",
+      "source": "MUSINSA",
+      "part": 1,
+      "rows": 35,
+      "bytes": 34857,
+      "sha256": "10c0bd6b0717fb7575588bbdae501a56c92774d0b6ed14d9f51697bd8e8f7ac0"
+    },
+    {
+      "file_name": "TEST_ONLY__UNIQLO__part_001.jsonl",
+      "runtime_scope": "TEST_ONLY",
+      "source": "UNIQLO",
+      "part": 1,
+      "rows": 184,
+      "bytes": 181798,
+      "sha256": "166232f838b20fe873a547ac3e6c63c02a74c63fefa4cf84b66b098d9581d326"
+    },
+    {
+      "file_name": "TEST_ONLY__ZARA__part_001.jsonl",
+      "runtime_scope": "TEST_ONLY",
+      "source": "ZARA",
+      "part": 1,
+      "rows": 90,
+      "bytes": 90144,
+      "sha256": "3b5ab248ddfa1d5048963dfa42861684f6e9c4468946a7cdb4e24ed9d4530b60"
+    }
+  ]
+}

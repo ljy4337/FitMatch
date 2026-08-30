@@ -3,6 +3,9 @@ import SwiftData
 
 @Model
 final class UserFit {
+    static let historyReferenceSnapshotSourceIdentity =
+        "fitmatch_vnext_history_reference_snapshot"
+
     @Attribute(.unique)
     var id: UUID
     var sourceTypeRawValue: String = ProductSourceType.manual.rawValue
@@ -280,6 +283,23 @@ final class UserFit {
 
     var displayName: String {
         "\(brandName) \(productName)"
+    }
+
+    /// An immutable comparison may outlive the active Closet row it used as
+    /// its reference. Such a snapshot remains available to History, but must
+    /// never re-enter active Closet, reference picking, or mutation sync.
+    var isHistoryOnlyReferenceSnapshot: Bool {
+        canonicalSourceIdentity == Self.historyReferenceSnapshotSourceIdentity
+    }
+
+    var isActiveClosetItem: Bool {
+        !isHistoryOnlyReferenceSnapshot
+    }
+
+    func markAsHistoryOnlyReferenceSnapshot() {
+        isRepresentative = false
+        canonicalEligibility = false
+        canonicalSourceIdentity = Self.historyReferenceSnapshotSourceIdentity
     }
 
     func replaceMeasurementRecords(with sourceRecords: [GarmentMeasurementRecord]) {

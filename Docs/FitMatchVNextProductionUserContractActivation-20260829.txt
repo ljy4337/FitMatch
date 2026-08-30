@@ -1,0 +1,266 @@
+FitMatch vNext — Final Production User Contract Activation
+Date: 2026-08-29 (Asia/Seoul)
+Production project: hnkplvyegonlhumlejst
+Domain schema: fitmatch_vnext
+Mode: SINGLE-MIGRATION PRODUCTION APPLY + POSTFLIGHT ONLY
+
+======================================================================
+Changed files
+======================================================================
+
+Repository production source changes:
+  0
+
+Documentation artifacts created/updated after Production verification:
+  Docs/FitMatchVNextProductionUserContractActivation-20260829.txt
+  Docs/CodexSessionHandoff.md
+  FitMatchVNextProductionUserContractActivation-20260829.zip
+
+No Swift, Edge Function, migration, seed, policy, or test source was modified.
+No commit or push was performed.
+
+======================================================================
+Production Apply
+======================================================================
+
+Approved source:
+  supabase/migrations/20260829050000_vnext_swift_user_contract.sql
+
+Source SHA-256:
+  ad23bad212999c882b114c50b95ad7df7b95f275e0aadf8b0a7a7f37daa0dbd6
+
+Source integrity passed to the migration API:
+  32,195 bytes
+  Exact file terminator verified
+
+Migration SQL apply:
+  PASS — the exact approved SQL was applied as one atomic migration unit.
+
+Only approved SQL applied:
+  PASS — exactly one new Production ledger row exists after the previous tail.
+
+Unexpected migration-ledger identity:
+  Requested repository identity:
+    20260829050000 / vnext_swift_user_contract
+
+  Actual Supabase MCP-generated ledger identity:
+    20260829110853 / vnext_swift_user_contract
+
+  Name row count:
+    1
+
+  Exact requested version row count:
+    0
+
+The migration API accepts name + SQL but not a caller-supplied version and
+generated the UTC execution timestamp as the ledger version. No ledger repair,
+manual fake marking, duplicate apply, migration rename/edit, or extra migration
+was performed because all are outside the approved scope.
+
+======================================================================
+Preflight
+======================================================================
+
+Repository:
+  Branch: connectDB
+  HEAD: 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+  Existing dirty working tree preserved.
+
+Supabase project:
+  ID: hnkplvyegonlhumlejst
+  Name: FitMatch
+  Region: ap-northeast-2
+  Status: ACTIVE_HEALTHY
+  PostgreSQL: 17.6
+
+Target migration before apply:
+  Ledger rows: 0
+  satisfaction column: absent
+  satisfaction check: absent
+  target public bridge functions: 0
+  prerequisite tables missing: 0
+  prerequisite functions missing: 0
+
+Data baseline at 2026-08-29T11:08:18.191303Z:
+  Products: 1,608
+  Classification:
+    CONFIRMED 203
+    REVIEW_REQUIRED 1,308
+    NOT_APPLICABLE 97
+  CONFIRMED invalid: 0
+  Readiness:
+    READY 3
+    NO_AVAILABLE_SIZE 198
+    NO_MEASUREMENT_DATA 2
+    CLASSIFICATION_REQUIRED 1,308
+    NOT_APPLICABLE 97
+  Golden READY:
+    MUSINSA 6805433 READY
+    UNIQLO E482856 READY
+    ZARA 561264931 READY
+  Duplicate Product identities: 0
+  Variant/size/measurement orphans: 0/0/0
+
+Preflight table counts:
+  variants 2,656
+  sizes 6,771
+  measurements 28,514
+  closet_items 6
+  closet_item_measurements 24
+  comparisons 0
+
+Preflight stable hashes:
+  products: 82c444272cba8f273ea7d14077f1b55e
+  variants: b9cc1a677fa6b49dc58ac22f8f21b6af
+  sizes: e8744393f6a28260b7726ad3137f626a
+  measurements: a6762986ee86739f1ff022203f4ba4ba
+  classification: 29510033fad4e32d2350959d00f68ead
+
+Security baseline:
+  closet_items RLS: enabled
+  own-row SELECT policy: present
+  authenticated closet table grant: SELECT only
+  authenticated global write grants across protected vNext tables: 0
+
+======================================================================
+Postflight
+======================================================================
+
+Schema contract:
+  satisfaction smallint nullable: PASS
+  satisfaction 1...5 CHECK validated: PASS
+  existing rows backfilled/non-null: 0
+  internal contract functions: 9/9 present
+  public Swift bridges: 15/15 present
+  expected JSONB result signatures: PASS
+
+Function security:
+  Internal functions SECURITY DEFINER: PASS
+  Public bridges SECURITY INVOKER: PASS
+  Fixed search_path on all 24 checked functions: PASS
+  anon EXECUTE: 0
+  authenticated EXECUTE: 24/24 intended functions
+  service_role EXECUTE: 24/24 intended functions
+  function-contract failures: 0
+
+RLS/grants:
+  closet_items RLS remains enabled
+  existing own-row SELECT policy remains unchanged
+  authenticated table write grants remain 0
+  global Product authority mutation DML in new mutation functions: 0
+
+Data at 2026-08-29T11:16:10.447991Z:
+  Products: 1,608 — unchanged
+  Classification: 203 / 1,308 / 97 — unchanged
+  CONFIRMED invalid: 0
+  Required axes missing: 0
+  Deterministic replay mismatch: 0
+  Duplicate Product identities: 0
+  Variant/size/measurement orphans: 0/0/0
+  Golden READY: 3/3
+  Readiness: unchanged
+
+Postflight stable hashes:
+  products: 82c444272cba8f273ea7d14077f1b55e
+  variants: b9cc1a677fa6b49dc58ac22f8f21b6af
+  sizes: e8744393f6a28260b7726ad3137f626a
+  measurements: a6762986ee86739f1ff022203f4ba4ba
+  classification: 29510033fad4e32d2350959d00f68ead
+
+Production fixture pollution after rollback:
+  named closet fixture: 0
+  comparison engine fixture: 0
+  non-null satisfaction on existing rows: 0
+  closet_items/measurements/comparisons: 6/24/0 — baseline exact
+
+Supabase advisors after DDL:
+  New migration-target-related security findings: 0
+  New migration-target-related performance findings: 0
+  Project-wide security: INFO 51 / WARN 14, all unrelated/pre-existing
+  Project-wide performance: INFO 115 only, target-related 0
+
+Reference for the project-wide RLS-no-policy INFO class:
+  https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy
+
+======================================================================
+Tests
+======================================================================
+
+Migration apply:
+  PASS
+
+Structural/security/grant contract:
+  PASS
+
+First rollback-probe attempt:
+  FAIL before transaction execution — validation SQL used reserved local
+  variable name “authorization”. PostgreSQL parser rejected it; no statement,
+  fixture write, or transaction began.
+
+Corrected rollback-probe attempt:
+  PASS + ROLLBACK
+
+Runtime operations inside the successful transaction:
+  manual closet upsert: PASS
+  product-linked closet upsert: PASS
+  duplicate upsert idempotency: PASS
+  closet edit: PASS
+  satisfaction 4 → 5: PASS
+  personal override set: PASS
+  personal override clear: PASS
+  reference set: PASS
+  reference unset: PASS
+  soft delete lifecycle: PASS
+  list/hydrate consistency: PASS
+  exact product/variant/size identity: PASS
+  garment/sleeve/lower/body field contract: PASS
+  global Product hash unchanged: PASS
+
+Ownership/security negatives:
+  user B edits user A item: blocked
+  user B deletes user A item: blocked
+  user B unsets user A reference: blocked
+  user B sets override on user A item: blocked
+  anonymous public bridge call: blocked
+
+Comparison bridge regression, Golden rollback fixture:
+  reference candidate retrieval: PASS
+  authorization: PASS
+  eligible candidate size set: PASS
+  begin + immutable snapshot: PASS
+  complete: PASS
+  immutable history hydration fields: PASS
+  transaction rollback: PASS
+
+Production data/hash postflight:
+  PASS
+
+Ledger exact-version gate:
+  FAIL
+
+======================================================================
+Final verdict
+======================================================================
+
+SWIFT VNEXT IMPLEMENTATION DB CONTRACT NOT READY
+
+The deployed schema, security, runtime, user-owned mutation contract,
+comparison bridge, data integrity, and cleanup all passed. The sole failed
+explicit acceptance criterion is the exact migration ledger version:
+`20260829050000` was not preserved by the Supabase migration API.
+
+======================================================================
+Remaining issues
+======================================================================
+
+One operational reproducibility blocker remains:
+  Repository file version: 20260829050000
+  Production ledger version: 20260829110853
+  Migration name and SQL: correct
+  Applied row count: exactly one
+
+No repair was attempted. Resolving this requires an explicit owner decision
+outside this task because ledger repair, fake marking, migration modification,
+duplicate application, and an additional migration were all prohibited.
+
+Do not begin a new DB/Swift phase or claim the exact-ledger gate as passed.

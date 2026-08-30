@@ -14,7 +14,7 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Query private var brands: [Brand]
     @Query private var products: [Product]
-    @Query private var userFits: [UserFit]
+    @Query private var cachedUserFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab: AppTab = .home
@@ -61,14 +61,20 @@ struct ContentView: View {
             guard hasFinishedSplash,
                   let userID = signedInUserID,
                   closetSync.state == .synced else { return }
-            await comparisonSync.synchronize(userID: userID, histories: histories)
+            await comparisonSync.synchronize(
+                userID: userID,
+                histories: histories,
+                products: products,
+                closetItems: cachedUserFits,
+                modelContext: modelContext
+            )
         }
         .task(id: measurementMigrationRetryToken) {
             do {
                 try MeasurementLegacyBackfillService.run(
                     modelContext: modelContext,
                     products: products,
-                    userFits: userFits
+                    userFits: activeUserFits
                 )
                 measurementMigrationErrorMessage = nil
             } catch {
@@ -79,7 +85,7 @@ struct ContentView: View {
             SampleDataService.removeLegacySamples(
                 modelContext: modelContext,
                 products: products,
-                userFits: userFits,
+                userFits: activeUserFits,
                 histories: histories
             )
             try? await Task.sleep(nanoseconds: 800_000_000)
@@ -164,9 +170,13 @@ struct ContentView: View {
         return userID
     }
 
+    private var activeUserFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
+
     private var closetSyncTaskID: String {
         guard let userID = signedInUserID else { return "signed-out" }
-        let localRevision = userFits
+        let localRevision = activeUserFits
             .sorted { $0.id.uuidString < $1.id.uuidString }
             .map {
                 "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970):\($0.isRepresentative)"

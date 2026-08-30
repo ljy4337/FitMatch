@@ -1,0 +1,346 @@
+FitMatch — Swift vNext Final Xcode Verification
+Date: 2026-08-29 (Asia/Seoul)
+Mode: STRICT VALIDATION ONLY
+
+======================================================================
+A. FINAL VERDICT
+======================================================================
+
+FINAL XCODE VALIDATION PASS
+
+The current Swift ↔ vNext working tree passed an actual Xcode app build,
+test-target build, and 76 focused simulator tests with 0 failures.
+
+No Swift/SQL/Edge production source was changed by this validation.
+No Production DB query or write was performed. No migration was applied.
+No commit, push, reset, restore, stash, clean, or formatting command was run.
+
+The initial XcodeBuildMCP build request stopped returning output. Process
+inspection showed no active xcodebuild/XCBBuildService/swift compiler. It was
+terminated once and was not retried indefinitely. The permitted alternate
+normal Xcode path, direct xcodebuild, then completed successfully. Therefore
+this is a completed PASS, not a syntax-only PASS or NOT RUN.
+
+======================================================================
+B. Repository state
+======================================================================
+
+Repository:
+  /Users/jinyoung/Documents/Projects/FitMatch/FitMatch
+
+Branch:
+  connectDB
+
+HEAD:
+  6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+
+Expected HEAD match:
+  PASS
+
+git diff --check:
+  PASS
+
+Existing working tree protection:
+  PASS — all pre-existing modifications and untracked artifacts were preserved.
+
+Pre-validation tracked modifications:
+  Docs/CodexSessionHandoff.md
+  FitMatch/ContentView.swift
+  FitMatch/Models/CanonicalComparisonProfile.swift
+  FitMatch/Services/FitMatchClosetSyncCoordinator.swift
+  FitMatch/Services/FitMatchComparisonSyncCoordinator.swift
+  FitMatch/Services/FitMatchServerAuthorityCoordinator.swift
+  FitMatch/Services/FitMatchSupabaseProductResolver.swift
+  FitMatch/Services/MeasurementComparisonEngine.swift
+  FitMatch/Services/ProductURLParserService.swift
+  FitMatch/Services/RecommendationService.swift
+  FitMatch/ViewModels/ShoppingProductViewModel.swift
+  FitMatch/Views/RecommendationResultView.swift
+  FitMatchTests/FitMatchClosetSyncCoordinatorTests.swift
+  FitMatchTests/FitMatchComparisonPermitSequencingTests.swift
+  FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift
+  supabase/functions/product-observation/index.ts
+
+Relevant pre-validation untracked implementation files:
+  FitMatch/Services/FitMatchVNextDTOs.swift
+  FitMatch/Services/VNextComparisonEngineAdapter.swift
+  FitMatch/Services/VNextHistoryCacheHydrator.swift
+  FitMatchTests/FitMatchVNextContractTests.swift
+  supabase/migrations/20260829050000_vnext_swift_user_contract.sql
+  supabase/sql/123_vnext_swift_user_contract_tests.sql
+
+Other pre-existing untracked vNext migrations, audit artifacts, and earlier ZIP
+packages remain present and were not altered or removed.
+
+Validation-only artifacts added/updated after all code checks:
+  Docs/FitMatchSwiftVNextFinalXcodeVerification-20260829.txt
+  Docs/CodexSessionHandoff.md
+  FitMatchSwiftVNextFinalXcodeVerification-20260829.zip
+
+======================================================================
+C. Build results
+======================================================================
+
+Xcode:
+  Xcode 26.3
+  Build version 17C529
+
+Project / scheme / configuration:
+  FitMatch.xcodeproj
+  FitMatch
+  Debug
+
+Destination:
+  platform=iOS Simulator
+  device=iPhone 17 Pro
+  UDID=03BAF093-552E-4E53-ABFB-7DE0653BE676
+  OS=26.3.1 (23D8133)
+  architecture=x86_64
+
+DerivedData:
+  /tmp/FitMatchFinalXcodeValidationDerivedData
+
+1. App target compile/type-check/build
+
+Command:
+  xcodebuild -project FitMatch.xcodeproj -scheme FitMatch \
+    -configuration Debug \
+    -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' \
+    -derivedDataPath /tmp/FitMatchFinalXcodeValidationDerivedData \
+    -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO build
+
+Result:
+  PASS — ** BUILD SUCCEEDED **
+  FitMatch.app exists in Debug-iphonesimulator products.
+  The Share Extension was also compiled as part of the app build.
+
+2. Test target compile
+
+Command:
+  Same project/scheme/destination with build-for-testing.
+
+Result:
+  PASS — ** TEST BUILD SUCCEEDED **
+  FitMatchTests.xctest exists inside FitMatch.app/PlugIns.
+  FitMatchUITests-Runner.app also exists in build products.
+
+Non-blocking build warnings:
+  Pre-existing optional-interpolation warnings in live test files and the
+  Xcode metadata note about no AppIntents dependency. Errors: 0. No warning
+  was modified or suppressed by this validation.
+
+======================================================================
+D. Test results
+======================================================================
+
+Execution mode:
+  test-without-building against the successful build-for-testing products.
+
+Result bundle 1:
+  /tmp/FitMatchFinalXcodeFocusedTests.xcresult
+
+Result bundle 2:
+  /tmp/FitMatchFinalXcodeResolverTests.xcresult
+
+Suite results:
+  FitMatchVNextContractTests
+    executed 5 / passed 5 / failed 0 / skipped 0
+
+  FitMatchComparisonSyncCoordinatorTests
+    executed 3 / passed 3 / failed 0 / skipped 0
+
+  FitMatchComparisonPermitSequencingTests
+    executed 4 / passed 4 / failed 0 / skipped 0
+
+  FitMatchClosetSyncCoordinatorTests
+    executed 19 / passed 19 / failed 0 / skipped 0
+
+  FitMatchServerAuthorityIntegrationTests
+    executed 23 / passed 23 / failed 0 / skipped 0
+
+  FitMatchSupabaseProductResolverTests
+    executed 22 / passed 22 / failed 0 / skipped 0
+
+Total:
+  PASS 76
+  FAIL 0
+  SKIP 0
+  Expected failures 0
+
+xcresulttool summaries:
+  Focused authority/closet/comparison group: Passed, 54/54
+  DTO/transport/resolver group: Passed, 22/22
+
+Coverage confirmed by the executed suites:
+  - runtime, observation, closet, reference-candidate, eligible-size,
+    begin-snapshot, completion, and immutable-history DTO decoding
+  - exact server tuple wins over conflicting local inference
+  - REVIEW_REQUIRED and NOT_APPLICABLE remain fail-closed
+  - product-linked and manual closet behavior
+  - vNext reference authorization and candidate aggregation
+  - AUTOMATIC, MANUAL_EXTENDED, MEASUREMENTS_REQUIRED, and BLOCKED handling
+  - pending comparison recovery and immutable completed-history hydration
+  - Golden server tuple regression coverage
+
+======================================================================
+E. Sequence / authority assertions
+======================================================================
+
+scorer-before-authorization violations:
+  0 — PASS
+
+scorer-before-begin violations:
+  0 — PASS
+
+unauthorized candidate/size scoring:
+  0 — PASS
+
+excluded metric scoring/evidence usage:
+  0 — PASS
+
+BLOCKED scorer calls:
+  0 — PASS
+
+REVIEW_REQUIRED scorer calls:
+  0 — PASS
+
+NOT_APPLICABLE scorer calls:
+  0 — PASS
+
+Evidence:
+  - releaseComparisonCallSitesRequirePermitBeforeScoring PASS
+  - persistedServerApprovalGuardsAlternativeSizeScoring PASS
+  - engineScoresOnlyExactAuthorizedCandidateSetAndRanksDeterministically PASS
+  - engineRejectsSnapshotCandidateSetMismatchBeforeScoring PASS
+  - engineRejectsBlockedAuthorizationBeforeScoring PASS
+  - currentReviewAndNotComparableRemainFailClosed PASS
+  - candidate aggregate/readiness mismatch fail-closed tests PASS
+
+Alternate item sequencing:
+  PASS
+  Current target Product/context is reused. The selected reference is sent
+  through server candidate authorization, exact eligible-size retrieval,
+  begin snapshot, vNext scorer, server completion, then a new local immutable
+  cache/history entry. No target parser call exists in this flow, and existing
+  comparison/history rows are not overwritten.
+
+Alternate size sequencing:
+  PASS
+  The UI reads only VNextComparisonSessionStore analysis for the current
+  completed result, intersects display sizes with the stored authorized
+  candidate ProductSize IDs, and uses the already-computed batch analysis.
+  Per-size parser run 0; per-size authorization run 0; new comparison 0;
+  history write 0; unauthorized size scorer call 0.
+
+History completion sequencing:
+  PASS
+  begin snapshot → adapter/scorer → server completion → local save/cache.
+  Sync recovers only server PENDING snapshots, re-fetches COMPLETED rows, and
+  hydrates immutable history. Local history is never promoted into server
+  authority.
+
+======================================================================
+F. Legacy authority regression
+======================================================================
+
+Release Swift + product-observation Edge search:
+  fitmatch_submit_product_observation: 0
+  fitmatch_process_product_observation: 0
+  fitmatch_resolve_product: 0
+  fitmatch_get_product_runtime: 0
+
+Result:
+  PASS — sourced production observation/runtime paths contain no listed legacy
+  RPC call.
+
+ParsedClosetClassification.resolve, GarmentLengthInferencePolicy, and
+ComparisonProfileMatcher still exist in parser/manual/presentation/legacy
+support paths. Inspection distinguishes these symbols from sourced comparison
+authority:
+  - server-confirmed tuple wins over a local hint
+  - fail-closed server states cannot become comparison authority
+  - release result-screen scoring requires a vNext permit/begin snapshot
+  - remaining direct local recommendation helpers are DEBUG-only or are not
+    called by the release result comparison path
+  - CompareFlow local profiles prepare display/candidate presentation only;
+    they do not invoke the measurement scorer or bypass server authorization
+
+local-history-first authority upload:
+  0 — PASS
+
+======================================================================
+G. Protected regression
+======================================================================
+
+SwiftData model/schema diff:
+  0 — PASS
+  FitMatchSchema.swift, all @Model entity files, FitMatchApp schema/container,
+  and xcdatamodel paths have no diff. CanonicalComparisonProfile.swift is a
+  value-type policy mapping change, not a SwiftData schema change.
+
+Protected TabBar modifier diff:
+  0 — PASS
+
+Protected tab/scroll call-site symbol diff:
+  0 — PASS
+
+Navigation structure additions in Swift diff:
+  0 — PASS
+
+Share Extension diff:
+  0 — PASS
+
+======================================================================
+H. Production safety
+======================================================================
+
+Production DB write:
+  0
+
+Production SELECT/introspection during this validation:
+  0
+
+Migration applied:
+  NO
+
+Migration ledger repair:
+  NO
+
+Edge deployment:
+  NO
+
+Production baseline was not modified or reinterpreted in this Xcode-only task.
+The known prior baseline remains the supplied evidence; it was not claimed as
+newly queried here.
+
+======================================================================
+I. Remaining blocker
+======================================================================
+
+Known functional P0:
+  supabase/migrations/20260829050000_vnext_swift_user_contract.sql is not
+  applied to Production.
+
+Production closet_items.satisfaction:
+  Not present per the known preflight baseline.
+
+Production Swift update bridge:
+  Not present per the known preflight baseline.
+
+New compile/test blocker found:
+  None.
+
+Physical signed-in iPhone E2E:
+  Not part of this validation and not claimed as PASS.
+
+======================================================================
+J. Exact next action
+======================================================================
+
+Swift final validation passed.
+Next step is explicit owner approval and Production application of only
+supabase/migrations/20260829050000_vnext_swift_user_contract.sql,
+followed by security/data postflight.
+
+Do not start another DB authority phase, apply any other migration, or change
+Production without that explicit approval.

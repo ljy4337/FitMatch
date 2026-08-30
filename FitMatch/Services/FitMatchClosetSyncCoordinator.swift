@@ -8,6 +8,44 @@ nonisolated protocol FitMatchClosetRemoteServicing: FitMatchServerAuthorityRemot
         -> FitMatchUpsertClosetItemResponse
     func deleteClosetItem(closetItemID: UUID) async throws
         -> FitMatchDeleteClosetItemResponse
+    func updateClosetItem(
+        _ request: FitMatchUpsertClosetItemRequest,
+        closetItemID: UUID
+    ) async throws -> FitMatchUpsertClosetItemResponse
+    func setClosetReference(closetItemID: UUID, isReference: Bool) async throws
+        -> FitMatchSetClosetReferenceResponse
+    func setClosetClassificationOverride(
+        closetItemID: UUID,
+        override: FitMatchClosetClassificationOverride
+    ) async throws
+    func clearClosetClassificationOverride(closetItemID: UUID) async throws
+}
+
+extension FitMatchClosetRemoteServicing {
+    func updateClosetItem(
+        _ request: FitMatchUpsertClosetItemRequest,
+        closetItemID: UUID
+    ) async throws -> FitMatchUpsertClosetItemResponse {
+        throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+    }
+
+    func setClosetReference(
+        closetItemID: UUID,
+        isReference: Bool
+    ) async throws -> FitMatchSetClosetReferenceResponse {
+        throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+    }
+
+    func setClosetClassificationOverride(
+        closetItemID: UUID,
+        override: FitMatchClosetClassificationOverride
+    ) async throws {
+        throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+    }
+
+    func clearClosetClassificationOverride(closetItemID: UUID) async throws {
+        throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+    }
 }
 
 extension FitMatchSupabaseDomainClient: FitMatchClosetRemoteServicing {}
@@ -132,6 +170,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             )
 
             let localItems = try modelContext.fetch(FetchDescriptor<UserFit>())
+                .filter(\.isActiveClosetItem)
             var failedUpsert = false
             var failedAutomaticAuthorityValidationIDs = Set<UUID>()
             for localItem in localItems {
@@ -146,7 +185,28 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
 
                 do {
                     let request = try await makeUpsertRequest(for: localItem)
-                    _ = try await remote.upsertClosetItem(request)
+                    let closetItemID: UUID
+                    if let existing = remoteItemsByClientID[localItem.id] {
+                        _ = try await remote.updateClosetItem(
+                            request,
+                            closetItemID: existing.closetItemID
+                        )
+                        closetItemID = existing.closetItemID
+                    } else {
+                        closetItemID = try await remote.upsertClosetItem(request).closetItemID
+                    }
+                    if let override = request.override, request.productID != nil {
+                        try await remote.setClosetClassificationOverride(
+                            closetItemID: closetItemID,
+                            override: override
+                        )
+                    } else if remoteItemsByClientID[localItem.id]?.classificationSource
+                                == "manual_override",
+                              request.productID != nil {
+                        try await remote.clearClosetClassificationOverride(
+                            closetItemID: closetItemID
+                        )
+                    }
                 } catch {
                     failedUpsert = true
                     if localItem.sourceProduct != nil,
@@ -158,6 +218,18 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                     #endif
                 }
             }
+
+            // Refresh IDs after creates/updates, then reconcile exact item
+            // deltas. Server set(true) remains responsible for atomic
+            // same-tuple replacement.
+            let beforeReference = try await remote.listClosetItems()
+            guard beforeReference.state == "ready" else {
+                throw FitMatchSupabaseProductResolverError.authenticationRequired
+            }
+            remoteItemsByClientID = Dictionary(
+                uniqueKeysWithValues: beforeReference.items.map { ($0.clientItemID, $0) }
+            )
+            try await synchronizeReferenceAuthority(localItems: localItems)
 
             let authoritative = try await remote.listClosetItems()
             guard authoritative.state == "ready" else {
@@ -202,6 +274,51 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         }
     }
 
+    private func synchronizeReferenceAuthority(localItems: [UserFit]) async throws {
+        let localByClientID = Dictionary(
+            uniqueKeysWithValues: localItems.map { ($0.id, $0) }
+        )
+        let setCandidates = localItems.filter { item in
+            item.isRepresentative
+                && remoteItemsByClientID[item.id]?.isReference == false
+        }.sorted { $0.id.uuidString < $1.id.uuidString }
+
+        for item in setCandidates {
+            guard let remoteItem = remoteItemsByClientID[item.id] else { continue }
+            _ = try await remote.setClosetReference(
+                closetItemID: remoteItem.closetItemID,
+                isReference: true
+            )
+        }
+
+        if !setCandidates.isEmpty {
+            let refreshed = try await remote.listClosetItems()
+            guard refreshed.state == "ready" else {
+                throw FitMatchSupabaseProductResolverError.authenticationRequired
+            }
+            remoteItemsByClientID = Dictionary(
+                uniqueKeysWithValues: refreshed.items.map { ($0.clientItemID, $0) }
+            )
+        }
+
+        let unsetCandidates = remoteItemsByClientID.values.filter { remoteItem in
+            guard remoteItem.isReference,
+                  let localItem = localByClientID[remoteItem.clientItemID] else {
+                return false
+            }
+            return !localItem.isRepresentative
+        }.sorted { $0.clientItemID.uuidString < $1.clientItemID.uuidString }
+
+        for remoteItem in unsetCandidates {
+            // A remote-only row is absent from localByClientID and is therefore
+            // hydration input, never an implicit first-login unset intent.
+            _ = try await remote.setClosetReference(
+                closetItemID: remoteItem.closetItemID,
+                isReference: false
+            )
+        }
+    }
+
     private func prepareLocalCache(for userID: UUID, modelContext: ModelContext) throws {
         let storedOwner = defaults.string(forKey: Self.cacheOwnerKey).flatMap(UUID.init(uuidString:))
         if let storedOwner, storedOwner != userID {
@@ -242,6 +359,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         }
 
         var productID = remoteItemsByClientID[item.id]?.productID
+        var productVariantID = remoteItemsByClientID[item.id]?.variantID
         var productSizeID = remoteItemsByClientID[item.id]?.productSizeID
         let existingRemoteItem = remoteItemsByClientID[item.id]
 
@@ -261,11 +379,13 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 )
                 try applyServerAuthority(authority, to: item)
                 productID = authority.productID
-                productSizeID = uniqueRuntimeSizeID(
+                let identity = uniqueRuntimeSizeIdentity(
                     in: authority.runtime,
                     matching: item.sizeName,
                     colorName: product.checkedColorName
                 )
+                productVariantID = identity?.variantID
+                productSizeID = identity?.sizeID
             } catch {
                 if item.classificationAuthorityProvenance != .userExplicit,
                    !(error is FitMatchClosetAuthorityError) {
@@ -301,10 +421,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 throw FitMatchClosetAuthorityError.unavailableClassification
             }
             override = FitMatchClosetClassificationOverride(
+                audienceCode: item.resolvedGenderCode,
                 categoryCode: item.resolvedCategoryCode ?? item.category.taxonomyCode,
                 detailCode: item.resolvedDetailCategoryCode ?? "other",
                 familyCode: familyCode,
                 lengthCode: resolvedLengthCode(for: item),
+                bodyLengthCode: resolvedBodyLengthCode(for: item),
                 reason: "user_confirmed_closet_classification",
                 evidence: [
                     "classification_authority": FitMatchClassificationAuthorityProvenance
@@ -318,6 +440,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             clientItemID: item.id,
             item: payload(for: item),
             productID: productID,
+            productVariantID: productVariantID,
             productSizeID: productSizeID,
             override: override
         )
@@ -381,11 +504,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         )
     }
 
-    private func uniqueRuntimeSizeID(
+    private func uniqueRuntimeSizeIdentity(
         in runtime: FitMatchProductRuntimeResponse,
         matching sizeName: String,
         colorName: String?
-    ) -> UUID? {
+    ) -> (variantID: UUID, sizeID: UUID)? {
         let normalizedSize = sizeName.fitMatchDisplaySizeName.lowercased()
         var variants = runtime.variants
         if let colorName = colorName?.nilIfBlank {
@@ -395,11 +518,17 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             }
             if !colorMatches.isEmpty { variants = colorMatches }
         }
-        let matches = variants.flatMap(\.sizes).filter {
-            $0.sizeLabel.fitMatchDisplaySizeName.lowercased() == normalizedSize
-                || $0.normalizedSizeLabel.fitMatchDisplaySizeName.lowercased() == normalizedSize
+        let matches = variants.flatMap { variant in
+            variant.sizes.compactMap { size -> (UUID, UUID)? in
+                guard size.sizeLabel.fitMatchDisplaySizeName.lowercased() == normalizedSize
+                        || size.normalizedSizeLabel.fitMatchDisplaySizeName.lowercased()
+                            == normalizedSize else { return nil }
+                return (variant.variantID, size.productSizeID)
+            }
         }
-        return matches.count == 1 ? matches[0].productSizeID : nil
+        return matches.count == 1
+            ? (variantID: matches[0].0, sizeID: matches[0].1)
+            : nil
     }
 
     private func applyRemoteAuthority(
@@ -480,7 +609,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             item.detailCategoryCode = detailCode
             item.normalizedProductTypeCode = detailCode
         }
-        item.garmentTypeRawValue = classification.familyCode
+        item.garmentTypeRawValue = classification.garmentTypeCode
+            ?? classification.familyCode
         item.sleeveTypeRawValue = classification.lengthCode
         item.canonicalPolicyVersion = classification.taxonomyPolicyVersion
             ?? classification.decisionVersion
@@ -497,7 +627,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         if let detailCode = classification.detailCode {
             product.normalizedProductTypeCode = detailCode
         }
-        product.garmentTypeRawValue = classification.familyCode
+        product.garmentTypeRawValue = classification.garmentTypeCode
+            ?? classification.familyCode
         product.sleeveTypeRawValue = classification.lengthCode
         product.canonicalPolicyVersion = classification.taxonomyPolicyVersion
             ?? classification.decisionVersion

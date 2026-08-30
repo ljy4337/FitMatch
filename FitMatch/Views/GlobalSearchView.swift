@@ -2,7 +2,11 @@ import SwiftUI
 import SwiftData
 
 struct GlobalSearchView: View {
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var searchText = ""
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()

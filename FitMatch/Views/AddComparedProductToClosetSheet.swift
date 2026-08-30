@@ -5,7 +5,11 @@ import SwiftData
 struct AddComparedProductToClosetSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     let product: Product
     let productDetailCategory: ClosetDetailCategory

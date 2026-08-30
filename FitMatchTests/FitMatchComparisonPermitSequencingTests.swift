@@ -16,9 +16,17 @@ struct FitMatchComparisonPermitSequencingTests {
             viewModel.range(of: "return try await coordinator.beginAuthorizedComparison")
         )
         let viewModelScore = try #require(
-            viewModel.range(of: "recommendationService.recommendAfterServerAuthorization")
+            viewModel.range(of: "recommendationService.analyzeVNextComparison")
+        )
+        let viewModelComplete = try #require(
+            viewModel.range(of: "serverAuthorityCoordinator.completeAuthorizedComparison")
+        )
+        let viewModelHistory = try #require(
+            viewModel.range(of: "recommendationService.makeCompletedVNextHistory")
         )
         #expect(viewModelBegin.lowerBound < viewModelScore.lowerBound)
+        #expect(viewModelScore.lowerBound < viewModelComplete.lowerBound)
+        #expect(viewModelComplete.lowerBound < viewModelHistory.lowerBound)
 
         let resultView = try sourceFile("FitMatch/Views/RecommendationResultView.swift")
         let releaseResultView = strippingDebugOnlyCode(from: resultView)
@@ -31,6 +39,14 @@ struct FitMatchComparisonPermitSequencingTests {
         #expect(resultBegin.lowerBound < resultScore.lowerBound)
         #expect(!releaseResultView.contains(".recommend("))
         #expect(!releaseResultView.contains(".insufficientEvidence("))
+        let resultComplete = try #require(
+            releaseResultView.range(of: "coordinator.completeAuthorizedComparison")
+        )
+        let resultCache = try #require(
+            releaseResultView.range(of: "RecommendationHistoryStore.saveCompletedVNext")
+        )
+        #expect(resultComplete.lowerBound < resultCache.lowerBound)
+        #expect(!releaseResultView.contains("RecommendationHistoryStore.saveUnique"))
 
         let compareFlow = try sourceFile("FitMatch/Views/CompareFlowSheet.swift")
         #expect(!compareFlow.contains(".automaticMatchResult("))
@@ -42,16 +58,19 @@ struct FitMatchComparisonPermitSequencingTests {
         let resultView = strippingDebugOnlyCode(
             from: try sourceFile("FitMatch/Views/RecommendationResultView.swift")
         )
-        let serverApprovalGuard = try #require(
-            resultView.range(
-                of: "currentResult.comparisonMethod.hasPrefix(\"서버 승인\")"
-            )
-        )
-        let alternativeScore = try #require(
-            resultView.range(of: "service.analyzeSizeWithoutSaving")
-        )
+        #expect(resultView.contains("VNextComparisonSessionStore.shared.analysis"))
+        #expect(resultView.contains("authorizedCandidateProductSizeIDs"))
+        #expect(!resultView.contains("service.analyzeSizeWithoutSaving"))
+    }
 
-        #expect(serverApprovalGuard.lowerBound < alternativeScore.lowerBound)
+    @Test func comparisonSyncCannotPromoteLocalHistoryIntoServerAuthority() throws {
+        let source = try sourceFile("FitMatch/Services/FitMatchComparisonSyncCoordinator.swift")
+
+        #expect(!source.contains("resolve("))
+        #expect(!source.contains("beginComparison"))
+        #expect(!source.contains("FitMatchBeginComparisonRequest"))
+        #expect(source.contains("row.pendingBegin"))
+        #expect(source.contains("fetchVNextComparisonHistory"))
     }
 
     private func sourceFile(_ relativePath: String) throws -> String {

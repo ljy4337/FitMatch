@@ -1,88 +1,72 @@
 import Foundation
+import SwiftData
 import Testing
 @testable import FitMatch
 
 @MainActor
 struct FitMatchComparisonSyncCoordinatorTests {
-    @Test func confirmedLocalHistoryIsPersistedWithCanonicalRunAndMeasurements() async throws {
-        let userID = UUID()
-        let clientClosetID = UUID()
-        let serverClosetID = UUID()
-        let targetProductID = UUID()
-        let targetSizeID = UUID()
-        let runID = UUID()
-        let history = try makeHistory(referenceID: clientClosetID)
-        let fixture = try RemoteFixture(
-            clientClosetID: clientClosetID,
-            serverClosetID: serverClosetID,
-            targetProductID: targetProductID,
-            targetSizeID: targetSizeID,
-            runID: runID
+    @Test func pendingServerSnapshotRecoversThenHydratesExactlyOnce() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let remote = ComparisonHistoryRemoteStub(
+            pending: fixture.pending,
+            completed: fixture.completed
         )
-        let remote = ComparisonRemoteStub(fixture: fixture)
-        let suiteName = "FitMatchComparisonSyncCoordinatorTests.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suiteName))
-        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let defaultsName = "FitMatchComparisonSyncCoordinatorTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
         let coordinator = FitMatchComparisonSyncCoordinator(remote: remote, defaults: defaults)
 
-        await coordinator.synchronize(userID: userID, histories: [history])
+        await coordinator.synchronize(
+            userID: fixture.userID,
+            histories: [],
+            products: [],
+            closetItems: [],
+            modelContext: context
+        )
 
         #expect(coordinator.state == .synced)
-        #expect(coordinator.parityWarningCount == 0)
-        let begin = await remote.capturedBeginRequest()
-        #expect(begin?.clientHistoryID == history.id)
-        #expect(begin?.referenceItemID == serverClosetID)
-        #expect(begin?.targetProductID == targetProductID)
-        #expect(begin?.allowExtended == false)
-        let complete = try #require(await remote.capturedCompleteRequest())
-        #expect(complete.runID == runID)
-        let submitted = try #require(complete.results.first)
-        #expect(submitted.targetSizeID == targetSizeID)
-        #expect(submitted.similarityScore == Double(history.recommendationScore))
-        #expect(submitted.coverageRatio == history.calculationSnapshot?.comparisonCoverage)
-        #expect(submitted.dataQualityScore == 1)
-        #expect(submitted.confidenceScore == 1)
-        #expect(submitted.confidenceCode == "high")
-        #expect(submitted.qualityMetricsVersion == "fitmatch-comparison-quality-2026-08-20-v1")
-        #expect(submitted.isComparable)
-        #expect(submitted.measurements.count == history.calculationSnapshot?.usedMeasurements.count)
-        #expect(submitted.measurements.allSatisfy { $0.included })
-        let encoded = try JSONEncoder().encode(complete)
-        let payload = try #require(
-            JSONSerialization.jsonObject(with: encoded) as? [String: Any]
-        )
-        let encodedResults = try #require(payload["results"] as? [[String: Any]])
-        let encodedResult = try #require(encodedResults.first)
-        #expect(encodedResult["coverage_ratio"] as? Double == 1)
-        #expect(encodedResult["data_quality_score"] as? Double == 1)
-        #expect(encodedResult["confidence_score"] as? Double == 1)
-        #expect(
-            encodedResult["quality_metrics_version"] as? String
-                == "fitmatch-comparison-quality-2026-08-20-v1"
-        )
-
-        await coordinator.synchronize(userID: userID, histories: [history])
-        #expect(await remote.beginCallCount() == 1)
         #expect(await remote.completeCallCount() == 1)
+        let histories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let history = try #require(histories.first)
+        #expect(histories.count == 1)
+        #expect(history.id == fixture.clientComparisonID)
+        #expect(history.recommendedSize.id == fixture.productSizeID)
+        #expect(history.recommendationScore == 95)
+        #expect(history.comparisonMethod == "서버 승인 직접 비교")
+
+        await coordinator.synchronize(
+            userID: fixture.userID,
+            histories: histories,
+            products: try context.fetch(FetchDescriptor<Product>()),
+            closetItems: try context.fetch(FetchDescriptor<UserFit>()),
+            modelContext: context
+        )
+        #expect(await remote.completeCallCount() == 1)
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
     }
 
-    @Test func blockedDatabaseRunIsRecordedAsParityWarningWithoutSubmittingResult() async throws {
-        let clientClosetID = UUID()
-        let history = try makeHistory(referenceID: clientClosetID)
-        let fixture = try RemoteFixture(
-            clientClosetID: clientClosetID,
-            serverClosetID: UUID(),
-            targetProductID: UUID(),
-            targetSizeID: UUID(),
-            runID: UUID(),
-            beginStatus: "blocked",
-            beginAllowed: false
-        )
-        let remote = ComparisonRemoteStub(fixture: fixture)
-        let suiteName = "FitMatchComparisonSyncCoordinatorTests.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suiteName))
-        defer { defaults.removePersistentDomain(forName: suiteName) }
+    @Test func legacyLocalHistoryIsReadOnlyAndNeverUploaded() async throws {
+        let history = makeLegacyHistory()
+        let remote = ComparisonHistoryRemoteStub(pending: nil, completed: nil)
+        let defaultsName = "FitMatchComparisonSyncCoordinatorTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
         let coordinator = FitMatchComparisonSyncCoordinator(remote: remote, defaults: defaults)
+
+        await coordinator.synchronize(userID: UUID(), histories: [history])
+
+        #expect(coordinator.state == .synced)
+        #expect(await remote.completeCallCount() == 0)
+        #expect(await remote.historyFetchCount() == 1)
+    }
+
+    @Test func orphanedServerApprovedLocalCacheFailsClosed() async throws {
+        let history = makeLegacyHistory()
+        history.comparisonMethod = "서버 승인 직접 비교"
+        let remote = ComparisonHistoryRemoteStub(pending: nil, completed: nil)
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote)
 
         await coordinator.synchronize(userID: UUID(), histories: [history])
 
@@ -91,302 +75,274 @@ struct FitMatchComparisonSyncCoordinatorTests {
         #expect(await remote.completeCallCount() == 0)
     }
 
-    private func makeHistory(referenceID: UUID) throws -> RecommendationHistory {
+    @Test func deletedReferenceHydratesAsHistoryOnlyForEveryAuthoritySource() async throws {
+        let historyOnlyIdentity = UserFit.historyReferenceSnapshotSourceIdentity
+        for classificationSource in [
+            "USER_EXPLICIT",
+            "USER_EDITED",
+            "RETAILER_SNAPSHOT"
+        ] {
+            let fixture = try ComparisonHistoryFixture(
+                classificationSource: classificationSource
+            )
+            let container = try inMemoryContainer()
+            let context = ModelContext(container)
+            _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+                [fixture.completed],
+                existingHistories: [],
+                existingProducts: [],
+                existingClosetItems: [],
+                modelContext: context
+            )
+
+            let histories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+            let items = try context.fetch(FetchDescriptor<UserFit>())
+            let history = try #require(histories.first)
+            let snapshot = try #require(items.first { $0.id == fixture.referenceClientItemID })
+
+            #expect(histories.count == 1)
+            #expect(history.userFit.id == fixture.referenceClientItemID)
+            #expect(history.userFit.productName == "내 반팔 티셔츠")
+            #expect(snapshot.canonicalSourceIdentity == historyOnlyIdentity)
+            #expect(items.filter(\.isActiveClosetItem).isEmpty)
+            #expect(snapshot.isRepresentative == false)
+        }
+    }
+
+    private func inMemoryContainer() throws -> ModelContainer {
+        let schema = Schema(FitMatchSchemaV1.models)
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        return try ModelContainer(for: schema, configurations: [configuration])
+    }
+
+    private func makeLegacyHistory() -> RecommendationHistory {
         let size = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
-                shoulder: 46,
-                chest: 54,
-                totalLength: 70,
-                sleeveLength: 23
+                shoulder: 45,
+                chest: 51,
+                totalLength: 69,
+                sleeveLength: 22
             )
         )
-        size.measurementRecords = measurementRecords(
-            shoulder: 46,
-            chest: 54,
-            totalLength: 70,
-            sleeveLength: 23,
-            methodSource: "uniqlo_kr",
-            inputSource: .importedSizeChart
-        )
-        let product = Product(
-            name: "에어리즘 코튼 크루넥T",
-            category: .top,
-            productCode: "E499999",
-            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E499999-000/01",
-            metadata: ProductMetadata(
-                sourceCategoryPath: "티셔츠 > 에어리즘 코튼 > 반팔",
-                categoryDepth1Code: "100",
-                categoryDepth2Code: "110",
-                categoryDepth3Code: "111",
-                genderCodes: ["MEN"],
-                checkedColorName: "BLACK"
-            ),
-            sourceType: .officialStore,
-            sourceName: "유니클로 공식몰",
-            source: .catalog,
-            sizes: [size]
-        )
+        let product = Product(name: "과거 상품", category: .top, sizes: [size])
         let reference = UserFit(
-            id: referenceID,
-            brandName: "테스트",
-            gender: .men,
-            productName: "내 반팔 티셔츠",
+            brandName: "과거",
+            productName: "내 옷",
             category: .top,
-            detailCategory: .shortSleeve,
             sizeName: "M",
             measurements: GarmentMeasurements(
                 shoulder: 45,
-                chest: 53,
+                chest: 50,
                 totalLength: 69,
                 sleeveLength: 22
             ),
             fitMemo: "",
-            satisfaction: 5,
-            isRepresentative: true
+            satisfaction: 3
         )
-        reference.measurementRecords = measurementRecords(
-            shoulder: 45,
-            chest: 53,
-            totalLength: 69,
-            sleeveLength: 22,
-            methodSource: "manual",
-            inputSource: .userMeasured
-        )
-        let comparison = MeasurementComparisonEngine().compare(
-            productSize: size,
-            referenceItem: reference,
-            productCategory: .top,
-            productDetailCategory: .shortSleeve
-        )
-        #expect(comparison.status == MeasurementComparisonStatus.confirmed)
         return RecommendationHistory(
             product: product,
             recommendedSize: size,
             userFit: reference,
-            totalDifference: comparison.averageDifference,
-            measurementDifferences: comparison.signedDifferences,
-            recommendationScore: comparison.score,
-            comparisonMethod: "같은 종류 기준 비교",
-            productDetailCategory: .shortSleeve,
-            comparisonResult: comparison
-        )
-    }
-
-    private func measurementRecords(
-        shoulder: Double,
-        chest: Double,
-        totalLength: Double,
-        sleeveLength: Double,
-        methodSource: String,
-        inputSource: MeasurementInputSource
-    ) -> [GarmentMeasurementRecord] {
-        [
-            measurementRecord(
-                value: shoulder,
-                code: .shoulderWidthSeamToSeam,
-                kind: .shoulder,
-                label: "어깨너비",
-                methodSource: methodSource,
-                inputSource: inputSource
-            ),
-            measurementRecord(
-                value: chest,
-                code: .chestWidthPitToPit,
-                kind: .chest,
-                label: "가슴너비",
-                methodSource: methodSource,
-                inputSource: inputSource
-            ),
-            measurementRecord(
-                value: totalLength,
-                code: .bodyLengthBackNeckToHem,
-                kind: .totalLength,
-                label: "총장",
-                methodSource: methodSource,
-                inputSource: inputSource
-            ),
-            measurementRecord(
-                value: sleeveLength,
-                code: .sleeveShoulderSeamToCuff,
-                kind: .sleeveLength,
-                label: "소매길이",
-                methodSource: methodSource,
-                inputSource: inputSource
+            totalDifference: 1,
+            measurementDifferences: GarmentMeasurements(
+                shoulder: 0,
+                chest: 1,
+                totalLength: 0,
+                sleeveLength: 0
             )
-        ]
-    }
-
-    private func measurementRecord(
-        value: Double,
-        code: MeasurementCode,
-        kind: MeasurementDisplayKind,
-        label: String,
-        methodSource: String,
-        inputSource: MeasurementInputSource
-    ) -> GarmentMeasurementRecord {
-        GarmentMeasurementRecord(
-            value: value,
-            measurementCode: code,
-            displayKind: kind,
-            methodSource: methodSource,
-            inputSource: inputSource,
-            mappingVersion: "comparison-sync-test-v1",
-            rawLabel: label,
-            evidenceLevel: .fitmatchDefined,
-            semanticStatus: .mapped
         )
     }
 }
 
-private struct RemoteFixture: Sendable {
-    let closet: FitMatchClosetItemsResponse
-    let resolution: FitMatchProductResolutionResponse
-    let runtime: FitMatchProductRuntimeResponse
-    let candidates: FitMatchReferenceCandidatesResponse
-    let begin: FitMatchBeginComparisonResponse
-    let complete: FitMatchCompleteComparisonResponse
+private struct ComparisonHistoryFixture: Sendable {
+    let userID = UUID()
+    let comparisonID = UUID()
+    let clientComparisonID = UUID()
+    let referenceClientItemID = UUID()
+    let targetProductID = UUID()
+    let targetVariantID = UUID()
+    let productSizeID = UUID()
+    let pending: VNextComparisonHistoryDTO
+    let completed: VNextComparisonHistoryDTO
 
-    init(
-        clientClosetID: UUID,
-        serverClosetID: UUID,
-        targetProductID: UUID,
-        targetSizeID: UUID,
-        runID: UUID,
-        beginStatus: String = "pending",
-        beginAllowed: Bool = true
-    ) throws {
-        closet = try Self.decode(
-            """
-            {
-              "state":"ready",
-              "items":[{
-                "closet_item_id":"\(serverClosetID.uuidString)",
-                "client_item_id":"\(clientClosetID.uuidString)",
-                "product_id":null,"external_product_id":null,"product_audience":null,
-                "source_category_codes":[],"variant_id":null,"product_size_id":null,
-                "brand":"테스트","product_name":"내 반팔 티셔츠","size_name":"M",
-                "gender_code":"male","source":"manual","source_category_path":null,
-                "product_url":null,"image_url":null,
-                "measurements":{"shoulder_width":45,"chest_width":53,"body_length":69,"sleeve_length":22},
-                "measurement_records":[],"fit_memo":"","fit_preference_code":"regular",
-                "satisfaction":5,"is_reference":true,"classification_status":"confirmed",
-                "classification_source":"manual_override","category_code":"tops",
-                "detail_code":"short_sleeve","canonical_category_code":null,
-                "canonical_detail_code":null,"family_code":"tshirt",
-                "length_code":"short_sleeve","body_length_code":null,
-                "classification_snapshot":{},"client_snapshot":{},
-                "client_created_at":"2026-08-19T00:00:00Z",
-                "client_updated_at":"2026-08-19T00:00:00Z","sync_revision":1,
-                "created_at":"2026-08-19T00:00:00Z","updated_at":"2026-08-19T00:00:00Z"
-              }]
-            }
-            """
+    init(classificationSource: String = "manual_override") throws {
+        let identifiers = (
+            comparisonID: comparisonID,
+            clientComparisonID: clientComparisonID,
+            referenceClientItemID: referenceClientItemID,
+            targetProductID: targetProductID,
+            targetVariantID: targetVariantID,
+            productSizeID: productSizeID
         )
-        resolution = FitMatchProductResolutionResponse(
-            productID: targetProductID,
-            intakeRequestID: nil,
-            catalogState: "current",
-            categoryEvidenceMatches: true,
-            classification: FitMatchDatabaseClassification(
-                classificationID: UUID(),
-                categoryCode: "tops",
-                detailCode: "short_sleeve",
-                familyCode: "tshirt",
-                lengthCode: "short_sleeve",
-                bodyLengthCode: nil,
-                status: "confirmed",
-                method: "verified",
-                confidence: 1,
-                requiresUserConfirmation: false,
-                taxonomyPolicyVersion: "taxonomy-v1",
-                decisionVersion: "decision-v1"
-            ),
-            comparisonReady: true
+        pending = try Self.decode(
+            Self.json(
+                status: "PENDING",
+                ids: identifiers,
+                classificationSource: classificationSource
+            )
         )
-        runtime = try Self.decode(
-            """
-            {
-              "runtime_state":"ready","comparison_ready":true,
-              "product":{"product_id":"\(targetProductID.uuidString)","source":"uniqlo",
-                "external_product_id":"E499999","product_name":"에어리즘 코튼 크루넥T",
-                "canonical_url":null,"audience":"MEN","source_category_path":"티셔츠 > 반팔",
-                "source_category_codes":["100","110","111"],"image_url":null,
-                "lifecycle_status":"active","input_fingerprint":"test"},
-              "classification":null,
-              "variants":[{"variant_id":"\(UUID().uuidString)","external_variant_id":"09",
-                "variant_name":"BLACK","color_code":"09","color_name":"BLACK",
-                "sizes":[{"product_size_id":"\(targetSizeID.uuidString)","external_size_id":"004",
-                  "size_label":"M","normalized_size_label":"M","display_order":1,
-                  "stock_status":"in_stock","measurements":[]}]}]
-            }
-            """
-        )
-        candidates = try Self.decode(
-            """
-            {
-              "state":"automatic","automatic_count":1,"manual_count":1,"structural_count":1,
-              "policy_version":"db-comparison-test-v1",
-              "candidates":[{"closet_item_id":"\(serverClosetID.uuidString)",
-                "product_name":"내 반팔 티셔츠","size_name":"M","is_reference":true,
-                "automatic_ready":true,"manual_ready":true,"measurement_overlap_count":4,
-                "automatic_compatibility":{"allowed":true,"level":"direct"},
-                "manual_compatibility":{"allowed":true,"level":"extended"}}]
-            }
-            """
-        )
-        begin = try Self.decode(
-            """
-            {"run_id":"\(runID.uuidString)","status":"\(beginStatus)",
-             "compatibility":{"allowed":\(beginAllowed),"level":"\(beginAllowed ? "direct" : "incompatible")"}}
-            """
-        )
-        complete = FitMatchCompleteComparisonResponse(
-            runID: runID,
-            status: "completed",
-            resultCount: 1
+        completed = try Self.decode(
+            Self.json(
+                status: "COMPLETED",
+                ids: identifiers,
+                classificationSource: classificationSource
+            )
         )
     }
 
-    private static func decode<T: Decodable>(_ json: String) throws -> T {
-        try JSONDecoder().decode(T.self, from: Data(json.utf8))
+    private static func json(
+        status: String,
+        ids: (
+            comparisonID: UUID,
+            clientComparisonID: UUID,
+            referenceClientItemID: UUID,
+            targetProductID: UUID,
+            targetVariantID: UUID,
+            productSizeID: UUID
+        ),
+        classificationSource: String
+    ) -> String {
+        let completedFields = status == "COMPLETED" ? """
+          "recommended_product_size_id":"\(ids.productSizeID)",
+          "recommended_size_label":"M",
+          "fit_score":95,"reliability_level":2,"coverage_ratio":1,
+          "engine_version":"fitmatch-ios-vnext-snapshot-v1",
+          "result_evidence":{
+            "recommended_product_size_id":"\(ids.productSizeID)",
+            "score":95,"reliability":2,"coverage":1,
+            "engine_version":"fitmatch-ios-vnext-snapshot-v1",
+            "candidate_size_ranking":[{
+              "product_size_id":"\(ids.productSizeID)","rank":1,"score":95
+            }],
+            "metric_evidence":[{
+              "product_size_id":"\(ids.productSizeID)",
+              "measurement_code":"chest_width_pit_to_pit",
+              "reference_value":50,"target_value":51,"difference":1,
+              "absolute_difference":1,"weight":1
+            }]
+          },
+        """ : """
+          "recommended_product_size_id":null,"recommended_size_label":null,
+          "fit_score":null,"reliability_level":null,"coverage_ratio":null,
+          "engine_version":"pending","result_evidence":{},
+        """
+        return """
+        {
+          "id":"\(ids.comparisonID)",
+          "client_comparison_id":"\(ids.clientComparisonID)",
+          "reference_client_item_id":"\(ids.referenceClientItemID)",
+          "target_product_id":"\(ids.targetProductID)",
+          "target_variant_id":"\(ids.targetVariantID)",
+          "target_product_name_snapshot":"테스트 반팔 티셔츠",
+          "target_image_url_snapshot":null,
+          "target_source_code_snapshot":"uniqlo",
+          "target_source_product_key":"E500001",
+          "target_category_code":"tops",
+          "result_status":"\(status)",
+          \(completedFields)
+          "created_at":"2026-08-29T01:00:00Z",
+          "snapshot_schema_version":3,
+          "excluded_measurement_codes":[],
+          "reference_snapshot":{
+            "source_code":"manual","item_name":"내 반팔 티셔츠","size_label":"M",
+            "garment_type_code":"tshirt","audience_code":"male",
+            "sleeve_length_code":"short_sleeve","lower_length_code":null,
+            "body_length_code":null,"classification_source":"\(classificationSource)",
+            "measurements":[{
+              "fitmatch_measurement_code":"chest_width_pit_to_pit",
+              "value":50,"unit_code":"CM","value_source":"USER"
+            }]
+          },
+          "target_snapshot":{
+            "product_id":"\(ids.targetProductID)",
+            "variant_id":"\(ids.targetVariantID)",
+            "authorized_candidate_product_size_ids":["\(ids.productSizeID)"],
+            "candidate_authority_fingerprint":"candidate-v1",
+            "classification_status":"CONFIRMED","garment_type_code":"tshirt",
+            "sleeve_length_code":"short_sleeve","lower_length_code":null,
+            "body_length_code":null,
+            "candidates":[{
+              "product_size_id":"\(ids.productSizeID)","size_label":"M",
+              "availability":{"status":"AVAILABLE","observed_at":"2026-08-29T00:00:00Z",
+                "valid_until":"2026-08-30T00:00:00Z","evidence_fingerprint":"stock-v1"},
+              "comparison_measurements":[{
+                "measurement_code":"chest_width_pit_to_pit",
+                "reference_value":50,"target_value":51,"difference":1,
+                "absolute_difference":1,"unit_code":"CM","basis_code":"WIDTH",
+                "weight":1,"requirement_mode":"REQUIRED_ANY","priority":1
+              }],
+              "authorization":{
+                "decision":"AUTOMATIC","allowed":true,"mode":"AUTOMATIC",
+                "excluded_measurement_codes":[],
+                "required_measurement_codes":["chest_width_pit_to_pit"],
+                "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
+                "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
+              }
+            }]
+          },
+          "authority_snapshot":{},
+          "policy_snapshot":{
+            "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1",
+            "metrics":[{
+              "metric_mode":"CANONICAL",
+              "fitmatch_measurement_code":"chest_width_pit_to_pit",
+              "weight":1,"requirement_mode":"REQUIRED_ANY","priority":1,"is_active":true
+            }]
+          },
+          "authorization_snapshot":{
+            "decision":"AUTOMATIC","allowed":true,"mode":"AUTOMATIC",
+            "excluded_measurement_codes":[],
+            "required_measurement_codes":["chest_width_pit_to_pit"],
+            "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
+            "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
+          },
+          "input_snapshot":{}
+        }
+        """
+    }
+
+    private static func decode(_ json: String) throws -> VNextComparisonHistoryDTO {
+        try JSONDecoder().decode(VNextComparisonHistoryDTO.self, from: Data(json.utf8))
     }
 }
 
-private actor ComparisonRemoteStub: FitMatchComparisonRemoteServicing {
-    private let fixture: RemoteFixture
-    private var beginRequests: [FitMatchBeginComparisonRequest] = []
-    private var completeRequests: [FitMatchCompleteComparisonRequest] = []
+private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
+    private let pending: VNextComparisonHistoryDTO?
+    private let completed: VNextComparisonHistoryDTO?
+    private var didComplete = false
+    private var completionCalls = 0
+    private var historyCalls = 0
 
-    init(fixture: RemoteFixture) {
-        self.fixture = fixture
+    init(pending: VNextComparisonHistoryDTO?, completed: VNextComparisonHistoryDTO?) {
+        self.pending = pending
+        self.completed = completed
     }
 
-    func resolve(_ request: FitMatchProductResolutionRequest) async throws
-        -> FitMatchProductResolutionResponse { fixture.resolution }
-
-    func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
-        -> FitMatchProductRuntimeResponse { fixture.runtime }
-
-    func listClosetItems() async throws -> FitMatchClosetItemsResponse { fixture.closet }
-
-    func findReferenceCandidates(targetProductID: UUID) async throws
-        -> FitMatchReferenceCandidatesResponse { fixture.candidates }
-
-    func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
-        -> FitMatchBeginComparisonResponse {
-        beginRequests.append(request)
-        return fixture.begin
+    func fetchVNextComparisonHistory() async throws -> [VNextComparisonHistoryDTO] {
+        historyCalls += 1
+        if didComplete, let completed { return [completed] }
+        if let pending { return [pending] }
+        return []
     }
 
-    func completeComparison(_ request: FitMatchCompleteComparisonRequest) async throws
-        -> FitMatchCompleteComparisonResponse {
-        completeRequests.append(request)
-        return fixture.complete
+    func completeVNextComparison(
+        comparisonID: UUID,
+        payload: VNextComparisonCompletionPayload
+    ) async throws -> VNextCompleteComparisonDTO {
+        completionCalls += 1
+        didComplete = true
+        return VNextCompleteComparisonDTO(
+            comparisonID: comparisonID,
+            completed: true,
+            idempotent: false,
+            recommendedProductSizeID: payload.recommendedProductSizeID,
+            recommendedSizeLabel: "M",
+            validatedEvidenceCount: payload.metricEvidence.count,
+            coverage: payload.coverage
+        )
     }
 
-    func capturedBeginRequest() -> FitMatchBeginComparisonRequest? { beginRequests.last }
-    func capturedCompleteRequest() -> FitMatchCompleteComparisonRequest? { completeRequests.last }
-    func beginCallCount() -> Int { beginRequests.count }
-    func completeCallCount() -> Int { completeRequests.count }
+    func completeCallCount() -> Int { completionCalls }
+    func historyFetchCount() -> Int { historyCalls }
 }

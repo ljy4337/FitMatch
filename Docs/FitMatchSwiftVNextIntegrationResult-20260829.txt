@@ -1,0 +1,157 @@
+FitMatch Swift ↔ vNext Production Integration
+Result Report — 2026-08-29
+
+Repository: ljy4337/FitMatch
+Branch: connectDB
+HEAD: 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+Production Supabase: hnkplvyegonlhumlejst
+
+FINAL VERDICT
+
+SWIFT VNEXT PRE-E2E NOT READY
+
+Known functional P0: 1
+
+The repository implementation is complete, but migration
+20260829050000_vnext_swift_user_contract.sql has not been applied to
+Production. The new Swift release path therefore cannot use its required
+vNext user-owned public bridges in Production yet.
+
+PHASE 0 CONTRACT GATE
+
+Implemented vNext-only contracts for:
+
+- closet item update
+- closet item soft delete
+- reference unset
+- personal classification override and clear
+- enriched closet hydration
+- immutable comparison-history hydration
+
+All user-owned mutations use auth.uid(), exact ownership checks, fixed
+search_path, and least-privilege grants. Personal overrides do not mutate the
+global Product classification.
+
+VNEXT INTEGRATION
+
+- Exact DTOs were added for runtime, closet, reference candidates,
+  authorization, eligible candidate sizes, begin snapshot, completion, and
+  immutable history.
+- Sourced observation uses the authenticated product-observation Edge v5.
+- Garment type and sleeve/lower/body axes remain separate.
+- Unknown enum and server states fail closed.
+- Sourced comparison order is:
+  candidate discovery → authorization → exact eligible size set → begin
+  snapshot → scorer adapter → full completion → local cache.
+- The scorer processes exactly the DB-authorized AVAILABLE candidate IDs and
+  uses begin-snapshot metrics, exclusions, values, and DB weights.
+- REVIEW_REQUIRED, NOT_APPLICABLE, BLOCKED, missing begin snapshot,
+  unauthorized sizes, and base-layer/tshirt mismatches do not invoke the
+  sourced scorer.
+- Final RecommendationHistory creation occurs only after server completion.
+- Comparison sync recovers server PENDING rows and hydrates immutable
+  COMPLETED history. It does not upload locally scored history as authority.
+
+UX PRESERVATION
+
+- Existing closet add/edit/delete/reference flows remain present.
+- “다른 옷과 비교” keeps the target and creates a new server comparison.
+- “다른 사이즈와 비교” is presentation-only within the stored authorized
+  candidate batch. It performs no parsing, new comparison, or history write.
+- Manual closet entry remains a personal-data path.
+- Offline closet/history remains a local cache of server-completed data.
+- SwiftData schema, TabBar scroll behavior, navigation, and Share Extension
+  were not changed.
+
+LEGACY AUTHORITY REMOVAL
+
+- Release Swift/Edge references to fitmatch_submit_product_observation: 0
+- Release Swift/Edge references to fitmatch_process_product_observation: 0
+- Sourced local-history-first comparison promotion: 0
+- Sourced scorer calls before authorization/begin: 0 in implemented flow
+- Unauthorized candidate scoring: 0 in implemented flow
+
+DATABASE VALIDATION
+
+PostgreSQL server/client: Homebrew PostgreSQL 17.11
+Disposable port: 55441
+
+- migration first apply: PASS
+- runtime/ownership transaction tests: PASS
+- cross-user edit/unset/override/delete denial: PASS
+- global Product hash unchanged: PASS
+- transaction rollback: PASS
+- migration reapply/idempotency: PASS
+- validation after reapply: PASS
+- post-rollback closet/measurement/comparison rows: 0/0/0
+- public bridges/internal functions: 15/7
+- disposable cluster stopped and deleted: PASS
+
+SWIFT VALIDATION
+
+- Earlier app and test-target builds: PASS
+- Focused suites: 54 tests, 0 failures
+- Suites covered vNext DTO/contract, closet sync, comparison sync, permit
+  sequencing, and server-authority integration.
+- Final changed/new Swift syntax parse: PASS
+- Final post-tweak Xcode type-check/test rerun: NOT RUN
+  Reason: xcodebuild/XcodeBuildMCP stopped producing output and was terminated.
+- git diff --check: PASS
+- protected TabBar modifier diff: 0
+- protected tab/scroll symbol diff: 0
+- SwiftData schema diff: 0
+- Share Extension diff: 0
+
+EDGE V5 PARITY
+
+- Production product-observation version: 5 ACTIVE
+- verify_jwt: true
+- Repository/deployed index.ts byte equality: PASS
+- Repository source SHA-256:
+  93ea79a8cffc064d1886d2f0d7be723af594cf5ba0097e432adba8a56afffeb3
+- vNext public service-only bridge reference: present
+- legacy submit/process references: 0
+
+FINAL PRODUCTION READ-ONLY POSTFLIGHT
+
+- products: 1,608
+- CONFIRMED: 203
+- REVIEW_REQUIRED: 1,308
+- NOT_APPLICABLE: 97
+- confirmed invalid tuple: 0
+- required axis missing: 0
+- confirmed non-SINGLE: 0
+- duplicate Product identities: 0
+- variant/size/measurement orphans: 0/0/0
+- readiness:
+  READY 3
+  NO_AVAILABLE_SIZE 198
+  NO_MEASUREMENT_DATA 2
+  CLASSIFICATION_REQUIRED 1,308
+  NOT_APPLICABLE 97
+- Golden READY: MUSINSA/UNIQLO/ZARA 3/3
+- Production migration 20260829050000 present: no
+- Production satisfaction column present: no
+- Production Swift update bridge present: no
+- Production writes during this implementation: 0
+
+REMAINING ISSUES / EXACT NEXT ACTION
+
+1. Obtain explicit owner approval to apply only:
+   supabase/migrations/20260829050000_vnext_swift_user_contract.sql
+2. Apply it and run structural, ownership, grant, and Production postflight
+   validation.
+3. Rerun focused Swift build/tests when Xcode responds.
+4. Execute signed-in iPhone MUSINSA, UNIQLO, ZARA, manual, alternate-item,
+   alternate-size, history, share, and offline E2E.
+
+Do not introduce a legacy fallback and do not start another DB authority phase.
+
+GIT / REPOSITORY
+
+- commit: not performed
+- push: not performed
+- local HEAD: 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+- origin/connectDB: 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+- required implementation remains in the local working tree until the owner
+  commits and pushes it.

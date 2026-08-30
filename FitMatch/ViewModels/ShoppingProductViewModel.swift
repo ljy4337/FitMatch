@@ -273,6 +273,7 @@ final class ShoppingProductViewModel: ObservableObject {
             switch authority.status {
             case .confirmed:
                 applyServerClassification(authority.classification)
+                applyServerRuntime(authority.runtime)
                 serverAuthorityState = .confirmed(authority)
                 // Kept only as a compatibility/debug signal. It is no longer a
                 // shadow decision: the server tuple below is the actual input.
@@ -314,6 +315,118 @@ final class ShoppingProductViewModel: ObservableObject {
         if let detailCode = classification.detailCode {
             detailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCode)
         }
+    }
+
+    private func applyServerRuntime(_ runtime: FitMatchProductRuntimeResponse) {
+        guard let exact = runtime.vnext else { return }
+        let observationVariant = parsedProductForServerAuthority?
+            .fitMatchProductObservationRequest()?
+            .payload.variants.first?.externalVariantID
+        let variant: VNextRuntimeVariantDTO? = {
+            if let observationVariant = observationVariant?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+               !observationVariant.isEmpty {
+                return exact.variants.first(where: {
+                    $0.sourceVariantKey == observationVariant
+                })
+            }
+            return exact.variants.count == 1 ? exact.variants[0] : nil
+        }()
+        guard let variant else {
+            sizeOptions = []
+            return
+        }
+
+        sizeOptions = variant.sizes.enumerated().map { index, size in
+            let parsedRecords = size.canonicalMeasurements.measurements.compactMap {
+                measurement -> ParsedMeasurement? in
+                guard let code = MeasurementCode(rawValue: measurement.measurementCode),
+                      let displayKind = Self.displayKind(for: code) else {
+                    return nil
+                }
+                return ParsedMeasurement(
+                    value: measurement.value,
+                    unit: .centimeter,
+                    measurementCode: code,
+                    displayKind: displayKind,
+                    methodSource: "fitmatch_vnext_runtime",
+                    methodProfile: exact.product?.resolverVersion,
+                    inputSource: .importedSizeChart,
+                    standardVersion: nil,
+                    mappingVersion: exact.product?.resolverVersion
+                        ?? "fitmatch-vnext-runtime-v1",
+                    rawCode: measurement.sourceMeasurementCode,
+                    rawLabel: measurement.sourceMeasurementCode
+                        ?? measurement.measurementCode,
+                    rawInfo: measurement.basisCode,
+                    rawValueText: String(measurement.value),
+                    evidenceLevel: .officialText,
+                    semanticStatus: .mapped
+                )
+            }
+            var form = Self.makeSizeForm(
+                from: ParsedProductSize(
+                    id: size.id,
+                    name: size.sizeLabel,
+                    measurements: GarmentMeasurements(
+                        shoulder: 0,
+                        chest: 0,
+                        totalLength: 0,
+                        sleeveLength: 0
+                    ),
+                    measurementRecords: parsedRecords,
+                    availabilityStatus: size.availability.status,
+                    availabilityObservedAt: Self.decodeRuntimeDate(
+                        size.availability.observedAt
+                    ),
+                    availabilityValidUntil: Self.decodeRuntimeDate(
+                        size.availability.validUntil
+                    ),
+                    availabilityEvidence: size.availability.evidenceFingerprint.map {
+                        ["evidence_fingerprint": $0]
+                    } ?? [:]
+                ),
+                displayOrder: index,
+                allowsStandardSizeFallback: false
+            )
+            form.id = size.id
+            return form
+        }
+    }
+
+    private static func displayKind(for code: MeasurementCode) -> MeasurementDisplayKind? {
+        switch code {
+        case .standardBodyChestCircumference,
+             .chestWidthPitToPit,
+             .chestCircumferenceGarment,
+             .chestWidthUniqloBodyWidth: return .chest
+        case .shoulderWidthSeamToSeam: return .shoulder
+        case .bodyLengthHPSToHemFront, .bodyLengthBackNeckToHem,
+             .bodyLengthMusinsaType5, .bodyLengthMusinsaType20,
+             .bodyLengthMusinsaType21, .bodyLengthUniqloBack,
+             .bodyLengthUniqloShirt, .bodyLengthUniqloKnitFront,
+             .pantsOutseamWaistToHem, .pantsInseamCrotchToHem,
+             .skirtLengthWaistToHem: return .totalLength
+        case .sleeveShoulderSeamToCuff, .sleeveCenterBackToCuff,
+             .sleeveRaglanNeckToCuff: return .sleeveLength
+        case .upperAbdomenWidthEdgeToEdge: return .upperAbdomen
+        case .upperWaistWidthEdgeToEdge: return .upperWaist
+        case .waistWidthEdgeToEdge, .waistCircumferenceGarment: return .waist
+        case .hipWidthAtWidest: return .hip
+        case .thighWidthCrotchToOuter: return .thigh
+        case .riseCrotchToWaistFront, .riseCrotchToWaistBack: return .rise
+        case .hemWidthEdgeToEdge: return .hem
+        case .footLengthHeelToToe: return .footLength
+        case .underBustWidthEdgeToEdge: return .underBust
+        case .unknown, .legacyUnknown: return nil
+        }
+    }
+
+    private static func decodeRuntimeDate(_ value: String?) -> Date? {
+        guard let value else { return nil }
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: value) ?? ISO8601DateFormatter().date(from: value)
     }
 
     var hasServerConfirmedAuthority: Bool {
@@ -465,10 +578,9 @@ final class ShoppingProductViewModel: ObservableObject {
                 reference,
                 allowsManualSelection: false
             ) else { continue }
-            guard let history = recommendationService.recommendAfterServerAuthorization(
+            guard let history = await completeVNextRecommendation(
                 product: product,
-                selectedReferenceItem: reference,
-                productDetailCategory: detailCategory,
+                reference: reference,
                 permit: permit
             ) else { continue }
 
@@ -511,10 +623,9 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
 
-        guard let history = recommendationService.recommendAfterServerAuthorization(
+        guard let history = await completeVNextRecommendation(
             product: product,
-            selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: detailCategory,
+            reference: selectedReferenceItem,
             permit: permit
         ) else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
@@ -526,6 +637,41 @@ final class ShoppingProductViewModel: ObservableObject {
         recommendation = history
         recordComparisonResult(history, mode: metricMode)
         return history
+    }
+
+    private func completeVNextRecommendation(
+        product: Product,
+        reference: UserFit,
+        permit: FitMatchServerComparisonPermit
+    ) async -> RecommendationHistory? {
+        guard let serverAuthorityCoordinator else { return nil }
+        do {
+            let analysis = try recommendationService.analyzeVNextComparison(
+                permit: permit
+            )
+            _ = try await serverAuthorityCoordinator.completeAuthorizedComparison(
+                permit: permit,
+                analysis: analysis
+            )
+            guard let history = recommendationService.makeCompletedVNextHistory(
+                product: product,
+                selectedReferenceItem: reference,
+                productDetailCategory: detailCategory,
+                permit: permit,
+                analysis: analysis
+            ) else {
+                return nil
+            }
+            VNextComparisonSessionStore.shared.store(
+                analysis,
+                historyID: history.id
+            )
+            return history
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "서버 비교 결과를 완료하지 못했습니다. 같은 비교를 다시 시도해 주세요."
+            return nil
+        }
     }
 
     func needsDetailCategoryBasis(userFits: [UserFit]) -> Bool {
@@ -651,6 +797,7 @@ final class ShoppingProductViewModel: ObservableObject {
         }
 
         let product = Product(
+            id: confirmedServerAuthority?.productID ?? UUID(),
             name: productName.trimmed,
             brand: brand,
             category: resolvedCategory,
@@ -667,8 +814,35 @@ final class ShoppingProductViewModel: ObservableObject {
             product.category = resolvedCategory
             product.categoryCode = serverClassification.categoryCode
             product.normalizedProductTypeCode = serverClassification.detailCode
-            product.garmentTypeRawValue = serverClassification.familyCode
+            product.garmentTypeRawValue = serverClassification.garmentTypeCode
             product.sleeveTypeRawValue = serverClassification.lengthCode
+            if let exact = confirmedServerAuthority?.runtime.vnext?.product {
+                product.normalizedProductTypeCode = exact.garmentTypeCode
+                product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
+                    CanonicalComparisonProfile(
+                        decision: .confirmed,
+                        semanticCategoryCode: exact.categoryCode,
+                        semanticGarmentType: exact.garmentTypeCode,
+                        comparisonFamily: exact.comparisonPolicyCode,
+                        appComparisonFamily: exact.comparisonPolicyCode,
+                        lengthAxes: CanonicalLengthAxes(
+                            sleeve: exact.sleeveLengthCode ?? "not_applicable",
+                            pants: exact.lowerLengthCode ?? "not_applicable",
+                            leggings: "not_applicable",
+                            skirt: "not_applicable",
+                            body: exact.bodyLengthCode ?? "not_applicable"
+                        ),
+                        constructionType: "unknown",
+                        eligibility: confirmedServerAuthority?.comparisonReady == true,
+                        requiredMeasurements: [],
+                        optionalMeasurements: [],
+                        excludedMeasurements: [],
+                        policyVersion: exact.resolverVersion ?? "fitmatch-vnext",
+                        resolutionMethod: "fitmatch_vnext_runtime",
+                        sourceIdentity: exact.inputFingerprint
+                    )
+                )
+            }
             product.canonicalPolicyVersion = serverClassification.taxonomyPolicyVersion
                 ?? serverClassification.decisionVersion
             product.markClassificationAuthority(

@@ -287,6 +287,7 @@ struct RecommendationResultView: View {
                                     .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
                             }
                             .buttonStyle(.plain)
+                            .disabled(availableProductSizes.count < 2)
                             .padding(.horizontal, 6)
                             .accessibilityHint("상품의 다른 사이즈를 임시로 비교합니다.")
                         }
@@ -632,7 +633,11 @@ struct RecommendationResultView: View {
     }
 
     private var availableProductSizes: [ProductSize] {
-        resultProductSizes
+        guard let batch = VNextComparisonSessionStore.shared.analysis(
+            for: currentResult.id
+        ) else { return [] }
+        let authorized = Set(batch.authorizedCandidateProductSizeIDs)
+        return resultProductSizes.filter { authorized.contains($0.id) }
     }
 
     private var displayedProductSize: ProductSize {
@@ -817,15 +822,18 @@ struct RecommendationResultView: View {
             return
         }
         let generation = alternativePreparationGeneration
-        let service = RecommendationService()
-        let scorePenalty = originalScorePenalty
-        let excludedKinds = persistedMeasurementExclusions
-            .filter { [.categoryPolicy, .sleeveLengthMismatch].contains($0.reason) }
-            .map(\.kind)
-        let excludedKindReasons = Dictionary(
-            uniqueKeysWithValues: persistedMeasurementExclusions.map { ($0.kind, $0.reason) }
+        guard let batch = VNextComparisonSessionStore.shared.analysis(
+            for: currentResult.id
+        ) else {
+            temporaryAnalysisCache = [:]
+            unavailableAlternativeSizeKeys = []
+            activeAlternativeAnalysisKeys = [:]
+            isPreparingAlternativeSizes = false
+            return
+        }
+        let bySizeID = Dictionary(
+            uniqueKeysWithValues: batch.analyses.map { ($0.productSizeID, $0) }
         )
-        let excludedKindsSignature = excludedKinds.map(\.rawValue).sorted().joined(separator: "|")
         var preparedAnalyses = temporaryAnalysisCache
         var unavailableKeys = unavailableAlternativeSizeKeys
         var activeKeys: [UUID: TemporarySizeAnalysisCacheKey] = [:]
@@ -841,25 +849,21 @@ struct RecommendationResultView: View {
                 referenceID: currentResult.userFit.id,
                 detailCategory: currentResult.productDetailCategory.rawValue,
                 comparisonMethod: currentResult.comparisonMethod,
-                excludedKindsSignature: excludedKindsSignature,
-                scorePenalty: scorePenalty
+                excludedKindsSignature: "vnext_begin_snapshot",
+                scorePenalty: 0
             )
             activeKeys[size.id] = key
             guard preparedAnalyses[key] == nil,
                   !unavailableKeys.contains(key) else {
                 continue
             }
-            if let analysis = service.analyzeSizeWithoutSaving(
-                size,
-                product: currentResult.product,
-                referenceItem: currentResult.userFit,
-                productDetailCategory: currentResult.productDetailCategory,
-                comparisonMethod: currentResult.comparisonMethod,
-                excludedKinds: excludedKinds,
-                excludedKindReasons: excludedKindReasons,
-                scorePenalty: scorePenalty
-            ) {
-                preparedAnalyses[key] = analysis
+            if let authorized = bySizeID[size.id] {
+                preparedAnalyses[key] = TemporarySizeAnalysis(
+                    productSize: size,
+                    comparisonResult: authorized.result,
+                    recommendationScore: authorized.result.score,
+                    comparisonSummary: nil
+                )
             } else {
                 unavailableKeys.insert(key)
             }
@@ -1801,8 +1805,8 @@ struct RecommendationResultView: View {
         let usesExplicitUserAuthority = item.classificationAuthorityProvenance == .userExplicit
         let authorization: FitMatchServerReferenceAuthorization
         let permit: FitMatchServerComparisonPermit
+        let coordinator = FitMatchServerAuthorityCoordinator()
         do {
-            let coordinator = FitMatchServerAuthorityCoordinator()
             authorization = try await coordinator.authorizeReferenceCandidate(
                     referenceClientItemID: item.id,
                     localReferenceSnapshot: localReferenceSnapshot,
@@ -1836,13 +1840,14 @@ struct RecommendationResultView: View {
         } else {
             serverProductDetailCategory = currentResult.productDetailCategory
         }
-        let outcome = ResultReferenceComparisonPersistence.resolveAndSave(
+        let outcome = await ResultReferenceComparisonPersistence.resolveAndSave(
             product: currentResult.product,
             selectedReferenceItem: item,
             productDetailCategory: serverProductDetailCategory,
             permit: permit,
             existingHistories: existingHistories,
-            modelContext: modelContext
+            modelContext: modelContext,
+            coordinator: coordinator
         )
 
         switch outcome {
@@ -2989,23 +2994,39 @@ enum ResultReferenceComparisonPersistence {
         productDetailCategory: ClosetDetailCategory,
         permit: FitMatchServerComparisonPermit,
         existingHistories: [RecommendationHistory],
-        modelContext: ModelContext
-    ) -> ResultReferenceComparisonOutcome {
+        modelContext: ModelContext,
+        coordinator: FitMatchServerAuthorityCoordinator
+    ) async -> ResultReferenceComparisonOutcome {
         let service = RecommendationService()
-        guard let history = service.recommendAfterServerAuthorization(
+        let analysis: VNextComparisonBatchAnalysis
+        do {
+            analysis = try service.analyzeVNextComparison(permit: permit)
+            _ = try await coordinator.completeAuthorizedComparison(
+                permit: permit,
+                analysis: analysis
+            )
+        } catch {
+            return .saveFailed(error.localizedDescription)
+        }
+        guard let history = service.makeCompletedVNextHistory(
             product: product,
             selectedReferenceItem: selectedReferenceItem,
             productDetailCategory: productDetailCategory,
-            permit: permit
+            permit: permit,
+            analysis: analysis
         ) else {
             return .insufficient(nil)
         }
 
         do {
-            try RecommendationHistoryStore.saveUnique(
+            try RecommendationHistoryStore.saveCompletedVNext(
                 history,
                 existing: existingHistories,
                 modelContext: modelContext
+            )
+            VNextComparisonSessionStore.shared.store(
+                analysis,
+                historyID: history.id
             )
             return .success(history)
         } catch {
@@ -3078,7 +3099,7 @@ enum ResultReferenceComparisonResolver {
 
 private struct ResultReferencePickerView: View {
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
     let currentUserFit: UserFit
     let product: Product
     let productDetailCategory: ClosetDetailCategory
@@ -3089,6 +3110,10 @@ private struct ResultReferencePickerView: View {
     @State private var isShowingReferenceComparison = false
     @State private var saveErrorMessage: String?
     @State private var isAuthorizingSelection = false
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     var body: some View {
         ScrollView {

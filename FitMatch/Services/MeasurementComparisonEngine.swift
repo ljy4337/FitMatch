@@ -183,6 +183,89 @@ struct MeasurementComparisonEngine {
     var activePolicyVersion: String { policySnapshot.version }
     var activePolicySource: MeasurementComparisonPolicySource { policySnapshot.source }
 
+    /// Scores only the canonical metric evidence frozen by vNext at
+    /// `begin_comparison`. This entry point deliberately bypasses the embedded
+    /// category policy and local record matching: candidate membership,
+    /// exclusions, values, and weights are all server-authorized inputs.
+    func compareAuthorizedEvidence(
+        _ evidence: [VNextAuthorizedMeasurementDTO],
+        minimumComparableCount: Int
+    ) -> MeasurementComparisonResult? {
+        guard !evidence.isEmpty,
+              minimumComparableCount > 0,
+              evidence.count >= minimumComparableCount else {
+            return nil
+        }
+
+        let sortedEvidence = evidence.sorted(by: {
+            if $0.priority != $1.priority { return $0.priority < $1.priority }
+            return $0.measurementCode < $1.measurementCode
+        })
+        var seenCodes = Set<String>()
+        var comparedItems: [MeasurementComparisonItem] = []
+        for metric in sortedEvidence {
+            guard seenCodes.insert(metric.measurementCode).inserted,
+                  let code = MeasurementCode(rawValue: metric.measurementCode),
+                  let kind = Self.measurementKind(for: code),
+                  metric.referenceValue.isFinite,
+                  metric.targetValue.isFinite,
+                  metric.difference.isFinite,
+                  metric.absoluteDifference.isFinite,
+                  metric.weight.isFinite,
+                  metric.weight > 0,
+                  abs((metric.targetValue - metric.referenceValue) - metric.difference)
+                    < 0.000_001,
+                  abs(abs(metric.difference) - metric.absoluteDifference) < 0.000_001 else {
+                return nil
+            }
+
+            let itemScore = max(
+                0,
+                min(100, Int((100 - metric.absoluteDifference * 5).rounded()))
+            )
+            comparedItems.append(MeasurementComparisonItem(
+                kind: kind,
+                measurementCode: code,
+                displayTitle: nil,
+                productValue: metric.targetValue,
+                referenceValue: metric.referenceValue,
+                signedDifference: metric.difference,
+                absoluteDifference: metric.absoluteDifference,
+                score: itemScore,
+                weight: metric.weight
+            ))
+        }
+
+        let weightSum = comparedItems.map(\.weight).reduce(0, +)
+        guard weightSum > 0 else { return nil }
+        let score = Int((comparedItems.map {
+            Double($0.score) * $0.weight
+        }.reduce(0, +) / weightSum).rounded())
+        let averageDifference = comparedItems.map {
+            $0.absoluteDifference * $0.weight
+        }.reduce(0, +) / weightSum
+        let requiredAnyKinds = sortedEvidence.enumerated().compactMap { index, metric in
+            metric.requirementMode == "REQUIRED_ANY" ? comparedItems[index].kind : nil
+        }
+        let requiredAllKinds = sortedEvidence.enumerated().compactMap { index, metric in
+            metric.requirementMode == "REQUIRED_ALL" ? comparedItems[index].kind : nil
+        }
+
+        return MeasurementComparisonResult(
+            status: .confirmed,
+            score: score,
+            comparedItems: comparedItems,
+            exclusions: [],
+            averageDifference: averageDifference,
+            minimumComparableCount: minimumComparableCount,
+            requiredKinds: requiredAnyKinds,
+            minimumRequiredKindCount: requiredAnyKinds.isEmpty ? 0 : 1,
+            requiredAllKinds: requiredAllKinds,
+            expectedWeightSum: weightSum,
+            usedWeightSum: weightSum
+        )
+    }
+
     func compare(
         productSize: ProductSize,
         referenceItem: UserFit,
@@ -315,6 +398,44 @@ struct MeasurementComparisonEngine {
             return (canonicalMatch || directPlatformFieldMatch)
                 && $0.value.isFinite
                 && $0.value > 0
+        }
+    }
+
+    static func measurementKind(for code: MeasurementCode) -> MeasurementKind? {
+        switch code {
+        case .standardBodyChestCircumference,
+             .chestWidthPitToPit,
+             .chestCircumferenceGarment,
+             .chestWidthUniqloBodyWidth:
+            return .chest
+        case .shoulderWidthSeamToSeam:
+            return .shoulder
+        case .bodyLengthHPSToHemFront,
+             .bodyLengthBackNeckToHem,
+             .bodyLengthMusinsaType5,
+             .bodyLengthMusinsaType20,
+             .bodyLengthMusinsaType21,
+             .bodyLengthUniqloBack,
+             .bodyLengthUniqloShirt,
+             .bodyLengthUniqloKnitFront,
+             .pantsOutseamWaistToHem,
+             .pantsInseamCrotchToHem,
+             .skirtLengthWaistToHem:
+            return .totalLength
+        case .sleeveShoulderSeamToCuff,
+             .sleeveCenterBackToCuff,
+             .sleeveRaglanNeckToCuff:
+            return .sleeveLength
+        case .upperAbdomenWidthEdgeToEdge: return .upperAbdomen
+        case .upperWaistWidthEdgeToEdge: return .upperWaist
+        case .waistWidthEdgeToEdge, .waistCircumferenceGarment: return .waist
+        case .hipWidthAtWidest: return .hip
+        case .thighWidthCrotchToOuter: return .thigh
+        case .riseCrotchToWaistFront, .riseCrotchToWaistBack: return .rise
+        case .hemWidthEdgeToEdge: return .hem
+        case .footLengthHeelToToe: return .footLength
+        case .underBustWidthEdgeToEdge: return .underBust
+        case .unknown, .legacyUnknown: return nil
         }
     }
 

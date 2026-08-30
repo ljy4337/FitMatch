@@ -6,10 +6,14 @@ struct MyPageView: View {
     @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
     @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     let onLogout: () -> Void
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var isShowingAccountDeletionConfirmation = false
     @State private var accountDeletionErrorMessage: String?
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     private let menuItems: [MyMenuItem] = [
         // MyMenuItem(title: "내 정보", systemImage: "person.circle", destination: .comingSoon),

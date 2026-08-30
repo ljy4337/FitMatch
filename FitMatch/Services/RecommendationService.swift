@@ -45,6 +45,57 @@ struct TemporarySizeAnalysis {
 struct RecommendationService {
     private let comparisonMatcher = ComparisonProfileMatcher()
     private let measurementComparisonEngine = MeasurementComparisonEngine()
+    private let vnextComparisonAdapter = VNextComparisonEngineAdapter()
+
+    func analyzeVNextComparison(
+        permit: FitMatchServerComparisonPermit
+    ) throws -> VNextComparisonBatchAnalysis {
+        guard permit.isAllowed, let begin = permit.vnextBegin else {
+            throw VNextComparisonEngineAdapterError.authorizationDenied(
+                "begin_snapshot_missing"
+            )
+        }
+        return try vnextComparisonAdapter.analyze(begin)
+    }
+
+    /// Builds the local/offline cache only after the caller has received a
+    /// successful `complete_comparison` response for this exact batch.
+    func makeCompletedVNextHistory(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        permit: FitMatchServerComparisonPermit,
+        analysis: VNextComparisonBatchAnalysis
+    ) -> RecommendationHistory? {
+        guard permit.runID == analysis.comparisonID,
+              product.classificationAuthorityProvenance == .serverConfirmed,
+              selectedReferenceItem.classificationAuthorityProvenance?
+                .isComparisonAuthority == true,
+              let size = product.sizes.first(where: {
+                $0.id == analysis.recommended.productSizeID
+              }) else {
+            return nil
+        }
+        let comparison = analysis.recommended.result
+        let history = RecommendationHistory(
+            id: permit.clientHistoryID,
+            product: product,
+            recommendedSize: size,
+            userFit: selectedReferenceItem,
+            totalDifference: comparison.averageDifference,
+            measurementDifferences: comparison.signedDifferences,
+            recommendationScore: comparison.score,
+            trueToSizeRecommendation: "기준 옷과 서버 승인 실측이 가장 비슷한 \(size.name) 사이즈입니다.",
+            oversizedRecommendation: "",
+            comparisonMethod: permit.referenceAuthorization.decision == .manualSelection
+                ? "서버 승인 확장 비교" : "서버 승인 직접 비교",
+            fallbackReason: permit.referenceAuthorization.decision == .manualSelection
+                ? "서버 정책이 승인한 공통 실측만 사용했습니다." : "",
+            productDetailCategory: productDetailCategory,
+            comparisonResult: comparison
+        )
+        return history
+    }
 
     func recommend(
         product: Product,
@@ -237,26 +288,6 @@ struct RecommendationService {
                 excludedMeasurementKinds: mismatch.excludedKinds,
                 excludedMeasurementReasons: exclusionReasons(for: mismatch.excludedKinds)
             )
-        )
-    }
-
-    /// Runs the unchanged measurement scorer only after evaluator v4 has
-    /// authorized this exact target/reference pair. Local profile matching is
-    /// intentionally bypassed here: it may provide UI hints, but it cannot
-    /// overturn or narrow the server comparison decision.
-    func recommendAfterServerAuthorization(
-        product: Product,
-        selectedReferenceItem: UserFit,
-        productDetailCategory: ClosetDetailCategory,
-        permit: FitMatchServerComparisonPermit
-    ) -> RecommendationHistory? {
-        authorizedRecommendation(
-            product: product,
-            selectedReferenceItem: selectedReferenceItem,
-            productDetailCategory: productDetailCategory,
-            authorization: permit.referenceAuthorization,
-            compatibility: permit.compatibility,
-            clientHistoryID: permit.clientHistoryID
         )
     }
 

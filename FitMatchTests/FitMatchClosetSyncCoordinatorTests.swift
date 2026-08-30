@@ -16,7 +16,7 @@ struct FitMatchClosetSyncCoordinatorTests {
             externalProductID: "E492123",
             productAudience: "MEN",
             sourceCategoryCodes: ["95354", "95362", "95381"],
-            variantID: nil,
+            variantID: UUID(),
             productSizeID: productSizeID,
             brand: "유니클로",
             productName: "데님릴렉스셔츠재킷",
@@ -577,10 +577,229 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(coordinator.lastErrorMessage == nil)
     }
 
+    @Test func multiTypeReferenceUnsetSendsOnlyExactChangedDelta() async throws {
+        let a = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let b = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let remote = ClosetSyncRemoteStub(
+            items: [a, b],
+            referenceScopes: [
+                a.closetItemID: "tops|tshirt|short_sleeve",
+                b.closetItemID: "bottoms|pants|ankle"
+            ]
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let localA = localReferenceItem(id: a.clientItemID, isReference: false)
+        let localB = localReferenceItem(id: b.clientItemID, isReference: true)
+        context.insert(localA)
+        context.insert(localB)
+        try context.save()
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+
+        #expect(await remote.referenceMutations() == [
+            ReferenceMutation(closetItemID: a.closetItemID, isReference: false)
+        ])
+        #expect(localA.isRepresentative == false)
+        #expect(localB.isRepresentative == true)
+
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        #expect(await remote.referenceMutations().count == 1)
+    }
+
+    @Test func multiTypeReferenceSetSendsOnlyExactChangedDelta() async throws {
+        let a = withReference(
+            remoteRecord(
+                clientItemID: UUID(),
+                productID: UUID(),
+                classificationSource: "manual_override"
+            ),
+            isReference: false
+        )
+        let b = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let remote = ClosetSyncRemoteStub(
+            items: [a, b],
+            referenceScopes: [
+                a.closetItemID: "tops|tshirt|short_sleeve",
+                b.closetItemID: "bottoms|pants|ankle"
+            ]
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let localA = localReferenceItem(id: a.clientItemID, isReference: true)
+        let localB = localReferenceItem(id: b.clientItemID, isReference: true)
+        context.insert(localA)
+        context.insert(localB)
+        try context.save()
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+
+        #expect(await remote.referenceMutations() == [
+            ReferenceMutation(closetItemID: a.closetItemID, isReference: true)
+        ])
+        #expect(localA.isRepresentative == true)
+        #expect(localB.isRepresentative == true)
+    }
+
+    @Test func sameTupleReferenceReplacementUsesAtomicServerSetOnly() async throws {
+        let old = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let replacement = withReference(
+            remoteRecord(
+                clientItemID: UUID(),
+                productID: UUID(),
+                classificationSource: "manual_override"
+            ),
+            isReference: false
+        )
+        let scope = "tops|tshirt|short_sleeve"
+        let remote = ClosetSyncRemoteStub(
+            items: [old, replacement],
+            referenceScopes: [
+                old.closetItemID: scope,
+                replacement.closetItemID: scope
+            ]
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let localOld = localReferenceItem(id: old.clientItemID, isReference: false)
+        let localReplacement = localReferenceItem(
+            id: replacement.clientItemID,
+            isReference: true
+        )
+        context.insert(localOld)
+        context.insert(localReplacement)
+        try context.save()
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+
+        #expect(await remote.referenceMutations() == [
+            ReferenceMutation(
+                closetItemID: replacement.closetItemID,
+                isReference: true
+            )
+        ])
+        #expect(localOld.isRepresentative == false)
+        #expect(localReplacement.isRepresentative == true)
+    }
+
+    @Test func firstLoginEmptyCacheNeverClearsRemoteReferences() async throws {
+        let a = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let b = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let remote = ClosetSyncRemoteStub(items: [a, b])
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+
+        #expect(await remote.referenceMutations().isEmpty)
+        let hydrated = try context.fetch(FetchDescriptor<UserFit>())
+        #expect(Set(hydrated.filter(\.isRepresentative).map(\.id)) == Set([
+            a.clientItemID,
+            b.clientItemID
+        ]))
+
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        #expect(await remote.referenceMutations().isEmpty)
+    }
+
+    @Test func historyOnlyReferenceSnapshotNeverEntersClosetMutationPipeline() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let item = localReferenceItem(id: UUID(), isReference: false)
+        item.markAsHistoryOnlyReferenceSnapshot()
+        context.insert(item)
+        try context.save()
+        let remote = ClosetSyncRemoteStub(
+            items: [],
+            tombstonedClientItemIDs: [item.id]
+        )
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+
+        #expect(coordinator.state == .synced)
+        #expect(await remote.capturedUpsertRequest() == nil)
+        #expect(await remote.referenceMutations().isEmpty)
+        #expect(item.canonicalSourceIdentity == UserFit.historyReferenceSnapshotSourceIdentity)
+        #expect(await remote.hasTombstone(clientItemID: item.id))
+    }
+
     private func inMemoryContainer() throws -> ModelContainer {
         let schema = Schema(FitMatchSchemaV1.models)
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [configuration])
+    }
+
+    private func localReferenceItem(id: UUID, isReference: Bool) -> UserFit {
+        let item = UserFit(
+            id: id,
+            sourceType: .manual,
+            sourceName: "직접 입력",
+            brandName: "테스트",
+            gender: .men,
+            productName: "기준 옷 \(id.uuidString.prefix(4))",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 48,
+                chest: 50,
+                totalLength: 70,
+                sleeveLength: 23
+            ),
+            fitMemo: "",
+            satisfaction: 4,
+            isRepresentative: isReference,
+            updatedAt: Date(timeIntervalSince1970: 4_102_444_800)
+        )
+        item.garmentTypeRawValue = "tshirt"
+        item.sleeveTypeRawValue = "short_sleeve"
+        item.markClassificationAuthority(.userExplicit, sourceIdentity: "user_test")
+        return item
     }
 
     private func localRetailerItem(
@@ -654,8 +873,8 @@ struct FitMatchClosetSyncCoordinatorTests {
             externalProductID: "E500000",
             productAudience: "MEN",
             sourceCategoryCodes: ["bottoms"],
-            variantID: nil,
-            productSizeID: nil,
+            variantID: UUID(),
+            productSizeID: UUID(),
             brand: "유니클로",
             productName: "기존 원격 분류",
             sizeName: "M",
@@ -745,7 +964,26 @@ struct FitMatchClosetSyncCoordinatorTests {
                 inputFingerprint: "test-fingerprint"
             ),
             classification: classification,
-            variants: []
+            variants: [
+                FitMatchRuntimeVariant(
+                    variantID: UUID(),
+                    externalVariantID: "09",
+                    variantName: "BLACK",
+                    colorCode: "09",
+                    colorName: "BLACK",
+                    sizes: [
+                        FitMatchRuntimeSize(
+                            productSizeID: UUID(),
+                            externalSizeID: "M",
+                            sizeLabel: "M",
+                            normalizedSizeLabel: "M",
+                            displayOrder: 0,
+                            stockStatus: "AVAILABLE",
+                            measurements: []
+                        )
+                    ]
+                )
+            ]
         )
     }
 
@@ -766,15 +1004,69 @@ struct FitMatchClosetSyncCoordinatorTests {
     }
 }
 
+private struct ReferenceMutation: Equatable, Sendable {
+    let closetItemID: UUID
+    let isReference: Bool
+}
+
+private func withReference(
+    _ record: FitMatchClosetItemRecord,
+    isReference: Bool
+) -> FitMatchClosetItemRecord {
+    FitMatchClosetItemRecord(
+        closetItemID: record.closetItemID,
+        clientItemID: record.clientItemID,
+        productID: record.productID,
+        externalProductID: record.externalProductID,
+        productAudience: record.productAudience,
+        sourceCategoryCodes: record.sourceCategoryCodes,
+        variantID: record.variantID,
+        productSizeID: record.productSizeID,
+        brand: record.brand,
+        productName: record.productName,
+        sizeName: record.sizeName,
+        genderCode: record.genderCode,
+        source: record.source,
+        sourceCategoryPath: record.sourceCategoryPath,
+        productURL: record.productURL,
+        imageURL: record.imageURL,
+        measurements: record.measurements,
+        measurementRecords: record.measurementRecords,
+        fitMemo: record.fitMemo,
+        fitPreferenceCode: record.fitPreferenceCode,
+        satisfaction: record.satisfaction,
+        isReference: isReference,
+        classificationStatus: record.classificationStatus,
+        classificationSource: record.classificationSource,
+        categoryCode: record.categoryCode,
+        detailCode: record.detailCode,
+        canonicalCategoryCode: record.canonicalCategoryCode,
+        canonicalDetailCode: record.canonicalDetailCode,
+        familyCode: record.familyCode,
+        lengthCode: record.lengthCode,
+        bodyLengthCode: record.bodyLengthCode,
+        classificationSnapshot: record.classificationSnapshot,
+        clientSnapshot: record.clientSnapshot,
+        clientCreatedAt: record.clientCreatedAt,
+        clientUpdatedAt: record.clientUpdatedAt,
+        syncRevision: record.syncRevision + 1,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt
+    )
+}
+
 private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
-    let items: [FitMatchClosetItemRecord]
+    private var currentItems: [FitMatchClosetItemRecord]
     let resolutionResponse: FitMatchProductResolutionResponse?
     private var runtimeResponses: [FitMatchProductRuntimeResponse]
     let observationResponse: FitMatchProductObservationResponse?
     let failsRuntime: Bool
+    private let referenceScopes: [UUID: String]
     private var upsertRequest: FitMatchUpsertClosetItemRequest?
     private var submittedObservationCount = 0
     private var fetchedRuntimeCount = 0
+    private var referenceMutationLog: [ReferenceMutation] = []
+    private var tombstonedClientItemIDs: Set<UUID>
 
     init(
         items: [FitMatchClosetItemRecord],
@@ -782,13 +1074,17 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
         runtime: FitMatchProductRuntimeResponse? = nil,
         runtimes: [FitMatchProductRuntimeResponse]? = nil,
         observation: FitMatchProductObservationResponse? = nil,
-        failsRuntime: Bool = false
+        failsRuntime: Bool = false,
+        referenceScopes: [UUID: String] = [:],
+        tombstonedClientItemIDs: Set<UUID> = []
     ) {
-        self.items = items
+        currentItems = items
         self.resolutionResponse = resolution
         self.runtimeResponses = runtimes ?? runtime.map { [$0] } ?? []
         self.observationResponse = observation
         self.failsRuntime = failsRuntime
+        self.referenceScopes = referenceScopes
+        self.tombstonedClientItemIDs = tombstonedClientItemIDs
     }
 
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
@@ -821,6 +1117,7 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
     func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
         -> FitMatchUpsertClosetItemResponse {
         upsertRequest = request
+        tombstonedClientItemIDs.remove(request.clientItemID)
         return FitMatchUpsertClosetItemResponse(
             closetItemID: UUID(),
             clientItemID: request.clientItemID,
@@ -835,12 +1132,70 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
         )
     }
 
+    func updateClosetItem(
+        _ request: FitMatchUpsertClosetItemRequest,
+        closetItemID: UUID
+    ) async throws -> FitMatchUpsertClosetItemResponse {
+        upsertRequest = request
+        return FitMatchUpsertClosetItemResponse(
+            closetItemID: closetItemID,
+            clientItemID: request.clientItemID,
+            syncRevision: 2,
+            classificationStatus: "confirmed",
+            categoryCode: request.item.categoryCode,
+            detailCode: request.item.detailCode,
+            familyCode: request.item.familyCode,
+            lengthCode: request.item.lengthCode,
+            bodyLengthCode: request.item.bodyLengthCode,
+            isReference: request.item.isReference
+        )
+    }
+
+    func setClosetReference(
+        closetItemID: UUID,
+        isReference: Bool
+    ) async throws -> FitMatchSetClosetReferenceResponse {
+        referenceMutationLog.append(
+            ReferenceMutation(
+                closetItemID: closetItemID,
+                isReference: isReference
+            )
+        )
+        if isReference, let scope = referenceScopes[closetItemID] {
+            currentItems = currentItems.map { item in
+                guard referenceScopes[item.closetItemID] == scope else { return item }
+                return withReference(item, isReference: item.closetItemID == closetItemID)
+            }
+        } else {
+            currentItems = currentItems.map { item in
+                guard item.closetItemID == closetItemID else { return item }
+                return withReference(item, isReference: isReference)
+            }
+        }
+        return FitMatchSetClosetReferenceResponse(
+            closetItemID: closetItemID,
+            isReference: isReference,
+            syncRevision: 2
+        )
+    }
+
+    func setClosetClassificationOverride(
+        closetItemID: UUID,
+        override: FitMatchClosetClassificationOverride
+    ) async throws {}
+
+    func clearClosetClassificationOverride(closetItemID: UUID) async throws {}
+
     func capturedUpsertRequest() -> FitMatchUpsertClosetItemRequest? { upsertRequest }
     func observationSubmissionCount() -> Int { submittedObservationCount }
     func runtimeFetchCount() -> Int { fetchedRuntimeCount }
+    func referenceMutations() -> [ReferenceMutation] { referenceMutationLog }
+    func hasTombstone(clientItemID: UUID) -> Bool {
+        tombstonedClientItemIDs.contains(clientItemID)
+    }
 
     func listClosetItems() async throws -> FitMatchClosetItemsResponse {
-        FitMatchClosetItemsResponse(state: "ready", items: items)
+        FitMatchClosetItemsResponse(state: "ready", items: currentItems)
     }
 
     func deleteClosetItem(closetItemID: UUID) async throws

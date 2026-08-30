@@ -10,10 +10,14 @@ struct HomeView: View {
     var onLogout: (() -> Void)?
 
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var isTopChromeVisible = true
     private let favoriteStore = FavoriteProductStore()
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     var body: some View {
         ZStack(alignment: .top) {

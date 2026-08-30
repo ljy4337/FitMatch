@@ -6,7 +6,11 @@ struct ClosetItemDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var isShowingEdit = false
     @State private var saveErrorMessage: String?

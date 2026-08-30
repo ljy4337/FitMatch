@@ -1,0 +1,815 @@
+import Foundation
+
+nonisolated enum FitMatchJSONValue: Codable, Equatable, Sendable {
+    case object([String: FitMatchJSONValue])
+    case array([FitMatchJSONValue])
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case null
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if container.decodeNil() { self = .null }
+        else if let value = try? container.decode(Bool.self) { self = .bool(value) }
+        else if let value = try? container.decode(Double.self) { self = .number(value) }
+        else if let value = try? container.decode(String.self) { self = .string(value) }
+        else if let value = try? container.decode([String: FitMatchJSONValue].self) {
+            self = .object(value)
+        } else if let value = try? container.decode([FitMatchJSONValue].self) {
+            self = .array(value)
+        } else {
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Unsupported JSON value"
+            )
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .object(let value): try container.encode(value)
+        case .array(let value): try container.encode(value)
+        case .string(let value): try container.encode(value)
+        case .number(let value): try container.encode(value)
+        case .bool(let value): try container.encode(value)
+        case .null: try container.encodeNil()
+        }
+    }
+}
+
+nonisolated extension FitMatchJSONValue {
+    var objectValue: [String: FitMatchJSONValue]? {
+        guard case .object(let value) = self else { return nil }
+        return value
+    }
+
+    var arrayValue: [FitMatchJSONValue]? {
+        guard case .array(let value) = self else { return nil }
+        return value
+    }
+
+    var stringValue: String? {
+        guard case .string(let value) = self else { return nil }
+        return value
+    }
+
+    var numberValue: Double? {
+        guard case .number(let value) = self else { return nil }
+        return value
+    }
+}
+
+nonisolated struct VNextProductReadinessDTO: Decodable, Equatable, Sendable {
+    let status: String
+    let reason: String?
+    let readySizeCount: Int
+    let policyMetricCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case status, reason
+        case readySizeCount = "ready_size_count"
+        case policyMetricCount = "policy_metric_count"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = try container.decode(String.self, forKey: .status)
+        reason = try container.decodeIfPresent(String.self, forKey: .reason)
+        readySizeCount = try container.decodeIfPresent(Int.self, forKey: .readySizeCount) ?? 0
+        policyMetricCount = try container.decodeIfPresent(Int.self, forKey: .policyMetricCount) ?? 0
+    }
+}
+
+nonisolated struct VNextRuntimeProductDTO: Decodable, Equatable, Sendable {
+    let id: UUID
+    let sourceCode: String
+    let sourceProductKey: String
+    let productName: String
+    let brandName: String?
+    let canonicalURL: String?
+    let imageURL: String?
+    let classificationStatus: String
+    let productStructureCode: String
+    let audienceCode: String
+    let categoryCode: String?
+    let garmentTypeCode: String?
+    let comparisonPolicyCode: String?
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let resolverVersion: String?
+    let inputFingerprint: String?
+    let latestIngestionFingerprint: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case sourceCode = "source_code"
+        case sourceProductKey = "source_product_key"
+        case productName = "product_name"
+        case brandName = "brand_name"
+        case canonicalURL = "canonical_url"
+        case imageURL = "image_url"
+        case classificationStatus = "classification_status"
+        case productStructureCode = "product_structure_code"
+        case audienceCode = "audience_code"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case comparisonPolicyCode = "comparison_policy_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+        case resolverVersion = "resolver_version"
+        case inputFingerprint = "input_fingerprint"
+        case latestIngestionFingerprint = "latest_ingestion_fingerprint"
+    }
+}
+
+nonisolated struct VNextAvailabilityDTO: Decodable, Equatable, Sendable {
+    let status: String
+    let observedAt: String?
+    let validUntil: String?
+    let evidenceFingerprint: String?
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case observedAt = "observed_at"
+        case validUntil = "valid_until"
+        case evidenceFingerprint = "evidence_fingerprint"
+    }
+}
+
+nonisolated struct VNextCanonicalMeasurementDTO: Decodable, Equatable, Sendable {
+    let measurementCode: String
+    let value: Double
+    let unitCode: String
+    let basisCode: String?
+    let sourceMeasurementCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case measurementCode = "fitmatch_measurement_code"
+        case value
+        case unitCode = "unit_code"
+        case basisCode = "basis_code"
+        case sourceMeasurementCode = "source_measurement_code"
+    }
+}
+
+nonisolated struct VNextCanonicalMeasurementsDTO: Decodable, Equatable, Sendable {
+    let measurements: [VNextCanonicalMeasurementDTO]
+    let semanticConflictCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case measurements
+        case semanticConflictCount = "semantic_conflict_count"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        measurements = try container.decodeIfPresent(
+            [VNextCanonicalMeasurementDTO].self,
+            forKey: .measurements
+        ) ?? []
+        semanticConflictCount = try container.decodeIfPresent(
+            Int.self,
+            forKey: .semanticConflictCount
+        ) ?? 0
+    }
+}
+
+nonisolated struct VNextRuntimeSizeDTO: Decodable, Equatable, Sendable {
+    let id: UUID
+    let sourceSizeKey: String?
+    let sizeLabel: String
+    let availability: VNextAvailabilityDTO
+    let canonicalMeasurements: VNextCanonicalMeasurementsDTO
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case sourceSizeKey = "source_size_key"
+        case sizeLabel = "size_label"
+        case availability
+        case canonicalMeasurements = "canonical_measurements"
+    }
+}
+
+nonisolated struct VNextRuntimeVariantDTO: Decodable, Equatable, Sendable {
+    let id: UUID
+    let sourceVariantKey: String?
+    let variantLabel: String?
+    let colorName: String?
+    let sizes: [VNextRuntimeSizeDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case sourceVariantKey = "source_variant_key"
+        case variantLabel = "variant_label"
+        case colorName = "color_name"
+        case sizes
+    }
+}
+
+nonisolated struct VNextProductRuntimeDTO: Decodable, Equatable, Sendable {
+    let found: Bool
+    let product: VNextRuntimeProductDTO?
+    let readiness: VNextProductReadinessDTO?
+    let variants: [VNextRuntimeVariantDTO]
+
+    enum CodingKeys: String, CodingKey { case found, product, readiness, variants }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        found = try container.decodeIfPresent(Bool.self, forKey: .found) ?? false
+        product = try container.decodeIfPresent(VNextRuntimeProductDTO.self, forKey: .product)
+        readiness = try container.decodeIfPresent(VNextProductReadinessDTO.self, forKey: .readiness)
+        variants = try container.decodeIfPresent(
+            [VNextRuntimeVariantDTO].self,
+            forKey: .variants
+        ) ?? []
+    }
+}
+
+nonisolated struct VNextClosetMeasurementDTO: Decodable, Equatable, Sendable {
+    let measurementCode: String
+    let value: Double
+    let unitCode: String
+    let valueSource: String
+    let rawLabelSnapshot: String?
+
+    enum CodingKeys: String, CodingKey {
+        case measurementCode = "fitmatch_measurement_code"
+        case value
+        case unitCode = "unit_code"
+        case valueSource = "value_source"
+        case rawLabelSnapshot = "raw_label_snapshot"
+    }
+}
+
+nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
+    let id: UUID
+    let clientItemID: UUID
+    let productID: UUID?
+    let productVariantID: UUID?
+    let productSizeID: UUID?
+    let itemName: String
+    let brandName: String?
+    let imageURL: String?
+    let productURL: String?
+    let sizeLabel: String?
+    let audienceCode: String
+    let categoryCode: String?
+    let garmentTypeCode: String
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let classificationSource: String
+    let classificationFingerprint: String?
+    let classificationResolverVersion: String?
+    let sourceCode: String
+    let sourceProductKey: String?
+    let sourceCategoryPath: String?
+    let isReference: Bool
+    let fitPreferenceCode: String?
+    let notes: String?
+    let satisfaction: Int?
+    let createdAt: String
+    let updatedAt: String
+    let measurements: [VNextClosetMeasurementDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case clientItemID = "client_item_id"
+        case productID = "product_id"
+        case productVariantID = "product_variant_id"
+        case productSizeID = "product_size_id"
+        case itemName = "item_name"
+        case brandName = "brand_name"
+        case imageURL = "image_url"
+        case productURL = "product_url"
+        case sizeLabel = "size_label"
+        case audienceCode = "audience_code"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+        case classificationSource = "classification_source"
+        case classificationFingerprint = "classification_fingerprint"
+        case classificationResolverVersion = "classification_resolver_version"
+        case sourceCode = "source_code"
+        case sourceProductKey = "source_product_key"
+        case sourceCategoryPath = "source_category_path"
+        case isReference = "is_reference"
+        case fitPreferenceCode = "fit_preference_code"
+        case notes, satisfaction
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case measurements
+    }
+}
+
+nonisolated struct VNextComparisonAuthorizationDTO: Decodable, Equatable, Sendable {
+    let decision: String
+    let allowed: Bool
+    let mode: String
+    let reason: String?
+    let excludedMeasurementCodes: [String]
+    let requiredMeasurementCodes: [String]
+    let minimumCommon: Int?
+    let commonMeasurementCount: Int?
+    let requiredAnyCount: Int?
+    let policyCode: String?
+    let policyVersion: String?
+    let policyChecksum: String?
+
+    enum CodingKeys: String, CodingKey {
+        case decision, allowed, mode, reason
+        case excludedMeasurementCodes = "excluded_measurement_codes"
+        case requiredMeasurementCodes = "required_measurement_codes"
+        case minimumCommon = "minimum_common"
+        case commonMeasurementCount = "common_measurement_count"
+        case requiredAnyCount = "required_any_count"
+        case policyCode = "policy_code"
+        case policyVersion = "policy_version"
+        case policyChecksum = "policy_checksum"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        decision = try container.decodeIfPresent(String.self, forKey: .decision) ?? "BLOCKED"
+        allowed = try container.decodeIfPresent(Bool.self, forKey: .allowed) ?? false
+        mode = try container.decodeIfPresent(String.self, forKey: .mode) ?? "NONE"
+        reason = try container.decodeIfPresent(String.self, forKey: .reason)
+        excludedMeasurementCodes = try container.decodeIfPresent(
+            [String].self,
+            forKey: .excludedMeasurementCodes
+        ) ?? []
+        requiredMeasurementCodes = try container.decodeIfPresent(
+            [String].self,
+            forKey: .requiredMeasurementCodes
+        ) ?? []
+        minimumCommon = try container.decodeIfPresent(Int.self, forKey: .minimumCommon)
+        commonMeasurementCount = try container.decodeIfPresent(
+            Int.self,
+            forKey: .commonMeasurementCount
+        )
+        requiredAnyCount = try container.decodeIfPresent(Int.self, forKey: .requiredAnyCount)
+        policyCode = try container.decodeIfPresent(String.self, forKey: .policyCode)
+        policyVersion = try container.decodeIfPresent(String.self, forKey: .policyVersion)
+        policyChecksum = try container.decodeIfPresent(String.self, forKey: .policyChecksum)
+    }
+}
+
+nonisolated struct VNextReferenceCandidateDTO: Decodable, Equatable, Sendable {
+    let closetItemID: UUID
+    let itemName: String
+    let sizeLabel: String?
+    let productID: UUID?
+    let variantID: UUID?
+    let productSizeID: UUID?
+    let isCurrentReference: Bool
+    let decision: String
+    let allowed: Bool
+    let mode: String
+    let manualExplicitRequired: Bool
+    let reason: String?
+    let eligibleProductSizeIDs: [UUID]
+
+    enum CodingKeys: String, CodingKey {
+        case closetItemID = "closet_item_id"
+        case itemName = "item_name"
+        case sizeLabel = "size_label"
+        case productID = "product_id"
+        case variantID = "variant_id"
+        case productSizeID = "product_size_id"
+        case isCurrentReference = "is_current_reference"
+        case decision, allowed, mode, reason
+        case manualExplicitRequired = "manual_explicit_required"
+        case eligibleProductSizeIDs = "eligible_product_size_ids"
+    }
+}
+
+nonisolated struct VNextReferenceCandidatesDTO: Decodable, Equatable, Sendable {
+    let targetProductID: UUID
+    let targetVariantID: UUID
+    let candidates: [VNextReferenceCandidateDTO]
+    let blocked: [VNextReferenceCandidateDTO]
+    let status: String
+
+    enum CodingKeys: String, CodingKey {
+        case targetProductID = "target_product_id"
+        case targetVariantID = "target_variant_id"
+        case candidates, blocked, status
+    }
+}
+
+nonisolated struct VNextAuthorizedMeasurementDTO: Codable, Equatable, Sendable {
+    let measurementCode: String
+    let referenceValue: Double
+    let targetValue: Double
+    let difference: Double
+    let absoluteDifference: Double
+    let unitCode: String
+    let basisCode: String?
+    let weight: Double
+    let requirementMode: String
+    let priority: Int
+
+    enum CodingKeys: String, CodingKey {
+        case measurementCode = "measurement_code"
+        case referenceValue = "reference_value"
+        case targetValue = "target_value"
+        case difference
+        case absoluteDifference = "absolute_difference"
+        case unitCode = "unit_code"
+        case basisCode = "basis_code"
+        case weight
+        case requirementMode = "requirement_mode"
+        case priority
+    }
+}
+
+nonisolated struct VNextAuthorizedCandidateDTO: Decodable, Equatable, Sendable {
+    let productSizeID: UUID
+    let sizeLabel: String
+    let availability: VNextAvailabilityDTO
+    let comparisonMeasurements: [VNextAuthorizedMeasurementDTO]
+    let authorization: VNextComparisonAuthorizationDTO
+
+    enum CodingKeys: String, CodingKey {
+        case productSizeID = "product_size_id"
+        case sizeLabel = "size_label"
+        case availability
+        case comparisonMeasurements = "comparison_measurements"
+        case authorization
+    }
+}
+
+nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendable {
+    let allowed: Bool
+    let decision: String
+    let mode: String
+    let reason: String?
+    let referenceClosetItemID: UUID?
+    let targetProductID: UUID?
+    let targetVariantID: UUID?
+    let authorizedCandidateProductSizeIDs: [UUID]
+    let candidates: [VNextAuthorizedCandidateDTO]
+    let candidateAuthorityFingerprint: String?
+
+    enum CodingKeys: String, CodingKey {
+        case allowed, decision, mode, reason, candidates
+        case referenceClosetItemID = "reference_closet_item_id"
+        case targetProductID = "target_product_id"
+        case targetVariantID = "target_variant_id"
+        case authorizedCandidateProductSizeIDs = "authorized_candidate_product_size_ids"
+        case candidateAuthorityFingerprint = "candidate_authority_fingerprint"
+    }
+}
+
+nonisolated struct VNextComparisonPolicyMetricDTO: Decodable, Equatable, Sendable {
+    let metricMode: String
+    let measurementCode: String?
+    let weight: Double
+    let requirementMode: String
+    let priority: Int
+    let isActive: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case metricMode = "metric_mode"
+        case measurementCode = "fitmatch_measurement_code"
+        case weight, priority
+        case requirementMode = "requirement_mode"
+        case isActive = "is_active"
+    }
+}
+
+nonisolated struct VNextComparisonPolicySnapshotDTO: Decodable, Equatable, Sendable {
+    let policyCode: String?
+    let policyVersion: String?
+    let policyChecksum: String?
+    let metrics: [VNextComparisonPolicyMetricDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case policyCode = "policy_code"
+        case policyVersion = "policy_version"
+        case policyChecksum = "policy_checksum"
+        case metrics
+    }
+}
+
+nonisolated struct VNextComparisonTargetSnapshotDTO: Decodable, Equatable, Sendable {
+    let productID: UUID
+    let variantID: UUID
+    let authorizedCandidateProductSizeIDs: [UUID]
+    let candidateAuthorityFingerprint: String?
+    let classificationStatus: String
+    let garmentTypeCode: String?
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let candidates: [VNextAuthorizedCandidateDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case productID = "product_id"
+        case variantID = "variant_id"
+        case authorizedCandidateProductSizeIDs = "authorized_candidate_product_size_ids"
+        case candidateAuthorityFingerprint = "candidate_authority_fingerprint"
+        case classificationStatus = "classification_status"
+        case garmentTypeCode = "garment_type_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+        case candidates
+    }
+}
+
+nonisolated struct VNextComparisonBeginSnapshotDTO: Decodable, Equatable, Sendable {
+    let snapshotSchemaVersion: Int
+    let target: VNextComparisonTargetSnapshotDTO
+    let policy: VNextComparisonPolicySnapshotDTO
+    let authorization: VNextComparisonAuthorizationDTO
+    let excludedMeasurementCodes: [String]
+    let referenceSnapshot: FitMatchJSONValue
+    let authoritySnapshot: FitMatchJSONValue
+    let inputSnapshot: FitMatchJSONValue
+
+    enum CodingKeys: String, CodingKey {
+        case snapshotSchemaVersion = "snapshot_schema_version"
+        case target = "target_snapshot"
+        case policy = "policy_snapshot"
+        case authorization = "authorization_snapshot"
+        case excludedMeasurementCodes = "excluded_measurement_codes"
+        case referenceSnapshot = "reference_snapshot"
+        case authoritySnapshot = "authority_snapshot"
+        case inputSnapshot = "input_snapshot"
+    }
+}
+
+nonisolated struct VNextBeginComparisonDTO: Decodable, Equatable, Sendable {
+    let comparisonID: UUID
+    let created: Bool
+    let idempotent: Bool
+    let resultStatus: String
+    let authorization: VNextComparisonAuthorizationDTO?
+    let authorizedCandidateProductSizeIDs: [UUID]
+    let candidateAuthorityFingerprint: String?
+    let snapshot: VNextComparisonBeginSnapshotDTO
+
+    enum CodingKeys: String, CodingKey {
+        case comparisonID = "comparison_id"
+        case created, idempotent
+        case resultStatus = "result_status"
+        case authorization
+        case authorizedCandidateProductSizeIDs = "authorized_candidate_product_size_ids"
+        case candidateAuthorityFingerprint = "candidate_authority_fingerprint"
+        case snapshot
+    }
+}
+
+nonisolated struct VNextCandidateRankingDTO: Codable, Equatable, Sendable {
+    let productSizeID: UUID
+    let rank: Int
+    let score: Double
+
+    enum CodingKeys: String, CodingKey {
+        case productSizeID = "product_size_id"
+        case rank, score
+    }
+}
+
+nonisolated struct VNextMetricEvidenceDTO: Codable, Equatable, Sendable {
+    let productSizeID: UUID
+    let measurementCode: String
+    let referenceValue: Double
+    let targetValue: Double
+    let difference: Double
+    let absoluteDifference: Double
+    let weight: Double
+
+    enum CodingKeys: String, CodingKey {
+        case productSizeID = "product_size_id"
+        case measurementCode = "measurement_code"
+        case referenceValue = "reference_value"
+        case targetValue = "target_value"
+        case difference
+        case absoluteDifference = "absolute_difference"
+        case weight
+    }
+}
+
+nonisolated struct VNextComparisonCompletionPayload: Codable, Equatable, Sendable {
+    let recommendedProductSizeID: UUID
+    let score: Double
+    let reliability: Int
+    let coverage: Double
+    let engineVersion: String
+    let candidateSizeRanking: [VNextCandidateRankingDTO]
+    let metricEvidence: [VNextMetricEvidenceDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case recommendedProductSizeID = "recommended_product_size_id"
+        case score, reliability, coverage
+        case engineVersion = "engine_version"
+        case candidateSizeRanking = "candidate_size_ranking"
+        case metricEvidence = "metric_evidence"
+    }
+}
+
+nonisolated struct VNextCompleteComparisonDTO: Decodable, Equatable, Sendable {
+    let comparisonID: UUID
+    let completed: Bool
+    let idempotent: Bool
+    let recommendedProductSizeID: UUID
+    let recommendedSizeLabel: String
+    let validatedEvidenceCount: Int?
+    let coverage: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case comparisonID = "comparison_id"
+        case completed, idempotent
+        case recommendedProductSizeID = "recommended_product_size_id"
+        case recommendedSizeLabel = "recommended_size_label"
+        case validatedEvidenceCount = "validated_evidence_count"
+        case coverage
+    }
+}
+
+nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {
+    let id: UUID
+    let clientComparisonID: UUID
+    let referenceClientItemID: UUID?
+    let targetProductID: UUID
+    let targetVariantID: UUID
+    let targetProductName: String
+    let targetImageURL: String?
+    let targetSourceCode: String
+    let targetSourceProductKey: String?
+    let targetCategoryCode: String?
+    let resultStatus: String
+    let recommendedProductSizeID: UUID?
+    let recommendedSizeLabel: String?
+    let fitScore: Double?
+    let reliabilityLevel: Int?
+    let coverageRatio: Double?
+    let engineVersion: String
+    let resultEvidence: VNextComparisonCompletionPayload?
+    let createdAt: String
+    let snapshotSchemaVersion: Int
+    let excludedMeasurementCodes: [String]
+    let referenceSnapshot: FitMatchJSONValue
+    let targetSnapshot: VNextComparisonTargetSnapshotDTO?
+    let authoritySnapshot: FitMatchJSONValue
+    let policySnapshot: VNextComparisonPolicySnapshotDTO?
+    let authorizationSnapshot: VNextComparisonAuthorizationDTO?
+    let inputSnapshot: FitMatchJSONValue
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case clientComparisonID = "client_comparison_id"
+        case referenceClientItemID = "reference_client_item_id"
+        case targetProductID = "target_product_id"
+        case targetVariantID = "target_variant_id"
+        case targetProductName = "target_product_name_snapshot"
+        case targetImageURL = "target_image_url_snapshot"
+        case targetSourceCode = "target_source_code_snapshot"
+        case targetSourceProductKey = "target_source_product_key"
+        case targetCategoryCode = "target_category_code"
+        case resultStatus = "result_status"
+        case recommendedProductSizeID = "recommended_product_size_id"
+        case recommendedSizeLabel = "recommended_size_label"
+        case fitScore = "fit_score"
+        case reliabilityLevel = "reliability_level"
+        case coverageRatio = "coverage_ratio"
+        case engineVersion = "engine_version"
+        case resultEvidence = "result_evidence"
+        case createdAt = "created_at"
+        case snapshotSchemaVersion = "snapshot_schema_version"
+        case excludedMeasurementCodes = "excluded_measurement_codes"
+        case referenceSnapshot = "reference_snapshot"
+        case targetSnapshot = "target_snapshot"
+        case authoritySnapshot = "authority_snapshot"
+        case policySnapshot = "policy_snapshot"
+        case authorizationSnapshot = "authorization_snapshot"
+        case inputSnapshot = "input_snapshot"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        clientComparisonID = try container.decode(UUID.self, forKey: .clientComparisonID)
+        referenceClientItemID = try container.decodeIfPresent(
+            UUID.self,
+            forKey: .referenceClientItemID
+        )
+        targetProductID = try container.decode(UUID.self, forKey: .targetProductID)
+        targetVariantID = try container.decode(UUID.self, forKey: .targetVariantID)
+        targetProductName = try container.decodeIfPresent(
+            String.self,
+            forKey: .targetProductName
+        ) ?? "FitMatch 상품"
+        targetImageURL = try container.decodeIfPresent(String.self, forKey: .targetImageURL)
+        targetSourceCode = try container.decodeIfPresent(
+            String.self,
+            forKey: .targetSourceCode
+        ) ?? "unknown"
+        targetSourceProductKey = try container.decodeIfPresent(
+            String.self,
+            forKey: .targetSourceProductKey
+        )
+        targetCategoryCode = try container.decodeIfPresent(
+            String.self,
+            forKey: .targetCategoryCode
+        )
+        resultStatus = try container.decode(String.self, forKey: .resultStatus)
+        recommendedProductSizeID = try container.decodeIfPresent(
+            UUID.self,
+            forKey: .recommendedProductSizeID
+        )
+        recommendedSizeLabel = try container.decodeIfPresent(
+            String.self,
+            forKey: .recommendedSizeLabel
+        )
+        fitScore = try container.decodeIfPresent(Double.self, forKey: .fitScore)
+        reliabilityLevel = try container.decodeIfPresent(Int.self, forKey: .reliabilityLevel)
+        coverageRatio = try container.decodeIfPresent(Double.self, forKey: .coverageRatio)
+        engineVersion = try container.decodeIfPresent(
+            String.self,
+            forKey: .engineVersion
+        ) ?? "unknown"
+        resultEvidence = try? container.decode(
+            VNextComparisonCompletionPayload.self,
+            forKey: .resultEvidence
+        )
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        snapshotSchemaVersion = try container.decodeIfPresent(
+            Int.self,
+            forKey: .snapshotSchemaVersion
+        ) ?? 0
+        excludedMeasurementCodes = try container.decodeIfPresent(
+            [String].self,
+            forKey: .excludedMeasurementCodes
+        ) ?? []
+        referenceSnapshot = try container.decodeIfPresent(
+            FitMatchJSONValue.self,
+            forKey: .referenceSnapshot
+        ) ?? .object([:])
+        targetSnapshot = try? container.decode(
+            VNextComparisonTargetSnapshotDTO.self,
+            forKey: .targetSnapshot
+        )
+        authoritySnapshot = try container.decodeIfPresent(
+            FitMatchJSONValue.self,
+            forKey: .authoritySnapshot
+        ) ?? .object([:])
+        policySnapshot = try? container.decode(
+            VNextComparisonPolicySnapshotDTO.self,
+            forKey: .policySnapshot
+        )
+        authorizationSnapshot = try? container.decode(
+            VNextComparisonAuthorizationDTO.self,
+            forKey: .authorizationSnapshot
+        )
+        inputSnapshot = try container.decodeIfPresent(
+            FitMatchJSONValue.self,
+            forKey: .inputSnapshot
+        ) ?? .object([:])
+    }
+
+    var snapshotBegin: VNextBeginComparisonDTO? {
+        guard let targetSnapshot,
+              let policySnapshot,
+              let authorizationSnapshot,
+              snapshotSchemaVersion >= 3,
+              authorizationSnapshot.allowed,
+              !targetSnapshot.authorizedCandidateProductSizeIDs.isEmpty else {
+            return nil
+        }
+        return VNextBeginComparisonDTO(
+            comparisonID: id,
+            created: false,
+            idempotent: true,
+            resultStatus: "PENDING",
+            authorization: authorizationSnapshot,
+            authorizedCandidateProductSizeIDs:
+                targetSnapshot.authorizedCandidateProductSizeIDs,
+            candidateAuthorityFingerprint:
+                targetSnapshot.candidateAuthorityFingerprint,
+            snapshot: VNextComparisonBeginSnapshotDTO(
+                snapshotSchemaVersion: snapshotSchemaVersion,
+                target: targetSnapshot,
+                policy: policySnapshot,
+                authorization: authorizationSnapshot,
+                excludedMeasurementCodes: excludedMeasurementCodes,
+                referenceSnapshot: referenceSnapshot,
+                authoritySnapshot: authoritySnapshot,
+                inputSnapshot: inputSnapshot
+            )
+        )
+    }
+
+    var pendingBegin: VNextBeginComparisonDTO? {
+        resultStatus == "PENDING" ? snapshotBegin : nil
+    }
+}

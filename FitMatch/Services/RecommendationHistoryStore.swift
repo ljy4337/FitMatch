@@ -2,6 +2,83 @@ import Foundation
 import SwiftData
 
 enum RecommendationHistoryStore {
+    /// Persists a server-completed vNext comparison without invoking any of
+    /// the legacy presentation-identity fallbacks. Server UUIDs are the sole
+    /// product, size, and immutable history identities on this path.
+    static func saveCompletedVNext(
+        _ history: RecommendationHistory,
+        existing histories: [RecommendationHistory],
+        modelContext: ModelContext
+    ) throws {
+        guard history.comparisonSchemaVersion >= 2,
+              history.calculationSnapshot != nil,
+              history.comparisonMethod.hasPrefix("서버 승인") else {
+            throw RecommendationHistoryStoreError.invalidCompletedVNextHistory
+        }
+
+        let historyID = history.id
+        if histories.contains(where: { $0.id == historyID }) {
+            return
+        }
+        let historyDescriptor = FetchDescriptor<RecommendationHistory>(
+            predicate: #Predicate { $0.id == historyID }
+        )
+        if try modelContext.fetch(historyDescriptor).first != nil {
+            return
+        }
+
+        let incomingProduct = history.product
+        let productID = incomingProduct.id
+        let recommendedSizeID = history.recommendedSize.id
+        let productDescriptor = FetchDescriptor<Product>(
+            predicate: #Predicate { $0.id == productID }
+        )
+        let storedProduct = try modelContext.fetch(productDescriptor).first
+        let storedSizes = try modelContext.fetch(FetchDescriptor<ProductSize>())
+        let storedSizesByID = Dictionary(
+            uniqueKeysWithValues: storedSizes.map { ($0.id, $0) }
+        )
+
+        if let storedProduct {
+            let incomingSizes = Array(incomingProduct.sizes)
+            storedProduct.refreshExternalPresentation(from: incomingProduct)
+
+            for incomingSize in incomingSizes {
+                if let exactStoredSize = storedSizesByID[incomingSize.id] {
+                    guard exactStoredSize.product?.id == productID else {
+                        throw RecommendationHistoryStoreError.vnextIdentityConflict
+                    }
+                    continue
+                }
+                incomingSize.product = storedProduct
+                if !storedProduct.sizes.contains(where: { $0.id == incomingSize.id }) {
+                    storedProduct.sizes.append(incomingSize)
+                }
+            }
+
+            guard let exactRecommendedSize = storedProduct.sizes.first(where: {
+                $0.id == recommendedSizeID
+            }) else {
+                throw RecommendationHistoryStoreError.vnextIdentityConflict
+            }
+            history.product = storedProduct
+            history.recommendedSize = exactRecommendedSize
+        } else {
+            if storedSizesByID[recommendedSizeID] != nil {
+                throw RecommendationHistoryStoreError.vnextIdentityConflict
+            }
+            guard incomingProduct.sizes.contains(where: { $0.id == recommendedSizeID }) else {
+                throw RecommendationHistoryStoreError.vnextIdentityConflict
+            }
+            if incomingProduct.modelContext == nil {
+                modelContext.insert(incomingProduct)
+            }
+        }
+
+        modelContext.insert(history)
+        try modelContext.save()
+    }
+
     static func saveUnique(
         _ history: RecommendationHistory,
         existing histories: [RecommendationHistory],
@@ -104,4 +181,6 @@ enum RecommendationHistoryStore {
 
 enum RecommendationHistoryStoreError: Error {
     case missingCalculationSnapshot
+    case invalidCompletedVNextHistory
+    case vnextIdentityConflict
 }

@@ -3,7 +3,7 @@ import SwiftData
 
 struct ShoppingProductFormView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \Brand.name) private var brands: [Brand]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @StateObject private var viewModel: ShoppingProductViewModel
@@ -11,6 +11,10 @@ struct ShoppingProductFormView: View {
     @State private var shouldAutoCalculateInitialURL: Bool
     @State private var didAutoCalculateInitialURL = false
     @FocusState private var isProductURLFocused: Bool
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     init(initialURL: String? = nil) {
         _viewModel = StateObject(wrappedValue: ShoppingProductViewModel(initialURL: initialURL))
@@ -347,11 +351,19 @@ struct ShoppingProductFormView: View {
     }
 
     private func saveUniqueHistory(_ history: RecommendationHistory) throws {
-        try RecommendationHistoryStore.saveUnique(
-            history,
-            existing: histories,
-            modelContext: modelContext
-        )
+        if history.comparisonMethod.hasPrefix("서버 승인") {
+            try RecommendationHistoryStore.saveCompletedVNext(
+                history,
+                existing: histories,
+                modelContext: modelContext
+            )
+        } else {
+            try RecommendationHistoryStore.saveUnique(
+                history,
+                existing: histories,
+                modelContext: modelContext
+            )
+        }
     }
 
     private func presentActiveSheet(_ sheet: ShoppingActiveSheet) {

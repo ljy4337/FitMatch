@@ -6,7 +6,7 @@ struct MyClosetView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
-    @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.closetViewLayout") private var closetViewLayoutRaw = ContentListLayout.list.rawValue
     @State private var activeSheet: ClosetActiveSheet?
@@ -21,6 +21,10 @@ struct MyClosetView: View {
     @State private var selectedClosetItemID: UUID?
     @State private var displayedItems: [UserFit] = []
     @State private var pendingDeleteItem: UserFit?
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     var body: some View {
         ZStack(alignment: .top) {

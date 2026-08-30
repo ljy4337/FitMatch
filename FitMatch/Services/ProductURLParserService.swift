@@ -174,6 +174,12 @@ struct ParsedProductSize: Identifiable, Equatable {
     var measurements: GarmentMeasurements
     var measurementRecords: [ParsedMeasurement] = []
     var standardBodyChestCircumferenceCm: Double? = nil
+    /// Retailer fact only. Parsers must leave this nil when the retailer did
+    /// not expose size-level stock evidence; nil is encoded as UNKNOWN.
+    var availabilityStatus: String? = nil
+    var availabilityObservedAt: Date? = nil
+    var availabilityValidUntil: Date? = nil
+    var availabilityEvidence: [String: String] = [:]
 }
 
 struct ParsedMeasurement: Equatable {

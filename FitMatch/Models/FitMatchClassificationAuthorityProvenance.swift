@@ -127,7 +127,8 @@ extension UserFit {
     }
 
     func fitMatchServerReferenceSnapshot() -> FitMatchLocalReferenceSnapshot? {
-        guard classificationAuthorityProvenance?.isComparisonAuthority == true,
+        guard isActiveClosetItem,
+              classificationAuthorityProvenance?.isComparisonAuthority == true,
               !FitMatchClosetClassificationEditPolicy.isExplicitSet(self),
               let categoryCode = resolvedCategoryCode,
               let detailCode = resolvedDetailCategoryCode,

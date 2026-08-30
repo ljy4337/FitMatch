@@ -10,26 +10,59 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
     func listClosetItems() async throws -> FitMatchClosetItemsResponse
     func findReferenceCandidates(targetProductID: UUID) async throws
         -> FitMatchReferenceCandidatesResponse
+    func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID) async throws
+        -> FitMatchReferenceCandidatesResponse
+    func eligibleCandidateSizes(
+        referenceClosetItemID: UUID,
+        targetProductID: UUID,
+        targetVariantID: UUID,
+        manualExplicit: Bool
+    ) async throws -> VNextEligibleCandidateSizesDTO
     func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
         -> FitMatchBeginComparisonResponse
+    func completeVNextComparison(
+        comparisonID: UUID,
+        payload: VNextComparisonCompletionPayload
+    ) async throws -> VNextCompleteComparisonDTO
 }
 
 extension FitMatchSupabaseDomainClient: FitMatchServerAuthorityRemoteServicing {}
 
 extension FitMatchServerAuthorityRemoteServicing {
+    func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        try await findReferenceCandidates(targetProductID: targetProductID)
+    }
+
+    func eligibleCandidateSizes(
+        referenceClosetItemID: UUID,
+        targetProductID: UUID,
+        targetVariantID: UUID,
+        manualExplicit: Bool
+    ) async throws -> VNextEligibleCandidateSizesDTO {
+        throw FitMatchServerAuthorityError.comparisonBeginUnavailable
+    }
+
     func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
         -> FitMatchBeginComparisonResponse {
         throw FitMatchServerAuthorityError.comparisonBeginUnavailable
     }
+
+    func completeVNextComparison(
+        comparisonID: UUID,
+        payload: VNextComparisonCompletionPayload
+    ) async throws -> VNextCompleteComparisonDTO {
+        throw FitMatchServerAuthorityError.comparisonCompletionUnavailable
+    }
 }
 
-enum FitMatchServerProductAuthorityStatus: String, Equatable, Sendable {
+nonisolated enum FitMatchServerProductAuthorityStatus: String, Equatable, Sendable {
     case confirmed
     case reviewRequired = "review_required"
     case notComparable = "not_comparable"
 }
 
-struct FitMatchServerProductAuthority: Equatable, Sendable {
+nonisolated struct FitMatchServerProductAuthority: Equatable, Sendable {
     let status: FitMatchServerProductAuthorityStatus
     let productID: UUID
     let classification: FitMatchDatabaseClassification
@@ -40,19 +73,19 @@ struct FitMatchServerProductAuthority: Equatable, Sendable {
     }
 }
 
-enum FitMatchServerReferenceAuthority: String, Equatable, Sendable {
+nonisolated enum FitMatchServerReferenceAuthority: String, Equatable, Sendable {
     case serverConfirmed = "server_confirmed"
     case userExplicit = "user_explicit"
 }
 
-enum FitMatchServerReferenceDecision: String, Equatable, Sendable {
+nonisolated enum FitMatchServerReferenceDecision: String, Equatable, Sendable {
     case automatic
     case manualSelection = "manual_selection"
     case measurementsRequired = "measurements_required"
     case blocked
 }
 
-struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
+nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
     let decision: FitMatchServerReferenceDecision
     let reason: String?
     let target: FitMatchServerProductAuthority
@@ -60,6 +93,30 @@ struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
     let referenceAuthority: FitMatchServerReferenceAuthority?
     let candidate: FitMatchReferenceCandidate?
     let candidateState: String?
+    let targetVariantID: UUID?
+    let authorizedCandidateSizeIDs: [UUID]
+
+    init(
+        decision: FitMatchServerReferenceDecision,
+        reason: String?,
+        target: FitMatchServerProductAuthority,
+        reference: FitMatchClosetItemRecord?,
+        referenceAuthority: FitMatchServerReferenceAuthority?,
+        candidate: FitMatchReferenceCandidate?,
+        candidateState: String?,
+        targetVariantID: UUID? = nil,
+        authorizedCandidateSizeIDs: [UUID] = []
+    ) {
+        self.decision = decision
+        self.reason = reason
+        self.target = target
+        self.reference = reference
+        self.referenceAuthority = referenceAuthority
+        self.candidate = candidate
+        self.candidateState = candidateState
+        self.targetVariantID = targetVariantID
+        self.authorizedCandidateSizeIDs = authorizedCandidateSizeIDs
+    }
 
     nonisolated var isAllowed: Bool {
         decision == .automatic || decision == .manualSelection
@@ -73,11 +130,12 @@ struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
 /// A server-created comparison run is the final precondition for invoking the
 /// local measurement engine. The history ID is allocated before scoring so the
 /// existing post-save sync can idempotently reopen and complete this exact run.
-struct FitMatchServerComparisonPermit: Equatable, Sendable {
+nonisolated struct FitMatchServerComparisonPermit: Equatable, Sendable {
     let referenceAuthorization: FitMatchServerReferenceAuthorization
     let clientHistoryID: UUID
     let runID: UUID
     let compatibility: FitMatchDatabaseCompatibility
+    let vnextBegin: VNextBeginComparisonDTO?
 
     nonisolated var isAllowed: Bool {
         referenceAuthorization.isAllowed && compatibility.allowed
@@ -88,7 +146,7 @@ struct FitMatchServerComparisonPermit: Equatable, Sendable {
 /// Server candidate authorization is rejected when this snapshot differs from
 /// the freshly fetched remote Closet row, preventing a stale/local edit from
 /// being scored against an older server-approved tuple or measurement payload.
-struct FitMatchLocalReferenceSnapshot: Equatable, Sendable {
+nonisolated struct FitMatchLocalReferenceSnapshot: Equatable, Sendable {
     let productName: String
     let sizeName: String?
     let categoryCode: String
@@ -99,7 +157,7 @@ struct FitMatchLocalReferenceSnapshot: Equatable, Sendable {
     let measurements: [String: Double]
 }
 
-enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendable {
+nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendable {
     case unsupportedCatalogState(String)
     case missingObservationForPromotion
     case observationIdentityMismatch
@@ -118,6 +176,8 @@ enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendable {
     case comparisonNotAuthorized
     case comparisonBeginRejected(String)
     case comparisonBeginMalformed(String)
+    case comparisonCompletionUnavailable
+    case comparisonCompletionRejected(String)
 
     var errorDescription: String? {
         switch self {
@@ -157,6 +217,10 @@ enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendable {
             return "서버 비교 시작이 차단되었습니다: \(reason)"
         case .comparisonBeginMalformed(let reason):
             return "서버 비교 시작 응답이 올바르지 않습니다: \(reason)"
+        case .comparisonCompletionUnavailable:
+            return "서버 비교 완료 API를 사용할 수 없습니다."
+        case .comparisonCompletionRejected(let reason):
+            return "서버가 비교 결과를 승인하지 않았습니다: \(reason)"
         }
     }
 }
@@ -322,9 +386,28 @@ actor FitMatchServerAuthorityCoordinator {
             )
         }
 
-        var candidates = try await remote.findReferenceCandidates(
-            targetProductID: target.productID
-        )
+        let targetVariantID = target.runtime.vnext.flatMap { runtime -> UUID? in
+            let observationVariant = targetObservation?.payload.variants.first?
+                .externalVariantID
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let observationVariant, !observationVariant.isEmpty {
+                return runtime.variants.first(where: {
+                    $0.sourceVariantKey == observationVariant
+                })?.id
+            }
+            return runtime.variants.count == 1 ? runtime.variants[0].id : nil
+        }
+        var candidates: FitMatchReferenceCandidatesResponse
+        if let targetVariantID {
+            candidates = try await remote.findReferenceCandidates(
+                targetProductID: target.productID,
+                targetVariantID: targetVariantID
+            )
+        } else {
+            candidates = try await remote.findReferenceCandidates(
+                targetProductID: target.productID
+            )
+        }
         if candidates.state == "target_classification_required" {
             target = try await resolveProductAuthority(
                 request: targetRequest,
@@ -339,24 +422,40 @@ actor FitMatchServerAuthorityCoordinator {
                     candidateState: candidates.state
                 )
             }
-            candidates = try await remote.findReferenceCandidates(
-                targetProductID: target.productID
-            )
+            if let targetVariantID {
+                candidates = try await remote.findReferenceCandidates(
+                    targetProductID: target.productID,
+                    targetVariantID: targetVariantID
+                )
+            } else {
+                candidates = try await remote.findReferenceCandidates(
+                    targetProductID: target.productID
+                )
+            }
             if candidates.state == "target_classification_required" {
                 throw FitMatchServerAuthorityError.targetClassificationRequired
             }
         }
 
-        let knownStates: Set<String> = [
+        let knownStates: Set<String> = candidates.vnext == nil ? [
             "automatic",
             "manual_selection",
             "measurements_required",
             "no_compatible_garment"
+        ] : [
+            "automatic",
+            "manual_selection",
+            "measurements_required",
+            "no_compatible_garment",
+            "READY",
+            "NO_REFERENCE_CANDIDATE"
         ]
         guard knownStates.contains(candidates.state) else {
             throw FitMatchServerAuthorityError.unknownCandidateState(candidates.state)
         }
-        try validateCandidateResponse(candidates)
+        if candidates.vnext == nil {
+            try validateCandidateResponse(candidates)
+        }
 
         guard let candidate = candidates.candidates.first(where: {
             $0.closetItemID == reference.closetItemID
@@ -378,7 +477,11 @@ actor FitMatchServerAuthorityCoordinator {
                 reference: reference,
                 referenceAuthority: referenceAuthority,
                 candidate: candidate,
-                candidateState: candidates.state
+                candidateState: candidates.state,
+                targetVariantID: targetVariantID,
+                authorizedCandidateSizeIDs: candidates.vnext?.candidates
+                    .first(where: { $0.closetItemID == reference.closetItemID })?
+                    .eligibleProductSizeIDs ?? []
             )
         }
         if candidate.manualReady && candidate.manualCompatibility.allowed {
@@ -389,7 +492,11 @@ actor FitMatchServerAuthorityCoordinator {
                 reference: reference,
                 referenceAuthority: referenceAuthority,
                 candidate: candidate,
-                candidateState: candidates.state
+                candidateState: candidates.state,
+                targetVariantID: targetVariantID,
+                authorizedCandidateSizeIDs: candidates.vnext?.candidates
+                    .first(where: { $0.closetItemID == reference.closetItemID })?
+                    .eligibleProductSizeIDs ?? []
             )
         }
         if candidate.automaticCompatibility.allowed
@@ -401,7 +508,9 @@ actor FitMatchServerAuthorityCoordinator {
                 reference: reference,
                 referenceAuthority: referenceAuthority,
                 candidate: candidate,
-                candidateState: candidates.state
+                candidateState: candidates.state,
+                targetVariantID: targetVariantID,
+                authorizedCandidateSizeIDs: []
             )
         }
         return blockedAuthorization(
@@ -425,12 +534,40 @@ actor FitMatchServerAuthorityCoordinator {
             throw FitMatchServerAuthorityError.comparisonNotAuthorized
         }
         let allowExtended = authorization.decision == .manualSelection
+        let exactCandidates: VNextEligibleCandidateSizesDTO?
+        if let targetVariantID = authorization.targetVariantID {
+            let value = try await remote.eligibleCandidateSizes(
+                referenceClosetItemID: reference.closetItemID,
+                targetProductID: authorization.target.productID,
+                targetVariantID: targetVariantID,
+                manualExplicit: allowExtended
+            )
+            guard value.allowed,
+                  !value.authorizedCandidateProductSizeIDs.isEmpty else {
+                throw FitMatchServerAuthorityError.comparisonNotAuthorized
+            }
+            if !authorization.authorizedCandidateSizeIDs.isEmpty,
+               Set(value.authorizedCandidateProductSizeIDs)
+                    != Set(authorization.authorizedCandidateSizeIDs) {
+                throw FitMatchServerAuthorityError.comparisonBeginMalformed(
+                    "candidate_authority_changed"
+                )
+            }
+            exactCandidates = value
+        } else {
+            exactCandidates = nil
+        }
         let response = try await remote.beginComparison(
             FitMatchBeginComparisonRequest(
                 referenceItemID: reference.closetItemID,
                 targetProductID: authorization.target.productID,
                 allowExtended: allowExtended,
-                clientHistoryID: clientHistoryID
+                clientHistoryID: clientHistoryID,
+                targetVariantID: authorization.targetVariantID,
+                authorizationProductSizeID: exactCandidates?
+                    .authorizedCandidateProductSizeIDs.first,
+                candidateProductSizeIDs: exactCandidates?
+                    .authorizedCandidateProductSizeIDs
             )
         )
         guard response.status == "pending" || response.status == "completed" else {
@@ -454,12 +591,52 @@ actor FitMatchServerAuthorityCoordinator {
                 "automatic_requires_direct_compatibility"
             )
         }
+        if authorization.targetVariantID != nil {
+            guard let exact = response.vnext,
+                  Set(exact.authorizedCandidateProductSizeIDs) == Set(
+                    exactCandidates?.authorizedCandidateProductSizeIDs ?? []
+                  ),
+                  exact.snapshot.target.variantID == authorization.targetVariantID else {
+                throw FitMatchServerAuthorityError.comparisonBeginMalformed(
+                    "vnext_snapshot_or_candidate_set_missing"
+                )
+            }
+        }
         return FitMatchServerComparisonPermit(
             referenceAuthorization: authorization,
             clientHistoryID: clientHistoryID,
             runID: response.runID,
-            compatibility: response.compatibility
+            compatibility: response.compatibility,
+            vnextBegin: response.vnext
         )
+    }
+
+    func completeAuthorizedComparison(
+        permit: FitMatchServerComparisonPermit,
+        analysis: VNextComparisonBatchAnalysis
+    ) async throws -> VNextCompleteComparisonDTO {
+        guard permit.isAllowed,
+              let begin = permit.vnextBegin,
+              begin.comparisonID == permit.runID,
+              analysis.comparisonID == permit.runID,
+              analysis.completionPayload.recommendedProductSizeID
+                == analysis.recommended.productSizeID else {
+            throw FitMatchServerAuthorityError.comparisonCompletionRejected(
+                "permit_or_snapshot_mismatch"
+            )
+        }
+        let result = try await remote.completeVNextComparison(
+            comparisonID: permit.runID,
+            payload: analysis.completionPayload
+        )
+        guard result.completed,
+              result.comparisonID == permit.runID,
+              result.recommendedProductSizeID == analysis.recommended.productSizeID else {
+            throw FitMatchServerAuthorityError.comparisonCompletionRejected(
+                "server_completion_mismatch"
+            )
+        }
+        return result
     }
 
     /// Recomputes the aggregate state using the exact predicates in

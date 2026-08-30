@@ -5,7 +5,7 @@ import UIKit
 struct CompareFlowSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \Brand.name) private var brands: [Brand]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
 
@@ -33,6 +33,10 @@ struct CompareFlowSheet: View {
     @State private var hasStartedInitialURL = false
     @State private var isProcessingReferenceSelection = false
     @FocusState private var isURLFocused: Bool
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     init(initialURL: String? = nil) {
         self.initialURL = initialURL
@@ -1775,11 +1779,19 @@ private extension CompareFlowSheet {
     }
 
     func saveUniqueHistory(_ history: RecommendationHistory) throws {
-        try RecommendationHistoryStore.saveUnique(
-            history,
-            existing: histories,
-            modelContext: modelContext
-        )
+        if history.comparisonMethod.hasPrefix("서버 승인") {
+            try RecommendationHistoryStore.saveCompletedVNext(
+                history,
+                existing: histories,
+                modelContext: modelContext
+            )
+        } else {
+            try RecommendationHistoryStore.saveUnique(
+                history,
+                existing: histories,
+                modelContext: modelContext
+            )
+        }
     }
 
     func setStep(_ newStep: CompareFlowStep) {
