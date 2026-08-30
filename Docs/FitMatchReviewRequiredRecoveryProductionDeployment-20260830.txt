@@ -1,141 +1,261 @@
 FITMATCH — REVIEW_REQUIRED RECOVERY PRODUCTION DEPLOYMENT + POSTFLIGHT
-Execution report — 2026-08-30 19:38:18 KST
+Controlled deployment report — 2026-08-30
 
 FINAL VERDICT
 
 BLOCKED
 
-The mandatory Git-authority gate failed before any Production connection or
-deployment action. The reviewed Recovery implementation is present only in the
-local working tree and is not contained in origin/connectDB. Per the deployment
-instructions, execution stopped before Production preflight, dry-run, or apply.
+The Git-authority, Production baseline, and 90000 SELECT-only dry-run gates
+passed. Deployment stopped immediately before the first write because the
+available authenticated Supabase migration interface cannot accept a
+caller-supplied migration version. Its established behavior on this project is
+to create an execution-time ledger version. The required exact ledger versions
+are 20260830090000 and 20260830091000.
+
+Using that interface would knowingly create an unexpected migration row.
+The official Supabase CLI is not installed, linked, or authenticated in this
+execution environment. No manual SQL/ledger insertion, fake marking, repair, or
+alternative write mechanism was used.
 
 GIT AUTHORITY
 
 - Repository: ljy4337/FitMatch
 - Branch: connectDB
-- Local HEAD: b419f159962e1447ae2981be3747436117d7faef
-- origin/connectDB HEAD: b419f159962e1447ae2981be3747436117d7faef
+- Local HEAD: fb3dde5252c8f50733491d9e90a44d35c452c6f9
+- origin/connectDB HEAD after fetch:
+  fb3dde5252c8f50733491d9e90a44d35c452c6f9
+- Working tree before evidence/report generation: clean
 - Unresolved merge/conflict paths: 0
-- Local working tree: dirty and preserved
-- Local migration 90000:
-  - path: supabase/migrations/20260830090000_vnext_leaf_specificity_correction.sql
-  - status: untracked; absent from origin/connectDB
-  - bytes: 13,814
-  - SHA-256: aabce9afd186fdae6de1f7f52ef5ef2e33fcbcdf1d25b0ca1c94bf94745f3a21
-- Local migration 91000:
-  - path: supabase/migrations/20260830091000_vnext_review_required_recovery.sql
-  - status: untracked; absent from origin/connectDB
-  - bytes: 114,024
-  - SHA-256: 2687da317e5ac7d51ca9942bb7441987179e36f4f6a8949a4470f6fc2d31dcd8
-- Recovery focused test:
-  - path: FitMatchTests/FitMatchReviewRequiredRecoveryTests.swift
-  - status: untracked; absent from origin/connectDB
-- Final Recovery Swift/UX implementation differs from origin/connectDB in:
-  - FitMatch/Services/FitMatchServerAuthorityCoordinator.swift
-  - FitMatch/Services/FitMatchSupabaseProductResolver.swift
-  - FitMatch/Services/FitMatchVNextDTOs.swift
-  - FitMatch/ViewModels/ShoppingProductViewModel.swift
-  - FitMatch/Views/CompareFlowSheet.swift
-  - FitMatch/Views/RecommendationResultView.swift
-- Local ↔ remote parity: FAIL
-- Final UX patch publication proof: FAIL; the local changes containing the
-  existing-UI reselect/reset actions and cleared-override behavior are not in
-  the remote commit.
+- Local and remote required-source diff: 0
+- Remote contains both migrations, Recovery DTO/client/coordinator,
+  ShoppingProductViewModel, CompareFlowSheet, RecommendationResultView,
+  focused Recovery tests, local fixture, validation SQL, and cumulative handoff.
+- Existing REVIEW_REQUIRED Recovery UI is reused.
+- Second Recovery screen: none
+- “상품 종류 다시 확인”: present
+- “내 선택 초기화”: present
+- Cleared override filter: effective resolver selects only cleared_at IS NULL.
+- Git authority result: PASS
+
+MIGRATION SOURCE
+
+90000
+
+- File:
+  supabase/migrations/20260830090000_vnext_leaf_specificity_correction.sql
+- Bytes: 13,814
+- Local SHA-256:
+  aabce9afd186fdae6de1f7f52ef5ef2e33fcbcdf1d25b0ca1c94bf94745f3a21
+- origin/connectDB SHA-256:
+  aabce9afd186fdae6de1f7f52ef5ef2e33fcbcdf1d25b0ca1c94bf94745f3a21
+- Reviewed SHA parity: PASS
+
+91000
+
+- File:
+  supabase/migrations/20260830091000_vnext_review_required_recovery.sql
+- Bytes: 114,024
+- Local SHA-256:
+  2687da317e5ac7d51ca9942bb7441987179e36f4f6a8949a4470f6fc2d31dcd8
+- origin/connectDB SHA-256:
+  2687da317e5ac7d51ca9942bb7441987179e36f4f6a8949a4470f6fc2d31dcd8
+- Reviewed SHA parity: PASS
+
+PRODUCTION PROJECT
+
+- Project: hnkplvyegonlhumlejst
+- Database returned by PostgreSQL: postgres
+- Primary application schema: fitmatch_vnext
+- Preflight captured at: 2026-08-30T12:44:45.873710Z
+- Stop-state postflight captured at: 2026-08-30T12:51:48.474257Z
+
+PRODUCTION PREFLIGHT
+
+- Target migration ledger rows: 0
+- Recovery override table: absent
+- Recovery feedback table: absent
+- Recovery/effective/set/clear functions and public wrappers: absent
+- Products: 1,608
+- Classification:
+  - CONFIRMED: 203
+  - REVIEW_REQUIRED: 1,308
+  - NOT_APPLICABLE: 97
+- REVIEW_REQUIRED stored reason distribution:
+  - Garment comparison policy is unsupported: 4
+  - No verified exact-product authority for the current tuple: 410
+  - Product structure is not verified as SINGLE: 424
+  - Required canonical tuple field is missing or invalid: 470
+- Invalid CONFIRMED tuple: 0
+- Duplicate Product identity: 0
+- Variant orphan: 0
+- Size orphan: 0
+- Measurement orphan: 0
+- Variants / sizes / raw measurements: 2,656 / 6,771 / 28,514
+- Comparisons: 0
+- Classification remediation audit rows: 1,546
+- Active garment types: 47
+- Active comparison policies: 39
+- Readiness:
+  - READY: 0
+  - NO_AVAILABLE_SIZE: 201
+  - NO_MEASUREMENT_DATA: 2
+  - CLASSIFICATION_REQUIRED: 1,308
+  - NOT_APPLICABLE: 97
+- READY 0 is the expected temporal state after Golden availability expiry.
+  Availability was not refreshed or modified.
+
+MANUAL-CROSS BASELINE
+
+- hoodie ↔ sweatshirt: active, require_same_sleeve=true
+- knit_sweater ↔ sweatshirt: active, require_same_sleeve=true
+- polo_shirt ↔ tshirt: active, require_same_sleeve=true
+- Automatic cross-reference expansion: none
+- authorize_comparison marker fitmatch-vnext-authorization-v3: present
+- Manual-cross data changes: 0
+
+90000 SELECT-ONLY DRY-RUN
+
+- False REVIEW_REQUIRED corrected: 143
+- Projected classification:
+  - CONFIRMED: 346
+  - REVIEW_REQUIRED: 1,165
+  - NOT_APPLICABLE: 97
+- Existing CONFIRMED status changes: 0
+- Existing CONFIRMED tuple changes: 0
+- NOT_APPLICABLE changes: 0
+- Newly invalid CONFIRMED tuples: 0
+- Unsafe moved rows without hierarchy-pruned ancestor: 0
+- Unexpected transition classes: 0
+- Every projected change is REVIEW_REQUIRED → CONFIRMED and has an actual
+  verified DIRECT descendant / competing PRODUCT_REQUIRED ancestor relationship
+  proved through parent_signal_id.
+- Product-name, path-prefix, evidence_order specificity, and hard-coded product
+  IDs/counts were not used.
+
+LOCAL PRE-DEPLOYMENT EVIDENCE
+
+- Artifact:
+  Docs/FitMatchReviewRequiredRecoveryProductionPreflight-20260830.jsonl
+- Rows: 144 total = 1 metadata + 143 exact projected Product transitions
+- Bytes: 201,520
+- SHA-256:
+  c9ce23dcf75abb08c3d1bbcacd66941399cd390392f2b4a218d412adbb343b8f
+- Captures Product/source identity, current state/tuple/provenance/fingerprints,
+  projected mapping/tuple, and exact parent_signal_id hierarchy evidence.
+- Function preimage SHA-256 values:
+  - classification_decision:
+    7bf53132e0c98a94a6c9c0f055b299a12bf357735873e7018a1c650dd85b2586
+  - authorize_comparison:
+    4dd5c5fc4e6ba824fedbb079824032b0d46decb2b780f3975387c4513b6e2b0d
+  - begin_comparison:
+    7a5f0f9fd7c94f40c249175d8015a2377562f9d7c58142868c666b1ea0e72cf6
+  - eligible_candidate_sizes:
+    264d9600edde5593401ac52fdb29995b317fac86d2ac1afd6692714df8e05f67
+  - find_reference_candidates:
+    6a923b534060b78692e0021f9ebffc8384a323194968461de936b21ed16c6254
+  - get_product_runtime_for_swift:
+    14cd9a9e38d80a6b49cbc30eb81937ed8e631975a46b4cefed9383c7cee4a270
+- Existing relevant SECURITY DEFINER functions are owned by postgres and use
+  fixed empty search_path. Existing closet/comparison ownership SELECT policies
+  use auth.uid().
 
 PRODUCTION MIGRATION RESULT
 
 90000
 
 - Applied: NO
-- Ledger inspection: NOT RUN; stopped before Production by Git gate
-- Duration/error: no deployment attempt
+- Ledger row: absent
+- Reason: exact-version-safe deployment mechanism unavailable
+- No application attempt was made.
 
 91000
 
 - Applied: NO
-- Ledger inspection: NOT RUN; stopped before Production by Git gate
-- Duration/error: no deployment attempt
+- Ledger row: absent
+- Reason: stopped before the first approved migration
+- No application attempt was made.
 
-CLASSIFICATION RESULT
+STOP-STATE PRODUCTION VERIFICATION
 
-- Production preflight counts: NOT RUN
-- Production SELECT-only dry-run: NOT RUN
-- Before distribution: NOT VERIFIED in this execution
-- After 90000 distribution: NOT APPLICABLE; migration not applied
-- After 91000 distribution: NOT APPLICABLE; migration not applied
-- False-review corrected count: NOT RUN
-- Existing CONFIRMED changes: NOT RUN
-- Invalid tuple count: NOT RUN
+- Products: 1,608
+- Classification: 203 / 1,308 / 97
+- Variants / sizes / measurements / comparisons:
+  2,656 / 6,771 / 28,514 / 0
+- Remediation audit rows: 1,546
+- Target ledger rows: 0
+- Recovery tables/functions: absent
+- Preflight/post-stop stable hashes match exactly:
+  - Products: 03c77afc1cd50b96d3a27419ff7fb8e2
+  - Variants: 32b1b409282472a55933c2dced228256
+  - Sizes: 5ffc4cd17832fee73557ef3f27ac6cbc
+  - Measurements: 1a449907282615b028c05371cdda857e
+  - Comparisons: d41d8cd98f00b204e9800998ecf8427e
+- Partial deployment: NO
 
-RECOVERY RESULT
+RECOVERY / SECURITY / COMPARISON / HISTORY POSTFLIGHT
 
-- PRODUCT_REQUIRED total: NOT RUN
-- Recoverable/unrecoverable counts: NOT RUN
-- Candidate distribution: NOT RUN
-- UNKNOWN blocked: NOT RUN
-- 47-type fallback check: NOT RUN
-
-SECURITY
-
-- Production RLS/grants/search_path postflight: NOT RUN
-- Ownership/anon/authenticated checks: NOT RUN
-- Raw tuple authority/global auto-promotion checks: NOT RUN
-- Reason: mandatory Git-authority gate failed before Production access
-
-COMPARISON AUTHORITY
-
-- Global/User Explicit/clear/stale deployed behavior: NOT RUN
-- Manual-cross regression: NOT RUN
-- Effective measurement context: NOT RUN
-
-HISTORY
-
-- Snapshot schema v4 deployment: NOT RUN
-- Old-row mutation audit: NOT RUN
-- Authority provenance postflight: NOT RUN
+- Recovery distribution after deployment: NOT RUN
+- Recovery RLS/grants postflight: NOT RUN
+- Effective authority/reselect/clear deployed behavior: NOT RUN
+- Effective-context measurement deployed behavior: NOT RUN
+- Comparison chain/manual-cross deployed regression: NOT RUN
+- Snapshot schema v4/History provenance postflight: NOT RUN
+- Reason: neither migration was applied.
 
 PRODUCTION WRITES
 
 - Migration 90000 DDL/DML: 0
 - Migration 91000 DDL/DML: 0
 - Migration ledger writes: 0
-- Manual SQL/data repair: 0
-- Other Production writes: 0
-- Production connections/queries in this execution: 0
+- Product/classification writes: 0
+- Override/feedback writes: 0
+- User/Auth/Closet/Comparison/History writes: 0
+- Availability/measurement/mapping/policy writes: 0
+- Edge/Auth/Storage changes: 0
+- Manual SQL repair or ledger marking: 0
 
-LOCAL CHANGES MADE BY THIS DEPLOYMENT ATTEMPT
+DEPLOYMENT-MECHANISM BLOCKER
 
-- Added this deployment report.
-- Appended the BLOCKED gate result to Docs/CodexSessionHandoff.md.
-- No Swift, migration, validation SQL, Edge Function, or Production source was
-  modified by this deployment attempt.
+- Available authenticated Supabase migration API parameters:
+  project_id, migration name, SQL query.
+- Caller-supplied migration version is not supported.
+- Established project evidence: the same API previously recorded
+  vnext_swift_user_contract using execution-time version 20260829110853 rather
+  than repository version 20260829050000.
+- The Supabase CLI command is not installed and no linked/authenticated CLI
+  context or database credential is present.
+- Using execute_sql plus manual ledger insertion was rejected because it would
+  bypass the required normal migration mechanism and violate the no-fake-ledger
+  rule.
 
 UNVERIFIED
 
-- Production classification/corpus preflight and 90000 dry-run
-- Production application and postflight of migrations 90000 and 91000
-- Production Recovery schema, RLS, grants, authority, measurement, comparison,
-  and history contracts
+- Production apply/postflight for 90000 and 91000
+- Deployed Recovery candidate distribution
+- Deployed Recovery RLS, effective authority, measurement, comparison, and
+  snapshot contracts
 - Physical signed-in iPhone Recovery E2E
 - Physical multi-device E2E
 - Physical restart/reselect/clear E2E
 - Fresh Golden availability/readiness
 
-REMAINING ISSUES
+REMAINING P0 / P1 / P2
 
-- Deployment blocker: the reviewed Recovery implementation, both approved
-  migrations, validation/test artifacts, and final UX patch are not published
-  in origin/connectDB.
-- No new Production correctness result was inferred because Production was not
-  queried or changed after the failed Git gate.
+- Deployment goal P0: 1 — REVIEW_REQUIRED Recovery remains unapplied and
+  unavailable in Production. This task introduced no regression; Production is
+  exactly unchanged.
+- P1: 1 — current execution environment lacks an authenticated official
+  migration path that preserves repository timestamps exactly.
+- P2: 0 newly identified.
 
 EXACT NEXT STEP
 
-Publish the complete reviewed Recovery implementation—including the exact two
-migration files with the SHA-256 values above, validation SQL, focused tests,
-final UX/lifecycle patch, reports, and current handoff—to origin/connectDB.
-Then rerun this controlled deployment from an authoritative checkout and repeat
-the Git parity gate before any Production access.
+Use an authenticated, project-linked official Supabase CLI environment and run
+supabase db push --dry-run first. Proceed only if it lists exactly migration
+versions 20260830090000 and 20260830091000 and nothing else. Then run
+supabase db push and repeat all Production postflight gates from this report.
 
-No commit or push was performed in this task.
+Do not use the current MCP migration API for these files unless the owner
+explicitly relaxes the exact-version ledger requirement.
+
+No commit or push was performed in this deployment attempt.
