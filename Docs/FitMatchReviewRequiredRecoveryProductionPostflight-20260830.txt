@@ -1,0 +1,435 @@
+FITMATCH — REVIEW_REQUIRED RECOVERY PRODUCTION POSTFLIGHT FINAL AUDIT
+
+Final Verdict
+=============
+
+PRODUCTION POSTFLIGHT PASS
+
+Audit mode: STRICT PRODUCTION READ-ONLY
+Production project: hnkplvyegonlhumlejst
+Primary schema: fitmatch_vnext
+Final observation time: 2026-08-30 22:40:43 UTC / 2026-08-31 07:40:43 KST
+Production writes performed by this audit: 0
+
+The deployed leaf-specificity correction and REVIEW_REQUIRED Recovery authority
+match the reviewed Git contract. No unresolved functional, data-integrity, or
+security P0 was found. Physical signed-in iPhone and multi-device lifecycle tests
+remain deliberately unverified and are the exact next stage.
+
+
+Git / Production Identity
+=========================
+
+- Branch: connectDB
+- Local HEAD: 2aa7c792f45384b08ca1f55f247c1c6fd0ed516a
+- origin/connectDB HEAD after fetch: 2aa7c792f45384b08ca1f55f247c1c6fd0ed516a
+- Local/remote parity: PASS
+- Unresolved conflict: 0
+- Working tree before this report: clean
+- Project health: ACTIVE_HEALTHY
+- PostgreSQL engine: 17.6.1.147
+
+Authoritative migration SHA-256:
+
+- 20260830090000_vnext_leaf_specificity_correction.sql
+  aabce9afd186fdae6de1f7f52ef5ef2e33fcbcdf1d25b0ca1c94bf94745f3a21
+- 20260830091000_vnext_review_required_recovery.sql
+  2687da317e5ac7d51ca9942bb7441987179e36f4f6a8949a4470f6fc2d31dcd8
+
+The Git source contains the two migrations, validation SQL, Recovery DTO/client/
+coordinator/ViewModel/UI integration, focused tests, and final lifecycle patch.
+The existing CompareFlowSheet Recovery surface is reused. No second Recovery
+screen was introduced. The actions “상품 종류 다시 확인” and “내 선택 초기화”
+are present. The server Recovery UI renders the bounded server candidate contract,
+not an all-garment picker, and no hidden Closet row is used as target authority.
+
+
+Migration Ledger
+================
+
+PASS
+
+Exact deployed rows:
+
+- 20260830090000 / vnext_leaf_specificity_correction
+- 20260830091000 / vnext_review_required_recovery
+
+Both versions are present exactly once. No duplicate version and no unexpected
+Recovery replacement migration were found.
+
+Latest relevant ledger tail:
+
+- 20260830091000 vnext_review_required_recovery
+- 20260830090000 vnext_leaf_specificity_correction
+- 20260830003907 constrain_manual_cross_comparisons_by_sleeve
+- 20260830003812 add_manual_cross_comparison_rules
+- 20260829110853 vnext_swift_user_contract
+
+No ledger repair or fake marking was performed by this audit.
+
+
+Classification
+==============
+
+Current Production:
+
+- Total Product: 1,608
+- CONFIRMED: 346
+- REVIEW_REQUIRED: 1,165
+- NOT_APPLICABLE: 97
+- Invalid CONFIRMED tuple: 0
+- Duplicate Product identity: 0
+- Orphan variant: 0
+- Orphan size: 0
+- Orphan measurement: 0
+
+Leaf-specificity correction evidence:
+
+- Remediation version: vnext-leaf-specificity-20260830-v1
+- REVIEW_REQUIRED → CONFIRMED: 143 products
+- Unexpected transition class: 0
+- Missing hierarchy-pruning evidence: 0
+- Selected mapping mismatch: 0
+- Corrected rows currently still CONFIRMED: 143/143
+- Corrected rows currently invalid: 0
+- Pre-deployment expected distribution: 346 / 1,165 / 97
+- Current distribution equals the expected postimage exactly.
+
+The deployed classifier proves specificity with recursive parent_signal_id ancestry.
+The correction requires a verified DIRECT descendant competing with a broader
+PRODUCT_REQUIRED ancestor at the comparable authority rank. Product-name matching,
+string-path-prefix guessing, and evidence_order as a specificity authority are
+absent. evidence_order remains only a deterministic tie/order field after the
+hierarchy rule. Existing pre-migration CONFIRMED and NOT_APPLICABLE guard assertions
+are present in the migration, and the current invalid tuple count is zero.
+
+Fresh resolver REVIEW_REQUIRED reason distribution:
+
+- Product structure not verified SINGLE: 424
+- Product-exact verified evidence is required: 389
+- No active verified mapping candidate: 352
+- Equal-top descendant/ancestor false-review group: 0
+
+The persisted historical classification_reason vocabulary differs on older rows;
+the fresh classification_decision result above is the authoritative current
+Recovery-envelope view.
+
+
+Recovery
+========
+
+Schema: PASS
+
+Tables:
+
+- fitmatch_vnext.user_product_classification_overrides
+- fitmatch_vnext.user_classification_feedback_evidence
+
+The current projection and append-only evidence are separate. Override rows are
+product-scoped per (user_id, product_id), USER_EXPLICIT-only, revisioned, fingerprint
+bound, candidate-fingerprint/hash bound, and use cleared_at for inactivity. Feedback
+rows preserve SELECTED/EDITED/CLEARED/REAFFIRMED provenance and cannot be updated or
+deleted through the contract. Neither table depends on a Closet row.
+
+Current Production row counts:
+
+- USER_EXPLICIT override rows: 0
+- Feedback evidence rows: 0
+
+Actual current PRODUCT_REQUIRED Recovery envelope:
+
+- PRODUCT_REQUIRED total: 389
+- 0 candidates: 270
+- 1 candidate: 7
+- 2 candidates: 5
+- 3 candidates: 107
+- >3 candidates: 0
+- Recoverable: 119
+- Unrecoverable: 270
+- Maximum returned candidate count: 3
+- Invalid candidate tuples: 0
+- Candidate with inactive garment taxonomy: 0
+- Candidate with inactive comparison policy: 0
+- UNKNOWN/non-SINGLE REVIEW_REQUIRED blocked: 424
+- 47-type fallback: 0
+
+Candidates come from active, verified descendant DIRECT mappings/signals and must
+pass tuple validation and active taxonomy/comparison-policy checks. Broad ancestors
+are not walked upward to manufacture choices. product_name is not candidate authority.
+
+fixed_facts are computed from verified facts and the intersection shared by all safe
+candidates. unknown_fields are the axes that actually vary across the bounded set.
+The Swift Recovery UI displays those fixed facts and asks only through the returned
+server candidates.
+
+
+Security
+========
+
+PASS — no BOLA/IDOR or raw-tuple authority path found.
+
+- RLS is enabled on both Recovery tables.
+- Override SELECT is restricted to authenticated auth.uid() and active rows.
+- Feedback SELECT is restricted to the authenticated owner.
+- authenticated has SELECT only on these tables; no unrestricted direct write grant.
+- service_role has the intended controlled table privileges.
+- anon and PUBLIC have no Recovery table privileges.
+- Feedback UPDATE/DELETE is rejected by an append-only trigger.
+- User-visible Recovery RPCs are not executable by PUBLIC or anon.
+- SECURITY DEFINER Recovery wrappers use a fixed empty search_path.
+- Authentication and ownership are derived from auth.uid(); no client-supplied user
+  identity is trusted.
+- The set RPC accepts only the server-issued candidate fingerprint/hash plus current
+  product/evidence fingerprints and expected revision. It does not accept an arbitrary
+  garment tuple as authority.
+- The clear RPC affects only the authenticated user's current projection.
+- Internal effective-context measurement/readiness helpers are not exposed to
+  authenticated clients as writable authority.
+- Global Product auto-promotion through USER_EXPLICIT: 0 paths.
+
+Defense-in-depth observations, not P0:
+
+- manual_cross_comparison_rules does not enable RLS, but PUBLIC/anon/authenticated/
+  service_role direct table privileges are absent; rules are consumed by controlled
+  functions. This is a non-exploitable catalog hardening opportunity.
+- Two trigger-returning helper functions retain default PUBLIC EXECUTE. They are
+  SECURITY INVOKER trigger functions and cannot act as normal Recovery mutation RPCs;
+  revoking default EXECUTE would reduce unnecessary callable surface.
+
+
+USER_EXPLICIT
+=============
+
+PASS
+
+Deployed precedence:
+
+1. Global NOT_APPLICABLE → blocked.
+2. Global CONFIRMED → GLOBAL_CONFIRMED authority.
+3. Global REVIEW_REQUIRED + current owned valid active override →
+   PERSONAL_CONFIRMED / USER_EXPLICIT.
+4. Global REVIEW_REQUIRED without valid active override → REVIEW_REQUIRED.
+
+The effective resolver only considers personal rows with cleared_at IS NULL.
+Therefore a cleared selection cannot be comparison authority and cannot later surface
+as current SUPERSEDED_MATCH or SUPERSEDED_CONFLICT. With a later Global CONFIRMED it
+returns plain GLOBAL_CONFIRMED. An active old override may retain superseded evidence,
+but Global controls all future comparisons.
+
+Staleness is fail-closed against product input fingerprint, evidence fingerprint,
+resolver version, candidate-set hash, selected candidate, and revision. Reselect
+recomputes the latest server contract, requires the current revision, increments the
+revision, records evidence, and replaces only the user's future effective projection.
+Clear marks that projection inactive, records CLEARED evidence, and does not rewrite
+history. Neither operation updates global Product classification.
+
+
+Comparison
+==========
+
+PASS by deployed-definition and Swift release-path audit.
+
+Required sequence remains:
+
+effective authority
+→ find_reference_candidates
+→ reference decision
+→ authorize_comparison
+→ eligible_candidate_sizes
+→ begin_comparison
+→ immutable server snapshot
+→ MeasurementComparisonEngine
+→ complete_comparison
+→ local completed-history cache
+
+Reference discovery accepts PERSONAL_CONFIRMED only through the server effective
+resolver. Target classification confirmation and explicit manual reference selection
+remain independent intents.
+
+Manual-cross rules are unchanged and exact:
+
+- hoodie ↔ sweatshirt
+- knit_sweater ↔ sweatshirt
+- polo_shirt ↔ tshirt
+
+All are active and require_same_sleeve=true. Cross-policy lookup is only entered when
+p_manual_explicit=true. Direct same-policy comparison can remain AUTOMATIC; short
+polo↔short tshirt may be MANUAL_EXTENDED only after explicit reference selection;
+same-sleeve mismatch remains blocked. The authorization-v3 marker and deterministic
+manual-rule fingerprint are preserved.
+
+eligible_candidate_sizes recomputes effective classification, effective-context
+measurements, unexpired AVAILABLE evidence, semantic-conflict exclusions, policy
+minimums/required_any, and a candidate authority fingerprint. The client cannot add
+arbitrary sizes.
+
+begin_comparison independently recomputes effective authority and eligible sizes,
+requires exact candidate-set equality, rejects duplicate/subset/superset/stale sets,
+validates hierarchy and authorization, and emits schema v4 for USER_EXPLICIT.
+
+Swift scorer sequencing is fail-closed:
+
+- Recovery selection only refreshes server authority and restarts reference discovery.
+- authorizeReferenceCandidate precedes eligible sizes and begin.
+- VNextComparisonEngineAdapter requires a permitted PENDING begin snapshot, allowed
+  authorization, CONFIRMED effective target, and exact non-empty candidate identity set.
+- BLOCKED/REVIEW_REQUIRED/NOT_APPLICABLE cannot reach the scorer.
+- Completion is sent before local completed History creation/persistence.
+
+complete_comparison retains candidate/ranking coverage, duplicate/rank-order,
+recommended-rank-1, metric-evidence, excluded-metric, policy-weight, coverage, hierarchy,
+and immutability checks.
+
+
+Measurement Authority
+=====================
+
+PASS
+
+The effective-context measurement path is shared by readiness, authorization,
+eligible-size generation, and begin snapshot. Global CONFIRMED delegates to the
+existing global path. USER_EXPLICIT uses the effective category/garment/axes while
+resolving only existing verified aliases and semantic mappings.
+
+USER_EXPLICIT does not create measurements, aliases, mappings, availability, or policy
+rows and cannot bypass semantic conflict, minimum-common, or required_any gates.
+Missing data continues to produce NO_MEASUREMENT_DATA, MEASUREMENTS_REQUIRED, or BLOCKED.
+
+
+History / Snapshot
+==================
+
+PASS for deployed contract; live physical mutation remains unverified.
+
+- New Recovery begin snapshots use schema version 4.
+- Snapshot content includes global classification, personal projection, effective
+  classification, override ID/revision, selected candidate fingerprint, contract
+  version/hash, global input/evidence fingerprints, effective axes, policy/version/
+  checksum, candidate authority fingerprint, excluded measurements, reference/target
+  evidence, and manual-cross pair/same-sleeve/rule fingerprint when applicable.
+- Existing comparison rows: 0
+- Existing completed rows: 0
+- Existing snapshot distribution: empty
+- Old rows bulk-mutated by deployment: 0
+
+Future edit, clear, or global reclassification cannot alter a completed comparison's
+stored v4 meaning. There were no existing Production history rows to compare for a
+before/after data hash.
+
+
+Readiness
+=========
+
+Current distribution:
+
+- READY: 0
+- NO_AVAILABLE_SIZE: 344
+- NO_MEASUREMENT_DATA: 2
+- CLASSIFICATION_REQUIRED: 1,165
+- NOT_APPLICABLE: 97
+
+READY=0 is a TEMPORAL AVAILABILITY STATE: prior Golden availability evidence has
+naturally expired. No availability refresh was attempted. The increase in
+NO_AVAILABLE_SIZE includes the 143 newly CONFIRMED products now evaluated against
+current availability. Fresh Golden readiness is not claimed by this audit.
+
+
+Swift / Protected Surface Audit
+===============================
+
+PASS by source/diff inspection.
+
+- Existing CompareFlowSheet Recovery UI reused: YES
+- Second Recovery screen created: NO
+- Server-bounded candidates only in DB Recovery mode: YES
+- Fresh server contract on reselect: YES
+- Clear refetches effective authority: YES
+- Auto-resume starts at reference discovery: YES
+- Scorer before begin: NO
+- Generic 47-type Recovery fallback: NO
+- Hidden Closet target workaround: NO
+- MeasurementComparisonEngine algorithm/weights/formulas modified by deployment: NO
+- SwiftData persisted schema diff: 0
+- Navigation redesign diff: 0
+- Share Extension diff: 0
+- Protected TabBar/header-scroll diff: 0
+- product-observation Edge deployment: 0; deployed function remains active v5 with
+  verify_jwt=true.
+
+No Xcode build/test was rerun for this DB postflight-only audit. The published local
+implementation validation remains prior evidence, not a newly executed result.
+
+
+Production Writes
+=================
+
+Writes caused by the already-completed deployment, reconstructed from exact migration
+source, ledger, and current postimage:
+
+1. Migration 90000
+   - classifier function replacement
+   - 143 classification_remediation_audit rows
+   - 143 Product REVIEW_REQUIRED→CONFIRMED updates
+   - migration ledger row
+2. Migration 91000
+   - reviewed Recovery tables, indexes, constraints, RLS policies, triggers, functions,
+     grants, and wrappers
+   - migration ledger row
+
+Other observed Production writes:
+
+- USER_EXPLICIT test rows: 0
+- Feedback test rows: 0
+- Synthetic comparison/history rows: 0
+- Manual availability writes: 0
+- Manual Product correction outside 90000: 0 observed
+- Manual History mutation: 0
+- Auth configuration/user changes: 0 performed by this audit or migrations
+- Edge deployment: 0
+- Storage change: 0
+- Writes performed during this audit: 0
+
+
+Remaining P0 / P1 / P2
+======================
+
+P0: 0
+
+P1:
+
+1. Physical signed-in Production USER_EXPLICIT selection/reselect/clear and real
+   multi-device/restart behavior are not yet executed. This is the next E2E gate, not
+   a defect found in the deployed DB contract.
+2. Fresh retailer availability is required before Golden READY can be re-observed;
+   current READY=0 is temporal and was intentionally not repaired.
+
+P2:
+
+1. manual_cross_comparison_rules could enable RLS as defense-in-depth even though no
+   application-role table privileges currently exist.
+2. Trigger-only Recovery helper functions could revoke default PUBLIC EXECUTE to reduce
+   non-business callable surface.
+
+No Recovery functionality, security, classification, comparison, or history P0 was
+found.
+
+
+Unverified
+==========
+
+- Physical signed-in iPhone Recovery E2E
+- Real Production USER_EXPLICIT selection/reselect/clear mutation
+- Physical multi-device E2E
+- Physical restart/resume/reselect/clear E2E
+- Fresh Golden availability/readiness after normal retailer observation refresh
+
+These items are NOT reported as PASS.
+
+
+Exact Next Step
+===============
+
+PHYSICAL SIGNED-IN IPHONE RECOVERY E2E
+→ TARGETED MULTI-DEVICE / RESTART E2E
+→ FINAL PRE-E2E / RELEASE AUDIT
+
