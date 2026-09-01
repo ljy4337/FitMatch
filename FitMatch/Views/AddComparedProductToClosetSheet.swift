@@ -34,6 +34,7 @@ struct AddComparedProductToClosetSheet: View {
     @State private var didExplicitlyChangeClassification = false
     @State private var isBasisItem = false
     @State private var isSaving = false
+    @State private var submissionAction = FitMatchComparedProductClosetSubmissionAction()
     @State private var alertMessage: String?
 
     init(
@@ -548,7 +549,9 @@ struct AddComparedProductToClosetSheet: View {
                 case .confirm:
                     guard !isSaving else { return }
                     isSaving = true
-                    saveSelectedSize()
+                    Task { @MainActor in
+                        await saveSelectedSize()
+                    }
                 }
             } label: {
                 Label(bottomButtonTitle, systemImage: step == .confirm ? "plus" : "chevron.right")
@@ -651,128 +654,47 @@ struct AddComparedProductToClosetSheet: View {
             && hasValidClassification
     }
 
-    private func saveSelectedSize() {
+    private func saveSelectedSize() async {
         guard let selectedSize else {
-            return
-        }
-
-        if isDuplicate(size: selectedSize) {
-            alertMessage = "이미 내 옷장에 등록된 사이즈입니다."
-            return
-        }
-
-        let storedProducts: [Product]
-        do {
-            storedProducts = try modelContext.fetch(FetchDescriptor<Product>())
-        } catch {
-            alertMessage = "저장된 상품 정보를 확인하지 못했습니다. 다시 시도해 주세요."
             isSaving = false
             return
         }
 
-        // ProductSize.id is a size-chart identifier, not a retailer-product
-        // identity. Resolve an existing row by the retailer product first so
-        // saving "M" never attaches this closet item to another product's M.
-        let storedProduct = storedProducts.first {
-            Self.isSameRetailerProduct($0, product)
-        }
-        let sourceProduct = storedProduct ?? product
-        storedProduct?.refreshExternalPresentation(from: product)
-
-        let selectedSizeKey = ParsedProductSizeNormalizer.normalizedSizeKey(for: selectedSize.name)
-        let sourceSize = storedProduct?.sizes.first {
-            ParsedProductSizeNormalizer.normalizedSizeKey(for: $0.name) == selectedSizeKey
-        } ?? selectedSize
-
-        if sourceProduct.modelContext == nil {
-            modelContext.insert(sourceProduct)
-        }
-        if sourceSize.product !== sourceProduct {
-            sourceSize.product = sourceProduct
-        }
-
-        let item = UserFit(
-            sourceType: sourceProduct.sourceType,
-            sourceName: sourceProduct.sourceDisplayName,
-            sourceCategoryPath: sourceProduct.sourceCategoryPath,
-            sourceCategoryDepth1: sourceProduct.sourceCategoryDepth1,
-            sourceCategoryDepth2: sourceProduct.sourceCategoryDepth2,
-            sourceCategoryDepth3: sourceProduct.sourceCategoryDepth3,
-            sourceCategoryDepth4: sourceProduct.sourceCategoryDepth4,
+        let request = FitMatchComparedProductClosetRegistration.SaveRequest(
+            product: product,
+            selectedSize: selectedSize,
+            activeClosetItems: userFits,
             brandName: savedBrandName,
             gender: selectedGender,
+            genderCode: selectedGenderCode,
             productName: savedProductName,
             category: selectedCategory.serviceGroup,
+            categoryCode: selectedCategoryCode,
             detailCategory: selectedDetailCategory,
-            sizeName: sourceSize.name.displaySizeName,
-            measurements: sourceSize.measurements,
-            fitMemo: "비교 상품에서 추가",
-            fitPreference: .regular,
-            satisfaction: 0,
+            detailCategoryCode: selectedDetailCategoryCode,
             isRepresentative: isBasisItem,
-            sourceProduct: sourceProduct,
-            sourceProductSize: sourceSize
-        )
-        item.genderCode = selectedGenderCode
-        item.categoryCode = selectedCategoryCode
-        item.detailCategoryCode = selectedDetailCategoryCode
-        let savedAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
-            current: product.classificationAuthorityProvenance,
-            isSourced: FitMatchClosetClassificationEditPolicy.isSourced(product),
-            isExplicitSet: FitMatchClosetClassificationEditPolicy.isExplicitSet(product),
             didExplicitlyChangeClassification: didExplicitlyChangeClassification
         )
-        if savedAuthority == .userExplicit {
-            // Only a real picker interaction is a user authority. Prefilled or
-            // inferred values remain hints and can never impersonate consent.
-            let savedClassification = ParsedClosetClassification.resolve(
-                category: selectedCategory.serviceGroup,
-                detailCategory: selectedDetailCategory,
-                sourceDepths: [],
-                sourcePath: nil,
-                productName: savedProductName
+        let submissionOutcome = await submissionAction.submit {
+            FitMatchComparedProductClosetRegistration.save(
+                request,
+                in: modelContext
             )
-            item.normalizedProductTypeCode = savedClassification?.normalizedProductTypeCode
-            if let savedClassification {
-                item.garmentType = savedClassification.garmentFamily
-                item.sleeveType = savedClassification.lengthType
-                item.constructionType = savedClassification.constructionType
-            }
-            item.markClassificationAuthority(.userExplicit)
-        } else if savedAuthority == .serverConfirmed {
-            item.normalizedProductTypeCode = product.normalizedProductTypeCode
-            item.garmentTypeRawValue = product.garmentTypeRawValue
-            item.sleeveTypeRawValue = product.sleeveTypeRawValue
-            item.constructionTypeRawValue = product.constructionTypeRawValue
-            item.canonicalPolicyVersion = product.canonicalPolicyVersion
-            item.markClassificationAuthority(
-                .serverConfirmed,
-                sourceIdentity: product.canonicalSourceIdentity
-            )
-        } else {
-            switch savedAuthority {
-            case .serverReviewRequired:
-                item.markClassificationAuthority(
-                    .serverReviewRequired,
-                    sourceIdentity: product.canonicalSourceIdentity
-                )
-            case .serverNotComparable:
-                item.markClassificationAuthority(
-                    .serverNotComparable,
-                    sourceIdentity: product.canonicalSourceIdentity
-                )
-            case .serverUnavailable:
-                item.markClassificationAuthority(
-                    .serverUnavailable,
-                    sourceIdentity: product.canonicalSourceIdentity
-                )
-            default:
-                item.markClassificationAuthority(.localHint)
-            }
         }
-        item.replaceMeasurementRecords(with: sourceSize.measurementRecords)
-        if item.classificationAuthorityProvenance == .userExplicit {
-            _ = ComparisonProfileMatcher().profile(for: item)
+        guard case .completed(let outcome) = submissionOutcome else {
+            // The visible button is disabled while the first task owns the
+            // action. Keep its progress state intact rather than falsely
+            // reporting a second save result.
+            return
+        }
+
+        guard case .saved(let item) = outcome else {
+            alertMessage = outcome.userVisibleMessage
+            // A duplicate or recoverable persistence error must not leave the
+            // production sheet in its disabled "저장 중" state. This is also
+            // the same action used by the headless double-submit regression.
+            isSaving = false
+            return
         }
 
         #if DEBUG
@@ -787,41 +709,6 @@ struct AddComparedProductToClosetSheet: View {
         print("[AddComparedProductToClosetSheet] sourceCategoryDepth4: \(item.sourceCategoryDepth4 ?? "nil")")
         print("[AddComparedProductToClosetSheet] sourceCategoryPath: \(item.sourceCategoryPath ?? "nil")")
         #endif
-
-        if isBasisItem,
-           item.classificationAuthorityProvenance?.isComparisonAuthority == true {
-            userFits
-                .filter {
-                    $0.isRepresentative && ReferenceGarmentPolicy.conflicts($0, item)
-                }
-                .forEach {
-                    $0.isRepresentative = false
-                    $0.updatedAt = Date()
-                }
-        }
-
-        modelContext.insert(item)
-        do {
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            alertMessage = "내 옷장에 저장하지 못했습니다. 다시 시도해 주세요."
-            isSaving = false
-            return
-        }
-        if item.classificationAuthorityProvenance == .userExplicit {
-            SourceCategoryHistoryMatcher.saveMapping(
-                for: sourceProduct,
-                category: selectedCategory,
-                detailCategory: selectedDetailCategory
-            )
-        }
-        FitMatchMetricsRecorder.shared.record(
-            .closetCreated(
-                origin: .comparedProduct,
-                category: FitMatchMetricMajorCategory(category: item.category)
-            )
-        )
         onSaved?(item)
         dismiss()
     }
@@ -837,34 +724,7 @@ struct AddComparedProductToClosetSheet: View {
     /// Retailer products must be matched before their sizes. A size label such
     /// as M is not globally unique across products.
     static func isSameRetailerProduct(_ lhs: Product, _ rhs: Product) -> Bool {
-        if let lhsURL = normalizedSourceURL(lhs.sourceURLString),
-           let rhsURL = normalizedSourceURL(rhs.sourceURLString) {
-            return lhsURL == rhsURL
-        }
-
-        guard let lhsCode = normalizedText(lhs.productCode), !lhsCode.isEmpty,
-              let rhsCode = normalizedText(rhs.productCode), !rhsCode.isEmpty,
-              lhsCode == rhsCode else {
-            return false
-        }
-
-        let lhsPlatform = normalizedText(lhs.sourcePlatformCode)
-        let rhsPlatform = normalizedText(rhs.sourcePlatformCode)
-        return lhsPlatform == nil || rhsPlatform == nil || lhsPlatform == rhsPlatform
-    }
-
-    private static func normalizedSourceURL(_ value: String?) -> String? {
-        guard var value = normalizedText(value)?.lowercased(), !value.isEmpty else {
-            return nil
-        }
-        if value.hasSuffix("/") {
-            value.removeLast()
-        }
-        return value
-    }
-
-    private static func normalizedText(_ value: String?) -> String? {
-        value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        FitMatchComparedProductClosetRegistration.isSameRetailerProduct(lhs, rhs)
     }
 
     private func normalizeCategory() {
@@ -901,39 +761,6 @@ struct AddComparedProductToClosetSheet: View {
 
         if !availableSizes.contains(where: { $0.id == selectedSizeID }) {
             self.selectedSizeID = nil
-        }
-    }
-
-    private func isDuplicate(size: ProductSize) -> Bool {
-        userFits.contains { item in
-            if item.sourceProductSize?.id == size.id {
-                return true
-            }
-
-            if let sourceURL = product.sourceURLString,
-               let itemURL = item.sourceProduct?.sourceURLString,
-               sourceURL == itemURL,
-               item.sizeName == size.name.displaySizeName {
-                return true
-            }
-
-            if let productCode = product.productCode,
-               let itemProductCode = item.sourceProduct?.productCode,
-               productCode == itemProductCode,
-               item.sizeName == size.name.displaySizeName {
-                return true
-            }
-
-            if product.sourceURLString != nil,
-               item.sourceProduct == nil,
-               item.productName == product.name,
-               item.sizeName == size.name.displaySizeName,
-               item.sourceName == product.sourceDisplayName,
-               item.brandName == product.brand?.name {
-                return true
-            }
-
-            return false
         }
     }
 

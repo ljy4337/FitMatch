@@ -1,0 +1,33 @@
+# FitMatch Unmapped User Scenario Ledger — 2026-08-31
+
+The 45 declared J journeys were all traced.  The following 17 materially distinct
+user-observable branches were discovered by reverse scan and had no matching
+declared scenario.  Each must be added to the next scenario authority and its
+regression set; names below are stable audit identifiers rather than implementation
+commands.
+
+| ID | Production entry / user action | Current behavior and why distinct | Suggested canonical scenario / required evidence | Severity |
+|---|---|---|---|---|
+| NEW-GAP-RESULT-001 | Result → “다른 옷과 비교” with current USER_EXPLICIT target | Valid server completion can lose local result/history after target is falsely marked global; old result target may mutate. | Recovered target → other manual/automatic reference → begin → engine → complete → new result/history; old result unchanged. | P0 |
+| NEW-GAP-HISTORY-003 | Fresh sync/reinstall opens a V4 recovered completed History | Hydrator derives category from live global Product and flattens source to `.serverConfirmed`. | Hydrate two USER_EXPLICIT revisions of one product; exact snapshot provenance/category/tuple remain historical. | P0 |
+| NEW-GAP-CLOSET-UE-001 | Shopping Recovery target → add to Closet (full or partial link) | Product-scope USER_EXPLICIT can be re-parsed and persisted as Closet `manual_override` without Closet intent. | Select Recovery candidate → add full/partial linked item → inspect sync request/current reference eligibility; no implicit override. | P0 |
+| NEW-GAP-REF-001 | Compare Flow confirmed/Recovery target → reference discovery | Local filter/ranker/badges/auto-routing run before server candidate discovery. | Stale local candidate vs server returned direct/manual candidates; only server list drives visibility/order/automatic route. | P1 |
+| NEW-GAP-REF-002 | Result → other-item reference picker | Local picker shows rows/badges before server discovery, including potential wrong category/authority. | Recovered/global result picker uses same server candidate source; manual intent remains separate. | P1 |
+| NEW-GAP-MC-001 | Explicit same-sleeve manual-cross reference with missing measurements | Structurally allowed manual cross is described as BLOCKED rather than MEASUREMENTS_REQUIRED because manual intent is dropped in no-size fallback. | Polo↔tshirt, hoodie↔sweatshirt, knit↔sweatshirt × one side insufficient: no scorer, measurement-recoverable reason. | P1 |
+| NEW-GAP-BEGIN-REPLAY-001 | Network retry repeats `begin_comparison` with exact same client ID | Replay response lacks top-level authority/authorization/fingerprints needed by Swift. | First begin + exact replay return equivalent full DTO/no duplicate comparison or history. | P1 |
+| NEW-GAP-EFFECTIVE-TUPLE-001 | Runtime supplies personal effective tuple with null irrelevant axis and partial global facts | Field-by-field coalescing invents a hybrid local tuple never issued by server. | USER_EXPLICIT tuple consumed verbatim; global fallback only if effective object absent. | P1 |
+| NEW-GAP-REG-001 | First install, signed-out onboarding → product-link Closet registration | Advertised action immediately requires authenticated server resolution; manual path behaves differently. | Sign-out link click: intentional login handoff or clearly blocked draft, no local authority manufacture. | P1 |
+| NEW-GAP-CLOSET-001 | Linked Closet duplicate size → dismiss alert → retry | `isSaving` remains true after duplicate return, leaving a disabled permanent saving state. | Duplicate submit then retry: no stall and no duplicate row. | P1 |
+| NEW-GAP-HISTORY-001 | Delete a Closet item associated with completed vNext History | UI deletes only local history but immutable server sync can restore it. | Execute only after owner selects PC-HISTORY-001 behavior. | Policy / P1 UX |
+| NEW-GAP-HISTORY-002 | Swipe/delete completed History | Same local-only deletion/reappearance inconsistency as above, distinct user entry. | Execute only after owner selects PC-HISTORY-001 behavior. | Policy / P1 UX |
+| NEW-GAP-PROVIDER-001 | Core-supported COS product parsing / comparison | Canonical provider matrix and headless transport omit COS although core parser/resolver supports it. | COS valid/missing/unsupported guide paths with explicit support classification. | P1 test/product gap |
+| NEW-GAP-PROVIDER-SUPPORT-001 | Share COS URL, COS partial Closet fallback, provider support messages | Core/Share/fallback/copy disagree on supported source/provenance. | Owner-approved COS surface behavior; test each intentional entry/fallback and all copy. | P2 unless support promise is confirmed |
+| NEW-GAP-NAV-001 | Open old Result/History after cold reconstruction → “다른 사이즈 비교” | UI exposes action from product sizes although memory-only authorized batch is absent; disabled options lack a reason. | No current batch: hidden/disabled entry with meaningful existing explanation, no fresh scorer. | P1 |
+| NEW-GAP-TEST-001 | Claiming finite headless coverage | Hand-written `program` switch ignores most declared state fields; UX oracle has 4 of 12 outcomes. | Generate/execute each valid canonical corridor, record independent expected/actual symbols and UX outcome. | P1 test-authority gap |
+| NEW-GAP-ENTRY-001 | Share / custom deep-link app entry | Pending share never expires, only first attachment is used, absent payload silently no-ops, unknown custom host can consume pending share. | Old/multiple/no-payload/unknown-route entries: deterministic explain-or-ignore behavior without wrong product opening. | P2 |
+
+## Mapping rule
+
+The next Scenario Matrix must add the entries above as named corridors or map them
+to more granular new J IDs.  They must not be claimed by an existing J merely
+because they share a service or a terminal error with it.

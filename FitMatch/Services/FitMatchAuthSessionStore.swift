@@ -118,6 +118,46 @@ protocol FitMatchAccountDeletionServicing: Sendable {
     func deleteAccount() async throws
 }
 
+/// The only side-effect boundary used by the session store for an Apple token
+/// exchange and sign-out.  Keeping this boundary small lets the app's real
+/// session-state action be exercised headlessly without manufacturing an
+/// `ASAuthorizationAppleIDCredential` in a test target.
+@MainActor
+protocol FitMatchAuthSessionServicing {
+    func signInWithApple(identityToken: String, nonce: String) async throws -> UUID
+    func signOut() async throws
+}
+
+@MainActor
+final class FitMatchSupabaseAuthSessionService: FitMatchAuthSessionServicing {
+    private let client: SupabaseClient?
+
+    init(client: SupabaseClient?) {
+        self.client = client
+    }
+
+    func signInWithApple(identityToken: String, nonce: String) async throws -> UUID {
+        guard let client else {
+            throw FitMatchAuthSessionError.notConfigured
+        }
+        let session = try await client.auth.signInWithIdToken(
+            credentials: OpenIDConnectCredentials(
+                provider: .apple,
+                idToken: identityToken,
+                nonce: nonce
+            )
+        )
+        return session.user.id
+    }
+
+    func signOut() async throws {
+        guard let client else {
+            throw FitMatchAuthSessionError.notConfigured
+        }
+        try await client.auth.signOut()
+    }
+}
+
 actor FitMatchSupabaseAccountDeletionService: FitMatchAccountDeletionServicing {
     private let client: SupabaseClient?
 
@@ -148,15 +188,19 @@ final class FitMatchAuthSessionStore: ObservableObject {
 
     private let client: SupabaseClient?
     private let accountDeletionService: any FitMatchAccountDeletionServicing
+    private let authSessionService: any FitMatchAuthSessionServicing
     private var currentNonce: String?
 
     init(
         client: SupabaseClient?,
-        accountDeletionService: (any FitMatchAccountDeletionServicing)? = nil
+        accountDeletionService: (any FitMatchAccountDeletionServicing)? = nil,
+        authSessionService: (any FitMatchAuthSessionServicing)? = nil
     ) {
         self.client = client
         self.accountDeletionService = accountDeletionService
             ?? FitMatchSupabaseAccountDeletionService(client: client)
+        self.authSessionService = authSessionService
+            ?? FitMatchSupabaseAuthSessionService(client: client)
     }
 
     convenience init() {
@@ -186,12 +230,7 @@ final class FitMatchAuthSessionStore: ObservableObject {
             guard !Task.isCancelled else { return }
             switch change.event {
             case .initialSession, .signedIn, .signedOut, .tokenRefreshed, .userUpdated:
-                if let session = change.session {
-                    state = .signedIn(userID: session.user.id)
-                    errorMessage = nil
-                } else {
-                    state = .signedOut
-                }
+                applyObservedSession(change.session?.user.id)
             default:
                 break
             }
@@ -232,19 +271,7 @@ final class FitMatchAuthSessionStore: ObservableObject {
             guard let currentNonce else {
                 throw FitMatchAuthSessionError.missingNonce
             }
-            guard let client else {
-                throw FitMatchAuthSessionError.notConfigured
-            }
-
-            let session = try await client.auth.signInWithIdToken(
-                credentials: OpenIDConnectCredentials(
-                    provider: .apple,
-                    idToken: identityToken,
-                    nonce: currentNonce
-                )
-            )
-            state = .signedIn(userID: session.user.id)
-            errorMessage = nil
+            await completeAppleSignIn(identityToken: identityToken, nonce: currentNonce)
         } catch let error as ASAuthorizationError where error.code == .canceled {
             errorMessage = nil
         } catch {
@@ -253,13 +280,49 @@ final class FitMatchAuthSessionStore: ObservableObject {
         }
     }
 
-    func signOut() async {
-        guard let client else {
-            state = .signedOut
-            return
-        }
+    /// Production credential-exchange action shared by the system callback
+    /// above and headless session tests.  The caller supplies the already
+    /// extracted token/nonce; authorization UI remains outside this action.
+    func completeAppleSignIn(identityToken: String?, nonce: String?) async {
+        isSigningIn = true
+        defer { isSigningIn = false }
+
         do {
-            try await client.auth.signOut()
+            guard let identityToken,
+                  !identityToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw FitMatchAuthSessionError.missingIdentityToken
+            }
+            guard let nonce,
+                  !nonce.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw FitMatchAuthSessionError.missingNonce
+            }
+            let userID = try await authSessionService.signInWithApple(
+                identityToken: identityToken,
+                nonce: nonce
+            )
+            state = .signedIn(userID: userID)
+            errorMessage = nil
+        } catch {
+            state = .signedOut
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    /// Applies the same session transition used by the live Supabase stream.
+    /// This is intentionally separate from subscription ownership so restart,
+    /// relogin, and cache-preparation tests do not need to mimic the stream.
+    func applyObservedSession(_ userID: UUID?) {
+        if let userID {
+            state = .signedIn(userID: userID)
+            errorMessage = nil
+        } else {
+            state = .signedOut
+        }
+    }
+
+    func signOut() async {
+        do {
+            try await authSessionService.signOut()
             state = .signedOut
             errorMessage = nil
         } catch {

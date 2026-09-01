@@ -14,10 +14,35 @@ extension Product {
         fitMatchParsedRetailerFacts()?.fitMatchProductObservationRequest(observedAt: observedAt)
     }
 
+    /// Reuses only persisted retailer facts for a History recompare when the
+    /// immutable History projection did not retain a browser URL.  The server
+    /// still resolves current authority; this never derives a URL or local
+    /// classification from historical meaning.
+    func fitMatchStoredRetailerFactsForRecompare() -> ParsedProductInfo? {
+        fitMatchParsedRetailerFacts()
+    }
+
     private func fitMatchParsedRetailerFacts() -> ParsedProductInfo? {
         guard let externalProductID = productCode?
             .trimmingCharacters(in: .whitespacesAndNewlines),
               !externalProductID.isEmpty else { return nil }
+
+        // A hydrated History projection can retain the stable retailer code
+        // while an older local label is no longer the canonical Korean
+        // presentation string.  Reuse that stored source fact only to route
+        // the existing server resolver; it does not derive any classification
+        // or browser URL from the historical Product.
+        let resolutionSourceName: String
+        switch sourcePlatformCode?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "uniqlo":
+            resolutionSourceName = "유니클로 공식몰"
+        case "musinsa":
+            resolutionSourceName = "무신사"
+        case "zara":
+            resolutionSourceName = "ZARA 공식몰"
+        default:
+            resolutionSourceName = sourceName
+        }
 
         let sourceURL = sourceURLString.flatMap(URL.init(string:))
             ?? URL(string: "https://fitmatch.invalid/products/\(externalProductID)")!
@@ -53,8 +78,8 @@ extension Product {
         let persistedRetailerFacts = FitMatchStoredRetailerFacts.decode(labelNames)
         var storedStructuredFacts = persistedRetailerFacts.structuredFacts
         if !persistedRetailerFacts.hasVersionedPayload,
-           sourceName.localizedCaseInsensitiveContains("zara")
-            || sourceName.localizedCaseInsensitiveContains("자라") {
+           resolutionSourceName.localizedCaseInsensitiveContains("zara")
+            || resolutionSourceName.localizedCaseInsensitiveContains("자라") {
             let zaraFacts = [
                 "section": categoryDepth1Code,
                 "family": categoryDepth2Name,
@@ -126,8 +151,8 @@ extension Product {
         return ParsedProductInfo(
             sourceURL: sourceURL,
             sourceType: sourceType,
-            sourceName: sourceName,
-            brandName: brand?.name ?? sourceName,
+            sourceName: resolutionSourceName,
+            brandName: brand?.name ?? resolutionSourceName,
             productName: name,
             category: category,
             detailCategory: storedDetailCategory,

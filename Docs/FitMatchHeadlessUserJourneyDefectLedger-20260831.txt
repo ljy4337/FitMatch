@@ -1,0 +1,124 @@
+FITMATCH — Headless User-Journey Defect Ledger
+Date: 2026-08-31
+Mode: TEST-ONLY / remediation revalidation completed
+
+Current status: HJ-P0-001 is RESOLVED locally by the narrowly scoped
+server-completion proof gate. All 45 canonical scenarios now pass, focused
+Headless is 5/5 PASS, and Production writes remain 0. This historical incident
+record is retained below so the original evidence and remediation boundary are
+auditable.
+
+Historical P0 — resolved
+
+HJ-P0-001
+Title: USER_EXPLICIT comparison completion loses the local Result/History.
+
+Symptom
+
+A USER_EXPLICIT target can pass server reference discovery, authorization,
+eligible-size validation, begin, the production MeasurementComparisonEngine,
+and complete_comparison, yet the app returns nil instead of a result/history.
+
+Affected execution paths
+
+* J07: explicit same-sleeve tshirt ↔ polo_shirt manual cross
+* J09: explicit same-sleeve sweatshirt ↔ hoodie manual cross
+* J11: explicit same-sleeve sweatshirt ↔ knit_sweater manual cross
+* J13: REVIEW_REQUIRED → bounded candidate → USER_EXPLICIT → automatic resume
+
+Runtime evidence
+
+Each manual-cross case recorded:
+
+resolve → runtime → resolve → runtime → list_closet → reference_candidates
+→ eligible_sizes → begin_comparison → complete_comparison
+
+J13 recorded:
+
+resolve → runtime → recovery_contract → set_user_product_classification
+→ resolve → runtime → resolve → runtime → list_closet
+→ reference_candidates → eligible_sizes → begin_comparison
+→ complete_comparison
+
+The absence is after complete_comparison, during local completed-history model
+construction.  It is not an authorization, eligible-size, begin, scorer, or
+server-completion denial.
+
+Root cause
+
+ShoppingProductViewModel.makeProduct marks a server runtime with
+authority_status USER_EXPLICIT as `.userExplicit`.
+RecommendationService.makeCompletedVNextHistory then requires
+`product.classificationAuthorityProvenance == .serverConfirmed`, returning nil
+for the valid personal authority.
+
+Relevant source locations
+
+* FitMatch/ViewModels/ShoppingProductViewModel.swift:831
+* FitMatch/ViewModels/ShoppingProductViewModel.swift:1050
+* FitMatch/Services/RecommendationService.swift:70
+* FitMatch/Views/RecommendationResultView.swift:817 (same downstream
+  `.serverConfirmed`-only presentation assumption; unreachable until Result
+  creation is corrected)
+
+User impact
+
+The reviewed Recovery feature cannot produce a result or local history after a
+successful personal classification comparison.  The UI reports an unrelated
+measurement/no-reference failure after server completion, which is misleading
+and can provoke a duplicate retry.
+
+Initial severity
+
+P0 — core Recovery comparison/result/history path was unusable and provenance
+presentation was broken after server completion.
+
+Historical minimum remediation scope (completed)
+
+Change only the local completed-history eligibility gate to accept a valid,
+server-backed USER_EXPLICIT target tied to the current server begin/permit
+snapshot.  Preserve exact UUID identity, permit/run-ID matching, begin-before-
+engine ordering, completed-server response ordering, immutable snapshot data,
+and stale-authority rejection.  Do not broaden client authority or modify
+Production DB/Edge policy.  In the same narrow presentation-layer remediation,
+audit the alternate-size current-session guard so a valid USER_EXPLICIT Result
+does not lose its server-authorized alternate-size presentation after the first
+gate is fixed.
+
+Required regression tests (now PASS)
+
+* USER_EXPLICIT tshirt/polo same-sleeve manual cross creates Result + History
+  only after complete_comparison.
+* USER_EXPLICIT sweatshirt/hoodie same-sleeve manual cross has the same result.
+* USER_EXPLICIT sweatshirt/knit_sweater same-sleeve manual cross has the same
+  result.
+* REVIEW_REQUIRED → USER_EXPLICIT → automatic direct reference produces Result
+  + History.
+* stale/cleared USER_EXPLICIT remains blocked; the remediation must not convert
+  an untrusted local tuple into history authority.
+
+P1 at initial execution
+
+None newly confirmed by this execution.
+
+P2 at initial execution
+
+None newly confirmed by this execution.
+
+Test limitations (not product defects)
+
+* The synthetic remote transport cannot establish Production RPC idempotency
+  for deliberately distinct client-history IDs (J31/J36).
+* The authenticated live Recovery-options function was not invoked because the
+  task forbids creating/using a Production test identity.  The read-only call
+  correctly rejected an unauthenticated context.
+
+Resolution confirmation — 2026-08-31
+
+The local presentation layer now accepts only the exact successfully completed
+server-backed USER_EXPLICIT comparison, not an arbitrary `.userExplicit`
+product. Direct regressions reject stale revision, candidate fingerprint/set
+hash, input/evidence fingerprint, cleared projection, local-only tuple,
+target/reference/run mismatch, and unauthorized recommended size. J07, J09,
+J11, and J13 all pass in the canonical rerun; no new P0/P1/P2 was confirmed by
+the remediation. Production writes remain 0.

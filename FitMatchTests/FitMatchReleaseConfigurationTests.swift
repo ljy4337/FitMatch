@@ -17,16 +17,17 @@ struct FitMatchReleaseConfigurationTests {
     }
 
     @Test func shareExtensionAcceptsAllReleasedRetailerHosts() throws {
-        let repositoryRoot = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let sourceURL = repositoryRoot
-            .appendingPathComponent("FitMatchShareExtension/ShareViewController.swift")
-        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        // The Share Extension and containing app now use this shared routing
+        // contract, rather than maintaining fragile duplicated host literals
+        // in a ViewController source file.
+        let musinsa = try #require(URL(string: "https://www.musinsa.com/products/6781113"))
+        let uniqlo = try #require(URL(string: "https://www.uniqlo.com/kr/ko/products/E450259-000/00"))
+        let zara = try #require(URL(string: "https://www.zara.com/kr/ko/example-p06224446.html"))
+        let cos = try #require(URL(string: "https://www.cos.com/ko-kr/product.example.1229297007.html"))
 
-        #expect(source.contains(#"host == "musinsa.com""#))
-        #expect(source.contains(#"host == "uniqlo.com""#))
-        #expect(source.contains(#"host == "zara.com""#))
-        #expect(source.contains(#"return "zara""#))
+        #expect(FitMatchProductURLRouting.provider(for: musinsa) == .musinsa)
+        #expect(FitMatchProductURLRouting.provider(for: uniqlo) == .uniqlo)
+        #expect(FitMatchProductURLRouting.provider(for: zara) == .zara)
+        #expect(FitMatchProductURLRouting.provider(for: cos) == nil)
     }
 }

@@ -289,17 +289,24 @@ final class UserFit {
     /// its reference. Such a snapshot remains available to History, but must
     /// never re-enter active Closet, reference picking, or mutation sync.
     var isHistoryOnlyReferenceSnapshot: Bool {
-        canonicalSourceIdentity == Self.historyReferenceSnapshotSourceIdentity
+        canonicalSourceIdentity?.hasPrefix(Self.historyReferenceSnapshotSourceIdentity) == true
     }
 
     var isActiveClosetItem: Bool {
         !isHistoryOnlyReferenceSnapshot
     }
 
-    func markAsHistoryOnlyReferenceSnapshot() {
+    func markAsHistoryOnlyReferenceSnapshot(
+        sourceIdentity: String? = nil
+    ) {
         isRepresentative = false
         canonicalEligibility = false
-        canonicalSourceIdentity = Self.historyReferenceSnapshotSourceIdentity
+        if let sourceIdentity,
+           !sourceIdentity.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            canonicalSourceIdentity = "\(Self.historyReferenceSnapshotSourceIdentity)|\(sourceIdentity)"
+        } else {
+            canonicalSourceIdentity = Self.historyReferenceSnapshotSourceIdentity
+        }
     }
 
     func replaceMeasurementRecords(with sourceRecords: [GarmentMeasurementRecord]) {

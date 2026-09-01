@@ -1,0 +1,62 @@
+# FITMATCH FINAL USER TEST — 2026-09-01
+
+총 시나리오: 137개  
+실행: 137개  
+Headless 통과: 133개  
+정적 계약 통과: 2개  
+아이폰 확인 대기: 2개  
+실패: 0개  
+미실행: 0개  
+점수: AI 검증 범위 100.0 / 100
+
+출시판정: **두 번째 독립 Sol Ultra 검증 대기**
+
+## 기능별
+
+| 기능 | Headless | 정적 계약 | iPhone 확인 대기 | 실패 | 미실행 |
+|---|---:|---:|---:|---:|---:|
+| 내 옷장 등록 | 22 / 22 | 0 | 0 | 0 | 0 |
+| 내 옷장 관리 | 19 / 19 | 0 | 0 | 0 | 0 |
+| 상품 비교 | 39 / 39 | 0 | 0 | 0 | 0 |
+| 비교 결과 | 13 / 13 | 0 | 0 | 0 | 0 |
+| History | 17 / 17 | 0 | 0 | 0 | 0 |
+| 상품 진입/공유 | 8 / 12 | 2 | 2 | 0 | 0 |
+| 예외/재시도 | 15 / 15 | 0 | 0 | 0 | 0 |
+
+## 실패한 사용자 경험
+
+없음.
+
+이번 후보에서는 상품 종류를 쇼핑 중에 확인한 일이 내 옷장의 개인 분류로
+번지는 문제, 같은 상품의 과거 비교 기록이 서로 섞이는 문제, 다른 옷으로
+다시 비교할 때 기존 결과가 바뀌는 문제, 오래된 공유 링크가 뒤늦게 열리는
+문제를 수정하고 재검증했습니다.
+
+## iPhone에서만 남은 확인
+
+- EN-002: 실제 Share Sheet 다중 첨부 선택
+- EN-012: 실제 Share Sheet의 cold/foreground 렌더링
+
+CR-019의 로그인 전 등록 라우팅과 EN-007의 로그인/취소/오류·계정 전환
+상태는 production action으로 headless 통과했습니다. 남은 범위는 실제 Share
+Sheet 시스템 UI·물리 기기 동작뿐입니다.
+
+## 실행 증거
+
+- 현재 후보 전체 non-UI 테스트: **649 PASS / 0 FAIL / 37 SKIP**
+- Final scenario execution fresh-state: **36 PASS × 2회**
+- Headless/History/Share/account/sync 핵심 그룹: **113 PASS × 5회**
+- Headless User Journey 전체: **39 PASS / 0 FAIL**
+- Debug app/test build-for-testing: PASS
+- 로컬 disposable PostgreSQL: Recovery begin replay와 3개 manual-cross
+  쌍 양방향 계약 검증 PASS
+
+## 배포 상태
+
+- Production write: **0**
+- History visibility migration: **NOT DEPLOYED**
+- commit / push: **없음**
+
+다음 단계는 이 변경 없는 후보에 대한 **두 번째 독립 Sol Ultra 137-scenario
+acceptance**입니다. 그 뒤 실제 iPhone Share smoke 2개, History visibility
+migration 배포, Production postflight 순서로 진행합니다.

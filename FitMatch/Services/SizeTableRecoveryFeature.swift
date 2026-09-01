@@ -36,3 +36,34 @@ enum SizeTableRecoveryValidator {
         return nil
     }
 }
+
+/// The non-visual completion action shared by `SizeTableRecoveryView` and
+/// headless callers. It owns only the existing selected-size validation and
+/// recovery selection side effect; it does not infer a size or alter any
+/// comparison policy.
+@MainActor
+enum FitMatchSizeTableRecoveryAction {
+    enum Outcome: Equatable {
+        case completed(selectedSizeID: UUID)
+        case blocked(String)
+    }
+
+    static func complete(
+        selectedSize: ClothingSizeForm?,
+        viewModel: ShoppingProductViewModel
+    ) -> Outcome {
+        guard let selectedSize else {
+            return .blocked("비교할 사이즈를 선택해 주세요.")
+        }
+        if let message = SizeTableRecoveryValidator.validationMessage(
+            for: [selectedSize],
+            category: viewModel.category,
+            detailCategory: viewModel.detailCategory
+        ) {
+            return .blocked(message)
+        }
+
+        viewModel.recoverySelectedSizeID = selectedSize.id
+        return .completed(selectedSizeID: selectedSize.id)
+    }
+}

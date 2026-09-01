@@ -4,11 +4,13 @@ import SwiftData
 struct RecommendationHistoryView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.historyViewLayout") private var historyViewLayoutRaw = ContentListLayout.list.rawValue
-    @State private var sortOption: HistorySortOption = .latest
-    @State private var selectedScope: HistoryScope = .all
+    @State private var sortOption: FitMatchHistorySortOption = .latest
+    @State private var selectedScope: FitMatchHistoryScope = .all
     @State private var selectedCategory: ClothingCategory?
+    @State private var searchText = ""
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var selectedHistoryForCloset: RecommendationHistory?
     @State private var selectedHistoryIDForDetail: UUID?
@@ -18,12 +20,13 @@ struct RecommendationHistoryView: View {
     @State private var isShowingClosetSavedToast = false
     @State private var cachedFilteredHistories: [RecommendationHistory] = []
     @State private var cachedAvailableCategories: [ClothingCategory] = []
+    @State private var hidingHistoryIDs = Set<UUID>()
     private let favoriteStore = FavoriteProductStore()
-    var onRecompare: ((String) -> Void)?
+    var onRecompare: ((FitMatchHistoryRecompareAction.StartRequest) -> Void)?
     var onStartCompare: (() -> Void)?
     var onLogout: (() -> Void)?
 
-    init(onRecompare: ((String) -> Void)? = nil, onStartCompare: (() -> Void)? = nil, onLogout: (() -> Void)? = nil) {
+    init(onRecompare: ((FitMatchHistoryRecompareAction.StartRequest) -> Void)? = nil, onStartCompare: (() -> Void)? = nil, onLogout: (() -> Void)? = nil) {
         self.onRecompare = onRecompare
         self.onStartCompare = onStartCompare
         self.onLogout = onLogout
@@ -40,6 +43,7 @@ struct RecommendationHistoryView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
+        .searchable(text: $searchText, prompt: "브랜드 또는 상품명 검색")
         .navigationDestination(isPresented: Binding(
             get: { selectedHistoryIDForDetail != nil },
             set: { if !$0 { selectedHistoryIDForDetail = nil } }
@@ -96,6 +100,9 @@ struct RecommendationHistoryView: View {
             refreshFilteredHistories()
         }
         .onChange(of: selectedCategory) {
+            refreshFilteredHistories()
+        }
+        .onChange(of: searchText) {
             refreshFilteredHistories()
         }
     }
@@ -241,9 +248,9 @@ struct RecommendationHistoryView: View {
                 id: "scope",
                 selectedID: selectedScope.rawValue,
                 selectedTitle: selectedScope.title,
-                options: HistoryScope.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
+                options: FitMatchHistoryScope.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
                 onSelect: { id in
-                    selectedScope = HistoryScope(rawValue: id) ?? .all
+                    selectedScope = FitMatchHistoryScope(rawValue: id) ?? .all
                 }
             ),
             ContentFilterItem(
@@ -260,9 +267,9 @@ struct RecommendationHistoryView: View {
                 id: "sort",
                 selectedID: sortOption.rawValue,
                 selectedTitle: sortOption.title,
-                options: HistorySortOption.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
+                options: FitMatchHistorySortOption.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
                 onSelect: { id in
-                    sortOption = HistorySortOption(rawValue: id) ?? .latest
+                    sortOption = FitMatchHistorySortOption(rawValue: id) ?? .latest
                 }
             )
         ]
@@ -296,21 +303,61 @@ struct RecommendationHistoryView: View {
     }
 
     private func recompare(_ history: RecommendationHistory) {
-        guard let urlString = history.product.sourceURLString else {
-            return
+        switch FitMatchHistoryRecompareAction.outcome(for: history) {
+        case .openCompare(let request):
+            onRecompare?(request)
+        case .unavailable(let message):
+            saveErrorMessage = message
         }
-        onRecompare?(urlString)
     }
 
     private func deleteHistory(_ history: RecommendationHistory) {
-        modelContext.delete(history)
-        do {
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            refreshFilteredHistories()
-            saveErrorMessage = "비교 기록을 삭제하지 못했어요. 다시 시도해 주세요."
+        guard !hidingHistoryIDs.contains(history.id) else { return }
+
+        guard history.isServerBackedVNextHistory else {
+            deleteHistoryLocally(history)
+            return
         }
+
+        guard let comparisonSync else {
+            saveErrorMessage = "서버 비교 기록을 삭제할 준비가 되지 않았어요. 다시 시도해 주세요."
+            return
+        }
+
+        hidingHistoryIDs.insert(history.id)
+        Task { @MainActor in
+            defer { hidingHistoryIDs.remove(history.id) }
+            let outcome = await FitMatchHistoryVisibilityAction.delete(
+                history,
+                in: modelContext,
+                comparisonSync: comparisonSync
+            )
+            if let message = outcome.userVisibleMessage {
+                refreshFilteredHistories()
+                saveErrorMessage = message
+            } else {
+                refreshFilteredHistories()
+            }
+        }
+    }
+
+    private func deleteHistoryLocally(
+        _ history: RecommendationHistory,
+        localSaveFailureMessage: String = "비교 기록을 삭제하지 못했어요. 다시 시도해 주세요."
+    ) {
+        let outcome = FitMatchHistoryVisibilityAction.deleteLocally(
+            history,
+            in: modelContext,
+            afterServerHide: false
+        )
+        if let message = outcome.userVisibleMessage {
+            refreshFilteredHistories()
+            saveErrorMessage = outcome == .localPersistenceFailed
+                ? localSaveFailureMessage
+                : message
+            return
+        }
+        refreshFilteredHistories()
     }
 
     private var displayedHistories: [RecommendationHistory] {
@@ -324,30 +371,14 @@ struct RecommendationHistoryView: View {
     }
 
     private func makeFilteredHistories() -> [RecommendationHistory] {
-        let scoped = histories.filter { history in
-            let matchesCategory = selectedCategory == nil || history.product.category == selectedCategory
-            guard matchesCategory else {
-                return false
-            }
-
-            switch selectedScope {
-            case .all:
-                return true
-            case .favorite:
-                return isFavorite(history)
-            }
-        }
-
-        switch sortOption {
-        case .latest:
-            return scoped.sorted { $0.createdAt > $1.createdAt }
-        case .oldest:
-            return scoped.sorted { $0.createdAt < $1.createdAt }
-        case .brand:
-            return scoped.sorted { ($0.product.brand?.name ?? "") < ($1.product.brand?.name ?? "") }
-        case .fitConfidence:
-            return scoped.sorted { $0.recommendationScore > $1.recommendationScore }
-        }
+        FitMatchHistoryPresentation.displayedHistories(
+            from: histories,
+            searchText: searchText,
+            scope: selectedScope,
+            category: selectedCategory,
+            favoriteURLs: favoriteURLs,
+            sort: sortOption
+        )
     }
 
     private func isFavorite(_ history: RecommendationHistory) -> Bool {
@@ -384,37 +415,11 @@ struct RecommendationHistoryView: View {
         } label: {
             Label("삭제", systemImage: "trash")
         }
+        .disabled(hidingHistoryIDs.contains(history.id))
         .tint(.red)
     }
 }
 
-private enum HistorySortOption: String, CaseIterable {
-    case latest
-    case oldest
-    case brand
-    case fitConfidence
-
-    var title: String {
-        switch self {
-        case .latest: return "최신순"
-        case .oldest: return "오래된순"
-        case .brand: return "브랜드순"
-        case .fitConfidence: return "사이즈 유사도 높은순"
-        }
-    }
-}
-
-private enum HistoryScope: String, CaseIterable {
-    case all
-    case favorite
-
-    var title: String {
-        switch self {
-        case .all: return "전체 기록"
-        case .favorite: return "관심상품"
-        }
-    }
-}
 
 private struct EmptyRecommendationHistoryView: View {
     let onStartCompare: (() -> Void)?

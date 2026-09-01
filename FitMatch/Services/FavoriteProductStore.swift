@@ -37,6 +37,13 @@ struct FavoriteProductStore {
         }
     }
 
+    /// Account deletion removes local, user-owned preference state. Favorites
+    /// are intentionally presentation-only, but must never survive into the
+    /// next authenticated account on the same device.
+    func removeAll() {
+        defaults.removeObject(forKey: key)
+    }
+
     private func normalizedURLString(_ urlString: String?) -> String? {
         guard let value = urlString?.trimmingCharacters(in: .whitespacesAndNewlines),
               !value.isEmpty else {

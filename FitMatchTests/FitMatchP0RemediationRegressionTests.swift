@@ -61,9 +61,30 @@ struct FitMatchP0RemediationRegressionTests {
         let histories = try reloadedContext.fetch(FetchDescriptor<RecommendationHistory>())
         let history = try #require(histories.first { $0.id == historyID })
 
-        #expect(history.product.id == serverProductID)
-        #expect(history.recommendedSize.id == serverRecommendedSizeID)
-        #expect(Set(history.product.sizes.map(\.id)).intersection(authorizedSizeIDs) == authorizedSizeIDs)
+        // The server IDs stay in the immutable completed snapshot.  The local
+        // cache deliberately owns a per-comparison projection so a later
+        // comparison of this same retailer product cannot mutate this row.
+        #expect(history.product.id == VNextHistoryProjectionIdentity.productID(
+            comparisonID: historyID
+        ))
+        #expect(history.product.id != serverProductID)
+        #expect(history.product.canonicalSourceIdentity?.contains(
+            "target=\(serverProductID.uuidString.lowercased())"
+        ) == true)
+        #expect(history.product.canonicalSourceIdentity?.contains(
+            "comparison=\(historyID.uuidString.lowercased())"
+        ) == true)
+        #expect(history.recommendedSize.id == VNextHistoryProjectionIdentity.productSizeID(
+            comparisonID: historyID,
+            productSizeID: serverRecommendedSizeID
+        ))
+        let projectedSizeIDs = Set(history.product.sizes.map(\.id))
+        #expect(projectedSizeIDs == Set(authorizedSizeIDs.map {
+            VNextHistoryProjectionIdentity.productSizeID(
+                comparisonID: historyID,
+                productSizeID: $0
+            )
+        }))
     }
 
     @Test func completedVNextHistoriesRemainDistinctForDifferentReferences() throws {
@@ -89,14 +110,17 @@ struct FitMatchP0RemediationRegressionTests {
         )
         try saveCompletedVNextUnderTest(first, existing: [], modelContext: context)
 
-        let storedProduct = try #require(
-            try context.fetch(FetchDescriptor<Product>()).first { $0.id == productID }
+        // A second completed comparison of the same remote Product comes in
+        // with the same server identity, but it must receive a different
+        // local immutable projection.
+        let secondProduct = makeProduct(
+            id: productID,
+            sizes: [makeSize(id: sizeID, name: "M", chest: 51)]
         )
-        let storedSize = try #require(storedProduct.sizes.first { $0.id == sizeID })
         let second = makeCompletedHistory(
             id: secondHistoryID,
-            product: storedProduct,
-            size: storedSize,
+            product: secondProduct,
+            size: try #require(secondProduct.sizes.first),
             reference: secondReference
         )
         let existing = try context.fetch(FetchDescriptor<RecommendationHistory>())
@@ -104,8 +128,8 @@ struct FitMatchP0RemediationRegressionTests {
 
         let duplicateIDReplay = makeCompletedHistory(
             id: secondHistoryID,
-            product: storedProduct,
-            size: storedSize,
+            product: secondProduct,
+            size: try #require(secondProduct.sizes.first),
             reference: firstReference
         )
         try saveCompletedVNextUnderTest(
@@ -116,9 +140,36 @@ struct FitMatchP0RemediationRegressionTests {
 
         let saved = try context.fetch(FetchDescriptor<RecommendationHistory>())
         #expect(Set(saved.map(\.id)) == Set([firstHistoryID, secondHistoryID]))
-        #expect(Set(saved.map { $0.userFit.id }) == Set([firstReference.id, secondReference.id]))
-        #expect(saved.allSatisfy { $0.product.id == productID })
-        #expect(saved.allSatisfy { $0.recommendedSize.id == sizeID })
+        #expect(Set(saved.map(\.userFit.id)) == Set([
+            VNextHistoryProjectionIdentity.referenceID(
+                comparisonID: firstHistoryID,
+                clientItemID: firstReference.id
+            ),
+            VNextHistoryProjectionIdentity.referenceID(
+                comparisonID: secondHistoryID,
+                clientItemID: secondReference.id
+            )
+        ]))
+        #expect(Set(saved.map(\.product.id)) == Set([
+            VNextHistoryProjectionIdentity.productID(comparisonID: firstHistoryID),
+            VNextHistoryProjectionIdentity.productID(comparisonID: secondHistoryID)
+        ]))
+        #expect(saved.allSatisfy {
+            $0.product.canonicalSourceIdentity?.contains(
+                "target=\(productID.uuidString.lowercased())"
+            ) == true
+        })
+        #expect(Set(saved.map(\.recommendedSize.id)) == Set([
+            VNextHistoryProjectionIdentity.productSizeID(
+                comparisonID: firstHistoryID,
+                productSizeID: sizeID
+            ),
+            VNextHistoryProjectionIdentity.productSizeID(
+                comparisonID: secondHistoryID,
+                productSizeID: sizeID
+            )
+        ]))
+        #expect(saved[0].product !== saved[1].product)
     }
 
     @Test func exactHistoryAndDeletedReferenceLifecycleRemainIndependent() throws {
@@ -149,17 +200,18 @@ struct FitMatchP0RemediationRegressionTests {
         )
         try saveCompletedVNextUnderTest(first, existing: [], modelContext: context)
 
-        let storedProduct = try #require(
-            try context.fetch(FetchDescriptor<Product>()).first { $0.id == productID }
-        )
-        let storedSize = try #require(
-            storedProduct.sizes.first { $0.id == recommendedSizeID }
+        let secondProduct = makeProduct(
+            id: productID,
+            sizes: [
+                makeSize(id: recommendedSizeID, name: "M", chest: 51),
+                makeSize(id: alternateSizeID, name: "L", chest: 54)
+            ]
         )
         let secondHistoryID = UUID()
         let second = makeCompletedHistory(
             id: secondHistoryID,
-            product: storedProduct,
-            size: storedSize,
+            product: secondProduct,
+            size: try #require(secondProduct.sizes.first),
             reference: referenceB
         )
         try saveCompletedVNextUnderTest(
@@ -175,17 +227,39 @@ struct FitMatchP0RemediationRegressionTests {
         let activeCloset = try context.fetch(FetchDescriptor<UserFit>())
             .filter(\.isActiveClosetItem)
         #expect(Set(histories.map(\.id)) == Set([firstHistoryID, secondHistoryID]))
-        #expect(histories.first { $0.id == firstHistoryID }?.userFit.id == referenceA.id)
-        #expect(histories.first { $0.id == secondHistoryID }?.userFit.id == referenceB.id)
+        #expect(histories.first { $0.id == firstHistoryID }?.userFit.id ==
+            VNextHistoryProjectionIdentity.referenceID(
+                comparisonID: firstHistoryID,
+                clientItemID: referenceA.id
+            ))
+        #expect(histories.first { $0.id == secondHistoryID }?.userFit.id ==
+            VNextHistoryProjectionIdentity.referenceID(
+                comparisonID: secondHistoryID,
+                clientItemID: referenceB.id
+            ))
+        #expect(histories.allSatisfy { $0.userFit.isHistoryOnlyReferenceSnapshot })
         #expect(activeCloset.map(\.id) == [referenceB.id])
         #expect(referenceA.fitMatchServerReferenceSnapshot() == nil)
-        #expect(Set(storedProduct.sizes.map(\.id)) == Set([
-            recommendedSizeID,
-            alternateSizeID
-        ]))
+        #expect(histories.allSatisfy {
+            Set($0.product.sizes.map(\.id)) == Set([
+                VNextHistoryProjectionIdentity.productSizeID(
+                    comparisonID: $0.id,
+                    productSizeID: recommendedSizeID
+                ),
+                VNextHistoryProjectionIdentity.productSizeID(
+                    comparisonID: $0.id,
+                    productSizeID: alternateSizeID
+                )
+            ])
+        })
     }
 
     @Test func historyOnlySnapshotsAreExcludedFromActiveClosetAndPickerSurfaces() throws {
+        let globalSearchPresentation = try sourceFile(
+            "FitMatch/Services/FitMatchHistoryPresentation.swift"
+        )
+        let globalSearchFiltersActiveCloset = globalSearchPresentation
+            .contains("cachedUserFits.filter(\\.isActiveClosetItem)")
         for relativePath in [
             "FitMatch/Views/MyClosetView.swift",
             "FitMatch/Views/HomeView.swift",
@@ -197,8 +271,125 @@ struct FitMatchP0RemediationRegressionTests {
             "FitMatch/Views/RecommendationResultView.swift"
         ] {
             let source = try sourceFile(relativePath)
-            #expect(source.contains("filter(\\.isActiveClosetItem)"))
+            let usesGlobalSearchPresentation = relativePath
+                == "FitMatch/Views/GlobalSearchView.swift"
+                && source.contains("FitMatchGlobalSearchPresentation")
+                && globalSearchFiltersActiveCloset
+            #expect(
+                source.contains("filter(\\.isActiveClosetItem)")
+                    || source.contains("FitMatchClosetPresentation.activeItems")
+                    || usesGlobalSearchPresentation
+            )
         }
+    }
+
+    @Test func homeRecentHistoryKeepsDistinctCompletedComparisonsForTheSameProduct() {
+        let product = makeProduct(
+            id: UUID(),
+            sizes: [makeSize(id: UUID(), name: "M", chest: 51)]
+        )
+        let reference = makeReference(name: "같은 기준 옷")
+        let first = makeCompletedHistory(
+            id: UUID(),
+            product: product,
+            size: product.sizes[0],
+            reference: reference,
+            createdAt: Date(timeIntervalSince1970: 10)
+        )
+        let second = makeCompletedHistory(
+            id: UUID(),
+            product: product,
+            size: product.sizes[0],
+            reference: reference,
+            createdAt: Date(timeIntervalSince1970: 20)
+        )
+
+        // HI-012: Home is a recent-comparison surface.  Equal URL/name must
+        // not merge distinct immutable comparison IDs.
+        let recents = FitMatchHistoryPresentation.recentHistories(
+            from: [first, second]
+        )
+        #expect(recents.map(\.id) == [second.id, first.id])
+    }
+
+    @Test func historySearchFilterSortAndFavoriteUseTheSamePresentationPathAsTheHistoryScreen() {
+        let favoriteURL = "https://www.musinsa.com/products/710002"
+        let matchingProduct = makeProduct(
+            id: UUID(),
+            sizes: [makeSize(id: UUID(), name: "M", chest: 51)]
+        )
+        matchingProduct.name = "에어리즘 크루넥 티셔츠"
+        matchingProduct.sourceName = "유니클로 공식몰"
+        matchingProduct.sourceURLString = "https://www.uniqlo.com/kr/ko/products/E500900"
+
+        let favoriteProduct = makeProduct(
+            id: UUID(),
+            sizes: [makeSize(id: UUID(), name: "L", chest: 54)]
+        )
+        favoriteProduct.name = "울 블렌드 니트"
+        favoriteProduct.sourceName = "무신사"
+        favoriteProduct.sourceURLString = favoriteURL
+        favoriteProduct.category = .outer
+
+        let reference = makeReference(name: "검색 기준 옷")
+        let matching = makeCompletedHistory(
+            id: UUID(),
+            product: matchingProduct,
+            size: matchingProduct.sizes[0],
+            reference: reference,
+            createdAt: Date(timeIntervalSince1970: 10)
+        )
+        let favorite = makeCompletedHistory(
+            id: UUID(),
+            product: favoriteProduct,
+            size: favoriteProduct.sizes[0],
+            reference: reference,
+            createdAt: Date(timeIntervalSince1970: 20)
+        )
+        favorite.recommendationScore = 80
+
+        // HI-011: the actual History presentation action supplies search,
+        // favorite scope, category filtering, and sort order.  It only reads
+        // immutable completed History rows; it makes no authority decision.
+        let searched = FitMatchHistoryPresentation.displayedHistories(
+            from: [matching, favorite],
+            searchText: "에어리즘",
+            scope: .all,
+            category: nil,
+            favoriteURLs: [],
+            sort: .latest
+        )
+        #expect(searched.map(\.id) == [matching.id])
+
+        let favoritesOnly = FitMatchHistoryPresentation.displayedHistories(
+            from: [matching, favorite],
+            searchText: "",
+            scope: .favorite,
+            category: nil,
+            favoriteURLs: [favoriteURL],
+            sort: .latest
+        )
+        #expect(favoritesOnly.map(\.id) == [favorite.id])
+
+        let categoryFiltered = FitMatchHistoryPresentation.displayedHistories(
+            from: [matching, favorite],
+            searchText: "",
+            scope: .all,
+            category: .outer,
+            favoriteURLs: [],
+            sort: .oldest
+        )
+        #expect(categoryFiltered.map(\.id) == [favorite.id])
+
+        let oldestFirst = FitMatchHistoryPresentation.displayedHistories(
+            from: [matching, favorite],
+            searchText: "",
+            scope: .all,
+            category: nil,
+            favoriteURLs: [],
+            sort: .oldest
+        )
+        #expect(oldestFirst.map(\.id) == [matching.id, favorite.id])
     }
 
     private func saveCompletedVNextUnderTest(
@@ -292,7 +483,8 @@ struct FitMatchP0RemediationRegressionTests {
         id: UUID,
         product: Product,
         size: ProductSize,
-        reference: UserFit
+        reference: UserFit,
+        createdAt: Date = Date()
     ) -> RecommendationHistory {
         let comparedItem = MeasurementComparisonItem(
             kind: .chest,
@@ -328,7 +520,8 @@ struct FitMatchP0RemediationRegressionTests {
             comparisonMethod: "서버 승인 직접 비교",
             productDetailCategory: .shortSleeve,
             comparisonResult: result,
-            reason: "vNext completion test"
+            reason: "vNext completion test",
+            createdAt: createdAt
         )
     }
 }

@@ -379,6 +379,8 @@ $measurement_equivalence$;
 do $comparison_contract$
 declare
     value jsonb;
+    request_value jsonb;
+    replay_value jsonb;
     candidate_ids jsonb;
     authority_fingerprint text;
     effective_fingerprint text;
@@ -560,7 +562,7 @@ begin
         if sqlerrm = 'Duplicate candidate IDs were accepted' then raise; end if;
     end;
 
-    value := fitmatch_vnext.begin_comparison(jsonb_build_object(
+    request_value := jsonb_build_object(
         'client_comparison_id','91000000-0000-0000-0000-000000000003',
         'reference_closet_item_id','f0000000-0000-0000-0000-000000000001',
         'target_product_id','c0000000-0000-0000-0000-000000000002',
@@ -571,7 +573,8 @@ begin
         'effective_authority_fingerprint',effective_fingerprint,
         'personal_override_revision',override_revision,
         'manual_explicit',false
-    ));
+    );
+    value := fitmatch_vnext.begin_comparison(request_value);
     comparison_id := (value ->> 'comparison_id')::uuid;
     if (select snapshot_schema_version from fitmatch_vnext.comparisons
         where id = comparison_id) <> 4
@@ -580,6 +583,29 @@ begin
            where id = comparison_id) <> 'USER_EXPLICIT' then
         raise exception 'Snapshot v4 personal provenance regression';
     end if;
+
+    replay_value := fitmatch_vnext.begin_comparison(request_value);
+    if replay_value ->> 'comparison_id' <> comparison_id::text
+       or coalesce((replay_value ->> 'created')::boolean, true)
+       or not coalesce((replay_value ->> 'idempotent')::boolean, false)
+       or (select count(*) from fitmatch_vnext.comparisons
+           where user_id = '11111111-1111-1111-1111-111111111111'
+             and client_comparison_id =
+                 '91000000-0000-0000-0000-000000000003'::uuid) <> 1 then
+        raise exception 'Same client comparison begin replay was not idempotent: %',
+            replay_value;
+    end if;
+
+    begin
+        perform fitmatch_vnext.begin_comparison(
+            request_value || jsonb_build_object('manual_explicit', true)
+        );
+        raise exception 'Changed request payload was accepted for an existing client comparison ID';
+    exception when others then
+        if sqlerrm = 'Changed request payload was accepted for an existing client comparison ID' then
+            raise;
+        end if;
+    end;
 end
 $comparison_contract$;
 

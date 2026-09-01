@@ -1,0 +1,193 @@
+# FitMatch — Terra Max One-Shot Scenario-Conformance Remediation
+
+Repository: `ljy4337/FitMatch`
+Target branch: `connectDB`
+Audit baseline: `8855874a7ff372ef9b0e6159740c6faee4750985`
+
+## Role and scope
+
+You are the implementation owner for the one coordinated remediation batch produced
+by `Docs/FitMatchScenarioCodeConformanceMatrix-20260831.txt`,
+`Docs/FitMatchScenarioCodeDefectMap-20260831.txt`, and
+`Docs/FitMatchOneShotRemediationPlan-20260831.txt`.
+
+Implement every confirmed non-policy mismatch in that package.  Do not redesign
+FitMatch.  Do not make a test green by weakening policy or changing expected output.
+Preserve unrelated dirty work.  Do not commit or push automatically.
+
+## First gate
+
+1. `git fetch origin`; record branch, local HEAD, `origin/connectDB`, status, and
+   divergence.  Use current authority if it legitimately advanced.
+2. Read all `AGENTS.md`, the cumulative Handoff, the six audit documents, current
+   Recovery reports, and existing focused tests before editing.
+3. Reconfirm the published HJ-P0-001 failure and preserve any existing local strict
+   proof work only if it matches current source.  Never overwrite a user worktree.
+4. Production is read-only during this implementation.  No direct SQL mutation,
+   migration apply, Edge deployment, or Auth/availability write is allowed.
+
+## Non-negotiable invariants
+
+- Global Product classification is server authority.  USER_EXPLICIT is current,
+  personal, server-backed authority only when the server contract proves it.
+- Never allow generic `.userExplicit`; never trust a raw local tuple.
+- Required order remains:
+  `effective authority → find_reference_candidates → reference decision → authorize →
+  eligible sizes → begin → MeasurementComparisonEngine → complete → local Result/History`.
+- Target classification confirmation is not manual-reference intent.
+- Manual cross remains **only** `tshirt↔polo_shirt`, `sweatshirt↔hoodie`,
+  `sweatshirt↔knit_sweater`; explicit manual only; `require_same_sleeve=true`; never
+  automatic cross.
+- Preserve scoring engine/weights/reliability/ranking, taxonomy, Recovery bounded
+  candidate generation, DB global classifier authority, SwiftData schema, navigation,
+  Share Extension architecture, product-observation Edge Function, and protected
+  `FitMatch/Components/TabBarScrollVisibilityModifier.swift`.
+- No fresh scorer from a local Result/History cache.  No completed History rewrite.
+- Do not implement `PC-HISTORY-001` History-delete semantics without an owner decision.
+
+## Required implementation batch
+
+### A. Exact current-server comparison proof and Result/History P0s
+
+1. **HJ-P0-001 — published primary flow**
+   - Files: `RecommendationService.swift`, `ShoppingProductViewModel.swift`,
+     `RecommendationResultView.swift` current-session alternate-size helper.
+   - Replace the released serverConfirmed-only completed-history assumption with a
+     strict proof tied to the current server permit/begin/complete contract.
+   - GLOBAL_CONFIRMED is valid only with global proof.  USER_EXPLICIT is valid only if
+     current V4 personal projection, revision/hash/input/evidence/resolver fingerprints,
+     effective authority, comparison/run identity, target/variant/reference, and
+     authorized/recommended candidate size all exactly match.  Complete must already
+     have succeeded.
+   - Do not use an enum-only allow-list.
+
+2. **NEW-GAP-RESULT-001 — Result “다른 옷과 비교” USER_EXPLICIT P0**
+   - Files: `RecommendationResultView.compare(with:)`, `applyServerAuthority`,
+     `ResultReferenceComparisonPersistence`.
+   - Build an ephemeral comparison target from runtime effective authority.  Do not
+     mutate the existing Result Product.  Map `garmentTypeCode` as garment and
+     `familyCode` as policy, preserving exact effective category/axes/source.
+   - A server-authorized USER_EXPLICIT other-item comparison must render and persist a
+     new Result/History; the old completed Result must retain its old provenance.
+
+3. **NEW-GAP-HISTORY-003 — V4 historical authority P0**
+   - Files: `VNextHistoryCacheHydrator.swift` and only essential history model helpers.
+   - Decode `authority_snapshot.effective_classification_at_begin` for V4; reconstruct
+     immutable historical effective category/garment/axes/source/revision instead of
+     using live global `target_category_code`.  Avoid sharing a mutable Product
+     classification across distinct historic revisions.
+   - Legacy snapshot behavior must remain compatible/fail-safe; a bad/missing V4
+     snapshot must never invent global confirmation.
+
+4. **NEW-GAP-CLOSET-UE-001 — prevent shopping-to-Closet authority leakage**
+   - Files: `AddComparedProductToClosetSheet.swift`, `LinkClosetRegistrationView.swift`,
+     `FitMatchClassificationAuthorityProvenance.swift`,
+     `FitMatchClosetSyncCoordinator.swift`, narrowly named helpers.
+   - A shopping product USER_EXPLICIT must not silently become a Closet
+     `manual_override`, be re-inferred from product name, be marked GLOBAL_CONFIRMED, or
+     use policy code as garment.  A personal Closet override needs an independent
+     explicit Closet action.  Preserve global-confirmed linked registration and explicit
+     manual Closet flows.
+
+### B. Reference and comparison P1s
+
+5. **NEW-GAP-REF-001 / REF-002**
+   - Files: `CompareFlowSheet.swift`, `ShoppingProductViewModel.swift`,
+     `FitMatchServerAuthorityCoordinator.swift`, `RecommendationResultView.swift`.
+   - Make server `find_reference_candidates` the authority for reference visibility,
+     ordering, automatic route, and manual eligibility.  Map server IDs to current local
+     Closet presentation only.  Do not use `ComparisonProfileMatcher`, product-name
+     strings, or local measurements as semantic routing authority.  Local rendering may
+     decorate a server list only.
+   - Do this for both Compare Flow and Result other-item selection without a second
+     policy implementation.
+
+6. **NEW-GAP-EFFECTIVE-TUPLE-001**
+   - Files: resolver/runtime mapper and `ShoppingProductViewModel.makeProduct`.
+   - When effective classification object exists, consume the object as an exact tuple;
+     never field-wise combine it with global REVIEW_REQUIRED data.
+
+7. **NEW-GAP-MC-001**
+   - Add a new reviewed migration; never edit already-applied `20260830091000`.
+   - In the no-eligible-size explanation path, retain `p_manual_explicit=true` only for
+     an already explicit manual candidate so same-sleeve valid manual cross with missing
+     measurements reports MEASUREMENTS_REQUIRED.  It must not permit automatic cross.
+
+8. **NEW-GAP-BEGIN-REPLAY-001**
+   - Add a new reviewed migration; never relax Swift proof to compensate.
+   - Exact same-client-id `begin_comparison` replay must return the same complete
+     authorization/candidate/effective-authority/snapshot contract as first begin,
+     reconstructed from immutable server snapshot and without duplicate comparison.
+
+### C. Registration, availability-result UX, and entry paths
+
+9. **NEW-GAP-REG-001 / CLOSET-001**
+   - Make signed-out onboarding link registration intentionally hand off to login (or a
+     clearly non-authoritative draft with no sourced save) and retain user context.
+   - Reset linked Closet `isSaving` on duplicate early return; user can retry.
+
+10. **NEW-GAP-NAV-001**
+    - Result other-size UI must require the exact current server-authorized session
+      batch.  After cold history hydration, do not advertise usable size choices without
+      batch; show a meaningful existing explanation and do not run a fresh scorer.
+
+11. **Provider / entry P2s**
+    - First obtain owner direction from `PC-PROVIDER-001` before expanding COS Share
+      support.  Independently make product-support copy truthful for approved providers,
+      preserve/proclaim partial COS fallback accurately, expire stale pending shares,
+      scan attachments deterministically, and reject/meaningfully handle missing or
+      unknown custom deep-link routes.
+
+### D. Do not implement pending policy
+
+`PC-HISTORY-001` (deleting completed History / Closet-associated history) is not an
+implementation instruction.  Preserve behavior until the owner chooses one documented
+policy.  Report it rather than silently choosing cache deletion, durable hide, or
+server evidence deletion.
+
+## Required tests
+
+1. Add tests using actual production Swift business paths and current DTOs.  Fake only
+   auth/network scheduling; never build a test classifier/scorer/reference policy.
+2. Headless suite must make C/P/G/R/M/A/U values actually instantiate state; execute
+   V01–V17 as machine constraints; record independent expected vs actual behavior and
+   all 12 UX outcomes.  Correct hard-coded hoodie/knit policy DTOs and true pair
+   directions.
+3. Required P0 regressions:
+   - J07/J09/J11/J13: USER_EXPLICIT → begin → real engine → server complete → Result →
+     History.
+   - stale/cleared/old revision/old hash/local-only UE denied.
+   - Result other-item USER_EXPLICIT keeps old Result immutable.
+   - V4 historical hydration preserves exact effective authority on fresh reconstruction.
+   - shopping UE full/partial Add-to-Closet cannot create manual override.
+4. Required P1 regressions:
+   - server reference list wins over stale local list; manual cross automatic blocks;
+     explicit same-sleeve manual can continue; mismatched sleeve blocks.
+   - manual cross + insufficient measurement gives MEASUREMENTS_REQUIRED with engine=0.
+   - same client-ID begin replay is full/equivalent/no duplicate.
+   - null-axis effective tuple remains verbatim.
+   - signed-out onboarding link, duplicate Closet retry, cold other-size state.
+5. Re-run J01–J45 plus every accepted `NEW-GAP-*`.  Explicitly mark PC-HISTORY-001 and
+   unapproved COS surface policy as excluded pending owner decision; do not silently
+   claim 100% while they are pending.
+6. Run current equivalents of Recovery, vNext contract, permit sequencing, comparison
+   sync, server authority integration, resolver, History, registration/provider tests,
+   app build-for-testing, test-target build-for-testing, and full suite if practical.
+
+## Validation and safety gates
+
+- SQL syntax/disposable replay/RLS tests before any reviewed follow-up migration.
+- `git diff --check`; protected TabBar diff/call-site checks; no unrelated Swift,
+  migrations, Edge, project, or SwiftData changes.
+- No Production mutation in development or tests; deployment is a separately authorized
+  phase only.
+- Final report must reconcile valid vs executed scenarios, list all UX outcome counts,
+  separate confirmed defects from policy holds, and never call a simulator/headless test
+  physical iPhone E2E.
+
+## Final acceptance
+
+Pass only when P0=0, all implemented non-policy corridors use the real Swift sequence,
+no authority is broadened, no historical meaning mutates, no manual cross becomes
+automatic, and test coverage demonstrates actual fixture-driven scenario behavior—not
+labels or hand-authored success lists.

@@ -1,0 +1,40 @@
+# FitMatch Scenario Policy Conflict Ledger — 2026-08-31
+
+## PC-HISTORY-001 — completed History deletion semantics
+
+| Field | Evidence / decision needed |
+|---|---|
+| **Scenarios / branches** | `NEW-GAP-HISTORY-001` (delete Closet item), `NEW-GAP-HISTORY-002` (History swipe/delete), adjacent J17/J20/J29/J32. |
+| **Source A** | Recovery Production postflight and vNext contract: a completed comparison has an immutable server snapshot/provenance; later reference/authority changes must not rewrite its meaning. |
+| **Source B** | `MyClosetView` delete alert/current code and `ClosetItemDetailView` delete path say associated local histories are deleted. `RecommendationHistoryView` permits local swipe deletion. Historical `Docs/flows/14_HistoryFlow.md` also describes History deletion. |
+| **Exact conflict** | Current UI removes SwiftData history only. The immutable server row remains, and `FitMatchComparisonSyncCoordinator` later hydrates it again. The user can reasonably observe “deleted” history reappearing. The code therefore cannot satisfy both a durable user deletion promise and immutable remote evidence with no additional contract. |
+| **Current Production contract** | Prior postflight evidence: completed comparisons are immutable and Recovery V4 snapshot is historical authority. This audit did not perform a mutation test. |
+| **Risk of choosing immutable-visible** | Users lose a requested “delete history” control or must be told it only deletes the source Closet item. Privacy/product-expectation implications need owner approval. |
+| **Risk of choosing durable-hide** | Requires a user-owned, durable suppression/tombstone model that must not mutate/delete server comparison evidence. Scope, RLS, cross-device sync, and restoration UX need explicit design. |
+| **Risk of choosing delete-evidence** | Requires an approved server-side deletion/privacy contract and potentially contradicts audit/provenance expectations. It cannot be introduced as a local cache fix. |
+| **Recommended resolution** | Owner explicitly chooses one: **A** completed vNext History remains visible; remove local deletion promise and state Closet deletion only removes the active source. **B** durable user-owned hide/tombstone, separate from immutable comparison. **C** approved server-side user deletion/privacy semantics. |
+| **Implementation must wait?** | **Yes** for every change that alters History delete semantics. The one-shot remediation may still fix independent P0/P1 paths, but must leave this branch untouched until adjudicated. |
+
+## PC-PROVIDER-001 — COS surface support scope (lower-impact product decision)
+
+| Field | Evidence / decision needed |
+|---|---|
+| **Scenarios / branches** | `NEW-GAP-PROVIDER-001/002/003`, J21/J42/J45. |
+| **Source A** | Core parser/resolver supports COS; `Docs/COSIntegrationAnalysis-20260821.md` documents a fail-closed COS integration. |
+| **Source B** | Canonical Headless provider axis has only UNIQLO/MUSINSA/ZARA; Share Extension rejects COS; onboarding/support copy is inconsistent. |
+| **Exact conflict** | Product support is technically present in core but not consistently offered or tested across entry points. |
+| **Recommended resolution** | Owner declares COS **supported in all normal entry points** (then align Share/copy/tests and preserve fail-closed parser behavior) or **experimental/not available through Share** (then show explicit copy and retain a documented test exclusion). |
+| **Implementation must wait?** | No for adding truthful tests and copy; yes before expanding Share Extension support if COS support intent is not approved. |
+
+## Policy precedence used by the audit
+
+1. Latest explicit cumulative owner handoff and approved Recovery product rules.
+2. Successfully deployed Production postflight / immutable vNext contract.
+3. Current independent Scenario Matrix.
+4. Current policy-regression tests, where they exercise real production flow.
+5. Current source behavior.
+6. Historical flows/decisions.
+
+No other higher-priority unresolved conflict was found.  Historic local taxonomy and
+older flow documents were treated as superseded where current server authority
+contradicted them.

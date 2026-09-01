@@ -803,14 +803,18 @@ struct FitMatchServerAuthorityIntegrationTests {
         #expect(authorization.reason == "compatibility_rule_denied")
     }
 
-    @Test func sweatshirtToHoodieServerPolicyAllows() async throws {
+    /// This validates only that the iOS coordinator consumes a server-issued
+    /// AUTOMATIC response for a same-type candidate. Manual-cross policy is
+    /// executed separately by the disposable vNext SQL contract assertions;
+    /// it must never be "proved" by injecting an automatic cross-type DTO.
+    @Test func sameTypeServerPolicyAllowsAutomaticResponse() async throws {
         let authorization = try await Self.policyAuthorization(
             targetCategory: "tops",
-            targetDetail: "hoodie",
-            targetFamily: "hoodie",
+            targetDetail: "short_sleeve",
+            targetFamily: "tshirt",
             referenceCategory: "tops",
-            referenceDetail: "sweatshirt",
-            referenceFamily: "sweatshirt",
+            referenceDetail: "short_sleeve",
+            referenceFamily: "tshirt",
             allowed: true
         )
 
@@ -893,6 +897,103 @@ struct FitMatchServerAuthorityIntegrationTests {
         #expect(await remote.candidateCallCount == 2)
     }
 
+    @Test func resultReferenceDiscoveryMapsOnlyServerAuthorizedCandidatesToLocalClosetItems() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "E482514",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let allowedClientID = UUID()
+        let staleClientID = UUID()
+        let allowedClosetID = UUID()
+        let staleClosetID = UUID()
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [
+                fixture.resolution(catalogState: "current"),
+                fixture.resolution(catalogState: "current")
+            ],
+            observations: [],
+            runtimes: [fixture.runtime, fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [
+                    Self.closetRecord(
+                        clientItemID: allowedClientID,
+                        closetItemID: allowedClosetID,
+                        productID: nil,
+                        classificationSource: "manual_override",
+                        productName: "서버 승인 기준 옷"
+                    ),
+                    Self.closetRecord(
+                        clientItemID: staleClientID,
+                        closetItemID: staleClosetID,
+                        productID: nil,
+                        classificationSource: "manual_override",
+                        productName: "서버 목록에 없는 이전 기준 옷"
+                    )
+                ]
+            ),
+            candidateResponses: [
+                try Self.candidateResponse(
+                    state: "automatic",
+                    closetItemID: allowedClosetID,
+                    automaticReady: true,
+                    manualReady: true,
+                    allowed: true
+                ),
+                // B remains in local SwiftData but is not in the server
+                // candidate contract, so it cannot enter the picker.
+                try Self.candidateResponse(
+                    state: "automatic",
+                    closetItemID: allowedClosetID,
+                    automaticReady: true,
+                    manualReady: true,
+                    allowed: true
+                )
+            ]
+        )
+        let target = Self.resultTarget(externalProductID: "E482514")
+        let allowed = Self.localResultReference(
+            id: allowedClientID,
+            name: "서버 승인 기준 옷",
+            isRepresentative: true
+        )
+        let stale = Self.localResultReference(
+            id: staleClientID,
+            name: "서버 목록에 없는 이전 기준 옷",
+            isRepresentative: false
+        )
+
+        #expect(target.fitMatchDatabaseResolutionRequest() != nil)
+        #expect(target.fitMatchProductObservationRequest() != nil)
+        #expect(allowed.fitMatchServerReferenceSnapshot() != nil)
+        #expect(stale.fitMatchServerReferenceSnapshot() != nil)
+
+        let outcome = await ResultReferenceComparisonAction.discoverSelectableReferences(
+            from: [stale, allowed],
+            excluding: UUID(),
+            target: target,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+
+        guard case .success(let authorizations) = outcome else {
+            Issue.record("Expected the server candidate contract to be available")
+            return
+        }
+        let eventLog = await remote.eventLog
+        let expectedEventLog = [
+            "resolve", "runtime", "list", "candidates",
+            "resolve", "runtime", "list", "candidates"
+        ]
+        if eventLog != expectedEventLog {
+            Issue.record("Unexpected candidate discovery calls: \(eventLog)")
+        }
+        #expect(Set(authorizations.keys) == [allowedClientID])
+        #expect(authorizations[allowedClientID]?.reference?.closetItemID == allowedClosetID)
+        #expect(await remote.candidateCallCount == 2)
+    }
+
     private static func closetRecord(
         clientItemID: UUID,
         closetItemID: UUID,
@@ -944,6 +1045,74 @@ struct FitMatchServerAuthorityIntegrationTests {
             createdAt: "2026-08-26T00:00:00Z",
             updatedAt: "2026-08-26T00:00:00Z"
         )
+    }
+
+    private static func resultTarget(externalProductID: String) -> Product {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 48,
+                chest: 52,
+                totalLength: 70,
+                sleeveLength: 23
+            )
+        )
+        let product = Product(
+            name: "서버 승인 대상 상품",
+            category: .top,
+            productCode: externalProductID,
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/\(externalProductID)-000/00",
+            metadata: ProductMetadata(
+                sourceCategoryPath: "tops > short sleeve",
+                genderCodes: ["UNISEX"]
+            ),
+            sourceType: .officialStore,
+            sourceName: "유니클로 공식몰",
+            source: .catalog,
+            sizes: [size]
+        )
+        product.categoryCode = "tops"
+        product.normalizedProductTypeCode = "short_sleeve"
+        product.garmentTypeRawValue = "tshirt"
+        product.sleeveTypeRawValue = "short_sleeve"
+        product.markClassificationAuthority(.serverConfirmed)
+        return product
+    }
+
+    private static func localResultReference(
+        id: UUID,
+        name: String,
+        isRepresentative: Bool
+    ) -> UserFit {
+        let item = UserFit(
+            id: id,
+            sourceType: .manual,
+            sourceName: "직접 입력",
+            brandName: "FitMatch",
+            productName: name,
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 52,
+                totalLength: 0,
+                sleeveLength: 0
+            ),
+            fitMemo: "",
+            satisfaction: 4,
+            isRepresentative: isRepresentative
+        )
+        item.categoryCode = "tops"
+        item.detailCategoryCode = "short_sleeve"
+        item.garmentTypeRawValue = "tshirt"
+        item.sleeveTypeRawValue = "short_sleeve"
+        // This is a normal explicit Closet tuple, which the current server
+        // contract represents as `manual_override`. The test is specifically
+        // about the server—not this tuple—deciding which local item may enter
+        // the Result picker.
+        item.markClassificationAuthority(.userExplicit, sourceIdentity: "manual_override")
+        return item
     }
 
     private static func policyAuthorization(

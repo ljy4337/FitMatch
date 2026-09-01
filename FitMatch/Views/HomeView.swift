@@ -6,13 +6,14 @@ struct HomeView: View {
     let onStartCompare: () -> Void
     let onOpenHistory: () -> Void
     let onOpenCloset: () -> Void
-    let onRecompare: (String) -> Void
+    let onRecompare: (FitMatchHistoryRecompareAction.StartRequest) -> Void
     var onLogout: (() -> Void)?
 
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var isTopChromeVisible = true
+    @State private var recompareErrorMessage: String?
     private let favoriteStore = FavoriteProductStore()
 
     private var userFits: [UserFit] {
@@ -45,6 +46,16 @@ struct HomeView: View {
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
+        .alert("다시 비교할 수 없습니다", isPresented: Binding(
+            get: { recompareErrorMessage != nil },
+            set: { if !$0 { recompareErrorMessage = nil } }
+        )) {
+            Button("확인", role: .cancel) {
+                recompareErrorMessage = nil
+            }
+        } message: {
+            Text(recompareErrorMessage ?? "")
+        }
     }
 
     private var closetDashboardSection: some View {
@@ -150,8 +161,11 @@ struct HomeView: View {
                                 layout: .carousel,
                                 onToggleFavorite: { toggleFavorite(history) },
                                 onRecompare: {
-                                    if let urlString = history.product.sourceURLString {
-                                        onRecompare(urlString)
+                                    switch FitMatchHistoryRecompareAction.outcome(for: history) {
+                                    case .openCompare(let request):
+                                        onRecompare(request)
+                                    case .unavailable(let message):
+                                        recompareErrorMessage = message
                                     }
                                 }
                             )
@@ -198,19 +212,7 @@ struct HomeView: View {
     }
 
     private var recentHistories: [RecommendationHistory] {
-        var seenKeys = Set<String>()
-        var result: [RecommendationHistory] = []
-
-        for history in histories {
-            let key = history.product.sourceURLString ?? history.product.displayName
-            guard seenKeys.insert(key).inserted else { continue }
-            result.append(history)
-            if result.count == 5 {
-                break
-            }
-        }
-
-        return result
+        FitMatchHistoryPresentation.recentHistories(from: histories)
     }
 
     private func isFavorite(_ history: RecommendationHistory) -> Bool {
@@ -466,6 +468,7 @@ struct CompareStartSheet: View {
     let onStartCompareWithURL: (String) -> Void
     let onDismiss: () -> Void
     @State private var productURL = ""
+    @State private var productURLErrorMessage: String?
 
     private let platformItems: [(title: String, systemImage: String)] = [
         ("무신사", "m.circle"),
@@ -487,6 +490,16 @@ struct CompareStartSheet: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("상품 비교 시작")
             .navigationBarTitleDisplayMode(.inline)
+            .alert("상품 링크를 확인해 주세요", isPresented: Binding(
+                get: { productURLErrorMessage != nil },
+                set: { if !$0 { productURLErrorMessage = nil } }
+            )) {
+                Button("확인", role: .cancel) {
+                    productURLErrorMessage = nil
+                }
+            } message: {
+                Text(productURLErrorMessage ?? "")
+            }
         }
     }
 
@@ -556,27 +569,23 @@ struct CompareStartSheet: View {
             Button(action: submitURL) {
                 Label("비교하기", systemImage: "sparkles")
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(canSubmitURL ? Color.white : Color.secondary)
+                    .foregroundStyle(Color.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(canSubmitURL ? Color.black : Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(Color.black, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .buttonStyle(.plain)
-            .disabled(!canSubmitURL)
         }
-    }
-
-    private var canSubmitURL: Bool {
-        ProductURLSupport.isSupportedProductURL(productURL)
     }
 
     private func submitURL() {
-        let trimmedURL = productURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard ProductURLSupport.isSupportedProductURL(trimmedURL) else {
-            return
+        switch FitMatchProductLinkInput.entryOutcome(for: productURL) {
+        case .begin(let url):
+            productURLErrorMessage = nil
+            onStartCompareWithURL(url.absoluteString)
+        case .blocked(let message):
+            productURLErrorMessage = message
         }
-
-        onStartCompareWithURL(trimmedURL)
     }
 
     private func openMusinsa() {

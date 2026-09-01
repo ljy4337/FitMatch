@@ -6,6 +6,7 @@ struct MyClosetView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
+    @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
     @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.closetViewLayout") private var closetViewLayoutRaw = ContentListLayout.list.rawValue
@@ -15,15 +16,16 @@ struct MyClosetView: View {
     @State private var isShowingBasisChangeAlert = false
     @State private var selectedCategory: ClothingCategory?
     @State private var selectedBrand: String?
-    @State private var sortOption: ClosetSortOption = .recent
+    @State private var sortOption: FitMatchClosetSortOption = .recent
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
     @State private var selectedClosetItemID: UUID?
     @State private var displayedItems: [UserFit] = []
     @State private var pendingDeleteItem: UserFit?
+    @State private var deletingItemID: UUID?
 
     private var userFits: [UserFit] {
-        cachedUserFits.filter(\.isActiveClosetItem)
+        FitMatchClosetPresentation.activeItems(from: cachedUserFits)
     }
 
     var body: some View {
@@ -67,14 +69,10 @@ struct MyClosetView: View {
             case .manualAdd:
                 NavigationStack {
                     AddClosetItemView { item in
-                        modelContext.insert(item)
-                        do {
-                            try modelContext.save()
-                            return true
-                        } catch {
-                            modelContext.rollback()
-                            return false
-                        }
+                        FitMatchClosetRegistrationPersistence.save(
+                            item,
+                            in: modelContext
+                        )
                     }
                 }
                 .presentationDragIndicator(.visible)
@@ -124,7 +122,7 @@ struct MyClosetView: View {
                 deleteItem(item)
             }
         } message: {
-            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 함께 삭제돼요. 그래도 삭제할까요?")
+            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 목록에서 함께 삭제돼요. 그래도 삭제할까요?")
         }
         .onAppear {
             rebuildDisplayedItems()
@@ -264,30 +262,12 @@ struct MyClosetView: View {
     }
 
     private func rebuildDisplayedItems() {
-        let filtered = userFits.filter { item in
-            let matchesCategory = selectedCategory == nil || item.category == selectedCategory
-            let matchesBrand = selectedBrand == nil || item.brandName == selectedBrand
-
-            return matchesCategory && matchesBrand
-        }
-
-        switch sortOption {
-        case .recent:
-            displayedItems = filtered.sorted { $0.createdAt > $1.createdAt }
-        case .oldest:
-            displayedItems = filtered.sorted { $0.createdAt < $1.createdAt }
-        case .brand:
-            displayedItems = filtered.sorted { $0.brandName < $1.brandName }
-        case .category:
-            displayedItems = filtered.sorted { $0.category.rawValue < $1.category.rawValue }
-        case .basisFirst:
-            displayedItems = filtered.sorted {
-                if $0.isRepresentative != $1.isRepresentative {
-                    return $0.isRepresentative && !$1.isRepresentative
-                }
-                return $0.createdAt > $1.createdAt
-            }
-        }
+        displayedItems = FitMatchClosetPresentation.displayedItems(
+            from: cachedUserFits,
+            category: selectedCategory,
+            brand: selectedBrand,
+            sort: sortOption
+        )
     }
 
     private var closetLayout: ContentListLayout {
@@ -328,9 +308,9 @@ struct MyClosetView: View {
                 id: "sort",
                 selectedID: sortOption.rawValue,
                 selectedTitle: sortOption.title,
-                options: ClosetSortOption.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
+                options: FitMatchClosetSortOption.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
                 onSelect: { id in
-                    sortOption = ClosetSortOption(rawValue: id) ?? .recent
+                    sortOption = FitMatchClosetSortOption(rawValue: id) ?? .recent
                 }
             )
         ]
@@ -383,8 +363,7 @@ struct MyClosetView: View {
 
     private func toggleRepresentative(_ item: UserFit) {
         if item.isRepresentative {
-            item.isRepresentative = false
-            item.updatedAt = Date()
+            FitMatchClosetReferenceMutation.clearRepresentative(item)
             do {
                 try modelContext.save()
                 rebuildDisplayedItems()
@@ -446,19 +425,10 @@ struct MyClosetView: View {
             return
         }
 
-        userFits
-            .filter {
-                $0.id != pendingBasisItem.id
-                    && $0.isRepresentative
-                    && ReferenceGarmentPolicy.conflicts($0, pendingBasisItem)
-            }
-            .forEach {
-                $0.isRepresentative = false
-                $0.updatedAt = Date()
-            }
-
-        pendingBasisItem.isRepresentative = true
-        pendingBasisItem.updatedAt = Date()
+        FitMatchClosetReferenceMutation.setRepresentative(
+            pendingBasisItem,
+            among: userFits
+        )
         do {
             try modelContext.save()
         } catch {
@@ -480,17 +450,20 @@ struct MyClosetView: View {
     }
 
     private func deleteItem(_ item: UserFit) {
-        let clientItemID = item.id
-        deleteHistoriesReferencing(item)
-        modelContext.delete(item)
-        do {
-            try modelContext.save()
-            closetSync?.enqueueDeletion(clientItemID: clientItemID)
+        guard deletingItemID == nil else { return }
+        deletingItemID = item.id
+
+        Task { @MainActor in
+            defer { deletingItemID = nil }
+            let outcome = await FitMatchClosetDeletionAction.delete(
+                item: item,
+                histories: histories,
+                in: modelContext,
+                comparisonSync: comparisonSync,
+                closetSync: closetSync
+            )
             rebuildDisplayedItems()
-        } catch {
-            modelContext.rollback()
-            rebuildDisplayedItems()
-            saveErrorMessage = "옷을 삭제하지 못했어요. 다시 시도해 주세요."
+            saveErrorMessage = outcome.userVisibleMessage
         }
     }
 
@@ -505,14 +478,8 @@ struct MyClosetView: View {
         } label: {
             Label("삭제", systemImage: "trash")
         }
+        .disabled(deletingItemID == item.id)
         .tint(.red)
-    }
-
-    private func deleteHistoriesReferencing(_ item: UserFit) {
-        historiesReferencing(item)
-            .forEach { history in
-                modelContext.delete(history)
-            }
     }
 
     private func historiesReferencing(_ item: UserFit) -> [RecommendationHistory] {
@@ -543,24 +510,6 @@ private enum ClosetActiveSheet: Identifiable {
             return "manualAdd"
         case .linkRegistration:
             return "linkRegistration"
-        }
-    }
-}
-
-private enum ClosetSortOption: String, CaseIterable {
-    case recent
-    case oldest
-    case brand
-    case category
-    case basisFirst
-
-    var title: String {
-        switch self {
-        case .recent: return "최근 등록"
-        case .oldest: return "오래된순"
-        case .brand: return "브랜드순"
-        case .category: return "카테고리순"
-        case .basisFirst: return "기준 옷 우선"
         }
     }
 }

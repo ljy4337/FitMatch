@@ -4,9 +4,6 @@ import SwiftData
 struct GlobalSearchView: View {
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
 
-    private var userFits: [UserFit] {
-        cachedUserFits.filter(\.isActiveClosetItem)
-    }
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var searchText = ""
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
@@ -85,33 +82,18 @@ struct GlobalSearchView: View {
     }
 
     private var closetResults: [UserFit] {
-        guard !normalizedSearchText.isEmpty else {
-            return Array(userFits.prefix(8))
-        }
-
-        return userFits.filter { item in
-            item.brandName.lowercased().contains(normalizedSearchText)
-                || item.productName.lowercased().contains(normalizedSearchText)
-                || item.category.rawValue.lowercased().contains(normalizedSearchText)
-                || item.detailCategory.rawValue.lowercased().contains(normalizedSearchText)
-                || item.sizeName.lowercased().contains(normalizedSearchText)
-        }
+        FitMatchGlobalSearchPresentation.closetResults(
+            from: cachedUserFits,
+            searchText: searchText
+        )
     }
 
     private var historyResults: [RecommendationHistory] {
-        guard !normalizedSearchText.isEmpty else {
-            return Array(histories.prefix(8))
-        }
-
-        return histories.filter { history in
-            let product = history.product
-            return product.displayName.lowercased().contains(normalizedSearchText)
-                || (product.brand?.name.lowercased().contains(normalizedSearchText) ?? false)
-                || product.category.rawValue.lowercased().contains(normalizedSearchText)
-                || history.productDetailCategory.rawValue.lowercased().contains(normalizedSearchText)
-                || product.sourceDisplayName.lowercased().contains(normalizedSearchText)
-                || (isFavorite(history) && "관심상품".contains(normalizedSearchText))
-        }
+        FitMatchGlobalSearchPresentation.historyResults(
+            from: histories,
+            searchText: searchText,
+            favoriteURLs: favoriteURLs
+        )
     }
 
     private var emptyClosetMessage: String {
@@ -123,12 +105,10 @@ struct GlobalSearchView: View {
     }
 
     private func isFavorite(_ history: RecommendationHistory) -> Bool {
-        guard let urlString = history.product.sourceURLString else {
-            return false
-        }
-
-        return favoriteURLs.contains(urlString)
+        guard let url = history.product.sourceURLString else { return false }
+        return favoriteURLs.contains(url)
     }
+
 }
 
 private struct SearchIntroCard: View {

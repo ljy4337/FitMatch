@@ -1272,6 +1272,8 @@ protocol FitMatchDatabaseDomainServicing:
         payload: VNextComparisonCompletionPayload
     ) async throws -> VNextCompleteComparisonDTO
     func fetchVNextComparisonHistory() async throws -> [VNextComparisonHistoryDTO]
+    func hideVNextComparisonHistories(clientComparisonIDs: [UUID]) async throws
+        -> VNextComparisonHistoryVisibilityDTO
 }
 
 enum FitMatchSupabaseProductResolverError: LocalizedError {
@@ -1608,6 +1610,14 @@ nonisolated private struct VNextCompleteComparisonParameters: Encodable, Sendabl
     enum CodingKeys: String, CodingKey {
         case pComparisonID = "p_comparison_id"
         case pResult = "p_result"
+    }
+}
+
+nonisolated private struct VNextHideComparisonHistoryParameters: Encodable, Sendable {
+    let pClientComparisonIDs: [UUID]
+
+    enum CodingKeys: String, CodingKey {
+        case pClientComparisonIDs = "p_client_comparison_ids"
     }
 }
 
@@ -1950,6 +1960,21 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             .value
     }
 
+    func hideVNextComparisonHistories(
+        clientComparisonIDs: [UUID]
+    ) async throws -> VNextComparisonHistoryVisibilityDTO {
+        let client = try await authenticatedClient()
+        return try await client
+            .rpc(
+                "fitmatch_vnext_hide_comparison_history",
+                params: VNextHideComparisonHistoryParameters(
+                    pClientComparisonIDs: clientComparisonIDs
+                )
+            )
+            .execute()
+            .value
+    }
+
     private func fetchVNextRuntime(
         _ request: FitMatchProductResolutionRequest
     ) async throws -> VNextProductRuntimeDTO {
@@ -1995,8 +2020,11 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         if let effective, effective.productID != product.id {
             throw FitMatchSupabaseProductResolverError.invalidVNextResponse
         }
-        let serverStatus = effective?.classificationStatus
-            ?? product.classificationStatus
+        let effectiveTuple = VNextRuntimeClassificationTuple(
+            product: product,
+            effective: effective
+        )
+        let serverStatus = effectiveTuple.classificationStatus
         let normalizedStatus: String
         switch serverStatus {
         case "CONFIRMED": normalizedStatus = "confirmed"
@@ -2022,15 +2050,12 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 throw FitMatchSupabaseProductResolverError.invalidVNextResponse
             }
         }
-        let effectiveCategory = effective?.categoryCode ?? product.categoryCode
-        let effectiveGarment = effective?.garmentTypeCode ?? product.garmentTypeCode
-        let effectivePolicy = effective?.comparisonPolicyCode
-            ?? product.comparisonPolicyCode
-        let effectiveSleeve = effective?.sleeveLengthCode
-            ?? product.sleeveLengthCode
-        let effectiveLower = effective?.lowerLengthCode
-            ?? product.lowerLengthCode
-        let effectiveBody = effective?.bodyLengthCode ?? product.bodyLengthCode
+        let effectiveCategory = effectiveTuple.categoryCode
+        let effectiveGarment = effectiveTuple.garmentTypeCode
+        let effectivePolicy = effectiveTuple.comparisonPolicyCode
+        let effectiveSleeve = effectiveTuple.sleeveLengthCode
+        let effectiveLower = effectiveTuple.lowerLengthCode
+        let effectiveBody = effectiveTuple.bodyLengthCode
         if normalizedStatus == "confirmed" {
             guard effectiveCategory?.isEmpty == false,
                   effectiveGarment?.isEmpty == false,
@@ -2047,13 +2072,12 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             lengthCode: effectiveSleeve ?? effectiveLower,
             bodyLengthCode: effectiveBody,
             status: normalizedStatus,
-            method: effective?.effectiveContractVersion ?? product.resolverVersion,
-            authorityStatus: effective?.effectiveSource == "USER_EXPLICIT"
+            method: effectiveTuple.contractVersion,
+            authorityStatus: effectiveTuple.effectiveSource == "USER_EXPLICIT"
                 ? "user_explicit" : "server",
             confidence: nil,
             requiresUserConfirmation: normalizedStatus != "confirmed",
-            taxonomyPolicyVersion: effective?.effectiveContractVersion
-                ?? product.resolverVersion,
+            taxonomyPolicyVersion: effectiveTuple.contractVersion,
             decisionVersion: nil
         )
         let variants = exact.variants.enumerated().map { variantIndex, variant in
@@ -2109,7 +2133,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 externalProductID: product.sourceProductKey,
                 productName: product.productName,
                 canonicalURL: product.canonicalURL,
-                audience: product.audienceCode,
+                audience: effectiveTuple.audienceCode,
                 sourceCategoryPath: nil,
                 sourceCategoryCodes: [],
                 imageURL: product.imageURL,

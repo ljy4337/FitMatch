@@ -49,7 +49,7 @@ struct FitMatchPrivacyPolicyView: View {
                 )
                 FitMatchReleaseSection(
                     title: "상품 정보 요청",
-                    content: "사용자가 입력하거나 공유한 무신사·유니클로 상품 링크를 분석하기 위해 해당 쇼핑몰의 공식 웹·API 주소로 네트워크 요청을 보냅니다. 이 과정에서 쇼핑몰에는 일반적인 네트워크 요청 정보가 전달될 수 있습니다."
+                    content: "사용자가 입력하거나 공유한 무신사·유니클로·ZARA 상품 링크를 분석하기 위해 해당 쇼핑몰의 공식 웹·API 주소로 네트워크 요청을 보냅니다. 이 과정에서 쇼핑몰에는 일반적인 네트워크 요청 정보가 전달될 수 있습니다."
                 )
                 FitMatchReleaseSection(
                     title: "이미지와 실측 분석",
@@ -57,7 +57,7 @@ struct FitMatchPrivacyPolicyView: View {
                 )
                 FitMatchReleaseSection(
                     title: "외부 전송과 추적",
-                    content: "계정·옷장·비교 데이터의 저장과 동기화에는 Supabase를 사용합니다. 상품 분석을 위해 무신사·유니클로의 공식 웹·API로 요청할 수 있습니다. 광고 SDK와 사용자 추적 기능은 사용하지 않으며, 품질 진단 정보는 사용자가 공유를 직접 선택한 경우에만 전달됩니다."
+                    content: "계정·옷장·비교 데이터의 저장과 동기화에는 Supabase를 사용합니다. 상품 분석을 위해 무신사·유니클로·ZARA의 공식 웹·API로 요청할 수 있습니다. 광고 SDK와 사용자 추적 기능은 사용하지 않으며, 품질 진단 정보는 사용자가 공유를 직접 선택한 경우에만 전달됩니다."
                 )
                 FitMatchReleaseSection(
                     title: "삭제와 보관",
@@ -113,7 +113,7 @@ struct FitMatchSupportView: View {
 
                 FitMatchReleaseSection(
                     title: "상품을 불러오지 못할 때",
-                    content: "무신사 또는 유니클로의 실제 상품 페이지 링크인지 확인하고 다시 시도해 주세요. 쇼핑몰의 페이지나 사이즈표 형식이 변경되면 일시적으로 분석하지 못할 수 있습니다."
+                    content: "무신사·유니클로·ZARA의 실제 상품 페이지 링크인지 확인하고 다시 시도해 주세요. 쇼핑몰의 페이지나 사이즈표 형식이 변경되면 일시적으로 분석하지 못할 수 있습니다."
                 )
                 FitMatchReleaseSection(
                     title: "저장 오류가 표시될 때",

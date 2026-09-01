@@ -92,6 +92,15 @@ final class AddClosetItemViewModel: ObservableObject {
             if let prefillProductName, !prefillProductName.trimmed.isEmpty {
                 productName = prefillProductName.trimmed
             }
+            // A new manual form starts with the same active taxonomy tuple
+            // that the View's picker normalizes on appearance.  Keeping the
+            // initial model valid avoids a headless/non-rendered caller
+            // persisting the legacy display code (for example
+            // `short_sleeve`) instead of the current taxonomy detail code.
+            detailCategoryCode = FitMatchTaxonomyProvider.shared.detailCode(
+                for: detailCategory.rawValue,
+                categoryCode: categoryCode
+            ) ?? detailCategoryCode
             return
         }
 
@@ -213,11 +222,30 @@ final class AddClosetItemViewModel: ObservableObject {
         gender != .unknown
             && !brand.trimmed.isEmpty
             && !productName.trimmed.isEmpty
+            && hasValidTaxonomySelection
             && measurements != nil
             && (measurementKinds.isEmpty || measurementEntrySource != nil)
             && (measurementEntrySource != .otherSizeChart || !measurementSourceName.trimmed.isEmpty)
             && (measurementEntrySource != .otherSizeChart || hasAllRequiredSourceLabels)
             && directMeasurementValidationMessage == nil
+    }
+
+    /// Picker-driven UI normally keeps this tuple valid, but linked recovery
+    /// and any future non-visual caller must not persist a mismatched taxonomy
+    /// code/value pair. The same current taxonomy contract is used by the
+    /// compared-product registration path.
+    var hasValidTaxonomySelection: Bool {
+        FitMatchTaxonomyProvider.shared.isActiveCategory(categoryCode)
+            && FitMatchTaxonomyProvider.shared.isValidDetail(
+                detailCategoryCode,
+                for: categoryCode
+            )
+            && ParsedClosetClassification.isConsistent(
+                category: category,
+                detailCategory: detailCategory,
+                categoryCode: categoryCode,
+                detailCode: detailCategoryCode
+            )
     }
 
     var measurements: GarmentMeasurements? {
@@ -291,7 +319,13 @@ final class AddClosetItemViewModel: ObservableObject {
     }
 
     func makeUserFit() -> UserFit? {
-        guard let measurements, directMeasurementValidationMessage == nil else {
+        // The View disables its save button when this is false, but the model
+        // is also used by linked-registration recovery and headless callers.
+        // Keep the same required-field/source gate at the construction
+        // boundary so no caller can persist a form the user could not save.
+        guard canSave,
+              let measurements,
+              directMeasurementValidationMessage == nil else {
             return nil
         }
 

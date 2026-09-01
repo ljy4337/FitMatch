@@ -1,6 +1,51 @@
 import Foundation
 import SwiftData
 
+/// Stable local identities for immutable vNext presentation projections. The
+/// server Product/size/reference IDs remain in the completed snapshot; these
+/// IDs prevent separate comparison records from sharing mutable SwiftData
+/// objects locally.
+enum VNextHistoryProjectionIdentity {
+    static func productID(comparisonID: UUID) -> UUID {
+        comparisonID
+    }
+
+    static func productSizeID(comparisonID: UUID, productSizeID: UUID) -> UUID {
+        derivedID(comparisonID: comparisonID, originalID: productSizeID, discriminator: 0x31)
+    }
+
+    static func referenceID(comparisonID: UUID, clientItemID: UUID) -> UUID {
+        derivedID(comparisonID: comparisonID, originalID: clientItemID, discriminator: 0x51)
+    }
+
+    private static func derivedID(
+        comparisonID: UUID,
+        originalID: UUID,
+        discriminator: UInt8
+    ) -> UUID {
+        let lhs = comparisonID.uuid
+        let rhs = originalID.uuid
+        return UUID(uuid: (
+            lhs.0 ^ rhs.0 ^ discriminator,
+            lhs.1 ^ rhs.1,
+            lhs.2 ^ rhs.2,
+            lhs.3 ^ rhs.3,
+            lhs.4 ^ rhs.4,
+            lhs.5 ^ rhs.5,
+            lhs.6 ^ rhs.6,
+            lhs.7 ^ rhs.7,
+            lhs.8 ^ rhs.8,
+            lhs.9 ^ rhs.9,
+            lhs.10 ^ rhs.10,
+            lhs.11 ^ rhs.11,
+            lhs.12 ^ rhs.12,
+            lhs.13 ^ rhs.13,
+            lhs.14 ^ rhs.14,
+            lhs.15 ^ rhs.15
+        ))
+    }
+}
+
 enum VNextHistoryCacheHydrationError: LocalizedError, Equatable {
     case incompleteSnapshot(UUID)
     case missingReferenceIdentity(UUID)
@@ -24,6 +69,177 @@ enum VNextHistoryCacheHydrationError: LocalizedError, Equatable {
 struct VNextHistoryCacheHydrator {
     private let adapter = VNextComparisonEngineAdapter()
 
+    /// A completed v4 comparison is an immutable, begin-time artifact.  It
+    /// cannot be represented by the mutable current Product cache when the
+    /// same retailer Product was compared under a different personal revision.
+    private struct HistoricalTargetProjection {
+        let localProductID: UUID
+        let usesImmutableProjection: Bool
+        let authority: FitMatchClassificationAuthorityProvenance
+        let sourceIdentity: String
+        let categoryCode: String?
+        let garmentTypeCode: String?
+        let audienceCode: String?
+        let sleeveLengthCode: String?
+        let lowerLengthCode: String?
+        let bodyLengthCode: String?
+        let policyCode: String?
+        let policyVersion: String?
+        let personalRevision: Int?
+        let candidateFingerprint: String?
+
+        private init(
+            localProductID: UUID,
+            usesImmutableProjection: Bool,
+            authority: FitMatchClassificationAuthorityProvenance,
+            sourceIdentity: String,
+            categoryCode: String?,
+            garmentTypeCode: String?,
+            audienceCode: String?,
+            sleeveLengthCode: String?,
+            lowerLengthCode: String?,
+            bodyLengthCode: String?,
+            policyCode: String?,
+            policyVersion: String?,
+            personalRevision: Int?,
+            candidateFingerprint: String?
+        ) {
+            self.localProductID = localProductID
+            self.usesImmutableProjection = usesImmutableProjection
+            self.authority = authority
+            self.sourceIdentity = sourceIdentity
+            self.categoryCode = categoryCode
+            self.garmentTypeCode = garmentTypeCode
+            self.audienceCode = audienceCode
+            self.sleeveLengthCode = sleeveLengthCode
+            self.lowerLengthCode = lowerLengthCode
+            self.bodyLengthCode = bodyLengthCode
+            self.policyCode = policyCode
+            self.policyVersion = policyVersion
+            self.personalRevision = personalRevision
+            self.candidateFingerprint = candidateFingerprint
+        }
+
+        init(row: VNextComparisonHistoryDTO) throws {
+            guard row.snapshotSchemaVersion >= 4 else {
+                self = Self.legacy(row: row)
+                return
+            }
+
+            guard let authorityRoot = row.authoritySnapshot.objectValue,
+                  let effective = authorityRoot[
+                    "effective_classification_at_begin"
+                  ]?.objectValue,
+                  let source = effective["source"]?.stringValue?.uppercased(),
+                  let state = effective["state"]?.stringValue?.uppercased(),
+                  let garment = effective["garment_type_code"]?.stringValue,
+                  !garment.isEmpty else {
+                throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
+            }
+
+            let personal = authorityRoot["personal_projection_at_begin"]?.objectValue
+            let provenance: FitMatchClassificationAuthorityProvenance
+            let revision: Int?
+            let candidateFingerprint: String?
+            switch source {
+            case "USER_EXPLICIT":
+                guard state == "PERSONAL_CONFIRMED",
+                      let numericRevision = personal?["revision"]?.numberValue,
+                      numericRevision >= 1,
+                      let fingerprint = personal?["selected_candidate_fingerprint"]?.stringValue,
+                      !fingerprint.isEmpty else {
+                    throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
+                }
+                provenance = .userExplicit
+                revision = Int(numericRevision)
+                candidateFingerprint = fingerprint
+            case "GLOBAL_CONFIRMED", "GLOBAL":
+                guard state == "GLOBAL_CONFIRMED" || state == "CONFIRMED" else {
+                    throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
+                }
+                provenance = .serverConfirmed
+                revision = nil
+                candidateFingerprint = nil
+            default:
+                throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
+            }
+
+            let category = effective["category_code"]?.stringValue
+            let audience = effective["audience_code"]?.stringValue
+            let sleeve = Self.axis(effective["sleeve_length_code"])
+            let lower = Self.axis(effective["lower_length_code"])
+            let body = Self.axis(effective["body_length_code"])
+            let policyCode = row.policySnapshot?.policyCode
+                ?? row.authorizationSnapshot?.policyCode
+            let policyVersion = row.policySnapshot?.policyVersion
+                ?? row.authorizationSnapshot?.policyVersion
+            let authorityFingerprint = effective[
+                "effective_authority_fingerprint"
+            ]?.stringValue ?? row.inputSnapshot.objectValue?[
+                "effective_authority_fingerprint"
+            ]?.stringValue
+            let revisionString = revision.map(String.init) ?? "none"
+            let candidateString = candidateFingerprint ?? "none"
+            let authorityString = authorityFingerprint ?? "none"
+            let categoryString = category ?? "nil"
+            let sleeveString = sleeve ?? "nil"
+            let lowerString = lower ?? "nil"
+            let bodyString = body ?? "nil"
+            let identity = [
+                "fitmatch_vnext_history_v4",
+                "comparison=\(row.clientComparisonID.uuidString.lowercased())",
+                "target=\(row.targetProductID.uuidString.lowercased())",
+                "source=\(source.lowercased())",
+                "revision=\(revisionString)",
+                "candidate=\(candidateString)",
+                "authority=\(authorityString)",
+                "audience=\(audience ?? "nil")",
+                "tuple=\(categoryString)/\(garment)/\(sleeveString)/\(lowerString)/\(bodyString)"
+            ].joined(separator: ";")
+
+            localProductID = VNextHistoryProjectionIdentity.productID(
+                comparisonID: row.clientComparisonID
+            )
+            usesImmutableProjection = true
+            authority = provenance
+            sourceIdentity = identity
+            categoryCode = category
+            garmentTypeCode = garment
+            audienceCode = audience
+            sleeveLengthCode = sleeve
+            lowerLengthCode = lower
+            bodyLengthCode = body
+            self.policyCode = policyCode
+            self.policyVersion = policyVersion
+            personalRevision = revision
+            self.candidateFingerprint = candidateFingerprint
+        }
+
+        private static func legacy(row: VNextComparisonHistoryDTO) -> Self {
+            Self(
+                localProductID: row.targetProductID,
+                usesImmutableProjection: false,
+                authority: .serverConfirmed,
+                sourceIdentity: "fitmatch_vnext_history",
+                categoryCode: row.targetCategoryCode,
+                garmentTypeCode: row.targetSnapshot?.garmentTypeCode,
+                audienceCode: nil,
+                sleeveLengthCode: row.targetSnapshot?.sleeveLengthCode,
+                lowerLengthCode: row.targetSnapshot?.lowerLengthCode,
+                bodyLengthCode: row.targetSnapshot?.bodyLengthCode,
+                policyCode: row.policySnapshot?.policyCode,
+                policyVersion: row.policySnapshot?.policyVersion,
+                personalRevision: nil,
+                candidateFingerprint: nil
+            )
+        }
+
+        private static func axis(_ value: FitMatchJSONValue?) -> String? {
+            guard case .string(let raw)? = value else { return nil }
+            return raw
+        }
+    }
+
     func hydrateCompleted(
         _ rows: [VNextComparisonHistoryDTO],
         existingHistories: [RecommendationHistory],
@@ -31,10 +247,22 @@ struct VNextHistoryCacheHydrator {
         existingClosetItems: [UserFit],
         modelContext: ModelContext
     ) throws -> Set<UUID> {
-        let existingHistoryIDs = Set(existingHistories.map(\.id))
-        var productByID = Dictionary(uniqueKeysWithValues: existingProducts.map { ($0.id, $0) })
+        // Callers can legitimately hold stale @Query snapshots while SwiftData
+        // has already inserted or deleted related rows.  Always rebuild the
+        // hydration identity maps from this context instead of retaining an
+        // invalidated model instance supplied by a previous render pass.
+        _ = existingHistories
+        _ = existingProducts
+        _ = existingClosetItems
+        let persistedHistories = try modelContext.fetch(
+            FetchDescriptor<RecommendationHistory>()
+        )
+        let persistedProducts = try modelContext.fetch(FetchDescriptor<Product>())
+        let persistedClosetItems = try modelContext.fetch(FetchDescriptor<UserFit>())
+        let existingHistoryIDs = Set(persistedHistories.map(\.id))
+        var productByID = Dictionary(uniqueKeysWithValues: persistedProducts.map { ($0.id, $0) })
         var closetByClientID = Dictionary(
-            uniqueKeysWithValues: existingClosetItems.map { ($0.id, $0) }
+            uniqueKeysWithValues: persistedClosetItems.map { ($0.id, $0) }
         )
         var hydrated = Set<UUID>()
 
@@ -53,12 +281,18 @@ struct VNextHistoryCacheHydrator {
                 throw VNextHistoryCacheHydrationError.completionMismatch(row.id)
             }
 
-            let product = productByID[row.targetProductID]
-                ?? makeProduct(from: row, modelContext: modelContext)
-            productByID[row.targetProductID] = product
+            let projection = try HistoricalTargetProjection(row: row)
+            let product = productByID[projection.localProductID]
+                ?? makeProduct(
+                    from: row,
+                    projection: projection,
+                    modelContext: modelContext
+                )
+            productByID[projection.localProductID] = product
             let recommendedSize = try ensureRecommendedSize(
                 id: recommendedID,
                 row: row,
+                projection: projection,
                 product: product,
                 modelContext: modelContext
             )
@@ -66,19 +300,25 @@ struct VNextHistoryCacheHydrator {
             guard let referenceClientID = row.referenceClientItemID else {
                 throw VNextHistoryCacheHydrationError.missingReferenceIdentity(row.id)
             }
-            let reference = closetByClientID[referenceClientID]
+            let referenceProjectionID = projection.usesImmutableProjection
+                ? VNextHistoryProjectionIdentity.referenceID(
+                    comparisonID: row.clientComparisonID,
+                    clientItemID: referenceClientID
+                )
+                : referenceClientID
+            let reference = closetByClientID[referenceProjectionID]
                 ?? makeReference(
-                    id: referenceClientID,
+                    id: referenceProjectionID,
                     snapshot: row.referenceSnapshot,
                     modelContext: modelContext
                 )
-            closetByClientID[referenceClientID] = reference
+            closetByClientID[referenceProjectionID] = reference
 
             let detail = detailCategory(
-                garmentType: row.targetSnapshot?.garmentTypeCode,
-                sleeve: row.targetSnapshot?.sleeveLengthCode,
-                lower: row.targetSnapshot?.lowerLengthCode,
-                body: row.targetSnapshot?.bodyLengthCode
+                garmentType: projection.garmentTypeCode,
+                sleeve: projection.sleeveLengthCode,
+                lower: projection.lowerLengthCode,
+                body: projection.bodyLengthCode
             )
             let result = analysis.recommended.result
             let history = RecommendationHistory(
@@ -125,21 +365,32 @@ struct VNextHistoryCacheHydrator {
 
     private func makeProduct(
         from row: VNextComparisonHistoryDTO,
+        projection: HistoricalTargetProjection,
         modelContext: ModelContext
     ) -> Product {
-        let category = ClothingCategory.fromTaxonomyCode(row.targetCategoryCode ?? "other")
+        let category = ClothingCategory.fromTaxonomyCode(projection.categoryCode ?? "other")
         let source = sourcePresentation(row.targetSourceCode)
         let sizes = (row.targetSnapshot?.candidates ?? []).enumerated().map { index, candidate in
-            makeProductSize(candidate: candidate, displayOrder: index)
+            makeProductSize(
+                candidate: candidate,
+                displayOrder: index,
+                localID: projection.usesImmutableProjection
+                    ? VNextHistoryProjectionIdentity.productSizeID(
+                        comparisonID: row.clientComparisonID,
+                        productSizeID: candidate.productSizeID
+                    )
+                    : candidate.productSizeID
+            )
         }
         let product = Product(
-            id: row.targetProductID,
+            id: projection.localProductID,
             name: row.targetProductName,
             category: category,
             productCode: row.targetSourceProductKey,
+            sourceURLString: supportedCanonicalURL(from: row),
             imageURLString: row.targetImageURL,
             metadata: ProductMetadata(
-                genderCodes: [row.targetSnapshot?.garmentTypeCode == nil ? "UNKNOWN" : "UNISEX"]
+                genderCodes: [projection.audienceCode ?? "UNKNOWN"]
             ),
             sourceType: source.type,
             sourceName: source.name,
@@ -149,25 +400,47 @@ struct VNextHistoryCacheHydrator {
             updatedAt: decodeDate(row.createdAt) ?? Date()
         )
         product.sourcePlatformCode = row.targetSourceCode
-        product.categoryCode = row.targetCategoryCode
-        product.garmentTypeRawValue = row.targetSnapshot?.garmentTypeCode
-        product.sleeveTypeRawValue = row.targetSnapshot?.sleeveLengthCode
+        product.categoryCode = projection.categoryCode
+        product.garmentTypeRawValue = projection.garmentTypeCode
+        product.sleeveTypeRawValue = projection.sleeveLengthCode
         product.checkedSizeName = row.recommendedSizeLabel
+        product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
+            historicalCanonicalProfile(for: projection, row: row)
+        )
+        product.canonicalPolicyVersion = projection.policyVersion
         product.markClassificationAuthority(
-            .serverConfirmed,
-            sourceIdentity: "fitmatch_vnext_history"
+            projection.authority,
+            sourceIdentity: projection.sourceIdentity
         )
         modelContext.insert(product)
         return product
     }
 
+    private func supportedCanonicalURL(from row: VNextComparisonHistoryDTO) -> String? {
+        guard let raw = row.targetCanonicalURL?.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        ),
+        let url = URL(string: raw),
+        FitMatchProductURLRouting.provider(for: url) != nil else {
+            return nil
+        }
+        return url.absoluteString
+    }
+
     private func ensureRecommendedSize(
         id: UUID,
         row: VNextComparisonHistoryDTO,
+        projection: HistoricalTargetProjection,
         product: Product,
         modelContext: ModelContext
     ) throws -> ProductSize {
-        if let existing = product.sizes.first(where: { $0.id == id }) {
+        let localID = projection.usesImmutableProjection
+            ? VNextHistoryProjectionIdentity.productSizeID(
+                comparisonID: row.clientComparisonID,
+                productSizeID: id
+            )
+            : id
+        if let existing = product.sizes.first(where: { $0.id == localID }) {
             return existing
         }
         guard let candidate = row.targetSnapshot?.candidates.first(where: {
@@ -175,7 +448,11 @@ struct VNextHistoryCacheHydrator {
         }) else {
             throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
         }
-        let size = makeProductSize(candidate: candidate, displayOrder: product.sizes.count)
+        let size = makeProductSize(
+            candidate: candidate,
+            displayOrder: product.sizes.count,
+            localID: localID
+        )
         size.product = product
         product.sizes.append(size)
         modelContext.insert(size)
@@ -184,13 +461,14 @@ struct VNextHistoryCacheHydrator {
 
     private func makeProductSize(
         candidate: VNextAuthorizedCandidateDTO,
-        displayOrder: Int
+        displayOrder: Int,
+        localID: UUID
     ) -> ProductSize {
         let values = candidate.comparisonMeasurements.reduce(into: [String: Double]()) {
             $0[$1.measurementCode] = $1.targetValue
         }
         let size = ProductSize(
-            id: candidate.productSizeID,
+            id: localID,
             name: candidate.sizeLabel,
             measurements: measurements(from: values),
             displayOrder: displayOrder
@@ -259,10 +537,14 @@ struct VNextHistoryCacheHydrator {
             userFit: item
         )
         item.markClassificationAuthority(
-            classificationSource == "manual_override" ? .userExplicit : .serverConfirmed,
+            isUserExplicitReference(classificationSource)
+                ? .userExplicit
+                : .serverConfirmed,
             sourceIdentity: classificationSource ?? "fitmatch_vnext_history"
         )
-        item.markAsHistoryOnlyReferenceSnapshot()
+        item.markAsHistoryOnlyReferenceSnapshot(
+            sourceIdentity: object["closet_item_id"]?.stringValue
+        )
         modelContext.insert(item)
         return item
     }
@@ -363,6 +645,48 @@ struct VNextHistoryCacheHydrator {
         if category(for: garmentType) == .dress { return .onePiece }
         if body == "long" && category(for: garmentType) == .outer { return .longPadding }
         return .other
+    }
+
+    /// The history cache may decorate a frozen server tuple for local display,
+    /// but it never derives a replacement classification from the current
+    /// Product.  Every meaningful axis below came from the begin snapshot.
+    private func historicalCanonicalProfile(
+        for projection: HistoricalTargetProjection,
+        row: VNextComparisonHistoryDTO
+    ) -> CanonicalComparisonProfile {
+        let policyCode = projection.policyCode ?? "history_snapshot"
+        let policyVersion = projection.policyVersion ?? "history_snapshot"
+        return CanonicalComparisonProfile(
+            decision: .confirmed,
+            semanticCategoryCode: projection.categoryCode,
+            semanticGarmentType: projection.garmentTypeCode,
+            comparisonFamily: policyCode,
+            appComparisonFamily: policyCode,
+            lengthAxes: CanonicalLengthAxes(
+                sleeve: projection.sleeveLengthCode ?? "not_applicable",
+                pants: projection.lowerLengthCode ?? "not_applicable",
+                leggings: "not_applicable",
+                skirt: "not_applicable",
+                body: projection.bodyLengthCode ?? "not_applicable"
+            ),
+            constructionType: "single",
+            eligibility: true,
+            requiredMeasurements: row.authorizationSnapshot?.requiredMeasurementCodes ?? [],
+            optionalMeasurements: [],
+            excludedMeasurements: row.excludedMeasurementCodes,
+            policyVersion: policyVersion,
+            resolutionMethod: projection.authority.rawValue,
+            sourceIdentity: projection.sourceIdentity
+        )
+    }
+
+    private func isUserExplicitReference(_ source: String?) -> Bool {
+        switch source?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
+        case "USER_EXPLICIT", "MANUAL_OVERRIDE", "USER_EDITED":
+            return true
+        default:
+            return false
+        }
     }
 
     private func sourcePresentation(_ source: String) -> (type: ProductSourceType, name: String) {

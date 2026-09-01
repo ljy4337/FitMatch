@@ -189,6 +189,52 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
+    /// Starts a new comparison from an immutable History projection only when
+    /// that projection retained enough official retailer identity for the
+    /// existing server resolver.  It intentionally does not reconstruct a
+    /// storefront URL or reuse historical authority: current authority is
+    /// resolved through the same coordinator used by normal URL entry.
+    func loadProductInfoFromHistoricalProduct(_ historicalProduct: Product) async -> Bool {
+        guard let parsedProduct = historicalProduct.fitMatchStoredRetailerFactsForRecompare(),
+              parsedProduct.fitMatchDatabaseResolutionRequest() != nil else {
+            errorMessage = "이 비교 기록의 상품 정보를 다시 불러올 수 없어요. 상품 링크를 다시 열어 주세요."
+            return false
+        }
+
+        let loadID = UUID()
+        activeLoadID = loadID
+        databaseShadowState = .idle
+        serverAuthorityState = .idle
+        reviewRecoveryState = .idle
+        parsedProductForServerAuthority = nil
+        classificationSafetyAudit = .safe
+        errorMessage = nil
+        parserNotice = nil
+        productAnalysisRecoveryAction = nil
+        hasLoadedProductInfo = false
+        productCode = nil
+        productMetadata = ProductMetadata()
+        sizeTableRecoveryContext = nil
+        isNetworkFailure = false
+        analysisPhase = .preparingComparison
+        isLoadingProductInfo = true
+        defer {
+            if activeLoadID == loadID {
+                activeLoadID = nil
+                isLoadingProductInfo = false
+            }
+        }
+
+        apply(parsedProduct)
+        // A retained canonical URL is presentation data, not a prerequisite
+        // for the server resolver.  Do not surface the private invalid
+        // placeholder used solely by the existing stored-facts request.
+        productURL = historicalProduct.sourceURLString ?? ""
+        productCanonicalURLString = historicalProduct.sourceURLString
+        guard !Task.isCancelled, activeLoadID == loadID else { return false }
+        return await resolveServerAuthority(for: parsedProduct)
+    }
+
     func cancelProductLoading() {
         activeLoadID = nil
         databaseShadowState = .idle
@@ -838,7 +884,7 @@ final class ShoppingProductViewModel: ObservableObject {
             let analysis = try recommendationService.analyzeVNextComparison(
                 permit: permit
             )
-            _ = try await serverAuthorityCoordinator.completeAuthorizedComparison(
+            let completion = try await serverAuthorityCoordinator.completeAuthorizedComparison(
                 permit: permit,
                 analysis: analysis
             )
@@ -847,7 +893,8 @@ final class ShoppingProductViewModel: ObservableObject {
                 selectedReferenceItem: reference,
                 productDetailCategory: detailCategory,
                 permit: permit,
-                analysis: analysis
+                analysis: analysis,
+                completion: completion
             ) else {
                 return nil
             }
@@ -1006,20 +1053,28 @@ final class ShoppingProductViewModel: ObservableObject {
             product.garmentTypeRawValue = serverClassification.garmentTypeCode
             product.sleeveTypeRawValue = serverClassification.lengthCode
             if let exact = confirmedServerAuthority?.runtime.vnext?.product {
-                let effective = confirmedServerAuthority?.runtime.vnext?
-                    .effectiveClassification
-                let garmentTypeCode = effective?.garmentTypeCode
-                    ?? exact.garmentTypeCode
-                let categoryCode = effective?.categoryCode ?? exact.categoryCode
-                let policyCode = effective?.comparisonPolicyCode
-                    ?? exact.comparisonPolicyCode
-                let sleeveLengthCode = effective?.sleeveLengthCode
-                    ?? exact.sleeveLengthCode
-                let lowerLengthCode = effective?.lowerLengthCode
-                    ?? exact.lowerLengthCode
-                let bodyLengthCode = effective?.bodyLengthCode
-                    ?? exact.bodyLengthCode
+                let effectiveTuple = VNextRuntimeClassificationTuple(
+                    product: exact,
+                    effective: confirmedServerAuthority?.runtime.vnext?
+                        .effectiveClassification
+                )
+                let garmentTypeCode = effectiveTuple.garmentTypeCode
+                let categoryCode = effectiveTuple.categoryCode
+                let policyCode = effectiveTuple.comparisonPolicyCode
+                let sleeveLengthCode = effectiveTuple.sleeveLengthCode
+                let lowerLengthCode = effectiveTuple.lowerLengthCode
+                let bodyLengthCode = effectiveTuple.bodyLengthCode
+                product.category = ClothingCategory.fromTaxonomyCode(categoryCode ?? "other")
+                product.categoryCode = categoryCode
                 product.normalizedProductTypeCode = garmentTypeCode
+                product.garmentTypeRawValue = garmentTypeCode
+                // These fields belong to the single server-issued effective
+                // tuple. Do not retain parser or global fields when a current
+                // personal authority replaces them (or intentionally omits an
+                // axis).
+                product.genderCodes = effectiveTuple.audienceCode
+                product.sleeveTypeRawValue = sleeveLengthCode
+                product.constructionTypeRawValue = effectiveTuple.productStructureCode
                 product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
                     CanonicalComparisonProfile(
                         decision: .confirmed,
@@ -1034,12 +1089,12 @@ final class ShoppingProductViewModel: ObservableObject {
                             skirt: "not_applicable",
                             body: bodyLengthCode ?? "not_applicable"
                         ),
-                        constructionType: "unknown",
+                        constructionType: effectiveTuple.productStructureCode,
                         eligibility: confirmedServerAuthority?.comparisonReady == true,
                         requiredMeasurements: [],
                         optionalMeasurements: [],
                         excludedMeasurements: [],
-                        policyVersion: exact.resolverVersion ?? "fitmatch-vnext",
+                        policyVersion: effectiveTuple.contractVersion ?? "fitmatch-vnext",
                         resolutionMethod: "fitmatch_vnext_runtime",
                         sourceIdentity: exact.inputFingerprint
                     )

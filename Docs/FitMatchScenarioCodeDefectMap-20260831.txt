@@ -1,0 +1,245 @@
+# FitMatch Scenario ↔ Code Defect Map — 2026-08-31
+
+## Scope
+
+This is an implementation blueprint produced by the strict read-only conformance
+audit.  It describes current source, not an approved patch.  `8855874` is the
+published authority; local HJ-P0-001 work is uncommitted evidence only.  Every
+change below must preserve server-owned classification, explicit-only manual
+cross, `require_same_sleeve`, begin-before-engine, complete-before-local-history,
+SwiftData schema, navigation, Share Extension behavior except where a listed
+entry expressly targets it, and the protected tab/header scroll implementation.
+
+## P0 — authority and immutable-result correctness
+
+### D-A01 — HJ-P0-001: primary shopping USER_EXPLICIT completion is discarded in published Git
+
+- **Files / symbols:** `FitMatch/Services/RecommendationService.swift`,
+  `makeCompletedVNextHistory`; `FitMatch/ViewModels/ShoppingProductViewModel.swift`,
+  `completeVNextRecommendation`; `FitMatch/Views/RecommendationResultView.swift`,
+  `prepareAlternativeSizeAnalyses`.
+- **Affected scenarios:** J07, J09, J11, J13; all later USER_EXPLICIT completed-result
+  paths.
+- **Current:** released code admits only `.serverConfirmed` when creating local vNext
+  history, after an already successful server completion.
+- **Expected:** admit either GLOBAL_CONFIRMED or only a current, server-backed
+  USER_EXPLICIT whose permit/begin/complete identities, target, reference,
+  authorized sizes, effective-authority fingerprint, snapshot V4 personal projection,
+  revision, hash, and global fingerprints all match.
+- **Change type:** narrow Swift provenance gate.  The pre-existing dirty strict-proof
+  direction is the required baseline; never substitute
+  `.serverConfirmed || .userExplicit`.
+- **Dependencies / regressions:** J07/J09/J11/J13 result+History; stale/cleared/local
+  USER_EXPLICIT, mismatched run/target/reference/size tests; global path; current-session
+  alternate size; wrong fallback error absent.
+- **Must not change:** scorer, policy, server RPC, manual-cross rows, snapshot content.
+
+### D-A02 — USER_EXPLICIT “다른 옷과 비교” rewrites target provenance and loses the new result
+
+- **Files / symbols:** `FitMatch/Views/RecommendationResultView.swift`,
+  `compare(with:)` (~1828), `applyServerAuthority` (~1908),
+  `ResultReferenceComparisonPersistence.resolveAndSave` (~3034).
+- **Affected scenarios:** new composite `NEW-GAP-RESULT-001` (J13/J14/J33 + J20/J32).
+- **Current:** after authorized begin, `applyServerAuthority` writes `familyCode` into
+  the garment field and unconditionally marks the mutable target Product
+  `.serverConfirmed`.  The strict history gate then rejects its USER_EXPLICIT V4
+  snapshot after server completion.  It can also mutate the Product owned by the old
+  Result.
+- **Expected:** construct an ephemeral comparison-local target from the runtime
+  effective classification: effective category/garment/axes/profile and source derived
+  from `authorityStatus`; preserve the old result Product.  Use `garmentTypeCode` as
+  garment and `familyCode` only as comparison policy.
+- **Change type:** shared server-runtime-to-Product mapper or a narrow reuse of the
+  main Shopping mapper; no local inference and no in-place historical mutation.
+- **Dependencies / regressions:** server-backed USER_EXPLICIT other-item V4 result and
+  History; global other-item result unchanged; stale/cleared/local projection rejected;
+  original Result remains byte/semantically unchanged.
+- **Must not change:** local fresh scoring without begin, reference intent, complete RPC.
+
+### D-A03 — V4 History hydration flattens personal effective authority into live global authority
+
+- **Files / symbols:** `FitMatch/Services/VNextHistoryCacheHydrator.swift`,
+  target `makeProduct` / reuse cache (~56, ~126–161);
+  `FitMatch/Models/RecommendationHistory.swift` profile snapshot use.
+- **Server evidence:** migration `20260830091000_vnext_review_required_recovery.sql`
+  snapshots `effective_classification_at_begin`; legacy history projection in
+  `20260829110853_vnext_swift_user_contract.sql` derives `target_category_code` from
+  the current global Product.
+- **Affected scenarios:** J20, J32, `NEW-GAP-HISTORY-003`.
+- **Current:** hydrated V4 USER_EXPLICIT history reads live category, always sets
+  `.serverConfirmed`, and may reuse one mutable Product for different historical
+  personal revisions.
+- **Expected:** V4 authority snapshot is the sole historical target presentation
+  source.  Decode effective category/garment/axes/source and personal revision/hash;
+  use a per-history immutable presentation snapshot.  V3/legacy fallback stays
+  explicitly legacy, never silently pretends personal V4 is global.
+- **Change type:** Swift hydration/provenance decoding only; no server rewrite.
+- **Dependencies / regressions:** fresh hydration of recovered history; two revisions
+  for same Product; global V4/V3 history; missing/inconsistent V4 snapshot fails safe;
+  recompare uses current server authority rather than rewriting old history.
+
+### D-A04 — shopping Recovery authority becomes a Closet manual override without separate intent
+
+- **Files / symbols:** `FitMatch/Views/AddComparedProductToClosetSheet.swift`
+  (~63–88, ~719–741), `FitMatch/Views/LinkClosetRegistrationView.swift`
+  (~519–565), `FitMatch/Models/FitMatchClassificationAuthorityProvenance.swift`
+  `resultingAuthority`, `FitMatch/Services/FitMatchClosetSyncCoordinator.swift`
+  (~417–445), `ShoppingProductViewModel.hasServerConfirmedAuthority` naming/use.
+- **Affected scenarios:** `NEW-GAP-CLOSET-UE-001`.
+- **Current:** a product-scoped shopping `.userExplicit` is treated as lack of server
+  authority in full registration and is locally re-parsed; partial registration calls
+  an effective-confirmed convenience flag “server confirmed,” writes `familyCode` as
+  garment, and marks it global.  Either path can persist a Closet `manual_override`.
+- **Expected:** shopping Recovery and Closet personal classification are separate
+  domains.  No implicit transfer or parser-based rewrite is permitted.  A Closet
+  override must require its own explicit Closet intent; otherwise use an
+  unambiguous non-authoritative/fail-closed registration outcome.
+- **Change type:** narrow domain/provenance gate plus exact tuple handling.  If product
+  policy needs a transfer UX, it must be a separately consented, exact server tuple—not
+  a compatibility shortcut.
+- **Dependencies / regressions:** full and partial add-to-Closet from shopping
+  USER_EXPLICIT; no `manual_override` RPC; future reference cannot use it; global
+  confirmed linked registration and direct manual Closet flows unchanged.
+
+## P1 — declared-flow conformance and important UX reliability
+
+### D-B01 — reference discovery/presentation is local-first
+
+- **Files / symbols:** `FitMatch/Views/CompareFlowSheet.swift`,
+  `rebuildPreparedComparison` (~1858), `serverPendingReferenceSelectionPlan` (~1899),
+  local compatibility/ranking surfaces (~636–729, ~1325–1458);
+  `FitMatchServerAuthorityCoordinator.authorizeReferenceCandidate` (~529–599).
+- **Affected scenarios:** J03, J04, J06–J13, J17–J19, J22–J25, J29, J30, J40,
+  J43–J45; `NEW-GAP-REF-001`.
+- **Current:** local `UserFit` filter/matcher creates, ranks, labels, and can
+  auto-route reference candidates before `find_reference_candidates` informs the UI.
+  Server authorization correctly blocks invalid choices, so no static scorer bypass was
+  found.
+- **Expected:** effective authority → server discovery → user/automatic reference
+  decision.  Display only server returned candidates mapped to current local items;
+  only server direct/automatic candidate may auto-progress.  Manual candidates remain
+  explicit; local cache is presentation only.
+- **Regressions:** stale local candidate hidden/server-valid candidate visible;
+  automatic manual-cross blocked; explicit same-sleeve cross remains MANUAL_EXTENDED;
+  no scorer before begin.
+
+### D-B02 — Result other-item picker is likewise local-first
+
+- **Files / symbols:** `RecommendationResultView.ResultReferencePickerView`,
+  `selectableFits` (~3477), compatibility badges (~3493), selection action (~3387).
+- **Affected scenarios:** J20/J32, `NEW-GAP-REF-002`, D-A02.
+- **Current / expected:** same defect as D-B01 on the Result surface.  It must use
+  server discovery, preserve actual target effective authority, and not expose a
+  target-category-looking list that contains server-blocked rows.
+- **Dependencies:** implement coherently with D-A02/D-B01; do not create a second
+  policy matcher.
+
+### D-B03 — manual-cross with insufficient measurements loses the manual intent in SQL fallback
+
+- **Files / symbols:** `supabase/migrations/20260830091000_vnext_review_required_recovery.sql`,
+  `eligible_candidate_sizes` no-size reason (~515–563); `authorize_comparison`
+  manual semantics (~967–1060).
+- **Affected scenarios:** new `NEW-GAP-MC-001`: J07/J09/J11 × J22/J23.
+- **Current:** fallback authorization passes `p_manual_explicit=false`, so an otherwise
+  structurally compatible explicit manual cross becomes BLOCKED instead of
+  MEASUREMENTS_REQUIRED.
+- **Expected:** preserve explicit intent only while explaining no eligible size; never
+  make cross-policy reference automatic.
+- **Change type:** reviewed follow-up migration + SQL tests; must not edit the already
+  deployed migration in place.
+
+### D-B04 — same-client-id begin replay is incomplete
+
+- **Files / symbols:** `20260830091000_vnext_review_required_recovery.sql`,
+  `begin_comparison` replay branch (~2299), legacy Swift bridge in
+  `20260829110853...` (~780); coordinator validation (~738).
+- **Affected scenarios:** J31/J36, `NEW-GAP-BEGIN-REPLAY-001`.
+- **Current:** replay omits top-level authority / authorization / candidate fingerprint
+  material required by current Swift continuation and strict history proof.
+- **Expected:** exact idempotent replay reconstructs/returns the same complete DTO
+  contract as first begin, without a new comparison or mutable snapshot.
+- **Change type:** reviewed additive migration / SQL contract test; no ledger repair,
+  duplicate comparison, or client relaxation.
+
+### D-B05 — effective tuple can be hybridized with global fields
+
+- **Files / symbols:** `FitMatchSupabaseProductResolver.swift` (~2025),
+  `ShoppingProductViewModel.makeProduct` (~1010).
+- **Affected scenarios:** J13–J15, J33–J39, `NEW-GAP-EFFECTIVE-TUPLE-001`.
+- **Current:** per-field nil coalescing mixes a valid effective personal tuple with
+  partial global REVIEW_REQUIRED evidence.
+- **Expected:** if the server supplies an effective classification object, consume it
+  verbatim; use global fields only when no effective object exists.
+- **Regressions:** null irrelevant axis, partial global tuple, global confirmed,
+  stale/cleared personal projection.
+
+### D-B06 — onboarding link registration is offered before its required authentication
+
+- **Files / symbols:** `ContentView`, onboarding/login routing (~107–165);
+  `FitMatchOnboardingView` (~123–155); `LinkClosetRegistrationView.loadProduct`
+  (~375–403); resolver session guards.
+- **Affected scenarios:** `NEW-GAP-REG-001`.
+- **Current:** first-install signed-out user sees a link registration action that cannot
+  resolve vNext server authority.  Manual entry can defer sync.
+- **Expected:** minimal intentional handoff/retained route to authentication, or a clear
+  non-authoritative draft flow that cannot save/link as sourced authority until signed
+  in.  Do not invent local global classification.
+
+### D-B07 — duplicate linked Closet save gets stuck in saving state
+
+- **Files / symbols:** `AddComparedProductToClosetSheet.saveSelectedSize` (~537–670).
+- **Affected scenarios:** `NEW-GAP-CLOSET-001`.
+- **Current / expected:** duplicate alert returns with `isSaving=true`; reset it before
+  return so the user can dismiss and retry.  Add an action-state test.
+
+### D-B08 — alternate-size action is advertised after its authorized session expires from memory
+
+- **Files / symbols:** `VNextComparisonEngineAdapter` current batch (~210–227),
+  `RecommendationResultView` entry (~263–299), prepare (~815–832), sheet (~546–610).
+- **Affected scenarios:** J20/J32, `NEW-GAP-NAV-001`.
+- **Current / expected:** post-restart/history has product sizes but no current
+  server-authorized batch; UI leads to disabled size choices with no reason.  Gate entry
+  on exact batch or show the existing literal explanation—never rerun local scorer.
+
+### D-B09 — provider/test authority gaps
+
+- **Files / symbols:** `ProductURLParserService`, provider parsers/resolver source map,
+  `FitMatchShareExtension/ShareViewController`, Headless test fixtures.
+- **Affected scenarios:** J21/J42/J45, `NEW-GAP-PROVIDER-001/002`,
+  `NEW-GAP-TEST-001`.
+- **Current / expected:** core supports COS but scenario/test matrix omits it and Share
+  rejects it.  Add COS provider corridors and make the Share whitelist match deliberate
+  core support or explicitly remove/relabel core support by owner decision.  Headless
+  must exercise actual parser boundary where supported, not merely provider metadata.
+
+## P2 — support consistency / hardening
+
+### D-C01 — COS partial fallback and provider support copy drift
+
+- **Files / symbols:** `AddClosetItemViewModel`, `LinkClosetRegistrationView`,
+  `ProductURLParserService`, `FitMatchOnboardingView`.
+- **Expected:** preserve COS provenance or clearly state manual fallback; list all
+  intentionally supported providers consistently.
+
+### D-C02 — stale/multiple Share payload and custom deep-link behavior
+
+- **Files / symbols:** `SharedURLStore`, `ShareViewController`, `ContentView` URL
+  handler.
+- **Expected:** expire a pending URL, scan supported attachments rather than only first,
+  explain missing payload, and reject unknown custom hosts without consuming a pending
+  share.
+
+### D-C03 — history reference provenance and client defensive validation/naming
+
+- **Files / symbols:** `VNextHistoryCacheHydrator` raw provenance decoding (~261),
+  `FitMatchServerAuthorityCoordinator` saved-candidate validation (~335),
+  `ShoppingProductViewModel.hasServerConfirmedAuthority` (~459).
+- **Expected:** display historic `USER_EDITED`/`USER_EXPLICIT` accurately; validate all
+  returned candidate tuple/concurrency values defensively; rename/re-scope the
+  effective-confirmed helper to prevent future domain conflation.
+
+## Explicit policy decision outside automatic remediation
+
+`PC-HISTORY-001` is documented in the policy ledger.  Do not change history-delete
+semantics until the owner selects durable-hide, immutable-visible, or approved
+user-deletion behavior.

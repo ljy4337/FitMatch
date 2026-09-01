@@ -224,6 +224,15 @@ final class RecommendationHistory {
         }
     }
 
+    /// A vNext completed history is locally cached from an immutable,
+    /// server-authorized comparison. Its `id` is the server comparison's
+    /// `client_comparison_id`, which is the only client-side identity accepted
+    /// by the user-owned visibility RPC.
+    var isServerBackedVNextHistory: Bool {
+        comparisonSchemaVersion >= 2
+            && comparisonMethod.hasPrefix("서버 승인")
+    }
+
     var stockStatus: ProductStockStatus {
         ProductStockStatus(rawValue: stockStatusRawValue ?? "") ?? .unknown
     }

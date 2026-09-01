@@ -75,6 +75,112 @@ struct FitMatchComparisonSyncCoordinatorTests {
         #expect(await remote.completeCallCount() == 0)
     }
 
+    /// CM-015: a delayed A history fetch must be discarded once the app has
+    /// prepared B's user-owned cache.  A later B sync is queued through the
+    /// same production coordinator; it cannot leave A's immutable history in
+    /// B's observable SwiftData cache.
+    @Test func overlappingAccountSwitchCannotHydrateOutgoingHistoryIntoNewAccount() async throws {
+        let fixtureA = try ComparisonHistoryFixture()
+        let fixtureB = try ComparisonHistoryFixture()
+        let schema = Schema(FitMatchSchemaV1.models)
+        let container = try ModelContainer(
+            for: schema,
+            configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]
+        )
+        let context = ModelContext(container)
+        let comparisonDefaultsName = "FitMatchComparisonSyncCoordinatorTests.OverlappingAccountSwitch.\(UUID().uuidString)"
+        let comparisonDefaults = try #require(UserDefaults(suiteName: comparisonDefaultsName))
+        defer { comparisonDefaults.removePersistentDomain(forName: comparisonDefaultsName) }
+        let cacheDefaultsName = "FitMatchComparisonSyncCoordinatorTests.OverlappingCache.\(UUID().uuidString)"
+        let cacheDefaults = try #require(UserDefaults(suiteName: cacheDefaultsName))
+        defer { cacheDefaults.removePersistentDomain(forName: cacheDefaultsName) }
+
+        let ownerA = UUID()
+        let ownerB = UUID()
+        let firstFetchGate = JourneyAsyncGate()
+        let remote = ComparisonHistoryRemoteStub(
+            pending: nil,
+            completed: nil,
+            historyResponses: [[fixtureA.completed], [fixtureB.completed]],
+            historyGates: [1: firstFetchGate]
+        )
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote, defaults: comparisonDefaults)
+        let cacheCoordinator = FitMatchClosetSyncCoordinator(defaults: cacheDefaults)
+
+        #expect(
+            try cacheCoordinator.prepareLocalCache(for: ownerA, modelContext: context)
+                == .claimedEmptyOrUnownedCache
+        )
+        let oldSync = Task { @MainActor in
+            await coordinator.synchronize(
+                userID: ownerA,
+                histories: [],
+                modelContext: context
+            )
+        }
+        await firstFetchGate.waitForArrival(atLeast: 1)
+
+        #expect(
+            try cacheCoordinator.prepareLocalCache(for: ownerB, modelContext: context)
+                == .purgedForeignOwnerCache
+        )
+        // ContentView executes this production boundary in the same cache
+        // preparation task, before B's comparison sync begins. It must make
+        // the delayed A response stale immediately, not only after a later B
+        // fetch happens to start.
+        coordinator.prepareForAuthenticatedUser(ownerB)
+        await coordinator.synchronize(
+            userID: ownerB,
+            histories: [],
+            modelContext: context
+        )
+        await firstFetchGate.open()
+        await oldSync.value
+
+        let histories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        #expect(histories.map(\.id) == [fixtureB.clientComparisonID])
+    }
+
+    /// RX-015: a second same-user trigger that arrives during an in-flight
+    /// history fetch gets its own follow-up production pass and hydrates the
+    /// newest immutable server row exactly once.
+    @Test func overlappingSameAccountHistorySyncUsesNewestFollowUpSnapshot() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let schema = Schema(FitMatchSchemaV1.models)
+        let container = try ModelContainer(
+            for: schema,
+            configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]
+        )
+        let context = ModelContext(container)
+        let defaultsName = "FitMatchComparisonSyncCoordinatorTests.OverlappingSameAccount.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let firstFetchGate = JourneyAsyncGate()
+        let remote = ComparisonHistoryRemoteStub(
+            pending: nil,
+            completed: nil,
+            historyResponses: [[], [fixture.completed]],
+            historyGates: [1: firstFetchGate]
+        )
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+
+        let first = Task { @MainActor in
+            await coordinator.synchronize(userID: userID, histories: [], modelContext: context)
+        }
+        await firstFetchGate.waitForArrival(atLeast: 1)
+        await coordinator.synchronize(userID: userID, histories: [], modelContext: context)
+        await firstFetchGate.open()
+        await first.value
+
+        #expect(coordinator.state == .synced)
+        #expect(
+            try context.fetch(FetchDescriptor<RecommendationHistory>()).map(\.id)
+                == [fixture.clientComparisonID]
+        )
+        #expect(await remote.historyFetchCount() == 2)
+    }
+
     @Test func deletedReferenceHydratesAsHistoryOnlyForEveryAuthoritySource() async throws {
         let historyOnlyIdentity = UserFit.historyReferenceSnapshotSourceIdentity
         for classificationSource in [
@@ -107,6 +213,302 @@ struct FitMatchComparisonSyncCoordinatorTests {
             #expect(items.filter(\.isActiveClosetItem).isEmpty)
             #expect(snapshot.isRepresentative == false)
         }
+    }
+
+    @Test func completedServerHistoryHideSurvivesSyncAndModeledSecondSession() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let remote = ComparisonHistoryRemoteStub(pending: nil, completed: fixture.completed)
+        let defaultsName = "FitMatchComparisonSyncCoordinatorTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+
+        let firstContainer = try inMemoryContainer()
+        let firstContext = ModelContext(firstContainer)
+        let firstCoordinator = FitMatchComparisonSyncCoordinator(remote: remote, defaults: defaults)
+        await firstCoordinator.synchronize(
+            userID: fixture.userID,
+            histories: [],
+            modelContext: firstContext
+        )
+        let visibleHistory = try #require(
+            firstContext.fetch(FetchDescriptor<RecommendationHistory>()).first
+        )
+        #expect(visibleHistory.isServerBackedVNextHistory)
+
+        // HI-006 / HI-008 / HI-015: invoke the exact production action that
+        // the History swipe-delete surface uses, not an equivalent test-side
+        // hide/delete sequence.
+        let deleteOutcome = await FitMatchHistoryVisibilityAction.delete(
+            visibleHistory,
+            in: firstContext,
+            comparisonSync: firstCoordinator
+        )
+        #expect(deleteOutcome == .deleted)
+
+        await firstCoordinator.synchronize(
+            userID: fixture.userID,
+            histories: [],
+            modelContext: firstContext
+        )
+        #expect(try firstContext.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+        #expect(await remote.hiddenClientIDs() == Set([fixture.clientComparisonID]))
+
+        let secondContainer = try inMemoryContainer()
+        let secondContext = ModelContext(secondContainer)
+        let secondCoordinator = FitMatchComparisonSyncCoordinator(remote: remote, defaults: defaults)
+        await secondCoordinator.synchronize(
+            userID: fixture.userID,
+            histories: [],
+            modelContext: secondContext
+        )
+        #expect(secondCoordinator.state == .synced)
+        #expect(try secondContext.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+    }
+
+    @Test func closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let remote = ComparisonHistoryRemoteStub(pending: nil, completed: fixture.completed)
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote)
+        let reference = UserFit(
+            brandName: "내 브랜드",
+            productName: "내 반팔 티셔츠",
+            category: .top,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 45,
+                chest: 50,
+                totalLength: 69,
+                sleeveLength: 22
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        reference.id = fixture.referenceClientItemID
+        context.insert(reference)
+        try context.save()
+
+        await coordinator.synchronize(
+            userID: fixture.userID,
+            histories: [],
+            modelContext: context
+        )
+        let history = try #require(
+            context.fetch(FetchDescriptor<RecommendationHistory>()).first
+        )
+        #expect(history.userFit.id == reference.id)
+        #expect(history.isServerBackedVNextHistory)
+
+        // CM-010 / HI-009: this is the same production action used by both
+        // Closet delete surfaces.  Persist the user-owned hide first, then
+        // remove local presentation/cache rows.  It never deletes the
+        // immutable remote completed-comparison evidence.
+        let outcome = await FitMatchClosetDeletionAction.delete(
+            item: reference,
+            histories: [history],
+            in: context,
+            comparisonSync: coordinator,
+            closetSync: nil
+        )
+        #expect(outcome == .deleted)
+
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+        #expect(
+            try context.fetch(FetchDescriptor<UserFit>())
+                .filter(\.isActiveClosetItem)
+                .isEmpty
+        )
+        #expect(await remote.completedHistoryRemainsImmutable())
+
+        await coordinator.synchronize(
+            userID: fixture.userID,
+            histories: [],
+            modelContext: context
+        )
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+    }
+
+    @Test func closetDeletionActionRemovesOnlyTheRequestedActiveItemWhenNoHistoryExists() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let target = UserFit(
+            brandName: "내 브랜드",
+            productName: "삭제할 일반 옷",
+            category: .top,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 45,
+                chest: 50,
+                totalLength: 69,
+                sleeveLength: 22
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        let unrelated = UserFit(
+            brandName: "내 브랜드",
+            productName: "남아야 하는 옷",
+            category: .bottom,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 100,
+                sleeveLength: 0
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        context.insert(target)
+        context.insert(unrelated)
+        try context.save()
+
+        // CM-008: the same production delete boundary used by MyCloset and
+        // detail surfaces does not require a comparison-sync service when no
+        // completed server History is associated with the item.
+        let outcome = await FitMatchClosetDeletionAction.delete(
+            item: target,
+            histories: [],
+            in: context,
+            comparisonSync: nil,
+            closetSync: nil
+        )
+        #expect(outcome == .deleted)
+        let remaining = try context.fetch(FetchDescriptor<UserFit>())
+        #expect(remaining.map(\.id) == [unrelated.id])
+    }
+
+    @Test func closetDeletionActionKeepsClosetAndHistoryWhenDurableHideFailsThenRetries() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let remote = ComparisonHistoryRemoteStub(
+            pending: nil,
+            completed: fixture.completed,
+            hideError: .transportFailure
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote)
+        let reference = UserFit(
+            brandName: "내 브랜드",
+            productName: "내 반팔 티셔츠",
+            category: .top,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 45,
+                chest: 50,
+                totalLength: 69,
+                sleeveLength: 22
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        reference.id = fixture.referenceClientItemID
+        context.insert(reference)
+        try context.save()
+
+        await coordinator.synchronize(
+            userID: fixture.userID,
+            histories: [],
+            modelContext: context
+        )
+        let history = try #require(
+            context.fetch(FetchDescriptor<RecommendationHistory>()).first
+        )
+
+        let failed = await FitMatchClosetDeletionAction.delete(
+            item: reference,
+            histories: [history],
+            in: context,
+            comparisonSync: coordinator,
+            closetSync: nil
+        )
+        #expect(failed == .serverHistoryHideFailed)
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
+        #expect(await remote.visibilityRowCount() == 0)
+
+        await remote.setHideError(nil)
+        let retried = await FitMatchClosetDeletionAction.delete(
+            item: reference,
+            histories: [history],
+            in: context,
+            comparisonSync: coordinator,
+            closetSync: nil
+        )
+        #expect(retried == .deleted)
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+        #expect(await remote.completedHistoryRemainsImmutable())
+    }
+
+    @Test func historyDeletionActionKeepsLegacyRowsLocalAndDoesNotFabricateServerHide() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let history = makeLegacyHistory()
+        context.insert(history)
+        try context.save()
+
+        let outcome = await FitMatchHistoryVisibilityAction.delete(
+            history,
+            in: context,
+            comparisonSync: nil
+        )
+        #expect(outcome == .deleted)
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+    }
+
+    @Test func completedServerHistoryHideIsIdempotentAndRejectsUnknownIdentity() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let remote = ComparisonHistoryRemoteStub(pending: nil, completed: fixture.completed)
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote)
+
+        try await coordinator.hideVNextComparisonHistories(
+            clientComparisonIDs: [fixture.clientComparisonID, fixture.clientComparisonID]
+        )
+        try await coordinator.hideVNextComparisonHistories(
+            clientComparisonIDs: [fixture.clientComparisonID]
+        )
+
+        #expect(await remote.hideCallCount() == 2)
+        #expect(await remote.visibilityRowCount() == 1)
+        #expect(await remote.lastHideWasIdempotent())
+
+        await #expect(throws: ComparisonHistoryRemoteError.unknownComparison) {
+            try await coordinator.hideVNextComparisonHistories(
+                clientComparisonIDs: [UUID()]
+            )
+        }
+    }
+
+    @Test func failedServerHistoryHideLeavesLocalCacheUntouchedForRetry() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let remote = ComparisonHistoryRemoteStub(
+            pending: nil,
+            completed: fixture.completed,
+            hideError: .transportFailure
+        )
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote)
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let history = makeLegacyHistory()
+        history.id = fixture.clientComparisonID
+        history.comparisonSchemaVersion = 2
+        history.comparisonMethod = "서버 승인 직접 비교"
+        context.insert(history)
+        try context.save()
+
+        await #expect(throws: ComparisonHistoryRemoteError.transportFailure) {
+            try await coordinator.hideVNextComparisonHistories(
+                clientComparisonIDs: [history.id]
+            )
+        }
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
+        #expect(await remote.visibilityRowCount() == 0)
+    }
+
+    @Test func localOnlyHistoryDoesNotClaimServerVisibilityAuthority() {
+        #expect(!makeLegacyHistory().isServerBackedVNextHistory)
     }
 
     private func inMemoryContainer() throws -> ModelContainer {
@@ -313,17 +715,61 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
     private var didComplete = false
     private var completionCalls = 0
     private var historyCalls = 0
+    private var hiddenIDs = Set<UUID>()
+    private var hideCalls = 0
+    private var idempotentHide = false
+    private var hideError: ComparisonHistoryRemoteError?
+    private let historyResponses: [[VNextComparisonHistoryDTO]]?
+    private let historyGates: [Int: JourneyAsyncGate]
 
-    init(pending: VNextComparisonHistoryDTO?, completed: VNextComparisonHistoryDTO?) {
+    init(
+        pending: VNextComparisonHistoryDTO?,
+        completed: VNextComparisonHistoryDTO?,
+        hideError: ComparisonHistoryRemoteError? = nil,
+        historyResponses: [[VNextComparisonHistoryDTO]]? = nil,
+        historyGates: [Int: JourneyAsyncGate] = [:]
+    ) {
         self.pending = pending
         self.completed = completed
+        self.hideError = hideError
+        self.historyResponses = historyResponses
+        self.historyGates = historyGates
     }
 
     func fetchVNextComparisonHistory() async throws -> [VNextComparisonHistoryDTO] {
         historyCalls += 1
+        if let gate = historyGates[historyCalls] {
+            await gate.wait()
+        }
+        if let historyResponses {
+            let responseIndex = min(historyCalls - 1, historyResponses.count - 1)
+            return historyResponses[responseIndex].filter {
+                !hiddenIDs.contains($0.clientComparisonID)
+            }
+        }
+        if let completed, hiddenIDs.contains(completed.clientComparisonID) { return [] }
         if didComplete, let completed { return [completed] }
         if let pending { return [pending] }
+        if let completed { return [completed] }
         return []
+    }
+
+    func hideVNextComparisonHistories(
+        clientComparisonIDs: [UUID]
+    ) async throws -> VNextComparisonHistoryVisibilityDTO {
+        hideCalls += 1
+        if let hideError { throw hideError }
+        guard let completed,
+              Set(clientComparisonIDs) == Set([completed.clientComparisonID]) else {
+            throw ComparisonHistoryRemoteError.unknownComparison
+        }
+        idempotentHide = clientComparisonIDs.allSatisfy { hiddenIDs.contains($0) }
+        hiddenIDs.formUnion(clientComparisonIDs)
+        return VNextComparisonHistoryVisibilityDTO(
+            clientComparisonIDs: Array(Set(clientComparisonIDs)),
+            hidden: true,
+            idempotent: idempotentHide
+        )
     }
 
     func completeVNextComparison(
@@ -345,4 +791,15 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
 
     func completeCallCount() -> Int { completionCalls }
     func historyFetchCount() -> Int { historyCalls }
+    func hiddenClientIDs() -> Set<UUID> { hiddenIDs }
+    func hideCallCount() -> Int { hideCalls }
+    func visibilityRowCount() -> Int { hiddenIDs.count }
+    func lastHideWasIdempotent() -> Bool { idempotentHide }
+    func completedHistoryRemainsImmutable() -> Bool { completed != nil }
+    func setHideError(_ value: ComparisonHistoryRemoteError?) { hideError = value }
+}
+
+private enum ComparisonHistoryRemoteError: Error, Equatable {
+    case unknownComparison
+    case transportFailure
 }

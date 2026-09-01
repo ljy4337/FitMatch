@@ -19,16 +19,21 @@ struct ContentView: View {
     @AppStorage("FitMatch.hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab: AppTab = .home
     @State private var hasFinishedSplash = false
+    @State private var localCachePreparedForUserID: UUID?
+    @State private var localCachePreparationErrorMessage: String?
+    @State private var localCachePreparationRetryToken = UUID()
     @StateObject private var authSession = FitMatchAuthSessionStore()
     @StateObject private var closetSync = FitMatchClosetSyncCoordinator()
     @StateObject private var comparisonSync = FitMatchComparisonSyncCoordinator()
     @State private var pendingCompareURL: String?
+    @State private var pendingCompareToken: String?
     @State private var compareViewID: UUID?
     @State private var lastCompareLaunchKey: String?
     @State private var lastCompareLaunchDate = Date.distantPast
     @State private var hasRecordedLaunch = false
     @State private var measurementMigrationErrorMessage: String?
     @State private var measurementMigrationRetryToken = UUID()
+    @State private var sharedHandoffErrorMessage: String?
     private let sharedURLStore = SharedURLStore()
 
     var body: some View {
@@ -45,6 +50,16 @@ struct ContentView: View {
             #endif
         }
         .dismissesKeyboardOnBackgroundTap()
+        .alert("상품 링크를 확인해 주세요", isPresented: Binding(
+            get: { sharedHandoffErrorMessage != nil },
+            set: { if !$0 { sharedHandoffErrorMessage = nil } }
+        )) {
+            Button("확인", role: .cancel) {
+                sharedHandoffErrorMessage = nil
+            }
+        } message: {
+            Text(sharedHandoffErrorMessage ?? "")
+        }
         .onAppear {
             guard !hasRecordedLaunch else { return }
             hasRecordedLaunch = true
@@ -53,13 +68,52 @@ struct ContentView: View {
         .task {
             await authSession.observeAuthChanges()
         }
+        .task(id: localCachePreparationTaskID) {
+            guard let userID = signedInUserID else {
+                closetSync.prepareForAuthenticatedUser(nil)
+                comparisonSync.prepareForAuthenticatedUser(nil)
+                localCachePreparedForUserID = nil
+                localCachePreparationErrorMessage = nil
+                return
+            }
+
+            do {
+                closetSync.prepareForAuthenticatedUser(userID)
+                comparisonSync.prepareForAuthenticatedUser(userID)
+                _ = try closetSync.prepareLocalCache(
+                    for: userID,
+                    modelContext: modelContext
+                )
+                localCachePreparedForUserID = userID
+                localCachePreparationErrorMessage = nil
+            } catch {
+                // Do not render a different user's persisted rows while this
+                // ownership boundary is unresolved.  A retry remains safe
+                // because prepareLocalCache is idempotent for the same user.
+                localCachePreparedForUserID = nil
+                localCachePreparationErrorMessage = "내 옷장 데이터를 안전하게 준비하지 못했어요. 다시 시도해 주세요."
+            }
+        }
         .task(id: closetSyncTaskID) {
-            guard hasFinishedSplash, let userID = signedInUserID else { return }
+            guard hasFinishedSplash,
+                  let userID = signedInUserID,
+                  FitMatchAuthenticatedRootPresentationAction.presentation(
+                    authState: authSession.state,
+                    localCachePreparedForUserID: localCachePreparedForUserID,
+                    localCachePreparationErrorMessage: localCachePreparationErrorMessage
+                  ) == .main else {
+                return
+            }
             await closetSync.synchronize(userID: userID, modelContext: modelContext)
         }
         .task(id: comparisonSyncTaskID) {
             guard hasFinishedSplash,
                   let userID = signedInUserID,
+                  FitMatchAuthenticatedRootPresentationAction.presentation(
+                    authState: authSession.state,
+                    localCachePreparedForUserID: localCachePreparedForUserID,
+                    localCachePreparationErrorMessage: localCachePreparationErrorMessage
+                  ) == .main,
                   closetSync.state == .synced else { return }
             await comparisonSync.synchronize(
                 userID: userID,
@@ -70,15 +124,15 @@ struct ContentView: View {
             )
         }
         .task(id: measurementMigrationRetryToken) {
-            do {
-                try MeasurementLegacyBackfillService.run(
-                    modelContext: modelContext,
-                    products: products,
-                    userFits: activeUserFits
-                )
+            switch FitMatchStartupAction.runLegacyMeasurementMigration(
+                modelContext: modelContext,
+                products: products,
+                userFits: activeUserFits
+            ) {
+            case .completed:
                 measurementMigrationErrorMessage = nil
-            } catch {
-                measurementMigrationErrorMessage = "기존 의류 데이터를 업데이트하지 못했어요. 원본 데이터는 삭제되지 않았습니다."
+            case .failed(let message):
+                measurementMigrationErrorMessage = message
                 hasFinishedSplash = true
                 return
             }
@@ -117,27 +171,49 @@ struct ContentView: View {
                 hasCompletedOnboarding = true
                 _ = openPendingSharedURLIfNeeded()
             }
-        } else if authSession.state == .loading {
-            ProgressView("로그인 확인 중")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(.systemGroupedBackground))
-        } else if !authSession.isAuthenticated {
-            LoginView(
-                isSigningIn: authSession.isSigningIn,
-                errorMessage: authSession.errorMessage,
-                onAppleRequest: authSession.prepareAppleSignIn,
-                onAppleCompletion: { result in
-                    Task {
-                        await authSession.completeAppleSignIn(result)
+        } else {
+            switch FitMatchAuthenticatedRootPresentationAction.presentation(
+                authState: authSession.state,
+                localCachePreparedForUserID: localCachePreparedForUserID,
+                localCachePreparationErrorMessage: localCachePreparationErrorMessage
+            ) {
+            case .checkingAuthentication:
+                ProgressView("로그인 확인 중")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(.systemGroupedBackground))
+            case .signIn:
+                LoginView(
+                    isSigningIn: authSession.isSigningIn,
+                    errorMessage: authSession.errorMessage,
+                    onAppleRequest: authSession.prepareAppleSignIn,
+                    onAppleCompletion: { result in
+                        Task {
+                            await authSession.completeAppleSignIn(result)
+                        }
+                    }
+                )
+            case .cachePreparationFailed(let message):
+                VStack(spacing: 16) {
+                    Text(message)
+                        .multilineTextAlignment(.center)
+                    Button("다시 시도") {
+                        localCachePreparationRetryToken = UUID()
                     }
                 }
-            )
-        } else {
+                .padding()
+            case .preparingLocalCache:
+                ProgressView("내 옷장 준비 중")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(.systemGroupedBackground))
+            case .main:
                 MainTabView(
                     selectedTab: $selectedTab,
                     compareURL: pendingCompareURL,
                     onCompareURLPresented: { presentedURL in
-                        let didConsumeSharedURL = sharedURLStore.clearPendingProductURL(ifMatching: presentedURL)
+                        let didConsumeSharedURL = sharedURLStore.clearPendingProductURL(
+                            ifMatching: presentedURL,
+                            token: pendingCompareToken
+                        )
                         if didConsumeSharedURL {
                             FitMatchMetricsRecorder.shared.record(
                                 .shareConsumed(provider: FitMatchMetricProvider.resolve(urlString: presentedURL))
@@ -145,15 +221,14 @@ struct ContentView: View {
                         }
                         if pendingCompareURL == presentedURL {
                             pendingCompareURL = nil
+                            pendingCompareToken = nil
                             compareViewID = nil
                         }
-                    },
-                    onRecompare: { urlString in
-                        openCompare(with: urlString)
                     },
                     onLogout: {
                         selectedTab = .home
                         pendingCompareURL = nil
+                        pendingCompareToken = nil
                         Task {
                             await authSession.signOut()
                         }
@@ -161,7 +236,9 @@ struct ContentView: View {
                     compareViewID: compareViewID
                 )
                 .environment(\.fitMatchClosetSyncCoordinator, closetSync)
+                .environment(\.fitMatchComparisonSyncCoordinator, comparisonSync)
                 .environmentObject(authSession)
+            }
         }
     }
 
@@ -170,28 +247,35 @@ struct ContentView: View {
         return userID
     }
 
+    private var localCachePreparationTaskID: String {
+        guard let userID = signedInUserID else { return "signed-out" }
+        return "\(userID.uuidString)|\(localCachePreparationRetryToken.uuidString)"
+    }
+
     private var activeUserFits: [UserFit] {
         cachedUserFits.filter(\.isActiveClosetItem)
     }
 
     private var closetSyncTaskID: String {
         guard let userID = signedInUserID else { return "signed-out" }
+        let preparedOwner = localCachePreparedForUserID?.uuidString ?? "unprepared"
         let localRevision = activeUserFits
             .sorted { $0.id.uuidString < $1.id.uuidString }
             .map {
                 "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970):\($0.isRepresentative)"
             }
             .joined(separator: "|")
-        return "\(userID.uuidString)|\(hasFinishedSplash)|\(localRevision)"
+        return "\(userID.uuidString)|\(hasFinishedSplash)|\(preparedOwner)|\(localRevision)"
     }
 
     private var comparisonSyncTaskID: String {
         guard let userID = signedInUserID else { return "signed-out" }
+        let preparedOwner = localCachePreparedForUserID?.uuidString ?? "unprepared"
         let localRevision = histories
             .sorted { $0.id.uuidString < $1.id.uuidString }
             .map { "\($0.id.uuidString):\($0.createdAt.timeIntervalSince1970)" }
             .joined(separator: "|")
-        return "\(userID.uuidString)|\(hasFinishedSplash)|\(closetSync.state)|\(localRevision)"
+        return "\(userID.uuidString)|\(hasFinishedSplash)|\(preparedOwner)|\(closetSync.state)|\(localRevision)"
     }
 
     private func handleDeepLink(_ url: URL) {
@@ -199,45 +283,21 @@ struct ContentView: View {
         print("[FitMatch] onOpenURL: \(url.absoluteString)")
         #endif
 
-        guard isSupportedDeepLink(url) else {
+        guard FitMatchProductEntryRouting.isSupportedAppLink(url) else {
             #if DEBUG
             print("[FitMatch] unsupported deep link: \(url.absoluteString)")
             #endif
             return
         }
 
-        switch deepLinkRoute(from: url) {
-        case "compare":
+        switch FitMatchProductEntryRouting.action(for: url) {
+        case .openPendingProductCompare:
             openCompareFromDeepLink()
-        default:
-            _ = openPendingSharedURLIfNeeded()
+        case .ignore:
+            #if DEBUG
+            print("[FitMatch] ignored unsupported or unknown deep-link route: \(url.absoluteString)")
+            #endif
         }
-    }
-
-    private func isSupportedDeepLink(_ url: URL) -> Bool {
-        switch url.scheme?.lowercased() {
-        case "fitmatch":
-            return true
-        case "https":
-            return url.host?.lowercased() == "fitmatch.app"
-        default:
-            return false
-        }
-    }
-
-    private func deepLinkRoute(from url: URL) -> String {
-        if url.scheme?.lowercased() == "fitmatch", let host = url.host, !host.isEmpty {
-            return host.lowercased()
-        }
-
-        let pathComponents = url.path
-            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            .split(separator: "/")
-            .map(String.init)
-
-        return pathComponents.first?
-            .lowercased()
-            ?? ""
     }
 
     private func openCompareFromDeepLink() {
@@ -251,25 +311,35 @@ struct ContentView: View {
 
     @discardableResult
     private func openPendingSharedURLIfNeeded() -> Bool {
-        guard let urlString = sharedURLStore.pendingProductURL() else {
+        let handoff: SharedURLStore.PendingProductURLHandoff
+        switch FitMatchPendingShareEntryAction.outcome(for: sharedURLStore) {
+        case .open(let available):
+            handoff = available
+        case .none:
             #if DEBUG
             print("[FitMatch] no pending shared URL")
             #endif
             return false
+        case .blocked(let message):
+            sharedHandoffErrorMessage = message
+            return false
         }
 
-        if pendingCompareURL == urlString, compareViewID != nil {
+        if pendingCompareURL == handoff.urlString,
+           pendingCompareToken == handoff.token,
+           compareViewID != nil {
             #if DEBUG
-            print("[FitMatch] pending shared URL already queued: \(urlString)")
+            print("[FitMatch] pending shared URL already queued: \(handoff.urlString)")
             #endif
             return true
         }
 
         #if DEBUG
-        print("[FitMatch] queued pending shared URL: \(urlString)")
+        print("[FitMatch] queued pending shared URL: \(handoff.urlString)")
         #endif
         selectedTab = .home
-        openCompare(with: urlString)
+        pendingCompareToken = handoff.token
+        openCompare(with: handoff.urlString)
         return true
     }
 
@@ -979,7 +1049,6 @@ private struct MainTabView: View {
     @Binding var selectedTab: AppTab
     let compareURL: String?
     let onCompareURLPresented: (String) -> Void
-    let onRecompare: (String) -> Void
     let onLogout: () -> Void
     let compareViewID: UUID?
     @State private var activeSheet: MainActiveSheet?
@@ -1034,7 +1103,10 @@ private struct MainTabView: View {
                 .presentationDragIndicator(.visible)
             case .compareFlow(let request):
                 NavigationStack {
-                    CompareFlowSheet(initialURL: request.initialURL)
+                    CompareFlowSheet(
+                        initialURL: request.initialURL,
+                        initialHistoricalProduct: request.initialHistoricalProduct
+                    )
                         .id(request.id)
                 }
                 .environmentObject(tabBarVisibilityController)
@@ -1116,14 +1188,14 @@ private struct MainTabView: View {
                     onOpenCloset: {
                         selectedTab = .my
                     },
-                    onRecompare: onRecompare,
+                    onRecompare: presentHistoryRecompare,
                     onLogout: onLogout
                 )
             }
         case .history:
             NavigationStack {
                 RecommendationHistoryView(
-                    onRecompare: onRecompare,
+                    onRecompare: presentHistoryRecompare,
                     onStartCompare: {
                         presentCompareFlow(initialURL: nil)
                     },
@@ -1161,11 +1233,17 @@ private struct MainTabView: View {
         tabBarVisibilityController.release(tab: selectedTab, reason: .modalFlow, source: "dismissSheet")
     }
 
-    private func presentCompareFlow(initialURL: String?) {
+    private func presentCompareFlow(
+        initialURL: String?,
+        initialHistoricalProduct: Product? = nil
+    ) {
         #if DEBUG
         print("[화면: 상품 비교][동작: 비교 시트 열기][상태: 요청] URL포함=\(initialURL != nil), 탭=\(selectedTab.logName)")
         #endif
-        let request = CompareFlowRequest(initialURL: initialURL)
+        let request = CompareFlowRequest(
+            initialURL: initialURL,
+            initialHistoricalProduct: initialHistoricalProduct
+        )
         guard activeSheet == nil, !isAwaitingSheetDismissal else {
             pendingCompareRequest = request
             if activeSheet != nil {
@@ -1180,6 +1258,20 @@ private struct MainTabView: View {
 
     private func presentCompareFlowFromNewTask(initialURL: String?) {
         presentCompareFlow(initialURL: initialURL)
+    }
+
+    private func presentHistoryRecompare(
+        _ request: FitMatchHistoryRecompareAction.StartRequest
+    ) {
+        switch request {
+        case .supportedURL(let urlString):
+            presentCompareFlow(initialURL: urlString)
+        case .storedOfficialProduct(let product):
+            presentCompareFlow(
+                initialURL: nil,
+                initialHistoricalProduct: product
+            )
+        }
     }
 
     private func handleCompareRequestIfNeeded(_ requestID: UUID?) {
@@ -1270,6 +1362,7 @@ private enum MainActiveSheet: Identifiable {
 private struct CompareFlowRequest: Identifiable {
     let id = UUID()
     let initialURL: String?
+    let initialHistoricalProduct: Product?
 }
 
 private struct NewTaskSheet: View {

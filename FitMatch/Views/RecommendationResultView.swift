@@ -34,6 +34,9 @@ struct RecommendationResultView: View {
     @State private var didOpenInitialReferencePicker = false
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var isShowingClosetSavedToast = false
+    @State private var serverReferenceAuthorizations: [UUID: FitMatchServerReferenceAuthorization] = [:]
+    @State private var isLoadingServerReferenceCandidates = false
+    @State private var referenceCandidateErrorMessage: String?
     private let favoriteStore = FavoriteProductStore()
 
     init(
@@ -93,7 +96,8 @@ struct RecommendationResultView: View {
                     ResultReferencePickerView(
                         currentUserFit: currentResult.userFit,
                         product: currentResult.product,
-                        productDetailCategory: currentResult.productDetailCategory
+                        productDetailCategory: currentResult.productDetailCategory,
+                        serverAuthorizations: serverReferenceAuthorizations
                     ) { item in
                         let outcome = await compare(with: item)
                         if outcome.shouldDismissPicker {
@@ -142,6 +146,17 @@ struct RecommendationResultView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .alert(
+                "기준 옷을 확인할 수 없어요",
+                isPresented: Binding(
+                    get: { referenceCandidateErrorMessage != nil },
+                    set: { if !$0 { referenceCandidateErrorMessage = nil } }
+                )
+            ) {
+                Button("확인", role: .cancel) {}
+            } message: {
+                Text(referenceCandidateErrorMessage ?? "")
+            }
             .onAppear {
                 DetailPerformanceDiagnostics.logHistoryResultNavigation(event: "result_on_appear")
                 logInitialPerformance()
@@ -155,7 +170,7 @@ struct RecommendationResultView: View {
 
                 didOpenInitialReferencePicker = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                    presentActiveSheet(.referencePicker)
+                    openServerAuthorizedReferencePicker()
                 }
             }
             .onDisappear {
@@ -487,7 +502,7 @@ struct RecommendationResultView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
-                    Button("기준 옷 변경") { presentActiveSheet(.referencePicker) }
+                    Button("기준 옷 변경") { openServerAuthorizedReferencePicker() }
                         .font(.subheadline.weight(.bold))
                         .buttonStyle(.plain)
                         .foregroundStyle(.primary)
@@ -814,10 +829,13 @@ struct RecommendationResultView: View {
 
     @MainActor
     private func prepareAlternativeSizeAnalyses() async {
-        guard currentResult.product.classificationAuthorityProvenance == .serverConfirmed,
-              currentResult.userFit.classificationAuthorityProvenance?
-                .isComparisonAuthority == true,
-              currentResult.comparisonMethod.hasPrefix("서버 승인") else {
+        let batch = VNextComparisonSessionStore.shared.analysis(
+            for: currentResult.id
+        )
+        guard RecommendationService().canPresentCurrentVNextAlternativeSizes(
+            for: currentResult,
+            batch: batch
+        ), let batch else {
             // Historical/local results retain their original persisted score,
             // but cannot run a fresh measurement comparison without a current
             // evaluator-v4 authorization for the exact target/reference pair.
@@ -828,15 +846,6 @@ struct RecommendationResultView: View {
             return
         }
         let generation = alternativePreparationGeneration
-        guard let batch = VNextComparisonSessionStore.shared.analysis(
-            for: currentResult.id
-        ) else {
-            temporaryAnalysisCache = [:]
-            unavailableAlternativeSizeKeys = []
-            activeAlternativeAnalysisKeys = [:]
-            isPreparingAlternativeSizes = false
-            return
-        }
         let bySizeID = Dictionary(
             uniqueKeysWithValues: batch.analyses.map { ($0.productSizeID, $0) }
         )
@@ -1787,38 +1796,22 @@ struct RecommendationResultView: View {
     #endif
 
     private func openShoppingMall() {
-        guard let urlString = currentResult.product.sourceURLString,
-              let url = URL(string: urlString) else {
+        guard let destination = FitMatchProductURLOpeningAction.destination(
+            for: currentResult.product
+        ) else {
             return
         }
 
-        if isMusinsaProduct,
-           let appURL = musinsaAppURL(for: url) {
+        switch destination {
+        case .musinsaApp(let appURL, let fallbackWebURL):
             openURL(appURL) { accepted in
                 if !accepted {
-                    openURL(url)
+                    openURL(fallbackWebURL)
                 }
             }
-            return
+        case .web(let url):
+            openURL(url)
         }
-
-        openURL(url)
-    }
-
-    private func musinsaAppURL(for webURL: URL) -> URL? {
-        var components = URLComponents()
-        components.scheme = "musinsaad"
-        components.host = "web"
-        components.queryItems = [
-            URLQueryItem(name: "link", value: webURL.absoluteString)
-        ]
-        return components.url
-    }
-
-    private var isMusinsaProduct: Bool {
-        currentResult.product.sourceDisplayName.localizedCaseInsensitiveContains("무신사")
-            || currentResult.product.sourceDisplayName.localizedCaseInsensitiveContains("musinsa")
-            || currentResult.product.sourceURLString?.localizedCaseInsensitiveContains("musinsa") == true
     }
 
     private func musinsaProductCode(from url: URL) -> String? {
@@ -1831,42 +1824,73 @@ struct RecommendationResultView: View {
         return value.allSatisfy(\.isNumber) ? value : currentResult.product.productCode
     }
 
+    /// The result picker is presentation only.  Its eligible set comes from
+    /// the current server authorization path, then maps those server client
+    /// IDs back onto the local Closet objects.  A stale local candidate can
+    /// never become selectable merely because it looks compatible on-device.
+    private func openServerAuthorizedReferencePicker() {
+        guard !isLoadingServerReferenceCandidates else { return }
+        let resultID = currentResult.id
+        let target = currentResult.product
+        let currentReferenceID = currentResult.userFit.id
+        let localItems = (
+            try? modelContext.fetch(FetchDescriptor<UserFit>())
+        ) ?? []
+
+        isLoadingServerReferenceCandidates = true
+        referenceCandidateErrorMessage = nil
+        Task { @MainActor in
+            let outcome = await ResultReferenceComparisonAction.discoverSelectableReferences(
+                from: localItems,
+                excluding: currentReferenceID,
+                target: target,
+                coordinator: FitMatchServerAuthorityCoordinator()
+            )
+            guard !Task.isCancelled, currentResult.id == resultID else {
+                isLoadingServerReferenceCandidates = false
+                return
+            }
+            isLoadingServerReferenceCandidates = false
+            switch outcome {
+            case .success(let authorizations):
+                serverReferenceAuthorizations = authorizations
+                presentActiveSheet(.referencePicker)
+            case .blocked(let message):
+                serverReferenceAuthorizations = [:]
+                referenceCandidateErrorMessage = message
+            }
+        }
+    }
+
     private func compare(with item: UserFit) async -> ResultReferenceComparisonOutcome {
         #if DEBUG
         print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 시작] 기존기준옷=\(currentResult.userFit.displayName), 선택기준옷=\(item.displayName)")
         #endif
 
-        guard let targetRequest = currentResult.product.fitMatchDatabaseResolutionRequest(),
-              let targetObservation = currentResult.product.fitMatchProductObservationRequest(),
-              let localReferenceSnapshot = item.fitMatchServerReferenceSnapshot() else {
-            return .saveFailed("서버에서 대상 상품을 확인할 수 없습니다.")
-        }
-
-        let usesExplicitUserAuthority = item.classificationAuthorityProvenance == .userExplicit
         let authorization: FitMatchServerReferenceAuthorization
         let permit: FitMatchServerComparisonPermit
+        let comparisonTarget: Product
         let coordinator = FitMatchServerAuthorityCoordinator()
+        switch await ResultReferenceComparisonAction.authorize(
+            target: currentResult.product,
+            reference: item,
+            coordinator: coordinator
+        ) {
+        case .allowed(let value):
+            authorization = value
+        case .rejected(let message), .unavailable(let message):
+            return .saveFailed(message)
+        }
         do {
-            authorization = try await coordinator.authorizeReferenceCandidate(
-                    referenceClientItemID: item.id,
-                    localReferenceSnapshot: localReferenceSnapshot,
-                    targetRequest: targetRequest,
-                    targetObservation: targetObservation,
-                    referenceRequest: usesExplicitUserAuthority
-                        ? nil
-                        : item.sourceProduct?.fitMatchDatabaseResolutionRequest(),
-                    referenceObservation: usesExplicitUserAuthority
-                        ? nil
-                        : item.sourceProduct?.fitMatchProductObservationRequest()
-                )
-            guard authorization.isAllowed else {
-                return .saveFailed(
-                    authorization.reason
-                        ?? "서버 비교 정책상 선택한 옷과 비교할 수 없습니다."
-                )
-            }
             permit = try await coordinator.beginAuthorizedComparison(authorization)
-            applyServerAuthority(authorization, selectedReferenceItem: item)
+            guard let target = RecommendationService()
+                .makeServerAuthorizedComparisonTarget(
+                    from: currentResult.product,
+                    permit: permit
+                ) else {
+                return .saveFailed("서버가 승인한 대상 상품 정보를 복원하지 못했습니다.")
+            }
+            comparisonTarget = target
         } catch {
             return .saveFailed("서버 비교 가능 여부를 확인하지 못했습니다.")
         }
@@ -1875,13 +1899,13 @@ struct RecommendationResultView: View {
             try? modelContext.fetch(FetchDescriptor<RecommendationHistory>())
         ) ?? []
         let serverProductDetailCategory: ClosetDetailCategory
-        if let detailCode = currentResult.product.normalizedProductTypeCode {
+        if let detailCode = comparisonTarget.normalizedProductTypeCode {
             serverProductDetailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCode)
         } else {
             serverProductDetailCategory = currentResult.productDetailCategory
         }
         let outcome = await ResultReferenceComparisonPersistence.resolveAndSave(
-            product: currentResult.product,
+            product: comparisonTarget,
             selectedReferenceItem: item,
             productDetailCategory: serverProductDetailCategory,
             permit: permit,
@@ -1909,41 +1933,6 @@ struct RecommendationResultView: View {
         }
 
         return outcome
-    }
-
-    private func applyServerAuthority(
-        _ authorization: FitMatchServerReferenceAuthorization,
-        selectedReferenceItem item: UserFit
-    ) {
-        let target = authorization.target.classification
-        if let categoryCode = target.categoryCode {
-            currentResult.product.category = ClothingCategory.fromTaxonomyCode(categoryCode)
-            currentResult.product.categoryCode = categoryCode
-        }
-        currentResult.product.normalizedProductTypeCode = target.detailCode
-        currentResult.product.garmentTypeRawValue = target.familyCode
-        currentResult.product.sleeveTypeRawValue = target.lengthCode
-        currentResult.product.canonicalPolicyVersion = target.taxonomyPolicyVersion
-            ?? target.decisionVersion
-        currentResult.product.markClassificationAuthority(
-            .serverConfirmed,
-            sourceIdentity: target.classificationID?.uuidString ?? target.method
-        )
-
-        guard let reference = authorization.reference else { return }
-        item.category = ClothingCategory.fromTaxonomyCode(reference.categoryCode)
-        item.categoryCode = reference.categoryCode
-        item.detailCategory = ClosetDetailCategory.fromTaxonomyCode(reference.detailCode)
-        item.detailCategoryCode = reference.detailCode
-        item.normalizedProductTypeCode = reference.detailCode
-        item.garmentTypeRawValue = reference.familyCode
-        item.sleeveTypeRawValue = reference.lengthCode
-        item.markClassificationAuthority(
-            authorization.referenceAuthority == .userExplicit
-                ? .userExplicit
-                : .serverConfirmed,
-            sourceIdentity: reference.classificationSource
-        )
     }
 
     private func presentActiveSheet(_ sheet: RecommendationResultActiveSheet) {
@@ -3027,6 +3016,111 @@ enum ResultReferenceComparisonOutcome {
     }
 }
 
+/// Shared result-reference orchestration.  The result picker and the final
+/// submission both use this exact server-authority action; it has no local
+/// comparison-policy fallback.
+@MainActor
+enum ResultReferenceComparisonAction {
+    enum AuthorizationOutcome {
+        case allowed(FitMatchServerReferenceAuthorization)
+        case rejected(String)
+        case unavailable(String)
+    }
+
+    enum DiscoveryOutcome {
+        case success([UUID: FitMatchServerReferenceAuthorization])
+        case blocked(String)
+    }
+
+    static func authorize(
+        target: Product,
+        reference: UserFit,
+        coordinator: FitMatchServerAuthorityCoordinator
+    ) async -> AuthorizationOutcome {
+        guard let targetRequest = target.fitMatchDatabaseResolutionRequest(),
+              let targetObservation = target.fitMatchProductObservationRequest(),
+              let localReferenceSnapshot = reference.fitMatchServerReferenceSnapshot() else {
+            return .unavailable("서버에서 대상 상품 또는 기준 옷을 확인할 수 없습니다.")
+        }
+
+        let usesExplicitUserAuthority =
+            reference.classificationAuthorityProvenance == .userExplicit
+        do {
+            let authorization = try await coordinator.authorizeReferenceCandidate(
+                referenceClientItemID: reference.id,
+                localReferenceSnapshot: localReferenceSnapshot,
+                targetRequest: targetRequest,
+                targetObservation: targetObservation,
+                referenceRequest: usesExplicitUserAuthority
+                    ? nil
+                    : reference.sourceProduct?.fitMatchDatabaseResolutionRequest(),
+                referenceObservation: usesExplicitUserAuthority
+                    ? nil
+                    : reference.sourceProduct?.fitMatchProductObservationRequest()
+            )
+            guard authorization.isAllowed else {
+                return .rejected(
+                    authorization.reason
+                        ?? "서버 비교 정책상 선택한 옷과 비교할 수 없습니다."
+                )
+            }
+            return .allowed(authorization)
+        } catch {
+            return .unavailable("서버 비교 가능 여부를 확인하지 못했습니다.")
+        }
+    }
+
+    /// Maps server-authorized client IDs to the currently active local Closet
+    /// items.  The local list is never treated as a comparison policy.
+    static func discoverSelectableReferences(
+        from localItems: [UserFit],
+        excluding currentReferenceID: UUID,
+        target: Product,
+        coordinator: FitMatchServerAuthorityCoordinator
+    ) async -> DiscoveryOutcome {
+        let candidates = localItems
+            .filter {
+                $0.isActiveClosetItem
+                    && $0.id != currentReferenceID
+                    && $0.fitMatchServerReferenceSnapshot() != nil
+            }
+            .sorted {
+                if $0.isRepresentative != $1.isRepresentative {
+                    return $0.isRepresentative
+                }
+                if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
+                return $0.id.uuidString < $1.id.uuidString
+            }
+
+        var authorized: [UUID: FitMatchServerReferenceAuthorization] = [:]
+        var didReachServerDecision = false
+        var unavailableMessage: String?
+        for item in candidates {
+            switch await authorize(
+                target: target,
+                reference: item,
+                coordinator: coordinator
+            ) {
+            case .allowed(let authorization):
+                didReachServerDecision = true
+                authorized[item.id] = authorization
+            case .rejected:
+                didReachServerDecision = true
+            case .unavailable(let message):
+                unavailableMessage = unavailableMessage ?? message
+            }
+        }
+
+        if !candidates.isEmpty,
+           !didReachServerDecision,
+           let unavailableMessage {
+            return .blocked(unavailableMessage)
+        }
+        return .success(authorized)
+    }
+}
+
+@MainActor
 enum ResultReferenceComparisonPersistence {
     static func resolveAndSave(
         product: Product,
@@ -3035,13 +3129,15 @@ enum ResultReferenceComparisonPersistence {
         permit: FitMatchServerComparisonPermit,
         existingHistories: [RecommendationHistory],
         modelContext: ModelContext,
-        coordinator: FitMatchServerAuthorityCoordinator
+        coordinator: FitMatchServerAuthorityCoordinator,
+        persistCompletedHistory: @MainActor (RecommendationHistory, [RecommendationHistory], ModelContext) throws -> Void = ResultReferenceComparisonPersistence.persistCompletedHistory
     ) async -> ResultReferenceComparisonOutcome {
         let service = RecommendationService()
         let analysis: VNextComparisonBatchAnalysis
+        let completion: VNextCompleteComparisonDTO
         do {
             analysis = try service.analyzeVNextComparison(permit: permit)
-            _ = try await coordinator.completeAuthorizedComparison(
+            completion = try await coordinator.completeAuthorizedComparison(
                 permit: permit,
                 analysis: analysis
             )
@@ -3053,17 +3149,14 @@ enum ResultReferenceComparisonPersistence {
             selectedReferenceItem: selectedReferenceItem,
             productDetailCategory: productDetailCategory,
             permit: permit,
-            analysis: analysis
+            analysis: analysis,
+            completion: completion
         ) else {
             return .insufficient(nil)
         }
 
         do {
-            try RecommendationHistoryStore.saveCompletedVNext(
-                history,
-                existing: existingHistories,
-                modelContext: modelContext
-            )
+            try persistCompletedHistory(history, existingHistories, modelContext)
             VNextComparisonSessionStore.shared.store(
                 analysis,
                 historyID: history.id
@@ -3073,6 +3166,18 @@ enum ResultReferenceComparisonPersistence {
             modelContext.rollback()
             return .saveFailed(error.localizedDescription)
         }
+    }
+
+    private static func persistCompletedHistory(
+        _ history: RecommendationHistory,
+        _ histories: [RecommendationHistory],
+        _ context: ModelContext
+    ) throws {
+        try RecommendationHistoryStore.saveCompletedVNext(
+            history,
+            existing: histories,
+            modelContext: context
+        )
     }
 
     #if DEBUG
@@ -3143,6 +3248,7 @@ private struct ResultReferencePickerView: View {
     let currentUserFit: UserFit
     let product: Product
     let productDetailCategory: ClosetDetailCategory
+    let serverAuthorizations: [UUID: FitMatchServerReferenceAuthorization]
     let onSelect: (UserFit) async -> ResultReferenceComparisonOutcome
     @State private var selectedItemID: UUID?
     @State private var insufficientEvidence: InsufficientComparisonEvidence?
@@ -3346,6 +3452,9 @@ private struct ResultReferencePickerView: View {
     }
 
     private var emptyReferenceTitle: String {
+        if !userFits.isEmpty, selectableFits.isEmpty {
+            return "서버에서 승인한 기준 옷이 없어요"
+        }
         if userFits.isEmpty { return "비교할 옷이 없어요" }
         let target = product.productTargetGender
         let hasChild = userFits.contains { [UserGender.kids, .baby].contains($0.gender) }
@@ -3356,6 +3465,9 @@ private struct ResultReferencePickerView: View {
     }
 
     private var emptyReferenceMessage: String {
+        if !userFits.isEmpty, selectableFits.isEmpty {
+            return "현재 서버 비교 정책에서 선택할 수 있는 기준 옷이 없어요. 다른 옷을 등록하거나 상품 조건을 다시 확인해 주세요."
+        }
         if userFits.isEmpty {
             return "내 옷장이 비어 있어요. 평소 잘 맞는 \(productDetailCategory.rawValue) 옷을 등록해 주세요."
         }
@@ -3482,7 +3594,7 @@ private struct ResultReferencePickerView: View {
         userFits
             .filter {
                 $0.id != currentUserFit.id
-                    && $0.classificationAuthorityProvenance?.isComparisonAuthority == true
+                    && serverAuthorizations[$0.id] != nil
                     && $0.fitMatchServerReferenceSnapshot() != nil
             }
             .sorted {
@@ -3495,11 +3607,10 @@ private struct ResultReferencePickerView: View {
     }
 
     private func compatibilityLevel(for item: UserFit) -> GarmentComparisonCompatibilityLevel {
-        RecommendationService().comparisonCompatibility(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            item: item
-        ).level
+        guard let authorization = serverAuthorizations[item.id] else {
+            return .blocked
+        }
+        return authorization.decision == .manualSelection ? .extended : .direct
     }
 }
 

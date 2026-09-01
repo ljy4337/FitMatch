@@ -316,20 +316,15 @@ struct SizeTableRecoveryView: View {
     }
 
     private func complete() {
-        guard let selectedSize else {
-            validationMessage = "비교할 사이즈를 선택해 주세요."
-            return
-        }
-        if let message = SizeTableRecoveryValidator.validationMessage(
-            for: [selectedSize],
-            category: viewModel.category,
-            detailCategory: viewModel.detailCategory
+        switch FitMatchSizeTableRecoveryAction.complete(
+            selectedSize: selectedSize,
+            viewModel: viewModel
         ) {
+        case .blocked(let message):
             validationMessage = message
-            return
+        case .completed:
+            validationMessage = nil
+            onComplete()
         }
-        validationMessage = nil
-        viewModel.recoverySelectedSizeID = selectedSize.id
-        onComplete()
     }
 }

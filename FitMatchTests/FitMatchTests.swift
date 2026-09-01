@@ -4434,10 +4434,10 @@ struct FitMatchTests {
     }
 
     @Test func sharedURLStoreConsumesPendingURLOnlyOnce() {
-        let suiteName = "FitMatchTests.SharedURLStore.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let store = SharedURLStore(defaults: defaults)
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FitMatchTests.SharedURLStore.\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let store = SharedURLStore(fileURL: fileURL)
         let url = URL(string: "https://www.musinsa.com/products/4668060")!
 
         store.savePendingProductURL(url)
@@ -4448,10 +4448,10 @@ struct FitMatchTests {
     }
 
     @Test func sharedURLStoreClearsOnlyThePresentedURL() {
-        let suiteName = "FitMatchTests.SharedURLStore.Presented.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let store = SharedURLStore(defaults: defaults)
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FitMatchTests.SharedURLStore.Presented.\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let store = SharedURLStore(fileURL: fileURL)
         let pendingURL = URL(string: "https://www.musinsa.com/products/4668060")!
 
         store.savePendingProductURL(pendingURL)
@@ -4471,13 +4471,32 @@ struct FitMatchTests {
         let sharedZARAURL = "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%AA%E1%84%91%E1%85%B3%E1%86%AF-p05372320.html?v1=549582583&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil"
         #expect(ProductURLSupport.supportedProviderName(for: sharedZARAURL) == "ZARA")
         #expect(ProductURLSupport.isSupportedProductURL(sharedZARAURL))
-        #expect(ProductURLSupport.supportedProviderName(for: "https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html") == "COS")
+        #expect(ProductURLSupport.supportedProviderName(for: "https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html") == nil)
+        #expect(!ProductURLSupport.isSupportedProductURL("https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html"))
 
         #expect(ProductURLSupport.supportedProviderName(for: "https://musinsa.example.com/products/4668060") == nil)
         #expect(ProductURLSupport.supportedProviderName(for: "https://example.com/?next=musinsa") == nil)
         #expect(ProductURLSupport.supportedProviderName(for: "https://uniqlo.com.example.com/products/E123456") == nil)
         #expect(ProductURLSupport.supportedProviderName(for: "https://zara.com.example.com/kr/ko/example-p01165305.html") == nil)
         #expect(ProductURLSupport.supportedProviderName(for: "https://cos.com.example.com/product.1229297007.html") == nil)
+    }
+
+    @Test func officialProductURLParserRejectsCOSBeforeAnyProviderParserRuns() async {
+        let service = ProductURLParserService()
+        let cosURL = "https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html"
+
+        do {
+            _ = try await service.parse(urlString: cosURL)
+            Issue.record("공식 COS URL이 지원되지 않는 링크로 차단되지 않았습니다.")
+        } catch let error as ProductURLParserError {
+            guard case .unsupportedURL = error else {
+                Issue.record("COS URL이 unsupportedURL이 아닌 오류로 처리됐습니다: \(error)")
+                return
+            }
+            #expect(error.errorDescription?.contains("COS") == false)
+        } catch {
+            Issue.record("예상하지 못한 COS URL 오류: \(error)")
+        }
     }
 
     @Test func zaraParserMapsOnlyVerifiedUpperGarmentBasis() async {
@@ -5248,7 +5267,12 @@ struct FitMatchTests {
         viewModel.brand = "테스트"
         viewModel.productName = "기준 바지"
         viewModel.category = .bottom
-        viewModel.detailCategory = .slacks
+        viewModel.categoryCode = ClothingCategory.bottom.taxonomyCode
+        // The shipped picker maps a current bottom selection to this active
+        // taxonomy detail; the legacy `.slacks` display value is not an
+        // active service-taxonomy detail.
+        viewModel.detailCategory = .longPants
+        viewModel.detailCategoryCode = "long_pants"
         viewModel.measurementEntrySource = .fitmatchMeasured
         viewModel.totalLength = "100"
         viewModel.waist = "38"
@@ -5283,7 +5307,9 @@ struct FitMatchTests {
         viewModel.brand = "테스트"
         viewModel.productName = "기준 재킷"
         viewModel.category = .outer
+        viewModel.categoryCode = ClothingCategory.outer.taxonomyCode
         viewModel.detailCategory = .jacket
+        viewModel.detailCategoryCode = "jacket"
         viewModel.measurementEntrySource = .fitmatchMeasured
         viewModel.totalLength = "72"
         viewModel.shoulder = "48"

@@ -4,6 +4,7 @@ import SwiftData
 struct MyPageView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
+    @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
     @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     let onLogout: () -> Void
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
@@ -181,20 +182,29 @@ struct MyPageView: View {
 
     private func deleteAccount() {
         Task { @MainActor in
-            let didDelete = await authSession.deleteAccount()
-            guard didDelete else {
-                accountDeletionErrorMessage = authSession.errorMessage
-                    ?? "잠시 후 다시 시도해 주세요."
-                return
+            let deletedUserID: UUID?
+            if case .signedIn(let userID) = authSession.state {
+                deletedUserID = userID
+            } else {
+                deletedUserID = nil
             }
-
-            do {
-                try closetSync?.purgeLocalAccountData(modelContext: modelContext)
-            } catch {
-                modelContext.rollback()
-                #if DEBUG
-                print("[MyPage] local account data cleanup failed: \(error.localizedDescription)")
-                #endif
+            let outcome = await FitMatchAccountDeletionAction.delete(
+                authSession: authSession,
+                deletedUserID: deletedUserID,
+                purgeLocalData: {
+                    do {
+                        try closetSync?.purgeLocalAccountData(modelContext: modelContext)
+                    } catch {
+                        modelContext.rollback()
+                        throw error
+                    }
+                },
+                purgeProcessedHistoryIDs: { userID in
+                    comparisonSync?.purgeProcessedHistoryIDs(for: userID)
+                }
+            )
+            if let message = outcome.userVisibleMessage {
+                accountDeletionErrorMessage = message
             }
         }
     }

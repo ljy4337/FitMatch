@@ -1,0 +1,240 @@
+# FITMATCH FINAL RELEASE USER SCENARIO CATALOG — 2026-08-31
+
+Status: FROZEN BEFORE FINAL EXECUTION
+Release candidate: current `connectDB` working tree at published base
+`8855874a7ff372ef9b0e6159740c6faee4750985`
+Mode: headless real-user business-logic acceptance; Production writes prohibited
+
+TOTAL FINAL USER SCENARIOS: 137
+
+## 1. Execution meaning
+
+A row is one behaviorally distinct user scenario. A row may contain a fixture
+matrix only when every subfixture has the same user intent, policy gate,
+recoverability, terminal state, and user-visible outcome. Each listed subfixture
+must nevertheless be constructed and executed; one representative cannot stand
+in for the others.
+
+A scenario is EXECUTED only when its distinguishing state is present in the
+constructed production DTO/model and the required production symbols are
+reached. A source-string assertion or a label-only fixture is not execution.
+Private SwiftUI-only behavior with no safe test injection seam is NOT_EXECUTED,
+not PASS. The harness may fake auth/network ordering only; it may not reproduce
+classification, reference policy, manual-cross policy, size eligibility, or the
+scorer.
+
+Provenance is exactly one of LIVE_RETAILER, PRODUCTION_PUBLIC_SELECT,
+REPOSITORY_REAL_SNAPSHOT, SYNTHETIC_ADVERSARIAL, or POLICY_STATE.
+
+## 2. Equivalence rules
+
+E01. Required-field validation may share one scenario only when each field is
+actually cleared in a separate subfixture and each reaches production validation.
+E02. A provider parser path never collapses into another provider path.
+E03. A server terminal gate collapses downstream axes only after proving that no
+downstream engine/result/history symbol is reached.
+E04. Manual-cross pairs may share a scenario by action mode only when all three
+protected pairs and both directions are separately instantiated.
+E05. Measurement failures may share a scenario only when every named semantic
+failure is separately represented and the production reason mapping is observed.
+E06. Availability failures are distinct from Recovery/classification success.
+E07. A current-session Result and a cold reconstructed History are never equivalent.
+E08. Local legacy History and server-completed vNext History are never equivalent.
+E09. Static-only reverse-scan evidence can explain a failure or missing seam but
+cannot turn a row into PASS.
+
+## 3. Scenario rows
+
+Columns below provide every required field: ID; major feature; plain Korean user
+situation/action; Normal/Exception/Recovery; provenance/provider; initial state and
+fixture requirements; expected UX and terminal state; required technical gates and
+production symbols; prior mapping.
+
+### F1 — MY CLOSET: REGISTER (CR-001…CR-022)
+
+| ID | 사용자 상황 / 행동 | 종류 | 데이터 | 초기 상태 / 실제 fixture | 기대 UX → 종료 | 필수 gate / production symbols | 기존 매핑 |
+|---|---|---|---|---|---|---|---|
+| CR-001 | 성인 상의를 직접 입력해 저장한다 | Normal | POLICY_STATE / manual | 빈 옷장; adult upper; full direct measurements; reference OFF | 필수 입력만 확인하고 1개 active Closet 저장 | `AddClosetItemViewModel.makeUserFit`; direct source/provenance; local persistence | C0/C1, U0 |
+| CR-002 | 성인 하의를 최소 실측만 넣고 선택 실측은 비운다 | Normal | POLICY_STATE / manual | adult bottom; minimum storable measurements; optional missing; valid source | 선택값 부재로 불필요하게 막지 않고 저장 | measurement source validation; bottom measurement codes; `makeUserFit` | M1/M4 |
+| CR-003 | 지원 taxonomy의 키즈/베이비 옷을 직접 등록한다 | Normal | POLICY_STATE / manual | child and baby subfixtures with matching audience/category | 연령 정보가 보존되고 성인 기준옷으로 승격되지 않음 | taxonomy selection; `UserFit` audience; reference policy | C19/C20 adjacent |
+| CR-004 | 브랜드·상품명·실측 출처 중 하나를 빠뜨린다 | Exception | SYNTHETIC_ADVERSARIAL / manual | three subfixtures, one required field empty each | 해당 필드 이유를 보여 주고 저장 0; 수정 후 재시도 가능 | `AddClosetItemViewModel.isValid`; save gate | NEW registration gap |
+| CR-005 | 성별/대분류/세부분류를 바꾸거나 복합 세트를 입력한다 | Exception | POLICY_STATE / manual | valid selections plus invalid detail and explicit composite/set subfixtures | 유효 tuple만 저장; set은 comparison/reference authority가 되지 않음 | taxonomy validation; `FitMatchClosetClassificationEditPolicy`; canonical eligibility | V09, NEW-GAP-CLOSET-UE-001 adjacent |
+| CR-006 | 숫자가 아니거나 0/음수/안전범위 밖 실측을 입력한다 | Exception | SYNTHETIC_ADVERSARIAL / manual | malformed, null, zero, negative, too-large direct values | 정확한 값 수정 요구; 잘못된 실측 저장 0 | direct measurement validator; `DirectMeasurementStandard` | M7 |
+| CR-007 | 핏 선호와 메모를 작성해 저장한다 | Normal | POLICY_STATE / manual | valid garment; non-default preference and memo | 저장·재구성 뒤 같은 선호/메모 | `AddClosetItemViewModel.makeUserFit`; SwiftData model | C15/U2 adjacent |
+| CR-008 | 등록하면서 기준옷을 켜고 기존 충돌 기준옷을 교체한다 | Recovery | POLICY_STATE / manual | no conflict, then same-scope existing representative conflict | 명시적 교체 뒤 새 옷만 기준옷; 독립 category reference 유지 | `ReferenceGarmentPolicy.conflicts`; save/reference mutation | C3/C4/C14, U3/U4 |
+| CR-009 | 직접 등록 저장이 실패한 뒤 다시 시도한다 | Recovery | SYNTHETIC_ADVERSARIAL / manual | first local/save failure; unchanged form; second success | 실패를 성공처럼 닫지 않고 입력 보존; 재시도 1개 저장 | save error state; idempotent local insertion | U20 |
+| CR-010 | 빈 클립보드·깨진 URL·미지원/COS URL을 링크 등록에 넣는다 | Exception | SYNTHETIC_ADVERSARIAL / unsupported | empty, malformed, lookalike host, official COS 1229297007 | 지원 안 됨 이유; parser/server/save 호출 0; COS 광고 0 | `ProductURLSupport`; `ProductURLParserService.parse`; link validation | PC-PROVIDER-001, EN adjacent |
+| CR-011 | 실제 UNIQLO 링크 상품을 등록하고 같은 상품을 다시 시도한다 | Normal | REPOSITORY_REAL_SNAPSHOT / UNIQLO | current URL variant; canonical identity; measurements/sizes; repeated identity | 공식 tuple/size 선택 후 저장; 중복은 명확히 처리 | `UniqloParser`; resolver; `LinkClosetRegistrationPreparation`; save | P1/J21 |
+| CR-012 | 실제 MUSINSA 링크를 등록하고 partial/image/manual recovery를 거친다 | Recovery | REPOSITORY_REAL_SNAPSHOT / MUSINSA | normal actual-size plus missing/partial chart and repository OCR fixture | 공식 값은 보존; 실패 시 허용된 recovery만 제시; 추정값 금지 | `MusinsaParser`; fallback/recovery; link preparation | P2/J21/J42 |
+| CR-013 | 실제 ZARA 링크를 등록하고 size-guide 부재 recovery를 본다 | Recovery | REPOSITORY_REAL_SNAPSHOT / ZARA | approved URL/metadata fixture; full and no-garment-guide subfixtures | 지원 gate를 거쳐 성공 또는 명확한 실측 recovery; 신체표를 의류 실측으로 쓰지 않음 | `ZARAParser`; availability gate; link preparation | P3/J21/J42 |
+| CR-014 | 링크 파서/네트워크가 실패하고 같은 링크를 재시도한다 | Recovery | SYNTHETIC_ADVERSARIAL / approved providers | timeout, parser failure, partial error, later success per provider | 실패 이유·재시도; 예전 provider/product state가 남지 않음 | `ShoppingProductViewModel.loadProductInfoFromURL`; parser transport | U20/J42 |
+| CR-015 | Global confirmed 링크 상품을 보유 size로 등록한다 | Normal | SYNTHETIC_ADVERSARIAL / approved providers | current global-confirmed runtime and exact tuple | server sourced authority와 선택 size를 보존해 저장 | resolver/coordinator; `LinkClosetRegistrationPreparation` | G0 |
+| CR-016 | full/partial size table에서 실제 보유 size를 선택한다 | Normal | REPOSITORY_REAL_SNAPSHOT / approved providers | full and partial tables; explicit owned size selection | 실제 표에 있는 선택 size만 저장; 없는 size 생성 0 | runtime size DTO; registration confirmation | A0/A1/A5 |
+| CR-017 | 쇼핑 USER_EXPLICIT 상품을 보유한 옷으로 등록한다 | Exception | POLICY_STATE / approved provider | current server-backed shopping personal authority; no separate Closet classification action | shopping 선택을 Closet manual override/global로 승격하지 않고 명시적 별도 intent 요구 | `AddComparedProductToClosetSheet`; `LinkClosetRegistrationPreparation`; edit policy/sync | NEW-GAP-CLOSET-UE-001 |
+| CR-018 | 링크 등록 저장 버튼을 연속으로 누른다 | Exception | SYNTHETIC_ADVERSARIAL / approved providers | exact same item/size; concurrent double submit | loading 고착·중복 Closet row 0 | `saveSelectedSize`; task ownership; Closet sync | NEW-GAP-CLOSET-001, RX |
+| CR-019 | 로그인 전 온보딩에서 링크 등록을 시작한다 | Exception/Recovery | POLICY_STATE / approved providers | signed-out root; onboarding link action | 인증이 필요한 단계에서 명확히 로그인으로 이어지고 무반응/권한 오류가 아님 | `ContentView.normalContent`; `FitMatchOnboardingView`; `LinkClosetRegistrationView.loadProduct` | NEW-GAP-REG-001 |
+| CR-020 | REVIEW_REQUIRED 또는 분류 unavailable 링크 상품을 등록한다 | Exception | SYNTHETIC_ADVERSARIAL / approved providers | review and unavailable runtime subfixtures | sourced Global authority를 만들지 않고 필요한 확인/차단 이유 | resolver/coordinator; `LinkClosetRegistrationPreparation` | G1-G5 |
+| CR-021 | size table이 없는 링크 상품을 등록한다 | Recovery | REPOSITORY_REAL_SNAPSHOT / approved providers | no usable size table | 지원되는 수동/이미지 recovery만 제시; 가짜 size 저장 0 | size recovery; registration confirmation | A4 |
+| CR-022 | 링크 등록 save 또는 sync 실패 뒤 재시도한다 | Recovery | SYNTHETIC_ADVERSARIAL / approved providers | first local/server failure, second success | 성공처럼 닫지 않고 재시도 뒤 정확히 1개 저장 | Closet sync coordinator; save error state | U20 |
+
+### F2 — MY CLOSET: MANAGE (CM-001…CM-019)
+
+| ID | 사용자 상황 / 행동 | 종류 | 데이터 | 초기 상태 / 실제 fixture | 기대 UX → 종료 | 필수 gate / production symbols | 기존 매핑 |
+|---|---|---|---|---|---|---|---|
+| CM-001 | 빈/한 벌/여러 벌 옷장을 열고 상세를 본다 | Normal | POLICY_STATE | 0, 1, multiple active rows | active 항목만 안정적으로 표시; 상세 identity 일치 | `MyClosetView` query filters; `isActiveClosetItem` | C0-C2 |
+| CM-002 | 직접 등록 옷의 기본 정보·분류·사이즈를 편집한다 | Normal | POLICY_STATE / manual | direct item with valid measurements | 명시적으로 바꾼 값만 갱신; 비교 authority 의미 유지 | `AddClosetItemViewModel`; detail save path | U2 |
+| CM-003 | 링크로 등록한 옷의 size와 분류를 편집한다 | Normal/Exception | POLICY_STATE / sourced | global confirmed, review/unavailable, explicit picker action | size-only edit는 authority를 만들지 않음; 분류 picker intent만 user explicit | `FitMatchClosetClassificationEditPolicy`; Closet sync | C14/U2 |
+| CM-004 | 기준옷 실측을 바꾼 뒤 같은 target을 다시 비교한다 | Normal | POLICY_STATE | reference A measurement revision 1→2 | 새 비교는 새 실측; 예전 History snapshot 불변 | measurement edit; reference snapshot; begin/completion | C15/M12/J19 |
+| CM-005 | 핏 메모/선호를 바꾸고 재구성한다 | Normal | POLICY_STATE | persisted UserFit non-default fields | 재구성 뒤 값 유지; classification/measurement 무변경 | detail save/persistence | U2 |
+| CM-006 | 기준옷 설정·충돌 교체·해제를 순서대로 한다 | Recovery | POLICY_STATE | A reference, B same scope, then clear | 서버/로컬에 정확한 delta; 동시에 충돌 기준옷 2개 없음 | `ReferenceGarmentPolicy`; Closet sync set/unset | C3/C14, U3-U5 |
+| CM-007 | 상의와 하의 등 독립 범주의 기준옷을 함께 둔다 | Normal | POLICY_STATE | multiple category representatives | 서로 충돌하지 않고 각 target에만 후보 | reference conflict scope; server candidate mapping | C4 |
+| CM-008 | 기준옷이 아닌 옷을 삭제한다 | Normal | POLICY_STATE | active non-reference, no history | active 목록/향후 후보에서 제거; unrelated rows 유지 | local delete; `enqueueDeletion`; active filter | U1 |
+| CM-009 | 활성 기준옷을 삭제하고 재구성/재동기화한다 | Recovery | POLICY_STATE | reference A, no completed history; remote soft-delete state | 삭제 옷이 후보로 부활하지 않고 새 reference discovery | history-only/deleted marker; Closet sync/hydration | C13/R15/J17/J29 |
+| CM-010 | completed server History가 연결된 옷을 삭제한다 | Recovery | SYNTHETIC_ADVERSARIAL | active reference + completed vNext history + successful hide RPC | 옷 제거, History durable hide, immutable comparison evidence 유지 | `FitMatchComparisonSyncCoordinator.hide...`; Closet delete order | PC-HISTORY-001/HIST-08 |
+| CM-011 | legacy/local-only History가 연결된 옷을 삭제한다 | Normal | POLICY_STATE | local legacy history, no server comparison identity | 기존 안전한 local 삭제; 가짜 server tombstone 생성 0 | `isServerBackedVNextHistory`; local delete | HIST-10 |
+| CM-012 | 편집/save/sync가 실패하고 재시도한다 | Recovery | SYNTHETIC_ADVERSARIAL | local save error and remote sync error, then success | 성공 오표시 없음; rollback/입력 보존; 재시도 가능 | detail error state; Closet sync state | U20 |
+| CM-013 | 중복/비활성/history-only 옷이 섞인 옷장을 연다 | Exception | SYNTHETIC_ADVERSARIAL | duplicate identity, inactive row, history-only snapshot | active owned row만 관리/후보에 표시 | active filters; sync dedupe; picker eligibility | C16/C23 |
+| CM-014 | A→B 기준옷 변경·B 삭제·A 실측 편집 후 target과 재비교한다 | Recovery | POLICY_STATE | continuous lifecycle with old completed History | 미래 비교는 매번 current state; old History 의미 불변 | Closet/reference lifecycle; coordinator; History store | J17-J20/J29-J32 |
+| CM-015 | 사용자 A 로그아웃 직후 사용자 B가 로그인한다 | Exception | SYNTHETIC_ADVERSARIAL | A-owned cached Closet/History then B session before sync purge | B 화면에 A 데이터가 한 순간도 보이지 않음 | `ContentView`; `prepareLocalCache`; SwiftData ownership filter | NEW-GAP-ACCOUNT-001 |
+| CM-016 | 계정 삭제 성공/서버 실패/local purge 실패를 각각 겪는다 | Recovery | SYNTHETIC_ADVERSARIAL | three deletion outcomes | 성공 시 owned local data 제거; 실패 시 성공 오표시 없이 재시도 | `MyPageView`; `FitMatchAuthSessionStore.deleteAccount`; `purgeLocalCache` | NEW-GAP-ACCOUNT-002 |
+| CM-017 | 계정 삭제 후 즐겨찾기와 parser 개인 선택을 확인한다 | Exception | SYNTHETIC_ADVERSARIAL | favorites/source-category mappings populated before delete | 사용자 개인 상태가 다음 계정에 남지 않음 | `FavoriteProductStore`; `SourceCategoryHistoryMatcher`; account purge | NEW-GAP-ACCOUNT-003 |
+| CM-018 | 옷장을 필터·정렬하고 list/grid를 바꾼다 | Normal | POLICY_STATE | multiple categories/brands/active states | 동일 owned active 집합을 조건에 맞게 표시하고 선택 identity 유지 | `MyClosetView.rebuildDisplayedItems`; filters/sort/layout | reverse scan UI branch |
+| CM-019 | completed History가 연결된 Closet item 삭제 중 durable hide가 실패한다 | Recovery | SYNTHETIC_ADVERSARIAL | first hide RPC failure, retry success | 첫 실패에는 옷/History 모두 유지; retry에서 hide 성공 뒤에만 옷 삭제 | `MyClosetView.deleteItem`; `ClosetItemDetailView.deleteItemAndDismiss`; both sync coordinators | PC-HISTORY-001 ordering |
+
+### F3 — PRODUCT COMPARE (CP-001…CP-039)
+
+| ID | 사용자 상황 / 행동 | 종류 | 데이터 | 초기 상태 / 실제 fixture | 기대 UX → 종료 | 필수 gate / production symbols | 기존 매핑 |
+|---|---|---|---|---|---|---|---|
+| CP-001 | current UNIQLO confirmed 상품을 정상 비교한다 | Normal | REPOSITORY_REAL_SNAPSHOT / UNIQLO | confirmed product, valid direct reference, multiple sizes | exact server sequence 뒤 Result/History | parser/resolver→coordinator→engine→complete | J03/P1 |
+| CP-002 | current MUSINSA confirmed 상품을 정상 비교한다 | Normal | REPOSITORY_REAL_SNAPSHOT / MUSINSA | provider-specific facts/measurements, valid reference | provider facts 유지, 정상 Result/History | Musinsa parser/resolver + full sequence | J04/P2 |
+| CP-003 | current ZARA confirmed·측정 가능 상품을 정상 비교한다 | Normal | REPOSITORY_REAL_SNAPSHOT / ZARA | supported verified metadata and garment measure guide | 검증된 의류 실측만 사용해 Result/History | ZARA parser/resolver + full sequence | J05/P3 |
+| CP-004 | 같은 상품 반복 및 UNIQLO→MUSINSA→ZARA 순차 진입 | Normal | REPOSITORY_REAL_SNAPSHOT / all approved | canonical identity repeats; provider state changes | identity/idempotency 유지; 이전 provider 상태 누출 0 | parser dispatch; load reset; resolver identity | J21/J31/J45 |
+| CP-005 | REVIEW_REQUIRED 후보 1/2/3개에서 미확정 사실만 고른다 | Recovery | PRODUCTION_PUBLIC_SELECT + POLICY_STATE | E467574/E482514/E450259 snapshots; separate 1/2/3 DTOs | bounded candidates only; shared fixed facts 재질문 0 | recovery contract DTO; ViewModel recovery state | G1-G3/J13 |
+| CP-006 | 후보 0개와 UNKNOWN 구조 상품을 연다 | Exception | PRODUCTION_PUBLIC_SELECT | E482868 zero; E422992 UNKNOWN | arbitrary/47-type picker 0; compare/engine 0; 이유 표시 | recovery unrecoverable path | G4/G5/J26/J28 |
+| CP-007 | NOT_APPLICABLE 상품을 비교하려 한다 | Exception | PRODUCTION_PUBLIC_SELECT | E482652 or equivalent | Recovery override 0; engine/result 0; 비교 불가 이유 | effective Global block; ViewModel state | G6/J27 |
+| CP-008 | 후보 A를 골라 USER_EXPLICIT으로 정상 resume한다 | Recovery | SYNTHETIC_ADVERSARIAL | REVIEW_REQUIRED contract + current revision + direct reference | fresh effective authority→reference→begin→engine→complete→Result/History | Recovery set + production full sequence | G7/J13/HJ-P0-001 |
+| CP-009 | “상품 종류 다시 확인” 후 최신 contract로 A→B 재선택한다 | Recovery | SYNTHETIC_ADVERSARIAL | active revision 1; fresh changed contract; revision 2 | old choice 중단, B authority, reference discovery부터 재시작 | `beginReviewRecoveryReselection`; confirm; resolve | G9/J14 |
+| CP-010 | “내 선택 초기화” 후 global REVIEW_REQUIRED로 돌아간다 | Recovery | SYNTHETIC_ADVERSARIAL | active UE then clear; global still review | comparison 자동 재개 0; fresh constrained state | `clearReviewRecovery`; resolve; no begin | G10/J15/J35 |
+| CP-011 | stale revision/candidate/hash/input/evidence contract로 저장/비교한다 | Exception | SYNTHETIC_ADVERSARIAL | each stale dimension separately changed | 모두 fail closed; old personal authority/result 0 | Recovery coordinator validation; history proof | G8/G13-G15/J34/J37/J39 |
+| CP-012 | 개인 선택 뒤 Global confirmed로 바뀐다 | Recovery | POLICY_STATE | active and cleared personal subfixtures; later confirmed | future comparison은 Global, old History 불변 | effective authority mapping; runtime refresh | G11/J16 |
+| CP-013 | 옷장이 비었거나 옷은 있으나 유효 기준옷이 없다 | Exception | POLICY_STATE | empty; nonrepresentative; incompatible-only subfixtures | engine 0; 사용자가 할 다음 행동과 이유 | `calculateRecommendation`; missing-reference state | C0-C2/C9/J01/J02 |
+| CP-014 | 같은 세부 종류의 server-approved direct 기준옷으로 자동 비교한다 | Normal | POLICY_STATE | exact tuple/direct candidate | automatic allowed only after server discovery/authorization; full sequence | coordinator discovery/auth/eligible/begin | R1/R2/J03 |
+| CP-015 | 여러 server 후보 중 사용자가 특정 기준옷을 고른다 | Normal | POLICY_STATE | multiple same-type/direct/manual candidates | server 목록만 표시; intent를 보존해 선택한 ID만 authorize | reference discovery/decision/authorization | C22/R13/R14/J30 |
+| CP-016 | 선택 기준옷이 begin 전 삭제/변경되거나 실측이 바뀐다 | Exception | SYNTHETIC_ADVERSARIAL | delete, reference A→B, measurement revision change | stale snapshot block/revalidation; engine 0 until fresh begin | coordinator snapshot equality; begin | R15-R17/J17-J19/J40 |
+| CP-017 | 로컬은 맞아 보이지만 server 후보 목록에는 없는 옷이 있다 | Exception | SYNTHETIC_ADVERSARIAL | stale local candidate + different server candidate list | 로컬 후보 숨김; server list/ordering/automatic choice가 authority | `findReferenceCandidates`; CompareFlow mapping | NEW-GAP-REF-001 |
+| CP-018 | 성인↔아동, 상의↔하의, 규칙 없는 다른 종류를 시도한다 | Exception | POLICY_STATE | each incompatible relation separately | engine 0; 관계에 맞는 의미 있는 차단 이유 | server authorization; relation DTO | R11/R12/J12/J43 |
+| CP-019 | 세 manual-cross 쌍을 양방향 automatic으로 시도한다 | Exception | POLICY_STATE | 3 pairs × 2 directions × same sleeve, automatic intent | 전부 block; manual intent 없이 cross 진행 0 | server discovery/authorization; manual flag false | R5/R7/R9/J06 |
+| CP-020 | 세 manual-cross 쌍을 양방향 명시 선택·같은 소매로 비교한다 | Normal | POLICY_STATE | 3 pairs × 2 directions; full measurements; manual explicit | remaining gates 통과 시 MANUAL_EXTENDED Result/History | authorization manual true→eligible→begin→engine→complete | J07/J09/J11 |
+| CP-021 | 세 manual-cross 쌍을 양방향 명시 선택하지만 소매가 다르다 | Exception | POLICY_STATE | 3 pairs × 2 directions × sleeve mismatch | 전부 block; engine 0; 소매 이유 | same-sleeve server policy | R6/R8/R10/J08/J10/J12 |
+| CP-022 | manual-cross는 허용되지만 비교 실측이 부족하다 | Exception | SYNTHETIC_ADVERSARIAL | all pairs authorized, measurement deficient | automatic으로 바뀌지 않고 measurement 이유로 engine 0 | authorize intent→eligible reason | NEW-GAP-MC-001 |
+| CP-023 | full/minimum/optional-missing 실측으로 비교한다 | Normal | POLICY_STATE | M0/M1/M4/M10 separately constructed | minimum 충족 시 성공; optional missing은 근거에만 반영 | canonical resolver; eligible; engine | M0/M1/M4/M10 |
+| CP-024 | target/reference/both required missing 또는 공통 실측 0이다 | Exception | POLICY_STATE | M2/M3/M8/M9 and both-insufficient subfixtures | recommendation 0; 누가/무엇이 부족한지 이유 | measurement resolver; eligible denial | J22/J23 |
+| CP-025 | semantic conflict/canonical failure/malformed/method mismatch/분류-실측 모순이다 | Exception | SYNTHETIC_ADVERSARIAL | M5/M6/M7/M13 + source-method mismatch | confident result 0; fail-closed reason | canonical measurement resolver; authority context | M5-M7/M13 |
+| CP-026 | 일부 size만 충분해 한 size 이상이 남는다 | Normal | POLICY_STATE | partial coverage and one-survivor subfixtures | authorized survivor만 exact begin/result | eligible candidate sizes; exact set | M11/A5 |
+| CP-027 | available size가 여러 개 또는 하나다 | Normal | POLICY_STATE | A0/A1 separately | server exact candidate로 begin/result | availability DTO; eligible; begin exactness | J24/J25 |
+| CP-028 | availability가 만료되거나 eligible 뒤 바뀐다 | Exception | SYNTHETIC_ADVERSARIAL | expired A3/A8; change A9/A11 between eligible/begin | Recovery와 분리된 temporal block; stale begin/engine 0 | eligible/begin recomputation | A3/A8/A9/A11 |
+| CP-029 | unusual size label/order 또는 duplicate size identity가 온다 | Normal/Exception | SYNTHETIC_ADVERSARIAL | valid labels/order A10; duplicate A6 | valid order 보존; duplicate exact set 거부 | size normalizer; begin candidate equality | A6/A10 |
+| CP-030 | Global과 current USER_EXPLICIT 성공의 engine 순서를 검증한다 | Normal | POLICY_STATE | positive global and UE exact server proofs | effective→reference→authorize→eligible→begin→engine→complete→History | ViewModel/coordinator/`RecommendationService`/adapter/History | V03-V15 |
+| CP-031 | effective USER_EXPLICIT tuple을 서버가 준 하나의 원자적 tuple로 소비한다 | Exception | SYNTHETIC_ADVERSARIAL | personal garment/sleeve with irrelevant null axis and conflicting global axis | field별 global fallback으로 존재하지 않는 hybrid 분류 생성 0 | `FitMatchSupabaseProductResolver`; `ShoppingProductViewModel.makeProduct` | NEW-GAP-EFFECTIVE-TUPLE-001 |
+| CP-032 | parser 수준 category 확인·수동 실측 recovery 뒤 비교를 재개한다 | Recovery | REPOSITORY_REAL_SNAPSHOT / ZARA + approved | source category unresolved or garment size guide missing | 서버 Recovery와 혼동하지 않고 허용된 사실 입력 뒤 같은 product flow 재개 | `CompareFlowSheet` parser recovery; `SizeTableRecoveryView`; ViewModel resume | reverse scan parser recovery |
+| CP-033 | ZARA에 의류 size guide가 없고 신체표만 있다 | Exception/Recovery | REPOSITORY_REAL_SNAPSHOT / ZARA | no garment-guide/body-guide-only snapshot | 신체표를 의류 실측으로 사용하지 않고 reasoned recovery/block | `ZARAParser`; measurement recovery | CP-003 split |
+| CP-034 | 개인 선택 뒤 Global NOT_APPLICABLE/block으로 바뀐다 | Exception | POLICY_STATE | active personal then later global block | future comparison 즉시 차단; old History 불변 | effective authority mapping; runtime refresh | G12 |
+| CP-035 | manual-cross 허용 뒤 eligible size가 0이다 | Exception | SYNTHETIC_ADVERSARIAL | same-sleeve explicit cross, zero eligible | no recommendation; size 이유; intent 변조 0 | authorization→eligible denial | NEW-GAP-MC-001 |
+| CP-036 | manual-cross 선택 기준옷이 stale/deleted다 | Exception | SYNTHETIC_ADVERSARIAL | explicit same-sleeve cross then stale reference | revalidation/block; old reference로 engine 0 | authorization/begin snapshot | NEW-GAP-MC-001 |
+| CP-037 | semantic/measurement eligibility가 모든 size를 제거한다 | Exception | POLICY_STATE | zero survivors A7 | reasoned block; begin/result 0 | eligible candidate sizes | M11/A7 |
+| CP-038 | available size 0 또는 size table 없음이다 | Exception | POLICY_STATE | A2 and A4 separately | 각각 reasoned block; begin/result 0 | availability DTO; eligible | J24/J25 |
+| CP-039 | unresolved/NA/no reference/auth/eligible/no-begin 차단 순서를 검증한다 | Exception | POLICY_STATE | each negative gate separately constructed | 어느 경우도 engine/result/history 0; 해당 gate 이유 | ViewModel/coordinator/adapter counters | V03-V15 |
+
+### F4 — RESULT (RS-001…RS-013)
+
+| ID | 사용자 상황 / 행동 | 종류 | 데이터 | 초기 상태 / 실제 fixture | 기대 UX → 종료 | 필수 gate / production symbols | 기존 매핑 |
+|---|---|---|---|---|---|---|---|
+| RS-001 | Global confirmed 비교 결과를 연다 | Normal | POLICY_STATE | completed exact server run | recommended size/score/evidence/reference가 exact snapshot과 일치 | completed History model; Result presentation | J03 |
+| RS-002 | server-backed current USER_EXPLICIT 결과를 연다 | Normal | POLICY_STATE | V4 personal projection + exact permit/begin/complete | 정상 Result/History; personal provenance 유지 | strict completion proof; Result | HJ-P0-001/J13 |
+| RS-003 | 결과의 실측 차이·근거·부족 근거 설명을 본다 | Normal/Exception | POLICY_STATE | sufficient and insufficient evidence subfixtures | 사용된/제외된 측정과 신뢰도 설명이 실제 analysis와 일치 | `RecommendationHistory` evidence; Result copy | M axes |
+| RS-004 | 현재 server session의 authorized batch로 다른 size를 본다 | Normal | SYNTHETIC_ADVERSARIAL | exact current authorized batch present | 이미 계산된 batch만 alternate 표시; fresh scorer 0 | `canPresentCurrentVNextAlternativeSizes`; session store | NEW-GAP-NAV-001 |
+| RS-005 | “다른 옷과 비교”에서 automatic/direct 또는 explicit manual reference를 고른다 | Normal | POLICY_STATE | Global and USER_EXPLICIT targets; server candidate mappings | exact current target/reference로 새 Result/History; old Result 불변 | Result picker→server discovery/auth/begin/engine/complete | NEW-GAP-RESULT-001/REF-002 |
+| RS-006 | 같은 target을 새 reference/revision으로 다시 비교한다 | Normal | POLICY_STATE | completed old Result; current changed reference/authority | 새 Result 추가; old Product/provenance/snapshot 불변 | Result persistence; History store | J18/J20/J32 |
+| RS-007 | Global confirmed 비교 결과 상품을 보유한 옷으로 등록한다 | Normal | POLICY_STATE | Global completed result | 선택 size와 Global sourced authority로 정상 등록 | AddComparedProduct sheet/edit policy/sync | result-to-Closet |
+| RS-008 | server complete 뒤 local Result/History 저장이 실패하고 재시도한다 | Recovery | SYNTHETIC_ADVERSARIAL | complete success; history construction/persistence failure; retry | misleading measurement error 금지; duplicate server/history 없이 복구 | complete→history gate/store; idempotency | HJ-P0-001/RX |
+| RS-009 | 결과 상품을 즐겨찾기에 추가/해제한다 | Normal | POLICY_STATE | completed result URL and empty/filled favorites | 같은 URL의 즐겨찾기 상태가 Home/History와 일치 | `FavoriteProductStore`; Result action | reverse scan favorite |
+| RS-010 | 결과에서 판매처 앱/웹을 연다 | Normal/Recovery | POLICY_STATE / approved providers | app URL available and app-open failure fallback | 승인 provider의 exact product URL을 열고 실패 시 web fallback | `RecommendationResultView.openProductPage` | reverse scan outbound |
+| RS-011 | cold reconstruction으로 authorized batch가 없는데 다른 size를 누른다 | Exception | SYNTHETIC_ADVERSARIAL | result exists, session batch nil/stale | fresh local scorer 0; 명확한 unavailable 이유 | `canPresentCurrentVNextAlternativeSizes`; session store | NEW-GAP-NAV-001 |
+| RS-012 | shopping USER_EXPLICIT 결과 상품을 별도 Closet intent 없이 등록한다 | Exception | POLICY_STATE | server-backed shopping personal result | shopping personal authority를 Closet `.userExplicit`로 자동 승격 0 | AddComparedProduct sheet/edit policy/sync | NEW-GAP-CLOSET-UE-001 |
+| RS-013 | USER_EXPLICIT 결과에서 재선택/초기화한다 | Recovery | POLICY_STATE | completed personal Result and immutable History | fresh Recovery/clear flow로 이동하되 old Result/History rewrite 0 | `RecommendationResultView` callbacks; CompareFlow Recovery actions | Recovery result lifecycle |
+
+### F5 — HISTORY (HI-001…HI-017)
+
+| ID | 사용자 상황 / 행동 | 종류 | 데이터 | 초기 상태 / 실제 fixture | 기대 UX → 종료 | 필수 gate / production symbols | 기존 매핑 |
+|---|---|---|---|---|---|---|---|
+| HI-001 | Global completed History를 fresh sync로 복원한다 | Normal | REPOSITORY_REAL_SNAPSHOT | completed DTO with immutable begin/result | score/size/reference/authority exact; no recomputation drift | sync coordinator; `VNextHistoryCacheHydrator` | J20 |
+| HI-002 | 같은 product의 USER_EXPLICIT V4 revision 1/2 History를 fresh 복원한다 | Normal | SYNTHETIC_ADVERSARIAL | two immutable snapshots, different personal tuple/revision | 각 행이 begin 당시 effective authority를 보존; live global로 평탄화 0 | V4 authority snapshot hydration | NEW-GAP-HISTORY-003 |
+| HI-003 | 같은 target을 시간/reference/personal revision별로 여러 번 비교한다 | Normal | POLICY_STATE | distinct client IDs and exact snapshots | distinct History; 중복/공유 mutable Product 의미 오염 0 | History store/hydrator identity | J31/J32 |
+| HI-004 | 완료 후 global 분류·reference·Closet 실측이 바뀐다 | Normal | POLICY_STATE | old completed row + later current mutations | old meaning/score/provenance 불변; future compare만 변경 | immutable snapshot/history model | V16/J20 |
+| HI-005 | History에서 같은 상품을 재비교한다 | Normal | POLICY_STATE | hydrated History and current changed authority | 현재 authority를 새로 확인; old History rewrite 0 | recompare route | J32 |
+| HI-006 | server completed History를 삭제하고 같은 삭제를 반복한다 | Normal | SYNTHETIC_ADVERSARIAL | visible history; hide receipt; duplicate hide | 즉시 local hide; tombstone 1개/idempotent; evidence untouched | comparison sync hide RPC | PC-HISTORY-001/HIST-01/06 |
+| HI-007 | hide RPC가 실패한 뒤 재시도한다 | Recovery | SYNTHETIC_ADVERSARIAL | first transport/server error, second success | 첫 실패 시 계속 보이고 성공 오표시 0; retry 가능 | History view semantics; sync coordinator | HIST-07 |
+| HI-008 | hide 뒤 resync/re-login/두 번째 modeled session으로 연다 | Recovery | SYNTHETIC_ADVERSARIAL | shared user suppression; fresh local containers | 숨긴 항목 부활 0; 다른 user state와 격리 | server projection filtering; sync/hydration | HIST-02/03/04/05 |
+| HI-009 | completed History가 연결된 Closet item을 삭제한다 | Recovery | SYNTHETIC_ADVERSARIAL | reference + server history; hide then closet delete | item/history hidden, immutable comparison retained | Closet delete ordered contract | HIST-08/PC-HISTORY-001 |
+| HI-010 | legacy/local History를 삭제한다 | Normal | POLICY_STATE | legacy-only local row | safe local 삭제; 가짜 server tombstone 생성 0 | legacy detector; local store | HIST-10 |
+| HI-011 | History를 검색·필터·정렬하고 즐겨찾기만 본다 | Normal | POLICY_STATE | multiple products/providers/dates/favorite states | 조건에 맞는 owned visible History와 stable identity | `RecommendationHistoryView` filters/sort; favorite store | reverse scan UI branch |
+| HI-012 | Home 최근 결과에서 같은 URL/이름의 여러 History를 본다 | Normal | POLICY_STATE | distinct immutable comparisons sharing URL/name | 제품 카드 중복 정책이 History 행 자체를 합치거나 잃지 않음 | `HomeView` recent-result dedupe; History store | reverse scan presentation |
+| HI-013 | History에서 다른 옷과 비교한다 | Normal | POLICY_STATE | hydrated history and current server references | fresh authority/reference sequence; old History rewrite 0 | History→Result comparison route | NEW-GAP-RESULT-001 |
+| HI-014 | History 상품을 Closet에 추가한다 | Normal/Exception | POLICY_STATE | Global and personal historical variants | current authority 확인; shopping personal을 Closet로 자동 승격 0 | History→registration route | NEW-GAP-CLOSET-UE-001 |
+| HI-015 | hidden server History를 재동기화한다 | Exception | POLICY_STATE | hidden projection plus fresh cache | hidden row 부활 0; visible rows 정상 hydrate | sync/hydrator/server projection | HIST-09 |
+| HI-016 | cold sync가 immutable begin snapshot의 PENDING comparison을 찾는다 | Recovery | SYNTHETIC_ADVERSARIAL | owned pending row with valid begin snapshot | snapshot을 한 번 계산/complete한 뒤 COMPLETED projection만 hydrate | `FitMatchComparisonSyncCoordinator`; engine adapter; hydrator | pending recovery branch |
+| HI-017 | local cache가 server-approved라 표시하지만 remote completed row가 없다 | Exception | SYNTHETIC_ADVERSARIAL | orphan local server-marked History | upload/promote/recompute 없이 fail closed/parity warning | `FitMatchComparisonSyncCoordinator.synchronizeOnce` | orphan cache branch |
+
+### F6 — PRODUCT ENTRY / SHARE / DEEP LINK (EN-001…EN-012)
+
+| ID | 사용자 상황 / 행동 | 종류 | 데이터 | 초기 상태 / 실제 fixture | 기대 UX → 종료 | 필수 gate / production symbols | 기존 매핑 |
+|---|---|---|---|---|---|---|---|
+| EN-001 | 직접 URL 또는 유효 custom deep link로 approved product를 연다 | Normal | REPOSITORY_REAL_SNAPSHOT / approved providers | direct URL and valid route payload | 같은 canonical target으로 한 번 진입 | `ContentView.handleDeepLink`; `SharedURLStore`; Compare load | direct entry |
+| EN-002 | 여러 Share attachment 중 첫 것은 미지원, 뒤에는 지원 URL이다 | Recovery | SYNTHETIC_ADVERSARIAL / approved providers | ordered multiple attachments and supported payload variants | 지원 URL을 결정적으로 찾고 1회 handoff | Share extraction/support gate/store | NEW-GAP-ENTRY-001 |
+| EN-003 | unsupported/COS Share URL을 보낸다 | Exception | SYNTHETIC_ADVERSARIAL / COS | official COS and lookalike URLs | Share handoff/compare parser 0; supported copy에 COS 0 | Share whitelist; ProductURLSupport | PC-PROVIDER-001/COS-04 |
+| EN-004 | stale pending share·missing app-group·malformed payload로 앱을 연다 | Exception | SYNTHETIC_ADVERSARIAL | old timestamp, missing/defaults garbage | 잘못된 상품 자동 진입 0; 의미 있는 ignore/recovery | `SharedURLStore.consumePendingProductURL`; app route | NEW-GAP-ENTRY-001 |
+| EN-005 | unknown custom route/host 뒤 valid pending share로 재진입한다 | Recovery | SYNTHETIC_ADVERSARIAL | pending valid URL plus unknown route then correct route | unknown route가 valid pending payload를 소비하지 않음; repeat exactly once | `ContentView.handleDeepLink`; SharedURLStore | NEW-GAP-ENTRY-001 |
+| EN-006 | Compare 직접 입력에 빈/깨진/미지원/COS URL을 넣는다 | Exception | SYNTHETIC_ADVERSARIAL / unsupported | each invalid input at Home/Compare boundary | 비교 sheet/parser 0; 현재 지원 provider 안내 | `HomeView.submitURL`; `CompareFlowSheet.loadProduct` | reverse scan direct compare gate |
+| EN-007 | 앱 auth load, Apple 성공/취소/오류, 로그아웃/재로그인을 겪는다 | Normal/Recovery | SYNTHETIC_ADVERSARIAL | deterministic session/auth outcomes | 올바른 root state; 취소/오류 이유; 다른 사용자 데이터 노출 0 | `ContentView`; `FitMatchAuthSessionStore` | reverse scan auth lifecycle |
+| EN-008 | 시작 시 SwiftData store를 열지 못한다 | Exception | SYNTHETIC_ADVERSARIAL | container construction failure | 빈 정상 화면으로 위장하지 않고 복구 가능한 startup error | `FitMatchApp` model-container fallback/error | reverse scan startup |
+| EN-009 | legacy measurement migration이 실패하고 재시도된다 | Recovery | SYNTHETIC_ADVERSARIAL | first backfill failure, second success | 기존 데이터 손상/중복 없이 명확히 재시도 | `MeasurementLegacyBackfillService`; ContentView task | reverse scan migration |
+| EN-010 | 전역 검색으로 Closet·History·상품 기능에 진입한다 | Normal | POLICY_STATE | multiple matching and no-match states | 검색 결과가 exact owned visible identity로 이동 | `GlobalSearchView`; `FitMatchCard` search route | reverse scan shipped flow |
+| EN-011 | 주요 탭과 도움말/개인정보/출시정보 shell을 연다 | Normal | POLICY_STATE | authenticated root | dead route 없이 현재 문서 화면 진입 | `MainTabView`; help/privacy/release views | reverse scan shell smoke |
+| EN-012 | approved provider URL 하나를 Share로 cold/foreground 앱에 전달한다 | Normal | REPOSITORY_REAL_SNAPSHOT / approved providers | one exact supported attachment in both app states | exact URL을 한 번 저장·소비하고 같은 target 열기 | Share extension handler; `SharedURLStore`; `ContentView` | normal Share happy path |
+
+### F7 — RETRY / RACE / STALE STATE (RX-001…RX-015)
+
+| ID | 사용자 상황 / 행동 | 종류 | 데이터 | 초기 상태 / 실제 fixture | 기대 UX → 종료 | 필수 gate / production symbols | 기존 매핑 |
+|---|---|---|---|---|---|---|---|
+| RX-001 | compare 시작을 빠르게 두 번 누른다 | Exception | SYNTHETIC_ADVERSARIAL | true concurrent duplicate compare actions | duplicate begin/completed History 0; dead loading 0 | task ownership; server idempotency; store | U22/J36 |
+| RX-002 | Recovery A 선택 직후 clear 또는 B 재선택, 늦은 A 응답이 돌아온다 | Recovery | SYNTHETIC_ADVERSARIAL | deterministic out-of-order A/B/clear schedule | newest revision/clear wins; A resurrection/auto-resume 0 | ViewModel Recovery tasks; revision/hash validation | J38/J39 |
+| RX-003 | eligible 뒤 reference/authority/availability가 바뀌고 예전 응답이 늦게 온다 | Exception | SYNTHETIC_ADVERSARIAL | A→B reference, fingerprint change, availability expiry | stale begin/engine/result 0; fresh restart required | coordinator begin exactness; active load identity | J40/J41/A9 |
+| RX-004 | product resolve/parser가 timeout 후 재시도된다 | Recovery | SYNTHETIC_ADVERSARIAL | first resolve failure then success | old provider state 없이 same intent 복구 | parser/ViewModel load identity | J42/U20 |
+| RX-005 | 같은 client-ID begin을 재전송한다 | Recovery | SYNTHETIC_ADVERSARIAL | exact same complete begin envelope | 동등한 snapshot/response; duplicate run/History 0 | begin DTO/coordinator/idempotency | NEW-GAP-BEGIN-REPLAY-001/J31 |
+| RX-006 | 오프라인 cold launch로 cache를 보고 연결 복구 뒤 sync한다 | Recovery | SYNTHETIC_ADVERSARIAL | owned cache; initial network failure; reconnect | 다른 계정 노출 없이 cache 표시; 자동/명시 retry로 최신화 | Closet/comparison sync coordinators; ContentView scheduling | reverse scan offline |
+| RX-007 | 링크 등록 save를 빠르게 두 번 누른다 | Exception | SYNTHETIC_ADVERSARIAL | concurrent identical link/size submit | duplicate Closet row 0; loading deadlock 0 | link save task ownership; Closet sync | U22 |
+| RX-008 | 같은 Recovery candidate를 빠르게 두 번 제출한다 | Exception | SYNTHETIC_ADVERSARIAL | identical contract/revision double submit | one revision/effective choice; stale duplicate safely rejected | Recovery ViewModel/coordinator | J37 |
+| RX-009 | authority/reference discovery/authorization 실패 뒤 각각 재시도한다 | Recovery | SYNTHETIC_ADVERSARIAL | one failure then success at each named boundary | correct step reason; engine before authorization 0 | coordinator remote sequence | J43/U20 |
+| RX-010 | eligible 또는 begin 실패 뒤 재시도한다 | Recovery | SYNTHETIC_ADVERSARIAL | first eligible/begin failure, second success | stale candidate 사용 0; successful begin 1 | coordinator eligible/begin | J44 |
+| RX-011 | complete 실패/지연 뒤 재시도한다 | Recovery | SYNTHETIC_ADVERSARIAL | engine result exists; first complete failure/delayed success | local completed Result before server success 0; duplicate History 0 | complete coordinator/store | U20 |
+| RX-012 | 작업을 취소/back/re-enter하거나 provider를 바꾼다 | Recovery | SYNTHETIC_ADVERSARIAL | delayed old task and new entry | old response가 새 화면/result를 덮지 않음 | ViewModel active load ID; task cancellation | U21 |
+| RX-013 | select/reselect/clear 뒤 객체/session을 재구성한다 | Recovery | SYNTHETIC_ADVERSARIAL | three fresh-object hydration subfixtures | 최신 server revision/clear가 이기고 local stale state 부활 0 | resolver/coordinator/hydrator | J33-J35 |
+| RX-014 | pending Share A를 읽는 동안 extension이 B로 덮어쓴다 | Recovery | SYNTHETIC_ADVERSARIAL | compare-and-clear race | A의 조건부 clear가 B를 지우지 않고 다음 entry에 B 유지 | `SharedURLStore.clearPendingProductURL(ifMatching:)` | pending-share CAS |
+| RX-015 | Closet/History sync가 도는 동안 새 sync 요청이 겹친다 | Recovery | SYNTHETIC_ADVERSARIAL | gated remotes and second trigger | latest revision을 잃지 않는 정확히 한 follow-up pass; duplicate hydrate/mutation 0 | both sync coordinators `needsAnotherPass` | sync coalescing |
+
+## 4. Required final reconciliation
+
+The execution report must contain exactly 137 JSONL rows and these feature totals:
+
+* My Closet Register: 22
+* My Closet Manage: 19
+* Product Compare: 39
+* Result: 13
+* History: 17
+* Entry / Share / Deep Link: 12
+* Retry / Race / Stale: 15
+
+Reverse scan may add a truly behaviorally distinct production branch before the
+first final-suite execution. If that happens, this catalog count and every report
+must be updated together before execution. After execution begins, no scenario may
+be removed or merged to improve the score.

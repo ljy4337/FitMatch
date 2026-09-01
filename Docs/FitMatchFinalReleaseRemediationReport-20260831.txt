@@ -1,0 +1,69 @@
+# FitMatch final 137 remediation report — 2026-09-01
+
+## Candidate status
+
+FINAL 137 REMEDIATION READY FOR SECOND INDEPENDENT ACCEPTANCE
+
+Published Git and local base: 8855874a7ff372ef9b0e6159740c6faee4750985
+on connectDB. The release candidate is the current uncommitted working
+tree; no commit, push, Production write, Production migration apply, or Auth
+mutation occurred.
+
+## Frozen accounting
+
+| Classification | Count |
+|---|---:|
+| HEADLESS_PASS | 131 |
+| STATIC_CONTRACT_PASS | 2 — EN-010 EN-011 |
+| PHYSICAL_SMOKE_PENDING | 4 — CR-019 EN-002 EN-007 EN-012 |
+| FAIL | 0 |
+| NOT_EXECUTED | 0 |
+| OWNER_SCOPE_DECISION_REQUIRED | 0 |
+| **TOTAL** | **137** |
+
+All four physical rows have their data/state/business logic executed. Only
+Apple/system presentation and physical Share Sheet lifecycle remain for a
+device smoke test.
+
+## Confirmed remediation
+
+1. **Result recompare immutability:** starting 다른 옷과 비교 creates a
+   detached current server-authorized target and reference context. It never
+   mutates the displayed completed Result or its historical reference.
+2. **V4 historical projection:** hydration and local persistence use a
+   per-comparison immutable target/reference projection. Audience, tuple,
+   USER_EXPLICIT provenance, revision, and reference identity are retained.
+3. **Home recent History identity:** completed comparison identity, rather than
+   URL/name, controls the recent History presentation.
+4. **Home URL explanation:** empty, malformed, unsupported, and COS links fail
+   closed with an actionable current-provider explanation and no parser call.
+5. **Share handoff integrity:** app and extension use one Codable App Group
+   payload with 15-minute TTL and generation-aware acknowledgement.
+6. **Account switch cache isolation:** stale outgoing-account Closet/History
+   remote responses cannot hydrate after a newer account is prepared.
+
+History search was not invented for a test: current shipped flow authority
+already declares History search/filter/sort/favorite, and the existing
+RecommendationHistoryView / FitMatchHistoryPresentation path is used.
+
+## Validation
+
+- full non-UI FitMatchTests: **592 PASS / 0 FAIL / 37 SKIP**
+- fresh final scenario execution: PASS with 137 unique IDs
+- SwiftData delete/hydration: 14 PASS × 10
+- Recovery/comparison race: 15 PASS × 5
+- Share handoff TTL/CAS: 26 PASS × 5
+- account cache isolation: 29 PASS × 5
+- local PostgreSQL Recovery begin-replay and manual-cross contract: PASS
+- Debug app/test build-for-testing: PASS
+
+## Safety and next boundary
+
+- Production writes: **0**
+- 20260831010000_vnext_comparison_history_visibility.sql: locally validated
+  only; **NOT DEPLOYED**
+- Protected tab/header scroll source: no task-induced diff
+
+The next authority is an independent Sol Ultra acceptance using the unchanged
+frozen catalog. Do not deploy the History visibility migration before that
+acceptance and the subsequent authorized Production postflight.

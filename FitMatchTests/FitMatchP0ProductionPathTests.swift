@@ -1061,10 +1061,10 @@ struct FitMatchP0ProductionPathTests {
 
     // PATH-SHARE-DEEPLINK-01 · Headless coverage ends at the app-group handoff store.
     @Test func p0SharedURLStoreConsumesOnlyTheExpectedURL() throws {
-        let suiteName = "FitMatch.P0.SharedURL.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suiteName))
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let store = SharedURLStore(defaults: defaults)
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FitMatch.P0.SharedURL.\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let store = SharedURLStore(fileURL: fileURL)
         let expected = try #require(URL(string: "https://www.musinsa.com/products/6294035"))
 
         store.savePendingProductURL(expected)

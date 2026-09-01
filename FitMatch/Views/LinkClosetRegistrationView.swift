@@ -38,7 +38,7 @@ struct LinkClosetRegistrationView: View {
     }
 
     private var canLoadProduct: Bool {
-        ProductURLSupport.isSupportedProductURL(normalizedURLString) && !isLoading
+        FitMatchProductLinkInput.validate(normalizedURLString).canStartLoad && !isLoading
     }
 
     var body: some View {
@@ -110,15 +110,14 @@ struct LinkClosetRegistrationView: View {
                         productImageURLString: partialProduct.imageURLString,
                         presentationContext: .linkedProduct
                     ) { item in
-                        modelContext.insert(item)
-                        do {
-                            try modelContext.save()
+                        if FitMatchClosetRegistrationPersistence.save(
+                            item,
+                            in: modelContext
+                        ) {
                             shouldCompleteAfterSheetDismissal = true
                             return true
-                        } catch {
-                            modelContext.rollback()
-                            return false
                         }
+                        return false
                     }
                 }
                 .presentationDragIndicator(.visible)
@@ -373,9 +372,7 @@ struct LinkClosetRegistrationView: View {
     }
 
     private func loadProduct() async {
-        let trimmedURL = normalizedURLString
-        guard ProductURLSupport.isSupportedProductURL(trimmedURL), !isLoading else {
-            errorMessage = trimmedURL.isEmpty ? nil : "올바른 상품 URL을 입력해 주세요."
+        guard !isLoading else {
             return
         }
 
@@ -386,20 +383,24 @@ struct LinkClosetRegistrationView: View {
         isLoading = true
         defer { isLoading = false }
 
-        let viewModel = ShoppingProductViewModel(initialURL: trimmedURL)
-        _ = await viewModel.loadProductInfoFromURL()
-        guard !Task.isCancelled else { return }
-
-        let brand = existingBrand(named: viewModel.brand) ?? Brand(name: viewModel.brand)
-        let preparation = LinkClosetRegistrationPreparation.make(
-            from: viewModel,
-            brand: brand
+        let outcome = await FitMatchLinkClosetRegistrationAction.load(
+            urlString: normalizedURLString,
+            makeViewModel: { ShoppingProductViewModel(initialURL: $0) },
+            existingBrand: existingBrand(named:)
         )
-        parsedProduct = preparation.parsedProduct
-        partialProduct = preparation.partialProduct
-        parsedDetailCategory = preparation.detailCategory
-        recoveryViewModel = preparation.recoveryViewModel
-        errorMessage = preparation.errorMessage
+        switch outcome {
+        case .blocked(let validation):
+            errorMessage = validation == .empty ? nil : "올바른 상품 URL을 입력해 주세요."
+            return
+        case .cancelled:
+            return
+        case .loaded(let preparation):
+            parsedProduct = preparation.parsedProduct
+            partialProduct = preparation.partialProduct
+            parsedDetailCategory = preparation.detailCategory
+            recoveryViewModel = preparation.recoveryViewModel
+            errorMessage = preparation.errorMessage
+        }
     }
 
     private func startLoadingProduct() {
@@ -544,12 +545,16 @@ struct LinkClosetRegistrationPreparation {
         let classification = authority.classification
         partial.categoryCode = classification.categoryCode
         partial.normalizedProductTypeCode = classification.detailCode
-        partial.garmentTypeRawValue = classification.familyCode
+        // `familyCode` is comparison policy, not the garment identity. The
+        // partial registration path must preserve the server-issued garment
+        // tuple without turning a shopping personal authority into Global.
+        partial.garmentTypeRawValue = classification.garmentTypeCode
+            ?? classification.detailCode
         partial.sleeveTypeRawValue = classification.lengthCode
         partial.canonicalPolicyVersion = classification.taxonomyPolicyVersion
             ?? classification.decisionVersion
         partial.markClassificationAuthority(
-            .serverConfirmed,
+            viewModel.hasActiveUserExplicitClassification ? .localHint : .serverConfirmed,
             sourceIdentity: classification.classificationID?.uuidString
                 ?? classification.method
         )

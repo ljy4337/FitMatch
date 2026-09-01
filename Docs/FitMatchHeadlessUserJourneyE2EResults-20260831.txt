@@ -1,0 +1,383 @@
+FITMATCH — CANONICAL HEADLESS REAL-SWIFT USER-JOURNEY E2E
+Execution Results
+Date: 2026-08-31 (Asia/Seoul)
+Mode: TEST-ONLY / Production SELECT-only
+
+CURRENT REMEDIATION REVALIDATION: HEADLESS USER JOURNEY PASS
+
+HJ-P0-001 was remediated without a Production write. The rerun completed all
+45 valid canonical scenarios: 45 executed / 45 PASS / 0 FAIL / 0 unexecuted.
+J07, J09, J11, and J13 now reach the real Swift server-backed completion path
+and construct local Result/History only after the matching successful server
+completion. The focused Headless suite is 5 PASS / 0 FAIL / 0 SKIP; critical
+vNext suites are 64 PASS / 0 FAIL / 0 SKIP; the full FitMatchTests target is
+513 PASS / 1 known legacy DBLogic failure / 37 SKIP. Production writes remain
+0. The historical initial-failure evidence below is intentionally retained.
+
+INITIAL EXECUTION VERDICT: HEADLESS USER JOURNEY FAIL
+
+The finite model executed every one of its 45 valid canonical journeys, but a
+P0 was reproduced in four USER_EXPLICIT comparison corridors.  The app reaches
+the real local scorer and successfully calls the scripted server completion
+boundary, then discards the Result/History because local History persistence
+accepts only GLOBAL server-confirmed products.
+
+1. Git identity and permitted diff scope
+
+Branch: connectDB
+Local HEAD: 8855874a7ff372ef9b0e6159740c6faee4750985
+origin/connectDB after fetch: 8855874a7ff372ef9b0e6159740c6faee4750985
+Conflict state: none observed.
+
+Pre-existing unrelated working-tree items were preserved:
+
+* Docs/CodexSessionHandoff.md (modified before this task)
+* Docs/FitMatchRecoverySimulatorProductionE2E-20260831.txt (untracked)
+* Docs/FitMatchRecoverySimulatorProductionE2E-20260831.zip (untracked)
+* Docs/FitMatchReviewRequiredRecoveryProductionPostflight-20260830.zip
+  (untracked)
+
+This task adds only the test-only headless harness and the three authorized
+headless-audit documents.  No application Swift, migration, SQL, Edge, project
+membership, or Production object was modified.
+
+2. Test architecture and integrity audit
+
+Harness file:
+
+* FitMatchTests/FitMatchHeadlessUserJourneyTests.swift
+
+Remote boundary:
+
+* JourneyRecordingRemote conforms to the existing
+  FitMatchServerAuthorityRemoteServicing seam.
+* It decodes schema-valid current DTOs and records remote call order.
+* It never calculates classification, reference compatibility, eligible sizes,
+  manual-cross policy, or scores.
+
+Real production Swift symbols traversed by the successful full chain:
+
+* ShoppingProductViewModel.loadProductInfoFromURL()
+* FitMatchServerAuthorityCoordinator.resolveProductAuthority(...)
+* FitMatchServerAuthorityCoordinator.authorizeReferenceCandidate(...)
+* FitMatchServerAuthorityCoordinator.beginAuthorizedComparison(_:)
+* RecommendationService.analyzeVNextComparison(permit:)
+* VNextComparisonEngineAdapter.analyze(_:)
+* FitMatchServerAuthorityCoordinator.completeAuthorizedComparison(...)
+* RecommendationService.makeCompletedVNextHistory(...)
+
+Test-integrity assertion passed:
+
+* no direct MeasurementComparisonEngine construction in the harness
+* no direct VNextComparisonEngineAdapter construction in the harness
+* no copied classifier, reference selector, manual-cross algorithm, policy
+  weights, or scoring formula
+* no expected result derived from the actual result
+* no production source modification
+
+3. Finite scenario space
+
+Raw named Cartesian space: 25 Closet × 3 provider × 16 classification × 18
+target/reference relation × 14 measurement × 12 availability × 24 action
+= 87,091,200.
+
+The authority matrix intentionally reduces this into 45 behaviorally distinct
+canonical corridors (J01...J45).  Of the raw combinations, 87,091,155 are not
+retained individually because they are either logically invalid under the
+documented constraints or behaviorally equivalent to a canonical corridor.
+This is an equivalence-class accounting number, not a false assertion that all
+omitted tuples are independently invalid.
+
+Valid canonical scenarios: 45
+Executed valid scenarios: 45
+Unexecuted valid scenarios: 0
+Scenario technical PASS: 41
+Scenario technical FAIL: 4
+
+The matrix test deliberately catches a scenario failure, records it, and
+continues through the remaining valid scenarios before producing one aggregate
+failure.  This prevents a first defect from hiding later state-space execution.
+
+4. Test execution results
+
+Final headless suite execution:
+
+* Target: FitMatchTests/FitMatchHeadlessUserJourneyTests
+* Simulator test runner: iPhone 17 Pro, iOS 26.3
+* UI automation: none
+* Discovered tests: 4
+* Passed: 3
+* Failed: 1 aggregate finite-matrix test
+* Skipped: 0
+* Duration: 73.1 seconds
+
+Passing tests:
+
+* actualProductionSwiftFullChainRequiresBeginBeforeCompletion
+* headlessHarnessDoesNotDuplicateBusinessAuthority
+* recoveryLifecycleUsesFreshOpaqueServerContracts
+
+The aggregate finite-matrix test failed only for J07, J09, J11, and J13.  It
+still executed all 45 scenarios.
+
+Critical existing regression suites were also executed after adding the
+harness:
+
+* FitMatchReviewRequiredRecoveryTests
+* FitMatchVNextContractTests
+* FitMatchComparisonPermitSequencingTests
+* FitMatchComparisonSyncCoordinatorTests
+* FitMatchServerAuthorityIntegrationTests
+* FitMatchSupabaseProductResolverTests
+
+Result: 64 PASS / 0 FAIL / 0 SKIP (58.7 seconds).
+
+Xcode `build-for-testing` also passed for the app and test target with the new
+harness included.  Existing unrelated compiler warnings in live/audit tests
+were not modified.
+
+5. Provider and public catalog evidence
+
+Production was queried SELECT-only for public product catalog facts.  No
+private Closet, History, Auth, or override rows were read.
+
+Current Production catalog distribution:
+
+* total products: 1,608
+* CONFIRMED: 346
+* REVIEW_REQUIRED: 1,165
+* NOT_APPLICABLE: 97
+
+Current provider/status counts:
+
+* UNIQLO: 259 CONFIRMED / 843 REVIEW_REQUIRED / 82 NOT_APPLICABLE
+* MUSINSA: 73 CONFIRMED / 306 REVIEW_REQUIRED / 15 NOT_APPLICABLE
+* ZARA: 14 CONFIRMED / 16 REVIEW_REQUIRED / 0 NOT_APPLICABLE
+
+Read-only representative confirmed catalog rows observed:
+
+* UNIQLO E424873 — 크루넥T — tshirt / short_sleeve
+* MUSINSA 6781113 — 민소매 티셔츠 M - 블랙:하이퍼 핑크 / IM6145-011
+  — tank_top / sleeveless
+* ZARA 545892778 — 숏 슬리브 티셔츠 — tshirt / short_sleeve
+
+All headless remote DTO sequences remain SYNTHETIC_ADVERSARIAL or POLICY_STATE;
+the public catalog rows above were not presented as captured runtime DTOs.
+The internal Production recovery-options function correctly refused an
+unauthenticated SELECT invocation.  No auth bypass, synthetic account, or
+user-data read was attempted.  Therefore the current live 0/1/2/3 candidate
+distribution is NOT VERIFIED in this run; it was not fabricated from the
+previous postflight report.
+
+6. Coverage and technical outcomes
+
+Closet/reference:
+
+* C0/C1/C2 empty/no-reference blocks: PASS with a user-visible reason.
+* active/stale/deleted reference guard: PASS; no evaluator/begin reached.
+* global automatic direct comparison: PASS.
+* global explicit manual-reference comparison: PASS.
+* same-type sleeve-difference, incompatible, upper/bottom, unavailable, and
+  measurement-required remote decisions: PASS fail-closed.
+* duplicate intentional app actions: executed as TEST_DATA_LIMITATION; the
+  synthetic remote cannot prove Production RPC idempotency for two deliberately
+  distinct client-history IDs.
+
+Classification/Recovery:
+
+* bounded Recovery contract, select, fresh reselect, revision progression,
+  clear, and reconstruction without cleared-authority resurrection: PASS.
+* zero-candidate and UNKNOWN/unrecoverable states: PASS fail-closed.
+* NOT_APPLICABLE: PASS; no begin/scorer path.
+* stale candidate and stale revision fixtures: PASS fail-closed.
+* USER_EXPLICIT resume through a valid comparison completion: FAIL — P0 below.
+
+Manual-cross:
+
+* automatic tshirt/polo cross: PASS blocked.
+* explicit sleeve-mismatch cross: PASS blocked.
+* explicit same-sleeve tshirt/polo, sweatshirt/hoodie, and
+  sweatshirt/knit_sweater all reach eligible sizes, begin, real engine, and
+  complete; their Result/History failure is the same P0 below.
+
+Measurement/availability:
+
+* valid global chain exercises existing MeasurementComparisonEngine only after
+  begin: PASS.
+* eligible-size gate precedes begin: PASS.
+* availability/measurement denial prevents begin and scorer: PASS.
+* expired/zero-availability are represented as safe downstream blocks, not as
+  Recovery success/failure.
+
+History:
+
+* global completed chain creates a local completed history only after server
+  completion: PASS.
+* deleted-reference/history-only and local-history non-promotion behavior:
+  covered by the 64 existing critical tests, PASS.
+* USER_EXPLICIT completed-history persistence: FAIL — P0 below.
+
+7. P0 defect
+
+HJ-P0-001 — USER_EXPLICIT comparison completes remotely but no local Result or
+History is created.
+
+Affected canonical journeys:
+
+* J07: USER_EXPLICIT polo target + explicit same-sleeve tshirt/polo manual
+  cross
+* J09: USER_EXPLICIT sweatshirt target + explicit same-sleeve hoodie cross
+* J11: USER_EXPLICIT sweatshirt target + explicit same-sleeve knit-sweater
+  cross
+* J13: REVIEW_REQUIRED → bounded candidate selection → USER_EXPLICIT →
+  automatic reference discovery/resume
+
+Observed actual production-Swift transition for J13:
+
+effective authority
+→ recovery_contract
+→ set_user_product_classification
+→ effective-authority refresh
+→ list_closet
+→ reference_candidates
+→ eligible_sizes
+→ begin_comparison
+→ MeasurementComparisonEngine via RecommendationService
+→ complete_comparison
+→ no local Result/History
+
+J13 recorded calls:
+
+resolve, runtime, recovery_contract, set_user_product_classification, resolve,
+runtime, resolve, runtime, list_closet, reference_candidates, eligible_sizes,
+begin_comparison, complete_comparison.
+
+J07/J09/J11 each recorded:
+
+resolve, runtime, resolve, runtime, list_closet, reference_candidates,
+eligible_sizes, begin_comparison, complete_comparison.
+
+Root cause (static and runtime-correlated):
+
+* ShoppingProductViewModel.makeProduct marks a runtime classification with
+  authority_status == USER_EXPLICIT as `.userExplicit`.
+* ShoppingProductViewModel.completeVNextRecommendation calls the real engine,
+  successfully completes the server comparison, then asks
+  RecommendationService.makeCompletedVNextHistory to create the local model.
+* RecommendationService.makeCompletedVNextHistory has a hard guard requiring
+  `product.classificationAuthorityProvenance == .serverConfirmed`; it rejects
+  `.userExplicit` even though that provenance is the reviewed, server-backed
+  authority for the current comparison.
+
+Evidence locations:
+
+* FitMatch/ViewModels/ShoppingProductViewModel.swift:831
+* FitMatch/ViewModels/ShoppingProductViewModel.swift:1050
+* FitMatch/Services/RecommendationService.swift:70
+
+Actual user outcome:
+
+* J07/J09/J11: WRONG_RESULT.  The app says “측정 방식이 호환되는 실측 항목이
+  부족해 추천할 수 없습니다.” after the exact permitted chain already reached
+  `complete_comparison`.
+* J13: UNEXPECTED_STALL/WRONG_RESULT.  The app says there is no compatible
+  reference after completion, while the server-completed comparison has no
+  local Result/History presentation.
+
+Impact:
+
+* The core REVIEW_REQUIRED Recovery product goal cannot complete for a real
+  USER_EXPLICIT target.
+* A user may retry after the misleading error.  The already-completed remote
+  comparison lacks its expected local presentation/cache, increasing duplicate
+  user-action/history-provenance risk.
+* This is P0: it makes an approved Recovery comparison path unusable and
+  destroys the expected Result/History UX after a successful server completion.
+
+Minimum remediation (NOT APPLIED):
+
+Adjust only the local completed-history eligibility gate so it accepts a valid
+server-backed USER_EXPLICIT target when the current permit/begin snapshot has
+already independently validated effective personal authority.  Preserve the
+existing exact product-size identity, permit/run-ID equality, completed-server
+response ordering, immutable snapshot provenance, and reject stale/untrusted
+local personal tuples.  Add direct regressions for J07, J09, J11, and J13
+before rerunning this matrix.  Do not weaken the server authorization/begin
+contract or modify Production in the remediation.
+
+Related static acceptance check: RecommendationResultView.swift:817 also
+requires `.serverConfirmed` before preparing current-session alternate-size
+presentation.  It was unreachable in this run because the immediate Result was
+discarded first, but the same valid USER_EXPLICIT authority would be rejected
+after the completion fix.  Treat it as the same server-confirmed-only local
+presentation root and cover it in the narrowly scoped P0 regression, rather
+than creating a separate architecture change.
+
+8. UX/confusion results
+
+Scenario outcome totals:
+
+* EXPECTED: 13
+* BLOCKED_WITH_REASON: 26
+* TEST_DATA_LIMITATION: 2
+* WRONG_RESULT / UNEXPECTED_STALL: 4 (the one P0 root cause)
+
+No 47-garment picker, silent REVIEW_REQUIRED scorer execution,
+NOT_APPLICABLE recommendation, stale/deleted-reference begin, or cross-type
+automatic begin was observed in the executed fake-remote/real-Swift paths.
+Those are headless code-path findings, not physical UI claims.
+
+9. Production safety
+
+Production writes: 0
+
+Admin/global writes: 0
+Normal app-level user writes: 0
+Auth changes: 0
+Migration actions: 0
+Edge deployments: 0
+
+Only public/non-private product catalog SELECT/introspection was issued.  The
+read-only Recovery-options call without an authenticated context returned
+“Authentication required”, and no workaround was attempted.
+
+10. What this test proves
+
+* A real current Swift full global-authority comparison chain calls begin
+  before the real MeasurementComparisonEngine and complete after it.
+* The server-authority coordinator and ViewModel safe blocks are exercised at
+  the remote boundary, not reimplemented by the test.
+* All 45 valid canonical corridors in the documented finite model ran.
+* USER_EXPLICIT Result/History presentation is currently broken after a
+  completed server comparison.
+
+11. What this test does not prove
+
+* physical iPhone UI, Apple login, Keychain, radio/network behavior, Share
+  Extension, or physical multi-device behavior
+* real Production RLS mutation behavior or real USER_EXPLICIT writes
+* current authenticated live Recovery candidate-count distribution; this run
+  did not create/use a Production account and did not bypass auth
+* live provider parsing/availability freshness beyond public catalog facts
+
+12. Historical initial next step (superseded)
+
+At the time of the initial failure, physical iPhone Recovery E2E was blocked.
+
+That required minimal P0-only remediation and the full Headless/critical
+rerun have now completed; the current next step is recorded in section 13.
+
+13. HJ-P0-001 remediation revalidation — 2026-08-31
+
+The remediation replaces the `.serverConfirmed`-only local History condition
+with exact proof of the completed server contract. It requires allowed
+permit/run identity, successful completion identity, exact target/variant/
+reference UUIDs, exact authorized candidate set and fingerprints, and the
+current V4 USER_EXPLICIT projection's revision/candidate/input/evidence
+provenance. Local-only, stale, cleared, identity-mismatched, and unauthorized
+size variants remain blocked. Result alternate-size presentation now reuses
+only an already-authorized current batch and never starts a fresh scorer.
+
+Final finite-matrix result: 45 valid / 45 executed / 45 PASS / 0 FAIL / 0
+unexecuted. The next step is the requested independent PRE-E2E re-audit, not
+a new DB or Recovery architecture phase.

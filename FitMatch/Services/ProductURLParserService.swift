@@ -359,7 +359,7 @@ enum ProductURLParserError: LocalizedError {
         case .invalidURL:
             return "올바른 상품 URL을 입력해 주세요."
         case .unsupportedURL:
-            return "아직 지원하지 않는 상품 링크예요. 현재는 무신사, 유니클로, COS 상품 URL을 지원합니다."
+            return "아직 지원하지 않는 상품 링크예요. 현재는 무신사, 유니클로, ZARA 상품 URL을 지원합니다."
         case .automaticParsingUnavailable:
             return "상품 정보를 불러오지 못했어요. 잠시 후 다시 시도하거나 지원하는 쇼핑몰의 상품 URL인지 확인해 주세요."
         }
@@ -402,12 +402,19 @@ enum ProductURLSupport {
             return nil
         }
 
-        if isMusinsaURL(url) { return "무신사" }
-        if isUniqloURL(url) { return "유니클로" }
-        if isZARAURL(url), ZARAIntegrationAvailability.isEnabled { return "ZARA" }
-        if isCOSURL(url) { return "COS" }
-
-        return nil
+        switch FitMatchProductURLRouting.provider(
+            for: url,
+            zaraEnabled: ZARAIntegrationAvailability.isEnabled
+        ) {
+        case .musinsa:
+            return "무신사"
+        case .uniqlo:
+            return "유니클로"
+        case .zara:
+            return "ZARA"
+        case nil:
+            return nil
+        }
     }
 
     static func isSupportedProductURL(_ urlString: String) -> Bool {
@@ -457,18 +464,15 @@ struct ProductURLParserService {
     private let musinsaParser: ProductURLParsing
     private let uniqloParser: ProductURLParsing
     private let zaraParser: ProductURLParsing
-    private let cosParser: ProductURLParsing
 
     init(
         musinsaParser: ProductURLParsing? = nil,
         uniqloParser: ProductURLParsing? = nil,
-        zaraParser: ProductURLParsing? = nil,
-        cosParser: ProductURLParsing? = nil
+        zaraParser: ProductURLParsing? = nil
     ) {
         self.musinsaParser = musinsaParser ?? MusinsaParser()
         self.uniqloParser = uniqloParser ?? UniqloParser()
         self.zaraParser = zaraParser ?? ZARAParser()
-        self.cosParser = cosParser ?? COSParser()
     }
 
     func parse(
@@ -477,6 +481,9 @@ struct ProductURLParserService {
     ) async throws -> ParsedProductInfo {
         guard let url = ProductURLSupport.normalizedURL(from: urlString) else {
             throw ProductURLParserError.invalidURL
+        }
+        guard ProductURLSupport.isSupportedProductURL(url.absoluteString) else {
+            throw ProductURLParserError.unsupportedURL
         }
         onProgress(.loadingProductInfo)
 
@@ -492,8 +499,7 @@ struct ProductURLParserService {
         let isMusinsaURL = ProductURLSupport.isMusinsaURL(url)
         let isUniqloURL = uniqloParser.canParse(url)
         let isZARAURL = zaraParser.canParse(url)
-        let isCOSURL = cosParser.canParse(url)
-        let detectedProvider = isMusinsaURL ? "musinsa" : (isUniqloURL ? "uniqlo" : (isZARAURL ? "zara" : (isCOSURL ? "cos" : "generic")))
+        let detectedProvider = isMusinsaURL ? "musinsa" : (isUniqloURL ? "uniqlo" : (isZARAURL ? "zara" : "generic"))
         #if DEBUG
         FitMatchDebugLogger.detail(screen: "상품 분석", action: "파서 선택", details: "파서=\(detectedProvider)")
         #endif
@@ -565,29 +571,6 @@ struct ProductURLParserService {
                 if Task.isCancelled { throw CancellationError() }
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "ZARA 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
-                #endif
-                throw ProductURLParserError.automaticParsingUnavailable
-            }
-        }
-
-        if isCOSURL {
-            do {
-                return logParsedProductInfo((
-                    try await cosParser.parse(from: url, onProgress: onProgress)
-                ).normalizedSizes().recordingParserProvenance(parserCode: "cos_kr"))
-            } catch let partialError as ProductURLParserPartialError {
-                #if DEBUG
-                FitMatchDebugLogger.event(screen: "상품 분석", action: "COS 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
-                #endif
-                throw ProductURLParserPartialError(
-                    productInfo: partialError.productInfo
-                        .normalizedSizes()
-                        .recordingParserProvenance(parserCode: "cos_kr")
-                )
-            } catch {
-                if Task.isCancelled { throw CancellationError() }
-                #if DEBUG
-                FitMatchDebugLogger.event(screen: "상품 분석", action: "COS 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
                 #endif
                 throw ProductURLParserError.automaticParsingUnavailable
             }

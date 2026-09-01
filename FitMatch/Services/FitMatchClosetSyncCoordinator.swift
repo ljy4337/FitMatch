@@ -57,6 +57,17 @@ enum FitMatchClosetSyncState: Equatable {
     case pendingRetry
 }
 
+/// The cache must be claimed by the authenticated user before any user-owned
+/// SwiftData row is allowed to reach presentation.  This is deliberately a
+/// synchronous, production-used boundary: a network sync is too late to
+/// prevent a newly signed-in user from briefly seeing the preceding account's
+/// Closet or History cache.
+enum FitMatchLocalCachePreparationOutcome: Equatable {
+    case alreadyOwned
+    case claimedEmptyOrUnownedCache
+    case purgedForeignOwnerCache
+}
+
 enum FitMatchClosetAuthorityError: LocalizedError {
     case classificationReviewRequired
     case notComparable
@@ -74,6 +85,10 @@ enum FitMatchClosetAuthorityError: LocalizedError {
     }
 }
 
+private enum FitMatchClosetSyncInterruption: Error {
+    case superseded
+}
+
 @MainActor
 final class FitMatchClosetSyncCoordinator: ObservableObject {
     @Published private(set) var state: FitMatchClosetSyncState = .idle
@@ -85,6 +100,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     private var activeUserID: UUID?
     private var isSynchronizing = false
     private var needsAnotherPass = false
+    private var pendingSyncUserID: UUID?
     private var remoteItemsByClientID: [UUID: FitMatchClosetItemRecord] = [:]
 
     private static let cacheOwnerKey = "FitMatch.closetCacheOwnerUserID"
@@ -100,20 +116,60 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         self.defaults = defaults
     }
 
-    func synchronize(userID: UUID, modelContext: ModelContext) async {
+    /// Establishes the authenticated session boundary before any cached
+    /// Closet rows are allowed to present.  In-flight work for a prior
+    /// account becomes ineligible to apply as soon as the session changes;
+    /// `prepareLocalCache` then owns the durable SwiftData boundary.
+    func prepareForAuthenticatedUser(_ userID: UUID?) {
+        guard activeUserID != userID else { return }
         activeUserID = userID
+        remoteItemsByClientID.removeAll()
+        pendingSyncUserID = nil
+        needsAnotherPass = false
+        if userID == nil {
+            state = .idle
+            lastErrorMessage = nil
+        }
+    }
+
+    func synchronize(userID: UUID, modelContext: ModelContext) async {
+        // ContentView cancels its old account-scoped task on session changes.
+        // Do not let a cancellation that has already arrived reclaim cache
+        // ownership for the outgoing account.
+        guard !Task.isCancelled else { return }
+        prepareForAuthenticatedUser(userID)
         if isSynchronizing {
             needsAnotherPass = true
+            pendingSyncUserID = userID
             return
         }
 
         isSynchronizing = true
         defer { isSynchronizing = false }
 
-        repeat {
+        var passUserID = userID
+        while true {
             needsAnotherPass = false
-            await synchronizeOnce(userID: userID, modelContext: modelContext)
-        } while needsAnotherPass
+            pendingSyncUserID = nil
+            await synchronizeOnce(userID: passUserID, modelContext: modelContext)
+
+            // A later authenticated session always owns the follow-up pass.
+            // Replaying the outgoing user here could rewrite the new user's
+            // cache-owner marker or hydrate stale account rows after the root
+            // has already made the new account presentable.
+            if let pendingSyncUserID {
+                passUserID = pendingSyncUserID
+                continue
+            }
+            if let activeUserID, activeUserID != passUserID {
+                passUserID = activeUserID
+                continue
+            }
+            if needsAnotherPass {
+                continue
+            }
+            break
+        }
     }
 
     func enqueueDeletion(clientItemID: UUID) {
@@ -142,20 +198,26 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             defaults.removeObject(forKey: Self.pendingDeletePrefix + userID.uuidString)
         }
         defaults.removeObject(forKey: Self.cacheOwnerKey)
+        FavoriteProductStore(defaults: defaults).removeAll()
+        SourceCategoryHistoryMatcher.clearStoredMappings(defaults: defaults)
         activeUserID = nil
         remoteItemsByClientID.removeAll()
         needsAnotherPass = false
+        pendingSyncUserID = nil
         state = .idle
         lastErrorMessage = nil
     }
 
     private func synchronizeOnce(userID: UUID, modelContext: ModelContext) async {
+        guard isCurrentSyncUser(userID) else { return }
         state = .syncing
         lastErrorMessage = nil
 
         do {
             try prepareLocalCache(for: userID, modelContext: modelContext)
+            guard isCurrentSyncUser(userID) else { return }
             var remoteResponse = try await remote.listClosetItems()
+            guard isCurrentSyncUser(userID) else { return }
             guard remoteResponse.state == "ready" else {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
@@ -164,7 +226,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 uniqueKeysWithValues: remoteResponse.items.map { ($0.clientItemID, $0) }
             )
             try await flushPendingDeletes(userID: userID)
+            guard isCurrentSyncUser(userID) else { return }
             remoteResponse = try await remote.listClosetItems()
+            guard isCurrentSyncUser(userID) else { return }
             remoteItemsByClientID = Dictionary(
                 uniqueKeysWithValues: remoteResponse.items.map { ($0.clientItemID, $0) }
             )
@@ -174,6 +238,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             var failedUpsert = false
             var failedAutomaticAuthorityValidationIDs = Set<UUID>()
             for localItem in localItems {
+                guard isCurrentSyncUser(userID) else { return }
                 if let remoteItem = remoteItemsByClientID[localItem.id],
                    remoteDate(remoteItem) > localItem.updatedAt.addingTimeInterval(1) {
                     try apply(remoteItem, to: localItem, modelContext: modelContext)
@@ -184,30 +249,36 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 }
 
                 do {
-                    let request = try await makeUpsertRequest(for: localItem)
+                    let request = try await makeUpsertRequest(for: localItem, userID: userID)
+                    guard isCurrentSyncUser(userID) else { return }
                     let closetItemID: UUID
                     if let existing = remoteItemsByClientID[localItem.id] {
                         _ = try await remote.updateClosetItem(
                             request,
                             closetItemID: existing.closetItemID
                         )
+                        guard isCurrentSyncUser(userID) else { return }
                         closetItemID = existing.closetItemID
                     } else {
                         closetItemID = try await remote.upsertClosetItem(request).closetItemID
+                        guard isCurrentSyncUser(userID) else { return }
                     }
                     if let override = request.override, request.productID != nil {
                         try await remote.setClosetClassificationOverride(
                             closetItemID: closetItemID,
                             override: override
                         )
+                        guard isCurrentSyncUser(userID) else { return }
                     } else if remoteItemsByClientID[localItem.id]?.classificationSource
                                 == "manual_override",
                               request.productID != nil {
                         try await remote.clearClosetClassificationOverride(
                             closetItemID: closetItemID
                         )
+                        guard isCurrentSyncUser(userID) else { return }
                     }
                 } catch {
+                    guard isCurrentSyncUser(userID) else { return }
                     failedUpsert = true
                     if localItem.sourceProduct != nil,
                        localItem.classificationAuthorityProvenance == .serverUnavailable {
@@ -223,15 +294,18 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             // deltas. Server set(true) remains responsible for atomic
             // same-tuple replacement.
             let beforeReference = try await remote.listClosetItems()
+            guard isCurrentSyncUser(userID) else { return }
             guard beforeReference.state == "ready" else {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
             remoteItemsByClientID = Dictionary(
                 uniqueKeysWithValues: beforeReference.items.map { ($0.clientItemID, $0) }
             )
-            try await synchronizeReferenceAuthority(localItems: localItems)
+            try await synchronizeReferenceAuthority(localItems: localItems, userID: userID)
+            guard isCurrentSyncUser(userID) else { return }
 
             let authoritative = try await remote.listClosetItems()
+            guard isCurrentSyncUser(userID) else { return }
             guard authoritative.state == "ready" else {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
@@ -242,6 +316,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             let currentLocalItems = try modelContext.fetch(FetchDescriptor<UserFit>())
             let currentByID = Dictionary(uniqueKeysWithValues: currentLocalItems.map { ($0.id, $0) })
             for remoteItem in authoritative.items {
+                guard isCurrentSyncUser(userID) else { return }
                 if let localItem = currentByID[remoteItem.clientItemID] {
                     if failedAutomaticAuthorityValidationIDs.contains(remoteItem.clientItemID),
                        remoteItem.classificationSource != "manual_override" {
@@ -257,6 +332,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 }
             }
             try modelContext.save()
+            guard isCurrentSyncUser(userID) else { return }
 
             if failedUpsert {
                 state = .pendingRetry
@@ -265,6 +341,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 state = .synced
             }
         } catch {
+            guard isCurrentSyncUser(userID) else { return }
             modelContext.rollback()
             state = .pendingRetry
             lastErrorMessage = error.localizedDescription
@@ -274,7 +351,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         }
     }
 
-    private func synchronizeReferenceAuthority(localItems: [UserFit]) async throws {
+    private func synchronizeReferenceAuthority(
+        localItems: [UserFit],
+        userID: UUID
+    ) async throws {
+        guard isCurrentSyncUser(userID) else { return }
         let localByClientID = Dictionary(
             uniqueKeysWithValues: localItems.map { ($0.id, $0) }
         )
@@ -284,15 +365,18 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         }.sorted { $0.id.uuidString < $1.id.uuidString }
 
         for item in setCandidates {
+            guard isCurrentSyncUser(userID) else { return }
             guard let remoteItem = remoteItemsByClientID[item.id] else { continue }
             _ = try await remote.setClosetReference(
                 closetItemID: remoteItem.closetItemID,
                 isReference: true
             )
+            guard isCurrentSyncUser(userID) else { return }
         }
 
         if !setCandidates.isEmpty {
             let refreshed = try await remote.listClosetItems()
+            guard isCurrentSyncUser(userID) else { return }
             guard refreshed.state == "ready" else {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
@@ -310,45 +394,81 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         }.sorted { $0.clientItemID.uuidString < $1.clientItemID.uuidString }
 
         for remoteItem in unsetCandidates {
+            guard isCurrentSyncUser(userID) else { return }
             // A remote-only row is absent from localByClientID and is therefore
             // hydration input, never an implicit first-login unset intent.
             _ = try await remote.setClosetReference(
                 closetItemID: remoteItem.closetItemID,
                 isReference: false
             )
+            guard isCurrentSyncUser(userID) else { return }
         }
     }
 
-    private func prepareLocalCache(for userID: UUID, modelContext: ModelContext) throws {
+    @discardableResult
+    func prepareLocalCache(
+        for userID: UUID,
+        modelContext: ModelContext
+    ) throws -> FitMatchLocalCachePreparationOutcome {
         let storedOwner = defaults.string(forKey: Self.cacheOwnerKey).flatMap(UUID.init(uuidString:))
-        if let storedOwner, storedOwner != userID {
-            let histories = try modelContext.fetch(FetchDescriptor<RecommendationHistory>())
+        let histories = try modelContext.fetch(FetchDescriptor<RecommendationHistory>())
+        let items = try modelContext.fetch(FetchDescriptor<UserFit>())
+        let containsUserScopedRows = !histories.isEmpty || !items.isEmpty
+
+        // A missing cache-owner marker is not evidence that this newly
+        // authenticated user owns persisted rows. Legacy/pre-marker rows must
+        // fail closed before MainTabView can present them to another account.
+        let mustPurge = storedOwner.map { $0 != userID } ?? containsUserScopedRows
+        if mustPurge {
             histories.forEach(modelContext.delete)
-            let items = try modelContext.fetch(FetchDescriptor<UserFit>())
             items.forEach(modelContext.delete)
-            try modelContext.save()
+            if containsUserScopedRows {
+                try modelContext.save()
+            }
+            clearUserScopedPresentationState()
             remoteItemsByClientID.removeAll()
+            activeUserID = userID
+            defaults.set(userID.uuidString, forKey: Self.cacheOwnerKey)
+            return .purgedForeignOwnerCache
         }
+
+        activeUserID = userID
         defaults.set(userID.uuidString, forKey: Self.cacheOwnerKey)
+        return storedOwner == userID ? .alreadyOwned : .claimedEmptyOrUnownedCache
+    }
+
+    private func clearUserScopedPresentationState() {
+        FavoriteProductStore(defaults: defaults).removeAll()
+        SourceCategoryHistoryMatcher.clearStoredMappings(defaults: defaults)
     }
 
     private func flushPendingDeletes(userID: UUID) async throws {
+        guard isCurrentSyncUser(userID) else { return }
         var pending = pendingDeleteIDs(for: userID)
         guard !pending.isEmpty else { return }
 
         for clientItemID in pending {
+            guard isCurrentSyncUser(userID) else { return }
             guard let remoteItem = remoteItemsByClientID[clientItemID] else {
                 pending.remove(clientItemID)
                 continue
             }
             _ = try await remote.deleteClosetItem(closetItemID: remoteItem.closetItemID)
+            guard isCurrentSyncUser(userID) else { return }
             pending.remove(clientItemID)
             remoteItemsByClientID.removeValue(forKey: clientItemID)
         }
+        guard isCurrentSyncUser(userID) else { return }
         storePendingDeleteIDs(pending, for: userID)
     }
 
-    private func makeUpsertRequest(for item: UserFit) async throws -> FitMatchUpsertClosetItemRequest {
+    private func makeUpsertRequest(
+        for item: UserFit,
+        userID: UUID
+    ) async throws -> FitMatchUpsertClosetItemRequest {
+        guard isCurrentSyncUser(userID) else {
+            throw FitMatchClosetSyncInterruption.superseded
+        }
         // Older direct-entry rows predate explicit authority provenance. A row
         // with no linked retailer product can only have come from the manual
         // Closet form, so migrate that user choice lazily without a bulk write.
@@ -377,6 +497,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                     request: request,
                     observation: product.fitMatchProductObservationRequest()
                 )
+                guard isCurrentSyncUser(userID) else {
+                    throw FitMatchClosetSyncInterruption.superseded
+                }
                 try applyServerAuthority(authority, to: item)
                 productID = authority.productID
                 let identity = uniqueRuntimeSizeIdentity(
@@ -387,6 +510,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 productVariantID = identity?.variantID
                 productSizeID = identity?.sizeID
             } catch {
+                if error is FitMatchClosetSyncInterruption {
+                    throw error
+                }
                 if item.classificationAuthorityProvenance != .userExplicit,
                    !(error is FitMatchClosetAuthorityError) {
                     item.markClassificationAuthority(.serverUnavailable)
@@ -444,6 +570,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             productSizeID: productSizeID,
             override: override
         )
+    }
+
+    private func isCurrentSyncUser(_ userID: UUID) -> Bool {
+        activeUserID == userID && !Task.isCancelled
     }
 
     private func payload(for item: UserFit) -> FitMatchClosetItemPayload {
@@ -566,6 +696,22 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         to item: UserFit
     ) throws {
         let userExplicit = item.classificationAuthorityProvenance == .userExplicit
+        let shoppingPersonalAuthority = authority.classification.authorityStatus?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() == "user_explicit"
+
+        // A shopping Product may be personally confirmed for the signed-in
+        // user without that user ever choosing a Closet classification. Keep
+        // a sourced Closet row fail-closed until its own explicit Closet
+        // action creates an override; never relabel the product-scoped choice
+        // as either a Global confirmation or a Closet manual override.
+        if shoppingPersonalAuthority, !userExplicit {
+            item.markClassificationAuthority(
+                .localHint,
+                sourceIdentity: "shopping_user_explicit_not_closet_authority"
+            )
+            return
+        }
 
         switch authority.status {
         case .confirmed:

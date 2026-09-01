@@ -8,7 +8,7 @@ nonisolated enum FitMatchJSONValue: Codable, Equatable, Sendable {
     case bool(Bool)
     case null
 
-    init(from decoder: Decoder) throws {
+    nonisolated init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() { self = .null }
         else if let value = try? container.decode(Bool.self) { self = .bool(value) }
@@ -392,6 +392,67 @@ nonisolated struct VNextEffectiveTargetClassificationDTO:
         state == "PERSONAL_CONFIRMED"
             && classificationStatus == "CONFIRMED"
             && effectiveSource == "USER_EXPLICIT"
+    }
+}
+
+/// The server's effective classification is one authority-issued tuple.
+///
+/// When it exists, each field (including an intentionally absent axis) belongs
+/// to that tuple. Callers must not fill individual values from the global
+/// Product tuple, which would construct a classification the server never
+/// issued. Global fields are used only when the entire effective object is
+/// absent from the current contract.
+nonisolated struct VNextRuntimeClassificationTuple: Equatable, Sendable {
+    let usesEffectiveClassification: Bool
+    let classificationStatus: String
+    let effectiveSource: String?
+    let categoryCode: String?
+    let garmentTypeCode: String?
+    let audienceCode: String
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let comparisonPolicyCode: String?
+    let productStructureCode: String
+    let contractVersion: String?
+    let authorityFingerprint: String?
+    let overrideRevision: Int?
+
+    init(
+        product: VNextRuntimeProductDTO,
+        effective: VNextEffectiveTargetClassificationDTO?
+    ) {
+        if let effective {
+            usesEffectiveClassification = true
+            classificationStatus = effective.classificationStatus
+            effectiveSource = effective.effectiveSource
+            categoryCode = effective.categoryCode
+            garmentTypeCode = effective.garmentTypeCode
+            audienceCode = effective.audienceCode
+            sleeveLengthCode = effective.sleeveLengthCode
+            lowerLengthCode = effective.lowerLengthCode
+            bodyLengthCode = effective.bodyLengthCode
+            comparisonPolicyCode = effective.comparisonPolicyCode
+            productStructureCode = effective.productStructureCode
+            contractVersion = effective.effectiveContractVersion
+            authorityFingerprint = effective.effectiveAuthorityFingerprint
+            overrideRevision = effective.overrideRevision
+        } else {
+            usesEffectiveClassification = false
+            classificationStatus = product.classificationStatus
+            effectiveSource = nil
+            categoryCode = product.categoryCode
+            garmentTypeCode = product.garmentTypeCode
+            audienceCode = product.audienceCode
+            sleeveLengthCode = product.sleeveLengthCode
+            lowerLengthCode = product.lowerLengthCode
+            bodyLengthCode = product.bodyLengthCode
+            comparisonPolicyCode = product.comparisonPolicyCode
+            productStructureCode = product.productStructureCode
+            contractVersion = product.resolverVersion
+            authorityFingerprint = nil
+            overrideRevision = nil
+        }
     }
 }
 
@@ -789,6 +850,42 @@ nonisolated struct VNextBeginComparisonDTO: Decodable, Equatable, Sendable {
     }
 }
 
+extension VNextBeginComparisonDTO {
+    /// A same-ID replay is the original immutable begin snapshot, not a new
+    /// weaker authorization. Older RPC envelopes omitted duplicated top-level
+    /// proof fields even though the owned `snapshot` already contained them.
+    /// Only that immutable snapshot is used as a fallback here; current
+    /// runtime authority is never consulted or synthesized.
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        comparisonID = try container.decode(UUID.self, forKey: .comparisonID)
+        created = try container.decodeIfPresent(Bool.self, forKey: .created) ?? false
+        idempotent = try container.decodeIfPresent(Bool.self, forKey: .idempotent) ?? false
+        resultStatus = try container.decodeIfPresent(String.self, forKey: .resultStatus) ?? "PENDING"
+        snapshot = try container.decode(VNextComparisonBeginSnapshotDTO.self, forKey: .snapshot)
+        authorization = try container.decodeIfPresent(
+            VNextComparisonAuthorizationDTO.self,
+            forKey: .authorization
+        ) ?? snapshot.authorization
+        authorizedCandidateProductSizeIDs = try container.decodeIfPresent(
+            [UUID].self,
+            forKey: .authorizedCandidateProductSizeIDs
+        ) ?? snapshot.target.authorizedCandidateProductSizeIDs
+        candidateAuthorityFingerprint = try container.decodeIfPresent(
+            String.self,
+            forKey: .candidateAuthorityFingerprint
+        ) ?? snapshot.target.candidateAuthorityFingerprint
+        effectiveAuthorityFingerprint = try container.decodeIfPresent(
+            String.self,
+            forKey: .effectiveAuthorityFingerprint
+        ) ?? snapshot.inputSnapshot.objectValue?["effective_authority_fingerprint"]?.stringValue
+        snapshotSchemaVersion = try container.decodeIfPresent(
+            Int.self,
+            forKey: .snapshotSchemaVersion
+        ) ?? snapshot.snapshotSchemaVersion
+    }
+}
+
 nonisolated struct VNextCandidateRankingDTO: Codable, Equatable, Sendable {
     let productSizeID: UUID
     let rank: Int
@@ -857,6 +954,17 @@ nonisolated struct VNextCompleteComparisonDTO: Decodable, Equatable, Sendable {
     }
 }
 
+nonisolated struct VNextComparisonHistoryVisibilityDTO: Decodable, Equatable, Sendable {
+    let clientComparisonIDs: [UUID]
+    let hidden: Bool
+    let idempotent: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case clientComparisonIDs = "client_comparison_ids"
+        case hidden, idempotent
+    }
+}
+
 nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {
     let id: UUID
     let clientComparisonID: UUID
@@ -867,6 +975,7 @@ nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {
     let targetImageURL: String?
     let targetSourceCode: String
     let targetSourceProductKey: String?
+    let targetCanonicalURL: String?
     let targetCategoryCode: String?
     let resultStatus: String
     let recommendedProductSizeID: UUID?
@@ -896,6 +1005,7 @@ nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {
         case targetImageURL = "target_image_url_snapshot"
         case targetSourceCode = "target_source_code_snapshot"
         case targetSourceProductKey = "target_source_product_key"
+        case targetCanonicalURL = "target_canonical_url"
         case targetCategoryCode = "target_category_code"
         case resultStatus = "result_status"
         case recommendedProductSizeID = "recommended_product_size_id"
@@ -938,6 +1048,10 @@ nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {
         targetSourceProductKey = try container.decodeIfPresent(
             String.self,
             forKey: .targetSourceProductKey
+        )
+        targetCanonicalURL = try container.decodeIfPresent(
+            String.self,
+            forKey: .targetCanonicalURL
         )
         targetCategoryCode = try container.decodeIfPresent(
             String.self,

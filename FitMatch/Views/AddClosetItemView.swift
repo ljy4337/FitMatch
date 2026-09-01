@@ -9,13 +9,15 @@ enum AddClosetItemPresentationContext: Equatable {
 struct AddClosetItemView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Brand.name) private var brands: [Brand]
+    @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @StateObject private var viewModel: AddClosetItemViewModel
     @State private var isShowingDeleteAlert = false
     @State private var isShowingSaveError = false
     @State private var selectedMeasurementGuide: MeasurementKind?
+    @State private var isDeleting = false
 
     let onSave: (UserFit) -> Bool
-    let onDelete: (() -> Bool)?
+    let onDelete: (() async -> Bool)?
     private let hasComparisonHistory: Bool
     private let isEditing: Bool
     private let presentationContext: AddClosetItemPresentationContext
@@ -33,7 +35,7 @@ struct AddClosetItemView: View {
         productImageURLString: String? = nil,
         presentationContext: AddClosetItemPresentationContext = .standard,
         hasComparisonHistory: Bool = false,
-        onDelete: (() -> Bool)? = nil,
+        onDelete: (() async -> Bool)? = nil,
         onSave: @escaping (UserFit) -> Bool
     ) {
         _viewModel = StateObject(
@@ -83,14 +85,10 @@ struct AddClosetItemView: View {
         .alert("이 옷을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
             Button("취소", role: .cancel) {}
             Button("삭제", role: .destructive) {
-                if onDelete?() == true {
-                    dismiss()
-                } else {
-                    isShowingSaveError = true
-                }
+                deleteCurrentItem()
             }
         } message: {
-            Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 함께 삭제됩니다. 그래도 삭제하시겠어요?")
+            Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 목록에서 함께 삭제됩니다. 그래도 삭제하시겠어요?")
         }
         .alert("저장 실패", isPresented: $isShowingSaveError) {
             Button("확인", role: .cancel) {}
@@ -330,11 +328,7 @@ struct AddClosetItemView: View {
                 if hasComparisonHistory {
                     isShowingDeleteAlert = true
                 } else {
-                    if onDelete?() == true {
-                        dismiss()
-                    } else {
-                        isShowingSaveError = true
-                    }
+                    deleteCurrentItem()
                 }
             } label: {
                 Text("삭제")
@@ -349,6 +343,20 @@ struct AddClosetItemView: View {
                     }
             }
             .buttonStyle(.plain)
+            .disabled(isDeleting)
+        }
+    }
+
+    private func deleteCurrentItem() {
+        guard !isDeleting, let onDelete else { return }
+        isDeleting = true
+        Task { @MainActor in
+            defer { isDeleting = false }
+            if await onDelete() {
+                dismiss()
+            } else {
+                isShowingSaveError = true
+            }
         }
     }
 
@@ -385,11 +393,19 @@ struct AddClosetItemView: View {
     }
 
     private func saveItemAndDismiss() {
-        guard let item = viewModel.makeUserFit() else {
-            return
+        let outcome: FitMatchClosetFormAction.Outcome
+        if isEditing {
+            outcome = FitMatchClosetFormAction.save(from: viewModel, persist: onSave)
+        } else {
+            outcome = FitMatchClosetManualRegistrationAction.save(
+                from: viewModel,
+                activeClosetItems: cachedUserFits.filter(\.isActiveClosetItem),
+                persist: onSave
+            )
         }
 
-        if onSave(item) {
+        switch outcome {
+        case .saved(let item):
             if !isEditing {
                 let origin: FitMatchMetricClosetOrigin = presentationContext == .linkedProduct
                     ? .linkedProduct
@@ -402,7 +418,12 @@ struct AddClosetItemView: View {
                 )
             }
             dismiss()
-        } else {
+        case .blocked:
+            // The primary button is already disabled and shows the same
+            // reason below it. Keep an unexpected programmatic call
+            // fail-closed rather than presenting a misleading save error.
+            return
+        case .persistenceFailed:
             isShowingSaveError = true
         }
     }
@@ -432,48 +453,7 @@ struct AddClosetItemView: View {
     }
 
     private var saveGuideText: String? {
-        if viewModel.canSave {
-            return nil
-        }
-
-        if viewModel.gender == .unknown {
-            return "성별을 선택해 주세요."
-        }
-
-        if viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "브랜드명을 입력해 주세요."
-        }
-
-        if viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "상품명을 입력해 주세요."
-        }
-
-        if !measurementKinds.isEmpty, viewModel.measurementEntrySource == nil {
-            return "실측 정보를 확인한 출처를 선택해 주세요."
-        }
-
-        if viewModel.measurementEntrySource == .otherSizeChart,
-           viewModel.measurementSourceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "사이즈표를 확인한 쇼핑몰 이름을 입력해 주세요."
-        }
-
-        if viewModel.measurementEntrySource == .otherSizeChart,
-           measurementKinds.contains(where: {
-               !viewModel.value(for: $0).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                   && (viewModel.measurementSourceLabels[$0]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
-           }) {
-            return "입력한 실측값의 원본 항목명을 입력해 주세요."
-        }
-
-        if viewModel.measurements == nil {
-            return "실측값을 1개 이상 입력해 주세요. 입력한 값은 0보다 큰 숫자여야 합니다."
-        }
-
-        if let validationMessage = viewModel.directMeasurementValidationMessage {
-            return validationMessage
-        }
-
-        return nil
+        FitMatchClosetFormValidation.message(for: viewModel)
     }
 
     private var headerTitle: String {

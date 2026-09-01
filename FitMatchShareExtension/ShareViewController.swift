@@ -7,8 +7,6 @@ final class ShareViewController: UIViewController {
     }
 
     private enum Key {
-        static let pendingProductURL = "pendingProductURL"
-        static let pendingProductURLCreatedAt = "pendingProductURLCreatedAt"
         static let metricsCounters = "FitMatch.metrics.aggregate.v1"
         static let metricsLastUpdatedAt = "FitMatch.metrics.lastUpdatedAt.v1"
     }
@@ -91,9 +89,8 @@ final class ShareViewController: UIViewController {
             return
         }
 
-        loadFirstURL(from: attachments) { [weak self] url in
-            if let url, self?.isSupportedProductURL(url) == true {
-                self?.savePendingURL(url)
+        FitMatchShareAttachmentExtractor.loadFirstSupportedURL(from: attachments) { [weak self] url in
+            if let url, self?.savePendingURL(url) == true {
                 self?.showCompletedState()
             } else {
                 self?.showFailureState()
@@ -101,59 +98,23 @@ final class ShareViewController: UIViewController {
         }
     }
 
-    private func loadFirstURL(from attachments: [NSItemProvider], completion: @escaping (URL?) -> Void) {
-        let urlType = UTType.url.identifier
-        let plainTextType = UTType.plainText.identifier
-
-        if let provider = attachments.first(where: { $0.hasItemConformingToTypeIdentifier(urlType) }) {
-            provider.loadItem(forTypeIdentifier: urlType, options: nil) { item, _ in
-                DispatchQueue.main.async {
-                    completion(item as? URL)
-                }
-            }
-            return
+    @discardableResult
+    private func savePendingURL(_ url: URL) -> Bool {
+        guard let handoffURL = FitMatchSharedURLHandoff.appGroupFileURL(
+            identifier: AppGroup.identifier
+        ) else {
+            return false
         }
-
-        if let provider = attachments.first(where: { $0.hasItemConformingToTypeIdentifier(plainTextType) }) {
-            provider.loadItem(forTypeIdentifier: plainTextType, options: nil) { item, _ in
-                let url = (item as? String).flatMap(self.firstURL(in:))
-                DispatchQueue.main.async {
-                    completion(url)
-                }
-            }
-            return
+        let didSave = FitMatchSharedURLHandoffStore(fileURL: handoffURL).save(url)
+        guard didSave,
+              let defaults = UserDefaults(suiteName: AppGroup.identifier) else {
+            return didSave
         }
-
-        completion(nil)
-    }
-
-    private func firstURL(in text: String) -> URL? {
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else {
-            return nil
-        }
-        return detector.firstMatch(in: text, range: range)?.url
-    }
-
-    private func isSupportedProductURL(_ url: URL) -> Bool {
-        guard let host = url.host?.lowercased() else { return false }
-        return host == "musinsa.com"
-            || host.hasSuffix(".musinsa.com")
-            || host == "musinsa.onelink.me"
-            || host == "uniqlo.com"
-            || host.hasSuffix(".uniqlo.com")
-            || host == "zara.com"
-            || host.hasSuffix(".zara.com")
-    }
-
-    private func savePendingURL(_ url: URL) {
-        guard let defaults = UserDefaults(suiteName: AppGroup.identifier) else { return }
-        defaults.set(url.absoluteString, forKey: Key.pendingProductURL)
-        defaults.set(Date(), forKey: Key.pendingProductURLCreatedAt)
         recordShareReceived(url: url, defaults: defaults)
         #if DEBUG
         print("[FitMatchShareExtension] saved supported \(metricProvider(for: url)) URL")
         #endif
+        return true
     }
 
     private func recordShareReceived(url: URL, defaults: UserDefaults) {
@@ -168,17 +129,7 @@ final class ShareViewController: UIViewController {
     }
 
     private func metricProvider(for url: URL) -> String {
-        let host = url.host?.lowercased() ?? ""
-        if host == "musinsa.com" || host.hasSuffix(".musinsa.com") || host == "musinsa.onelink.me" {
-            return "musinsa"
-        }
-        if host == "uniqlo.com" || host.hasSuffix(".uniqlo.com") {
-            return "uniqlo"
-        }
-        if host == "zara.com" || host.hasSuffix(".zara.com") {
-            return "zara"
-        }
-        return "unsupported"
+        FitMatchProductURLRouting.provider(for: url)?.rawValue ?? "unsupported"
     }
 
     private func completeRequest() {

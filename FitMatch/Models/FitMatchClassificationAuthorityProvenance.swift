@@ -32,11 +32,21 @@ enum FitMatchClassificationAuthorityProvenance: String, Codable, Sendable {
 /// Keeps a sourced item's fail-closed server state from becoming a user
 /// override merely because an editable picker was shown.
 enum FitMatchClosetClassificationEditPolicy {
+    enum Scope: Sendable {
+        /// A new sourced Closet registration has not yet received a separate
+        /// Closet-classification decision from the user.
+        case newSourcedRegistration
+        /// An existing Closet row may retain a prior explicit Closet choice
+        /// during a size-only or other non-classification edit.
+        case existingClosetItem
+    }
+
     static func resultingAuthority(
         current: FitMatchClassificationAuthorityProvenance?,
         isSourced: Bool,
         isExplicitSet: Bool,
-        didExplicitlyChangeClassification: Bool
+        didExplicitlyChangeClassification: Bool,
+        scope: Scope = .newSourcedRegistration
     ) -> FitMatchClassificationAuthorityProvenance {
         // A composite garment set is never a comparison authority, regardless
         // of whether it came from a retailer import or the manual Closet form.
@@ -54,6 +64,13 @@ enum FitMatchClosetClassificationEditPolicy {
             switch current {
             case .serverReviewRequired, .serverNotComparable, .serverUnavailable:
                 return current ?? .serverUnavailable
+            case .userExplicit where !didExplicitlyChangeClassification:
+                // A shopping Recovery choice is product-scoped. It cannot
+                // become an owned Closet override simply by selecting a size
+                // or saving the sourced item. Existing Closet overrides are
+                // retained only for an existing row whose prior explicit
+                // Closet intent is already established.
+                return scope == .existingClosetItem ? .userExplicit : .localHint
             default:
                 break
             }

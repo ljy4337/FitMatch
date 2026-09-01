@@ -1,0 +1,498 @@
+FITMATCH — AUTONOMOUS PRODUCTION RECOVERY E2E
+SIMULATOR EXECUTION + SERVER EVIDENCE AUDIT
+
+Final Verdict
+=============
+
+SIMULATOR PRODUCTION E2E PARTIAL
+
+The latest app was actually built, installed, launched, inspected, tapped, killed,
+and cold-relaunched on an iOS Simulator. The real Apple/Supabase authentication gate
+was reached. Authenticated Recovery execution could not safely proceed because every
+local Simulator had zero FitMatch Supabase sessions, the execution Simulator had no
+Apple account, and no approved QA credential/JWT exists in the repository or documented
+environment. No fake auth, new Auth user, or raw user write was used.
+
+This is not a Recovery failure. It is an authenticated-execution blocker. The required
+USER_EXPLICIT select/reselect/clear and downstream comparison gates remain NOT RUN.
+
+
+Environment
+===========
+
+- Repository: ljy4337/FitMatch
+- Branch: connectDB
+- Git HEAD: 8855874a7ff372ef9b0e6159740c6faee4750985
+- origin/connectDB: 8855874a7ff372ef9b0e6159740c6faee4750985
+- Initial tracked diff: 0
+- Preserved pre-existing untracked artifact:
+  Docs/FitMatchReviewRequiredRecoveryProductionPostflight-20260830.zip
+- Project: FitMatch.xcodeproj
+- Scheme: FitMatch
+- Configuration: Debug
+- Bundle ID: com.ljy4337.fitmatch
+- Xcode: 26.3 (17C529)
+- Runtime Simulator: iPhone 17 Pro / iOS 26.3
+- Runtime Simulator UDID: 03BAF093-552E-4E53-ABFB-7DE0653BE676
+- Runtime DerivedData: /tmp/FitMatchRecoveryProductionE2E-20260831
+- Build/test Simulator: FitMatch-Regression-20260721 / iPhone 17 / iOS 26.3.1
+- App build: PASS
+- Test-target build: PASS
+- Authenticated session: NO — safely blocked
+
+The first XcodeBuildMCP build-run operation produced no progress output after the build
+phase and was terminated rather than retried indefinitely. Its current-HEAD app product
+was present in the dedicated DerivedData, installed successfully, and launched. A
+separate independent app build and build-for-testing both completed successfully.
+
+
+Build / Test Evidence
+=====================
+
+- App Simulator build: PASS, 268.5 seconds
+- Test-target build-for-testing: PASS, 218.7 seconds
+- Compile errors: 0
+- Existing test warnings: 4
+- Focused suites: 88 PASS / 0 FAIL / 0 SKIP, 39.3 seconds
+
+Per suite:
+
+- FitMatchReviewRequiredRecoveryTests: 6/6
+- FitMatchVNextContractTests: 5/5
+- FitMatchComparisonSyncCoordinatorTests: 4/4
+- FitMatchComparisonPermitSequencingTests: 4/4
+- FitMatchClosetSyncCoordinatorTests: 24/24
+- FitMatchServerAuthorityIntegrationTests: 23/23
+- FitMatchSupabaseProductResolverTests: 22/22
+
+xcresult:
+/Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-e60223af795a/
+result-bundles/test_sim_2026-08-31T00-07-32-113Z_pid19193_3174e3df.xcresult
+
+No test expectation or source was changed.
+
+
+Primary Real Product
+====================
+
+- Provider: UNIQLO
+- Product: 옥스포드셔츠
+- Product code: E450259
+- Product ID: bf835b1d-f245-4248-861d-3c97020f6fb7
+- URL: https://www.uniqlo.com/kr/ko/products/E450259-000/00
+- Source state: ACTIVE
+- Global state: REVIEW_REQUIRED
+- Audience / structure: MEN / SINGLE
+- Global garment/axes: null
+- Current reason: Product-exact verified evidence is required
+- Candidate-set hash:
+  aaac3d9b2ff09f81fce83d366d1bfe376c251f1d317f1de4122d63b543b7f1cc
+
+Server Recovery candidates:
+
+1. 셔츠/블라우스 — shirt_blouse / long_sleeve
+   fingerprint d4c7f4f8ce07212cfc6f5c7ed893ea948549298cf7d953de623afe267411ad62
+2. 셔츠/블라우스 — shirt_blouse / short_sleeve
+   fingerprint 0270fe876c69bac7b99526719a0d2df6e79afa7eb6becb64919869c446551aa1
+3. 폴로/카라 티셔츠 — polo_shirt / short_sleeve
+   fingerprint f1de315bea5ec7e6a985a344eac42e7775d160557b29265865be3468942cc904
+
+Fixed facts:
+
+- MEN
+- tops
+- SINGLE
+
+Unknown facts:
+
+- garment_type
+- sleeve_length
+
+Inventory evidence:
+
+- Sizes: XS, S, M, L, XL, XXL, 3XL, 4XL
+- Raw measurement kinds per size: body length, chest width, neck, shoulder, sleeve-CB
+- M canonical values under all candidate contexts: back length 75 cm, chest width
+  57 cm, shoulder width 46.5 cm
+- Semantic conflicts: 0
+- Availability observations: 0
+- Currently available sizes: 0
+
+The zero availability state means successful Recovery could still stop later at the
+legitimate temporal availability boundary. No manual availability refresh was used.
+
+
+Backup Products
+===============
+
+Backup 1 — two candidates:
+
+- UNIQLO E482514 / AIRism크루넥T
+- Product ID: 6e021c8a-0dad-450d-8c69-742f4b0cd9fe
+- URL: https://www.uniqlo.com/kr/ko/products/E482514-000/00
+- Fixed: MEN, tops, base_layer_top, SINGLE
+- Unknown: sleeve_length
+- Candidates: base_layer_top short_sleeve; base_layer_top sleeveless
+- Sizes/raw measurements: 8/32
+- Availability observations/current available sizes: 0/0
+
+Backup 2 — one candidate:
+
+- UNIQLO E467574 / 감탄팬츠(하운드투스)
+- Product ID: 9041409a-320f-4b16-98bc-84ea596bc4fa
+- URL: https://www.uniqlo.com/kr/ko/products/E467574-000/00
+- Fixed: MEN, bottoms, slacks_trousers, short_length, SINGLE
+- Unknown: none
+- Candidate: slacks_trousers / short_length
+- Sizes/raw measurements: 11/66
+- Availability observations/current available sizes: 0/0
+
+
+Actual Runtime Evidence
+=======================
+
+Initial real UI
+---------------
+
+ACTION
+- Installed the current-HEAD Debug app on iPhone 17 Pro Simulator.
+- Launched com.ljy4337.fitmatch.
+- Captured a semantic UI snapshot and screenshot.
+
+OBSERVED UI
+- Actual FitMatch login screen.
+- Single interaction target: “Continue with Apple”.
+
+OBSERVED SERVER
+- No server mutation occurred.
+
+LOG EVIDENCE
+- Runtime log: “[FitMatch] no pending shared URL”.
+- No token, credential, or service key appeared in captured logs.
+
+RESULT
+- PASS for actual current-binary launch and real auth-gate reachability.
+
+Apple authentication boundary
+-----------------------------
+
+ACTION
+- Tapped the actual “Continue with Apple” control.
+
+OBSERVED UI
+- System alert: “Apple 계정에 로그인”.
+- Message: “설정에서 Apple 계정에 로그인해야 합니다.”
+- Actions: “닫기”, “설정”.
+- The alert was closed without entering credentials or changing Settings.
+
+OBSERVED SERVER
+- Supabase session was not created.
+- No Auth user was created.
+- No user-domain RPC was reached.
+
+LOG EVIDENCE
+- Captured app and OS logs contained no credentials or secrets.
+
+RESULT
+- AUTHENTICATED EXECUTION BLOCKED.
+
+Authentication inventory
+------------------------
+
+- Checked local Simulator FitMatch Supabase Keychain records without reading token
+  values: zero sessions on iPhone 17 Pro, iPhone 17, iPhone 16e, and the dedicated
+  FitMatch-Regression Simulator.
+- Repository/docs/schemes contain no approved QA email/password, reusable JWT, or
+  Apple QA credential.
+- The application has Apple-only login; no email/password login path exists.
+- The `-fitmatchUITesting` launch mode was deliberately rejected because it creates a
+  fake signed-in UUID and disables real Supabase client configuration.
+- No Production Auth account was created.
+
+Kill / cold relaunch
+--------------------
+
+ACTION
+- Terminated the app process, not background-only.
+- Launched the same installed current-HEAD binary again.
+
+OBSERVED UI
+- The app returned to the real “Continue with Apple” gate.
+- No phantom or cached signed-in authority appeared.
+
+OBSERVED SERVER
+- Override, feedback, and comparison row counts remained zero.
+
+LOG EVIDENCE
+- Cold-relaunch log again reported no pending shared URL.
+
+RESULT
+- PASS for unauthenticated cold-relaunch behavior.
+- USER_EXPLICIT persistence across relaunch: NOT RUN.
+
+Initial REVIEW_REQUIRED
+-----------------------
+
+ACTION: NOT RUN — cannot enter the authenticated shopping/compare flow.
+OBSERVED UI: NOT RUN.
+OBSERVED SERVER: Primary remains REVIEW_REQUIRED.
+LOG EVIDENCE: No Recovery RPC was reached.
+RESULT: AUTHENTICATED EXECUTION BLOCKED.
+
+Candidate Selection
+-------------------
+
+ACTION: NOT RUN.
+OBSERVED UI: NOT RUN.
+OBSERVED SERVER: Override rows remain 0.
+LOG EVIDENCE: No set-user-classification RPC was reached.
+RESULT: AUTHENTICATED EXECUTION BLOCKED.
+
+Automatic Resume
+----------------
+
+ACTION: NOT RUN.
+OBSERVED UI: NOT RUN.
+OBSERVED SERVER: Comparison rows remain 0.
+LOG EVIDENCE: No reference/authorization/eligible/begin sequence was reached.
+RESULT: AUTHENTICATED EXECUTION BLOCKED.
+
+Server USER_EXPLICIT
+--------------------
+
+ACTION: NOT RUN.
+OBSERVED UI: NOT RUN.
+OBSERVED SERVER: user_product_classification_overrides=0; feedback evidence=0.
+LOG EVIDENCE: No authenticated mutation occurred.
+RESULT: AUTHENTICATED EXECUTION BLOCKED.
+
+Reselect
+--------
+
+ACTION: NOT RUN.
+OBSERVED UI: NOT RUN.
+OBSERVED SERVER: Revision/reselection evidence absent because selection was not created.
+LOG EVIDENCE: No fresh-contract or set RPC occurred.
+RESULT: AUTHENTICATED EXECUTION BLOCKED.
+
+Clear
+-----
+
+ACTION: NOT RUN.
+OBSERVED UI: NOT RUN.
+OBSERVED SERVER: No active override existed to clear.
+LOG EVIDENCE: No clear RPC occurred.
+RESULT: AUTHENTICATED EXECUTION BLOCKED.
+
+
+Server Evidence After Attempt
+=============================
+
+SELECT-only post-attempt evidence:
+
+- user_product_classification_overrides: 0
+- user_classification_feedback_evidence: 0
+- comparisons: 0
+- Primary Product global status: REVIEW_REQUIRED
+- Primary Product global garment_type_code: null
+- Global Product mutation: 0
+
+No private user rows were enumerated during target discovery. The aggregate zero-row
+checks and selected public Product evidence were sufficient.
+
+
+Negative Cases
+==============
+
+Zero safe candidate:
+
+- UNIQLO E482868 / 배기진
+- Product ID: f47ca3d3-dcfd-4140-aae5-d1e3e2c53a5f
+- REVIEW_REQUIRED / MEN / SINGLE
+- Expected reason: NO_VERIFIED_DESCENDANT_DIRECT_CANDIDATE
+- 12 sizes / 72 raw measurements / availability 0
+- Simulator UI result: NOT RUN due authentication blocker.
+
+UNKNOWN structure:
+
+- UNIQLO E422992 / 크루넥T
+- Product ID: cb306f0c-bc8c-47fa-9b23-e2eb6270bbe1
+- REVIEW_REQUIRED / UNISEX / UNKNOWN
+- Expected reason: PRODUCT_STRUCTURE_NOT_SINGLE
+- 24 size identities / 96 raw measurements / availability 0
+- Simulator UI result: NOT RUN due authentication blocker.
+
+NOT_APPLICABLE:
+
+- UNIQLO E482652 / AIRism코튼파자마
+- Product ID: f10ce994-3a01-402d-8329-27b95256b9e7
+- NOT_APPLICABLE / WOMEN / SET
+- Reason: Retailer structure is SET or MULTIPACK
+- 7 sizes / 70 raw measurements / availability 0
+- Simulator UI result: NOT RUN due authentication blocker.
+
+No 47-type picker was observed at runtime because no authenticated Recovery surface
+could be opened. Server distribution and focused tests prove a maximum candidate set
+of 3, but that is supporting evidence, not an actual UI PASS.
+
+
+Manual Cross
+============
+
+Runtime manual-cross E2E: NOT RUN.
+
+Reason: no authenticated session and no authorized QA Closet state. No arbitrary
+Closet data was created. The focused authorization/permit tests passed, and Production
+rules remain the expected three explicit-only same-sleeve pairs, but this run does not
+claim actual UI/runtime manual-cross PASS.
+
+
+Multi-Simulator
+===============
+
+NOT RUN.
+
+Two Simulator environments were available, but no approved account/session existed on
+either. Fake auth or a newly created Production user was not permitted. This limitation
+does not convert static tests into a multi-device PASS.
+
+
+Availability Boundary
+=====================
+
+All selected real products currently have zero availability observations and zero
+available sizes. If authentication were established, Recovery select/reselect/clear
+should remain testable, while eligible sizes/begin/complete may legitimately stop at
+NO_AVAILABLE_SIZE. That future stop must be classified separately from Recovery.
+
+No availability data was manually refreshed.
+
+
+Scorer Sequencing
+=================
+
+Runtime timestamp correlation: NOT RUN because authenticated Recovery could not reach
+reference discovery or begin.
+
+Supporting current-build evidence:
+
+- FitMatchComparisonPermitSequencingTests: 4/4 PASS.
+- FitMatchServerAuthorityIntegrationTests: 23/23 PASS.
+- VNextComparisonEngineAdapter remains begin-snapshot gated.
+
+This supporting evidence is not reported as an actual Production runtime sequencing
+PASS for USER_EXPLICIT.
+
+
+P0 / P1 / P2
+=============
+
+P0 found: 0
+
+P1:
+
+1. No approved authenticated QA session/Apple test account is available in the
+   autonomous environment, blocking every required user-owned Production E2E mutation.
+   This is a test-infrastructure/credential blocker, not a demonstrated app defect.
+2. All selected products have temporal availability 0, so downstream size/begin/
+   complete may remain legitimately blocked after Recovery succeeds.
+
+P2: 0 newly identified.
+
+Unverified functional/security state cannot be promoted to PASS merely because no P0
+was observed.
+
+
+Production Writes
+=================
+
+AUTHORIZED NORMAL APP-LEVEL TEST WRITES
+
+- USER_EXPLICIT override writes: 0
+- Feedback evidence writes: 0
+- Comparison begin/history writes: 0
+- Closet writes: 0
+
+ADMIN / GLOBAL WRITES
+
+- SQL INSERT/UPDATE/DELETE: 0
+- Migration/repair/DDL: 0
+- Product/classification/mapping changes: 0
+- Availability refresh: 0
+- RLS/grant/function change: 0
+- Auth user/configuration change: 0
+- Edge deployment: 0
+- Storage change: 0
+
+Production access during this run was SELECT/introspection only.
+
+
+Files Created
+=============
+
+- Docs/FitMatchRecoverySimulatorProductionE2E-20260831.txt
+- Docs/TestEvidence/RecoverySimulatorProductionE2E-20260831/01-real-auth-gate.jpg
+- Docs/TestEvidence/RecoverySimulatorProductionE2E-20260831/02-apple-account-required.jpg
+- Docs/TestEvidence/RecoverySimulatorProductionE2E-20260831/03-runtime-auth-gate.log
+- Docs/TestEvidence/RecoverySimulatorProductionE2E-20260831/04-cold-relaunch-auth-gate.jpg
+- Docs/TestEvidence/RecoverySimulatorProductionE2E-20260831/05-cold-relaunch.log
+- Docs/TestEvidence/RecoverySimulatorProductionE2E-20260831/06-test-and-server-matrix.txt
+- Docs/CodexSessionHandoff.md (updated)
+
+No production source, migration, SQL, project, test, Edge, or configuration file was
+modified.
+
+
+What AI Fully Verified
+======================
+
+- Latest Git authority and clean tracked source baseline.
+- Current app and test-target compile.
+- 88 focused Recovery/vNext tests with zero failures/skips.
+- Current Debug app install and real Simulator launch.
+- Actual FitMatch Apple login UI and system Apple-account requirement.
+- No existing local Supabase session or approved QA credential.
+- Actual app kill and cold relaunch returns to the real auth gate.
+- Real Production candidate corpus and deterministic primary/backups/negative targets.
+- Production remains unpolluted after the attempt.
+
+
+What Remains Unverified
+=======================
+
+- Actual authenticated REVIEW_REQUIRED Recovery UI.
+- Candidate display/fixed-vs-unknown UI parity at runtime.
+- USER_EXPLICIT selection and server projection.
+- Automatic resume to reference discovery.
+- Authenticated kill/relaunch authority hydration.
+- Reselect and revision increment.
+- Clear and inactive-authority behavior.
+- Zero-candidate/UNKNOWN/NOT_APPLICABLE UI negatives.
+- Manual-cross actual runtime behavior.
+- USER_EXPLICIT scorer sequencing timestamps.
+- Same-account multi-Simulator propagation.
+- Physical iPhone behavior, Share Extension, Keychain, and radio/network behavior.
+
+
+Exact Next Execution
+====================
+
+Provide or establish one approved existing QA Apple-authenticated Simulator session.
+Do not send credentials in chat or create a new Production Auth user for this purpose.
+Once that session exists, rerun this autonomous E2E with the already selected targets:
+
+1. Paste PRIMARY URL E450259.
+2. Confirm the three constrained candidates and fixed/unknown facts.
+3. Select candidate A and verify server revision 1/global REVIEW_REQUIRED.
+4. Kill/relaunch and verify hydration.
+5. Reselect candidate B and verify revision 2.
+6. Clear and verify REVIEW_REQUIRED/no active authority.
+7. Open E482868, E422992, and E482652 for fail-closed negatives.
+8. If QA Closet permits, run explicit same-sleeve manual-cross.
+9. Repeat select/reselect/clear on a second authenticated Simulator.
+
+This cannot honestly be reduced to a five-minute physical smoke test until the
+authenticated Simulator Recovery gates above have passed. After they pass, the minimal
+physical check can be limited to Apple session restoration, one select→relaunch→clear
+cycle, and one Share-to-Compare handoff.
+

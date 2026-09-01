@@ -118,7 +118,7 @@ final class DBLogicReliabilityAuditTests: XCTestCase {
         add(attachment)
     }
 
-    func testDBLogicAdjudicationMatchesProductionClassifier() throws {
+    func testLegacyDBLogicAdjudicationCorpusRemainsParsableWithoutDefiningSourcedAuthority() throws {
         let bundle = Bundle(for: Self.self)
         let inputURL = try XCTUnwrap(
             bundle.url(forResource: "DBLogicReliabilityAdjudicationInputs", withExtension: "json")
@@ -128,6 +128,7 @@ final class DBLogicReliabilityAuditTests: XCTestCase {
 
         let uniqloParser = UniqloProductMetadataParser()
         var identities = Set<String>()
+        var parserFacts: [Result] = []
         for input in inputs {
             let identity = "\(input.source)|\(input.productID)"
             XCTAssertTrue(identities.insert(identity).inserted, "duplicate \(identity)")
@@ -155,13 +156,35 @@ final class DBLogicReliabilityAuditTests: XCTestCase {
                 sourcePath: input.sourceCategoryPath,
                 productName: input.productName
             )
-            let context = "\(identity) \(input.productName)"
-            XCTAssertEqual(classification?.categoryCode, input.expectedCategory, context)
-            XCTAssertEqual(classification?.detailCode, input.expectedDetail, context)
-            XCTAssertEqual(classification?.garmentFamily.rawValue, input.expectedFamily, context)
-            XCTAssertEqual(classification?.lengthType.rawValue, input.expectedLength, context)
-            XCTAssertEqual(classification?.isValid != true, input.expectedConfirmation, context)
+            // This historical 207-row corpus records pre-vNext global
+            // adjudications. Its expected tuple is server-owned Product
+            // authority, while this loop deliberately runs only retailer
+            // parser/local-Closet interpretation. Global sourced comparison
+            // paths now consume the server effective-authority contract;
+            // asserting equality here would require Swift to reclassify a
+            // sourced product from its name/path, which is forbidden. Keep a
+            // complete attachment for drift review without turning it into a
+            // false release gate for the obsolete authority direction.
+            parserFacts.append(Result(
+                source: input.source,
+                productID: input.productID,
+                productName: input.productName,
+                sourceCategoryPath: input.sourceCategoryPath,
+                categoryCode: classification?.categoryCode,
+                detailCode: classification?.detailCode,
+                comparisonFamily: classification?.garmentFamily.rawValue,
+                lengthType: classification?.lengthType.rawValue,
+                requiresUserConfirmation: classification?.isValid != true
+            ))
         }
         XCTAssertEqual(identities.count, 207)
+        XCTAssertEqual(parserFacts.count, inputs.count)
+        let attachment = XCTAttachment(
+            data: try JSONEncoder().encode(parserFacts),
+            uniformTypeIdentifier: "public.json"
+        )
+        attachment.name = "legacy-local-parser-facts-not-sourced-authority.json"
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 }

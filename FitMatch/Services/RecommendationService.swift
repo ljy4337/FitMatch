@@ -58,6 +58,127 @@ struct RecommendationService {
         return try vnextComparisonAdapter.analyze(begin)
     }
 
+    /// Builds a detached, current server-authorized target presentation for a
+    /// replacement comparison. A completed Result may itself be a historical
+    /// projection, so mutating it would rewrite old Result/History meaning.
+    /// This maps the server-issued effective tuple as a whole; it never fills
+    /// an absent effective axis from the older displayed Product.
+    func makeServerAuthorizedComparisonTarget(
+        from displayedProduct: Product,
+        permit: FitMatchServerComparisonPermit
+    ) -> Product? {
+        guard permit.isAllowed,
+              let begin = permit.vnextBegin,
+              begin.comparisonID == permit.runID,
+              begin.snapshot.target.productID == permit.referenceAuthorization.target.productID,
+              let runtime = permit.referenceAuthorization.target.runtime.vnext,
+              let runtimeProduct = runtime.product else {
+            return nil
+        }
+
+        let tuple = VNextRuntimeClassificationTuple(
+            product: runtimeProduct,
+            effective: runtime.effectiveClassification
+        )
+        guard tuple.usesEffectiveClassification,
+              tuple.classificationStatus == "CONFIRMED",
+              let categoryCode = tuple.categoryCode,
+              let garmentCode = tuple.garmentTypeCode,
+              !categoryCode.isEmpty,
+              !garmentCode.isEmpty,
+              begin.snapshot.target.classificationStatus == "CONFIRMED",
+              Set(begin.snapshot.target.authorizedCandidateProductSizeIDs)
+                == Set(begin.authorizedCandidateProductSizeIDs),
+              !begin.snapshot.target.candidates.isEmpty else {
+            return nil
+        }
+
+        let authority: FitMatchClassificationAuthorityProvenance
+        switch tuple.effectiveSource {
+        case "GLOBAL_CONFIRMED":
+            authority = .serverConfirmed
+        case "USER_EXPLICIT":
+            guard tuple.overrideRevision != nil,
+                  tuple.authorityFingerprint?.isEmpty == false else {
+                return nil
+            }
+            authority = .userExplicit
+        default:
+            return nil
+        }
+
+        let product = Product(
+            id: permit.referenceAuthorization.target.productID,
+            name: displayedProduct.name,
+            brand: displayedProduct.brand,
+            category: ClothingCategory.fromTaxonomyCode(categoryCode),
+            productCode: displayedProduct.productCode,
+            sourceURLString: displayedProduct.sourceURLString,
+            imageURLString: displayedProduct.imageURLString,
+            sourceType: displayedProduct.sourceType,
+            sourceName: displayedProduct.sourceName,
+            source: displayedProduct.source,
+            notes: displayedProduct.notes,
+            createdAt: displayedProduct.createdAt,
+            updatedAt: Date()
+        )
+        copyRetailerPresentation(from: displayedProduct, to: product)
+        product.categoryRawValue = ClothingCategory.fromTaxonomyCode(categoryCode).rawValue
+        product.categoryCode = categoryCode
+        product.normalizedProductTypeCode = garmentCode
+        product.garmentTypeRawValue = garmentCode
+        product.genderCodes = tuple.audienceCode
+        // These nil values are intentional server tuple values. Do not
+        // coalesce them with axes from the completed historical product.
+        product.sleeveTypeRawValue = tuple.sleeveLengthCode
+        product.constructionTypeRawValue = tuple.productStructureCode
+        product.canonicalPolicyVersion = tuple.contractVersion
+            ?? begin.snapshot.policy.policyVersion
+        product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
+            CanonicalComparisonProfile(
+                decision: .confirmed,
+                semanticCategoryCode: categoryCode,
+                semanticGarmentType: garmentCode,
+                comparisonFamily: tuple.comparisonPolicyCode,
+                appComparisonFamily: tuple.comparisonPolicyCode,
+                lengthAxes: CanonicalLengthAxes(
+                    sleeve: tuple.sleeveLengthCode ?? "not_applicable",
+                    pants: tuple.lowerLengthCode ?? "not_applicable",
+                    leggings: "not_applicable",
+                    skirt: "not_applicable",
+                    body: tuple.bodyLengthCode ?? "not_applicable"
+                ),
+                constructionType: tuple.productStructureCode,
+                eligibility: true,
+                requiredMeasurements: begin.snapshot.policy.metrics.compactMap(
+                    \.measurementCode
+                ),
+                optionalMeasurements: [],
+                excludedMeasurements: begin.snapshot.excludedMeasurementCodes,
+                policyVersion: tuple.contractVersion
+                    ?? begin.snapshot.policy.policyVersion
+                    ?? "fitmatch_vnext",
+                resolutionMethod: authority.rawValue,
+                sourceIdentity: tuple.authorityFingerprint
+            )
+        )
+        product.markClassificationAuthority(
+            authority,
+            sourceIdentity: tuple.authorityFingerprint
+        )
+
+        product.sizes = begin.snapshot.target.candidates.enumerated().map {
+            index,
+            candidate in
+            makeServerAuthorizedPresentationSize(
+                candidate,
+                displayOrder: index,
+                product: product
+            )
+        }
+        return product
+    }
+
     /// Builds the local/offline cache only after the caller has received a
     /// successful `complete_comparison` response for this exact batch.
     func makeCompletedVNextHistory(
@@ -65,15 +186,18 @@ struct RecommendationService {
         selectedReferenceItem: UserFit,
         productDetailCategory: ClosetDetailCategory,
         permit: FitMatchServerComparisonPermit,
-        analysis: VNextComparisonBatchAnalysis
+        analysis: VNextComparisonBatchAnalysis,
+        completion: VNextCompleteComparisonDTO
     ) -> RecommendationHistory? {
-        guard permit.runID == analysis.comparisonID,
-              product.classificationAuthorityProvenance == .serverConfirmed,
-              selectedReferenceItem.classificationAuthorityProvenance?
-                .isComparisonAuthority == true,
-              let size = product.sizes.first(where: {
-                $0.id == analysis.recommended.productSizeID
-              }) else {
+        guard completedVNextHistoryIsServerBacked(
+            product: product,
+            selectedReferenceItem: selectedReferenceItem,
+            permit: permit,
+            analysis: analysis,
+            completion: completion
+        ), let size = product.sizes.first(where: {
+            $0.id == analysis.recommended.productSizeID
+        }) else {
             return nil
         }
         let comparison = analysis.recommended.result
@@ -95,6 +219,359 @@ struct RecommendationService {
             comparisonResult: comparison
         )
         return history
+    }
+
+    /// Alternative-size presentation is read-only. It can reuse only the
+    /// exact batch already produced by a completed server-backed run; it never
+    /// authorizes or invokes a fresh measurement comparison.
+    func canPresentCurrentVNextAlternativeSizes(
+        for history: RecommendationHistory,
+        batch: VNextComparisonBatchAnalysis?
+    ) -> Bool {
+        let expectedRecommendedSizeIDs = batch.map {
+            [
+                $0.recommended.productSizeID,
+                VNextHistoryProjectionIdentity.productSizeID(
+                    comparisonID: history.id,
+                    productSizeID: $0.recommended.productSizeID
+                )
+            ]
+        } ?? []
+        guard history.product.classificationAuthorityProvenance?
+                .isComparisonAuthority == true,
+              history.userFit.classificationAuthorityProvenance?
+                .isComparisonAuthority == true,
+              history.comparisonMethod.hasPrefix("서버 승인"),
+              let batch,
+              expectedRecommendedSizeIDs.contains(history.recommendedSize.id),
+              batch.completionPayload.recommendedProductSizeID
+                == batch.recommended.productSizeID,
+              batch.authorizedCandidateProductSizeIDs.contains(
+                batch.recommended.productSizeID
+              ) else {
+            return false
+        }
+        let authorized = batch.authorizedCandidateProductSizeIDs
+        let analysisIDs = batch.analyses.map(\.productSizeID)
+        return !authorized.isEmpty
+            && Set(authorized).count == authorized.count
+            && Set(analysisIDs) == Set(authorized)
+            && analysisIDs.count == authorized.count
+    }
+
+    /// A local completed-history cache is allowed only for the exact server
+    /// comparison that completed. In particular, `.userExplicit` alone is not
+    /// authority: it must be the current effective authority proven by the
+    /// server-created V4 begin snapshot.
+    private func completedVNextHistoryIsServerBacked(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        permit: FitMatchServerComparisonPermit,
+        analysis: VNextComparisonBatchAnalysis,
+        completion: VNextCompleteComparisonDTO
+    ) -> Bool {
+        guard permit.isAllowed,
+              permit.runID == analysis.comparisonID,
+              completion.completed,
+              completion.comparisonID == permit.runID,
+              completion.recommendedProductSizeID == analysis.recommended.productSizeID,
+              analysis.completionPayload.recommendedProductSizeID
+                == analysis.recommended.productSizeID,
+              let begin = permit.vnextBegin,
+              begin.comparisonID == permit.runID,
+              begin.resultStatus == "PENDING",
+              begin.snapshot.authorization.allowed,
+              begin.snapshot.target.classificationStatus == "CONFIRMED",
+              permit.referenceAuthorization.target.status == .confirmed,
+              permit.referenceAuthorization.target.productID == product.id,
+              begin.snapshot.target.productID == product.id,
+              let targetVariantID = permit.referenceAuthorization.targetVariantID,
+              begin.snapshot.target.variantID == targetVariantID,
+              let reference = permit.referenceAuthorization.reference,
+              reference.clientItemID == selectedReferenceItem.id,
+              permit.referenceAuthorization.referenceAuthority != nil,
+              snapshotUUID(
+                begin.snapshot.referenceSnapshot,
+                key: "closet_item_id"
+              ) == reference.closetItemID,
+              product.sizes.contains(where: {
+                $0.id == analysis.recommended.productSizeID
+              }) else {
+            return false
+        }
+
+        let authorizedIDs = begin.authorizedCandidateProductSizeIDs
+        let authorizedSet = Set(authorizedIDs)
+        let snapshotIDs = begin.snapshot.target.authorizedCandidateProductSizeIDs
+        let snapshotCandidateIDs = begin.snapshot.target.candidates.map(\.productSizeID)
+        let analysisIDs = analysis.authorizedCandidateProductSizeIDs
+        guard !authorizedIDs.isEmpty,
+              authorizedSet.count == authorizedIDs.count,
+              Set(snapshotIDs) == authorizedSet,
+              snapshotIDs.count == authorizedIDs.count,
+              Set(snapshotCandidateIDs) == authorizedSet,
+              snapshotCandidateIDs.count == authorizedIDs.count,
+              Set(analysisIDs) == authorizedSet,
+              analysisIDs.count == authorizedIDs.count,
+              authorizedSet.contains(analysis.recommended.productSizeID),
+              begin.snapshot.target.candidateAuthorityFingerprint
+                == begin.candidateAuthorityFingerprint,
+              let effectiveAuthorityFingerprint = begin.effectiveAuthorityFingerprint,
+              !effectiveAuthorityFingerprint.isEmpty,
+              snapshotString(
+                begin.snapshot.inputSnapshot,
+                key: "effective_authority_fingerprint"
+              ) == effectiveAuthorityFingerprint else {
+            return false
+        }
+
+        return currentServerAuthorityMatches(
+            product: product,
+            permit: permit,
+            begin: begin,
+            effectiveAuthorityFingerprint: effectiveAuthorityFingerprint
+        )
+    }
+
+    private func currentServerAuthorityMatches(
+        product: Product,
+        permit: FitMatchServerComparisonPermit,
+        begin: VNextBeginComparisonDTO,
+        effectiveAuthorityFingerprint: String
+    ) -> Bool {
+        guard let effective = permit.referenceAuthorization.target.runtime.vnext?
+            .effectiveClassification,
+              effective.productID == product.id,
+              effective.classificationStatus == "CONFIRMED",
+              effective.effectiveAuthorityFingerprint == effectiveAuthorityFingerprint,
+              effectiveClassificationSnapshotMatches(
+                effective,
+                begin: begin
+              ) else {
+            return false
+        }
+        let runtimeAuthorityStatus = permit.referenceAuthorization.target
+            .classification.authorityStatus?.lowercased()
+
+        switch product.classificationAuthorityProvenance {
+        case .serverConfirmed:
+            return effective.effectiveSource == "GLOBAL_CONFIRMED"
+                && runtimeAuthorityStatus != "user_explicit"
+
+        case .userExplicit:
+            guard begin.snapshot.snapshotSchemaVersion >= 4,
+                  effective.isPersonalComparisonAuthority,
+                  runtimeAuthorityStatus == "user_explicit",
+                  let revision = effective.overrideRevision,
+                  snapshotNumber(
+                    begin.snapshot.inputSnapshot,
+                    key: "personal_override_revision"
+                  ) == Double(revision),
+                  let authority = begin.snapshot.authoritySnapshot.objectValue,
+                  let effectiveAtBegin = authority[
+                    "effective_classification_at_begin"
+                  ]?.objectValue,
+                  effectiveAtBegin["source"]?.stringValue == "USER_EXPLICIT",
+                  effectiveAtBegin["effective_authority_fingerprint"]?.stringValue
+                    == effectiveAuthorityFingerprint,
+                  let beginProjection = authority[
+                    "personal_projection_at_begin"
+                  ]?.objectValue,
+                  let runtimeProjection = effective.personalProjection?.objectValue,
+                  personalProjectionIsActive(beginProjection),
+                  beginProjection["revision"]?.numberValue == Double(revision),
+                  runtimeProjection["revision"]?.numberValue == Double(revision),
+                  personalProjectionMatches(
+                    beginProjection,
+                    runtimeProjection
+                  ) else {
+                return false
+            }
+            return true
+
+        default:
+            return false
+        }
+    }
+
+    private func copyRetailerPresentation(from source: Product, to destination: Product) {
+        destination.brand = source.brand
+        destination.productCode = source.productCode
+        destination.sourceURLString = source.sourceURLString
+        destination.imageURLString = source.imageURLString
+        destination.styleNo = source.styleNo
+        destination.englishName = source.englishName
+        destination.brandCode = source.brandCode
+        destination.brandEnglishName = source.brandEnglishName
+        destination.brandLogoImageURLString = source.brandLogoImageURLString
+        destination.brandNationName = source.brandNationName
+        destination.sourceCategoryPath = source.sourceCategoryPath
+        destination.sourceCategoryDepth1 = source.sourceCategoryDepth1
+        destination.sourceCategoryDepth2 = source.sourceCategoryDepth2
+        destination.sourceCategoryDepth3 = source.sourceCategoryDepth3
+        destination.sourceCategoryDepth4 = source.sourceCategoryDepth4
+        destination.baseCategoryFullPath = source.baseCategoryFullPath
+        destination.categoryDepth1Code = source.categoryDepth1Code
+        destination.categoryDepth1Name = source.categoryDepth1Name
+        destination.categoryDepth2Code = source.categoryDepth2Code
+        destination.categoryDepth2Name = source.categoryDepth2Name
+        destination.categoryDepth3Code = source.categoryDepth3Code
+        destination.categoryDepth3Name = source.categoryDepth3Name
+        destination.categoryDepth4Code = source.categoryDepth4Code
+        destination.categoryDepth4Name = source.categoryDepth4Name
+        destination.sizeType = source.sizeType
+        destination.genderCodes = source.genderCodes
+        destination.labelNames = source.labelNames
+        destination.imageURLStrings = source.imageURLStrings
+        destination.normalPrice = source.normalPrice
+        destination.salePrice = source.salePrice
+        destination.finalPrice = source.finalPrice
+        destination.currencyCode = source.currencyCode
+        destination.discountRate = source.discountRate
+        destination.isSale = source.isSale
+        destination.isOutOfStock = source.isOutOfStock
+        destination.stockStatusRawValue = source.stockStatusRawValue
+        destination.isRestock = source.isRestock
+        destination.isSoonOutOfStock = source.isSoonOutOfStock
+        destination.isLimitedQuantity = source.isLimitedQuantity
+        destination.reviewCount = source.reviewCount
+        destination.reviewSatisfactionScore = source.reviewSatisfactionScore
+        destination.seasonYear = source.seasonYear
+        destination.season = source.season
+        destination.checkedColorName = source.checkedColorName
+        destination.checkedSizeName = source.checkedSizeName
+        destination.sourceTypeRawValue = source.sourceTypeRawValue
+        destination.sourceName = source.sourceName
+        destination.sourcePlatformCode = source.sourcePlatformCode
+        destination.sourceRawValue = source.sourceRawValue
+        destination.notes = source.notes
+    }
+
+    private func makeServerAuthorizedPresentationSize(
+        _ candidate: VNextAuthorizedCandidateDTO,
+        displayOrder: Int,
+        product: Product
+    ) -> ProductSize {
+        var measurements = GarmentMeasurements(
+            shoulder: 0,
+            chest: 0,
+            totalLength: 0,
+            sleeveLength: 0
+        )
+        for measurement in candidate.comparisonMeasurements {
+            guard let code = MeasurementCode(rawValue: measurement.measurementCode),
+                  let kind = MeasurementComparisonEngine.measurementKind(for: code) else {
+                continue
+            }
+            switch kind {
+            case .shoulder: measurements.shoulder = measurement.targetValue
+            case .chest: measurements.chest = measurement.targetValue
+            case .totalLength: measurements.totalLength = measurement.targetValue
+            case .sleeveLength: measurements.sleeveLength = measurement.targetValue
+            case .upperAbdomen: measurements.upperAbdomen = measurement.targetValue
+            case .upperWaist: measurements.upperWaist = measurement.targetValue
+            case .waist: measurements.waist = measurement.targetValue
+            case .hip: measurements.hip = measurement.targetValue
+            case .thigh: measurements.thigh = measurement.targetValue
+            case .rise: measurements.rise = measurement.targetValue
+            case .hem: measurements.hem = measurement.targetValue
+            case .footLength: measurements.footLength = measurement.targetValue
+            case .underBust: measurements.underBust = measurement.targetValue
+            }
+        }
+        return ProductSize(
+            id: candidate.productSizeID,
+            name: candidate.sizeLabel,
+            measurements: measurements,
+            displayOrder: displayOrder,
+            product: product
+        )
+    }
+
+    private func personalProjectionMatches(
+        _ beginProjection: [String: FitMatchJSONValue],
+        _ runtimeProjection: [String: FitMatchJSONValue]
+    ) -> Bool {
+        let requiredKeys = [
+            "classification_source",
+            "selected_candidate_fingerprint",
+            "candidate_contract_version",
+            "candidate_set_hash",
+            "base_product_input_fingerprint",
+            "base_product_evidence_fingerprint",
+            "base_resolver_version"
+        ]
+        return requiredKeys.allSatisfy { key in
+            guard let beginValue = beginProjection[key],
+                  let runtimeValue = runtimeProjection[key] else {
+                return false
+            }
+            return beginValue == runtimeValue
+        }
+    }
+
+    private func personalProjectionIsActive(
+        _ projection: [String: FitMatchJSONValue]
+    ) -> Bool {
+        guard let clearedAt = projection["cleared_at"] else { return true }
+        return clearedAt == .null
+    }
+
+    /// The target tuple rendered locally must be the exact effective tuple that
+    /// the server snapshotted at begin. This keeps a current server-backed
+    /// personal projection distinct from a local `.userExplicit` label.
+    private func effectiveClassificationSnapshotMatches(
+        _ effective: VNextEffectiveTargetClassificationDTO,
+        begin: VNextBeginComparisonDTO
+    ) -> Bool {
+        guard let authority = begin.snapshot.authoritySnapshot.objectValue,
+              let snapshot = authority[
+                "effective_classification_at_begin"
+              ]?.objectValue else {
+            return false
+        }
+
+        return snapshot["source"]?.stringValue == effective.effectiveSource
+            && snapshot["state"]?.stringValue == effective.state
+            && snapshot["category_code"]?.stringValue == effective.categoryCode
+            && snapshot["garment_type_code"]?.stringValue
+                == effective.garmentTypeCode
+            && snapshot["audience_code"]?.stringValue == effective.audienceCode
+            && snapshot["sleeve_length_code"]?.stringValue
+                == effective.sleeveLengthCode
+            && snapshot["lower_length_code"]?.stringValue
+                == effective.lowerLengthCode
+            && snapshot["body_length_code"]?.stringValue
+                == effective.bodyLengthCode
+            && snapshot["comparison_policy_code"]?.stringValue
+                == effective.comparisonPolicyCode
+            && begin.snapshot.target.classificationStatus
+                == effective.classificationStatus
+            && begin.snapshot.target.garmentTypeCode == effective.garmentTypeCode
+            && begin.snapshot.target.sleeveLengthCode == effective.sleeveLengthCode
+            && begin.snapshot.target.lowerLengthCode == effective.lowerLengthCode
+            && begin.snapshot.target.bodyLengthCode == effective.bodyLengthCode
+    }
+
+    private func snapshotString(
+        _ snapshot: FitMatchJSONValue,
+        key: String
+    ) -> String? {
+        snapshot.objectValue?[key]?.stringValue
+    }
+
+    private func snapshotUUID(
+        _ snapshot: FitMatchJSONValue,
+        key: String
+    ) -> UUID? {
+        snapshotString(snapshot, key: key).flatMap(UUID.init(uuidString:))
+    }
+
+    private func snapshotNumber(
+        _ snapshot: FitMatchJSONValue,
+        key: String
+    ) -> Double? {
+        snapshot.objectValue?[key]?.numberValue
     }
 
     func recommend(

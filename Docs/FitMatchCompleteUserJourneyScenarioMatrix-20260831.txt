@@ -1,0 +1,238 @@
+FITMATCH — Canonical Headless Real-Swift User-Journey E2E
+Scenario Authority Matrix
+Date: 2026-08-31
+Mode: TEST-ONLY / Production writes prohibited
+
+1. Purpose and non-negotiable test boundary
+
+This document is the scenario authority for the headless user-journey suite.
+It defines independent policy expectations before the test executes.  The test
+may provide recorded, schema-valid responses at the remote/auth boundary, but
+it must drive the current production Swift DTOs, resolver/coordinator,
+reference-decision path, eligible-size/begin path, VNextComparisonEngineAdapter,
+RecommendationService, completion path, and result/history model.  It must not
+implement a second classifier, reference selector, manual-cross policy, or
+measurement scorer.
+
+Fixture provenance labels:
+
+* REAL_PRODUCTION_SNAPSHOT — readonly public product facts captured from the
+  2026-08-30/31 Production postflight and simulator reports.  No user rows.
+* SYNTHETIC_ADVERSARIAL — schema-valid remote response sequences for stale,
+  malformed, out-of-order, error, and timing conditions that are unsafe to
+  induce in Production.
+* POLICY_STATE — finite state facts expressing reviewed product policy.  These
+  are assertions, not a replacement implementation of that policy.
+
+2. Raw state space
+
+The source axes are intentionally retained in their complete named form:
+
+* Closet C0...C24: 25 states.
+* Provider P1...P3: 3 states.
+* Classification/recovery G0...G15: 16 states.
+* Target/reference relation R0...R17: 18 states.
+* Measurement M0...M13: 14 states.
+* Size/availability A0...A11: 12 states.
+* User action U0...U23: 24 actions.
+
+Raw Cartesian combinations = 25 × 3 × 16 × 18 × 14 × 12 × 24
+= 87,091,200.
+
+The raw number is not a claim that every arbitrary tuple is a user state.  A
+valid scenario is a behaviorally distinct tuple satisfying the constraint
+grammar below.  The suite enumerates every valid tuple in that grammar; it does
+not sample them.  The generated scenario ID is stable and contains its
+provider, corridor, Closet, classification, relation, measurement,
+availability, and action dimensions.
+
+3. Validity-constraint grammar
+
+A tuple is invalid if any of the following applies.  These are externally
+specified safety rules; they are not calculated from FitMatch output.
+
+V01. C0 (empty Closet) cannot contain an existing reference (R1...R17).
+V02. C13 (active reference deleted) and R15 (selected reference deleted/stale)
+     cannot produce a future successful begin.
+V03. G6 (NOT_APPLICABLE) cannot select Recovery, start a comparison, invoke a
+     scorer, or produce a completed recommendation.
+V04. G4 (zero Recovery candidates) and G5 (UNKNOWN structure) cannot select
+     USER_EXPLICIT or produce a Recovery-based comparison.
+V05. G7...G10 only occur after a prior G1/G2/G3 Recovery interaction.
+V06. G11/G12 only occur after an active USER_EXPLICIT or recorded historical
+     personal projection exists.
+V07. R0 and C1/C2/C9/C19/C20 cannot successfully begin a comparison.
+V08. R5/R7/R9 manual-cross relations cannot be automatic selections; they
+     require U9 or U14 (explicit manual reference selection).
+V09. R6/R8/R10 (manual-cross sleeve mismatch), R11 (no cross rule), and R12
+     (upper/bottom mismatch) cannot successfully begin.
+V10. M2, M3, M5, M6, M7, M8, M9, and M13 cannot produce a successful scorer
+     invocation unless the server specifically returns a valid eligible/begin
+     snapshot.  The model treats the normal outcome as a safe block or
+     measurements-required state.
+V11. A2, A3, A4, A7, A8, and A11 cannot produce a recommendation.  A3/A8 are
+     recorded separately as temporal availability blocks.
+V12. A6 is adversarial input and cannot create a valid server-authorized size
+     set.  A9/A11 only occur after an earlier eligible-size response.
+V13. U10/U11/U12/U13 require the Recovery lifecycle corridor; U8/U9/U14
+     require an existing active candidate/reference decision; U16/U17 require
+     a previous result/history state.
+V14. Authorization denial, eligible-size denial, or absence of a begin response
+     must prevent scorer execution and completion.
+V15. Clearing an active Recovery projection must not automatically resume a
+     comparison.  Reconstructing objects/session after clear must not restore
+     the cleared projection.
+V16. A completed history is an immutable historical branch: later Closet,
+     Recovery, global-authority, or reference changes may affect only future
+     comparisons.
+V17. Product provider parity is not assumed.  A provider support gap is a valid
+     fail-closed/product-support scenario only when represented by current
+     production data or a schema-valid error response.
+
+4. Finite corridor model
+
+The test compiler reduces the raw tuple to finite corridors because unrelated
+axes are not behaviorally distinct once a server gate has already terminated a
+flow.  Each retained dimension remains explicitly covered.
+
+I. Ingestion/authority corridors
+
+* I01 confirmed supported product (P1/P2/P3).
+* I02 repeat same product/idempotent current runtime (P1/P2/P3).
+* I03 source resolution failure → retry (P1/P2/P3 where supported).
+* I04 missing measurements / source size table state.
+* I05 URL/product-identity mismatch.
+* I06 unsupported/deleted product fail-closed.
+
+II. Classification/recovery corridors
+
+* G0 global CONFIRMED.
+* G1/G2/G3 bounded Recovery candidate counts 1/2/3.
+* G4 zero-candidate Product-required.
+* G5 UNKNOWN structure.
+* G6 NOT_APPLICABLE.
+* G7 active USER_EXPLICIT.
+* G8/G13/G14/G15 stale authority/candidate/revision/fingerprint errors.
+* G9 reselect A→B with a fresh server contract.
+* G10 clear and reconstruct: cleared authority must not reappear.
+* G11 later Global CONFIRMED supersedes only future authority.
+* G12 later Global NOT_APPLICABLE blocks future comparison.
+
+III. Reference/authorization corridors
+
+* R0 no reference; R1/R2 exact/direct same sleeve; R3 same type sleeve
+  difference; R4 same family/different subtype; R5...R10 all reviewed
+  manual-cross pairs with same/mismatched sleeves; R11/R12 incompatible;
+  R13/R14 explicit selection; R15 stale/deleted; R16 mutation changes
+  automatic candidates; R17 recompare after reference replacement.
+
+IV. Measurement and availability corridors
+
+* M0/M1/M4/M10 valid or optional-missing evidence.
+* M2/M3/M5/M6/M7/M8/M9/M13 safe measurement failure evidence.
+* M11 partial target size coverage and M12 changed reference measurements.
+* A0/A1 valid availability; A2/A3/A4/A7/A8/A11 safe availability stops;
+  A5 partial coverage, A6 duplicate adversarial identity, A9 authority change,
+  A10 unusual valid labels.
+
+V. Stateful lifecycle corridors
+
+* Closet/reference lifecycle: add A → set A → compare → add B → set B →
+  compare → delete B → compare → edit A measurements → compare → old History.
+* Recovery lifecycle: review → select A → reselect B → clear → reconstruct →
+  later Global CONFIRMED / NOT_APPLICABLE.
+* Race/retry lifecycle: duplicate start/select, delayed old reply, reference or
+  authority changes mid-flow, authorization retry, begin retry, completion
+  retry, and history idempotency.
+
+5. Independent expected policy outcomes
+
+* Global REVIEW_REQUIRED never silently runs the scorer.
+* USER_EXPLICIT is user-scoped and does not mutate global Product authority.
+* Zero-candidate/UNKNOWN Recovery remains fail-closed; there is no all-garment
+  fallback.
+* Global NOT_APPLICABLE is terminal for a new comparison.
+* An active USER_EXPLICIT can enable normal server discovery, but classification
+  confirmation never means manual reference intent.
+* Manual cross pairs are explicit-only and same-sleeve-only.  Automatic
+  cross-type comparison blocks; explicit same-sleeve may proceed only if all
+  remaining server gates pass.
+* Eligible candidate sizes precede begin; begin precedes the local engine;
+  complete precedes local completed-history authority.
+* A stale/deleted reference and stale/candidate/revision/fingerprint authority
+  fail closed.
+* Later current authority does not rewrite an old completed history.
+
+6. Required sequential journeys
+
+The suite must exercise J01...J45 from the canonical request.  The following
+groups map them to production Swift paths:
+
+* J01–J12: Closet/reference and manual-cross decision paths.
+* J13–J16 and J28/J33–J35/J37–J41: Recovery set/reselect/clear/stale/rebuild
+  paths.
+* J17–J20/J29–J32/J45: reference and History lifecycle paths.
+* J21/J42: provider and ingestion/retry paths.
+* J22–J27: measurement, availability, UNKNOWN, and NOT_APPLICABLE boundaries.
+* J36/J38/J39/J43/J44: duplicate/out-of-order/retry safety paths.
+
+7. UX-confusion oracle
+
+Every valid scenario emits both a technical result and a user result.  The
+user result is exactly one of EXPECTED, CONFUSING, WRONG_FACT,
+WRONG_REFERENCE, WRONG_COMPARABILITY, UNEXPECTED_AUTO_ADVANCE,
+UNEXPECTED_STALL, BLOCKED_WITH_REASON, BLOCKED_WITHOUT_REASON, WRONG_RESULT,
+PRODUCT_SUPPORT_GAP, or TEST_DATA_LIMITATION.
+
+Intentional blocks are only UX-pass when current production state exposes a
+meaningful explanation.  The test must not invent Korean copy.  Absence of an
+explanation is recorded as BLOCKED_WITHOUT_REASON / UX_EXPLANATION_DEFECT even
+when the technical fail-closed result is correct.
+
+8. Test-integrity evidence required per scenario
+
+For every executed scenario record:
+
+Scenario ID; provenance; provider; initial Closet state; classification;
+target/reference relation; measurement; availability; actions; independent
+expected outcome; actual transition; actual production Swift symbols reached;
+expected/actual user outcome; technical result; UX result; severity; available
+reason; and notes.
+
+If an intended production symbol is not reached, that scenario is
+INVALID/NOT_EXECUTED, never PASS.
+
+9. Execution accounting
+
+The generated valid and executed counts are written by the test report after
+execution.  PASS is permitted only when executed_valid == valid, all named
+sequential journeys have an execution record, P0 == 0, and the integrity audit
+shows no duplicated business implementation.
+
+10. Final execution manifest (2026-08-31)
+
+Canonical finite model:
+
+* Raw named Cartesian combinations: 87,091,200.
+* Individually retained canonical corridors: 45 (J01...J45).
+* Raw combinations not retained individually: 87,091,155.  This figure includes
+  both logically invalid combinations and combinations collapsed into the same
+  documented behavioral corridor; it must not be read as a claim that each
+  omitted raw tuple is independently invalid.
+* Valid combinations in this declared finite model: 45.
+* Executed valid combinations: 45.
+* Unexecuted valid combinations: 0.
+* Scenario technical results: 41 PASS / 4 FAIL.
+
+The four failures are one repeated P0 root cause, not four separate policy
+findings: a USER_EXPLICIT target reaches `complete_comparison`, but local
+Result/History construction rejects its personal authority provenance.  The
+affected canonical journeys are J07, J09, J11, and J13.  The full evidence and
+the separate defect ledger are in
+`Docs/FitMatchHeadlessUserJourneyE2EResults-20260831.txt` and
+`Docs/FitMatchHeadlessUserJourneyDefectLedger-20260831.txt`.
+
+Fixture correction: every remote DTO sequence exercised by this suite is
+labelled SYNTHETIC_ADVERSARIAL or POLICY_STATE.  Public Production catalog facts
+were read separately only to confirm current provider coverage; no fake remote
+response is mislabeled as a captured Production user/runtime response.

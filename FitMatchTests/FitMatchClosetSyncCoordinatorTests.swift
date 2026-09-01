@@ -217,15 +217,15 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let item = localRetailerItem(authority: .localHint)
         context.insert(item)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         let request = try #require(await remote.capturedUpsertRequest())
         #expect(request.override == nil)
@@ -239,6 +239,38 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(coordinator.state == .synced)
     }
 
+    @Test func shoppingPersonalAuthorityNeverPromotesASourcedClosetRow() async throws {
+        let productID = UUID()
+        let classification = databaseClassification(
+            status: "confirmed",
+            authorityStatus: "user_explicit"
+        )
+        let remote = ClosetSyncRemoteStub(
+            items: [],
+            resolution: resolution(productID: productID, classification: classification),
+            runtime: runtime(productID: productID, classification: classification)
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+        let item = localRetailerItem(authority: .localHint)
+        context.insert(item)
+        try context.save()
+
+        await coordinator.synchronize(userID: userID, modelContext: context)
+
+        let request = try #require(await remote.capturedUpsertRequest())
+        #expect(request.productID == productID)
+        #expect(request.override == nil)
+        #expect(item.classificationAuthorityProvenance == .localHint)
+        #expect(item.canonicalEligibility == false)
+        #expect(item.isRepresentative == false)
+        #expect(coordinator.state == .synced)
+    }
+
     @Test func onlyExplicitUserClassificationCreatesServerOverride() async throws {
         let productID = UUID()
         let classification = databaseClassification(status: "confirmed")
@@ -249,15 +281,15 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let item = localRetailerItem(authority: .userExplicit)
         context.insert(item)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         let request = try #require(await remote.capturedUpsertRequest())
         let override = try #require(request.override)
@@ -286,6 +318,10 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let item = localRetailerItem(
             id: clientItemID,
             productID: productID,
@@ -293,12 +329,8 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         context.insert(item)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.runtimeFetchCount() == 1)
         let request = try #require(await remote.capturedUpsertRequest())
@@ -323,15 +355,15 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let item = localRetailerItem(authority: .localHint)
         context.insert(item)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.capturedUpsertRequest() == nil)
         #expect(item.classificationAuthorityProvenance == .serverNotComparable)
@@ -354,15 +386,15 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let item = localRetailerItem(authority: .localHint)
         context.insert(item)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.capturedUpsertRequest() == nil)
         #expect(item.classificationAuthorityProvenance == .serverReviewRequired)
@@ -391,15 +423,15 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let item = localRetailerItem(authority: .localHint)
         context.insert(item)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.observationSubmissionCount() == 1)
         #expect(await remote.runtimeFetchCount() == 2)
@@ -419,15 +451,15 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let item = localRetailerItem(authority: .localHint)
         context.insert(item)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.capturedUpsertRequest() == nil)
         #expect(item.classificationAuthorityProvenance == .serverUnavailable)
@@ -453,6 +485,10 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let item = localRetailerItem(
             id: clientItemID,
             productID: productID,
@@ -460,12 +496,8 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         context.insert(item)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.capturedUpsertRequest() == nil)
         #expect(item.classificationAuthorityProvenance == .serverUnavailable)
@@ -577,6 +609,323 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(coordinator.lastErrorMessage == nil)
     }
 
+    @Test func foreignAccountCacheIsPurgedBeforeRemoteSyncCanExposeIt() throws {
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.ForeignCache.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: ClosetSyncRemoteStub(items: []),
+            defaults: defaults
+        )
+        let ownerA = UUID()
+        let ownerB = UUID()
+        let reference = localReferenceItem(id: UUID(), isReference: true)
+        let product = Product(name: "A의 이전 비교 상품", category: .top)
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(shoulder: 48, chest: 52, totalLength: 69, sleeveLength: 22),
+            product: product
+        )
+        product.sizes = [size]
+        let history = RecommendationHistory(
+            product: product,
+            recommendedSize: size,
+            userFit: reference,
+            totalDifference: 1,
+            measurementDifferences: GarmentMeasurements(
+                shoulder: 0,
+                chest: 1,
+                totalLength: 0,
+                sleeveLength: 0
+            ),
+            comparisonMethod: "서버 승인 vNext 비교"
+        )
+        context.insert(reference)
+        context.insert(product)
+        context.insert(history)
+        try context.save()
+
+        // A legacy cache with no owner marker cannot be claimed by the first
+        // currently signed-in account. Its provenance is unknown, so it must
+        // be purged before either A or a later B can see it.
+        let initial = try coordinator.prepareLocalCache(for: ownerA, modelContext: context)
+        #expect(initial == .purgedForeignOwnerCache)
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<RecommendationHistory>()).isEmpty)
+
+        // Rows created after A owns this cache are safe for A, but must still
+        // be removed before B's root can present.
+        let ownedByA = localReferenceItem(id: UUID(), isReference: true)
+        context.insert(ownedByA)
+        try context.save()
+        #expect(
+            try coordinator.prepareLocalCache(for: ownerA, modelContext: context)
+                == .alreadyOwned
+        )
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).count == 1)
+
+        // This is deliberately before `synchronize` and therefore before any
+        // remote response.  ContentView withholds MainTabView until this exact
+        // production boundary completes for the newly signed-in account.
+        let switched = try coordinator.prepareLocalCache(for: ownerB, modelContext: context)
+        #expect(switched == .purgedForeignOwnerCache)
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<RecommendationHistory>()).isEmpty)
+    }
+
+    /// CM-015 / EN-007: ownerless legacy data is never promoted into a new
+    /// authenticated account's personal state. Favorites and saved parser
+    /// classification selections are user-owned too, so they clear alongside
+    /// the SwiftData Closet/History rows.
+    @Test func ownerlessLegacyCacheFailsClosedAndPurgesAllUserScopedPresentationState() throws {
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.OwnerlessCache.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: ClosetSyncRemoteStub(items: []),
+            defaults: defaults
+        )
+
+        let staleItem = localReferenceItem(id: UUID(), isReference: true)
+        staleItem.markClassificationAuthority(.userExplicit, sourceIdentity: "legacy-A")
+        context.insert(staleItem)
+        try context.save()
+
+        let favorites = FavoriteProductStore(defaults: defaults)
+        #expect(favorites.toggle("https://www.uniqlo.com/kr/ko/products/E450259"))
+        defaults.set(Data("legacy-personal-choice".utf8), forKey: "FitMatch.sourceCategoryMappings")
+
+        let accountB = UUID()
+        #expect(
+            try coordinator.prepareLocalCache(for: accountB, modelContext: context)
+                == .purgedForeignOwnerCache
+        )
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<RecommendationHistory>()).isEmpty)
+        #expect(favorites.favoriteURLs().isEmpty)
+        #expect(defaults.data(forKey: "FitMatch.sourceCategoryMappings") == nil)
+    }
+
+    /// CM-015 / EN-007 / CR-019: before B's cache preparation action runs,
+    /// the exact production root state must withhold MainTabView even if A's
+    /// SwiftData rows still exist. After the same coordinator purges A, only
+    /// B's cache can enter the authenticated root.
+    @Test func accountSwitchNeverPresentsForeignLocalCacheBeforePreparationCompletes() throws {
+        let schema = Schema(FitMatchSchemaV1.models)
+        let container = try ModelContainer(
+            for: schema,
+            configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]
+        )
+        let context = ModelContext(container)
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.RootPresentation.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: ClosetSyncRemoteStub(items: []),
+            defaults: defaults
+        )
+        let ownerA = UUID()
+        let ownerB = UUID()
+        #expect(
+            try coordinator.prepareLocalCache(for: ownerA, modelContext: context)
+                == .claimedEmptyOrUnownedCache
+        )
+        let cachedA = localReferenceItem(id: UUID(), isReference: true)
+        context.insert(cachedA)
+        try context.save()
+        #expect(
+            FitMatchAuthenticatedRootPresentationAction.presentation(
+                authState: .signedIn(userID: ownerA),
+                localCachePreparedForUserID: ownerA,
+                localCachePreparationErrorMessage: nil
+            ) == .main
+        )
+
+        // B's session transition happens before the cache task executes. The
+        // production root state is therefore a holding screen, never main.
+        #expect(
+            FitMatchAuthenticatedRootPresentationAction.presentation(
+                authState: .signedIn(userID: ownerB),
+                localCachePreparedForUserID: ownerA,
+                localCachePreparationErrorMessage: nil
+            ) == .preparingLocalCache
+        )
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).count == 1)
+
+        #expect(
+            try coordinator.prepareLocalCache(for: ownerB, modelContext: context)
+                == .purgedForeignOwnerCache
+        )
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).isEmpty)
+        #expect(
+            FitMatchAuthenticatedRootPresentationAction.presentation(
+                authState: .signedIn(userID: ownerB),
+                localCachePreparedForUserID: ownerB,
+                localCachePreparationErrorMessage: nil
+            ) == .main
+        )
+        #expect(
+            FitMatchAuthenticatedRootPresentationAction.presentation(
+                authState: .signedOut,
+                localCachePreparedForUserID: nil,
+                localCachePreparationErrorMessage: nil
+            ) == .signIn
+        )
+    }
+
+    /// CM-015: an A sync that was already waiting on the old authenticated
+    /// session must not reclaim B's cache ownership after the app switches
+    /// accounts.  The delayed first list response is A's already-issued
+    /// request; every later response is from B's newly active session.
+    @Test func overlappingAccountSwitchKeepsNewAccountCacheOwnership() async throws {
+        let schema = Schema(FitMatchSchemaV1.models)
+        let container = try ModelContainer(
+            for: schema,
+            configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]
+        )
+        let context = ModelContext(container)
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.OverlappingAccountSwitch.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+
+        let ownerA = UUID()
+        let ownerB = UUID()
+        let itemA = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let itemB = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let firstListGate = JourneyAsyncGate()
+        let remote = ClosetSyncRemoteStub(
+            items: [itemA],
+            listResponses: [[itemA], [itemB]],
+            listGates: [1: firstListGate]
+        )
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+
+        #expect(
+            try coordinator.prepareLocalCache(for: ownerA, modelContext: context)
+                == .claimedEmptyOrUnownedCache
+        )
+        let cachedA = localReferenceItem(id: itemA.clientItemID, isReference: true)
+        context.insert(cachedA)
+        try context.save()
+
+        let oldSync = Task { @MainActor in
+            await coordinator.synchronize(userID: ownerA, modelContext: context)
+        }
+        await firstListGate.waitForArrival(atLeast: 1)
+
+        // This is the same production cache-preparation action ContentView
+        // runs as soon as B becomes the authenticated user.
+        coordinator.prepareForAuthenticatedUser(ownerB)
+        #expect(
+            try coordinator.prepareLocalCache(for: ownerB, modelContext: context)
+                == .purgedForeignOwnerCache
+        )
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).isEmpty)
+
+        // The B task is queued while A is still in flight. It must cause the
+        // coordinator's follow-up pass to use B, not replay A.
+        await coordinator.synchronize(userID: ownerB, modelContext: context)
+        await firstListGate.open()
+        await oldSync.value
+
+        let finalItems = try context.fetch(FetchDescriptor<UserFit>())
+        #expect(finalItems.map(\.id) == [itemB.clientItemID])
+        #expect(
+            try coordinator.prepareLocalCache(for: ownerB, modelContext: context)
+                == .alreadyOwned
+        )
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).map(\.id) == [itemB.clientItemID])
+    }
+
+    /// RX-015: two same-account sync triggers overlap at the real remote
+    /// boundary. The second request must cause one production follow-up pass
+    /// that hydrates the newer snapshot, rather than being silently dropped.
+    @Test func overlappingSameAccountSyncHydratesNewestFollowUpSnapshot() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.OverlappingSameAccount.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let userID = UUID()
+        let newest = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let firstListGate = JourneyAsyncGate()
+        let remote = ClosetSyncRemoteStub(
+            items: [],
+            listResponses: [[], [], [], [], [newest]],
+            listGates: [1: firstListGate]
+        )
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+
+        let first = Task { @MainActor in
+            await coordinator.synchronize(userID: userID, modelContext: context)
+        }
+        await firstListGate.waitForArrival(atLeast: 1)
+        await coordinator.synchronize(userID: userID, modelContext: context)
+        await firstListGate.open()
+        await first.value
+
+        #expect(coordinator.state == .synced)
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).map(\.id) == [newest.clientItemID])
+        #expect(await remote.listCallCount() >= 5)
+    }
+
+    /// RX-006: an owned cold cache remains the current user's presentation
+    /// while the first reconnect attempt fails at the real remote boundary.
+    /// A later sync of the same production coordinator refreshes it without
+    /// purging it or crossing an account boundary.
+    @Test func rx006OfflineOwnedColdCacheThenReconnectRetainsOwnedRowsAndRecovers() async throws {
+        let userID = UUID()
+        let clientItemID = UUID()
+        let record = remoteRecord(
+            clientItemID: clientItemID,
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let remote = ClosetSyncRemoteStub(items: [record])
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.RX006.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+
+        let warmCoordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        await warmCoordinator.synchronize(userID: userID, modelContext: context)
+        #expect(warmCoordinator.state == .synced)
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).map(\.id) == [clientItemID])
+
+        // A new coordinator models a cold launch. The persisted owner marker
+        // remains the same user, so transient offline failure cannot erase or
+        // expose another account's cache.
+        let coldCoordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        await remote.setListFailureCount(1)
+        await coldCoordinator.synchronize(userID: userID, modelContext: context)
+        #expect(coldCoordinator.state == .pendingRetry)
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).map(\.id) == [clientItemID])
+
+        await remote.setListFailureCount(0)
+        await coldCoordinator.synchronize(userID: userID, modelContext: context)
+        #expect(coldCoordinator.state == .synced)
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).map(\.id) == [clientItemID])
+    }
+
     @Test func multiTypeReferenceUnsetSendsOnlyExactChangedDelta() async throws {
         let a = remoteRecord(
             clientItemID: UUID(),
@@ -597,17 +946,17 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let localA = localReferenceItem(id: a.clientItemID, isReference: false)
         let localB = localReferenceItem(id: b.clientItemID, isReference: true)
         context.insert(localA)
         context.insert(localB)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.referenceMutations() == [
             ReferenceMutation(closetItemID: a.closetItemID, isReference: false)
@@ -615,7 +964,7 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(localA.isRepresentative == false)
         #expect(localB.isRepresentative == true)
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
         #expect(await remote.referenceMutations().count == 1)
     }
 
@@ -642,17 +991,17 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let localA = localReferenceItem(id: a.clientItemID, isReference: true)
         let localB = localReferenceItem(id: b.clientItemID, isReference: true)
         context.insert(localA)
         context.insert(localB)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.referenceMutations() == [
             ReferenceMutation(closetItemID: a.closetItemID, isReference: true)
@@ -685,6 +1034,10 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let container = try inMemoryContainer()
         let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
         let localOld = localReferenceItem(id: old.clientItemID, isReference: false)
         let localReplacement = localReferenceItem(
             id: replacement.clientItemID,
@@ -693,12 +1046,8 @@ struct FitMatchClosetSyncCoordinatorTests {
         context.insert(localOld)
         context.insert(localReplacement)
         try context.save()
-        let coordinator = FitMatchClosetSyncCoordinator(
-            remote: remote,
-            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
-        )
 
-        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
 
         #expect(await remote.referenceMutations() == [
             ReferenceMutation(
@@ -908,7 +1257,10 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
     }
 
-    private func databaseClassification(status: String) -> FitMatchDatabaseClassification {
+    private func databaseClassification(
+        status: String,
+        authorityStatus: String? = nil
+    ) -> FitMatchDatabaseClassification {
         FitMatchDatabaseClassification(
             classificationID: UUID(),
             categoryCode: status == "not_comparable" ? nil : "tops",
@@ -919,6 +1271,7 @@ struct FitMatchClosetSyncCoordinatorTests {
             bodyLengthCode: nil,
             status: status,
             method: status == "not_comparable" ? "verified_exclusion" : "verified_product_decision",
+            authorityStatus: authorityStatus,
             confidence: 1,
             requiresUserConfirmation: status != "confirmed",
             taxonomyPolicyVersion: "db-classifier-2026-08-26-final",
@@ -1057,6 +1410,10 @@ private func withReference(
 
 private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
     private var currentItems: [FitMatchClosetItemRecord]
+    private let listResponses: [[FitMatchClosetItemRecord]]?
+    private let listGates: [Int: JourneyAsyncGate]
+    private var listRequestCount = 0
+    private var listFailureCount: Int
     let resolutionResponse: FitMatchProductResolutionResponse?
     private var runtimeResponses: [FitMatchProductRuntimeResponse]
     let observationResponse: FitMatchProductObservationResponse?
@@ -1076,9 +1433,15 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
         observation: FitMatchProductObservationResponse? = nil,
         failsRuntime: Bool = false,
         referenceScopes: [UUID: String] = [:],
-        tombstonedClientItemIDs: Set<UUID> = []
+        tombstonedClientItemIDs: Set<UUID> = [],
+        listResponses: [[FitMatchClosetItemRecord]]? = nil,
+        listGates: [Int: JourneyAsyncGate] = [:],
+        listFailureCount: Int = 0
     ) {
         currentItems = items
+        self.listResponses = listResponses
+        self.listGates = listGates
+        self.listFailureCount = listFailureCount
         self.resolutionResponse = resolution
         self.runtimeResponses = runtimes ?? runtime.map { [$0] } ?? []
         self.observationResponse = observation
@@ -1190,12 +1553,29 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
     func observationSubmissionCount() -> Int { submittedObservationCount }
     func runtimeFetchCount() -> Int { fetchedRuntimeCount }
     func referenceMutations() -> [ReferenceMutation] { referenceMutationLog }
+    func listCallCount() -> Int { listRequestCount }
     func hasTombstone(clientItemID: UUID) -> Bool {
         tombstonedClientItemIDs.contains(clientItemID)
     }
 
     func listClosetItems() async throws -> FitMatchClosetItemsResponse {
-        FitMatchClosetItemsResponse(state: "ready", items: currentItems)
+        listRequestCount += 1
+        if let gate = listGates[listRequestCount] {
+            await gate.wait()
+        }
+        if listFailureCount > 0 {
+            listFailureCount -= 1
+            throw ClosetSyncRemoteStubError.listUnavailable
+        }
+        if let listResponses {
+            let responseIndex = min(listRequestCount - 1, listResponses.count - 1)
+            currentItems = listResponses[responseIndex]
+        }
+        return FitMatchClosetItemsResponse(state: "ready", items: currentItems)
+    }
+
+    func setListFailureCount(_ value: Int) {
+        listFailureCount = max(0, value)
     }
 
     func deleteClosetItem(closetItemID: UUID) async throws
@@ -1207,4 +1587,5 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
 private enum ClosetSyncRemoteStubError: Error {
     case unsupported
     case runtimeUnavailable
+    case listUnavailable
 }

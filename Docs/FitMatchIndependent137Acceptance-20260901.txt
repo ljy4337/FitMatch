@@ -1,0 +1,240 @@
+FITMATCH FINAL INDEPENDENT 137-SCENARIO RELEASE ACCEPTANCE
+Date: 2026-09-01 (Asia/Seoul)
+Mode: STRICT READ-ONLY / NO REMEDIATION
+
+FINAL VERDICT
+INDEPENDENT ACCEPTANCE FAIL
+
+INDEPENDENT ACCOUNTING
+TOTAL FROZEN SCENARIOS: 137
+HEADLESS PASS: 41
+STATIC CONTRACT PASS: 2
+PHYSICAL_SMOKE_PENDING: 0
+FAIL: 12
+NOT_EXECUTED: 82
+
+The five categories are mutually exclusive and reconcile to 137. The four rows
+previously reported as physical-only do not qualify for PHYSICAL_SMOKE_PENDING
+because their non-physical production routing/state portions are not fully
+executed. They are NOT_EXECUTED, not product failures.
+
+GIT IDENTITY
+Branch: connectDB
+PUBLISHED_GIT_HEAD: 8855874a7ff372ef9b0e6159740c6faee4750985
+LOCAL_WORKING_TREE_CANDIDATE: the above commit plus substantial uncommitted
+application, test, documentation, project, and unapplied migration changes.
+The independent audit did not reset, restore, stash, clean, commit, or push.
+
+FROZEN AUTHORITY INTEGRITY
+- Scenario catalog: 137 unique IDs.
+- Result JSONL: 137 syntactically valid rows and 137 unique IDs.
+- Catalog and JSONL ID sets: exact match.
+- Feature totals: CR 22, CM 19, CP 39, RS 13, HI 17, EN 12, RX 15.
+- No scenario was added, removed, merged, or edited by this audit.
+- Existing JSONL cannot be accepted as execution proof: every row says PASS,
+  including the four rows described elsewhere as physical smoke pending; 96
+  rows omit the catalog's required evidence fields, and nearly all rows omit
+  engine/result/history evidence where those fields would be relevant.
+
+WHY THE REPORTED 123 HEADLESS PASSES ARE NOT ACCEPTED
+`FitMatchFinalReleaseScenarioExecutionTests` contains 11 grouped XCTest methods,
+not one independently evidenced execution for each claimed scenario. The final
+acceptance file contains 21 methods. Many scenario IDs are assigned by set
+subtraction, grouped comments, source-string assertions, generic fixtures, or
+preprogrammed fake-server outcomes. Those mechanisms are useful regression
+checks, but they do not prove that every scenario's distinguishing state reached
+the intended production orchestration and terminal state.
+
+Examples:
+- Provider fixtures use a common generic garment/measurement shape and a
+  prebuilt parser DTO; changing UNIQLO/MUSINSA/ZARA often changes only metadata,
+  not the provider-specific parser/fallback behavior required by the catalog.
+- Manual-cross tests inject the server allow/deny response. They prove that
+  Swift respects a response, not that all three pairs in both directions are
+  produced and enforced by the actual policy contract.
+- Several retry/race rows execute sequential calls without a deterministic
+  delayed or out-of-order production orchestration transition.
+- The DBLogic corpus regression was changed from exact classification
+  expectations to attachment/parsability checks; its green status is not
+  equivalent to the former product-authority regression gate.
+
+CONFIRMED PRODUCT NONCONFORMANCE
+
+P0 — Result recompare and same-target historical authority corruption
+Affected frozen rows: RS-005, RS-006, HI-003, HI-004, HI-005, HI-013; CP-012
+is also nonconforming through future-authority persistence/presentation.
+
+The Result "다른 옷과 비교" path mutates the currently displayed/persisted
+target Product before the replacement comparison has completed and overwrites
+its authority provenance with serverConfirmed. It also mutates the selected
+persisted reference. A valid USER_EXPLICIT completion then no longer satisfies
+the strict current-server-authority proof, so a server-completed comparison may
+lose its local Result/History. The History store subsequently reuses the same
+stable mutable Product for later comparisons of the same target, allowing old
+history rows to observe newer authority/tuple meaning.
+
+Evidence:
+- FitMatch/Views/RecommendationResultView.swift
+  compare(with:), applyServerAuthority(...)
+- FitMatch/Services/RecommendationService.swift
+  currentServerAuthorityMatches(...)
+- FitMatch/Services/RecommendationHistoryStore.swift
+  saveCompletedVNext(...)
+
+P0 — Historical audience/provenance projection is not exact
+Affected frozen rows: HI-001, HI-002, HI-003.
+
+The V4 hydrator reads the historical audience but constructs the historical
+target Product with UNISEX whenever a garment type exists. A MEN/WOMEN/KIDS
+begin-time snapshot can therefore be flattened during fresh hydration. Current
+tests include non-unisex fixture data but do not assert the reconstructed
+audience. This violates exact immutable begin-time History semantics.
+
+Evidence:
+- FitMatch/Services/VNextHistoryCacheHydrator.swift
+  HistoricalTargetProjection and makeProduct(...)
+
+P1 — History search contract is absent
+Affected frozen row: HI-011.
+
+The History screen has filtering, sorting, and favorite controls but no search
+interaction. The test only searches source text for broad terms; it does not
+execute the catalog's search behavior.
+
+Evidence:
+- FitMatch/Views/RecommendationHistoryView.swift
+
+P1 — Home drops distinct repeat comparisons
+Affected frozen row: HI-012.
+
+Home's recent-history projection deduplicates by source URL or display name.
+Two immutable comparisons for the same target at different times can therefore
+collapse into one Home card even though their comparison identities differ.
+
+Evidence:
+- FitMatch/Views/HomeView.swift, recentHistories
+
+P2 — Home URL rejection has no meaningful explanation
+Affected frozen row: EN-006.
+
+Invalid, unsupported, and COS URLs on the Home entry path are silently disabled
+or returned without the supported-provider guidance available in the Compare
+flow. The frozen scenario requires a reason at each declared entry surface.
+
+Evidence:
+- FitMatch/Views/HomeView.swift
+- FitMatch/Views/CompareFlowSheet.swift
+
+SHARE CROSS-PROCESS INTEGRITY RISK
+Affected evidence: EN-004, EN-012, RX-014.
+
+The Share Extension does not call SharedURLStore. It writes four UserDefaults
+keys directly, while SharedURLStore separately writes the same logical payload
+under a process-local NSLock. An app and extension are separate processes, so
+the tested single-process CAS does not prove atomic cross-process handoff.
+This is tagged STATIC_RISK / NOT_EXECUTED rather than a reproduced product FAIL.
+
+Evidence:
+- FitMatchShareExtension/ShareViewController.swift, savePendingURL(...)
+- FitMatch/Services/SharedURLStore.swift
+
+FOUR REPORTED PHYSICAL ROWS
+- CR-019: NOT_EXECUTED. The actual onboarding → registration → authentication
+  state transition is not fully exercised; only the physical Apple sheet itself
+  may remain physical.
+- EN-002: NOT_EXECUTED. The helper's supported-URL selection is exercised, but
+  the actual NSItemProvider attachment iteration/callback path is not.
+- EN-007: NOT_EXECUTED. Apple success/cancel/error/logout/re-login production
+  session transitions are not all executed; this is more than Apple UI.
+- EN-012: NOT_EXECUTED. Storage helper checks do not execute the real
+  extension/App Group/cold-vs-foreground lifecycle, and cross-process atomicity
+  remains unproven.
+
+STATIC CONTRACT REVIEW
+Accepted as genuine simple/static contracts:
+- EN-010: Global-search route/filter identities exist.
+- EN-011: declared non-calculating shell routes exist.
+
+The other eight reported static rows include behavior, persistence, or feature
+semantics not proven by simple source existence and are NOT_EXECUTED or FAIL.
+
+INDEPENDENT EXECUTION EVIDENCE
+- Final scenario execution suite: 11/11 methods PASS.
+  Result: /tmp/FitMatchIndependent137Scenario-20260901.xcresult
+- Final acceptance suite: 21/21 methods PASS.
+  Result: /tmp/FitMatchIndependent137Acceptance-20260901.xcresult
+- Final scenario grouped suite repeat: initial run plus 3 repetitions plus 2
+  further repetitions; all PASS. This proves grouped test repeatability, not
+  per-scenario completeness.
+- Full non-UI FitMatchTests: 557 PASS / 0 FAIL / 37 SKIP (594 total).
+  Result: /tmp/FitMatchIndependent137Full-20260901.xcresult
+- SwiftData comparison sync/delete/hydration class: 12 tests × 10 repetitions,
+  120 PASS / 0 FAIL. No invalidated-object crash recurred.
+  Result: /tmp/FitMatchIndependentSwiftDataClass10-20260901.xcresult
+- Share/acceptance group: 21 tests × 5 repetitions, 105 PASS / 0 FAIL.
+  Result: /tmp/FitMatchIndependentShareCAS5-20260901.xcresult
+- Account/cache group: 26 tests × 5 repetitions, 130 PASS / 0 FAIL.
+  Result: /tmp/FitMatchIndependentAccount5-20260901.xcresult
+- Build-for-testing: PASS for FitMatch app, FitMatchTests, Share Extension, and
+  UI test bundle on iPhone 17 Pro Simulator, iOS 26.3.1.
+- Skipped tests were not counted as PASS.
+
+SWIFTDATA CRASH VERDICT
+The previously reported invalidation crash did not recur in ten class-level
+repetitions or the full non-UI suite. The current candidate is stable for that
+reproducer. This does not cure the separate mutable historical Product defects
+described above.
+
+HISTORY VISIBILITY MIGRATION — LOCAL ONLY
+Migration: 20260831010000_vnext_comparison_history_visibility.sql
+SHA-256: e20880ba716dde5a51b1bd03c0c2fc5c4de40c5295e79edb587609e8bcdc4ee3
+
+Validated in a fresh disposable PostgreSQL 17 cluster:
+- first apply and reapply/idempotency
+- owner hide and duplicate hide
+- cross-user and pending-comparison rejection
+- anon denial and grants
+- immutable completed comparison row retained and hash unchanged
+- hidden projection exclusion
+- owner RLS
+- fixed SECURITY DEFINER search_path
+
+Local result: HISTORY_VISIBILITY_LOCAL_CONTRACT_PASS.
+Production deployment status: NOT DEPLOYED.
+
+PRODUCTION SAFETY
+Production writes: 0
+Production migration applies/repairs: 0
+Auth mutations: 0
+Edge deployments: 0
+No Production Supabase mutation or authenticated user-flow mutation was used.
+
+AUDIT DIFF SAFETY
+The independent audit did not modify application Swift, tests, migrations,
+Edge code, scenario expectations, or existing result artifacts. Only the two
+independent audit documents were created. `git diff --check` passed. The
+protected TabBarScrollVisibilityModifier and protected scroll identifiers have
+no audit-induced change.
+
+TERRA RESULT DIFFERENCE
+Terra reported: HEADLESS 123 / STATIC 10 / PHYSICAL 4 / FAIL 0 / NOT_EXECUTED 0.
+Independent result: HEADLESS 41 / STATIC 2 / PHYSICAL 0 / FAIL 12 /
+NOT_EXECUTED 82.
+
+The difference is not caused by a failing build or flaky suite. It is caused by
+requiring per-scenario distinguishing fixtures, intended production symbol
+reachability, terminal assertions, and no source/label/grouped substitution.
+Green grouped tests and the full 557-test regression do not provide that proof.
+
+REQUIRED NEXT STEP
+1. Correct the confirmed Result/History authority and historical projection
+   defects, Home repeat-history behavior, History search contract, and Home URL
+   explanation without weakening the frozen catalog.
+2. Replace the 82 grouped/label/generic-fixture claims with real per-scenario
+   production-path evidence, including real provider-specific and deterministic
+   race/manual-cross evidence.
+3. Run a new independent 137-scenario acceptance.
+4. Only after an independent PASS: perform the four actual iPhone smoke checks,
+   deploy the History visibility migration in a separately authorized task,
+   run Production postflight, and proceed to release.
+

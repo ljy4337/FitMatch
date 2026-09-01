@@ -10,6 +10,7 @@ struct CompareFlowSheet: View {
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
 
     let initialURL: String?
+    let initialHistoricalProduct: Product?
     @StateObject private var viewModel: ShoppingProductViewModel
     @State private var step: CompareFlowStep = .start
     @State private var productURL = ""
@@ -32,14 +33,19 @@ struct CompareFlowSheet: View {
     @State private var loadTask: Task<Void, Never>?
     @State private var hasStartedInitialURL = false
     @State private var isProcessingReferenceSelection = false
+    @State private var comparisonSubmission = FitMatchComparisonSubmissionAction()
     @FocusState private var isURLFocused: Bool
 
     private var userFits: [UserFit] {
         cachedUserFits.filter(\.isActiveClosetItem)
     }
 
-    init(initialURL: String? = nil) {
+    init(
+        initialURL: String? = nil,
+        initialHistoricalProduct: Product? = nil
+    ) {
         self.initialURL = initialURL
+        self.initialHistoricalProduct = initialHistoricalProduct
         _viewModel = StateObject(wrappedValue: ShoppingProductViewModel(initialURL: initialURL))
         _productURL = State(initialValue: initialURL ?? "")
     }
@@ -98,8 +104,13 @@ struct CompareFlowSheet: View {
             isURLFocused = false
         }
         .onAppear {
-            guard !hasStartedInitialURL,
-                  let initialURL,
+            guard !hasStartedInitialURL else { return }
+            if let initialHistoricalProduct {
+                hasStartedInitialURL = true
+                startCompareTask(fromHistoricalProduct: initialHistoricalProduct)
+                return
+            }
+            guard let initialURL,
                   !initialURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
             hasStartedInitialURL = true
             startCompareTask(with: initialURL)
@@ -1598,6 +1609,14 @@ private extension CompareFlowSheet {
         }
     }
 
+    func startCompareTask(fromHistoricalProduct product: Product) {
+        guard loadTask == nil, !viewModel.isLoadingProductInfo else { return }
+        loadTask = Task {
+            await startCompare(fromHistoricalProduct: product)
+            loadTask = nil
+        }
+    }
+
     func startReviewRecoveryReselection() {
         guard loadTask == nil,
               viewModel.hasActiveUserExplicitClassification else { return }
@@ -1674,19 +1693,34 @@ private extension CompareFlowSheet {
     }
 
     func startCompare(with urlString: String) async {
-        let trimmedURL = urlString.trimmedForCompareFlow
-        guard !trimmedURL.isEmpty else { return }
         guard !viewModel.isLoadingProductInfo else { return }
 
-        guard ProductURLSupport.isSupportedProductURL(trimmedURL) else {
-            productURL = trimmedURL
-            errorMessage = ProductURLParserError.unsupportedURL.errorDescription
+        switch FitMatchProductLinkInput.entryOutcome(for: urlString) {
+        case .blocked(let message):
+            productURL = urlString.trimmedForCompareFlow
+            errorMessage = message
             setStep(.error)
             return
+        case .begin(let url):
+            productURL = url.absoluteString
         }
 
-        productURL = trimmedURL
-        viewModel.productURL = trimmedURL
+        prepareForProductLoad()
+        viewModel.productURL = productURL
+        let didLoad = await viewModel.loadProductInfoFromURL()
+        guard !Task.isCancelled else { return }
+        handleProductLoadCompletion(didLoad)
+    }
+
+    func startCompare(fromHistoricalProduct product: Product) async {
+        guard !viewModel.isLoadingProductInfo else { return }
+        prepareForProductLoad()
+        let didLoad = await viewModel.loadProductInfoFromHistoricalProduct(product)
+        guard !Task.isCancelled else { return }
+        handleProductLoadCompletion(didLoad)
+    }
+
+    func prepareForProductLoad() {
         errorMessage = nil
         statusMessage = nil
         usesLegacySizeFailureScreen = false
@@ -1695,9 +1729,9 @@ private extension CompareFlowSheet {
         hasConfirmedComparisonCategory = false
         preparedComparison = nil
         setStep(.loading)
+    }
 
-        let didLoad = await viewModel.loadProductInfoFromURL()
-        guard !Task.isCancelled else { return }
+    func handleProductLoadCompletion(_ didLoad: Bool) {
         guard didLoad else {
             if viewModel.hasServerReviewRequiredAuthority {
                 if viewModel.reviewRecoveryContract != nil {
@@ -1930,16 +1964,19 @@ private extension CompareFlowSheet {
     }
 
     func calculateAndSaveRecommendation() async {
-        let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
-        if let brand, existingBrand(named: brand.name) == nil {
-            modelContext.insert(brand)
+        let outcome = await comparisonSubmission.submit {
+            let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
+            if let brand, existingBrand(named: brand.name) == nil {
+                modelContext.insert(brand)
+            }
+            return await viewModel.calculateRecommendation(
+                userFits: userFits,
+                brand: brand,
+                allowsGlobalFallback: false
+            )
         }
-
-        guard let history = await viewModel.calculateRecommendation(
-            userFits: userFits,
-            brand: brand,
-            allowsGlobalFallback: false
-        ) else {
+        guard case .finished(let history) = outcome else { return }
+        guard let history else {
             selectedReferenceItemID = nil
             if referenceSelectionPlan?.recommendedCandidates.isEmpty == false
                 || !allSimilarClosetCandidates.isEmpty {
@@ -1972,15 +2009,18 @@ private extension CompareFlowSheet {
     }
 
     func calculateAndSaveTemporaryRecommendation(selectedReferenceItem: UserFit) async {
-        let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
-        if let brand, existingBrand(named: brand.name) == nil {
-            modelContext.insert(brand)
+        let outcome = await comparisonSubmission.submit {
+            let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
+            if let brand, existingBrand(named: brand.name) == nil {
+                modelContext.insert(brand)
+            }
+            return await viewModel.calculateTemporaryRecommendation(
+                selectedReferenceItem: selectedReferenceItem,
+                brand: brand
+            )
         }
-
-        guard let history = await viewModel.calculateTemporaryRecommendation(
-            selectedReferenceItem: selectedReferenceItem,
-            brand: brand
-        ) else {
+        guard case .finished(let history) = outcome else { return }
+        guard let history else {
             errorMessage = viewModel.errorMessage
                 ?? "서버 비교 정책 또는 실측 조건을 충족하지 못했습니다."
             setStep(.error)

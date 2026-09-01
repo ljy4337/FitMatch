@@ -5,6 +5,7 @@ struct ClosetItemDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
+    @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
 
@@ -58,7 +59,7 @@ struct ClosetItemDetailView: View {
                         item: item,
                         hasComparisonHistory: hasComparisonHistory,
                         onDelete: {
-                            deleteItemAndDismiss()
+                            await deleteItemAndDismiss()
                         }
                     ) { selectedSize, category, detailCategory, categoryCode, detailCode, didExplicitlyChangeClassification in
                         saveImportedChanges(
@@ -75,7 +76,7 @@ struct ClosetItemDetailView: View {
                         item: item,
                         hasComparisonHistory: hasComparisonHistory,
                         onDelete: {
-                            deleteItemAndDismiss()
+                            await deleteItemAndDismiss()
                         }
                     ) { editedItem in
                         applyChanges(from: editedItem)
@@ -284,44 +285,15 @@ struct ClosetItemDetailView: View {
 
     @discardableResult
     private func applyChangesImmediately(from editedItem: UserFit) -> Bool {
-        item.sourceType = editedItem.sourceType
-        item.sourceName = editedItem.sourceName
-        item.brandName = editedItem.brandName
-        item.gender = editedItem.gender
-        item.genderCode = editedItem.resolvedGenderCode
-        item.productName = editedItem.productName
-        item.category = editedItem.category
-        item.detailCategory = editedItem.detailCategory
-        item.categoryCode = editedItem.resolvedCategoryCode
-        item.detailCategoryCode = editedItem.resolvedDetailCategoryCode
-        item.normalizedProductTypeCode = editedItem.resolvedNormalizedProductTypeCode
-        item.sizeName = editedItem.sizeName
-        item.measurements = editedItem.measurements
-        item.fitMemo = editedItem.fitMemo
-        item.fitPreference = editedItem.fitPreference
-        item.satisfaction = editedItem.satisfaction
-        item.isRepresentative = editedItem.isRepresentative
-        item.measurementRecords.forEach(modelContext.delete)
-        item.replaceMeasurementRecords(with: editedItem.measurementRecords)
-        _ = ComparisonProfileMatcher().profile(for: item)
-        if item.isRepresentative {
-            userFits
-                .filter {
-                    $0.id != item.id
-                        && $0.isRepresentative
-                        && ReferenceGarmentPolicy.conflicts($0, item)
-                }
-                .forEach {
-                    $0.isRepresentative = false
-                    $0.updatedAt = Date()
-                }
-        }
-        item.updatedAt = Date()
-        do {
-            try modelContext.save()
+        switch FitMatchClosetItemEditAction.saveManual(
+            item: item,
+            editedItem: editedItem,
+            activeClosetItems: userFits,
+            in: modelContext
+        ) {
+        case .saved:
             return true
-        } catch {
-            modelContext.rollback()
+        case .persistenceFailed:
             saveErrorMessage = "수정 내용을 저장하지 못했습니다."
             return false
         }
@@ -339,7 +311,8 @@ struct ClosetItemDetailView: View {
             current: item.classificationAuthorityProvenance,
             isSourced: FitMatchClosetClassificationEditPolicy.isSourced(item),
             isExplicitSet: FitMatchClosetClassificationEditPolicy.isExplicitSet(item),
-            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
+            scope: .existingClosetItem
         )
         let appliesUserClassification = didExplicitlyChangeClassification
             && resultingAuthority == .userExplicit
@@ -390,42 +363,19 @@ struct ClosetItemDetailView: View {
         detailCode: String,
         didExplicitlyChangeClassification: Bool
     ) -> Bool {
-        let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
-            current: item.classificationAuthorityProvenance,
-            isSourced: FitMatchClosetClassificationEditPolicy.isSourced(item),
-            isExplicitSet: FitMatchClosetClassificationEditPolicy.isExplicitSet(item),
-            didExplicitlyChangeClassification: didExplicitlyChangeClassification
-        )
-        if didExplicitlyChangeClassification, resultingAuthority == .userExplicit {
-            item.category = category
-            item.detailCategory = detailCategory
-            item.categoryCode = categoryCode
-            item.detailCategoryCode = detailCode
-            item.normalizedProductTypeCode = detailCode
-            _ = ComparisonProfileMatcher().profile(for: item)
-            item.markClassificationAuthority(
-                .userExplicit,
-                sourceIdentity: "user_explicit_closet_edit"
-            )
-        } else {
-            item.markClassificationAuthority(
-                resultingAuthority,
-                sourceIdentity: resultingAuthority == .localHint
-                    ? "ios_existing_set_validation"
-                    : item.canonicalSourceIdentity
-            )
-        }
-        item.sizeName = selectedSize.name.fitMatchDisplaySizeName
-        item.measurements = selectedSize.measurements
-        item.sourceProductSize = selectedSize
-        item.measurementRecords.forEach(modelContext.delete)
-        item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
-        item.updatedAt = Date()
-        do {
-            try modelContext.save()
+        switch FitMatchClosetItemEditAction.saveImported(
+            item: item,
+            selectedSize: selectedSize,
+            category: category,
+            detailCategory: detailCategory,
+            categoryCode: categoryCode,
+            detailCode: detailCode,
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
+            in: modelContext
+        ) {
+        case .saved:
             return true
-        } catch {
-            modelContext.rollback()
+        case .persistenceFailed:
             saveErrorMessage = "수정 내용을 저장하지 못했습니다."
             return false
         }
@@ -525,23 +475,20 @@ struct ClosetItemDetailView: View {
         return candidate
     }
 
-    private func deleteItemAndDismiss() -> Bool {
-        let clientItemID = item.id
-        histories
-            .filter { $0.userFit.id == item.id }
-            .forEach { modelContext.delete($0) }
-
-        modelContext.delete(item)
-        do {
-            try modelContext.save()
-            closetSync?.enqueueDeletion(clientItemID: clientItemID)
+    private func deleteItemAndDismiss() async -> Bool {
+        let outcome = await FitMatchClosetDeletionAction.delete(
+            item: item,
+            histories: histories,
+            in: modelContext,
+            comparisonSync: comparisonSync,
+            closetSync: closetSync
+        )
+        if case .deleted = outcome {
             dismiss()
             return true
-        } catch {
-            modelContext.rollback()
-            saveErrorMessage = "옷을 삭제하지 못했어요. 다시 시도해 주세요."
-            return false
         }
+        saveErrorMessage = outcome.userVisibleMessage
+        return false
     }
 
     private var hasComparisonHistory: Bool {
@@ -672,7 +619,7 @@ private struct ImportedClosetItemEditView: View {
     @Environment(\.dismiss) private var dismiss
     let item: UserFit
     let hasComparisonHistory: Bool
-    let onDelete: () -> Bool
+    let onDelete: () async -> Bool
     let onSave: (
         ProductSize,
         ClothingCategory,
@@ -690,11 +637,12 @@ private struct ImportedClosetItemEditView: View {
     @State private var didExplicitlyChangeClassification = false
     @State private var isShowingDeleteAlert = false
     @State private var isShowingSaveError = false
+    @State private var isDeleting = false
 
     init(
         item: UserFit,
         hasComparisonHistory: Bool,
-        onDelete: @escaping () -> Bool,
+        onDelete: @escaping () async -> Bool,
         onSave: @escaping (
             ProductSize,
             ClothingCategory,
@@ -744,14 +692,10 @@ private struct ImportedClosetItemEditView: View {
         .alert("이 옷을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
             Button("취소", role: .cancel) {}
             Button("삭제", role: .destructive) {
-                if onDelete() {
-                    dismiss()
-                } else {
-                    isShowingSaveError = true
-                }
+                deleteCurrentItem()
             }
         } message: {
-            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 함께 삭제돼요. 그래도 삭제할까요?")
+            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 목록에서 함께 삭제돼요. 그래도 삭제할까요?")
         }
         .alert("저장하지 못했습니다", isPresented: $isShowingSaveError) {
             Button("확인", role: .cancel) {}
@@ -884,11 +828,7 @@ private struct ImportedClosetItemEditView: View {
             if hasComparisonHistory {
                 isShowingDeleteAlert = true
             } else {
-                if onDelete() {
-                    dismiss()
-                } else {
-                    isShowingSaveError = true
-                }
+                deleteCurrentItem()
             }
         } label: {
             Text("삭제")
@@ -903,6 +843,20 @@ private struct ImportedClosetItemEditView: View {
                 }
         }
         .buttonStyle(.plain)
+        .disabled(isDeleting)
+    }
+
+    private func deleteCurrentItem() {
+        guard !isDeleting else { return }
+        isDeleting = true
+        Task { @MainActor in
+            defer { isDeleting = false }
+            if await onDelete() {
+                dismiss()
+            } else {
+                isShowingSaveError = true
+            }
+        }
     }
 
     private var bottomSaveBar: some View {

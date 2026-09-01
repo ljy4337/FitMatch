@@ -233,7 +233,7 @@ struct FitMatchOnboardingView: View {
             onboardingStep(
                 number: 2,
                 title: "사고 싶은 상품 불러오기",
-                description: "무신사·유니클로 링크를 공유하거나 입력",
+                description: "무신사·유니클로·ZARA 링크를 공유하거나 입력",
                 systemImage: "link"
             )
             onboardingStep(
@@ -359,8 +359,8 @@ struct FitMatchOnboardingView: View {
 
                 registrationCard(
                     title: "상품 링크로 등록",
-                    description: "무신사·유니클로에서 가지고 있는 상품의 링크를 복사해 등록할 수 있어요.",
-                    supportText: "지원 쇼핑몰  MUSINSA · UNIQLO",
+                    description: "무신사·유니클로·ZARA에서 가지고 있는 상품의 링크를 복사해 등록할 수 있어요.",
+                    supportText: "지원 쇼핑몰  MUSINSA · UNIQLO · ZARA",
                     buttonTitle: "상품 링크로 등록",
                     systemImage: "link"
                 ) {

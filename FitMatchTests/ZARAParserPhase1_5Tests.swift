@@ -1275,6 +1275,57 @@ struct ZARAParserPhase1_5Tests {
         #expect(viewModel.sizeOptions.count == 1)
     }
 
+    /// CP-032: the real ZARA parser first returns the typed category-confirm
+    /// recovery state, then the same ViewModel action resumes that exact URL
+    /// with the user's confirmed bottom facts.  This is intentionally not the
+    /// server REVIEW_REQUIRED path and does not substitute a test parser for
+    /// the approved ZARA size-guide recovery.
+    @Test func cp032RealZARAParserCategoryConfirmationResumesTheSameProductFlow() async throws {
+        let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p01234567.html?v1=900000011"))
+        let html = try String(
+            contentsOf: fixtureURL("fixtures/zara_unknown_category_synthetic.html"),
+            encoding: .utf8
+        )
+        let guide = try sizeGuideResponseData(
+            from: fixtureURL("production_sample_30_cache/561619028.json")
+        )
+        let realZARAParser = ZARAParser(
+            pageLoader: Phase15ZARAPageLoader(page: .init(url: url, statusCode: 200, html: html)),
+            sizeGuideLoader: Phase15ZARAGuideLoader(data: guide)
+        )
+        let remote = FitMatchEchoServerAuthorityRemote(
+            categoryCode: "bottoms",
+            detailCode: "long_pants",
+            familyCode: "pants",
+            lengthCode: "long"
+        )
+        let viewModel = ShoppingProductViewModel(
+            parserService: ProductURLParserService(zaraParser: realZARAParser),
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+        viewModel.productURL = url.absoluteString
+
+        let firstLoad = await viewModel.loadProductInfoFromURL()
+
+        #expect(!firstLoad)
+        #expect(viewModel.productAnalysisRecoveryAction == .confirmCategoryBeforeMeasurements)
+        #expect(viewModel.measurementAvailability == .unavailable)
+        #expect(viewModel.productURL == url.absoluteString)
+
+        viewModel.category = .bottom
+        viewModel.detailCategory = .longPants
+        let resumed = await viewModel.resumeZARAParsingAfterCategoryConfirmation()
+
+        #expect(resumed)
+        #expect(viewModel.category == .bottom)
+        #expect(viewModel.detailCategory == .longPants)
+        #expect(viewModel.productAnalysisRecoveryAction == nil)
+        #expect(viewModel.measurementAvailability == .actualMeasurements)
+        #expect(!viewModel.sizeOptions.isEmpty)
+        #expect(viewModel.sourceName == "ZARA 공식몰")
+        #expect(viewModel.productCanonicalURLString == url.absoluteString)
+    }
+
     @Test func missingStructuredSectionOrFamilyFailsClosed() async throws {
         let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p01234570.html?v1=900000014"))
         let html = productHTML(

@@ -28,7 +28,7 @@ struct FitMatchApp: App {
         }
         #endif
 
-        do {
+        switch FitMatchStartupAction.makeContainer({
             let schema = Schema(FitMatchSchemaV1.models)
             let container: ModelContainer
             #if DEBUG
@@ -81,9 +81,12 @@ struct FitMatchApp: App {
                 UserDefaults.standard.set(true, forKey: "FitMatch.hasCompletedOnboarding")
             }
             #endif
+            return container
+        }) {
+        case .ready(let container):
             modelContainer = container
             modelContainerError = nil
-        } catch {
+        case .failed(let error):
             modelContainer = nil
             modelContainerError = error
             #if DEBUG
