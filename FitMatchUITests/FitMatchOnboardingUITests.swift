@@ -140,6 +140,53 @@ final class FitMatchOnboardingUITests: XCTestCase {
         ).count, 1)
     }
 
+    /// CR-019: this deliberately omits `-fitmatchUITesting`, whose existing
+    /// auth fixture forces a signed-in root. The production onboarding link
+    /// action, registration save, and ContentView signed-out route therefore
+    /// execute in sequence using only the existing parser fixture boundary.
+    @MainActor
+    func test08SignedOutOnboardingLinkRegistrationRoutesToLogin() throws {
+        let storeName = "FitMatchCR019-\(UUID().uuidString)"
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-fitmatchResetOnboarding",
+            "-fitmatchOnboardingFixtures",
+            "-fitmatchUITestingPersistentStore", storeName
+        ]
+        app.launch()
+
+        app.buttons["onboarding.next"].tap()
+        XCTAssertTrue(app.staticTexts["상품 실측을 불러와요"].waitForExistence(timeout: 3))
+        app.buttons["onboarding.next"].tap()
+        XCTAssertTrue(app.staticTexts["가장 비슷한 사이즈를 찾아요"].waitForExistence(timeout: 3))
+        app.buttons["onboarding.next"].tap()
+        XCTAssertTrue(app.buttons["onboarding.shoppingLink"].waitForExistence(timeout: 3))
+        app.buttons["onboarding.shoppingLink"].tap()
+
+        let urlField = app.textFields["closet.linkURL"]
+        XCTAssertTrue(urlField.waitForExistence(timeout: 3))
+        urlField.tap()
+        urlField.typeText("https://www.musinsa.com/products/onboarding-ui-test")
+        app.buttons["closet.linkLoad"].tap()
+        XCTAssertTrue(app.staticTexts["온보딩 무신사 기준옷"].waitForExistence(timeout: 5))
+        app.buttons["closet.linkNext"].tap()
+
+        let actionButton = app.buttons["closet.confirmAction"]
+        XCTAssertTrue(actionButton.waitForExistence(timeout: 3))
+        actionButton.tap()
+
+        // `FIT MATCH` is unique to LoginView. Its appearance proves the
+        // onboarding registration callback reached ContentView.normalContent
+        // and the actual signed-out root presentation, rather than leaving
+        // the link action unresponsive or rendering the main authenticated UI.
+        XCTAssertTrue(app.staticTexts["FIT MATCH"].waitForExistence(timeout: 8))
+        let appleButton = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", "Apple")
+        ).firstMatch
+        XCTAssertTrue(appleButton.waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["새 작업"].exists)
+    }
+
     @MainActor
     private func launchFreshOnboardingApp() -> XCUIApplication {
         let app = XCUIApplication()

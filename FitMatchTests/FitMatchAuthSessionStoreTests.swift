@@ -1,3 +1,4 @@
+import AuthenticationServices
 import Foundation
 import Testing
 @testable import FitMatch
@@ -114,8 +115,8 @@ struct FitMatchAuthSessionStoreTests {
     }
 
     /// EN-007's Apple sheet itself remains a system-owned physical interaction,
-    /// but success, token failure, logout, and a second account login must use
-    /// the same production session action after that sheet returns.
+    /// but every callback branch after that sheet returns must use the real
+    /// production session action.
     @MainActor
     @Test func appleSessionActionPreservesSuccessFailureLogoutAndReloginTransitions() async {
         let userA = UUID()
@@ -132,6 +133,16 @@ struct FitMatchAuthSessionStoreTests {
         // This mirrors the live initial auth stream before Apple is presented.
         store.applyObservedSession(nil)
         #expect(store.state == .signedOut)
+
+        // The system callback is the production entry point. A user cancel is
+        // neither a token-exchange failure nor a stale signed-in state: it
+        // keeps the signed-out route, clears a prior visible error, and never
+        // calls the auth network boundary.
+        await store.completeAppleSignIn(.failure(ASAuthorizationError(.canceled)))
+        #expect(store.state == .signedOut)
+        #expect(store.errorMessage == nil)
+        #expect(!store.isSigningIn)
+        #expect(service.signInCallCount == 0)
 
         await store.completeAppleSignIn(identityToken: "token-a", nonce: "nonce-a")
         #expect(store.state == .signedIn(userID: userA))

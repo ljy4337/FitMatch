@@ -18,9 +18,9 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         let physical = FinalFrozenScenarioClassification.physicalSmokeIDs
 
         #expect(all.count == 137)
-        #expect(headless.count == 131)
+        #expect(headless.count == 133)
         #expect(staticContract.count == 2)
-        #expect(physical.count == 4)
+        #expect(physical.count == 2)
         #expect(Set(headless).isDisjoint(with: staticContract))
         #expect(Set(headless).isDisjoint(with: physical))
         #expect(Set(staticContract).isDisjoint(with: physical))
@@ -1919,8 +1919,11 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
 private enum FinalFrozenScenarioClassification {
     static let staticContractIDs: Set<String> = ["EN-010", "EN-011"]
 
+    // CR-019 is covered by the signed-out production onboarding UI path and
+    // EN-007 by the real Apple callback cancellation branch. The two rows
+    // below still require their Apple Share-system smoke interactions.
     static let physicalSmokeIDs: Set<String> = [
-        "CR-019", "EN-002", "EN-007", "EN-012"
+        "EN-002", "EN-012"
     ]
 
     static let allIDs: [String] =
