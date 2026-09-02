@@ -15,7 +15,9 @@ struct RetailerProductStructureContractTests {
             "product_type_kr": "니트",
             "product_structure": "single",
             "product_structure_source": "uniqlo_pdp_entity",
-            "product_structure_evidence": "productStructure:provider_declared"
+            "product_structure_evidence": "productStructure:provider_declared",
+            "source_category_path_completeness": "complete",
+            "source_category_path_source": "uniqlo_pdp_breadcrumbs"
         ])
         let request = try #require(
             metadata.parsedProductInfo(sizes: []).fitMatchDatabaseResolutionRequest()
@@ -30,7 +32,11 @@ struct RetailerProductStructureContractTests {
             productName: "공식 티셔츠"
         ))
 
-        #expect(metadata.productMetadata.structuredFacts == ["product_type_kr": "니트"])
+        #expect(metadata.productMetadata.structuredFacts == [
+            "product_type_kr": "니트",
+            "source_category_path_completeness": "complete",
+            "source_category_path_source": "uniqlo_pdp_breadcrumbs"
+        ])
         #expect(
             metadata.parsedProductInfo(sizes: [coherentSize("M")])
                 .normalizedSizes()
@@ -91,6 +97,24 @@ struct RetailerProductStructureContractTests {
         #expect(fact?.evidence == "product_description:explicit_mixed_garment_set")
     }
 
+    @Test func explicitProviderComponentCompositionIsMixedSetButSetNameAloneIsNot() {
+        let explicitComposition = UniqloProductMetadataParser().parse(resolved: uniqloResolvedURL(
+            productID: "E100004",
+            variantID: "E100004-000",
+            productName: "공식 라운지세트",
+            extraProductJSON: #""composition":"상의: 100% 면 / 하의: 100% 면""#
+        ))
+        #expect(explicitComposition.productMetadata.structuredFacts["product_structure"] == "set")
+        #expect(explicitComposition.productMetadata.structuredFacts["product_structure_evidence"] == "pdp_composition:explicit_mixed_garment_set")
+
+        let ambiguousName = UniqloProductMetadataParser().parse(resolved: uniqloResolvedURL(
+            productID: "E100005",
+            variantID: "E100005-000",
+            productName: "공식 라운지세트"
+        ))
+        #expect(ambiguousName.productMetadata.structuredFacts["product_structure"] == nil)
+    }
+
     @Test func insufficientRetailerStructureEvidenceStaysAbsent() {
         #expect(
             RetailerProductStructureFact.explicitCompositeRetailerText(
@@ -131,6 +155,18 @@ struct RetailerProductStructureContractTests {
         #expect(fact.evidence == "one_coherent_imported_measurement_schema")
     }
 
+    @Test func optionalColumnsStayInOneCoherentGarmentTable() {
+        let fact = RetailerComparisonMeasurementContractFact.retailerSizeTable(
+            sizes: [
+                coherentSize("S", fields: ["shoulder", "chest", "length", "sleeve"]),
+                coherentSize("M", fields: ["shoulder", "chest", "length"]),
+                coherentSize("L", fields: ["shoulder", "chest", "length", "sleeve"])
+            ],
+            productStructure: .unknown
+        )
+        #expect(fact.contract == .singleCoherent)
+    }
+
     @Test func homogeneousMultipackKeepsItsStructureAndGetsOneCoherentContract() {
         let fact = RetailerComparisonMeasurementContractFact.retailerSizeTable(
             sizes: [coherentSize("S"), coherentSize("M"), coherentSize("L")],
@@ -155,6 +191,15 @@ struct RetailerProductStructureContractTests {
             productStructure: .unknown
         )
         #expect(disjoint.contract == .multipleComponent)
+
+        let sharedLengthButDifferentComponents = RetailerComparisonMeasurementContractFact.retailerSizeTable(
+            sizes: [
+                coherentSize("top", fields: ["shoulder", "chest", "length"]),
+                coherentSize("bottom", fields: ["waist", "hip", "length"])
+            ],
+            productStructure: .unknown
+        )
+        #expect(sharedLengthButDifferentComponents.contract == .multipleComponent)
     }
 
     @Test func missingMeasurementsAreNotAComparisonContract() {
@@ -173,10 +218,20 @@ struct RetailerProductStructureContractTests {
         fields: [String] = ["shoulder", "chest", "length", "sleeve"]
     ) -> ParsedProductSize {
         let records = fields.enumerated().map { index, field in
-            ParsedMeasurement(
+            let semantics: (MeasurementCode, MeasurementDisplayKind) = switch field {
+            case "shoulder": (.shoulderWidthSeamToSeam, .shoulder)
+            case "chest": (.chestWidthPitToPit, .chest)
+            case "length": (.bodyLengthHPSToHemFront, .totalLength)
+            case "sleeve": (.sleeveShoulderSeamToCuff, .sleeveLength)
+            case "waist": (.waistWidthEdgeToEdge, .waist)
+            case "hip": (.hipWidthAtWidest, .hip)
+            case "inseam": (.pantsInseamCrotchToHem, .unknown)
+            default: (.unknown, .unknown)
+            }
+            return ParsedMeasurement(
                 value: Double(40 + index),
-                measurementCode: .unknown,
-                displayKind: .unknown,
+                measurementCode: semantics.0,
+                displayKind: semantics.1,
                 methodSource: "fixture_retailer_size_api",
                 inputSource: .importedSizeChart,
                 rawCode: field,

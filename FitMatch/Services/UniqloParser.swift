@@ -706,6 +706,13 @@ struct UniqloProductMetadataParser {
         if let productStructureFact {
             structuredFacts.merge(productStructureFact.structuredFacts) { current, _ in current }
         }
+        // This marker is retailer-observation provenance, not a path-length
+        // guess. It is emitted only when the selected PDP exposes each
+        // ordered UNIQLO breadcrumb node with an ID.
+        if sourcePath.isCompleteObservedProviderHierarchy {
+            structuredFacts["source_category_path_completeness"] = "complete"
+            structuredFacts["source_category_path_source"] = "uniqlo_pdp_breadcrumbs"
+        }
 
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
@@ -984,10 +991,19 @@ struct UniqloProductMetadataParser {
 
         let gender = audienceCode(from: nodes[0].name)
         let categoryNodes = gender == nil ? nodes : Array(nodes.dropFirst())
+        let isCompleteObservedProviderHierarchy = nodes.count == orderedKeys.count
+            && gender != nil
+            && nodes.allSatisfy { node in
+                guard let code = node.code?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                    return false
+                }
+                return !code.isEmpty
+            }
         return SourceCategoryPath(
             gender: gender,
             depths: categoryNodes.map(\.name),
-            codes: categoryNodes.map(\.code)
+            codes: categoryNodes.map(\.code),
+            isCompleteObservedProviderHierarchy: isCompleteObservedProviderHierarchy
         )
     }
 
@@ -1032,11 +1048,14 @@ struct UniqloProductMetadataParser {
         }
 
         let textFields: [(String, String?)] = [
-            ("pdp_product_name", productName),
             ("pdp_entity_name", product.flatMap { stringValue($0["name"]) }),
+            ("pdp_composition", product.flatMap { stringValue($0["composition"]) }),
+            ("pdp_product_composition", product.flatMap { stringValue($0["productComposition"]) }),
+            ("pdp_component_description", product.flatMap { stringValue($0["componentDescription"]) }),
             ("pdp_long_description", product.flatMap { stringValue($0["longDescription"]) }),
             ("pdp_description", product.flatMap { stringValue($0["description"]) }),
-            ("pdp_short_description", product.flatMap { stringValue($0["shortDescription"]) })
+            ("pdp_short_description", product.flatMap { stringValue($0["shortDescription"]) }),
+            ("pdp_product_name", productName)
         ]
         for (field, value) in textFields {
             guard let value,
@@ -1545,6 +1564,19 @@ private struct SourceCategoryPath {
     let gender: String?
     let depths: [String]
     let codes: [String?]
+    let isCompleteObservedProviderHierarchy: Bool
+
+    init(
+        gender: String?,
+        depths: [String],
+        codes: [String?],
+        isCompleteObservedProviderHierarchy: Bool = false
+    ) {
+        self.gender = gender
+        self.depths = depths
+        self.codes = codes
+        self.isCompleteObservedProviderHierarchy = isCompleteObservedProviderHierarchy
+    }
 
     var fullPath: String? {
         depths.isEmpty ? nil : depths.joined(separator: " > ")

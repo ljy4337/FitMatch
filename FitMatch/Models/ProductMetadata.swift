@@ -109,6 +109,12 @@ private enum RetailerCompositeRetailerText {
     }
 
     static func declaresMixedSet(_ normalized: String) -> Bool {
+        // A provider composition field can identify its components without
+        // using the ambiguous word "set" at all. Require explicit component
+        // labels and values (for example, "상의: … / 하의: …"); a product
+        // name such as "라운지세트" alone remains inconclusive.
+        if declaresExplicitComponentComposition(normalized) { return true }
+
         let explicitMixedMarkers = [
             "상하의 세트", "상의 하의 세트", "상의 하의", "탑 바텀",
             "파자마 세트", "정장 세트", "수트 세트", "셋업 수트",
@@ -139,6 +145,19 @@ private enum RetailerCompositeRetailerText {
             ["점프수트", "점프 슈트", "jumpsuit", "overall"].contains(where: normalized.contains)
         ]
         return families.filter { $0 }.count >= 2
+    }
+
+    private static func declaresExplicitComponentComposition(_ normalized: String) -> Bool {
+        let koreanTop = #"(?:^|[\s,;/])상의\s*[:：]"#
+        let koreanBottom = #"(?:^|[\s,;/])하의\s*[:：]"#
+        let englishTop = #"(?:^|[\s,;/])top\s*[:：]"#
+        let englishBottom = #"(?:^|[\s,;/])bottom\s*[:：]"#
+
+        let koreanComponents = normalized.range(of: koreanTop, options: .regularExpression) != nil
+            && normalized.range(of: koreanBottom, options: .regularExpression) != nil
+        let englishComponents = normalized.range(of: englishTop, options: .regularExpression) != nil
+            && normalized.range(of: englishBottom, options: .regularExpression) != nil
+        return koreanComponents || englishComponents
     }
 }
 
@@ -173,22 +192,19 @@ struct RetailerComparisonMeasurementContractFact: Equatable, Sendable {
         sizes: [ParsedProductSize],
         productStructure: RetailerProductStructure?
     ) -> RetailerComparisonMeasurementContractFact {
-        let observedSchemas = sizes.compactMap { size -> Set<String>? in
-            let fields = Set(size.measurementRecords.compactMap { record -> String? in
+        let observedRoles = sizes.compactMap { size -> Set<RetailerMeasurementRegion>? in
+            let roles = Set(size.measurementRecords.compactMap { record -> RetailerMeasurementRegion? in
                 guard record.inputSource == .importedSizeChart,
                       record.value.isFinite,
                       record.value > 0 else {
                     return nil
                 }
-                let raw = (record.rawCode ?? record.rawLabel)
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .lowercased()
-                return raw.isEmpty ? nil : raw
+                return canonicalRegion(for: record)
             })
-            return fields.isEmpty ? nil : fields
+            return roles.isEmpty ? nil : roles
         }
 
-        guard !observedSchemas.isEmpty else {
+        guard !observedRoles.isEmpty else {
             return RetailerComparisonMeasurementContractFact(
                 contract: .absent,
                 source: "retailer_size_table",
@@ -204,18 +220,28 @@ struct RetailerComparisonMeasurementContractFact: Equatable, Sendable {
             )
         }
 
-        // Separate component tables have no stable retailer field in common.
-        // Optional columns may vary by size, so overlap—not exact equality—is
-        // the conservative proof that all rows describe one table.
-        let firstSchema = observedSchemas[0]
-        let hasDisjointSchema = observedSchemas.dropFirst().contains {
-            firstSchema.isDisjoint(with: $0)
+        // A provider table may omit optional columns for one size, so exact
+        // schema equality would falsely split one garment table. Conversely,
+        // a generic shared field such as total length must not merge an upper
+        // garment table with a lower-garment table. Use only canonical
+        // measurement semantics, never raw-label substring overlap.
+        let componentRegions = observedRoles.reduce(into: Set<RetailerMeasurementRegion>()) {
+            partialResult, roles in
+            partialResult.formUnion(roles.intersection(Set([.upper, .lower, .foot])))
         }
-        if hasDisjointSchema {
+        if componentRegions.count > 1 {
             return RetailerComparisonMeasurementContractFact(
                 contract: .multipleComponent,
                 source: "retailer_size_table",
-                evidence: "multiple_disjoint_provider_measurement_schemas"
+                evidence: "multiple_canonical_component_measurement_regions"
+            )
+        }
+
+        guard componentRegions.count == 1 else {
+            return RetailerComparisonMeasurementContractFact(
+                contract: .unknown,
+                source: "retailer_size_table",
+                evidence: "canonical_component_measurement_region_unverified"
             )
         }
 
@@ -225,6 +251,69 @@ struct RetailerComparisonMeasurementContractFact: Equatable, Sendable {
             evidence: "one_coherent_imported_measurement_schema"
         )
     }
+
+    private static func canonicalRegion(for record: ParsedMeasurement) -> RetailerMeasurementRegion? {
+        switch record.measurementCode {
+        case .shoulderWidthSeamToSeam,
+             .chestWidthPitToPit,
+             .chestCircumferenceGarment,
+             .chestWidthUniqloBodyWidth,
+             .bodyLengthHPSToHemFront,
+             .bodyLengthBackNeckToHem,
+             .bodyLengthMusinsaType5,
+             .bodyLengthMusinsaType20,
+             .bodyLengthMusinsaType21,
+             .bodyLengthUniqloBack,
+             .bodyLengthUniqloShirt,
+             .bodyLengthUniqloKnitFront,
+             .sleeveShoulderSeamToCuff,
+             .sleeveCenterBackToCuff,
+             .sleeveRaglanNeckToCuff,
+             .upperAbdomenWidthEdgeToEdge,
+             .upperWaistWidthEdgeToEdge,
+             .underBustWidthEdgeToEdge:
+            return .upper
+        case .waistWidthEdgeToEdge,
+             .waistCircumferenceGarment,
+             .hipWidthAtWidest,
+             .thighWidthCrotchToOuter,
+             .riseCrotchToWaistFront,
+             .riseCrotchToWaistBack,
+             .pantsOutseamWaistToHem,
+             .pantsInseamCrotchToHem,
+             .skirtLengthWaistToHem:
+            return .lower
+        case .footLengthHeelToToe:
+            return .foot
+        case .hemWidthEdgeToEdge, .standardBodyChestCircumference:
+            return .neutral
+        case .unknown, .legacyUnknown:
+            break
+        }
+
+        // Display kind is a typed parser field, not text inference. It is a
+        // conservative fallback for provider records not yet assigned a
+        // canonical MeasurementCode.
+        switch record.displayKind {
+        case .shoulder, .chest, .sleeveLength, .upperAbdomen, .upperWaist, .underBust:
+            return .upper
+        case .waist, .hip, .thigh, .rise:
+            return .lower
+        case .footLength:
+            return .foot
+        case .totalLength, .hem:
+            return .neutral
+        case .unknown:
+            return nil
+        }
+    }
+}
+
+private enum RetailerMeasurementRegion: Hashable {
+    case upper
+    case lower
+    case foot
+    case neutral
 }
 
 struct ProductMetadata {

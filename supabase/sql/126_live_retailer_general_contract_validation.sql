@@ -17,6 +17,30 @@
 begin;
 select set_config('request.jwt.claim.role', 'service_role', true);
 
+-- Test payload construction only. This emits one real raw provider
+-- measurement record so the migration's server-side observation-consistency
+-- check is exercised; it does not reproduce any classification policy.
+create or replace function fitmatch_vnext.fixture_coherent_variants()
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $function$
+select jsonb_build_array(jsonb_build_object(
+    'external_variant_id', 'fixture-default',
+    'sizes', jsonb_build_array(jsonb_build_object(
+        'size_identity', 'M', 'size_label', 'M',
+        'availability_status', 'AVAILABLE',
+        'valid_until', '2027-09-02T00:00:00Z',
+        'measurements', jsonb_build_array(jsonb_build_object(
+            'measurement_identity', 'fixture-chest',
+            'raw_code', 'chest_width', 'raw_label', 'Chest',
+            'raw_value', 50, 'raw_unit', 'cm'
+        ))
+    ))
+));
+$function$;
+
 -- Existing verified authorities used by general retailer inputs. No Golden
 -- product ID is used here.
 insert into fitmatch_vnext.source_classification_signals(
@@ -78,8 +102,12 @@ begin
             'source', 'musinsa', 'external_product_id', 'bridge-single',
             'product_name', '브리지 단품', 'audience', 'MEN',
             'source_category_codes', jsonb_build_array('001010'),
-            'structured_facts', jsonb_build_object('product_structure', 'single'),
-            'observed_at', '2026-09-02T00:00:30Z', 'variants', jsonb_build_array()
+            'structured_facts', jsonb_build_object(
+                'product_structure', 'single',
+                'comparison_measurement_contract', 'single_coherent'
+            ),
+            'observed_at', '2026-09-02T00:00:30Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if bridge_result -> 'runtime' -> 'product' ->> 'classification_status' <> 'CONFIRMED'
@@ -96,9 +124,11 @@ begin
             'structured_facts', jsonb_build_object(
                 'product_structure', 'single',
                 'product_structure_source', 'retailer_parser',
-                'product_structure_evidence', 'fixture_positive_provider_contract'
+                'product_structure_evidence', 'fixture_positive_provider_contract',
+                'comparison_measurement_contract', 'single_coherent'
             ),
-            'observed_at', '2026-09-02T00:00:00Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:00:00Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'classification_status' <> 'CONFIRMED'
@@ -115,9 +145,11 @@ begin
             'structured_facts', jsonb_build_object(
                 'product_structure', 'single',
                 'product_structure_source', 'retailer_parser',
-                'product_structure_evidence', 'fixture_first_observation'
+                'product_structure_evidence', 'fixture_first_observation',
+                'comparison_measurement_contract', 'single_coherent'
             ),
-            'observed_at', '2026-09-02T00:01:00Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:01:00Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     product_id_value := (first_result -> 'processing' ->> 'product_id')::uuid;
@@ -155,8 +187,9 @@ begin
         raise exception 'Missing structure preservation fabricated or lost evidence: %', missing_result;
     end if;
 
-    -- C. Explicit UNKNOWN is a new safety observation and intentionally erases
-    -- the effective SINGLE value, returning the product to REVIEW_REQUIRED.
+    -- C. Explicit UNKNOWN erases the cardinality fact without fabricating
+    -- SINGLE. Its already observed coherent measurement contract can still
+    -- pass only the structure gate under the owner-approved UNKNOWN rule.
     unknown_result := fitmatch_vnext.ingest_product_observation(
         jsonb_build_object(
             'source', 'musinsa', 'external_product_id', 'preserve-structure',
@@ -171,8 +204,10 @@ begin
         ), null
     );
     if unknown_result -> 'runtime' -> 'product' ->> 'product_structure_code' <> 'UNKNOWN'
-       or unknown_result -> 'runtime' -> 'product' ->> 'classification_status' <> 'REVIEW_REQUIRED'
+       or unknown_result -> 'runtime' -> 'product' ->> 'classification_status' <> 'CONFIRMED'
        or unknown_result -> 'structure_contract' ->> 'state' <> 'EXPLICIT_UNKNOWN'
+       or not coalesce((unknown_result -> 'classification' ->>
+           'comparison_unit_eligible')::boolean, false)
        or exists (
            select 1 from fitmatch_vnext.product_classification_signals pcs
            join fitmatch_vnext.source_classification_signals s on s.id = pcs.source_signal_id
@@ -263,7 +298,8 @@ begin
                 'comparison_measurement_contract_source', 'retailer_size_table',
                 'comparison_measurement_contract_evidence', 'fixture_one_schema'
             ),
-            'observed_at', '2026-09-02T00:06:30Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:06:30Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'classification_status' <> 'CONFIRMED'
@@ -283,9 +319,12 @@ begin
             'source_category_path', '니트 & 가디건 > 니트 > 긴팔 니트',
             'source_category_codes', jsonb_build_array('95355', '95357', '100315'),
             'structured_facts', jsonb_build_object(
-                'comparison_measurement_contract', 'single_coherent'
+                'comparison_measurement_contract', 'single_coherent',
+                'source_category_path_completeness', 'complete',
+                'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
             ),
-            'observed_at', '2026-09-02T00:06:45Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:06:45Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'classification_status' <> 'CONFIRMED' then
@@ -299,9 +338,12 @@ begin
             'source_category_path', '니트 & 가디건 > 니트 > 긴팔 니트',
             'source_category_codes', jsonb_build_array('95355', '95357', '100315'),
             'structured_facts', jsonb_build_object(
-                'comparison_measurement_contract', 'single_coherent'
+                'comparison_measurement_contract', 'single_coherent',
+                'source_category_path_completeness', 'complete',
+                'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
             ),
-            'observed_at', '2026-09-02T00:07:00Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:07:00Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'classification_status' <> 'CONFIRMED'
@@ -320,9 +362,12 @@ begin
             'source_category_path', '니트 & 가디건 > 니트 > 크루넥 니트',
             'source_category_codes', jsonb_build_array('95355', '95357', '95405'),
             'structured_facts', jsonb_build_object(
-                'comparison_measurement_contract', 'single_coherent'
+                'comparison_measurement_contract', 'single_coherent',
+                'source_category_path_completeness', 'complete',
+                'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
             ),
-            'observed_at', '2026-09-02T00:08:00Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:08:00Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'classification_status' <> 'REVIEW_REQUIRED'
@@ -341,7 +386,8 @@ begin
             'structured_facts', jsonb_build_object(
                 'comparison_measurement_contract', 'single_coherent'
             ),
-            'observed_at', '2026-09-02T00:09:00Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:09:00Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'classification_status' <> 'CONFIRMED'
@@ -357,9 +403,12 @@ begin
             'source_category_path', '니트 & 가디건 > 니트 > 긴팔 니트',
             'source_category_codes', jsonb_build_array('95355', '95357', '100315'),
             'structured_facts', jsonb_build_object(
-                'comparison_measurement_contract', 'single_coherent'
+                'comparison_measurement_contract', 'single_coherent',
+                'source_category_path_completeness', 'complete',
+                'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
             ),
-            'observed_at', '2026-09-02T00:10:00Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:10:00Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'classification_status' <> 'CONFIRMED'
@@ -375,9 +424,12 @@ begin
             'source_category_path', '니트 & 가디건 > 니트 > 크루넥 니트',
             'source_category_codes', jsonb_build_array('95355', '95357', '95405'),
             'structured_facts', jsonb_build_object(
-                'comparison_measurement_contract', 'single_coherent'
+                'comparison_measurement_contract', 'single_coherent',
+                'source_category_path_completeness', 'complete',
+                'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
             ),
-            'observed_at', '2026-09-02T00:11:00Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:11:00Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'classification_status' <> 'REVIEW_REQUIRED'
@@ -407,7 +459,8 @@ begin
                 'comparison_measurement_contract', 'single_coherent',
                 'comparison_measurement_contract_source', 'uniqlo_size_chart'
             ),
-            'observed_at', '2026-09-02T00:11:30Z', 'variants', jsonb_build_array()
+            'observed_at', '2026-09-02T00:11:30Z',
+            'variants', fitmatch_vnext.fixture_coherent_variants()
         ), null
     );
     if result_value -> 'runtime' -> 'product' ->> 'product_structure_code' <> 'MULTIPACK'
@@ -418,6 +471,120 @@ begin
     end if;
 end
 $ingestion_contract$;
+
+-- Product structure is not comparison readiness. Every positive structure
+-- outcome needs the same observation's actual provider measurement records;
+-- MISSING never upgrades a legacy column into retailer evidence.
+do $comparison_unit_contract$
+declare
+    result_value jsonb;
+    orphan_product_id uuid;
+    before_structure_signal_count integer;
+    after_structure_signal_count integer;
+begin
+    result_value := fitmatch_vnext.ingest_product_observation(
+        jsonb_build_object(
+            'source', 'musinsa', 'external_product_id', 'single-absent-contract',
+            'product_name', '단품이지만 실측 없음', 'audience', 'MEN',
+            'source_category_codes', jsonb_build_array('001010'),
+            'structured_facts', jsonb_build_object('product_structure', 'single'),
+            'observed_at', '2026-09-02T00:12:00Z', 'variants', jsonb_build_array()
+        ), null
+    );
+    if result_value -> 'classification' ->> 'classification_status' = 'CONFIRMED'
+       or coalesce((result_value -> 'classification' ->>
+           'comparison_unit_eligible')::boolean, false) then
+        raise exception 'SINGLE without a coherent measurement contract became eligible: %', result_value;
+    end if;
+
+    result_value := fitmatch_vnext.ingest_product_observation(
+        jsonb_build_object(
+            'source', 'musinsa', 'external_product_id', 'single-unknown-contract',
+            'product_name', '단품이지만 실측 계약 미상', 'audience', 'MEN',
+            'source_category_codes', jsonb_build_array('001010'),
+            'structured_facts', jsonb_build_object(
+                'product_structure', 'single',
+                'comparison_measurement_contract', 'unknown'
+            ),
+            'observed_at', '2026-09-02T00:12:30Z', 'variants', jsonb_build_array()
+        ), null
+    );
+    if result_value -> 'classification' ->> 'classification_status' = 'CONFIRMED'
+       or coalesce((result_value -> 'classification' ->>
+           'comparison_unit_eligible')::boolean, false) then
+        raise exception 'SINGLE with UNKNOWN measurement contract became eligible: %', result_value;
+    end if;
+
+    result_value := fitmatch_vnext.ingest_product_observation(
+        jsonb_build_object(
+            'source', 'musinsa', 'external_product_id', 'multipack-absent-contract',
+            'product_name', '3팩이지만 실측 없음', 'audience', 'MEN',
+            'source_category_codes', jsonb_build_array('001010'),
+            'structured_facts', jsonb_build_object('product_structure', 'multipack'),
+            'observed_at', '2026-09-02T00:13:00Z', 'variants', jsonb_build_array()
+        ), null
+    );
+    if result_value -> 'classification' ->> 'classification_status' = 'CONFIRMED'
+       or coalesce((result_value -> 'classification' ->>
+           'comparison_unit_eligible')::boolean, false) then
+        raise exception 'MULTIPACK without a coherent measurement contract became eligible: %', result_value;
+    end if;
+
+    result_value := fitmatch_vnext.ingest_product_observation(
+        jsonb_build_object(
+            'source', 'musinsa', 'external_product_id', 'unbacked-coherent-claim',
+            'product_name', '실측 없는 coherent claim', 'audience', 'MEN',
+            'source_category_codes', jsonb_build_array('001010'),
+            'structured_facts', jsonb_build_object(
+                'product_structure', 'single',
+                'comparison_measurement_contract', 'single_coherent'
+            ),
+            'observed_at', '2026-09-02T00:13:30Z', 'variants', jsonb_build_array()
+        ), null
+    );
+    if result_value -> 'comparison_unit_contract' ->> 'effective_value' <> 'ABSENT'
+       or not coalesce((result_value -> 'comparison_unit_contract' ->>
+           'claim_rejected')::boolean, false)
+       or result_value -> 'classification' ->> 'classification_status' = 'CONFIRMED' then
+        raise exception 'Unbacked SINGLE_COHERENT claim was trusted: %', result_value;
+    end if;
+
+    insert into fitmatch_vnext.products(
+        source_code, source_product_key, product_name, audience_code,
+        product_structure_code, source_extra, first_seen_at, last_seen_at
+    ) values (
+        'musinsa', 'column-only-structure', 'legacy column only', 'MEN',
+        'SINGLE', '{}'::jsonb, '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z'
+    ) returning id into orphan_product_id;
+    select count(*) into before_structure_signal_count
+    from fitmatch_vnext.product_classification_signals pcs
+    join fitmatch_vnext.source_classification_signals signal on signal.id = pcs.source_signal_id
+    where pcs.product_id = orphan_product_id
+      and signal.signal_kind = 'PRODUCT_STRUCTURE';
+
+    result_value := fitmatch_vnext.ingest_product_observation(
+        jsonb_build_object(
+            'source', 'musinsa', 'external_product_id', 'column-only-structure',
+            'product_name', 'legacy column only', 'audience', 'MEN',
+            'source_category_codes', jsonb_build_array('001010'),
+            'structured_facts', jsonb_build_object(),
+            'observed_at', '2026-09-02T00:14:00Z', 'variants', jsonb_build_array()
+        ), null
+    );
+    select count(*) into after_structure_signal_count
+    from fitmatch_vnext.product_classification_signals pcs
+    join fitmatch_vnext.source_classification_signals signal on signal.id = pcs.source_signal_id
+    where pcs.product_id = orphan_product_id
+      and signal.signal_kind = 'PRODUCT_STRUCTURE';
+    if before_structure_signal_count <> 0
+       or after_structure_signal_count <> 0
+       or result_value -> 'structure_contract' ->> 'effective_value' <> 'UNKNOWN'
+       or coalesce((result_value -> 'structure_contract' ->>
+           'preserved_existing_fact')::boolean, false) then
+        raise exception 'MISSING observation fabricated PRODUCT_STRUCTURE evidence: %', result_value;
+    end if;
+end
+$comparison_unit_contract$;
 
 -- Exact duplicate and stale receipts are observational only. They must not
 -- rewrite the current effective structure, provenance, signal projection, or
@@ -434,7 +601,8 @@ declare
             'product_structure_evidence', 'fixture_observed_single',
             'comparison_measurement_contract', 'single_coherent'
         ),
-        'observed_at', '2026-09-02T00:20:00Z', 'variants', jsonb_build_array()
+        'observed_at', '2026-09-02T00:20:00Z',
+        'variants', fitmatch_vnext.fixture_coherent_variants()
     );
     first_result jsonb;
     duplicate_result jsonb;
@@ -505,6 +673,9 @@ declare
     prior_id uuid := null;
     depth_id uuid;
     index_value integer;
+    stale_peer_leaf uuid;
+    wrong_audience_peer_leaf uuid;
+    promoted_mapping_count integer;
 begin
     result_value := fitmatch_vnext.ingest_product_observation(
         jsonb_build_object(
@@ -608,6 +779,167 @@ begin
             'uniqlo_audience_mapping_promoted')::integer, 0) <> 0 then
         raise exception 'Conflicting UNIQLO audience tuples were generalized: %', result_value;
     end if;
+
+    -- A complete-looking receipt which was later rejected as stale cannot
+    -- become hierarchy authority. The target follows the real ingress path;
+    -- a manually installed peer mapping is deliberately ignored.
+    perform fitmatch_vnext.ingest_product_observation(jsonb_build_object(
+        'source', 'uniqlo', 'external_product_id', 'stale-peer-men',
+        'product_name', 'stale peer', 'audience', 'MEN',
+        'source_category_codes', jsonb_build_array('stale-root', 'stale-middle', 'stale-leaf'),
+        'structured_facts', jsonb_build_object(
+            'comparison_measurement_contract', 'single_coherent',
+            'source_category_path_completeness', 'complete',
+            'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
+        ), 'observed_at', '2026-09-02T00:24:00Z',
+        'variants', fitmatch_vnext.fixture_coherent_variants()
+    ), null);
+    select id into stale_peer_leaf
+    from fitmatch_vnext.source_classification_signals
+    where source_code = 'uniqlo' and signal_kind = 'CATEGORY'
+      and external_key = 'stale-leaf' and audience_code = 'MEN';
+    insert into fitmatch_vnext.classification_signal_mappings(
+        source_signal_id, audience_code, garment_type_code, resolution_mode,
+        sleeve_length_code, priority, is_verified, is_active, mapping_version,
+        mapping_checksum
+    ) values (
+        stale_peer_leaf, 'MEN', 'tshirt', 'DIRECT', 'long_sleeve',
+        40, true, true, 'fixture-stale-peer-v1', repeat('0', 64)
+    );
+    update fitmatch_vnext.product_ingestion_receipts
+    set processing_status = 'IGNORED_STALE'
+    where source_code = 'uniqlo' and source_product_key = 'stale-peer-men';
+    result_value := fitmatch_vnext.ingest_product_observation(jsonb_build_object(
+        'source', 'uniqlo', 'external_product_id', 'stale-target-unisex',
+        'product_name', 'stale target', 'audience', 'UNISEX',
+        'source_category_codes', jsonb_build_array('stale-root', 'stale-middle', 'stale-leaf'),
+        'structured_facts', jsonb_build_object(
+            'comparison_measurement_contract', 'single_coherent',
+            'source_category_path_completeness', 'complete',
+            'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
+        ), 'observed_at', '2026-09-02T00:24:30Z',
+        'variants', fitmatch_vnext.fixture_coherent_variants()
+    ), null);
+    if coalesce((result_value -> 'comparison_unit_contract' ->>
+            'uniqlo_audience_mapping_promoted')::integer, 0) <> 0 then
+        raise exception 'IGNORED_STALE UNIQLO receipt promoted a target: %', result_value;
+    end if;
+
+    -- The immutable receipt must describe the same audience as the category
+    -- signal. A peer receipt with an audience mismatch is not authority.
+    -- Create immutable contradictory legacy evidence directly: current
+    -- product/signal audience is MEN, while the original provider receipt
+    -- truthfully records WOMEN. The receipt trigger intentionally prevents
+    -- mutating an already observed fact for this adversarial fixture.
+    insert into fitmatch_vnext.source_classification_signals(
+        id, source_code, signal_kind, external_key, audience_code,
+        signal_name, signal_path, parent_signal_id
+    ) values
+        ('d4000000-0000-0000-0000-000000000001', 'uniqlo', 'CATEGORY', 'wrong-root', 'MEN',
+            'wrong root', 'wrong root > middle > leaf', null),
+        ('d4000000-0000-0000-0000-000000000002', 'uniqlo', 'CATEGORY', 'wrong-middle', 'MEN',
+            'wrong middle', 'wrong root > middle > leaf', 'd4000000-0000-0000-0000-000000000001'),
+        ('d4000000-0000-0000-0000-000000000003', 'uniqlo', 'CATEGORY', 'wrong-leaf', 'MEN',
+            'wrong leaf', 'wrong root > middle > leaf', 'd4000000-0000-0000-0000-000000000002');
+    wrong_audience_peer_leaf := 'd4000000-0000-0000-0000-000000000003';
+    insert into fitmatch_vnext.products(
+        id, source_code, source_product_key, product_name, audience_code,
+        product_structure_code, classification_status, classification_source,
+        resolver_version, input_fingerprint, evidence_fingerprint, source_extra,
+        first_seen_at, last_seen_at
+    ) values (
+        'd4100000-0000-0000-0000-000000000001', 'uniqlo', 'wrong-audience-peer-men',
+        'wrong audience peer', 'MEN', 'UNKNOWN', 'REVIEW_REQUIRED', 'UNCLASSIFIED',
+        'fixture', 'fixture-wrong-audience', 'fixture-wrong-audience', '{}'::jsonb,
+        '2026-09-02T00:25:00Z', '2026-09-02T00:25:00Z'
+    );
+    insert into fitmatch_vnext.product_classification_signals(
+        product_id, source_signal_id, evidence_order
+    ) values (
+        'd4100000-0000-0000-0000-000000000001', wrong_audience_peer_leaf, 0
+    );
+    insert into fitmatch_vnext.product_ingestion_receipts(
+        product_id, source_code, source_product_key, payload_fingerprint,
+        retailer_facts, observed_at, processing_status
+    ) values (
+        'd4100000-0000-0000-0000-000000000001', 'uniqlo', 'wrong-audience-peer-men',
+        repeat('a', 64), jsonb_build_object(
+            'source', 'uniqlo', 'external_product_id', 'wrong-audience-peer-men',
+            'audience', 'WOMEN',
+            'source_category_codes', jsonb_build_array('wrong-root', 'wrong-middle', 'wrong-leaf'),
+            'structured_facts', jsonb_build_object(
+                'source_category_path_completeness', 'complete',
+                'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
+            )
+        ), '2026-09-02T00:25:00Z', 'PROCESSED'
+    );
+    insert into fitmatch_vnext.classification_signal_mappings(
+        source_signal_id, audience_code, garment_type_code, resolution_mode,
+        sleeve_length_code, priority, is_verified, is_active, mapping_version,
+        mapping_checksum
+    ) values (
+        wrong_audience_peer_leaf, 'MEN', 'tshirt', 'DIRECT', 'long_sleeve',
+        40, true, true, 'fixture-wrong-audience-v1', repeat('0', 64)
+    );
+    result_value := fitmatch_vnext.ingest_product_observation(jsonb_build_object(
+        'source', 'uniqlo', 'external_product_id', 'wrong-audience-target-unisex',
+        'product_name', 'wrong audience target', 'audience', 'UNISEX',
+        'source_category_codes', jsonb_build_array('wrong-root', 'wrong-middle', 'wrong-leaf'),
+        'structured_facts', jsonb_build_object(
+            'comparison_measurement_contract', 'single_coherent',
+            'source_category_path_completeness', 'complete',
+            'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
+        ), 'observed_at', '2026-09-02T00:25:30Z',
+        'variants', fitmatch_vnext.fixture_coherent_variants()
+    ), null);
+    if coalesce((result_value -> 'comparison_unit_contract' ->>
+            'uniqlo_audience_mapping_promoted')::integer, 0) <> 0 then
+        raise exception 'Wrong-audience UNIQLO receipt promoted a target: %', result_value;
+    end if;
+
+    -- Revalidation must withdraw a previously automatic DIRECT mapping when
+    -- a new complete peer observation introduces a conflicting tuple.
+    select count(*) into promoted_mapping_count
+    from fitmatch_vnext.classification_signal_mappings m
+    join fitmatch_vnext.source_classification_signals s on s.id = m.source_signal_id
+    where s.source_code = 'uniqlo' and s.signal_kind = 'CATEGORY'
+      and s.external_key = '100315' and s.audience_code = 'UNISEX'
+      and m.mapping_version = 'vnext-uniqlo-complete-path-20260902-v3'
+      and m.is_active;
+    if promoted_mapping_count <> 1 then
+        raise exception 'Expected one valid automatic mapping before conflict, found %', promoted_mapping_count;
+    end if;
+    perform fitmatch_vnext.ingest_product_observation(jsonb_build_object(
+        'source', 'uniqlo', 'external_product_id', 'post-conflict-women-knit',
+        'product_name', 'post conflict women knit', 'audience', 'WOMEN',
+        'source_category_codes', jsonb_build_array('95355', '95357', '100315'),
+        'structured_facts', jsonb_build_object(
+            'comparison_measurement_contract', 'single_coherent',
+            'source_category_path_completeness', 'complete',
+            'source_category_path_source', 'uniqlo_pdp_breadcrumbs'
+        ), 'observed_at', '2026-09-02T00:26:00Z',
+        'variants', fitmatch_vnext.fixture_coherent_variants()
+    ), null);
+    insert into fitmatch_vnext.classification_signal_mappings(
+        source_signal_id, audience_code, garment_type_code, resolution_mode,
+        sleeve_length_code, priority, is_verified, is_active, mapping_version,
+        mapping_checksum
+    ) select s.id, 'WOMEN', 'tshirt', 'DIRECT', 'long_sleeve',
+        40, true, true, 'fixture-post-promotion-conflict-v1', repeat('0', 64)
+    from fitmatch_vnext.source_classification_signals s
+    where s.source_code = 'uniqlo' and s.signal_kind = 'CATEGORY'
+      and s.external_key = '100315' and s.audience_code = 'WOMEN';
+    perform fitmatch_vnext.revalidate_uniqlo_auto_promoted_mappings('100315');
+    select count(*) into promoted_mapping_count
+    from fitmatch_vnext.classification_signal_mappings m
+    join fitmatch_vnext.source_classification_signals s on s.id = m.source_signal_id
+    where s.source_code = 'uniqlo' and s.signal_kind = 'CATEGORY'
+      and s.external_key = '100315' and s.audience_code = 'UNISEX'
+      and m.mapping_version = 'vnext-uniqlo-complete-path-20260902-v3'
+      and m.is_active;
+    if promoted_mapping_count <> 0 then
+        raise exception 'Conflicting current evidence left auto-promoted DIRECT authority active';
+    end if;
 end
 $uniqlo_hierarchy_fail_closed$;
 
@@ -624,14 +956,23 @@ declare
     knit_target uuid := 'e0000000-0000-0000-0000-000000000002';
     pants_target uuid := 'e0000000-0000-0000-0000-000000000003';
     bra_target uuid := 'e0000000-0000-0000-0000-000000000004';
+    men_tshirt_target uuid := 'e0000000-0000-0000-0000-000000000005';
+    unisex_tshirt_target uuid := 'e0000000-0000-0000-0000-000000000006';
     tshirt_size uuid := 'e1000000-0000-0000-0000-000000000001';
     knit_size uuid := 'e1000000-0000-0000-0000-000000000002';
     pants_size uuid := 'e1000000-0000-0000-0000-000000000003';
     bra_size uuid := 'e1000000-0000-0000-0000-000000000004';
+    men_tshirt_size uuid := 'e1000000-0000-0000-0000-000000000005';
+    unisex_tshirt_size uuid := 'e1000000-0000-0000-0000-000000000006';
     tshirt_ref uuid := 'e2000000-0000-0000-0000-000000000001';
     knit_ref uuid := 'e2000000-0000-0000-0000-000000000002';
     pants_ref uuid := 'e2000000-0000-0000-0000-000000000003';
     briefs_ref uuid := 'e2000000-0000-0000-0000-000000000004';
+    women_tshirt_ref uuid := 'e2000000-0000-0000-0000-000000000005';
+    unisex_tshirt_ref uuid := 'e2000000-0000-0000-0000-000000000006';
+    kids_tshirt_ref uuid := 'e2000000-0000-0000-0000-000000000007';
+    baby_tshirt_ref uuid := 'e2000000-0000-0000-0000-000000000008';
+    unknown_tshirt_ref uuid := 'e2000000-0000-0000-0000-000000000009';
     multipack_target uuid;
     multipack_variant uuid;
     set_target uuid;
@@ -642,20 +983,50 @@ begin
         id, source_code, source_product_key, product_name, audience_code,
         product_structure_code, garment_type_code, sleeve_length_code,
         classification_status, classification_source, resolver_version,
-        input_fingerprint, evidence_fingerprint
+        input_fingerprint, evidence_fingerprint, source_extra
     ) values
         (tshirt_target, 'fixture', 'adult-women-tshirt', 'Women T-shirt', 'WOMEN',
             'SINGLE', 'tshirt', 'long_sleeve', 'CONFIRMED', 'SOURCE_DIRECT',
-            'fixture', 'fixture', 'fixture'),
+            'fixture', 'fixture', 'fixture', jsonb_build_object(
+                'comparison_measurement_contract', jsonb_build_object(
+                    'effective_value', 'SINGLE_COHERENT'
+                )
+            )),
         (knit_target, 'fixture', 'adult-men-knit', 'Men Knit', 'MEN',
             'SINGLE', 'knit_sweater', 'long_sleeve', 'CONFIRMED', 'SOURCE_DIRECT',
-            'fixture', 'fixture', 'fixture'),
+            'fixture', 'fixture', 'fixture', jsonb_build_object(
+                'comparison_measurement_contract', jsonb_build_object(
+                    'effective_value', 'SINGLE_COHERENT'
+                )
+            )),
         (pants_target, 'fixture', 'adult-women-pants', 'Women Pants', 'WOMEN',
             'SINGLE', 'standard_pants', null, 'CONFIRMED', 'SOURCE_DIRECT',
-            'fixture', 'fixture', 'fixture'),
+            'fixture', 'fixture', 'fixture', jsonb_build_object(
+                'comparison_measurement_contract', jsonb_build_object(
+                    'effective_value', 'SINGLE_COHERENT'
+                )
+            )),
         (bra_target, 'fixture', 'adult-women-bra', 'Women Bra', 'WOMEN',
             'SINGLE', 'women_bra', null, 'CONFIRMED', 'SOURCE_DIRECT',
-            'fixture', 'fixture', 'fixture');
+            'fixture', 'fixture', 'fixture', jsonb_build_object(
+                'comparison_measurement_contract', jsonb_build_object(
+                    'effective_value', 'SINGLE_COHERENT'
+                )
+            )),
+        (men_tshirt_target, 'fixture', 'adult-men-tshirt', 'Men T-shirt', 'MEN',
+            'SINGLE', 'tshirt', 'long_sleeve', 'CONFIRMED', 'SOURCE_DIRECT',
+            'fixture', 'fixture', 'fixture', jsonb_build_object(
+                'comparison_measurement_contract', jsonb_build_object(
+                    'effective_value', 'SINGLE_COHERENT'
+                )
+            )),
+        (unisex_tshirt_target, 'fixture', 'adult-unisex-tshirt', 'Unisex T-shirt', 'UNISEX',
+            'SINGLE', 'tshirt', 'long_sleeve', 'CONFIRMED', 'SOURCE_DIRECT',
+            'fixture', 'fixture', 'fixture', jsonb_build_object(
+                'comparison_measurement_contract', jsonb_build_object(
+                    'effective_value', 'SINGLE_COHERENT'
+                )
+            ));
 
     insert into fitmatch_vnext.product_variants(
         id, product_id, source_variant_key, sort_order
@@ -663,7 +1034,9 @@ begin
         ('e0100000-0000-0000-0000-000000000001', tshirt_target, 'default', 0),
         ('e0100000-0000-0000-0000-000000000002', knit_target, 'default', 0),
         ('e0100000-0000-0000-0000-000000000003', pants_target, 'default', 0),
-        ('e0100000-0000-0000-0000-000000000004', bra_target, 'default', 0);
+        ('e0100000-0000-0000-0000-000000000004', bra_target, 'default', 0),
+        ('e0100000-0000-0000-0000-000000000005', men_tshirt_target, 'default', 0),
+        ('e0100000-0000-0000-0000-000000000006', unisex_tshirt_target, 'default', 0);
 
     insert into fitmatch_vnext.product_sizes(
         id, variant_id, source_size_key, size_label, sort_order
@@ -671,7 +1044,9 @@ begin
         (tshirt_size, 'e0100000-0000-0000-0000-000000000001', 'M', 'M', 0),
         (knit_size, 'e0100000-0000-0000-0000-000000000002', 'M', 'M', 0),
         (pants_size, 'e0100000-0000-0000-0000-000000000003', 'M', 'M', 0),
-        (bra_size, 'e0100000-0000-0000-0000-000000000004', 'M', 'M', 0);
+        (bra_size, 'e0100000-0000-0000-0000-000000000004', 'M', 'M', 0),
+        (men_tshirt_size, 'e0100000-0000-0000-0000-000000000005', 'M', 'M', 0),
+        (unisex_tshirt_size, 'e0100000-0000-0000-0000-000000000006', 'M', 'M', 0);
 
     insert into fitmatch_vnext.product_size_measurements(
         product_size_id, parser_code, raw_measurement_key, raw_code, raw_label,
@@ -680,7 +1055,9 @@ begin
         (tshirt_size, 'fixture', 'chest', 'chest_width', 'Chest', 50, 'cm'),
         (knit_size, 'fixture', 'chest', 'chest_width', 'Chest', 50, 'cm'),
         (pants_size, 'fixture', 'chest', 'chest_width', 'Chest', 50, 'cm'),
-        (bra_size, 'fixture', 'chest', 'chest_width', 'Chest', 50, 'cm');
+        (bra_size, 'fixture', 'chest', 'chest_width', 'Chest', 50, 'cm'),
+        (men_tshirt_size, 'fixture', 'chest', 'chest_width', 'Chest', 50, 'cm'),
+        (unisex_tshirt_size, 'fixture', 'chest', 'chest_width', 'Chest', 50, 'cm');
 
     insert into fitmatch_vnext.closet_items(
         id, user_id, client_item_id, item_name, audience_code,
@@ -694,7 +1071,17 @@ begin
         (pants_ref, '11111111-1111-1111-1111-111111111111', gen_random_uuid(),
             'Men Pants', 'MEN', 'standard_pants', null, 'SOURCE_DIRECT', 'CANONICAL'),
         (briefs_ref, '11111111-1111-1111-1111-111111111111', gen_random_uuid(),
-            'Men Briefs', 'MEN', 'men_briefs', null, 'SOURCE_DIRECT', 'CANONICAL');
+            'Men Briefs', 'MEN', 'men_briefs', null, 'SOURCE_DIRECT', 'CANONICAL'),
+        (women_tshirt_ref, '11111111-1111-1111-1111-111111111111', gen_random_uuid(),
+            'Women T-shirt', 'WOMEN', 'tshirt', 'long_sleeve', 'SOURCE_DIRECT', 'CANONICAL'),
+        (unisex_tshirt_ref, '11111111-1111-1111-1111-111111111111', gen_random_uuid(),
+            'Unisex T-shirt', 'UNISEX', 'tshirt', 'long_sleeve', 'SOURCE_DIRECT', 'CANONICAL'),
+        (kids_tshirt_ref, '11111111-1111-1111-1111-111111111111', gen_random_uuid(),
+            'Kids T-shirt', 'KIDS', 'tshirt', 'long_sleeve', 'SOURCE_DIRECT', 'CANONICAL'),
+        (baby_tshirt_ref, '11111111-1111-1111-1111-111111111111', gen_random_uuid(),
+            'Baby T-shirt', 'BABY', 'tshirt', 'long_sleeve', 'SOURCE_DIRECT', 'CANONICAL'),
+        (unknown_tshirt_ref, '11111111-1111-1111-1111-111111111111', gen_random_uuid(),
+            'Unknown T-shirt', 'UNKNOWN', 'tshirt', 'long_sleeve', 'SOURCE_DIRECT', 'CANONICAL');
 
     insert into fitmatch_vnext.closet_item_measurements(
         closet_item_id, fitmatch_measurement_code, value, unit_code, value_source
@@ -702,7 +1089,12 @@ begin
         (tshirt_ref, 'chest_width', 50, 'cm', 'fixture'),
         (knit_ref, 'chest_width', 50, 'cm', 'fixture'),
         (pants_ref, 'chest_width', 50, 'cm', 'fixture'),
-        (briefs_ref, 'chest_width', 50, 'cm', 'fixture');
+        (briefs_ref, 'chest_width', 50, 'cm', 'fixture'),
+        (women_tshirt_ref, 'chest_width', 50, 'cm', 'fixture'),
+        (unisex_tshirt_ref, 'chest_width', 50, 'cm', 'fixture'),
+        (kids_tshirt_ref, 'chest_width', 50, 'cm', 'fixture'),
+        (baby_tshirt_ref, 'chest_width', 50, 'cm', 'fixture'),
+        (unknown_tshirt_ref, 'chest_width', 50, 'cm', 'fixture');
 
     -- This is the real ingress-produced adult homogeneous MULTIPACK from the
     -- preceding block. It must pass the same authorization/size path as an
@@ -748,6 +1140,45 @@ begin
         raise exception 'MEN t-shirt to WOMEN t-shirt remained blocked: %', decision_value;
     end if;
 
+    -- Exercise every adult audience direction through the production
+    -- authorization action. ADULT_ANY may clear only this audience gate.
+    foreach decision_value in array array[
+        fitmatch_vnext.authorize_comparison_with_context(
+            women_tshirt_ref, men_tshirt_target, men_tshirt_size, false,
+            jsonb_build_object('product_id', men_tshirt_target,
+                'classification_status', 'CONFIRMED', 'garment_type_code', 'tshirt',
+                'audience_code', 'MEN', 'sleeve_length_code', 'long_sleeve')
+        ),
+        fitmatch_vnext.authorize_comparison_with_context(
+            tshirt_ref, unisex_tshirt_target, unisex_tshirt_size, false,
+            jsonb_build_object('product_id', unisex_tshirt_target,
+                'classification_status', 'CONFIRMED', 'garment_type_code', 'tshirt',
+                'audience_code', 'UNISEX', 'sleeve_length_code', 'long_sleeve')
+        ),
+        fitmatch_vnext.authorize_comparison_with_context(
+            unisex_tshirt_ref, men_tshirt_target, men_tshirt_size, false,
+            jsonb_build_object('product_id', men_tshirt_target,
+                'classification_status', 'CONFIRMED', 'garment_type_code', 'tshirt',
+                'audience_code', 'MEN', 'sleeve_length_code', 'long_sleeve')
+        ),
+        fitmatch_vnext.authorize_comparison_with_context(
+            women_tshirt_ref, unisex_tshirt_target, unisex_tshirt_size, false,
+            jsonb_build_object('product_id', unisex_tshirt_target,
+                'classification_status', 'CONFIRMED', 'garment_type_code', 'tshirt',
+                'audience_code', 'UNISEX', 'sleeve_length_code', 'long_sleeve')
+        ),
+        fitmatch_vnext.authorize_comparison_with_context(
+            unisex_tshirt_ref, tshirt_target, tshirt_size, false,
+            jsonb_build_object('product_id', tshirt_target,
+                'classification_status', 'CONFIRMED', 'garment_type_code', 'tshirt',
+                'audience_code', 'WOMEN', 'sleeve_length_code', 'long_sleeve')
+        )
+    ] loop
+        if not coalesce((decision_value ->> 'allowed')::boolean, false) then
+            raise exception 'An adult audience direction remained blocked: %', decision_value;
+        end if;
+    end loop;
+
     foreach decision_value in array array[
         fitmatch_vnext.authorize_comparison_with_context(
             tshirt_ref, tshirt_target, tshirt_size, false,
@@ -770,6 +1201,31 @@ begin
     ] loop
         if decision_value ->> 'reason' <> 'Audience is incompatible' then
             raise exception 'ADULT_ANY leaked to a non-adult audience: %', decision_value;
+        end if;
+    end loop;
+
+    foreach decision_value in array array[
+        fitmatch_vnext.authorize_comparison_with_context(
+            kids_tshirt_ref, tshirt_target, tshirt_size, false,
+            jsonb_build_object('product_id', tshirt_target,
+                'classification_status', 'CONFIRMED', 'garment_type_code', 'tshirt',
+                'audience_code', 'WOMEN', 'sleeve_length_code', 'long_sleeve')
+        ),
+        fitmatch_vnext.authorize_comparison_with_context(
+            baby_tshirt_ref, tshirt_target, tshirt_size, false,
+            jsonb_build_object('product_id', tshirt_target,
+                'classification_status', 'CONFIRMED', 'garment_type_code', 'tshirt',
+                'audience_code', 'WOMEN', 'sleeve_length_code', 'long_sleeve')
+        ),
+        fitmatch_vnext.authorize_comparison_with_context(
+            unknown_tshirt_ref, tshirt_target, tshirt_size, false,
+            jsonb_build_object('product_id', tshirt_target,
+                'classification_status', 'CONFIRMED', 'garment_type_code', 'tshirt',
+                'audience_code', 'WOMEN', 'sleeve_length_code', 'long_sleeve')
+        )
+    ] loop
+        if decision_value ->> 'reason' <> 'Audience is incompatible' then
+            raise exception 'ADULT_ANY leaked from a non-adult reference: %', decision_value;
         end if;
     end loop;
 

@@ -14,7 +14,18 @@ declare
     active_policy_count integer;
     unexpected_policy_count integer;
     ingress_definition text;
+    authorization_definition text;
+    readiness_definition text;
     recovery_definition text;
+    is_security_definer boolean;
+    ingress_proc regprocedure :=
+        'fitmatch_vnext.ingest_product_observation(jsonb,uuid)'::regprocedure;
+    authorization_proc regprocedure :=
+        'fitmatch_vnext.authorize_comparison_with_context(uuid,uuid,uuid,boolean,jsonb)'::regprocedure;
+    readiness_proc regprocedure :=
+        'fitmatch_vnext.product_readiness_with_context(uuid,jsonb)'::regprocedure;
+    recovery_proc regprocedure :=
+        'fitmatch_vnext.classification_recovery_options(uuid)'::regprocedure;
 begin
     if to_regclass('fitmatch_vnext.products') is null
        or to_regclass('fitmatch_vnext.product_ingestion_receipts') is null
@@ -27,20 +38,67 @@ begin
        or to_regprocedure('fitmatch_vnext.resolve_product_classification(text,text,boolean)') is null
        or to_regprocedure('fitmatch_vnext.classification_decision(text,text)') is null
        or to_regprocedure('fitmatch_vnext.authorize_comparison_with_context(uuid,uuid,uuid,boolean,jsonb)') is null
+       or to_regprocedure('fitmatch_vnext.product_readiness_with_context(uuid,jsonb)') is null
        or to_regprocedure('fitmatch_vnext.classification_recovery_options(uuid)') is null then
         raise exception 'Expected vNext ingress/classification contract is missing';
     end if;
-    ingress_definition := pg_get_functiondef(
-        to_regprocedure('fitmatch_vnext.ingest_product_observation(jsonb,uuid)')
-    );
+
+    -- These are intentionally independent preimage assertions over the
+    -- deployed public contract: signature, security mode/ACL, and the
+    -- critical body anchors that make the v1-to-v2 forward replacement safe.
+    -- A stale or hand-edited authority function aborts before any rename,
+    -- policy mutation, or data projection can occur.
+    if to_regprocedure('fitmatch_vnext.ingest_product_observation_v1(jsonb,uuid)') is not null
+       or to_regprocedure('fitmatch_vnext.ingest_product_observation_v2(jsonb,uuid)') is not null
+       or to_regprocedure('fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb)') is not null
+       or to_regprocedure('fitmatch_vnext.product_readiness_with_context_v1(uuid,jsonb)') is not null then
+        raise exception 'Unexpected prior live-retailer wrapper collision';
+    end if;
+
+    select pg_get_functiondef(p.oid), p.prosecdef
+    into ingress_definition, is_security_definer
+    from pg_proc p where p.oid = ingress_proc;
+    if not is_security_definer
+       or has_function_privilege('public', ingress_proc, 'EXECUTE')
+       or has_function_privilege('anon', ingress_proc, 'EXECUTE')
+       or has_function_privilege('authenticated', ingress_proc, 'EXECUTE')
+       or not has_function_privilege('service_role', ingress_proc, 'EXECUTE') then
+        raise exception 'Unexpected ingest_product_observation security preimage';
+    end if;
     if position('product_ingestion_receipts' in ingress_definition) = 0
        or position('Awaiting deterministic replay after new retailer evidence'
                    in ingress_definition) = 0 then
         raise exception 'Unexpected ingest_product_observation preimage';
     end if;
-    recovery_definition := pg_get_functiondef(
-        to_regprocedure('fitmatch_vnext.classification_recovery_options(uuid)')
-    );
+
+    select pg_get_functiondef(p.oid), p.prosecdef
+    into authorization_definition, is_security_definer
+    from pg_proc p where p.oid = authorization_proc;
+    if not is_security_definer
+       or has_function_privilege('public', authorization_proc, 'EXECUTE')
+       or has_function_privilege('anon', authorization_proc, 'EXECUTE')
+       or has_function_privilege('authenticated', authorization_proc, 'EXECUTE')
+       or not has_function_privilege('service_role', authorization_proc, 'EXECUTE')
+       or position('manual_cross_comparison_rules' in authorization_definition) = 0
+       or position('ADULT_ANY' in authorization_definition) = 0 then
+        raise exception 'Unexpected authorize_comparison_with_context preimage';
+    end if;
+
+    select pg_get_functiondef(p.oid), p.prosecdef
+    into readiness_definition, is_security_definer
+    from pg_proc p where p.oid = readiness_proc;
+    if is_security_definer
+       or has_function_privilege('public', readiness_proc, 'EXECUTE')
+       or has_function_privilege('anon', readiness_proc, 'EXECUTE')
+       or has_function_privilege('authenticated', readiness_proc, 'EXECUTE')
+       or not has_function_privilege('service_role', readiness_proc, 'EXECUTE')
+       or position('canonical_measurements_for_size_with_context' in readiness_definition) = 0
+       or position('fitmatch-vnext-readiness-v2' in readiness_definition) = 0 then
+        raise exception 'Unexpected product_readiness_with_context preimage';
+    end if;
+
+    select pg_get_functiondef(p.oid) into recovery_definition
+    from pg_proc p where p.oid = recovery_proc;
     if position(
         'elsif product_row.product_structure_code <> ''SINGLE'' then'
         in recovery_definition
@@ -111,8 +169,7 @@ with product_row as (
            case
              when p.structure_code = 'SET' then false
              when p.measurement_contract = 'MULTIPLE_COMPONENT' then false
-             when p.structure_code = 'SINGLE' then true
-             when p.structure_code in ('MULTIPACK','UNKNOWN')
+             when p.structure_code in ('SINGLE','MULTIPACK','UNKNOWN')
                 and p.measurement_contract = 'SINGLE_COHERENT' then true
              else false
            end eligible,
@@ -120,7 +177,11 @@ with product_row as (
              when p.structure_code = 'SET' then 'MIXED_GARMENT_SET'
              when p.measurement_contract = 'MULTIPLE_COMPONENT'
                 then 'MULTIPLE_COMPONENT_MEASUREMENT_CONTRACT'
-             when p.structure_code = 'SINGLE' then 'EXPLICIT_SINGLE_STRUCTURE'
+             when p.structure_code = 'SINGLE'
+                and p.measurement_contract = 'SINGLE_COHERENT'
+                then 'EXPLICIT_SINGLE_ONE_COHERENT_CONTRACT'
+             when p.structure_code = 'SINGLE'
+                then 'SINGLE_CONTRACT_UNVERIFIED'
              when p.structure_code = 'MULTIPACK'
                 and p.measurement_contract = 'SINGLE_COHERENT'
                 then 'HOMOGENEOUS_MULTIPACK_ONE_COHERENT_CONTRACT'
@@ -169,13 +230,10 @@ with gt as (
         gt.garment_type_code is not null garment_exists,
         coalesce(gt.is_active, false) garment_active,
         (
-          upper(coalesce(p_product_structure_code, 'UNKNOWN')) = 'SINGLE'
-          or (
-             upper(coalesce(p_product_structure_code, 'UNKNOWN'))
-                 in ('MULTIPACK','UNKNOWN')
-             and upper(coalesce(p_measurement_contract, 'ABSENT'))
-                 = 'SINGLE_COHERENT'
-          )
+          upper(coalesce(p_product_structure_code, 'UNKNOWN'))
+              in ('SINGLE','MULTIPACK','UNKNOWN')
+          and upper(coalesce(p_measurement_contract, 'ABSENT'))
+              = 'SINGLE_COHERENT'
         ) unit_valid,
         p_audience_code is not null and p_audience_code <> 'UNKNOWN' audience_valid,
         case when coalesce(gt.uses_sleeve_length, false)
@@ -313,7 +371,7 @@ begin
     if enforce_complete then
         if structure_code = 'SET'
            or structure_code not in ('SINGLE','MULTIPACK','UNKNOWN')
-           or (structure_code <> 'SINGLE'
+           or (tg_table_name = 'products'
                and comparison_contract <> 'SINGLE_COHERENT') then
             raise exception 'comparable classification requires an eligible comparison unit';
         end if;
@@ -366,14 +424,27 @@ with target as (
      and p.source_code = 'uniqlo' and p.audience_code = t.audience_code
     join fitmatch_vnext.product_ingestion_receipts r
       on r.product_id = p.id and r.source_code = 'uniqlo'
+     and r.processing_status = 'PROCESSED'
+     and r.observed_at = p.last_seen_at
     cross join lateral jsonb_array_elements_text(
-      coalesce(r.retailer_facts -> 'source_category_codes', '[]'::jsonb)
+      case when jsonb_typeof(r.retailer_facts -> 'source_category_codes') = 'array'
+        then r.retailer_facts -> 'source_category_codes'
+        else '[]'::jsonb end
     ) with ordinality code(value, ordinality)
-    where btrim(code.value) <> ''
+    where r.retailer_facts -> 'structured_facts'
+            ->> 'source_category_path_completeness' = 'complete'
+      and r.retailer_facts -> 'structured_facts'
+            ->> 'source_category_path_source' = 'uniqlo_pdp_breadcrumbs'
+      and case upper(btrim(r.retailer_facts ->> 'audience'))
+            when 'M' then 'MEN' when 'MAN' then 'MEN' when 'MALE' then 'MEN'
+            when 'W' then 'WOMEN' when 'WOMAN' then 'WOMEN' when 'FEMALE' then 'WOMEN'
+            when 'U' then 'UNISEX' when 'COMMON' then 'UNISEX' when 'M,W' then 'UNISEX'
+            else upper(btrim(r.retailer_facts ->> 'audience')) end = t.audience_code
+      and btrim(code.value) <> ''
     group by r.id, t.external_key
 ), valid_paths as (
     select path from receipt_paths
-    where cardinality(path) >= 3
+    where cardinality(path) > 0
       and path[cardinality(path)] = external_key
       and cardinality(path) = (
           select count(distinct code) from unnest(path) code
@@ -384,6 +455,73 @@ where (select count(distinct path) from valid_paths) = 1
 limit 1;
 $function$;
 
+create or replace function fitmatch_vnext.uniqlo_category_parent_chain_matches_observed_path(
+    p_signal_id uuid,
+    p_path text[]
+)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $function$
+with recursive target as (
+    select s.id, s.audience_code
+    from fitmatch_vnext.source_classification_signals s
+    where s.id = p_signal_id
+      and s.source_code = 'uniqlo'
+      and s.signal_kind = 'CATEGORY'
+      and s.is_active
+      and s.audience_code in ('MEN','WOMEN','UNISEX')
+      and cardinality(p_path) > 0
+      and s.external_key = p_path[cardinality(p_path)]
+), expected as (
+    select btrim(code.value) external_key, code.ordinality
+    from unnest(p_path) with ordinality code(value, ordinality)
+    where btrim(code.value) <> ''
+), walk as (
+    select s.id, s.parent_signal_id, s.external_key, s.audience_code,
+           0 depth, array[s.id] visited, false cycle
+    from fitmatch_vnext.source_classification_signals s
+    join target t on t.id = s.id
+    union all
+    select parent.id, parent.parent_signal_id, parent.external_key,
+           parent.audience_code, w.depth + 1,
+           w.visited || parent.id, parent.id = any(w.visited)
+    from walk w
+    join fitmatch_vnext.source_classification_signals parent
+      on parent.id = w.parent_signal_id
+    where w.parent_signal_id is not null
+      and w.depth < 16
+      and not w.cycle
+), chain as (
+    select array_agg(w.external_key order by w.depth desc) path,
+           bool_or(w.cycle) has_cycle,
+           bool_or(w.depth >= 16 and w.parent_signal_id is not null) hit_depth_limit,
+           bool_or(w.parent_signal_id is not null and not exists (
+               select 1 from fitmatch_vnext.source_classification_signals parent
+               where parent.id = w.parent_signal_id
+           )) missing_parent,
+           bool_and(w.audience_code = (select audience_code from target)) audience_consistent
+    from walk w
+)
+select exists (select 1 from target)
+   and (select path from chain) = p_path
+   and not coalesce((select has_cycle from chain), true)
+   and not coalesce((select hit_depth_limit from chain), true)
+   and not coalesce((select missing_parent from chain), true)
+   and coalesce((select audience_consistent from chain), false)
+   and cardinality(p_path) = (select count(*) from expected)
+   and not exists (
+       select 1 from expected e
+       where (select count(*) from fitmatch_vnext.source_classification_signals s
+              join target t on t.audience_code = s.audience_code
+              where s.source_code = 'uniqlo'
+                and s.signal_kind = 'CATEGORY'
+                and s.is_active
+                and s.external_key = e.external_key) <> 1
+   );
+$function$;
+
 create or replace function fitmatch_vnext.uniqlo_category_parent_chain_safe(
     p_signal_id uuid
 )
@@ -392,30 +530,95 @@ language sql
 stable
 set search_path = ''
 as $function$
-with recursive walk as (
-    select s.id, s.parent_signal_id, 0 depth, array[s.id] visited, false cycle
-    from fitmatch_vnext.source_classification_signals s
-    where s.id = p_signal_id
-    union all
-    select parent.id, parent.parent_signal_id, w.depth + 1,
-           w.visited || parent.id, parent.id = any(w.visited)
-    from walk w
-    join fitmatch_vnext.source_classification_signals parent
-      on parent.id = w.parent_signal_id
-    where w.parent_signal_id is not null
-      and w.depth < 16
-      and not w.cycle
+with observed as (
+    select fitmatch_vnext.uniqlo_complete_observed_category_path(p_signal_id) path
 )
-select exists (select 1 from walk)
-   and not exists (
-       select 1 from walk w
-       where w.cycle
-          or (w.depth >= 16 and w.parent_signal_id is not null)
-          or (w.parent_signal_id is not null and not exists (
-              select 1 from fitmatch_vnext.source_classification_signals parent
-              where parent.id = w.parent_signal_id
-          ))
-   );
+select path is not null
+   and fitmatch_vnext.uniqlo_category_parent_chain_matches_observed_path(
+       p_signal_id, path
+   )
+from observed;
+$function$;
+
+create or replace function fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current(
+    p_mapping_id uuid
+)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $function$
+with automatic_mapping as (
+    select m.id, m.source_signal_id, m.audience_code,
+           m.garment_type_code, m.sleeve_length_code,
+           m.lower_length_code, m.body_length_code,
+           s.external_key, s.audience_code signal_audience_code,
+           fitmatch_vnext.uniqlo_complete_observed_category_path(s.id) path
+    from fitmatch_vnext.classification_signal_mappings m
+    join fitmatch_vnext.source_classification_signals s on s.id = m.source_signal_id
+    where m.id = p_mapping_id
+      and m.mapping_version = 'vnext-uniqlo-complete-path-20260902-v3'
+      and m.is_active and m.is_verified and m.resolution_mode = 'DIRECT'
+      and s.source_code = 'uniqlo' and s.signal_kind = 'CATEGORY' and s.is_active
+), target as (
+    select m.* from automatic_mapping m
+    where m.path is not null
+      and m.audience_code = m.signal_audience_code
+      and fitmatch_vnext.uniqlo_category_parent_chain_matches_observed_path(
+          m.source_signal_id, m.path
+      )
+      and not exists (
+          select 1 from fitmatch_vnext.classification_signal_mappings target_mapping
+          where target_mapping.source_signal_id = m.source_signal_id
+            and target_mapping.is_active and target_mapping.is_verified
+            and target_mapping.id <> m.id
+            and target_mapping.resolution_mode = 'PRODUCT_REQUIRED'
+      )
+), peer_mappings as (
+    select peer_mapping.*
+    from target t
+    join fitmatch_vnext.source_classification_signals peer
+      on peer.source_code = 'uniqlo'
+     and peer.signal_kind = 'CATEGORY'
+     and peer.external_key = t.external_key
+     and peer.id <> t.source_signal_id
+     and peer.is_active
+     and peer.audience_code in ('MEN','WOMEN','UNISEX')
+     and fitmatch_vnext.uniqlo_complete_observed_category_path(peer.id) = t.path
+     and fitmatch_vnext.uniqlo_category_parent_chain_matches_observed_path(peer.id, t.path)
+    join fitmatch_vnext.classification_signal_mappings peer_mapping
+      on peer_mapping.source_signal_id = peer.id
+     and peer_mapping.is_active and peer_mapping.is_verified
+     and peer_mapping.audience_code in (peer.audience_code, 'ANY')
+     and coalesce(peer_mapping.mapping_version, '')
+         <> 'vnext-uniqlo-complete-path-20260902-v3'
+), peer_summary as (
+    select count(*) mapping_count,
+           bool_and(resolution_mode = 'DIRECT') direct_only,
+           count(distinct concat_ws('|', resolution_mode,
+               coalesce(garment_type_code, '∅'),
+               coalesce(sleeve_length_code, '∅'),
+               coalesce(lower_length_code, '∅'),
+               coalesce(body_length_code, '∅'))) tuple_count,
+           min(concat_ws('|', resolution_mode,
+               coalesce(garment_type_code, '∅'),
+               coalesce(sleeve_length_code, '∅'),
+               coalesce(lower_length_code, '∅'),
+               coalesce(body_length_code, '∅'))) tuple_value
+    from peer_mappings
+), target_tuple as (
+    select concat_ws('|', 'DIRECT',
+        coalesce(garment_type_code, '∅'),
+        coalesce(sleeve_length_code, '∅'),
+        coalesce(lower_length_code, '∅'),
+        coalesce(body_length_code, '∅')) tuple_value
+    from target
+)
+select exists (select 1 from target)
+   and coalesce((select mapping_count from peer_summary), 0) > 0
+   and coalesce((select direct_only from peer_summary), false)
+   and coalesce((select tuple_count from peer_summary), 0) = 1
+   and (select tuple_value from peer_summary) = (select tuple_value from target_tuple);
 $function$;
 
 create or replace function fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping(
@@ -456,9 +659,11 @@ begin
         select m.*
         from peers peer
         join fitmatch_vnext.classification_signal_mappings m
-          on m.source_signal_id = peer.id
+         on m.source_signal_id = peer.id
          and m.is_active and m.is_verified
          and m.audience_code in (peer.audience_code, 'ANY')
+         and coalesce(m.mapping_version, '')
+             <> 'vnext-uniqlo-complete-path-20260902-v3'
     ), eligible as (
         select t.id target_signal_id, t.audience_code target_audience_code,
                min(m.garment_type_code) garment_type_code,
@@ -493,13 +698,49 @@ begin
     )
     select target_signal_id, target_audience_code, garment_type_code, 'DIRECT',
            sleeve_length_code, lower_length_code, body_length_code, priority,
-           true, true, 'vnext-uniqlo-complete-path-20260902-v2', repeat('0',64)
+           true, true, 'vnext-uniqlo-complete-path-20260902-v3', repeat('0',64)
     from eligible;
 
     get diagnostics inserted_count = row_count;
     return inserted_count;
 end
 $function$;
+
+revoke all on function fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping(uuid)
+    from public, anon, authenticated;
+grant execute on function fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping(uuid)
+    to service_role;
+
+create or replace function fitmatch_vnext.revalidate_uniqlo_auto_promoted_mappings(
+    p_external_key text
+)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+    revoked_count integer := 0;
+begin
+    update fitmatch_vnext.classification_signal_mappings mapping
+    set is_active = false
+    from fitmatch_vnext.source_classification_signals signal
+    where signal.id = mapping.source_signal_id
+      and signal.source_code = 'uniqlo'
+      and signal.signal_kind = 'CATEGORY'
+      and signal.external_key = p_external_key
+      and mapping.mapping_version = 'vnext-uniqlo-complete-path-20260902-v3'
+      and mapping.is_active
+      and not fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current(mapping.id);
+    get diagnostics revoked_count = row_count;
+    return revoked_count;
+end
+$function$;
+
+revoke all on function fitmatch_vnext.revalidate_uniqlo_auto_promoted_mappings(text)
+    from public, anon, authenticated;
+grant execute on function fitmatch_vnext.revalidate_uniqlo_auto_promoted_mappings(text)
+    to service_role;
 
 create or replace function fitmatch_vnext.classification_decision(
     p_source_code text,
@@ -548,6 +789,10 @@ with recursive product_row as (
       on m.source_signal_id = e.source_signal_id
      and m.is_active and m.is_verified
      and (m.audience_code = 'ANY' or m.audience_code = p.audience_code)
+     and (
+        coalesce(m.mapping_version, '') <> 'vnext-uniqlo-complete-path-20260902-v3'
+        or fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current(m.id)
+     )
 ), signal_ancestry(descendant_id, ancestor_id, depth) as (
     select s.id, s.parent_signal_id, 1
     from fitmatch_vnext.source_classification_signals s
@@ -733,6 +978,22 @@ begin
 end
 $function$;
 
+-- Preserve the deployed service-only authority boundary for both the wrapper
+-- and its retained implementation. CREATE OR REPLACE would otherwise leave
+-- the new wrapper with PostgreSQL's default PUBLIC EXECUTE ACL.
+revoke all on function fitmatch_vnext.authorize_comparison_with_context(
+    uuid, uuid, uuid, boolean, jsonb
+) from public, anon, authenticated;
+grant execute on function fitmatch_vnext.authorize_comparison_with_context(
+    uuid, uuid, uuid, boolean, jsonb
+) to service_role;
+revoke all on function fitmatch_vnext.authorize_comparison_with_context_v1(
+    uuid, uuid, uuid, boolean, jsonb
+) from public, anon, authenticated;
+grant execute on function fitmatch_vnext.authorize_comparison_with_context_v1(
+    uuid, uuid, uuid, boolean, jsonb
+) to service_role;
+
 do $rename_readiness_context_v1$
 begin
     if to_regprocedure(
@@ -751,7 +1012,6 @@ create or replace function fitmatch_vnext.product_readiness_with_context(
 returns jsonb
 language plpgsql
 stable
-security definer
 set search_path = ''
 as $function$
 declare
@@ -775,6 +1035,19 @@ begin
     );
 end
 $function$;
+
+revoke all on function fitmatch_vnext.product_readiness_with_context(
+    uuid, jsonb
+) from public, anon, authenticated;
+grant execute on function fitmatch_vnext.product_readiness_with_context(
+    uuid, jsonb
+) to service_role;
+revoke all on function fitmatch_vnext.product_readiness_with_context_v1(
+    uuid, jsonb
+) from public, anon, authenticated;
+grant execute on function fitmatch_vnext.product_readiness_with_context_v1(
+    uuid, jsonb
+) to service_role;
 
 -- Preserve the existing bounded USER_EXPLICIT recovery protocol while
 -- replacing its obsolete cardinality-only precondition. This migration first
@@ -864,6 +1137,8 @@ declare
     explicit_contract_value text;
     contract_present boolean := false;
     effective_contract_value text := 'ABSENT';
+    comparison_contract_claim_rejected boolean := false;
+    payload_measurement_count integer := 0;
     prior_structure_links jsonb := '[]'::jsonb;
     prior_structure_source text;
     prior_structure_evidence text;
@@ -886,6 +1161,12 @@ declare
     signal_value jsonb;
     category_value text;
     category_index integer := 0;
+    category_codes_value text[] := '{}'::text[];
+    category_path_complete boolean := false;
+    previous_category_signal_id uuid;
+    current_category_signal_id uuid;
+    observed_parent_signal_id uuid;
+    category_signal_count integer;
     parser_value text;
     default_parser_value text;
     raw_key_value text;
@@ -952,6 +1233,19 @@ begin
        or jsonb_typeof(coalesce(p_payload -> 'structured_facts', '{}'::jsonb)) <> 'object' then
         raise exception 'raw_payload and structured_facts must be JSON objects';
     end if;
+    select count(*)::integer into payload_measurement_count
+    from jsonb_array_elements(coalesce(p_payload -> 'variants', '[]'::jsonb)) variant
+    cross join lateral jsonb_array_elements(
+        case when jsonb_typeof(variant.value -> 'sizes') = 'array'
+            then variant.value -> 'sizes' else '[]'::jsonb end
+    ) size
+    cross join lateral jsonb_array_elements(
+        case when jsonb_typeof(size.value -> 'measurements') = 'array'
+            then size.value -> 'measurements' else '[]'::jsonb end
+    ) measurement
+    where jsonb_typeof(variant.value) = 'object'
+      and jsonb_typeof(size.value) = 'object'
+      and jsonb_typeof(measurement.value) = 'object';
 
     audience_value := upper(btrim(coalesce(p_payload ->> 'audience', 'UNKNOWN')));
     audience_value := case audience_value
@@ -1118,10 +1412,24 @@ begin
             );
             preserve_existing_structure := coalesce(
                 jsonb_array_length(prior_structure_links) > 0
-                or existing_product.source_extra -> 'product_structure_fact' ? 'value'
-                or existing_product.source_extra -> 'structured_facts' ? 'product_structure',
+                or (
+                    existing_product.source_extra -> 'product_structure_fact' ? 'value'
+                    and prior_structure_source is not null
+                    and prior_structure_evidence is not null
+                )
+                or (
+                    existing_product.source_extra -> 'structured_facts' ? 'product_structure'
+                    and prior_structure_source is not null
+                    and prior_structure_evidence is not null
+                ),
                 false
             );
+            -- A legacy/current column alone is not a retailer observation.
+            -- Preserve only existing observed provenance; otherwise this
+            -- MISSING receipt must not promote the column into new evidence.
+            if not preserve_existing_structure then
+                structure_value := 'UNKNOWN';
+            end if;
         else
             structure_value := explicit_structure_value;
         end if;
@@ -1154,7 +1462,25 @@ begin
         end;
     end if;
 
+    -- A client/parser may report its coherent-table observation, but the
+    -- server only accepts SINGLE_COHERENT as effective readiness evidence
+    -- when this same immutable payload contains actual provider measurement
+    -- records. The receipt retains the original claim; the effective state is
+    -- downgraded rather than fabricating a table that was not observed.
+    if comparison_contract_state = 'EXPLICIT_VALUE'
+       and explicit_contract_value = 'SINGLE_COHERENT'
+       and payload_measurement_count = 0 then
+        effective_contract_value := 'ABSENT';
+        comparison_contract_claim_rejected := true;
+    end if;
+
     effective_structured_facts_value := structured_facts_value;
+    if comparison_contract_claim_rejected then
+        effective_structured_facts_value := effective_structured_facts_value
+            - 'comparison_measurement_contract'
+            - 'comparison_measurement_contract_source'
+            - 'comparison_measurement_contract_evidence';
+    end if;
     if preserve_existing_structure then
         effective_structured_facts_value := effective_structured_facts_value
             || jsonb_strip_nulls(jsonb_build_object(
@@ -1258,10 +1584,14 @@ begin
                 'preserved_existing_fact', comparison_contract_state = 'MISSING'
                     and existing_product.id is not null
                     and effective_contract_value <> 'ABSENT',
-                'source', case when comparison_contract_state = 'MISSING'
+                'source', case when comparison_contract_claim_rejected
+                    then 'server_contract_validation'
+                when comparison_contract_state = 'MISSING'
                     then prior_contract_source
                     else structured_facts_value ->> 'comparison_measurement_contract_source' end,
-                'evidence', case when comparison_contract_state = 'MISSING'
+                'evidence', case when comparison_contract_claim_rejected
+                    then 'single_coherent_claim_without_provider_measurement_records'
+                when comparison_contract_state = 'MISSING'
                     then prior_contract_evidence
                     else structured_facts_value ->> 'comparison_measurement_contract_evidence' end,
                 'observed_at', p_payload ->> 'observed_at'
@@ -1344,7 +1674,9 @@ begin
         from jsonb_array_elements(prior_structure_links) link;
     end if;
 
-    if not preserve_existing_structure and structure_value <> 'UNKNOWN' then
+    if structure_state = 'EXPLICIT_VALUE'
+       and not preserve_existing_structure
+       and structure_value <> 'UNKNOWN' then
         signal_order_value := signal_order_value + 1;
         signal_id_value := null;
         select s.id into signal_id_value
@@ -1386,13 +1718,24 @@ begin
         order by ordinal
     loop
         category_index := category_index + 1;
+        category_codes_value := array_append(category_codes_value, category_value);
         signal_order_value := signal_order_value + 1;
         signal_id_value := null;
         select s.id into signal_id_value
         from fitmatch_vnext.source_classification_signals s
         where s.source_code = source_value and s.signal_kind = 'CATEGORY'
           and s.external_key = category_value
-          and s.audience_code in (audience_value, 'ANY')
+          and (
+            s.audience_code = audience_value
+            or (
+                s.audience_code = 'ANY'
+                and not (
+                    source_value = 'uniqlo'
+                    and structured_facts_value ->> 'source_category_path_completeness' = 'complete'
+                    and structured_facts_value ->> 'source_category_path_source' = 'uniqlo_pdp_breadcrumbs'
+                )
+            )
+          )
         order by (s.audience_code = audience_value) desc, s.id
         limit 1;
         if signal_id_value is null then
@@ -1419,6 +1762,60 @@ begin
         set evidence_order = excluded.evidence_order,
             observed_at = excluded.observed_at;
     end loop;
+
+    -- A category hierarchy is authority evidence only when the selected
+    -- UNIQLO PDP supplied the complete ordered breadcrumb marker. This links
+    -- exactly that immutable path, never a leaf-only or guessed hierarchy.
+    category_path_complete := source_value = 'uniqlo'
+        and structured_facts_value ->> 'source_category_path_completeness' = 'complete'
+        and structured_facts_value ->> 'source_category_path_source' = 'uniqlo_pdp_breadcrumbs'
+        and audience_value in ('MEN','WOMEN','UNISEX')
+        and cardinality(category_codes_value) > 0
+        and cardinality(category_codes_value) = (
+            select count(distinct code) from unnest(category_codes_value) code
+        );
+    if category_path_complete then
+        previous_category_signal_id := null;
+        foreach category_value in array category_codes_value
+        loop
+            select count(*) into category_signal_count
+            from fitmatch_vnext.source_classification_signals signal
+            where signal.source_code = 'uniqlo'
+              and signal.signal_kind = 'CATEGORY'
+              and signal.external_key = category_value
+              and signal.audience_code = audience_value
+              and signal.is_active;
+            if category_signal_count <> 1 then
+                category_path_complete := false;
+                exit;
+            end if;
+
+            select signal.id, signal.parent_signal_id
+            into current_category_signal_id, observed_parent_signal_id
+            from fitmatch_vnext.source_classification_signals signal
+            where signal.source_code = 'uniqlo'
+              and signal.signal_kind = 'CATEGORY'
+              and signal.external_key = category_value
+              and signal.audience_code = audience_value
+              and signal.is_active;
+
+            if previous_category_signal_id is null then
+                if observed_parent_signal_id is not null then
+                    category_path_complete := false;
+                    exit;
+                end if;
+            elsif observed_parent_signal_id is null then
+                update fitmatch_vnext.source_classification_signals
+                set parent_signal_id = previous_category_signal_id
+                where id = current_category_signal_id
+                  and parent_signal_id is null;
+            elsif observed_parent_signal_id is distinct from previous_category_signal_id then
+                category_path_complete := false;
+                exit;
+            end if;
+            previous_category_signal_id := current_category_signal_id;
+        end loop;
+    end if;
 
     for signal_value in
         select value from jsonb_array_elements(
@@ -1474,25 +1871,6 @@ begin
         set evidence_order = excluded.evidence_order,
             observed_at = excluded.observed_at;
     end loop;
-
-    -- Promotion is driven only by immutable complete paths; no parent pointer
-    -- is created or inferred by this ingress action.
-    if source_value = 'uniqlo' and category_index >= 3 and category_value is not null then
-        select signal.id into signal_id_value
-        from fitmatch_vnext.source_classification_signals signal
-        where signal.source_code = source_value
-          and signal.signal_kind = 'CATEGORY'
-          and signal.external_key = category_value
-          and signal.audience_code in (audience_value, 'ANY')
-        order by (signal.audience_code = audience_value) desc, signal.id
-        limit 1;
-        if signal_id_value is not null then
-            promoted_count :=
-                fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping(
-                    signal_id_value
-                );
-        end if;
-    end if;
 
     select case when count(distinct a.parser_code) = 1 then min(a.parser_code) end
     into default_parser_value
@@ -1709,6 +2087,33 @@ begin
         end loop;
     end loop;
 
+    -- The current receipt becomes hierarchy evidence only after all of its
+    -- raw measurements and category links have been accepted. Transactional
+    -- execution keeps this intermediate status invisible outside the ingress.
+    if category_path_complete then
+        update fitmatch_vnext.product_ingestion_receipts
+        set processing_status = 'PROCESSED'
+        where id = receipt_id_value;
+
+        category_value := category_codes_value[cardinality(category_codes_value)];
+        perform fitmatch_vnext.revalidate_uniqlo_auto_promoted_mappings(category_value);
+        select signal.id into signal_id_value
+        from fitmatch_vnext.source_classification_signals signal
+        where signal.source_code = 'uniqlo'
+          and signal.signal_kind = 'CATEGORY'
+          and signal.external_key = category_value
+          and signal.audience_code = audience_value
+          and signal.is_active
+        limit 1;
+        if signal_id_value is not null
+           and fitmatch_vnext.uniqlo_category_parent_chain_safe(signal_id_value) then
+            promoted_count :=
+                fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping(
+                    signal_id_value
+                );
+        end if;
+    end if;
+
     classification_value := fitmatch_vnext.resolve_product_classification(
         source_value, product_key, true
     );
@@ -1732,6 +2137,7 @@ begin
             'comparison_unit_contract', jsonb_build_object(
                 'state', comparison_contract_state,
                 'effective_value', effective_contract_value,
+                'claim_rejected', comparison_contract_claim_rejected,
                 'uniqlo_audience_mapping_promoted', promoted_count
             )
         )
@@ -1763,6 +2169,7 @@ begin
         'comparison_unit_contract', jsonb_build_object(
             'state', comparison_contract_state,
             'effective_value', effective_contract_value,
+            'claim_rejected', comparison_contract_claim_rejected,
             'uniqlo_audience_mapping_promoted', promoted_count
         )
     );
@@ -1904,7 +2311,7 @@ begin
         from fitmatch_vnext.classification_signal_mappings m
         join fitmatch_vnext.source_classification_signals s
           on s.id = m.source_signal_id
-        where m.mapping_version = 'vnext-uniqlo-complete-path-20260902-v2'
+        where m.mapping_version = 'vnext-uniqlo-complete-path-20260902-v3'
           and (
             s.source_code <> 'uniqlo'
             or s.signal_kind <> 'CATEGORY'
@@ -1915,6 +2322,62 @@ begin
           )
     ) then
         raise exception 'UNIQLO complete-path mapping safety postflight failed';
+    end if;
+    if has_function_privilege('public',
+           'fitmatch_vnext.authorize_comparison_with_context(uuid,uuid,uuid,boolean,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('anon',
+           'fitmatch_vnext.authorize_comparison_with_context(uuid,uuid,uuid,boolean,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('authenticated',
+           'fitmatch_vnext.authorize_comparison_with_context(uuid,uuid,uuid,boolean,jsonb)'::regprocedure,
+           'EXECUTE')
+       or not has_function_privilege('service_role',
+           'fitmatch_vnext.authorize_comparison_with_context(uuid,uuid,uuid,boolean,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('public',
+           'fitmatch_vnext.product_readiness_with_context(uuid,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('anon',
+           'fitmatch_vnext.product_readiness_with_context(uuid,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('authenticated',
+           'fitmatch_vnext.product_readiness_with_context(uuid,jsonb)'::regprocedure,
+           'EXECUTE')
+       or not has_function_privilege('service_role',
+           'fitmatch_vnext.product_readiness_with_context(uuid,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('public',
+           'fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('anon',
+           'fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('authenticated',
+           'fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb)'::regprocedure,
+           'EXECUTE')
+       or not has_function_privilege('service_role',
+           'fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('public',
+           'fitmatch_vnext.product_readiness_with_context_v1(uuid,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('anon',
+           'fitmatch_vnext.product_readiness_with_context_v1(uuid,jsonb)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('authenticated',
+           'fitmatch_vnext.product_readiness_with_context_v1(uuid,jsonb)'::regprocedure,
+           'EXECUTE')
+       or not has_function_privilege('service_role',
+           'fitmatch_vnext.product_readiness_with_context_v1(uuid,jsonb)'::regprocedure,
+           'EXECUTE') then
+        raise exception 'Live-retailer wrapper ACL postflight failed';
+    end if;
+    if not (select p.prosecdef from pg_proc p
+            where p.oid = 'fitmatch_vnext.authorize_comparison_with_context(uuid,uuid,uuid,boolean,jsonb)'::regprocedure)
+       or (select p.prosecdef from pg_proc p
+           where p.oid = 'fitmatch_vnext.product_readiness_with_context(uuid,jsonb)'::regprocedure) then
+        raise exception 'Live-retailer wrapper security mode postflight failed';
     end if;
 end
 $postflight$;

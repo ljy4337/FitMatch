@@ -5618,8 +5618,13 @@ struct FitMatchTests {
                 metadata.parsedProductInfo(sizes: []).fitMatchDatabaseResolutionRequest()
             )
 
-            #expect(metadata.productMetadata.structuredFacts == ["product_type_kr": fixture.value])
-            #expect(request.structuredFacts == ["product_type_kr": fixture.value])
+            let expectedFacts = [
+                "product_type_kr": fixture.value,
+                "source_category_path_completeness": "complete",
+                "source_category_path_source": "uniqlo_pdp_breadcrumbs"
+            ]
+            #expect(metadata.productMetadata.structuredFacts == expectedFacts)
+            #expect(request.structuredFacts == expectedFacts)
         }
     }
 

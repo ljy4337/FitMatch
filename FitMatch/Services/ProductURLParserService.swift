@@ -158,6 +158,11 @@ extension ParsedProductInfo {
             fieldSources["comparison_measurement_contract_source"] = "retailer_parser"
             fieldSources["comparison_measurement_contract_evidence"] = "retailer_parser"
         }
+        if productMetadata.structuredFacts["source_category_path_completeness"] == "complete",
+           productMetadata.structuredFacts["source_category_path_source"] == "uniqlo_pdp_breadcrumbs" {
+            fieldSources["source_category_path_completeness"] = "retailer_parser"
+            fieldSources["source_category_path_source"] = "retailer_parser"
+        }
         if !sizes.isEmpty {
             fieldSources["sizes"] = "retailer_parser"
         }

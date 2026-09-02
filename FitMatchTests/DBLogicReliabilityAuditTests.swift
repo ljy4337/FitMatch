@@ -63,11 +63,12 @@ final class DBLogicReliabilityAuditTests: XCTestCase {
     }
 
     func testCurrentBatchProductsNotPresentIn5026Corpus() throws {
-        let repositoryRoot = URL(fileURLWithPath: #filePath)
+        // Keep the immutable 346-row input test-owned and tracked.  The
+        // original evidence attachment lives under an ignored Docs path, so
+        // resolving that path made a clean checkout nondeterministic.
+        let inputURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let inputURL = repositoryRoot
-            .appendingPathComponent("Docs/TestEvidence/DBLogicReliability-20260815/current-batch-new-products.json")
+            .appendingPathComponent("Fixtures/DBLogicReliabilityCurrentBatchInputs.json")
         let inputs = try JSONDecoder().decode([Input].self, from: Data(contentsOf: inputURL))
         XCTAssertEqual(inputs.count, 346)
 
