@@ -762,6 +762,8 @@ extension ParsedProductInfo {
             || copy.sourceName.localizedCaseInsensitiveContains("uniqlo")
             || copy.sourceName.localizedCaseInsensitiveContains("무신사")
             || copy.sourceName.localizedCaseInsensitiveContains("musinsa")
+            || copy.sourceName.localizedCaseInsensitiveContains("자라")
+            || copy.sourceName.localizedCaseInsensitiveContains("zara")
         if isSupportedRetailer,
            copy.productMetadata.structuredFacts["comparison_measurement_contract"] == nil {
             let structure = copy.productMetadata.structuredFacts["product_structure"]

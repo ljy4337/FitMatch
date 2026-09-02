@@ -230,28 +230,77 @@ struct FitMatchServerAuthorityIntegrationTests {
         #expect(await remote.runtimeCallCount == 1)
     }
 
-    @Test func currentReviewAndNotComparableRemainFailClosed() async throws {
-        for status in [
-            FitMatchServerProductAuthorityStatus.reviewRequired,
-            .notComparable
-        ] {
-            let fixture = AuthorityFixture.nonConfirmed(status: status)
-            let remote = ServerAuthorityRemoteStub(
-                resolutions: [fixture.resolution(catalogState: "current")],
-                observations: [],
-                runtimes: [fixture.runtime]
-            )
-            let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+    @Test func currentReviewWithoutImprovedProviderEvidenceRemainsFailClosed() async throws {
+        let fixture = AuthorityFixture.nonConfirmed(status: .reviewRequired)
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime]
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
 
-            let authority = try await coordinator.resolveProductAuthority(
-                request: fixture.request,
-                observation: fixture.observationRequest
-            )
+        let authority = try await coordinator.resolveProductAuthority(
+            request: fixture.request,
+            observation: fixture.observationRequest
+        )
 
-            #expect(authority.status == status)
-            #expect(!authority.comparisonReady)
-            #expect(await remote.observationCallCount == 0)
-        }
+        #expect(authority.status == .reviewRequired)
+        #expect(!authority.comparisonReady)
+        #expect(await remote.observationCallCount == 0)
+    }
+
+    @Test func currentReviewSubmitsNewCoherentProviderMeasurementsAndRequeries() async throws {
+        let review = AuthorityFixture.nonConfirmed(status: .reviewRequired)
+        let confirmed = AuthorityFixture.confirmed(
+            externalProductID: review.request.externalProductID,
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let finalRuntime = FitMatchProductRuntimeResponse(
+            runtimeState: "ready",
+            comparisonReady: true,
+            product: review.runtime.product,
+            classification: confirmed.classification,
+            variants: []
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [review.resolution(catalogState: "current")],
+            observations: [review.observationResponse],
+            runtimes: [review.runtime, finalRuntime]
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+
+        let authority = try await coordinator.resolveProductAuthority(
+            request: review.request,
+            observation: review.observationRequestWithCoherentMeasurement
+        )
+
+        #expect(authority.status == .confirmed)
+        #expect(authority.comparisonReady)
+        #expect(await remote.observationCallCount == 1)
+        #expect(await remote.eventLog == [
+            "resolve", "runtime", "observation", "runtime"
+        ])
+    }
+
+    @Test func currentNotComparableNeverPromotesMeasurementObservation() async throws {
+        let fixture = AuthorityFixture.nonConfirmed(status: .notComparable)
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime]
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+
+        let authority = try await coordinator.resolveProductAuthority(
+            request: fixture.request,
+            observation: fixture.observationRequestWithCoherentMeasurement
+        )
+
+        #expect(authority.status == .notComparable)
+        #expect(!authority.comparisonReady)
+        #expect(await remote.observationCallCount == 0)
     }
 
     @Test func goldProductsUsePersistedServerTuples() async throws {
@@ -1349,6 +1398,30 @@ private struct AuthorityFixture {
                         ]
                     )
                 ]
+            )
+        )
+    }
+
+    var observationRequestWithCoherentMeasurement: FitMatchProductObservationRequest {
+        let measured = observationRequestWithMeasurement.payload
+        var facts = measured.structuredFacts
+        facts["comparison_measurement_contract"] = "single_coherent"
+        facts["comparison_measurement_contract_source"] = "retailer_size_table"
+        facts["comparison_measurement_contract_evidence"] = "provider_measurement_records"
+        return FitMatchProductObservationRequest(
+            payload: FitMatchProductObservationPayload(
+                source: measured.source,
+                externalProductID: measured.externalProductID,
+                productName: measured.productName,
+                canonicalURL: measured.canonicalURL,
+                audience: measured.audience,
+                sourceCategoryPath: measured.sourceCategoryPath,
+                sourceCategoryCodes: measured.sourceCategoryCodes,
+                imageURL: measured.imageURL,
+                observedAt: measured.observedAt,
+                rawPayload: measured.rawPayload,
+                structuredFacts: facts,
+                variants: measured.variants
             )
         )
     }

@@ -62,8 +62,18 @@ enum FitMatchClosetClassificationEditPolicy {
 
         if isSourced {
             switch current {
-            case .serverReviewRequired, .serverNotComparable, .serverUnavailable:
-                return current ?? .serverUnavailable
+            case .serverReviewRequired:
+                // REVIEW_REQUIRED means the server could not establish a
+                // global classification. A distinct Closet picker edit is an
+                // owned, personal classification decision and may therefore
+                // become USER_EXPLICIT without rewriting server authority.
+                return didExplicitlyChangeClassification
+                    ? .userExplicit
+                    : .serverReviewRequired
+            case .serverNotComparable:
+                return .serverNotComparable
+            case .serverUnavailable:
+                return .serverUnavailable
             case .userExplicit where !didExplicitlyChangeClassification:
                 // A shopping Recovery choice is product-scoped. It cannot
                 // become an owned Closet override simply by selecting a size

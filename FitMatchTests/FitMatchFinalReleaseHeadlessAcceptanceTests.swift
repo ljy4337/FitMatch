@@ -1103,6 +1103,47 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         )
         #expect(explicitClosetPicker.classificationAuthorityProvenance == .userExplicit)
 
+        let reviewRequiredProduct = Product(
+            name: "서버 검토가 필요한 스웨터",
+            category: .top,
+            sourceType: .officialStore,
+            sourceName: "유니클로 공식몰",
+            source: .catalog
+        )
+        reviewRequiredProduct.garmentTypeRawValue = nil
+        reviewRequiredProduct.sleeveTypeRawValue = nil
+        reviewRequiredProduct.markClassificationAuthority(.serverReviewRequired)
+        let reviewRequiredSize = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 47,
+                chest: 52,
+                totalLength: 66,
+                sleeveLength: 59
+            ),
+            product: reviewRequiredProduct
+        )
+        reviewRequiredProduct.sizes = [reviewRequiredSize]
+
+        let explicitReviewRequiredRegistration = FitMatchComparedProductClosetRegistration.makeUserFit(
+            sourceProduct: reviewRequiredProduct,
+            sourceSize: reviewRequiredSize,
+            authorityProduct: reviewRequiredProduct,
+            brandName: "UNIQLO",
+            gender: .women,
+            genderCode: "WOMEN",
+            productName: reviewRequiredProduct.name,
+            category: .top,
+            categoryCode: "tops",
+            detailCategory: .knitTop,
+            detailCategoryCode: "knit_sweater",
+            isRepresentative: true,
+            didExplicitlyChangeClassification: true
+        )
+        #expect(explicitReviewRequiredRegistration.classificationAuthorityProvenance == .userExplicit)
+        #expect(explicitReviewRequiredRegistration.canonicalEligibility)
+        #expect(explicitReviewRequiredRegistration.isRepresentative)
+
         let globalProduct = Product(
             name: "전역 확정 티셔츠",
             category: .top,

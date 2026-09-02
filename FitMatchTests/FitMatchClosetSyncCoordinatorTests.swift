@@ -506,10 +506,29 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(coordinator.state == .pendingRetry)
     }
 
-    @Test func sourcedFailClosedPickerEditsCannotBecomeUserAuthority() {
+    @Test func sourcedReviewRequiredExplicitClosetEditBecomesUserAuthority() {
+        let explicitEdit = FitMatchClosetClassificationEditPolicy.resultingAuthority(
+            current: .serverReviewRequired,
+            isSourced: true,
+            isExplicitSet: false,
+            didExplicitlyChangeClassification: true
+        )
+        let unchanged = FitMatchClosetClassificationEditPolicy.resultingAuthority(
+            current: .serverReviewRequired,
+            isSourced: true,
+            isExplicitSet: false,
+            didExplicitlyChangeClassification: false
+        )
+
+        #expect(explicitEdit == .userExplicit)
+        #expect(explicitEdit.isComparisonAuthority)
+        #expect(unchanged == .serverReviewRequired)
+        #expect(unchanged.isComparisonAuthority == false)
+    }
+
+    @Test func sourcedTerminalServerFailuresRemainFailClosedAfterPickerEdits() {
         for authority in [
-            FitMatchClassificationAuthorityProvenance.serverReviewRequired,
-            .serverNotComparable,
+            FitMatchClassificationAuthorityProvenance.serverNotComparable,
             .serverUnavailable
         ] {
             let result = FitMatchClosetClassificationEditPolicy.resultingAuthority(

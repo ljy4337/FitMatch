@@ -930,6 +930,20 @@ actor FitMatchServerAuthorityCoordinator {
     ) -> Bool {
         guard let observation else { return false }
         switch runtimeState {
+        case "classification_required":
+            // A previously observed product can remain REVIEW_REQUIRED only
+            // because its older receipt did not contain the provider size
+            // table/measurement-contract facts now available to the parser.
+            // Re-submit only a provider-backed coherent contract with actual
+            // measurements. The ingestion boundary owns duplicate/stale
+            // handling and the server remains the classification authority.
+            let contract = observation.payload.structuredFacts[
+                "comparison_measurement_contract"
+            ]?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard contract == "single_coherent" else { return false }
+            return observation.payload.variants.contains { variant in
+                variant.sizes.contains { !$0.measurements.isEmpty }
+            }
         case "sizes_required":
             return observation.payload.variants.contains { !$0.sizes.isEmpty }
         case "measurements_required":
