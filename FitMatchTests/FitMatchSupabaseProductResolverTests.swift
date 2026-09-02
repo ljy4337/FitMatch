@@ -181,7 +181,7 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(FitMatchStoredRetailerFacts.decode(persisted.labelNames).labelNames == ["일반 라벨"])
     }
 
-    @Test func persistedReplayReusesExistingSetSemantics() throws {
+    @Test func persistedReplayDoesNotCreateObservedStructureFromStoredName() throws {
         let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/5982920"))
         let metadata = ProductMetadata(
             sourceCategoryPath: "상의 > 반소매 티셔츠",
@@ -215,11 +215,12 @@ struct FitMatchSupabaseProductResolverTests {
 
         let initialFacts = try #require(parsed.fitMatchDatabaseResolutionRequest()).structuredFacts
         let replayFacts = try #require(persisted.fitMatchDatabaseResolutionRequest()).structuredFacts
-        #expect(initialFacts == replayFacts)
-        #expect(replayFacts["product_structure"] == "set")
+        #expect(initialFacts == ["size_type": "반소매티셔츠"])
+        #expect(replayFacts == initialFacts)
+        #expect(replayFacts["product_structure"] == nil)
     }
 
-    @Test func existingSetSemanticsEmitProductStructureWithoutGarmentInference() throws {
+    @Test func existingSetSemanticsEmitExplicitRetailerStructureWithoutGarmentInference() throws {
         let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/5982920"))
         let namedSet = ParsedProductInfo(
             sourceURL: sourceURL,
@@ -233,31 +234,30 @@ struct FitMatchSupabaseProductResolverTests {
             productID: "5982920",
             sourceCategoryPath: "상의 > 반소매 티셔츠"
         )
-        #expect(
-            namedSet.fitMatchDatabaseResolutionRequest()?.structuredFacts["product_structure"]
-                == "set"
-        )
-        #expect(
-            namedSet.fitMatchProductObservationRequest()?.payload
-                .structuredFacts["product_structure"] == "set"
-        )
+        #expect(namedSet.fitMatchDatabaseResolutionRequest()?.structuredFacts["product_structure"] == nil)
+        #expect(namedSet.fitMatchProductObservationRequest()?.payload
+            .structuredFacts["product_structure"] == nil)
 
-        let categorySet = ParsedProductInfo(
+        let explicitRetailerSet = ParsedProductInfo(
             sourceURL: sourceURL,
             sourceType: .marketplace,
             sourceName: "무신사",
             brandName: "테스트",
-            productName: "코디 상품",
+            productName: "공식 구성 상품",
             category: .top,
             detailCategory: .other,
             sizes: [],
             productID: "5982920",
             sourceCategoryPath: "상의 > 상하의 세트",
             sourceCategoryDepth2: "상하의 세트",
-            productMetadata: ProductMetadata(categoryDepth2Name: "상하의 세트")
+            productMetadata: ProductMetadata(structuredFacts: [
+                "product_structure": "set",
+                "product_structure_source": "musinsa_official_category",
+                "product_structure_evidence": "official_category:top_bottom_set"
+            ])
         )
         #expect(
-            categorySet.fitMatchDatabaseResolutionRequest()?.structuredFacts["product_structure"]
+            explicitRetailerSet.fitMatchDatabaseResolutionRequest()?.structuredFacts["product_structure"]
                 == "set"
         )
     }

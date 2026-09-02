@@ -144,6 +144,20 @@ extension ParsedProductInfo {
         if productTargetGender != .unknown || !productMetadata.genderCodes.isEmpty {
             fieldSources["audience"] = "retailer_parser"
         }
+        if productMetadata.structuredFacts["product_structure"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty == false {
+            fieldSources["product_structure"] = "retailer_parser"
+            fieldSources["product_structure_source"] = "retailer_parser"
+            fieldSources["product_structure_evidence"] = "retailer_parser"
+        }
+        if productMetadata.structuredFacts["comparison_measurement_contract"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty == false {
+            fieldSources["comparison_measurement_contract"] = "retailer_parser"
+            fieldSources["comparison_measurement_contract_source"] = "retailer_parser"
+            fieldSources["comparison_measurement_contract_evidence"] = "retailer_parser"
+        }
         if !sizes.isEmpty {
             fieldSources["sizes"] = "retailer_parser"
         }
@@ -739,6 +753,20 @@ extension ParsedProductInfo {
     func normalizedSizes() -> ParsedProductInfo {
         var copy = self
         copy.sizes = ParsedProductSizeNormalizer.uniqueSizes(sizes)
+        let isSupportedRetailer = copy.sourceName.localizedCaseInsensitiveContains("유니클로")
+            || copy.sourceName.localizedCaseInsensitiveContains("uniqlo")
+            || copy.sourceName.localizedCaseInsensitiveContains("무신사")
+            || copy.sourceName.localizedCaseInsensitiveContains("musinsa")
+        if isSupportedRetailer,
+           copy.productMetadata.structuredFacts["comparison_measurement_contract"] == nil {
+            let structure = copy.productMetadata.structuredFacts["product_structure"]
+                .flatMap { RetailerProductStructure(rawValue: $0.lowercased()) }
+            let fact = RetailerComparisonMeasurementContractFact.retailerSizeTable(
+                sizes: copy.sizes,
+                productStructure: structure
+            )
+            copy.productMetadata.structuredFacts.merge(fact.structuredFacts) { current, _ in current }
+        }
         let shouldInferLengthDetail = copy.detailCategory == .other
         if shouldInferLengthDetail {
             let length = GarmentLengthInferencePolicy.infer(

@@ -418,6 +418,7 @@ struct MusinsaProductMetadataParser {
         let stockStatusRawValue = data.isOutOfStock == true
             ? ProductStockStatus.outOfStock.rawValue
             : ProductStockStatus.unknown.rawValue
+        let structureFact = retailerProductStructureFact(from: data, sourcePath: sourcePath)
 
         return ProductMetadata(
             styleNo: data.styleNo,
@@ -440,6 +441,7 @@ struct MusinsaProductMetadataParser {
             categoryDepth3Name: sourcePath.depth3,
             categoryDepth4Code: data.category?.categoryDepth4Code,
             categoryDepth4Name: sourcePath.depth4,
+            structuredFacts: structureFact?.structuredFacts ?? [:],
             sizeType: data.sizeType,
             genderCodes: data.genders ?? data.sex ?? [],
             labelNames: data.labels?.map(\.name) ?? [],
@@ -460,6 +462,59 @@ struct MusinsaProductMetadataParser {
             seasonYear: data.seasonYear,
             season: data.season
         )
+    }
+
+    /// MUSINSA's detail response is the retailer contract for a concrete
+    /// clothing offer. It forwards only positive composite evidence; listing
+    /// identity, generic goods metadata, and a category never infer SINGLE.
+    private static func retailerProductStructureFact(
+        from data: MusinsaProductDetailResponse.DataBody,
+        sourcePath: SourceCategoryPath
+    ) -> RetailerProductStructureFact? {
+        let nameSource = "musinsa_product_detail"
+        if let composite = RetailerProductStructureFact.explicitCompositeRetailerText(
+            data.goodsNm,
+            source: nameSource,
+            evidenceField: "goods_name"
+        ) {
+            return composite
+        }
+
+        let labels = data.labels?.map(\.name).joined(separator: " ") ?? ""
+        if let composite = RetailerProductStructureFact.explicitCompositeRetailerText(
+            labels,
+            source: "musinsa_product_labels",
+            evidenceField: "official_labels"
+        ) {
+            return composite
+        }
+
+        if let contents = data.goodsContents,
+           let composite = RetailerProductStructureFact.explicitCompositeRetailerText(
+                contents,
+                source: "musinsa_product_detail",
+                evidenceField: "goods_contents"
+           ) {
+            return composite
+        }
+
+        let officialCategory = sourcePath.depths
+            .joined(separator: " ")
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
+        if officialCategory.contains("상하의세트") {
+            return RetailerProductStructureFact(
+                structure: .set,
+                source: "musinsa_official_category",
+                evidence: "official_category:top_bottom_set"
+            )
+        }
+
+        // `goodsNo`, `goodsType`, option kind, and the existence of a size
+        // selector identify a purchasable listing only. They do not prove that
+        // the listing contains exactly one garment, so they intentionally
+        // leave product_structure absent/UNKNOWN.
+        return nil
     }
 
     private static func preferredProductName(localized: String, english: String?) -> String {
@@ -556,6 +611,7 @@ private struct MusinsaProductDetailResponse: Decodable {
         let goodsNo: Int?
         let goodsNm: String
         let goodsNmEng: String?
+        let goodsType: String?
         let styleNo: String?
         let sex: [String]?
         let brand: String?
@@ -578,6 +634,7 @@ private struct MusinsaProductDetailResponse: Decodable {
         let goodsReview: GoodsReview?
         let sizeType: String?
         let isUseSize: Bool?
+        let optKindCd: String?
         let labels: [Label]?
         let genders: [String]?
         let isOutOfStock: Bool?

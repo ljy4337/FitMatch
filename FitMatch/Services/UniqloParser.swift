@@ -650,6 +650,12 @@ struct UniqloProductMetadataParser {
             productID: resolved.productID,
             productIDWithColorCode: resolved.productIDWithColorCode
         )
+        let productStructureFact = embeddedProductStructureFact(
+            from: resolved.html,
+            productID: resolved.productID,
+            productIDWithColorCode: resolved.productIDWithColorCode,
+            productName: productName
+        )
         let sourcePath = categoryPath(
             productGroupObject: productGroupObject,
             breadcrumb: breadcrumb,
@@ -696,6 +702,11 @@ struct UniqloProductMetadataParser {
             ?? sourcePath.gender.map { [$0] }
             ?? genderCodes(from: breadcrumb + htmlBreadcrumb)
 
+        var structuredFacts = productTypeKr.map { ["product_type_kr": $0] } ?? [:]
+        if let productStructureFact {
+            structuredFacts.merge(productStructureFact.structuredFacts) { current, _ in current }
+        }
+
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
             sourceCategoryPath: sourcePath.fullPath,
@@ -712,7 +723,7 @@ struct UniqloProductMetadataParser {
             categoryDepth3Name: sourcePath.depth3,
             categoryDepth4Code: sourcePath.code4,
             categoryDepth4Name: sourcePath.depth4,
-            structuredFacts: productTypeKr.map { ["product_type_kr": $0] } ?? [:],
+            structuredFacts: structuredFacts,
             genderCodes: genderCodes,
             imageURLStrings: [imageURLString].compactMap { $0 },
             normalPrice: priceInfo.normalPrice,
@@ -989,6 +1000,114 @@ struct UniqloProductMetadataParser {
         productID: String,
         productIDWithColorCode: String
     ) -> String? {
+        guard let selectedProduct = selectedHydrationProduct(
+            from: html,
+            productID: productID,
+            productIDWithColorCode: productIDWithColorCode
+        ), let rawValue = selectedProduct["productTypeKr"] as? String,
+              !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return rawValue
+    }
+
+    /// Captures only a provider-declared structure or explicit composite text
+    /// in the selected retailer PDP. PDP identity selects the record, but it
+    /// is not cardinality evidence.
+    private func embeddedProductStructureFact(
+        from html: String,
+        productID: String,
+        productIDWithColorCode: String,
+        productName: String
+    ) -> RetailerProductStructureFact? {
+        let product = selectedHydrationProduct(
+            from: html,
+            productID: productID,
+            productIDWithColorCode: productIDWithColorCode
+        )
+
+        if let product,
+           let declared = declaredProductStructure(from: product) {
+            return declared
+        }
+
+        let textFields: [(String, String?)] = [
+            ("pdp_product_name", productName),
+            ("pdp_entity_name", product.flatMap { stringValue($0["name"]) }),
+            ("pdp_long_description", product.flatMap { stringValue($0["longDescription"]) }),
+            ("pdp_description", product.flatMap { stringValue($0["description"]) }),
+            ("pdp_short_description", product.flatMap { stringValue($0["shortDescription"]) })
+        ]
+        for (field, value) in textFields {
+            guard let value,
+                  let fact = RetailerProductStructureFact.explicitCompositeRetailerText(
+                    value,
+                    source: "uniqlo_pdp_entity",
+                    evidenceField: field
+                  ) else {
+                continue
+            }
+            return fact
+        }
+        return nil
+    }
+
+    private func declaredProductStructure(
+        from product: [String: Any]
+    ) -> RetailerProductStructureFact? {
+        let textFields = [
+            "productStructure", "product_structure", "bundleType", "bundle_type"
+        ]
+        for field in textFields {
+            guard let raw = stringValue(product[field])?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased(), !raw.isEmpty else {
+                continue
+            }
+            let structure: RetailerProductStructure?
+            switch raw {
+            case "single", "single_item", "single-item", "one":
+                structure = .single
+            case "set", "bundle", "kit":
+                structure = .set
+            case "multipack", "multi_pack", "multi-pack", "pack":
+                structure = .multipack
+            case "unknown":
+                structure = .unknown
+            default:
+                structure = nil
+            }
+            if let structure {
+                return RetailerProductStructureFact(
+                    structure: structure,
+                    source: "uniqlo_pdp_entity",
+                    evidence: "\(field):provider_declared"
+                )
+            }
+        }
+
+        if let isSet = product["isSet"] as? Bool, isSet {
+            return RetailerProductStructureFact(
+                structure: .set,
+                source: "uniqlo_pdp_entity",
+                evidence: "isSet:true"
+            )
+        }
+        if let packCount = intValue(product["packCount"]), packCount > 1 {
+            return RetailerProductStructureFact(
+                structure: .multipack,
+                source: "uniqlo_pdp_entity",
+                evidence: "packCount:provider_gt_1"
+            )
+        }
+        return nil
+    }
+
+    private func selectedHydrationProduct(
+        from html: String,
+        productID: String,
+        productIDWithColorCode: String
+    ) -> [String: Any]? {
         guard let json = firstMatch(
             in: html,
             pattern: #"window\.__PRELOADED_STATE__\s*=\s*(\{.*?\})\s*;?\s*</script>"#
@@ -1023,20 +1142,13 @@ struct UniqloProductMetadataParser {
                 || candidate.key.hasPrefix(normalizedVariantID + "-")
                 || candidate.productID == normalizedVariantID
         }
-        let selectedProduct: [String: Any]
         if exactMatches.count == 1 {
-            selectedProduct = exactMatches[0].product
+            return exactMatches[0].product
         } else if exactMatches.isEmpty, candidates.count == 1 {
-            selectedProduct = candidates[0].product
+            return candidates[0].product
         } else {
             return nil
         }
-
-        guard let rawValue = selectedProduct["productTypeKr"] as? String,
-              !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return nil
-        }
-        return rawValue
     }
 
     private func htmlBreadcrumbItems(from html: String, productName: String) -> [String] {

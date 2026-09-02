@@ -2398,14 +2398,9 @@ extension ParsedProductInfo {
             guard !key.isEmpty, !value.isEmpty else { return }
             facts[key] = value
         }
-        let isExplicitSet = ParsedClosetClassification.isExplicitCompositeGarmentSet(productName)
-            || (source == "musinsa" && MusinsaUnsupportedProductPolicy.isTopBottomSet(
-                categoryDepth2Name: metadata.categoryDepth2Name
-                    ?? sourceCategoryDepth2
-            ))
-        if isExplicitSet {
-            structuredFacts["product_structure"] = "set"
-        }
+        // A replay only serializes retailer facts captured with its original
+        // observation. It must never turn a persisted display name into new
+        // observed retailer evidence.
         return FitMatchProductResolutionRequest(
             source: source,
             externalProductID: productID,
