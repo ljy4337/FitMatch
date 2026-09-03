@@ -17,6 +17,7 @@ declare
     authorization_definition text;
     readiness_definition text;
     recovery_definition text;
+    uniqlo_measurement_contract_count integer;
     is_security_definer boolean;
     ingress_proc regprocedure :=
         'fitmatch_vnext.ingest_product_observation(jsonb,uuid)'::regprocedure;
@@ -31,8 +32,32 @@ begin
        or to_regclass('fitmatch_vnext.product_ingestion_receipts') is null
        or to_regclass('fitmatch_vnext.source_classification_signals') is null
        or to_regclass('fitmatch_vnext.classification_signal_mappings') is null
-       or to_regclass('fitmatch_vnext.comparison_policies') is null then
+       or to_regclass('fitmatch_vnext.source_measurement_aliases') is null
+       or to_regclass('fitmatch_vnext.source_measurement_mappings') is null
+       or to_regclass('fitmatch_vnext.comparison_policies') is null
+       or to_regclass('fitmatch_catalog.current_product_classifications') is null then
         raise exception 'Required live-retailer contract tables are missing';
+    end if;
+
+    -- The iOS observation explicitly names `size_chart`; verify that the
+    -- deployed resolver can translate the current official UNIQLO raw codes
+    -- before replacing ingress. This is a provider contract guard, not a
+    -- product-specific mapping.
+    select count(distinct a.raw_code) into uniqlo_measurement_contract_count
+    from fitmatch_vnext.source_measurement_aliases a
+    join fitmatch_vnext.source_measurement_mappings m
+      on m.source_measurement_code = a.source_measurement_code
+     and m.is_active and m.is_verified
+    where a.source_code = 'uniqlo'
+      and a.parser_code = 'size_chart'
+      and a.raw_code in (
+        'body-width','shoulder-width','body-length-back',
+        'knit-body-length-front'
+      )
+      and a.is_active and a.is_verified;
+    if uniqlo_measurement_contract_count <> 4 then
+        raise exception 'UNIQLO size-chart measurement contract preimage mismatch: %',
+            uniqlo_measurement_contract_count;
     end if;
     if to_regprocedure('fitmatch_vnext.ingest_product_observation(jsonb,uuid)') is null
        or to_regprocedure('fitmatch_vnext.resolve_product_classification(text,text,boolean)') is null
@@ -549,7 +574,7 @@ stable
 set search_path = ''
 as $function$
 with automatic_mapping as (
-    select m.id, m.source_signal_id, m.audience_code,
+    select m.id, m.source_signal_id, m.audience_code, m.resolution_mode,
            m.garment_type_code, m.sleeve_length_code,
            m.lower_length_code, m.body_length_code,
            s.external_key, s.audience_code signal_audience_code,
@@ -557,8 +582,12 @@ with automatic_mapping as (
     from fitmatch_vnext.classification_signal_mappings m
     join fitmatch_vnext.source_classification_signals s on s.id = m.source_signal_id
     where m.id = p_mapping_id
-      and m.mapping_version = 'vnext-uniqlo-complete-path-20260902-v3'
-      and m.is_active and m.is_verified and m.resolution_mode = 'DIRECT'
+      and m.mapping_version in (
+          'vnext-uniqlo-complete-path-20260902-v3',
+          'vnext-uniqlo-product-required-envelope-20260903-v1'
+      )
+      and m.is_active and m.is_verified
+      and m.resolution_mode in ('DIRECT', 'PRODUCT_REQUIRED')
       and s.source_code = 'uniqlo' and s.signal_kind = 'CATEGORY' and s.is_active
 ), target as (
     select m.* from automatic_mapping m
@@ -572,7 +601,6 @@ with automatic_mapping as (
           where target_mapping.source_signal_id = m.source_signal_id
             and target_mapping.is_active and target_mapping.is_verified
             and target_mapping.id <> m.id
-            and target_mapping.resolution_mode = 'PRODUCT_REQUIRED'
       )
 ), peer_mappings as (
     select peer_mapping.*
@@ -590,8 +618,10 @@ with automatic_mapping as (
       on peer_mapping.source_signal_id = peer.id
      and peer_mapping.is_active and peer_mapping.is_verified
      and peer_mapping.audience_code in (peer.audience_code, 'ANY')
-     and coalesce(peer_mapping.mapping_version, '')
-         <> 'vnext-uniqlo-complete-path-20260902-v3'
+     and coalesce(peer_mapping.mapping_version, '') not in (
+         'vnext-uniqlo-complete-path-20260902-v3',
+         'vnext-uniqlo-product-required-envelope-20260903-v1'
+     )
 ), peer_summary as (
     select count(*) mapping_count,
            bool_and(resolution_mode = 'DIRECT') direct_only,
@@ -607,7 +637,7 @@ with automatic_mapping as (
                coalesce(body_length_code, '∅'))) tuple_value
     from peer_mappings
 ), target_tuple as (
-    select concat_ws('|', 'DIRECT',
+    select concat_ws('|', resolution_mode,
         coalesce(garment_type_code, '∅'),
         coalesce(sleeve_length_code, '∅'),
         coalesce(lower_length_code, '∅'),
@@ -616,7 +646,10 @@ with automatic_mapping as (
 )
 select exists (select 1 from target)
    and coalesce((select mapping_count from peer_summary), 0) > 0
-   and coalesce((select direct_only from peer_summary), false)
+   and (
+       coalesce((select direct_only from peer_summary), false)
+       or (select resolution_mode from target) = 'PRODUCT_REQUIRED'
+   )
    and coalesce((select tuple_count from peer_summary), 0) = 1
    and (select tuple_value from peer_summary) = (select tuple_value from target_tuple);
 $function$;
@@ -662,10 +695,13 @@ begin
          on m.source_signal_id = peer.id
          and m.is_active and m.is_verified
          and m.audience_code in (peer.audience_code, 'ANY')
-         and coalesce(m.mapping_version, '')
-             <> 'vnext-uniqlo-complete-path-20260902-v3'
+         and coalesce(m.mapping_version, '') not in (
+             'vnext-uniqlo-complete-path-20260902-v3',
+             'vnext-uniqlo-product-required-envelope-20260903-v1'
+         )
     ), eligible as (
         select t.id target_signal_id, t.audience_code target_audience_code,
+               min(m.resolution_mode) resolution_mode,
                min(m.garment_type_code) garment_type_code,
                min(m.sleeve_length_code) sleeve_length_code,
                min(m.lower_length_code) lower_length_code,
@@ -680,25 +716,39 @@ begin
           )
         group by t.id, t.audience_code
         having count(*) > 0
-          and bool_and(m.resolution_mode = 'DIRECT')
           and count(distinct concat_ws('|', m.resolution_mode,
               coalesce(m.garment_type_code, '∅'),
               coalesce(m.sleeve_length_code, '∅'),
               coalesce(m.lower_length_code, '∅'),
               coalesce(m.body_length_code, '∅'))) = 1
-          and bool_and(coalesce((fitmatch_vnext.classification_tuple_validation(
-              m.garment_type_code, 'SINGLE', t.audience_code,
-              m.sleeve_length_code, m.lower_length_code, m.body_length_code
-          ) ->> 'valid')::boolean, false))
+          and (
+              (
+                  bool_and(m.resolution_mode = 'DIRECT')
+                  and bool_and(coalesce((fitmatch_vnext.classification_tuple_validation(
+                      m.garment_type_code, 'SINGLE', t.audience_code,
+                      m.sleeve_length_code, m.lower_length_code, m.body_length_code
+                  ) ->> 'valid')::boolean, false))
+              )
+              or bool_and(m.resolution_mode = 'PRODUCT_REQUIRED')
+          )
     )
     insert into fitmatch_vnext.classification_signal_mappings (
         source_signal_id, audience_code, garment_type_code, resolution_mode,
         sleeve_length_code, lower_length_code, body_length_code, priority,
         is_verified, is_active, mapping_version, mapping_checksum
     )
-    select target_signal_id, target_audience_code, garment_type_code, 'DIRECT',
-           sleeve_length_code, lower_length_code, body_length_code, priority,
-           true, true, 'vnext-uniqlo-complete-path-20260902-v3', repeat('0',64)
+    select target_signal_id, target_audience_code,
+           case when resolution_mode = 'DIRECT' then garment_type_code end,
+           resolution_mode,
+           case when resolution_mode = 'DIRECT' then sleeve_length_code end,
+           case when resolution_mode = 'DIRECT' then lower_length_code end,
+           case when resolution_mode = 'DIRECT' then body_length_code end,
+           priority, true, true,
+           case resolution_mode
+             when 'DIRECT' then 'vnext-uniqlo-complete-path-20260902-v3'
+             else 'vnext-uniqlo-product-required-envelope-20260903-v1'
+           end,
+           repeat('0',64)
     from eligible;
 
     get diagnostics inserted_count = row_count;
@@ -729,7 +779,10 @@ begin
       and signal.source_code = 'uniqlo'
       and signal.signal_kind = 'CATEGORY'
       and signal.external_key = p_external_key
-      and mapping.mapping_version = 'vnext-uniqlo-complete-path-20260902-v3'
+      and mapping.mapping_version in (
+          'vnext-uniqlo-complete-path-20260902-v3',
+          'vnext-uniqlo-product-required-envelope-20260903-v1'
+      )
       and mapping.is_active
       and not fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current(mapping.id);
     get diagnostics revoked_count = row_count;
@@ -790,7 +843,10 @@ with recursive product_row as (
      and m.is_active and m.is_verified
      and (m.audience_code = 'ANY' or m.audience_code = p.audience_code)
      and (
-        coalesce(m.mapping_version, '') <> 'vnext-uniqlo-complete-path-20260902-v3'
+        coalesce(m.mapping_version, '') not in (
+            'vnext-uniqlo-complete-path-20260902-v3',
+            'vnext-uniqlo-product-required-envelope-20260903-v1'
+        )
         or fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current(m.id)
      )
 ), signal_ancestry(descendant_id, ancestor_id, depth) as (
@@ -1049,6 +1105,193 @@ grant execute on function fitmatch_vnext.product_readiness_with_context_v1(
     uuid, jsonb
 ) to service_role;
 
+-- Some already-verified exact-product classifications predate the vNext
+-- sleeve/body-axis contract. They remain valid server authority for the
+-- garment type, but must never be promoted directly when a required axis is
+-- absent. Build a small USER_EXPLICIT candidate set from independently
+-- verified provider mappings instead. This is source/product agnostic and
+-- never changes the global REVIEW_REQUIRED decision.
+create or replace function fitmatch_vnext.exact_product_authority_recovery_options(
+    p_product_id uuid
+)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $function$
+with product_row as (
+    select p.*,
+           fitmatch_vnext.product_comparison_unit_decision(p.id) comparison_unit
+    from fitmatch_vnext.products p
+    where p.id = p_product_id
+      and p.classification_status = 'REVIEW_REQUIRED'
+), legacy_authority as (
+    select legacy.classification_id, legacy.detail_code garment_type_code,
+           gt.category_code, gt.comparison_policy_code, gt.display_name,
+           gt.sort_order
+    from product_row p
+    join fitmatch_catalog.current_product_classifications legacy
+      on lower(legacy.source) = lower(p.source_code)
+     and legacy.external_product_id = p.source_product_key
+    join fitmatch_vnext.garment_types gt
+      on gt.garment_type_code = legacy.detail_code
+     and gt.is_active
+    where lower(legacy.classification_status) = 'confirmed'
+      and coalesce(legacy.confidence, 0) = 1
+      and coalesce((legacy.evidence ->> 'exact_product_authority')::boolean,
+                   false)
+      and legacy.evidence ->> 'authority_status' = 'verified'
+      and legacy.comparison_family_code = gt.comparison_policy_code
+      and coalesce((p.comparison_unit ->> 'eligible')::boolean, false)
+), unique_authority as (
+    select min(classification_id::text)::uuid classification_id,
+           min(garment_type_code) garment_type_code,
+           min(category_code) category_code,
+           min(comparison_policy_code) comparison_policy_code,
+           min(display_name) display_name,
+           min(sort_order) sort_order
+    from legacy_authority
+    having count(*) > 0
+       and count(distinct garment_type_code) = 1
+       and count(distinct category_code) = 1
+       and count(distinct comparison_policy_code) = 1
+), provider_axis_templates as (
+    select distinct on (
+        coalesce(mapping.sleeve_length_code, '∅'),
+        coalesce(mapping.lower_length_code, '∅'),
+        coalesce(mapping.body_length_code, '∅')
+    )
+        mapping.id mapping_id,
+        mapping.mapping_checksum,
+        authority.*,
+        mapping.sleeve_length_code,
+        mapping.lower_length_code,
+        mapping.body_length_code
+    from unique_authority authority
+    join product_row p on true
+    join fitmatch_vnext.classification_signal_mappings mapping
+      on mapping.garment_type_code = authority.garment_type_code
+     and mapping.is_verified
+     and mapping.resolution_mode = 'DIRECT'
+    join fitmatch_vnext.source_classification_signals signal
+      on signal.id = mapping.source_signal_id
+     and signal.source_code = p.source_code
+    where coalesce((fitmatch_vnext.comparison_unit_tuple_validation(
+        authority.garment_type_code,
+        p.product_structure_code,
+        p.comparison_unit ->> 'measurement_contract',
+        p.audience_code,
+        mapping.sleeve_length_code,
+        mapping.lower_length_code,
+        mapping.body_length_code
+    ) ->> 'valid')::boolean, false)
+    order by coalesce(mapping.sleeve_length_code, '∅'),
+             coalesce(mapping.lower_length_code, '∅'),
+             coalesce(mapping.body_length_code, '∅'),
+             mapping.is_active desc, mapping.priority desc, mapping.id
+), fingerprinted as (
+    select template.*,
+           encode(extensions.digest(concat_ws('|',
+               p.id::text,
+               p.input_fingerprint,
+               p.evidence_fingerprint,
+               p.resolver_version,
+               template.classification_id::text,
+               template.mapping_id::text,
+               template.mapping_checksum,
+               template.category_code,
+               template.garment_type_code,
+               coalesce(template.sleeve_length_code, '∅'),
+               coalesce(template.lower_length_code, '∅'),
+               coalesce(template.body_length_code, '∅'),
+               template.comparison_policy_code,
+               'fitmatch-vnext-recovery-candidates-v3-exact-product'
+           ), 'sha256'), 'hex') candidate_fingerprint
+    from provider_axis_templates template
+    join product_row p on true
+), aggregate_value as (
+    select count(*)::integer candidate_count,
+           count(distinct coalesce(sleeve_length_code, '∅'))::integer
+               sleeve_count,
+           count(distinct coalesce(lower_length_code, '∅'))::integer
+               lower_count,
+           count(distinct coalesce(body_length_code, '∅'))::integer
+               body_count,
+           min(category_code) category_code,
+           min(garment_type_code) garment_type_code,
+           min(comparison_policy_code) comparison_policy_code,
+           coalesce(jsonb_agg(jsonb_build_object(
+               'candidate_id', candidate_fingerprint,
+               'candidate_fingerprint', candidate_fingerprint,
+               'display_name', display_name,
+               'category_code', category_code,
+               'garment_type_code', garment_type_code,
+               'sleeve_length_code', sleeve_length_code,
+               'lower_length_code', lower_length_code,
+               'body_length_code', body_length_code,
+               'comparison_policy_code', comparison_policy_code
+           ) order by sort_order, garment_type_code,
+               coalesce(sleeve_length_code, '∅'),
+               coalesce(lower_length_code, '∅'),
+               coalesce(body_length_code, '∅')), '[]'::jsonb) candidates,
+           encode(extensions.digest(coalesce(string_agg(
+               candidate_fingerprint, E'\n' order by candidate_fingerprint
+           ), ''), 'sha256'), 'hex') candidate_set_hash
+    from fingerprinted
+)
+select jsonb_build_object(
+    'recoverability', case when a.candidate_count between 1 and 3
+        then 'RECOVERABLE' else 'UNRECOVERABLE' end,
+    'unrecoverable_reason', case
+        when a.candidate_count = 0 then 'NO_EXACT_PRODUCT_AXIS_CANDIDATE'
+        when a.candidate_count > 3 then 'EXACT_PRODUCT_CANDIDATE_SET_NOT_BOUNDED'
+        else null end,
+    'fixed_facts', case when a.candidate_count between 1 and 3 then
+        jsonb_strip_nulls(jsonb_build_object(
+            'audience_code', p.audience_code,
+            'product_structure_code', p.product_structure_code,
+            'category_code', a.category_code,
+            'garment_type_code', a.garment_type_code,
+            'sleeve_length_code', case when a.sleeve_count = 1
+                then (a.candidates -> 0 ->> 'sleeve_length_code') end,
+            'lower_length_code', case when a.lower_count = 1
+                then (a.candidates -> 0 ->> 'lower_length_code') end,
+            'body_length_code', case when a.body_count = 1
+                then (a.candidates -> 0 ->> 'body_length_code') end,
+            'comparison_policy_code', a.comparison_policy_code
+        )) else jsonb_strip_nulls(jsonb_build_object(
+            'audience_code', p.audience_code,
+            'product_structure_code', p.product_structure_code
+        )) end,
+    'unknown_fields', case when a.candidate_count between 1 and 3 then
+        (select coalesce(jsonb_agg(field_name order by field_order), '[]'::jsonb)
+         from (values
+             ('sleeve_length', 1, a.sleeve_count > 1),
+             ('lower_length', 2, a.lower_count > 1),
+             ('body_length', 3, a.body_count > 1)
+         ) fields(field_name, field_order, is_unknown)
+         where is_unknown)
+        else '[]'::jsonb end,
+    'candidates', case when a.candidate_count between 1 and 3
+        then a.candidates else '[]'::jsonb end,
+    'candidate_count', case when a.candidate_count between 1 and 3
+        then a.candidate_count else 0 end,
+    'candidate_set_hash', case when a.candidate_count between 1 and 3
+        then a.candidate_set_hash end,
+    'candidate_contract_version',
+        'fitmatch-vnext-recovery-candidates-v3-exact-product',
+    'authority_source', 'VERIFIED_EXACT_PRODUCT_SERVER_AUTHORITY'
+)
+from aggregate_value a
+cross join product_row p;
+$function$;
+
+revoke all on function fitmatch_vnext.exact_product_authority_recovery_options(uuid)
+    from public, anon, authenticated;
+grant execute on function fitmatch_vnext.exact_product_authority_recovery_options(uuid)
+    to service_role;
+
 -- Preserve the existing bounded USER_EXPLICIT recovery protocol while
 -- replacing its obsolete cardinality-only precondition. This migration first
 -- verifies the deployed v1 body and then changes only the structure gate and
@@ -1105,8 +1348,46 @@ begin
         'fitmatch-vnext-recovery-candidates-v1',
         'fitmatch-vnext-recovery-candidates-v2-comparison-unit'
     );
+    new_definition := replace(
+        new_definition,
+        '    if recoverability_value <> ''RECOVERABLE'' then',
+        E'    if recoverability_value <> ''RECOVERABLE'' then\n'
+        || E'        exact_fallback_value := fitmatch_vnext.'
+        || E'exact_product_authority_recovery_options(product_row.id);\n'
+        || E'        if exact_fallback_value ->> ''recoverability'' = '
+        || E'''RECOVERABLE'' then\n'
+        || E'            recoverability_value := ''RECOVERABLE'';\n'
+        || E'            unrecoverable_reason_value := null;\n'
+        || E'            candidates_value := exact_fallback_value -> '
+        || E'''candidates'';\n'
+        || E'            candidate_count_value := coalesce('
+        || E'(exact_fallback_value ->> ''candidate_count'')::integer, 0);\n'
+        || E'            candidate_set_hash_value := exact_fallback_value ->> '
+        || E'''candidate_set_hash'';\n'
+        || E'            fixed_facts_value := exact_fallback_value -> '
+        || E'''fixed_facts'';\n'
+        || E'            unknown_fields_value := exact_fallback_value -> '
+        || E'''unknown_fields'';\n'
+        || E'            contract_version_value := exact_fallback_value ->> '
+        || E'''candidate_contract_version'';\n'
+        || E'        end if;\n'
+        || E'    end if;\n\n'
+        || E'    if recoverability_value <> ''RECOVERABLE'' then'
+    );
+    new_definition := replace(
+        new_definition,
+        '    current_decision jsonb;',
+        E'    current_decision jsonb;\n    exact_fallback_value jsonb;'
+    );
+    new_definition := replace(
+        new_definition,
+        '    contract_version_value constant text :=',
+        '    contract_version_value text :='
+    );
     if position('comparison_unit_tuple_validation' in new_definition) = 0
-       or position('PRODUCT_COMPARISON_UNIT_NOT_ELIGIBLE' in new_definition) = 0 then
+       or position('PRODUCT_COMPARISON_UNIT_NOT_ELIGIBLE' in new_definition) = 0
+       or position('exact_product_authority_recovery_options' in new_definition) = 0
+       or position('exact_fallback_value jsonb' in new_definition) = 0 then
         raise exception 'Unable to amend classification_recovery_options';
     end if;
     execute new_definition;
@@ -2021,6 +2302,14 @@ begin
                     nullif(btrim(size_value ->> 'parser_code'), ''),
                     nullif(btrim(variant_value ->> 'parser_code'), ''),
                     nullif(btrim(p_payload -> 'structured_facts' ->> 'measurement_parser_code'), ''),
+                    (
+                        select case when count(distinct alias.parser_code) = 1
+                            then min(alias.parser_code) end
+                        from fitmatch_vnext.source_measurement_aliases alias
+                        where alias.source_code = source_value
+                          and alias.raw_code = raw_code_value
+                          and alias.is_active and alias.is_verified
+                    ),
                     default_parser_value,
                     'ingestion_unmapped'
                 );
@@ -2226,8 +2515,10 @@ revoke all on function public.fitmatch_vnext_ingest_product_observation(jsonb,uu
 grant execute on function public.fitmatch_vnext_ingest_product_observation(jsonb,uuid)
     to service_role;
 
--- Only immutable, complete official paths may add audience-scoped DIRECT
--- authority. No parent pointer is used as proof and no ANY mapping is created.
+-- Only immutable, complete official paths may add audience-scoped authority.
+-- A unique DIRECT tuple may be copied as DIRECT; a unanimously
+-- PRODUCT_REQUIRED peer set may copy only that recovery envelope with no
+-- semantic tuple. No parent pointer alone is proof and no ANY mapping is made.
 do $backfill_complete_uniqlo_authority$
 declare
     signal_row record;
@@ -2372,6 +2663,27 @@ begin
            'fitmatch_vnext.product_readiness_with_context_v1(uuid,jsonb)'::regprocedure,
            'EXECUTE') then
         raise exception 'Live-retailer wrapper ACL postflight failed';
+    end if;
+    if has_function_privilege('public',
+           'fitmatch_vnext.exact_product_authority_recovery_options(uuid)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('anon',
+           'fitmatch_vnext.exact_product_authority_recovery_options(uuid)'::regprocedure,
+           'EXECUTE')
+       or has_function_privilege('authenticated',
+           'fitmatch_vnext.exact_product_authority_recovery_options(uuid)'::regprocedure,
+           'EXECUTE')
+       or not has_function_privilege('service_role',
+           'fitmatch_vnext.exact_product_authority_recovery_options(uuid)'::regprocedure,
+           'EXECUTE')
+       or position('exact_product_authority_recovery_options' in pg_get_functiondef(
+           'fitmatch_vnext.classification_recovery_options(uuid)'::regprocedure
+       )) = 0
+       or position('fitmatch-vnext-recovery-candidates-v3-exact-product'
+           in pg_get_functiondef(
+               'fitmatch_vnext.classification_recovery_options(uuid)'::regprocedure
+           )) = 0 then
+        raise exception 'Exact-product bounded recovery postflight failed';
     end if;
     if not (select p.prosecdef from pg_proc p
             where p.oid = 'fitmatch_vnext.authorize_comparison_with_context(uuid,uuid,uuid,boolean,jsonb)'::regprocedure)

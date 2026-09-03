@@ -1,6 +1,14 @@
 import XCTest
 
 final class FitMatchLiveUserJourneyUITests: XCTestCase {
+    private struct ClosetRegistrationCase {
+        let provider: String
+        let group: String
+        let productID: String
+        let productName: String
+        let url: String
+    }
+
     private struct ThirtyPairCase: Decodable {
         let brand: String
         let referenceProductID: String
@@ -164,6 +172,51 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
             )
         }
         XCTAssertEqual(completed, 30)
+    }
+
+    /// Live retailer regression for the actual Closet link-registration UI.
+    /// The list is deliberately balanced at five upper and five lower garments
+    /// per provider, and every item has an official retailer size table.
+    /// `FITMATCH_CLOSET30_START_INDEX` lets a diagnosed live failure resume at
+    /// the interrupted item without weakening or relabelling earlier results.
+    @MainActor
+    func testLiveThirtyRetailerClosetRegistrations() throws {
+        continueAfterFailure = false
+        executionTimeAllowance = 3_600
+        let cases = thirtyClosetRegistrationCases
+        XCTAssertEqual(cases.count, 30)
+        XCTAssertEqual(Set(cases.map { "\($0.provider):\($0.productID)" }).count, 30)
+        for provider in ["MUSINSA", "UNIQLO", "ZARA"] {
+            let providerCases = cases.filter { $0.provider == provider }
+            XCTAssertEqual(providerCases.count, 10)
+            XCTAssertEqual(providerCases.filter { $0.group == "상의" }.count, 5)
+            XCTAssertEqual(providerCases.filter { $0.group == "하의" }.count, 5)
+        }
+
+        let requestedStart = Int(
+            ProcessInfo.processInfo.environment["FITMATCH_CLOSET30_START_INDEX"] ?? "1"
+        ) ?? 1
+        let startIndex = min(max(requestedStart, 1), cases.count)
+        let requestedEnd = Int(
+            ProcessInfo.processInfo.environment["FITMATCH_CLOSET30_END_INDEX"]
+                ?? String(cases.count)
+        ) ?? cases.count
+        let endIndex = min(max(requestedEnd, startIndex), cases.count)
+
+        for (offset, testCase) in cases.enumerated()
+            .dropFirst(startIndex - 1)
+            .prefix(endIndex - startIndex + 1) {
+            let index = offset + 1
+            let uiMessage = try addClosetReference(
+                url: testCase.url,
+                expectedProductText: productTextProbe(testCase.productName)
+            )
+            print(
+                "FITMATCH_CLOSET30_PASS index=\(index) provider=\(testCase.provider) "
+                    + "group=\(testCase.group) product=\(testCase.productID) "
+                    + "ui_message=\(uiMessage)"
+            )
+        }
     }
 
     @MainActor
@@ -413,7 +466,8 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
         dismissComparisonSheetIfNeeded()
     }
 
-    private func addClosetReference(url: String, expectedProductText: String) throws {
+    @discardableResult
+    private func addClosetReference(url: String, expectedProductText: String) throws -> String {
         app.activate()
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 8))
         app.buttons["새 작업"].tap()
@@ -427,25 +481,73 @@ final class FitMatchLiveUserJourneyUITests: XCTestCase {
         urlField.typeText(url)
         app.buttons["상품 정보 불러오기"].tap()
 
-        let expectedProduct = app.staticTexts.matching(
-            NSPredicate(format: "label CONTAINS[c] %@", expectedProductText)
-        ).firstMatch
+        let loadedProductName = app.staticTexts["closet.loadedProductName"]
         let loadError = app.staticTexts.matching(
             NSPredicate(format: "label CONTAINS[c] %@", "불러오지 못")
         ).firstMatch
         XCTAssertTrue(
-            waitForEither(expectedProduct, loadError, timeout: 240),
+            waitForEither(loadedProductName, loadError, timeout: 240),
             "상품 분석이 제한 시간 안에 완료되어야 합니다."
         )
         if loadError.exists {
             capture(name: "closet-load-error-\(expectedProductText)")
             XCTFail("상품 링크 내 옷장 추가가 실패했습니다: \(loadError.label)")
         }
+        XCTAssertTrue(
+            loadedProductName.label.localizedCaseInsensitiveContains(expectedProductText),
+            "요청한 상품과 다른 상품이 열렸습니다: \(loadedProductName.label)"
+        )
 
         tapHittableButton(named: "다음", timeout: 10)
         tapHittableButton(named: "보유한 옷으로 등록", timeout: 10)
+        let successToast = app.staticTexts.matching(
+            NSPredicate(format: "label == %@", "내 옷장에 추가했어요.")
+        ).firstMatch
+        XCTAssertTrue(
+            successToast.waitForExistence(timeout: 8),
+            "등록 완료 시 사용자에게 실제 성공 문구를 보여줘야 합니다."
+        )
+        let uiMessage = successToast.label
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 10))
         capture(name: "closet-saved-\(expectedProductText)")
+        return uiMessage
+    }
+
+    private var thirtyClosetRegistrationCases: [ClosetRegistrationCase] {
+        [
+            .init(provider: "MUSINSA", group: "하의", productID: "3346165", productName: "윈드브레이커 와이드 밴딩 팬츠", url: "https://www.musinsa.com/products/3346165"),
+            .init(provider: "MUSINSA", group: "하의", productID: "4818151", productName: "seersucker stripe pants", url: "https://www.musinsa.com/products/4818151"),
+            .init(provider: "MUSINSA", group: "하의", productID: "3774997", productName: "우먼즈 레귤러 핏 데님 팬츠", url: "https://www.musinsa.com/products/3774997"),
+            .init(provider: "MUSINSA", group: "하의", productID: "6908818", productName: "트레일 기어 팬츠", url: "https://www.musinsa.com/products/6908818"),
+            .init(provider: "MUSINSA", group: "하의", productID: "6908820", productName: "트레일 기어 팬츠", url: "https://www.musinsa.com/products/6908820"),
+            .init(provider: "MUSINSA", group: "상의", productID: "4341120", productName: "클래식 반소매 티셔츠", url: "https://www.musinsa.com/products/4341120"),
+            .init(provider: "MUSINSA", group: "상의", productID: "4971043", productName: "메이크 아트 반소매 티셔츠", url: "https://www.musinsa.com/products/4971043"),
+            .init(provider: "MUSINSA", group: "상의", productID: "5922490", productName: "Cotton Short Sleeve Henley Tee", url: "https://www.musinsa.com/products/5922490"),
+            .init(provider: "MUSINSA", group: "상의", productID: "6590793", productName: "헨리넥 오버핏 반팔 티셔츠", url: "https://www.musinsa.com/products/6590793"),
+            .init(provider: "MUSINSA", group: "상의", productID: "6595807", productName: "스트라이프 릴렉스드 긴소매 티셔츠", url: "https://www.musinsa.com/products/6595807"),
+
+            .init(provider: "UNIQLO", group: "하의", productID: "E488397", productName: "EZY배럴진", url: "https://www.uniqlo.com/kr/ko/products/E488397-000"),
+            .init(provider: "UNIQLO", group: "하의", productID: "E488630", productName: "EZY배럴진", url: "https://www.uniqlo.com/kr/ko/products/E488630-000"),
+            .init(provider: "UNIQLO", group: "하의", productID: "E488684", productName: "스트레이트진", url: "https://www.uniqlo.com/kr/ko/products/E488684-000"),
+            .init(provider: "UNIQLO", group: "하의", productID: "E489563", productName: "기어쇼트팬츠", url: "https://www.uniqlo.com/kr/ko/products/E489563-000"),
+            .init(provider: "UNIQLO", group: "하의", productID: "E483512", productName: "데님쇼트팬츠", url: "https://www.uniqlo.com/kr/ko/products/E483512-000"),
+            .init(provider: "UNIQLO", group: "상의", productID: "E491086", productName: "메리노블렌드헨리넥스웨터", url: "https://www.uniqlo.com/kr/ko/products/E491086-000"),
+            .init(provider: "UNIQLO", group: "상의", productID: "E491294", productName: "코튼셔츠", url: "https://www.uniqlo.com/kr/ko/products/E491294-000"),
+            .init(provider: "UNIQLO", group: "상의", productID: "E491297", productName: "코튼셔츠", url: "https://www.uniqlo.com/kr/ko/products/E491297-000"),
+            .init(provider: "UNIQLO", group: "상의", productID: "E491380", productName: "옥스포드박시셔츠", url: "https://www.uniqlo.com/kr/ko/products/E491380-000"),
+            .init(provider: "UNIQLO", group: "상의", productID: "E492123", productName: "데님릴렉스셔츠재킷", url: "https://www.uniqlo.com/kr/ko/products/E492123-000"),
+
+            .init(provider: "ZARA", group: "하의", productID: "p08372248", productName: "배럴 팬츠", url: "https://www.zara.com/kr/ko/item-p08372248.html"),
+            .init(provider: "ZARA", group: "하의", productID: "p04026158", productName: "레귤러핏 치노 팬츠", url: "https://www.zara.com/kr/ko/item-p04026158.html"),
+            .init(provider: "ZARA", group: "하의", productID: "p01568383", productName: "울 - 리넨 수트 팬츠 AARON LEVINE X ZARA", url: "https://www.zara.com/kr/ko/item-p01568383.html"),
+            .init(provider: "ZARA", group: "하의", productID: "p01608240", productName: "포플린 배럴 팬츠", url: "https://www.zara.com/kr/ko/item-p01608240.html"),
+            .init(provider: "ZARA", group: "하의", productID: "p06861011", productName: "플리츠 치노 팬츠", url: "https://www.zara.com/kr/ko/item-p06861011.html"),
+            .init(provider: "ZARA", group: "상의", productID: "p03431633", productName: "리오셀 반소매 티셔츠", url: "https://www.zara.com/kr/ko/item-p03431633.html"),
+            .init(provider: "ZARA", group: "상의", productID: "p08054344", productName: "코튼 린넨 헨리넥 티셔츠", url: "https://www.zara.com/kr/ko/item-p08054344.html"),
+            .init(provider: "ZARA", group: "상의", productID: "p01887320", productName: "롱 슬리브 티셔츠", url: "https://www.zara.com/kr/ko/item-p01887320.html"),
+            .init(provider: "ZARA", group: "상의", productID: "p01887423", productName: "스트라이프 자카드 티셔츠", url: "https://www.zara.com/kr/ko/item-p01887423.html"),
+            .init(provider: "ZARA", group: "상의", productID: "p00264141", productName: "플루이드 레터링 티셔츠", url: "https://www.zara.com/kr/ko/item-p00264141.html")
+        ]
     }
 
     private func deleteClosetItem(containing productText: String) throws {

@@ -150,6 +150,62 @@ struct ZARAParserPhase1_5Tests {
         #expect(info.detailCategory == .shirt)
     }
 
+    @Test func officialPDPCompositionCreatesMixedSetRetailerFact() throws {
+        let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p04166166.html?v1=545490346"))
+        let html = productHTML(
+            internalProductID: "545486853",
+            styleNumber: "04166166",
+            catentryID: "545490346",
+            section: "MAN",
+            family: "세트",
+            subfamily: "SET",
+            productName: "테일러드 룩",
+            productDescription: "공식 구성: 재킷 + 팬츠 세트"
+        )
+        let identity = try #require(ZARAProductPageParser.identity(
+            requestedURL: url,
+            resolvedURL: url,
+            html: html
+        ))
+
+        let info = ZARAProductPageParser.parse(
+            html: html,
+            sourceURL: url,
+            identity: identity
+        )
+
+        #expect(info.productMetadata.structuredFacts["product_structure"] == "set")
+        #expect(info.productMetadata.structuredFacts["product_structure_source"] == "zara_pdp_structured_data")
+        #expect(info.productMetadata.structuredFacts["product_structure_evidence"] == "json_ld_description:explicit_mixed_garment_set")
+    }
+
+    @Test func ambiguousSetTitleDoesNotCreateMixedSetRetailerFact() throws {
+        let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p04166166.html?v1=545490346"))
+        let html = productHTML(
+            internalProductID: "545486853",
+            styleNumber: "04166166",
+            catentryID: "545490346",
+            section: "WOMAN",
+            family: "홈웨어",
+            subfamily: "LOUNGE",
+            productName: "라운지 세트"
+        )
+        let identity = try #require(ZARAProductPageParser.identity(
+            requestedURL: url,
+            resolvedURL: url,
+            html: html
+        ))
+
+        let info = ZARAProductPageParser.parse(
+            html: html,
+            sourceURL: url,
+            identity: identity
+        )
+
+        #expect(info.productMetadata.structuredFacts["product_structure"] == nil)
+        #expect(info.productMetadata.structuredFacts["product_structure_source"] == nil)
+    }
+
     @Test func URLVariantRequestsOfficialSizeGuideBeforeProductPage() async throws {
         let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p04166166.html?v1=545490346"))
         let html = productHTML(
@@ -1493,6 +1549,7 @@ struct ZARAParserPhase1_5Tests {
         family: String?,
         subfamily: String?,
         productName: String = "테스트 상품",
+        productDescription: String? = nil,
         additionalVariantIDs: [String] = []
     ) -> String {
         let familyField = family.map { ",\"family\":\"\($0)\"" } ?? ""
@@ -1502,9 +1559,10 @@ struct ZARAParserPhase1_5Tests {
                 #"{"@type":"Product","offers":{"url":"https://www.zara.com/kr/ko/item-p\#(styleNumber).html?v1=\#($0)"}}"#
             }
             .joined(separator: ",")
+        let descriptionField = productDescription.map { ",\"description\":\"\($0)\"" } ?? ""
         return """
         <html><head>
-        <script type="application/ld+json">{"@type":"ProductGroup","name":"\(productName)","productGroupID":"\(styleNumber)","hasVariant":[\(structuredVariants)]}</script>
+        <script type="application/ld+json">{"@type":"ProductGroup","name":"\(productName)"\(descriptionField),"productGroupID":"\(styleNumber)","hasVariant":[\(structuredVariants)]}</script>
         <script>zara.analyticsData = {"productId":\(internalProductID),"productRef":"\(styleNumber)-000","catentryId":\(catentryID),"section":"\(section)"\(familyField)\(subfamilyField)};</script>
         </head></html>
         """

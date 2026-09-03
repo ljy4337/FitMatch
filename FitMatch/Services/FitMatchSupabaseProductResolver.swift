@@ -161,6 +161,7 @@ nonisolated struct FitMatchProductResolutionResponse: Decodable, Equatable, Send
 
 nonisolated struct FitMatchProductObservationMeasurement: Encodable, Equatable, Sendable {
     let measurementIdentity: String
+    let parserCode: String
     let rawCode: String?
     let rawLabel: String
     let rawValue: Double
@@ -170,6 +171,7 @@ nonisolated struct FitMatchProductObservationMeasurement: Encodable, Equatable, 
 
     enum CodingKeys: String, CodingKey {
         case measurementIdentity = "measurement_identity"
+        case parserCode = "parser_code"
         case rawCode = "raw_code"
         case rawLabel = "raw_label"
         case rawValue = "raw_value"
@@ -2476,6 +2478,10 @@ extension ParsedProductInfo {
                     : "\(measurement.measurementCode.rawValue):\(measurementIndex)"
                 return FitMatchProductObservationMeasurement(
                     measurementIdentity: identity,
+                    parserCode: Self.observationMeasurementParserCode(
+                        sourceCode: resolution.source,
+                        methodSource: measurement.methodSource
+                    ),
                     rawCode: trimmedRawCode?.isEmpty == false ? trimmedRawCode : nil,
                     rawLabel: rawLabel,
                     rawValue: measurement.value,
@@ -2601,5 +2607,23 @@ extension ParsedProductInfo {
                 ]
             )
         )
+    }
+
+    /// The database resolves retailer-native measurement codes within the
+    /// provider parser contract. Keep this explicit in every observation;
+    /// relying on a provider-wide default is ambiguous as soon as a retailer
+    /// has more than one supported parser generation.
+    nonisolated private static func observationMeasurementParserCode(
+        sourceCode: String,
+        methodSource: String
+    ) -> String {
+        switch sourceCode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "musinsa": return "actual_size"
+        case "uniqlo": return "size_chart"
+        case "zara": return "zara_kr_size_measure_guide_v1"
+        default:
+            let value = methodSource.trimmingCharacters(in: .whitespacesAndNewlines)
+            return value.isEmpty ? "legacy_unknown" : value
+        }
     }
 }

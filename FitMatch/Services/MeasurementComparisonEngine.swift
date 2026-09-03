@@ -205,8 +205,9 @@ struct MeasurementComparisonEngine {
         var comparedItems: [MeasurementComparisonItem] = []
         for metric in sortedEvidence {
             guard seenCodes.insert(metric.measurementCode).inserted,
-                  let code = MeasurementCode(rawValue: metric.measurementCode),
-                  let kind = Self.measurementKind(for: code),
+                  let identity = Self.authorizedMeasurementIdentity(
+                    for: metric.measurementCode
+                  ),
                   metric.referenceValue.isFinite,
                   metric.targetValue.isFinite,
                   metric.difference.isFinite,
@@ -224,8 +225,8 @@ struct MeasurementComparisonEngine {
                 min(100, Int((100 - metric.absoluteDifference * 5).rounded()))
             )
             comparedItems.append(MeasurementComparisonItem(
-                kind: kind,
-                measurementCode: code,
+                kind: identity.kind,
+                measurementCode: identity.localCode,
                 displayTitle: nil,
                 productValue: metric.targetValue,
                 referenceValue: metric.referenceValue,
@@ -264,6 +265,50 @@ struct MeasurementComparisonEngine {
             expectedWeightSum: weightSum,
             usedWeightSum: weightSum
         )
+    }
+
+    /// vNext snapshots carry DB-authoritative canonical metric codes. Older
+    /// local records carry the more specific `MeasurementCode` raw values.
+    /// Scoring accepts both vocabularies without changing the server code that
+    /// is returned as immutable completion evidence.
+    static func authorizedMeasurementIdentity(
+        for code: String
+    ) -> (localCode: MeasurementCode, kind: MeasurementKind)? {
+        if let localCode = MeasurementCode(rawValue: code),
+           let kind = measurementKind(for: localCode) {
+            return (localCode, kind)
+        }
+
+        switch code {
+        case "back_length", "total_length":
+            return (.bodyLengthBackNeckToHem, .totalLength)
+        case "outseam":
+            return (.pantsOutseamWaistToHem, .totalLength)
+        case "chest_width":
+            return (.chestWidthPitToPit, .chest)
+        case "chest_circumference":
+            return (.chestCircumferenceGarment, .chest)
+        case "shoulder_width":
+            return (.shoulderWidthSeamToSeam, .shoulder)
+        case "sleeve_length":
+            return (.sleeveShoulderSeamToCuff, .sleeveLength)
+        case "front_rise":
+            return (.riseCrotchToWaistFront, .rise)
+        case "hem_width", "hem_circumference":
+            return (.hemWidthEdgeToEdge, .hem)
+        case "hip_width", "hip_circumference":
+            return (.hipWidthAtWidest, .hip)
+        case "thigh_width", "thigh_circumference":
+            return (.thighWidthCrotchToOuter, .thigh)
+        case "under_bust_width", "under_bust_circumference":
+            return (.underBustWidthEdgeToEdge, .underBust)
+        case "waist_width":
+            return (.waistWidthEdgeToEdge, .waist)
+        case "waist_circumference":
+            return (.waistCircumferenceGarment, .waist)
+        default:
+            return nil
+        }
     }
 
     func compare(

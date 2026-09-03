@@ -7,6 +7,94 @@ private final class FitMatchP0BundleToken {}
 
 @MainActor
 struct FitMatchP0ProductionPathTests {
+    // PATH-UNIQLO-AVAILABILITY-01 · Official L2 SKU inventory, not size-chart
+    // presence, is the retailer stock fact forwarded to ingestion.
+    @Test func p0UniqloL2InventoryIsJoinedByColorSizeAndPLD() throws {
+        let response = """
+        {
+          "status":"ok",
+          "result":{"l2s":[
+            {"l2Id":"m-65","color":{"displayCode":"65","name":"BLUE"},
+             "size":{"displayCode":"004","name":"M"},
+             "pld":{"displayCode":"000","name":"-"},"sales":true},
+            {"l2Id":"l-65","color":{"displayCode":"65","name":"BLUE"},
+             "size":{"displayCode":"005","name":"L"},
+             "pld":{"displayCode":"000","name":"-"},"sales":false},
+            {"l2Id":"m-69","color":{"displayCode":"69","name":"NAVY"},
+             "size":{"displayCode":"004","name":"M"},
+             "pld":{"displayCode":"000","name":"-"},"sales":false}
+          ]}
+        }
+        """
+        let stock = """
+        {"status":"ok","result":{
+          "m-65":{"statusCode":"IN_STOCK","quantity":95},
+          "l-65":{"statusCode":"STOCK_OUT","quantity":0},
+          "m-69":{"statusCode":"STOCK_OUT","quantity":0}
+        }}
+        """
+        let observedAt = Date(timeIntervalSince1970: 1_788_400_000)
+        let sizes = ["M", "L", "XL"].map {
+            ParsedProductSize(name: $0, measurements: GarmentMeasurements(chest: 50))
+        }
+
+        let resolved = try UniqloSizeAPIParser().applyingAvailability(
+            productData: Data(response.utf8),
+            stockData: Data(stock.utf8),
+            to: sizes,
+            colorDisplayCode: "065",
+            pldDisplayCode: "000",
+            observedAt: observedAt
+        )
+
+        #expect(resolved[0].availabilityStatus == "AVAILABLE")
+        #expect(resolved[0].availabilityObservedAt == observedAt)
+        #expect(resolved[0].availabilityValidUntil == observedAt.addingTimeInterval(15 * 60))
+        #expect(resolved[0].availabilityEvidence["provider_entity"] == "l2_stock")
+        #expect(resolved[0].availabilityEvidence["stock_quantity"] == "95")
+        #expect(resolved[1].availabilityStatus == "SOLD_OUT")
+        #expect(resolved[2].availabilityStatus == nil)
+    }
+
+    @Test func p0UniqloAmbiguousPLDInventoryRemainsUnknown() throws {
+        let response = """
+        {
+          "status":"ok",
+          "result":{"l2s":[
+            {"l2Id":"m-standard","color":{"displayCode":"65"},
+             "size":{"displayCode":"004","name":"M"},
+             "pld":{"displayCode":"000"},"sales":true},
+            {"l2Id":"m-long","color":{"displayCode":"65"},
+             "size":{"displayCode":"004","name":"M"},
+             "pld":{"displayCode":"001"},"sales":false}
+          ]}
+        }
+        """
+        let stock = """
+        {"status":"ok","result":{
+          "m-standard":{"statusCode":"IN_STOCK","quantity":10},
+          "m-long":{"statusCode":"STOCK_OUT","quantity":0}
+        }}
+        """
+        let input = [ParsedProductSize(name: "M", measurements: GarmentMeasurements(chest: 50))]
+        let unresolved = try UniqloSizeAPIParser().applyingAvailability(
+            productData: Data(response.utf8),
+            stockData: Data(stock.utf8),
+            to: input,
+            colorDisplayCode: "65"
+        )
+        let selected = try UniqloSizeAPIParser().applyingAvailability(
+            productData: Data(response.utf8),
+            stockData: Data(stock.utf8),
+            to: input,
+            colorDisplayCode: "65",
+            pldDisplayCode: "000"
+        )
+
+        #expect(unresolved[0].availabilityStatus == nil)
+        #expect(selected[0].availabilityStatus == "AVAILABLE")
+    }
+
     @Test func p0ExactProductCategoryChoiceDoesNotSpreadToSiblingProduct() {
         let sourcePath = "상의 > 기타 상의 > p0-(UUID().uuidString)"
         let selected = Product(

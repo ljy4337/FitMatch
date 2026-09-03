@@ -283,18 +283,24 @@ struct ZARAWebViewProductPageLoader: ZARAProductPageLoading {
 
 @MainActor
 private final class ZARAWebViewPageCaptureOperation: NSObject, WKNavigationDelegate {
+    /// Keep the browser session ephemeral, but reuse it for ZARA imports during
+    /// this app process. ZARA's normal interstitial sets short-lived cookies;
+    /// discarding them after every product made consecutive legitimate imports
+    /// look like unrelated new browsers and repeatedly trigger the challenge.
+    private static let sharedEphemeralDataStore = WKWebsiteDataStore.nonPersistent()
+
     private struct Snapshot: Decodable {
         let url: String
         let title: String
         let bodyExcerpt: String
         let analyticsScript: String
+        let analyticsJSON: String
         let jsonLD: [String]
     }
 
     private var webView: WKWebView?
     private var continuation: CheckedContinuation<ZARAProductPage, Error>?
     private var timeoutTask: Task<Void, Never>?
-    private var captureAttempts = 0
     private var requestedURL: URL?
 
     static func capture(url: URL) async throws -> ZARAProductPage {
@@ -311,16 +317,16 @@ private final class ZARAWebViewPageCaptureOperation: NSObject, WKNavigationDeleg
             try await withCheckedThrowingContinuation { continuation in
                 self.continuation = continuation
                 let configuration = WKWebViewConfiguration()
-                configuration.websiteDataStore = .nonPersistent()
+                configuration.websiteDataStore = Self.sharedEphemeralDataStore
                 configuration.defaultWebpagePreferences.allowsContentJavaScript = true
                 let webView = WKWebView(frame: .zero, configuration: configuration)
                 webView.navigationDelegate = self
                 self.webView = webView
                 timeoutTask = Task { @MainActor [weak self] in
-                    try? await Task.sleep(for: .seconds(25))
+                    try? await Task.sleep(for: .seconds(45))
                     self?.finish(.failure(ProductURLParserError.automaticParsingUnavailable))
                 }
-                webView.load(URLRequest(url: url, timeoutInterval: 25))
+                webView.load(URLRequest(url: url, timeoutInterval: 45))
             }
         } onCancel: {
             Task { @MainActor [weak self] in
@@ -399,6 +405,16 @@ private final class ZARAWebViewPageCaptureOperation: NSObject, WKNavigationDeleg
           analyticsScript: Array.from(document.scripts)
             .map(node => node.textContent || '')
             .find(text => /zara\.analyticsData\s*=\s*\{/.test(text)) || '',
+          analyticsJSON: (() => {
+            try {
+              const analytics = window.zara && window.zara.analyticsData;
+              return analytics && typeof analytics === 'object'
+                ? JSON.stringify(analytics)
+                : '';
+            } catch (_) {
+              return '';
+            }
+          })(),
           jsonLD: Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
             .map(node => node.textContent || '')
         }))();
@@ -417,15 +433,24 @@ private final class ZARAWebViewPageCaptureOperation: NSObject, WKNavigationDeleg
                 }
 
                 let visibleText = "\(snapshot.title) \(snapshot.bodyExcerpt)".lowercased()
-                guard !resolvedURL.absoluteString.lowercased().contains("bm-verify="),
-                      !visibleText.contains("access denied") else {
-                    self.finish(.failure(ProductURLParserError.automaticParsingUnavailable))
+                if resolvedURL.absoluteString.lowercased().contains("bm-verify=")
+                    || visibleText.contains("access denied") {
+                    // Let ZARA's ordinary browser interstitial finish on its
+                    // own. We do not click, solve, or bypass it; the same hard
+                    // The 45-second operation timeout remains the fail-closed end.
+                    self.retryOrFail()
                     return
                 }
 
                 var fragments: [String] = []
                 if !snapshot.analyticsScript.isEmpty {
                     fragments.append("<script>\(snapshot.analyticsScript)</script>")
+                } else if !snapshot.analyticsJSON.isEmpty {
+                    let safeAnalytics = snapshot.analyticsJSON.replacingOccurrences(
+                        of: "</script",
+                        with: "<\\/script"
+                    )
+                    fragments.append("<script>zara.analyticsData = \(safeAnalytics);</script>")
                 }
                 for rawJSON in snapshot.jsonLD {
                     let safeJSON = rawJSON.replacingOccurrences(of: "</script", with: "<\\/script")
@@ -452,11 +477,11 @@ private final class ZARAWebViewPageCaptureOperation: NSObject, WKNavigationDeleg
     }
 
     private func retryOrFail() {
-        captureAttempts += 1
-        guard captureAttempts < 5 else {
-            finish(.failure(ProductURLParserError.automaticParsingUnavailable))
-            return
-        }
+        // ZARA's JavaScript shell can finish its main-frame navigation several
+        // seconds before the official analytics/product payload is installed.
+        // Keep observing the same page until the operation's 45-second timeout
+        // decides the terminal failure; an arbitrary five-snapshot cutoff made
+        // valid product pages fail nondeterministically.
         scheduleCapture(after: .milliseconds(500))
     }
 
@@ -661,6 +686,12 @@ enum ZARAProductPageParser {
             let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
             return trimmed?.isEmpty == false ? trimmed : nil
         }
+        if let structureFact = retailerStructureFact(from: jsonLD) {
+            metadata.structuredFacts.merge(
+                structureFact.structuredFacts,
+                uniquingKeysWith: { _, retailerFact in retailerFact }
+            )
+        }
         metadata.genderCodes = [classification.gender.taxonomyCode]
         metadata.imageURLStrings = imageURL.map { [$0] } ?? []
         metadata.finalPrice = price
@@ -742,6 +773,46 @@ enum ZARAProductPageParser {
             if let dictionary = object as? [String: Any],
                string(dictionary["@type"])?.localizedCaseInsensitiveContains("product") == true {
                 return dictionary
+            }
+        }
+        return nil
+    }
+
+    /// ZARA structure evidence must come from an official PDP composition or
+    /// description field. The product title is intentionally excluded: names
+    /// such as "라운지 세트" do not prove that distinct garment components
+    /// are present.
+    private static func retailerStructureFact(
+        from jsonLD: [String: Any]?
+    ) -> RetailerProductStructureFact? {
+        guard let jsonLD else { return nil }
+
+        var evidence: [(field: String, value: String)] = []
+        if let description = string(jsonLD["description"]) {
+            evidence.append(("json_ld_description", description))
+        }
+        if let properties = jsonLD["additionalProperty"] as? [[String: Any]] {
+            for property in properties {
+                guard let name = string(property["name"]),
+                      let value = string(property["value"]) else { continue }
+                let normalizedName = name.folding(
+                    options: [.caseInsensitive, .diacriticInsensitive],
+                    locale: .current
+                ).lowercased()
+                guard ["composition", "component", "구성", "구성품"].contains(where: {
+                    normalizedName.contains($0)
+                }) else { continue }
+                evidence.append(("json_ld_additional_property", "\(name): \(value)"))
+            }
+        }
+
+        for item in evidence {
+            if let fact = RetailerProductStructureFact.explicitCompositeRetailerText(
+                item.value,
+                source: "zara_pdp_structured_data",
+                evidenceField: item.field
+            ) {
+                return fact
             }
         }
         return nil

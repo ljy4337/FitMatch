@@ -87,6 +87,38 @@ struct FitMatchVNextContractTests {
             == Set([fixture.sizeA, fixture.sizeB]))
     }
 
+    @Test func engineAcceptsEveryActiveServerCanonicalMetricCode() {
+        let expected: [(String, MeasurementKind)] = [
+            ("back_length", .totalLength),
+            ("chest_circumference", .chest),
+            ("chest_width", .chest),
+            ("front_rise", .rise),
+            ("hem_circumference", .hem),
+            ("hem_width", .hem),
+            ("hip_circumference", .hip),
+            ("hip_width", .hip),
+            ("outseam", .totalLength),
+            ("shoulder_width", .shoulder),
+            ("sleeve_length", .sleeveLength),
+            ("thigh_circumference", .thigh),
+            ("thigh_width", .thigh),
+            ("total_length", .totalLength),
+            ("under_bust_circumference", .underBust),
+            ("under_bust_width", .underBust),
+            ("waist_circumference", .waist),
+            ("waist_width", .waist)
+        ]
+
+        for (code, kind) in expected {
+            #expect(MeasurementComparisonEngine.authorizedMeasurementIdentity(
+                for: code
+            )?.kind == kind)
+        }
+        #expect(MeasurementComparisonEngine.authorizedMeasurementIdentity(
+            for: "not_a_server_metric"
+        )?.kind == nil)
+    }
+
     @Test func engineRejectsSnapshotCandidateSetMismatchBeforeScoring() throws {
         let fixture = ComparisonBeginFixture()
         let begin: VNextBeginComparisonDTO = try decode(
@@ -133,7 +165,7 @@ private struct ComparisonBeginFixture {
           "authorization":{
             "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
             "reason":\(reason),"excluded_measurement_codes":[],
-            "required_measurement_codes":["chest_width_pit_to_pit"],
+            "required_measurement_codes":["chest_width"],
             "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
             "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
           },
@@ -146,14 +178,14 @@ private struct ComparisonBeginFixture {
             "policy_snapshot":{
               "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1",
               "metrics":[{
-                "metric_mode":"CANONICAL","fitmatch_measurement_code":"chest_width_pit_to_pit",
+                "metric_mode":"CANONICAL","fitmatch_measurement_code":"chest_width",
                 "weight":1,"requirement_mode":"REQUIRED_ANY","priority":1,"is_active":true
               }]
             },
             "authorization_snapshot":{
               "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
               "reason":\(reason),"excluded_measurement_codes":[],
-              "required_measurement_codes":["chest_width_pit_to_pit"],
+              "required_measurement_codes":["chest_width"],
               "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
               "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
             },
@@ -188,7 +220,7 @@ private struct ComparisonBeginFixture {
           "availability":{"status":"AVAILABLE","observed_at":"2026-08-29T00:00:00Z",
             "valid_until":"2026-08-30T00:00:00Z","evidence_fingerprint":"stock-\(label)"},
           "comparison_measurements":[{
-            "measurement_code":"chest_width_pit_to_pit","reference_value":50,
+            "measurement_code":"chest_width","reference_value":50,
             "target_value":\(target),"difference":\(difference),
             "absolute_difference":\(difference),"unit_code":"CM","basis_code":"WIDTH",
             "weight":1,"requirement_mode":"REQUIRED_ANY","priority":1
@@ -196,7 +228,7 @@ private struct ComparisonBeginFixture {
           "authorization":{
             "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
             "reason":\(reason),"excluded_measurement_codes":[],
-            "required_measurement_codes":["chest_width_pit_to_pit"],
+            "required_measurement_codes":["chest_width"],
             "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
             "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
           }

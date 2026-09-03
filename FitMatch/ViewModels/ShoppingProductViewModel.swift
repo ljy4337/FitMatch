@@ -413,8 +413,10 @@ final class ShoppingProductViewModel: ObservableObject {
         sizeOptions = variant.sizes.enumerated().map { index, size in
             let parsedRecords = size.canonicalMeasurements.measurements.compactMap {
                 measurement -> ParsedMeasurement? in
-                guard let code = MeasurementCode(rawValue: measurement.measurementCode),
-                      let displayKind = Self.displayKind(for: code) else {
+                guard let code = Self.runtimeMeasurementCode(
+                    for: measurement.measurementCode,
+                    basisCode: measurement.basisCode
+                ), let displayKind = Self.displayKind(for: code) else {
                     return nil
                 }
                 return ParsedMeasurement(
@@ -492,6 +494,42 @@ final class ShoppingProductViewModel: ObservableObject {
         case .footLengthHeelToToe: return .footLength
         case .underBustWidthEdgeToEdge: return .underBust
         case .unknown, .legacyUnknown: return nil
+        }
+    }
+
+    /// Converts the server's provider-independent measurement vocabulary into
+    /// the app's method-specific storage vocabulary. The server remains the
+    /// semantic authority; this is only a lossless transport adapter used by
+    /// Closet registration and comparison product construction.
+    static func runtimeMeasurementCode(
+        for code: String,
+        basisCode: String? = nil
+    ) -> MeasurementCode? {
+        if let exact = MeasurementCode(rawValue: code) {
+            return exact
+        }
+        switch code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "back_length": return .bodyLengthBackNeckToHem
+        case "total_length":
+            switch basisCode {
+            case "waist_to_skirt_hem": return .skirtLengthWaistToHem
+            case "waist_to_hem", "waist_to_outseam": return .pantsOutseamWaistToHem
+            default: return .bodyLengthBackNeckToHem
+            }
+        case "chest_width": return .chestWidthPitToPit
+        case "shoulder_width": return .shoulderWidthSeamToSeam
+        case "sleeve_length":
+            return basisCode == "sleeve_center_back_to_cuff"
+                ? .sleeveCenterBackToCuff : .sleeveShoulderSeamToCuff
+        case "waist_width": return .waistWidthEdgeToEdge
+        case "hip_width": return .hipWidthAtWidest
+        case "thigh_width": return .thighWidthCrotchToOuter
+        case "front_rise": return .riseCrotchToWaistFront
+        case "hem_width": return .hemWidthEdgeToEdge
+        case "inseam": return .pantsInseamCrotchToHem
+        case "foot_length": return .footLengthHeelToToe
+        case "under_bust_width": return .underBustWidthEdgeToEdge
+        default: return nil
         }
     }
 

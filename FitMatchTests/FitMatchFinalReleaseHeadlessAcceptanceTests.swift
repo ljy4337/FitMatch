@@ -1141,7 +1141,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             didExplicitlyChangeClassification: true
         )
         #expect(explicitReviewRequiredRegistration.classificationAuthorityProvenance == .userExplicit)
-        #expect(explicitReviewRequiredRegistration.canonicalEligibility)
+        #expect(explicitReviewRequiredRegistration.canonicalEligibility == true)
         #expect(explicitReviewRequiredRegistration.isRepresentative)
 
         let globalProduct = Product(
