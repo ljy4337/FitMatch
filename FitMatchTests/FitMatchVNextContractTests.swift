@@ -87,6 +87,117 @@ struct FitMatchVNextContractTests {
             == Set([fixture.sizeA, fixture.sizeB]))
     }
 
+    @Test func availabilityAndExpiryNeverChangeAuthorizedCandidateScoring() throws {
+        let fixture = ComparisonBeginFixture()
+        let adapter = VNextComparisonEngineAdapter()
+        let baseline = try adapter.analyze(decode(fixture.json()))
+
+        for status in ["SOLD_OUT", "UNKNOWN"] {
+            let unavailableOrUnknown = try adapter.analyze(
+                decode(
+                    fixture.json(
+                        availabilityStatus: status,
+                        availabilityValidUntil: "2020-01-01T00:00:00Z"
+                    )
+                )
+            )
+
+            #expect(unavailableOrUnknown.recommended.productSizeID == baseline.recommended.productSizeID)
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            #expect(unavailableOrUnknown.completionPayload == baseline.completionPayload)
+            #expect(unavailableOrUnknown.analyses.map(\.availability.status)
+                == [status, status])
+        }
+
+        let noObservation = try adapter.analyze(
+            decode(
+                fixture.json(
+                    availabilityStatus: "UNKNOWN",
+                    availabilityObservedAt: nil,
+                    availabilityValidUntil: nil
+                )
+            )
+        )
+        #expect(noObservation.recommended.productSizeID == baseline.recommended.productSizeID)
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        #expect(noObservation.completionPayload == baseline.completionPayload)
+        #expect(noObservation.analyses.map(\.availability.status) == ["UNKNOWN", "UNKNOWN"])
+    }
+
+    @Test func engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence() throws {
+        let fixture = ComparisonBeginFixture()
+        let authorizationWithExclusion = """
+        "excluded_measurement_codes":["sleeve_length"],
+        "excluded_measurement_reasons":[{
+          "measurement_code":"sleeve_length",
+          "reason_code":"DESIGN_AXIS_DIFFERENCE"
+        }]
+        """
+        let json = fixture.json().replacingOccurrences(
+            of: "\"excluded_measurement_codes\":[]",
+            with: authorizationWithExclusion
+        )
+        let begin: VNextBeginComparisonDTO = try decode(json)
+        let result = try VNextComparisonEngineAdapter().analyze(begin)
+
+        #expect(result.recommended.result.exclusions == [
+            MeasurementComparisonExclusion(
+                kind: .sleeveLength,
+                reason: .designAxisDifference,
+                productCode: .sleeveShoulderSeamToCuff,
+                referenceCode: .sleeveShoulderSeamToCuff
+            )
+        ])
+    }
+
+    @Test func eligibleCandidateDTOKeepsStableBlockedReasonCode() throws {
+        let response: VNextEligibleCandidateSizesDTO = try decode(
+            """
+            {
+              "allowed":false,"decision":"BLOCKED","mode":"NONE",
+              "reason_code":"INCOMPATIBLE_BODY_REGION",
+              "reason":"Upper-body and lower-body measurements are not comparable",
+              "authorized_candidate_product_size_ids":[],"candidates":[]
+            }
+            """
+        )
+
+        #expect(response.reasonCode == "INCOMPATIBLE_BODY_REGION")
+        #expect(response.allowed == false)
+    }
+
+    @Test func engineAcceptsEveryActiveServerCanonicalMetricCode() {
+        let expected: [(String, MeasurementKind)] = [
+            ("back_length", .totalLength),
+            ("chest_circumference", .chest),
+            ("chest_width", .chest),
+            ("front_rise", .rise),
+            ("hem_circumference", .hem),
+            ("hem_width", .hem),
+            ("hip_circumference", .hip),
+            ("hip_width", .hip),
+            ("outseam", .totalLength),
+            ("shoulder_width", .shoulder),
+            ("sleeve_length", .sleeveLength),
+            ("thigh_circumference", .thigh),
+            ("thigh_width", .thigh),
+            ("total_length", .totalLength),
+            ("under_bust_circumference", .underBust),
+            ("under_bust_width", .underBust),
+            ("waist_circumference", .waist),
+            ("waist_width", .waist)
+        ]
+
+        for (code, kind) in expected {
+            #expect(MeasurementComparisonEngine.authorizedMeasurementIdentity(
+                for: code
+            )?.kind == kind)
+        }
+        #expect(MeasurementComparisonEngine.authorizedMeasurementIdentity(
+            for: "not_a_server_metric"
+        )?.kind == nil)
+    }
+
     @Test func engineRejectsSnapshotCandidateSetMismatchBeforeScoring() throws {
         let fixture = ComparisonBeginFixture()
         let begin: VNextBeginComparisonDTO = try decode(
@@ -121,7 +232,10 @@ private struct ComparisonBeginFixture {
 
     func json(
         topLevelAuthorizedIDs: [UUID]? = nil,
-        allowed: Bool = true
+        allowed: Bool = true,
+        availabilityStatus: String = "AVAILABLE",
+        availabilityObservedAt: String? = "2026-08-29T00:00:00Z",
+        availabilityValidUntil: String? = "2026-08-30T00:00:00Z"
     ) -> String {
         let ids = topLevelAuthorizedIDs ?? [sizeA, sizeB]
         let encodedIDs = ids.map { "\"\($0)\"" }.joined(separator: ",")
@@ -133,7 +247,7 @@ private struct ComparisonBeginFixture {
           "authorization":{
             "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
             "reason":\(reason),"excluded_measurement_codes":[],
-            "required_measurement_codes":["chest_width_pit_to_pit"],
+            "required_measurement_codes":["chest_width"],
             "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
             "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
           },
@@ -146,14 +260,14 @@ private struct ComparisonBeginFixture {
             "policy_snapshot":{
               "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1",
               "metrics":[{
-                "metric_mode":"CANONICAL","fitmatch_measurement_code":"chest_width_pit_to_pit",
+                "metric_mode":"CANONICAL","fitmatch_measurement_code":"chest_width",
                 "weight":1,"requirement_mode":"REQUIRED_ANY","priority":1,"is_active":true
               }]
             },
             "authorization_snapshot":{
               "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
               "reason":\(reason),"excluded_measurement_codes":[],
-              "required_measurement_codes":["chest_width_pit_to_pit"],
+              "required_measurement_codes":["chest_width"],
               "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
               "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
             },
@@ -165,8 +279,8 @@ private struct ComparisonBeginFixture {
               "sleeve_length_code":"short_sleeve","lower_length_code":null,
               "body_length_code":null,
               "candidates":[
-                \(candidate(id: sizeA, label: "M", target: 51, difference: 1, allowed: allowed)),
-                \(candidate(id: sizeB, label: "L", target: 53, difference: 3, allowed: allowed))
+                \(candidate(id: sizeA, label: "M", target: 51, difference: 1, allowed: allowed, availabilityStatus: availabilityStatus, availabilityValidUntil: availabilityValidUntil)),
+                \(candidate(id: sizeB, label: "L", target: 53, difference: 3, allowed: allowed, availabilityStatus: availabilityStatus, availabilityValidUntil: availabilityValidUntil))
               ]
             }
           }
@@ -179,16 +293,21 @@ private struct ComparisonBeginFixture {
         label: String,
         target: Int,
         difference: Int,
-        allowed: Bool
+        allowed: Bool,
+        availabilityStatus: String,
+        availabilityObservedAt: String?,
+        availabilityValidUntil: String?
     ) -> String {
         let reason = allowed ? "null" : "\"blocked\""
+        let observedAt = availabilityObservedAt.map { "\"\($0)\"" } ?? "null"
+        let validUntil = availabilityValidUntil.map { "\"\($0)\"" } ?? "null"
         return """
         {
           "product_size_id":"\(id)","size_label":"\(label)",
-          "availability":{"status":"AVAILABLE","observed_at":"2026-08-29T00:00:00Z",
-            "valid_until":"2026-08-30T00:00:00Z","evidence_fingerprint":"stock-\(label)"},
+          "availability":{"status":"\(availabilityStatus)","observed_at":\(observedAt),
+            "valid_until":\(validUntil),"evidence_fingerprint":"stock-\(label)"},
           "comparison_measurements":[{
-            "measurement_code":"chest_width_pit_to_pit","reference_value":50,
+            "measurement_code":"chest_width","reference_value":50,
             "target_value":\(target),"difference":\(difference),
             "absolute_difference":\(difference),"unit_code":"CM","basis_code":"WIDTH",
             "weight":1,"requirement_mode":"REQUIRED_ANY","priority":1
@@ -196,7 +315,7 @@ private struct ComparisonBeginFixture {
           "authorization":{
             "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
             "reason":\(reason),"excluded_measurement_codes":[],
-            "required_measurement_codes":["chest_width_pit_to_pit"],
+            "required_measurement_codes":["chest_width"],
             "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
             "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
           }

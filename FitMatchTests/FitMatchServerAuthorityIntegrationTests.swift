@@ -464,6 +464,41 @@ struct FitMatchServerAuthorityIntegrationTests {
         #expect(await remote.beginCallCount == 1)
     }
 
+    @Test func beginAuthorizedComparisonKeepsExactCandidateReasonCode() async throws {
+        let authorization = try Self.beginComparisonAuthorization(
+            targetVariantID: UUID()
+        )
+        let deniedData = Data(
+            """
+            {
+              "allowed":false,"decision":"BLOCKED","mode":"NONE",
+              "reason_code":"INCOMPATIBLE_BODY_REGION",
+              "reason":"Upper-body and lower-body measurements are not comparable",
+              "authorized_candidate_product_size_ids":[],"candidates":[]
+            }
+            """.utf8
+        )
+        let denied = try JSONDecoder().decode(
+            VNextEligibleCandidateSizesDTO.self,
+            from: deniedData
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [],
+            observations: [],
+            runtimes: [],
+            eligibleResponses: [denied]
+        )
+
+        do {
+            _ = try await FitMatchServerAuthorityCoordinator(remote: remote)
+                .beginAuthorizedComparison(authorization)
+            Issue.record("An exact server block must not produce a comparison permit")
+        } catch let error as FitMatchServerAuthorityError {
+            #expect(error == .comparisonAuthorizationRejected(.incompatibleBodyRegion))
+        }
+        #expect(await remote.beginCallCount == 0)
+    }
+
     @Test func beginAuthorizedComparisonRejectsMalformedStatusAndCompatibility() async throws {
         let authorization = try Self.beginComparisonAuthorization()
         let malformedResponses: [
@@ -946,101 +981,32 @@ struct FitMatchServerAuthorityIntegrationTests {
         #expect(await remote.candidateCallCount == 2)
     }
 
-    @Test func resultReferenceDiscoveryMapsOnlyServerAuthorizedCandidatesToLocalClosetItems() async throws {
-        let fixture = AuthorityFixture.confirmed(
-            externalProductID: "E482514",
-            detail: "short_sleeve",
-            family: "tshirt",
-            length: "short_sleeve"
-        )
-        let allowedClientID = UUID()
-        let staleClientID = UUID()
-        let allowedClosetID = UUID()
-        let staleClosetID = UUID()
-        let remote = ServerAuthorityRemoteStub(
-            resolutions: [
-                fixture.resolution(catalogState: "current"),
-                fixture.resolution(catalogState: "current")
-            ],
-            observations: [],
-            runtimes: [fixture.runtime, fixture.runtime],
-            closetResponse: .init(
-                state: "ready",
-                items: [
-                    Self.closetRecord(
-                        clientItemID: allowedClientID,
-                        closetItemID: allowedClosetID,
-                        productID: nil,
-                        classificationSource: "manual_override",
-                        productName: "서버 승인 기준 옷"
-                    ),
-                    Self.closetRecord(
-                        clientItemID: staleClientID,
-                        closetItemID: staleClosetID,
-                        productID: nil,
-                        classificationSource: "manual_override",
-                        productName: "서버 목록에 없는 이전 기준 옷"
-                    )
-                ]
-            ),
-            candidateResponses: [
-                try Self.candidateResponse(
-                    state: "automatic",
-                    closetItemID: allowedClosetID,
-                    automaticReady: true,
-                    manualReady: true,
-                    allowed: true
-                ),
-                // B remains in local SwiftData but is not in the server
-                // candidate contract, so it cannot enter the picker.
-                try Self.candidateResponse(
-                    state: "automatic",
-                    closetItemID: allowedClosetID,
-                    automaticReady: true,
-                    manualReady: true,
-                    allowed: true
-                )
-            ]
-        )
-        let target = Self.resultTarget(externalProductID: "E482514")
-        let allowed = Self.localResultReference(
-            id: allowedClientID,
-            name: "서버 승인 기준 옷",
+    @Test func resultReferencePickerKeepsEveryActiveLocalClosetItemUntilSelection() {
+        let currentClientID = UUID()
+        let recentClientID = UUID()
+        let olderClientID = UUID()
+        let current = Self.localResultReference(
+            id: currentClientID,
+            name: "현재 기준 옷",
             isRepresentative: true
         )
-        let stale = Self.localResultReference(
-            id: staleClientID,
-            name: "서버 목록에 없는 이전 기준 옷",
+        let recent = Self.localResultReference(
+            id: recentClientID,
+            name: "품절이어도 선택 가능한 옷",
+            isRepresentative: false
+        )
+        let older = Self.localResultReference(
+            id: olderClientID,
+            name: "서버 사전검증 대상이 아닌 옷",
             isRepresentative: false
         )
 
-        #expect(target.fitMatchDatabaseResolutionRequest() != nil)
-        #expect(target.fitMatchProductObservationRequest() != nil)
-        #expect(allowed.fitMatchServerReferenceSnapshot() != nil)
-        #expect(stale.fitMatchServerReferenceSnapshot() != nil)
-
-        let outcome = await ResultReferenceComparisonAction.discoverSelectableReferences(
-            from: [stale, allowed],
-            excluding: UUID(),
-            target: target,
-            coordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        let selectable = ResultReferenceComparisonAction.fullActiveReferences(
+            from: [older, current, recent],
+            excluding: currentClientID
         )
 
-        guard case .success(let authorizations) = outcome else {
-            Issue.record("Expected the server candidate contract to be available")
-            return
-        }
-        let eventLog = await remote.eventLog
-        let expectedEventLog = [
-            "resolve", "runtime", "list", "candidates",
-            "resolve", "runtime", "list", "candidates"
-        ]
-        if eventLog != expectedEventLog {
-            Issue.record("Unexpected candidate discovery calls: \(eventLog)")
-        }
-        #expect(Set(authorizations.keys) == [allowedClientID])
-        #expect(authorizations[allowedClientID]?.reference?.closetItemID == allowedClosetID)
-        #expect(await remote.candidateCallCount == 2)
+        #expect(Set(selectable.map(\.id)) == [recentClientID, olderClientID])
     }
 
     private static func closetRecord(
@@ -1288,7 +1254,8 @@ struct FitMatchServerAuthorityIntegrationTests {
     }
 
     private static func beginComparisonAuthorization(
-        referenceItemID: UUID = UUID()
+        referenceItemID: UUID = UUID(),
+        targetVariantID: UUID? = nil
     ) throws -> FitMatchServerReferenceAuthorization {
         let fixture = AuthorityFixture.confirmed(
             externalProductID: "BEGIN-COMPARISON-TARGET",
@@ -1321,7 +1288,8 @@ struct FitMatchServerAuthorityIntegrationTests {
             reference: reference,
             referenceAuthority: .serverConfirmed,
             candidate: candidate,
-            candidateState: "automatic"
+            candidateState: "automatic",
+            targetVariantID: targetVariantID
         )
     }
 
@@ -1386,6 +1354,7 @@ private struct AuthorityFixture {
                                 measurements: [
                                     FitMatchProductObservationMeasurement(
                                         measurementIdentity: "chest_width",
+                                        parserCode: "size_chart",
                                         rawCode: "chest_width",
                                         rawLabel: "chest_width",
                                         rawValue: 52,
@@ -1575,6 +1544,7 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
     private var runtimes: [FitMatchProductRuntimeResponse]
     private let closetResponse: FitMatchClosetItemsResponse
     private var candidateResponses: [FitMatchReferenceCandidatesResponse]
+    private var eligibleResponses: [VNextEligibleCandidateSizesDTO]
     private var beginResponses: [FitMatchBeginComparisonResponse]
     private let beginError: FitMatchServerAuthorityError?
 
@@ -1591,6 +1561,7 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         runtimes: [FitMatchProductRuntimeResponse],
         closetResponse: FitMatchClosetItemsResponse = .init(state: "ready", items: []),
         candidateResponses: [FitMatchReferenceCandidatesResponse] = [],
+        eligibleResponses: [VNextEligibleCandidateSizesDTO] = [],
         beginResponses: [FitMatchBeginComparisonResponse] = [],
         beginError: FitMatchServerAuthorityError? = nil
     ) {
@@ -1599,6 +1570,7 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         self.runtimes = runtimes
         self.closetResponse = closetResponse
         self.candidateResponses = candidateResponses
+        self.eligibleResponses = eligibleResponses
         self.beginResponses = beginResponses
         self.beginError = beginError
     }
@@ -1639,6 +1611,18 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         return candidateResponses.removeFirst()
     }
 
+    func eligibleCandidateSizes(
+        referenceClosetItemID: UUID,
+        targetProductID: UUID,
+        targetVariantID: UUID,
+        manualExplicit: Bool
+    ) async throws -> VNextEligibleCandidateSizesDTO {
+        guard !eligibleResponses.isEmpty else {
+            throw StubError.missingEligibleResponse
+        }
+        return eligibleResponses.removeFirst()
+    }
+
     func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
         -> FitMatchBeginComparisonResponse {
         eventLog.append("begin")
@@ -1656,6 +1640,7 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         case missingObservation
         case missingRuntime
         case missingCandidates
+        case missingEligibleResponse
         case missingBeginResponse
     }
 }

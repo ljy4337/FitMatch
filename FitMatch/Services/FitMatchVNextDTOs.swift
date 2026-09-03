@@ -585,8 +585,13 @@ nonisolated struct VNextComparisonAuthorizationDTO: Decodable, Equatable, Sendab
     let decision: String
     let allowed: Bool
     let mode: String
+    let reasonCode: String?
     let reason: String?
+    let referenceMeasurementDomain: String?
+    let targetMeasurementDomain: String?
+    let usedMeasurementCodes: [String]
     let excludedMeasurementCodes: [String]
+    let excludedMeasurementReasons: [VNextMeasurementExclusionReasonDTO]
     let requiredMeasurementCodes: [String]
     let minimumCommon: Int?
     let commonMeasurementCount: Int?
@@ -597,7 +602,12 @@ nonisolated struct VNextComparisonAuthorizationDTO: Decodable, Equatable, Sendab
 
     enum CodingKeys: String, CodingKey {
         case decision, allowed, mode, reason
+        case reasonCode = "reason_code"
+        case referenceMeasurementDomain = "reference_measurement_domain"
+        case targetMeasurementDomain = "target_measurement_domain"
+        case usedMeasurementCodes = "used_measurement_codes"
         case excludedMeasurementCodes = "excluded_measurement_codes"
+        case excludedMeasurementReasons = "excluded_measurement_reasons"
         case requiredMeasurementCodes = "required_measurement_codes"
         case minimumCommon = "minimum_common"
         case commonMeasurementCount = "common_measurement_count"
@@ -612,10 +622,27 @@ nonisolated struct VNextComparisonAuthorizationDTO: Decodable, Equatable, Sendab
         decision = try container.decodeIfPresent(String.self, forKey: .decision) ?? "BLOCKED"
         allowed = try container.decodeIfPresent(Bool.self, forKey: .allowed) ?? false
         mode = try container.decodeIfPresent(String.self, forKey: .mode) ?? "NONE"
+        reasonCode = try container.decodeIfPresent(String.self, forKey: .reasonCode)
         reason = try container.decodeIfPresent(String.self, forKey: .reason)
+        referenceMeasurementDomain = try container.decodeIfPresent(
+            String.self,
+            forKey: .referenceMeasurementDomain
+        )
+        targetMeasurementDomain = try container.decodeIfPresent(
+            String.self,
+            forKey: .targetMeasurementDomain
+        )
+        usedMeasurementCodes = try container.decodeIfPresent(
+            [String].self,
+            forKey: .usedMeasurementCodes
+        ) ?? []
         excludedMeasurementCodes = try container.decodeIfPresent(
             [String].self,
             forKey: .excludedMeasurementCodes
+        ) ?? []
+        excludedMeasurementReasons = try container.decodeIfPresent(
+            [VNextMeasurementExclusionReasonDTO].self,
+            forKey: .excludedMeasurementReasons
         ) ?? []
         requiredMeasurementCodes = try container.decodeIfPresent(
             [String].self,
@@ -633,6 +660,16 @@ nonisolated struct VNextComparisonAuthorizationDTO: Decodable, Equatable, Sendab
     }
 }
 
+nonisolated struct VNextMeasurementExclusionReasonDTO: Decodable, Equatable, Sendable {
+    let measurementCode: String
+    let reasonCode: String
+
+    enum CodingKeys: String, CodingKey {
+        case measurementCode = "measurement_code"
+        case reasonCode = "reason_code"
+    }
+}
+
 nonisolated struct VNextReferenceCandidateDTO: Decodable, Equatable, Sendable {
     let closetItemID: UUID
     let itemName: String
@@ -645,7 +682,14 @@ nonisolated struct VNextReferenceCandidateDTO: Decodable, Equatable, Sendable {
     let allowed: Bool
     let mode: String
     let manualExplicitRequired: Bool
+    let reasonCode: String?
     let reason: String?
+    let commonMeasurementCount: Int?
+    let usedMeasurementCodes: [String]?
+    let excludedMeasurementCodes: [String]?
+    let excludedMeasurementReasons: [VNextMeasurementExclusionReasonDTO]?
+    let referenceMeasurementDomain: String?
+    let targetMeasurementDomain: String?
     let eligibleProductSizeIDs: [UUID]
 
     enum CodingKeys: String, CodingKey {
@@ -657,7 +701,14 @@ nonisolated struct VNextReferenceCandidateDTO: Decodable, Equatable, Sendable {
         case productSizeID = "product_size_id"
         case isCurrentReference = "is_current_reference"
         case decision, allowed, mode, reason
+        case reasonCode = "reason_code"
         case manualExplicitRequired = "manual_explicit_required"
+        case commonMeasurementCount = "common_measurement_count"
+        case usedMeasurementCodes = "used_measurement_codes"
+        case excludedMeasurementCodes = "excluded_measurement_codes"
+        case excludedMeasurementReasons = "excluded_measurement_reasons"
+        case referenceMeasurementDomain = "reference_measurement_domain"
+        case targetMeasurementDomain = "target_measurement_domain"
         case eligibleProductSizeIDs = "eligible_product_size_ids"
     }
 }
@@ -722,6 +773,7 @@ nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendabl
     let allowed: Bool
     let decision: String
     let mode: String
+    let reasonCode: String?
     let reason: String?
     let referenceClosetItemID: UUID?
     let targetProductID: UUID?
@@ -735,6 +787,7 @@ nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendabl
 
     enum CodingKeys: String, CodingKey {
         case allowed, decision, mode, reason, candidates
+        case reasonCode = "reason_code"
         case referenceClosetItemID = "reference_closet_item_id"
         case targetProductID = "target_product_id"
         case targetVariantID = "target_variant_id"
