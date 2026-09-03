@@ -110,8 +110,66 @@ nonisolated enum FitMatchServerReferenceDecision: String, Equatable, Sendable {
     case blocked
 }
 
+/// Stable server reason codes are translated here, not inferred from an
+/// English/Korean explanation string.  The unknown case keeps old servers and
+/// partial rollouts fail-closed without inventing local comparison authority.
+nonisolated enum FitMatchComparisonBlockReason: String, Equatable, Sendable {
+    case classificationRequired = "CLASSIFICATION_REQUIRED"
+    case noAutomaticReference = "NO_AUTOMATIC_REFERENCE"
+    case incompatibleBodyRegion = "INCOMPATIBLE_BODY_REGION"
+    case noCommonMeasurements = "NO_COMMON_MEASUREMENTS"
+    case structurallyNotComparable = "STRUCTURALLY_NOT_COMPARABLE"
+    case invalidAuthority = "INVALID_AUTHORITY"
+    case staleReference = "STALE_REFERENCE"
+    case noEligibleTargetSize = "NO_ELIGIBLE_TARGET_SIZE"
+    case serverUnavailable = "SERVER_UNAVAILABLE"
+    case incompatibleAudience = "INCOMPATIBLE_AUDIENCE"
+    case designAxisDifference = "DESIGN_AXIS_DIFFERENCE"
+    case userSelectedReference = "USER_SELECTED_REFERENCE"
+    case automaticMatch = "AUTOMATIC_MATCH"
+    case unknown
+
+    init(code: String?) {
+        guard let code else {
+            self = .unknown
+            return
+        }
+        self = Self(rawValue: code) ?? .unknown
+    }
+
+    var userMessage: String {
+        switch self {
+        case .classificationRequired:
+            return "상품 분류를 다시 확인한 뒤 비교해 주세요."
+        case .noAutomaticReference:
+            return "자동으로 선택할 기준 옷이 없어 직접 선택해 주세요."
+        case .incompatibleBodyRegion:
+            return "이 두 옷은 측정하는 신체 부위가 달라 비교하기 어려워요."
+        case .noCommonMeasurements:
+            return "이 두 옷은 함께 비교할 수 있는 실측 항목이 없어요."
+        case .structurallyNotComparable:
+            return "여러 종류의 옷이 함께 구성된 상품은 비교할 수 없어요."
+        case .invalidAuthority:
+            return "기준 옷 또는 상품 정보를 다시 확인해 주세요."
+        case .staleReference:
+            return "기준 옷 정보가 바뀌었어요. 최신 정보로 다시 확인해 주세요."
+        case .noEligibleTargetSize:
+            return "비교에 사용할 상품 사이즈 실측이 없어요."
+        case .serverUnavailable:
+            return "서버 비교 가능 여부를 확인하지 못했습니다. 다시 시도해 주세요."
+        case .incompatibleAudience:
+            return "대상 사용자 범위가 달라 비교하기 어려워요."
+        case .designAxisDifference:
+            return "디자인 축이 달라 이 조합은 비교할 수 없어요."
+        case .userSelectedReference, .automaticMatch, .unknown:
+            return "서버 비교 정책상 선택한 옷과 비교할 수 없습니다."
+        }
+    }
+}
+
 nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
     let decision: FitMatchServerReferenceDecision
+    let reasonCode: String?
     let reason: String?
     let target: FitMatchServerProductAuthority
     let reference: FitMatchClosetItemRecord?
@@ -123,6 +181,7 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
 
     init(
         decision: FitMatchServerReferenceDecision,
+        reasonCode: String? = nil,
         reason: String?,
         target: FitMatchServerProductAuthority,
         reference: FitMatchClosetItemRecord?,
@@ -133,6 +192,7 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
         authorizedCandidateSizeIDs: [UUID] = []
     ) {
         self.decision = decision
+        self.reasonCode = reasonCode
         self.reason = reason
         self.target = target
         self.reference = reference
@@ -149,6 +209,10 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
 
     nonisolated var allowsExtendedComparison: Bool {
         decision == .manualSelection
+    }
+
+    nonisolated var blockReason: FitMatchComparisonBlockReason {
+        FitMatchComparisonBlockReason(code: reasonCode)
     }
 }
 
@@ -202,6 +266,7 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
     case inconsistentCandidateState(state: String, reason: String)
     case comparisonBeginUnavailable
     case comparisonNotAuthorized
+    case comparisonAuthorizationRejected(FitMatchComparisonBlockReason)
     case comparisonBeginRejected(String)
     case comparisonBeginMalformed(String)
     case comparisonCompletionUnavailable
@@ -247,6 +312,8 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
             return "서버 비교 시작 API를 사용할 수 없습니다."
         case .comparisonNotAuthorized:
             return "서버에서 승인되지 않은 비교입니다."
+        case .comparisonAuthorizationRejected(let reason):
+            return reason.userMessage
         case .comparisonBeginRejected(let reason):
             return "서버 비교 시작이 차단되었습니다: \(reason)"
         case .comparisonBeginMalformed(let reason):
@@ -484,6 +551,9 @@ actor FitMatchServerAuthorityCoordinator {
                 reason: target.status == .notComparable
                     ? "target_not_comparable"
                     : "target_review_required",
+                reasonCode: target.status == .notComparable
+                    ? FitMatchComparisonBlockReason.structurallyNotComparable.rawValue
+                    : FitMatchComparisonBlockReason.classificationRequired.rawValue,
                 target: target,
                 reference: reference
             )
@@ -498,6 +568,7 @@ actor FitMatchServerAuthorityCoordinator {
                 reason: reference.classificationStatus == "confirmed"
                     ? "reference_authority_unverified"
                     : "reference_classification_not_confirmed",
+                reasonCode: FitMatchComparisonBlockReason.invalidAuthority.rawValue,
                 target: target,
                 reference: reference
             )
@@ -509,6 +580,7 @@ actor FitMatchServerAuthorityCoordinator {
         ) else {
             return blockedAuthorization(
                 reason: "local_reference_snapshot_mismatch",
+                reasonCode: FitMatchComparisonBlockReason.staleReference.rawValue,
                 target: target,
                 reference: reference,
                 referenceAuthority: referenceAuthority
@@ -545,6 +617,7 @@ actor FitMatchServerAuthorityCoordinator {
             guard target.status == .confirmed else {
                 return blockedAuthorization(
                     reason: "target_classification_not_confirmed_after_retry",
+                    reasonCode: FitMatchComparisonBlockReason.classificationRequired.rawValue,
                     target: target,
                     reference: reference,
                     referenceAuthority: referenceAuthority,
@@ -586,16 +659,88 @@ actor FitMatchServerAuthorityCoordinator {
             try validateCandidateResponse(candidates)
         }
 
+        let vnextCandidate = candidates.vnext?.candidates.first(where: {
+            $0.closetItemID == reference.closetItemID
+        })
+        let vnextBlockedCandidate = candidates.vnext?.blocked.first(where: {
+            $0.closetItemID == reference.closetItemID
+        })
         guard let candidate = candidates.candidates.first(where: {
             $0.closetItemID == reference.closetItemID
         }) else {
+            if let vnextBlockedCandidate {
+                return blockedAuthorization(
+                    reason: vnextBlockedCandidate.reason
+                        ?? "comparison_blocked",
+                    reasonCode: vnextBlockedCandidate.reasonCode,
+                    target: target,
+                    reference: reference,
+                    referenceAuthority: referenceAuthority,
+                    candidateState: candidates.state
+                )
+            }
             return blockedAuthorization(
                 reason: "reference_not_authorized_by_server_evaluator",
+                reasonCode: FitMatchComparisonBlockReason.invalidAuthority.rawValue,
                 target: target,
                 reference: reference,
                 referenceAuthority: referenceAuthority,
                 candidateState: candidates.state
             )
+        }
+
+        if let vnextCandidate {
+            switch vnextCandidate.decision {
+            case "AUTOMATIC" where vnextCandidate.allowed:
+                return FitMatchServerReferenceAuthorization(
+                    decision: .automatic,
+                    reasonCode: vnextCandidate.reasonCode,
+                    reason: vnextCandidate.reason,
+                    target: target,
+                    reference: reference,
+                    referenceAuthority: referenceAuthority,
+                    candidate: candidate,
+                    candidateState: candidates.state,
+                    targetVariantID: targetVariantID,
+                    authorizedCandidateSizeIDs: vnextCandidate.eligibleProductSizeIDs
+                )
+            case "MANUAL_EXTENDED" where vnextCandidate.allowed:
+                return FitMatchServerReferenceAuthorization(
+                    decision: .manualSelection,
+                    reasonCode: vnextCandidate.reasonCode,
+                    reason: vnextCandidate.reason,
+                    target: target,
+                    reference: reference,
+                    referenceAuthority: referenceAuthority,
+                    candidate: candidate,
+                    candidateState: candidates.state,
+                    targetVariantID: targetVariantID,
+                    authorizedCandidateSizeIDs: vnextCandidate.eligibleProductSizeIDs
+                )
+            case "MEASUREMENTS_REQUIRED":
+                return FitMatchServerReferenceAuthorization(
+                    decision: .measurementsRequired,
+                    reasonCode: vnextCandidate.reasonCode,
+                    reason: vnextCandidate.reason,
+                    target: target,
+                    reference: reference,
+                    referenceAuthority: referenceAuthority,
+                    candidate: candidate,
+                    candidateState: candidates.state,
+                    targetVariantID: targetVariantID,
+                    authorizedCandidateSizeIDs: []
+                )
+            default:
+                return blockedAuthorization(
+                    reason: vnextCandidate.reason ?? "comparison_blocked",
+                    reasonCode: vnextCandidate.reasonCode,
+                    target: target,
+                    reference: reference,
+                    referenceAuthority: referenceAuthority,
+                    candidate: candidate,
+                    candidateState: candidates.state
+                )
+            }
         }
 
         if candidate.automaticReady && candidate.automaticCompatibility.allowed {
@@ -654,6 +799,72 @@ actor FitMatchServerAuthorityCoordinator {
         )
     }
 
+    /// Returns only the server-ordered automatic references.  The caller maps
+    /// these client IDs to its active local Closet objects and still performs
+    /// the normal per-reference authorization before beginning a comparison.
+    func automaticReferenceClientItemIDs(
+        targetRequest: FitMatchProductResolutionRequest,
+        targetObservation: FitMatchProductObservationRequest?
+    ) async throws -> [UUID] {
+        let target = try await resolveProductAuthority(
+            request: targetRequest,
+            observation: targetObservation
+        )
+        guard target.status == .confirmed else { return [] }
+
+        let closet = try await remote.listClosetItems()
+        guard closet.state == "ready" else {
+            throw FitMatchServerAuthorityError.closetRuntimeUnavailable(closet.state)
+        }
+
+        let targetVariantID = target.runtime.vnext.flatMap { runtime -> UUID? in
+            let observationVariant = targetObservation?.payload.variants.first?
+                .externalVariantID
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let observationVariant, !observationVariant.isEmpty {
+                return runtime.variants.first(where: {
+                    $0.sourceVariantKey == observationVariant
+                })?.id
+            }
+            return runtime.variants.count == 1 ? runtime.variants[0].id : nil
+        }
+        let response: FitMatchReferenceCandidatesResponse
+        if let targetVariantID {
+            response = try await remote.findReferenceCandidates(
+                targetProductID: target.productID,
+                targetVariantID: targetVariantID
+            )
+        } else {
+            response = try await remote.findReferenceCandidates(
+                targetProductID: target.productID
+            )
+        }
+        if response.vnext == nil {
+            try validateCandidateResponse(response)
+        }
+
+        let automaticClosetIDs: [UUID]
+        if let vnext = response.vnext {
+            automaticClosetIDs = vnext.candidates.compactMap { candidate in
+                candidate.allowed && candidate.decision == "AUTOMATIC"
+                    ? candidate.closetItemID
+                    : nil
+            }
+        } else {
+            automaticClosetIDs = response.candidates.compactMap { candidate in
+                candidate.automaticReady && candidate.automaticCompatibility.allowed
+                    ? candidate.closetItemID
+                    : nil
+            }
+        }
+        let clientIDByClosetID = Dictionary(
+            uniqueKeysWithValues: closet.items.map {
+                ($0.closetItemID, $0.clientItemID)
+            }
+        )
+        return automaticClosetIDs.compactMap { clientIDByClosetID[$0] }
+    }
+
     func beginAuthorizedComparison(
         _ authorization: FitMatchServerReferenceAuthorization,
         clientHistoryID: UUID = UUID()
@@ -673,6 +884,11 @@ actor FitMatchServerAuthorityCoordinator {
             )
             guard value.allowed,
                   !value.authorizedCandidateProductSizeIDs.isEmpty else {
+                if !value.allowed, let reasonCode = value.reasonCode {
+                    throw FitMatchServerAuthorityError.comparisonAuthorizationRejected(
+                        FitMatchComparisonBlockReason(code: reasonCode)
+                    )
+                }
                 throw FitMatchServerAuthorityError.comparisonNotAuthorized
             }
             if !authorization.authorizedCandidateSizeIDs.isEmpty,
@@ -1131,6 +1347,7 @@ actor FitMatchServerAuthorityCoordinator {
 
     private func blockedAuthorization(
         reason: String,
+        reasonCode: String? = nil,
         target: FitMatchServerProductAuthority,
         reference: FitMatchClosetItemRecord?,
         referenceAuthority: FitMatchServerReferenceAuthority? = nil,
@@ -1139,6 +1356,7 @@ actor FitMatchServerAuthorityCoordinator {
     ) -> FitMatchServerReferenceAuthorization {
         FitMatchServerReferenceAuthorization(
             decision: .blocked,
+            reasonCode: reasonCode,
             reason: reason,
             target: target,
             reference: reference,

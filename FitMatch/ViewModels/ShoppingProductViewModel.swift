@@ -720,7 +720,7 @@ final class ShoppingProductViewModel: ObservableObject {
               let product = parsedProductForServerAuthority,
               let request = product.fitMatchDatabaseResolutionRequest(),
               let localReferenceSnapshot = item.fitMatchServerReferenceSnapshot() else {
-            errorMessage = "서버 비교 정책을 확인할 수 없습니다."
+            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
             return nil
         }
         do {
@@ -741,14 +741,16 @@ final class ShoppingProductViewModel: ObservableObject {
             let allowed = authorization.decision == .automatic
                 || (allowsManualSelection && authorization.decision == .manualSelection)
             guard allowed else {
-                errorMessage = authorization.decision == .measurementsRequired
-                    ? "서버 비교 정책에 필요한 공통 실측값이 부족합니다."
-                    : "서버 비교 정책상 선택한 옷과 비교할 수 없습니다."
+                errorMessage = authorization.blockReason.userMessage
                 return nil
             }
             return try await coordinator.beginAuthorizedComparison(authorization)
+        } catch let error as FitMatchServerAuthorityError {
+            errorMessage = error.errorDescription
+                ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            return nil
         } catch {
-            errorMessage = "서버 비교 가능 여부를 확인하지 못했습니다. 다시 시도해 주세요."
+            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
             return nil
         }
     }
@@ -830,18 +832,33 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
 
-        let authoritativeFits = userFits.filter {
-            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
+        guard let coordinator = serverAuthorityCoordinator,
+              let parsedProduct = parsedProductForServerAuthority,
+              let request = parsedProduct.fitMatchDatabaseResolutionRequest() else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
+            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            recommendation = nil
+            return nil
         }
-        let automaticCandidates = authoritativeFits
-            .filter(\.isRepresentative)
-            .sorted {
-                if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
-                return $0.id.uuidString < $1.id.uuidString
-            }
+
+        let automaticIDs: [UUID]
+        do {
+            automaticIDs = try await coordinator.automaticReferenceClientItemIDs(
+                targetRequest: request,
+                targetObservation: parsedProduct.fitMatchProductObservationRequest()
+            )
+        } catch {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
+            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            recommendation = nil
+            return nil
+        }
+        let fitByID = Dictionary(uniqueKeysWithValues: userFits.map { ($0.id, $0) })
+        let automaticCandidates = automaticIDs.compactMap { fitByID[$0] }
         guard !automaticCandidates.isEmpty else {
+            // No automatic reference is not an error.  The caller presents the
+            // full active Closet and authorizes only after the user chooses.
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .missingReference))
-            errorMessage = "서버 정책으로 자동 비교할 기준 옷을 선택하지 못했습니다."
             recommendation = nil
             return nil
         }
@@ -949,17 +966,10 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     func needsDetailCategoryBasis(userFits: [UserFit]) -> Bool {
-        guard hasLoadedProductInfo else {
-            return false
-        }
-
-        let authoritativeFits = userFits.filter {
-            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
-        }
-        // Candidate compatibility is evaluator-v4 authority. Before that RPC,
-        // UI routing may only ask whether an authoritative reference exists;
-        // it must not run the measurement scorer or local matcher.
-        return !authoritativeFits.contains(where: \.isRepresentative)
+        // Reference eligibility is server authority.  In particular, a local
+        // representative toggle must not divert a confirmed product away from
+        // automatic reference discovery.
+        false
     }
 
     func temporaryComparisonCandidates(userFits: [UserFit], brand: Brand? = nil) -> [UserFit] {
@@ -967,22 +977,15 @@ final class ShoppingProductViewModel: ObservableObject {
             return []
         }
 
-        return userFits.filter {
-            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
-        }.sorted {
-            if $0.isRepresentative != $1.isRepresentative {
-                return $0.isRepresentative
-            }
+        return userFits.filter(\.isActiveClosetItem).sorted {
             if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
             return $0.id.uuidString < $1.id.uuidString
         }
     }
 
     func needsFallbackDecision(userFits: [UserFit], brand: Brand? = nil) -> Bool {
-        let authoritativeFits = userFits.filter {
-            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
-        }
-        return makeProduct(brand: brand) != nil && authoritativeFits.isEmpty
+        return makeProduct(brand: brand) != nil
+            && userFits.filter(\.isActiveClosetItem).isEmpty
     }
 
     func makeBrand() -> Brand? {

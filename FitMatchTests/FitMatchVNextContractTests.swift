@@ -87,6 +87,85 @@ struct FitMatchVNextContractTests {
             == Set([fixture.sizeA, fixture.sizeB]))
     }
 
+    @Test func availabilityAndExpiryNeverChangeAuthorizedCandidateScoring() throws {
+        let fixture = ComparisonBeginFixture()
+        let adapter = VNextComparisonEngineAdapter()
+        let baseline = try adapter.analyze(decode(fixture.json()))
+
+        for status in ["SOLD_OUT", "UNKNOWN"] {
+            let unavailableOrUnknown = try adapter.analyze(
+                decode(
+                    fixture.json(
+                        availabilityStatus: status,
+                        availabilityValidUntil: "2020-01-01T00:00:00Z"
+                    )
+                )
+            )
+
+            #expect(unavailableOrUnknown.recommended.productSizeID == baseline.recommended.productSizeID)
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            #expect(unavailableOrUnknown.completionPayload == baseline.completionPayload)
+            #expect(unavailableOrUnknown.analyses.map(\.availability.status)
+                == [status, status])
+        }
+
+        let noObservation = try adapter.analyze(
+            decode(
+                fixture.json(
+                    availabilityStatus: "UNKNOWN",
+                    availabilityObservedAt: nil,
+                    availabilityValidUntil: nil
+                )
+            )
+        )
+        #expect(noObservation.recommended.productSizeID == baseline.recommended.productSizeID)
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        #expect(noObservation.completionPayload == baseline.completionPayload)
+        #expect(noObservation.analyses.map(\.availability.status) == ["UNKNOWN", "UNKNOWN"])
+    }
+
+    @Test func engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence() throws {
+        let fixture = ComparisonBeginFixture()
+        let authorizationWithExclusion = """
+        "excluded_measurement_codes":["sleeve_length"],
+        "excluded_measurement_reasons":[{
+          "measurement_code":"sleeve_length",
+          "reason_code":"DESIGN_AXIS_DIFFERENCE"
+        }]
+        """
+        let json = fixture.json().replacingOccurrences(
+            of: "\"excluded_measurement_codes\":[]",
+            with: authorizationWithExclusion
+        )
+        let begin: VNextBeginComparisonDTO = try decode(json)
+        let result = try VNextComparisonEngineAdapter().analyze(begin)
+
+        #expect(result.recommended.result.exclusions == [
+            MeasurementComparisonExclusion(
+                kind: .sleeveLength,
+                reason: .designAxisDifference,
+                productCode: .sleeveShoulderSeamToCuff,
+                referenceCode: .sleeveShoulderSeamToCuff
+            )
+        ])
+    }
+
+    @Test func eligibleCandidateDTOKeepsStableBlockedReasonCode() throws {
+        let response: VNextEligibleCandidateSizesDTO = try decode(
+            """
+            {
+              "allowed":false,"decision":"BLOCKED","mode":"NONE",
+              "reason_code":"INCOMPATIBLE_BODY_REGION",
+              "reason":"Upper-body and lower-body measurements are not comparable",
+              "authorized_candidate_product_size_ids":[],"candidates":[]
+            }
+            """
+        )
+
+        #expect(response.reasonCode == "INCOMPATIBLE_BODY_REGION")
+        #expect(response.allowed == false)
+    }
+
     @Test func engineAcceptsEveryActiveServerCanonicalMetricCode() {
         let expected: [(String, MeasurementKind)] = [
             ("back_length", .totalLength),
@@ -153,7 +232,10 @@ private struct ComparisonBeginFixture {
 
     func json(
         topLevelAuthorizedIDs: [UUID]? = nil,
-        allowed: Bool = true
+        allowed: Bool = true,
+        availabilityStatus: String = "AVAILABLE",
+        availabilityObservedAt: String? = "2026-08-29T00:00:00Z",
+        availabilityValidUntil: String? = "2026-08-30T00:00:00Z"
     ) -> String {
         let ids = topLevelAuthorizedIDs ?? [sizeA, sizeB]
         let encodedIDs = ids.map { "\"\($0)\"" }.joined(separator: ",")
@@ -197,8 +279,8 @@ private struct ComparisonBeginFixture {
               "sleeve_length_code":"short_sleeve","lower_length_code":null,
               "body_length_code":null,
               "candidates":[
-                \(candidate(id: sizeA, label: "M", target: 51, difference: 1, allowed: allowed)),
-                \(candidate(id: sizeB, label: "L", target: 53, difference: 3, allowed: allowed))
+                \(candidate(id: sizeA, label: "M", target: 51, difference: 1, allowed: allowed, availabilityStatus: availabilityStatus, availabilityValidUntil: availabilityValidUntil)),
+                \(candidate(id: sizeB, label: "L", target: 53, difference: 3, allowed: allowed, availabilityStatus: availabilityStatus, availabilityValidUntil: availabilityValidUntil))
               ]
             }
           }
@@ -211,14 +293,19 @@ private struct ComparisonBeginFixture {
         label: String,
         target: Int,
         difference: Int,
-        allowed: Bool
+        allowed: Bool,
+        availabilityStatus: String,
+        availabilityObservedAt: String?,
+        availabilityValidUntil: String?
     ) -> String {
         let reason = allowed ? "null" : "\"blocked\""
+        let observedAt = availabilityObservedAt.map { "\"\($0)\"" } ?? "null"
+        let validUntil = availabilityValidUntil.map { "\"\($0)\"" } ?? "null"
         return """
         {
           "product_size_id":"\(id)","size_label":"\(label)",
-          "availability":{"status":"AVAILABLE","observed_at":"2026-08-29T00:00:00Z",
-            "valid_until":"2026-08-30T00:00:00Z","evidence_fingerprint":"stock-\(label)"},
+          "availability":{"status":"\(availabilityStatus)","observed_at":\(observedAt),
+            "valid_until":\(validUntil),"evidence_fingerprint":"stock-\(label)"},
           "comparison_measurements":[{
             "measurement_code":"chest_width","reference_value":50,
             "target_value":\(target),"difference":\(difference),
