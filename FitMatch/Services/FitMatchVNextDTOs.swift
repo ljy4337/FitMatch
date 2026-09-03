@@ -258,6 +258,19 @@ nonisolated struct VNextClassificationRecoveryCandidateDTO:
 
     var id: String { candidateID }
 
+    func value(for field: VNextUnknownClassificationField) -> String? {
+        switch field {
+        case .garmentType:
+            garmentTypeCode
+        case .sleeveLength:
+            sleeveLengthCode
+        case .lowerLength:
+            lowerLengthCode
+        case .bodyLength:
+            bodyLengthCode
+        }
+    }
+
     enum CodingKeys: String, CodingKey {
         case candidateID = "candidate_id"
         case candidateFingerprint = "candidate_fingerprint"
@@ -271,8 +284,37 @@ nonisolated struct VNextClassificationRecoveryCandidateDTO:
     }
 }
 
+nonisolated struct VNextClassificationRecoveryGarmentGroup:
+    Equatable, Identifiable, Sendable {
+    let garmentTypeCode: String
+    let displayName: String
+    let candidates: [VNextClassificationRecoveryCandidateDTO]
+
+    var id: String { garmentTypeCode }
+
+    /// Only axes whose server-issued values actually differ need a follow-up.
+    /// No tuple value is inferred or rewritten here.
+    var differingFields: [VNextUnknownClassificationField] {
+        [
+            .sleeveLength,
+            .lowerLength,
+            .bodyLength
+        ].filter { field in
+            guard let first = candidates.first?.value(for: field) else {
+                return candidates.contains { $0.value(for: field) != nil }
+            }
+            return candidates.dropFirst().contains {
+                $0.value(for: field) != first
+            }
+        }
+    }
+}
+
 nonisolated struct VNextClassificationRecoveryContractDTO:
     Decodable, Equatable, Sendable {
+    static let completeTupleContractVersion =
+        "fitmatch-vnext-recovery-v6-complete-tuple-garment-first"
+
     let productID: UUID
     let globalStatus: String
     let recoverability: VNextClassificationRecoverability
@@ -307,9 +349,86 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
 
     var isSafelyRecoverable: Bool {
         recoverability == .recoverable
+            && candidateContractVersion == Self.completeTupleContractVersion
             && (1...3).contains(candidates.count)
             && candidateCount == candidates.count
             && candidateSetHash?.isEmpty == false
+            && candidates.allSatisfy(isCompleteCandidateShape)
+            && candidates.allSatisfy(matchesFixedFacts)
+            && unknownFields == presentationUnknownFields
+    }
+
+    var garmentGroups: [VNextClassificationRecoveryGarmentGroup] {
+        var orderedCodes: [String] = []
+        var groupedCandidates: [String: [VNextClassificationRecoveryCandidateDTO]] = [:]
+
+        for candidate in candidates {
+            if groupedCandidates[candidate.garmentTypeCode] == nil {
+                orderedCodes.append(candidate.garmentTypeCode)
+            }
+            groupedCandidates[candidate.garmentTypeCode, default: []].append(candidate)
+        }
+
+        return orderedCodes.compactMap { garmentTypeCode in
+            guard let candidates = groupedCandidates[garmentTypeCode],
+                  let first = candidates.first else { return nil }
+            return VNextClassificationRecoveryGarmentGroup(
+                garmentTypeCode: garmentTypeCode,
+                displayName: first.displayName,
+                candidates: candidates
+            )
+        }
+    }
+
+    var presentationUnknownFields: [VNextUnknownClassificationField] {
+        var result: [VNextUnknownClassificationField] = []
+        if garmentGroups.count > 1 {
+            result.append(.garmentType)
+        }
+        for field in [
+            VNextUnknownClassificationField.sleeveLength,
+            .lowerLength,
+            .bodyLength
+        ] where garmentGroups.contains(where: {
+            $0.differingFields.contains(field)
+        }) {
+            result.append(field)
+        }
+        return result
+    }
+
+    private func isCompleteCandidateShape(
+        _ candidate: VNextClassificationRecoveryCandidateDTO
+    ) -> Bool {
+        !candidate.candidateID.isEmpty
+            && !candidate.candidateFingerprint.isEmpty
+            && !candidate.displayName.isEmpty
+            && !candidate.categoryCode.isEmpty
+            && !candidate.garmentTypeCode.isEmpty
+            && !candidate.comparisonPolicyCode.isEmpty
+            && [
+                candidate.sleeveLengthCode,
+                candidate.lowerLengthCode,
+                candidate.bodyLengthCode
+            ].compactMap { $0 }.allSatisfy { !$0.isEmpty && $0 != "UNKNOWN" }
+    }
+
+    private func matchesFixedFacts(
+        _ candidate: VNextClassificationRecoveryCandidateDTO
+    ) -> Bool {
+        (fixedFacts.categoryCode == nil
+            || fixedFacts.categoryCode == candidate.categoryCode)
+            && (fixedFacts.garmentTypeCode == nil
+                || fixedFacts.garmentTypeCode == candidate.garmentTypeCode)
+            && (fixedFacts.sleeveLengthCode == nil
+                || fixedFacts.sleeveLengthCode == candidate.sleeveLengthCode)
+            && (fixedFacts.lowerLengthCode == nil
+                || fixedFacts.lowerLengthCode == candidate.lowerLengthCode)
+            && (fixedFacts.bodyLengthCode == nil
+                || fixedFacts.bodyLengthCode == candidate.bodyLengthCode)
+            && (fixedFacts.comparisonPolicyCode == nil
+                || fixedFacts.comparisonPolicyCode ==
+                   candidate.comparisonPolicyCode)
     }
 }
 

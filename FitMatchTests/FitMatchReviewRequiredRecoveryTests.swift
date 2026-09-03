@@ -28,6 +28,168 @@ struct FitMatchReviewRequiredRecoveryTests {
         ])
     }
 
+    @Test func completeCandidatesProjectToUniqueGarmentFirstGroups() throws {
+        let productID = UUID()
+        let contract = try makeGarmentFirstRecoveryContract(productID: productID)
+
+        #expect(contract.isSafelyRecoverable)
+        #expect(contract.garmentGroups.count == 2)
+        #expect(contract.garmentGroups.map(\.garmentTypeCode) == [
+            "knit_sweater", "cardigan"
+        ])
+        #expect(contract.garmentGroups.map(\.displayName) == [
+            "니트/스웨터", "가디건"
+        ])
+        #expect(contract.presentationUnknownFields == [.garmentType])
+        #expect(contract.garmentGroups.allSatisfy { group in
+            group.candidates.count == 1
+                && group.candidates[0].sleeveLengthCode == "long_sleeve"
+                && group.differingFields.isEmpty
+        })
+    }
+
+    @MainActor
+    @Test func singleCandidateGarmentReturnsExactServerCandidateWithoutSaving() async throws {
+        let productID = UUID()
+        let contract = try makeGarmentFirstRecoveryContract(productID: productID)
+        let remote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract]
+        )
+        let viewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(await viewModel.beginReviewRecoveryReselection())
+        let sweaterGroup = try #require(
+            viewModel.reviewRecoveryContract?.garmentGroups.first(where: {
+                $0.garmentTypeCode == "knit_sweater"
+            })
+        )
+        let selected = try #require(
+            viewModel.selectReviewRecoveryGarment(sweaterGroup)
+        )
+
+        #expect(selected == sweaterGroup.candidates[0])
+        #expect(selected.candidateFingerprint == "candidate-knit-long")
+        #expect(await remote.setCallCount() == 0)
+    }
+
+    @MainActor
+    @Test func oneGarmentWithTwoSleevesStartsAxisFollowUpAndResets() async throws {
+        let productID = UUID()
+        let contract = try makeSleeveFollowUpRecoveryContract(
+            productID: productID
+        )
+        let remote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract]
+        )
+        let viewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(await viewModel.beginReviewRecoveryReselection())
+        if case .choosingAxis(_, let group) = viewModel.reviewRecoveryState {
+            #expect(group.garmentTypeCode == "shirt_blouse")
+            #expect(group.differingFields == [.sleeveLength])
+            #expect(Set(group.candidates.compactMap(\.sleeveLengthCode)) == [
+                "short_sleeve", "long_sleeve"
+            ])
+        } else {
+            Issue.record("단일 garment의 sleeve follow-up 상태가 아닙니다.")
+        }
+        #expect(await remote.setCallCount() == 0)
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(viewModel.reviewRecoveryState == .idle)
+        #expect(await viewModel.beginReviewRecoveryReselection())
+        if case .choosingAxis = viewModel.reviewRecoveryState {
+            // A fresh contract request reconstructs, rather than retains, the step.
+        } else {
+            Issue.record("재로딩 후 새 recovery contract의 axis 단계가 없습니다.")
+        }
+
+        viewModel.returnToReviewRecoveryGarmentSelection()
+        if case .choosingGarment = viewModel.reviewRecoveryState {
+            // Back never writes or assembles a tuple.
+        } else {
+            Issue.record("상품 종류 단계로 돌아가지 못했습니다.")
+        }
+        let onlyGroup = try #require(
+            viewModel.reviewRecoveryContract?.garmentGroups.first
+        )
+        #expect(viewModel.selectReviewRecoveryGarment(onlyGroup) == nil)
+        if case .choosingAxis = viewModel.reviewRecoveryState {
+            // Expected: two complete server candidates still need selection.
+        } else {
+            Issue.record("상품 종류 재선택 후 axis 단계가 복원되지 않았습니다.")
+        }
+        #expect(await remote.setCallCount() == 0)
+
+        viewModel.cancelProductLoading()
+        #expect(viewModel.reviewRecoveryState == .idle)
+    }
+
+    @Test func coordinatorRejectsDuplicateCandidateFingerprint() async throws {
+        let fixture = try RecoveryContractFixture()
+        let contract = try makeDuplicateFingerprintRecoveryContract(
+            productID: fixture.productID
+        )
+        let remote = RecoveryTransportStub(
+            contract: contract,
+            saved: fixture.savedMutation,
+            cleared: fixture.clearedMutation
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+
+        var rejected = false
+        do {
+            _ = try await coordinator.classificationRecoveryOptions(
+                productID: fixture.productID
+            )
+        } catch let error as FitMatchServerAuthorityError {
+            rejected = error == .invalidClassificationRecoveryContract(
+                "unbounded_or_incomplete_candidate_set"
+            )
+        }
+
+        #expect(rejected)
+        #expect(await remote.setCallCount() == 0)
+    }
+
+    @Test func coordinatorRejectsIncompleteServerCandidate() async throws {
+        let fixture = try RecoveryContractFixture()
+        let contract = try makeIncompleteRecoveryContract(
+            productID: fixture.productID
+        )
+        let remote = RecoveryTransportStub(
+            contract: contract,
+            saved: fixture.savedMutation,
+            cleared: fixture.clearedMutation
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+
+        #expect(!contract.isSafelyRecoverable)
+        var rejected = false
+        do {
+            _ = try await coordinator.classificationRecoveryOptions(
+                productID: fixture.productID
+            )
+        } catch let error as FitMatchServerAuthorityError {
+            rejected = error == .invalidClassificationRecoveryContract(
+                "unbounded_or_incomplete_candidate_set"
+            )
+        }
+
+        #expect(rejected)
+        #expect(await remote.setCallCount() == 0)
+    }
+
     @Test func coordinatorSendsOnlyOpaqueCandidateAndServerContractProvenance() async throws {
         let fixture = try RecoveryContractFixture()
         let remote = RecoveryTransportStub(
@@ -207,6 +369,7 @@ struct FitMatchReviewRequiredRecoveryTests {
         #expect(await remote.currentGarmentType() == "tshirt")
         #expect(await remote.globalClassificationStatus() == "REVIEW_REQUIRED")
         #expect(viewModel.hasActiveUserExplicitClassification)
+        #expect(viewModel.reviewRecoveryState == .idle)
         if case .confirmed(let authority) = viewModel.serverAuthorityState {
             #expect(authority.classification.garmentTypeCode == "tshirt")
             #expect(authority.runtime.vnext?.effectiveClassification?.overrideRevision == 2)
@@ -281,6 +444,12 @@ struct FitMatchReviewRequiredRecoveryTests {
         #expect(await remote.globalClassificationStatus() == "REVIEW_REQUIRED")
         #expect(await remote.referenceDiscoveryCallCount() == 0)
         #expect(await remote.beginCallCount() == 0)
+        if case .choosingGarment(let refreshedContract) =
+            viewModel.reviewRecoveryState {
+            #expect(refreshedContract == contract)
+        } else {
+            Issue.record("초기화 후 새 recovery contract로 재구성되지 않았습니다.")
+        }
     }
 }
 
@@ -328,7 +497,8 @@ private struct RecoveryContractFixture {
               ],
               "candidate_count":3,"product_input_fingerprint":"input-v1",
               "product_evidence_fingerprint":"evidence-v1","resolver_version":"resolver-v2",
-              "candidate_contract_version":"recovery-v1","candidate_set_hash":"set-v1",
+              "candidate_contract_version":"fitmatch-vnext-recovery-v6-complete-tuple-garment-first",
+              "candidate_set_hash":"set-v1",
               "current_review_reason":"Product-exact verified evidence is required"
             }
             """
@@ -343,7 +513,8 @@ private struct RecoveryContractFixture {
                 "category_code":"tops","garment_type_code":"polo_shirt",
                 "comparison_policy_code":"polo_shirt","sleeve_length_code":"short_sleeve",
                 "selected_candidate_fingerprint":"candidate-polo",
-                "candidate_contract_version":"recovery-v1","candidate_set_hash":"set-v1",
+                "candidate_contract_version":"fitmatch-vnext-recovery-v6-complete-tuple-garment-first",
+                "candidate_set_hash":"set-v1",
                 "revision":1,"cleared_at":null
               },
               "effective_classification":{
@@ -510,8 +681,168 @@ private func makeRecoveryContract(
           "product_input_fingerprint":"input-\(suffix)",
           "product_evidence_fingerprint":"evidence-\(suffix)",
           "resolver_version":"resolver-v2",
-          "candidate_contract_version":"recovery-v1",
+          "candidate_contract_version":"fitmatch-vnext-recovery-v6-complete-tuple-garment-first",
           "candidate_set_hash":"set-\(suffix)",
+          "current_review_reason":"Product-exact verified evidence is required"
+        }
+        """
+    )
+}
+
+private func makeGarmentFirstRecoveryContract(
+    productID: UUID
+) throws -> VNextClassificationRecoveryContractDTO {
+    try decodeRecoveryJSON(
+        """
+        {
+          "product_id":"\(productID)","global_status":"REVIEW_REQUIRED",
+          "recoverability":"RECOVERABLE","unrecoverable_reason":null,
+          "fixed_facts":{
+            "audience_code":"MEN","product_structure_code":"SINGLE",
+            "category_code":"tops","sleeve_length_code":"long_sleeve"
+          },
+          "unknown_fields":["garment_type"],
+          "candidates":[
+            {
+              "candidate_id":"candidate-knit-long",
+              "candidate_fingerprint":"candidate-knit-long",
+              "display_name":"니트/스웨터","category_code":"tops",
+              "garment_type_code":"knit_sweater",
+              "sleeve_length_code":"long_sleeve",
+              "comparison_policy_code":"knit_sweater"
+            },
+            {
+              "candidate_id":"candidate-cardigan-long",
+              "candidate_fingerprint":"candidate-cardigan-long",
+              "display_name":"가디건","category_code":"tops",
+              "garment_type_code":"cardigan",
+              "sleeve_length_code":"long_sleeve",
+              "comparison_policy_code":"cardigan"
+            }
+          ],
+          "candidate_count":2,"product_input_fingerprint":"input-v6",
+          "product_evidence_fingerprint":"evidence-v6",
+          "resolver_version":"resolver-v6",
+          "candidate_contract_version":"fitmatch-vnext-recovery-v6-complete-tuple-garment-first",
+          "candidate_set_hash":"set-garment-v6",
+          "current_review_reason":"Product-exact verified evidence is required"
+        }
+        """
+    )
+}
+
+private func makeSleeveFollowUpRecoveryContract(
+    productID: UUID
+) throws -> VNextClassificationRecoveryContractDTO {
+    try decodeRecoveryJSON(
+        """
+        {
+          "product_id":"\(productID)","global_status":"REVIEW_REQUIRED",
+          "recoverability":"RECOVERABLE","unrecoverable_reason":null,
+          "fixed_facts":{
+            "audience_code":"MEN","product_structure_code":"SINGLE",
+            "category_code":"tops","garment_type_code":"shirt_blouse",
+            "comparison_policy_code":"shirt_blouse"
+          },
+          "unknown_fields":["sleeve_length"],
+          "candidates":[
+            {
+              "candidate_id":"candidate-shirt-short",
+              "candidate_fingerprint":"candidate-shirt-short",
+              "display_name":"셔츠/블라우스","category_code":"tops",
+              "garment_type_code":"shirt_blouse",
+              "sleeve_length_code":"short_sleeve",
+              "comparison_policy_code":"shirt_blouse"
+            },
+            {
+              "candidate_id":"candidate-shirt-long",
+              "candidate_fingerprint":"candidate-shirt-long",
+              "display_name":"셔츠/블라우스","category_code":"tops",
+              "garment_type_code":"shirt_blouse",
+              "sleeve_length_code":"long_sleeve",
+              "comparison_policy_code":"shirt_blouse"
+            }
+          ],
+          "candidate_count":2,"product_input_fingerprint":"input-axis-v6",
+          "product_evidence_fingerprint":"evidence-axis-v6",
+          "resolver_version":"resolver-v6",
+          "candidate_contract_version":"fitmatch-vnext-recovery-v6-complete-tuple-garment-first",
+          "candidate_set_hash":"set-axis-v6",
+          "current_review_reason":"Product-exact verified evidence is required"
+        }
+        """
+    )
+}
+
+private func makeDuplicateFingerprintRecoveryContract(
+    productID: UUID
+) throws -> VNextClassificationRecoveryContractDTO {
+    try decodeRecoveryJSON(
+        """
+        {
+          "product_id":"\(productID)","global_status":"REVIEW_REQUIRED",
+          "recoverability":"RECOVERABLE","unrecoverable_reason":null,
+          "fixed_facts":{
+            "audience_code":"MEN","product_structure_code":"SINGLE",
+            "category_code":"tops","sleeve_length_code":"long_sleeve"
+          },
+          "unknown_fields":["garment_type"],
+          "candidates":[
+            {
+              "candidate_id":"duplicate","candidate_fingerprint":"duplicate",
+              "display_name":"니트/스웨터","category_code":"tops",
+              "garment_type_code":"knit_sweater",
+              "sleeve_length_code":"long_sleeve",
+              "comparison_policy_code":"knit_sweater"
+            },
+            {
+              "candidate_id":"duplicate","candidate_fingerprint":"duplicate",
+              "display_name":"가디건","category_code":"tops",
+              "garment_type_code":"cardigan",
+              "sleeve_length_code":"long_sleeve",
+              "comparison_policy_code":"cardigan"
+            }
+          ],
+          "candidate_count":2,"product_input_fingerprint":"input-duplicate",
+          "product_evidence_fingerprint":"evidence-duplicate",
+          "resolver_version":"resolver-v6",
+          "candidate_contract_version":"fitmatch-vnext-recovery-v6-complete-tuple-garment-first",
+          "candidate_set_hash":"set-duplicate",
+          "current_review_reason":"Product-exact verified evidence is required"
+        }
+        """
+    )
+}
+
+private func makeIncompleteRecoveryContract(
+    productID: UUID
+) throws -> VNextClassificationRecoveryContractDTO {
+    try decodeRecoveryJSON(
+        """
+        {
+          "product_id":"\(productID)","global_status":"REVIEW_REQUIRED",
+          "recoverability":"RECOVERABLE","unrecoverable_reason":null,
+          "fixed_facts":{
+            "audience_code":"MEN","product_structure_code":"SINGLE",
+            "category_code":"tops","garment_type_code":"shirt_blouse",
+            "comparison_policy_code":"shirt_blouse"
+          },
+          "unknown_fields":["sleeve_length"],
+          "candidates":[
+            {
+              "candidate_id":"candidate-incomplete",
+              "candidate_fingerprint":"candidate-incomplete",
+              "display_name":"셔츠/블라우스","category_code":"tops",
+              "garment_type_code":"shirt_blouse",
+              "sleeve_length_code":null,
+              "comparison_policy_code":"shirt_blouse"
+            }
+          ],
+          "candidate_count":1,"product_input_fingerprint":"input-incomplete",
+          "product_evidence_fingerprint":"evidence-incomplete",
+          "resolver_version":"resolver-v6",
+          "candidate_contract_version":"fitmatch-vnext-recovery-v6-complete-tuple-garment-first",
+          "candidate_set_hash":"set-incomplete",
           "current_review_reason":"Product-exact verified evidence is required"
         }
         """

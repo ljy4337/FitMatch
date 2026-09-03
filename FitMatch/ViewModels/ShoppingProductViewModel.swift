@@ -24,7 +24,11 @@ enum FitMatchIOSServerAuthorityState: Equatable {
 enum FitMatchReviewRecoveryState: Equatable {
     case idle
     case loading
-    case recoverable(VNextClassificationRecoveryContractDTO)
+    case choosingGarment(VNextClassificationRecoveryContractDTO)
+    case choosingAxis(
+        VNextClassificationRecoveryContractDTO,
+        VNextClassificationRecoveryGarmentGroup
+    )
     case unrecoverable(VNextClassificationRecoveryContractDTO)
     case saving
     case resuming
@@ -346,13 +350,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 do {
                     let contract = try await serverAuthorityCoordinator
                         .classificationRecoveryOptions(productID: authority.productID)
-                    if contract.isSafelyRecoverable {
-                        reviewRecoveryState = .recoverable(contract)
-                        errorMessage = nil
-                    } else {
-                        reviewRecoveryState = .unrecoverable(contract)
-                        errorMessage = "이 상품은 아직 정확하게 분류하기 어려워요. 현재는 비교할 수 없습니다."
-                    }
+                    presentReviewRecovery(contract)
                 } catch {
                     reviewRecoveryState = .failed(error.localizedDescription)
                     errorMessage = "상품 분류 선택지를 확인하지 못했습니다. 네트워크 연결 후 다시 시도해 주세요."
@@ -556,7 +554,9 @@ final class ShoppingProductViewModel: ObservableObject {
 
     var reviewRecoveryContract: VNextClassificationRecoveryContractDTO? {
         switch reviewRecoveryState {
-        case .recoverable(let contract), .unrecoverable(let contract):
+        case .choosingGarment(let contract),
+             .choosingAxis(let contract, _),
+             .unrecoverable(let contract):
             return contract
         case .idle, .loading, .saving, .resuming, .failed:
             return nil
@@ -597,7 +597,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 errorMessage = "이 상품은 현재 안전한 선택지로 다시 분류할 수 없습니다."
                 return false
             }
-            reviewRecoveryState = .recoverable(contract)
+            presentReviewRecovery(contract)
             return true
         } catch {
             if let parsedProduct = parsedProductForServerAuthority {
@@ -610,10 +610,60 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     @discardableResult
+    func selectReviewRecoveryGarment(
+        _ requestedGroup: VNextClassificationRecoveryGarmentGroup
+    ) -> VNextClassificationRecoveryCandidateDTO? {
+        guard case .choosingGarment(let contract) = reviewRecoveryState,
+              let group = contract.garmentGroups.first(where: {
+                  $0.garmentTypeCode == requestedGroup.garmentTypeCode
+              }),
+              group == requestedGroup else {
+            errorMessage = "서버 상품 분류 선택지를 다시 불러와 주세요."
+            return nil
+        }
+
+        if group.candidates.count == 1 {
+            return group.candidates[0]
+        }
+
+        reviewRecoveryState = .choosingAxis(contract, group)
+        errorMessage = nil
+        return nil
+    }
+
+    func returnToReviewRecoveryGarmentSelection() {
+        guard case .choosingAxis(let contract, _) = reviewRecoveryState else {
+            return
+        }
+        reviewRecoveryState = .choosingGarment(contract)
+        errorMessage = nil
+    }
+
+    @discardableResult
     func confirmReviewRecovery(
         _ candidate: VNextClassificationRecoveryCandidateDTO
     ) async -> Bool {
-        guard case .recoverable(let contract) = reviewRecoveryState,
+        let contract: VNextClassificationRecoveryContractDTO
+        let permittedCandidates: [VNextClassificationRecoveryCandidateDTO]
+        switch reviewRecoveryState {
+        case .choosingGarment(let currentContract):
+            guard let group = currentContract.garmentGroups.first(where: {
+                $0.garmentTypeCode == candidate.garmentTypeCode
+            }), group.candidates.count == 1 else {
+                errorMessage = "상품 종류를 먼저 선택해 주세요."
+                return false
+            }
+            contract = currentContract
+            permittedCandidates = group.candidates
+        case .choosingAxis(let currentContract, let group):
+            contract = currentContract
+            permittedCandidates = group.candidates
+        case .idle, .loading, .unrecoverable, .saving, .resuming, .failed:
+            errorMessage = "서버 상품 분류 선택지를 다시 불러와 주세요."
+            return false
+        }
+
+        guard permittedCandidates.contains(candidate),
               let coordinator = serverAuthorityCoordinator,
               let parsedProduct = parsedProductForServerAuthority,
               let request = parsedProduct.fitMatchDatabaseResolutionRequest() else {
@@ -672,6 +722,25 @@ final class ShoppingProductViewModel: ObservableObject {
             errorMessage = message
             return false
         }
+    }
+
+    private func presentReviewRecovery(
+        _ contract: VNextClassificationRecoveryContractDTO
+    ) {
+        guard contract.isSafelyRecoverable else {
+            reviewRecoveryState = .unrecoverable(contract)
+            errorMessage = "이 상품은 아직 정확하게 분류하기 어려워요. 현재는 비교할 수 없습니다."
+            return
+        }
+
+        if contract.garmentGroups.count == 1,
+           let group = contract.garmentGroups.first,
+           group.candidates.count > 1 {
+            reviewRecoveryState = .choosingAxis(contract, group)
+        } else {
+            reviewRecoveryState = .choosingGarment(contract)
+        }
+        errorMessage = nil
     }
 
     @discardableResult

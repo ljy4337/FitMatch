@@ -536,54 +536,15 @@ private extension CompareFlowSheet {
 
                 if contract.isSafelyRecoverable {
                     Divider()
-                    CompareSheetSectionTitle(
-                        title: recoveryQuestionTitle(contract.unknownFields),
-                        subtitle: "서버가 검증한 선택지만 표시합니다. 이 선택은 내 계정에만 적용돼요."
-                    )
-
-                    ForEach(contract.candidates) { candidate in
-                        Button {
-                            guard !viewModel.isReviewRecoverySaving else { return }
-                            setStep(.loading)
-                            loadTask = Task {
-                                let saved = await viewModel.confirmReviewRecovery(candidate)
-                                guard !Task.isCancelled else {
-                                    loadTask = nil
-                                    return
-                                }
-                                loadTask = nil
-                                if saved {
-                                    statusMessage = "확인했어요. 비교할 옷을 찾고 있어요…"
-                                    continueComparisonAfterProductInput()
-                                } else {
-                                    errorMessage = viewModel.errorMessage
-                                    setStep(.categoryConfirmation)
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(candidate.displayName)
-                                        .font(.subheadline.weight(.bold))
-                                        .foregroundStyle(.primary)
-                                    Text(recoveryCandidateFactsText(candidate))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.weight(.bold))
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.horizontal, 14)
-                            .frame(minHeight: 58)
-                            .background(
-                                Color(.secondarySystemGroupedBackground),
-                                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(viewModel.isReviewRecoverySaving)
+                    switch viewModel.reviewRecoveryState {
+                    case .choosingGarment:
+                        reviewRecoveryGarmentSelection(contract)
+                    case .choosingAxis(_, let group):
+                        reviewRecoveryAxisSelection(group)
+                    case .idle, .loading, .unrecoverable, .saving, .resuming,
+                         .failed:
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
                     }
                 } else {
                     Label(
@@ -594,6 +555,103 @@ private extension CompareFlowSheet {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    func reviewRecoveryGarmentSelection(
+        _ contract: VNextClassificationRecoveryContractDTO
+    ) -> some View {
+        CompareSheetSectionTitle(
+            title: contract.garmentGroups.count > 1
+                ? "어떤 상품 종류인가요?" : "상품 종류를 확인해주세요",
+            subtitle: "서버가 검증한 선택지만 표시합니다. 이 선택은 내 계정에만 적용돼요."
+        )
+
+        ForEach(contract.garmentGroups) { group in
+            Button {
+                guard !viewModel.isReviewRecoverySaving else { return }
+                if let candidate = viewModel.selectReviewRecoveryGarment(group) {
+                    saveReviewRecoveryCandidate(candidate)
+                }
+            } label: {
+                recoveryChoiceRow(title: group.displayName)
+            }
+            .buttonStyle(.plain)
+            .disabled(viewModel.isReviewRecoverySaving)
+        }
+    }
+
+    @ViewBuilder
+    func reviewRecoveryAxisSelection(
+        _ group: VNextClassificationRecoveryGarmentGroup
+    ) -> some View {
+        CompareSheetSectionTitle(
+            title: recoveryQuestionTitle(group.differingFields),
+            subtitle: "선택한 상품 종류에서 실제로 다른 정보만 확인합니다."
+        )
+
+        ForEach(group.candidates) { candidate in
+            Button {
+                guard !viewModel.isReviewRecoverySaving else { return }
+                saveReviewRecoveryCandidate(candidate)
+            } label: {
+                recoveryChoiceRow(
+                    title: recoveryCandidateFactsText(
+                        candidate,
+                        differingFields: group.differingFields
+                    )
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(viewModel.isReviewRecoverySaving)
+        }
+
+        SecondaryButton(
+            title: "상품 종류로 돌아가기",
+            systemImage: "chevron.backward"
+        ) {
+            viewModel.returnToReviewRecoveryGarmentSelection()
+        }
+        .disabled(viewModel.isReviewRecoverySaving)
+    }
+
+    func recoveryChoiceRow(title: String) -> some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.primary)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 58)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
+    }
+
+    func saveReviewRecoveryCandidate(
+        _ candidate: VNextClassificationRecoveryCandidateDTO
+    ) {
+        setStep(.loading)
+        loadTask = Task {
+            let saved = await viewModel.confirmReviewRecovery(candidate)
+            guard !Task.isCancelled else {
+                loadTask = nil
+                return
+            }
+            loadTask = nil
+            if saved {
+                statusMessage = "확인했어요. 비교할 옷을 찾고 있어요…"
+                continueComparisonAfterProductInput()
+            } else {
+                errorMessage = viewModel.errorMessage
+                setStep(.categoryConfirmation)
             }
         }
     }
@@ -1251,14 +1309,11 @@ private extension CompareFlowSheet {
     }
 
     func recoveryCandidateFactsText(
-        _ candidate: VNextClassificationRecoveryCandidateDTO
+        _ candidate: VNextClassificationRecoveryCandidateDTO,
+        differingFields: [VNextUnknownClassificationField]
     ) -> String {
-        [
-            candidate.sleeveLengthCode,
-            candidate.lowerLengthCode,
-            candidate.bodyLengthCode
-        ]
-        .compactMap { $0 }
+        differingFields
+        .compactMap { candidate.value(for: $0) }
         .map(recoveryAxisDisplayName)
         .joined(separator: " · ")
     }

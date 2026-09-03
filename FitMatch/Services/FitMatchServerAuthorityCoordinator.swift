@@ -354,8 +354,12 @@ actor FitMatchServerAuthorityCoordinator {
             guard contract.isSafelyRecoverable,
                   Set(contract.candidates.map(\.candidateFingerprint)).count
                     == contract.candidates.count,
+                  Set(contract.candidates.map(\.candidateID)).count
+                    == contract.candidates.count,
                   contract.candidates.allSatisfy({ candidate in
                       !candidate.candidateFingerprint.isEmpty
+                          && candidate.candidateID
+                             == candidate.candidateFingerprint
                           && !candidate.categoryCode.isEmpty
                           && !candidate.garmentTypeCode.isEmpty
                           && !candidate.comparisonPolicyCode.isEmpty
@@ -380,9 +384,7 @@ actor FitMatchServerAuthorityCoordinator {
     ) async throws -> VNextUserClassificationMutationDTO {
         guard contract.isSafelyRecoverable,
               let candidateSetHash = contract.candidateSetHash,
-              contract.candidates.contains(where: {
-                  $0.candidateFingerprint == candidate.candidateFingerprint
-              }) else {
+              contract.candidates.contains(candidate) else {
             throw FitMatchServerAuthorityError.invalidClassificationRecoveryContract(
                 "candidate_not_in_server_contract"
             )
@@ -403,7 +405,17 @@ actor FitMatchServerAuthorityCoordinator {
               result.effectiveClassification.productID == contract.productID,
               result.effectiveClassification.isPersonalComparisonAuthority,
               result.effectiveClassification.garmentTypeCode
-                == candidate.garmentTypeCode else {
+                == candidate.garmentTypeCode,
+              result.effectiveClassification.categoryCode
+                == candidate.categoryCode,
+              result.effectiveClassification.comparisonPolicyCode
+                == candidate.comparisonPolicyCode,
+              result.effectiveClassification.sleeveLengthCode
+                == candidate.sleeveLengthCode,
+              result.effectiveClassification.lowerLengthCode
+                == candidate.lowerLengthCode,
+              result.effectiveClassification.bodyLengthCode
+                == candidate.bodyLengthCode else {
             throw FitMatchServerAuthorityError.classificationRecoveryRejected(
                 "effective_authority_not_personal_confirmed"
             )
