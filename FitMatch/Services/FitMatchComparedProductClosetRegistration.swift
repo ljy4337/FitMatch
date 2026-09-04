@@ -25,17 +25,27 @@ nonisolated struct FitMatchClosetRegistrationServerContext: Equatable, Sendable 
 
     let classificationState: ClassificationState
     let identitiesByDisplaySizeID: [UUID: FitMatchClosetRegistrationServerIdentity]
+    /// Presentation eligibility derived from retailer garment facts before
+    /// runtime forms replace parser data.  It remains separate from
+    /// classificationState and from comparison readiness.
+    let registerableDisplaySizeIDs: Set<UUID>
 
     init(
         classificationState: ClassificationState,
-        identitiesByDisplaySizeID: [UUID: FitMatchClosetRegistrationServerIdentity] = [:]
+        identitiesByDisplaySizeID: [UUID: FitMatchClosetRegistrationServerIdentity] = [:],
+        registerableDisplaySizeIDs: Set<UUID> = []
     ) {
         self.classificationState = classificationState
         self.identitiesByDisplaySizeID = identitiesByDisplaySizeID
+        self.registerableDisplaySizeIDs = registerableDisplaySizeIDs
     }
 
     func identity(for displaySizeID: UUID) -> FitMatchClosetRegistrationServerIdentity? {
         identitiesByDisplaySizeID[displaySizeID]
+    }
+
+    func isRegisterable(displaySizeID: UUID) -> Bool {
+        registerableDisplaySizeIDs.contains(displaySizeID)
     }
 
     var registrationBlockMessage: String? {
@@ -74,6 +84,11 @@ enum FitMatchComparedProductClosetRegistration {
         /// Non-nil only for the new server-first link path. It prevents normal
         /// registration from falling back to label based remote identity.
         let serverIdentity: FitMatchClosetRegistrationServerIdentity?
+        /// True only when the selected exact display size retained a positive
+        /// retailer garment measurement fact. The link View passes its
+        /// transient server context proof; direct callers fall back to the
+        /// shared ProductSize helper.
+        let hasMeasurementEligibilityProof: Bool
         let activeClosetItems: [UserFit]
         let brandName: String
         let gender: UserGender
@@ -96,6 +111,7 @@ enum FitMatchComparedProductClosetRegistration {
             product: Product,
             selectedSize: ProductSize,
             serverIdentity: FitMatchClosetRegistrationServerIdentity? = nil,
+            hasMeasurementEligibilityProof: Bool? = nil,
             activeClosetItems: [UserFit],
             brandName: String,
             gender: UserGender,
@@ -114,6 +130,8 @@ enum FitMatchComparedProductClosetRegistration {
             self.product = product
             self.selectedSize = selectedSize
             self.serverIdentity = serverIdentity
+            self.hasMeasurementEligibilityProof = hasMeasurementEligibilityProof
+                ?? FitMatchGarmentMeasurementPresence.hasAnyMeasurement(in: selectedSize)
             self.activeClosetItems = activeClosetItems
             self.brandName = brandName
             self.gender = gender
@@ -136,6 +154,7 @@ enum FitMatchComparedProductClosetRegistration {
                 product: product,
                 selectedSize: selectedSize,
                 serverIdentity: serverIdentity,
+                hasMeasurementEligibilityProof: hasMeasurementEligibilityProof,
                 activeClosetItems: activeClosetItems,
                 brandName: brandName,
                 gender: gender,
@@ -184,12 +203,15 @@ enum FitMatchComparedProductClosetRegistration {
 
     enum ServerPreparationError: LocalizedError, Equatable {
         case missingExactSizeIdentity
+        case missingUsableMeasurement
         case invalidExplicitClassification
 
         var errorDescription: String? {
             switch self {
             case .missingExactSizeIdentity:
                 return "서버 사이즈 정보를 다시 확인해 주세요."
+            case .missingUsableMeasurement:
+                return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
             case .invalidExplicitClassification:
                 return "선택한 옷 분류를 서버에 안전하게 전달할 수 없습니다."
             }
@@ -207,6 +229,9 @@ enum FitMatchComparedProductClosetRegistration {
     static func prepareServerFirstSubmission(
         _ request: SaveRequest
     ) throws -> ServerFirstSubmission {
+        guard request.hasMeasurementEligibilityProof else {
+            throw ServerPreparationError.missingUsableMeasurement
+        }
         guard let identity = request.serverIdentity else {
             throw ServerPreparationError.missingExactSizeIdentity
         }

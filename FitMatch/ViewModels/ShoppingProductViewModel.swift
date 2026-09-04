@@ -69,11 +69,19 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published private(set) var serverAuthorityState: FitMatchIOSServerAuthorityState = .idle
     @Published private(set) var reviewRecoveryState: FitMatchReviewRecoveryState = .idle
     @Published private(set) var classificationSafetyAudit: ParsedClosetClassificationSafetyAudit = .safe
+    /// Retailer-fact presence only. This never implies that the server has
+    /// approved comparison readiness.
+    @Published private(set) var productMeasurementPresence:
+        FitMatchProductMeasurementPresence = .unknown
     /// Transient map from the exact runtime-backed display size to the three
     /// UUIDs needed by the server-first Closet mutation. It is never inferred
     /// from a visible label after runtime resolution.
     @Published private(set) var closetRegistrationIdentitiesByDisplaySizeID:
         [UUID: FitMatchClosetRegistrationServerIdentity] = [:]
+    /// Exact runtime-backed display sizes for which retailer garment facts
+    /// prove at least one measurement. This is presentation eligibility for
+    /// Closet registration, not comparison eligibility.
+    @Published private(set) var closetRegisterableDisplaySizeIDs: Set<UUID> = []
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
@@ -81,6 +89,11 @@ final class ShoppingProductViewModel: ObservableObject {
     private let serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator?
     private var activeLoadID: UUID?
     private var parsedProductForServerAuthority: ParsedProductInfo?
+    private var parsedProductMeasurementPresence: FitMatchProductMeasurementPresence = .unknown
+    /// These keys are the parser observation's source-size identities. They
+    /// are intentionally matched only to runtime source_size_key values, not
+    /// to rendered ProductSize labels.
+    private var parsedGarmentMeasurementSourceSizeKeys = Set<String>()
 
     init(
         initialURL: String? = nil,
@@ -131,6 +144,7 @@ final class ShoppingProductViewModel: ObservableObject {
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
         errorMessage = nil
         parserNotice = nil
@@ -223,6 +237,7 @@ final class ShoppingProductViewModel: ObservableObject {
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
         errorMessage = nil
         parserNotice = nil
@@ -258,6 +273,7 @@ final class ShoppingProductViewModel: ObservableObject {
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
         isLoadingProductInfo = false
     }
@@ -349,7 +365,10 @@ final class ShoppingProductViewModel: ObservableObject {
             switch authority.status {
             case .confirmed:
                 applyServerClassification(authority.classification)
-                applyServerRuntime(authority.runtime)
+                applyServerRuntime(
+                    authority.runtime,
+                    allowsCanonicalMeasurementPresence: true
+                )
                 serverAuthorityState = .confirmed(authority)
                 // Kept only as a compatibility/debug signal. It is no longer a
                 // shadow decision: the server tuple below is the actual input.
@@ -361,7 +380,10 @@ final class ShoppingProductViewModel: ObservableObject {
                 // Preserve its exact size identities for a possible
                 // USER_EXPLICIT Closet registration; do not send parser labels
                 // back to the database later.
-                applyServerRuntime(authority.runtime)
+                applyServerRuntime(
+                    authority.runtime,
+                    allowsCanonicalMeasurementPresence: false
+                )
                 serverAuthorityState = .reviewRequired(authority)
                 databaseShadowState = .unavailable
                 reviewRecoveryState = .loading
@@ -375,7 +397,10 @@ final class ShoppingProductViewModel: ObservableObject {
                 }
                 return false
             case .notComparable:
-                applyServerRuntime(authority.runtime)
+                applyServerRuntime(
+                    authority.runtime,
+                    allowsCanonicalMeasurementPresence: false
+                )
                 serverAuthorityState = .notComparable(authority)
                 databaseShadowState = .unavailable
                 errorMessage = "세트 또는 비교 대상이 아닌 상품이라 비교를 진행할 수 없습니다."
@@ -407,76 +432,101 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
-    private func applyServerRuntime(_ runtime: FitMatchProductRuntimeResponse) {
+    private func applyServerRuntime(
+        _ runtime: FitMatchProductRuntimeResponse,
+        allowsCanonicalMeasurementPresence: Bool
+    ) {
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        closetRegisterableDisplaySizeIDs.removeAll()
+        var hasConfirmedCanonicalMeasurement = false
+
         if let exact = runtime.vnext,
            let variant = selectedRuntimeVariant(
             in: exact,
             observationVariantID: observationVariantID
            ) {
             sizeOptions = variant.sizes.enumerated().map { index, size in
-            let parsedRecords = size.canonicalMeasurements.measurements.compactMap {
-                measurement -> ParsedMeasurement? in
-                guard let code = Self.runtimeMeasurementCode(
-                    for: measurement.measurementCode,
-                    basisCode: measurement.basisCode
-                ), let displayKind = Self.displayKind(for: code) else {
-                    return nil
+                let parsedRecords = size.canonicalMeasurements.measurements.compactMap {
+                    measurement -> ParsedMeasurement? in
+                    guard let code = Self.runtimeMeasurementCode(
+                        for: measurement.measurementCode,
+                        basisCode: measurement.basisCode
+                    ), let displayKind = Self.displayKind(for: code) else {
+                        return nil
+                    }
+                    return ParsedMeasurement(
+                        value: measurement.value,
+                        unit: .centimeter,
+                        measurementCode: code,
+                        displayKind: displayKind,
+                        methodSource: "fitmatch_vnext_runtime",
+                        methodProfile: exact.product?.resolverVersion,
+                        inputSource: .importedSizeChart,
+                        standardVersion: nil,
+                        mappingVersion: exact.product?.resolverVersion
+                            ?? "fitmatch-vnext-runtime-v1",
+                        rawCode: measurement.sourceMeasurementCode,
+                        rawLabel: measurement.sourceMeasurementCode
+                            ?? measurement.measurementCode,
+                        rawInfo: measurement.basisCode,
+                        rawValueText: String(measurement.value),
+                        evidenceLevel: .officialText,
+                        semanticStatus: .mapped
+                    )
                 }
-                return ParsedMeasurement(
-                    value: measurement.value,
-                    unit: .centimeter,
-                    measurementCode: code,
-                    displayKind: displayKind,
-                    methodSource: "fitmatch_vnext_runtime",
-                    methodProfile: exact.product?.resolverVersion,
-                    inputSource: .importedSizeChart,
-                    standardVersion: nil,
-                    mappingVersion: exact.product?.resolverVersion
-                        ?? "fitmatch-vnext-runtime-v1",
-                    rawCode: measurement.sourceMeasurementCode,
-                    rawLabel: measurement.sourceMeasurementCode
-                        ?? measurement.measurementCode,
-                    rawInfo: measurement.basisCode,
-                    rawValueText: String(measurement.value),
-                    evidenceLevel: .officialText,
-                    semanticStatus: .mapped
+                // Runtime canonical facts remain useful for CONFIRMED products
+                // even when an unfamiliar server measurement code has no
+                // current display adapter.  This is only a presence fact;
+                // comparison still consumes the server policy/records.
+                let hasCanonicalMeasurement = size.canonicalMeasurements
+                    .semanticConflictCount == 0
+                    && size.canonicalMeasurements.measurements.contains {
+                        $0.value.isFinite && $0.value > 0
+                    }
+                hasConfirmedCanonicalMeasurement = hasConfirmedCanonicalMeasurement
+                    || hasCanonicalMeasurement
+                var form = Self.makeSizeForm(
+                    from: ParsedProductSize(
+                        id: size.id,
+                        name: size.sizeLabel,
+                        measurements: GarmentMeasurements(
+                            shoulder: 0,
+                            chest: 0,
+                            totalLength: 0,
+                            sleeveLength: 0
+                        ),
+                        measurementRecords: parsedRecords,
+                        availabilityStatus: size.availability.status,
+                        availabilityObservedAt: Self.decodeRuntimeDate(
+                            size.availability.observedAt
+                        ),
+                        availabilityValidUntil: Self.decodeRuntimeDate(
+                            size.availability.validUntil
+                        ),
+                        availabilityEvidence: size.availability.evidenceFingerprint.map {
+                            ["evidence_fingerprint": $0]
+                        } ?? [:]
+                    ),
+                    displayOrder: index,
+                    allowsStandardSizeFallback: false
                 )
+                form.id = size.id
+                closetRegistrationIdentitiesByDisplaySizeID[form.id] =
+                    FitMatchClosetRegistrationServerIdentity(
+                        productID: runtime.product.productID,
+                        productVariantID: variant.id,
+                        productSizeID: size.id
+                    )
+                if hasParsedGarmentMeasurement(sourceSizeKey: size.sourceSizeKey)
+                    || (allowsCanonicalMeasurementPresence && hasCanonicalMeasurement) {
+                    closetRegisterableDisplaySizeIDs.insert(form.id)
+                }
+                return form
             }
-            var form = Self.makeSizeForm(
-                from: ParsedProductSize(
-                    id: size.id,
-                    name: size.sizeLabel,
-                    measurements: GarmentMeasurements(
-                        shoulder: 0,
-                        chest: 0,
-                        totalLength: 0,
-                        sleeveLength: 0
-                    ),
-                    measurementRecords: parsedRecords,
-                    availabilityStatus: size.availability.status,
-                    availabilityObservedAt: Self.decodeRuntimeDate(
-                        size.availability.observedAt
-                    ),
-                    availabilityValidUntil: Self.decodeRuntimeDate(
-                        size.availability.validUntil
-                    ),
-                    availabilityEvidence: size.availability.evidenceFingerprint.map {
-                        ["evidence_fingerprint": $0]
-                    } ?? [:]
-                ),
-                displayOrder: index,
-                allowsStandardSizeFallback: false
+            reconcileProductMeasurementPresence(
+                hasConfirmedCanonicalMeasurement: allowsCanonicalMeasurementPresence
+                    && hasConfirmedCanonicalMeasurement
             )
-            form.id = size.id
-            closetRegistrationIdentitiesByDisplaySizeID[form.id] =
-                FitMatchClosetRegistrationServerIdentity(
-                    productID: runtime.product.productID,
-                    productVariantID: variant.id,
-                    productSizeID: size.id
-                )
-            return form
-            }
             return
         }
 
@@ -518,6 +568,12 @@ final class ShoppingProductViewModel: ObservableObject {
                     semanticStatus: .mapped
                 )
             }
+            let hasCanonicalMeasurement = size.measurements.contains { measurement in
+                let value = measurement.normalizedValue ?? measurement.rawValue
+                return value.isFinite && value > 0
+            }
+            hasConfirmedCanonicalMeasurement = hasConfirmedCanonicalMeasurement
+                || hasCanonicalMeasurement
             var form = Self.makeSizeForm(
                 from: ParsedProductSize(
                     id: size.productSizeID,
@@ -541,7 +597,68 @@ final class ShoppingProductViewModel: ObservableObject {
                     productVariantID: variant.variantID,
                     productSizeID: size.productSizeID
                 )
+            if hasParsedGarmentMeasurement(sourceSizeKey: size.externalSizeID)
+                || (allowsCanonicalMeasurementPresence && hasCanonicalMeasurement) {
+                closetRegisterableDisplaySizeIDs.insert(form.id)
+            }
             return form
+        }
+        reconcileProductMeasurementPresence(
+            hasConfirmedCanonicalMeasurement: allowsCanonicalMeasurementPresence
+                && hasConfirmedCanonicalMeasurement
+        )
+    }
+
+    private func hasParsedGarmentMeasurement(sourceSizeKey: String?) -> Bool {
+        guard let normalized = normalizedSourceSizeKey(sourceSizeKey) else {
+            return false
+        }
+        return parsedGarmentMeasurementSourceSizeKeys.contains(normalized)
+    }
+
+    private func normalizedSourceSizeKey(_ sourceSizeKey: String?) -> String? {
+        guard let sourceSizeKey else { return nil }
+        let normalized = ParsedProductSizeNormalizer.normalizedSizeKey(for: sourceSizeKey)
+        return normalized.isEmpty ? nil : normalized
+    }
+
+    private func reconcileProductMeasurementPresence(
+        hasConfirmedCanonicalMeasurement: Bool
+    ) {
+        guard hasConfirmedCanonicalMeasurement else {
+            productMeasurementPresence = parsedProductMeasurementPresence
+            return
+        }
+        // A CONFIRMED runtime's canonical record can prove actual garment
+        // presence when parser evidence was incomplete. It never changes
+        // comparison readiness and it is intentionally unavailable to a
+        // REVIEW_REQUIRED registration decision.
+        productMeasurementPresence = .available
+    }
+
+    private func resetMeasurementPresenceState() {
+        productMeasurementPresence = .unknown
+        parsedProductMeasurementPresence = .unknown
+        parsedGarmentMeasurementSourceSizeKeys.removeAll()
+        closetRegisterableDisplaySizeIDs.removeAll()
+    }
+
+    private func captureParsedMeasurementPresence(from parsedProduct: ParsedProductInfo) {
+        let presence = FitMatchGarmentMeasurementPresence.presence(for: parsedProduct)
+        parsedProductMeasurementPresence = presence
+        productMeasurementPresence = presence
+        parsedGarmentMeasurementSourceSizeKeys.removeAll()
+
+        // The observation payload uses this same normalized source-size key as
+        // its stable identity. It is captured before runtime display forms can
+        // replace the parser's retailer facts.
+        guard parsedProduct.measurementAvailability == .actualMeasurements else {
+            return
+        }
+        for size in parsedProduct.sizes where FitMatchGarmentMeasurementPresence
+            .hasAnyMeasurement(in: size) {
+            guard let key = normalizedSourceSizeKey(size.name) else { continue }
+            parsedGarmentMeasurementSourceSizeKeys.insert(key)
         }
     }
 
@@ -660,12 +777,14 @@ final class ShoppingProductViewModel: ObservableObject {
         case .confirmed:
             return FitMatchClosetRegistrationServerContext(
                 classificationState: .confirmed,
-                identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID
+                identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
+                registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )
         case .reviewRequired:
             return FitMatchClosetRegistrationServerContext(
                 classificationState: .reviewRequired,
-                identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID
+                identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
+                registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )
         case .notComparable:
             return FitMatchClosetRegistrationServerContext(
@@ -843,7 +962,10 @@ final class ShoppingProductViewModel: ObservableObject {
                 )
             }
             applyServerClassification(authority.classification)
-            applyServerRuntime(authority.runtime)
+            applyServerRuntime(
+                authority.runtime,
+                allowsCanonicalMeasurementPresence: true
+            )
             serverAuthorityState = .confirmed(authority)
             databaseShadowState = .checking
             reviewRecoveryState = .idle
@@ -1355,13 +1477,15 @@ final class ShoppingProductViewModel: ObservableObject {
     ) -> Product? {
         makeProduct(
             brand: brand,
-            classificationWasUserConfirmed: classificationWasUserConfirmed
+            classificationWasUserConfirmed: classificationWasUserConfirmed,
+            isClosetRegistration: true
         )
     }
 
     private func makeProduct(
         brand: Brand?,
-        classificationWasUserConfirmed: Bool = false
+        classificationWasUserConfirmed: Bool = false,
+        isClosetRegistration: Bool = false
     ) -> Product? {
         let serverClassification = confirmedServerAuthority?.classification
         let localHint = ParsedClosetClassification.resolve(
@@ -1382,13 +1506,19 @@ final class ShoppingProductViewModel: ObservableObject {
         let resolvedDetailCategory = serverClassification?.detailCode.map(
             ClosetDetailCategory.fromTaxonomyCode
         ) ?? localHint?.detailCategory ?? detailCategory
-        let validOptions = sizeOptions.compactMap {
-            $0.makeSizeOption(
+        let productSizes = sizeOptions.compactMap { option in
+            if isClosetRegistration {
+                return option.makeSizeOptionForClosetRegistration(
+                    category: resolvedCategory,
+                    detailCategory: resolvedDetailCategory
+                )
+            }
+            return option.makeSizeOption(
                 category: resolvedCategory,
                 detailCategory: resolvedDetailCategory
             )
         }
-        guard !productName.trimmed.isEmpty, !validOptions.isEmpty else {
+        guard !productName.trimmed.isEmpty, !productSizes.isEmpty else {
             return nil
         }
 
@@ -1403,7 +1533,7 @@ final class ShoppingProductViewModel: ObservableObject {
             metadata: productMetadata,
             sourceType: sourceType,
             sourceName: resolvedSourceName,
-            sizes: validOptions
+            sizes: productSizes
         )
 
         if let serverClassification {
@@ -1512,6 +1642,8 @@ final class ShoppingProductViewModel: ObservableObject {
 
     func apply(_ parsedProduct: ParsedProductInfo) {
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        closetRegisterableDisplaySizeIDs.removeAll()
+        captureParsedMeasurementPresence(from: parsedProduct)
         productURL = parsedProduct.sourceURL.absoluteString
         sourceType = parsedProduct.sourceType
         sourceName = parsedProduct.sourceName
@@ -1684,6 +1816,37 @@ struct ClothingSizeForm: Identifiable, Equatable {
     var allowsStandardSizeFallback = false
 
     func makeSizeOption(category: ClothingCategory, detailCategory: ClosetDetailCategory = .other, gender: UserGender = .unisex) -> ProductSize? {
+        makeProductSize(
+            category: category,
+            detailCategory: detailCategory,
+            gender: gender,
+            requiresComparisonMeasurementMinimum: true
+        )
+    }
+
+    /// A linked Closet registration must retain every runtime-backed source
+    /// size so that presentation can filter by exact measurement eligibility.
+    /// It deliberately does not relax the comparison builder's two-measurement
+    /// rule above.
+    func makeSizeOptionForClosetRegistration(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory = .other,
+        gender: UserGender = .unisex
+    ) -> ProductSize? {
+        makeProductSize(
+            category: category,
+            detailCategory: detailCategory,
+            gender: gender,
+            requiresComparisonMeasurementMinimum: false
+        )
+    }
+
+    private func makeProductSize(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        gender: UserGender,
+        requiresComparisonMeasurementMinimum: Bool
+    ) -> ProductSize? {
         guard !sizeName.trimmed.isEmpty else {
             return nil
         }
@@ -1697,7 +1860,9 @@ struct ClothingSizeForm: Identifiable, Equatable {
             numericValue(for: $0) > 0
         }.count
         let isStandardSizeOption = allowsStandardSizeFallback
-        guard validMeasurementCount >= min(2, measurementKinds.count) || isStandardSizeOption else {
+        guard !requiresComparisonMeasurementMinimum
+            || validMeasurementCount >= min(2, measurementKinds.count)
+            || isStandardSizeOption else {
             return nil
         }
 

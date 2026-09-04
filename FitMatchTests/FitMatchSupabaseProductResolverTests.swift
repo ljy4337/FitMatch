@@ -982,7 +982,10 @@ struct FitMatchSupabaseProductResolverTests {
                     sizes: [
                         FitMatchRuntimeSize(
                             productSizeID: sizeID,
-                            externalSizeID: "m-source-key",
+                            // The runtime source-size key is the same stable
+                            // observation identity captured from the parser;
+                            // it is not a later display-label lookup.
+                            externalSizeID: "M",
                             sizeLabel: "M",
                             normalizedSizeLabel: "M",
                             displayOrder: 0,
@@ -1032,6 +1035,11 @@ struct FitMatchSupabaseProductResolverTests {
                     productVariantID: variantID,
                     productSizeID: sizeID
                 )
+        )
+        #expect(
+            preparation.serverRegistrationContext.isRegisterable(
+                displaySizeID: displayedSize.id
+            )
         )
     }
 
@@ -1305,6 +1313,244 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(recoveryProduct.canonicalEligibility == true)
     }
 
+    @Test func allZeroRetailerMeasurementsBlockLinkPreparationButKeepRuntimeSizes() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "all-zero-presence",
+            sizes: [("S", 0), ("M", 0), ("L", 0), ("XL", 0)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "all-zero-presence",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let variantID = UUID()
+        let runtime = Self.measurementRuntime(
+            fixture: fixture,
+            runtimeState: "measurements_required",
+            comparisonReady: false,
+            variantID: variantID,
+            sizes: ["S", "M", "L", "XL"].enumerated().map { index, name in
+                Self.runtimeSize(
+                    sourceSizeKey: name,
+                    label: name,
+                    displayOrder: index
+                )
+            }
+        )
+        let viewModel = Self.authorityViewModel(
+            product: parsed,
+            remote: DatabaseAuthorityRemoteStub(
+                resolutions: [fixture.resolution(comparisonReady: false)],
+                observations: [],
+                runtimes: [runtime]
+            )
+        )
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(viewModel.productMeasurementPresence == .none)
+        #expect(viewModel.serverComparisonReadiness == .measurementsRequired)
+
+        let preparation = LinkClosetRegistrationPreparation.make(
+            from: viewModel,
+            brand: nil
+        )
+        let product = try #require(preparation.parsedProduct)
+        #expect(!preparation.canBeginRegistration)
+        #expect(product.sizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(
+            AddComparedProductToClosetSheet.selectableSizes(
+                productSizes: product.sizes,
+                serverRegistrationContext: preparation.serverRegistrationContext
+            ).isEmpty
+        )
+    }
+
+    @Test func reviewRequiredRawMeasurementMapsToExactRegisterableRuntimeSize() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "review-raw-presence",
+            sizes: [("S", 0), ("M", 0), ("L", 52), ("XL", 0)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "review-raw-presence",
+            status: .reviewRequired
+        )
+        let variantID = UUID()
+        let runtimeSizes = ["S", "M", "L", "XL"].enumerated().map { index, name in
+            Self.runtimeSize(
+                sourceSizeKey: name,
+                // Deliberately different from the parser's L display text.
+                // The source-size key, not the rendered label, must carry
+                // parser measurement presence onto this exact DB UUID.
+                label: name == "L" ? "L (Runtime)" : name,
+                displayOrder: index,
+                stockStatus: name == "L" ? "SOLD_OUT" : "UNKNOWN"
+            )
+        }
+        let runtime = Self.measurementRuntime(
+            fixture: fixture,
+            runtimeState: "classification_required",
+            comparisonReady: false,
+            variantID: variantID,
+            sizes: runtimeSizes
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+        #expect(!(await viewModel.loadProductInfoFromURL()))
+        #expect(viewModel.productMeasurementPresence == .available)
+        guard case .reviewRequired = viewModel.serverAuthorityState else {
+            Issue.record("Expected REVIEW_REQUIRED server state")
+            return
+        }
+
+        let preparation = LinkClosetRegistrationPreparation.make(
+            from: viewModel,
+            brand: nil
+        )
+        let product = try #require(preparation.parsedProduct)
+        let registerable = AddComparedProductToClosetSheet.selectableSizes(
+            productSizes: product.sizes,
+            serverRegistrationContext: preparation.serverRegistrationContext
+        )
+        #expect(product.sizes.map(\.name) == ["S", "M", "L (Runtime)", "XL"])
+        #expect(registerable.map(\.name) == ["L (Runtime)"])
+        let selected = try #require(registerable.first)
+        let exact = try #require(
+            preparation.serverRegistrationContext.identity(for: selected.id)
+        )
+        #expect(exact.productID == fixture.productID)
+        #expect(exact.productVariantID == variantID)
+        #expect(exact.productSizeID == runtimeSizes[2].productSizeID)
+        #expect(preparation.serverRegistrationContext.isRegisterable(displaySizeID: selected.id))
+    }
+
+    @Test func linkedClosetPickerFiltersExactRegisterableSizesWithoutMutatingSourceSizes() {
+        let product = Product(name: "Picker measurement fixture", category: .top)
+        let sizes = ["S", "M", "L", "XL"].enumerated().map { index, name in
+            ProductSize(
+                id: UUID(),
+                name: name,
+                measurements: .init(
+                    shoulder: 0,
+                    chest: name == "M" || name == "L" ? 50 : 0,
+                    totalLength: 0,
+                    sleeveLength: 0
+                ),
+                displayOrder: index,
+                product: product
+            )
+        }
+        product.sizes = sizes
+        let context = FitMatchClosetRegistrationServerContext(
+            classificationState: .confirmed,
+            identitiesByDisplaySizeID: Dictionary(
+                uniqueKeysWithValues: sizes.map {
+                    (
+                        $0.id,
+                        FitMatchClosetRegistrationServerIdentity(
+                            productID: UUID(),
+                            productVariantID: UUID(),
+                            productSizeID: UUID()
+                        )
+                    )
+                }
+            ),
+            registerableDisplaySizeIDs: Set([sizes[1].id, sizes[2].id])
+        )
+
+        let pickerSizes = AddComparedProductToClosetSheet.selectableSizes(
+            productSizes: product.sizes,
+            serverRegistrationContext: context
+        )
+
+        #expect(product.sizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(pickerSizes.map(\.name) == ["M", "L"])
+    }
+
+    @Test func confirmedCanonicalMeasurementCanEstablishPresenceWithoutParserProof() async throws {
+        var parsed = try Self.measurementPresenceProduct(
+            externalProductID: "confirmed-canonical-presence",
+            sizes: [("L", 0)]
+        )
+        parsed.measurementAvailability = .unavailable
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "confirmed-canonical-presence",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let runtimeSize = Self.runtimeSize(
+            sourceSizeKey: "L",
+            label: "L",
+            displayOrder: 0,
+            measurements: [
+                FitMatchRuntimeMeasurement(
+                    measurementCode: "chest_width",
+                    rawLabel: "가슴단면",
+                    rawValue: 52,
+                    rawUnit: "CM",
+                    normalizedValue: 52,
+                    normalizedUnit: "CM",
+                    comparisonBasis: "WIDTH",
+                    isComparable: true,
+                    exclusionReason: nil,
+                    policyVersion: "fixture"
+                )
+            ]
+        )
+        let runtime = Self.measurementRuntime(
+            fixture: fixture,
+            runtimeState: "ready",
+            comparisonReady: true,
+            variantID: UUID(),
+            sizes: [runtimeSize]
+        )
+        let viewModel = Self.authorityViewModel(
+            product: parsed,
+            remote: DatabaseAuthorityRemoteStub(
+                resolutions: [fixture.resolution()],
+                observations: [],
+                runtimes: [runtime]
+            )
+        )
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(viewModel.productMeasurementPresence == .available)
+        let product = try #require(viewModel.makeProductForClosetRegistration(brand: nil))
+        let displayedSize = try #require(product.sizes.first)
+        #expect(
+            viewModel.closetRegistrationServerContext.isRegisterable(
+                displaySizeID: displayedSize.id
+            )
+        )
+    }
+
+    @Test func unknownParserMeasurementStateNeverBecomesNone() throws {
+        var parsed = try Self.measurementPresenceProduct(
+            externalProductID: "unknown-presence",
+            sizes: [("M", 0)]
+        )
+        parsed.measurementAvailability = .unavailable
+
+        #expect(FitMatchGarmentMeasurementPresence.presence(for: parsed) == .unknown)
+        #expect(FitMatchServerComparisonReadiness(
+            runtimeState: "measurements_required",
+            comparisonReady: false
+        ) == .measurementsRequired)
+    }
+
     private static func authorityViewModel(
         product: ParsedProductInfo,
         remote: DatabaseAuthorityRemoteStub
@@ -1385,6 +1631,101 @@ struct FitMatchSupabaseProductResolverTests {
             )
         )
     }
+
+    private static func measurementPresenceProduct(
+        externalProductID: String,
+        sizes: [(String, Double)]
+    ) throws -> ParsedProductInfo {
+        let sourceURL = try #require(
+            URL(string: "https://www.musinsa.com/products/\(externalProductID)")
+        )
+        return ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "실측 존재성 테스트 티셔츠",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizes: sizes.map { size in
+                ParsedProductSize(
+                    name: size.0,
+                    measurements: GarmentMeasurements(
+                        shoulder: 0,
+                        chest: size.1,
+                        totalLength: 0,
+                        sleeveLength: 0
+                    )
+                )
+            },
+            productID: externalProductID,
+            canonicalURLString: sourceURL.absoluteString,
+            sourceCategoryPath: "상의 > 반소매 티셔츠",
+            productTargetGender: .men,
+            productMetadata: ProductMetadata(
+                sourceCategoryPath: "상의 > 반소매 티셔츠",
+                categoryDepth1Code: "001",
+                categoryDepth2Code: "001001",
+                genderCodes: ["MEN"]
+            ),
+            measurementAvailability: .actualMeasurements
+        )
+    }
+
+    private static func runtimeSize(
+        sourceSizeKey: String,
+        label: String,
+        displayOrder: Int,
+        stockStatus: String = "UNKNOWN",
+        measurements: [FitMatchRuntimeMeasurement] = []
+    ) -> FitMatchRuntimeSize {
+        FitMatchRuntimeSize(
+            productSizeID: UUID(),
+            externalSizeID: sourceSizeKey,
+            sizeLabel: label,
+            normalizedSizeLabel: SizeTokenNormalizer.displayName(for: label),
+            displayOrder: displayOrder,
+            stockStatus: stockStatus,
+            measurements: measurements
+        )
+    }
+
+    private static func measurementRuntime(
+        fixture: DatabaseAuthorityFixture,
+        runtimeState: String,
+        comparisonReady: Bool,
+        variantID: UUID,
+        sizes: [FitMatchRuntimeSize]
+    ) -> FitMatchProductRuntimeResponse {
+        FitMatchProductRuntimeResponse(
+            runtimeState: runtimeState,
+            comparisonReady: comparisonReady,
+            product: FitMatchRuntimeProduct(
+                productID: fixture.productID,
+                source: fixture.source,
+                externalProductID: fixture.externalProductID,
+                productName: "Server Product",
+                canonicalURL: nil,
+                audience: "MEN",
+                sourceCategoryPath: "server > category",
+                sourceCategoryCodes: ["server-category"],
+                imageURL: nil,
+                lifecycleStatus: "active",
+                inputFingerprint: "measurement-presence-fixture"
+            ),
+            classification: fixture.classification,
+            variants: [
+                FitMatchRuntimeVariant(
+                    variantID: variantID,
+                    externalVariantID: "__default__",
+                    variantName: nil,
+                    colorCode: nil,
+                    colorName: nil,
+                    sizes: sizes
+                )
+            ]
+        )
+    }
 }
 
 @MainActor
@@ -1443,7 +1784,10 @@ private struct DatabaseAuthorityFixture {
         )
     }
 
-    func resolution(catalogState: String = "current") -> FitMatchProductResolutionResponse {
+    func resolution(
+        catalogState: String = "current",
+        comparisonReady: Bool? = nil
+    ) -> FitMatchProductResolutionResponse {
         FitMatchProductResolutionResponse(
             productID: catalogState == "new" ? nil : productID,
             intakeRequestID: catalogState == "current" ? nil : UUID(),
@@ -1451,7 +1795,8 @@ private struct DatabaseAuthorityFixture {
             categoryEvidenceMatches: catalogState == "current",
             authorityPersisted: catalogState == "current",
             classification: classification,
-            comparisonReady: catalogState == "current" && status == .confirmed
+            comparisonReady: comparisonReady
+                ?? (catalogState == "current" && status == .confirmed)
         )
     }
 

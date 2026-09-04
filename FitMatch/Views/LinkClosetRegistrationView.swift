@@ -14,6 +14,7 @@ struct LinkClosetRegistrationView: View {
     @State private var parsedProduct: Product?
     @State private var partialProduct: Product?
     @State private var parsedDetailCategory: ClosetDetailCategory = .other
+    @State private var productMeasurementPresence: FitMatchProductMeasurementPresence = .unknown
     @State private var registrationServerContext: FitMatchClosetRegistrationServerContext?
     @State private var isShowingAddToClosetSheet = false
     @State private var recoveryViewModel: ShoppingProductViewModel?
@@ -120,6 +121,7 @@ struct LinkClosetRegistrationView: View {
             parsedProduct = nil
             partialProduct = nil
             registrationServerContext = nil
+            productMeasurementPresence = .unknown
             recoveryViewModel = nil
             recoveredSelectedSizeID = nil
             errorMessage = nil
@@ -275,10 +277,22 @@ struct LinkClosetRegistrationView: View {
                         }
                     }
 
+                    if productMeasurementPresence == .none {
+                        Label(
+                            "이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다.",
+                            systemImage: "ruler"
+                        )
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+
                     PrimaryButton(title: "다음", systemImage: "chevron.right") {
+                        guard productMeasurementPresence != .none else { return }
                         isShowingAddToClosetSheet = true
                     }
                     .accessibilityIdentifier("closet.linkNext")
+                    .disabled(productMeasurementPresence == .none)
                 }
             }
         }
@@ -362,6 +376,7 @@ struct LinkClosetRegistrationView: View {
         parsedProduct = nil
         partialProduct = nil
         registrationServerContext = nil
+        productMeasurementPresence = .unknown
         isLoading = true
         defer { isLoading = false }
 
@@ -380,6 +395,7 @@ struct LinkClosetRegistrationView: View {
             parsedProduct = preparation.parsedProduct
             partialProduct = preparation.partialProduct
             parsedDetailCategory = preparation.detailCategory
+            productMeasurementPresence = preparation.productMeasurementPresence
             registrationServerContext = preparation.serverRegistrationContext
             recoveryViewModel = preparation.recoveryViewModel
             errorMessage = preparation.errorMessage
@@ -428,6 +444,11 @@ struct LinkClosetRegistrationView: View {
     }
 
     private func completeRecoveredProduct(using viewModel: ShoppingProductViewModel) {
+        guard viewModel.productMeasurementPresence != .none else {
+            viewModel.recoveryErrorMessage =
+                "이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
+            return
+        }
         let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
         guard let product = viewModel.makeProductForClosetRegistration(brand: brand) else {
             viewModel.recoveryErrorMessage = "선택한 사이즈 정보를 저장할 수 없습니다."
@@ -475,17 +496,23 @@ struct LinkClosetRegistrationView: View {
 }
 
 /// Converts a parsed link into a Closet-registration input without creating a
-/// second local classification authority. A fully measured product keeps the
-/// exact server status on `Product`; measurement recovery is offered only when
+/// second local classification authority. The Product keeps exact server status
+/// and every source size; retailer measurement presence separately controls
+/// whether registration may begin. Measurement recovery is offered only when
 /// the server has already confirmed the canonical tuple.
 @MainActor
 struct LinkClosetRegistrationPreparation {
     let parsedProduct: Product?
     let partialProduct: Product?
     let detailCategory: ClosetDetailCategory
+    let productMeasurementPresence: FitMatchProductMeasurementPresence
     let serverRegistrationContext: FitMatchClosetRegistrationServerContext
     let recoveryViewModel: ShoppingProductViewModel?
     let errorMessage: String?
+
+    var canBeginRegistration: Bool {
+        productMeasurementPresence != .none
+    }
 
     static func make(
         from viewModel: ShoppingProductViewModel,
@@ -496,6 +523,7 @@ struct LinkClosetRegistrationPreparation {
                 parsedProduct: product,
                 partialProduct: nil,
                 detailCategory: viewModel.detailCategory,
+                productMeasurementPresence: viewModel.productMeasurementPresence,
                 serverRegistrationContext: viewModel.closetRegistrationServerContext,
                 recoveryViewModel: nil,
                 errorMessage: product.classificationAuthorityProvenance == .serverConfirmed
@@ -512,6 +540,7 @@ struct LinkClosetRegistrationPreparation {
                 parsedProduct: nil,
                 partialProduct: nil,
                 detailCategory: viewModel.detailCategory,
+                productMeasurementPresence: viewModel.productMeasurementPresence,
                 serverRegistrationContext: viewModel.closetRegistrationServerContext,
                 recoveryViewModel: nil,
                 errorMessage: viewModel.errorMessage ?? "서버 상품 분류를 확인하지 못했습니다."
@@ -551,6 +580,7 @@ struct LinkClosetRegistrationPreparation {
             parsedProduct: nil,
             partialProduct: partial,
             detailCategory: viewModel.detailCategory,
+            productMeasurementPresence: viewModel.productMeasurementPresence,
             serverRegistrationContext: viewModel.closetRegistrationServerContext,
             recoveryViewModel: viewModel,
             errorMessage: viewModel.errorMessage

@@ -1,0 +1,337 @@
+FitMatch — Measurement Presence Gate / Phase 1E 결과 보고
+작성일: 2026-09-04
+
+A. Baseline
+
+- Repository: ljy4337/FitMatch
+- Branch: connectDB
+- 작업 시작 HEAD: 9d888077a4eedb2258f74bb4e487ae46777b168d
+- 작업 시작 working tree: clean
+- 기준 commit: fix: align closet registration with server authority
+- 이번 작업은 Production Supabase write/query, migration, RPC 변경, schema 변경, Edge Function 변경을 수행하지 않았다.
+- 커밋 직전 변경 범위는 아래 9개 Swift/Test 파일과 이 결과 보고 텍스트 파일이다.
+  1. FitMatch/Models/ProductSize.swift
+  2. FitMatch/ViewModels/ShoppingProductViewModel.swift
+  3. FitMatch/Services/FitMatchComparedProductClosetRegistration.swift
+  4. FitMatch/Services/FitMatchComparedProductClosetSubmissionAction.swift
+  5. FitMatch/Views/AddComparedProductToClosetSheet.swift
+  6. FitMatch/Views/LinkClosetRegistrationView.swift
+  7. FitMatch/Views/CompareFlowSheet.swift
+  8. FitMatchTests/FitMatchSupabaseProductResolverTests.swift
+  9. FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift
+
+B. 기존 call graph 확인 결과
+
+[Closet]
+
+LinkClosetRegistrationView
+→ FitMatchLinkClosetRegistrationAction.load
+→ ShoppingProductViewModel.loadProductInfoFromURL
+→ Retailer Parser
+→ ShoppingProductViewModel.apply(parsedProduct)
+→ FitMatchServerAuthorityCoordinator.resolveProductAuthority
+→ ShoppingProductViewModel.applyServerRuntime
+→ LinkClosetRegistrationPreparation.make
+→ AddComparedProductToClosetSheet
+→ FitMatchComparedProductClosetRegistration.prepareServerFirstSubmission
+→ public.fitmatch_vnext_upsert_closet_item
+→ optional public.fitmatch_vnext_set_closet_reference
+→ SwiftData UserFit persistence
+
+[Compare]
+
+CompareFlowSheet.startCompareTask/startCompare
+→ ShoppingProductViewModel.loadProductInfoFromURL
+→ Retailer Parser
+→ ShoppingProductViewModel.apply(parsedProduct)
+→ server authority/runtime
+→ CompareFlowSheet.handleProductLoadCompletion
+→ existing classification recovery/readiness/reference plan
+→ begin comparison
+→ existing Swift scoring
+→ complete comparison
+
+수정 전 확인한 문제:
+
+- applyServerRuntime이 runtime canonical size form으로 sizeOptions를 교체하면 Parser raw garment measurement presence를 보존하지 못했다.
+- Closet용 Product 생성이 comparison용 최소 2개 measurement builder를 그대로 사용해 1개 measurement size나 0 measurement source identity를 잃을 수 있었다.
+- AddComparedProductToClosetSheet가 server-first link path에서도 product.sizes 전체를 picker에 노출했다.
+- CompareFlowSheet가 REVIEW_REQUIRED recovery 이전에 전체 실측 0 early gate를 갖지 않았다.
+
+C. Measurement Presence 정의
+
+공통 enum FitMatchProductMeasurementPresence:
+
+- available
+  Parser가 actualMeasurements 상태에서 retailer garment measurement가 양수인 size를 하나 이상 확인했다. CONFIRMED runtime은 semantic conflict가 없고 양수 canonical measurement가 있으면 parser evidence가 불완전한 경우에만 추가 근거가 될 수 있다.
+
+- none
+  Parser가 actualMeasurements 상태의 비어 있지 않은 size table을 확인했고, 모든 size에 positive garment measurement가 없다.
+
+- unknown
+  Parser partial/unavailable/standard-size fallback 또는 size table 미확정 상태다. unknown은 none으로 바꾸지 않으며 기존 OCR/수동 recovery/error UX를 유지한다.
+
+공통 helper FitMatchGarmentMeasurementPresence의 규칙:
+
+- finite && value > 0인 garment measurement만 인정한다.
+- measurementRecords가 있으면 records를 우선한다.
+- legacy parser가 records 없이 scalar GarmentMeasurements만 채운 경우에만 scalar fallback을 허용한다.
+- standardBodyChestCircumference는 garment measurement가 아니므로 제외한다.
+- 이 helper는 comparison readiness, classification, canonicalization policy를 만들지 않는다.
+
+D. Size measurement eligibility
+
+- ShoppingProductViewModel은 parser apply 시점에 product-wide presence와 raw positive measurement source-size identity set을 먼저 보존한다.
+- vNext runtime에서는 runtime source_size_key를, legacy runtime adapter에서는 explicit externalSizeID를 parser observation source-size identity와 연결한다.
+- display label로 product_size_id를 다시 찾지 않는다.
+- exact runtime display size ID마다 closetRegisterableDisplaySizeIDs에 eligibility를 저장한다.
+- LinkClosetRegistrationPreparation의 transient FitMatchClosetRegistrationServerContext가 classificationState, exact product/variant/size UUID map, registerableDisplaySizeIDs를 함께 보유한다.
+- Product.sizes 및 server runtime source data에는 S/M/L/XL 전체를 보존한다.
+- AddComparedProductToClosetSheet의 server-first linked registration picker만 registerableDisplaySizeIDs에 포함된 size로 필터한다.
+- 재고 상태 AVAILABLE/SOLD_OUT/UNKNOWN은 measurement eligibility에 영향을 주지 않는다.
+
+E. 수정 파일별 보고
+
+1. FitMatch/Models/ProductSize.swift
+
+- 수정 symbol: FitMatchProductMeasurementPresence, FitMatchGarmentMeasurementPresence
+- 기존: product-wide/size-wide raw garment measurement presence를 공유하는 명시적 규칙이 없었다.
+- 수정: available/none/unknown과 record-first positive garment measurement helper를 추가했다.
+- 이유: Closet와 Compare가 같은 retailer-fact presence 규칙을 소비하도록 하고, local comparison authority를 만들지 않기 위해서다.
+
+2. FitMatch/ViewModels/ShoppingProductViewModel.swift
+
+- 수정 symbol: productMeasurementPresence, closetRegisterableDisplaySizeIDs, applyServerRuntime, captureParsedMeasurementPresence, makeProductForClosetRegistration, ClothingSizeForm.makeSizeOptionForClosetRegistration
+- 기존: runtime form 적용 후 parser raw presence를 잃었고 Closet builder가 comparison minimum measurement 규칙을 재사용했다.
+- 수정: raw presence/source-size identity를 apply(parsedProduct) 시점에 보존하고, CONFIRMED canonical fallback을 semantic conflict 없이 제한했다. runtime exact UUID와 registerable display size ID를 별도로 기록했다. Closet-only builder는 source size identity를 유지하고 comparison builder의 최소 2개 rule은 그대로 유지한다.
+- 이유: REVIEW_REQUIRED canonical empty 오판을 막고, 1개 measurement Closet registration을 허용하면서 comparison behavior를 변경하지 않기 위해서다.
+
+3. FitMatch/Services/FitMatchComparedProductClosetRegistration.swift
+
+- 수정 symbol: FitMatchClosetRegistrationServerContext.registerableDisplaySizeIDs/isRegisterable, SaveRequest.hasMeasurementEligibilityProof, ServerPreparationError.missingUsableMeasurement, prepareServerFirstSubmission
+- 기존: selected size의 retailer measurement eligibility를 request 직전에 fail-closed 검증하지 않았다.
+- 수정: UI를 우회한 direct/headless call도 proof가 없으면 remote request 생성 전에 실패한다.
+- 이유: stale state나 future call site가 picker filtering을 우회해 0 measurement size를 upsert하지 못하게 하기 위해서다.
+
+4. FitMatch/Services/FitMatchComparedProductClosetSubmissionAction.swift
+
+- 수정 symbol: serverMessage(for:)
+- 기존: DB canonical measurement reject가 raw SQL-facing error로 노출될 수 있었다.
+- 수정: "Closet registration requires at least one usable canonical measurement" rejection을 "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."로 domain boundary에서 변환했다.
+- 이유: View에서 문자열을 해석하지 않고 server final authority의 오류를 제어된 UX로 전달하기 위해서다.
+
+5. FitMatch/Views/AddComparedProductToClosetSheet.swift
+
+- 수정 symbol: selectableSizes, availableSizes, validationMessage, saveSelectedSize
+- 기존: server-first link registration에서도 product.sizes 전체가 picker 후보였다.
+- 수정: linked path는 exact registerable display size만 노출한다. 사용 불가능한 size는 disabled로 보이지 않고 목록에서 제외된다. 저장 직전에도 context proof를 request에 전달한다.
+- 이유: S0/M0/L1/XL0이면 사용자에게 L만 보이도록 하기 위해서다.
+
+6. FitMatch/Views/LinkClosetRegistrationView.swift
+
+- 수정 symbol: productMeasurementPresence state, parsedProduct preview, Next action, LinkClosetRegistrationPreparation
+- 기존: 전체 실측 0 product도 registration Sheet 진입을 막는 전용 state/message가 없었다.
+- 수정: product facts preview는 유지하고, none이면 명시적인 한국어 안내와 Next disabled/guard로 Sheet 진입을 차단한다. preparation에도 presence를 전달한다.
+- 이유: 상품 정보 load failure와 실측 없음 정책을 분리하기 위해서다.
+
+7. FitMatch/Views/CompareFlowSheet.swift
+
+- 수정 symbol: handleProductLoadCompletion
+- 기존: all-zero product가 REVIEW_REQUIRED recovery 또는 다음 comparison preparation으로 넘어갈 수 있었다.
+- 수정: parser/DB load 이후, review recovery/reference discovery 이전에 none early return을 추가했다.
+- 이유: 전체 실측 0 상품은 "이 상품은 실측 정보가 없어 비교할 수 없습니다."로 즉시 종료하기 위해서다.
+
+8. FitMatchTests/FitMatchSupabaseProductResolverTests.swift
+
+- 수정: all-zero, L-only, M/L-only picker, REVIEW_REQUIRED raw measurement + differing runtime display label/source-size identity, CONFIRMED canonical fallback, unknown presence regression test를 추가했다.
+- 이유: exact UUID mapping, stock independence, source size 보존, readiness 분리를 검증하기 위해서다.
+
+9. FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift
+
+- 수정: 0 measurement server-first preflight reject, DB canonical reject friendly message, Closet/Compare source gate order를 추가했다. 기존 reference partial-success fixture는 새 DB 계약에 맞게 chest 53의 usable measurement로 갱신했다.
+- 이유: server-first local persistence 순서와 새 DB measurement gate를 함께 회귀 검증하기 위해서다.
+
+F. Closet 최종 flow
+
+상품 링크
+→ Parser가 상품 facts와 raw size measurement를 수집
+→ Supabase product observation/resolve/runtime
+→ productMeasurementPresence 검사
+→ none이면 상품 preview는 표시하고 registration Sheet 진입, remote upsert, SwiftData write를 모두 차단
+→ available이면 exact runtime identity와 registerable display size만 registration context에 전달
+→ AddComparedProductToClosetSheet picker는 실측 있는 size만 표시
+→ validation
+→ stable client_item_id 유지
+→ exact product_id/product_variant_id/product_size_id + 필요 시 nested closet_classification_override
+→ remote upsert
+→ optional set_closet_reference
+→ remote 성공 이후 SwiftData 저장
+
+선택 size는 UI와 prepareServerFirstSubmission 양쪽에서 measurement eligibility를 검사한다. DB는 여전히 canonical measurement final safety gate다.
+
+G. Compare 최종 flow
+
+상품 링크
+→ Parser facts
+→ Supabase observation/runtime
+→ productMeasurementPresence 검사
+→ none이면 "이 상품은 실측 정보가 없어 비교할 수 없습니다."로 error step 전환 및 return
+→ available/unknown이면 기존 classification recovery, serverComparisonReadiness, reference selection plan, begin comparison, Swift scoring, complete comparison 흐름을 그대로 사용
+
+available은 comparison-ready가 아니다. 예를 들어 chest 한 개만 있으면 product gate는 통과하지만 DB readiness가 INSUFFICIENT_MEASUREMENTS 또는 MEASUREMENTS_REQUIRED이면 비교는 기존처럼 차단된다.
+
+H. 사례 결과
+
+1. S0 M0 L0 XL0
+
+- productMeasurementPresence = none
+- Link registration: 상품 preview 유지, Sheet 진입 X, remote upsert 0, SwiftData write 0
+- Compare: recovery/reference candidate/begin/scoring 전에 error 종료
+
+2. S0 M0 L1 XL0
+
+- productMeasurementPresence = available
+- Closet picker: L만 표시
+- S/M/XL: 선택지에 표시하지 않음
+- comparison readiness: 기존 DB 판단 유지
+
+3. S0 M1 L1 XL0
+
+- productMeasurementPresence = available
+- Closet picker: M, L만 표시
+- source Product/runtime data에는 S/M/L/XL 전체 보존
+
+4. REVIEW_REQUIRED + raw measurement 있음
+
+- runtime canonical measurements가 []여도 parser raw garment measurement가 있으면 productMeasurementPresence = available
+- source_size_key로 exact runtime product_size_id에 연결되는 size만 registerable
+- REVIEW_REQUIRED classification recovery 및 USER_EXPLICIT Closet flow는 기존 authority 규칙대로 유지
+
+5. SOLD_OUT + measurement 있음
+
+- positive garment measurement가 있으면 picker 후보에 포함
+- stock SOLD_OUT/UNKNOWN/AVAILABLE는 presence 및 picker filtering의 조건이 아님
+
+I. Exact UUID 검증
+
+- product_id: server runtime product.id에서 받는다.
+- variant_id: 선택된 runtime variant.id에서 받는다.
+- product_size_id: runtime size.id(vNext) 또는 explicit legacy productSizeID에서 받는다.
+- 보관: ShoppingProductViewModel.closetRegistrationIdentitiesByDisplaySizeID
+- 전달: FitMatchClosetRegistrationServerContext.identity(for: selectedDisplaySizeID)
+  → FitMatchComparedProductClosetRegistration.SaveRequest.serverIdentity
+  → FitMatchUpsertClosetItemRequest
+- REVIEW_REQUIRED raw measurement mapping은 parser observation identity와 runtime source_size_key를 사용한다. display label이 다른 "L (Runtime)" fixture도 source_size_key "L"을 통해 exact UUID에 연결되는 테스트를 추가했다.
+- 정상 server-first link path에서는 sizeName/colorName으로 DB UUID를 재탐색하지 않는다.
+- FitMatchClosetSyncCoordinator의 uniqueRuntimeSizeIdentity는 remote client_item_id row가 없는 legacy local-only recovery bounded path로만 남아 있으며 이번 작업에서 변경하지 않았다.
+
+J. DB write
+
+- Production Supabase database write: 0회
+- Production Supabase database read: 0회
+- migration/DDL/RPC/schema/Edge Function 변경: 0회
+- 이번 변경은 기존 public RPC response/request 소비 및 Swift UI/domain guard에 한정된다.
+
+K. Tests
+
+PASS
+
+1. xcrun swiftc -parse \
+   FitMatch/Models/ProductSize.swift \
+   FitMatch/ViewModels/ShoppingProductViewModel.swift \
+   FitMatch/Services/FitMatchComparedProductClosetRegistration.swift \
+   FitMatch/Services/FitMatchComparedProductClosetSubmissionAction.swift \
+   FitMatch/Views/AddComparedProductToClosetSheet.swift \
+   FitMatch/Views/LinkClosetRegistrationView.swift \
+   FitMatch/Views/CompareFlowSheet.swift \
+   FitMatchTests/FitMatchSupabaseProductResolverTests.swift \
+   FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift
+
+2. git diff --check -- [변경된 9개 Swift/Test 파일]
+
+3. xcrun simctl list devices available
+
+4. TabBarScrollVisibilityModifier file diff empty 및 변경된 diff에서 아래 selector가 발견되지 않음
+   - hidesBottomTabBarOnScroll
+   - tracksTabBarVisibilityOnScroll
+   - hidesTopChromeOnScroll
+
+NOT RUN — host limitation
+
+1. xcodebuild -list -project FitMatch.xcodeproj
+   - command line invocation 출력 후 60초 동안 target/project list 출력 없이 멈췄다.
+
+2. xcodebuild -project FitMatch.xcodeproj -scheme FitMatch \
+   -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' \
+   -derivedDataPath /tmp/FitMatchPhase1ETests \
+   -only-testing:FitMatchTests/FitMatchSupabaseProductResolverTests test
+   - command line invocation 출력 후 90초 동안 build/test log 없이 멈췄다.
+
+3. xcodebuild -list -project FitMatch.xcodeproj -disableAutomaticPackageResolution
+   - automatic package resolution을 끈 재시도도 30초 동안 같은 상태로 멈췄다.
+
+4. 전체 git diff --check 및 git status --short
+   - repository 전역 scan이 이 host에서 완료되지 않아 중단했다.
+   - 변경 경로 한정 git diff --check는 PASS다.
+
+XCTest 미실행 사유:
+
+- CoreSimulator는 정상이다. xcrun simctl list devices available이 iOS 26.3 simulator 목록을 즉시 반환했다.
+- xcodebuild -version도 Xcode 26.3 / Build 17C529를 즉시 반환했다.
+- 그러나 xcodebuild가 FitMatch.xcodeproj project metadata를 읽는 첫 단계에서 build log 없이 멈춘다.
+- 기본 sandbox와 escalated permission 모두, explicit simulator/DerivedData 경로 및 automatic package resolution 비활성화 재시도에서도 동일했다.
+- 따라서 XCTest 결과를 PASS로 추정하지 않았으며, 정상적으로 project metadata를 읽을 수 있는 Xcode host에서 재실행이 필요하다.
+
+L. Regression 결과
+
+이번 작업으로 다음 protected files/logic은 변경하지 않았다.
+
+- FitMatch/Services/VNextComparisonEngineAdapter.swift
+- FitMatch/Services/FitMatchServerAuthorityCoordinator.swift
+- FitMatch/Services/FitMatchClosetSyncCoordinator.swift
+- FitMatch/Services/RecommendationService.swift
+- FitMatch/Models/RecommendationHistory.swift
+- FitMatch/Services/MusinsaParser.swift
+- FitMatch/Components/TabBarScrollVisibilityModifier.swift
+
+따라서 유지한 d5faf1f / 9d88807 보호 항목:
+
+- SOLD_OUT candidate scoring 유지
+- UNKNOWN inventory candidate scoring 유지
+- no-inventory evidence candidate scoring 유지
+- server reference order 유지
+- local isRepresentative automatic fallback 금지 유지
+- sizes_required short-circuit 유지
+- measurements_required short-circuit 유지
+- server-approved reliability 보존 유지
+- DESIGN_AXIS_DIFFERENCE diagnostic 보존 유지
+- REVIEW_REQUIRED exact IDs 유지
+- nested closet_classification_override 유지
+- CONFIRMED no override 유지
+- stable client_item_id retry 유지
+- server-first persistence 유지
+- reference partial success 유지
+- USER_EXPLICIT/USER_EDITED mapping 유지
+- remote exact ID sync 유지
+- generic create/update 뒤 post-upsert setClosetClassificationOverride 호출을 추가하지 않음
+
+M. Remaining Issues
+
+P0
+
+- 없음. 이번 범위에서 알려진 production authority/identity/measurement gate 회귀는 발견하지 못했다.
+
+P1
+
+- XCTest를 이 host에서 실행하지 못했다. xcodebuild project metadata 단계의 무응답이 해소된 Xcode host에서 아래 테스트를 재실행해야 한다.
+  - FitMatchSupabaseProductResolverTests
+  - FitMatchFinalReleaseHeadlessAcceptanceTests
+  - Closet registration tests
+  - Compare flow tests
+  - 기존 d5faf1f / 9d88807 regression suites
+
+P2
+
+- 없음.
+
+Commit/Push 기록은 이 문서 작성 이후 사용자 요청에 따라 수행한다.

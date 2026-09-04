@@ -1846,6 +1846,43 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(await remote.upsertCallCount() == 1)
     }
 
+    @Test func zeroMeasurementLinkedClosetSubmissionIsRejectedBeforeRemoteMutation() async throws {
+        let request = serverFirstRegistrationRequest(
+            measurements: .init(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 0,
+                sleeveLength: 0
+            )
+        )
+        let remote = ServerFirstClosetRemote(upsertResult: .success)
+
+        #expect(throws: FitMatchComparedProductClosetRegistration.ServerPreparationError
+            .missingUsableMeasurement) {
+            try FitMatchComparedProductClosetRegistration.prepareServerFirstSubmission(request)
+        }
+        #expect(await remote.upsertCallCount() == 0)
+    }
+
+    @Test func canonicalMeasurementServerRejectionUsesFriendlyClosetMessage() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest())
+        let remote = ServerFirstClosetRemote(upsertResult: .canonicalMeasurementRejected)
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+
+        let outcome = await action.submitServerFirst(submission, in: context)
+
+        guard case .completed(.serverRejected(let message)) = outcome else {
+            Issue.record("Expected canonical measurement rejection")
+            return
+        }
+        #expect(message == "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다.")
+        #expect(await remote.upsertCallCount() == 1)
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
+    }
+
     @Test func serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure() async throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
@@ -1911,7 +1948,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             isRepresentative: true,
             measurements: .init(
                 shoulder: 0,
-                chest: 0,
+                chest: 53,
                 totalLength: 0,
                 sleeveLength: 0
             )
@@ -1946,6 +1983,23 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(!source.contains("FitMatchClosetRegistrationPersistence.save"))
         #expect(!source.contains("isShowingManualAddSheet"))
         #expect(source.contains("serverContext.identity(for: selectedSizeID) != nil"))
+    }
+
+    @Test func measurementPresenceGatesPrecedeClosetSheetAndReviewRecovery() throws {
+        let linkSource = try sourceFile("FitMatch/Views/LinkClosetRegistrationView.swift")
+        #expect(linkSource.contains("이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다."))
+        #expect(linkSource.contains("guard productMeasurementPresence != .none else { return }"))
+        #expect(linkSource.contains(".disabled(productMeasurementPresence == .none)"))
+
+        let compareSource = try sourceFile("FitMatch/Views/CompareFlowSheet.swift")
+        let presenceGate = try #require(
+            compareSource.range(of: "viewModel.productMeasurementPresence == .none")
+        )
+        let reviewRecovery = try #require(
+            compareSource.range(of: "if viewModel.hasServerReviewRequiredAuthority")
+        )
+        #expect(presenceGate.lowerBound < reviewRecovery.lowerBound)
+        #expect(compareSource.contains("이 상품은 실측 정보가 없어 비교할 수 없습니다."))
     }
 
     private func shareURLProvider(_ url: URL) -> NSItemProvider {
@@ -2251,16 +2305,27 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
     }
 }
 
-private enum ServerFirstSubmissionTestError: Error {
+private enum ServerFirstSubmissionTestError: LocalizedError {
     case localPersistence
     case upsertRejected
     case referenceRejected
+    case canonicalMeasurementRejected
+
+    var errorDescription: String? {
+        switch self {
+        case .canonicalMeasurementRejected:
+            "Closet registration requires at least one usable canonical measurement"
+        case .localPersistence, .upsertRejected, .referenceRejected:
+            nil
+        }
+    }
 }
 
 private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing {
     enum UpsertResult: Sendable, Equatable {
         case success
         case failure
+        case canonicalMeasurementRejected
     }
 
     enum ReferenceResult: Sendable, Equatable {
@@ -2287,6 +2352,9 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
         -> FitMatchUpsertClosetItemResponse {
         submittedClientItemIDs.append(request.clientItemID)
         guard upsertResult == .success else {
+            if upsertResult == .canonicalMeasurementRejected {
+                throw ServerFirstSubmissionTestError.canonicalMeasurementRejected
+            }
             throw ServerFirstSubmissionTestError.upsertRejected
         }
         acceptedClientItemIDs.insert(request.clientItemID)

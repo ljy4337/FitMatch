@@ -1796,6 +1796,17 @@ private extension CompareFlowSheet {
     }
 
     func handleProductLoadCompletion(_ didLoad: Bool) {
+        // This is a retailer-fact early gate, deliberately before
+        // REVIEW_REQUIRED recovery or any reference discovery. One positive
+        // measurement only permits the existing server readiness flow; it
+        // never makes a product comparison-ready on its own.
+        if viewModel.hasLoadedProductInfo,
+           viewModel.productMeasurementPresence == .none {
+            errorMessage = "이 상품은 실측 정보가 없어 비교할 수 없습니다."
+            setStep(.error)
+            return
+        }
+
         guard didLoad else {
             if viewModel.hasServerReviewRequiredAuthority {
                 if viewModel.reviewRecoveryContract != nil {

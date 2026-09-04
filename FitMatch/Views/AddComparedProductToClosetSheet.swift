@@ -130,9 +130,13 @@ struct AddComparedProductToClosetSheet: View {
         _selectedCategoryCode = State(initialValue: initialCategoryCode)
         _selectedDetailCategory = State(initialValue: initialDetail)
         _selectedDetailCategoryCode = State(initialValue: initialDetailCode)
+        let selectableProductSizes = Self.selectableSizes(
+            productSizes: product.sizes,
+            serverRegistrationContext: serverRegistrationContext
+        )
         _selectedSizeID = State(initialValue: Self.initialSelectedSizeID(
             recommendedSize: recommendedSize,
-            productSizes: product.sizes,
+            productSizes: selectableProductSizes,
             allowsLabelFallback: serverRegistrationContext == nil
         ))
         // Reversible previous initialization used only preselectedCategory != nil.
@@ -146,7 +150,26 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private var availableSizes: [ProductSize] {
-        let sortedSizes = product.sizes.sorted {
+        Self.selectableSizes(
+            productSizes: product.sizes,
+            serverRegistrationContext: serverRegistrationContext
+        )
+    }
+
+    private var unavailableSizeMessage: String {
+        isServerFirstLinkedRegistration
+            ? "실측 정보가 있는 서버 사이즈를 다시 확인해 주세요."
+            : "사이즈 정보를 찾을 수 없습니다."
+    }
+
+    /// Filters only the link-registration presentation. The Product keeps all
+    /// runtime sizes and exact IDs for observation, comparison, and later
+    /// reconciliation; unavailable-for-Closet sizes are never deleted.
+    static func selectableSizes(
+        productSizes: [ProductSize],
+        serverRegistrationContext: FitMatchClosetRegistrationServerContext?
+    ) -> [ProductSize] {
+        let sortedSizes = productSizes.sorted {
             if $0.displayOrder != $1.displayOrder {
                 return $0.displayOrder < $1.displayOrder
             }
@@ -156,9 +179,12 @@ struct AddComparedProductToClosetSheet: View {
         // A normal legacy product view can coalesce duplicate presentation
         // labels. A linked server-first registration cannot: two visible "M"
         // rows may carry different exact variant/product-size UUIDs.
-        return serverRegistrationContext == nil
-            ? ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
-            : sortedSizes
+        guard let serverRegistrationContext else {
+            return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+        }
+        return sortedSizes.filter {
+            serverRegistrationContext.isRegisterable(displaySizeID: $0.id)
+        }
     }
 
     static func initialSelectedSizeID(
@@ -287,7 +313,7 @@ struct AddComparedProductToClosetSheet: View {
             ) {
                 VStack(alignment: .leading, spacing: 16) {
                     if availableSizes.isEmpty {
-                        Text("불러온 사이즈표가 없습니다.")
+                        Text(unavailableSizeMessage)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else {
@@ -325,7 +351,9 @@ struct AddComparedProductToClosetSheet: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(availableSizes.isEmpty ? "사이즈 정보를 찾을 수 없습니다." : "\(availableSizes.count)개 사이즈를 찾았습니다.")
+                        Text(availableSizes.isEmpty
+                            ? unavailableSizeMessage
+                            : "\(availableSizes.count)개 사이즈를 찾았습니다.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -432,7 +460,7 @@ struct AddComparedProductToClosetSheet: View {
             }
 
             if availableSizes.isEmpty {
-                Text("사이즈 정보를 찾을 수 없습니다.")
+                Text(unavailableSizeMessage)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -678,8 +706,13 @@ struct AddComparedProductToClosetSheet: View {
             return "세부 카테고리를 선택해 주세요."
         }
 
-        guard selectedSize != nil else {
+        guard let selectedSize else {
             return "실제로 보유한 사이즈를 선택해 주세요."
+        }
+
+        if let serverRegistrationContext,
+           !serverRegistrationContext.isRegisterable(displaySizeID: selectedSize.id) {
+            return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
         }
 
         guard !savedProductName.isEmpty else {
@@ -711,6 +744,8 @@ struct AddComparedProductToClosetSheet: View {
             product: product,
             selectedSize: selectedSize,
             serverIdentity: serverRegistrationContext?.identity(for: selectedSize.id),
+            hasMeasurementEligibilityProof: serverRegistrationContext?
+                .isRegisterable(displaySizeID: selectedSize.id),
             activeClosetItems: userFits,
             brandName: savedBrandName,
             gender: selectedGender,
