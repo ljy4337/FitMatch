@@ -521,8 +521,13 @@ struct UniqloSizeAPIParser {
                 && (normalizedPLD == nil
                     || Self.normalizedDisplayCode(item.pld.displayCode) == normalizedPLD)
         }
-        let bySize = Dictionary(grouping: matching) {
-            ParsedProductSizeNormalizer.normalizedSizeKey(for: $0.size.name)
+        let bySize = matching.reduce(
+            into: [String: [UniqloProductAvailabilityResponse.L2]]()
+        ) { grouped, item in
+            guard let sizeName = item.size.name else { return }
+            let sizeKey = ParsedProductSizeNormalizer.normalizedSizeKey(for: sizeName)
+            guard !sizeKey.isEmpty else { return }
+            grouped[sizeKey, default: []].append(item)
         }
 
         return sizes.map { size in
