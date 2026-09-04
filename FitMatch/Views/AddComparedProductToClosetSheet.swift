@@ -17,6 +17,10 @@ struct AddComparedProductToClosetSheet: View {
     let preselectedCategory: ClothingCategory?
     let preselectedClassification: ParsedClosetClassification?
     let isParsedProductReadOnly: Bool
+    /// Present only for the link registration flow. Its exact runtime UUID map
+    /// is consumed by the server-first action and never reconstructed from a
+    /// size label in this View.
+    let serverRegistrationContext: FitMatchClosetRegistrationServerContext?
     var onSaved: ((UserFit) -> Void)?
 
     @State private var step: AddComparedProductStep
@@ -32,10 +36,23 @@ struct AddComparedProductToClosetSheet: View {
     @State private var hasSelectedClosetCategory = false
     @State private var hasSelectedClosetDetailCategory = false
     @State private var didExplicitlyChangeClassification = false
+    @State private var didExplicitlyChangeAudience = false
+    @State private var didExplicitlySelectClosetClassification = false
     @State private var isBasisItem = false
     @State private var isSaving = false
     @State private var submissionAction = FitMatchComparedProductClosetSubmissionAction()
+    @State private var pendingServerSubmission:
+        FitMatchComparedProductClosetRegistration.ServerFirstSubmission?
     @State private var alertMessage: String?
+    @State private var savedItemAwaitingAcknowledgement: UserFit?
+
+    /// Only a server-confirmed tuple may be preselected without becoming a
+    /// Closet override.  Retain that exact starting tuple so re-selecting the
+    /// same values does not manufacture USER_EXPLICIT, while an audience
+    /// change followed by a newly confirmed category/detail does.
+    private let automaticServerAudienceCode: String?
+    private let automaticServerCategoryCode: String?
+    private let automaticServerDetailCategoryCode: String?
 
     init(
         product: Product,
@@ -44,6 +61,7 @@ struct AddComparedProductToClosetSheet: View {
         preselectedCategory: ClothingCategory? = nil,
         preselectedClassification: ParsedClosetClassification? = nil,
         isParsedProductReadOnly: Bool = false,
+        serverRegistrationContext: FitMatchClosetRegistrationServerContext? = nil,
         startsAtRegistrationConfirmation: Bool = false,
         prefersRepresentativeByDefault: Bool = false,
         onSaved: ((UserFit) -> Void)? = nil
@@ -54,6 +72,7 @@ struct AddComparedProductToClosetSheet: View {
         self.preselectedCategory = preselectedCategory
         self.preselectedClassification = preselectedClassification
         self.isParsedProductReadOnly = isParsedProductReadOnly
+        self.serverRegistrationContext = serverRegistrationContext
         self.onSaved = onSaved
         _step = State(initialValue: startsAtRegistrationConfirmation ? .confirm : (isParsedProductReadOnly ? .productInfo : .size))
         _isBasisItem = State(initialValue: prefersRepresentativeByDefault)
@@ -61,8 +80,16 @@ struct AddComparedProductToClosetSheet: View {
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
         _selectedGenderCode = State(initialValue: product.productTargetGender.taxonomyCode)
-        let hasServerAuthority = product.classificationAuthorityProvenance == .serverConfirmed
-        let suppliedCanonical = !hasServerAuthority && preselectedClassification?.isValid == true
+        let requiresExplicitClosetClassification = serverRegistrationContext?
+            .classificationState == .reviewRequired
+        let hasServerAuthority = serverRegistrationContext?.classificationState == .confirmed
+            || product.classificationAuthorityProvenance == .serverConfirmed
+        automaticServerAudienceCode = hasServerAuthority
+            ? product.productTargetGender.taxonomyCode
+            : nil
+        let suppliedCanonical = !hasServerAuthority
+            && !requiresExplicitClosetClassification
+            && preselectedClassification?.isValid == true
             ? preselectedClassification
             : nil
         let inferredCanonical = hasServerAuthority
@@ -76,30 +103,46 @@ struct AddComparedProductToClosetSheet: View {
         // source path so a comparison detail such as "데님" is stored as the
         // valid closet taxonomy detail "긴바지" instead of falling back to 기타.
         let canonical = suppliedCanonical ?? inferredCanonical
-        let initialCategory = canonical?.category
+        let initialCategory = requiresExplicitClosetClassification ? .other : (canonical?.category
             ?? (hasServerAuthority ? product.category : preselectedCategory)
-            ?? product.category.serviceGroup
-        let initialCategoryCode = canonical?.categoryCode
+            ?? product.category.serviceGroup)
+        let initialCategoryCode = requiresExplicitClosetClassification ? "" : (canonical?.categoryCode
             ?? (hasServerAuthority ? product.resolvedCategoryCode : nil)
-            ?? initialCategory.taxonomyCode
-        let initialDetail = canonical?.detailCategory ?? productDetailCategory
-        let initialDetailCode = canonical?.detailCode
+            ?? initialCategory.taxonomyCode)
+        let initialDetail = requiresExplicitClosetClassification
+            ? .other
+            : (canonical?.detailCategory ?? productDetailCategory)
+        let initialDetailCode = requiresExplicitClosetClassification ? "" : (canonical?.detailCode
             ?? (hasServerAuthority ? product.normalizedProductTypeCode : nil)
             ?? FitMatchTaxonomyProvider.shared.detailCode(
                 for: initialDetail.rawValue, categoryCode: initialCategoryCode
-            ) ?? ""
+            ) ?? "")
         let hasValidCanonicalSelection = FitMatchTaxonomyProvider.shared.isValidDetail(
             initialDetailCode, for: initialCategoryCode
         )
+        automaticServerCategoryCode = hasServerAuthority && hasValidCanonicalSelection
+            ? initialCategoryCode
+            : nil
+        automaticServerDetailCategoryCode = hasServerAuthority && hasValidCanonicalSelection
+            ? initialDetailCode
+            : nil
         _selectedCategory = State(initialValue: initialCategory)
         _selectedCategoryCode = State(initialValue: initialCategoryCode)
         _selectedDetailCategory = State(initialValue: initialDetail)
         _selectedDetailCategoryCode = State(initialValue: initialDetailCode)
-        _selectedSizeID = State(initialValue: Self.initialSelectedSizeID(recommendedSize: recommendedSize, productSizes: product.sizes))
+        _selectedSizeID = State(initialValue: Self.initialSelectedSizeID(
+            recommendedSize: recommendedSize,
+            productSizes: product.sizes,
+            allowsLabelFallback: serverRegistrationContext == nil
+        ))
         // Reversible previous initialization used only preselectedCategory != nil.
         // Canonical taxonomy validity now controls whether parsed selections appear selected.
-        _hasSelectedClosetCategory = State(initialValue: hasValidCanonicalSelection)
-        _hasSelectedClosetDetailCategory = State(initialValue: hasValidCanonicalSelection)
+        _hasSelectedClosetCategory = State(initialValue:
+            !requiresExplicitClosetClassification && hasValidCanonicalSelection
+        )
+        _hasSelectedClosetDetailCategory = State(initialValue:
+            !requiresExplicitClosetClassification && hasValidCanonicalSelection
+        )
     }
 
     private var availableSizes: [ProductSize] {
@@ -110,10 +153,19 @@ struct AddComparedProductToClosetSheet: View {
             return $0.name < $1.name
         }
 
-        return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+        // A normal legacy product view can coalesce duplicate presentation
+        // labels. A linked server-first registration cannot: two visible "M"
+        // rows may carry different exact variant/product-size UUIDs.
+        return serverRegistrationContext == nil
+            ? ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+            : sortedSizes
     }
 
-    private static func initialSelectedSizeID(recommendedSize: ProductSize?, productSizes: [ProductSize]) -> UUID? {
+    static func initialSelectedSizeID(
+        recommendedSize: ProductSize?,
+        productSizes: [ProductSize],
+        allowsLabelFallback: Bool
+    ) -> UUID? {
         guard let recommendedSize else {
             return nil
         }
@@ -124,10 +176,16 @@ struct AddComparedProductToClosetSheet: View {
             }
             return $0.name < $1.name
         }
-        let availableSizes = ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+        let availableSizes = allowsLabelFallback
+            ? ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
+            : sortedSizes
 
         if availableSizes.contains(where: { $0.id == recommendedSize.id }) {
             return recommendedSize.id
+        }
+
+        guard allowsLabelFallback else {
+            return nil
         }
 
         let normalizedRecommendedName = recommendedSize.name
@@ -205,7 +263,13 @@ struct AddComparedProductToClosetSheet: View {
                 set: { if !$0 { alertMessage = nil } }
             )) {
                 Button("확인") {
+                    let savedItem = savedItemAwaitingAcknowledgement
                     alertMessage = nil
+                    savedItemAwaitingAcknowledgement = nil
+                    if let savedItem {
+                        onSaved?(savedItem)
+                        dismiss()
+                    }
                 }
             } message: {
                 Text(alertMessage ?? "")
@@ -397,11 +461,7 @@ struct AddComparedProductToClosetSheet: View {
             RegistrationMenuRow(title: "성별", value: selectedGenderDisplayName) {
                 ForEach(availableGenders) { gender in
                     Button(gender.displayName) {
-                        selectedGenderCode = gender.code
-                        selectedGender = UserGender.fromTaxonomyCode(gender.code)
-                        didExplicitlyChangeClassification = true
-                        normalizeCategory()
-                        normalizeDetailCategory()
+                        selectAudience(gender)
                     }
                 }
             }
@@ -409,10 +469,7 @@ struct AddComparedProductToClosetSheet: View {
             RegistrationMenuRow(title: "카테고리", value: selectedCategoryDisplayName) {
                 ForEach(availableCategories) { category in
                     Button(category.displayName) {
-                        selectedCategoryCode = category.code
-                        selectedCategory = ClothingCategory.fromTaxonomyCode(category.code)
-                        didExplicitlyChangeClassification = true
-                        normalizeDetailCategory()
+                        selectCategory(category)
                     }
                 }
             }
@@ -420,9 +477,7 @@ struct AddComparedProductToClosetSheet: View {
             RegistrationMenuRow(title: "상세 카테고리", value: selectedDetailDisplayName) {
                 ForEach(availableDetailCategories) { detailCategory in
                     Button(detailCategory.displayName) {
-                        selectedDetailCategoryCode = detailCategory.code
-                        selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCategory.code)
-                        didExplicitlyChangeClassification = true
+                        selectDetailCategory(detailCategory)
                     }
                 }
             }
@@ -448,12 +503,7 @@ struct AddComparedProductToClosetSheet: View {
             RegistrationMenuRow(title: "성별", value: selectedGenderDisplayName) {
                 ForEach(availableGenders) { gender in
                     Button(gender.displayName) {
-                        selectedGenderCode = gender.code
-                        selectedGender = UserGender.fromTaxonomyCode(gender.code)
-                        didExplicitlyChangeClassification = true
-                        hasSelectedClosetCategory = false
-                        hasSelectedClosetDetailCategory = false
-                        normalizeCategory()
+                        selectAudience(gender)
                     }
                 }
             }
@@ -461,12 +511,7 @@ struct AddComparedProductToClosetSheet: View {
             RegistrationMenuRow(title: "대분류", value: hasSelectedClosetCategory ? selectedCategoryDisplayName : "선택") {
                 ForEach(availableCategories) { category in
                     Button(category.displayName) {
-                        selectedCategoryCode = category.code
-                        selectedCategory = ClothingCategory.fromTaxonomyCode(category.code)
-                        didExplicitlyChangeClassification = true
-                        hasSelectedClosetCategory = true
-                        hasSelectedClosetDetailCategory = false
-                        normalizeDetailCategory()
+                        selectCategory(category)
                     }
                 }
             }
@@ -475,10 +520,7 @@ struct AddComparedProductToClosetSheet: View {
                 if hasSelectedClosetCategory {
                     ForEach(availableDetailCategories) { detailCategory in
                         Button(detailCategory.displayName) {
-                            selectedDetailCategoryCode = detailCategory.code
-                            selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCategory.code)
-                            didExplicitlyChangeClassification = true
-                            hasSelectedClosetDetailCategory = true
+                            selectDetailCategory(detailCategory)
                         }
                     }
                 } else {
@@ -548,6 +590,7 @@ struct AddComparedProductToClosetSheet: View {
                     }
                 case .confirm:
                     guard !isSaving else { return }
+                    guard validateBeforeSave() else { return }
                     isSaving = true
                     Task { @MainActor in
                         await saveSelectedSize()
@@ -556,17 +599,20 @@ struct AddComparedProductToClosetSheet: View {
             } label: {
                 Label(bottomButtonTitle, systemImage: step == .confirm ? "plus" : "chevron.right")
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(isBottomButtonEnabled ? Color(.systemBackground) : .secondary)
+                    .foregroundStyle(isSaving ? Color.secondary : Color(.systemBackground))
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
                     .background(
-                        isBottomButtonEnabled ? Color.black : Color(.secondarySystemGroupedBackground),
+                        isSaving ? Color(.secondarySystemGroupedBackground) : Color.black,
                         in: RoundedRectangle(cornerRadius: 18, style: .continuous)
                     )
             }
             .accessibilityIdentifier("closet.confirmAction")
             .buttonStyle(.plain)
-            .disabled(!isBottomButtonEnabled || isSaving)
+            // Missing fields are deliberately handled by the ordered alert
+            // validation above. A disabled button hides the reason and makes
+            // a REVIEW_REQUIRED registration look like a load failure.
+            .disabled(isSaving)
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -586,17 +632,6 @@ struct AddComparedProductToClosetSheet: View {
         }
     }
 
-    private var isBottomButtonEnabled: Bool {
-        switch step {
-        case .productInfo:
-            return true
-        case .size:
-            return selectedSize != nil
-        case .confirm:
-            return canSave
-        }
-    }
-
     private var bottomGuideText: String? {
         switch step {
         case .productInfo:
@@ -604,54 +639,65 @@ struct AddComparedProductToClosetSheet: View {
         case .size:
             return selectedSize == nil ? "등록할 사이즈를 선택해 주세요." : nil
         case .confirm:
-            if isParsedProductReadOnly {
-                if selectedGenderCode == "unknown" {
-                    return "성별을 선택해 주세요."
-                }
-                if !hasSelectedClosetCategory {
-                    return "대분류를 선택해 주세요."
-                }
-                if !hasSelectedClosetDetailCategory {
-                    return "세부 카테고리를 선택해 주세요."
-                }
-                if selectedSize == nil {
-                    return "저장할 사이즈를 선택해 주세요."
-                }
-                return productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "상품명을 확인할 수 없습니다." : nil
-            }
-            if brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                return "브랜드명을 입력해 주세요."
-            }
-            if productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                return "상품명을 입력해 주세요."
-            }
-            return nil
+            return validationMessage ?? serverRegistrationContext?.registrationBlockMessage
         }
     }
 
-    private var canSave: Bool {
-        let hasValidClassification = FitMatchTaxonomyProvider.shared.isActiveCategory(selectedCategoryCode)
-            && FitMatchTaxonomyProvider.shared.isValidDetail(selectedDetailCategoryCode, for: selectedCategoryCode)
-            && ParsedClosetClassification.isConsistent(
-                category: selectedCategory,
-                detailCategory: selectedDetailCategory,
-                categoryCode: selectedCategoryCode,
-                detailCode: selectedDetailCategoryCode
-            )
-        if isParsedProductReadOnly {
-            return selectedSize != nil
-                && selectedGenderCode != "unknown"
-                && hasSelectedClosetCategory
-                && hasSelectedClosetDetailCategory
-                && hasValidClassification
-                && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    /// The button remains actionable so the user gets one concrete reason at a
+    /// time.  Keep this ordering stable: UI tests and, more importantly, the
+    /// registration contract rely on validation finishing before *any* local
+    /// or remote mutation is constructed.
+    private var validationMessage: String? {
+        let provider = FitMatchTaxonomyProvider.shared
+        let normalizedGenderCode = selectedGenderCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard selectedGender != .unknown,
+              !normalizedGenderCode.isEmpty,
+              normalizedGenderCode != "unknown" else {
+            return "성별을 선택해 주세요."
         }
 
-        return selectedSize != nil
-            && selectedGenderCode != "unknown"
-            && !brandName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && hasValidClassification
+        let hasValidCategory = provider.isActiveCategory(selectedCategoryCode)
+        guard (!isParsedProductReadOnly || hasSelectedClosetCategory),
+              hasValidCategory else {
+            return "대분류를 선택해 주세요."
+        }
+
+        let hasValidDetail = provider.isValidDetail(
+            selectedDetailCategoryCode,
+            for: selectedCategoryCode
+        ) && ParsedClosetClassification.isConsistent(
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            categoryCode: selectedCategoryCode,
+            detailCode: selectedDetailCategoryCode
+        )
+        guard (!isParsedProductReadOnly || hasSelectedClosetDetailCategory),
+              hasValidDetail else {
+            return "세부 카테고리를 선택해 주세요."
+        }
+
+        guard selectedSize != nil else {
+            return "실제로 보유한 사이즈를 선택해 주세요."
+        }
+
+        guard !savedProductName.isEmpty else {
+            return "상품명을 확인할 수 없습니다."
+        }
+        return nil
+    }
+
+    private func validateBeforeSave() -> Bool {
+        if let validationMessage {
+            alertMessage = validationMessage
+            return false
+        }
+        if let blockMessage = serverRegistrationContext?.registrationBlockMessage {
+            alertMessage = blockMessage
+            return false
+        }
+        return true
     }
 
     private func saveSelectedSize() async {
@@ -661,8 +707,10 @@ struct AddComparedProductToClosetSheet: View {
         }
 
         let request = FitMatchComparedProductClosetRegistration.SaveRequest(
+            clientItemID: pendingServerSubmission?.localRequest.clientItemID ?? UUID(),
             product: product,
             selectedSize: selectedSize,
+            serverIdentity: serverRegistrationContext?.identity(for: selectedSize.id),
             activeClosetItems: userFits,
             brandName: savedBrandName,
             gender: selectedGender,
@@ -673,8 +721,44 @@ struct AddComparedProductToClosetSheet: View {
             detailCategory: selectedDetailCategory,
             detailCategoryCode: selectedDetailCategoryCode,
             isRepresentative: isBasisItem,
-            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
+            didExplicitlyChangeAudience: didExplicitlyChangeAudience,
+            didExplicitlySelectClosetClassification:
+                didExplicitlySelectClosetClassification
         )
+
+        if serverRegistrationContext != nil {
+            let submission: FitMatchComparedProductClosetRegistration.ServerFirstSubmission
+            if let pendingServerSubmission {
+                // A timeout can have reached the server after the client lost
+                // its response.  Retry the immutable request, not the newly
+                // edited UI values and never a freshly allocated UUID.
+                submission = pendingServerSubmission
+            } else {
+                do {
+                    submission = try FitMatchComparedProductClosetRegistration
+                        .prepareServerFirstSubmission(request)
+                    pendingServerSubmission = submission
+                } catch {
+                    alertMessage = (error as? LocalizedError)?.errorDescription
+                        ?? "서버 등록 요청을 준비하지 못했습니다."
+                    isSaving = false
+                    return
+                }
+            }
+
+            let submissionOutcome = await submissionAction.submitServerFirst(
+                submission,
+                in: modelContext
+            )
+            guard case .completed(let outcome) = submissionOutcome else {
+                isSaving = false
+                return
+            }
+            handleServerFirstOutcome(outcome)
+            return
+        }
+
         let submissionOutcome = await submissionAction.submit {
             FitMatchComparedProductClosetRegistration.save(
                 request,
@@ -697,6 +781,35 @@ struct AddComparedProductToClosetSheet: View {
             return
         }
 
+        finishSuccessfulSave(item)
+    }
+
+    private func handleServerFirstOutcome(
+        _ outcome: FitMatchComparedProductClosetRegistration.SaveOutcome
+    ) {
+        switch outcome {
+        case .saved(let item):
+            pendingServerSubmission = nil
+            finishSuccessfulSave(item)
+        case .savedWithoutReference(let item, let message):
+            // The server already owns the Closet row. Do not report a full
+            // success until the user has seen that reference selection was
+            // rejected; the local row accurately remains non-representative.
+            pendingServerSubmission = nil
+            isSaving = false
+            savedItemAwaitingAcknowledgement = item
+            alertMessage = message
+        case .duplicate, .storageLookupFailed, .persistenceFailed,
+             .serverRejected, .serverAcceptedLocalPersistenceFailed:
+            alertMessage = outcome.userVisibleMessage
+            // Retain `pendingServerSubmission` for transport ambiguity and
+            // local-persistence recovery. Its client_item_id is the only safe
+            // identity to retry until this sheet is dismissed.
+            isSaving = false
+        }
+    }
+
+    private func finishSuccessfulSave(_ item: UserFit) {
         #if DEBUG
         print("[AddComparedProductToClosetSheet] final UserFit source category saved")
         print("[AddComparedProductToClosetSheet] raw source category: \(product.sourceCategoryPath ?? "nil")")
@@ -711,6 +824,91 @@ struct AddComparedProductToClosetSheet: View {
         #endif
         onSaved?(item)
         dismiss()
+    }
+
+    private var isServerFirstLinkedRegistration: Bool {
+        serverRegistrationContext != nil
+    }
+
+    private func selectAudience(_ gender: TaxonomyOption) {
+        let changed = selectedGenderCode != gender.code
+        selectedGenderCode = gender.code
+        selectedGender = UserGender.fromTaxonomyCode(gender.code)
+        if changed {
+            didExplicitlyChangeAudience = true
+        }
+
+        guard changed else { return }
+        if isServerFirstLinkedRegistration {
+            // An audience change cannot silently retain a server-auto tuple.
+            // The user must actively review both canonical Closet dimensions
+            // before an override can be built.
+            resetClosetClassificationSelection()
+            return
+        }
+
+        if isParsedProductReadOnly {
+            hasSelectedClosetCategory = false
+            hasSelectedClosetDetailCategory = false
+        }
+        normalizeCategory()
+        normalizeDetailCategory()
+    }
+
+    private func selectCategory(_ category: TaxonomyCategory) {
+        selectedCategoryCode = category.code
+        selectedCategory = ClothingCategory.fromTaxonomyCode(category.code)
+        didExplicitlyChangeClassification = true
+        hasSelectedClosetCategory = true
+        hasSelectedClosetDetailCategory = false
+        selectedDetailCategory = .other
+        selectedDetailCategoryCode = ""
+
+        if !isServerFirstLinkedRegistration {
+            normalizeDetailCategory()
+        }
+        refreshExplicitClassificationIntent()
+    }
+
+    private func selectDetailCategory(_ detailCategory: TaxonomyOption) {
+        selectedDetailCategoryCode = detailCategory.code
+        selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCategory.code)
+        didExplicitlyChangeClassification = true
+        hasSelectedClosetDetailCategory = true
+        refreshExplicitClassificationIntent()
+    }
+
+    private func resetClosetClassificationSelection() {
+        selectedCategory = .other
+        selectedCategoryCode = ""
+        selectedDetailCategory = .other
+        selectedDetailCategoryCode = ""
+        hasSelectedClosetCategory = false
+        hasSelectedClosetDetailCategory = false
+        didExplicitlySelectClosetClassification = false
+    }
+
+    private func refreshExplicitClassificationIntent() {
+        guard isServerFirstLinkedRegistration else { return }
+        guard hasSelectedClosetCategory, hasSelectedClosetDetailCategory else {
+            didExplicitlySelectClosetClassification = false
+            return
+        }
+
+        switch serverRegistrationContext?.classificationState {
+        case .reviewRequired:
+            didExplicitlySelectClosetClassification = true
+        case .confirmed:
+            let selectedAudience = FitMatchCanonicalAudience.code(from: selectedGenderCode)
+            let automaticAudience = FitMatchCanonicalAudience.code(
+                from: automaticServerAudienceCode
+            )
+            didExplicitlySelectClosetClassification = selectedAudience != automaticAudience
+                || selectedCategoryCode != automaticServerCategoryCode
+                || selectedDetailCategoryCode != automaticServerDetailCategoryCode
+        case .notApplicable, .unavailable, .none:
+            didExplicitlySelectClosetClassification = false
+        }
     }
 
     private func normalizeDetailCategory() {

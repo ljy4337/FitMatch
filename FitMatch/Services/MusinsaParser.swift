@@ -49,16 +49,11 @@ struct MusinsaParser: ProductURLParsing {
     ) async throws -> ParsedProductInfo {
         let resolved = try await urlResolver.resolve(url)
         var metadata = await metadataParser.parse(productID: resolved.productID, sourceURL: resolved.resolvedURL)
-        if MusinsaUnsupportedProductPolicy.isTopBottomSet(
-            categoryDepth2Name: metadata.categoryDepth2Name
-        ) {
-            throw ProductURLParserPartialError(
-                productInfo: metadata.parsedProductInfo(
-                    sizes: [],
-                    parserNotice: Self.unsupportedTopBottomSetNotice
-                )
-            )
-        }
+        // `상하의세트` is an official product-structure fact, not a parser
+        // failure. Preserve it in the observation and continue through the
+        // size APIs so the product-information UI can render every fact the
+        // retailer supplies. vNext remains the authority that blocks SET
+        // Closet/comparison use for this phase.
         onProgress(.loadingSizeChart)
         let actualSize: MusinsaActualSizeResult?
         do {

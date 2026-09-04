@@ -929,6 +929,342 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(preparation.errorMessage != nil)
     }
 
+    @Test func reviewRequiredLinkKeepsParserFactsAndExactRuntimeSizeIdentity() async throws {
+        let parsed = try Self.authorityTestProduct(
+            source: "musinsa",
+            externalProductID: "link-review-exact-size",
+            localCategory: .top,
+            localDetail: .shortSleeve
+        )
+        let productID = UUID()
+        let variantID = UUID()
+        let sizeID = UUID()
+        let classification = FitMatchDatabaseClassification(
+            classificationID: UUID(),
+            categoryCode: nil,
+            detailCode: nil,
+            garmentTypeCode: nil,
+            familyCode: nil,
+            lengthCode: nil,
+            bodyLengthCode: nil,
+            status: "review_required",
+            method: "needs_user_closet_tuple",
+            authorityStatus: nil,
+            confidence: nil,
+            requiresUserConfirmation: true,
+            taxonomyPolicyVersion: "test-vnext",
+            decisionVersion: "test-review"
+        )
+        let runtime = FitMatchProductRuntimeResponse(
+            runtimeState: "classification_required",
+            comparisonReady: false,
+            product: FitMatchRuntimeProduct(
+                productID: productID,
+                source: "musinsa",
+                externalProductID: "link-review-exact-size",
+                productName: parsed.productName,
+                canonicalURL: parsed.sourceURL.absoluteString,
+                audience: "MEN",
+                sourceCategoryPath: parsed.sourceCategoryPath,
+                sourceCategoryCodes: ["001", "001001"],
+                imageURL: nil,
+                lifecycleStatus: "active",
+                inputFingerprint: "review-runtime"
+            ),
+            classification: classification,
+            variants: [
+                FitMatchRuntimeVariant(
+                    variantID: variantID,
+                    externalVariantID: "__default__",
+                    variantName: nil,
+                    colorCode: nil,
+                    colorName: nil,
+                    sizes: [
+                        FitMatchRuntimeSize(
+                            productSizeID: sizeID,
+                            externalSizeID: "m-source-key",
+                            sizeLabel: "M",
+                            normalizedSizeLabel: "M",
+                            displayOrder: 0,
+                            stockStatus: "UNKNOWN",
+                            measurements: []
+                        )
+                    ]
+                )
+            ]
+        )
+        let resolution = FitMatchProductResolutionResponse(
+            productID: productID,
+            intakeRequestID: nil,
+            catalogState: "current",
+            categoryEvidenceMatches: true,
+            authorityPersisted: true,
+            classification: classification,
+            comparisonReady: false
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [resolution],
+            observations: [],
+            runtimes: [runtime]
+        )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+        // The legacy Bool remains a comparison-authority gate, but parser
+        // facts are independently available for the link registration UI.
+        #expect(!(await viewModel.loadProductInfoFromURL()))
+        #expect(viewModel.hasLoadedProductInfo)
+        guard case .reviewRequired = viewModel.serverAuthorityState else {
+            Issue.record("Expected REVIEW_REQUIRED server state")
+            return
+        }
+
+        let preparation = LinkClosetRegistrationPreparation.make(
+            from: viewModel,
+            brand: nil
+        )
+        let product = try #require(preparation.parsedProduct)
+        let displayedSize = try #require(product.sizes.first)
+        #expect(preparation.serverRegistrationContext.classificationState == .reviewRequired)
+        #expect(
+            preparation.serverRegistrationContext.identity(for: displayedSize.id)
+                == FitMatchClosetRegistrationServerIdentity(
+                    productID: productID,
+                    productVariantID: variantID,
+                    productSizeID: sizeID
+                )
+        )
+    }
+
+    @Test func nonComparableAndUnavailableLinksKeepFactsVisibleButBlockRegistration() async throws {
+        let nonComparableParsed = try Self.authorityTestProduct(
+            source: "musinsa",
+            externalProductID: "link-not-applicable",
+            localCategory: .top,
+            localDetail: .shortSleeve
+        )
+        let nonComparableFixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "link-not-applicable",
+            status: .notComparable
+        )
+        let nonComparableViewModel = Self.authorityViewModel(
+            product: nonComparableParsed,
+            remote: DatabaseAuthorityRemoteStub(
+                resolutions: [nonComparableFixture.resolution()],
+                observations: [],
+                runtimes: [nonComparableFixture.runtime]
+            )
+        )
+
+        #expect(!(await nonComparableViewModel.loadProductInfoFromURL()))
+        #expect(nonComparableViewModel.hasLoadedProductInfo)
+        let nonComparablePreparation = LinkClosetRegistrationPreparation.make(
+            from: nonComparableViewModel,
+            brand: nil
+        )
+        #expect(nonComparablePreparation.parsedProduct != nil)
+        #expect(
+            nonComparablePreparation.serverRegistrationContext.classificationState
+                == .notApplicable
+        )
+        #expect(
+            nonComparablePreparation.serverRegistrationContext.registrationBlockMessage
+                == "현재 이 상품은 옷장 등록 대상이 아닙니다."
+        )
+
+        let unavailableParsed = try Self.authorityTestProduct(
+            source: "musinsa",
+            externalProductID: "link-server-unavailable",
+            localCategory: .top,
+            localDetail: .shortSleeve
+        )
+        let unavailableViewModel = Self.authorityViewModel(
+            product: unavailableParsed,
+            remote: DatabaseAuthorityRemoteStub(
+                resolutions: [],
+                observations: [],
+                runtimes: [],
+                resolveFailure: .network
+            )
+        )
+
+        #expect(!(await unavailableViewModel.loadProductInfoFromURL()))
+        #expect(unavailableViewModel.hasLoadedProductInfo)
+        let unavailablePreparation = LinkClosetRegistrationPreparation.make(
+            from: unavailableViewModel,
+            brand: nil
+        )
+        #expect(unavailablePreparation.parsedProduct != nil)
+        #expect(
+            unavailablePreparation.serverRegistrationContext.classificationState
+                == .unavailable
+        )
+        #expect(
+            unavailablePreparation.serverRegistrationContext.registrationBlockMessage
+                == "서버 연결을 확인한 뒤 다시 저장해 주세요."
+        )
+    }
+
+    @Test func vNextClosetMutationUsesExactIdentityAndNestedOverrideOnlyWhenExplicit() throws {
+        let product = Product(
+            id: UUID(),
+            name: "서버 기준 티셔츠",
+            category: .top,
+            productCode: "EXACT-IDENTITY",
+            sourceURLString: "https://www.musinsa.com/products/EXACT-IDENTITY",
+            metadata: ProductMetadata(genderCodes: ["MEN"]),
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            source: .catalog
+        )
+        product.garmentTypeRawValue = "tshirt"
+        product.sleeveTypeRawValue = "short_sleeve"
+        product.markClassificationAuthority(.serverConfirmed)
+        let displaySize = ProductSize(
+            id: UUID(),
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 47,
+                chest: 53,
+                totalLength: 69,
+                sleeveLength: 23
+            ),
+            product: product
+        )
+        product.sizes = [displaySize]
+        let exactIdentity = FitMatchClosetRegistrationServerIdentity(
+            productID: UUID(),
+            productVariantID: UUID(),
+            productSizeID: UUID()
+        )
+        let clientItemID = UUID()
+        let confirmed = FitMatchComparedProductClosetRegistration.SaveRequest(
+            clientItemID: clientItemID,
+            product: product,
+            selectedSize: displaySize,
+            serverIdentity: exactIdentity,
+            activeClosetItems: [],
+            brandName: "테스트",
+            gender: .men,
+            genderCode: "male",
+            productName: product.name,
+            category: .top,
+            categoryCode: "tops",
+            detailCategory: .shortSleeve,
+            detailCategoryCode: "short_sleeve",
+            isRepresentative: false,
+            didExplicitlyChangeClassification: false,
+            didExplicitlySelectClosetClassification: false
+        )
+        let confirmedSubmission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(confirmed)
+        #expect(confirmedSubmission.remoteRequest.clientItemID == clientItemID)
+        #expect(confirmedSubmission.remoteRequest.productID == exactIdentity.productID)
+        #expect(confirmedSubmission.remoteRequest.productVariantID == exactIdentity.productVariantID)
+        #expect(confirmedSubmission.remoteRequest.productSizeID == exactIdentity.productSizeID)
+        let confirmedJSON = try #require(
+            JSONSerialization.jsonObject(
+                with: FitMatchSupabaseDomainClient.encodedVNextClosetPayload(
+                    confirmedSubmission.remoteRequest
+                )
+            ) as? [String: Any]
+        )
+        #expect(confirmedJSON["closet_classification_override"] == nil)
+        #expect(confirmedJSON["product_id"] as? String == exactIdentity.productID.uuidString)
+        #expect(confirmedJSON["product_variant_id"] as? String == exactIdentity.productVariantID.uuidString)
+        #expect(confirmedJSON["product_size_id"] as? String == exactIdentity.productSizeID.uuidString)
+
+        product.markClassificationAuthority(.serverReviewRequired)
+        let reviewExplicit = FitMatchComparedProductClosetRegistration.SaveRequest(
+            clientItemID: UUID(),
+            product: product,
+            selectedSize: displaySize,
+            serverIdentity: exactIdentity,
+            activeClosetItems: [],
+            brandName: "테스트",
+            gender: .men,
+            genderCode: "male",
+            productName: product.name,
+            category: .top,
+            categoryCode: "tops",
+            detailCategory: .shortSleeve,
+            detailCategoryCode: "short_sleeve",
+            isRepresentative: false,
+            didExplicitlyChangeClassification: true,
+            didExplicitlySelectClosetClassification: true
+        )
+        let reviewSubmission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(reviewExplicit)
+        let reviewJSON = try #require(
+            JSONSerialization.jsonObject(
+                with: FitMatchSupabaseDomainClient.encodedVNextClosetPayload(
+                    reviewSubmission.remoteRequest
+                )
+            ) as? [String: Any]
+        )
+        let override = try #require(
+            reviewJSON["closet_classification_override"] as? [String: Any]
+        )
+        #expect(override["audience_code"] as? String == "MEN")
+        #expect(override["category_code"] as? String == "tops")
+        #expect(override["garment_type_code"] as? String == "tshirt")
+        #expect(override["sleeve_length_code"] as? String == "short_sleeve")
+        #expect(override["lower_length_code"] is NSNull)
+        #expect(override["body_length_code"] is NSNull)
+    }
+
+    @Test func linkedRegistrationKeepsDuplicateDisplayLabelsAsDistinctExactSizes() {
+        let product = Product(name: "동일 라벨 variant", category: .top)
+        let firstM = ProductSize(
+            id: UUID(),
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 46,
+                chest: 51,
+                totalLength: 68,
+                sleeveLength: 22
+            ),
+            product: product
+        )
+        let secondM = ProductSize(
+            id: UUID(),
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 48,
+                chest: 54,
+                totalLength: 70,
+                sleeveLength: 23
+            ),
+            product: product
+        )
+
+        #expect(
+            AddComparedProductToClosetSheet.initialSelectedSizeID(
+                recommendedSize: secondM,
+                productSizes: [firstM, secondM],
+                allowsLabelFallback: false
+            ) == secondM.id
+        )
+    }
+
+    @Test func vNextClosetListKeepsBothPersonalServerSourcesAsManualAuthority() {
+        #expect(
+            FitMatchSupabaseDomainClient.closetClassificationSource(
+                from: "USER_EXPLICIT"
+            ) == "manual_override"
+        )
+        #expect(
+            FitMatchSupabaseDomainClient.closetClassificationSource(
+                from: "USER_EDITED"
+            ) == "manual_override"
+        )
+        #expect(
+            FitMatchSupabaseDomainClient.closetClassificationSource(
+                from: "RETAILER_SNAPSHOT"
+            ) == "product_metadata"
+        )
+    }
+
     @Test func linkClosetMeasurementRecoveryRequiresServerConfirmedAuthority() async throws {
         var parsed = try Self.authorityTestProduct(
             source: "uniqlo",

@@ -251,32 +251,22 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 do {
                     let request = try await makeUpsertRequest(for: localItem, userID: userID)
                     guard isCurrentSyncUser(userID) else { return }
-                    let closetItemID: UUID
                     if let existing = remoteItemsByClientID[localItem.id] {
                         _ = try await remote.updateClosetItem(
                             request,
                             closetItemID: existing.closetItemID
                         )
                         guard isCurrentSyncUser(userID) else { return }
-                        closetItemID = existing.closetItemID
                     } else {
-                        closetItemID = try await remote.upsertClosetItem(request).closetItemID
+                        _ = try await remote.upsertClosetItem(request)
                         guard isCurrentSyncUser(userID) else { return }
                     }
-                    if let override = request.override, request.productID != nil {
-                        try await remote.setClosetClassificationOverride(
-                            closetItemID: closetItemID,
-                            override: override
-                        )
-                        guard isCurrentSyncUser(userID) else { return }
-                    } else if remoteItemsByClientID[localItem.id]?.classificationSource
-                                == "manual_override",
-                              request.productID != nil {
-                        try await remote.clearClosetClassificationOverride(
-                            closetItemID: closetItemID
-                        )
-                        guard isCurrentSyncUser(userID) else { return }
-                    }
+                    // vNext upsert/update carries a nested
+                    // `closet_classification_override` atomically. Generic
+                    // sync must never issue a second override mutation or
+                    // clear a personal tuple merely because this request did
+                    // not synthesize one. Dedicated explicit-edit flows keep
+                    // their own server mutation call sites.
                 } catch {
                     guard isCurrentSyncUser(userID) else { return }
                     failedUpsert = true
@@ -478,20 +468,76 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             item.markClassificationAuthority(.userExplicit)
         }
 
-        var productID = remoteItemsByClientID[item.id]?.productID
-        var productVariantID = remoteItemsByClientID[item.id]?.variantID
-        var productSizeID = remoteItemsByClientID[item.id]?.productSizeID
         let existingRemoteItem = remoteItemsByClientID[item.id]
+        var productID = existingRemoteItem?.productID
+        var productVariantID = existingRemoteItem?.variantID
+        var productSizeID = existingRemoteItem?.productSizeID
 
-        if let existingRemoteItem,
-           existingRemoteItem.classificationStatus == "confirmed",
-           existingRemoteItem.classificationSource == "manual_override" {
-            // A persisted user override is already explicit authority. Every
-            // sourced automatic classification (including an old v3 history
-            // row) must still pass through the active v4 runtime below.
-            try applyRemoteAuthority(existingRemoteItem, to: item)
+        if let existingRemoteItem {
+            // A row returned by listClosetItems owns its product/variant/size
+            // relationship. Re-resolving an M or a colour label here can bind
+            // this client_item_id to a different variant, so the exact remote
+            // IDs are retained even while we refresh classification authority.
+            if item.sourceProduct != nil, existingRemoteItem.productID == nil {
+                // This is neither a manual row nor an exact product-linked
+                // snapshot. Do not repair it by guessing from labels.
+                throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+            }
+            if existingRemoteItem.productID != nil,
+               (productVariantID == nil || productSizeID == nil) {
+                throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+            }
+
+            if existingRemoteItem.classificationStatus == "confirmed",
+               existingRemoteItem.classificationSource == "manual_override" {
+                // The list adapter deliberately normalizes the production
+                // USER_EXPLICIT and USER_EDITED strings to manual_override.
+                // Both preserve local personal Closet authority.
+                try applyRemoteAuthority(existingRemoteItem, to: item)
+            } else if let product = item.sourceProduct,
+                      let request = product.fitMatchDatabaseResolutionRequest() {
+                do {
+                    let authority = try await authorityCoordinator.resolveProductAuthority(
+                        request: request,
+                        observation: product.fitMatchProductObservationRequest()
+                    )
+                    guard isCurrentSyncUser(userID) else {
+                        throw FitMatchClosetSyncInterruption.superseded
+                    }
+                    try applyServerAuthority(authority, to: item)
+                    // Intentionally do not replace productID/productVariantID/
+                    // productSizeID with a label-derived runtime lookup.
+                } catch {
+                    if error is FitMatchClosetSyncInterruption {
+                        throw error
+                    }
+                    if item.classificationAuthorityProvenance != .userExplicit,
+                       !(error is FitMatchClosetAuthorityError) {
+                        item.markClassificationAuthority(.serverUnavailable)
+                    }
+                    throw error
+                }
+            } else {
+                switch existingRemoteItem.classificationStatus {
+                case "review_required", "unclassified", "not_comparable":
+                    try applyRemoteAuthority(existingRemoteItem, to: item)
+                default:
+                    // An automatic remote snapshot can point at pre-v4 current
+                    // history. Without source facts it cannot prove active-
+                    // runtime authority, so retain fail-closed behavior.
+                    item.markClassificationAuthority(
+                        .serverUnavailable,
+                        sourceIdentity: existingRemoteItem.classificationSource
+                    )
+                    throw FitMatchClosetAuthorityError.unavailableClassification
+                }
+            }
         } else if let product = item.sourceProduct,
                   let request = product.fitMatchDatabaseResolutionRequest() {
+            // Bounded recovery for a legacy local-only sourced row. This is the
+            // sole remaining call site for label/color matching because no
+            // client_item_id remote row exists from which exact IDs can be
+            // recovered. New server-first link registrations never enter it.
             do {
                 let authority = try await authorityCoordinator.resolveProductAuthority(
                     request: request,
@@ -502,13 +548,15 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 }
                 try applyServerAuthority(authority, to: item)
                 productID = authority.productID
-                let identity = uniqueRuntimeSizeIdentity(
+                guard let identity = uniqueRuntimeSizeIdentity(
                     in: authority.runtime,
                     matching: item.sizeName,
                     colorName: product.checkedColorName
-                )
-                productVariantID = identity?.variantID
-                productSizeID = identity?.sizeID
+                ) else {
+                    throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+                }
+                productVariantID = identity.variantID
+                productSizeID = identity.sizeID
             } catch {
                 if error is FitMatchClosetSyncInterruption {
                     throw error
@@ -518,22 +566,6 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                     item.markClassificationAuthority(.serverUnavailable)
                 }
                 throw error
-            }
-        } else if let existingRemoteItem {
-            switch existingRemoteItem.classificationStatus {
-            case "review_required", "unclassified", "not_comparable":
-                try applyRemoteAuthority(existingRemoteItem, to: item)
-            default:
-                // An automatic remote snapshot can point at pre-v4 current
-                // history. Without source facts it cannot prove active-runtime
-                // authority, so keep the item fail-closed until it can be
-                // resolved again. Only a persisted manual_override bypasses
-                // this validation path.
-                item.markClassificationAuthority(
-                    .serverUnavailable,
-                    sourceIdentity: existingRemoteItem.classificationSource
-                )
-                throw FitMatchClosetAuthorityError.unavailableClassification
             }
         } else if item.classificationAuthorityProvenance != .userExplicit {
             item.markClassificationAuthority(.localHint)

@@ -6,7 +6,6 @@ struct LinkClosetRegistrationView: View {
     let prefersRepresentativeByDefault: Bool
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
     @Query(sort: \Brand.name) private var brands: [Brand]
 
     @State private var productURL = ""
@@ -15,8 +14,8 @@ struct LinkClosetRegistrationView: View {
     @State private var parsedProduct: Product?
     @State private var partialProduct: Product?
     @State private var parsedDetailCategory: ClosetDetailCategory = .other
+    @State private var registrationServerContext: FitMatchClosetRegistrationServerContext?
     @State private var isShowingAddToClosetSheet = false
-    @State private var isShowingManualAddSheet = false
     @State private var recoveryViewModel: ShoppingProductViewModel?
     @State private var isShowingSizeTableRecovery = false
     @State private var recoveredSelectedSizeID: UUID?
@@ -59,18 +58,19 @@ struct LinkClosetRegistrationView: View {
         .navigationTitle("상품 링크로 추가")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isShowingAddToClosetSheet) {
-            if let parsedProduct {
+            if let parsedProduct, let registrationServerContext {
                 AddComparedProductToClosetSheet(
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
                     recommendedSize: recoveredSelectedSizeID.flatMap { selectedID in
                         uniqueSizes(for: parsedProduct).first { $0.id == selectedID }
                     } ?? uniqueSizes(for: parsedProduct).first,
-                    preselectedClassification: ParsedClosetClassification.resolve(
-                        product: parsedProduct,
-                        detailCategory: parsedDetailCategory
-                    ),
+                    // The Sheet receives the server context and decides whether
+                    // a tuple is auto-selected. Passing a parser classification
+                    // here would make REVIEW_REQUIRED look user-confirmed.
+                    preselectedClassification: nil,
                     isParsedProductReadOnly: true,
+                    serverRegistrationContext: registrationServerContext,
                     startsAtRegistrationConfirmation: true,
                     prefersRepresentativeByDefault: prefersRepresentativeByDefault
                 ) { _ in
@@ -96,37 +96,7 @@ struct LinkClosetRegistrationView: View {
                 .presentationDragIndicator(.visible)
             }
         }
-        .sheet(isPresented: $isShowingManualAddSheet) {
-            if let partialProduct {
-                NavigationStack {
-                    AddClosetItemView(
-                        prefillCategory: partialProduct.category,
-                        prefillDetailCategory: parsedDetailCategory,
-                        prefillGender: partialProduct.productTargetGender,
-                        prefillSourceOption: closetSourceOption(for: partialProduct),
-                        prefillBrand: partialProduct.brand?.name,
-                        prefillProductName: partialProduct.name,
-                        prefersRepresentativeByDefault: prefersRepresentativeByDefault,
-                        productImageURLString: partialProduct.imageURLString,
-                        presentationContext: .linkedProduct
-                    ) { item in
-                        if FitMatchClosetRegistrationPersistence.save(
-                            item,
-                            in: modelContext
-                        ) {
-                            shouldCompleteAfterSheetDismissal = true
-                            return true
-                        }
-                        return false
-                    }
-                }
-                .presentationDragIndicator(.visible)
-            }
-        }
         .onChange(of: isShowingAddToClosetSheet) { _, isPresented in
-            if !isPresented { completeSaveIfNeeded() }
-        }
-        .onChange(of: isShowingManualAddSheet) { _, isPresented in
             if !isPresented { completeSaveIfNeeded() }
         }
         .overlay(alignment: .top) {
@@ -149,6 +119,7 @@ struct LinkClosetRegistrationView: View {
         .onChange(of: productURL) { _, _ in
             parsedProduct = nil
             partialProduct = nil
+            registrationServerContext = nil
             recoveryViewModel = nil
             recoveredSelectedSizeID = nil
             errorMessage = nil
@@ -324,11 +295,20 @@ struct LinkClosetRegistrationView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Label(
-                            partialProduct == nil ? errorMessage : "상품 정보를 불러왔어요.",
-                            systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
+                            (parsedProduct != nil || partialProduct != nil)
+                                ? "상품 정보를 불러왔어요."
+                                : errorMessage,
+                            systemImage: (parsedProduct != nil || partialProduct != nil)
+                                ? "checkmark.circle" : "exclamationmark.circle"
                         )
                         .font(.headline)
-                        .foregroundStyle(partialProduct == nil ? .red : .primary)
+                        .foregroundStyle((parsedProduct != nil || partialProduct != nil) ? .primary : .red)
+                    }
+
+                    if parsedProduct != nil, !isUnsupportedTopBottomSet {
+                        Text(errorMessage)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
 
                     if let partialProduct, !isUnsupportedTopBottomSet {
@@ -362,9 +342,10 @@ struct LinkClosetRegistrationView: View {
                             isShowingSizeTableRecovery = true
                         }
 
-                        SecondaryButton(title: "사이즈 직접 입력", systemImage: "square.and.pencil") {
-                            isShowingManualAddSheet = true
-                        }
+                        Text("링크 상품은 서버가 확인한 상품·옵션·사이즈 식별자가 있어야 저장할 수 있어요. 서버 사이즈 정보를 다시 확인한 뒤 등록해 주세요.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -380,6 +361,7 @@ struct LinkClosetRegistrationView: View {
         errorMessage = nil
         parsedProduct = nil
         partialProduct = nil
+        registrationServerContext = nil
         isLoading = true
         defer { isLoading = false }
 
@@ -398,6 +380,7 @@ struct LinkClosetRegistrationView: View {
             parsedProduct = preparation.parsedProduct
             partialProduct = preparation.partialProduct
             parsedDetailCategory = preparation.detailCategory
+            registrationServerContext = preparation.serverRegistrationContext
             recoveryViewModel = preparation.recoveryViewModel
             errorMessage = preparation.errorMessage
         }
@@ -451,8 +434,20 @@ struct LinkClosetRegistrationView: View {
             return
         }
 
+        let serverContext = viewModel.closetRegistrationServerContext
+        let selectedSizeID = viewModel.recoverySelectedSizeID ?? product.sizes.first?.id
+        guard let selectedSizeID,
+              serverContext.identity(for: selectedSizeID) != nil else {
+            // A recovered display size without a server-issued UUID is useful
+            // parser evidence, but it cannot safely become a link-based
+            // Closet row. Do not send it through the old local-only form.
+            viewModel.recoveryErrorMessage = "서버 사이즈 정보를 다시 확인해 주세요."
+            return
+        }
+
         parsedProduct = product
         partialProduct = nil
+        registrationServerContext = serverContext
         errorMessage = nil
         recoveredSelectedSizeID = viewModel.recoverySelectedSizeID
         isShowingSizeTableRecovery = false
@@ -477,16 +472,6 @@ struct LinkClosetRegistrationView: View {
         return value.isEmpty ? "카테고리 정보 없음" : value
     }
 
-    private func closetSourceOption(for product: Product) -> ClosetProductSourceOption {
-        if product.sourceName == "무신사" { return .musinsa }
-        if product.sourceName.contains("유니클로") { return .uniqlo }
-        if product.sourceName.localizedCaseInsensitiveContains("zara")
-            || product.sourceName.localizedCaseInsensitiveContains("자라") {
-            return .zara
-        }
-        return .manual
-    }
-
 }
 
 /// Converts a parsed link into a Closet-registration input without creating a
@@ -498,6 +483,7 @@ struct LinkClosetRegistrationPreparation {
     let parsedProduct: Product?
     let partialProduct: Product?
     let detailCategory: ClosetDetailCategory
+    let serverRegistrationContext: FitMatchClosetRegistrationServerContext
     let recoveryViewModel: ShoppingProductViewModel?
     let errorMessage: String?
 
@@ -510,6 +496,7 @@ struct LinkClosetRegistrationPreparation {
                 parsedProduct: product,
                 partialProduct: nil,
                 detailCategory: viewModel.detailCategory,
+                serverRegistrationContext: viewModel.closetRegistrationServerContext,
                 recoveryViewModel: nil,
                 errorMessage: product.classificationAuthorityProvenance == .serverConfirmed
                     ? nil
@@ -525,6 +512,7 @@ struct LinkClosetRegistrationPreparation {
                 parsedProduct: nil,
                 partialProduct: nil,
                 detailCategory: viewModel.detailCategory,
+                serverRegistrationContext: viewModel.closetRegistrationServerContext,
                 recoveryViewModel: nil,
                 errorMessage: viewModel.errorMessage ?? "서버 상품 분류를 확인하지 못했습니다."
             )
@@ -563,6 +551,7 @@ struct LinkClosetRegistrationPreparation {
             parsedProduct: nil,
             partialProduct: partial,
             detailCategory: viewModel.detailCategory,
+            serverRegistrationContext: viewModel.closetRegistrationServerContext,
             recoveryViewModel: viewModel,
             errorMessage: viewModel.errorMessage
                 ?? viewModel.parserNotice

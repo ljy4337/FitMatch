@@ -302,6 +302,45 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(coordinator.state == .synced)
     }
 
+    @Test func existingRemoteRowRetainsExactIDsAndUsesAtomicOverrideOnly() async throws {
+        let clientItemID = UUID()
+        let productID = UUID()
+        let remoteVariantID = UUID()
+        let remoteSizeID = UUID()
+        let record = remoteRecord(
+            clientItemID: clientItemID,
+            productID: productID,
+            classificationSource: "manual_override",
+            variantID: remoteVariantID,
+            productSizeID: remoteSizeID
+        )
+        let remote = ClosetSyncRemoteStub(items: [record])
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+        context.insert(
+            localRetailerItem(
+                id: clientItemID,
+                productID: productID,
+                authority: .userExplicit
+            )
+        )
+        try context.save()
+
+        await coordinator.synchronize(userID: userID, modelContext: context)
+
+        let request = try #require(await remote.capturedUpsertRequest())
+        #expect(request.productID == productID)
+        #expect(request.productVariantID == remoteVariantID)
+        #expect(request.productSizeID == remoteSizeID)
+        #expect(request.override != nil)
+        #expect(await remote.overrideMutationCount() == 0)
+        #expect(await remote.clearOverrideMutationCount() == 0)
+    }
+
     @Test func existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime() async throws {
         let clientItemID = UUID()
         let productID = UUID()
@@ -1232,7 +1271,9 @@ struct FitMatchClosetSyncCoordinatorTests {
         clientItemID: UUID,
         productID: UUID,
         classificationSource: String,
-        classificationStatus: String = "confirmed"
+        classificationStatus: String = "confirmed",
+        variantID: UUID = UUID(),
+        productSizeID: UUID = UUID()
     ) -> FitMatchClosetItemRecord {
         FitMatchClosetItemRecord(
             closetItemID: UUID(),
@@ -1241,8 +1282,8 @@ struct FitMatchClosetSyncCoordinatorTests {
             externalProductID: "E500000",
             productAudience: "MEN",
             sourceCategoryCodes: ["bottoms"],
-            variantID: UUID(),
-            productSizeID: UUID(),
+            variantID: variantID,
+            productSizeID: productSizeID,
             brand: "유니클로",
             productName: "기존 원격 분류",
             sizeName: "M",
@@ -1442,6 +1483,8 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
     private var submittedObservationCount = 0
     private var fetchedRuntimeCount = 0
     private var referenceMutationLog: [ReferenceMutation] = []
+    private var overrideMutationCountValue = 0
+    private var clearOverrideMutationCountValue = 0
     private var tombstonedClientItemIDs: Set<UUID>
 
     init(
@@ -1564,14 +1607,20 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
     func setClosetClassificationOverride(
         closetItemID: UUID,
         override: FitMatchClosetClassificationOverride
-    ) async throws {}
+    ) async throws {
+        overrideMutationCountValue += 1
+    }
 
-    func clearClosetClassificationOverride(closetItemID: UUID) async throws {}
+    func clearClosetClassificationOverride(closetItemID: UUID) async throws {
+        clearOverrideMutationCountValue += 1
+    }
 
     func capturedUpsertRequest() -> FitMatchUpsertClosetItemRequest? { upsertRequest }
     func observationSubmissionCount() -> Int { submittedObservationCount }
     func runtimeFetchCount() -> Int { fetchedRuntimeCount }
     func referenceMutations() -> [ReferenceMutation] { referenceMutationLog }
+    func overrideMutationCount() -> Int { overrideMutationCountValue }
+    func clearOverrideMutationCount() -> Int { clearOverrideMutationCountValue }
     func listCallCount() -> Int { listRequestCount }
     func hasTombstone(clientItemID: UUID) -> Bool {
         tombstonedClientItemIDs.contains(clientItemID)

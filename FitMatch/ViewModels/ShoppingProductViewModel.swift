@@ -69,6 +69,11 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published private(set) var serverAuthorityState: FitMatchIOSServerAuthorityState = .idle
     @Published private(set) var reviewRecoveryState: FitMatchReviewRecoveryState = .idle
     @Published private(set) var classificationSafetyAudit: ParsedClosetClassificationSafetyAudit = .safe
+    /// Transient map from the exact runtime-backed display size to the three
+    /// UUIDs needed by the server-first Closet mutation. It is never inferred
+    /// from a visible label after runtime resolution.
+    @Published private(set) var closetRegistrationIdentitiesByDisplaySizeID:
+        [UUID: FitMatchClosetRegistrationServerIdentity] = [:]
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
@@ -125,6 +130,7 @@ final class ShoppingProductViewModel: ObservableObject {
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
+        closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         classificationSafetyAudit = .safe
         errorMessage = nil
         parserNotice = nil
@@ -154,7 +160,7 @@ final class ShoppingProductViewModel: ObservableObject {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             analysisPhase = .preparingComparison
             apply(parsedProduct)
-            let isServerConfirmed = await resolveServerAuthority(for: parsedProduct)
+            let hasConfirmedComparisonAuthority = await resolveServerAuthority(for: parsedProduct)
             metricsRecorder.record(
                 .parserSuccess(
                     provider: metricProvider,
@@ -163,7 +169,12 @@ final class ShoppingProductViewModel: ObservableObject {
                     measurement: FitMatchMetricMeasurementAvailability(measurementAvailability)
                 )
             )
-            return isServerConfirmed
+            // This legacy Bool remains a comparison-authority gate for its
+            // existing callers. It is deliberately *not* the product-load
+            // signal: parser facts live in hasLoadedProductInfo, while runtime
+            // comparison readiness lives in serverComparisonReadiness. Link
+            // Closet registration consumes those explicit states directly.
+            return hasConfirmedComparisonAuthority
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             apply(partialError.productInfo)
@@ -211,6 +222,7 @@ final class ShoppingProductViewModel: ObservableObject {
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
+        closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         classificationSafetyAudit = .safe
         errorMessage = nil
         parserNotice = nil
@@ -245,6 +257,7 @@ final class ShoppingProductViewModel: ObservableObject {
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
+        closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         classificationSafetyAudit = .safe
         isLoadingProductInfo = false
     }
@@ -344,6 +357,11 @@ final class ShoppingProductViewModel: ObservableObject {
                 errorMessage = nil
                 return true
             case .reviewRequired:
+                // REVIEW_REQUIRED still has a concrete server product/runtime.
+                // Preserve its exact size identities for a possible
+                // USER_EXPLICIT Closet registration; do not send parser labels
+                // back to the database later.
+                applyServerRuntime(authority.runtime)
                 serverAuthorityState = .reviewRequired(authority)
                 databaseShadowState = .unavailable
                 reviewRecoveryState = .loading
@@ -357,6 +375,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 }
                 return false
             case .notComparable:
+                applyServerRuntime(authority.runtime)
                 serverAuthorityState = .notComparable(authority)
                 databaseShadowState = .unavailable
                 errorMessage = "세트 또는 비교 대상이 아닌 상품이라 비교를 진행할 수 없습니다."
@@ -389,26 +408,13 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     private func applyServerRuntime(_ runtime: FitMatchProductRuntimeResponse) {
-        guard let exact = runtime.vnext else { return }
-        let observationVariant = parsedProductForServerAuthority?
-            .fitMatchProductObservationRequest()?
-            .payload.variants.first?.externalVariantID
-        let variant: VNextRuntimeVariantDTO? = {
-            if let observationVariant = observationVariant?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-               !observationVariant.isEmpty {
-                return exact.variants.first(where: {
-                    $0.sourceVariantKey == observationVariant
-                })
-            }
-            return exact.variants.count == 1 ? exact.variants[0] : nil
-        }()
-        guard let variant else {
-            sizeOptions = []
-            return
-        }
-
-        sizeOptions = variant.sizes.enumerated().map { index, size in
+        closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        if let exact = runtime.vnext,
+           let variant = selectedRuntimeVariant(
+            in: exact,
+            observationVariantID: observationVariantID
+           ) {
+            sizeOptions = variant.sizes.enumerated().map { index, size in
             let parsedRecords = size.canonicalMeasurements.measurements.compactMap {
                 measurement -> ParsedMeasurement? in
                 guard let code = Self.runtimeMeasurementCode(
@@ -463,8 +469,114 @@ final class ShoppingProductViewModel: ObservableObject {
                 allowsStandardSizeFallback: false
             )
             form.id = size.id
+            closetRegistrationIdentitiesByDisplaySizeID[form.id] =
+                FitMatchClosetRegistrationServerIdentity(
+                    productID: runtime.product.productID,
+                    productVariantID: variant.id,
+                    productSizeID: size.id
+                )
+            return form
+            }
+            return
+        }
+
+        // The vNext object is the normal production contract. Keep the legacy
+        // runtime adapter only for pre-vNext fixtures/rows that already expose
+        // an explicit variant/size relationship; it never matches labels.
+        guard let variant = selectedLegacyRuntimeVariant(
+            in: runtime,
+            observationVariantID: observationVariantID
+        ) else {
+            return
+        }
+        sizeOptions = variant.sizes.enumerated().map { index, size in
+            let parsedRecords = size.measurements.compactMap {
+                measurement -> ParsedMeasurement? in
+                guard let rawCode = measurement.measurementCode,
+                      let code = Self.runtimeMeasurementCode(for: rawCode),
+                      let displayKind = Self.displayKind(for: code) else {
+                    return nil
+                }
+                let value = measurement.normalizedValue ?? measurement.rawValue
+                guard value.isFinite, value > 0 else { return nil }
+                return ParsedMeasurement(
+                    value: value,
+                    unit: .centimeter,
+                    measurementCode: code,
+                    displayKind: displayKind,
+                    methodSource: "fitmatch_runtime",
+                    methodProfile: measurement.policyVersion,
+                    inputSource: .importedSizeChart,
+                    standardVersion: nil,
+                    mappingVersion: measurement.policyVersion
+                        ?? "fitmatch-runtime-v1",
+                    rawCode: rawCode,
+                    rawLabel: measurement.rawLabel,
+                    rawInfo: measurement.comparisonBasis,
+                    rawValueText: String(measurement.rawValue),
+                    evidenceLevel: .officialText,
+                    semanticStatus: .mapped
+                )
+            }
+            var form = Self.makeSizeForm(
+                from: ParsedProductSize(
+                    id: size.productSizeID,
+                    name: size.sizeLabel,
+                    measurements: GarmentMeasurements(
+                        shoulder: 0,
+                        chest: 0,
+                        totalLength: 0,
+                        sleeveLength: 0
+                    ),
+                    measurementRecords: parsedRecords,
+                    availabilityStatus: size.stockStatus
+                ),
+                displayOrder: index,
+                allowsStandardSizeFallback: false
+            )
+            form.id = size.productSizeID
+            closetRegistrationIdentitiesByDisplaySizeID[form.id] =
+                FitMatchClosetRegistrationServerIdentity(
+                    productID: runtime.product.productID,
+                    productVariantID: variant.variantID,
+                    productSizeID: size.productSizeID
+                )
             return form
         }
+    }
+
+    private var observationVariantID: String? {
+        guard let value = parsedProductForServerAuthority?
+            .fitMatchProductObservationRequest()?
+            .payload.variants.first?.externalVariantID else {
+            return nil
+        }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func selectedRuntimeVariant(
+        in runtime: VNextProductRuntimeDTO,
+        observationVariantID: String?
+    ) -> VNextRuntimeVariantDTO? {
+        if let observationVariantID {
+            return runtime.variants.first {
+                $0.sourceVariantKey == observationVariantID
+            }
+        }
+        return runtime.variants.count == 1 ? runtime.variants[0] : nil
+    }
+
+    private func selectedLegacyRuntimeVariant(
+        in runtime: FitMatchProductRuntimeResponse,
+        observationVariantID: String?
+    ) -> FitMatchRuntimeVariant? {
+        if let observationVariantID {
+            return runtime.variants.first {
+                $0.externalVariantID == observationVariantID
+            }
+        }
+        return runtime.variants.count == 1 ? runtime.variants[0] : nil
     }
 
     private static func displayKind(for code: MeasurementCode) -> MeasurementDisplayKind? {
@@ -541,6 +653,29 @@ final class ShoppingProductViewModel: ObservableObject {
     var hasServerConfirmedAuthority: Bool {
         if case .confirmed = serverAuthorityState { return true }
         return false
+    }
+
+    var closetRegistrationServerContext: FitMatchClosetRegistrationServerContext {
+        switch serverAuthorityState {
+        case .confirmed:
+            return FitMatchClosetRegistrationServerContext(
+                classificationState: .confirmed,
+                identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID
+            )
+        case .reviewRequired:
+            return FitMatchClosetRegistrationServerContext(
+                classificationState: .reviewRequired,
+                identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID
+            )
+        case .notComparable:
+            return FitMatchClosetRegistrationServerContext(
+                classificationState: .notApplicable
+            )
+        case .idle, .resolving, .unavailable:
+            return FitMatchClosetRegistrationServerContext(
+                classificationState: .unavailable
+            )
+        }
     }
 
     var serverComparisonReadiness: FitMatchServerComparisonReadiness? {
@@ -1277,6 +1412,16 @@ final class ShoppingProductViewModel: ObservableObject {
             product.normalizedProductTypeCode = serverClassification.detailCode
             product.garmentTypeRawValue = serverClassification.garmentTypeCode
             product.sleeveTypeRawValue = serverClassification.lengthCode
+            let runtimeAudience = confirmedServerAuthority?.runtime.vnext?
+                .effectiveClassification?.audienceCode
+                ?? confirmedServerAuthority?.runtime.product.audience
+            if let runtimeAudience,
+               !runtimeAudience.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                // CONFIRMED Closet initialization must consume the server
+                // tuple's audience as well as category/detail/axes. Parser
+                // audience remains a retailer fact for non-confirmed states.
+                product.genderCodes = runtimeAudience
+            }
             if let exact = confirmedServerAuthority?.runtime.vnext?.product {
                 let effectiveTuple = VNextRuntimeClassificationTuple(
                     product: exact,
@@ -1366,6 +1511,7 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     func apply(_ parsedProduct: ParsedProductInfo) {
+        closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         productURL = parsedProduct.sourceURL.absoluteString
         sourceType = parsedProduct.sourceType
         sourceName = parsedProduct.sourceName

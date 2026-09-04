@@ -1478,6 +1478,11 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     let notes: String
     let satisfaction: Int
     let measurements: [VNextClosetMeasurementPayload]?
+    /// The vNext upsert/update contract consumes a Closet-local override as
+    /// one nested value. Do not flatten it into the product snapshot fields:
+    /// the database must distinguish a global product tuple from a user's
+    /// personal Closet tuple atomically inside the mutation.
+    let closetClassificationOverride: VNextClosetClassificationOverridePayload?
 
     enum CodingKeys: String, CodingKey {
         case clientItemID = "client_item_id"
@@ -1496,6 +1501,70 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         case bodyLengthCode = "body_length_code"
         case fitPreferenceCode = "fit_preference_code"
         case notes, satisfaction, measurements
+        case closetClassificationOverride = "closet_classification_override"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(clientItemID, forKey: .clientItemID)
+        try container.encodeIfPresent(productID, forKey: .productID)
+        try container.encodeIfPresent(productVariantID, forKey: .productVariantID)
+        try container.encodeIfPresent(productSizeID, forKey: .productSizeID)
+        try container.encode(itemName, forKey: .itemName)
+        try container.encodeIfPresent(brandName, forKey: .brandName)
+        try container.encodeIfPresent(imageURL, forKey: .imageURL)
+        try container.encodeIfPresent(productURL, forKey: .productURL)
+        try container.encodeIfPresent(sizeLabel, forKey: .sizeLabel)
+        try container.encode(audienceCode, forKey: .audienceCode)
+        try container.encodeIfPresent(garmentTypeCode, forKey: .garmentTypeCode)
+        try container.encodeIfPresent(sleeveLengthCode, forKey: .sleeveLengthCode)
+        try container.encodeIfPresent(lowerLengthCode, forKey: .lowerLengthCode)
+        try container.encodeIfPresent(bodyLengthCode, forKey: .bodyLengthCode)
+        try container.encode(fitPreferenceCode, forKey: .fitPreferenceCode)
+        try container.encode(notes, forKey: .notes)
+        try container.encode(satisfaction, forKey: .satisfaction)
+        try container.encodeIfPresent(measurements, forKey: .measurements)
+        // `encodeIfPresent` is intentional. A CONFIRMED registration with no
+        // personal edit must omit this key completely, not send null or a
+        // flattened empty override.
+        try container.encodeIfPresent(
+            closetClassificationOverride,
+            forKey: .closetClassificationOverride
+        )
+    }
+}
+
+/// Transport-only representation of `closet_classification_override` for the
+/// upsert/update RPC. Its keys mirror the public production SQL contract.
+nonisolated private struct VNextClosetClassificationOverridePayload: Encodable, Sendable {
+    let audienceCode: String
+    let categoryCode: String
+    let garmentTypeCode: String
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case audienceCode = "audience_code"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(audienceCode, forKey: .audienceCode)
+        try container.encode(categoryCode, forKey: .categoryCode)
+        try container.encode(garmentTypeCode, forKey: .garmentTypeCode)
+        // These canonical axis keys are part of the public nested contract.
+        // Encode null deliberately when an axis is not applicable; omission
+        // would turn a client payload shape difference into a server-side
+        // compatibility decision.
+        try container.encode(sleeveLengthCode, forKey: .sleeveLengthCode)
+        try container.encode(lowerLengthCode, forKey: .lowerLengthCode)
+        try container.encode(bodyLengthCode, forKey: .bodyLengthCode)
     }
 }
 
@@ -2151,10 +2220,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     nonisolated private static func closetPayload(
         _ request: FitMatchUpsertClosetItemRequest
     ) -> VNextClosetMutationPayload {
-        let override = request.override
-        let category = override?.categoryCode ?? request.item.categoryCode
-        let garment = override?.familyCode ?? request.item.familyCode
-        let length = override?.lengthCode ?? request.item.lengthCode
+        let category = request.item.categoryCode
+        let garment = request.item.familyCode
+        let length = request.item.lengthCode
         let measurements: [VNextClosetMeasurementPayload]
         if request.item.measurementRecords.isEmpty {
             measurements = request.item.measurements.sorted { $0.key < $1.key }.map {
@@ -2198,7 +2266,37 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             // Product-linked items always hydrate canonical measurements from
             // the selected vNext size. Local cache values are never allowed to
             // overwrite sourced measurement authority during an edit.
-            measurements: request.productID == nil ? measurements : nil
+            measurements: request.productID == nil ? measurements : nil,
+            closetClassificationOverride: request.override.map {
+                Self.mutationOverridePayload($0)
+            }
+        )
+    }
+
+    nonisolated static func encodedVNextClosetPayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> Data {
+        try JSONEncoder().encode(closetPayload(request))
+    }
+
+    nonisolated private static func mutationOverridePayload(
+        _ value: FitMatchClosetClassificationOverride
+    ) -> VNextClosetClassificationOverridePayload {
+        let audience = vnextAudience(value.audienceCode ?? "unknown")
+        let length = value.lengthCode
+        return VNextClosetClassificationOverridePayload(
+            audienceCode: audience,
+            categoryCode: value.categoryCode,
+            // `familyCode` is the established domain field containing the
+            // canonical vNext garment type code (see resolvedFamilyCode and
+            // ParsedClosetClassification); no display-label inference occurs
+            // at this transport boundary.
+            garmentTypeCode: value.familyCode,
+            sleeveLengthCode: value.categoryCode == "tops" ? length : nil,
+            lowerLengthCode: ["bottoms", "leggings", "skirts"].contains(value.categoryCode)
+                ? length : nil,
+            bodyLengthCode: value.bodyLengthCode
+                ?? (value.categoryCode == "dresses" ? length : nil)
         )
     }
 
@@ -2263,8 +2361,6 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 semanticStatus: MeasurementSemanticStatus.mapped.rawValue
             )
         }
-        let isPersonal = item.classificationSource == "USER_EXPLICIT"
-            || item.classificationSource == "USER_EDITED"
         return FitMatchClosetItemRecord(
             closetItemID: item.id,
             clientItemID: item.clientItemID,
@@ -2289,7 +2385,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             satisfaction: item.satisfaction ?? 3,
             isReference: item.isReference,
             classificationStatus: "confirmed",
-            classificationSource: isPersonal ? "manual_override" : "product_metadata",
+            classificationSource: closetClassificationSource(
+                from: item.classificationSource
+            ),
             categoryCode: item.categoryCode ?? "other",
             detailCode: item.garmentTypeCode,
             canonicalCategoryCode: item.categoryCode,
@@ -2308,6 +2406,19 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             createdAt: item.createdAt,
             updatedAt: item.updatedAt
         )
+    }
+
+    /// Public Closet list rows use USER_EXPLICIT for an initial personal
+    /// selection and USER_EDITED after an actual tuple change. Both are one
+    /// local personal-authority state; retain that fact before the sync layer
+    /// interprets the row.
+    nonisolated static func closetClassificationSource(from rawValue: String) -> String {
+        switch rawValue {
+        case "USER_EXPLICIT", "USER_EDITED":
+            return "manual_override"
+        default:
+            return "product_metadata"
+        }
     }
 
     nonisolated private static func vnextAudience(_ value: String) -> String {

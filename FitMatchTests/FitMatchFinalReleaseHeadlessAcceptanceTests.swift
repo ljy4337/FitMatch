@@ -1827,6 +1827,127 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(profile.lengthAxes.body == "not_applicable")
     }
 
+    @Test func serverFirstClosetSubmissionNeverPersistsBeforeRemoteUpsert() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let request = serverFirstRegistrationRequest()
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(request)
+        let remote = ServerFirstClosetRemote(upsertResult: .failure)
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+
+        let outcome = await action.submitServerFirst(submission, in: context)
+
+        guard case .completed(.serverRejected(_)) = outcome else {
+            Issue.record("Expected remote rejection before any SwiftData write")
+            return
+        }
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
+        #expect(await remote.upsertCallCount() == 1)
+    }
+
+    @Test func serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let clientItemID = UUID()
+        let request = serverFirstRegistrationRequest(clientItemID: clientItemID)
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(request)
+        let remote = ServerFirstClosetRemote(upsertResult: .success)
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+
+        let failedLocal = await action.submitServerFirst(
+            submission,
+            in: context,
+            persist: { _ in throw ServerFirstSubmissionTestError.localPersistence }
+        )
+        guard case .completed(.serverAcceptedLocalPersistenceFailed(let pendingID)) = failedLocal else {
+            Issue.record("Expected remote success/local failure recovery outcome")
+            return
+        }
+        #expect(pendingID == clientItemID)
+        #expect(await remote.hasAccepted(clientItemID: clientItemID))
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
+
+        let retried = await action.submitServerFirst(submission, in: context)
+        guard case .completed(.saved(let item)) = retried else {
+            Issue.record("Expected same pending submission to hydrate locally on retry")
+            return
+        }
+        #expect(item.id == clientItemID)
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
+        #expect(await remote.upsertClientItemIDs() == [clientItemID, clientItemID])
+    }
+
+    @Test func serverFirstConfirmedRegistrationHydratesServerConfirmedAuthority() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let request = serverFirstRegistrationRequest()
+        // A server-effective tuple can itself originate from a prior shopping
+        // confirmation. It remains a server tuple until this Closet picker
+        // actually sends an override.
+        request.product.markClassificationAuthority(.userExplicit)
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(request)
+        let action = FitMatchComparedProductClosetSubmissionAction(
+            remote: ServerFirstClosetRemote(upsertResult: .success)
+        )
+
+        let outcome = await action.submitServerFirst(submission, in: context)
+
+        guard case .completed(.saved(let item)) = outcome else {
+            Issue.record("Expected server-first confirmed registration")
+            return
+        }
+        #expect(item.classificationAuthorityProvenance == .serverConfirmed)
+    }
+
+    @Test func referenceRejectionKeepsServerCreatedClosetItemAndLocalReferenceFalse() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let clientItemID = UUID()
+        let request = serverFirstRegistrationRequest(
+            clientItemID: clientItemID,
+            isRepresentative: true,
+            measurements: .init(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 0,
+                sleeveLength: 0
+            )
+        )
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(request)
+        let remote = ServerFirstClosetRemote(
+            upsertResult: .success,
+            referenceResult: .failure
+        )
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+
+        let outcome = await action.submitServerFirst(submission, in: context)
+
+        guard case .completed(.savedWithoutReference(let item, _)) = outcome else {
+            Issue.record("Expected partial success after server reference rejection")
+            return
+        }
+        #expect(item.id == clientItemID)
+        #expect(!item.isRepresentative)
+        #expect(await remote.hasAccepted(clientItemID: clientItemID))
+        #expect(await remote.referenceCallCount() == 1)
+        let persisted = try #require(
+            try context.fetch(FetchDescriptor<UserFit>()).first { $0.id == clientItemID }
+        )
+        #expect(!persisted.isRepresentative)
+    }
+
+    @Test func linkedClosetRegistrationNeverFallsBackToLocalOnlyPersistence() throws {
+        let source = try sourceFile("FitMatch/Views/LinkClosetRegistrationView.swift")
+
+        #expect(!source.contains("FitMatchClosetRegistrationPersistence.save"))
+        #expect(!source.contains("isShowingManualAddSheet"))
+        #expect(source.contains("serverContext.identity(for: selectedSizeID) != nil"))
+    }
+
     private func shareURLProvider(_ url: URL) -> NSItemProvider {
         let provider = NSItemProvider()
         provider.registerDataRepresentation(
@@ -1864,6 +1985,61 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             isStoredInMemoryOnly: true
         )
         return try ModelContainer(for: schema, configurations: [configuration])
+    }
+
+    private func serverFirstRegistrationRequest(
+        clientItemID: UUID = UUID(),
+        isRepresentative: Bool = false,
+        measurements: GarmentMeasurements = .init(
+            shoulder: 47,
+            chest: 53,
+            totalLength: 69,
+            sleeveLength: 23
+        )
+    ) -> FitMatchComparedProductClosetRegistration.SaveRequest {
+        let product = Product(
+            id: UUID(),
+            name: "서버 우선 등록 티셔츠",
+            category: .top,
+            productCode: "SERVER-FIRST-TEST",
+            sourceURLString: "https://www.musinsa.com/products/SERVER-FIRST-TEST",
+            metadata: ProductMetadata(genderCodes: ["MEN"]),
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            source: .catalog
+        )
+        product.garmentTypeRawValue = "tshirt"
+        product.sleeveTypeRawValue = "short_sleeve"
+        product.markClassificationAuthority(.serverConfirmed)
+        let displaySize = ProductSize(
+            id: UUID(),
+            name: "M",
+            measurements: measurements,
+            product: product
+        )
+        product.sizes = [displaySize]
+        return FitMatchComparedProductClosetRegistration.SaveRequest(
+            clientItemID: clientItemID,
+            product: product,
+            selectedSize: displaySize,
+            serverIdentity: FitMatchClosetRegistrationServerIdentity(
+                productID: UUID(),
+                productVariantID: UUID(),
+                productSizeID: UUID()
+            ),
+            activeClosetItems: [],
+            brandName: "테스트",
+            gender: .men,
+            genderCode: "male",
+            productName: product.name,
+            category: .top,
+            categoryCode: "tops",
+            detailCategory: .shortSleeve,
+            detailCategoryCode: "short_sleeve",
+            isRepresentative: isRepresentative,
+            didExplicitlyChangeClassification: false,
+            didExplicitlySelectClosetClassification: false
+        )
     }
 
     private func sourceFile(_ path: String) throws -> String {
@@ -2072,6 +2248,82 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             VNextComparisonHistoryDTO.self,
             from: Data(json.utf8)
         )
+    }
+}
+
+private enum ServerFirstSubmissionTestError: Error {
+    case localPersistence
+    case upsertRejected
+    case referenceRejected
+}
+
+private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing {
+    enum UpsertResult: Sendable, Equatable {
+        case success
+        case failure
+    }
+
+    enum ReferenceResult: Sendable, Equatable {
+        case success
+        case failure
+    }
+
+    private let upsertResult: UpsertResult
+    private let referenceResult: ReferenceResult
+    private let closetItemID = UUID()
+    private var acceptedClientItemIDs = Set<UUID>()
+    private var submittedClientItemIDs: [UUID] = []
+    private var submittedReferenceCount = 0
+
+    init(
+        upsertResult: UpsertResult,
+        referenceResult: ReferenceResult = .success
+    ) {
+        self.upsertResult = upsertResult
+        self.referenceResult = referenceResult
+    }
+
+    func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
+        -> FitMatchUpsertClosetItemResponse {
+        submittedClientItemIDs.append(request.clientItemID)
+        guard upsertResult == .success else {
+            throw ServerFirstSubmissionTestError.upsertRejected
+        }
+        acceptedClientItemIDs.insert(request.clientItemID)
+        return FitMatchUpsertClosetItemResponse(
+            closetItemID: closetItemID,
+            clientItemID: request.clientItemID,
+            syncRevision: submittedClientItemIDs.count,
+            classificationStatus: "confirmed",
+            categoryCode: request.override?.categoryCode ?? request.item.categoryCode,
+            detailCode: request.override?.detailCode ?? request.item.detailCode,
+            familyCode: request.override?.familyCode ?? request.item.familyCode,
+            lengthCode: request.override?.lengthCode ?? request.item.lengthCode,
+            bodyLengthCode: request.item.bodyLengthCode,
+            isReference: false
+        )
+    }
+
+    func setClosetReference(
+        closetItemID: UUID,
+        isReference: Bool
+    ) async throws -> FitMatchSetClosetReferenceResponse {
+        submittedReferenceCount += 1
+        guard referenceResult == .success else {
+            throw ServerFirstSubmissionTestError.referenceRejected
+        }
+        return FitMatchSetClosetReferenceResponse(
+            closetItemID: closetItemID,
+            isReference: isReference,
+            syncRevision: submittedReferenceCount
+        )
+    }
+
+    func upsertCallCount() -> Int { submittedClientItemIDs.count }
+    func upsertClientItemIDs() -> [UUID] { submittedClientItemIDs }
+    func referenceCallCount() -> Int { submittedReferenceCount }
+    func hasAccepted(clientItemID: UUID) -> Bool {
+        acceptedClientItemIDs.contains(clientItemID)
     }
 }
 
