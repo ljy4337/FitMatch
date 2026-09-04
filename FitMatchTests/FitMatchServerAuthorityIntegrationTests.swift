@@ -1324,10 +1324,12 @@ struct FitMatchServerAuthorityIntegrationTests {
         #expect(await remote.candidateCallCount == 2)
     }
 
-    @Test func resultReferencePickerKeepsEveryActiveLocalClosetItemUntilSelection() {
+    @Test func resultReferencePickerUsesServerAuthorizationForEveryActiveLocalClosetItem() async throws {
         let currentClientID = UUID()
         let recentClientID = UUID()
         let olderClientID = UUID()
+        let recentClosetID = UUID()
+        let olderClosetID = UUID()
         let current = Self.localResultReference(
             id: currentClientID,
             name: "현재 기준 옷",
@@ -1336,7 +1338,7 @@ struct FitMatchServerAuthorityIntegrationTests {
         let recent = Self.localResultReference(
             id: recentClientID,
             name: "품절이어도 선택 가능한 옷",
-            isRepresentative: false
+            isRepresentative: true
         )
         let older = Self.localResultReference(
             id: olderClientID,
@@ -1344,12 +1346,65 @@ struct FitMatchServerAuthorityIntegrationTests {
             isRepresentative: false
         )
 
-        let selectable = ResultReferenceComparisonAction.fullActiveReferences(
-            from: [older, current, recent],
-            excluding: currentClientID
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "RESULT-REFERENCE-PICKER",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [
+                fixture.resolution(catalogState: "current"),
+                fixture.resolution(catalogState: "current")
+            ],
+            observations: [],
+            runtimes: [fixture.runtime, fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [
+                    Self.closetRecord(
+                        clientItemID: recentClientID,
+                        closetItemID: recentClosetID,
+                        productID: nil,
+                        classificationSource: "manual_override",
+                        productName: recent.productName
+                    ),
+                    Self.closetRecord(
+                        clientItemID: olderClientID,
+                        closetItemID: olderClosetID,
+                        productID: nil,
+                        classificationSource: "manual_override",
+                        productName: older.productName
+                    )
+                ]
+            ),
+            candidateResponses: [
+                try Self.vnextReferenceCandidateResponse(
+                    targetProductID: fixture.productID,
+                    candidates: [(recentClosetID, "AUTOMATIC", true)],
+                    blocked: []
+                ),
+                try Self.vnextReferenceCandidateResponse(
+                    targetProductID: fixture.productID,
+                    candidates: [],
+                    blocked: [(olderClosetID, "BLOCKED", false)]
+                )
+            ]
         )
 
-        #expect(Set(selectable.map(\.id)) == [recentClientID, olderClientID])
+        let outcome = await ResultReferenceComparisonAction.discoverSelectableReferences(
+            from: [older, current, recent],
+            excluding: currentClientID,
+            target: Self.resultTarget(externalProductID: "RESULT-REFERENCE-PICKER"),
+            coordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+
+        guard case .success(let selectable) = outcome else {
+            Issue.record("서버 후보 확인이 차단되면 안 됩니다.")
+            return
+        }
+        #expect(Set(selectable.keys) == [recentClientID])
+        #expect(await remote.candidateCallCount == 2)
     }
 
     private static func closetRecord(

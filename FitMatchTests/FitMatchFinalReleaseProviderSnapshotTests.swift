@@ -636,17 +636,14 @@ struct FitMatchFinalReleaseProviderSnapshotTests {
         )
         let remoteReference = fixture.closetRecord(for: reference)
         let remote = JourneyRecordingRemote(
-            resolutions: [
-                fixture.resolution(globalStatus: .confirmed),
-                fixture.resolution(globalStatus: .confirmed)
-            ],
-            runtimes: [runtime, runtime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: Array(repeating: runtime, count: 3),
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
                 decision: "AUTOMATIC"
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,

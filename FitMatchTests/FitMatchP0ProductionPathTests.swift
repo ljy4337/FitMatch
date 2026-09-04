@@ -35,7 +35,15 @@ struct FitMatchP0ProductionPathTests {
         """
         let observedAt = Date(timeIntervalSince1970: 1_788_400_000)
         let sizes = ["M", "L", "XL"].map {
-            ParsedProductSize(name: $0, measurements: GarmentMeasurements(chest: 50))
+            ParsedProductSize(
+                name: $0,
+                measurements: GarmentMeasurements(
+                    shoulder: 0,
+                    chest: 50,
+                    totalLength: 0,
+                    sleeveLength: 0
+                )
+            )
         }
 
         let resolved = try UniqloSizeAPIParser().applyingAvailability(
@@ -76,7 +84,17 @@ struct FitMatchP0ProductionPathTests {
           "m-long":{"statusCode":"STOCK_OUT","quantity":0}
         }}
         """
-        let input = [ParsedProductSize(name: "M", measurements: GarmentMeasurements(chest: 50))]
+        let input = [
+            ParsedProductSize(
+                name: "M",
+                measurements: GarmentMeasurements(
+                    shoulder: 0,
+                    chest: 50,
+                    totalLength: 0,
+                    sleeveLength: 0
+                )
+            )
+        ]
         let unresolved = try UniqloSizeAPIParser().applyingAvailability(
             productData: Data(response.utf8),
             stockData: Data(stock.utf8),

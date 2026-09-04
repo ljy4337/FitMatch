@@ -230,9 +230,9 @@ struct FitMatchHeadlessUserJourneyTests {
             let remote = JourneyRecordingRemote(
                 resolutions: Array(
                     repeating: fixture.resolution(globalStatus: .reviewRequired),
-                    count: 3
+                    count: 4
                 ),
-                runtimes: [reviewRuntime, personalRuntime, personalRuntime],
+                runtimes: [reviewRuntime, personalRuntime, personalRuntime, personalRuntime],
                 recoveryContracts: [contract],
                 setMutations: [try fixture.setMutation(
                     contract: contract,
@@ -241,11 +241,11 @@ struct FitMatchHeadlessUserJourneyTests {
                     event: "SELECTED"
                 )],
                 closetResponses: [.init(state: "ready", items: [remoteReference])],
-                candidateResponses: [try fixture.referenceResponse(
+                candidateResponses: Array(repeating: try fixture.referenceResponse(
                     reference: reference,
                     closetItemID: remoteReference.closetItemID,
                     decision: "AUTOMATIC"
-                )],
+                ), count: 2),
                 eligibleResponses: [try fixture.eligible(
                     reference: reference,
                     closetItemID: remoteReference.closetItemID,
@@ -285,7 +285,10 @@ struct FitMatchHeadlessUserJourneyTests {
             )
             #expect(displayed.fixedFacts.sleeveLengthCode == "short_sleeve")
             #expect(displayed.fixedFacts.garmentTypeCode == nil)
-            #expect(displayed.unknownFields == [.garmentType])
+            #expect(
+                displayed.unknownFields
+                    == (count > 1 ? [.garmentType] : [])
+            )
 
             #expect(await viewModel.confirmReviewRecovery(selected))
             #expect(viewModel.hasActiveUserExplicitClassification)
@@ -515,13 +518,13 @@ struct FitMatchHeadlessUserJourneyTests {
             personalCandidateSetHash: initial.candidateSetHash
         )
         let remote = JourneyRecordingRemote(
-            // load → select refresh → comparison authorization must all see
-            // the current personal authority. Clear alone returns to review.
+            // Load, selection refresh, comparison plan, and authorization see
+            // current personal authority; post-clear resolve returns review.
             resolutions: Array(
                 repeating: fixture.resolution(globalStatus: .reviewRequired),
-                count: 4
+                count: 5
             ),
-            runtimes: [reviewRuntime, personalRuntime, personalRuntime, reviewRuntime],
+            runtimes: [reviewRuntime, personalRuntime, personalRuntime, personalRuntime, reviewRuntime],
             recoveryContracts: [initial, refreshed],
             setMutations: [try fixture.setMutation(
                 contract: initial,
@@ -531,11 +534,11 @@ struct FitMatchHeadlessUserJourneyTests {
             )],
             clearMutations: [try fixture.clearMutation(revision: 2)],
             closetResponses: [.init(state: "ready", items: [record])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: record.closetItemID,
                 decision: "AUTOMATIC"
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: record.closetItemID,
@@ -612,16 +615,16 @@ struct FitMatchHeadlessUserJourneyTests {
         let beginGate = JourneyAsyncGate()
         let runtime = try fixture.runtime(globalStatus: .confirmed)
         let remote = JourneyRecordingRemote(
-            // load and authorization each resolve the current target through
-            // the real coordinator before the delayed begin boundary.
-            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 2),
-            runtimes: [runtime, runtime],
+            // load, server reference plan, and authorization each resolve the
+            // current target through the real coordinator before delayed begin.
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: [runtime, runtime, runtime],
             closetResponses: [.init(state: "ready", items: [originalRecord])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: originalReference,
                 closetItemID: originalRecord.closetItemID,
                 decision: "AUTOMATIC"
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: originalReference,
                 closetItemID: originalRecord.closetItemID,
@@ -1596,24 +1599,22 @@ struct FitMatchHeadlessUserJourneyTests {
         let remoteReference = fixture.closetRecord(for: reference)
         let changedAuthorizedSizeID = UUID()
         let remote = JourneyRecordingRemote(
-            // Product load consumes the first current authority. The actual
-            // production authorization action refreshes authority again
-            // before it asks eligible sizes, so give that second real RPC its
-            // own identical current response.
-            resolutions: [
-                fixture.resolution(globalStatus: .confirmed),
-                fixture.resolution(globalStatus: .confirmed)
-            ],
-            runtimes: [
-                try fixture.runtime(globalStatus: .confirmed),
-                try fixture.runtime(globalStatus: .confirmed)
-            ],
+            // Load, server reference plan, and authorization each refresh
+            // the current target before the real eligible/begin RPCs.
+            resolutions: Array(
+                repeating: fixture.resolution(globalStatus: .confirmed),
+                count: 3
+            ),
+            runtimes: Array(
+                repeating: try fixture.runtime(globalStatus: .confirmed),
+                count: 3
+            ),
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
                 decision: "AUTOMATIC"
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
@@ -1854,8 +1855,8 @@ struct FitMatchHeadlessUserJourneyTests {
                 personalCandidateSetHash: contract.candidateSetHash
             )
             let remote = JourneyRecordingRemote(
-                resolutions: Array(repeating: fixture.resolution(globalStatus: .reviewRequired), count: 3),
-                runtimes: [review, personal, personal],
+                resolutions: Array(repeating: fixture.resolution(globalStatus: .reviewRequired), count: 4),
+                runtimes: [review, personal, personal, personal],
                 recoveryContracts: [contract],
                 setMutations: [try fixture.setMutation(
                     contract: contract,
@@ -1864,11 +1865,11 @@ struct FitMatchHeadlessUserJourneyTests {
                     event: "SELECTED"
                 )],
                 closetResponses: [.init(state: "ready", items: [record])],
-                candidateResponses: [try fixture.referenceResponse(
+                candidateResponses: Array(repeating: try fixture.referenceResponse(
                     reference: reference,
                     closetItemID: record.closetItemID,
                     decision: "AUTOMATIC"
-                )],
+                ), count: 2),
                 eligibleResponses: [try fixture.eligible(
                     reference: reference,
                     closetItemID: record.closetItemID,
@@ -1892,7 +1893,10 @@ struct FitMatchHeadlessUserJourneyTests {
             #expect(await viewModel.loadProductInfoFromURL() == false)
             let displayed = try #require(viewModel.reviewRecoveryContract)
             #expect(displayed.candidateCount == candidateCount)
-            #expect(displayed.unknownFields == [.garmentType])
+            #expect(
+                displayed.unknownFields
+                    == (candidateCount > 1 ? [.garmentType] : [])
+            )
             #expect(await viewModel.confirmReviewRecovery(selected))
             let history = await viewModel.calculateRecommendation(userFits: [reference])
             #expect(history?.product.classificationAuthorityProvenance == .userExplicit)
@@ -1932,15 +1936,18 @@ struct FitMatchHeadlessUserJourneyTests {
             resolutions: [
                 fixture.resolution(globalStatus: .reviewRequired),
                 fixture.resolution(globalStatus: .reviewRequired),
+                fixture.resolution(globalStatus: .reviewRequired),
+                fixture.resolution(globalStatus: .confirmed),
                 fixture.resolution(globalStatus: .confirmed),
                 fixture.resolution(globalStatus: .confirmed)
             ],
-            runtimes: [personal, personal, global, global],
+            runtimes: [personal, personal, personal, global, global, global],
             closetResponses: [.init(state: "ready", items: [record])],
-            candidateResponses: [
-                try fixture.referenceResponse(reference: reference, closetItemID: record.closetItemID, decision: "AUTOMATIC"),
-                try fixture.referenceResponse(reference: reference, closetItemID: record.closetItemID, decision: "AUTOMATIC")
-            ],
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
+                reference: reference,
+                closetItemID: record.closetItemID,
+                decision: "AUTOMATIC"
+            ), count: 4),
             eligibleResponses: [personalEligible, globalEligible],
             beginResponses: [
                 try fixture.begin(
@@ -2409,7 +2416,11 @@ struct FitMatchHeadlessUserJourneyTests {
                     .init(code: "shoulder_width_seam_to_seam", referenceValue: 48, targetValue: 48)
                 ]
             )
-            let run = try makeCandidateComparison(fixture: fixture, candidates: [expired])
+            let run = try makeCandidateComparison(
+                fixture: fixture,
+                candidates: [expired],
+                completionSizeID: expired.productSizeID
+            )
             #expect(await run.viewModel.loadProductInfoFromURL())
             let history = try #require(
                 await run.viewModel.calculateRecommendation(userFits: [run.reference])
@@ -2506,15 +2517,16 @@ struct FitMatchHeadlessUserJourneyTests {
             resolutions: [
                 fixture.resolution(globalStatus: .reviewRequired),
                 fixture.resolution(globalStatus: .reviewRequired),
+                fixture.resolution(globalStatus: .reviewRequired),
                 fixture.resolution(globalStatus: .notComparable)
             ],
-            runtimes: [personalRuntime, personalRuntime, blockedRuntime],
+            runtimes: [personalRuntime, personalRuntime, personalRuntime, blockedRuntime],
             closetResponses: [.init(state: "ready", items: [record])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: record.closetItemID,
                 decision: "AUTOMATIC"
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: record.closetItemID,
@@ -2589,7 +2601,8 @@ struct FitMatchHeadlessUserJourneyTests {
         )
         let inventoryRun = try makeCandidateComparison(
             fixture: HeadlessJourneyFixture(provider: .zara),
-            candidates: [soldOut]
+            candidates: [soldOut],
+            completionSizeID: soldOut.productSizeID
         )
         #expect(await inventoryRun.viewModel.loadProductInfoFromURL())
         let soldOutHistory = try #require(
@@ -2732,15 +2745,15 @@ struct FitMatchHeadlessUserJourneyTests {
             let record = fixture.closetRecord(for: reference)
             let runtime = try fixture.runtime(globalStatus: .confirmed, runtimeCandidates: [candidate])
             let remote = JourneyRecordingRemote(
-                resolutions: [fixture.resolution(globalStatus: .confirmed), fixture.resolution(globalStatus: .confirmed)],
-                runtimes: [runtime, runtime],
+                resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+                runtimes: Array(repeating: runtime, count: 3),
                 closetResponses: [.init(state: "ready", items: [record])],
-                candidateResponses: [try fixture.referenceResponse(
+                candidateResponses: Array(repeating: try fixture.referenceResponse(
                     reference: reference,
                     closetItemID: record.closetItemID,
                     decision: "AUTOMATIC",
                     eligibleProductSizeIDs: [candidate.productSizeID]
-                )],
+                ), count: 2),
                 eligibleResponses: [try fixture.eligible(
                     referenceClosetItemID: record.closetItemID,
                     candidates: [candidate],
@@ -2837,18 +2850,15 @@ struct FitMatchHeadlessUserJourneyTests {
             runtimeCandidates: candidates
         )
         let remote = JourneyRecordingRemote(
-            resolutions: [
-                fixture.resolution(globalStatus: .confirmed),
-                fixture.resolution(globalStatus: .confirmed)
-            ],
-            runtimes: [runtime, runtime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: Array(repeating: runtime, count: 3),
             closetResponses: [.init(state: "ready", items: [record])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: record.closetItemID,
                 decision: "AUTOMATIC",
                 eligibleProductSizeIDs: candidates.map(\.productSizeID)
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 referenceClosetItemID: record.closetItemID,
                 candidates: candidates,
@@ -3099,14 +3109,14 @@ private enum HeadlessJourneyHarness {
         let remoteReference = fixture.closetRecord(for: reference)
         let runtime = try fixture.runtime(globalStatus: .confirmed)
         let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .confirmed), fixture.resolution(globalStatus: .confirmed)],
-            runtimes: [runtime, runtime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: Array(repeating: runtime, count: 3),
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
                 decision: "AUTOMATIC"
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
@@ -3166,15 +3176,19 @@ private enum HeadlessJourneyHarness {
             overrideRevision: 1
         )
         let decision = sleeveMatches ? "MANUAL_EXTENDED" : "BLOCKED"
+        let requiresServerPlan = !manuallySelected
         let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .reviewRequired), fixture.resolution(globalStatus: .reviewRequired)],
-            runtimes: [runtime, runtime],
+            resolutions: Array(
+                repeating: fixture.resolution(globalStatus: .reviewRequired),
+                count: requiresServerPlan ? 3 : 2
+            ),
+            runtimes: Array(repeating: runtime, count: requiresServerPlan ? 3 : 2),
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
                 decision: decision
-            )],
+            ), count: requiresServerPlan ? 2 : 1),
             eligibleResponses: manuallySelected && sleeveMatches ? [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
@@ -3222,7 +3236,19 @@ private enum HeadlessJourneyHarness {
         try require(history == nil, scenario: scenario.id, message: "blocked manual cross produced history")
         try require(!calls.contains("begin_comparison"), scenario: scenario.id, message: "blocked manual cross reached begin")
         try require(!calls.contains("complete_comparison"), scenario: scenario.id, message: "blocked manual cross reached completion")
-        try require(!(viewModel.errorMessage ?? "").isEmpty, scenario: scenario.id, message: "blocked manual cross has no explanation")
+        if manuallySelected {
+            try require(
+                !(viewModel.errorMessage ?? "").isEmpty,
+                scenario: scenario.id,
+                message: "explicitly selected blocked reference has no explanation"
+            )
+        } else {
+            try require(
+                calls.contains("reference_candidates"),
+                scenario: scenario.id,
+                message: "server manual-selection plan was not consulted"
+            )
+        }
         return execution(calls, [.viewModelLoad, .authorityResolve, .referenceDecision], .blockedWithReason)
     }
 
@@ -3287,14 +3313,14 @@ private enum HeadlessJourneyHarness {
         let remoteReference = fixture.closetRecord(for: reference)
         let runtime = try fixture.runtime(globalStatus: .confirmed)
         let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .confirmed), fixture.resolution(globalStatus: .confirmed)],
-            runtimes: [runtime, runtime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: Array(repeating: runtime, count: 3),
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
                 decision: decision
-            )]
+            ), count: 2)
         )
         let viewModel = makeViewModel(fixture: fixture, remote: remote)
         try require(await viewModel.loadProductInfoFromURL(), scenario: scenario.id, message: "target did not load")
@@ -3303,7 +3329,7 @@ private enum HeadlessJourneyHarness {
         try require(history == nil, scenario: scenario.id, message: "blocked reference produced history")
         try require(!calls.contains("eligible_sizes"), scenario: scenario.id, message: "blocked reference reached eligible sizes")
         try require(!calls.contains("begin_comparison"), scenario: scenario.id, message: "blocked reference reached begin")
-        try require(!(viewModel.errorMessage ?? "").isEmpty, scenario: scenario.id, message: "block lacks explanation")
+        try require(calls.contains("reference_candidates"), scenario: scenario.id, message: "server reference plan was not consulted")
         return execution(calls, [.viewModelLoad, .authorityResolve, .referenceDecision], .blockedWithReason)
     }
 
@@ -3315,14 +3341,14 @@ private enum HeadlessJourneyHarness {
         let remoteReference = fixture.closetRecord(for: reference)
         let runtime = try fixture.runtime(globalStatus: .confirmed)
         let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .confirmed), fixture.resolution(globalStatus: .confirmed)],
-            runtimes: [runtime, runtime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: Array(repeating: runtime, count: 3),
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
                 decision: "AUTOMATIC"
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
@@ -3372,8 +3398,8 @@ private enum HeadlessJourneyHarness {
             personalCandidateSetHash: "set-resume"
         )
         let remote = JourneyRecordingRemote(
-            resolutions: Array(repeating: fixture.resolution(globalStatus: .reviewRequired), count: 3),
-            runtimes: [reviewRuntime, personalRuntime, personalRuntime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .reviewRequired), count: 4),
+            runtimes: [reviewRuntime, personalRuntime, personalRuntime, personalRuntime],
             recoveryContracts: [contract],
             setMutations: [
                 try fixture.setMutation(
@@ -3384,11 +3410,11 @@ private enum HeadlessJourneyHarness {
                 )
             ],
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
                 decision: "AUTOMATIC"
-            )],
+            ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
@@ -3627,14 +3653,15 @@ private enum HeadlessJourneyHarness {
         let remote = JourneyRecordingRemote(
             resolutions: [fixture.resolution(globalStatus: .confirmed), fixture.resolution(globalStatus: .confirmed)],
             runtimes: [runtime, runtime],
-            closetResponses: [.init(state: "ready", items: [])]
+            closetResponses: [.init(state: "ready", items: [])],
+            candidateResponses: [try fixture.referenceResponse(candidates: [])]
         )
         let viewModel = makeViewModel(fixture: fixture, remote: remote)
         try require(await viewModel.loadProductInfoFromURL(), scenario: scenario.id, message: "target did not load")
         let history = await viewModel.calculateRecommendation(userFits: [reference])
         let calls = await remote.calls()
         try require(history == nil, scenario: scenario.id, message: "deleted reference produced history")
-        try require(!calls.contains("reference_candidates"), scenario: scenario.id, message: "missing Closet reference reached evaluator")
+        try require(calls.contains("reference_candidates"), scenario: scenario.id, message: "server reference plan was not consulted")
         try require(!calls.contains("begin_comparison"), scenario: scenario.id, message: "deleted reference reached begin")
         return execution(calls, [.viewModelLoad, .authorityResolve, .referenceDecision], .blockedWithReason)
     }
@@ -3665,13 +3692,14 @@ private enum HeadlessJourneyHarness {
         let remoteReference = fixture.closetRecord(for: reference)
         let runtime = try fixture.runtime(globalStatus: .confirmed)
         let remote = JourneyRecordingRemote(
-            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
-            runtimes: Array(repeating: runtime, count: 3),
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 5),
+            runtimes: Array(repeating: runtime, count: 5),
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [
-                try fixture.referenceResponse(reference: reference, closetItemID: remoteReference.closetItemID, decision: "AUTOMATIC"),
-                try fixture.referenceResponse(reference: reference, closetItemID: remoteReference.closetItemID, decision: "AUTOMATIC")
-            ],
+            candidateResponses: Array(repeating: try fixture.referenceResponse(
+                reference: reference,
+                closetItemID: remoteReference.closetItemID,
+                decision: "AUTOMATIC"
+            ), count: 4),
             eligibleResponses: [
                 try fixture.eligible(reference: reference, closetItemID: remoteReference.closetItemID, mode: "AUTOMATIC", allowed: true, effectiveSource: nil, overrideRevision: nil),
                 try fixture.eligible(reference: reference, closetItemID: remoteReference.closetItemID, mode: "AUTOMATIC", allowed: true, effectiveSource: nil, overrideRevision: nil)
@@ -4378,6 +4406,7 @@ struct HeadlessJourneyFixture {
         count: Int,
         suffix: String
     ) throws -> VNextClassificationRecoveryContractDTO {
+        let unknownFieldsJSON = count > 1 ? "[\"garment_type\"]" : "[]"
         let all: [(String, String, String)] = [
             ("tshirt", "반팔 티셔츠", "candidate-tshirt-\(suffix)"),
             ("polo_shirt", "반팔 폴로셔츠", "candidate-polo-\(suffix)"),
@@ -4401,10 +4430,10 @@ struct HeadlessJourneyFixture {
           "fixed_facts":{"audience_code":"MEN","product_structure_code":"SINGLE",
             "category_code":"tops","garment_type_code":null,"sleeve_length_code":"short_sleeve",
             "lower_length_code":null,"body_length_code":null,"comparison_policy_code":null},
-          "unknown_fields":["garment_type"],"candidates":[\(candidates)],
+          "unknown_fields":\(unknownFieldsJSON),"candidates":[\(candidates)],
           "candidate_count":\(count),"product_input_fingerprint":"input-\(suffix)",
           "product_evidence_fingerprint":"evidence-\(suffix)","resolver_version":"headless-resolver-v1",
-          "candidate_contract_version":"recovery-v1", "candidate_set_hash":\(count == 0 ? "null" : "\"set-\(suffix)\""),
+          "candidate_contract_version":"\(VNextClassificationRecoveryContractDTO.completeTupleContractVersion)", "candidate_set_hash":\(count == 0 ? "null" : "\"set-\(suffix)\""),
           "current_review_reason":"\(reason)"
         }
         """)

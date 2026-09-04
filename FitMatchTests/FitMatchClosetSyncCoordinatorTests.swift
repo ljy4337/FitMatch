@@ -321,13 +321,17 @@ struct FitMatchClosetSyncCoordinatorTests {
         let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
         let userID = UUID()
         _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
-        context.insert(
-            localRetailerItem(
-                id: clientItemID,
-                productID: productID,
-                authority: .userExplicit
-            )
+        let localItem = localRetailerItem(
+            id: clientItemID,
+            productID: productID,
+            authority: .userExplicit
         )
+        // This test exercises a local edit of an existing remote row. The
+        // fixture's remote snapshot is deliberately dated in 2099, so make
+        // the local mutation newer rather than accidentally testing remote
+        // hydration precedence.
+        localItem.updatedAt = Date(timeIntervalSince1970: 4_102_444_800)
+        context.insert(localItem)
         try context.save()
 
         await coordinator.synchronize(userID: userID, modelContext: context)

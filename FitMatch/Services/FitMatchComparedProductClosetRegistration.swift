@@ -708,7 +708,7 @@ enum FitMatchComparedProductClosetRegistration {
         for size: ProductSize,
         records: [FitMatchClosetMeasurementRecordPayload]
     ) -> [String: Double] {
-        let recordValues = Dictionary(uniqueKeysWithValues: records.compactMap { record in
+        let recordValues: [String: Double] = Dictionary(uniqueKeysWithValues: records.compactMap { record -> (String, Double)? in
             guard record.value.isFinite, record.value > 0 else { return nil }
             return (record.measurementCode, record.value)
         })

@@ -1725,14 +1725,17 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         let remoteReference = fixture.closetRecord(for: reference)
         let runtime = try fixture.runtime(globalStatus: .confirmed)
         let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .confirmed), fixture.resolution(globalStatus: .confirmed)],
-            runtimes: [runtime, runtime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: [runtime, runtime, runtime],
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
-                reference: reference,
-                closetItemID: remoteReference.closetItemID,
-                decision: "AUTOMATIC"
-            )],
+            candidateResponses: Array(
+                repeating: try fixture.referenceResponse(
+                    reference: reference,
+                    closetItemID: remoteReference.closetItemID,
+                    decision: "AUTOMATIC"
+                ),
+                count: 2
+            ),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
@@ -1894,10 +1897,17 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         let recordA = fixture.closetRecord(for: referenceA)
         let runtime = try fixture.runtime(globalStatus: .confirmed)
         let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .confirmed), fixture.resolution(globalStatus: .confirmed)],
-            runtimes: [runtime, runtime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: [runtime, runtime, runtime],
             closetResponses: [.init(state: "ready", items: [recordA])],
-            candidateResponses: [try fixture.referenceResponse(reference: referenceA, closetItemID: recordA.closetItemID, decision: "AUTOMATIC")],
+            candidateResponses: Array(
+                repeating: try fixture.referenceResponse(
+                    reference: referenceA,
+                    closetItemID: recordA.closetItemID,
+                    decision: "AUTOMATIC"
+                ),
+                count: 2
+            ),
             eligibleResponses: [try fixture.eligible(reference: referenceA, closetItemID: recordA.closetItemID, mode: "AUTOMATIC", allowed: true, effectiveSource: nil, overrideRevision: nil)],
             beginResponses: [try fixture.begin(mode: "AUTOMATIC", personal: false, referenceClosetItemID: recordA.closetItemID)],
             completionResponses: [try fixture.complete()]
@@ -2125,14 +2135,17 @@ private extension FitMatchFinalReleaseScenarioExecutionTests {
         let reference = fixture.localReference(garment: "tshirt", sleeve: "short_sleeve")
         let remoteReference = fixture.closetRecord(for: reference)
         let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .confirmed), fixture.resolution(globalStatus: .confirmed)],
-            runtimes: [runtime, runtime],
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 3),
+            runtimes: [runtime, runtime, runtime],
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [try fixture.referenceResponse(
-                reference: reference,
-                closetItemID: remoteReference.closetItemID,
-                decision: "AUTOMATIC"
-            )],
+            candidateResponses: Array(
+                repeating: try fixture.referenceResponse(
+                    reference: reference,
+                    closetItemID: remoteReference.closetItemID,
+                    decision: "AUTOMATIC"
+                ),
+                count: 2
+            ),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
@@ -2231,11 +2244,20 @@ private extension FitMatchFinalReleaseScenarioExecutionTests {
         }
         let remote = JourneyRecordingRemote(
             resolutions: includeReference
-                ? [fixture.resolution(globalStatus: globalStatus), fixture.resolution(globalStatus: globalStatus)]
+                ? Array(repeating: fixture.resolution(globalStatus: globalStatus), count: 3)
                 : [fixture.resolution(globalStatus: globalStatus)],
-            runtimes: includeReference ? [runtime, runtime] : [runtime],
+            runtimes: includeReference ? [runtime, runtime, runtime] : [runtime],
             closetResponses: includeReference ? [.init(state: "ready", items: [remoteReference])] : [],
-            candidateResponses: includeReference ? [try fixture.referenceResponse(reference: reference, closetItemID: remoteReference.closetItemID, decision: decision)] : [],
+            candidateResponses: includeReference
+                ? Array(
+                    repeating: try fixture.referenceResponse(
+                        reference: reference,
+                        closetItemID: remoteReference.closetItemID,
+                        decision: decision
+                    ),
+                    count: 2
+                )
+                : [],
             eligibleResponses: eligibleAllowed && (decision == "AUTOMATIC" || decision == "MANUAL_EXTENDED") && includeReference
                 ? [try fixture.eligible(reference: reference, closetItemID: remoteReference.closetItemID, mode: decision == "AUTOMATIC" ? "AUTOMATIC" : "MANUAL_EXTENDED", allowed: true, effectiveSource: isPersonal ? "USER_EXPLICIT" : nil, overrideRevision: isPersonal ? 1 : nil)]
                 : includeReference && decision == "AUTOMATIC" ? [try fixture.eligible(reference: reference, closetItemID: remoteReference.closetItemID, mode: "AUTOMATIC", allowed: false, effectiveSource: nil, overrideRevision: nil)] : [],
@@ -2296,10 +2318,10 @@ private extension FitMatchFinalReleaseScenarioExecutionTests {
             personalEvidenceFingerprint: nil
         )
         let remote = JourneyRecordingRemote(
-            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 4),
-            runtimes: Array(repeating: runtime, count: 4),
+            resolutions: Array(repeating: fixture.resolution(globalStatus: .confirmed), count: 5),
+            runtimes: Array(repeating: runtime, count: 5),
             closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: [candidate, candidate],
+            candidateResponses: [candidate, candidate, candidate, candidate],
             eligibleResponses: [eligible, eligible],
             beginResponses: [begin, begin],
             completionResponses: [try fixture.complete(), try fixture.complete()],

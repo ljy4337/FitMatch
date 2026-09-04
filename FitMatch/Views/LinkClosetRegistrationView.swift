@@ -316,7 +316,7 @@ struct LinkClosetRegistrationView: View {
                                 ? "checkmark.circle" : "exclamationmark.circle"
                         )
                         .font(.headline)
-                        .foregroundStyle((parsedProduct != nil || partialProduct != nil) ? .primary : .red)
+                        .foregroundStyle((parsedProduct != nil || partialProduct != nil) ? Color.primary : Color.red)
                     }
 
                     if parsedProduct != nil, !isUnsupportedTopBottomSet {
