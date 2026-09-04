@@ -30,6 +30,7 @@ struct CompareFlowSheet: View {
     @State private var hasConfirmedComparisonCategory = false
     @State private var isSheetHeaderVisible = true
     @State private var preparedComparison: PreparedComparison?
+    @State private var serverReferenceSelectionPlan: FitMatchServerReferenceSelectionPlan?
     @State private var loadTask: Task<Void, Never>?
     @State private var hasStartedInitialURL = false
     @State private var isProcessingReferenceSelection = false
@@ -660,7 +661,7 @@ private extension CompareFlowSheet {
         VStack(alignment: .leading, spacing: 20) {
             sheetHeader(
                 title: "비교할 옷 선택",
-                subtitle: "자동으로 선택할 기준 옷이 없어요. 내 옷장에서 비교할 옷을 직접 선택해 주세요."
+                subtitle: "서버가 직접 선택 후보로 승인한 옷만 표시합니다."
             )
 
             if allSimilarClosetCandidates.isEmpty {
@@ -705,27 +706,18 @@ private extension CompareFlowSheet {
     var referenceSelectionSituationCard: some View {
         FitMatchCard {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: hasMatchingStructureCandidate ? "hand.tap.fill" : "info.circle.fill")
+                Image(systemName: "hand.tap.fill")
                     .font(.title3)
                     .foregroundStyle(.tint)
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text(referenceSelectionSituationTitle)
+                    Text("비교할 기준 옷을 선택해 주세요")
                         .font(.headline.weight(.bold))
-                    Text(referenceSelectionSituationDescription)
+                    Text("서버가 이번 상품과 비교 가능하다고 승인한 기준 옷입니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-
-                    if !hasMatchingStructureCandidate {
-                        Text(hasSleeveLengthExpansionCandidate
-                            ? "소매 길이가 달라 자동으로 선택하지 않았어요."
-                            : "옷의 종류가 달라 자동으로 선택하지 않았어요.")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
                 }
             }
         }
@@ -734,12 +726,8 @@ private extension CompareFlowSheet {
     var recommendedCandidateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             CompareSheetSectionTitle(
-                title: hasMatchingStructureCandidate
-                    ? "비교할 기준 옷"
-                    : (hasSleeveLengthExpansionCandidate ? "부분 비교 가능한 옷" : "비교 가능한 유사한 옷"),
-                subtitle: hasMatchingStructureCandidate
-                    ? "같은 종류 중 실측 방식이 가까운 순서입니다."
-                    : "공통 실측이 많고 측정 방식이 가까운 순서입니다."
+                title: "비교할 기준 옷",
+                subtitle: "서버가 반환한 비교 후보 순서입니다."
             )
             ForEach(recommendedReferenceCandidates) { candidate in
                 Button {
@@ -1568,6 +1556,22 @@ private extension CompareFlowSheet {
     }
 
     var missingReferencePresentation: MissingReferencePresentation {
+        if serverReferenceSelectionPlan?.measurementRequiredCandidates.isEmpty == false {
+            return MissingReferencePresentation(
+                title: "기준 옷 실측 보완이 필요해요",
+                message: "서버가 현재 옷장 후보의 실측 정보가 부족하다고 판단했습니다. 실측을 보완한 뒤 다시 비교해 주세요.",
+                registrationButtonTitle: "실측 옷 등록하기"
+            )
+        }
+
+        if serverReferenceSelectionPlan?.allBlockedCandidates.isEmpty == false {
+            return MissingReferencePresentation(
+                title: "비교 가능한 기준 옷이 없어요",
+                message: "서버 비교 정책상 현재 옷장에는 이 상품과 비교할 수 있는 기준 옷이 없습니다.",
+                registrationButtonTitle: "비교할 기준 옷 등록하기"
+            )
+        }
+
         guard allSimilarClosetCandidates.isEmpty else {
             return MissingReferencePresentation(
                 title: "비교할 옷 선택",
@@ -1653,7 +1657,10 @@ private extension CompareFlowSheet {
     func completeReferenceRegistration() {
         referenceRegistrationRoute = nil
         statusMessage = "비교할 기준 옷을 등록했어요."
-        rebuildPreparedComparison()
+        serverReferenceSelectionPlan = nil
+        preparedComparison = nil
+        setStep(.loading)
+        continueComparisonAfterProductInput()
     }
 
     func startCompareTask(with urlString: String) {
@@ -1739,6 +1746,7 @@ private extension CompareFlowSheet {
     }
 
     func resetTransientComparisonForRecoveryMutation() {
+        serverReferenceSelectionPlan = nil
         preparedComparison = nil
         selectedReferenceItemID = nil
         insufficientEvidence = nil
@@ -1782,6 +1790,7 @@ private extension CompareFlowSheet {
         insufficientEvidence = nil
         isShowingReferenceComparison = false
         hasConfirmedComparisonCategory = false
+        serverReferenceSelectionPlan = nil
         preparedComparison = nil
         setStep(.loading)
     }
@@ -1827,6 +1836,14 @@ private extension CompareFlowSheet {
             setStep(.error)
             return
         }
+        guard let readiness = viewModel.serverComparisonReadiness,
+              readiness.isReady else {
+            presentServerReadinessRecovery(
+                viewModel.serverComparisonReadiness
+                    ?? .unavailable("server_authority_unavailable")
+            )
+            return
+        }
         guard let product = makeProduct(insertBrandIfNeeded: false), !product.sizes.isEmpty else {
             errorMessage = "사이즈명과 실측값을 확인해 주세요."
             setStep(.error)
@@ -1837,13 +1854,13 @@ private extension CompareFlowSheet {
             setStep(.error)
             return
         }
-        rebuildPreparedComparison(using: product)
+        serverReferenceSelectionPlan = nil
+        preparedComparison = nil
         errorMessage = nil
         #if DEBUG
         print("[CompareFlowSheet] productName: \(product.name)")
         print("[CompareFlowSheet] category: \(viewModel.category.rawValue)")
         print("[CompareFlowSheet] detailCategory: \(viewModel.detailCategory.rawValue)")
-        print("[CompareFlowSheet] automaticMatchState before user confirmation: \(String(describing: automaticMatchResult?.state))")
         print("[화면: 상품 비교][동작: 상품 분석][상태: 성공] 상품=\(product.name), 출처=\(product.sourceDisplayName), 사이즈수=\(product.sizes.count), 분류=\(viewModel.category.rawValue)/\(viewModel.detailCategory.rawValue)")
         #endif
 
@@ -1872,32 +1889,94 @@ private extension CompareFlowSheet {
     }
 
     func proceedWithServerConfirmedCategory(product: Product) {
+        Task {
+            await loadServerConfirmedReferenceSelection(product: product)
+        }
+    }
+
+    func loadServerConfirmedReferenceSelection(product: Product) async {
         hasConfirmedComparisonCategory = false
-        rebuildPreparedComparison(using: product)
-
-        guard let plan = referenceSelectionPlan else {
-            logMissingReferenceDiagnostics(product: product)
-            setStep(.missingReference)
+        guard let readiness = viewModel.serverComparisonReadiness,
+              readiness.isReady else {
+            presentServerReadinessRecovery(
+                viewModel.serverComparisonReadiness
+                    ?? .unavailable("server_authority_unavailable")
+            )
+            return
+        }
+        guard let plan = await viewModel.loadServerReferenceSelectionPlan(
+            localClientItemIDs: Set(userFits.map(\.id))
+        ) else {
+            serverReferenceSelectionPlan = nil
+            preparedComparison = nil
+            errorMessage = viewModel.errorMessage
+                ?? "서버 기준 옷 정보를 확인하지 못했습니다."
+            setStep(.error)
             return
         }
 
-        guard !plan.recommendedCandidates.isEmpty || !allSimilarClosetCandidates.isEmpty else {
-            logMissingReferenceDiagnostics(product: product)
-            setStep(.missingReference)
+        guard let automaticReferences = localReferenceProjection(
+            for: plan.automaticCandidates
+        ), let manualReferences = localReferenceProjection(
+            for: plan.manualCandidates
+        ) else {
+            serverReferenceSelectionPlan = nil
+            preparedComparison = nil
+            errorMessage = "서버 기준 옷과 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
+            setStep(.error)
             return
         }
 
-        if let automaticCandidate = plan.automaticallySelectedCandidate {
-            selectedReferenceItemID = automaticCandidate.id
-            Task {
-                await calculateAndSaveRecommendation()
-            }
+        serverReferenceSelectionPlan = plan
+        rebuildPreparedComparison(
+            using: product,
+            manualReferences: manualReferences
+        )
+
+        if !automaticReferences.isEmpty {
+            selectedReferenceItemID = automaticReferences[0].id
+            await calculateAndSaveRecommendation(
+                automaticReferenceCandidates: automaticReferences
+            )
+            return
+        }
+
+        guard !manualReferences.isEmpty else {
+            selectedReferenceItemID = nil
+            logMissingReferenceDiagnostics(product: product)
+            setStep(.missingReference)
             return
         }
 
         selectedReferenceItemID = nil
         showsAllReferenceCandidates = false
         setStep(.closetSelection)
+    }
+
+    func presentServerReadinessRecovery(
+        _ readiness: FitMatchServerComparisonReadiness
+    ) {
+        errorMessage = nil
+        switch readiness {
+        case .ready:
+            return
+        case .sizesRequired:
+            statusMessage = readiness.userMessage
+            setStep(.categoryConfirmation)
+            if SizeTableRecoveryFeature.isEnabled,
+               viewModel.sizeTableRecoveryContext != nil {
+                isShowingSizeTableRecovery = true
+            } else {
+                isShowingManualProductEntry = true
+            }
+        case .measurementsRequired:
+            statusMessage = readiness.userMessage
+            setStep(.categoryConfirmation)
+            isShowingManualProductEntry = true
+        case .unavailable:
+            errorMessage = readiness.userMessage
+            setStep(.error)
+        }
     }
 
     func resumeZARAComparisonAfterCategoryConfirmation() {
@@ -1944,7 +2023,10 @@ private extension CompareFlowSheet {
         rebuildPreparedComparison()
     }
 
-    func rebuildPreparedComparison(using suppliedProduct: Product? = nil) {
+    func rebuildPreparedComparison(
+        using suppliedProduct: Product? = nil,
+        manualReferences suppliedManualReferences: [UserFit]? = nil
+    ) {
         guard let product = suppliedProduct ?? makeProduct(insertBrandIfNeeded: false) else {
             preparedComparison = nil
             return
@@ -1953,11 +2035,31 @@ private extension CompareFlowSheet {
             preparedComparison = nil
             return
         }
-        let comparableFits = userFits.filter {
-            $0.classificationAuthorityProvenance?.isComparisonAuthority == true
-                && hasComparableMeasurements($0)
+        guard let serverPlan = serverReferenceSelectionPlan,
+              let manualReferences = suppliedManualReferences
+                ?? localReferenceProjection(for: serverPlan.manualCandidates) else {
+            preparedComparison = nil
+            return
         }
-        let serverPendingPlan = serverPendingReferenceSelectionPlan(comparableFits)
+        let manualCandidateByID = Dictionary(
+            uniqueKeysWithValues: serverPlan.manualCandidates.map {
+                ($0.clientItemID, $0)
+            }
+        )
+        let manualCandidates = manualReferences.compactMap { item -> FitMatchCandidate? in
+            guard let candidate = manualCandidateByID[item.id] else { return nil }
+            return FitMatchCandidate(
+                userFit: item,
+                matchRate: 0,
+                compatibleMeasurementCount: candidate.commonMeasurementCount ?? 0,
+                selectionReason: candidate.reason
+                    ?? "서버가 비교 가능한 기준 옷으로 승인했습니다."
+            )
+        }
+        guard manualCandidates.count == serverPlan.manualCandidates.count else {
+            preparedComparison = nil
+            return
+        }
         let pendingProfile = ComparisonProfileMatcher().profile(
             for: product,
             detailCategory: viewModel.detailCategory
@@ -1965,69 +2067,43 @@ private extension CompareFlowSheet {
         preparedComparison = PreparedComparison(
             product: product,
             automaticMatchResult: AutomaticComparisonMatchResult(
-                state: comparableFits.isEmpty ? .noCompatibleGarment : .compatible,
+                state: manualReferences.isEmpty ? .noCompatibleGarment : .compatible,
                 incomingProfile: pendingProfile,
-                compatibleCandidates: comparableFits
+                compatibleCandidates: manualReferences
             ),
-            referenceSelectionPlan: serverPendingPlan,
+            referenceSelectionPlan: ReferenceSelectionPlan(
+                recommendedCandidates: manualCandidates,
+                automaticallySelectedCandidate: nil
+            ),
             sourceCategoryHistoryMatches: SourceCategoryHistoryMatcher.matches(
                 for: product,
                 detectedDetailCategory: viewModel.detailCategory,
                 userFits: userFits
             ),
-            allSimilarClosetCandidates: comparableFits.sorted {
-                if $0.isRepresentative != $1.isRepresentative {
-                    return $0.isRepresentative
-                }
-                if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
-                return $0.id.uuidString < $1.id.uuidString
-            }
+            allSimilarClosetCandidates: manualReferences
         )
     }
 
-    func serverPendingReferenceSelectionPlan(
-        _ items: [UserFit]
-    ) -> ReferenceSelectionPlan {
-        let sorted = items.sorted {
-            if $0.isRepresentative != $1.isRepresentative {
-                return $0.isRepresentative
-            }
-            if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
-            return $0.id.uuidString < $1.id.uuidString
-        }
-        let candidates = sorted.map { item in
-            let recordCount = item.measurementRecords.filter(\.isComparable).count
-            let legacyCount = [
-                item.shoulder, item.chest, item.totalLength, item.sleeveLength,
-                item.waist, item.hip, item.thigh, item.rise, item.hem,
-                item.footLength, item.underBust
-            ].filter { $0.isFinite && $0 > 0 }.count
-            return FitMatchCandidate(
-                userFit: item,
-                matchRate: 0,
-                compatibleMeasurementCount: max(recordCount, legacyCount),
-                selectionReason: "서버 비교 정책 확인 후 실측 비교"
-            )
-        }
-        let representatives = candidates.filter(\.userFit.isRepresentative)
-        return ReferenceSelectionPlan(
-            recommendedCandidates: Array(candidates.prefix(3)),
-            automaticallySelectedCandidate: representatives.count == 1
-                ? representatives.first
-                : nil
-        )
+    func localReferenceProjection(
+        for candidates: [FitMatchServerReferenceSelectionCandidate]
+    ) -> [UserFit]? {
+        let userFitByID = Dictionary(uniqueKeysWithValues: userFits.map { ($0.id, $0) })
+        let projected = candidates.compactMap { userFitByID[$0.clientItemID] }
+        guard projected.count == candidates.count else { return nil }
+        return projected
     }
 
-    func calculateAndSaveRecommendation() async {
+    func calculateAndSaveRecommendation(
+        automaticReferenceCandidates: [UserFit]
+    ) async {
         let outcome = await comparisonSubmission.submit {
             let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
             if let brand, existingBrand(named: brand.name) == nil {
                 modelContext.insert(brand)
             }
             return await viewModel.calculateRecommendation(
-                userFits: userFits,
-                brand: brand,
-                allowsGlobalFallback: false
+                automaticReferenceCandidates: automaticReferenceCandidates,
+                brand: brand
             )
         }
         guard case .finished(let history) = outcome else { return }

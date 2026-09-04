@@ -816,6 +816,38 @@ struct FitMatchHeadlessUserJourneyTests {
         // begin, the production engine, and server completion becomes a local
         // Result/History model.
         let validHistory = try #require(completed())
+        #expect(
+            validHistory.serverApprovedVNextReliability
+                == proof.analysis.completionPayload.reliability
+        )
+
+        // The completed vNext payload, rather than the presentation's
+        // measurement count or direct/extended label, is the only reliability
+        // authority retained by Result/History.
+        let reliabilityFourPayload = VNextComparisonCompletionPayload(
+            recommendedProductSizeID: proof.analysis.completionPayload
+                .recommendedProductSizeID,
+            score: proof.analysis.completionPayload.score,
+            reliability: 4,
+            coverage: proof.analysis.completionPayload.coverage,
+            engineVersion: proof.analysis.completionPayload.engineVersion,
+            candidateSizeRanking: proof.analysis.completionPayload
+                .candidateSizeRanking,
+            metricEvidence: proof.analysis.completionPayload.metricEvidence
+        )
+        let reliabilityFourAnalysis = VNextComparisonBatchAnalysis(
+            comparisonID: proof.analysis.comparisonID,
+            analyses: proof.analysis.analyses,
+            recommended: proof.analysis.recommended,
+            completionPayload: reliabilityFourPayload
+        )
+        let reliabilityFourHistory = try #require(
+            completed(analysis: reliabilityFourAnalysis)
+        )
+        #expect(reliabilityFourHistory.serverApprovedVNextReliability == 4)
+        reliabilityFourHistory.comparisonMethod = "서버 승인 확장 비교"
+        #expect(reliabilityFourHistory.serverApprovedVNextReliability == 4)
+
         #expect(service.canPresentCurrentVNextAlternativeSizes(
             for: validHistory,
             batch: proof.analysis
@@ -919,6 +951,7 @@ struct FitMatchHeadlessUserJourneyTests {
         let unauthorizedRecommendation = VNextComparisonCandidateAnalysis(
             productSizeID: unauthorizedSizeID,
             sizeLabel: "XL",
+            availability: proof.analysis.recommended.availability,
             result: proof.analysis.recommended.result,
             rank: 1
         )
@@ -2207,7 +2240,7 @@ struct FitMatchHeadlessUserJourneyTests {
             sizeLabel: "M",
             // Keep target evidence sufficient so the production flow reaches
             // the server-issued eligible-size block. The blocked outcome is
-            // an availability/eligibility decision, not a local shortcut.
+            // a server-issued eligibility decision, not a local shortcut.
             metrics: [
                 .init(code: "chest_width_pit_to_pit", referenceValue: 50, targetValue: 51),
                 .init(code: "shoulder_width_seam_to_seam", referenceValue: 48, targetValue: 48)
@@ -2362,10 +2395,9 @@ struct FitMatchHeadlessUserJourneyTests {
         }
     }
 
-    /// CP-028: availability expiry and a changed authorized set after the
-    /// eligible response are temporal blocks. Neither may produce a completed
-    /// comparison from the now-stale candidate evidence.
-    @Test func cp028ExpiredOrChangedAvailabilityBlocksBeforeCompletion() async throws {
+    /// CP-028: inventory is diagnostic only once a size is in the immutable
+    /// server-authorized snapshot. A changed authorized set still fails closed.
+    @Test func cp028AvailabilityDoesNotBlockButChangedAuthorizedSetDoes() async throws {
         do {
             let fixture = HeadlessJourneyFixture(provider: .uniqlo)
             let expired = HeadlessServerCandidateFixture(
@@ -2379,9 +2411,11 @@ struct FitMatchHeadlessUserJourneyTests {
             )
             let run = try makeCandidateComparison(fixture: fixture, candidates: [expired])
             #expect(await run.viewModel.loadProductInfoFromURL())
-            #expect(await run.viewModel.calculateRecommendation(userFits: [run.reference]) == nil)
-            #expect(!(await run.remote.calls()).contains("complete_comparison"))
-            #expect(run.viewModel.errorMessage?.isEmpty == false)
+            let history = try #require(
+                await run.viewModel.calculateRecommendation(userFits: [run.reference])
+            )
+            #expect(history.recommendedSize.id == expired.productSizeID)
+            #expect((await run.remote.calls()).contains("complete_comparison"))
         }
 
         do {
@@ -2520,10 +2554,10 @@ struct FitMatchHeadlessUserJourneyTests {
         #expect(calls.filter { $0 == "complete_comparison" }.count == 1)
     }
 
-    /// CP-037/CP-038: all-size semantic removal, sold-out inventory, and a
-    /// missing size table are separate server/product states. Each keeps the
-    /// comparison before begin and leaves a concrete user-facing reason.
-    @Test func cp037AndCp038AllSizeRemovalInventoryAndNoTableFailClosed() async throws {
+    /// CP-037/CP-038: all-size semantic removal and a missing size table block
+    /// before begin; SOLD_OUT remains a comparison candidate when DB approves
+    /// it.
+    @Test func cp037AndCp038SemanticRemovalNoTableBlockButSoldOutCompletes() async throws {
         let noSurvivor = HeadlessServerCandidateFixture(
             productSizeID: UUID(),
             sizeLabel: "M",
@@ -2555,15 +2589,15 @@ struct FitMatchHeadlessUserJourneyTests {
         )
         let inventoryRun = try makeCandidateComparison(
             fixture: HeadlessJourneyFixture(provider: .zara),
-            candidates: [soldOut],
-            eligibleAllowed: false,
-            eligibleDecision: "BLOCKED",
-            eligibleReason: "no_available_size"
+            candidates: [soldOut]
         )
         #expect(await inventoryRun.viewModel.loadProductInfoFromURL())
-        #expect(await inventoryRun.viewModel.calculateRecommendation(userFits: [inventoryRun.reference]) == nil)
-        #expect(inventoryRun.viewModel.errorMessage?.isEmpty == false)
-        #expect(!(await inventoryRun.remote.calls()).contains("begin_comparison"))
+        let soldOutHistory = try #require(
+            await inventoryRun.viewModel.calculateRecommendation(userFits: [inventoryRun.reference])
+        )
+        #expect(soldOutHistory.recommendedSize.id == soldOut.productSizeID)
+        #expect((await inventoryRun.remote.calls()).contains("begin_comparison"))
+        #expect((await inventoryRun.remote.calls()).contains("complete_comparison"))
 
         var parsedWithoutTable = HeadlessJourneyFixture(provider: .uniqlo).parsedProduct()
         parsedWithoutTable.sizes = []
@@ -2861,7 +2895,7 @@ private enum HeadlessJourneyProgram: Sendable, Equatable {
     case manualExplicitGlobal
     case incompatibleReference
     case measurementsRequired
-    case availabilityBlocked
+    case availabilityDiagnostic
     case recoveryResume
     case reviewLifecycle
     case unrecoverable
@@ -2929,8 +2963,8 @@ private enum HeadlessJourneyScenarioCatalog {
         scenario("J21", .uniqlo, "C3", "G0", "R1", "M0", "A0", ["U15"], .automaticDirect),
         scenario("J22", .zara, "C11", "G0", "R1", "M8", "A0", ["U7"], .measurementsRequired),
         scenario("J23", .zara, "C12", "G0", "R1", "M9", "A0", ["U7"], .measurementsRequired),
-        scenario("J24", .uniqlo, "C12", "G0", "R1", "M0", "A3", ["U7"], .availabilityBlocked),
-        scenario("J25", .musinsa, "C12", "G0", "R1", "M0", "A2", ["U7"], .availabilityBlocked),
+        scenario("J24", .uniqlo, "C12", "G0", "R1", "M0", "A3", ["U7"], .availabilityDiagnostic),
+        scenario("J25", .musinsa, "C12", "G0", "R1", "M0", "A2", ["U7"], .availabilityDiagnostic),
         scenario("J26", .zara, "C3", "G5", "R0", "M0", "A4", ["U6", "U7"], .unrecoverable),
         scenario("J27", .uniqlo, "C3", "G6", "R0", "M0", "A4", ["U6", "U7"], .notApplicable),
         scenario("J28", .musinsa, "C3", "G4", "R0", "M0", "A4", ["U6", "U10"], .unrecoverable),
@@ -2949,7 +2983,7 @@ private enum HeadlessJourneyScenarioCatalog {
         scenario("J41", .zara, "C3", "G15", "R1", "M0", "A9", ["U7"], .targetAuthorityChanged),
         scenario("J42", .uniqlo, "C3", "G0", "R1", "M0", "A0", ["U6", "U20"], .providerRetry),
         scenario("J43", .musinsa, "C9", "G0", "R11", "M0", "A0", ["U20"], .incompatibleReference),
-        scenario("J44", .zara, "C3", "G0", "R1", "M0", "A0", ["U20"], .availabilityBlocked),
+        scenario("J44", .zara, "C3", "G0", "R1", "M0", "A0", ["U20"], .availabilityDiagnostic),
         scenario("J45", .uniqlo, "C17/C18", "G0", "R2", "M4", "A10", ["U15", "U7"], .automaticDirect)
     ]
 
@@ -3009,8 +3043,8 @@ private enum HeadlessJourneyHarness {
             return try await blockedReference(scenario, decision: "BLOCKED")
         case .measurementsRequired:
             return try await blockedReference(scenario, decision: "MEASUREMENTS_REQUIRED")
-        case .availabilityBlocked:
-            return try await availabilityBlocked(scenario)
+        case .availabilityDiagnostic:
+            return try await availabilityDiagnostic(scenario)
         case .recoveryResume:
             return try await recoveryResume(scenario)
         case .reviewLifecycle:
@@ -3273,7 +3307,7 @@ private enum HeadlessJourneyHarness {
         return execution(calls, [.viewModelLoad, .authorityResolve, .referenceDecision], .blockedWithReason)
     }
 
-    private static func availabilityBlocked(
+    private static func availabilityDiagnostic(
         _ scenario: HeadlessJourneyScenario
     ) async throws -> HeadlessJourneyExecution {
         let fixture = HeadlessJourneyFixture(provider: scenario.provider)
@@ -3293,19 +3327,30 @@ private enum HeadlessJourneyHarness {
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
                 mode: "AUTOMATIC",
-                allowed: false,
+                allowed: true,
                 effectiveSource: nil,
                 overrideRevision: nil
-            )]
+            )],
+            beginResponses: [try fixture.begin(
+                mode: "AUTOMATIC",
+                personal: false,
+                referenceClosetItemID: remoteReference.closetItemID
+            )],
+            completionResponses: [try fixture.complete()]
         )
         let viewModel = makeViewModel(fixture: fixture, remote: remote)
         try require(await viewModel.loadProductInfoFromURL(), scenario: scenario.id, message: "target did not load")
         let history = await viewModel.calculateRecommendation(userFits: [reference])
         let calls = await remote.calls()
-        try require(history == nil, scenario: scenario.id, message: "availability-blocked target produced history")
-        try require(calls.contains("eligible_sizes"), scenario: scenario.id, message: "availability gate was not queried")
-        try require(!calls.contains("begin_comparison"), scenario: scenario.id, message: "availability block reached begin")
-        return execution(calls, [.viewModelLoad, .authorityResolve, .referenceDecision, .eligibleSizes], .blockedWithReason)
+        try require(history != nil, scenario: scenario.id, message: "DB-approved unavailable candidate did not complete")
+        try require(calls.contains("eligible_sizes"), scenario: scenario.id, message: "eligible-size authority was not queried")
+        try require(calls.contains("begin_comparison"), scenario: scenario.id, message: "DB-approved candidate skipped begin")
+        try require(calls.contains("complete_comparison"), scenario: scenario.id, message: "DB-approved candidate skipped completion")
+        return execution(
+            calls,
+            [.viewModelLoad, .authorityResolve, .referenceDecision, .eligibleSizes, .begin, .recommendationService, .engineAdapter, .complete, .historyModel],
+            .expected
+        )
     }
 
     /// Executes the same production ViewModel continuation that the existing
@@ -4679,7 +4724,8 @@ struct HeadlessJourneyFixture {
 
     /// Serializes the immutable begin snapshot supplied by the server.  The
     /// production adapter—not this fixture—checks candidate-set equality,
-    /// availability, evidence sufficiency, and scoring.
+    /// evidence sufficiency, and scoring. Availability is retained as a
+    /// diagnostic snapshot field and is deliberately not an eligibility gate.
     func begin(
         mode: String,
         personal: Bool,

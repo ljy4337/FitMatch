@@ -543,6 +543,14 @@ final class ShoppingProductViewModel: ObservableObject {
         return false
     }
 
+    var serverComparisonReadiness: FitMatchServerComparisonReadiness? {
+        confirmedServerAuthority?.comparisonReadiness
+    }
+
+    var hasServerComparisonReadyAuthority: Bool {
+        confirmedServerAuthority?.comparisonReadiness.isReady == true
+    }
+
     var hasActiveUserExplicitClassification: Bool {
         guard case .confirmed(let authority) = serverAuthorityState else {
             return false
@@ -781,10 +789,52 @@ final class ShoppingProductViewModel: ObservableObject {
         return authority
     }
 
+    /// Fetches the complete DB-issued reference plan. Local Closet rows are
+    /// only a projection for the UI, so a missing projection is fail-closed
+    /// rather than an opportunity to choose a different representative item.
+    func loadServerReferenceSelectionPlan(
+        localClientItemIDs: Set<UUID>
+    ) async -> FitMatchServerReferenceSelectionPlan? {
+        guard let authority = confirmedServerAuthority else {
+            errorMessage = "서버에서 상품 분류를 확정하지 못해 비교할 수 없습니다."
+            return nil
+        }
+        guard authority.comparisonReadiness.isReady else {
+            errorMessage = authority.comparisonReadiness.userMessage
+            return nil
+        }
+        guard let coordinator = serverAuthorityCoordinator,
+              let product = parsedProductForServerAuthority,
+              let request = product.fitMatchDatabaseResolutionRequest() else {
+            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            return nil
+        }
+        do {
+            return try await coordinator.referenceSelectionPlan(
+                targetRequest: request,
+                targetObservation: product.fitMatchProductObservationRequest(),
+                localClientItemIDs: localClientItemIDs
+            )
+        } catch let error as FitMatchServerAuthorityError {
+            errorMessage = error.errorDescription
+                ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            return nil
+        } catch {
+            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            return nil
+        }
+    }
+
     func authorizeReferenceForComparison(
         _ item: UserFit,
         allowsManualSelection: Bool
     ) async -> FitMatchServerComparisonPermit? {
+        guard let readiness = serverComparisonReadiness,
+              readiness.isReady else {
+            errorMessage = serverComparisonReadiness?.userMessage
+                ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            return nil
+        }
         guard let coordinator = serverAuthorityCoordinator,
               let product = parsedProductForServerAuthority,
               let request = product.fitMatchDatabaseResolutionRequest(),
@@ -887,6 +937,14 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
 
+        guard hasServerComparisonReadyAuthority else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
+            errorMessage = serverComparisonReadiness?.userMessage
+                ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            recommendation = nil
+            return nil
+        }
+
         guard let product = makeProduct(brand: brand) else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
             errorMessage = "상품명과 최소 1개 사이즈의 실측값을 입력해 주세요."
@@ -901,38 +959,87 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
 
-        guard let coordinator = serverAuthorityCoordinator,
-              let parsedProduct = parsedProductForServerAuthority,
-              let request = parsedProduct.fitMatchDatabaseResolutionRequest() else {
+        guard let plan = await loadServerReferenceSelectionPlan(
+            localClientItemIDs: Set(userFits.map(\.id))
+        ) else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
-            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
             recommendation = nil
             return nil
         }
-
-        let automaticIDs: [UUID]
-        do {
-            automaticIDs = try await coordinator.automaticReferenceClientItemIDs(
-                targetRequest: request,
-                targetObservation: parsedProduct.fitMatchProductObservationRequest()
-            )
-        } catch {
-            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
-            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
-            recommendation = nil
-            return nil
-        }
+        let automaticIDs = plan.automaticCandidates.map(\.clientItemID)
         let fitByID = Dictionary(uniqueKeysWithValues: userFits.map { ($0.id, $0) })
         let automaticCandidates = automaticIDs.compactMap { fitByID[$0] }
+        guard automaticCandidates.count == automaticIDs.count else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
+            errorMessage = "서버 기준 옷과 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
+            recommendation = nil
+            return nil
+        }
         guard !automaticCandidates.isEmpty else {
-            // No automatic reference is not an error.  The caller presents the
-            // full active Closet and authorizes only after the user chooses.
+            // No automatic reference is not an error. The caller may present
+            // only `plan.manualCandidates`, then performs a new server
+            // authorization after the user's explicit choice.
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .missingReference))
             recommendation = nil
             return nil
         }
 
         for reference in automaticCandidates {
+            guard let permit = await authorizeReferenceForComparison(
+                reference,
+                allowsManualSelection: false
+            ) else { continue }
+            guard let history = await completeVNextRecommendation(
+                product: product,
+                reference: reference,
+                permit: permit
+            ) else { continue }
+
+            recommendation = history
+            recordComparisonResult(history, mode: metricMode)
+            return history
+        }
+
+        metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
+        errorMessage = errorMessage
+            ?? "서버 비교 정책 또는 실측 조건을 충족하는 기준 옷이 없습니다."
+        recommendation = nil
+        return nil
+    }
+
+    /// Executes only server-ordered AUTOMATIC references that the caller has
+    /// already obtained from `loadServerReferenceSelectionPlan`. It never
+    /// queries local `isRepresentative` state to construct that order.
+    @discardableResult
+    func calculateRecommendation(
+        automaticReferenceCandidates: [UserFit],
+        brand: Brand? = nil
+    ) async -> RecommendationHistory? {
+        errorMessage = nil
+        let metricMode = FitMatchMetricComparisonMode.automatic
+        metricsRecorder.record(.comparisonAttempt(mode: metricMode))
+
+        guard hasServerComparisonReadyAuthority else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
+            errorMessage = serverComparisonReadiness?.userMessage
+                ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            recommendation = nil
+            return nil
+        }
+        guard !automaticReferenceCandidates.isEmpty else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .missingReference))
+            recommendation = nil
+            return nil
+        }
+        guard let product = makeProduct(brand: brand),
+              product.classificationAuthorityProvenance?.isComparisonAuthority == true else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
+            errorMessage = "서버에서 확정된 상품만 비교할 수 있습니다."
+            recommendation = nil
+            return nil
+        }
+
+        for reference in automaticReferenceCandidates {
             guard let permit = await authorizeReferenceForComparison(
                 reference,
                 allowsManualSelection: false
@@ -963,6 +1070,14 @@ final class ShoppingProductViewModel: ObservableObject {
         errorMessage = nil
         let metricMode = FitMatchMetricComparisonMode.selectedReference
         metricsRecorder.record(.comparisonAttempt(mode: metricMode))
+
+        guard hasServerComparisonReadyAuthority else {
+            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
+            errorMessage = serverComparisonReadiness?.userMessage
+                ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            recommendation = nil
+            return nil
+        }
 
         guard let product = makeProduct(brand: brand) else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))

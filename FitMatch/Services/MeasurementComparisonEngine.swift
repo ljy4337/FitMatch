@@ -8,6 +8,10 @@ enum MeasurementComparisonStatus: String, Codable, Equatable {
 
 enum MeasurementExclusionReason: String, Codable, Equatable {
     case categoryPolicy = "category_policy"
+    /// A DB policy snapshot excluded this measurement because its design axis
+    /// is not comparable. This is diagnostic evidence only; vNext scoring
+    /// never recreates or overrides that policy locally.
+    case designAxisDifference = "design_axis_difference"
     case sleeveLengthMismatch = "sleeve_length_mismatch"
     case garmentLengthMismatch = "garment_length_mismatch"
     case missingProductValue = "missing_product_value"
@@ -21,6 +25,8 @@ enum MeasurementExclusionReason: String, Codable, Equatable {
         switch self {
         case .categoryPolicy:
             return "의류 구조가 달라 비교에서 제외했어요."
+        case .designAxisDifference:
+            return "서버 비교 정책에서 디자인 축이 달라 제외했어요."
         case .sleeveLengthMismatch:
             return "반팔과 긴팔은 소매 구조가 달라 비교에서 제외했어요."
         case .garmentLengthMismatch:

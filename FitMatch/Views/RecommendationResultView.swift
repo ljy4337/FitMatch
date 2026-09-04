@@ -541,11 +541,16 @@ struct RecommendationResultView: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
                 Text("사이즈 유사도는 선택한 상품 사이즈와 기준 옷의 실측이 얼마나 비슷한지 나타냅니다.")
-                Text("추천 신뢰도는 비교에 사용한 실측 항목 수, 측정 방식의 호환 여부, 누락·제외된 항목을 바탕으로 결과를 얼마나 참고할 수 있는지 보여줍니다.")
-                    .foregroundStyle(.secondary)
-                if currentResult.comparisonMethod.contains("확장 비교") {
-                    Text("서로 다른 종류의 유사한 옷을 비교한 결과라 구조 차이를 반영해 추천 신뢰도를 한 단계 낮췄어요.")
+                if currentResult.serverApprovedVNextReliability != nil {
+                    Text("이 결과의 신뢰도는 서버가 승인한 비교 근거 수와 coverage를 사용해 엔진이 계산한 값입니다.")
                         .foregroundStyle(.secondary)
+                } else {
+                    Text("추천 신뢰도는 비교에 사용한 실측 항목 수, 측정 방식의 호환 여부, 누락·제외된 항목을 바탕으로 결과를 얼마나 참고할 수 있는지 보여줍니다.")
+                        .foregroundStyle(.secondary)
+                    if currentResult.comparisonMethod.contains("확장 비교") {
+                        Text("서로 다른 종류의 유사한 옷을 비교한 결과라 구조 차이를 반영해 추천 신뢰도를 한 단계 낮췄어요.")
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Divider()
                 InfoRow(title: "현재 신뢰도", value: "\(comparisonReliability.stars) \(comparisonReliability.title)")
@@ -1534,7 +1539,10 @@ struct RecommendationResultView: View {
     }
 
     private var comparisonReliability: ComparisonReliability {
-        ComparisonReliability(
+        if let serverApproved = currentResult.serverApprovedVNextReliability {
+            return ComparisonReliability(serverApprovedLevel: serverApproved)
+        }
+        return ComparisonReliability(
             comparedCount: comparedMeasurementKinds.count,
             compatibilityLevel: currentResult.comparisonMethod.contains("확장 비교")
                 ? .extended
@@ -2155,6 +2163,19 @@ private struct ComparisonReliability {
         default: baseTitle = "매우 낮음"
         }
         title = compatibilityLevel == .extended ? "확장 비교 · \(baseTitle)" : baseTitle
+    }
+
+    init(serverApprovedLevel: Int) {
+        let filledStars = min(5, max(1, serverApprovedLevel))
+        stars = String(repeating: "★", count: filledStars)
+            + String(repeating: "☆", count: 5 - filledStars)
+        switch filledStars {
+        case 5: title = "매우 높음"
+        case 4: title = "높음"
+        case 3: title = "보통"
+        case 2: title = "낮음"
+        default: title = "매우 낮음"
+        }
     }
 }
 

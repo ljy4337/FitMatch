@@ -698,10 +698,16 @@ private struct HistoryCard: View {
         case 2: title = "낮음"
         default: title = "매우 낮음"
         }
+        if history.serverApprovedVNextReliability != nil {
+            return title
+        }
         return history.comparisonMethod.contains("확장 비교") ? "확장 · \(title)" : title
     }
 
     private func reliabilityStarCount(comparedCount: Int) -> Int {
+        if let serverApproved = history.serverApprovedVNextReliability {
+            return min(5, max(1, serverApproved))
+        }
         let base: Int
         switch comparedCount {
         case 4...: base = 5

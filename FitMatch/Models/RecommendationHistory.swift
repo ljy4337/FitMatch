@@ -76,6 +76,7 @@ final class RecommendationHistory {
         fallbackReason: String = "",
         productDetailCategory: ClosetDetailCategory = .other,
         comparisonResult: MeasurementComparisonResult? = nil,
+        serverApprovedReliability: Int? = nil,
         reason: String? = nil,
         createdAt: Date = Date()
     ) {
@@ -105,7 +106,8 @@ final class RecommendationHistory {
             self.comparisonSchemaVersion = 2
             self.comparisonStatusRawValue = comparisonResult.status.rawValue
             let snapshot = RecommendationCalculationSnapshot.make(
-                comparison: comparisonResult
+                comparison: comparisonResult,
+                serverApprovedReliability: serverApprovedReliability
             )
             self.comparedMeasurementUsagesJSON = Self.encode(
                 RecommendationComparisonEnvelope(snapshot: snapshot)
@@ -182,6 +184,14 @@ final class RecommendationHistory {
 
     var comparisonCoverage: Double {
         calculationSnapshot?.comparisonCoverage ?? 0
+    }
+
+    /// The vNext engine's evidence/coverage reliability after successful
+    /// `complete_comparison`. Older local histories keep their legacy UI
+    /// fallback because they have no server-approved payload to preserve.
+    var serverApprovedVNextReliability: Int? {
+        guard isServerBackedVNextHistory else { return nil }
+        return calculationSnapshot?.serverApprovedReliability
     }
 
     var measurementExclusions: [MeasurementComparisonExclusion] {

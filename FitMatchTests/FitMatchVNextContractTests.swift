@@ -279,8 +279,8 @@ private struct ComparisonBeginFixture {
               "sleeve_length_code":"short_sleeve","lower_length_code":null,
               "body_length_code":null,
               "candidates":[
-                \(candidate(id: sizeA, label: "M", target: 51, difference: 1, allowed: allowed, availabilityStatus: availabilityStatus, availabilityValidUntil: availabilityValidUntil)),
-                \(candidate(id: sizeB, label: "L", target: 53, difference: 3, allowed: allowed, availabilityStatus: availabilityStatus, availabilityValidUntil: availabilityValidUntil))
+                \(candidate(id: sizeA, label: "M", target: 51, difference: 1, allowed: allowed, availabilityStatus: availabilityStatus, availabilityObservedAt: availabilityObservedAt, availabilityValidUntil: availabilityValidUntil)),
+                \(candidate(id: sizeB, label: "L", target: 53, difference: 3, allowed: allowed, availabilityStatus: availabilityStatus, availabilityObservedAt: availabilityObservedAt, availabilityValidUntil: availabilityValidUntil))
               ]
             }
           }

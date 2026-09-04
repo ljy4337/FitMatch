@@ -338,6 +338,8 @@ struct VNextHistoryCacheHydrator {
                     ? "서버 정책이 승인한 공통 실측만 사용했습니다." : "",
                 productDetailCategory: detail,
                 comparisonResult: result,
+                serverApprovedReliability: row.resultEvidence?.reliability
+                    ?? row.reliabilityLevel,
                 reason: "vNext immutable comparison history에서 복원했습니다.",
                 createdAt: decodeDate(row.createdAt) ?? Date()
             )
@@ -359,6 +361,8 @@ struct VNextHistoryCacheHydrator {
         let tolerance = 0.000_001
         return evidence.recommendedProductSizeID == analysis.recommended.productSizeID
             && abs(evidence.score - analysis.completionPayload.score) < tolerance
+            && evidence.reliability == analysis.completionPayload.reliability
+            && abs(evidence.coverage - analysis.completionPayload.coverage) < tolerance
             && evidence.candidateSizeRanking == analysis.completionPayload.candidateSizeRanking
             && evidence.metricEvidence == analysis.completionPayload.metricEvidence
     }

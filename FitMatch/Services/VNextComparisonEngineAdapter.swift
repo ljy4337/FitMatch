@@ -7,7 +7,6 @@ enum VNextComparisonEngineAdapterError: LocalizedError, Equatable {
     case emptyAuthorizedSet
     case candidateSetMismatch
     case duplicateCandidate
-    case unavailableCandidate(UUID)
     case excludedMetricUsed(String)
     case invalidEvidence(UUID)
     case policySnapshotInvalid
@@ -24,8 +23,6 @@ enum VNextComparisonEngineAdapterError: LocalizedError, Equatable {
             return "서버가 승인한 비교 사이즈가 없습니다."
         case .candidateSetMismatch, .duplicateCandidate:
             return "서버 비교 후보 스냅샷이 일관되지 않습니다."
-        case .unavailableCandidate:
-            return "판매 가능 근거가 없는 사이즈가 비교 후보에 포함됐습니다."
         case .excludedMetricUsed(let code):
             return "제외된 실측 항목이 비교에 포함됐습니다: \(code)"
         case .invalidEvidence:
@@ -39,6 +36,9 @@ enum VNextComparisonEngineAdapterError: LocalizedError, Equatable {
 struct VNextComparisonCandidateAnalysis: Equatable, @unchecked Sendable {
     let productSizeID: UUID
     let sizeLabel: String
+    /// Retained for result diagnostics/presentation only. It never participates
+    /// in candidate authorization, scoring, ranking, or recommendation.
+    let availability: VNextAvailabilityDTO
     let result: MeasurementComparisonResult
     let rank: Int
 }
@@ -58,6 +58,14 @@ struct VNextComparisonEngineAdapter {
     static let engineVersion = "fitmatch-ios-vnext-snapshot-v1"
 
     private let engine: MeasurementComparisonEngine
+
+    /// These codes originate in the immutable DB begin snapshot. They are
+    /// intentionally mapped only to presentation diagnostics after the engine
+    /// has calculated its DB-authorized evidence; they neither add evidence nor
+    /// affect score, ranking, coverage, or completion payloads.
+    private enum SnapshotExclusionReasonCode: String {
+        case designAxisDifference = "DESIGN_AXIS_DIFFERENCE"
+    }
 
     init(engine: MeasurementComparisonEngine = MeasurementComparisonEngine()) {
         self.engine = engine
@@ -92,6 +100,10 @@ struct VNextComparisonEngineAdapter {
         }
 
         let excluded = Set(begin.snapshot.excludedMeasurementCodes)
+        let snapshotPresentationExclusions = Self.presentationExclusions(
+            from: begin.snapshot.authorization.excludedMeasurementReasons,
+            excludedMeasurementCodes: excluded
+        )
         let activePolicyMetricCount = begin.snapshot.policy.metrics.filter {
             $0.metricMode == "CANONICAL"
                 && $0.isActive
@@ -103,11 +115,6 @@ struct VNextComparisonEngineAdapter {
 
         var unranked: [(candidate: VNextAuthorizedCandidateDTO, result: MeasurementComparisonResult)] = []
         for candidate in begin.snapshot.target.candidates {
-            guard candidate.availability.status == "AVAILABLE" else {
-                throw VNextComparisonEngineAdapterError.unavailableCandidate(
-                    candidate.productSizeID
-                )
-            }
             guard candidate.authorization.allowed else {
                 throw VNextComparisonEngineAdapterError.authorizationDenied(
                     candidate.authorization.reason ?? "candidate_blocked"
@@ -128,7 +135,13 @@ struct VNextComparisonEngineAdapter {
                     candidate.productSizeID
                 )
             }
-            unranked.append((candidate, result))
+            unranked.append((
+                candidate,
+                Self.applyingPresentationExclusions(
+                    snapshotPresentationExclusions,
+                    to: result
+                )
+            ))
         }
 
         let ranked = unranked.sorted {
@@ -145,6 +158,7 @@ struct VNextComparisonEngineAdapter {
             VNextComparisonCandidateAnalysis(
                 productSizeID: entry.candidate.productSizeID,
                 sizeLabel: entry.candidate.sizeLabel,
+                availability: entry.candidate.availability,
                 result: entry.result,
                 rank: index + 1
             )
@@ -204,6 +218,49 @@ struct VNextComparisonEngineAdapter {
         if evidenceCount >= 2 { return 3 }
         if evidenceCount == 1 { return 2 }
         return 1
+    }
+
+    private static func presentationExclusions(
+        from reasons: [VNextMeasurementExclusionReasonDTO],
+        excludedMeasurementCodes: Set<String>
+    ) -> [MeasurementComparisonExclusion] {
+        var seen = Set<String>()
+        return reasons.compactMap { reason in
+            guard excludedMeasurementCodes.contains(reason.measurementCode),
+                  seen.insert("\(reason.measurementCode)|\(reason.reasonCode)").inserted,
+                  SnapshotExclusionReasonCode(rawValue: reason.reasonCode) == .designAxisDifference,
+                  let identity = MeasurementComparisonEngine.authorizedMeasurementIdentity(
+                    for: reason.measurementCode
+                  ) else {
+                return nil
+            }
+            return MeasurementComparisonExclusion(
+                kind: identity.kind,
+                reason: .designAxisDifference,
+                productCode: identity.localCode,
+                referenceCode: identity.localCode
+            )
+        }
+    }
+
+    private static func applyingPresentationExclusions(
+        _ exclusions: [MeasurementComparisonExclusion],
+        to result: MeasurementComparisonResult
+    ) -> MeasurementComparisonResult {
+        guard !exclusions.isEmpty else { return result }
+        return MeasurementComparisonResult(
+            status: result.status,
+            score: result.score,
+            comparedItems: result.comparedItems,
+            exclusions: result.exclusions + exclusions,
+            averageDifference: result.averageDifference,
+            minimumComparableCount: result.minimumComparableCount,
+            requiredKinds: result.requiredKinds,
+            minimumRequiredKindCount: result.minimumRequiredKindCount,
+            requiredAllKinds: result.requiredAllKinds,
+            expectedWeightSum: result.expectedWeightSum,
+            usedWeightSum: result.usedWeightSum
+        )
     }
 }
 

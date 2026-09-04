@@ -96,6 +96,52 @@ nonisolated struct FitMatchServerProductAuthority: Equatable, Sendable {
     var comparisonReady: Bool {
         status == .confirmed && runtime.comparisonReady
     }
+
+    /// Runtime readiness is independent from classification confirmation. The
+    /// server owns both values, so callers must not infer readiness from local
+    /// size or measurement counts.
+    var comparisonReadiness: FitMatchServerComparisonReadiness {
+        FitMatchServerComparisonReadiness(
+            runtimeState: runtime.runtimeState,
+            comparisonReady: comparisonReady
+        )
+    }
+}
+
+nonisolated enum FitMatchServerComparisonReadiness: Equatable, Sendable {
+    case ready
+    case sizesRequired
+    case measurementsRequired
+    case unavailable(String)
+
+    init(runtimeState: String, comparisonReady: Bool) {
+        if comparisonReady && runtimeState == "ready" {
+            self = .ready
+            return
+        }
+        switch runtimeState {
+        case "sizes_required": self = .sizesRequired
+        case "measurements_required": self = .measurementsRequired
+        default: self = .unavailable(runtimeState)
+        }
+    }
+
+    var isReady: Bool {
+        self == .ready
+    }
+
+    var userMessage: String {
+        switch self {
+        case .ready:
+            return ""
+        case .sizesRequired:
+            return "상품 사이즈표를 보완한 뒤 비교해 주세요."
+        case .measurementsRequired:
+            return "상품 실측 정보를 보완한 뒤 비교해 주세요."
+        case .unavailable:
+            return "서버에서 이 상품의 비교 준비 상태를 확인하지 못했습니다."
+        }
+    }
 }
 
 nonisolated enum FitMatchServerReferenceAuthority: String, Equatable, Sendable {
@@ -108,6 +154,55 @@ nonisolated enum FitMatchServerReferenceDecision: String, Equatable, Sendable {
     case manualSelection = "manual_selection"
     case measurementsRequired = "measurements_required"
     case blocked
+}
+
+/// `fitmatch_vnext_find_reference_candidates` is the source of truth for
+/// reference selection. These values deliberately represent the server's
+/// typed status/decision fields rather than local Closet preferences.
+nonisolated enum FitMatchServerReferenceSelectionStatus: Equatable, Sendable {
+    case ready
+    case noReferenceCandidate
+    case automatic
+    case manualSelection
+    case measurementsRequired
+}
+
+nonisolated struct FitMatchServerReferenceSelectionCandidate: Equatable, Sendable {
+    let clientItemID: UUID
+    let closetItemID: UUID
+    let decision: FitMatchServerReferenceDecision
+    let allowed: Bool
+    let reasonCode: String?
+    let reason: String?
+    let commonMeasurementCount: Int?
+
+    var isSelectable: Bool {
+        allowed && (decision == .automatic || decision == .manualSelection)
+    }
+}
+
+nonisolated struct FitMatchServerReferenceSelectionPlan: Equatable, Sendable {
+    let target: FitMatchServerProductAuthority
+    let status: FitMatchServerReferenceSelectionStatus
+    /// Preserves the order returned by the vNext candidate RPC.
+    let candidates: [FitMatchServerReferenceSelectionCandidate]
+    let blockedCandidates: [FitMatchServerReferenceSelectionCandidate]
+
+    var automaticCandidates: [FitMatchServerReferenceSelectionCandidate] {
+        candidates.filter { $0.allowed && $0.decision == .automatic }
+    }
+
+    var manualCandidates: [FitMatchServerReferenceSelectionCandidate] {
+        candidates.filter { $0.allowed && $0.decision == .manualSelection }
+    }
+
+    var measurementRequiredCandidates: [FitMatchServerReferenceSelectionCandidate] {
+        candidates.filter { $0.decision == .measurementsRequired }
+    }
+
+    var allBlockedCandidates: [FitMatchServerReferenceSelectionCandidate] {
+        blockedCandidates + candidates.filter { $0.decision == .blocked }
+    }
 }
 
 /// Stable server reason codes are translated here, not inferred from an
@@ -261,7 +356,9 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
     case classificationRecoveryRejected(String)
     case closetRuntimeUnavailable(String)
     case referenceItemNotFound
+    case localReferenceProjectionMissing(UUID)
     case targetClassificationRequired
+    case comparisonNotReady(String)
     case unknownCandidateState(String)
     case inconsistentCandidateState(state: String, reason: String)
     case comparisonBeginUnavailable
@@ -302,8 +399,15 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
             return "서버 옷장 상태를 사용할 수 없습니다: \(state)"
         case .referenceItemNotFound:
             return "서버 옷장에서 기준 의류를 찾지 못했습니다."
+        case .localReferenceProjectionMissing:
+            return "서버 기준 옷과 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
         case .targetClassificationRequired:
             return "대상 상품의 서버 분류 승격이 필요합니다."
+        case .comparisonNotReady(let state):
+            return FitMatchServerComparisonReadiness(
+                runtimeState: state,
+                comparisonReady: false
+            ).userMessage
         case .unknownCandidateState(let state):
             return "알 수 없는 서버 비교 후보 상태입니다: \(state)"
         case .inconsistentCandidateState(let state, let reason):
@@ -537,6 +641,13 @@ actor FitMatchServerAuthorityCoordinator {
             request: targetRequest,
             observation: targetObservation
         )
+
+        if target.status == .confirmed,
+           !target.comparisonReadiness.isReady {
+            throw FitMatchServerAuthorityError.comparisonNotReady(
+                target.runtime.runtimeState
+            )
+        }
 
         let resolvedReference: FitMatchServerProductAuthority?
         if let referenceRequest {
@@ -811,26 +922,114 @@ actor FitMatchServerAuthorityCoordinator {
         )
     }
 
-    /// Returns only the server-ordered automatic references.  The caller maps
-    /// these client IDs to its active local Closet objects and still performs
-    /// the normal per-reference authorization before beginning a comparison.
-    func automaticReferenceClientItemIDs(
+    /// Loads the complete server-issued reference decision. `localClientItemIDs`
+    /// is an optional projection check: if a selectable server candidate is not
+    /// present in the active local Closet cache, the flow fails closed instead
+    /// of falling back to a different local representative item.
+    func referenceSelectionPlan(
         targetRequest: FitMatchProductResolutionRequest,
-        targetObservation: FitMatchProductObservationRequest?
-    ) async throws -> [UUID] {
+        targetObservation: FitMatchProductObservationRequest?,
+        localClientItemIDs: Set<UUID>? = nil
+    ) async throws -> FitMatchServerReferenceSelectionPlan {
         let target = try await resolveProductAuthority(
             request: targetRequest,
             observation: targetObservation
         )
-        guard target.status == .confirmed else { return [] }
+        guard target.status == .confirmed else {
+            throw FitMatchServerAuthorityError.targetClassificationRequired
+        }
+        guard target.comparisonReadiness.isReady else {
+            throw FitMatchServerAuthorityError.comparisonNotReady(
+                target.runtime.runtimeState
+            )
+        }
 
         let closet = try await remote.listClosetItems()
         guard closet.state == "ready" else {
             throw FitMatchServerAuthorityError.closetRuntimeUnavailable(closet.state)
         }
+        let clientIDByClosetID = Dictionary(
+            uniqueKeysWithValues: closet.items.map {
+                ($0.closetItemID, $0.clientItemID)
+            }
+        )
+        let targetVariantID = targetVariantID(
+            for: target,
+            observation: targetObservation
+        )
+        let response = try await findReferenceCandidates(
+            targetProductID: target.productID,
+            targetVariantID: targetVariantID
+        )
+        guard response.state != "target_classification_required" else {
+            throw FitMatchServerAuthorityError.targetClassificationRequired
+        }
 
-        let targetVariantID = target.runtime.vnext.flatMap { runtime -> UUID? in
-            let observationVariant = targetObservation?.payload.variants.first?
+        let plan: FitMatchServerReferenceSelectionPlan
+        if let vnext = response.vnext {
+            let candidates = try vnext.candidates.map {
+                try makeReferenceSelectionCandidate(
+                    from: $0,
+                    clientIDByClosetID: clientIDByClosetID
+                )
+            }
+            let blocked = try vnext.blocked.map {
+                try makeReferenceSelectionCandidate(
+                    from: $0,
+                    clientIDByClosetID: clientIDByClosetID
+                )
+            }
+            plan = FitMatchServerReferenceSelectionPlan(
+                target: target,
+                status: try referenceSelectionStatus(vnext.status),
+                candidates: candidates,
+                blockedCandidates: blocked
+            )
+        } else {
+            try validateCandidateResponse(response)
+            let candidates = try response.candidates.map {
+                try makeLegacyReferenceSelectionCandidate(
+                    from: $0,
+                    clientIDByClosetID: clientIDByClosetID
+                )
+            }
+            plan = FitMatchServerReferenceSelectionPlan(
+                target: target,
+                status: try referenceSelectionStatus(response.state),
+                candidates: candidates,
+                blockedCandidates: []
+            )
+        }
+
+        if let localClientItemIDs,
+           let missing = (plan.automaticCandidates + plan.manualCandidates)
+            .first(where: { !localClientItemIDs.contains($0.clientItemID) }) {
+            throw FitMatchServerAuthorityError.localReferenceProjectionMissing(
+                missing.clientItemID
+            )
+        }
+        return plan
+    }
+
+    /// Returns only the server-ordered automatic references. The full plan is
+    /// the canonical path; this compatibility API intentionally reuses it.
+    func automaticReferenceClientItemIDs(
+        targetRequest: FitMatchProductResolutionRequest,
+        targetObservation: FitMatchProductObservationRequest?
+    ) async throws -> [UUID] {
+        let plan = try await referenceSelectionPlan(
+            targetRequest: targetRequest,
+            targetObservation: targetObservation
+        )
+        return plan.automaticCandidates.map(\.clientItemID)
+    }
+
+    private func targetVariantID(
+        for target: FitMatchServerProductAuthority,
+        observation: FitMatchProductObservationRequest?
+    ) -> UUID? {
+        target.runtime.vnext.flatMap { runtime -> UUID? in
+            let observationVariant = observation?.payload.variants.first?
                 .externalVariantID
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             if let observationVariant, !observationVariant.isEmpty {
@@ -840,41 +1039,108 @@ actor FitMatchServerAuthorityCoordinator {
             }
             return runtime.variants.count == 1 ? runtime.variants[0].id : nil
         }
-        let response: FitMatchReferenceCandidatesResponse
+    }
+
+    private func findReferenceCandidates(
+        targetProductID: UUID,
+        targetVariantID: UUID?
+    ) async throws -> FitMatchReferenceCandidatesResponse {
         if let targetVariantID {
-            response = try await remote.findReferenceCandidates(
-                targetProductID: target.productID,
+            return try await remote.findReferenceCandidates(
+                targetProductID: targetProductID,
                 targetVariantID: targetVariantID
             )
-        } else {
-            response = try await remote.findReferenceCandidates(
-                targetProductID: target.productID
-            )
         }
-        if response.vnext == nil {
-            try validateCandidateResponse(response)
-        }
-
-        let automaticClosetIDs: [UUID]
-        if let vnext = response.vnext {
-            automaticClosetIDs = vnext.candidates.compactMap { candidate in
-                candidate.allowed && candidate.decision == "AUTOMATIC"
-                    ? candidate.closetItemID
-                    : nil
-            }
-        } else {
-            automaticClosetIDs = response.candidates.compactMap { candidate in
-                candidate.automaticReady && candidate.automaticCompatibility.allowed
-                    ? candidate.closetItemID
-                    : nil
-            }
-        }
-        let clientIDByClosetID = Dictionary(
-            uniqueKeysWithValues: closet.items.map {
-                ($0.closetItemID, $0.clientItemID)
-            }
+        return try await remote.findReferenceCandidates(
+            targetProductID: targetProductID
         )
-        return automaticClosetIDs.compactMap { clientIDByClosetID[$0] }
+    }
+
+    private func referenceSelectionStatus(
+        _ status: String
+    ) throws -> FitMatchServerReferenceSelectionStatus {
+        switch status {
+        case "READY": return .ready
+        case "NO_REFERENCE_CANDIDATE", "BLOCKED", "no_compatible_garment":
+            return .noReferenceCandidate
+        case "automatic": return .automatic
+        case "manual_selection": return .manualSelection
+        case "measurements_required": return .measurementsRequired
+        default:
+            throw FitMatchServerAuthorityError.unknownCandidateState(status)
+        }
+    }
+
+    private func referenceDecision(
+        _ decision: String
+    ) throws -> FitMatchServerReferenceDecision {
+        switch decision {
+        case "AUTOMATIC": return .automatic
+        case "MANUAL_EXTENDED": return .manualSelection
+        case "MEASUREMENTS_REQUIRED": return .measurementsRequired
+        case "BLOCKED": return .blocked
+        default:
+            throw FitMatchServerAuthorityError.unknownCandidateState(decision)
+        }
+    }
+
+    private func makeReferenceSelectionCandidate(
+        from candidate: VNextReferenceCandidateDTO,
+        clientIDByClosetID: [UUID: UUID]
+    ) throws -> FitMatchServerReferenceSelectionCandidate {
+        guard let clientItemID = clientIDByClosetID[candidate.closetItemID] else {
+            throw FitMatchServerAuthorityError.referenceItemNotFound
+        }
+        return FitMatchServerReferenceSelectionCandidate(
+            clientItemID: clientItemID,
+            closetItemID: candidate.closetItemID,
+            decision: try referenceDecision(candidate.decision),
+            allowed: candidate.allowed,
+            reasonCode: candidate.reasonCode,
+            reason: candidate.reason,
+            commonMeasurementCount: candidate.commonMeasurementCount
+        )
+    }
+
+    private func makeLegacyReferenceSelectionCandidate(
+        from candidate: FitMatchReferenceCandidate,
+        clientIDByClosetID: [UUID: UUID]
+    ) throws -> FitMatchServerReferenceSelectionCandidate {
+        guard let clientItemID = clientIDByClosetID[candidate.closetItemID] else {
+            throw FitMatchServerAuthorityError.referenceItemNotFound
+        }
+        let decision: FitMatchServerReferenceDecision
+        let allowed: Bool
+        let reason: String?
+        if candidate.automaticReady && candidate.automaticCompatibility.allowed {
+            decision = .automatic
+            allowed = true
+            reason = candidate.automaticCompatibility.reason
+        } else if candidate.manualReady && candidate.manualCompatibility.allowed {
+            decision = .manualSelection
+            allowed = true
+            reason = candidate.manualCompatibility.reason
+        } else if candidate.automaticCompatibility.allowed
+            || candidate.manualCompatibility.allowed {
+            decision = .measurementsRequired
+            allowed = false
+            reason = candidate.manualCompatibility.reason
+                ?? candidate.automaticCompatibility.reason
+        } else {
+            decision = .blocked
+            allowed = false
+            reason = candidate.manualCompatibility.reason
+                ?? candidate.automaticCompatibility.reason
+        }
+        return FitMatchServerReferenceSelectionCandidate(
+            clientItemID: clientItemID,
+            closetItemID: candidate.closetItemID,
+            decision: decision,
+            allowed: allowed,
+            reasonCode: nil,
+            reason: reason,
+            commonMeasurementCount: candidate.measurementOverlapCount
+        )
     }
 
     func beginAuthorizedComparison(
@@ -884,6 +1150,11 @@ actor FitMatchServerAuthorityCoordinator {
         guard authorization.isAllowed,
               let reference = authorization.reference else {
             throw FitMatchServerAuthorityError.comparisonNotAuthorized
+        }
+        guard authorization.target.comparisonReadiness.isReady else {
+            throw FitMatchServerAuthorityError.comparisonNotReady(
+                authorization.target.runtime.runtimeState
+            )
         }
         let allowExtended = authorization.decision == .manualSelection
         let exactCandidates: VNextEligibleCandidateSizesDTO?

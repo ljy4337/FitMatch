@@ -216,7 +216,8 @@ struct RecommendationService {
             fallbackReason: permit.referenceAuthorization.decision == .manualSelection
                 ? "서버 정책이 승인한 공통 실측만 사용했습니다." : "",
             productDetailCategory: productDetailCategory,
-            comparisonResult: comparison
+            comparisonResult: comparison,
+            serverApprovedReliability: analysis.completionPayload.reliability
         )
         return history
     }

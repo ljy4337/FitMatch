@@ -400,6 +400,349 @@ struct FitMatchServerAuthorityIntegrationTests {
         #expect(authorization.isAllowed)
     }
 
+    @Test func referencePlanUsesDBAutomaticWhenLocalRepresentativeIsFalse() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "REFERENCE-PLAN-AUTO",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let clientID = UUID()
+        let closetID = UUID()
+        let localProjection = Self.localResultReference(
+            id: clientID,
+            name: "로컬 대표 아님",
+            isRepresentative: false
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [Self.closetRecord(
+                    clientItemID: clientID,
+                    closetItemID: closetID,
+                    productID: nil,
+                    classificationSource: "manual_override"
+                )]
+            ),
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID,
+                candidates: [(closetID, "AUTOMATIC", true)],
+                blocked: []
+            )]
+        )
+
+        let plan = try await FitMatchServerAuthorityCoordinator(remote: remote)
+            .referenceSelectionPlan(
+                targetRequest: fixture.request,
+                targetObservation: fixture.observationRequest,
+                localClientItemIDs: [localProjection.id]
+            )
+
+        #expect(plan.automaticCandidates.map(\.clientItemID) == [clientID])
+        #expect(plan.manualCandidates.isEmpty)
+    }
+
+    @Test func referencePlanKeepsRepresentativeManualOnly() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "REFERENCE-PLAN-MANUAL",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let clientID = UUID()
+        let closetID = UUID()
+        let localProjection = Self.localResultReference(
+            id: clientID,
+            name: "로컬 대표지만 수동",
+            isRepresentative: true
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [Self.closetRecord(
+                    clientItemID: clientID,
+                    closetItemID: closetID,
+                    productID: nil,
+                    classificationSource: "manual_override"
+                )]
+            ),
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID,
+                candidates: [(closetID, "MANUAL_EXTENDED", true)],
+                blocked: []
+            )]
+        )
+
+        let plan = try await FitMatchServerAuthorityCoordinator(remote: remote)
+            .referenceSelectionPlan(
+                targetRequest: fixture.request,
+                targetObservation: fixture.observationRequest,
+                localClientItemIDs: [localProjection.id]
+            )
+
+        #expect(plan.automaticCandidates.isEmpty)
+        #expect(plan.manualCandidates.map(\.clientItemID) == [clientID])
+    }
+
+    @Test func referencePlanKeepsBlockedRepresentativeOutOfEverySelectionSet() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "REFERENCE-PLAN-BLOCKED",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let clientID = UUID()
+        let closetID = UUID()
+        let localProjection = Self.localResultReference(
+            id: clientID,
+            name: "로컬 대표지만 차단",
+            isRepresentative: true
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [Self.closetRecord(
+                    clientItemID: clientID,
+                    closetItemID: closetID,
+                    productID: nil,
+                    classificationSource: "manual_override"
+                )]
+            ),
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID,
+                candidates: [],
+                blocked: [(closetID, "BLOCKED", false)]
+            )]
+        )
+
+        let plan = try await FitMatchServerAuthorityCoordinator(remote: remote)
+            .referenceSelectionPlan(
+                targetRequest: fixture.request,
+                targetObservation: fixture.observationRequest,
+                localClientItemIDs: [localProjection.id]
+            )
+
+        #expect(plan.automaticCandidates.isEmpty)
+        #expect(plan.manualCandidates.isEmpty)
+        #expect(plan.allBlockedCandidates.map(\.clientItemID) == [clientID])
+    }
+
+    @Test func referencePlanKeepsMeasurementsRequiredOutsideSelectionSets() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "REFERENCE-PLAN-MEASUREMENTS",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let clientID = UUID()
+        let closetID = UUID()
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [Self.closetRecord(
+                    clientItemID: clientID,
+                    closetItemID: closetID,
+                    productID: nil,
+                    classificationSource: "manual_override"
+                )]
+            ),
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID,
+                candidates: [(closetID, "MEASUREMENTS_REQUIRED", false)],
+                blocked: []
+            )]
+        )
+
+        let plan = try await FitMatchServerAuthorityCoordinator(remote: remote)
+            .referenceSelectionPlan(
+                targetRequest: fixture.request,
+                targetObservation: fixture.observationRequest,
+                localClientItemIDs: [clientID]
+            )
+
+        #expect(plan.automaticCandidates.isEmpty)
+        #expect(plan.manualCandidates.isEmpty)
+        #expect(plan.measurementRequiredCandidates.map(\.clientItemID) == [clientID])
+    }
+
+    @Test func referencePlanExposesOnlyServerManualCandidatesInServerOrder() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "REFERENCE-PLAN-MANUAL-ORDER",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let manualA = UUID()
+        let manualB = UUID()
+        let localOnlyC = UUID()
+        let localOnlyD = UUID()
+        let closetA = UUID()
+        let closetB = UUID()
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [
+                    Self.closetRecord(clientItemID: manualA, closetItemID: closetA, productID: nil, classificationSource: "manual_override"),
+                    Self.closetRecord(clientItemID: manualB, closetItemID: closetB, productID: nil, classificationSource: "manual_override")
+                ]
+            ),
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID,
+                candidates: [
+                    (closetA, "MANUAL_EXTENDED", true),
+                    (closetB, "MANUAL_EXTENDED", true)
+                ],
+                blocked: []
+            )]
+        )
+
+        let plan = try await FitMatchServerAuthorityCoordinator(remote: remote)
+            .referenceSelectionPlan(
+                targetRequest: fixture.request,
+                targetObservation: fixture.observationRequest,
+                localClientItemIDs: [manualA, manualB, localOnlyC, localOnlyD]
+            )
+
+        #expect(plan.automaticCandidates.isEmpty)
+        #expect(plan.manualCandidates.map(\.clientItemID) == [manualA, manualB])
+    }
+
+    @Test func referencePlanFailsClosedWhenAutomaticProjectionIsMissing() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "REFERENCE-PLAN-MISSING-LOCAL",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let automaticClientID = UUID()
+        let fallbackRepresentativeID = UUID()
+        let closetID = UUID()
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [Self.closetRecord(
+                    clientItemID: automaticClientID,
+                    closetItemID: closetID,
+                    productID: nil,
+                    classificationSource: "manual_override"
+                )]
+            ),
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID,
+                candidates: [(closetID, "AUTOMATIC", true)],
+                blocked: []
+            )]
+        )
+
+        do {
+            _ = try await FitMatchServerAuthorityCoordinator(remote: remote)
+                .referenceSelectionPlan(
+                    targetRequest: fixture.request,
+                    targetObservation: fixture.observationRequest,
+                    localClientItemIDs: [fallbackRepresentativeID]
+                )
+            Issue.record("Missing DB AUTOMATIC projection must not choose another local item")
+        } catch let error as FitMatchServerAuthorityError {
+            #expect(error == .localReferenceProjectionMissing(automaticClientID))
+        }
+    }
+
+    @Test func referencePlanPreservesServerAutomaticCandidateOrder() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "REFERENCE-PLAN-AUTO-ORDER",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let firstClientID = UUID()
+        let secondClientID = UUID()
+        let firstClosetID = UUID()
+        let secondClosetID = UUID()
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [
+                    Self.closetRecord(clientItemID: firstClientID, closetItemID: firstClosetID, productID: nil, classificationSource: "manual_override"),
+                    Self.closetRecord(clientItemID: secondClientID, closetItemID: secondClosetID, productID: nil, classificationSource: "manual_override")
+                ]
+            ),
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID,
+                candidates: [
+                    (firstClosetID, "AUTOMATIC", true),
+                    (secondClosetID, "AUTOMATIC", true)
+                ],
+                blocked: []
+            )]
+        )
+
+        let plan = try await FitMatchServerAuthorityCoordinator(remote: remote)
+            .referenceSelectionPlan(
+                targetRequest: fixture.request,
+                targetObservation: fixture.observationRequest,
+                localClientItemIDs: [firstClientID, secondClientID]
+            )
+
+        #expect(plan.automaticCandidates.map(\.clientItemID) == [firstClientID, secondClientID])
+    }
+
+    @Test func referenceDiscoveryDoesNotRunUntilConfirmedRuntimeIsReady() async throws {
+        for state in ["sizes_required", "measurements_required"] {
+            let fixture = AuthorityFixture.confirmed(
+                externalProductID: "REFERENCE-PLAN-\(state)",
+                detail: "short_sleeve",
+                family: "tshirt",
+                length: "short_sleeve"
+            )
+            let runtime = FitMatchProductRuntimeResponse(
+                runtimeState: state,
+                comparisonReady: false,
+                product: fixture.runtime.product,
+                classification: fixture.classification,
+                variants: []
+            )
+            let remote = ServerAuthorityRemoteStub(
+                resolutions: [fixture.resolution(catalogState: "current")],
+                observations: [],
+                runtimes: [runtime]
+            )
+
+            do {
+                _ = try await FitMatchServerAuthorityCoordinator(remote: remote)
+                    .referenceSelectionPlan(
+                        targetRequest: fixture.request,
+                        targetObservation: fixture.observationRequest,
+                        localClientItemIDs: []
+                    )
+                Issue.record("\(state) must not begin reference discovery")
+            } catch let error as FitMatchServerAuthorityError {
+                #expect(error == .comparisonNotReady(state))
+            }
+            #expect(await remote.candidateCallCount == 0)
+        }
+    }
+
     @Test func beginAuthorizedComparisonPreservesPendingDirectPermitIdentities() async throws {
         let referenceItemID = UUID()
         let clientHistoryID = UUID()
@@ -1205,6 +1548,42 @@ struct FitMatchServerAuthorityIntegrationTests {
             bodyLengthCode: nil,
             measurements: measurements
         )
+    }
+
+    private static func vnextReferenceCandidateResponse(
+        targetProductID: UUID,
+        candidates: [(UUID, String, Bool)],
+        blocked: [(UUID, String, Bool)],
+        status: String = "READY"
+    ) throws -> FitMatchReferenceCandidatesResponse {
+        func encodedCandidate(_ value: (UUID, String, Bool)) -> [String: Any] {
+            [
+                "closet_item_id": value.0.uuidString,
+                "item_name": "Server reference \(value.0.uuidString.prefix(6))",
+                "size_label": "M",
+                "is_current_reference": false,
+                "decision": value.1,
+                "allowed": value.2,
+                "mode": value.1 == "MANUAL_EXTENDED" ? "MANUAL_EXTENDED" : "AUTOMATIC",
+                "manual_explicit_required": value.1 == "MANUAL_EXTENDED",
+                "reason_code": value.2 ? NSNull() : "NO_COMMON_MEASUREMENTS",
+                "reason": value.2 ? NSNull() : "server blocked",
+                "common_measurement_count": value.2 ? 3 : 0,
+                "eligible_product_size_ids": []
+            ]
+        }
+        let data = try JSONSerialization.data(withJSONObject: [
+            "target_product_id": targetProductID.uuidString,
+            "target_variant_id": UUID().uuidString,
+            "candidates": candidates.map(encodedCandidate),
+            "blocked": blocked.map(encodedCandidate),
+            "status": status
+        ])
+        let decoded = try JSONDecoder().decode(
+            VNextReferenceCandidatesDTO.self,
+            from: data
+        )
+        return FitMatchReferenceCandidatesResponse(vnext: decoded)
     }
 
     private static func candidateResponse(
