@@ -1,0 +1,359 @@
+FitMatch — Phase 1F
+Comparison Result → Closet Registration Server-First Unification
+Current Displayed Size Intent Preservation
+
+Final Audit Status: NOT_READY
+Date: 2026-09-05
+
+================================================================
+A. Baseline
+================================================================
+
+Branch: connectDB
+Start HEAD: fcb112f9dbeee9519c8f05b9f525cf744db2cd35
+
+The requested remote baseline was bf0a25f7a7077fb51635b9efa6934ba4518295b6.
+The actual start HEAD was its already-pushed XCTest recovery descendant.
+
+The original workspace's git status could not finish because the macOS
+iCloud File Provider stalled file-content access.
+
+
+================================================================
+B. Existing Uncommitted Working Tree
+================================================================
+
+The prior Phase 1E XCTest recovery changes were already committed and pushed
+in fcb112f, rather than remaining uncommitted as the Phase 1F specification
+anticipated.
+
+The final Phase 1F original-worktree status could not be mechanically read
+because File Provider access stalled.
+
+
+================================================================
+C. Current Bug Confirmation
+================================================================
+
+Confirmed pre-change Result path:
+
+RecommendationResultView
+  → presentActiveSheet(.addToCloset)
+  → AddComparedProductToClosetSheet(
+        product: currentResult.product,
+        recommendedSize: currentResult.recommendedSize
+    )
+  → serverRegistrationContext == nil
+  → legacy/local SwiftData save path could be selected
+
+The Result flow omitted both fresh server registration context and the exact
+currently displayed server product_size_id.
+
+
+================================================================
+D. Root Cause
+================================================================
+
+1. A completed comparison Result can contain only a comparison-authorized
+   product-size subset.
+
+2. The current alternate-size Result was presentation state only; its exact
+   server product_size_id did not reach Closet registration.
+
+3. The Result flow opened the sheet without a fresh server authority/runtime
+   check, allowing a sourced retailer product to take a local-only path.
+
+
+================================================================
+E. Result → Closet Preparation Design
+================================================================
+
+Added non-visual action:
+
+FitMatchResultClosetRegistrationPreparationAction
+
+Responsibilities:
+
+- Preserve the existing manual/local-only Product path.
+- For retailer-sourced Result Products, replay stored retailer facts through
+  ShoppingProductViewModel.loadProductInfoFromHistoricalProduct(...).
+- Consume fresh Supabase server authority/runtime.
+- Build a Closet-registration Product using makeProductForClosetRegistration.
+- Pass FitMatchClosetRegistrationServerContext to the existing Sheet.
+- Map a preferred exact product_size_id to a fresh display ProductSize only
+  through context.identity(for:).productSizeID.
+- Block sourced Result registration when server authority, exact identity,
+  structural policy, or product-wide measurement presence is unavailable.
+
+No duplicate classification resolver or local global classification authority
+was introduced.
+
+
+================================================================
+F. Full Runtime Size Restoration
+================================================================
+
+The Result's currentResult.product is not used as the Closet source.
+
+Instead:
+
+fresh historical retailer replay
+  → current server authority/runtime
+  → makeProductForClosetRegistration
+  → full selected-runtime size collection retained on Product
+  → serverRegistrationContext.registerableDisplaySizeIDs filters only picker UI
+
+Example:
+
+Full runtime:
+  S  0 measurements
+  M  chest 52
+  L  chest 54 / shoulder 48 / length 70
+  XL chest 57
+
+Comparison authorized subset:
+  L / XL
+
+Closet picker:
+  M / L / XL
+
+S remains in Product/runtime but is not displayed in the Closet picker.
+
+
+================================================================
+G. Comparison Eligibility vs Closet Eligibility
+================================================================
+
+Closet eligibility:
+  actual retailer garment measurement >= 1 for that exact display/runtime size
+
+Comparison eligibility:
+  DB readiness + eligible_candidate_sizes + begin_comparison authorization
+
+These remain separate. A size with one garment measurement may be allowed in
+Closet registration while still being comparison-ineligible.
+
+
+================================================================
+H. Current Displayed Size Exact Identity
+================================================================
+
+Recommended state:
+  VNext completed batch.recommended.productSizeID
+
+Temporary alternate analysis state:
+  the completed batch's exact product_size_id is cached alongside the local
+  presentation analysis key; display labels are never used as DB identity.
+
+Historical Result with no retained batch identity:
+  preferred selection = nil
+
+No L/M/XL label-based product-size, variant, or runtime lookup is allowed.
+
+
+================================================================
+I. Recommended L → Register → L
+================================================================
+
+If the fresh runtime proves the completed batch's recommended L
+product_size_id is registerable:
+
+  Sheet initial selection = L
+  final untouched save = L exact product_size_id
+
+
+================================================================
+J. Recommended L → Alternative XL → Register → XL
+================================================================
+
+If temporarySizeAnalysis is active and refers to completed-batch XL:
+
+  Sheet preferred identity = XL exact product_size_id
+  fresh runtime finds that exact XL display row
+  Sheet initial selection = XL
+
+No fallback to recommended L is allowed.
+
+
+================================================================
+K. XL Initial → User Selects M → DB Saves M
+================================================================
+
+The initial selection is only presentation intent.
+
+At save time:
+
+selected display ProductSize ID
+  → serverRegistrationContext.identity(for:)
+  → product_id / product_variant_id / product_size_id
+  → upsert_closet_item
+
+Therefore an XL initial selection changed by the user to M results in M's
+exact product_size_id in the mutation payload.
+
+
+================================================================
+L. Exact UUID Validation
+================================================================
+
+Local disposable simulator mirror verified:
+
+- Full S/M/L/XL runtime product preservation.
+- Closet picker M/L/XL only when S has no measurements.
+- SOLD_OUT XL remains Closet-registerable when it has measurements.
+- Preferred XL maps to its exact product / variant / size UUIDs.
+- User final M selection maps to M exact product_size_id.
+- Duplicate visible XL labels are not used for identity inference.
+- A duplicate-label variant-B exact product_size_id chooses variant B.
+
+
+================================================================
+M. Server-First Call Ordering
+================================================================
+
+For a sourced Result with server registration context:
+
+validation
+  → stable client_item_id
+  → exact product / variant / size identity
+  → nested classification override when needed
+  → upsert_closet_item
+  → optional set_closet_reference
+  → SwiftData persist
+
+Remote upsert failure does not create a local SwiftData success fallback.
+
+
+================================================================
+N. Modified Files
+================================================================
+
+Applied Phase 1F scope before the File Provider stall:
+
+- FitMatch/Services/FitMatchResultClosetRegistrationPreparationAction.swift
+- FitMatch/Views/RecommendationResultView.swift
+- FitMatch/Views/AddComparedProductToClosetSheet.swift
+- FitMatchTests/FitMatchSupabaseProductResolverTests.swift
+
+Required P0 follow-up not safely applied to the original workspace because
+File Provider stalled:
+
+- FitMatch/ViewModels/ShoppingProductViewModel.swift
+
+Required logic:
+
+When a historical Result has no retained source variant key and fresh runtime
+contains multiple variants, select a runtime variant only when it contains the
+already-known exact preferred product_size_id. This is a safe exact-ID lookup,
+not a label fallback.
+
+
+================================================================
+O. Tests
+================================================================
+
+Executed in a disposable local simulator mirror that included the Phase 1F
+source changes. The original workspace test build stalled in File Provider.
+
+PASS:
+
+- Phase 1F exact preferred-size probe
+- Phase 1F full runtime / preferred XL test
+- Phase 1F duplicate-label multi-variant exact-ID test
+- FitMatchSupabaseProductResolverTests: 33 PASS
+- FitMatchServerAuthorityIntegrationTests + FitMatchP0ProductionPathTests:
+  68 PASS
+- FitMatchHeadlessUserJourneyTests: 39 PASS
+- FitMatchFinalReleaseScenarioExecutionTests: 36 PASS
+- FitMatchFinalReleaseHeadlessAcceptanceTests: 37 PASS
+- FitMatchFinalReleaseProviderSnapshotTests: 12 PASS
+- FitMatchClosetSyncCoordinatorTests: 33 PASS
+
+ZARAParserPhase1_5Tests in the disposable mirror:
+
+- 33 PASS
+- 8 FAIL
+- 3 SKIP
+
+Those eight failures were missing fixture resources in the mirror, including
+zara_products.jsonl, zara_live_300.jsonl, and ZARAAudit fixture files. They
+were environment/resource-copy failures, not code assertion regressions.
+
+
+================================================================
+P. Build / Parse / Diff
+================================================================
+
+PASS in disposable local mirror:
+
+- xcrun swiftc -parse for changed Swift source/test files
+- normal simulator build
+- build-for-testing
+
+NOT COMPLETE in original workspace:
+
+- normal simulator build: File Provider stalled
+- XCTest build: File Provider stalled
+- git diff --check: File Provider stalled
+- protected-file git diff: File Provider stalled
+
+
+================================================================
+Q. Protected Files
+================================================================
+
+No intentional Phase 1F changes were made to:
+
+- FitMatch/Services/VNextComparisonEngineAdapter.swift
+- FitMatch/Services/FitMatchServerAuthorityCoordinator.swift
+- FitMatch/Services/FitMatchClosetSyncCoordinator.swift
+- FitMatch/Services/RecommendationService.swift
+- FitMatch/Models/RecommendationHistory.swift
+- FitMatch/Components/TabBarScrollVisibilityModifier.swift
+
+The original-workspace Git diff could not complete, so final mechanical proof
+remains pending File Provider recovery.
+
+
+================================================================
+R. DB Write / SQL / Migration
+================================================================
+
+Production DB write: 0
+SQL: 0
+Migration: 0
+RPC definition change: 0
+Edge Function change: 0
+
+
+================================================================
+S. Remaining P0 / P1 / P2
+================================================================
+
+P0
+
+- Recover original workspace file access.
+- Apply and verify the multi-variant exact product_size_id runtime-selection
+  enhancement in ShoppingProductViewModel.swift.
+- Re-run original-workspace build, targeted XCTest, git diff --check, and
+  protected-file diff.
+
+P1
+
+- None after the P0 enhancement. Historical results without an exact current
+  batch identity remain intentionally fail-closed rather than using labels.
+
+P2
+
+- None.
+
+
+================================================================
+T. Commit Candidate Files
+================================================================
+
+Not a commit candidate yet.
+
+Do not commit or push until the P0 original-workspace File Provider recovery,
+multi-variant exact-ID patch, original build/test validation, and Git diff
+audit are complete.

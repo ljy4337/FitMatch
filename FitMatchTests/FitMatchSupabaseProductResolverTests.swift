@@ -1551,6 +1551,314 @@ struct FitMatchSupabaseProductResolverTests {
         ) == .measurementsRequired)
     }
 
+    /// Result → Closet must not reuse a historical comparison subset.  A
+    /// fresh runtime restores every retailer size, while the Sheet presents
+    /// only those with raw garment measurement evidence.
+    @Test func resultClosetPreparationRestoresFullRuntimeAndKeepsCurrentExactSize() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-full-runtime",
+            sizes: [("S", 0), ("M", 50), ("L", 54), ("XL", 57)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-full-runtime",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let variantID = UUID()
+        let runtimeSizes = ["S", "M", "L", "XL"].enumerated().map { index, name in
+            Self.runtimeSize(
+                sourceSizeKey: name,
+                label: name,
+                displayOrder: index,
+                // Inventory never changes Closet measurement eligibility.
+                stockStatus: name == "XL" ? "SOLD_OUT" : "UNKNOWN"
+            )
+        }
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [Self.measurementRuntime(
+                fixture: fixture,
+                runtimeState: "measurements_required",
+                comparisonReady: false,
+                variantID: variantID,
+                sizes: runtimeSizes
+            )]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: runtimeSizes[3].productSizeID,
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+
+        guard case .prepared(let preparation) = outcome else {
+            Issue.record("Fresh server runtime preparation should succeed")
+            return
+        }
+        let context = try #require(preparation.serverRegistrationContext)
+        #expect(preparation.product.sizes.map(\.name) == ["S", "M", "L", "XL"])
+        let pickerSizes = AddComparedProductToClosetSheet.selectableSizes(
+            productSizes: preparation.product.sizes,
+            serverRegistrationContext: context
+        )
+        #expect(pickerSizes.map(\.name) == ["M", "L", "XL"])
+        let preferred = try #require(preparation.preferredSize)
+        #expect(preferred.name == "XL")
+        #expect(context.identity(for: preferred.id)?.productID == fixture.productID)
+        #expect(context.identity(for: preferred.id)?.productVariantID == variantID)
+        #expect(context.identity(for: preferred.id)?.productSizeID == runtimeSizes[3].productSizeID)
+
+        // XL was the current display preference, but a user choosing M in the
+        // sheet must submit M's exact UUID rather than XL or the recommendation.
+        let selectedM = try #require(pickerSizes.first { $0.name == "M" })
+        let selectedMIdentity = try #require(context.identity(for: selectedM.id))
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(
+                FitMatchComparedProductClosetRegistration.SaveRequest(
+                    product: preparation.product,
+                    selectedSize: selectedM,
+                    serverIdentity: selectedMIdentity,
+                    hasMeasurementEligibilityProof: context.isRegisterable(
+                        displaySizeID: selectedM.id
+                    ),
+                    activeClosetItems: [],
+                    brandName: "테스트",
+                    gender: .men,
+                    genderCode: "MEN",
+                    productName: preparation.product.name,
+                    category: .top,
+                    categoryCode: "tops",
+                    detailCategory: .shortSleeve,
+                    detailCategoryCode: "short_sleeve",
+                    isRepresentative: false,
+                    didExplicitlyChangeClassification: false
+                )
+            )
+        #expect(submission.remoteRequest.productID == fixture.productID)
+        #expect(submission.remoteRequest.productVariantID == variantID)
+        #expect(submission.remoteRequest.productSizeID == runtimeSizes[1].productSizeID)
+    }
+
+    /// An invalid current exact size must not silently return to the historical
+    /// recommendation or to the only currently registerable size.
+    @Test func resultClosetPreparationLeavesInvalidExactPreferenceUnselected() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-invalid-preferred",
+            sizes: [("M", 50), ("L", 54), ("XL", 0)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-invalid-preferred",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let runtimeSizes = ["M", "L", "XL"].enumerated().map { index, name in
+            Self.runtimeSize(sourceSizeKey: name, label: name, displayOrder: index)
+        }
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [Self.measurementRuntime(
+                fixture: fixture,
+                runtimeState: "measurements_required",
+                comparisonReady: false,
+                variantID: UUID(),
+                sizes: runtimeSizes
+            )]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: runtimeSizes[2].productSizeID,
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+
+        guard case .prepared(let preparation) = outcome else {
+            Issue.record("The remaining registerable sizes should still be presented")
+            return
+        }
+        let context = try #require(preparation.serverRegistrationContext)
+        #expect(preparation.preferredSize == nil)
+        #expect(preparation.requiresExplicitSizeSelection)
+        let pickerSizes = AddComparedProductToClosetSheet.selectableSizes(
+            productSizes: preparation.product.sizes,
+            serverRegistrationContext: context
+        )
+        #expect(pickerSizes.map(\.name) == ["M", "L"])
+        #expect(
+            AddComparedProductToClosetSheet.initialSelectedSizeID(
+                recommendedSize: preparation.preferredSize,
+                productSizes: pickerSizes,
+                allowsLabelFallback: false
+            ) == nil
+        )
+    }
+
+    /// Duplicate visible labels are valid when they carry distinct runtime
+    /// identities.  The preferred ID, not the string "XL", chooses variant B.
+    @Test func resultClosetPreparationUsesExactIDForDuplicateRuntimeLabels() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-duplicate-label",
+            sizes: [("XL-A", 54), ("XL-B", 58)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-duplicate-label",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let variantID = UUID()
+        let firstXL = Self.runtimeSize(sourceSizeKey: "XL-A", label: "XL", displayOrder: 0)
+        let secondXL = Self.runtimeSize(sourceSizeKey: "XL-B", label: "XL", displayOrder: 1)
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [Self.measurementRuntime(
+                fixture: fixture,
+                runtimeState: "measurements_required",
+                comparisonReady: false,
+                variantID: variantID,
+                sizes: [firstXL, secondXL]
+            )]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: secondXL.productSizeID,
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+
+        guard case .prepared(let preparation) = outcome else {
+            Issue.record("Duplicate-label runtime should prepare safely")
+            return
+        }
+        let context = try #require(preparation.serverRegistrationContext)
+        let preferred = try #require(preparation.preferredSize)
+        #expect(preparation.product.sizes.map(\.name) == ["XL", "XL"])
+        #expect(preferred.id != firstXL.productSizeID)
+        #expect(context.identity(for: preferred.id)?.productSizeID == secondXL.productSizeID)
+        #expect(context.identity(for: preferred.id)?.productVariantID == variantID)
+    }
+
+    /// REVIEW_REQUIRED retains raw retailer measurement evidence and exact
+    /// runtime identity for a USER_EXPLICIT Closet selection.  Canonical-empty
+    /// runtime measurements must not turn it into an all-zero product gate.
+    @Test func resultClosetPreparationRetainsReviewRequiredRawMeasurement() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-review-raw",
+            sizes: [("M", 52)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-review-raw",
+            status: .reviewRequired
+        )
+        let runtimeSize = Self.runtimeSize(
+            sourceSizeKey: "M",
+            label: "M",
+            displayOrder: 0,
+            stockStatus: "SOLD_OUT"
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [Self.measurementRuntime(
+                fixture: fixture,
+                runtimeState: "classification_required",
+                comparisonReady: false,
+                variantID: UUID(),
+                sizes: [runtimeSize]
+            )]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: runtimeSize.productSizeID,
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+
+        guard case .prepared(let preparation) = outcome else {
+            Issue.record("REVIEW_REQUIRED raw measurement should allow Closet preparation")
+            return
+        }
+        let context = try #require(preparation.serverRegistrationContext)
+        #expect(context.classificationState == .reviewRequired)
+        #expect(preparation.preferredSize?.name == "M")
+        #expect(context.identity(for: try #require(preparation.preferredSize).id)?.productSizeID == runtimeSize.productSizeID)
+    }
+
+    /// A sourced historical Result must fail closed if the fresh server lookup
+    /// is unavailable; it must not reopen the Sheet as a local-only save.
+    @Test func resultClosetPreparationBlocksSourcedProductWhenServerUnavailable() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-server-unavailable",
+            sizes: [("L", 52)]
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [],
+            observations: [],
+            runtimes: [],
+            resolveFailure: .network
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: UUID(),
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+
+        guard case .blocked = outcome else {
+            Issue.record("Sourced Result must not fall back to the local sheet")
+            return
+        }
+    }
+
     private static func authorityViewModel(
         product: ParsedProductInfo,
         remote: DatabaseAuthorityRemoteStub
@@ -1670,6 +1978,30 @@ struct FitMatchSupabaseProductResolverTests {
             ),
             measurementAvailability: .actualMeasurements
         )
+    }
+
+    private static func historicalResultProduct(from parsed: ParsedProductInfo) -> Product {
+        let product = Product(
+            name: parsed.productName,
+            category: parsed.category,
+            productCode: parsed.productID,
+            sourceURLString: parsed.canonicalURLString ?? parsed.sourceURL.absoluteString,
+            metadata: parsed.productMetadata,
+            sourceType: parsed.sourceType,
+            sourceName: parsed.sourceName,
+            sizes: []
+        )
+        product.genderCodes = parsed.productTargetGender.taxonomyCode
+        product.sizes = parsed.sizes.enumerated().map { index, size in
+            ProductSize(
+                id: UUID(),
+                name: size.name,
+                measurements: size.measurements,
+                displayOrder: index,
+                product: product
+            )
+        }
+        return product
     }
 
     private static func runtimeSize(

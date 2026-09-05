@@ -24,6 +24,12 @@ struct RecommendationResultView: View {
     @State private var selectedAlternativeSizeID: UUID?
     @State private var temporarySizeAnalysis: TemporarySizeAnalysis?
     @State private var temporaryAnalysisCache: [TemporarySizeAnalysisCacheKey: TemporarySizeAnalysis] = [:]
+    /// This is populated directly from the completed vNext batch.  It is
+    /// deliberately separate from `ProductSize.id`, which can be a historical
+    /// SwiftData projection outside a current server-runtime context.
+    @State private var exactProductSizeIDByTemporaryAnalysisKey:
+        [TemporarySizeAnalysisCacheKey: UUID] = [:]
+    @State private var temporaryDisplayedProductSizeID: UUID?
     @State private var activeAlternativeAnalysisKeys: [UUID: TemporarySizeAnalysisCacheKey] = [:]
     @State private var unavailableAlternativeSizeKeys: Set<TemporarySizeAnalysisCacheKey> = []
     @State private var isAnalyzingAlternativeSize = false
@@ -34,6 +40,10 @@ struct RecommendationResultView: View {
     @State private var didOpenInitialReferencePicker = false
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var isShowingClosetSavedToast = false
+    @State private var closetRegistrationPreparation:
+        FitMatchResultClosetRegistrationPreparation?
+    @State private var isPreparingClosetRegistration = false
+    @State private var closetRegistrationPreparationErrorMessage: String?
     @State private var serverReferenceAuthorizations: [UUID: FitMatchServerReferenceAuthorization] = [:]
     @State private var isLoadingServerReferenceCandidates = false
     @State private var referenceCandidateErrorMessage: String?
@@ -111,18 +121,22 @@ struct RecommendationResultView: View {
                     }
                 }
                 .presentationDragIndicator(.visible)
-                case .addToCloset:
+                }
+            }
+            .sheet(item: $closetRegistrationPreparation) { preparation in
                 AddComparedProductToClosetSheet(
-                    product: currentResult.product,
-                    productDetailCategory: currentResult.productDetailCategory,
-                    recommendedSize: currentResult.recommendedSize,
-                    startsAtRegistrationConfirmation: true
+                    product: preparation.product,
+                    productDetailCategory: preparation.productDetailCategory,
+                    recommendedSize: preparation.preferredSize,
+                    isParsedProductReadOnly: preparation.serverRegistrationContext != nil,
+                    serverRegistrationContext: preparation.serverRegistrationContext,
+                    startsAtRegistrationConfirmation: true,
+                    requiresExplicitSizeSelection: preparation.requiresExplicitSizeSelection
                 ) { _ in
                     showClosetSavedToast()
                 }
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
-                }
             }
             .overlay(alignment: .top) {
                 if isShowingClosetSavedToast {
@@ -156,6 +170,17 @@ struct RecommendationResultView: View {
                 Button("확인", role: .cancel) {}
             } message: {
                 Text(referenceCandidateErrorMessage ?? "")
+            }
+            .alert(
+                "옷장 등록을 준비할 수 없어요",
+                isPresented: Binding(
+                    get: { closetRegistrationPreparationErrorMessage != nil },
+                    set: { if !$0 { closetRegistrationPreparationErrorMessage = nil } }
+                )
+            ) {
+                Button("확인", role: .cancel) {}
+            } message: {
+                Text(closetRegistrationPreparationErrorMessage ?? "")
             }
             .onAppear {
                 DetailPerformanceDiagnostics.logHistoryResultNavigation(event: "result_on_appear")
@@ -670,6 +695,18 @@ struct RecommendationResultView: View {
         temporarySizeAnalysis?.productSize ?? currentResult.recommendedSize
     }
 
+    /// The Result's visible size is a completed batch identity, not the
+    /// rendered label.  A historical Result without that retained batch has no
+    /// safe preferred identity and therefore intentionally returns nil.
+    private var displayedServerProductSizeID: UUID? {
+        if temporarySizeAnalysis != nil {
+            return temporaryDisplayedProductSizeID
+        }
+        return VNextComparisonSessionStore.shared.analysis(
+            for: currentResult.id
+        )?.recommended.productSizeID
+    }
+
     private func fitMatchDescription(for score: Int) -> String {
         switch score {
         case 90...: return "거의 완벽한 핏"
@@ -855,6 +892,7 @@ struct RecommendationResultView: View {
             uniqueKeysWithValues: batch.analyses.map { ($0.productSizeID, $0) }
         )
         var preparedAnalyses = temporaryAnalysisCache
+        var exactIDs = exactProductSizeIDByTemporaryAnalysisKey
         var unavailableKeys = unavailableAlternativeSizeKeys
         var activeKeys: [UUID: TemporarySizeAnalysisCacheKey] = [:]
 
@@ -884,6 +922,9 @@ struct RecommendationResultView: View {
                     recommendationScore: authorized.result.score,
                     comparisonSummary: nil
                 )
+                // Keep the batch's exact product_size_id next to the local
+                // presentation cache.  No size label participates here.
+                exactIDs[key] = authorized.productSizeID
             } else {
                 unavailableKeys.insert(key)
             }
@@ -893,6 +934,7 @@ struct RecommendationResultView: View {
             return
         }
         temporaryAnalysisCache = preparedAnalyses
+        exactProductSizeIDByTemporaryAnalysisKey = exactIDs
         unavailableAlternativeSizeKeys = unavailableKeys
         activeAlternativeAnalysisKeys = activeKeys
         isPreparingAlternativeSizes = false
@@ -944,6 +986,7 @@ struct RecommendationResultView: View {
             await Task.yield()
             if selectedAlternativeSize.id == currentResult.recommendedSize.id {
                 temporarySizeAnalysis = nil
+                temporaryDisplayedProductSizeID = nil
                 isAnalyzingAlternativeSize = false
                 isShowingAlternativeSizeComparison = false
                 return
@@ -953,7 +996,13 @@ struct RecommendationResultView: View {
                 alternativeSizeErrorMessage = "선택한 사이즈는 비교 가능한 실측 정보가 부족합니다."
                 return
             }
+            guard let exactProductSizeID = exactProductSizeID(for: selectedAlternativeSize) else {
+                isAnalyzingAlternativeSize = false
+                alternativeSizeErrorMessage = "선택한 사이즈의 서버 식별자를 다시 확인해 주세요."
+                return
+            }
             temporarySizeAnalysis = analysis
+            temporaryDisplayedProductSizeID = exactProductSizeID
             isAnalyzingAlternativeSize = false
             isShowingAlternativeSizeComparison = false
         }
@@ -964,6 +1013,8 @@ struct RecommendationResultView: View {
         selectedAlternativeSizeID = nil
         temporarySizeAnalysis = nil
         temporaryAnalysisCache.removeAll()
+        exactProductSizeIDByTemporaryAnalysisKey.removeAll()
+        temporaryDisplayedProductSizeID = nil
         activeAlternativeAnalysisKeys.removeAll()
         unavailableAlternativeSizeKeys.removeAll()
         isAnalyzingAlternativeSize = false
@@ -1395,9 +1446,21 @@ struct RecommendationResultView: View {
             }
 
             Button {
-                presentActiveSheet(.addToCloset)
+                guard !isPreparingClosetRegistration else { return }
+                Task { @MainActor in
+                    await prepareClosetRegistration()
+                }
             } label: {
-                Label("보유한 옷으로 등록", systemImage: "plus")
+                HStack(spacing: 8) {
+                    if isPreparingClosetRegistration {
+                        ProgressView()
+                            .tint(Color(.systemBackground))
+                    }
+                    Label(
+                        isPreparingClosetRegistration ? "등록 정보 확인 중" : "보유한 옷으로 등록",
+                        systemImage: "plus"
+                    )
+                }
                     .font(.headline.weight(.bold))
                     .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
@@ -1405,6 +1468,7 @@ struct RecommendationResultView: View {
                     .background(Color.black, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
             .buttonStyle(.plain)
+            .disabled(isPreparingClosetRegistration)
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -1418,6 +1482,43 @@ struct RecommendationResultView: View {
             try? await Task.sleep(for: .seconds(1.8))
             withAnimation { isShowingClosetSavedToast = false }
         }
+    }
+
+    @MainActor
+    private func prepareClosetRegistration() async {
+        guard !isPreparingClosetRegistration else {
+            return
+        }
+
+        let resultSnapshot = currentResult
+        let displayedSizeSnapshot = displayedProductSize
+        let preferredProductSizeID = displayedServerProductSizeID
+        isPreparingClosetRegistration = true
+        defer { isPreparingClosetRegistration = false }
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: resultSnapshot.product,
+            productDetailCategory: resultSnapshot.productDetailCategory,
+            preferredProductSizeID: preferredProductSizeID,
+            legacyPreferredSize: displayedSizeSnapshot,
+            makeViewModel: { ShoppingProductViewModel() }
+        )
+
+        switch outcome {
+        case .prepared(let preparation):
+            closetRegistrationPreparation = preparation
+        case .blocked(let message):
+            closetRegistrationPreparationErrorMessage = message
+        case .cancelled:
+            break
+        }
+    }
+
+    private func exactProductSizeID(for size: ProductSize) -> UUID? {
+        guard let key = activeAlternativeAnalysisKeys[size.id] else {
+            return nil
+        }
+        return exactProductSizeIDByTemporaryAnalysisKey[key]
     }
 
     private var productThumbnail: some View {
@@ -2567,14 +2668,11 @@ private struct FlowLayout: Layout {
 
 private enum RecommendationResultActiveSheet: Identifiable {
     case referencePicker
-    case addToCloset
 
     var id: String {
         switch self {
         case .referencePicker:
             return "referencePicker"
-        case .addToCloset:
-            return "addToCloset"
         }
     }
 

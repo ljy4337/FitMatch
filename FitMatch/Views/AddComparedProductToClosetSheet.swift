@@ -21,6 +21,11 @@ struct AddComparedProductToClosetSheet: View {
     /// is consumed by the server-first action and never reconstructed from a
     /// size label in this View.
     let serverRegistrationContext: FitMatchClosetRegistrationServerContext?
+    /// A Result may be displaying an exact server size which is no longer
+    /// registerable in a freshly fetched runtime.  In that case the caller
+    /// asks the sheet to leave the selection empty rather than silently
+    /// choosing the sole remaining/recommended size.
+    let requiresExplicitSizeSelection: Bool
     var onSaved: ((UserFit) -> Void)?
 
     @State private var step: AddComparedProductStep
@@ -64,6 +69,7 @@ struct AddComparedProductToClosetSheet: View {
         serverRegistrationContext: FitMatchClosetRegistrationServerContext? = nil,
         startsAtRegistrationConfirmation: Bool = false,
         prefersRepresentativeByDefault: Bool = false,
+        requiresExplicitSizeSelection: Bool = false,
         onSaved: ((UserFit) -> Void)? = nil
     ) {
         self.product = product
@@ -73,6 +79,7 @@ struct AddComparedProductToClosetSheet: View {
         self.preselectedClassification = preselectedClassification
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.serverRegistrationContext = serverRegistrationContext
+        self.requiresExplicitSizeSelection = requiresExplicitSizeSelection
         self.onSaved = onSaved
         _step = State(initialValue: startsAtRegistrationConfirmation ? .confirm : (isParsedProductReadOnly ? .productInfo : .size))
         _isBasisItem = State(initialValue: prefersRepresentativeByDefault)
@@ -986,7 +993,8 @@ struct AddComparedProductToClosetSheet: View {
 
     private func normalizeSelectedSize() {
         guard let selectedSizeID else {
-            if availableSizes.count == 1 {
+            if availableSizes.count == 1,
+               !requiresExplicitSizeSelection {
                 self.selectedSizeID = availableSizes.first?.id
             }
             return
