@@ -357,3 +357,69 @@ Not a commit candidate yet.
 Do not commit or push until the P0 original-workspace File Provider recovery,
 multi-variant exact-ID patch, original build/test validation, and Git diff
 audit are complete.
+
+
+================================================================
+Phase 1F P0 Finalization Addendum — 2026-09-05
+================================================================
+
+Implementation applied
+
+- Historical replay now accepts an optional preferredProductSizeID.
+- Result Closet preparation forwards its completed-batch exact product_size_id
+  into historical replay.
+- The ID is passed explicitly through resolveServerAuthority and
+  applyServerRuntime; no singleton, rendered label, color name, or array order
+  is used.
+- vNext selection order is:
+  1. retained observation source_variant_key;
+  2. the sole runtime variant;
+  3. exactly one runtime variant containing preferred product_size_id.
+- With multiple vNext variants, a missing or duplicate preferred exact ID
+  returns nil and stops the vNext path. It does not fall through to a legacy
+  projection or choose the first variant.
+- The legacy adapter applies the same unique productSizeID rule only when it
+  is the active runtime adapter.
+
+Source changes
+
+- FitMatch/ViewModels/ShoppingProductViewModel.swift
+- FitMatch/Services/FitMatchResultClosetRegistrationPreparationAction.swift
+- FitMatchTests/FitMatchSupabaseProductResolverTests.swift
+
+New regression coverage added
+
+- vNext multi-variant selection by a unique exact preferred ID;
+- no matching preferred ID blocks preparation;
+- duplicate exact ID across variants blocks preparation;
+- a sole variant remains selectable when its old preferred ID disappeared;
+- source_variant_key remains higher priority for normal URL loading;
+- legacy multi-variant selection also uses the unique exact ID rule;
+- the selected final M request preserves M's exact product/variant/size IDs
+  even when XL was the initial Result preference.
+
+Actual workspace validation
+
+- Baseline: connectDB / 4fc50f950b21de0d0b79b57a8ee059e8725aa865.
+- Pre-existing untracked files were preserved:
+  FitMatchTests/MeasurementResolverDisplayTests.swift,
+  supabase/migrations/20260903123000_vnext_classification_decision_v4_classification_only.sql,
+  supabase/migrations/20260903123100_vnext_generic_leaf_exact_authority_fail_closed.sql.
+- xcrun swiftc -parse of the three changed Swift files: PASS.
+- git diff --check: PASS.
+- Protected comparison/sync/UI file diff: 0.
+- Normal Simulator build and generic build-for-testing: NOT COMPLETED.
+  Both xcodebuild attempts timed out before a Swift compiler or XCTest child
+  began. A sampled stack shows Xcode blocked in
+  NSFileCoordinator coordinateReadingItemAtURL during recursive project read.
+- Targeted XCTest and required regression suites: NOT RUN, because the actual
+  workspace build system did not reach compilation or test execution.
+
+Production DB / SQL / migration / RPC / Edge Function change: 0.
+
+Final status: NOT_READY.
+
+The P0 implementation is present, but actual-workspace build and XCTest proof
+remain blocked by the host file-coordination condition. Do not commit or push
+this addendum until that condition is recovered and the required test suites
+have passed in the original workspace.

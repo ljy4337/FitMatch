@@ -223,7 +223,10 @@ final class ShoppingProductViewModel: ObservableObject {
     /// existing server resolver.  It intentionally does not reconstruct a
     /// storefront URL or reuse historical authority: current authority is
     /// resolved through the same coordinator used by normal URL entry.
-    func loadProductInfoFromHistoricalProduct(_ historicalProduct: Product) async -> Bool {
+    func loadProductInfoFromHistoricalProduct(
+        _ historicalProduct: Product,
+        preferredProductSizeID: UUID? = nil
+    ) async -> Bool {
         guard let parsedProduct = historicalProduct.fitMatchStoredRetailerFactsForRecompare(),
               parsedProduct.fitMatchDatabaseResolutionRequest() != nil else {
             errorMessage = "이 비교 기록의 상품 정보를 다시 불러올 수 없어요. 상품 링크를 다시 열어 주세요."
@@ -263,7 +266,10 @@ final class ShoppingProductViewModel: ObservableObject {
         productURL = historicalProduct.sourceURLString ?? ""
         productCanonicalURLString = historicalProduct.sourceURLString
         guard !Task.isCancelled, activeLoadID == loadID else { return false }
-        return await resolveServerAuthority(for: parsedProduct)
+        return await resolveServerAuthority(
+            for: parsedProduct,
+            preferredProductSizeID: preferredProductSizeID
+        )
     }
 
     func cancelProductLoading() {
@@ -339,7 +345,10 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
-    private func resolveServerAuthority(for product: ParsedProductInfo) async -> Bool {
+    private func resolveServerAuthority(
+        for product: ParsedProductInfo,
+        preferredProductSizeID: UUID? = nil
+    ) async -> Bool {
         parsedProductForServerAuthority = product
         guard let request = product.fitMatchDatabaseResolutionRequest() else {
             databaseShadowState = .skipped
@@ -367,7 +376,8 @@ final class ShoppingProductViewModel: ObservableObject {
                 applyServerClassification(authority.classification)
                 applyServerRuntime(
                     authority.runtime,
-                    allowsCanonicalMeasurementPresence: true
+                    allowsCanonicalMeasurementPresence: true,
+                    preferredProductSizeID: preferredProductSizeID
                 )
                 serverAuthorityState = .confirmed(authority)
                 // Kept only as a compatibility/debug signal. It is no longer a
@@ -382,7 +392,8 @@ final class ShoppingProductViewModel: ObservableObject {
                 // back to the database later.
                 applyServerRuntime(
                     authority.runtime,
-                    allowsCanonicalMeasurementPresence: false
+                    allowsCanonicalMeasurementPresence: false,
+                    preferredProductSizeID: preferredProductSizeID
                 )
                 serverAuthorityState = .reviewRequired(authority)
                 databaseShadowState = .unavailable
@@ -399,7 +410,8 @@ final class ShoppingProductViewModel: ObservableObject {
             case .notComparable:
                 applyServerRuntime(
                     authority.runtime,
-                    allowsCanonicalMeasurementPresence: false
+                    allowsCanonicalMeasurementPresence: false,
+                    preferredProductSizeID: preferredProductSizeID
                 )
                 serverAuthorityState = .notComparable(authority)
                 databaseShadowState = .unavailable
@@ -434,17 +446,24 @@ final class ShoppingProductViewModel: ObservableObject {
 
     private func applyServerRuntime(
         _ runtime: FitMatchProductRuntimeResponse,
-        allowsCanonicalMeasurementPresence: Bool
+        allowsCanonicalMeasurementPresence: Bool,
+        preferredProductSizeID: UUID? = nil
     ) {
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         closetRegisterableDisplaySizeIDs.removeAll()
         var hasConfirmedCanonicalMeasurement = false
 
-        if let exact = runtime.vnext,
-           let variant = selectedRuntimeVariant(
-            in: exact,
-            observationVariantID: observationVariantID
-           ) {
+        if let exact = runtime.vnext, exact.found {
+            guard let variant = selectedRuntimeVariant(
+                in: exact,
+                observationVariantID: observationVariantID,
+                preferredProductSizeID: preferredProductSizeID
+            ) else {
+                // vNext is the production identity contract. If its exact
+                // relationship is unavailable or ambiguous, never fall
+                // through to a legacy projection and invent a variant.
+                return
+            }
             sizeOptions = variant.sizes.enumerated().map { index, size in
                 let parsedRecords = size.canonicalMeasurements.measurements.compactMap {
                     measurement -> ParsedMeasurement? in
@@ -535,7 +554,8 @@ final class ShoppingProductViewModel: ObservableObject {
         // an explicit variant/size relationship; it never matches labels.
         guard let variant = selectedLegacyRuntimeVariant(
             in: runtime,
-            observationVariantID: observationVariantID
+            observationVariantID: observationVariantID,
+            preferredProductSizeID: preferredProductSizeID
         ) else {
             return
         }
@@ -674,26 +694,65 @@ final class ShoppingProductViewModel: ObservableObject {
 
     private func selectedRuntimeVariant(
         in runtime: VNextProductRuntimeDTO,
-        observationVariantID: String?
+        observationVariantID: String?,
+        preferredProductSizeID: UUID?
     ) -> VNextRuntimeVariantDTO? {
+        // A completed Result's product_size_id is a stronger exact identity
+        // than an observation variant hint. It is the only safe way to replay
+        // a historical Result whose variant key was not retained.
+        if let preferredProductSizeID {
+            let matches = runtime.variants.filter { variant in
+                variant.sizes.contains { $0.id == preferredProductSizeID }
+            }
+            guard matches.count <= 1 else { return nil }
+            if let exact = matches.first {
+                if let observationVariantID,
+                   exact.sourceVariantKey != observationVariantID {
+                    // An exact-ID/variant-key disagreement is a contract
+                    // conflict, never a reason to revive a label fallback.
+                    return nil
+                }
+                return exact
+            }
+        }
         if let observationVariantID {
             return runtime.variants.first {
                 $0.sourceVariantKey == observationVariantID
             }
         }
-        return runtime.variants.count == 1 ? runtime.variants[0] : nil
+        if runtime.variants.count == 1 {
+            return runtime.variants[0]
+        }
+        return nil
     }
 
     private func selectedLegacyRuntimeVariant(
         in runtime: FitMatchProductRuntimeResponse,
-        observationVariantID: String?
+        observationVariantID: String?,
+        preferredProductSizeID: UUID?
     ) -> FitMatchRuntimeVariant? {
+        if let preferredProductSizeID {
+            let matches = runtime.variants.filter { variant in
+                variant.sizes.contains { $0.productSizeID == preferredProductSizeID }
+            }
+            guard matches.count <= 1 else { return nil }
+            if let exact = matches.first {
+                if let observationVariantID,
+                   exact.externalVariantID != observationVariantID {
+                    return nil
+                }
+                return exact
+            }
+        }
         if let observationVariantID {
             return runtime.variants.first {
                 $0.externalVariantID == observationVariantID
             }
         }
-        return runtime.variants.count == 1 ? runtime.variants[0] : nil
+        if runtime.variants.count == 1 {
+            return runtime.variants[0]
+        }
+        return nil
     }
 
     private static func displayKind(for code: MeasurementCode) -> MeasurementDisplayKind? {

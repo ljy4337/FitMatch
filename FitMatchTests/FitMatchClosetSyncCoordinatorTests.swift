@@ -44,6 +44,23 @@ struct FitMatchClosetSyncCoordinatorTests {
                     rawValueText: "31.0",
                     evidenceLevel: "official_text",
                     semanticStatus: "mapped"
+                ),
+                FitMatchClosetMeasurementRecordPayload(
+                    value: 7,
+                    unit: "cm",
+                    measurementCode: "future_metric_v2",
+                    displayKind: "unknown",
+                    methodSource: "future_retailer",
+                    methodProfile: nil,
+                    inputSource: "imported_size_chart",
+                    standardVersion: nil,
+                    mappingVersion: "future_mapping",
+                    rawCode: "future_metric_v2",
+                    rawLabel: "미래 치수",
+                    rawInfo: "retained as raw server fact",
+                    rawValueText: "7",
+                    evidenceLevel: "official_text",
+                    semanticStatus: "unknown_definition"
                 )
             ],
             fitMemo: "정핏",
@@ -90,6 +107,12 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(item.totalLength == 74)
         #expect(item.rise == 31)
         #expect(item.measurementRecords.first?.measurementCodeRawValue == "rise_crotch_to_waist_front")
+        let futureMetric = try #require(item.measurementRecords.first {
+            $0.measurementCodeRawValue == "future_metric_v2"
+        })
+        #expect(futureMetric.measurementCode == .unknown)
+        #expect(futureMetric.value == 7)
+        #expect(futureMetric.rawCode == "future_metric_v2")
         #expect(item.sourceProduct?.id == productID)
         #expect(item.sourceProduct?.productCode == "E492123")
         #expect(item.sourceProduct?.categoryDepth3Code == "95381")
@@ -343,6 +366,94 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(request.override != nil)
         #expect(await remote.overrideMutationCount() == 0)
         #expect(await remote.clearOverrideMutationCount() == 0)
+    }
+
+    /// A sourced M → L edit is journaled with the exact fresh runtime UUID.
+    /// The first server list can still contain old M, and must neither replace
+    /// local L nor cause the request to recover a UUID from the "L" label.
+    @Test func pendingLinkedSizeEditUsesExactServerSizeAndPreservesLocalChoiceUntilReadBack() async throws {
+        let clientItemID = UUID()
+        let productID = UUID()
+        let variantID = UUID()
+        let remoteMSizeID = UUID()
+        let exactLSizeID = UUID()
+        let displayLSizeID = UUID()
+        let record = remoteRecord(
+            clientItemID: clientItemID,
+            productID: productID,
+            classificationSource: "manual_override",
+            variantID: variantID,
+            productSizeID: remoteMSizeID
+        )
+        let remote = ClosetSyncRemoteStub(items: [record])
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.LinkedSizeEdit.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+
+        let item = localRetailerItem(
+            id: clientItemID,
+            productID: productID,
+            authority: .userExplicit
+        )
+        let selectedL = ProductSize(
+            id: displayLSizeID,
+            name: "L",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 102,
+                sleeveLength: 0,
+                waist: 42,
+                hip: 54,
+                thigh: 31,
+                rise: 29,
+                hem: 21
+            ),
+            product: item.sourceProduct
+        )
+        item.sourceProductSize = selectedL
+        item.sizeName = "L"
+        item.measurements = selectedL.measurements
+        // Deliberately older than the fixture's remote timestamp: the sync
+        // must still send L instead of treating the old manual-override M
+        // snapshot as a reason to skip the exact pending edit.
+        let editedAt = Date(timeIntervalSince1970: 4_000_000_000)
+        item.updatedAt = editedAt
+        let intent = FitMatchLinkedSizeEditIntent(
+            token: UUID(),
+            userID: userID,
+            clientItemID: clientItemID,
+            selectedDisplaySizeID: displayLSizeID,
+            productID: productID,
+            variantID: variantID,
+            productSizeID: exactLSizeID,
+            localUpdatedAt: editedAt
+        )
+        FitMatchLinkedSizeEditIntentStore.store(intent, defaults: defaults)
+        context.insert(item)
+        try context.save()
+
+        await coordinator.synchronize(userID: userID, modelContext: context)
+
+        let request = try #require(await remote.capturedUpsertRequest())
+        #expect(request.productID == productID)
+        #expect(request.productVariantID == variantID)
+        #expect(request.productSizeID == exactLSizeID)
+        #expect(item.sizeName == "L")
+        #expect(item.sourceProductSize?.id == displayLSizeID)
+        #expect(coordinator.state == .pendingRetry)
+        #expect(
+            FitMatchLinkedSizeEditIntentStore.intent(
+                userID: userID,
+                clientItemID: clientItemID,
+                defaults: defaults
+            )?.token == intent.token
+        )
     }
 
     @Test func existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime() async throws {

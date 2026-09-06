@@ -5,6 +5,8 @@ import SwiftData
 struct AddComparedProductToClosetSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
 
     private var userFits: [UserFit] {
@@ -238,6 +240,10 @@ struct AddComparedProductToClosetSheet: View {
         return availableSizes.first { $0.id == selectedSizeID }
     }
 
+    private var isSubmissionInputLocked: Bool {
+        isSaving || !submissionAction.recovery.mayEditInput
+    }
+
     private var sizeSelectionGridColumns: [GridItem] {
         [
             GridItem(.flexible(minimum: 96), spacing: 12),
@@ -273,6 +279,7 @@ struct AddComparedProductToClosetSheet: View {
                 .padding(20)
                 .padding(.bottom, 112)
             }
+            .disabled(isSubmissionInputLocked)
             .background(Color(.systemGroupedBackground))
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
@@ -308,6 +315,7 @@ struct AddComparedProductToClosetSheet: View {
                 Text(alertMessage ?? "")
             }
         }
+        .interactiveDismissDisabled(isSubmissionInputLocked)
     }
 
     private var sizeStep: some View {
@@ -663,7 +671,14 @@ struct AddComparedProductToClosetSheet: View {
         case .size:
             return "다음"
         case .confirm:
-            return isSaving ? "저장 중" : "보유한 옷으로 등록"
+            if isSaving {
+                return "저장 중"
+            }
+            if pendingServerSubmission != nil,
+               !submissionAction.recovery.mayEditInput {
+                return "등록 결과 다시 확인"
+            }
+            return "보유한 옷으로 등록"
         }
     }
 
@@ -746,8 +761,15 @@ struct AddComparedProductToClosetSheet: View {
             return
         }
 
+        // Only an ambiguous/accepted pending submission is immutable. A
+        // deterministic first SQL rejection returns to `.editable`, where a
+        // changed size must receive a new client_item_id and payload.
+        let reusablePendingSubmission = pendingServerSubmission.flatMap {
+            submissionAction.recovery.mayEditInput ? nil : $0
+        }
+
         let request = FitMatchComparedProductClosetRegistration.SaveRequest(
-            clientItemID: pendingServerSubmission?.localRequest.clientItemID ?? UUID(),
+            clientItemID: reusablePendingSubmission?.localRequest.clientItemID ?? UUID(),
             product: product,
             selectedSize: selectedSize,
             serverIdentity: serverRegistrationContext?.identity(for: selectedSize.id),
@@ -770,12 +792,21 @@ struct AddComparedProductToClosetSheet: View {
         )
 
         if serverRegistrationContext != nil {
+            // A retailer-linked request captures its owning account before it
+            // allocates a client_item_id or issues any RPC. The action checks
+            // the same value after every await, so a late A response cannot
+            // ever project into B's local cache.
+            guard let submissionUserID = authSession.authenticatedUserID else {
+                alertMessage = "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+                isSaving = false
+                return
+            }
             let submission: FitMatchComparedProductClosetRegistration.ServerFirstSubmission
-            if let pendingServerSubmission {
+            if let reusablePendingSubmission {
                 // A timeout can have reached the server after the client lost
                 // its response.  Retry the immutable request, not the newly
                 // edited UI values and never a freshly allocated UUID.
-                submission = pendingServerSubmission
+                submission = reusablePendingSubmission
             } else {
                 do {
                     submission = try FitMatchComparedProductClosetRegistration
@@ -791,7 +822,21 @@ struct AddComparedProductToClosetSheet: View {
 
             let submissionOutcome = await submissionAction.submitServerFirst(
                 submission,
-                in: modelContext
+                in: modelContext,
+                submissionUserID: submissionUserID,
+                currentUserID: { authSession.authenticatedUserID },
+                projectAuthoritativeReceipt: { record, request, closetItemID, context in
+                    guard let closetSync else {
+                        throw FitMatchClosetSyncCoordinator
+                            .AuthoritativeRegistrationProjectionError.receiptMismatch
+                    }
+                    return try closetSync.projectAuthoritativeRegistration(
+                        record,
+                        expected: request,
+                        acceptedClosetItemID: closetItemID,
+                        modelContext: context
+                    )
+                }
             )
             guard case .completed(let outcome) = submissionOutcome else {
                 isSaving = false
@@ -832,17 +877,28 @@ struct AddComparedProductToClosetSheet: View {
         switch outcome {
         case .saved(let item):
             pendingServerSubmission = nil
+            submissionAction.resetAfterCompletedSubmission()
             finishSuccessfulSave(item)
         case .savedWithoutReference(let item, let message):
             // The server already owns the Closet row. Do not report a full
             // success until the user has seen that reference selection was
             // rejected; the local row accurately remains non-representative.
             pendingServerSubmission = nil
+            submissionAction.resetAfterCompletedSubmission()
             isSaving = false
             savedItemAwaitingAcknowledgement = item
             alertMessage = message
+        case .serverRejected:
+            // Only the first, deterministic SQL failure returns input to an
+            // editable state. A replay rejection after an ambiguous timeout
+            // stays locked with the same immutable client item ID.
+            if submissionAction.recovery.mayEditInput {
+                pendingServerSubmission = nil
+            }
+            alertMessage = outcome.userVisibleMessage
+            isSaving = false
         case .duplicate, .storageLookupFailed, .persistenceFailed,
-             .serverRejected, .serverAcceptedLocalPersistenceFailed:
+             .serverAcceptedLocalPersistenceFailed:
             alertMessage = outcome.userVisibleMessage
             // Retain `pendingServerSubmission` for transport ambiguity and
             // local-persistence recovery. Its client_item_id is the only safe

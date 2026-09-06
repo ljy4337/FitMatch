@@ -166,11 +166,6 @@ struct ContentView: View {
             }
         } else if !hasFinishedSplash {
             SplashView()
-        } else if !hasCompletedOnboarding {
-            FitMatchOnboardingView {
-                hasCompletedOnboarding = true
-                _ = openPendingSharedURLIfNeeded()
-            }
         } else {
             switch FitMatchAuthenticatedRootPresentationAction.presentation(
                 authState: authSession.state,
@@ -206,7 +201,25 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(.systemGroupedBackground))
             case .main:
-                MainTabView(
+                if !hasCompletedOnboarding {
+                    // Onboarding is device-scoped, but it must never precede
+                    // authentication and cache ownership preparation.  This
+                    // keeps every user-owned registration/comparison surface
+                    // behind the signed-in root boundary.
+                    FitMatchOnboardingView {
+                        hasCompletedOnboarding = true
+                        _ = openPendingSharedURLIfNeeded()
+                    }
+                    // Onboarding can launch the same server-first link
+                    // registration sheet as Main. Keep the authenticated
+                    // account/session and cache coordinator available there
+                    // as well; it is now safe because this branch is reached
+                    // only after `.main` confirms cache ownership.
+                    .environment(\.fitMatchClosetSyncCoordinator, closetSync)
+                    .environment(\.fitMatchComparisonSyncCoordinator, comparisonSync)
+                    .environmentObject(authSession)
+                } else {
+                    MainTabView(
                     selectedTab: $selectedTab,
                     compareURL: pendingCompareURL,
                     onCompareURLPresented: { presentedURL in
@@ -234,10 +247,11 @@ struct ContentView: View {
                         }
                     },
                     compareViewID: compareViewID
-                )
-                .environment(\.fitMatchClosetSyncCoordinator, closetSync)
-                .environment(\.fitMatchComparisonSyncCoordinator, comparisonSync)
-                .environmentObject(authSession)
+                    )
+                    .environment(\.fitMatchClosetSyncCoordinator, closetSync)
+                    .environment(\.fitMatchComparisonSyncCoordinator, comparisonSync)
+                    .environmentObject(authSession)
+                }
             }
         }
     }

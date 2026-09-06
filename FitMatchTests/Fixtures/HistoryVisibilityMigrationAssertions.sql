@@ -1,7 +1,11 @@
 \set ON_ERROR_STOP on
 
+-- The history command is a soft hide on comparisons.deleted_at. Every
+-- immutable comparison-evidence column must remain byte-for-byte stable.
 create temporary table comparison_preimage as
-select id, md5(to_jsonb(c)::text) as row_hash
+select
+    id,
+    md5((to_jsonb(c) - 'deleted_at')::text) as evidence_hash
 from fitmatch_vnext.comparisons c
 order by id;
 
@@ -9,14 +13,6 @@ do $contract$
 declare
     response jsonb;
 begin
-    if has_table_privilege(
-        'authenticated',
-        'fitmatch_vnext.user_comparison_history_visibility',
-        'SELECT, INSERT, UPDATE, DELETE'
-    ) then
-        raise exception 'authenticated received raw visibility table privileges';
-    end if;
-
     if has_function_privilege(
         'anon',
         'public.fitmatch_vnext_hide_comparison_history(uuid[])',
@@ -25,12 +21,35 @@ begin
         raise exception 'anon can execute the history hide wrapper';
     end if;
 
+    if has_function_privilege(
+        'authenticated',
+        'fitmatch_vnext.hide_comparison_history(uuid[])',
+        'EXECUTE'
+    ) then
+        raise exception 'authenticated can bypass the public history wrapper';
+    end if;
+
+    -- H1: no JWT identity is never accepted.
+    perform set_config('request.jwt.claim.sub', '', true);
+    begin
+        perform public.fitmatch_vnext_hide_comparison_history(array[
+            '70000000-0000-0000-0000-000000000001'::uuid
+        ]);
+        raise exception 'unauthenticated hide unexpectedly succeeded';
+    exception when others then
+        if sqlerrm = 'unauthenticated hide unexpectedly succeeded' then
+            raise;
+        end if;
+    end;
+
     perform set_config(
         'request.jwt.claim.sub',
         '10000000-0000-0000-0000-000000000001',
         true
     );
 
+    -- H2/H3: duplicate IDs are deduplicated and repeated soft hides are
+    -- idempotent without deleting or re-writing comparison evidence.
     response := public.fitmatch_vnext_hide_comparison_history(array[
         '70000000-0000-0000-0000-000000000001'::uuid,
         '70000000-0000-0000-0000-000000000001'::uuid
@@ -44,20 +63,30 @@ begin
     response := public.fitmatch_vnext_hide_comparison_history(array[
         '70000000-0000-0000-0000-000000000001'::uuid
     ]);
-    if response->>'idempotent' <> 'true' then
+    if response->>'hidden' <> 'true'
+       or response->>'idempotent' <> 'true' then
         raise exception 'duplicate hide is not idempotent: %', response;
     end if;
 
+    -- H7: an empty one-dimensional request is a harmless success.
+    response := public.fitmatch_vnext_hide_comparison_history(array[]::uuid[]);
+    if response->>'hidden' <> 'true'
+       or response->>'idempotent' <> 'true'
+       or jsonb_array_length(response->'client_comparison_ids') <> 0 then
+        raise exception 'empty hide receipt is invalid: %', response;
+    end if;
+
+    -- H4/H5/H6: ownership, inexistence, and non-COMPLETED status all reject
+    -- the entire request; no partial update is legal.
     begin
         perform public.fitmatch_vnext_hide_comparison_history(array[
             '70000000-0000-0000-0000-000000000002'::uuid
         ]);
         raise exception 'cross-user hide unexpectedly succeeded';
-    exception
-        when others then
-            if sqlerrm = 'cross-user hide unexpectedly succeeded' then
-                raise;
-            end if;
+    exception when others then
+        if sqlerrm = 'cross-user hide unexpectedly succeeded' then
+            raise;
+        end if;
     end;
 
     begin
@@ -65,11 +94,21 @@ begin
             '70000000-0000-0000-0000-000000000003'::uuid
         ]);
         raise exception 'pending comparison hide unexpectedly succeeded';
-    exception
-        when others then
-            if sqlerrm = 'pending comparison hide unexpectedly succeeded' then
-                raise;
-            end if;
+    exception when others then
+        if sqlerrm = 'pending comparison hide unexpectedly succeeded' then
+            raise;
+        end if;
+    end;
+
+    begin
+        perform public.fitmatch_vnext_hide_comparison_history(array[
+            '70000000-0000-0000-0000-000000000099'::uuid
+        ]);
+        raise exception 'missing comparison hide unexpectedly succeeded';
+    exception when others then
+        if sqlerrm = 'missing comparison hide unexpectedly succeeded' then
+            raise;
+        end if;
     end;
 end
 $contract$;
@@ -112,21 +151,24 @@ begin
         select 1
         from comparison_preimage before
         full join (
-            select id, md5(to_jsonb(c)::text) as row_hash
+            select id, md5((to_jsonb(c) - 'deleted_at')::text) as evidence_hash
             from fitmatch_vnext.comparisons c
         ) after using (id)
         where before.id is null
            or after.id is null
-           or before.row_hash is distinct from after.row_hash
+           or before.evidence_hash is distinct from after.evidence_hash
     ) then
         raise exception 'immutable comparison evidence changed during hide';
     end if;
 
-    if (
-        select count(*)
-        from fitmatch_vnext.user_comparison_history_visibility
-    ) <> 1 then
-        raise exception 'expected exactly one durable visibility row';
+    if not exists (
+        select 1
+        from fitmatch_vnext.comparisons c
+        where c.client_comparison_id
+              = '70000000-0000-0000-0000-000000000001'::uuid
+          and c.deleted_at is not null
+    ) then
+        raise exception 'completed comparison was not soft hidden';
     end if;
 end
 $immutability$;

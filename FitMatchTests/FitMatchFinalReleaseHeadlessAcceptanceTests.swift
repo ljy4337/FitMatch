@@ -1883,6 +1883,59 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
     }
 
+    @Test func deterministicFirstClosetRejectReturnsToEditableAndUsesNewClientID() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let rejectedID = UUID()
+        let acceptedID = UUID()
+        let rejected = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest(clientItemID: rejectedID))
+        let accepted = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest(clientItemID: acceptedID))
+        let remote = ServerFirstClosetRemote(upsertResults: [.deterministicReject, .success])
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+
+        let first = await action.submitServerFirst(rejected, in: context)
+        guard case .completed(.serverRejected(_)) = first else {
+            Issue.record("Expected a deterministic first write rejection")
+            return
+        }
+        #expect(action.recovery == .editable)
+
+        let second = await action.submitServerFirst(accepted, in: context)
+        guard case .completed(.saved(let item)) = second else {
+            Issue.record("Expected a new immutable request after deterministic rejection")
+            return
+        }
+        #expect(item.id == acceptedID)
+        #expect(await remote.upsertClientItemIDs() == [rejectedID, acceptedID])
+    }
+
+    @Test func timeoutThenReplayRejectKeepsOriginalImmutableRequestLocked() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let clientItemID = UUID()
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest(clientItemID: clientItemID))
+        let remote = ServerFirstClosetRemote(upsertResults: [.timeout, .deterministicReject])
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+
+        let first = await action.submitServerFirst(submission, in: context)
+        guard case .completed(.serverRejected(_)) = first else {
+            Issue.record("Expected ambiguous timeout outcome")
+            return
+        }
+        #expect(action.recovery == .retrySameRequest)
+
+        let replay = await action.submitServerFirst(submission, in: context)
+        guard case .completed(.serverRejected(_)) = replay else {
+            Issue.record("Expected replay rejection without clearing prior ambiguity")
+            return
+        }
+        #expect(action.recovery == .retrySameRequest)
+        #expect(await remote.upsertClientItemIDs() == [clientItemID, clientItemID])
+    }
+
     @Test func serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure() async throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
@@ -1913,7 +1966,96 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         }
         #expect(item.id == clientItemID)
         #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
-        #expect(await remote.upsertClientItemIDs() == [clientItemID, clientItemID])
+        // Once the first upsert response was accepted, retry reconciles the
+        // local projection only. Reissuing the upsert would violate the
+        // serverAccepted recovery boundary and can race a reference receipt.
+        #expect(await remote.upsertClientItemIDs() == [clientItemID])
+    }
+
+    @Test func serverFirstClosetSubmissionProjectsExactReadBackReceiptBeforeLocalSuccess() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest(
+                measurements: .init(
+                    shoulder: 47,
+                    chest: 50,
+                    totalLength: 69,
+                    sleeveLength: 23
+                )
+            ))
+        let serverItemID = UUID()
+        let receipt = serverFirstReceipt(
+            request: submission.remoteRequest,
+            closetItemID: serverItemID,
+            chest: 54,
+            unknownMeasurementCode: "future_metric_v2"
+        )
+        let remote = ServerFirstClosetRemote(
+            upsertResult: .success,
+            readBackItems: [receipt]
+        )
+        let coordinator = FitMatchClosetSyncCoordinator()
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+        let submissionUserID = UUID()
+
+        let outcome = await action.submitServerFirst(
+            submission,
+            in: context,
+            submissionUserID: submissionUserID,
+            currentUserID: { submissionUserID },
+            projectAuthoritativeReceipt: { record, request, closetItemID, context in
+                try coordinator.projectAuthoritativeRegistration(
+                    record,
+                    expected: request,
+                    acceptedClosetItemID: closetItemID,
+                    modelContext: context
+                )
+            }
+        )
+
+        guard case .completed(.saved(let item)) = outcome else {
+            Issue.record("Expected server read-back to be projected before local success")
+            return
+        }
+        #expect(item.id == submission.remoteRequest.clientItemID)
+        #expect(item.chest == 54)
+        #expect(item.sourceProductSize?.chest == 54)
+        #expect(await remote.upsertCallCount() == 1)
+        #expect(await remote.listCallCount() == 1)
+    }
+
+    @Test func lateResponseAfterAccountSwitchNeverProjectsIntoAnotherUsersCache() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest())
+        let remote = ServerFirstClosetRemote(upsertResult: .success)
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+        let originalUserID = UUID()
+        let replacementUserID = UUID()
+        var currentUserCheckCount = 0
+
+        let outcome = await action.submitServerFirst(
+            submission,
+            in: context,
+            submissionUserID: originalUserID,
+            currentUserID: {
+                currentUserCheckCount += 1
+                return currentUserCheckCount == 1 ? originalUserID : replacementUserID
+            }
+        )
+
+        guard case .completed(.serverAcceptedLocalPersistenceFailed(let clientItemID)) = outcome else {
+            Issue.record("A late response after account switch must not project locally")
+            return
+        }
+        let acceptedClosetID = await remote.closetID()
+        #expect(clientItemID == submission.remoteRequest.clientItemID)
+        #expect(action.recovery == .serverAccepted(closetItemID: acceptedClosetID))
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
+        #expect(await remote.upsertCallCount() == 1)
+        #expect(await remote.listCallCount() == 0)
     }
 
     @Test func serverFirstConfirmedRegistrationHydratesServerConfirmedAuthority() async throws {
@@ -1937,6 +2079,140 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             return
         }
         #expect(item.classificationAuthorityProvenance == .serverConfirmed)
+    }
+
+    @Test func authoritativeClosetReceiptOverridesPreSubmitMeasurementsAndRetainsUnknownCode() throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest(
+                measurements: .init(
+                    shoulder: 47,
+                    chest: 50,
+                    totalLength: 69,
+                    sleeveLength: 23
+                )
+            ))
+        let serverItemID = UUID()
+        let receipt = serverFirstReceipt(
+            request: submission.remoteRequest,
+            closetItemID: serverItemID,
+            chest: 54,
+            unknownMeasurementCode: "future_metric_v2"
+        )
+        // The projector itself does not issue RPCs; it shares the generic
+        // DB-to-Swift mapper owned by the coordinator.
+        let coordinator = FitMatchClosetSyncCoordinator()
+
+        let item = try coordinator.projectAuthoritativeRegistration(
+            receipt,
+            expected: submission.remoteRequest,
+            acceptedClosetItemID: serverItemID,
+            modelContext: context
+        )
+
+        #expect(item.chest == 54)
+        #expect(item.sourceProductSize?.chest == 54)
+        let future = try #require(item.measurementRecords.first {
+            $0.measurementCodeRawValue == "future_metric_v2"
+        })
+        #expect(future.measurementCode == .unknown)
+        #expect(future.value == 7)
+    }
+
+    @Test func authoritativeClosetReceiptDoesNotOverwriteSharedRetailerProductSize() throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest())
+        let productID = try #require(submission.remoteRequest.productID)
+        let productSizeID = try #require(submission.remoteRequest.productSizeID)
+        let sharedProduct = Product(
+            id: productID,
+            name: "공유 retailer cache",
+            category: .top,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            source: .catalog
+        )
+        let sharedSize = ProductSize(
+            id: productSizeID,
+            name: "M",
+            measurements: .init(
+                shoulder: 47,
+                chest: 50,
+                totalLength: 69,
+                sleeveLength: 23
+            ),
+            product: sharedProduct
+        )
+        sharedProduct.sizes = [sharedSize]
+        context.insert(sharedProduct)
+        context.insert(sharedSize)
+        try context.save()
+
+        let receipt = serverFirstReceipt(
+            request: submission.remoteRequest,
+            closetItemID: UUID(),
+            chest: 54,
+            unknownMeasurementCode: "future_metric_v2"
+        )
+        let item = try FitMatchClosetSyncCoordinator()
+            .projectAuthoritativeRegistration(
+                receipt,
+                expected: submission.remoteRequest,
+                acceptedClosetItemID: receipt.closetItemID,
+                modelContext: context
+            )
+
+        #expect(item.chest == 54)
+        #expect(item.sourceProductSize?.id == productSizeID)
+        #expect(item.sourceProductSize?.chest == 50)
+        #expect(sharedSize.chest == 50)
+    }
+
+    @Test func authoritativeReceiptProjectionFailureDoesNotRollbackUnrelatedPendingChanges() throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let unrelated = UserFit(
+            sourceName: "직접 입력",
+            brandName: "다른 화면의 임시 입력",
+            gender: .men,
+            productName: "저장 전 수동 옷",
+            category: .top,
+            detailCategory: .shortSleeve,
+            sizeName: "M",
+            measurements: .init(
+                shoulder: 45,
+                chest: 50,
+                totalLength: 68,
+                sleeveLength: 22
+            ),
+            fitMemo: "unrelated pending edit",
+            satisfaction: 3
+        )
+        context.insert(unrelated)
+
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest())
+        let receipt = serverFirstReceipt(
+            request: submission.remoteRequest,
+            closetItemID: UUID(),
+            chest: 54,
+            unknownMeasurementCode: "future_metric_v2"
+        )
+
+        #expect(throws: ServerFirstSubmissionTestError.localPersistence) {
+            try FitMatchClosetSyncCoordinator().projectAuthoritativeRegistration(
+                receipt,
+                expected: submission.remoteRequest,
+                acceptedClosetItemID: receipt.closetItemID,
+                modelContext: context,
+                persist: { _ in throw ServerFirstSubmissionTestError.localPersistence }
+            )
+        }
+        #expect(unrelated.productName == "저장 전 수동 옷")
+        #expect(context.hasChanges)
     }
 
     @Test func referenceRejectionKeepsServerCreatedClosetItemAndLocalReferenceFalse() async throws {
@@ -2093,6 +2369,89 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             isRepresentative: isRepresentative,
             didExplicitlyChangeClassification: false,
             didExplicitlySelectClosetClassification: false
+        )
+    }
+
+    private func serverFirstReceipt(
+        request: FitMatchUpsertClosetItemRequest,
+        closetItemID: UUID,
+        chest: Double,
+        unknownMeasurementCode: String
+    ) -> FitMatchClosetItemRecord {
+        FitMatchClosetItemRecord(
+            closetItemID: closetItemID,
+            clientItemID: request.clientItemID,
+            productID: request.productID,
+            externalProductID: "SERVER-FIRST-TEST",
+            productAudience: "MEN",
+            sourceCategoryCodes: ["tops", "short_sleeve"],
+            variantID: request.productVariantID,
+            productSizeID: request.productSizeID,
+            brand: request.item.brandName,
+            productName: request.item.productName,
+            sizeName: request.item.sizeName,
+            genderCode: request.item.genderCode,
+            source: "musinsa",
+            sourceCategoryPath: "tops > short sleeve",
+            productURL: request.item.productURL,
+            imageURL: request.item.imageURL,
+            measurements: ["chest_width": chest],
+            measurementRecords: [
+                FitMatchClosetMeasurementRecordPayload(
+                    value: chest,
+                    unit: "cm",
+                    measurementCode: "chest_width",
+                    displayKind: "chest",
+                    methodSource: "server",
+                    methodProfile: nil,
+                    inputSource: "imported_size_chart",
+                    standardVersion: nil,
+                    mappingVersion: "v1",
+                    rawCode: "chest_width",
+                    rawLabel: "Chest",
+                    rawInfo: nil,
+                    rawValueText: String(chest),
+                    evidenceLevel: "official_text",
+                    semanticStatus: "mapped"
+                ),
+                FitMatchClosetMeasurementRecordPayload(
+                    value: 7,
+                    unit: "cm",
+                    measurementCode: unknownMeasurementCode,
+                    displayKind: "unknown",
+                    methodSource: "server",
+                    methodProfile: nil,
+                    inputSource: "imported_size_chart",
+                    standardVersion: nil,
+                    mappingVersion: "future-v2",
+                    rawCode: unknownMeasurementCode,
+                    rawLabel: "Future metric",
+                    rawInfo: "server-issued",
+                    rawValueText: "7",
+                    evidenceLevel: "official_text",
+                    semanticStatus: "unknown_definition"
+                )
+            ],
+            fitMemo: request.item.fitMemo,
+            fitPreferenceCode: request.item.fitPreferenceCode,
+            satisfaction: request.item.satisfaction,
+            isReference: false,
+            classificationStatus: "confirmed",
+            classificationSource: "retailer_snapshot",
+            categoryCode: request.item.categoryCode,
+            detailCode: request.item.detailCode,
+            canonicalCategoryCode: request.item.categoryCode,
+            canonicalDetailCode: request.item.detailCode,
+            familyCode: request.item.familyCode,
+            lengthCode: request.item.lengthCode,
+            bodyLengthCode: request.item.bodyLengthCode,
+            classificationSnapshot: [:],
+            clientSnapshot: [:],
+            clientCreatedAt: "2026-09-06T00:00:00Z",
+            clientUpdatedAt: "2026-09-06T00:00:00Z",
+            syncRevision: 1,
+            createdAt: "2026-09-06T00:00:00Z",
+            updatedAt: "2026-09-06T00:00:00Z"
         )
     }
 
@@ -2326,6 +2685,8 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
         case success
         case failure
         case canonicalMeasurementRejected
+        case deterministicReject
+        case timeout
     }
 
     enum ReferenceResult: Sendable, Equatable {
@@ -2333,27 +2694,55 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
         case failure
     }
 
-    private let upsertResult: UpsertResult
+    private var upsertResults: [UpsertResult]
     private let referenceResult: ReferenceResult
-    private let closetItemID = UUID()
+    private let closetItemID: UUID
+    private let readBackItems: [FitMatchClosetItemRecord]
     private var acceptedClientItemIDs = Set<UUID>()
     private var submittedClientItemIDs: [UUID] = []
     private var submittedReferenceCount = 0
+    private var submittedListCount = 0
 
     init(
         upsertResult: UpsertResult,
-        referenceResult: ReferenceResult = .success
+        referenceResult: ReferenceResult = .success,
+        readBackItems: [FitMatchClosetItemRecord] = []
     ) {
-        self.upsertResult = upsertResult
+        upsertResults = [upsertResult]
         self.referenceResult = referenceResult
+        self.readBackItems = readBackItems
+        closetItemID = readBackItems.first?.closetItemID ?? UUID()
+    }
+
+    init(
+        upsertResults: [UpsertResult],
+        referenceResult: ReferenceResult = .success,
+        readBackItems: [FitMatchClosetItemRecord] = []
+    ) {
+        self.upsertResults = upsertResults
+        self.referenceResult = referenceResult
+        self.readBackItems = readBackItems
+        closetItemID = readBackItems.first?.closetItemID ?? UUID()
     }
 
     func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
         -> FitMatchUpsertClosetItemResponse {
         submittedClientItemIDs.append(request.clientItemID)
-        guard upsertResult == .success else {
-            if upsertResult == .canonicalMeasurementRejected {
+        let result = upsertResults.count > 1
+            ? upsertResults.removeFirst()
+            : (upsertResults.first ?? .failure)
+        guard result == .success else {
+            if result == .canonicalMeasurementRejected {
                 throw ServerFirstSubmissionTestError.canonicalMeasurementRejected
+            }
+            if result == .deterministicReject {
+                throw FitMatchClosetRegistrationRPCError.rejected(
+                    sqlState: "P0001",
+                    message: "server rejected selected size"
+                )
+            }
+            if result == .timeout {
+                throw URLError(.timedOut)
             }
             throw ServerFirstSubmissionTestError.upsertRejected
         }
@@ -2387,9 +2776,16 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
         )
     }
 
+    func listClosetItems() async throws -> FitMatchClosetItemsResponse {
+        submittedListCount += 1
+        return FitMatchClosetItemsResponse(state: "ready", items: readBackItems)
+    }
+
     func upsertCallCount() -> Int { submittedClientItemIDs.count }
     func upsertClientItemIDs() -> [UUID] { submittedClientItemIDs }
     func referenceCallCount() -> Int { submittedReferenceCount }
+    func listCallCount() -> Int { submittedListCount }
+    func closetID() -> UUID { closetItemID }
     func hasAccepted(clientItemID: UUID) -> Bool {
         acceptedClientItemIDs.contains(clientItemID)
     }

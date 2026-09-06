@@ -63,9 +63,20 @@ struct LinkClosetRegistrationView: View {
                 AddComparedProductToClosetSheet(
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
+                    // A fresh link registration never invents a size choice,
+                    // even when the server exposes a single registerable row.
+                    // Only a prior explicit SizeTableRecovery selection can
+                    // seed this form, and it must still be backed by the
+                    // exact runtime identity/measurement context.
                     recommendedSize: recoveredSelectedSizeID.flatMap { selectedID in
-                        uniqueSizes(for: parsedProduct).first { $0.id == selectedID }
-                    } ?? uniqueSizes(for: parsedProduct).first,
+                        parsedProduct.sizes.first {
+                            $0.id == selectedID
+                                && registrationServerContext.isRegisterable(
+                                    displaySizeID: $0.id
+                                )
+                                && registrationServerContext.identity(for: $0.id) != nil
+                        }
+                    },
                     // The Sheet receives the server context and decides whether
                     // a tuple is auto-selected. Passing a parser classification
                     // here would make REVIEW_REQUIRED look user-confirmed.
@@ -73,7 +84,8 @@ struct LinkClosetRegistrationView: View {
                     isParsedProductReadOnly: true,
                     serverRegistrationContext: registrationServerContext,
                     startsAtRegistrationConfirmation: true,
-                    prefersRepresentativeByDefault: prefersRepresentativeByDefault
+                    prefersRepresentativeByDefault: prefersRepresentativeByDefault,
+                    requiresExplicitSizeSelection: recoveredSelectedSizeID == nil
                 ) { _ in
                     shouldCompleteAfterSheetDismissal = true
                 }
@@ -456,8 +468,11 @@ struct LinkClosetRegistrationView: View {
         }
 
         let serverContext = viewModel.closetRegistrationServerContext
-        let selectedSizeID = viewModel.recoverySelectedSizeID ?? product.sizes.first?.id
-        guard let selectedSizeID,
+        // Recovery is the one link-flow exception to the no-auto-selection
+        // rule: only an exact size that the user explicitly picked in the
+        // recovery UI may seed the registration sheet.
+        guard let selectedSizeID = viewModel.recoverySelectedSizeID,
+              serverContext.isRegisterable(displaySizeID: selectedSizeID),
               serverContext.identity(for: selectedSizeID) != nil else {
             // A recovered display size without a server-issued UUID is useful
             // parser evidence, but it cannot safely become a link-based

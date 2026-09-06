@@ -76,6 +76,8 @@ enum FitMatchClosetItemEditAction {
     static func saveImported(
         item: UserFit,
         selectedSize: ProductSize,
+        linkedSizeEditIntent: FitMatchLinkedSizeEditIntent? = nil,
+        defaults: UserDefaults = .standard,
         category: ClothingCategory,
         detailCategory: ClosetDetailCategory,
         categoryCode: String,
@@ -85,6 +87,23 @@ enum FitMatchClosetItemEditAction {
         now: Date = Date(),
         performSave: (ModelContext) throws -> Void = { try $0.save() }
     ) -> Outcome {
+        // The intent is recorded before the local mutation so the following
+        // account-scoped sync can send the exact runtime size UUID. If the
+        // local save fails we restore the prior journal value; an unpersisted
+        // UI mutation must never manufacture a future server update.
+        let previousIntent = linkedSizeEditIntent.flatMap {
+            FitMatchLinkedSizeEditIntentStore.intent(
+                userID: $0.userID,
+                clientItemID: $0.clientItemID,
+                defaults: defaults
+            )
+        }
+        if let linkedSizeEditIntent {
+            FitMatchLinkedSizeEditIntentStore.store(
+                linkedSizeEditIntent,
+                defaults: defaults
+            )
+        }
         let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
             current: item.classificationAuthorityProvenance,
             isSourced: FitMatchClosetClassificationEditPolicy.isSourced(item),
@@ -117,7 +136,22 @@ enum FitMatchClosetItemEditAction {
         item.measurementRecords.forEach(modelContext.delete)
         item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
         item.updatedAt = now
-        return persist(in: modelContext, using: performSave)
+        let outcome = persist(in: modelContext, using: performSave)
+        guard case .persistenceFailed = outcome,
+              let linkedSizeEditIntent else {
+            return outcome
+        }
+
+        if let previousIntent {
+            FitMatchLinkedSizeEditIntentStore.store(previousIntent, defaults: defaults)
+        } else {
+            FitMatchLinkedSizeEditIntentStore.remove(
+                userID: linkedSizeEditIntent.userID,
+                clientItemID: linkedSizeEditIntent.clientItemID,
+                defaults: defaults
+            )
+        }
+        return outcome
     }
 
     private static func persist(

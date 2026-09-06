@@ -1772,6 +1772,523 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(context.identity(for: preferred.id)?.productVariantID == variantID)
     }
 
+    /// Historical Result projections can lack a source variant key.  In that
+    /// case the completed comparison's exact product_size_id is the only
+    /// allowed way to choose one of several fresh runtime variants.
+    @Test func resultClosetPreparationSelectsUniqueVNextVariantByExactPreferredSizeID() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-vnext-multi-variant",
+            sizes: [("M", 50), ("L", 54), ("XL", 58)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-vnext-multi-variant",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let blackVariantID = UUID()
+        let blueVariantID = UUID()
+        let blackSizes = ["M", "L", "XL"].enumerated().map { index, name in
+            Self.runtimeSize(sourceSizeKey: name, label: name, displayOrder: index)
+        }
+        let blueSizes = ["M", "L", "XL"].enumerated().map { index, name in
+            Self.runtimeSize(
+                sourceSizeKey: name,
+                label: name,
+                displayOrder: index,
+                stockStatus: name == "XL" ? "SOLD_OUT" : "UNKNOWN"
+            )
+        }
+        let runtime = try Self.vNextMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "measurements_required",
+            comparisonReady: false,
+            variants: [
+                .init(
+                    variantID: blackVariantID,
+                    sourceVariantKey: "black",
+                    sizes: blackSizes
+                ),
+                .init(
+                    variantID: blueVariantID,
+                    sourceVariantKey: "blue",
+                    sizes: blueSizes
+                )
+            ]
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: blueSizes[2].productSizeID,
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+
+        guard case .prepared(let preparation) = outcome else {
+            Issue.record("The exact preferred size should select only the blue variant")
+            return
+        }
+        let context = try #require(preparation.serverRegistrationContext)
+        #expect(preparation.product.sizes.map(\.name) == ["M", "L", "XL"])
+        #expect(
+            Set(preparation.product.sizes.compactMap {
+                context.identity(for: $0.id)?.productVariantID
+            }) == Set([blueVariantID])
+        )
+        let preferred = try #require(preparation.preferredSize)
+        #expect(context.identity(for: preferred.id)?.productSizeID == blueSizes[2].productSizeID)
+        #expect(context.identity(for: preferred.id)?.productVariantID == blueVariantID)
+
+        // The initial XL preference never overrides a user's final M choice.
+        let selectedM = try #require(preparation.product.sizes.first { $0.name == "M" })
+        let selectedMIdentity = try #require(context.identity(for: selectedM.id))
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(
+                FitMatchComparedProductClosetRegistration.SaveRequest(
+                    product: preparation.product,
+                    selectedSize: selectedM,
+                    serverIdentity: selectedMIdentity,
+                    hasMeasurementEligibilityProof: context.isRegisterable(
+                        displaySizeID: selectedM.id
+                    ),
+                    activeClosetItems: [],
+                    brandName: "테스트",
+                    gender: .men,
+                    genderCode: "MEN",
+                    productName: preparation.product.name,
+                    category: .top,
+                    categoryCode: "tops",
+                    detailCategory: .shortSleeve,
+                    detailCategoryCode: "short_sleeve",
+                    isRepresentative: false,
+                    didExplicitlyChangeClassification: false
+                )
+            )
+        #expect(submission.remoteRequest.productID == fixture.productID)
+        #expect(submission.remoteRequest.productVariantID == blueVariantID)
+        #expect(submission.remoteRequest.productSizeID == blueSizes[0].productSizeID)
+    }
+
+    @Test func resultClosetPreparationBlocksVNextMultiVariantWhenPreferredSizeIsAbsent() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-vnext-missing-preferred",
+            sizes: [("M", 50), ("XL", 58)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-vnext-missing-preferred",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let runtime = try Self.vNextMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "measurements_required",
+            comparisonReady: false,
+            variants: [
+                .init(
+                    variantID: UUID(),
+                    sourceVariantKey: "black",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        Self.runtimeSize(sourceSizeKey: "XL", label: "XL", displayOrder: 1)
+                    ]
+                ),
+                .init(
+                    variantID: UUID(),
+                    sourceVariantKey: "blue",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        Self.runtimeSize(sourceSizeKey: "XL", label: "XL", displayOrder: 1)
+                    ]
+                )
+            ]
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: UUID(),
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+        guard case .blocked = outcome else {
+            Issue.record("A missing exact ID must not fall back to the first variant")
+            return
+        }
+    }
+
+    @Test func resultClosetPreparationBlocksVNextMultiVariantWithAmbiguousExactSizeID() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-vnext-ambiguous-preferred",
+            sizes: [("M", 50), ("XL", 58)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-vnext-ambiguous-preferred",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let duplicateXLID = UUID()
+        let runtime = try Self.vNextMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "measurements_required",
+            comparisonReady: false,
+            variants: [
+                .init(
+                    variantID: UUID(),
+                    sourceVariantKey: "black",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        Self.runtimeSize(
+                            productSizeID: duplicateXLID,
+                            sourceSizeKey: "XL",
+                            label: "XL",
+                            displayOrder: 1
+                        )
+                    ]
+                ),
+                .init(
+                    variantID: UUID(),
+                    sourceVariantKey: "blue",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        Self.runtimeSize(
+                            productSizeID: duplicateXLID,
+                            sourceSizeKey: "XL",
+                            label: "XL",
+                            displayOrder: 1
+                        )
+                    ]
+                )
+            ]
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: duplicateXLID,
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+        guard case .blocked = outcome else {
+            Issue.record("An ambiguous exact ID must not choose the first variant")
+            return
+        }
+    }
+
+    /// An exact Result size and a separately retained retailer variant key
+    /// describe the same runtime relationship. If they disagree, that is a
+    /// contract inconsistency rather than an opportunity to use either label
+    /// or array order as a recovery hint.
+    @Test func resultClosetPreparationBlocksExactPreferenceThatConflictsWithObservedVariant() async throws {
+        var parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-vnext-variant-conflict",
+            sizes: [("M", 50), ("XL", 58)]
+        )
+        parsed.productMetadata.externalVariantID = "black"
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-vnext-variant-conflict",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let blueXL = Self.runtimeSize(
+            sourceSizeKey: "XL",
+            label: "XL",
+            displayOrder: 1
+        )
+        let runtime = try Self.vNextMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "measurements_required",
+            comparisonReady: false,
+            variants: [
+                .init(
+                    variantID: UUID(),
+                    sourceVariantKey: "black",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        Self.runtimeSize(sourceSizeKey: "XL", label: "XL", displayOrder: 1)
+                    ]
+                ),
+                .init(
+                    variantID: UUID(),
+                    sourceVariantKey: "blue",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        blueXL
+                    ]
+                )
+            ]
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: blueXL.productSizeID,
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+
+        guard case .blocked = outcome else {
+            Issue.record("An exact-size/explicit-variant conflict must fail closed")
+            return
+        }
+    }
+
+    @Test func resultClosetPreparationKeepsSoleVNextVariantWhenPreferredSizeHasGone() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-vnext-sole-variant",
+            sizes: [("M", 50), ("L", 54)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-vnext-sole-variant",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let soleVariantID = UUID()
+        let runtime = try Self.vNextMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "measurements_required",
+            comparisonReady: false,
+            variants: [
+                .init(
+                    variantID: soleVariantID,
+                    sourceVariantKey: "black",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        Self.runtimeSize(sourceSizeKey: "L", label: "L", displayOrder: 1)
+                    ]
+                )
+            ]
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: UUID(),
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+        guard case .prepared(let preparation) = outcome else {
+            Issue.record("A sole variant remains safe even when the old size disappeared")
+            return
+        }
+        let context = try #require(preparation.serverRegistrationContext)
+        #expect(preparation.preferredSize == nil)
+        #expect(preparation.requiresExplicitSizeSelection)
+        #expect(
+            Set(preparation.product.sizes.compactMap {
+                context.identity(for: $0.id)?.productVariantID
+            }) == Set([soleVariantID])
+        )
+    }
+
+    @Test func sourceVariantKeyStillWinsForMultiVariantURLLoadWithoutPreference() async throws {
+        var parsed = try Self.measurementPresenceProduct(
+            externalProductID: "url-vnext-source-variant-priority",
+            sizes: [("M", 50), ("XL", 58)]
+        )
+        parsed.productMetadata.externalVariantID = "blue"
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "url-vnext-source-variant-priority",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let blackVariantID = UUID()
+        let blueVariantID = UUID()
+        let runtime = try Self.vNextMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "measurements_required",
+            comparisonReady: false,
+            variants: [
+                .init(
+                    variantID: blackVariantID,
+                    sourceVariantKey: "black",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        Self.runtimeSize(sourceSizeKey: "XL", label: "XL", displayOrder: 1)
+                    ]
+                ),
+                .init(
+                    variantID: blueVariantID,
+                    sourceVariantKey: "blue",
+                    sizes: [
+                        Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+                        Self.runtimeSize(sourceSizeKey: "XL", label: "XL", displayOrder: 1)
+                    ]
+                )
+            ]
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        let product = try #require(viewModel.makeProductForClosetRegistration(brand: nil))
+        let context = viewModel.closetRegistrationServerContext
+        #expect(
+            Set(product.sizes.compactMap {
+                context.identity(for: $0.id)?.productVariantID
+            }) == Set([blueVariantID])
+        )
+    }
+
+    @Test func resultClosetPreparationSelectsUniqueLegacyVariantByExactPreferredSizeID() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "result-closet-legacy-multi-variant",
+            sizes: [("M", 50), ("XL", 58)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "result-closet-legacy-multi-variant",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let blackVariantID = UUID()
+        let blueVariantID = UUID()
+        let blackSizes = [
+            Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+            Self.runtimeSize(sourceSizeKey: "XL", label: "XL", displayOrder: 1)
+        ]
+        let blueSizes = [
+            Self.runtimeSize(sourceSizeKey: "M", label: "M", displayOrder: 0),
+            Self.runtimeSize(sourceSizeKey: "XL", label: "XL", displayOrder: 1)
+        ]
+        let runtime = Self.legacyMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "measurements_required",
+            comparisonReady: false,
+            variants: [
+                FitMatchRuntimeVariant(
+                    variantID: blackVariantID,
+                    externalVariantID: "black",
+                    variantName: "BLACK",
+                    colorCode: nil,
+                    colorName: "BLACK",
+                    sizes: blackSizes
+                ),
+                FitMatchRuntimeVariant(
+                    variantID: blueVariantID,
+                    externalVariantID: "blue",
+                    variantName: "BLUE",
+                    colorCode: nil,
+                    colorName: "BLUE",
+                    sizes: blueSizes
+                )
+            ]
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: Self.historicalResultProduct(from: parsed),
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: blueSizes[1].productSizeID,
+            legacyPreferredSize: nil,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+        guard case .prepared(let preparation) = outcome else {
+            Issue.record("Legacy runtime must use the exact preferred ID when variants are multiple")
+            return
+        }
+        let context = try #require(preparation.serverRegistrationContext)
+        #expect(preparation.preferredSize?.name == "XL")
+        #expect(
+            Set(preparation.product.sizes.compactMap {
+                context.identity(for: $0.id)?.productVariantID
+            }) == Set([blueVariantID])
+        )
+        #expect(
+            context.identity(for: try #require(preparation.preferredSize).id)?.productSizeID
+                == blueSizes[1].productSizeID
+        )
+    }
+
     /// REVIEW_REQUIRED retains raw retailer measurement evidence and exact
     /// runtime identity for a USER_EXPLICIT Closet selection.  Canonical-empty
     /// runtime measurements must not turn it into an all-zero product gate.
@@ -2005,6 +2522,7 @@ struct FitMatchSupabaseProductResolverTests {
     }
 
     private static func runtimeSize(
+        productSizeID: UUID = UUID(),
         sourceSizeKey: String,
         label: String,
         displayOrder: Int,
@@ -2012,7 +2530,7 @@ struct FitMatchSupabaseProductResolverTests {
         measurements: [FitMatchRuntimeMeasurement] = []
     ) -> FitMatchRuntimeSize {
         FitMatchRuntimeSize(
-            productSizeID: UUID(),
+            productSizeID: productSizeID,
             externalSizeID: sourceSizeKey,
             sizeLabel: label,
             normalizedSizeLabel: SizeTokenNormalizer.displayName(for: label),
@@ -2058,6 +2576,108 @@ struct FitMatchSupabaseProductResolverTests {
             ]
         )
     }
+
+    private static func legacyMeasurementRuntime(
+        fixture: DatabaseAuthorityFixture,
+        runtimeState: String,
+        comparisonReady: Bool,
+        variants: [FitMatchRuntimeVariant]
+    ) -> FitMatchProductRuntimeResponse {
+        FitMatchProductRuntimeResponse(
+            runtimeState: runtimeState,
+            comparisonReady: comparisonReady,
+            product: FitMatchRuntimeProduct(
+                productID: fixture.productID,
+                source: fixture.source,
+                externalProductID: fixture.externalProductID,
+                productName: "Server Product",
+                canonicalURL: nil,
+                audience: "MEN",
+                sourceCategoryPath: "server > category",
+                sourceCategoryCodes: ["server-category"],
+                imageURL: nil,
+                lifecycleStatus: "active",
+                inputFingerprint: "measurement-presence-fixture"
+            ),
+            classification: fixture.classification,
+            variants: variants
+        )
+    }
+
+    private static func vNextMeasurementRuntime(
+        fixture: DatabaseAuthorityFixture,
+        runtimeState: String,
+        comparisonReady: Bool,
+        variants: [VNextRuntimeVariantFixture]
+    ) throws -> FitMatchProductRuntimeResponse {
+        let variantsJSON = variants.map { variant in
+            let sizesJSON = variant.sizes.map { size in
+                """
+                {"id":"\(size.productSizeID)","source_size_key":\(jsonString(size.externalSizeID)),
+                "size_label":\(jsonString(size.sizeLabel)),"availability":{"status":\(jsonString(size.stockStatus ?? "UNKNOWN"))},
+                "canonical_measurements":{"semantic_conflict_count":0,"measurements":[]}}
+                """
+            }.joined(separator: ",")
+            return """
+            {"id":"\(variant.variantID)","source_variant_key":\(jsonString(variant.sourceVariantKey)),
+            "variant_label":\(jsonString(variant.sourceVariantKey)),"color_name":null,"sizes":[\(sizesJSON)]}
+            """
+        }.joined(separator: ",")
+        let vnext = try JSONDecoder().decode(
+            VNextProductRuntimeDTO.self,
+            from: Data(
+                """
+                {
+                  "found":true,
+                  "product":{
+                    "id":"\(fixture.productID)","source_code":"\(fixture.source)",
+                    "source_product_key":"\(fixture.externalProductID)","product_name":"Server Product",
+                    "classification_status":"CONFIRMED","product_structure_code":"SINGLE",
+                    "audience_code":"MEN","category_code":"tops","garment_type_code":"tshirt",
+                    "comparison_policy_code":"tshirt","sleeve_length_code":"short_sleeve",
+                    "lower_length_code":null,"body_length_code":null,
+                    "resolver_version":"test-vnext","input_fingerprint":"fixture"
+                  },
+                  "readiness":{"status":"MEASUREMENTS_REQUIRED","reason":null,
+                    "ready_size_count":0,"policy_metric_count":1},
+                  "variants":[\(variantsJSON)]
+                }
+                """.utf8
+            )
+        )
+        return FitMatchProductRuntimeResponse(
+            runtimeState: runtimeState,
+            comparisonReady: comparisonReady,
+            product: FitMatchRuntimeProduct(
+                productID: fixture.productID,
+                source: fixture.source,
+                externalProductID: fixture.externalProductID,
+                productName: "Server Product",
+                canonicalURL: nil,
+                audience: "MEN",
+                sourceCategoryPath: "server > category",
+                sourceCategoryCodes: ["server-category"],
+                imageURL: nil,
+                lifecycleStatus: "active",
+                inputFingerprint: "measurement-presence-fixture"
+            ),
+            classification: fixture.classification,
+            variants: [],
+            vnext: vnext
+        )
+    }
+
+    private static func jsonString(_ value: String?) -> String {
+        guard let value else { return "null" }
+        let encoded = try? JSONEncoder().encode(value)
+        return encoded.flatMap { String(data: $0, encoding: .utf8) } ?? "null"
+    }
+}
+
+private struct VNextRuntimeVariantFixture {
+    let variantID: UUID
+    let sourceVariantKey: String?
+    let sizes: [FitMatchRuntimeSize]
 }
 
 @MainActor

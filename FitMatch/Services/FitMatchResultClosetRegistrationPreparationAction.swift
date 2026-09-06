@@ -61,7 +61,10 @@ enum FitMatchResultClosetRegistrationPreparationAction {
         }
 
         let viewModel = makeViewModel()
-        _ = await viewModel.loadProductInfoFromHistoricalProduct(historicalProduct)
+        _ = await viewModel.loadProductInfoFromHistoricalProduct(
+            historicalProduct,
+            preferredProductSizeID: preferredProductSizeID
+        )
         guard !Task.isCancelled else {
             return .cancelled
         }

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import Supabase
 
 /// Minimal remote contract for the server-first link-registration action.
 /// Keeping this narrower than account sync makes the View's production action
@@ -10,9 +11,40 @@ nonisolated protocol FitMatchClosetRegistrationRemoteServicing: Sendable {
         -> FitMatchUpsertClosetItemResponse
     func setClosetReference(closetItemID: UUID, isReference: Bool) async throws
         -> FitMatchSetClosetReferenceResponse
+    func listClosetItems() async throws -> FitMatchClosetItemsResponse
+}
+
+extension FitMatchClosetRegistrationRemoteServicing {
+    /// Existing test seams that only exercise the write boundary retain a
+    /// compile-compatible default. The production client implements the real
+    /// read-back method and the app supplies an authoritative projector.
+    func listClosetItems() async throws -> FitMatchClosetItemsResponse {
+        throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+    }
 }
 
 extension FitMatchSupabaseDomainClient: FitMatchClosetRegistrationRemoteServicing {}
+
+nonisolated enum FitMatchClosetSubmissionRecovery: Equatable, Sendable {
+    case editable
+    case retrySameRequest
+    case serverAccepted(closetItemID: UUID)
+
+    var mayEditInput: Bool {
+        if case .editable = self { return true }
+        return false
+    }
+}
+
+nonisolated enum FitMatchClosetRegistrationRPCError: LocalizedError, Sendable {
+    case rejected(sqlState: String, message: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .rejected(_, let message): return message
+        }
+    }
+}
 
 /// Serializes one compared-product Closet save interaction.  The sheet owns
 /// its visual loading state and presentation, while this action owns the
@@ -32,6 +64,7 @@ final class FitMatchComparedProductClosetSubmissionAction {
 
     private var isSubmitting = false
     private let remote: any FitMatchClosetRegistrationRemoteServicing
+    private(set) var recovery: FitMatchClosetSubmissionRecovery = .editable
 
     init(
         remote: any FitMatchClosetRegistrationRemoteServicing = FitMatchSupabaseDomainClient.shared
@@ -51,6 +84,10 @@ final class FitMatchComparedProductClosetSubmissionAction {
         return .completed(await operation())
     }
 
+    func resetAfterCompletedSubmission() {
+        recovery = .editable
+    }
+
     /// The link path must be server-first: it allocates one stable
     /// client_item_id, performs the atomic Closet upsert, optionally asks the
     /// server to make that row a reference, and only then persists SwiftData.
@@ -59,6 +96,14 @@ final class FitMatchComparedProductClosetSubmissionAction {
     func submitServerFirst(
         _ submission: FitMatchComparedProductClosetRegistration.ServerFirstSubmission,
         in modelContext: ModelContext,
+        submissionUserID: UUID? = nil,
+        currentUserID: @MainActor () -> UUID? = { nil },
+        projectAuthoritativeReceipt: ((
+            FitMatchClosetItemRecord,
+            FitMatchUpsertClosetItemRequest,
+            UUID,
+            ModelContext
+        ) throws -> UserFit)? = nil,
         persist: (ModelContext) throws -> Void = { try $0.save() }
     ) async -> Outcome {
         guard !isSubmitting else {
@@ -68,66 +113,186 @@ final class FitMatchComparedProductClosetSubmissionAction {
         isSubmitting = true
         defer { isSubmitting = false }
 
-        if FitMatchComparedProductClosetRegistration.isDuplicate(
-            submission.localRequest
-        ) {
+        if recovery.mayEditInput,
+           FitMatchComparedProductClosetRegistration.isDuplicate(submission.localRequest) {
             return .completed(.duplicate)
         }
 
-        let response: FitMatchUpsertClosetItemResponse
-        do {
-            response = try await remote.upsertClosetItem(submission.remoteRequest)
-            guard response.clientItemID == submission.remoteRequest.clientItemID else {
-                return .completed(.serverRejected(
-                    "서버가 등록 요청의 식별자를 확인하지 못했습니다. 다시 시도해 주세요."
-                ))
-            }
-        } catch {
-            return .completed(.serverRejected(serverMessage(for: error)))
+        guard isCurrentSubmissionUser(submissionUserID, currentUserID) else {
+            return .completed(.serverRejected("로그인 상태가 변경되어 등록 결과를 안전하게 확인할 수 없습니다."))
         }
 
-        var localRequest = submission.localRequest
-        var referenceFailureMessage: String?
+        let acceptedClosetItemID: UUID
+        switch recovery {
+        case .serverAccepted(let closetItemID):
+            // Never write the same accepted client_item_id again. Continue at
+            // the authoritative read-back receipt only.
+            acceptedClosetItemID = closetItemID
+        case .editable, .retrySameRequest:
+            do {
+                let response = try await remote.upsertClosetItem(submission.remoteRequest)
+                guard response.clientItemID == submission.remoteRequest.clientItemID else {
+                    // A decode/identity anomaly can follow a committed RPC.
+                    // Keep exactly this immutable request for reconciliation.
+                    recovery = .retrySameRequest
+                    return .completed(.serverRejected(
+                        "서버 등록 결과를 확인하지 못했습니다. 등록 결과를 다시 확인해 주세요."
+                    ))
+                }
+                guard isCurrentSubmissionUser(submissionUserID, currentUserID) else {
+                    recovery = .serverAccepted(closetItemID: response.closetItemID)
+                    return .completed(.serverAcceptedLocalPersistenceFailed(
+                        clientItemID: submission.remoteRequest.clientItemID
+                    ))
+                }
+                acceptedClosetItemID = response.closetItemID
+                recovery = .serverAccepted(closetItemID: acceptedClosetItemID)
+            } catch {
+                if deterministicRejection(from: error) != nil, recovery.mayEditInput {
+                    // A first SQL-state rejection proves this transaction did
+                    // not commit, so a user may change XL to M and form a new
+                    // immutable request/client ID.
+                    recovery = .editable
+                    return .completed(.serverRejected(serverMessage(for: error)))
+                }
+                // A transport failure, PGRST envelope, decode issue, or a
+                // replay rejection after an earlier timeout cannot disprove a
+                // previous commit. Lock input and retain the exact request.
+                recovery = .retrySameRequest
+                return .completed(.serverRejected(serverMessage(for: error)))
+            }
+        }
+
+        var receiptReferenceState = false
         if submission.localRequest.isRepresentative {
             do {
-                let reference = try await remote.setClosetReference(
-                    closetItemID: response.closetItemID,
+                let response = try await remote.setClosetReference(
+                    closetItemID: acceptedClosetItemID,
                     isReference: true
                 )
-                guard reference.closetItemID == response.closetItemID,
-                      reference.isReference else {
-                    throw FitMatchSupabaseProductResolverError.invalidVNextResponse
-                }
+                receiptReferenceState = response.isReference
             } catch {
-                // The item upsert already succeeded. Persist the local row as a
-                // non-reference and explain this partial outcome rather than
-                // attempting an unsafe compensating delete.
-                localRequest = localRequest.replacingRepresentative(false)
-                referenceFailureMessage = "옷은 등록했지만 기준 옷으로 지정할 수 없습니다."
+                // An absent reply is not evidence that the server left this
+                // row non-reference. The following list receipt is final.
             }
         }
 
-        let localOutcome = FitMatchComparedProductClosetRegistration.save(
-            localRequest,
-            in: modelContext,
-            persist: persist
-        )
-        switch localOutcome {
-        case .saved(let item):
-            if let referenceFailureMessage {
-                return .completed(.savedWithoutReference(item, referenceFailureMessage))
-            }
-            return .completed(.saved(item))
-        case .savedWithoutReference:
-            // `save` itself cannot produce this case; retain the exhaustive
-            // handling in case a future local persistence adapter can.
-            return .completed(localOutcome)
-        case .duplicate, .storageLookupFailed, .persistenceFailed,
-             .serverRejected, .serverAcceptedLocalPersistenceFailed:
+        guard isCurrentSubmissionUser(submissionUserID, currentUserID) else {
             return .completed(.serverAcceptedLocalPersistenceFailed(
                 clientItemID: submission.remoteRequest.clientItemID
             ))
         }
+
+        guard let projectAuthoritativeReceipt else {
+            // This branch is retained solely for older isolated unit-test
+            // seams that intentionally model only the write boundary. The
+            // application sheet always supplies the authoritative projector
+            // below, so production cannot construct a UserFit from the
+            // pre-submit ProductSize.
+            let fallback = FitMatchComparedProductClosetRegistration.save(
+                submission.localRequest.replacingRepresentative(receiptReferenceState),
+                in: modelContext,
+                persist: persist
+            )
+            switch fallback {
+            case .saved(let item):
+                if submission.localRequest.isRepresentative,
+                   !receiptReferenceState {
+                    return .completed(.savedWithoutReference(
+                        item,
+                        "옷은 등록했지만 기준 옷으로 지정할 수 없습니다."
+                    ))
+                }
+                return .completed(.saved(item))
+            case .persistenceFailed:
+                return .completed(.serverAcceptedLocalPersistenceFailed(
+                    clientItemID: submission.remoteRequest.clientItemID
+                ))
+            default:
+                return .completed(.serverAcceptedLocalPersistenceFailed(
+                    clientItemID: submission.remoteRequest.clientItemID
+                ))
+            }
+        }
+
+        let receipt: FitMatchClosetItemRecord
+        do {
+            let rows = try await remote.listClosetItems()
+            guard rows.state == "ready" else {
+                throw FitMatchSupabaseProductResolverError.authenticationRequired
+            }
+            let matches = rows.items.filter {
+                $0.clientItemID == submission.remoteRequest.clientItemID
+            }
+            guard matches.count == 1 else {
+                throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+            }
+            receipt = matches[0]
+        } catch {
+            return .completed(.serverAcceptedLocalPersistenceFailed(
+                clientItemID: submission.remoteRequest.clientItemID
+            ))
+        }
+
+        guard isCurrentSubmissionUser(submissionUserID, currentUserID) else {
+            return .completed(.serverAcceptedLocalPersistenceFailed(
+                clientItemID: submission.remoteRequest.clientItemID
+            ))
+        }
+
+        let item: UserFit
+        do {
+            item = try projectAuthoritativeReceipt(
+                receipt,
+                submission.remoteRequest,
+                acceptedClosetItemID,
+                modelContext
+            )
+        } catch {
+            return .completed(.serverAcceptedLocalPersistenceFailed(
+                clientItemID: submission.remoteRequest.clientItemID
+            ))
+        }
+
+        if submission.localRequest.isRepresentative && !receipt.isReference {
+            return .completed(.savedWithoutReference(
+                item,
+                "옷은 등록했지만 기준 옷으로 지정할 수 없습니다."
+            ))
+        }
+        return .completed(.saved(item))
+    }
+
+    private func isCurrentSubmissionUser(
+        _ original: UUID?,
+        _ currentUserID: @MainActor () -> UUID?
+    ) -> Bool {
+        guard let original else { return true }
+        return currentUserID() == original
+    }
+
+    private func deterministicRejection(from error: Error) -> (code: String, message: String)? {
+        if let registrationError = error as? FitMatchClosetRegistrationRPCError {
+            switch registrationError {
+            case .rejected(let sqlState, let message):
+                return (sqlState, message)
+            }
+        }
+        guard let postgrest = error as? PostgrestError,
+              let code = postgrest.code?.uppercased(),
+              isDeterministicSQLState(code) else {
+            return nil
+        }
+        return (code, postgrest.message)
+    }
+
+    private func isDeterministicSQLState(_ code: String) -> Bool {
+        code == "P0001"
+            || code.hasPrefix("22")
+            || code.hasPrefix("23")
+            || code.hasPrefix("40")
+            || code == "42501"
+            || code.hasPrefix("28")
     }
 
     private func serverMessage(for error: Error) -> String {

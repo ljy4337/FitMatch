@@ -212,6 +212,15 @@ final class FitMatchAuthSessionStore: ObservableObject {
         return false
     }
 
+    /// The root owns account presentation, but a server-first mutation must
+    /// also be able to compare its captured user with the *current* session
+    /// after every await boundary.  Expose only the signed-in UUID; callers
+    /// never infer identity from local cache ownership or a display name.
+    var authenticatedUserID: UUID? {
+        guard case .signedIn(let userID) = state else { return nil }
+        return userID
+    }
+
     func observeAuthChanges() async {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-fitmatchUITesting") {

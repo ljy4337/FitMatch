@@ -6,6 +6,7 @@ struct ClosetItemDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
     @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
 
@@ -60,15 +61,28 @@ struct ClosetItemDetailView: View {
                         hasComparisonHistory: hasComparisonHistory,
                         onDelete: {
                             await deleteItemAndDismiss()
-                        }
-                    ) { selectedSize, category, detailCategory, categoryCode, detailCode, didExplicitlyChangeClassification in
+                        },
+                        prepareLinkedSizeOptions: item.isImportedFromURL ? ({
+                            guard let userID = authSession.authenticatedUserID,
+                                  let closetSync else {
+                                throw FitMatchLinkedClosetSizeEditPreparationError
+                                    .authenticationChanged
+                            }
+                            return try await closetSync.prepareLinkedClosetSizeEdit(
+                                item: item,
+                                userID: userID
+                            )
+                        }) : nil
+                    ) { selectedSize, category, detailCategory, categoryCode, detailCode,
+                        didExplicitlyChangeClassification, linkedSizeEditIntent in
                         saveImportedChanges(
                             selectedSize,
                             category: category,
                             detailCategory: detailCategory,
                             categoryCode: categoryCode,
                             detailCode: detailCode,
-                            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+                            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
+                            linkedSizeEditIntent: linkedSizeEditIntent
                         )
                     }
                 } else {
@@ -275,7 +289,8 @@ struct ClosetItemDetailView: View {
                 detailCategory: editedItem.detailCategory,
                 categoryCode: editedItem.resolvedCategoryCode,
                 detailCode: editedItem.resolvedDetailCategoryCode,
-                didExplicitlyChangeClassification: false
+                didExplicitlyChangeClassification: false,
+                linkedSizeEditIntent: nil
             )
             return true
         }
@@ -305,7 +320,8 @@ struct ClosetItemDetailView: View {
         detailCategory: ClosetDetailCategory,
         categoryCode: String,
         detailCode: String,
-        didExplicitlyChangeClassification: Bool
+        didExplicitlyChangeClassification: Bool,
+        linkedSizeEditIntent: FitMatchLinkedSizeEditIntent?
     ) -> Bool {
         let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
             current: item.classificationAuthorityProvenance,
@@ -340,7 +356,8 @@ struct ClosetItemDetailView: View {
                 detailCategory: effectiveDetail,
                 categoryCode: effectiveCategoryCode,
                 detailCode: effectiveDetailCode,
-                didExplicitlyChangeClassification: didExplicitlyChangeClassification
+                didExplicitlyChangeClassification: didExplicitlyChangeClassification,
+                linkedSizeEditIntent: linkedSizeEditIntent
             )
             return true
         }
@@ -351,7 +368,8 @@ struct ClosetItemDetailView: View {
             detailCategory: effectiveDetail,
             categoryCode: effectiveCategoryCode,
             detailCode: effectiveDetailCode,
-            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
+            linkedSizeEditIntent: linkedSizeEditIntent
         )
     }
 
@@ -361,11 +379,13 @@ struct ClosetItemDetailView: View {
         detailCategory: ClosetDetailCategory,
         categoryCode: String,
         detailCode: String,
-        didExplicitlyChangeClassification: Bool
+        didExplicitlyChangeClassification: Bool,
+        linkedSizeEditIntent: FitMatchLinkedSizeEditIntent? = nil
     ) -> Bool {
         switch FitMatchClosetItemEditAction.saveImported(
             item: item,
             selectedSize: selectedSize,
+            linkedSizeEditIntent: linkedSizeEditIntent,
             category: category,
             detailCategory: detailCategory,
             categoryCode: categoryCode,
@@ -439,7 +459,8 @@ struct ClosetItemDetailView: View {
                     ?? item.resolvedDetailCategoryCode
                     ?? "",
                 didExplicitlyChangeClassification: pendingReferenceChange
-                    .didExplicitlyChangeClassification
+                    .didExplicitlyChangeClassification,
+                linkedSizeEditIntent: pendingReferenceChange.linkedSizeEditIntent
             )
         }
         self.pendingReferenceChange = nil
@@ -620,13 +641,15 @@ private struct ImportedClosetItemEditView: View {
     let item: UserFit
     let hasComparisonHistory: Bool
     let onDelete: () async -> Bool
+    let prepareLinkedSizeOptions: (() async throws -> FitMatchLinkedClosetSizeEditPreparation)?
     let onSave: (
         ProductSize,
         ClothingCategory,
         ClosetDetailCategory,
         String,
         String,
-        Bool
+        Bool,
+        FitMatchLinkedSizeEditIntent?
     ) -> Bool
 
     @State private var selectedSizeID: UUID?
@@ -638,28 +661,39 @@ private struct ImportedClosetItemEditView: View {
     @State private var isShowingDeleteAlert = false
     @State private var isShowingSaveError = false
     @State private var isDeleting = false
+    @State private var isPreparingLinkedSizeOptions = false
+    @State private var linkedSizePreparation: FitMatchLinkedClosetSizeEditPreparation?
+    @State private var linkedSizePreparationMessage: String?
 
     init(
         item: UserFit,
         hasComparisonHistory: Bool,
         onDelete: @escaping () async -> Bool,
+        prepareLinkedSizeOptions: (() async throws -> FitMatchLinkedClosetSizeEditPreparation)? = nil,
         onSave: @escaping (
             ProductSize,
             ClothingCategory,
             ClosetDetailCategory,
             String,
             String,
-            Bool
+            Bool,
+            FitMatchLinkedSizeEditIntent?
         ) -> Bool
     ) {
         self.item = item
         self.hasComparisonHistory = hasComparisonHistory
         self.onDelete = onDelete
+        self.prepareLinkedSizeOptions = prepareLinkedSizeOptions
         self.onSave = onSave
         let sizes = Self.availableSizes(for: item)
-        let initialID = item.sourceProductSize?.id
-            ?? sizes.first { $0.name.fitMatchDisplaySizeName == item.sizeName }?.id
-            ?? (sizes.count == 1 ? sizes.first?.id : nil)
+        // A server-linked edit deliberately starts empty until the remote row
+        // and fresh runtime establish an exact current product_size_id. The
+        // legacy/local-only editor retains its historical presentation path.
+        let initialID: UUID? = prepareLinkedSizeOptions == nil
+            ? (item.sourceProductSize?.id
+                ?? sizes.first { $0.name.fitMatchDisplaySizeName == item.sizeName }?.id
+                ?? (sizes.count == 1 ? sizes.first?.id : nil))
+            : nil
         _selectedSizeID = State(initialValue: initialID)
         _selectedCategory = State(initialValue: item.category)
         _selectedDetailCategory = State(initialValue: item.detailCategory)
@@ -685,6 +719,9 @@ private struct ImportedClosetItemEditView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             normalizeCategorySelection()
+        }
+        .task(id: item.id) {
+            await loadLinkedSizeOptionsIfNeeded()
         }
         .safeAreaInset(edge: .bottom) {
             bottomSaveBar
@@ -789,7 +826,14 @@ private struct ImportedClosetItemEditView: View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 16) {
                 SectionHeader(title: "보유 사이즈")
-                if availableSizes.isEmpty {
+                if isPreparingLinkedSizeOptions {
+                    ProgressView("서버 사이즈 확인 중")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else if let linkedSizePreparationMessage {
+                    Text(linkedSizePreparationMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else if availableSizes.isEmpty {
                     Text("선택할 수 있는 원본 사이즈표가 없습니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -861,7 +905,12 @@ private struct ImportedClosetItemEditView: View {
 
     private var bottomSaveBar: some View {
         VStack(spacing: 10) {
-            if selectedSize == nil {
+            if let linkedSizePreparationMessage {
+                Label(linkedSizePreparationMessage, systemImage: "info.circle")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if selectedSize == nil {
                 Label("저장할 사이즈를 선택해 주세요.", systemImage: "info.circle")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -870,13 +919,33 @@ private struct ImportedClosetItemEditView: View {
 
             Button {
                 guard let selectedSize else { return }
+                let linkedSizeEditIntent: FitMatchLinkedSizeEditIntent?
+                if let preparation = linkedSizePreparation {
+                    guard let selectedSizeID,
+                          preparation.option(displaySizeID: selectedSizeID) != nil else {
+                        isShowingSaveError = true
+                        return
+                    }
+                    linkedSizeEditIntent = preparation.intent(
+                        for: selectedSizeID,
+                        localUpdatedAt: Date()
+                    )
+                } else if prepareLinkedSizeOptions != nil {
+                    // A sourced row never falls through to a label-based
+                    // local edit while its fresh server identity is absent.
+                    isShowingSaveError = true
+                    return
+                } else {
+                    linkedSizeEditIntent = nil
+                }
                 if onSave(
                     selectedSize,
                     selectedCategory,
                     selectedDetailCategory,
                     selectedCategoryCode,
                     selectedDetailCategoryCode,
-                    didExplicitlyChangeClassification
+                    didExplicitlyChangeClassification,
+                    linkedSizeEditIntent
                 ) {
                     dismiss()
                 } else {
@@ -894,7 +963,11 @@ private struct ImportedClosetItemEditView: View {
                     )
             }
             .buttonStyle(.plain)
-            .disabled(selectedSize == nil)
+            .disabled(
+                selectedSize == nil
+                    || isPreparingLinkedSizeOptions
+                    || (prepareLinkedSizeOptions != nil && linkedSizePreparation == nil)
+            )
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -903,6 +976,12 @@ private struct ImportedClosetItemEditView: View {
     }
 
     private var availableSizes: [ProductSize] {
+        if let linkedSizePreparation {
+            return linkedSizePreparation.options.map(\.productSize)
+        }
+        if prepareLinkedSizeOptions != nil {
+            return []
+        }
         Self.availableSizes(for: item)
     }
 
@@ -955,6 +1034,30 @@ private struct ImportedClosetItemEditView: View {
         return availableSizes.first { $0.id == selectedSizeID }
     }
 
+    private func loadLinkedSizeOptionsIfNeeded() async {
+        guard let prepareLinkedSizeOptions,
+              !isPreparingLinkedSizeOptions,
+              linkedSizePreparation == nil else {
+            return
+        }
+        isPreparingLinkedSizeOptions = true
+        linkedSizePreparationMessage = nil
+        defer { isPreparingLinkedSizeOptions = false }
+        do {
+            let preparation = try await prepareLinkedSizeOptions()
+            guard preparation.clientItemID == item.id,
+                  preparation.option(displaySizeID: preparation.initialDisplaySizeID) != nil else {
+                throw FitMatchLinkedClosetSizeEditPreparationError.runtimeIdentityUnavailable
+            }
+            linkedSizePreparation = preparation
+            selectedSizeID = preparation.initialDisplaySizeID
+        } catch {
+            linkedSizePreparationMessage = (error as? LocalizedError)?.errorDescription
+                ?? "서버의 최신 사이즈 정보를 확인하지 못했습니다. 새로고침 후 다시 시도해 주세요."
+            selectedSizeID = nil
+        }
+    }
+
     private var measurementGridColumns: [GridItem] {
         let columnCount = item.category.serviceGroup == .bottom ? 3 : 2
         return Array(repeating: GridItem(.flexible(), spacing: 10), count: columnCount)
@@ -985,6 +1088,7 @@ private struct PendingClosetEdit {
     let categoryCode: String?
     let detailCode: String?
     let didExplicitlyChangeClassification: Bool
+    let linkedSizeEditIntent: FitMatchLinkedSizeEditIntent?
 }
 
 private struct MeasurementValueTile: View {
