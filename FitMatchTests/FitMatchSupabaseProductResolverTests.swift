@@ -1369,6 +1369,46 @@ struct FitMatchSupabaseProductResolverTests {
         )
     }
 
+    @Test func linkRegistrationNextRequiresAtLeastOneRegisterableExactIdentity() {
+        let product = Product(name: "Link exact identity gate", category: .top)
+        let displaySize = ProductSize(
+            id: UUID(),
+            name: "M",
+            measurements: .init(shoulder: 0, chest: 52, totalLength: 0, sleeveLength: 0),
+            product: product
+        )
+        let exactIdentity = FitMatchClosetRegistrationServerIdentity(
+            productID: UUID(),
+            productVariantID: UUID(),
+            productSizeID: UUID()
+        )
+        let validReviewContext = FitMatchClosetRegistrationServerContext(
+            classificationState: .reviewRequired,
+            identitiesByDisplaySizeID: [displaySize.id: exactIdentity],
+            registerableDisplaySizeIDs: [displaySize.id]
+        )
+        #expect(
+            LinkClosetRegistrationPreparation.registrationBlockMessage(
+                productMeasurementPresence: .available,
+                serverRegistrationContext: validReviewContext,
+                displaySizes: [displaySize]
+            ) == nil
+        )
+
+        let staleIdentityContext = FitMatchClosetRegistrationServerContext(
+            classificationState: .confirmed,
+            identitiesByDisplaySizeID: [:],
+            registerableDisplaySizeIDs: [displaySize.id]
+        )
+        #expect(
+            LinkClosetRegistrationPreparation.registrationBlockMessage(
+                productMeasurementPresence: .available,
+                serverRegistrationContext: staleIdentityContext,
+                displaySizes: [displaySize]
+            ) != nil
+        )
+    }
+
     @Test func reviewRequiredRawMeasurementMapsToExactRegisterableRuntimeSize() async throws {
         let parsed = try Self.measurementPresenceProduct(
             externalProductID: "review-raw-presence",
@@ -1417,6 +1457,7 @@ struct FitMatchSupabaseProductResolverTests {
             brand: nil
         )
         let product = try #require(preparation.parsedProduct)
+        #expect(preparation.canBeginRegistration)
         let registerable = AddComparedProductToClosetSheet.selectableSizes(
             productSizes: product.sizes,
             serverRegistrationContext: preparation.serverRegistrationContext
@@ -1711,6 +1752,78 @@ struct FitMatchSupabaseProductResolverTests {
             AddComparedProductToClosetSheet.initialSelectedSizeID(
                 recommendedSize: preparation.preferredSize,
                 productSizes: pickerSizes,
+                allowsLabelFallback: false
+            ) == nil
+        )
+        #expect(preparation.initialSizeSelectionMessage?.contains("XL") == true)
+    }
+
+    /// History has no retained current-display server identity.  Even a
+    /// one-size historical product must therefore enter the same fresh
+    /// server-first preparation with no preselected size; the local history
+    /// ProductSize UUID is presentation data, never `product_size_id`.
+    @Test func historyClosetPreparationRequiresExplicitFreshSizeSelection() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "history-closet-explicit-size",
+            sizes: [("M", 52)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "history-closet-explicit-size",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let serverM = Self.runtimeSize(
+            sourceSizeKey: "M",
+            label: "M",
+            displayOrder: 0
+        )
+        let historicalProduct = Self.historicalResultProduct(from: parsed)
+        let historicalM = try #require(historicalProduct.sizes.first)
+        #expect(historicalM.id != serverM.productSizeID)
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [Self.measurementRuntime(
+                fixture: fixture,
+                runtimeState: "measurements_required",
+                comparisonReady: false,
+                variantID: UUID(),
+                sizes: [serverM]
+            )]
+        )
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: historicalProduct,
+            productDetailCategory: .shortSleeve,
+            preferredProductSizeID: nil,
+            legacyPreferredSize: historicalM,
+            requiresExplicitSizeSelectionWhenNoPreferred: true,
+            makeViewModel: {
+                ShoppingProductViewModel(
+                    metricsRecorder: DatabaseAuthorityNoopMetricsRecorder(),
+                    serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+                )
+            }
+        )
+
+        guard case .prepared(let preparation) = outcome else {
+            Issue.record("History should open only after fresh server preparation")
+            return
+        }
+        let context = try #require(preparation.serverRegistrationContext)
+        #expect(preparation.preferredSize == nil)
+        #expect(preparation.requiresExplicitSizeSelection)
+        #expect(preparation.initialSizeSelectionMessage == nil)
+        let freshM = try #require(preparation.product.sizes.first)
+        #expect(context.identity(for: freshM.id)?.productSizeID == serverM.productSizeID)
+        #expect(
+            AddComparedProductToClosetSheet.initialSelectedSizeID(
+                recommendedSize: preparation.preferredSize,
+                productSizes: [freshM],
                 allowsLabelFallback: false
             ) == nil
         )

@@ -131,7 +131,8 @@ struct RecommendationResultView: View {
                     isParsedProductReadOnly: preparation.serverRegistrationContext != nil,
                     serverRegistrationContext: preparation.serverRegistrationContext,
                     startsAtRegistrationConfirmation: true,
-                    requiresExplicitSizeSelection: preparation.requiresExplicitSizeSelection
+                    requiresExplicitSizeSelection: preparation.requiresExplicitSizeSelection,
+                    initialSizeSelectionMessage: preparation.initialSizeSelectionMessage
                 ) { _ in
                     showClosetSavedToast()
                 }

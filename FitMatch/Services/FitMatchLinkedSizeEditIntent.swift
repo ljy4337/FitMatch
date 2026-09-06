@@ -65,6 +65,39 @@ enum FitMatchLinkedClosetSizeEditPreparationError: LocalizedError {
     }
 }
 
+/// A single user-triggered edit assembled from the current owned Closet row
+/// and the fresh runtime option returned by
+/// `prepareLinkedClosetSizeEdit`.  It deliberately carries the exact UUID
+/// tuple beside its display ProductSize so no edit path can re-infer identity
+/// from a rendered size label.
+@MainActor
+struct FitMatchLinkedClosetEditDraft {
+    let item: UserFit
+    let preparation: FitMatchLinkedClosetSizeEditPreparation
+    let selectedDisplaySizeID: UUID
+    let category: ClothingCategory
+    let detailCategory: ClosetDetailCategory
+    let categoryCode: String
+    let detailCode: String
+    let didExplicitlyChangeClassification: Bool
+
+    var selectedOption: FitMatchLinkedClosetSizeEditOption? {
+        preparation.option(displaySizeID: selectedDisplaySizeID)
+    }
+}
+
+/// Terminal and recoverable outcomes for the user-driven linked edit flow.
+/// `needsReferenceConfirmation` is intentionally returned before any update
+/// or reference RPC, allowing the editing sheet itself to retain its input
+/// while it asks for consent.
+@MainActor
+enum FitMatchLinkedClosetEditSaveOutcome {
+    case saved
+    case needsReferenceConfirmation
+    case reconciliationRequired(String)
+    case failed(String)
+}
+
 /// A user-confirmed size change for an already linked Closet row.  This is a
 /// user-scoped journal, not product identity storage: the exact identifiers
 /// are obtained from a fresh runtime preparation immediately before the edit.

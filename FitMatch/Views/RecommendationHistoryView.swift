@@ -12,7 +12,8 @@ struct RecommendationHistoryView: View {
     @State private var selectedCategory: ClothingCategory?
     @State private var searchText = ""
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
-    @State private var selectedHistoryForCloset: RecommendationHistory?
+    @State private var closetRegistrationPreparation: FitMatchResultClosetRegistrationPreparation?
+    @State private var preparingHistoryClosetIDs = Set<UUID>()
     @State private var selectedHistoryIDForDetail: UUID?
     @State private var opensReferencePickerOnDetail = false
     @State private var saveErrorMessage: String?
@@ -58,12 +59,16 @@ struct RecommendationHistoryView: View {
                 }
             }
         }
-        .sheet(item: $selectedHistoryForCloset) { history in
+        .sheet(item: $closetRegistrationPreparation) { preparation in
             AddComparedProductToClosetSheet(
-                product: history.product,
-                productDetailCategory: history.productDetailCategory,
-                recommendedSize: history.recommendedSize,
-                startsAtRegistrationConfirmation: true
+                product: preparation.product,
+                productDetailCategory: preparation.productDetailCategory,
+                recommendedSize: preparation.preferredSize,
+                isParsedProductReadOnly: preparation.serverRegistrationContext != nil,
+                serverRegistrationContext: preparation.serverRegistrationContext,
+                startsAtRegistrationConfirmation: true,
+                requiresExplicitSizeSelection: preparation.requiresExplicitSizeSelection,
+                initialSizeSelectionMessage: preparation.initialSizeSelectionMessage
             ) { _ in
                 showClosetSavedToast()
             }
@@ -155,7 +160,8 @@ struct RecommendationHistoryView: View {
                 ForEach(displayedHistories) { history in
                     HistoryCard(
                         history: history,
-                        isFavorite: isFavorite(history)
+                        isFavorite: isFavorite(history),
+                        isPreparingClosetRegistration: preparingHistoryClosetIDs.contains(history.id)
                     ) {
                         toggleFavorite(history)
                     } onOpen: {
@@ -164,7 +170,7 @@ struct RecommendationHistoryView: View {
                         opensReferencePickerOnDetail = true
                         showDetail(history)
                     } onAddToCloset: {
-                        selectedHistoryForCloset = history
+                        prepareHistoryClosetRegistration(history)
                     } onShowDetail: {
                         opensReferencePickerOnDetail = false
                         showDetail(history)
@@ -233,6 +239,34 @@ struct RecommendationHistoryView: View {
             productName: history.productNameForDisplay
         )
         selectedHistoryIDForDetail = history.id
+    }
+
+    private func prepareHistoryClosetRegistration(_ history: RecommendationHistory) {
+        guard !preparingHistoryClosetIDs.contains(history.id) else { return }
+        preparingHistoryClosetIDs.insert(history.id)
+        Task { @MainActor in
+            defer { preparingHistoryClosetIDs.remove(history.id) }
+            let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+                historicalProduct: history.product,
+                productDetailCategory: history.productDetailCategory,
+                // A History row is evidence from a completed comparison, not
+                // an exact size currently selected in a live Result screen.
+                // Never treat its local ProductSize ID or displayed label as
+                // a production server identity.
+                preferredProductSizeID: nil,
+                legacyPreferredSize: nil,
+                requiresExplicitSizeSelectionWhenNoPreferred: true,
+                makeViewModel: { ShoppingProductViewModel() }
+            )
+            switch outcome {
+            case .prepared(let preparation):
+                closetRegistrationPreparation = preparation
+            case .blocked(let message):
+                saveErrorMessage = message
+            case .cancelled:
+                break
+            }
+        }
     }
 
     private var historyLayoutBinding: Binding<ContentListLayout> {
@@ -461,6 +495,7 @@ private struct EmptyRecommendationHistoryView: View {
 private struct HistoryCard: View {
     let history: RecommendationHistory
     let isFavorite: Bool
+    let isPreparingClosetRegistration: Bool
     let onToggleFavorite: () -> Void
     let onOpen: () -> Void
     let onRecompare: () -> Void
@@ -479,6 +514,28 @@ private struct HistoryCard: View {
             currentCardContent(comparedKinds: comparedKinds)
                 .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .onTapGesture(perform: onShowDetail)
+                .overlay(alignment: .topTrailing) {
+                    if isPreparingClosetRegistration {
+                        ProgressView()
+                            .padding(14)
+                            .background(.regularMaterial, in: Circle())
+                            .padding(8)
+                    }
+                }
+        }
+        .contextMenu {
+            Button {
+                onAddToCloset()
+            } label: {
+                Label(
+                    isPreparingClosetRegistration ? "등록 정보 확인 중" : "보유한 옷으로 등록",
+                    systemImage: "plus"
+                )
+            }
+            .disabled(isPreparingClosetRegistration)
+        }
+        .accessibilityAction(named: "보유한 옷으로 등록") {
+            onAddToCloset()
         }
     }
 

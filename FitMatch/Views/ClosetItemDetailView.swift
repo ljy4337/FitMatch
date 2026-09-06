@@ -73,16 +73,18 @@ struct ClosetItemDetailView: View {
                                 userID: userID
                             )
                         }) : nil
-                    ) { selectedSize, category, detailCategory, categoryCode, detailCode,
-                        didExplicitlyChangeClassification, linkedSizeEditIntent in
-                        saveImportedChanges(
-                            selectedSize,
-                            category: category,
-                            detailCategory: detailCategory,
-                            categoryCode: categoryCode,
-                            detailCode: detailCode,
-                            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
-                            linkedSizeEditIntent: linkedSizeEditIntent
+                    ) { draft, confirmsReferenceReplacement in
+                        guard let userID = authSession.authenticatedUserID,
+                              let closetSync else {
+                            return .failed(
+                                "로그인 상태가 변경되어 수정 결과를 안전하게 확인할 수 없습니다."
+                            )
+                        }
+                        return await closetSync.saveLinkedClosetEdit(
+                            draft,
+                            userID: userID,
+                            modelContext: modelContext,
+                            confirmsReferenceReplacement: confirmsReferenceReplacement
                         )
                     }
                 } else {
@@ -642,15 +644,8 @@ private struct ImportedClosetItemEditView: View {
     let hasComparisonHistory: Bool
     let onDelete: () async -> Bool
     let prepareLinkedSizeOptions: (() async throws -> FitMatchLinkedClosetSizeEditPreparation)?
-    let onSave: (
-        ProductSize,
-        ClothingCategory,
-        ClosetDetailCategory,
-        String,
-        String,
-        Bool,
-        FitMatchLinkedSizeEditIntent?
-    ) -> Bool
+    let onSave: (FitMatchLinkedClosetEditDraft, Bool) async
+        -> FitMatchLinkedClosetEditSaveOutcome
 
     @State private var selectedSizeID: UUID?
     @State private var selectedCategory: ClothingCategory
@@ -664,21 +659,18 @@ private struct ImportedClosetItemEditView: View {
     @State private var isPreparingLinkedSizeOptions = false
     @State private var linkedSizePreparation: FitMatchLinkedClosetSizeEditPreparation?
     @State private var linkedSizePreparationMessage: String?
+    @State private var isSaving = false
+    @State private var isReconcilingAcceptedServerEdit = false
+    @State private var saveErrorMessage: String?
+    @State private var pendingReferenceConfirmationDraft: FitMatchLinkedClosetEditDraft?
 
     init(
         item: UserFit,
         hasComparisonHistory: Bool,
         onDelete: @escaping () async -> Bool,
         prepareLinkedSizeOptions: (() async throws -> FitMatchLinkedClosetSizeEditPreparation)? = nil,
-        onSave: @escaping (
-            ProductSize,
-            ClothingCategory,
-            ClosetDetailCategory,
-            String,
-            String,
-            Bool,
-            FitMatchLinkedSizeEditIntent?
-        ) -> Bool
+        onSave: @escaping (FitMatchLinkedClosetEditDraft, Bool) async
+            -> FitMatchLinkedClosetEditSaveOutcome
     ) {
         self.item = item
         self.hasComparisonHistory = hasComparisonHistory
@@ -714,6 +706,7 @@ private struct ImportedClosetItemEditView: View {
             .padding(20)
             .padding(.bottom, 120)
         }
+        .disabled(isSubmissionInputLocked)
         .background(Color(.systemGroupedBackground))
         .navigationTitle("내 옷 정보 수정")
         .navigationBarTitleDisplayMode(.inline)
@@ -737,8 +730,26 @@ private struct ImportedClosetItemEditView: View {
         .alert("저장하지 못했습니다", isPresented: $isShowingSaveError) {
             Button("확인", role: .cancel) {}
         } message: {
-            Text("입력한 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.")
+            Text(saveErrorMessage ?? "입력한 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.")
         }
+        .alert("기준 옷을 변경할까요?", isPresented: Binding(
+            get: { pendingReferenceConfirmationDraft != nil },
+            set: { if !$0 { pendingReferenceConfirmationDraft = nil } }
+        )) {
+            Button("취소", role: .cancel) {
+                // The preflight was read-only. Keep the editor and every
+                // selected input exactly as the user left them.
+                pendingReferenceConfirmationDraft = nil
+            }
+            Button("변경") {
+                guard let draft = pendingReferenceConfirmationDraft else { return }
+                pendingReferenceConfirmationDraft = nil
+                submitLinkedEdit(draft, confirmsReferenceReplacement: true)
+            }
+        } message: {
+            Text("같은 분류의 기존 기준 옷은 서버에서 해제될 수 있어요.")
+        }
+        .interactiveDismissDisabled(isSubmissionInputLocked)
     }
 
     private var categorySelectionCard: some View {
@@ -830,9 +841,19 @@ private struct ImportedClosetItemEditView: View {
                     ProgressView("서버 사이즈 확인 중")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else if let linkedSizePreparationMessage {
-                    Text(linkedSizePreparationMessage)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(linkedSizePreparationMessage)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button("다시 시도") {
+                            Task { @MainActor in
+                                await loadLinkedSizeOptionsIfNeeded()
+                            }
+                        }
+                        .font(.subheadline.weight(.bold))
+                        .disabled(isSubmissionInputLocked)
+                    }
                 } else if availableSizes.isEmpty {
                     Text("선택할 수 있는 원본 사이즈표가 없습니다.")
                         .font(.subheadline)
@@ -905,7 +926,15 @@ private struct ImportedClosetItemEditView: View {
 
     private var bottomSaveBar: some View {
         VStack(spacing: 10) {
-            if let linkedSizePreparationMessage {
+            if isReconcilingAcceptedServerEdit {
+                Label(
+                    "서버 수정 결과를 확인하는 중입니다. 등록 결과를 다시 확인해 주세요.",
+                    systemImage: "info.circle"
+                )
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else if let linkedSizePreparationMessage {
                 Label(linkedSizePreparationMessage, systemImage: "info.circle")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -918,41 +947,21 @@ private struct ImportedClosetItemEditView: View {
             }
 
             Button {
-                guard let selectedSize else { return }
-                let linkedSizeEditIntent: FitMatchLinkedSizeEditIntent?
-                if let preparation = linkedSizePreparation {
-                    guard let selectedSizeID,
-                          preparation.option(displaySizeID: selectedSizeID) != nil else {
-                        isShowingSaveError = true
-                        return
-                    }
-                    linkedSizeEditIntent = preparation.intent(
-                        for: selectedSizeID,
-                        localUpdatedAt: Date()
-                    )
-                } else if prepareLinkedSizeOptions != nil {
-                    // A sourced row never falls through to a label-based
-                    // local edit while its fresh server identity is absent.
+                guard let draft = currentLinkedEditDraft else {
+                    saveErrorMessage = "서버의 최신 사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요."
                     isShowingSaveError = true
                     return
-                } else {
-                    linkedSizeEditIntent = nil
                 }
-                if onSave(
-                    selectedSize,
-                    selectedCategory,
-                    selectedDetailCategory,
-                    selectedCategoryCode,
-                    selectedDetailCategoryCode,
-                    didExplicitlyChangeClassification,
-                    linkedSizeEditIntent
-                ) {
-                    dismiss()
-                } else {
-                    isShowingSaveError = true
-                }
+                submitLinkedEdit(
+                    draft,
+                    confirmsReferenceReplacement: false
+                )
             } label: {
-                Text("수정 저장")
+                Text(isSaving ? "저장 중" : (
+                    isReconcilingAcceptedServerEdit
+                        ? "등록 결과 다시 확인"
+                        : "수정 저장"
+                ))
                     .font(.headline.weight(.bold))
                     .foregroundStyle(selectedSize == nil ? .secondary : Color(.systemBackground))
                     .frame(maxWidth: .infinity)
@@ -967,12 +976,66 @@ private struct ImportedClosetItemEditView: View {
                 selectedSize == nil
                     || isPreparingLinkedSizeOptions
                     || (prepareLinkedSizeOptions != nil && linkedSizePreparation == nil)
+                    || isSaving
             )
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 10)
         .background(.regularMaterial)
+    }
+
+    private var isSubmissionInputLocked: Bool {
+        isSaving || isReconcilingAcceptedServerEdit
+    }
+
+    private var currentLinkedEditDraft: FitMatchLinkedClosetEditDraft? {
+        guard let linkedSizePreparation,
+              let selectedSizeID,
+              linkedSizePreparation.option(displaySizeID: selectedSizeID) != nil else {
+            return nil
+        }
+        return FitMatchLinkedClosetEditDraft(
+            item: item,
+            preparation: linkedSizePreparation,
+            selectedDisplaySizeID: selectedSizeID,
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            categoryCode: selectedCategoryCode,
+            detailCode: selectedDetailCategoryCode,
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+        )
+    }
+
+    private func submitLinkedEdit(
+        _ draft: FitMatchLinkedClosetEditDraft,
+        confirmsReferenceReplacement: Bool
+    ) {
+        guard !isSaving else { return }
+        isSaving = true
+        Task { @MainActor in
+            defer { isSaving = false }
+            let outcome = await onSave(draft, confirmsReferenceReplacement)
+            switch outcome {
+            case .saved:
+                isReconcilingAcceptedServerEdit = false
+                dismiss()
+            case .needsReferenceConfirmation:
+                // No remote update has occurred on this outcome.  The child
+                // sheet owns the confirmation so it cannot disappear behind
+                // the parent detail alert before the user chooses.
+                pendingReferenceConfirmationDraft = draft
+            case .reconciliationRequired(let message):
+                isReconcilingAcceptedServerEdit = true
+                saveErrorMessage = message
+                // Keep the editor on screen and lock the immutable accepted
+                // request. The bottom action remains enabled for read-back.
+            case .failed(let message):
+                isReconcilingAcceptedServerEdit = false
+                saveErrorMessage = message
+                isShowingSaveError = true
+            }
+        }
     }
 
     private var availableSizes: [ProductSize] {

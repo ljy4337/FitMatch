@@ -21,6 +21,10 @@ struct FitMatchResultClosetRegistrationPreparation: Identifiable {
     /// unregistrable in the fresh runtime, retain no selection rather than
     /// silently returning to the historical recommendation.
     let requiresExplicitSizeSelection: Bool
+    /// Presentation-only explanation for a Result whose exact server size is
+    /// no longer present in the fresh runtime.  The label is never used to
+    /// recover identity or make a new automatic selection.
+    let initialSizeSelectionMessage: String?
 }
 
 /// Non-visual preparation behind Result → "보유한 옷으로 등록".
@@ -43,6 +47,10 @@ enum FitMatchResultClosetRegistrationPreparationAction {
         productDetailCategory: ClosetDetailCategory,
         preferredProductSizeID: UUID?,
         legacyPreferredSize: ProductSize?,
+        /// History has no current displayed server size.  It deliberately
+        /// opens the sourced form with no automatic size selection, including
+        /// products with exactly one registerable size.
+        requiresExplicitSizeSelectionWhenNoPreferred: Bool = false,
         makeViewModel: () -> ShoppingProductViewModel
     ) async -> Outcome {
         // Manual products have no retailer identity to resolve.  Preserve the
@@ -55,7 +63,8 @@ enum FitMatchResultClosetRegistrationPreparationAction {
                     productDetailCategory: productDetailCategory,
                     serverRegistrationContext: nil,
                     preferredSize: legacyPreferredSize,
-                    requiresExplicitSizeSelection: false
+                    requiresExplicitSizeSelection: false,
+                    initialSizeSelectionMessage: nil
                 )
             )
         }
@@ -104,14 +113,31 @@ enum FitMatchResultClosetRegistrationPreparationAction {
             product: product,
             context: context
         )
+        let needsExplicitSelection = preferredSize == nil
+            && (
+                preferredProductSizeID != nil
+                    || requiresExplicitSizeSelectionWhenNoPreferred
+            )
+        let initialSizeSelectionMessage: String?
+        if preferredProductSizeID != nil, preferredSize == nil {
+            let displayedLabel = legacyPreferredSize?.name.displaySizeName
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let displayedLabel, !displayedLabel.isEmpty {
+                initialSizeSelectionMessage = "비교했던 \(displayedLabel) 사이즈는 현재 상품에서 확인되지 않습니다. 등록할 사이즈를 다시 선택해 주세요."
+            } else {
+                initialSizeSelectionMessage = "비교했던 사이즈는 현재 상품에서 확인되지 않습니다. 등록할 사이즈를 다시 선택해 주세요."
+            }
+        } else {
+            initialSizeSelectionMessage = nil
+        }
         return .prepared(
             FitMatchResultClosetRegistrationPreparation(
                 product: product,
                 productDetailCategory: viewModel.detailCategory,
                 serverRegistrationContext: context,
                 preferredSize: preferredSize,
-                requiresExplicitSizeSelection: preferredProductSizeID != nil
-                    && preferredSize == nil
+                requiresExplicitSizeSelection: needsExplicitSelection,
+                initialSizeSelectionMessage: initialSizeSelectionMessage
             )
         )
     }

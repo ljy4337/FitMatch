@@ -102,9 +102,23 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     private var needsAnotherPass = false
     private var pendingSyncUserID: UUID?
     private var remoteItemsByClientID: [UUID: FitMatchClosetItemRecord] = [:]
+    /// A user-triggered linked edit has already reached the update RPC.  Keep
+    /// its exact request in memory until the list receipt is projected so a
+    /// local read-back failure cannot turn into a second update with guessed
+    /// or newly selected identity.
+    private var acceptedLinkedEditReceipts: [UUID: LinkedEditAcceptedReceipt] = [:]
 
     private static let cacheOwnerKey = "FitMatch.closetCacheOwnerUserID"
     private static let pendingDeletePrefix = "FitMatch.closetPendingDelete."
+
+    private struct LinkedEditAcceptedReceipt {
+        let userID: UUID
+        let closetItemID: UUID
+        let request: FitMatchUpsertClosetItemRequest
+        let wantsReference: Bool
+        let possibleReplacedReferenceClientIDs: Set<UUID>
+        var shouldRetryReferenceMutation: Bool
+    }
 
     init(
         remote: (any FitMatchClosetRemoteServicing)? = nil,
@@ -124,6 +138,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         guard activeUserID != userID else { return }
         activeUserID = userID
         remoteItemsByClientID.removeAll()
+        acceptedLinkedEditReceipts.removeAll()
         pendingSyncUserID = nil
         needsAnotherPass = false
         if userID == nil {
@@ -203,6 +218,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         SourceCategoryHistoryMatcher.clearStoredMappings(defaults: defaults)
         activeUserID = nil
         remoteItemsByClientID.removeAll()
+        acceptedLinkedEditReceipts.removeAll()
         needsAnotherPass = false
         pendingSyncUserID = nil
         state = .idle
@@ -361,6 +377,428 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             options: options,
             initialDisplaySizeID: currentOptions[0].displaySizeID
         )
+    }
+
+    /// Performs the user-visible server-first mutation for an already linked
+    /// Closet item.  The editor calls this only after
+    /// `prepareLinkedClosetSizeEdit` has proved the selected display option's
+    /// product/variant/size UUIDs.  No local size or measurements are changed
+    /// until the server's list receipt confirms that exact tuple.
+    func saveLinkedClosetEdit(
+        _ draft: FitMatchLinkedClosetEditDraft,
+        userID: UUID,
+        modelContext: ModelContext,
+        confirmsReferenceReplacement: Bool
+    ) async -> FitMatchLinkedClosetEditSaveOutcome {
+        guard isCurrentSyncUser(userID),
+              draft.preparation.userID == userID,
+              draft.preparation.clientItemID == draft.item.id,
+              let selectedOption = draft.selectedOption else {
+            return .failed("서버의 최신 사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요.")
+        }
+
+        if let accepted = acceptedLinkedEditReceipts[draft.item.id] {
+            guard accepted.userID == userID,
+                  accepted.request.productID == selectedOption.identity.productID,
+                  accepted.request.productVariantID == selectedOption.identity.productVariantID,
+                  accepted.request.productSizeID == selectedOption.identity.productSizeID else {
+                return .reconciliationRequired(
+                    "서버에 저장된 변경 결과를 확인하는 중입니다. 등록 결과를 다시 확인해 주세요."
+                )
+            }
+            return await reconcileAcceptedLinkedEdit(
+                accepted,
+                item: draft.item,
+                modelContext: modelContext
+            )
+        }
+
+        let rows: FitMatchClosetItemsResponse
+        do {
+            rows = try await remote.listClosetItems()
+        } catch {
+            return .failed(linkedEditErrorMessage(for: error))
+        }
+        guard isCurrentSyncUser(userID), rows.state == "ready" else {
+            return .failed("서버의 현재 옷장 정보를 확인하지 못했습니다. 다시 시도해 주세요.")
+        }
+
+        let currentRows = rows.items.filter { $0.clientItemID == draft.item.id }
+        guard currentRows.count == 1, let currentRow = currentRows.first,
+              currentRow.productID == draft.preparation.currentServerIdentity.productID,
+              currentRow.variantID == draft.preparation.currentServerIdentity.productVariantID,
+              currentRow.productSizeID == draft.preparation.currentServerIdentity.productSizeID,
+              selectedOption.identity.productID == currentRow.productID,
+              selectedOption.identity.productVariantID == currentRow.variantID else {
+            return .failed("서버의 최신 사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요.")
+        }
+
+        let request: FitMatchUpsertClosetItemRequest
+        do {
+            request = try linkedEditRequest(
+                item: draft.item,
+                selectedOption: selectedOption,
+                category: draft.category,
+                detailCategory: draft.detailCategory,
+                categoryCode: draft.categoryCode,
+                detailCode: draft.detailCode,
+                didExplicitlyChangeClassification: draft.didExplicitlyChangeClassification,
+                isReference: currentRow.isReference
+            )
+        } catch {
+            return .failed("선택한 분류를 서버에 안전하게 저장할 수 없습니다. 다시 확인해 주세요.")
+        }
+
+        let remotelyConflictingReferenceClientIDs = possibleServerReferenceConflicts(
+            in: rows.items,
+            excluding: currentRow.clientItemID,
+            request: request
+        )
+        let locallyConflictingReferenceClientIDs: Set<UUID>
+        do {
+            locallyConflictingReferenceClientIDs = try possibleLocalReferenceConflicts(
+                excluding: currentRow.clientItemID,
+                request: request,
+                modelContext: modelContext
+            )
+        } catch {
+            return .failed("기준 옷 상태를 안전하게 확인하지 못했습니다. 다시 시도해 주세요.")
+        }
+        let possiblyReplacedReferenceClientIDs = remotelyConflictingReferenceClientIDs
+            .union(locallyConflictingReferenceClientIDs)
+        if currentRow.isReference,
+           !possiblyReplacedReferenceClientIDs.isEmpty,
+           !confirmsReferenceReplacement {
+            // This is a read-only preflight. The sheet owns the confirmation
+            // so cancelling leaves every local value and server row intact.
+            return .needsReferenceConfirmation
+        }
+
+        let updateResponse: FitMatchUpsertClosetItemResponse
+        do {
+            updateResponse = try await remote.updateClosetItem(
+                request,
+                closetItemID: currentRow.closetItemID
+            )
+        } catch {
+            return .failed(linkedEditErrorMessage(for: error))
+        }
+        guard updateResponse.clientItemID == request.clientItemID,
+              updateResponse.closetItemID == currentRow.closetItemID else {
+            // The update could have committed despite a malformed response.
+            // Lock this editor to this exact tuple and reconcile by receipt;
+            // never manufacture a second mutation from a new size choice.
+            let receipt = LinkedEditAcceptedReceipt(
+                userID: userID,
+                closetItemID: currentRow.closetItemID,
+                request: request,
+                wantsReference: currentRow.isReference,
+                possibleReplacedReferenceClientIDs: possiblyReplacedReferenceClientIDs,
+                shouldRetryReferenceMutation: currentRow.isReference
+            )
+            acceptedLinkedEditReceipts[draft.item.id] = receipt
+            return .reconciliationRequired(
+                "서버 수정 결과를 확인하는 중입니다. 등록 결과를 다시 확인해 주세요."
+            )
+        }
+        guard isCurrentSyncUser(userID) else {
+            return .failed("로그인 상태가 변경되어 수정 결과를 안전하게 확인할 수 없습니다.")
+        }
+
+        let receipt = LinkedEditAcceptedReceipt(
+            userID: userID,
+            closetItemID: currentRow.closetItemID,
+            request: request,
+            wantsReference: currentRow.isReference,
+            possibleReplacedReferenceClientIDs: possiblyReplacedReferenceClientIDs,
+            shouldRetryReferenceMutation: currentRow.isReference
+        )
+        acceptedLinkedEditReceipts[draft.item.id] = receipt
+        return await reconcileAcceptedLinkedEdit(
+            receipt,
+            item: draft.item,
+            modelContext: modelContext
+        )
+    }
+
+    /// Once `update_closet_item` has acknowledged an edit, this path never
+    /// sends that update again. It only completes a necessary reference
+    /// mutation and projects an authoritative list receipt into SwiftData.
+    private func reconcileAcceptedLinkedEdit(
+        _ initialReceipt: LinkedEditAcceptedReceipt,
+        item: UserFit,
+        modelContext: ModelContext
+    ) async -> FitMatchLinkedClosetEditSaveOutcome {
+        var receipt = initialReceipt
+        guard isCurrentSyncUser(receipt.userID) else {
+            return .failed("로그인 상태가 변경되어 수정 결과를 안전하게 확인할 수 없습니다.")
+        }
+
+        if receipt.wantsReference, receipt.shouldRetryReferenceMutation {
+            do {
+                _ = try await remote.setClosetReference(
+                    closetItemID: receipt.closetItemID,
+                    isReference: true
+                )
+                receipt.shouldRetryReferenceMutation = false
+                acceptedLinkedEditReceipts[item.id] = receipt
+            } catch {
+                // A lost response is ambiguous. The following list receipt is
+                // the authority; only retry set-reference if it says false.
+            }
+            guard isCurrentSyncUser(receipt.userID) else {
+                return .failed("로그인 상태가 변경되어 수정 결과를 안전하게 확인할 수 없습니다.")
+            }
+        }
+
+        let rows: FitMatchClosetItemsResponse
+        do {
+            rows = try await remote.listClosetItems()
+        } catch {
+            return .reconciliationRequired(
+                "서버 수정 결과를 확인하는 중입니다. 등록 결과를 다시 확인해 주세요."
+            )
+        }
+        guard isCurrentSyncUser(receipt.userID), rows.state == "ready" else {
+            return .reconciliationRequired(
+                "서버 수정 결과를 확인하는 중입니다. 등록 결과를 다시 확인해 주세요."
+            )
+        }
+
+        let matches = rows.items.filter { $0.clientItemID == receipt.request.clientItemID }
+        guard matches.count == 1, let record = matches.first,
+              record.closetItemID == receipt.closetItemID,
+              record.productID == receipt.request.productID,
+              record.variantID == receipt.request.productVariantID,
+              record.productSizeID == receipt.request.productSizeID else {
+            return .reconciliationRequired(
+                "서버 수정 결과를 확인하는 중입니다. 등록 결과를 다시 확인해 주세요."
+            )
+        }
+
+        guard !receipt.wantsReference || record.isReference else {
+            // Preserve the accepted update and retry only the reference
+            // mutation after explicit consent; do not re-run update.
+            receipt.shouldRetryReferenceMutation = true
+            acceptedLinkedEditReceipts[item.id] = receipt
+            return .reconciliationRequired(
+                "사이즈는 수정됐지만 기준 옷 상태를 서버에서 확인하지 못했습니다. 등록 결과를 다시 확인해 주세요."
+            )
+        }
+
+        do {
+            try projectAuthoritativeLinkedEdit(
+                record,
+                allRecords: rows.items,
+                receipt: receipt,
+                to: item,
+                modelContext: modelContext
+            )
+        } catch {
+            return .reconciliationRequired(
+                "서버 수정 결과를 기기에 반영하지 못했습니다. 등록 결과를 다시 확인해 주세요."
+            )
+        }
+        guard isCurrentSyncUser(receipt.userID) else {
+            return .failed("로그인 상태가 변경되어 수정 결과를 안전하게 확인할 수 없습니다.")
+        }
+        acceptedLinkedEditReceipts.removeValue(forKey: item.id)
+        return .saved
+    }
+
+    private func linkedEditRequest(
+        item: UserFit,
+        selectedOption: FitMatchLinkedClosetSizeEditOption,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        categoryCode: String,
+        detailCode: String,
+        didExplicitlyChangeClassification: Bool,
+        isReference: Bool
+    ) throws -> FitMatchUpsertClosetItemRequest {
+        let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
+            current: item.classificationAuthorityProvenance,
+            isSourced: FitMatchClosetClassificationEditPolicy.isSourced(item),
+            isExplicitSet: FitMatchClosetClassificationEditPolicy.isExplicitSet(item),
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
+            scope: .existingClosetItem
+        )
+        let familyCode = resolvedFamilyCode(
+            for: item,
+            category: category,
+            detailCategory: detailCategory,
+            requiresNewClassification: didExplicitlyChangeClassification
+        )
+        let lengthCode = resolvedLengthCode(
+            for: item,
+            category: category,
+            detailCategory: detailCategory,
+            requiresNewClassification: didExplicitlyChangeClassification
+        )
+        let override: FitMatchClosetClassificationOverride?
+        if resultingAuthority == .userExplicit {
+            guard let familyCode else {
+                throw FitMatchClosetAuthorityError.unavailableClassification
+            }
+            override = FitMatchClosetClassificationOverride(
+                audienceCode: item.resolvedGenderCode,
+                categoryCode: categoryCode,
+                detailCode: detailCode,
+                familyCode: familyCode,
+                lengthCode: lengthCode,
+                bodyLengthCode: resolvedBodyLengthCode(for: item),
+                reason: "user_confirmed_closet_classification",
+                evidence: [
+                    "classification_authority": FitMatchClassificationAuthorityProvenance
+                        .userExplicit.rawValue,
+                    "client_item_id": item.id.uuidString
+                ]
+            )
+        } else {
+            override = nil
+        }
+
+        let payload = FitMatchClosetItemPayload(
+            productName: item.productName,
+            brand: item.brandName.nilIfBlank,
+            sizeName: selectedOption.productSize.name.fitMatchDisplaySizeName,
+            genderCode: item.resolvedGenderCode,
+            source: resolvedSourceCode(for: item),
+            categoryCode: categoryCode,
+            detailCode: detailCode,
+            familyCode: familyCode,
+            lengthCode: lengthCode,
+            bodyLengthCode: resolvedBodyLengthCode(for: item),
+            sourceCategoryPath: item.sourceCategoryPath ?? item.sourceProduct?.sourceCategoryPath,
+            productURL: item.sourceProduct?.sourceURLString,
+            imageURL: item.sourceProduct?.imageURLString,
+            // The vNext transport omits product-linked measurements, but keep
+            // this request boundary empty as well so stale M facts cannot be
+            // mistaken for selected L facts by a future adapter change.
+            measurements: [:],
+            measurementRecords: [],
+            fitMemo: item.fitMemo,
+            fitPreferenceCode: item.fitPreference.databaseCode,
+            satisfaction: item.satisfaction,
+            isReference: isReference,
+            classificationVersion: item.canonicalPolicyVersion,
+            clientSnapshot: [
+                "local_model": "UserFit",
+                "local_schema": "1",
+                "classification_authority": resultingAuthority.rawValue
+            ],
+            clientCreatedAt: encodeDate(item.createdAt),
+            clientUpdatedAt: encodeDate(Date())
+        )
+        return FitMatchUpsertClosetItemRequest(
+            clientItemID: item.id,
+            item: payload,
+            productID: selectedOption.identity.productID,
+            productVariantID: selectedOption.identity.productVariantID,
+            productSizeID: selectedOption.identity.productSizeID,
+            override: override
+        )
+    }
+
+    private func possibleServerReferenceConflicts(
+        in records: [FitMatchClosetItemRecord],
+        excluding clientItemID: UUID,
+        request: FitMatchUpsertClosetItemRequest
+    ) -> Set<UUID> {
+        let targetGender = request.item.genderCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return Set(records.compactMap { record in
+            guard record.clientItemID != clientItemID,
+                  record.isReference,
+                  record.genderCode?.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased() == targetGender,
+                  record.categoryCode == request.item.categoryCode,
+                  record.detailCode == request.item.detailCode else {
+                return nil
+            }
+            // This is intentionally conservative: the existing product
+            // policy and the server tuple both agree that a same audience /
+            // category / garment detail could replace a reference. Asking
+            // first is safer than allowing update/set to clear it silently.
+            return record.clientItemID
+        })
+    }
+
+    /// Preserve the app's existing reference policy as an additional consent
+    /// signal. The subsequent list receipt remains the authority for which
+    /// rows the server actually changed; this local scan merely prevents a
+    /// visibly represented reference from being released without consent.
+    private func possibleLocalReferenceConflicts(
+        excluding clientItemID: UUID,
+        request: FitMatchUpsertClosetItemRequest,
+        modelContext: ModelContext
+    ) throws -> Set<UUID> {
+        let targetGender = request.item.genderCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return Set(try modelContext.fetch(FetchDescriptor<UserFit>()).compactMap { local in
+            guard local.id != clientItemID,
+                  local.isActiveClosetItem,
+                  local.isRepresentative,
+                  local.resolvedGenderCode.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased() == targetGender,
+                  local.resolvedCategoryCode == request.item.categoryCode,
+                  local.resolvedDetailCategoryCode == request.item.detailCode else {
+                return nil
+            }
+            return local.id
+        })
+    }
+
+    private func projectAuthoritativeLinkedEdit(
+        _ record: FitMatchClosetItemRecord,
+        allRecords: [FitMatchClosetItemRecord],
+        receipt: LinkedEditAcceptedReceipt,
+        to item: UserFit,
+        modelContext: ModelContext
+    ) throws {
+        guard item.id == receipt.request.clientItemID,
+              record.clientItemID == receipt.request.clientItemID,
+              record.closetItemID == receipt.closetItemID,
+              record.productID == receipt.request.productID,
+              record.variantID == receipt.request.productVariantID,
+              record.productSizeID == receipt.request.productSizeID else {
+            throw AuthoritativeRegistrationProjectionError.receiptMismatch
+        }
+
+        try apply(record, to: item, modelContext: modelContext)
+        // set_closet_reference may have atomically released another local
+        // reference. Apply only the candidate rows established in the
+        // preflight, not arbitrary unrelated unsaved Closet edits.
+        for clientItemID in receipt.possibleReplacedReferenceClientIDs {
+            guard let remoteRecord = allRecords.first(where: {
+                $0.clientItemID == clientItemID
+            }) else {
+                continue
+            }
+            let localMatches = try modelContext.fetch(
+                FetchDescriptor<UserFit>(predicate: #Predicate { $0.id == clientItemID })
+            )
+            guard localMatches.count <= 1 else {
+                throw AuthoritativeRegistrationProjectionError.duplicateLocalClientItemID
+            }
+            if let localReference = localMatches.first {
+                try apply(remoteRecord, to: localReference, modelContext: modelContext)
+            }
+        }
+        // No broad rollback on failure: this ModelContext can carry pending
+        // edits from other screens. A failed save leaves the exact accepted
+        // receipt available for a read-back-only retry.
+        try modelContext.save()
+    }
+
+    private func linkedEditErrorMessage(for error: Error) -> String {
+        let text = error.localizedDescription.lowercased()
+        if text.contains("usable canonical measurement") {
+            return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
+        }
+        return "서버에 수정 내용을 저장하지 못했습니다. 입력한 내용은 유지됩니다. 다시 시도해 주세요."
     }
 
     private func synchronizeOnce(userID: UUID, modelContext: ModelContext) async {
@@ -664,6 +1102,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             guard isCurrentSyncUser(userID) else { return }
             pending.remove(clientItemID)
             remoteItemsByClientID.removeValue(forKey: clientItemID)
+            acceptedLinkedEditReceipts.removeValue(forKey: clientItemID)
             FitMatchLinkedSizeEditIntentStore.remove(
                 userID: userID,
                 clientItemID: clientItemID,
@@ -1409,12 +1848,58 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         )?.garmentFamily.rawValue.nilIfBlank
     }
 
+    private func resolvedFamilyCode(
+        for item: UserFit,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        requiresNewClassification: Bool
+    ) -> String? {
+        if !requiresNewClassification {
+            return resolvedFamilyCode(for: item)
+        }
+        return ParsedClosetClassification.resolve(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [
+                item.sourceCategoryDepth1,
+                item.sourceCategoryDepth2,
+                item.sourceCategoryDepth3,
+                item.sourceCategoryDepth4
+            ],
+            sourcePath: item.sourceCategoryPath,
+            productName: item.productName
+        )?.garmentFamily.rawValue.nilIfBlank
+    }
+
     private func resolvedLengthCode(for item: UserFit) -> String? {
         if let value = item.sleeveTypeRawValue?.nilIfBlank, value != "unknown" { return value }
         return ParsedClosetClassification.resolve(
             category: item.category,
             detailCategory: item.detailCategory,
             sourceDepths: [item.sourceCategoryDepth1, item.sourceCategoryDepth2, item.sourceCategoryDepth3, item.sourceCategoryDepth4],
+            sourcePath: item.sourceCategoryPath,
+            productName: item.productName
+        )?.lengthType.rawValue.nilIfBlank
+    }
+
+    private func resolvedLengthCode(
+        for item: UserFit,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        requiresNewClassification: Bool
+    ) -> String? {
+        if !requiresNewClassification {
+            return resolvedLengthCode(for: item)
+        }
+        return ParsedClosetClassification.resolve(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [
+                item.sourceCategoryDepth1,
+                item.sourceCategoryDepth2,
+                item.sourceCategoryDepth3,
+                item.sourceCategoryDepth4
+            ],
             sourcePath: item.sourceCategoryPath,
             productName: item.productName
         )?.lengthType.rawValue.nilIfBlank

@@ -456,6 +456,212 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
     }
 
+    /// A user-facing linked edit must not make a local M look like L before
+    /// the server has acknowledged the exact L tuple and returned its canonical
+    /// Closet snapshot.  The display ProductSize UUID is deliberately distinct
+    /// from the server's `product_size_id` in this fixture.
+    @Test func linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess() async throws {
+        let userID = UUID()
+        let clientItemID = UUID()
+        let productID = UUID()
+        let variantID = UUID()
+        let serverMSizeID = UUID()
+        let serverLSizeID = UUID()
+        let displayLSizeID = UUID()
+        let remoteM = withReference(
+            remoteRecord(
+                clientItemID: clientItemID,
+                productID: productID,
+                classificationSource: "manual_override",
+                variantID: variantID,
+                productSizeID: serverMSizeID
+            ),
+            isReference: false
+        )
+        let remoteL = withLinkedSize(
+            remoteM,
+            productSizeID: serverLSizeID,
+            sizeName: "L",
+            measurements: ["waist_width": 44]
+        )
+        let remote = ClosetSyncRemoteStub(
+            items: [remoteM],
+            listResponses: [[remoteM], [remoteL]]
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+
+        let item = localRetailerItem(
+            id: clientItemID,
+            productID: productID,
+            authority: .userExplicit
+        )
+        item.isRepresentative = false
+        context.insert(item)
+        try context.save()
+
+        let displayL = ProductSize(
+            id: displayLSizeID,
+            name: "L",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 999,
+                sleeveLength: 0,
+                waist: 999
+            ),
+            product: item.sourceProduct
+        )
+        let preparation = FitMatchLinkedClosetSizeEditPreparation(
+            userID: userID,
+            clientItemID: clientItemID,
+            currentServerIdentity: .init(
+                productID: productID,
+                productVariantID: variantID,
+                productSizeID: serverMSizeID
+            ),
+            options: [
+                .init(
+                    displaySizeID: displayLSizeID,
+                    productSize: displayL,
+                    identity: .init(
+                        productID: productID,
+                        productVariantID: variantID,
+                        productSizeID: serverLSizeID
+                    )
+                )
+            ],
+            initialDisplaySizeID: displayLSizeID
+        )
+        let draft = FitMatchLinkedClosetEditDraft(
+            item: item,
+            preparation: preparation,
+            selectedDisplaySizeID: displayLSizeID,
+            category: .bottom,
+            detailCategory: .longPants,
+            categoryCode: "bottoms",
+            detailCode: "long_pants",
+            didExplicitlyChangeClassification: false
+        )
+
+        let outcome = await coordinator.saveLinkedClosetEdit(
+            draft,
+            userID: userID,
+            modelContext: context,
+            confirmsReferenceReplacement: false
+        )
+
+        guard case .saved = outcome else {
+            Issue.record("The exact server L read-back should complete the edit")
+            return
+        }
+        let request = try #require(await remote.capturedUpsertRequest())
+        #expect(request.productID == productID)
+        #expect(request.productVariantID == variantID)
+        #expect(request.productSizeID == serverLSizeID)
+        #expect(request.item.measurements.isEmpty)
+        #expect(request.item.measurementRecords.isEmpty)
+        #expect(item.sizeName == "L")
+        #expect(item.waist == 44)
+        #expect(item.waist != displayL.measurements.waist)
+        #expect(item.sourceProductSize?.id == serverLSizeID)
+    }
+
+    /// Reference replacement consent is an editor-owned, read-only preflight:
+    /// cancelling at this point must not send an update or a reference RPC.
+    @Test func linkedClosetEditRequiresReferenceConfirmationBeforeServerMutation() async throws {
+        let userID = UUID()
+        let clientItemID = UUID()
+        let productID = UUID()
+        let variantID = UUID()
+        let serverMSizeID = UUID()
+        let serverLSizeID = UUID()
+        let current = remoteRecord(
+            clientItemID: clientItemID,
+            productID: productID,
+            classificationSource: "manual_override",
+            variantID: variantID,
+            productSizeID: serverMSizeID
+        )
+        let otherReference = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let remote = ClosetSyncRemoteStub(items: [current, otherReference])
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+        let item = localRetailerItem(
+            id: clientItemID,
+            productID: productID,
+            authority: .userExplicit
+        )
+        context.insert(item)
+        try context.save()
+
+        let displayLSizeID = UUID()
+        let option = FitMatchLinkedClosetSizeEditOption(
+            displaySizeID: displayLSizeID,
+            productSize: ProductSize(
+                id: UUID(),
+                name: "L",
+                measurements: item.measurements,
+                product: item.sourceProduct
+            ),
+            identity: .init(
+                productID: productID,
+                productVariantID: variantID,
+                productSizeID: serverLSizeID
+            )
+        )
+        let preparation = FitMatchLinkedClosetSizeEditPreparation(
+            userID: userID,
+            clientItemID: clientItemID,
+            currentServerIdentity: .init(
+                productID: productID,
+                productVariantID: variantID,
+                productSizeID: serverMSizeID
+            ),
+            options: [option],
+            initialDisplaySizeID: option.displaySizeID
+        )
+        let draft = FitMatchLinkedClosetEditDraft(
+            item: item,
+            preparation: preparation,
+            selectedDisplaySizeID: option.displaySizeID,
+            category: .bottom,
+            detailCategory: .longPants,
+            categoryCode: "bottoms",
+            detailCode: "long_pants",
+            didExplicitlyChangeClassification: false
+        )
+
+        let outcome = await coordinator.saveLinkedClosetEdit(
+            draft,
+            userID: userID,
+            modelContext: context,
+            confirmsReferenceReplacement: false
+        )
+
+        guard case .needsReferenceConfirmation = outcome else {
+            Issue.record("The server-visible reference conflict needs explicit consent")
+            return
+        }
+        #expect(await remote.capturedUpsertRequest() == nil)
+        #expect(await remote.referenceMutations().isEmpty)
+        #expect(item.sizeName == "M")
+    }
+
     @Test func existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime() async throws {
         let clientItemID = UUID()
         let productID = UUID()
@@ -1564,6 +1770,54 @@ private func withReference(
         fitPreferenceCode: record.fitPreferenceCode,
         satisfaction: record.satisfaction,
         isReference: isReference,
+        classificationStatus: record.classificationStatus,
+        classificationSource: record.classificationSource,
+        categoryCode: record.categoryCode,
+        detailCode: record.detailCode,
+        canonicalCategoryCode: record.canonicalCategoryCode,
+        canonicalDetailCode: record.canonicalDetailCode,
+        familyCode: record.familyCode,
+        lengthCode: record.lengthCode,
+        bodyLengthCode: record.bodyLengthCode,
+        classificationSnapshot: record.classificationSnapshot,
+        clientSnapshot: record.clientSnapshot,
+        clientCreatedAt: record.clientCreatedAt,
+        clientUpdatedAt: record.clientUpdatedAt,
+        syncRevision: record.syncRevision + 1,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt
+    )
+}
+
+private func withLinkedSize(
+    _ record: FitMatchClosetItemRecord,
+    productSizeID: UUID,
+    sizeName: String,
+    measurements: [String: Double]
+) -> FitMatchClosetItemRecord {
+    FitMatchClosetItemRecord(
+        closetItemID: record.closetItemID,
+        clientItemID: record.clientItemID,
+        productID: record.productID,
+        externalProductID: record.externalProductID,
+        productAudience: record.productAudience,
+        sourceCategoryCodes: record.sourceCategoryCodes,
+        variantID: record.variantID,
+        productSizeID: productSizeID,
+        brand: record.brand,
+        productName: record.productName,
+        sizeName: sizeName,
+        genderCode: record.genderCode,
+        source: record.source,
+        sourceCategoryPath: record.sourceCategoryPath,
+        productURL: record.productURL,
+        imageURL: record.imageURL,
+        measurements: measurements,
+        measurementRecords: record.measurementRecords,
+        fitMemo: record.fitMemo,
+        fitPreferenceCode: record.fitPreferenceCode,
+        satisfaction: record.satisfaction,
+        isReference: record.isReference,
         classificationStatus: record.classificationStatus,
         classificationSource: record.classificationSource,
         categoryCode: record.categoryCode,

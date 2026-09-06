@@ -28,6 +28,10 @@ struct AddComparedProductToClosetSheet: View {
     /// asks the sheet to leave the selection empty rather than silently
     /// choosing the sole remaining/recommended size.
     let requiresExplicitSizeSelection: Bool
+    /// A Result can retain an exact historical server size that no longer
+    /// exists in the fresh runtime.  This is presentation only: identity
+    /// stays nil until the user makes a fresh exact choice.
+    let initialSizeSelectionMessage: String?
     var onSaved: ((UserFit) -> Void)?
 
     @State private var step: AddComparedProductStep
@@ -72,6 +76,7 @@ struct AddComparedProductToClosetSheet: View {
         startsAtRegistrationConfirmation: Bool = false,
         prefersRepresentativeByDefault: Bool = false,
         requiresExplicitSizeSelection: Bool = false,
+        initialSizeSelectionMessage: String? = nil,
         onSaved: ((UserFit) -> Void)? = nil
     ) {
         self.product = product
@@ -82,6 +87,7 @@ struct AddComparedProductToClosetSheet: View {
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.serverRegistrationContext = serverRegistrationContext
         self.requiresExplicitSizeSelection = requiresExplicitSizeSelection
+        self.initialSizeSelectionMessage = initialSizeSelectionMessage
         self.onSaved = onSaved
         _step = State(initialValue: startsAtRegistrationConfirmation ? .confirm : (isParsedProductReadOnly ? .productInfo : .size))
         _isBasisItem = State(initialValue: prefersRepresentativeByDefault)
@@ -332,6 +338,12 @@ struct AddComparedProductToClosetSheet: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else {
+                        if let initialSizeSelectionMessage {
+                            Label(initialSizeSelectionMessage, systemImage: "info.circle")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                         ProductSizeSelectionGrid(
                             sizes: availableSizes,
                             selectedSizeID: $selectedSizeID
@@ -483,6 +495,12 @@ struct AddComparedProductToClosetSheet: View {
                     .frame(height: 50)
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             } else {
+                if let initialSizeSelectionMessage {
+                    Label(initialSizeSelectionMessage, systemImage: "info.circle")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
                     ForEach(availableSizes) { size in
                         Button(size.name.displaySizeName) {

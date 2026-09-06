@@ -41,6 +41,35 @@ struct LinkClosetRegistrationView: View {
         FitMatchProductLinkInput.validate(normalizedURLString).canStartLoad && !isLoading
     }
 
+    /// A recovered selection is valid only while the current runtime still
+    /// proves both measurement eligibility and its exact server UUID tuple.
+    /// A stale recovery ID must not turn a one-size sheet into an automatic
+    /// registration choice.
+    private var preferredRecoveredSize: ProductSize? {
+        guard let parsedProduct,
+              let registrationServerContext,
+              let recoveredSelectedSizeID else {
+            return nil
+        }
+        return parsedProduct.sizes.first {
+            $0.id == recoveredSelectedSizeID
+                && registrationServerContext.isRegisterable(displaySizeID: $0.id)
+                && registrationServerContext.identity(for: $0.id) != nil
+        }
+    }
+
+    private var registrationBlockMessage: String? {
+        LinkClosetRegistrationPreparation.registrationBlockMessage(
+            productMeasurementPresence: productMeasurementPresence,
+            serverRegistrationContext: registrationServerContext,
+            displaySizes: parsedProduct?.sizes ?? []
+        )
+    }
+
+    private var canOpenRegistration: Bool {
+        parsedProduct != nil && registrationBlockMessage == nil
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -68,15 +97,7 @@ struct LinkClosetRegistrationView: View {
                     // Only a prior explicit SizeTableRecovery selection can
                     // seed this form, and it must still be backed by the
                     // exact runtime identity/measurement context.
-                    recommendedSize: recoveredSelectedSizeID.flatMap { selectedID in
-                        parsedProduct.sizes.first {
-                            $0.id == selectedID
-                                && registrationServerContext.isRegisterable(
-                                    displaySizeID: $0.id
-                                )
-                                && registrationServerContext.identity(for: $0.id) != nil
-                        }
-                    },
+                    recommendedSize: preferredRecoveredSize,
                     // The Sheet receives the server context and decides whether
                     // a tuple is auto-selected. Passing a parser classification
                     // here would make REVIEW_REQUIRED look user-confirmed.
@@ -85,7 +106,7 @@ struct LinkClosetRegistrationView: View {
                     serverRegistrationContext: registrationServerContext,
                     startsAtRegistrationConfirmation: true,
                     prefersRepresentativeByDefault: prefersRepresentativeByDefault,
-                    requiresExplicitSizeSelection: recoveredSelectedSizeID == nil
+                    requiresExplicitSizeSelection: preferredRecoveredSize == nil
                 ) { _ in
                     shouldCompleteAfterSheetDismissal = true
                 }
@@ -289,9 +310,9 @@ struct LinkClosetRegistrationView: View {
                         }
                     }
 
-                    if productMeasurementPresence == .none {
+                    if let registrationBlockMessage {
                         Label(
-                            "이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다.",
+                            registrationBlockMessage,
                             systemImage: "ruler"
                         )
                         .font(.subheadline.weight(.semibold))
@@ -300,11 +321,11 @@ struct LinkClosetRegistrationView: View {
                     }
 
                     PrimaryButton(title: "다음", systemImage: "chevron.right") {
-                        guard productMeasurementPresence != .none else { return }
+                        guard canOpenRegistration else { return }
                         isShowingAddToClosetSheet = true
                     }
                     .accessibilityIdentifier("closet.linkNext")
-                    .disabled(productMeasurementPresence == .none)
+                    .disabled(!canOpenRegistration)
                 }
             }
         }
@@ -525,8 +546,39 @@ struct LinkClosetRegistrationPreparation {
     let recoveryViewModel: ShoppingProductViewModel?
     let errorMessage: String?
 
+    var registrationBlockMessage: String? {
+        Self.registrationBlockMessage(
+            productMeasurementPresence: productMeasurementPresence,
+            serverRegistrationContext: serverRegistrationContext,
+            displaySizes: parsedProduct?.sizes ?? []
+        )
+    }
+
     var canBeginRegistration: Bool {
-        productMeasurementPresence != .none
+        registrationBlockMessage == nil
+    }
+
+    static func registrationBlockMessage(
+        productMeasurementPresence: FitMatchProductMeasurementPresence,
+        serverRegistrationContext: FitMatchClosetRegistrationServerContext?,
+        displaySizes: [ProductSize]
+    ) -> String? {
+        guard productMeasurementPresence != .none else {
+            return "이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
+        }
+        guard let serverRegistrationContext else {
+            return "서버 사이즈 정보를 다시 확인해 주세요."
+        }
+        if let message = serverRegistrationContext.registrationBlockMessage {
+            return message
+        }
+        let hasExactRegisterableSize = displaySizes.contains { size in
+            serverRegistrationContext.isRegisterable(displaySizeID: size.id)
+                && serverRegistrationContext.identity(for: size.id) != nil
+        }
+        return hasExactRegisterableSize
+            ? nil
+            : "서버 사이즈 정보를 다시 확인해 주세요."
     }
 
     static func make(
