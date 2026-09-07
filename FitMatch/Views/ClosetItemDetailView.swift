@@ -62,17 +62,7 @@ struct ClosetItemDetailView: View {
                         onDelete: {
                             await deleteItemAndDismiss()
                         },
-                        prepareLinkedSizeOptions: item.isImportedFromURL ? ({
-                            guard let userID = authSession.authenticatedUserID,
-                                  let closetSync else {
-                                throw FitMatchLinkedClosetSizeEditPreparationError
-                                    .authenticationChanged
-                            }
-                            return try await closetSync.prepareLinkedClosetSizeEdit(
-                                item: item,
-                                userID: userID
-                            )
-                        }) : nil
+                        prepareLinkedSizeOptions: linkedSizeOptionsPreparation
                     ) { draft, confirmsReferenceReplacement in
                         guard let userID = authSession.authenticatedUserID,
                               let closetSync else {
@@ -133,6 +123,20 @@ struct ClosetItemDetailView: View {
         }
         .onDisappear {
             tabBarVisibilityController.release(reason: .navigationDetail, source: "closet detail disappear")
+        }
+    }
+
+    private var linkedSizeOptionsPreparation: (() async throws -> FitMatchLinkedClosetSizeEditPreparation)? {
+        guard item.isImportedFromURL else { return nil }
+        return {
+            guard let userID = authSession.authenticatedUserID,
+                  let closetSync else {
+                throw FitMatchLinkedClosetSizeEditPreparationError.authenticationChanged
+            }
+            return try await closetSync.prepareLinkedClosetSizeEdit(
+                item: item,
+                userID: userID
+            )
         }
     }
 
@@ -1045,7 +1049,7 @@ private struct ImportedClosetItemEditView: View {
         if prepareLinkedSizeOptions != nil {
             return []
         }
-        Self.availableSizes(for: item)
+        return Self.availableSizes(for: item)
     }
 
     private var availableCategories: [TaxonomyCategory] {

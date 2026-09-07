@@ -120,8 +120,9 @@ enum FitMatchResultClosetRegistrationPreparationAction {
             )
         let initialSizeSelectionMessage: String?
         if preferredProductSizeID != nil, preferredSize == nil {
-            let displayedLabel = legacyPreferredSize?.name.displaySizeName
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let displayedLabel = legacyPreferredSize.map {
+                displaySizeName(for: $0.name)
+            }
             if let displayedLabel, !displayedLabel.isEmpty {
                 initialSizeSelectionMessage = "비교했던 \(displayedLabel) 사이즈는 현재 상품에서 확인되지 않습니다. 등록할 사이즈를 다시 선택해 주세요."
             } else {
@@ -159,5 +160,16 @@ enum FitMatchResultClosetRegistrationPreparationAction {
             }
             return context.identity(for: displaySize.id)?.productSizeID == productSizeID
         }
+    }
+
+    private static func displaySizeName(for rawValue: String) -> String {
+        let value = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalComponent = value
+            .split(separator: "/")
+            .last
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            ?? value
+
+        return SizeTokenNormalizer.displayName(for: finalComponent)
     }
 }
