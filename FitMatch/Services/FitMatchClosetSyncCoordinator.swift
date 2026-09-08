@@ -438,6 +438,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             request = try linkedEditRequest(
                 item: draft.item,
                 selectedOption: selectedOption,
+                measurementSnapshot: draft.measurementSnapshot,
                 category: draft.category,
                 detailCategory: draft.detailCategory,
                 categoryCode: draft.categoryCode,
@@ -609,6 +610,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     private func linkedEditRequest(
         item: UserFit,
         selectedOption: FitMatchLinkedClosetSizeEditOption,
+        measurementSnapshot: FitMatchClosetMeasurementSnapshot,
         category: ClothingCategory,
         detailCategory: ClosetDetailCategory,
         categoryCode: String,
@@ -657,14 +659,6 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         } else {
             override = nil
         }
-        // A linked-size change is also a change of the exact retailer size
-        // chart.  Seed a fresh Closet-local snapshot from that selected size
-        // so the linked snapshot RPC can validate and persist it; do not send
-        // the item's previous M measurements for a newly selected L size.
-        let selectedSnapshot = FitMatchClosetMeasurementSnapshot(
-            sourceSize: selectedOption.productSize
-        )
-
         let payload = FitMatchClosetItemPayload(
             productName: item.productName,
             brand: item.brandName.nilIfBlank,
@@ -680,10 +674,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             productURL: item.sourceProduct?.sourceURLString,
             imageURL: item.sourceProduct?.imageURLString,
             measurements: measurementValues(
-                for: selectedSnapshot.measurements,
-                records: selectedSnapshot.measurementRecords
+                for: measurementSnapshot.measurements,
+                records: measurementSnapshot.measurementRecords
             ),
-            measurementRecords: selectedSnapshot.measurementRecords,
+            measurementRecords: measurementSnapshot.measurementRecords,
             fitMemo: item.fitMemo,
             fitPreferenceCode: item.fitPreference.databaseCode,
             satisfaction: item.satisfaction,
@@ -1739,6 +1733,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 for: payload.measurementCode
             )
             let code = projection?.localCode ?? localMeasurementCode(payload.measurementCode)
+            let inputSource = MeasurementInputSource(rawValue: payload.inputSource)
+                ?? .importedSizeChart
             // Forward-compatible server facts are still Closet facts. Keep
             // the raw code with `.unknown` rather than discarding or guessing
             // a familiar measurement axis; generic sync and accepted
@@ -1754,10 +1750,14 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                     ?? .unknown,
                 methodSource: payload.methodSource,
                 methodProfile: payload.methodProfile,
-                inputSource: MeasurementInputSource(rawValue: payload.inputSource) ?? .importedSizeChart,
+                inputSource: inputSource,
                 standardVersion: payload.standardVersion,
                 mappingVersion: payload.mappingVersion,
-                rawCode: payload.rawCode ?? payload.measurementCode,
+                // A user-added canonical value has no parser/source identity.
+                // Preserve nil through hydration so the next sync does not
+                // try to claim that its FitMatch code came from a retailer.
+                rawCode: payload.rawCode
+                    ?? (inputSource == .userMeasured ? nil : payload.measurementCode),
                 rawLabel: payload.rawLabel.isEmpty
                     ? payload.measurementCode
                     : payload.rawLabel,
@@ -1804,7 +1804,17 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     ) -> [String: Double] {
         var result: [String: Double] = [:]
         for record in records where record.value.isFinite && record.value > 0 {
-            result[record.measurementCode] = record.value
+            // The scalar map is only a legacy projection.  Project each
+            // record through the established exact code table first so it
+            // cannot add (for example) both a method-specific
+            // `waist_width_edge_to_edge` and a generic `waist_width` for the
+            // same fact.  The original method-specific identity remains on
+            // `measurementRecords` and is what the transport uses for source
+            // metadata.
+            let code = FitMatchCanonicalMeasurementCode
+                .canonicalCode(forTransportRawCode: record.measurementCode)
+                ?? record.measurementCode
+            result[code] = record.value
         }
         let scalarValues: [(String, Double)] = [
             ("shoulder_width", measurements.shoulder),

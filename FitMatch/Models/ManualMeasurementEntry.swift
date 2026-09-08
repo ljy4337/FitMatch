@@ -39,7 +39,7 @@ enum FitMatchMeasurementStandard {
         }
     }
 
-    static func definition(
+    nonisolated static func definition(
         for kind: MeasurementKind,
         category: ClothingCategory? = nil
     ) -> DirectMeasurementDefinition {
@@ -90,7 +90,7 @@ enum FitMatchMeasurementStandard {
         }
     }
 
-    private static func definition(
+    nonisolated private static func definition(
         _ kind: MeasurementKind,
         _ instruction: String,
         _ caution: String,
@@ -265,7 +265,7 @@ enum ManualMeasurementRecordFactory {
 
     /// Shared by direct-entry and linked-Closet editing so a newly added
     /// personal measurement uses the same existing FitMatch definition.
-    static func fitmatchCode(
+    nonisolated static func fitmatchCode(
         for kind: MeasurementKind,
         category: ClothingCategory
     ) -> MeasurementCode {

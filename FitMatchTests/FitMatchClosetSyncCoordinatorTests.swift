@@ -546,10 +546,19 @@ struct FitMatchClosetSyncCoordinatorTests {
             ],
             initialDisplaySizeID: displayLSizeID
         )
+        var selectedMeasurementDraft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: displayL,
+            category: .bottom,
+            detailCategory: .longPants,
+            gender: .men
+        )
+        selectedMeasurementDraft.setRawValue("45", for: .waist)
+        let selectedMeasurementSnapshot = try selectedMeasurementDraft.snapshot()
         let draft = FitMatchLinkedClosetEditDraft(
             item: item,
             preparation: preparation,
             selectedDisplaySizeID: displayLSizeID,
+            measurementSnapshot: selectedMeasurementSnapshot,
             category: .bottom,
             detailCategory: .longPants,
             categoryCode: "bottoms",
@@ -572,11 +581,17 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(request.productID == productID)
         #expect(request.productVariantID == variantID)
         #expect(request.productSizeID == serverLSizeID)
-        // The request carries the exact L chart snapshot, never stale local
-        // M values. The linked snapshot RPC can therefore validate it against
-        // the selected server ProductSize and keep it retailer provenance.
-        #expect(request.item.measurements == ["waist_width": 44])
-        #expect(request.item.measurementRecords.isEmpty)
+        // The request carries the editor's exact L-local snapshot, never a
+        // stale M value or a coordinator reconstruction from the chart.
+        #expect(request.item.measurements == ["waist_width": 45])
+        #expect(request.item.measurementRecords.count == 1)
+        let measurementRecord = try #require(request.item.measurementRecords.first)
+        #expect(measurementRecord.value == 45)
+        #expect(FitMatchCanonicalMeasurementCode.canonicalCode(
+            forTransportRawCode: measurementRecord.measurementCode
+        ) == "waist_width")
+        #expect(measurementRecord.valueSource
+            == FitMatchClosetMeasurementProvenance.userManual)
         #expect(item.sizeName == "L")
         #expect(item.waist == 44)
         #expect(item.sourceProductSize?.id == serverLSizeID)
@@ -649,6 +664,7 @@ struct FitMatchClosetSyncCoordinatorTests {
             item: item,
             preparation: preparation,
             selectedDisplaySizeID: option.displaySizeID,
+            measurementSnapshot: .init(sourceSize: option.productSize),
             category: .bottom,
             detailCategory: .longPants,
             categoryCode: "bottoms",

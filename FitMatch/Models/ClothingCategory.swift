@@ -29,7 +29,7 @@ enum ClothingCategory: String, CaseIterable, Identifiable, Codable, Hashable {
         }
     }
 
-    static func fromTaxonomyCode(_ code: String) -> ClothingCategory {
+    nonisolated static func fromTaxonomyCode(_ code: String) -> ClothingCategory {
         switch code {
         case "tops": return .top
         case "bottoms", "leggings", "skirts": return .bottom

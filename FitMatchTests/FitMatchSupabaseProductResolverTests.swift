@@ -1043,7 +1043,7 @@ struct FitMatchSupabaseProductResolverTests {
         )
     }
 
-    @Test func nonComparableAndUnavailableLinksKeepFactsVisibleButBlockRegistration() async throws {
+    @Test func nonComparableLinkAllowsExactUserClosetRegistrationWhileUnavailableIdentityBlocks() async throws {
         let nonComparableParsed = try Self.authorityTestProduct(
             source: "musinsa",
             externalProductID: "link-not-applicable",
@@ -1055,12 +1055,44 @@ struct FitMatchSupabaseProductResolverTests {
             externalProductID: "link-not-applicable",
             status: .notComparable
         )
+        let nonComparableVariantID = UUID()
+        let nonComparableSizeID = UUID()
+        let nonComparableRuntime = Self.measurementRuntime(
+            fixture: nonComparableFixture,
+            runtimeState: "not_comparable",
+            comparisonReady: false,
+            variantID: nonComparableVariantID,
+            sizes: [
+                Self.runtimeSize(
+                    productSizeID: nonComparableSizeID,
+                    // This is the parser-observation size key, never a
+                    // display-label lookup invented at registration time.
+                    sourceSizeKey: "M",
+                    label: "M",
+                    displayOrder: 0,
+                    measurements: [
+                        FitMatchRuntimeMeasurement(
+                            measurementCode: "chest_width",
+                            rawLabel: "가슴단면",
+                            rawValue: 54,
+                            rawUnit: "CM",
+                            normalizedValue: 54,
+                            normalizedUnit: "CM",
+                            comparisonBasis: "WIDTH",
+                            isComparable: false,
+                            exclusionReason: "not_comparable_product",
+                            policyVersion: "fixture"
+                        )
+                    ]
+                )
+            ]
+        )
         let nonComparableViewModel = Self.authorityViewModel(
             product: nonComparableParsed,
             remote: DatabaseAuthorityRemoteStub(
                 resolutions: [nonComparableFixture.resolution()],
                 observations: [],
-                runtimes: [nonComparableFixture.runtime]
+                runtimes: [nonComparableRuntime]
             )
         )
 
@@ -1079,6 +1111,29 @@ struct FitMatchSupabaseProductResolverTests {
             nonComparablePreparation.serverRegistrationContext.registrationBlockMessage
                 == "현재 이 상품은 옷장 등록 대상이 아닙니다."
         )
+        let nonComparableSize = try #require(
+            nonComparablePreparation.parsedProduct?.sizes.first
+        )
+        #expect(
+            nonComparablePreparation.serverRegistrationContext.identity(
+                for: nonComparableSize.id
+            ) == FitMatchClosetRegistrationServerIdentity(
+                productID: nonComparableFixture.productID,
+                productVariantID: nonComparableVariantID,
+                productSizeID: nonComparableSizeID
+            )
+        )
+        #expect(
+            nonComparablePreparation.serverRegistrationContext.isRegisterable(
+                displaySizeID: nonComparableSize.id
+            )
+        )
+        // NOT_COMPARABLE is a comparison decision, not a user-Closet
+        // authority gate. With a verified exact Product/variant/size tuple and
+        // retailer measurements, the user may still choose a Closet category
+        // and save a personal snapshot.
+        #expect(nonComparablePreparation.canBeginRegistration)
+        #expect(nonComparablePreparation.registrationBlockMessage == nil)
 
         let unavailableParsed = try Self.authorityTestProduct(
             source: "musinsa",
@@ -1111,6 +1166,11 @@ struct FitMatchSupabaseProductResolverTests {
             unavailablePreparation.serverRegistrationContext.registrationBlockMessage
                 == "서버 연결을 확인한 뒤 다시 저장해 주세요."
         )
+        // This remains blocked because no exact server identity could be
+        // established after the transport failure—not because a classifier
+        // result is being used as Closet authority.
+        #expect(!unavailablePreparation.canBeginRegistration)
+        #expect(unavailablePreparation.registrationBlockMessage != nil)
     }
 
     @Test func vNextClosetMutationUsesExactIdentityAndNestedOverrideOnlyWhenExplicit() throws {

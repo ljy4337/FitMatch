@@ -2,18 +2,114 @@
 --
 -- Simple FitMatch Phase 1 linked Closet round-trip contract.
 --
--- This candidate deliberately makes no schema change.  The existing
--- `closet_items.measurement_mode` and per-row
+-- The existing `closet_items.measurement_mode` and per-row
 -- `closet_item_measurements.value_source` already express a Closet-local
 -- mixed snapshot:
 --   * RETAILER_SNAPSHOT: exact canonical fact for the selected ProductSize
 --   * USER_MANUAL: one value measured or entered by the owning user
+--
+-- Production read-only inspection found that the current
+-- `closet_item_measurements_one_semantic_chk` and
+-- `validate_closet_measurement_mode` contract reject a canonical row that
+-- also retains its verified `source_measurement_code`.  That makes it
+-- impossible to round-trip an edited imported value with both its canonical
+-- FitMatch meaning and its original parser identity.  This candidate adds a
+-- separate canonical-row source snapshot field instead of deleting or
+-- weakening that existing constraint: `source_measurement_code` keeps its
+-- current SOURCE_NATIVE-only meaning and `source_measurement_code_snapshot`
+-- stores the verified origin of a CANONICAL Closet-local snapshot row.
 --
 -- It must be reviewed and executed only against a disposable/local Supabase
 -- database after the companion validation script passes.  Do not apply it to
 -- Production from this repository.
 
 begin;
+
+-- Preserve the live mutually-exclusive semantic columns and trigger exactly
+-- as they are. This additive field is the smallest representation that can
+-- retain source provenance on an otherwise canonical Closet-local row.
+alter table fitmatch_vnext.closet_item_measurements
+    add column if not exists source_measurement_code_snapshot text;
+
+do $source_snapshot_fk$
+begin
+    if not exists (
+        select 1
+        from pg_constraint c
+        join pg_class t on t.oid = c.conrelid
+        join pg_namespace n on n.oid = t.relnamespace
+        where n.nspname = 'fitmatch_vnext'
+          and t.relname = 'closet_item_measurements'
+          and c.conname = 'closet_item_measurements_source_snapshot_fkey'
+    ) then
+        alter table fitmatch_vnext.closet_item_measurements
+            add constraint closet_item_measurements_source_snapshot_fkey
+            foreign key (source_measurement_code_snapshot)
+            references fitmatch_vnext.source_measurements(source_measurement_code);
+    end if;
+end
+$source_snapshot_fk$;
+
+-- Add a distinct integrity trigger rather than replacing the existing
+-- measurement-mode trigger. A source snapshot is permitted only on a
+-- CANONICAL row linked to a Product of the same registered source.
+create or replace function fitmatch_vnext.validate_closet_measurement_source_snapshot()
+returns trigger
+language plpgsql
+set search_path = ''
+as $function$
+declare
+    parent_mode text;
+    parent_product_id uuid;
+    linked_product_source text;
+    snapshot_source text;
+begin
+    if new.source_measurement_code_snapshot is null then
+        return new;
+    end if;
+
+    select ci.measurement_mode,
+           ci.product_id,
+           p.source_code
+    into parent_mode,
+         parent_product_id,
+         linked_product_source
+    from fitmatch_vnext.closet_items ci
+    left join fitmatch_vnext.products p on p.id = ci.product_id
+    where ci.id = new.closet_item_id;
+
+    if parent_mode is null then
+        raise exception 'closet item % does not exist', new.closet_item_id;
+    end if;
+    if parent_mode <> 'CANONICAL'
+       or new.fitmatch_measurement_code is null
+       or new.source_measurement_code is not null then
+        raise exception 'source measurement snapshot requires a CANONICAL Closet measurement';
+    end if;
+    if parent_product_id is null or linked_product_source is null then
+        raise exception 'source measurement snapshot requires a linked Product';
+    end if;
+
+    select sm.source_code into snapshot_source
+    from fitmatch_vnext.source_measurements sm
+    where sm.source_measurement_code = new.source_measurement_code_snapshot;
+
+    if snapshot_source is distinct from linked_product_source then
+        raise exception 'Closet source measurement snapshot % does not match linked Product source %',
+            snapshot_source, linked_product_source;
+    end if;
+
+    return new;
+end
+$function$;
+
+drop trigger if exists closet_item_measurements_validate_source_snapshot
+    on fitmatch_vnext.closet_item_measurements;
+create trigger closet_item_measurements_validate_source_snapshot
+before insert or update of closet_item_id, source_measurement_code,
+    fitmatch_measurement_code, source_measurement_code_snapshot
+on fitmatch_vnext.closet_item_measurements
+for each row execute function fitmatch_vnext.validate_closet_measurement_source_snapshot();
 
 -- The helper is intentionally limited to product-linked requests which carry
 -- the new `measurements` payload.  All legacy/manual mutation paths continue
@@ -39,7 +135,9 @@ declare
     is_create boolean := p_existing_closet_item_id is null;
     request_hash text;
     canonical_payload jsonb;
+    effective_measurement_context jsonb;
     measurement_payload jsonb;
+    normalized_measurement_payload jsonb := '[]'::jsonb;
     override_payload jsonb;
     is_explicit_closet_classification boolean := false;
     effective_audience_code text;
@@ -53,11 +151,14 @@ declare
     effective_resolver_version text;
     requested_satisfaction smallint;
     measurement_value jsonb;
-    measurement_code text;
+    requested_measurement_code text;
     measurement_source text;
     measurement_unit text;
     measurement_text text;
     numeric_measurement numeric;
+    requested_source_measurement_code text;
+    effective_source_measurement_code text;
+    canonical_source_identity_count integer;
 begin
     if caller_id is null then
         raise exception 'Authentication required';
@@ -137,14 +238,6 @@ begin
         raise exception 'Product, variant, and size hierarchy mismatch';
     end if;
 
-    canonical_payload := fitmatch_vnext.canonical_measurements_for_size(linked_size_id);
-    if coalesce((canonical_payload ->> 'semantic_conflict_count')::integer, 0) > 0 then
-        raise exception 'Canonical measurement semantics are ambiguous';
-    end if;
-    if jsonb_array_length(coalesce(canonical_payload -> 'measurements', '[]'::jsonb)) = 0 then
-        raise exception 'Verified canonical measurements are required';
-    end if;
-
     override_payload := p_request -> 'closet_classification_override';
     if override_payload is not null then
         if jsonb_typeof(override_payload) <> 'object' then
@@ -217,6 +310,28 @@ begin
         effective_resolver_version := product_row.resolver_version;
     end if;
 
+    -- The selected personal Closet category is authoritative for measurement
+    -- resolution too. The context-aware resolver is the existing server
+    -- mechanism; it preserves the global resolver for CONFIRMED products and
+    -- never asks the client to guess a mapping from a label or display axis.
+    effective_measurement_context := jsonb_build_object(
+        'product_id', linked_product_id,
+        'effective_source', case when is_explicit_closet_classification
+            then 'USER_EXPLICIT' else 'GLOBAL_CONFIRMED' end,
+        'category_code', effective_category_code,
+        'garment_type_code', effective_garment_type_code
+    );
+    canonical_payload := fitmatch_vnext.canonical_measurements_for_size_with_context(
+        linked_size_id,
+        effective_measurement_context
+    );
+    if coalesce((canonical_payload ->> 'semantic_conflict_count')::integer, 0) > 0 then
+        raise exception 'Canonical measurement semantics are ambiguous';
+    end if;
+    if jsonb_array_length(coalesce(canonical_payload -> 'measurements', '[]'::jsonb)) = 0 then
+        raise exception 'Verified canonical measurements are required';
+    end if;
+
     measurement_payload := p_request -> 'measurements';
     if jsonb_typeof(measurement_payload) <> 'array'
        or jsonb_array_length(measurement_payload) = 0 then
@@ -235,13 +350,19 @@ begin
         raise exception 'Linked Closet snapshot has duplicate or missing measurement codes';
     end if;
 
-    -- Validate the full snapshot before deleting any existing owned rows.  A
-    -- retailer row must exactly match the selected ProductSize's canonical
-    -- fact; only USER_MANUAL may differ or add an active FitMatch definition.
+    -- Validate and normalize the full snapshot before deleting any existing
+    -- owned rows. A retailer row must exactly match the selected ProductSize's
+    -- canonical fact; only USER_MANUAL may differ or add an active FitMatch
+    -- definition. A known source identity may never be re-attached to an
+    -- unrelated canonical row or selected size. An unregistered client raw
+    -- code is not treated as source identity (this is how a user-added
+    -- FitMatch definition remains source-null without a string heuristic).
     for measurement_value in
         select value from jsonb_array_elements(measurement_payload)
     loop
-        measurement_code := nullif(btrim(measurement_value ->> 'fitmatch_measurement_code'), '');
+        requested_measurement_code := nullif(
+            btrim(measurement_value ->> 'fitmatch_measurement_code'), ''
+        );
         measurement_source := upper(coalesce(
             nullif(btrim(measurement_value ->> 'value_source'), ''),
             'RETAILER_SNAPSHOT'
@@ -272,24 +393,102 @@ begin
         if measurement_source not in ('RETAILER_SNAPSHOT', 'USER_MANUAL') then
             raise exception 'Unsupported Closet measurement value_source';
         end if;
-        if measurement_code is null or not exists (
+        if requested_measurement_code is null or not exists (
             select 1
             from fitmatch_vnext.fitmatch_measurements fm
-            where fm.measurement_code = measurement_code
+            where fm.measurement_code = requested_measurement_code
               and fm.is_active
         ) then
             raise exception 'Invalid active FitMatch measurement code';
         end if;
+
+        requested_source_measurement_code := nullif(
+            btrim(measurement_value ->> 'source_measurement_code'), ''
+        );
+        effective_source_measurement_code := null;
+        if requested_source_measurement_code is not null then
+            if exists (
+                select 1
+                from jsonb_array_elements(canonical_payload -> 'measurements')
+                    as value(canonical_measurement)
+                where canonical_measurement ->> 'fitmatch_measurement_code'
+                    = requested_measurement_code
+                  and canonical_measurement ->> 'source_measurement_code'
+                    = requested_source_measurement_code
+            ) then
+                effective_source_measurement_code := requested_source_measurement_code;
+            elsif exists (
+                select 1
+                from fitmatch_vnext.source_measurements sm
+                where sm.source_measurement_code = requested_source_measurement_code
+            ) then
+                raise exception 'Source measurement identity does not belong to selected ProductSize canonical measurement';
+            end if;
+        end if;
+
         if measurement_source = 'RETAILER_SNAPSHOT' and not exists (
             select 1
             from jsonb_array_elements(canonical_payload -> 'measurements')
                 as value(canonical_measurement)
-            where canonical_measurement ->> 'fitmatch_measurement_code' = measurement_code
+            where canonical_measurement ->> 'fitmatch_measurement_code'
+                = requested_measurement_code
               and (canonical_measurement ->> 'value')::numeric = numeric_measurement
               and lower(canonical_measurement ->> 'unit_code') = measurement_unit
         ) then
             raise exception 'Retailer snapshot does not match selected ProductSize';
         end if;
+
+        -- If an older client omitted source identity (or a user-added local
+        -- code is not a registered source identity), recover it only where the
+        -- selected ProductSize has exactly one verified source for this
+        -- canonical meaning. Never choose one arbitrarily.
+        if effective_source_measurement_code is null then
+            if measurement_source = 'RETAILER_SNAPSHOT' then
+                select count(distinct nullif(
+                           canonical_measurement ->> 'source_measurement_code', ''
+                       ))::integer,
+                       min(nullif(
+                           canonical_measurement ->> 'source_measurement_code', ''
+                       ))
+                into canonical_source_identity_count,
+                     effective_source_measurement_code
+                from jsonb_array_elements(canonical_payload -> 'measurements')
+                    as value(canonical_measurement)
+                where canonical_measurement ->> 'fitmatch_measurement_code'
+                    = requested_measurement_code
+                  and (canonical_measurement ->> 'value')::numeric = numeric_measurement
+                  and lower(canonical_measurement ->> 'unit_code') = measurement_unit;
+            else
+                select count(distinct nullif(
+                           canonical_measurement ->> 'source_measurement_code', ''
+                       ))::integer,
+                       min(nullif(
+                           canonical_measurement ->> 'source_measurement_code', ''
+                       ))
+                into canonical_source_identity_count,
+                     effective_source_measurement_code
+                from jsonb_array_elements(canonical_payload -> 'measurements')
+                    as value(canonical_measurement)
+                where canonical_measurement ->> 'fitmatch_measurement_code'
+                    = requested_measurement_code;
+            end if;
+
+            if canonical_source_identity_count > 1 then
+                raise exception 'Selected ProductSize canonical measurement has ambiguous source identity';
+            end if;
+        end if;
+        if measurement_source = 'RETAILER_SNAPSHOT'
+           and effective_source_measurement_code is null then
+            raise exception 'Retailer snapshot is missing verified source identity';
+        end if;
+
+        normalized_measurement_payload := normalized_measurement_payload
+            || jsonb_build_array(jsonb_set(
+                measurement_value,
+                '{source_measurement_code_snapshot}',
+                coalesce(to_jsonb(effective_source_measurement_code), 'null'::jsonb),
+                true
+            ));
     end loop;
 
     -- A user override may replace a canonical fact, but it may not make a
@@ -312,12 +511,21 @@ begin
         raise exception 'Linked Closet snapshot is missing a selected ProductSize measurement';
     end if;
 
-    requested_satisfaction := coalesce(
-        nullif(btrim(p_request ->> 'satisfaction'), '')::smallint,
-        case when is_create then 3 else target_item.satisfaction end,
-        3
-    );
-    if requested_satisfaction not between 1 and 5 then
+    -- An omitted rating means “not rated yet”, not a fabricated neutral 3.
+    -- The existing schema's check explicitly permits NULL.  On update an
+    -- omitted key preserves the existing rating; an explicit JSON null clears
+    -- it, matching the nullable contract.
+    if p_request ? 'satisfaction' then
+        requested_satisfaction := nullif(
+            btrim(p_request ->> 'satisfaction'), ''
+        )::smallint;
+    elsif is_create then
+        requested_satisfaction := null;
+    else
+        requested_satisfaction := target_item.satisfaction;
+    end if;
+    if requested_satisfaction is not null
+       and requested_satisfaction not between 1 and 5 then
         raise exception 'satisfaction must be between 1 and 5';
     end if;
 
@@ -390,35 +598,31 @@ begin
     delete from fitmatch_vnext.closet_item_measurements cm
     where cm.closet_item_id = item_id;
     for measurement_value in
-        select value from jsonb_array_elements(measurement_payload)
+        select value from jsonb_array_elements(normalized_measurement_payload)
     loop
-        measurement_code := measurement_value ->> 'fitmatch_measurement_code';
+        requested_measurement_code := measurement_value ->> 'fitmatch_measurement_code';
         measurement_source := upper(coalesce(
             nullif(btrim(measurement_value ->> 'value_source'), ''),
             'RETAILER_SNAPSHOT'
         ));
         insert into fitmatch_vnext.closet_item_measurements (
             closet_item_id, source_measurement_code, fitmatch_measurement_code,
-            value, unit_code, value_source, raw_label_snapshot
+            value, unit_code, value_source, raw_label_snapshot,
+            source_measurement_code_snapshot
         ) values (
             item_id,
-            coalesce(
-                nullif(btrim(measurement_value ->> 'source_measurement_code'), ''),
-                case when measurement_source = 'RETAILER_SNAPSHOT' then (
-                    select canonical_measurement ->> 'source_measurement_code'
-                    from jsonb_array_elements(canonical_payload -> 'measurements')
-                        as value(canonical_measurement)
-                    where canonical_measurement ->> 'fitmatch_measurement_code' = measurement_code
-                    limit 1
-                ) else null end
-            ),
-            measurement_code,
+            null,
+            requested_measurement_code,
             (measurement_value ->> 'value')::numeric,
             'cm',
             measurement_source,
             coalesce(
                 nullif(btrim(measurement_value ->> 'raw_label'), ''),
-                measurement_code
+                requested_measurement_code
+            ),
+            nullif(
+                btrim(measurement_value ->> 'source_measurement_code_snapshot'),
+                ''
             )
         );
     end loop;
@@ -491,7 +695,15 @@ begin
             'measurements', coalesce((
                 select jsonb_agg(jsonb_build_object(
                     'fitmatch_measurement_code', cm.fitmatch_measurement_code,
-                    'source_measurement_code', cm.source_measurement_code,
+                    -- Preserve the existing public DTO key. SOURCE_NATIVE
+                    -- rows expose their semantic source code; CANONICAL rows
+                    -- expose their immutable source snapshot instead.
+                    'source_measurement_code', coalesce(
+                        cm.source_measurement_code_snapshot,
+                        cm.source_measurement_code
+                    ),
+                    'source_measurement_code_snapshot',
+                        cm.source_measurement_code_snapshot,
                     'value', cm.value,
                     'unit_code', cm.unit_code,
                     'value_source', cm.value_source,
@@ -509,6 +721,19 @@ begin
           and ci.deleted_at is null
     ), '[]'::jsonb);
 end
+$function$;
+
+-- Keep the authenticated public list bridge aligned with the enriched
+-- internal DTO (including source_measurement_code). Existing deployments
+-- already have this signature; recreating the thin bridge prevents a stale
+-- body from hiding the per-row provenance source during hydration.
+create or replace function public.fitmatch_vnext_list_closet_items()
+returns jsonb
+language sql
+security invoker
+set search_path = ''
+as $function$
+    select fitmatch_vnext.list_closet_items()
 $function$;
 
 -- Route only the Phase 1 linked snapshot shape through the helper.  Manual
@@ -563,6 +788,10 @@ grant execute on function public.fitmatch_vnext_upsert_closet_item(jsonb)
 revoke all on function public.fitmatch_vnext_update_closet_item(uuid, jsonb)
     from public, anon;
 grant execute on function public.fitmatch_vnext_update_closet_item(uuid, jsonb)
+    to authenticated, service_role;
+revoke all on function public.fitmatch_vnext_list_closet_items()
+    from public, anon;
+grant execute on function public.fitmatch_vnext_list_closet_items()
     to authenticated, service_role;
 
 commit;

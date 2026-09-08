@@ -76,30 +76,54 @@ struct FitMatchClosetMeasurementSnapshot: Equatable {
     }
 
     init(sourceSize: ProductSize) {
-        measurements = sourceSize.measurements
-        measurementRecords = sourceSize.measurementRecords.map { record in
-            FitMatchClosetMeasurementRecordPayload(
-                value: record.value,
-                unit: record.unitRawValue,
-                measurementCode: record.measurementCodeRawValue,
-                displayKind: record.displayKindRawValue,
-                methodSource: record.methodSource,
-                methodProfile: record.methodProfile,
-                inputSource: record.inputSourceRawValue,
-                standardVersion: record.standardVersion,
-                mappingVersion: record.mappingVersion,
-                rawCode: record.rawCode,
-                rawLabel: record.rawLabel,
-                rawInfo: record.rawInfo,
-                rawValueText: record.rawValueText,
-                evidenceLevel: record.evidenceLevelRawValue,
-                semanticStatus: record.semanticStatusRawValue,
-                valueSource: FitMatchClosetMeasurementProvenance.transportValueSource(
-                    valueSource: nil,
-                    inputSource: record.inputSourceRawValue
-                )
+        self.init(
+            measurements: sourceSize.measurements,
+            sourceRecords: sourceSize.measurementRecords
+        )
+    }
+
+    /// Existing linked Closet edits must start from the owning user's current
+    /// snapshot, not from the shared ProductSize chart.  This is what keeps a
+    /// category-only edit from overwriting a previous one-field correction.
+    init(sourceClosetItem: UserFit) {
+        self.init(
+            measurements: sourceClosetItem.measurements,
+            sourceRecords: sourceClosetItem.measurementRecords
+        )
+    }
+
+    private init(
+        measurements: GarmentMeasurements,
+        sourceRecords: [GarmentMeasurementRecord]
+    ) {
+        self.measurements = measurements
+        measurementRecords = sourceRecords.map { Self.payload(from: $0) }
+    }
+
+    private static func payload(
+        from record: GarmentMeasurementRecord
+    ) -> FitMatchClosetMeasurementRecordPayload {
+        FitMatchClosetMeasurementRecordPayload(
+            value: record.value,
+            unit: record.unitRawValue,
+            measurementCode: record.measurementCodeRawValue,
+            displayKind: record.displayKindRawValue,
+            methodSource: record.methodSource,
+            methodProfile: record.methodProfile,
+            inputSource: record.inputSourceRawValue,
+            standardVersion: record.standardVersion,
+            mappingVersion: record.mappingVersion,
+            rawCode: record.rawCode,
+            rawLabel: record.rawLabel,
+            rawInfo: record.rawInfo,
+            rawValueText: record.rawValueText,
+            evidenceLevel: record.evidenceLevelRawValue,
+            semanticStatus: record.semanticStatusRawValue,
+            valueSource: FitMatchClosetMeasurementProvenance.transportValueSource(
+                valueSource: nil,
+                inputSource: record.inputSourceRawValue
             )
-        }
+        )
     }
 
     func makeGarmentMeasurementRecords() -> [GarmentMeasurementRecord] {
@@ -154,7 +178,20 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
         detailCategory: ClosetDetailCategory,
         gender: UserGender
     ) {
-        let baseline = FitMatchClosetMeasurementSnapshot(sourceSize: sourceSize)
+        self.init(
+            baseline: FitMatchClosetMeasurementSnapshot(sourceSize: sourceSize),
+            category: category,
+            detailCategory: detailCategory,
+            gender: gender
+        )
+    }
+
+    init(
+        baseline: FitMatchClosetMeasurementSnapshot,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        gender: UserGender
+    ) {
         self.baseline = baseline
         self.category = category
         measurementKinds = category.measurementKinds(
@@ -182,6 +219,13 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
 
     func sourceLabel(for kind: MeasurementKind) -> String {
         if isUserEdited(kind) {
+            return "직접 측정/수정 값"
+        }
+        if let source = Self.sourceRecord(for: kind, in: baseline, category: category),
+           FitMatchClosetMeasurementProvenance.isUserValue(
+                valueSource: source.valueSource,
+                inputSource: source.inputSource
+           ) {
             return "직접 측정/수정 값"
         }
         if Self.baselineValue(for: kind, in: baseline, category: category) != nil {
@@ -301,14 +345,15 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
         }
         guard !records.isEmpty else { return nil }
 
-        // Prefer the selected FitMatch definition when a retailer exposes
-        // multiple facts on the same presentation axis (for example chest
-        // width and chest circumference). This is an exact canonical-code
-        // match, not a display-label heuristic; falling back remains safe only
-        // when there is exactly one already-mapped source fact.
+        // A display axis is not a measurement semantic.  For example, chest
+        // width and chest circumference can both be presented as “가슴”.  When
+        // the selected Closet definition has a canonical code, only that
+        // exact code may seed an editable field; an unmatched source row is
+        // preserved and the user may add the selected definition separately.
         if let desiredCode = desiredCanonicalCode(for: kind, category: category) {
             let exact = records.filter { canonicalCode(for: $0) == desiredCode }
             if exact.count == 1 { return exact[0] }
+            return nil
         }
         return records.count == 1 ? records[0] : nil
     }
@@ -377,7 +422,10 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
             inputSource: MeasurementInputSource.userMeasured.rawValue,
             standardVersion: FitMatchMeasurementStandard.version,
             mappingVersion: "manual_measurement_mapping_v1",
-            rawCode: code.rawValue,
+            // A newly added FitMatch definition has no retailer/parser row.
+            // Keep its source identity absent rather than using its canonical
+            // code as a look-alike raw source identifier.
+            rawCode: nil,
             rawLabel: kind.title,
             rawInfo: nil,
             rawValueText: formatted(value),
@@ -391,7 +439,11 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
         guard let value, value.isFinite, value > 0 else { return "" }
         return value.rounded() == value
             ? String(Int(value))
-            : String(format: "%.1f", value)
+            // The editable field is persistence input, not a display label.
+            // `String(Double)` round-trips the stored value, whereas a one
+            // decimal display formatter would turn an untouched 55.25 into a
+            // false user edit (55.2) on the next save.
+            : String(value)
     }
 }
 

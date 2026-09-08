@@ -667,6 +667,7 @@ private struct ImportedClosetItemEditView: View {
     @State private var isReconcilingAcceptedServerEdit = false
     @State private var saveErrorMessage: String?
     @State private var pendingReferenceConfirmationDraft: FitMatchLinkedClosetEditDraft?
+    @State private var linkedMeasurementDraft: FitMatchLinkedClosetMeasurementDraft?
 
     init(
         item: UserFit,
@@ -778,6 +779,7 @@ private struct ImportedClosetItemEditView: View {
                     )
                 ) { _ in
                     normalizeDetailCategory()
+                    resetLinkedMeasurementDraft()
                 }
                 AddClosetSelectionMenu(
                     title: "세부 카테고리",
@@ -790,6 +792,7 @@ private struct ImportedClosetItemEditView: View {
                             selectedDetailCategoryCode = option.code
                             selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
                             didExplicitlyChangeClassification = true
+                            resetLinkedMeasurementDraft()
                         }
                     )
                 )
@@ -863,7 +866,18 @@ private struct ImportedClosetItemEditView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ProductSizeSelectionGrid(sizes: availableSizes, selectedSizeID: $selectedSizeID)
+                    ProductSizeSelectionGrid(
+                        sizes: availableSizes,
+                        selectedSizeID: Binding(
+                            get: { selectedSizeID },
+                            set: { value in
+                                selectedSizeID = value
+                                resetLinkedMeasurementDraft()
+                            }
+                        ),
+                        preservesExactIdentities: linkedSizePreparation != nil,
+                        disabledSizeIDs: unavailableMeasurementSizeIDs
+                    )
                 }
             }
         }
@@ -872,20 +886,67 @@ private struct ImportedClosetItemEditView: View {
     @ViewBuilder
     private var measurementSummaryCard: some View {
         if let selectedSize {
-            FitMatchCard {
-                VStack(alignment: .leading, spacing: 16) {
-                    SectionHeader(title: "선택한 사이즈 실측")
-                    LazyVGrid(columns: measurementGridColumns, spacing: 10) {
-                        ForEach(visibleMeasurementKinds(for: selectedSize)) { kind in
-                            MeasurementValueTile(
-                                title: kind.title,
-                                value: MeasurementResolver.value(
-                                    for: kind,
-                                    measurements: selectedSize.measurements,
-                                    records: selectedSize.measurementRecords
-                                )?.cmText ?? "-"
-                            )
+            linkedMeasurementEditor(for: selectedSize)
+        }
+    }
+
+    @ViewBuilder
+    private func linkedMeasurementEditor(for size: ProductSize) -> some View {
+        let draft = linkedMeasurementDraft ?? FitMatchLinkedClosetMeasurementDraft(
+            baseline: measurementBaseline(for: size),
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: item.gender
+        )
+        FitMatchCard {
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(
+                    title: "선택한 사이즈 실측",
+                    subtitle: "쇼핑몰·API 값은 자동 입력됩니다. 실제 옷을 재서 수정하거나 빈 항목을 추가할 수 있어요."
+                )
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(draft.kinds, id: \.self) { kind in
+                        VStack(alignment: .leading, spacing: 7) {
+                            HStack(spacing: 8) {
+                                Text(kind.title)
+                                    .font(.subheadline.weight(.semibold))
+                                Spacer()
+                                Text(draft.sourceLabel(for: kind))
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(
+                                        draft.sourceLabel(for: kind) == "직접 측정/수정 값"
+                                            ? Color.primary
+                                            : Color.secondary
+                                    )
+                            }
+                            HStack(spacing: 10) {
+                                TextField(
+                                    kind.placeholder,
+                                    text: linkedMeasurementBinding(
+                                        for: kind,
+                                        fallback: draft
+                                    )
+                                )
+                                .keyboardType(.decimalPad)
+                                .textInputAutocapitalization(.never)
+                                .font(.headline.weight(.bold))
+                                .disabled(!draft.isSupported(for: kind))
+                                Text("cm")
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(.secondary)
+                            }
+                            if !draft.isSupported(for: kind) {
+                                Text("이 항목은 검증된 서버 실측 코드가 없어 원본 값만 보존됩니다.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .background(
+                            Color(.secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        )
                     }
                 }
             }
@@ -951,8 +1012,12 @@ private struct ImportedClosetItemEditView: View {
             }
 
             Button {
-                guard let draft = currentLinkedEditDraft else {
-                    saveErrorMessage = "서버의 최신 사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요."
+                let draft: FitMatchLinkedClosetEditDraft
+                do {
+                    draft = try makeCurrentLinkedEditDraft()
+                } catch {
+                    saveErrorMessage = (error as? LocalizedError)?.errorDescription
+                        ?? "서버의 최신 사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요."
                     isShowingSaveError = true
                     return
                 }
@@ -978,6 +1043,7 @@ private struct ImportedClosetItemEditView: View {
             .buttonStyle(.plain)
             .disabled(
                 selectedSize == nil
+                    || !hasSelectedSizeMeasurement
                     || isPreparingLinkedSizeOptions
                     || (prepareLinkedSizeOptions != nil && linkedSizePreparation == nil)
                     || isSaving
@@ -993,16 +1059,20 @@ private struct ImportedClosetItemEditView: View {
         isSaving || isReconcilingAcceptedServerEdit
     }
 
-    private var currentLinkedEditDraft: FitMatchLinkedClosetEditDraft? {
+    private func makeCurrentLinkedEditDraft() throws -> FitMatchLinkedClosetEditDraft {
         guard let linkedSizePreparation,
               let selectedSizeID,
-              linkedSizePreparation.option(displaySizeID: selectedSizeID) != nil else {
-            return nil
+              let selectedOption = linkedSizePreparation.option(displaySizeID: selectedSizeID) else {
+            throw FitMatchLinkedClosetMeasurementDraftError.invalidInput(
+                "서버의 최신 사이즈 정보를 확인하지 못했습니다."
+            )
         }
+        let measurementSnapshot = try linkedMeasurementDraftSnapshot(for: selectedOption.productSize)
         return FitMatchLinkedClosetEditDraft(
             item: item,
             preparation: linkedSizePreparation,
             selectedDisplaySizeID: selectedSizeID,
+            measurementSnapshot: measurementSnapshot,
             category: selectedCategory,
             detailCategory: selectedDetailCategory,
             categoryCode: selectedCategoryCode,
@@ -1052,6 +1122,18 @@ private struct ImportedClosetItemEditView: View {
         return Self.availableSizes(for: item)
     }
 
+    private var unavailableMeasurementSizeIDs: Set<UUID> {
+        Set(availableSizes.compactMap { size in
+            FitMatchGarmentMeasurementPresence.hasAnyMeasurement(in: size) ? nil : size.id
+        })
+    }
+
+    private var hasSelectedSizeMeasurement: Bool {
+        selectedSize.map {
+            FitMatchGarmentMeasurementPresence.hasAnyMeasurement(in: $0)
+        } ?? false
+    }
+
     private var availableCategories: [TaxonomyCategory] {
         FitMatchTaxonomyProvider.shared.activeCategories
     }
@@ -1081,6 +1163,68 @@ private struct ImportedClosetItemEditView: View {
             selectedCategory = ClothingCategory.fromTaxonomyCode(first.code)
         }
         normalizeDetailCategory()
+    }
+
+    private func measurementBaseline(for selectedSize: ProductSize) -> FitMatchClosetMeasurementSnapshot {
+        if let linkedSizePreparation,
+           let selectedSizeID,
+           let option = linkedSizePreparation.option(displaySizeID: selectedSizeID),
+           option.identity.productSizeID == linkedSizePreparation.currentServerIdentity.productSizeID {
+            // The server proved this exact selected size is still the current
+            // Closet tuple. Retain the current user-owned mixed snapshot for
+            // category-only or measurement-only edits.
+            return FitMatchClosetMeasurementSnapshot(sourceClosetItem: item)
+        }
+        if linkedSizePreparation == nil,
+           selectedSize.id == item.sourceProductSize?.id {
+            return FitMatchClosetMeasurementSnapshot(sourceClosetItem: item)
+        }
+        // A true exact size change must begin from the newly selected retailer
+        // chart; keeping an old M override on L would be incorrect.
+        return FitMatchClosetMeasurementSnapshot(sourceSize: selectedSize)
+    }
+
+    private func resetLinkedMeasurementDraft() {
+        guard let selectedSize else {
+            linkedMeasurementDraft = nil
+            return
+        }
+        linkedMeasurementDraft = FitMatchLinkedClosetMeasurementDraft(
+            baseline: measurementBaseline(for: selectedSize),
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: item.gender
+        )
+    }
+
+    private func linkedMeasurementBinding(
+        for kind: MeasurementKind,
+        fallback: FitMatchLinkedClosetMeasurementDraft
+    ) -> Binding<String> {
+        Binding(
+            // Rendering must show the existing Closet snapshot before the
+            // first keystroke.  Do not make the UI appear blank merely because
+            // the draft has not yet been promoted into @State.
+            get: { linkedMeasurementDraft?.rawValue(for: kind) ?? fallback.rawValue(for: kind) },
+            set: { value in
+                if linkedMeasurementDraft == nil {
+                    linkedMeasurementDraft = fallback
+                }
+                linkedMeasurementDraft?.setRawValue(value, for: kind)
+            }
+        )
+    }
+
+    private func linkedMeasurementDraftSnapshot(
+        for selectedSize: ProductSize
+    ) throws -> FitMatchClosetMeasurementSnapshot {
+        let draft = linkedMeasurementDraft ?? FitMatchLinkedClosetMeasurementDraft(
+            baseline: measurementBaseline(for: selectedSize),
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: item.gender
+        )
+        return try draft.snapshot()
     }
 
     private static func availableSizes(for item: UserFit) -> [ProductSize] {

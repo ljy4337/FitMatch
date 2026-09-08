@@ -82,6 +82,33 @@ struct FitMatchLinkedClosetRoundTripTests {
         }?.inputSourceRawValue == MeasurementInputSource.importedSizeChart.rawValue)
     }
 
+    /// The text field is an editing surface, not a one-decimal display.  An
+    /// untouched retailer value must not be rounded and accidentally become a
+    /// USER_MANUAL correction on the next save.
+    @Test func linkedUntouchedDecimalMeasurementRetainsExactValueAndProvenance() throws {
+        let fixture = linkedFixture()
+        fixture.size.chest = 55.25
+        let chestRecord = try #require(fixture.size.measurementRecords.first {
+            $0.measurementCodeRawValue == "chest_width"
+        })
+        chestRecord.value = 55.25
+
+        let draft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: fixture.size,
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        #expect(draft.rawValue(for: .chest) == "55.25")
+
+        let snapshot = try draft.snapshot()
+        let chest = try #require(snapshot.measurementRecords.first {
+            $0.measurementCode == "chest_width"
+        })
+        #expect(chest.value == 55.25)
+        #expect(chest.valueSource == FitMatchClosetMeasurementProvenance.retailerSnapshot)
+    }
+
     /// Multiple retailer facts may share a presentation axis. The selected
     /// category's existing exact definition chooses chest width here; changing
     /// it never converts the independent circumference fact into a user value.
@@ -112,6 +139,65 @@ struct FitMatchLinkedClosetRoundTripTests {
         #expect(values["chest_circumference"]?.0 == 110)
         #expect(values["chest_circumference"]?.1
             == FitMatchClosetMeasurementProvenance.retailerSnapshot)
+    }
+
+    /// A sole circumference fact cannot silently become a chest-width field
+    /// just because both render on the chest axis.  The selected taxonomy's
+    /// exact chest-width definition is added independently instead.
+    @Test func linkedEditDoesNotTreatCircumferenceAsWidthByDisplayAxis() throws {
+        let fixture = linkedFixture()
+        fixture.size.chest = 0
+        fixture.size.measurementRecords.removeAll {
+            $0.measurementCodeRawValue == "chest_width"
+        }
+        fixture.size.measurementRecords.append(importedRecord(
+            value: 110,
+            code: .chestCircumferenceGarment,
+            rawCode: "chest_circumference",
+            kind: .chest,
+            productSize: fixture.size
+        ))
+
+        var draft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: fixture.size,
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        #expect(draft.rawValue(for: .chest).isEmpty)
+        draft.setRawValue("56", for: .chest)
+
+        let snapshot = try draft.snapshot()
+        let localCircumference = try #require(snapshot.measurementRecords.first {
+            $0.measurementCode == "chest_circumference"
+        })
+        #expect(localCircumference.value == 110)
+        #expect(localCircumference.valueSource
+            == FitMatchClosetMeasurementProvenance.retailerSnapshot)
+        let localWidth = try #require(snapshot.measurementRecords.first {
+            $0.measurementCode == MeasurementCode.chestWidthPitToPit.rawValue
+        })
+        #expect(localWidth.value == 56)
+        #expect(localWidth.valueSource == FitMatchClosetMeasurementProvenance.userManual)
+
+        // The local method-specific code is intentionally normalized only at
+        // the transport boundary. The server receives distinct canonical
+        // circumference and width rows, with no display-axis substitution.
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(
+                linkedRequest(
+                    fixture: fixture,
+                    snapshot: snapshot,
+                    explicitClassification: true
+                )
+            )
+        let rows = try encodedMeasurements(for: submission.remoteRequest)
+        #expect(rows["chest_circumference"]?["value"] as? Double == 110)
+        #expect(rows["chest_circumference"]?["value_source"] as? String
+            == FitMatchClosetMeasurementProvenance.retailerSnapshot)
+        #expect(rows["chest_width"]?["value"] as? Double == 56)
+        #expect(rows["chest_width"]?["value_source"] as? String
+            == FitMatchClosetMeasurementProvenance.userManual)
     }
 
     /// T3: a missing definition can be added through the selected FitMatch
@@ -149,6 +235,14 @@ struct FitMatchLinkedClosetRoundTripTests {
         #expect(rows[hemCode]?["value"] as? Double == 24)
         #expect(rows[hemCode]?["value_source"] as? String
             == FitMatchClosetMeasurementProvenance.userManual)
+        #expect(rows[hemCode]?["source_measurement_code"] == nil)
+        let addedRecord = try #require(snapshot.measurementRecords.first {
+            $0.measurementCode == ManualMeasurementRecordFactory.fitmatchCode(
+                for: .hem,
+                category: .bottom
+            ).rawValue
+        })
+        #expect(addedRecord.rawCode == nil)
         for code in ["chest_width", "shoulder_width", "back_length", "sleeve_length"] {
             #expect(rows[code]?["value_source"] as? String
                 == FitMatchClosetMeasurementProvenance.retailerSnapshot)
@@ -217,6 +311,53 @@ struct FitMatchLinkedClosetRoundTripTests {
             })
             #expect(row.inputSourceRawValue == MeasurementInputSource.importedSizeChart.rawValue)
         }
+    }
+
+    /// Re-opening a linked Closet item starts from its owned snapshot so a
+    /// category-only change does not reconstruct measurements from ProductSize.
+    @Test func linkedClosetEditBaselineRetainsExistingUserRowsForCategoryOnlyEdit() throws {
+        let fixture = linkedFixture()
+        var firstDraft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: fixture.size,
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        firstDraft.setRawValue("56", for: .chest)
+        let ownedSnapshot = try firstDraft.snapshot()
+        let item = FitMatchComparedProductClosetRegistration.makeUserFit(
+            sourceProduct: fixture.product,
+            sourceSize: fixture.size,
+            measurementSnapshot: ownedSnapshot,
+            authorityProduct: fixture.product,
+            brandName: "Fixture",
+            gender: .men,
+            genderCode: "MEN",
+            productName: fixture.product.name,
+            category: .top,
+            categoryCode: "tops",
+            detailCategory: .shortSleeve,
+            detailCategoryCode: "short_sleeve",
+            isRepresentative: false,
+            didExplicitlyChangeClassification: true,
+            didExplicitlySelectClosetClassification: true
+        )
+
+        let reopeningDraft = FitMatchLinkedClosetMeasurementDraft(
+            baseline: .init(sourceClosetItem: item),
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        let reopened = try reopeningDraft.snapshot()
+        let values = Dictionary(uniqueKeysWithValues: reopened.measurementRecords.map {
+            ($0.measurementCode, ($0.value, $0.valueSource))
+        })
+        #expect(values["chest_width"]?.0 == 56)
+        #expect(values["chest_width"]?.1 == FitMatchClosetMeasurementProvenance.userManual)
+        #expect(values["shoulder_width"]?.0 == 47)
+        #expect(values["shoulder_width"]?.1
+            == FitMatchClosetMeasurementProvenance.retailerSnapshot)
     }
 
     /// T5: a user's Closet category wins even when the linked global Product
@@ -352,6 +493,22 @@ struct FitMatchLinkedClosetRoundTripTests {
         #expect(row["fitmatch_measurement_code"] as? String == "chest_width")
         #expect(row["value_source"] as? String
             == FitMatchClosetMeasurementProvenance.userManual)
+    }
+
+    @Test func unratedLinkedPayloadOmitsSatisfactionAndDecodeRestoresUnratedState() throws {
+        let encoded = try decodedJSON(FitMatchSupabaseDomainClient.encodedVNextClosetPayload(
+            manualRequest(record: measurementRecord(value: 51), satisfaction: 0)
+        ))
+        #expect(encoded["satisfaction"] == nil)
+
+        let fixture = linkedFixture()
+        let dto = try linkedListDTO(
+            clientItemID: UUID(),
+            identity: fixture.identity,
+            rows: [("chest_width", 55, FitMatchClosetMeasurementProvenance.retailerSnapshot)],
+            satisfaction: NSNull()
+        )
+        #expect(FitMatchSupabaseDomainClient.mapClosetItem(dto).satisfaction == 0)
     }
 
     private func linkedFixture() -> (
@@ -500,7 +657,8 @@ struct FitMatchLinkedClosetRoundTripTests {
     private func linkedListDTO(
         clientItemID: UUID,
         identity: FitMatchClosetRegistrationServerIdentity,
-        rows: [(String, Double, String)]
+        rows: [(String, Double, String)],
+        satisfaction: Any = 3
     ) throws -> VNextClosetItemDTO {
         let object: [String: Any] = [
             "id": UUID().uuidString,
@@ -528,7 +686,7 @@ struct FitMatchLinkedClosetRoundTripTests {
             "is_reference": false,
             "fit_preference_code": "regular",
             "notes": NSNull(),
-            "satisfaction": 3,
+            "satisfaction": satisfaction,
             "created_at": "2026-09-08T00:00:00Z",
             "updated_at": "2026-09-08T00:00:00Z",
             "measurements": rows.map { code, value, source in
@@ -573,7 +731,8 @@ struct FitMatchLinkedClosetRoundTripTests {
     }
 
     private func manualRequest(
-        record: FitMatchClosetMeasurementRecordPayload
+        record: FitMatchClosetMeasurementRecordPayload,
+        satisfaction: Int = 3
     ) -> FitMatchUpsertClosetItemRequest {
         let item = FitMatchClosetItemPayload(
             productName: "직접 측정 티셔츠",
@@ -593,7 +752,7 @@ struct FitMatchLinkedClosetRoundTripTests {
             measurementRecords: [record],
             fitMemo: "",
             fitPreferenceCode: "regular",
-            satisfaction: 3,
+            satisfaction: satisfaction,
             isReference: false,
             classificationVersion: nil,
             clientSnapshot: [:],

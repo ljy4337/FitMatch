@@ -1604,7 +1604,9 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     let bodyLengthCode: String?
     let fitPreferenceCode: String
     let notes: String
-    let satisfaction: Int
+    /// `nil` means the user has not rated this Closet item.  Do not turn that
+    /// absence into a neutral-looking 3 during a link registration.
+    let satisfaction: Int?
     let measurements: [VNextClosetMeasurementPayload]?
     /// The vNext upsert/update contract consumes a Closet-local override as
     /// one nested value. Do not flatten it into the product snapshot fields:
@@ -1650,7 +1652,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         try container.encodeIfPresent(bodyLengthCode, forKey: .bodyLengthCode)
         try container.encode(fitPreferenceCode, forKey: .fitPreferenceCode)
         try container.encode(notes, forKey: .notes)
-        try container.encode(satisfaction, forKey: .satisfaction)
+        try container.encodeIfPresent(satisfaction, forKey: .satisfaction)
         try container.encodeIfPresent(measurements, forKey: .measurements)
         // `encodeIfPresent` is intentional. A CONFIRMED registration with no
         // personal edit must omit this key completely, not send null or a
@@ -2492,14 +2494,12 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             bodyLengthCode: axes.bodyLengthCode,
             fitPreferenceCode: request.item.fitPreferenceCode,
             notes: request.item.fitMemo,
-            // The current Closet SQL contract accepts the user-facing 1...5
-            // scale. A compared-product registration has no fit feedback yet
-            // and historically used 0 locally, so transport its neutral
-            // persisted default rather than issuing a mutation that the DB
-            // must reject before the linked snapshot can round-trip.
+            // `0` is the app's explicit “not rated yet” state.  The database
+            // contract permits a null rating, so omit it rather than turning
+            // absence into a fabricated rating of 3.
             satisfaction: (1...5).contains(request.item.satisfaction)
                 ? request.item.satisfaction
-                : 3,
+                : nil,
             // Linked Closets carry a Closet-local measurement snapshot.  The
             // RPC validates retailer rows against the exact selected size and
             // accepts USER_MANUAL rows only for this caller's Closet item;
@@ -2630,7 +2630,12 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     : nil,
                 mappingVersion: item.classificationResolverVersion
                     ?? "fitmatch-vnext-closet-v1",
-                rawCode: measurement.sourceMeasurementCode ?? measurement.measurementCode,
+                // Source identity exists only when the server actually
+                // returned one. A USER_MANUAL addition must not acquire a
+                // fabricated source identity just because it has a canonical
+                // FitMatch code.
+                rawCode: measurement.sourceMeasurementCode
+                    ?? (isUserValue ? nil : measurement.measurementCode),
                 rawLabel: measurement.rawLabelSnapshot ?? measurement.measurementCode,
                 rawInfo: nil,
                 rawValueText: String(measurement.value),
@@ -2667,7 +2672,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             measurementRecords: records,
             fitMemo: item.notes ?? "",
             fitPreferenceCode: item.fitPreferenceCode ?? "regular",
-            satisfaction: item.satisfaction ?? 3,
+            // The local model represents an unrated value as 0.  Keep that
+            // distinction through server decode instead of inventing 3.
+            satisfaction: item.satisfaction ?? 0,
             isReference: item.isReference,
             classificationStatus: "confirmed",
             classificationSource: closetClassificationSource(
@@ -2787,7 +2794,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             try validateMeasurementRecord(
                 record,
                 canonicalCode: canonicalCode,
-                valueSource: valueSource
+                valueSource: valueSource,
+                categoryCode: item.categoryCode
             )
             payloadByCanonicalCode[canonicalCode] = VNextClosetMeasurementPayload(
                 fitmatchMeasurementCode: canonicalCode,
@@ -2837,7 +2845,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     nonisolated private static func validateMeasurementRecord(
         _ record: FitMatchClosetMeasurementRecordPayload,
         canonicalCode: String,
-        valueSource: String
+        valueSource: String,
+        categoryCode: String
     ) throws {
         let unit = record.unit.trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
@@ -2851,21 +2860,51 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             )
         }
 
-        // Retailer facts retain their verified source semantics.  Direct
-        // values use the existing FitMatch definition and must be valid before
-        // they ever reach the RPC; no display-name or unit conversion is used.
-        guard valueSource == FitMatchClosetMeasurementProvenance.userManual,
-              let kind = MeasurementKind.allCases.first(where: {
-                  $0.displayKind.rawValue == record.displayKind
-              }) else {
+        // Retailer facts retain their verified source semantics.  For user
+        // values, only validate against a definition whose *exact canonical
+        // code* is emitted by the existing direct-measurement factory.  A
+        // display axis is deliberately not enough: chest circumference and
+        // chest width may both display as "chest", but they are not the same
+        // definition or range.
+        guard valueSource == FitMatchClosetMeasurementProvenance.userManual else {
             return
         }
-        guard FitMatchMeasurementStandard.transportValidRange(for: kind)
-            .contains(record.value) else {
+        guard record.value <= 1_000 else {
             throw FitMatchClosetPayloadContractError.invalidUserMeasurementRange(
                 code: record.measurementCode
             )
         }
+
+        guard record.methodSource == "fitmatch",
+              record.mappingVersion == "manual_measurement_mapping_v1" else {
+            return
+        }
+        let category = ClothingCategory.fromTaxonomyCode(categoryCode)
+        guard let definition = exactUserMeasurementDefinition(
+            canonicalCode: canonicalCode,
+            category: category
+        ) else { return }
+        guard definition.validRange.contains(record.value) else {
+            throw FitMatchClosetPayloadContractError.invalidUserMeasurementRange(
+                code: record.measurementCode
+            )
+        }
+    }
+
+    nonisolated private static func exactUserMeasurementDefinition(
+        canonicalCode: String,
+        category: ClothingCategory
+    ) -> DirectMeasurementDefinition? {
+        let matches = MeasurementKind.allCases.filter { kind in
+            FitMatchCanonicalMeasurementCode.canonicalCode(
+                for: ManualMeasurementRecordFactory.fitmatchCode(
+                    for: kind,
+                    category: category
+                )
+            ) == canonicalCode
+        }
+        guard matches.count == 1, let kind = matches.first else { return nil }
+        return FitMatchMeasurementStandard.definition(for: kind, category: category)
     }
 
     nonisolated private static func canonicalMeasurementCode(

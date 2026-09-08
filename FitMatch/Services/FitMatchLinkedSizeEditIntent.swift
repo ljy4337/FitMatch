@@ -75,6 +75,12 @@ struct FitMatchLinkedClosetEditDraft {
     let item: UserFit
     let preparation: FitMatchLinkedClosetSizeEditPreparation
     let selectedDisplaySizeID: UUID
+    /// A Closet-local mixed snapshot.  It is based on the current owned item
+    /// for a category-only edit, or the newly selected exact ProductSize for a
+    /// size change.  It must never be reconstructed from the shared chart in
+    /// the coordinator because that would erase user measurements before the
+    /// server round-trip.
+    let measurementSnapshot: FitMatchClosetMeasurementSnapshot
     let category: ClothingCategory
     let detailCategory: ClosetDetailCategory
     let categoryCode: String

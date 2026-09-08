@@ -132,16 +132,23 @@ enum FitMatchClosetItemEditAction {
             )
         }
         item.sizeName = selectedSize.name.fitMatchDisplaySizeName
-        // A personal measurement edit is a Closet-local snapshot.  The
-        // selected ProductSize remains the retailer source and must not be
-        // changed by this action.
-        item.measurements = measurementSnapshot?.measurements ?? selectedSize.measurements
+        // A personal measurement edit is a Closet-local snapshot.  For a
+        // category-only (same exact local size identity) change, preserve the
+        // current user-owned snapshot by default instead of rebuilding it
+        // from the shared retailer chart.  A true size change still starts
+        // from that newly selected chart unless a caller supplied a snapshot.
+        let effectiveSnapshot: FitMatchClosetMeasurementSnapshot
+        if let measurementSnapshot {
+            effectiveSnapshot = measurementSnapshot
+        } else if selectedSize.id == item.sourceProductSize?.id {
+            effectiveSnapshot = FitMatchClosetMeasurementSnapshot(sourceClosetItem: item)
+        } else {
+            effectiveSnapshot = FitMatchClosetMeasurementSnapshot(sourceSize: selectedSize)
+        }
+        item.measurements = effectiveSnapshot.measurements
         item.sourceProductSize = selectedSize
         item.measurementRecords.forEach(modelContext.delete)
-        item.replaceMeasurementRecords(with:
-            measurementSnapshot?.makeGarmentMeasurementRecords()
-                ?? selectedSize.measurementRecords
-        )
+        item.replaceMeasurementRecords(with: effectiveSnapshot.makeGarmentMeasurementRecords())
         item.updatedAt = now
         let outcome = persist(in: modelContext, using: performSave)
         guard case .persistenceFailed = outcome,

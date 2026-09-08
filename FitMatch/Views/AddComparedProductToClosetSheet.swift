@@ -708,7 +708,13 @@ struct AddComparedProductToClosetSheet: View {
                                 )
                         }
                         HStack(spacing: 10) {
-                            TextField(kind.placeholder, text: linkedMeasurementBinding(for: kind))
+                            TextField(
+                                kind.placeholder,
+                                text: linkedMeasurementBinding(
+                                    for: kind,
+                                    fallback: draft
+                                )
+                            )
                                 .keyboardType(.decimalPad)
                                 .textInputAutocapitalization(.never)
                                 .font(.headline.weight(.bold))
@@ -1240,12 +1246,17 @@ struct AddComparedProductToClosetSheet: View {
         )
     }
 
-    private func linkedMeasurementBinding(for kind: MeasurementKind) -> Binding<String> {
+    private func linkedMeasurementBinding(
+        for kind: MeasurementKind,
+        fallback: FitMatchLinkedClosetMeasurementDraft
+    ) -> Binding<String> {
         Binding(
-            get: { linkedMeasurementDraft?.rawValue(for: kind) ?? "" },
+            // The initial frame must expose the API/retailer values even
+            // before onAppear has promoted this transient draft into @State.
+            get: { linkedMeasurementDraft?.rawValue(for: kind) ?? fallback.rawValue(for: kind) },
             set: { value in
                 if linkedMeasurementDraft == nil {
-                    resetLinkedMeasurementDraft()
+                    linkedMeasurementDraft = fallback
                 }
                 linkedMeasurementDraft?.setRawValue(value, for: kind)
             }
