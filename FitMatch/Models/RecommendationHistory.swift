@@ -243,6 +243,27 @@ final class RecommendationHistory {
             && comparisonMethod.hasPrefix("서버 승인")
     }
 
+    /// Determines whether this immutable History references one active Closet
+    /// item. vNext persistence deliberately gives the frozen reference a
+    /// comparison-derived ID, so direct `userFit.id == clientItemID` checks
+    /// only work for legacy rows and silently miss the production projection.
+    /// This is a relationship test only; it never grants server visibility or
+    /// deletion authority.
+    func referencesClosetItem(clientItemID: UUID) -> Bool {
+        if userFit.id == clientItemID {
+            // Legacy History and older restores retained the active item's ID.
+            return true
+        }
+        guard isServerBackedVNextHistory,
+              userFit.isHistoryOnlyReferenceSnapshot else {
+            return false
+        }
+        return userFit.id == VNextHistoryProjectionIdentity.referenceID(
+            comparisonID: id,
+            clientItemID: clientItemID
+        )
+    }
+
     var stockStatus: ProductStockStatus {
         ProductStockStatus(rawValue: stockStatusRawValue ?? "") ?? .unknown
     }

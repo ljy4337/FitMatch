@@ -200,8 +200,21 @@ struct FitMatchVNextContractTests {
 
     @Test func engineRejectsSnapshotCandidateSetMismatchBeforeScoring() throws {
         let fixture = ComparisonBeginFixture()
-        let begin: VNextBeginComparisonDTO = try decode(
-            fixture.json(topLevelAuthorizedIDs: [fixture.sizeA])
+        let decoded: VNextBeginComparisonDTO = try decode(fixture.json())
+        // The network decoder now rejects conflicting duplicated proof. Keep
+        // the adapter seam test by constructing the deliberately inconsistent
+        // in-memory DTO that a decoder-bypassing caller could still provide.
+        let begin = VNextBeginComparisonDTO(
+            comparisonID: decoded.comparisonID,
+            created: false,
+            idempotent: true,
+            resultStatus: "PENDING",
+            authorization: decoded.authorization,
+            authorizedCandidateProductSizeIDs: [fixture.sizeA],
+            candidateAuthorityFingerprint: decoded.candidateAuthorityFingerprint,
+            effectiveAuthorityFingerprint: decoded.effectiveAuthorityFingerprint,
+            snapshotSchemaVersion: decoded.snapshotSchemaVersion,
+            snapshot: decoded.snapshot
         )
 
         #expect(throws: VNextComparisonEngineAdapterError.candidateSetMismatch) {

@@ -1081,10 +1081,14 @@ nonisolated struct FitMatchBeginComparisonResponse: Decodable, Equatable, Sendab
         case runID = "run_id"
         case status
         case compatibility
+        case snapshot
     }
 
     init(from decoder: Decoder) throws {
-        if let exact = try? VNextBeginComparisonDTO(from: decoder) {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if container.contains(.snapshot) {
+            let exact = try VNextBeginComparisonDTO(from: decoder)
+            try FitMatchVNextContractValidator.validateLiveBegin(exact)
             runID = exact.comparisonID
             status = exact.resultStatus.lowercased()
             compatibility = FitMatchDatabaseCompatibility(
@@ -1098,7 +1102,6 @@ nonisolated struct FitMatchBeginComparisonResponse: Decodable, Equatable, Sendab
             vnext = exact
             return
         }
-        let container = try decoder.container(keyedBy: CodingKeys.self)
         runID = try container.decode(UUID.self, forKey: .runID)
         status = try container.decode(String.self, forKey: .status)
         compatibility = try container.decode(
@@ -2035,15 +2038,34 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         clientComparisonIDs: [UUID]
     ) async throws -> VNextComparisonHistoryVisibilityDTO {
         let client = try await authenticatedClient()
-        return try await client
-            .rpc(
-                "fitmatch_vnext_hide_comparison_history",
-                params: VNextHideComparisonHistoryParameters(
-                    pClientComparisonIDs: clientComparisonIDs
+        do {
+            return try await client
+                .rpc(
+                    "fitmatch_vnext_hide_comparison_history",
+                    params: VNextHideComparisonHistoryParameters(
+                        pClientComparisonIDs: clientComparisonIDs
+                    )
                 )
-            )
-            .execute()
-            .value
+                .execute()
+                .value
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as PostgrestError {
+            switch error.code?.uppercased() {
+            case "PGRST202":
+                throw FitMatchHistoryVisibilityRPCError.unavailable
+            case "42501":
+                throw FitMatchHistoryVisibilityRPCError.authenticationRequired
+            case "22023", "22P02":
+                throw FitMatchHistoryVisibilityRPCError.invalidRequest
+            default:
+                throw FitMatchHistoryVisibilityRPCError.rejected
+            }
+        } catch is URLError {
+            throw FitMatchHistoryVisibilityRPCError.transportUncertain
+        } catch {
+            throw error
+        }
     }
 
     private func fetchVNextRuntime(
@@ -2187,17 +2209,28 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 }
             )
         }
+        let readinessState = try FitMatchVNextContractValidator.readinessState(readiness)
         let runtimeState: String
-        switch readiness.status {
-        case "READY": runtimeState = "ready"
-        case "CLASSIFICATION_REQUIRED": runtimeState = "classification_required"
-        case "NOT_APPLICABLE": runtimeState = "not_comparable"
-        case "NO_AVAILABLE_SIZE": runtimeState = "sizes_required"
-        default: runtimeState = "measurements_required"
+        switch readinessState {
+        case .ready:
+            runtimeState = "ready"
+        case .classificationRequired:
+            runtimeState = "classification_required"
+        case .notApplicable:
+            runtimeState = "not_comparable"
+        case .noAvailableSize:
+            runtimeState = "sizes_required"
+        case .noMeasurementData, .mappingRequired, .insufficientMeasurements:
+            // These are distinct database reasons. The existing UI presents
+            // one measurement-completion flow while retaining `readiness`
+            // unchanged inside the vNext runtime for diagnostics.
+            runtimeState = "measurements_required"
+        case .policyUnavailable:
+            runtimeState = "policy_unavailable"
         }
         return FitMatchProductRuntimeResponse(
             runtimeState: runtimeState,
-            comparisonReady: readiness.status == "READY",
+            comparisonReady: readinessState == .ready,
             product: FitMatchRuntimeProduct(
                 productID: product.id,
                 source: product.sourceCode,

@@ -222,6 +222,17 @@ nonisolated enum VNextUnknownClassificationField: String, Decodable, Sendable {
     case bodyLength = "body_length"
 }
 
+/// The recovery envelope version is an explicit server contract.  Do not
+/// accept a version family by prefix: each version also defines how
+/// `unknown_fields` is derived from the server-issued candidates.
+nonisolated enum VNextClassificationRecoveryContractVersion: String, Equatable,
+    Sendable {
+    case v6CompleteTupleGarmentFirst =
+        "fitmatch-vnext-recovery-v6-complete-tuple-garment-first"
+    case v7ExplicitAuthority =
+        "fitmatch-vnext-recovery-v7-explicit-authority"
+}
+
 nonisolated struct VNextKnownClassificationFactsDTO: Decodable, Equatable, Sendable {
     let audienceCode: String?
     let productStructureCode: String?
@@ -313,7 +324,10 @@ nonisolated struct VNextClassificationRecoveryGarmentGroup:
 nonisolated struct VNextClassificationRecoveryContractDTO:
     Decodable, Equatable, Sendable {
     static let completeTupleContractVersion =
-        "fitmatch-vnext-recovery-v6-complete-tuple-garment-first"
+        VNextClassificationRecoveryContractVersion
+            .v6CompleteTupleGarmentFirst.rawValue
+    static let explicitAuthorityContractVersion =
+        VNextClassificationRecoveryContractVersion.v7ExplicitAuthority.rawValue
 
     let productID: UUID
     let globalStatus: String
@@ -347,15 +361,34 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
         case currentReviewReason = "current_review_reason"
     }
 
+    var supportedContractVersion: VNextClassificationRecoveryContractVersion? {
+        VNextClassificationRecoveryContractVersion(
+            rawValue: candidateContractVersion
+        )
+    }
+
     var isSafelyRecoverable: Bool {
-        recoverability == .recoverable
-            && candidateContractVersion == Self.completeTupleContractVersion
-            && (1...3).contains(candidates.count)
+        guard recoverability == .recoverable,
+              supportedContractVersion != nil,
+              let serverUnknownFields else {
+            return false
+        }
+
+        return (1...3).contains(candidates.count)
             && candidateCount == candidates.count
             && candidateSetHash?.isEmpty == false
+            && !productInputFingerprint.isEmpty
+            && !productEvidenceFingerprint.isEmpty
+            && !resolverVersion.isEmpty
+            && Set(candidates.map(\.candidateID)).count == candidates.count
+            && Set(candidates.map(\.candidateFingerprint)).count
+                == candidates.count
             && candidates.allSatisfy(isCompleteCandidateShape)
             && candidates.allSatisfy(matchesFixedFacts)
-            && unknownFields == presentationUnknownFields
+            && candidates.allSatisfy {
+                $0.candidateID == $0.candidateFingerprint
+            }
+            && unknownFields == serverUnknownFields
     }
 
     var garmentGroups: [VNextClassificationRecoveryGarmentGroup] {
@@ -380,6 +413,10 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
         }
     }
 
+    /// UI projection is deliberately garment-first for every supported server
+    /// version.  A v7 envelope may report an axis as unknown because values
+    /// differ across different garment types; once one garment has exactly
+    /// one candidate, that axis must not become a redundant question.
     var presentationUnknownFields: [VNextUnknownClassificationField] {
         var result: [VNextUnknownClassificationField] = []
         if garmentGroups.count > 1 {
@@ -392,6 +429,37 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
         ] where garmentGroups.contains(where: {
             $0.differingFields.contains(field)
         }) {
+            result.append(field)
+        }
+        return result
+    }
+
+    /// Expected `unknown_fields` using the semantics of the declared server
+    /// contract.  This validates an issued candidate set; it never creates or
+    /// rewrites a candidate tuple, fingerprint, or hash on the device.
+    private var serverUnknownFields: [VNextUnknownClassificationField]? {
+        guard let supportedContractVersion else { return nil }
+        switch supportedContractVersion {
+        case .v6CompleteTupleGarmentFirst:
+            return presentationUnknownFields
+        case .v7ExplicitAuthority:
+            return wholeCandidateUnknownFields
+        }
+    }
+
+    /// v7 derives garment and axis questions from the entire candidate set.
+    /// Optional axis values participate as values, so `nil` and a concrete
+    /// server value are different while an all-`nil` axis is not unknown.
+    private var wholeCandidateUnknownFields: [VNextUnknownClassificationField] {
+        var result: [VNextUnknownClassificationField] = []
+        if Set(candidates.map(\.garmentTypeCode)).count > 1 {
+            result.append(.garmentType)
+        }
+        for field in [
+            VNextUnknownClassificationField.sleeveLength,
+            .lowerLength,
+            .bodyLength
+        ] where Set(candidates.map { $0.value(for: field) }).count > 1 {
             result.append(field)
         }
         return result
@@ -1006,6 +1074,10 @@ nonisolated struct VNextBeginComparisonDTO: Decodable, Equatable, Sendable {
     let authorizedCandidateProductSizeIDs: [UUID]
     let candidateAuthorityFingerprint: String?
     let effectiveAuthorityFingerprint: String?
+    /// The decoded top-level value is retained separately from the resolved
+    /// compatibility value. Historical same-ID replay may omit it, but a live
+    /// begin response may not silently borrow it from the nested snapshot.
+    let declaredSnapshotSchemaVersion: Int?
     let snapshotSchemaVersion: Int?
     let snapshot: VNextComparisonBeginSnapshotDTO
 
@@ -1023,6 +1095,32 @@ nonisolated struct VNextBeginComparisonDTO: Decodable, Equatable, Sendable {
 }
 
 extension VNextBeginComparisonDTO {
+    nonisolated init(
+        comparisonID: UUID,
+        created: Bool,
+        idempotent: Bool,
+        resultStatus: String,
+        authorization: VNextComparisonAuthorizationDTO?,
+        authorizedCandidateProductSizeIDs: [UUID],
+        candidateAuthorityFingerprint: String?,
+        effectiveAuthorityFingerprint: String?,
+        snapshotSchemaVersion: Int?,
+        snapshot: VNextComparisonBeginSnapshotDTO,
+        declaredSnapshotSchemaVersion: Int? = nil
+    ) {
+        self.comparisonID = comparisonID
+        self.created = created
+        self.idempotent = idempotent
+        self.resultStatus = resultStatus
+        self.authorization = authorization
+        self.authorizedCandidateProductSizeIDs = authorizedCandidateProductSizeIDs
+        self.candidateAuthorityFingerprint = candidateAuthorityFingerprint
+        self.effectiveAuthorityFingerprint = effectiveAuthorityFingerprint
+        self.declaredSnapshotSchemaVersion = declaredSnapshotSchemaVersion
+        self.snapshotSchemaVersion = snapshotSchemaVersion
+        self.snapshot = snapshot
+    }
+
     /// A same-ID replay is the original immutable begin snapshot, not a new
     /// weaker authorization. Older RPC envelopes omitted duplicated top-level
     /// proof fields even though the owned `snapshot` already contained them.
@@ -1033,28 +1131,77 @@ extension VNextBeginComparisonDTO {
         comparisonID = try container.decode(UUID.self, forKey: .comparisonID)
         created = try container.decodeIfPresent(Bool.self, forKey: .created) ?? false
         idempotent = try container.decodeIfPresent(Bool.self, forKey: .idempotent) ?? false
-        resultStatus = try container.decodeIfPresent(String.self, forKey: .resultStatus) ?? "PENDING"
+        resultStatus = try container.decode(String.self, forKey: .resultStatus)
         snapshot = try container.decode(VNextComparisonBeginSnapshotDTO.self, forKey: .snapshot)
-        authorization = try container.decodeIfPresent(
+        let topLevelAuthorization = try container.decodeIfPresent(
             VNextComparisonAuthorizationDTO.self,
             forKey: .authorization
-        ) ?? snapshot.authorization
-        authorizedCandidateProductSizeIDs = try container.decodeIfPresent(
+        )
+        if let topLevelAuthorization,
+           topLevelAuthorization != snapshot.authorization {
+            throw FitMatchVNextContractError.conflictingProof("authorization")
+        }
+        authorization = topLevelAuthorization ?? snapshot.authorization
+
+        let topLevelCandidateIDs = try container.decodeIfPresent(
             [UUID].self,
             forKey: .authorizedCandidateProductSizeIDs
-        ) ?? snapshot.target.authorizedCandidateProductSizeIDs
-        candidateAuthorityFingerprint = try container.decodeIfPresent(
+        )
+        if let topLevelCandidateIDs,
+           (topLevelCandidateIDs.count != snapshot.target.authorizedCandidateProductSizeIDs.count
+            || Set(topLevelCandidateIDs)
+                != Set(snapshot.target.authorizedCandidateProductSizeIDs)) {
+            throw FitMatchVNextContractError.conflictingProof(
+                "authorized_candidate_product_size_ids"
+            )
+        }
+        authorizedCandidateProductSizeIDs = topLevelCandidateIDs
+            ?? snapshot.target.authorizedCandidateProductSizeIDs
+
+        let topLevelCandidateFingerprint = try container.decodeIfPresent(
             String.self,
             forKey: .candidateAuthorityFingerprint
-        ) ?? snapshot.target.candidateAuthorityFingerprint
-        effectiveAuthorityFingerprint = try container.decodeIfPresent(
+        )
+        if let topLevelCandidateFingerprint,
+           let nested = snapshot.target.candidateAuthorityFingerprint,
+           topLevelCandidateFingerprint != nested {
+            throw FitMatchVNextContractError.conflictingProof(
+                "candidate_authority_fingerprint"
+            )
+        }
+        candidateAuthorityFingerprint = topLevelCandidateFingerprint
+            ?? snapshot.target.candidateAuthorityFingerprint
+
+        let topLevelEffectiveFingerprint = try container.decodeIfPresent(
             String.self,
             forKey: .effectiveAuthorityFingerprint
-        ) ?? snapshot.inputSnapshot.objectValue?["effective_authority_fingerprint"]?.stringValue
-        snapshotSchemaVersion = try container.decodeIfPresent(
+        )
+        let nestedEffectiveFingerprint = snapshot.inputSnapshot.objectValue?[
+            "effective_authority_fingerprint"
+        ]?.stringValue
+        if let topLevelEffectiveFingerprint,
+           let nestedEffectiveFingerprint,
+           topLevelEffectiveFingerprint != nestedEffectiveFingerprint {
+            throw FitMatchVNextContractError.conflictingProof(
+                "effective_authority_fingerprint"
+            )
+        }
+        effectiveAuthorityFingerprint = topLevelEffectiveFingerprint
+            ?? nestedEffectiveFingerprint
+
+        let declaredVersion = try container.decodeIfPresent(
             Int.self,
             forKey: .snapshotSchemaVersion
-        ) ?? snapshot.snapshotSchemaVersion
+        )
+        if let declaredVersion,
+           declaredVersion != snapshot.snapshotSchemaVersion {
+            throw FitMatchVNextContractError.snapshotVersionMismatch(
+                topLevel: declaredVersion,
+                nested: snapshot.snapshotSchemaVersion
+            )
+        }
+        declaredSnapshotSchemaVersion = declaredVersion
+        snapshotSchemaVersion = declaredVersion ?? snapshot.snapshotSchemaVersion
     }
 }
 
@@ -1288,12 +1435,11 @@ nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {
         guard let targetSnapshot,
               let policySnapshot,
               let authorizationSnapshot,
-              snapshotSchemaVersion >= 3,
               authorizationSnapshot.allowed,
               !targetSnapshot.authorizedCandidateProductSizeIDs.isEmpty else {
             return nil
         }
-        return VNextBeginComparisonDTO(
+        let begin = VNextBeginComparisonDTO(
             comparisonID: id,
             created: false,
             idempotent: true,
@@ -1316,8 +1462,13 @@ nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {
                 referenceSnapshot: referenceSnapshot,
                 authoritySnapshot: authoritySnapshot,
                 inputSnapshot: inputSnapshot
-            )
+            ),
+            declaredSnapshotSchemaVersion: nil
         )
+        guard (try? FitMatchVNextContractValidator.validateReplayBegin(begin)) != nil else {
+            return nil
+        }
+        return begin
     }
 
     var pendingBegin: VNextBeginComparisonDTO? {

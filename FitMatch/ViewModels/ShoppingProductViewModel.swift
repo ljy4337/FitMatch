@@ -88,6 +88,10 @@ final class ShoppingProductViewModel: ObservableObject {
     private let metricsRecorder: FitMatchMetricsRecording
     private let serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator?
     private var activeLoadID: UUID?
+    /// A foreground comparison is a separate lifecycle from product loading.
+    /// It is owned by CompareFlowSheet and invalidated when that sheet, its
+    /// request generation, or its authenticated user changes.
+    private var activeComparisonRequestID: UUID?
     private var parsedProductForServerAuthority: ParsedProductInfo?
     private var parsedProductMeasurementPresence: FitMatchProductMeasurementPresence = .unknown
     /// These keys are the parser observation's source-size identities. They
@@ -122,6 +126,124 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     // This view model owns only Sendable task state at teardown. Keeping the
+    func beginComparisonRequest(_ requestID: UUID) {
+        activeComparisonRequestID = requestID
+    }
+
+    func invalidateComparisonRequest(_ requestID: UUID? = nil) {
+        guard requestID == nil || activeComparisonRequestID == requestID else {
+            return
+        }
+        activeComparisonRequestID = nil
+    }
+
+    func isCurrentComparisonRequest(_ requestID: UUID) -> Bool {
+        !Task.isCancelled && activeComparisonRequestID == requestID
+    }
+
+    private func isCurrentComparison(_ requestID: UUID?) -> Bool {
+        !Task.isCancelled
+            && (requestID == nil || activeComparisonRequestID == requestID)
+    }
+
+    private func isCurrentLoad(_ loadID: UUID?) -> Bool {
+        !Task.isCancelled && (loadID == nil || activeLoadID == loadID)
+    }
+
+    /// Recovery errors are typed at the server/DTO boundary.  Keep malformed
+    /// or unsupported contracts distinct from an actual transport failure so
+    /// a server contract mismatch is never presented as a connectivity issue.
+    private func reviewRecoveryRequestErrorMessage(for error: Error) -> String {
+        if isRecoveryContractError(error) {
+            return "상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요."
+        }
+        if isNetworkTransportError(error) {
+            return "상품 분류 선택지를 확인하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+        }
+        return "상품 분류 선택지를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."
+    }
+
+    private func reviewRecoverySaveErrorMessage(for error: Error) -> String {
+        if isRecoveryContractError(error) {
+            return "상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요."
+        }
+        if isNetworkTransportError(error) {
+            return "상품 분류 선택을 저장하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+        }
+        if let localized = (error as? LocalizedError)?.errorDescription,
+           !localized.isEmpty {
+            return localized
+        }
+        return "상품 분류를 저장하지 못했습니다. 최신 상태를 다시 확인해 주세요."
+    }
+
+    private func isRecoveryContractError(_ error: Error) -> Bool {
+        if error is DecodingError || error is FitMatchVNextContractError {
+            return true
+        }
+
+        if let authorityError = error as? FitMatchServerAuthorityError {
+            switch authorityError {
+            case .classificationRecoveryUnavailable,
+                 .invalidClassificationRecoveryContract,
+                 .runtimeResponseMalformed,
+                 .unknownClassificationStatus,
+                 .inconsistentRuntimeState:
+                return true
+            case .unsupportedCatalogState,
+                 .missingObservationForPromotion,
+                 .observationIdentityMismatch,
+                 .promotionRejected,
+                 .promotionResponseMalformed,
+                 .promotedProductMismatch,
+                 .classificationRecoveryRejected,
+                 .closetRuntimeUnavailable,
+                 .referenceItemNotFound,
+                 .localReferenceProjectionMissing,
+                 .targetClassificationRequired,
+                 .comparisonNotReady,
+                 .unknownCandidateState,
+                 .inconsistentCandidateState,
+                 .comparisonBeginUnavailable,
+                 .comparisonNotAuthorized,
+                 .comparisonAuthorizationRejected,
+                 .comparisonBeginRejected,
+                 .comparisonAlreadyCompleted,
+                 .comparisonBeginMalformed,
+                 .comparisonContractViolation,
+                 .comparisonCompletionUnavailable,
+                 .comparisonCompletionRejected:
+                return false
+            }
+        }
+
+        if let resolverError = error as? FitMatchSupabaseProductResolverError {
+            switch resolverError {
+            case .invalidVNextResponse:
+                return true
+            case .notConfigured,
+                 .authenticationRequired,
+                 .vnextIdentityRequired,
+                 .vnextCompletionRequired:
+                return false
+            }
+        }
+
+        return false
+    }
+
+    private func isNetworkTransportError(_ error: Error) -> Bool {
+        if error is URLError {
+            return true
+        }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return true
+        }
+        return (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain
+            == NSURLErrorDomain
+    }
+
     func addSizeOption() {
         sizeOptions.append(ClothingSizeForm())
     }
@@ -174,7 +296,11 @@ final class ShoppingProductViewModel: ObservableObject {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             analysisPhase = .preparingComparison
             apply(parsedProduct)
-            let hasConfirmedComparisonAuthority = await resolveServerAuthority(for: parsedProduct)
+            let hasConfirmedComparisonAuthority = await resolveServerAuthority(
+                for: parsedProduct,
+                loadID: loadID
+            )
+            guard !Task.isCancelled, activeLoadID == loadID else { return false }
             metricsRecorder.record(
                 .parserSuccess(
                     provider: metricProvider,
@@ -192,7 +318,11 @@ final class ShoppingProductViewModel: ObservableObject {
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             apply(partialError.productInfo)
-            _ = await resolveServerAuthority(for: partialError.productInfo)
+            _ = await resolveServerAuthority(
+                for: partialError.productInfo,
+                loadID: loadID
+            )
+            guard !Task.isCancelled, activeLoadID == loadID else { return false }
             metricsRecorder.record(.parserFailure(provider: metricProvider, reason: .partial))
             if partialError.productInfo.sourceName == "무신사",
                partialError.productInfo.sizes.isEmpty {
@@ -268,12 +398,14 @@ final class ShoppingProductViewModel: ObservableObject {
         guard !Task.isCancelled, activeLoadID == loadID else { return false }
         return await resolveServerAuthority(
             for: parsedProduct,
-            preferredProductSizeID: preferredProductSizeID
+            preferredProductSizeID: preferredProductSizeID,
+            loadID: loadID
         )
     }
 
     func cancelProductLoading() {
         activeLoadID = nil
+        activeComparisonRequestID = nil
         databaseShadowState = .idle
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
@@ -325,7 +457,10 @@ final class ShoppingProductViewModel: ObservableObject {
             category = selectedCategory
             detailCategory = selectedDetailCategory
             productAnalysisRecoveryAction = nil
-            return await resolveServerAuthority(for: parsedProduct)
+            return await resolveServerAuthority(
+                for: parsedProduct,
+                loadID: loadID
+            )
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             apply(partialError.productInfo)
@@ -333,7 +468,11 @@ final class ShoppingProductViewModel: ObservableObject {
             detailCategory = selectedDetailCategory
             productAnalysisRecoveryAction = partialError.productInfo.recoveryAction
                 ?? .enterMeasurementsManually
-            _ = await resolveServerAuthority(for: partialError.productInfo)
+            _ = await resolveServerAuthority(
+                for: partialError.productInfo,
+                loadID: loadID
+            )
+            guard !Task.isCancelled, activeLoadID == loadID else { return false }
             errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
             return false
         } catch {
@@ -347,8 +486,10 @@ final class ShoppingProductViewModel: ObservableObject {
 
     private func resolveServerAuthority(
         for product: ParsedProductInfo,
-        preferredProductSizeID: UUID? = nil
+        preferredProductSizeID: UUID? = nil,
+        loadID: UUID? = nil
     ) async -> Bool {
+        guard isCurrentLoad(loadID) else { return false }
         parsedProductForServerAuthority = product
         guard let request = product.fitMatchDatabaseResolutionRequest() else {
             databaseShadowState = .skipped
@@ -370,7 +511,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 request: request,
                 observation: product.fitMatchProductObservationRequest()
             )
-            guard !Task.isCancelled else { return false }
+            guard isCurrentLoad(loadID) else { return false }
             switch authority.status {
             case .confirmed:
                 applyServerClassification(authority.classification)
@@ -401,10 +542,15 @@ final class ShoppingProductViewModel: ObservableObject {
                 do {
                     let contract = try await serverAuthorityCoordinator
                         .classificationRecoveryOptions(productID: authority.productID)
+                    guard isCurrentLoad(loadID) else { return false }
                     presentReviewRecovery(contract)
+                } catch is CancellationError {
+                    return false
                 } catch {
-                    reviewRecoveryState = .failed(error.localizedDescription)
-                    errorMessage = "상품 분류 선택지를 확인하지 못했습니다. 네트워크 연결 후 다시 시도해 주세요."
+                    guard isCurrentLoad(loadID) else { return false }
+                    let message = reviewRecoveryRequestErrorMessage(for: error)
+                    reviewRecoveryState = .failed(message)
+                    errorMessage = message
                 }
                 return false
             case .notComparable:
@@ -419,7 +565,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 return false
             }
         } catch {
-            guard !Task.isCancelled else { return false }
+            guard isCurrentLoad(loadID) else { return false }
             databaseShadowState = .unavailable
             serverAuthorityState = .unavailable(error.localizedDescription)
             errorMessage = "서버 상품 분류를 확인하지 못했습니다. 네트워크 연결 후 다시 시도해 주세요."
@@ -898,6 +1044,7 @@ final class ShoppingProductViewModel: ObservableObject {
 
     @discardableResult
     func beginReviewRecoveryReselection() async -> Bool {
+        guard !Task.isCancelled else { return false }
         guard case .confirmed(let authority) = serverAuthorityState,
               authority.classification.authorityStatus == "user_explicit",
               authority.runtime.vnext?.effectiveClassification?
@@ -913,6 +1060,7 @@ final class ShoppingProductViewModel: ObservableObject {
             let contract = try await coordinator.classificationRecoveryOptions(
                 productID: authority.productID
             )
+            guard !Task.isCancelled else { return false }
             guard contract.isSafelyRecoverable else {
                 reviewRecoveryState = .unrecoverable(contract)
                 errorMessage = "이 상품은 현재 안전한 선택지로 다시 분류할 수 없습니다."
@@ -920,12 +1068,17 @@ final class ShoppingProductViewModel: ObservableObject {
             }
             presentReviewRecovery(contract)
             return true
+        } catch is CancellationError {
+            return false
         } catch {
+            guard !Task.isCancelled else { return false }
+            let message = reviewRecoveryRequestErrorMessage(for: error)
             if let parsedProduct = parsedProductForServerAuthority {
                 _ = await resolveServerAuthority(for: parsedProduct)
+                guard !Task.isCancelled else { return false }
             }
-            reviewRecoveryState = .failed(error.localizedDescription)
-            errorMessage = "최신 상품 분류 선택지를 확인하지 못했습니다. 다시 시도해 주세요."
+            reviewRecoveryState = .failed(message)
+            errorMessage = message
             return false
         }
     }
@@ -964,6 +1117,7 @@ final class ShoppingProductViewModel: ObservableObject {
     func confirmReviewRecovery(
         _ candidate: VNextClassificationRecoveryCandidateDTO
     ) async -> Bool {
+        guard !Task.isCancelled else { return false }
         let contract: VNextClassificationRecoveryContractDTO
         let permittedCandidates: [VNextClassificationRecoveryCandidateDTO]
         switch reviewRecoveryState {
@@ -1009,11 +1163,13 @@ final class ShoppingProductViewModel: ObservableObject {
                 candidate: candidate,
                 expectedRevision: expectedRevision
             )
+            guard !Task.isCancelled else { return false }
             reviewRecoveryState = .resuming
             let authority = try await coordinator.resolveProductAuthority(
                 request: request,
                 observation: parsedProduct.fitMatchProductObservationRequest()
             )
+            guard !Task.isCancelled else { return false }
             guard authority.status == .confirmed,
                   authority.classification.authorityStatus == "user_explicit" else {
                 throw FitMatchServerAuthorityError.classificationRecoveryRejected(
@@ -1030,13 +1186,17 @@ final class ShoppingProductViewModel: ObservableObject {
             reviewRecoveryState = .idle
             errorMessage = nil
             return true
+        } catch is CancellationError {
+            return false
         } catch {
-            let message = (error as? LocalizedError)?.errorDescription
-                ?? "상품 분류를 저장하지 못했습니다. 다시 시도해 주세요."
+            guard !Task.isCancelled else { return false }
+            let message = reviewRecoverySaveErrorMessage(for: error)
             if let parsedProduct = parsedProductForServerAuthority {
                 _ = await resolveServerAuthority(for: parsedProduct)
+                guard !Task.isCancelled else { return false }
                 if hasActiveUserExplicitClassification {
                     _ = await beginReviewRecoveryReselection()
+                    guard !Task.isCancelled else { return false }
                 } else if reviewRecoveryContract == nil {
                     reviewRecoveryState = .failed(message)
                 }
@@ -1069,6 +1229,7 @@ final class ShoppingProductViewModel: ObservableObject {
 
     @discardableResult
     func clearReviewRecovery() async -> Bool {
+        guard !Task.isCancelled else { return false }
         guard case .confirmed(let authority) = serverAuthorityState,
               authority.classification.authorityStatus == "user_explicit",
               let revision = authority.runtime.vnext?.effectiveClassification?
@@ -1084,8 +1245,10 @@ final class ShoppingProductViewModel: ObservableObject {
                 productID: authority.productID,
                 expectedRevision: revision
             )
+            guard !Task.isCancelled else { return false }
             reviewRecoveryState = .idle
             _ = await resolveServerAuthority(for: parsedProduct)
+            guard !Task.isCancelled else { return false }
             switch serverAuthorityState {
             case .reviewRequired, .confirmed, .notComparable:
                 return true
@@ -1093,6 +1256,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 return false
             }
         } catch {
+            guard !Task.isCancelled else { return false }
             reviewRecoveryState = .idle
             errorMessage = (error as? LocalizedError)?.errorDescription
                 ?? "개인 분류를 해제하지 못했습니다."
@@ -1109,8 +1273,10 @@ final class ShoppingProductViewModel: ObservableObject {
     /// only a projection for the UI, so a missing projection is fail-closed
     /// rather than an opportunity to choose a different representative item.
     func loadServerReferenceSelectionPlan(
-        localClientItemIDs: Set<UUID>
+        localClientItemIDs: Set<UUID>,
+        comparisonRequestID: UUID? = nil
     ) async -> FitMatchServerReferenceSelectionPlan? {
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
         guard let authority = confirmedServerAuthority else {
             errorMessage = "서버에서 상품 분류를 확정하지 못해 비교할 수 없습니다."
             return nil
@@ -1126,16 +1292,22 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
         do {
-            return try await coordinator.referenceSelectionPlan(
+            let plan = try await coordinator.referenceSelectionPlan(
                 targetRequest: request,
                 targetObservation: product.fitMatchProductObservationRequest(),
                 localClientItemIDs: localClientItemIDs
             )
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
+            return plan
+        } catch is CancellationError {
+            return nil
         } catch let error as FitMatchServerAuthorityError {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             errorMessage = error.errorDescription
                 ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
             return nil
         } catch {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
             return nil
         }
@@ -1143,8 +1315,10 @@ final class ShoppingProductViewModel: ObservableObject {
 
     func authorizeReferenceForComparison(
         _ item: UserFit,
-        allowsManualSelection: Bool
+        allowsManualSelection: Bool,
+        comparisonRequestID: UUID? = nil
     ) async -> FitMatchServerComparisonPermit? {
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
         guard let readiness = serverComparisonReadiness,
               readiness.isReady else {
             errorMessage = serverComparisonReadiness?.userMessage
@@ -1173,18 +1347,25 @@ final class ShoppingProductViewModel: ObservableObject {
                     ? nil
                     : item.sourceProduct?.fitMatchProductObservationRequest()
             )
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             let allowed = authorization.decision == .automatic
                 || (allowsManualSelection && authorization.decision == .manualSelection)
             guard allowed else {
                 errorMessage = authorization.blockReason.userMessage
                 return nil
             }
-            return try await coordinator.beginAuthorizedComparison(authorization)
+            let permit = try await coordinator.beginAuthorizedComparison(authorization)
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
+            return permit
+        } catch is CancellationError {
+            return nil
         } catch let error as FitMatchServerAuthorityError {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             errorMessage = error.errorDescription
                 ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
             return nil
         } catch {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
             return nil
         }
@@ -1240,8 +1421,10 @@ final class ShoppingProductViewModel: ObservableObject {
     func calculateRecommendation(
         userFits: [UserFit],
         brand: Brand? = nil,
-        allowsGlobalFallback: Bool = false
+        allowsGlobalFallback: Bool = false,
+        comparisonRequestID: UUID? = nil
     ) async -> RecommendationHistory? {
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
         errorMessage = nil
         let metricMode = FitMatchMetricComparisonMode.automatic
         metricsRecorder.record(.comparisonAttempt(mode: metricMode))
@@ -1267,6 +1450,7 @@ final class ShoppingProductViewModel: ObservableObject {
             recommendation = nil
             return nil
         }
+        let comparisonDetailCategory = detailCategory
 
         guard product.classificationAuthorityProvenance?.isComparisonAuthority == true else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
@@ -1276,8 +1460,10 @@ final class ShoppingProductViewModel: ObservableObject {
         }
 
         guard let plan = await loadServerReferenceSelectionPlan(
-            localClientItemIDs: Set(userFits.map(\.id))
+            localClientItemIDs: Set(userFits.map(\.id)),
+            comparisonRequestID: comparisonRequestID
         ) else {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
             recommendation = nil
             return nil
@@ -1301,22 +1487,29 @@ final class ShoppingProductViewModel: ObservableObject {
         }
 
         for reference in automaticCandidates {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             guard let permit = await authorizeReferenceForComparison(
                 reference,
-                allowsManualSelection: false
+                allowsManualSelection: false,
+                comparisonRequestID: comparisonRequestID
             ) else { continue }
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             guard let history = await completeVNextRecommendation(
                 product: product,
                 reference: reference,
-                permit: permit
+                permit: permit,
+                productDetailCategory: comparisonDetailCategory,
+                comparisonRequestID: comparisonRequestID
             ) else { continue }
 
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             recommendation = history
             recordComparisonResult(history, mode: metricMode)
             return history
         }
 
         metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
         errorMessage = errorMessage
             ?? "서버 비교 정책 또는 실측 조건을 충족하는 기준 옷이 없습니다."
         recommendation = nil
@@ -1329,8 +1522,10 @@ final class ShoppingProductViewModel: ObservableObject {
     @discardableResult
     func calculateRecommendation(
         automaticReferenceCandidates: [UserFit],
-        brand: Brand? = nil
+        brand: Brand? = nil,
+        comparisonRequestID: UUID? = nil
     ) async -> RecommendationHistory? {
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
         errorMessage = nil
         let metricMode = FitMatchMetricComparisonMode.automatic
         metricsRecorder.record(.comparisonAttempt(mode: metricMode))
@@ -1354,24 +1549,32 @@ final class ShoppingProductViewModel: ObservableObject {
             recommendation = nil
             return nil
         }
+        let comparisonDetailCategory = detailCategory
 
         for reference in automaticReferenceCandidates {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             guard let permit = await authorizeReferenceForComparison(
                 reference,
-                allowsManualSelection: false
+                allowsManualSelection: false,
+                comparisonRequestID: comparisonRequestID
             ) else { continue }
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             guard let history = await completeVNextRecommendation(
                 product: product,
                 reference: reference,
-                permit: permit
+                permit: permit,
+                productDetailCategory: comparisonDetailCategory,
+                comparisonRequestID: comparisonRequestID
             ) else { continue }
 
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             recommendation = history
             recordComparisonResult(history, mode: metricMode)
             return history
         }
 
         metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
         errorMessage = errorMessage
             ?? "서버 비교 정책 또는 실측 조건을 충족하는 기준 옷이 없습니다."
         recommendation = nil
@@ -1381,8 +1584,10 @@ final class ShoppingProductViewModel: ObservableObject {
     @discardableResult
     func calculateTemporaryRecommendation(
         selectedReferenceItem: UserFit,
-        brand: Brand? = nil
+        brand: Brand? = nil,
+        comparisonRequestID: UUID? = nil
     ) async -> RecommendationHistory? {
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
         errorMessage = nil
         let metricMode = FitMatchMetricComparisonMode.selectedReference
         metricsRecorder.record(.comparisonAttempt(mode: metricMode))
@@ -1401,13 +1606,16 @@ final class ShoppingProductViewModel: ObservableObject {
             recommendation = nil
             return nil
         }
+        let comparisonDetailCategory = detailCategory
 
 
         guard product.classificationAuthorityProvenance?.isComparisonAuthority == true,
               let permit = await authorizeReferenceForComparison(
                 selectedReferenceItem,
-                allowsManualSelection: true
+                allowsManualSelection: true,
+                comparisonRequestID: comparisonRequestID
               ) else {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
             recommendation = nil
             return nil
@@ -1416,14 +1624,19 @@ final class ShoppingProductViewModel: ObservableObject {
         guard let history = await completeVNextRecommendation(
             product: product,
             reference: selectedReferenceItem,
-            permit: permit
+            permit: permit,
+            productDetailCategory: comparisonDetailCategory,
+            comparisonRequestID: comparisonRequestID
         ) else {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
-            errorMessage = "측정 방식이 호환되는 실측 항목이 부족해 추천할 수 없습니다."
+            errorMessage = errorMessage
+                ?? "서버 비교 결과를 완료하지 못했습니다. 같은 비교를 다시 시도해 주세요."
             recommendation = nil
             return nil
         }
 
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
         recommendation = history
         recordComparisonResult(history, mode: metricMode)
         return history
@@ -1432,33 +1645,43 @@ final class ShoppingProductViewModel: ObservableObject {
     private func completeVNextRecommendation(
         product: Product,
         reference: UserFit,
-        permit: FitMatchServerComparisonPermit
+        permit: FitMatchServerComparisonPermit,
+        productDetailCategory: ClosetDetailCategory,
+        comparisonRequestID: UUID?
     ) async -> RecommendationHistory? {
-        guard let serverAuthorityCoordinator else { return nil }
+        guard isCurrentComparison(comparisonRequestID),
+              let serverAuthorityCoordinator else { return nil }
         do {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             let analysis = try recommendationService.analyzeVNextComparison(
                 permit: permit
             )
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             let completion = try await serverAuthorityCoordinator.completeAuthorizedComparison(
                 permit: permit,
                 analysis: analysis
             )
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             guard let history = recommendationService.makeCompletedVNextHistory(
                 product: product,
                 selectedReferenceItem: reference,
-                productDetailCategory: detailCategory,
+                productDetailCategory: productDetailCategory,
                 permit: permit,
                 analysis: analysis,
                 completion: completion
             ) else {
                 return nil
             }
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             VNextComparisonSessionStore.shared.store(
                 analysis,
                 historyID: history.id
             )
             return history
+        } catch is CancellationError {
+            return nil
         } catch {
+            guard isCurrentComparison(comparisonRequestID) else { return nil }
             errorMessage = (error as? LocalizedError)?.errorDescription
                 ?? "서버 비교 결과를 완료하지 못했습니다. 같은 비교를 다시 시도해 주세요."
             return nil

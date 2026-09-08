@@ -215,6 +215,34 @@ struct FitMatchComparisonSyncCoordinatorTests {
         }
     }
 
+    @Test func schema4HydratedFrozenReferenceResolvesItsOriginalClosetIdentity() async throws {
+        let fixture = try ComparisonHistoryFixture(
+            classificationSource: "USER_EXPLICIT",
+            snapshotSchemaVersion: 4
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+
+        let hydrated = try VNextHistoryCacheHydrator().hydrateCompleted(
+            [fixture.completed],
+            existingHistories: [],
+            existingProducts: [],
+            existingClosetItems: [],
+            modelContext: context
+        )
+        let history = try #require(
+            context.fetch(FetchDescriptor<RecommendationHistory>()).first
+        )
+
+        #expect(hydrated == Set([fixture.clientComparisonID]))
+        #expect(history.userFit.id != fixture.referenceClientItemID)
+        #expect(history.userFit.isHistoryOnlyReferenceSnapshot)
+        #expect(history.referencesClosetItem(
+            clientItemID: fixture.referenceClientItemID
+        ))
+        #expect(!history.referencesClosetItem(clientItemID: UUID()))
+    }
+
     @Test func completedServerHistoryHideSurvivesSyncAndModeledSecondSession() async throws {
         let fixture = try ComparisonHistoryFixture()
         let remote = ComparisonHistoryRemoteStub(pending: nil, completed: fixture.completed)
@@ -568,7 +596,10 @@ private struct ComparisonHistoryFixture: Sendable {
     let pending: VNextComparisonHistoryDTO
     let completed: VNextComparisonHistoryDTO
 
-    init(classificationSource: String = "manual_override") throws {
+    init(
+        classificationSource: String = "manual_override",
+        snapshotSchemaVersion: Int = 3
+    ) throws {
         let identifiers = (
             comparisonID: comparisonID,
             clientComparisonID: clientComparisonID,
@@ -581,14 +612,16 @@ private struct ComparisonHistoryFixture: Sendable {
             Self.json(
                 status: "PENDING",
                 ids: identifiers,
-                classificationSource: classificationSource
+                classificationSource: classificationSource,
+                snapshotSchemaVersion: snapshotSchemaVersion
             )
         )
         completed = try Self.decode(
             Self.json(
                 status: "COMPLETED",
                 ids: identifiers,
-                classificationSource: classificationSource
+                classificationSource: classificationSource,
+                snapshotSchemaVersion: snapshotSchemaVersion
             )
         )
     }
@@ -603,7 +636,8 @@ private struct ComparisonHistoryFixture: Sendable {
             targetVariantID: UUID,
             productSizeID: UUID
         ),
-        classificationSource: String
+        classificationSource: String,
+        snapshotSchemaVersion: Int
     ) -> String {
         let completedFields = status == "COMPLETED" ? """
           "recommended_product_size_id":"\(ids.productSizeID)",
@@ -644,7 +678,7 @@ private struct ComparisonHistoryFixture: Sendable {
           "result_status":"\(status)",
           \(completedFields)
           "created_at":"2026-08-29T01:00:00Z",
-          "snapshot_schema_version":3,
+          "snapshot_schema_version":\(snapshotSchemaVersion),
           "excluded_measurement_codes":[],
           "reference_snapshot":{
             "source_code":"manual","item_name":"내 반팔 티셔츠","size_label":"M",
@@ -683,7 +717,9 @@ private struct ComparisonHistoryFixture: Sendable {
               }
             }]
           },
-          "authority_snapshot":{},
+          "authority_snapshot":\(snapshotSchemaVersion == 4 ? """
+          {"effective_classification_at_begin":{"source":"USER_EXPLICIT","state":"PERSONAL_CONFIRMED","category_code":"tops","garment_type_code":"tshirt","audience_code":"male","sleeve_length_code":"short_sleeve","lower_length_code":null,"body_length_code":null,"effective_authority_fingerprint":"effective-v1"},"personal_projection_at_begin":{"revision":1,"selected_candidate_fingerprint":"candidate-v1"}}
+          """ : "{}"),
           "policy_snapshot":{
             "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1",
             "metrics":[{
@@ -699,7 +735,7 @@ private struct ComparisonHistoryFixture: Sendable {
             "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
             "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
           },
-          "input_snapshot":{}
+          "input_snapshot":\(snapshotSchemaVersion == 4 ? "{\"effective_authority_fingerprint\":\"effective-v1\"}" : "{}")
         }
         """
     }

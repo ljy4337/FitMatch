@@ -483,7 +483,7 @@ struct MyClosetView: View {
     }
 
     private func historiesReferencing(_ item: UserFit) -> [RecommendationHistory] {
-        histories.filter { $0.userFit.id == item.id }
+        histories.filter { $0.referencesClosetItem(clientItemID: item.id) }
     }
 }
 

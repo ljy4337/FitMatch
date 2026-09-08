@@ -2387,7 +2387,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             sourceCategoryCodes: ["tops", "short_sleeve"],
             variantID: request.productVariantID,
             productSizeID: request.productSizeID,
-            brand: request.item.brandName,
+            brand: request.item.brand,
             productName: request.item.productName,
             sizeName: request.item.sizeName,
             genderCode: request.item.genderCode,

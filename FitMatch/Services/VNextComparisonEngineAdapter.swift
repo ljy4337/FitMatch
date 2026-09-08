@@ -72,6 +72,10 @@ struct VNextComparisonEngineAdapter {
     }
 
     func analyze(_ begin: VNextBeginComparisonDTO) throws -> VNextComparisonBatchAnalysis {
+        // Decoder callers are not the only callers: a test seam or a future
+        // in-memory recovery path can construct this DTO directly. Validate
+        // the immutable replay contract here before any engine calculation.
+        try FitMatchVNextContractValidator.validateEngineInput(begin)
         guard begin.resultStatus == "PENDING" else {
             throw VNextComparisonEngineAdapterError.comparisonNotPending(begin.resultStatus)
         }

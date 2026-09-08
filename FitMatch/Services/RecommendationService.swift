@@ -360,7 +360,7 @@ struct RecommendationService {
                 && runtimeAuthorityStatus != "user_explicit"
 
         case .userExplicit:
-            guard begin.snapshot.snapshotSchemaVersion >= 4,
+            guard begin.snapshot.snapshotSchemaVersion == 4,
                   effective.isPersonalComparisonAuthority,
                   runtimeAuthorityStatus == "user_explicit",
                   let revision = effective.overrideRevision,

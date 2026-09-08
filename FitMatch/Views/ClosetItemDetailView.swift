@@ -519,7 +519,7 @@ struct ClosetItemDetailView: View {
     }
 
     private var hasComparisonHistory: Bool {
-        histories.contains { $0.userFit.id == item.id }
+        histories.contains { $0.referencesClosetItem(clientItemID: item.id) }
     }
 
     private func logInitialPerformance() {

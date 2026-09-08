@@ -13,7 +13,7 @@ struct FitMatchComparisonPermitSequencingTests {
     @Test func releaseComparisonCallSitesRequirePermitBeforeScoring() throws {
         let viewModel = try sourceFile("FitMatch/ViewModels/ShoppingProductViewModel.swift")
         let viewModelBegin = try #require(
-            viewModel.range(of: "return try await coordinator.beginAuthorizedComparison")
+            viewModel.range(of: "let permit = try await coordinator.beginAuthorizedComparison")
         )
         let viewModelScore = try #require(
             viewModel.range(of: "recommendationService.analyzeVNextComparison")

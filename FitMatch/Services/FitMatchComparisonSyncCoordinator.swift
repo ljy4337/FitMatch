@@ -189,12 +189,24 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
             var hasRetryableFailure = false
             var recoveredPending = false
 
+            var hasSupportedPending = false
             for row in rows where row.resultStatus == "PENDING" {
                 guard isCurrentSyncUser(userID) else { return }
-                guard let begin = row.pendingBegin else {
+                do {
+                    try FitMatchVNextContractValidator.validatePendingReplay(row)
+                } catch {
                     parityWarningCount += 1
+                    lastErrorMessage = lastErrorMessage
+                        ?? "지원하지 않는 서버 비교 기록은 자동으로 완료하지 않았습니다."
                     continue
                 }
+                guard let begin = row.pendingBegin else {
+                    parityWarningCount += 1
+                    lastErrorMessage = lastErrorMessage
+                        ?? "서버 비교 기록의 시작 스냅샷이 불완전합니다."
+                    continue
+                }
+                hasSupportedPending = true
                 do {
                     guard isCurrentSyncUser(userID) else { return }
                     let analysis = try adapter.analyze(begin)
@@ -211,6 +223,10 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
                         throw FitMatchSupabaseProductResolverError.invalidVNextResponse
                     }
                     recoveredPending = true
+                } catch is FitMatchVNextContractError {
+                    parityWarningCount += 1
+                    lastErrorMessage = lastErrorMessage
+                        ?? "지원하지 않는 서버 비교 기록은 자동으로 완료하지 않았습니다."
                 } catch {
                     guard isCurrentSyncUser(userID) else { return }
                     hasRetryableFailure = true
@@ -231,7 +247,30 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
                 guard isCurrentSyncUser(userID) else { return }
             }
 
-            let completedRows = rows.filter { $0.resultStatus == "COMPLETED" }
+            var completedRows: [VNextComparisonHistoryDTO] = []
+            for row in rows where row.resultStatus == "COMPLETED" {
+                do {
+                    try FitMatchVNextContractValidator.validateCompletedReplay(row)
+                    guard row.snapshotBegin != nil else {
+                        throw FitMatchVNextContractError.missingRequiredField(
+                            "comparison_history.begin_snapshot"
+                        )
+                    }
+                    completedRows.append(row)
+                } catch {
+                    parityWarningCount += 1
+                    lastErrorMessage = lastErrorMessage
+                        ?? "지원하지 않는 서버 비교 기록은 이 기기에 복원하지 않았습니다."
+                }
+            }
+            let unsupportedStatusCount = rows.filter {
+                $0.resultStatus != "PENDING" && $0.resultStatus != "COMPLETED"
+            }.count
+            if unsupportedStatusCount > 0 {
+                parityWarningCount += unsupportedStatusCount
+                lastErrorMessage = lastErrorMessage
+                    ?? "지원하지 않는 서버 비교 상태를 건너뛰었습니다."
+            }
             let completedClientIDs = Set(completedRows.map(\.clientComparisonID))
             var processed = processedHistoryIDs(for: userID)
             let localIDs = Set(histories.map(\.id))
@@ -248,6 +287,14 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
                     )
                     guard isCurrentSyncUser(userID) else { return }
                     processed.formUnion(hydrated)
+                } catch is FitMatchVNextContractError,
+                        is VNextHistoryCacheHydrationError {
+                    // A malformed or unsupported immutable record will not
+                    // become valid after a network retry. Keep existing local
+                    // history intact and surface the parity issue instead.
+                    parityWarningCount += 1
+                    lastErrorMessage = lastErrorMessage
+                        ?? "지원하지 않는 서버 비교 기록은 이 기기에 복원하지 않았습니다."
                 } catch {
                     guard isCurrentSyncUser(userID) else { return }
                     hasRetryableFailure = true
@@ -273,8 +320,11 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
                 }
             }
 
-            let stillPending = rows.contains { $0.resultStatus == "PENDING" }
-            if stillPending {
+            hasSupportedPending = rows.contains { row in
+                guard row.resultStatus == "PENDING" else { return false }
+                return (try? FitMatchVNextContractValidator.validatePendingReplay(row)) != nil
+            }
+            if hasSupportedPending {
                 hasRetryableFailure = true
                 if lastErrorMessage == nil {
                     lastErrorMessage = "완료되지 않은 서버 비교를 다음 동기화에서 다시 복구합니다."

@@ -39,7 +39,9 @@ enum FitMatchClosetDeletionAction {
         // Capture immutable identity before mutation.  No deleted SwiftData
         // object is traversed after `modelContext.delete(item)`.
         let itemID = item.id
-        let relatedHistories = histories.filter { $0.userFit.id == itemID }
+        let relatedHistories = histories.filter {
+            $0.referencesClosetItem(clientItemID: itemID)
+        }
         let serverHistories = relatedHistories.filter(\.isServerBackedVNextHistory)
 
         let hideOutcome = await FitMatchHistoryVisibilityAction
@@ -52,7 +54,11 @@ enum FitMatchClosetDeletionAction {
             break
         case .comparisonSyncUnavailable:
             return .comparisonSyncUnavailable
-        case .serverHideFailed:
+        case .authenticationRequired,
+             .serverHideUnavailable,
+             .invalidServerHideRequest,
+             .serverHideUncertain,
+             .serverHideFailed:
             return .serverHistoryHideFailed
         case .localPersistenceFailedAfterServerHide, .localPersistenceFailed:
             // `hideCompletedServerHistories` never performs local persistence.

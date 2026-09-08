@@ -1,6 +1,32 @@
 import Foundation
 import SwiftData
 
+/// Typed transport boundary for the immutable History visibility RPC. The
+/// caller never treats any of these failures as a receipt, so local cache
+/// deletion remains impossible until a validated success returns.
+nonisolated enum FitMatchHistoryVisibilityRPCError: LocalizedError, Equatable, Sendable {
+    case authenticationRequired
+    case invalidRequest
+    case unavailable
+    case transportUncertain
+    case rejected
+
+    var errorDescription: String? {
+        switch self {
+        case .authenticationRequired:
+            return "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+        case .invalidRequest:
+            return "비교 기록 삭제 요청을 확인하지 못했습니다. 다시 시도해 주세요."
+        case .unavailable:
+            return "비교 기록 삭제 기능을 아직 사용할 수 없습니다."
+        case .transportUncertain:
+            return "서버 반영 여부를 확인하지 못했습니다. 같은 기록을 다시 시도해 주세요."
+        case .rejected:
+            return "비교 기록을 삭제하지 못했습니다. 다시 시도해 주세요."
+        }
+    }
+}
+
 /// Non-visual production actions behind History deletion.  A server-completed
 /// comparison is never deleted: the server visibility receipt must succeed
 /// before its local presentation cache is removed.  Legacy local History
@@ -10,6 +36,10 @@ enum FitMatchHistoryVisibilityAction {
     enum Outcome: Equatable {
         case deleted
         case comparisonSyncUnavailable
+        case authenticationRequired
+        case serverHideUnavailable
+        case invalidServerHideRequest
+        case serverHideUncertain
         case serverHideFailed
         case localPersistenceFailedAfterServerHide
         case localPersistenceFailed
@@ -20,6 +50,14 @@ enum FitMatchHistoryVisibilityAction {
                 nil
             case .comparisonSyncUnavailable:
                 "서버 비교 기록을 삭제할 준비가 되지 않았어요. 다시 시도해 주세요."
+            case .authenticationRequired:
+                "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+            case .serverHideUnavailable:
+                "비교 기록 삭제 기능을 아직 사용할 수 없습니다."
+            case .invalidServerHideRequest:
+                "비교 기록 삭제 요청을 확인하지 못했습니다. 다시 시도해 주세요."
+            case .serverHideUncertain:
+                "서버 반영 여부를 확인하지 못했습니다. 같은 기록을 다시 시도해 주세요."
             case .serverHideFailed:
                 "비교 기록을 삭제하지 못했어요. 다시 시도해 주세요."
             case .localPersistenceFailedAfterServerHide:
@@ -46,6 +84,8 @@ enum FitMatchHistoryVisibilityAction {
                 try await comparisonSync.hideVNextComparisonHistories(
                     clientComparisonIDs: [history.id]
                 )
+            } catch let error as FitMatchHistoryVisibilityRPCError {
+                return outcome(for: error)
             } catch {
                 return .serverHideFailed
             }
@@ -82,6 +122,8 @@ enum FitMatchHistoryVisibilityAction {
                 clientComparisonIDs: ids
             )
             return .deleted
+        } catch let error as FitMatchHistoryVisibilityRPCError {
+            return outcome(for: error)
         } catch {
             return .serverHideFailed
         }
@@ -103,6 +145,23 @@ enum FitMatchHistoryVisibilityAction {
             return afterServerHide
                 ? .localPersistenceFailedAfterServerHide
                 : .localPersistenceFailed
+        }
+    }
+
+    private static func outcome(
+        for error: FitMatchHistoryVisibilityRPCError
+    ) -> Outcome {
+        switch error {
+        case .authenticationRequired:
+            return .authenticationRequired
+        case .unavailable:
+            return .serverHideUnavailable
+        case .invalidRequest:
+            return .invalidServerHideRequest
+        case .transportUncertain:
+            return .serverHideUncertain
+        case .rejected:
+            return .serverHideFailed
         }
     }
 }

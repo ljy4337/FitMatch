@@ -5,6 +5,7 @@ import UIKit
 struct CompareFlowSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \Brand.name) private var brands: [Brand]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
@@ -32,6 +33,11 @@ struct CompareFlowSheet: View {
     @State private var preparedComparison: PreparedComparison?
     @State private var serverReferenceSelectionPlan: FitMatchServerReferenceSelectionPlan?
     @State private var loadTask: Task<Void, Never>?
+    @State private var activeLoadRequestID: UUID?
+    @State private var comparisonTask: Task<Void, Never>?
+    @State private var activeComparisonRequestID: UUID?
+    @State private var activeComparisonUserID: UUID?
+    @State private var processingReferenceRequestID: UUID?
     @State private var hasStartedInitialURL = false
     @State private var isProcessingReferenceSelection = false
     @State private var comparisonSubmission = FitMatchComparisonSubmissionAction()
@@ -53,18 +59,31 @@ struct CompareFlowSheet: View {
 
     @ViewBuilder
     var body: some View {
-        if case .result(let history) = step {
-            RecommendationResultView(
-                result: history,
-                onReselectClassification:
-                    viewModel.hasActiveUserExplicitClassification
-                    ? { startReviewRecoveryReselection() } : nil,
-                onClearClassification:
-                    viewModel.hasActiveUserExplicitClassification
-                    ? { clearReviewRecoverySelection() } : nil
-            )
-        } else {
-            comparisonInputContent
+        ZStack {
+            if case .result(let history) = step {
+                RecommendationResultView(
+                    result: history,
+                    onReselectClassification:
+                        viewModel.hasActiveUserExplicitClassification
+                        ? { startReviewRecoveryReselection() } : nil,
+                    onClearClassification:
+                        viewModel.hasActiveUserExplicitClassification
+                        ? { clearReviewRecoverySelection() } : nil
+                )
+            } else {
+                comparisonInputContent
+            }
+        }
+        // This persistent root remains alive through the normal input → Result
+        // switch. It therefore owns actual sheet dismissal, not disappearance
+        // of the input subtree which is an expected successful transition.
+        .onDisappear {
+            invalidateForegroundComparison()
+            invalidateForegroundLoad()
+        }
+        .onChange(of: authSession.authenticatedUserID) { _, _ in
+            invalidateForegroundComparison()
+            invalidateForegroundLoad()
         }
     }
 
@@ -115,11 +134,6 @@ struct CompareFlowSheet: View {
                   !initialURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
             hasStartedInitialURL = true
             startCompareTask(with: initialURL)
-        }
-        .onDisappear {
-            loadTask?.cancel()
-            loadTask = nil
-            viewModel.cancelProductLoading()
         }
         .onChange(of: userFits.count) { _, _ in
             guard step == .missingReference || step == .closetSelection else { return }
@@ -241,6 +255,40 @@ private struct PreparedComparison {
 }
 
 private extension CompareFlowSheet {
+    func startForegroundLoadTask(
+        replacingCurrent: Bool = false,
+        _ operation: @escaping @MainActor (UUID) async -> Void
+    ) {
+        guard replacingCurrent || loadTask == nil else { return }
+        if replacingCurrent {
+            invalidateForegroundLoad()
+        }
+
+        let requestID = UUID()
+        activeLoadRequestID = requestID
+        loadTask = Task { @MainActor in
+            await operation(requestID)
+            finishForegroundLoadTask(requestID)
+        }
+    }
+
+    func invalidateForegroundLoad() {
+        activeLoadRequestID = nil
+        loadTask?.cancel()
+        loadTask = nil
+        viewModel.cancelProductLoading()
+    }
+
+    func isCurrentForegroundLoad(_ requestID: UUID) -> Bool {
+        !Task.isCancelled && activeLoadRequestID == requestID
+    }
+
+    func finishForegroundLoadTask(_ requestID: UUID) {
+        guard activeLoadRequestID == requestID else { return }
+        loadTask = nil
+        activeLoadRequestID = nil
+    }
+
     var showsPersonalRecoveryActions: Bool {
         guard viewModel.hasActiveUserExplicitClassification else { return false }
         switch step {
@@ -640,13 +688,9 @@ private extension CompareFlowSheet {
         _ candidate: VNextClassificationRecoveryCandidateDTO
     ) {
         setStep(.loading)
-        loadTask = Task {
+        startForegroundLoadTask { requestID in
             let saved = await viewModel.confirmReviewRecovery(candidate)
-            guard !Task.isCancelled else {
-                loadTask = nil
-                return
-            }
-            loadTask = nil
+            guard isCurrentForegroundLoad(requestID) else { return }
             if saved {
                 statusMessage = "확인했어요. 비교할 옷을 찾고 있어요…"
                 continueComparisonAfterProductInput()
@@ -732,11 +776,12 @@ private extension CompareFlowSheet {
             ForEach(recommendedReferenceCandidates) { candidate in
                 Button {
                     guard !isProcessingReferenceSelection else { return }
-                    isProcessingReferenceSelection = true
                     selectedReferenceItemID = candidate.id
-                    Task {
+                    startForegroundComparisonTask(locksReferenceSelection: true) { requestID, userID in
                         await calculateAndSaveTemporaryRecommendation(
-                            selectedReferenceItem: candidate.userFit
+                            selectedReferenceItem: candidate.userFit,
+                            requestID: requestID,
+                            userID: userID
                         )
                     }
                 } label: {
@@ -759,14 +804,15 @@ private extension CompareFlowSheet {
                 CompareSheetSectionTitle(title: title)
                 ForEach(items) { item in
                     Button {
-                        guard !isProcessingReferenceSelection else { return }
-                        isProcessingReferenceSelection = true
-                        selectedReferenceItemID = item.id
-                        Task {
-                            await calculateAndSaveTemporaryRecommendation(
-                                selectedReferenceItem: item
-                            )
-                        }
+                    guard !isProcessingReferenceSelection else { return }
+                    selectedReferenceItemID = item.id
+                    startForegroundComparisonTask(locksReferenceSelection: true) { requestID, userID in
+                        await calculateAndSaveTemporaryRecommendation(
+                            selectedReferenceItem: item,
+                            requestID: requestID,
+                            userID: userID
+                        )
+                    }
                     } label: {
                         ClosetReferenceChoiceCard(
                             item: item,
@@ -1663,19 +1709,78 @@ private extension CompareFlowSheet {
         continueComparisonAfterProductInput()
     }
 
+    func startForegroundComparisonTask(
+        locksReferenceSelection: Bool = false,
+        _ operation: @escaping @MainActor (UUID, UUID?) async -> Void
+    ) {
+        invalidateForegroundComparison()
+        let requestID = UUID()
+        let userID = authSession.authenticatedUserID
+        activeComparisonRequestID = requestID
+        activeComparisonUserID = userID
+        if locksReferenceSelection {
+            isProcessingReferenceSelection = true
+            processingReferenceRequestID = requestID
+        }
+        viewModel.beginComparisonRequest(requestID)
+        comparisonTask = Task { @MainActor in
+            await operation(requestID, userID)
+            finishForegroundComparisonTask(requestID: requestID, userID: userID)
+        }
+    }
+
+    func invalidateForegroundComparison() {
+        let requestID = activeComparisonRequestID
+        activeComparisonRequestID = nil
+        activeComparisonUserID = nil
+        comparisonTask?.cancel()
+        comparisonTask = nil
+        clearReferenceSelectionProcessing(for: requestID)
+        comparisonSubmission.invalidate()
+        viewModel.invalidateComparisonRequest(requestID)
+    }
+
+    func isCurrentForegroundComparison(
+        requestID: UUID,
+        userID: UUID?
+    ) -> Bool {
+        !Task.isCancelled
+            && activeComparisonRequestID == requestID
+            && activeComparisonUserID == userID
+            && authSession.authenticatedUserID == userID
+            && viewModel.isCurrentComparisonRequest(requestID)
+    }
+
+    func finishForegroundComparisonTask(requestID: UUID, userID: UUID?) {
+        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+            return
+        }
+        comparisonTask = nil
+        activeComparisonRequestID = nil
+        activeComparisonUserID = nil
+        clearReferenceSelectionProcessing(for: requestID)
+        viewModel.invalidateComparisonRequest(requestID)
+    }
+
+    func clearReferenceSelectionProcessing(for requestID: UUID?) {
+        guard processingReferenceRequestID == requestID else { return }
+        isProcessingReferenceSelection = false
+        processingReferenceRequestID = nil
+    }
+
     func startCompareTask(with urlString: String) {
-        guard loadTask == nil, !viewModel.isLoadingProductInfo else { return }
-        loadTask = Task {
+        invalidateForegroundComparison()
+        startForegroundLoadTask(replacingCurrent: true) { requestID in
             await startCompare(with: urlString)
-            loadTask = nil
+            guard isCurrentForegroundLoad(requestID) else { return }
         }
     }
 
     func startCompareTask(fromHistoricalProduct product: Product) {
-        guard loadTask == nil, !viewModel.isLoadingProductInfo else { return }
-        loadTask = Task {
+        invalidateForegroundComparison()
+        startForegroundLoadTask(replacingCurrent: true) { requestID in
             await startCompare(fromHistoricalProduct: product)
-            loadTask = nil
+            guard isCurrentForegroundLoad(requestID) else { return }
         }
     }
 
@@ -1684,13 +1789,9 @@ private extension CompareFlowSheet {
               viewModel.hasActiveUserExplicitClassification else { return }
         resetTransientComparisonForRecoveryMutation()
         setStep(.loading)
-        loadTask = Task {
+        startForegroundLoadTask { requestID in
             let loaded = await viewModel.beginReviewRecoveryReselection()
-            guard !Task.isCancelled else {
-                loadTask = nil
-                return
-            }
-            loadTask = nil
+            guard isCurrentForegroundLoad(requestID) else { return }
             if loaded || viewModel.reviewRecoveryContract != nil {
                 errorMessage = viewModel.errorMessage
                 setStep(.categoryConfirmation)
@@ -1707,13 +1808,9 @@ private extension CompareFlowSheet {
               viewModel.hasActiveUserExplicitClassification else { return }
         resetTransientComparisonForRecoveryMutation()
         setStep(.loading)
-        loadTask = Task {
+        startForegroundLoadTask { requestID in
             let cleared = await viewModel.clearReviewRecovery()
-            guard !Task.isCancelled else {
-                loadTask = nil
-                return
-            }
-            loadTask = nil
+            guard isCurrentForegroundLoad(requestID) else { return }
             guard cleared else {
                 errorMessage = viewModel.errorMessage
                     ?? "내 선택을 초기화하지 못했습니다."
@@ -1751,6 +1848,7 @@ private extension CompareFlowSheet {
         selectedReferenceItemID = nil
         insufficientEvidence = nil
         isProcessingReferenceSelection = false
+        processingReferenceRequestID = nil
         statusMessage = nil
         errorMessage = nil
     }
@@ -1900,12 +1998,23 @@ private extension CompareFlowSheet {
     }
 
     func proceedWithServerConfirmedCategory(product: Product) {
-        Task {
-            await loadServerConfirmedReferenceSelection(product: product)
+        startForegroundComparisonTask { requestID, userID in
+            await loadServerConfirmedReferenceSelection(
+                product: product,
+                requestID: requestID,
+                userID: userID
+            )
         }
     }
 
-    func loadServerConfirmedReferenceSelection(product: Product) async {
+    func loadServerConfirmedReferenceSelection(
+        product: Product,
+        requestID: UUID,
+        userID: UUID?
+    ) async {
+        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+            return
+        }
         hasConfirmedComparisonCategory = false
         guard let readiness = viewModel.serverComparisonReadiness,
               readiness.isReady else {
@@ -1916,8 +2025,12 @@ private extension CompareFlowSheet {
             return
         }
         guard let plan = await viewModel.loadServerReferenceSelectionPlan(
-            localClientItemIDs: Set(userFits.map(\.id))
+            localClientItemIDs: Set(userFits.map(\.id)),
+            comparisonRequestID: requestID
         ) else {
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return
+            }
             serverReferenceSelectionPlan = nil
             preparedComparison = nil
             errorMessage = viewModel.errorMessage
@@ -1931,6 +2044,9 @@ private extension CompareFlowSheet {
         ), let manualReferences = localReferenceProjection(
             for: plan.manualCandidates
         ) else {
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return
+            }
             serverReferenceSelectionPlan = nil
             preparedComparison = nil
             errorMessage = "서버 기준 옷과 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
@@ -1947,8 +2063,14 @@ private extension CompareFlowSheet {
         if !automaticReferences.isEmpty {
             selectedReferenceItemID = automaticReferences[0].id
             await calculateAndSaveRecommendation(
-                automaticReferenceCandidates: automaticReferences
+                automaticReferenceCandidates: automaticReferences,
+                requestID: requestID,
+                userID: userID
             )
+            return
+        }
+
+        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
             return
         }
 
@@ -1997,16 +2119,12 @@ private extension CompareFlowSheet {
         errorMessage = nil
         setStep(.loading)
 
-        loadTask = Task {
+        startForegroundLoadTask { requestID in
             let didLoad = await viewModel.resumeZARAParsingAfterCategoryConfirmation()
-            guard !Task.isCancelled else {
-                loadTask = nil
-                return
-            }
+            guard isCurrentForegroundLoad(requestID) else { return }
 
             if didLoad {
                 rebuildPreparedComparison()
-                loadTask = nil
                 continueComparisonAfterProductInput()
                 return
             }
@@ -2014,7 +2132,6 @@ private extension CompareFlowSheet {
             viewModel.category = confirmedCategory
             viewModel.detailCategory = confirmedDetailCategory
 
-            loadTask = nil
             if viewModel.productAnalysisRecoveryAction == .enterMeasurementsManually {
                 statusMessage = "상품 종류를 적용했어요. 비교할 실측값을 확인해 주세요."
                 setStep(.categoryConfirmation)
@@ -2105,17 +2222,26 @@ private extension CompareFlowSheet {
     }
 
     func calculateAndSaveRecommendation(
-        automaticReferenceCandidates: [UserFit]
+        automaticReferenceCandidates: [UserFit],
+        requestID: UUID,
+        userID: UUID?
     ) async {
+        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+            return
+        }
         let outcome = await comparisonSubmission.submit {
-            let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
-            if let brand, existingBrand(named: brand.name) == nil {
-                modelContext.insert(brand)
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return nil
             }
+            let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
             return await viewModel.calculateRecommendation(
                 automaticReferenceCandidates: automaticReferenceCandidates,
-                brand: brand
+                brand: brand,
+                comparisonRequestID: requestID
             )
+        }
+        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+            return
         }
         guard case .finished(let history) = outcome else { return }
         guard let history else {
@@ -2135,12 +2261,25 @@ private extension CompareFlowSheet {
         }
 
         do {
+            if let brand = history.product.brand,
+               existingBrand(named: brand.name) == nil {
+                modelContext.insert(brand)
+            }
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return
+            }
             try saveUniqueHistory(history)
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return
+            }
             #if DEBUG
             print("[화면: 상품 비교][동작: 추천 기록 저장][상태: 성공] 상품=\(history.product.name), 추천사이즈=\(history.recommendedSize.name), 기준옷=\(history.userFit.displayName)")
             #endif
             setStep(.result(history))
         } catch {
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return
+            }
             modelContext.rollback()
             #if DEBUG
             print("[화면: 상품 비교][동작: 추천 기록 저장][상태: 실패] 오류=\(error.localizedDescription), 상품=\(history.product.name)")
@@ -2150,39 +2289,63 @@ private extension CompareFlowSheet {
         }
     }
 
-    func calculateAndSaveTemporaryRecommendation(selectedReferenceItem: UserFit) async {
+    func calculateAndSaveTemporaryRecommendation(
+        selectedReferenceItem: UserFit,
+        requestID: UUID,
+        userID: UUID?
+    ) async {
+        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+            return
+        }
         let outcome = await comparisonSubmission.submit {
-            let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
-            if let brand, existingBrand(named: brand.name) == nil {
-                modelContext.insert(brand)
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return nil
             }
+            let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
             return await viewModel.calculateTemporaryRecommendation(
                 selectedReferenceItem: selectedReferenceItem,
-                brand: brand
+                brand: brand,
+                comparisonRequestID: requestID
             )
+        }
+        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+            return
         }
         guard case .finished(let history) = outcome else { return }
         guard let history else {
             errorMessage = viewModel.errorMessage
                 ?? "서버 비교 정책 또는 실측 조건을 충족하지 못했습니다."
             setStep(.error)
-            isProcessingReferenceSelection = false
+            clearReferenceSelectionProcessing(for: requestID)
             return
         }
 
         do {
+            if let brand = history.product.brand,
+               existingBrand(named: brand.name) == nil {
+                modelContext.insert(brand)
+            }
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return
+            }
             try saveUniqueHistory(history)
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return
+            }
             #if DEBUG
             print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 성공] 상품=\(history.product.name), 추천사이즈=\(history.recommendedSize.name), 기준옷=\(history.userFit.displayName)")
             #endif
             setStep(.result(history))
         } catch {
+            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
+                return
+            }
             modelContext.rollback()
             #if DEBUG
             print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 실패] 오류=\(error.localizedDescription), 상품=\(history.product.name)")
             #endif
             errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
-            isProcessingReferenceSelection = false
+            clearReferenceSelectionProcessing(for: requestID)
             setStep(.error)
         }
     }

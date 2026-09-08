@@ -48,6 +48,282 @@ struct FitMatchReviewRequiredRecoveryTests {
         })
     }
 
+    @Test func v7RecoveryContractAcceptsWholeCandidateUnknownFieldsButKeepsGarmentFirstPresentation() async throws {
+        let productID = UUID()
+        let contract = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID
+        )
+        let fixture = try RecoveryContractFixture()
+        let remote = RecoveryTransportStub(
+            contract: contract,
+            saved: fixture.savedMutation,
+            cleared: fixture.clearedMutation
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+
+        let recovered = try await coordinator.classificationRecoveryOptions(
+            productID: productID
+        )
+
+        #expect(
+            recovered.supportedContractVersion == .v7ExplicitAuthority
+        )
+        #expect(recovered.isSafelyRecoverable)
+        #expect(recovered.unknownFields == [
+            .garmentType, .sleeveLength, .lowerLength
+        ])
+        // The v7 envelope reports cross-garment axis differences, but each
+        // garment here maps to one exact candidate. The screen must not ask an
+        // axis question after the user chooses either garment.
+        #expect(recovered.presentationUnknownFields == [.garmentType])
+        #expect(recovered.garmentGroups.allSatisfy {
+            $0.differingFields.isEmpty && $0.candidates.count == 1
+        })
+    }
+
+    @Test func v7RecoveryContractTreatsNilAndValueAsDifferentButAllNilAsKnown() throws {
+        let contract = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: UUID()
+        )
+
+        #expect(contract.isSafelyRecoverable)
+        #expect(contract.unknownFields.contains(.lowerLength))
+        #expect(!contract.unknownFields.contains(.bodyLength))
+    }
+
+    @Test func v7RecoveryContractRetainsAxisFollowUpOnlyWithinSelectedGarment() throws {
+        let contract = try makeV7SingleGarmentAxisRecoveryContract(
+            productID: UUID()
+        )
+        let group = try #require(contract.garmentGroups.first)
+
+        #expect(contract.isSafelyRecoverable)
+        #expect(contract.unknownFields == [.sleeveLength])
+        #expect(contract.presentationUnknownFields == [.sleeveLength])
+        #expect(contract.garmentGroups.count == 1)
+        #expect(group.differingFields == [.sleeveLength])
+    }
+
+    @Test func v7CoordinatorSendsExactServerCandidateAndProvenance() async throws {
+        let productID = UUID()
+        let contract = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID
+        )
+        let candidate = try #require(contract.candidates.first)
+        let fixture = try RecoveryContractFixture()
+        let remote = RecoveryTransportStub(
+            contract: contract,
+            saved: try makeSavedRecoveryMutation(
+                productID: productID,
+                candidate: candidate
+            ),
+            cleared: fixture.clearedMutation
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+
+        let issued = try await coordinator.classificationRecoveryOptions(
+            productID: productID
+        )
+        _ = try await coordinator.setUserProductClassification(
+            contract: issued,
+            candidate: candidate,
+            expectedRevision: 0,
+            mutationID: UUID()
+        )
+        let request = try #require(await remote.capturedSetRequest())
+
+        #expect(request.selectedCandidateFingerprint == candidate.candidateFingerprint)
+        #expect(request.expectedCandidateSetHash == contract.candidateSetHash)
+        #expect(
+            request.expectedProductInputFingerprint
+                == contract.productInputFingerprint
+        )
+        #expect(
+            request.expectedProductEvidenceFingerprint
+                == contract.productEvidenceFingerprint
+        )
+    }
+
+    @MainActor
+    @Test func v7SingleCandidateGarmentDoesNotCreateRedundantAxisQuestionOrMutation() async throws {
+        let productID = UUID()
+        let contract = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID
+        )
+        let remote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract]
+        )
+        let viewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(await viewModel.beginReviewRecoveryReselection())
+        let group = try #require(
+            viewModel.reviewRecoveryContract?.garmentGroups.first(where: {
+                $0.garmentTypeCode == "knit_sweater"
+            })
+        )
+        let selected = try #require(viewModel.selectReviewRecoveryGarment(group))
+
+        #expect(selected == group.candidates[0])
+        #expect(selected.candidateFingerprint == "candidate-knit-v7")
+        if case .choosingGarment = viewModel.reviewRecoveryState {
+            // The exact candidate is ready to be explicitly confirmed; no
+            // axis picker was entered because this garment has one candidate.
+        } else {
+            Issue.record("v7 교차-garment 축 차이가 불필요한 axis 질문을 만들었습니다.")
+        }
+        #expect(await remote.setCallCount() == 0)
+    }
+
+    @MainActor
+    @Test func reviewRequiredLoadAcceptsV7RecoveryWithoutNetworkFailurePresentation() async throws {
+        let productID = UUID()
+        let contract = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID
+        )
+        let remote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract],
+            startsReviewRequired: true
+        )
+        let viewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+
+        // REVIEW_REQUIRED is not comparison-ready, so the legacy Bool remains
+        // false; the recovery contract itself must still reach its chooser.
+        #expect(!(await viewModel.loadProductInfoFromURL()))
+        #expect(viewModel.errorMessage == nil)
+        if case .choosingGarment(let issuedContract) = viewModel.reviewRecoveryState {
+            #expect(issuedContract == contract)
+        } else {
+            Issue.record("유효한 v7 REVIEW_REQUIRED contract가 chooser로 전환되지 않았습니다.")
+        }
+        #expect(await remote.setCallCount() == 0)
+    }
+
+    @Test func coordinatorRejectsUnknownVersionAndInvalidV7UnknownFieldsBeforeMutation() async throws {
+        let productID = UUID()
+        let fixture = try RecoveryContractFixture()
+        let unsupported = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID,
+            contractVersion: "fitmatch-vnext-recovery-v8-future"
+        )
+        let invalidUnknownFields = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID,
+            unknownFields: "[\"garment_type\"]"
+        )
+
+        for (contract, expectedReason) in [
+            (unsupported, "unsupported_candidate_contract_version"),
+            (invalidUnknownFields, "unbounded_or_incomplete_candidate_set")
+        ] {
+            let remote = RecoveryTransportStub(
+                contract: contract,
+                saved: fixture.savedMutation,
+                cleared: fixture.clearedMutation
+            )
+            let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+            var rejected = false
+            do {
+                _ = try await coordinator.classificationRecoveryOptions(
+                    productID: productID
+                )
+            } catch let error as FitMatchServerAuthorityError {
+                rejected = error == .invalidClassificationRecoveryContract(
+                    expectedReason
+                )
+            }
+
+            #expect(rejected)
+            #expect(await remote.setCallCount() == 0)
+        }
+    }
+
+    @Test func coordinatorRejectsV7BoundCountAndFixedFactViolationsBeforeMutation() async throws {
+        let productID = UUID()
+        let valid = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID
+        )
+        let fixture = try RecoveryContractFixture()
+        let extraCandidates = valid.candidates + [
+            VNextClassificationRecoveryCandidateDTO(
+                candidateID: "candidate-polo-v7",
+                candidateFingerprint: "candidate-polo-v7",
+                displayName: "폴로",
+                categoryCode: "tops",
+                garmentTypeCode: "polo_shirt",
+                sleeveLengthCode: "short_sleeve",
+                lowerLengthCode: "regular",
+                bodyLengthCode: nil,
+                comparisonPolicyCode: "polo_shirt"
+            ),
+            VNextClassificationRecoveryCandidateDTO(
+                candidateID: "candidate-shirt-v7",
+                candidateFingerprint: "candidate-shirt-v7",
+                displayName: "셔츠/블라우스",
+                categoryCode: "tops",
+                garmentTypeCode: "shirt_blouse",
+                sleeveLengthCode: "long_sleeve",
+                lowerLengthCode: nil,
+                bodyLengthCode: nil,
+                comparisonPolicyCode: "shirt_blouse"
+            )
+        ]
+        let fixedFactMismatch = VNextKnownClassificationFactsDTO(
+            audienceCode: "MEN",
+            productStructureCode: "SINGLE",
+            categoryCode: "tops",
+            garmentTypeCode: nil,
+            sleeveLengthCode: "long_sleeve",
+            lowerLengthCode: nil,
+            bodyLengthCode: nil,
+            comparisonPolicyCode: nil
+        )
+        let malformedContracts = [
+            copiedRecoveryContract(
+                valid,
+                unknownFields: [],
+                candidates: [],
+                candidateCount: 0
+            ),
+            copiedRecoveryContract(valid, candidateCount: 1),
+            copiedRecoveryContract(
+                valid,
+                candidates: extraCandidates,
+                candidateCount: 4
+            ),
+            copiedRecoveryContract(valid, fixedFacts: fixedFactMismatch)
+        ]
+
+        for contract in malformedContracts {
+            #expect(!contract.isSafelyRecoverable)
+            let remote = RecoveryTransportStub(
+                contract: contract,
+                saved: fixture.savedMutation,
+                cleared: fixture.clearedMutation
+            )
+            let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+            var rejected = false
+            do {
+                _ = try await coordinator.classificationRecoveryOptions(
+                    productID: productID
+                )
+            } catch let error as FitMatchServerAuthorityError {
+                rejected = error == .invalidClassificationRecoveryContract(
+                    "unbounded_or_incomplete_candidate_set"
+                )
+            }
+            #expect(rejected)
+            #expect(await remote.setCallCount() == 0)
+        }
+    }
+
     @MainActor
     @Test func singleCandidateGarmentReturnsExactServerCandidateWithoutSaving() async throws {
         let productID = UUID()
@@ -451,6 +727,117 @@ struct FitMatchReviewRequiredRecoveryTests {
             Issue.record("초기화 후 새 recovery contract로 재구성되지 않았습니다.")
         }
     }
+
+    @MainActor
+    @Test func reviewRecoveryOptionsPresentContractAndNetworkFailuresDifferently() async throws {
+        let productID = UUID()
+        let contract = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID
+        )
+
+        let contractRemote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract],
+            recoveryFailure: .invalidContract,
+            startsReviewRequired: true
+        )
+        let contractViewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: contractRemote)
+        )
+
+        #expect(!(await contractViewModel.loadProductInfoFromURL()))
+        #expect(
+            contractViewModel.errorMessage
+                == "상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요."
+        )
+        #expect(await contractRemote.setCallCount() == 0)
+
+        let malformedRemote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract],
+            recoveryFailure: .malformedResponse,
+            startsReviewRequired: true
+        )
+        let malformedViewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: malformedRemote)
+        )
+
+        #expect(!(await malformedViewModel.loadProductInfoFromURL()))
+        #expect(
+            malformedViewModel.errorMessage
+                == "상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요."
+        )
+        #expect(await malformedRemote.setCallCount() == 0)
+
+        let networkRemote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract],
+            recoveryFailure: .network,
+            startsReviewRequired: true
+        )
+        let networkViewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: networkRemote)
+        )
+
+        #expect(!(await networkViewModel.loadProductInfoFromURL()))
+        #expect(
+            networkViewModel.errorMessage
+                == "상품 분류 선택지를 확인하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+        )
+        #expect(await networkRemote.setCallCount() == 0)
+
+        let cancelledRemote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract],
+            recoveryFailure: .cancelled,
+            startsReviewRequired: true
+        )
+        let cancelledViewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: cancelledRemote)
+        )
+
+        #expect(!(await cancelledViewModel.loadProductInfoFromURL()))
+        #expect(cancelledViewModel.errorMessage == nil)
+        #expect(await cancelledRemote.setCallCount() == 0)
+    }
+
+    @MainActor
+    @Test func reviewRecoverySaveKeepsTransportFailureDistinctAndRefreshesSelection() async throws {
+        let productID = UUID()
+        let contract = try makeV7CrossGarmentAxisRecoveryContract(
+            productID: productID
+        )
+        let remote = try RecoveryLifecycleTransportStub(
+            productID: productID,
+            contracts: [contract],
+            setFailure: .network
+        )
+        let viewModel = makeRecoveryLifecycleViewModel(
+            productID: productID,
+            coordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(await viewModel.beginReviewRecoveryReselection())
+        let group = try #require(
+            viewModel.reviewRecoveryContract?.garmentGroups.first(where: {
+                $0.garmentTypeCode == "knit_sweater"
+            })
+        )
+        let candidate = try #require(viewModel.selectReviewRecoveryGarment(group))
+
+        #expect(!(await viewModel.confirmReviewRecovery(candidate)))
+        #expect(
+            viewModel.errorMessage
+                == "상품 분류 선택을 저장하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+        )
+        #expect(await remote.setCallCount() == 1)
+        #expect(viewModel.reviewRecoveryContract != nil)
+    }
 }
 
 private struct RecoveryContractFixture {
@@ -774,6 +1161,154 @@ private func makeSleeveFollowUpRecoveryContract(
     )
 }
 
+private func makeV7CrossGarmentAxisRecoveryContract(
+    productID: UUID,
+    contractVersion: String =
+        VNextClassificationRecoveryContractDTO.explicitAuthorityContractVersion,
+    unknownFields: String =
+        "[\"garment_type\",\"sleeve_length\",\"lower_length\"]"
+) throws -> VNextClassificationRecoveryContractDTO {
+    try decodeRecoveryJSON(
+        """
+        {
+          "product_id":"\(productID)","global_status":"REVIEW_REQUIRED",
+          "recoverability":"RECOVERABLE","unrecoverable_reason":null,
+          "fixed_facts":{
+            "audience_code":"MEN","product_structure_code":"SINGLE",
+            "category_code":"tops"
+          },
+          "unknown_fields":\(unknownFields),
+          "candidates":[
+            {
+              "candidate_id":"candidate-knit-v7",
+              "candidate_fingerprint":"candidate-knit-v7",
+              "display_name":"니트/스웨터","category_code":"tops",
+              "garment_type_code":"knit_sweater",
+              "sleeve_length_code":"long_sleeve",
+              "lower_length_code":null,
+              "comparison_policy_code":"knit_sweater"
+            },
+            {
+              "candidate_id":"candidate-cardigan-v7",
+              "candidate_fingerprint":"candidate-cardigan-v7",
+              "display_name":"가디건","category_code":"tops",
+              "garment_type_code":"cardigan",
+              "sleeve_length_code":"short_sleeve",
+              "lower_length_code":"regular",
+              "comparison_policy_code":"cardigan"
+            }
+          ],
+          "candidate_count":2,"product_input_fingerprint":"input-v7",
+          "product_evidence_fingerprint":"evidence-v7",
+          "resolver_version":"resolver-v7",
+          "candidate_contract_version":"\(contractVersion)",
+          "candidate_set_hash":"set-v7",
+          "current_review_reason":"Product-exact verified evidence is required"
+        }
+        """
+    )
+}
+
+private func makeV7SingleGarmentAxisRecoveryContract(
+    productID: UUID
+) throws -> VNextClassificationRecoveryContractDTO {
+    try decodeRecoveryJSON(
+        """
+        {
+          "product_id":"\(productID)","global_status":"REVIEW_REQUIRED",
+          "recoverability":"RECOVERABLE","unrecoverable_reason":null,
+          "fixed_facts":{
+            "audience_code":"MEN","product_structure_code":"SINGLE",
+            "category_code":"tops","garment_type_code":"shirt_blouse",
+            "comparison_policy_code":"shirt_blouse"
+          },
+          "unknown_fields":["sleeve_length"],
+          "candidates":[
+            {
+              "candidate_id":"candidate-shirt-short-v7",
+              "candidate_fingerprint":"candidate-shirt-short-v7",
+              "display_name":"셔츠/블라우스","category_code":"tops",
+              "garment_type_code":"shirt_blouse",
+              "sleeve_length_code":"short_sleeve",
+              "comparison_policy_code":"shirt_blouse"
+            },
+            {
+              "candidate_id":"candidate-shirt-long-v7",
+              "candidate_fingerprint":"candidate-shirt-long-v7",
+              "display_name":"셔츠/블라우스","category_code":"tops",
+              "garment_type_code":"shirt_blouse",
+              "sleeve_length_code":"long_sleeve",
+              "comparison_policy_code":"shirt_blouse"
+            }
+          ],
+          "candidate_count":2,"product_input_fingerprint":"input-axis-v7",
+          "product_evidence_fingerprint":"evidence-axis-v7",
+          "resolver_version":"resolver-v7",
+          "candidate_contract_version":"fitmatch-vnext-recovery-v7-explicit-authority",
+          "candidate_set_hash":"set-axis-v7",
+          "current_review_reason":"Product-exact verified evidence is required"
+        }
+        """
+    )
+}
+
+private func copiedRecoveryContract(
+    _ contract: VNextClassificationRecoveryContractDTO,
+    fixedFacts: VNextKnownClassificationFactsDTO? = nil,
+    unknownFields: [VNextUnknownClassificationField]? = nil,
+    candidates: [VNextClassificationRecoveryCandidateDTO]? = nil,
+    candidateCount: Int? = nil
+) -> VNextClassificationRecoveryContractDTO {
+    VNextClassificationRecoveryContractDTO(
+        productID: contract.productID,
+        globalStatus: contract.globalStatus,
+        recoverability: contract.recoverability,
+        unrecoverableReason: contract.unrecoverableReason,
+        fixedFacts: fixedFacts ?? contract.fixedFacts,
+        unknownFields: unknownFields ?? contract.unknownFields,
+        candidates: candidates ?? contract.candidates,
+        candidateCount: candidateCount ?? contract.candidateCount,
+        productInputFingerprint: contract.productInputFingerprint,
+        productEvidenceFingerprint: contract.productEvidenceFingerprint,
+        resolverVersion: contract.resolverVersion,
+        candidateContractVersion: contract.candidateContractVersion,
+        candidateSetHash: contract.candidateSetHash,
+        currentReviewReason: contract.currentReviewReason
+    )
+}
+
+private func makeSavedRecoveryMutation(
+    productID: UUID,
+    candidate: VNextClassificationRecoveryCandidateDTO
+) throws -> VNextUserClassificationMutationDTO {
+    try decodeRecoveryJSON(
+        """
+        {
+          "saved":true,"idempotent":false,
+          "effective_classification":{
+            "product_id":"\(productID)","state":"PERSONAL_CONFIRMED",
+            "classification_status":"CONFIRMED","effective_source":"USER_EXPLICIT",
+            "category_code":"\(candidate.categoryCode)",
+            "garment_type_code":"\(candidate.garmentTypeCode)",
+            "audience_code":"MEN",
+            "sleeve_length_code":\(recoveryJSONString(candidate.sleeveLengthCode)),
+            "lower_length_code":\(recoveryJSONString(candidate.lowerLengthCode)),
+            "body_length_code":\(recoveryJSONString(candidate.bodyLengthCode)),
+            "comparison_policy_code":"\(candidate.comparisonPolicyCode)",
+            "product_structure_code":"SINGLE",
+            "effective_authority_fingerprint":"effective-v7",
+            "effective_contract_version":"effective-v1"
+          }
+        }
+        """
+    )
+}
+
+private func recoveryJSONString(_ value: String?) -> String {
+    guard let value else { return "null" }
+    return "\"\(value)\""
+}
+
 private func makeDuplicateFingerprintRecoveryContract(
     productID: UUID
 ) throws -> VNextClassificationRecoveryContractDTO {
@@ -866,6 +1401,17 @@ private final class RecoveryLifecycleNoopMetricsRecorder: FitMatchMetricsRecordi
     func record(_ event: FitMatchMetricEvent) {}
 }
 
+private enum RecoveryOptionsFailure: Sendable {
+    case invalidContract
+    case malformedResponse
+    case network
+    case cancelled
+}
+
+private enum RecoverySaveFailure: Sendable {
+    case network
+}
+
 private actor RecoveryLifecycleTransportStub: FitMatchServerAuthorityRemoteServicing {
     private enum PersonalState {
         case active(garmentType: String, revision: Int)
@@ -882,6 +1428,8 @@ private actor RecoveryLifecycleTransportStub: FitMatchServerAuthorityRemoteServi
     private let productID: UUID
     private var contracts: [VNextClassificationRecoveryContractDTO]
     private var lastIssuedContract: VNextClassificationRecoveryContractDTO?
+    private let recoveryFailure: RecoveryOptionsFailure?
+    private let setFailure: RecoverySaveFailure?
     private var state: PersonalState = .active(
         garmentType: "polo_shirt",
         revision: 1
@@ -895,11 +1443,19 @@ private actor RecoveryLifecycleTransportStub: FitMatchServerAuthorityRemoteServi
 
     init(
         productID: UUID,
-        contracts: [VNextClassificationRecoveryContractDTO]
+        contracts: [VNextClassificationRecoveryContractDTO],
+        recoveryFailure: RecoveryOptionsFailure? = nil,
+        setFailure: RecoverySaveFailure? = nil,
+        startsReviewRequired: Bool = false
     ) throws {
         guard !contracts.isEmpty else { throw StubError.missingContract }
         self.productID = productID
         self.contracts = contracts
+        self.recoveryFailure = recoveryFailure
+        self.setFailure = setFailure
+        if startsReviewRequired {
+            state = .cleared(revision: 0)
+        }
     }
 
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
@@ -945,6 +1501,21 @@ private actor RecoveryLifecycleTransportStub: FitMatchServerAuthorityRemoteServi
     func classificationRecoveryOptions(productID: UUID) async throws
         -> VNextClassificationRecoveryContractDTO {
         guard productID == self.productID else { throw StubError.unexpected }
+        if let recoveryFailure {
+            switch recoveryFailure {
+            case .invalidContract:
+                throw FitMatchServerAuthorityError
+                    .invalidClassificationRecoveryContract("fixture_invalid")
+            case .malformedResponse:
+                throw DecodingError.dataCorrupted(
+                    .init(codingPath: [], debugDescription: "fixture")
+                )
+            case .network:
+                throw URLError(.notConnectedToInternet)
+            case .cancelled:
+                throw CancellationError()
+            }
+        }
         recoveryCalls += 1
         let contract: VNextClassificationRecoveryContractDTO
         if contracts.count > 1 {
@@ -962,6 +1533,12 @@ private actor RecoveryLifecycleTransportStub: FitMatchServerAuthorityRemoteServi
         _ request: FitMatchSetUserProductClassificationRequest
     ) async throws -> VNextUserClassificationMutationDTO {
         setRequests.append(request)
+        if let setFailure {
+            switch setFailure {
+            case .network:
+                throw URLError(.notConnectedToInternet)
+            }
+        }
         guard let contract = lastIssuedContract,
               request.expectedCandidateSetHash == contract.candidateSetHash,
               request.expectedProductInputFingerprint

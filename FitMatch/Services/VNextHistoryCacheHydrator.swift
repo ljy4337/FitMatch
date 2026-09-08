@@ -121,7 +121,10 @@ struct VNextHistoryCacheHydrator {
         }
 
         init(row: VNextComparisonHistoryDTO) throws {
-            guard row.snapshotSchemaVersion >= 4 else {
+            try FitMatchVNextContractValidator.validateSupportedSnapshotVersion(
+                row.snapshotSchemaVersion
+            )
+            guard row.snapshotSchemaVersion == 4 else {
                 self = Self.legacy(row: row)
                 return
             }
@@ -247,6 +250,18 @@ struct VNextHistoryCacheHydrator {
         existingClosetItems: [UserFit],
         modelContext: ModelContext
     ) throws -> Set<UUID> {
+        // Validate the entire completed batch before a single SwiftData
+        // object is inserted. A malformed later row must not leave earlier
+        // projections persisted as a partial cache update.
+        let completedRows = rows.filter { $0.resultStatus == "COMPLETED" }
+        try completedRows.forEach {
+            try FitMatchVNextContractValidator.validateCompletedReplay($0)
+            guard $0.snapshotBegin != nil else {
+                throw FitMatchVNextContractError.missingRequiredField(
+                    "comparison_history.begin_snapshot"
+                )
+            }
+        }
         // Callers can legitimately hold stale @Query snapshots while SwiftData
         // has already inserted or deleted related rows.  Always rebuild the
         // hydration identity maps from this context instead of retaining an
@@ -266,7 +281,7 @@ struct VNextHistoryCacheHydrator {
         )
         var hydrated = Set<UUID>()
 
-        for row in rows where row.resultStatus == "COMPLETED" {
+        for row in completedRows {
             guard !existingHistoryIDs.contains(row.clientComparisonID),
                   !hydrated.contains(row.clientComparisonID) else {
                 continue
@@ -357,7 +372,14 @@ struct VNextHistoryCacheHydrator {
         _ row: VNextComparisonHistoryDTO,
         analysis: VNextComparisonBatchAnalysis
     ) -> Bool {
-        guard let evidence = row.resultEvidence else { return false }
+        guard row.engineVersion
+                == FitMatchVNextContractValidator.completedReplayEngineVersion,
+              let evidence = row.resultEvidence,
+              evidence.engineVersion
+                == FitMatchVNextContractValidator.completedReplayEngineVersion,
+              row.engineVersion == evidence.engineVersion else {
+            return false
+        }
         let tolerance = 0.000_001
         return evidence.recommendedProductSizeID == analysis.recommended.productSizeID
             && abs(evidence.score - analysis.completionPayload.score) < tolerance

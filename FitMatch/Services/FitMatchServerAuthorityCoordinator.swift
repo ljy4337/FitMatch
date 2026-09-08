@@ -365,7 +365,9 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
     case comparisonNotAuthorized
     case comparisonAuthorizationRejected(FitMatchComparisonBlockReason)
     case comparisonBeginRejected(String)
+    case comparisonAlreadyCompleted
     case comparisonBeginMalformed(String)
+    case comparisonContractViolation(FitMatchVNextContractError)
     case comparisonCompletionUnavailable
     case comparisonCompletionRejected(String)
 
@@ -420,8 +422,12 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
             return reason.userMessage
         case .comparisonBeginRejected(let reason):
             return "서버 비교 시작이 차단되었습니다: \(reason)"
+        case .comparisonAlreadyCompleted:
+            return "이미 완료된 비교입니다. 비교 기록에서 확인해 주세요."
         case .comparisonBeginMalformed(let reason):
             return "서버 비교 시작 응답이 올바르지 않습니다: \(reason)"
+        case .comparisonContractViolation(let error):
+            return error.errorDescription
         case .comparisonCompletionUnavailable:
             return "서버 비교 완료 API를 사용할 수 없습니다."
         case .comparisonCompletionRejected(let reason):
@@ -445,9 +451,11 @@ actor FitMatchServerAuthorityCoordinator {
     func classificationRecoveryOptions(
         productID: UUID
     ) async throws -> VNextClassificationRecoveryContractDTO {
+        try Task.checkCancellation()
         let contract = try await remote.classificationRecoveryOptions(
             productID: productID
         )
+        try Task.checkCancellation()
         guard contract.productID == productID,
               contract.globalStatus == "REVIEW_REQUIRED" else {
             throw FitMatchServerAuthorityError.invalidClassificationRecoveryContract(
@@ -455,6 +463,12 @@ actor FitMatchServerAuthorityCoordinator {
             )
         }
         if contract.recoverability == .recoverable {
+            guard contract.supportedContractVersion != nil else {
+                throw FitMatchServerAuthorityError
+                    .invalidClassificationRecoveryContract(
+                        "unsupported_candidate_contract_version"
+                    )
+            }
             guard contract.isSafelyRecoverable,
                   Set(contract.candidates.map(\.candidateFingerprint)).count
                     == contract.candidates.count,
@@ -486,6 +500,7 @@ actor FitMatchServerAuthorityCoordinator {
         expectedRevision: Int,
         mutationID: UUID = UUID()
     ) async throws -> VNextUserClassificationMutationDTO {
+        try Task.checkCancellation()
         guard contract.isSafelyRecoverable,
               let candidateSetHash = contract.candidateSetHash,
               contract.candidates.contains(candidate) else {
@@ -505,6 +520,7 @@ actor FitMatchServerAuthorityCoordinator {
                 expectedRevision: expectedRevision
             )
         )
+        try Task.checkCancellation()
         guard result.saved == true,
               result.effectiveClassification.productID == contract.productID,
               result.effectiveClassification.isPersonalComparisonAuthority,
@@ -532,6 +548,7 @@ actor FitMatchServerAuthorityCoordinator {
         expectedRevision: Int,
         mutationID: UUID = UUID()
     ) async throws -> VNextUserClassificationMutationDTO {
+        try Task.checkCancellation()
         let result = try await remote.clearUserProductClassification(
             FitMatchClearUserProductClassificationRequest(
                 productID: productID,
@@ -539,6 +556,7 @@ actor FitMatchServerAuthorityCoordinator {
                 expectedRevision: expectedRevision
             )
         )
+        try Task.checkCancellation()
         guard result.cleared == true,
               result.effectiveClassification.productID == productID,
               !result.effectiveClassification.isPersonalComparisonAuthority else {
@@ -553,7 +571,9 @@ actor FitMatchServerAuthorityCoordinator {
         request: FitMatchProductResolutionRequest,
         observation: FitMatchProductObservationRequest?
     ) async throws -> FitMatchServerProductAuthority {
+        try Task.checkCancellation()
         let resolution = try await remote.resolve(request)
+        try Task.checkCancellation()
         _ = try classificationStatus(resolution.classification.status)
 
         let expectedProductID: UUID?
@@ -592,7 +612,9 @@ actor FitMatchServerAuthorityCoordinator {
             )
         }
 
+        try Task.checkCancellation()
         var runtime = try await remote.fetchProductRuntime(request)
+        try Task.checkCancellation()
         if runtime.runtimeState == "classification_promotion_required" {
             guard !didPromote else {
                 throw FitMatchServerAuthorityError.inconsistentRuntimeState(
@@ -605,7 +627,9 @@ actor FitMatchServerAuthorityCoordinator {
                 observation: observation,
                 expectedProductID: expectedProductID
             )
+            try Task.checkCancellation()
             runtime = try await remote.fetchProductRuntime(request)
+            try Task.checkCancellation()
         }
 
         if !didPromote,
@@ -619,7 +643,9 @@ actor FitMatchServerAuthorityCoordinator {
                 expectedProductID: expectedProductID
             )
             didPromote = true
+            try Task.checkCancellation()
             runtime = try await remote.fetchProductRuntime(request)
+            try Task.checkCancellation()
         }
 
         return try validatedAuthority(
@@ -637,10 +663,12 @@ actor FitMatchServerAuthorityCoordinator {
         referenceRequest: FitMatchProductResolutionRequest? = nil,
         referenceObservation: FitMatchProductObservationRequest? = nil
     ) async throws -> FitMatchServerReferenceAuthorization {
+        try Task.checkCancellation()
         var target = try await resolveProductAuthority(
             request: targetRequest,
             observation: targetObservation
         )
+        try Task.checkCancellation()
 
         if target.status == .confirmed,
            !target.comparisonReadiness.isReady {
@@ -651,15 +679,19 @@ actor FitMatchServerAuthorityCoordinator {
 
         let resolvedReference: FitMatchServerProductAuthority?
         if let referenceRequest {
+            try Task.checkCancellation()
             resolvedReference = try await resolveProductAuthority(
                 request: referenceRequest,
                 observation: referenceObservation
             )
+            try Task.checkCancellation()
         } else {
             resolvedReference = nil
         }
 
+        try Task.checkCancellation()
         let closet = try await remote.listClosetItems()
+        try Task.checkCancellation()
         guard closet.state == "ready" else {
             throw FitMatchServerAuthorityError.closetRuntimeUnavailable(closet.state)
         }
@@ -723,20 +755,26 @@ actor FitMatchServerAuthorityCoordinator {
         }
         var candidates: FitMatchReferenceCandidatesResponse
         if let targetVariantID {
+            try Task.checkCancellation()
             candidates = try await remote.findReferenceCandidates(
                 targetProductID: target.productID,
                 targetVariantID: targetVariantID
             )
+            try Task.checkCancellation()
         } else {
+            try Task.checkCancellation()
             candidates = try await remote.findReferenceCandidates(
                 targetProductID: target.productID
             )
+            try Task.checkCancellation()
         }
         if candidates.state == "target_classification_required" {
+            try Task.checkCancellation()
             target = try await resolveProductAuthority(
                 request: targetRequest,
                 observation: targetObservation
             )
+            try Task.checkCancellation()
             guard target.status == .confirmed else {
                 return blockedAuthorization(
                     reason: "target_classification_not_confirmed_after_retry",
@@ -748,14 +786,18 @@ actor FitMatchServerAuthorityCoordinator {
                 )
             }
             if let targetVariantID {
+                try Task.checkCancellation()
                 candidates = try await remote.findReferenceCandidates(
                     targetProductID: target.productID,
                     targetVariantID: targetVariantID
                 )
+                try Task.checkCancellation()
             } else {
+                try Task.checkCancellation()
                 candidates = try await remote.findReferenceCandidates(
                     targetProductID: target.productID
                 )
+                try Task.checkCancellation()
             }
             if candidates.state == "target_classification_required" {
                 throw FitMatchServerAuthorityError.targetClassificationRequired
@@ -931,10 +973,12 @@ actor FitMatchServerAuthorityCoordinator {
         targetObservation: FitMatchProductObservationRequest?,
         localClientItemIDs: Set<UUID>? = nil
     ) async throws -> FitMatchServerReferenceSelectionPlan {
+        try Task.checkCancellation()
         let target = try await resolveProductAuthority(
             request: targetRequest,
             observation: targetObservation
         )
+        try Task.checkCancellation()
         guard target.status == .confirmed else {
             throw FitMatchServerAuthorityError.targetClassificationRequired
         }
@@ -944,7 +988,9 @@ actor FitMatchServerAuthorityCoordinator {
             )
         }
 
+        try Task.checkCancellation()
         let closet = try await remote.listClosetItems()
+        try Task.checkCancellation()
         guard closet.state == "ready" else {
             throw FitMatchServerAuthorityError.closetRuntimeUnavailable(closet.state)
         }
@@ -957,10 +1003,12 @@ actor FitMatchServerAuthorityCoordinator {
             for: target,
             observation: targetObservation
         )
+        try Task.checkCancellation()
         let response = try await findReferenceCandidates(
             targetProductID: target.productID,
             targetVariantID: targetVariantID
         )
+        try Task.checkCancellation()
         guard response.state != "target_classification_required" else {
             throw FitMatchServerAuthorityError.targetClassificationRequired
         }
@@ -1147,6 +1195,7 @@ actor FitMatchServerAuthorityCoordinator {
         _ authorization: FitMatchServerReferenceAuthorization,
         clientHistoryID: UUID = UUID()
     ) async throws -> FitMatchServerComparisonPermit {
+        try Task.checkCancellation()
         guard authorization.isAllowed,
               let reference = authorization.reference else {
             throw FitMatchServerAuthorityError.comparisonNotAuthorized
@@ -1159,12 +1208,14 @@ actor FitMatchServerAuthorityCoordinator {
         let allowExtended = authorization.decision == .manualSelection
         let exactCandidates: VNextEligibleCandidateSizesDTO?
         if let targetVariantID = authorization.targetVariantID {
+            try Task.checkCancellation()
             let value = try await remote.eligibleCandidateSizes(
                 referenceClosetItemID: reference.closetItemID,
                 targetProductID: authorization.target.productID,
                 targetVariantID: targetVariantID,
                 manualExplicit: allowExtended
             )
+            try Task.checkCancellation()
             guard value.allowed,
                   !value.authorizedCandidateProductSizeIDs.isEmpty else {
                 if !value.allowed, let reasonCode = value.reasonCode {
@@ -1185,6 +1236,7 @@ actor FitMatchServerAuthorityCoordinator {
         } else {
             exactCandidates = nil
         }
+        try Task.checkCancellation()
         let response = try await remote.beginComparison(
             FitMatchBeginComparisonRequest(
                 referenceItemID: reference.closetItemID,
@@ -1202,6 +1254,7 @@ actor FitMatchServerAuthorityCoordinator {
                     .personalOverrideRevision
             )
         )
+        try Task.checkCancellation()
         guard response.status == "pending" || response.status == "completed" else {
             if response.status == "blocked" {
                 throw FitMatchServerAuthorityError.comparisonBeginRejected(
@@ -1225,17 +1278,27 @@ actor FitMatchServerAuthorityCoordinator {
         }
         if authorization.targetVariantID != nil {
             guard let exact = response.vnext,
+                  exact.comparisonID == response.runID,
                   Set(exact.authorizedCandidateProductSizeIDs) == Set(
                     exactCandidates?.authorizedCandidateProductSizeIDs ?? []
                   ),
-                  exact.snapshot.target.variantID == authorization.targetVariantID,
-                  exact.snapshot.snapshotSchemaVersion >= 3 else {
+                  exact.snapshot.target.variantID == authorization.targetVariantID else {
                 throw FitMatchServerAuthorityError.comparisonBeginMalformed(
                     "vnext_snapshot_or_candidate_set_missing"
                 )
             }
+            do {
+                try FitMatchVNextContractValidator.validateLiveBegin(exact)
+            } catch let error as FitMatchVNextContractError {
+                throw FitMatchServerAuthorityError.comparisonContractViolation(error)
+            } catch {
+                throw error
+            }
+            guard exact.resultStatus == "PENDING" else {
+                throw FitMatchServerAuthorityError.comparisonAlreadyCompleted
+            }
             if exactCandidates?.effectiveSource == "USER_EXPLICIT" {
-                guard exact.snapshot.snapshotSchemaVersion >= 4,
+                guard exact.snapshot.snapshotSchemaVersion == 4,
                       exact.effectiveAuthorityFingerprint
                         == exactCandidates?.effectiveAuthorityFingerprint else {
                     throw FitMatchServerAuthorityError.comparisonBeginMalformed(
@@ -1257,6 +1320,7 @@ actor FitMatchServerAuthorityCoordinator {
         permit: FitMatchServerComparisonPermit,
         analysis: VNextComparisonBatchAnalysis
     ) async throws -> VNextCompleteComparisonDTO {
+        try Task.checkCancellation()
         guard permit.isAllowed,
               let begin = permit.vnextBegin,
               begin.comparisonID == permit.runID,
@@ -1271,6 +1335,7 @@ actor FitMatchServerAuthorityCoordinator {
             comparisonID: permit.runID,
             payload: analysis.completionPayload
         )
+        try Task.checkCancellation()
         guard result.completed,
               result.comparisonID == permit.runID,
               result.recommendedProductSizeID == analysis.recommended.productSizeID else {
@@ -1386,6 +1451,7 @@ actor FitMatchServerAuthorityCoordinator {
         observation: FitMatchProductObservationRequest?,
         expectedProductID: UUID?
     ) async throws -> UUID {
+        try Task.checkCancellation()
         guard let observation else {
             throw FitMatchServerAuthorityError.missingObservationForPromotion
         }
@@ -1406,6 +1472,7 @@ actor FitMatchServerAuthorityCoordinator {
         }
 
         let response = try await remote.submitProductObservation(observation)
+        try Task.checkCancellation()
         guard response.observation.observationID == response.processing.observationID else {
             throw FitMatchServerAuthorityError.promotionResponseMalformed
         }
