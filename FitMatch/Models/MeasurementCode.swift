@@ -35,6 +35,251 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case legacyUnknown = "legacy_unknown"
 }
 
+/// The public vNext Closet/runtime vocabulary is intentionally distinct from
+/// the app's method-specific `MeasurementCode` vocabulary.  This adapter is
+/// the one place where an equivalence has been explicitly verified; callers
+/// must not infer a server code from a display name or a partial string.
+///
+/// `localCode` and `displayKind` are presentation/storage projections only.
+/// The original `canonicalCode` stays on the measurement record so that two
+/// facts which share a display axis (for example width and circumference) are
+/// never merged into one measurement.
+nonisolated struct FitMatchCanonicalMeasurementProjection: Equatable, Sendable {
+    let canonicalCode: String
+    let localCode: MeasurementCode
+    let displayKind: MeasurementDisplayKind
+}
+
+nonisolated enum FitMatchCanonicalMeasurementCode {
+    /// These are the current server comparison vocabulary.  Future server
+    /// codes can still be retained as raw facts after hydration, but they are
+    /// deliberately not assigned a local comparison/display meaning here.
+    static let activeCodes: Set<String> = [
+        "back_length",
+        "chest_circumference",
+        "chest_width",
+        "front_rise",
+        "hem_circumference",
+        "hem_width",
+        "hip_circumference",
+        "hip_width",
+        "outseam",
+        "shoulder_width",
+        "sleeve_length",
+        "thigh_circumference",
+        "thigh_width",
+        "total_length",
+        "under_bust_circumference",
+        "under_bust_width",
+        "waist_circumference",
+        "waist_width"
+    ]
+
+    /// Projects one exact server-issued canonical code for local storage and
+    /// UI.  No width/circumference conversion occurs here.
+    static func projection(
+        for canonicalCode: String,
+        basisCode: String? = nil
+    ) -> FitMatchCanonicalMeasurementProjection? {
+        let code = canonicalCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch code {
+        case "back_length":
+            return projection(code, .bodyLengthBackNeckToHem, .totalLength)
+        case "total_length":
+            let localCode: MeasurementCode
+            switch basisCode?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "waist_to_skirt_hem":
+                localCode = .skirtLengthWaistToHem
+            case "waist_to_hem", "waist_to_outseam":
+                localCode = .pantsOutseamWaistToHem
+            default:
+                localCode = .bodyLengthBackNeckToHem
+            }
+            return projection(code, localCode, .totalLength)
+        case "outseam":
+            return projection(code, .pantsOutseamWaistToHem, .totalLength)
+        case "shoulder_width":
+            return projection(code, .shoulderWidthSeamToSeam, .shoulder)
+        case "chest_width":
+            return projection(code, .chestWidthPitToPit, .chest)
+        case "chest_circumference":
+            return projection(code, .chestCircumferenceGarment, .chest)
+        case "sleeve_length":
+            let localCode: MeasurementCode
+            switch basisCode?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "sleeve_center_back_to_cuff":
+                localCode = .sleeveCenterBackToCuff
+            case "sleeve_raglan_neck_to_cuff":
+                localCode = .sleeveRaglanNeckToCuff
+            case "sleeve_shoulder_seam_to_cuff":
+                localCode = .sleeveShoulderSeamToCuff
+            default:
+                // `sleeve_length` alone does not prove whether a retailer
+                // measured from the shoulder seam, neck, or centre back.
+                // Retain the canonical fact for the server-owned comparison
+                // path, but do not turn an unspecified/raglan basis into a
+                // shoulder-seam local measurement.
+                localCode = .unknown
+            }
+            return projection(code, localCode, .sleeveLength)
+        case "waist_width":
+            return projection(code, .waistWidthEdgeToEdge, .waist)
+        case "waist_circumference":
+            return projection(code, .waistCircumferenceGarment, .waist)
+        case "hip_width":
+            return projection(code, .hipWidthAtWidest, .hip)
+        case "thigh_width":
+            return projection(code, .thighWidthCrotchToOuter, .thigh)
+        case "front_rise":
+            return projection(code, .riseCrotchToWaistFront, .rise)
+        case "hem_width":
+            return projection(code, .hemWidthEdgeToEdge, .hem)
+        case "under_bust_width":
+            return projection(code, .underBustWidthEdgeToEdge, .underBust)
+        // The app has no exact local semantic code for these circumference
+        // facts.  Preserve their original code/value/unit but do not project
+        // them onto the corresponding width axis.
+        case "hem_circumference", "hip_circumference", "thigh_circumference",
+             "under_bust_circumference":
+            return projection(code, .unknown, .unknown)
+        default:
+            return nil
+        }
+    }
+
+    /// Maps an app-local measurement code to the one verified server code
+    /// with the same meaning.  A nil result is a contract error at the
+    /// transport boundary, never a reason to silently drop a positive value.
+    static func canonicalCode(for localCode: MeasurementCode) -> String? {
+        switch localCode {
+        case .shoulderWidthSeamToSeam:
+            return "shoulder_width"
+        case .chestWidthPitToPit, .chestWidthUniqloBodyWidth:
+            return "chest_width"
+        case .chestCircumferenceGarment:
+            return "chest_circumference"
+        case .bodyLengthHPSToHemFront, .bodyLengthUniqloKnitFront,
+             .skirtLengthWaistToHem:
+            return "total_length"
+        case .bodyLengthBackNeckToHem, .bodyLengthMusinsaType5,
+             .bodyLengthMusinsaType20, .bodyLengthMusinsaType21,
+             .bodyLengthUniqloBack, .bodyLengthUniqloShirt:
+            return "back_length"
+        case .sleeveShoulderSeamToCuff:
+            return "sleeve_length"
+        case .waistWidthEdgeToEdge:
+            return "waist_width"
+        case .waistCircumferenceGarment:
+            return "waist_circumference"
+        case .hipWidthAtWidest:
+            return "hip_width"
+        case .thighWidthCrotchToOuter:
+            return "thigh_width"
+        case .riseCrotchToWaistFront:
+            return "front_rise"
+        case .hemWidthEdgeToEdge:
+            return "hem_width"
+        case .pantsOutseamWaistToHem:
+            return "outseam"
+        case .underBustWidthEdgeToEdge:
+            return "under_bust_width"
+        case .standardBodyChestCircumference,
+             .sleeveCenterBackToCuff,
+             .sleeveRaglanNeckToCuff,
+             .upperAbdomenWidthEdgeToEdge,
+             .upperWaistWidthEdgeToEdge,
+             .riseCrotchToWaistBack,
+             .pantsInseamCrotchToHem,
+             .footLengthHeelToToe,
+             .unknown,
+             .legacyUnknown:
+            return nil
+        }
+    }
+
+    /// Exact compatibility for rows that pre-date measurement records.  The
+    /// aliases are historical field names, not a string-pattern fallback.
+    static func canonicalCode(forTransportRawCode rawCode: String) -> String? {
+        let code = rawCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        if activeCodes.contains(code) { return code }
+        if let localCode = MeasurementCode(rawValue: code),
+           let canonical = canonicalCode(for: localCode) {
+            return canonical
+        }
+        switch code {
+        case "body_length": return "back_length"
+        case "rise": return "front_rise"
+        case "pants_outseam": return "outseam"
+        default: return nil
+        }
+    }
+
+    private static func projection(
+        _ canonicalCode: String,
+        _ localCode: MeasurementCode,
+        _ displayKind: MeasurementDisplayKind
+    ) -> FitMatchCanonicalMeasurementProjection {
+        FitMatchCanonicalMeasurementProjection(
+            canonicalCode: canonicalCode,
+            localCode: localCode,
+            displayKind: displayKind
+        )
+    }
+}
+
+extension MeasurementCode {
+    /// Presentation-only counterpart to the method-specific local code. This
+    /// retains established legacy Closet labels without treating an unknown
+    /// future server identifier as a guessed comparison axis.
+    nonisolated var presentationDisplayKind: MeasurementDisplayKind? {
+        switch self {
+        case .standardBodyChestCircumference,
+             .chestWidthPitToPit,
+             .chestCircumferenceGarment,
+             .chestWidthUniqloBodyWidth:
+            return .chest
+        case .shoulderWidthSeamToSeam:
+            return .shoulder
+        case .bodyLengthHPSToHemFront,
+             .bodyLengthBackNeckToHem,
+             .bodyLengthMusinsaType5,
+             .bodyLengthMusinsaType20,
+             .bodyLengthMusinsaType21,
+             .bodyLengthUniqloBack,
+             .bodyLengthUniqloShirt,
+             .bodyLengthUniqloKnitFront,
+             .pantsOutseamWaistToHem,
+             .pantsInseamCrotchToHem,
+             .skirtLengthWaistToHem:
+            return .totalLength
+        case .sleeveShoulderSeamToCuff,
+             .sleeveCenterBackToCuff,
+             .sleeveRaglanNeckToCuff:
+            return .sleeveLength
+        case .upperAbdomenWidthEdgeToEdge:
+            return .upperAbdomen
+        case .upperWaistWidthEdgeToEdge:
+            return .upperWaist
+        case .waistWidthEdgeToEdge, .waistCircumferenceGarment:
+            return .waist
+        case .hipWidthAtWidest:
+            return .hip
+        case .thighWidthCrotchToOuter:
+            return .thigh
+        case .riseCrotchToWaistFront, .riseCrotchToWaistBack:
+            return .rise
+        case .hemWidthEdgeToEdge:
+            return .hem
+        case .footLengthHeelToToe:
+            return .footLength
+        case .underBustWidthEdgeToEdge:
+            return .underBust
+        case .unknown, .legacyUnknown:
+            return nil
+        }
+    }
+}
+
 extension MeasurementCode {
     var comparisonDefinition: String? {
         switch self {

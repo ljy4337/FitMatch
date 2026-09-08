@@ -613,15 +613,28 @@ final class ShoppingProductViewModel: ObservableObject {
             sizeOptions = variant.sizes.enumerated().map { index, size in
                 let parsedRecords = size.canonicalMeasurements.measurements.compactMap {
                     measurement -> ParsedMeasurement? in
-                    guard let code = Self.runtimeMeasurementCode(
+                    guard measurement.value.isFinite, measurement.value > 0 else { return nil }
+                    let projection = FitMatchCanonicalMeasurementCode.projection(
                         for: measurement.measurementCode,
                         basisCode: measurement.basisCode
-                    ), let displayKind = Self.displayKind(for: code) else {
-                        return nil
-                    }
+                    )
+                    // Preserve unfamiliar future server facts as records too,
+                    // but never assign them a local comparison/display axis.
+                    let code = projection?.localCode
+                        ?? Self.runtimeMeasurementCode(
+                            for: measurement.measurementCode,
+                            basisCode: measurement.basisCode
+                        )
+                        ?? .unknown
+                    let displayKind = projection?.displayKind
+                        ?? Self.displayKind(for: code)
+                        ?? .unknown
+                    let hasKnownLocalProjection = code != .unknown
+                        && code != .legacyUnknown
                     return ParsedMeasurement(
                         value: measurement.value,
                         unit: .centimeter,
+                        unitRawValue: measurement.unitCode,
                         measurementCode: code,
                         displayKind: displayKind,
                         methodSource: "fitmatch_vnext_runtime",
@@ -636,7 +649,8 @@ final class ShoppingProductViewModel: ObservableObject {
                         rawInfo: measurement.basisCode,
                         rawValueText: String(measurement.value),
                         evidenceLevel: .officialText,
-                        semanticStatus: .mapped
+                        semanticStatus: hasKnownLocalProjection ? .mapped : .unknownDefinition,
+                        canonicalMeasurementCode: measurement.measurementCode
                     )
                 }
                 // Runtime canonical facts remain useful for CONFIRMED products
@@ -708,16 +722,25 @@ final class ShoppingProductViewModel: ObservableObject {
         sizeOptions = variant.sizes.enumerated().map { index, size in
             let parsedRecords = size.measurements.compactMap {
                 measurement -> ParsedMeasurement? in
-                guard let rawCode = measurement.measurementCode,
-                      let code = Self.runtimeMeasurementCode(for: rawCode),
-                      let displayKind = Self.displayKind(for: code) else {
-                    return nil
-                }
+                guard let rawCode = measurement.measurementCode else { return nil }
                 let value = measurement.normalizedValue ?? measurement.rawValue
                 guard value.isFinite, value > 0 else { return nil }
+                let projection = FitMatchCanonicalMeasurementCode.projection(
+                    for: rawCode,
+                    basisCode: measurement.comparisonBasis
+                )
+                guard let code = projection?.localCode
+                    ?? Self.runtimeMeasurementCode(for: rawCode),
+                      let displayKind = projection?.displayKind
+                    ?? Self.displayKind(for: code) else {
+                    return nil
+                }
+                let hasKnownLocalProjection = code != .unknown
+                    && code != .legacyUnknown
                 return ParsedMeasurement(
                     value: value,
                     unit: .centimeter,
+                    unitRawValue: measurement.normalizedUnit ?? measurement.rawUnit,
                     measurementCode: code,
                     displayKind: displayKind,
                     methodSource: "fitmatch_runtime",
@@ -731,7 +754,8 @@ final class ShoppingProductViewModel: ObservableObject {
                     rawInfo: measurement.comparisonBasis,
                     rawValueText: String(measurement.rawValue),
                     evidenceLevel: .officialText,
-                    semanticStatus: .mapped
+                    semanticStatus: hasKnownLocalProjection ? .mapped : .unknownDefinition,
+                    canonicalMeasurementCode: projection?.canonicalCode
                 )
             }
             let hasCanonicalMeasurement = size.measurements.contains { measurement in
@@ -902,31 +926,7 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     private static func displayKind(for code: MeasurementCode) -> MeasurementDisplayKind? {
-        switch code {
-        case .standardBodyChestCircumference,
-             .chestWidthPitToPit,
-             .chestCircumferenceGarment,
-             .chestWidthUniqloBodyWidth: return .chest
-        case .shoulderWidthSeamToSeam: return .shoulder
-        case .bodyLengthHPSToHemFront, .bodyLengthBackNeckToHem,
-             .bodyLengthMusinsaType5, .bodyLengthMusinsaType20,
-             .bodyLengthMusinsaType21, .bodyLengthUniqloBack,
-             .bodyLengthUniqloShirt, .bodyLengthUniqloKnitFront,
-             .pantsOutseamWaistToHem, .pantsInseamCrotchToHem,
-             .skirtLengthWaistToHem: return .totalLength
-        case .sleeveShoulderSeamToCuff, .sleeveCenterBackToCuff,
-             .sleeveRaglanNeckToCuff: return .sleeveLength
-        case .upperAbdomenWidthEdgeToEdge: return .upperAbdomen
-        case .upperWaistWidthEdgeToEdge: return .upperWaist
-        case .waistWidthEdgeToEdge, .waistCircumferenceGarment: return .waist
-        case .hipWidthAtWidest: return .hip
-        case .thighWidthCrotchToOuter: return .thigh
-        case .riseCrotchToWaistFront, .riseCrotchToWaistBack: return .rise
-        case .hemWidthEdgeToEdge: return .hem
-        case .footLengthHeelToToe: return .footLength
-        case .underBustWidthEdgeToEdge: return .underBust
-        case .unknown, .legacyUnknown: return nil
-        }
+        code.presentationDisplayKind
     }
 
     /// Converts the server's provider-independent measurement vocabulary into
@@ -937,30 +937,19 @@ final class ShoppingProductViewModel: ObservableObject {
         for code: String,
         basisCode: String? = nil
     ) -> MeasurementCode? {
+        if let projection = FitMatchCanonicalMeasurementCode.projection(
+            for: code,
+            basisCode: basisCode
+        ) {
+            return projection.localCode
+        }
         if let exact = MeasurementCode(rawValue: code) {
             return exact
         }
         switch code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-        case "back_length": return .bodyLengthBackNeckToHem
-        case "total_length":
-            switch basisCode {
-            case "waist_to_skirt_hem": return .skirtLengthWaistToHem
-            case "waist_to_hem", "waist_to_outseam": return .pantsOutseamWaistToHem
-            default: return .bodyLengthBackNeckToHem
-            }
-        case "chest_width": return .chestWidthPitToPit
-        case "shoulder_width": return .shoulderWidthSeamToSeam
-        case "sleeve_length":
-            return basisCode == "sleeve_center_back_to_cuff"
-                ? .sleeveCenterBackToCuff : .sleeveShoulderSeamToCuff
-        case "waist_width": return .waistWidthEdgeToEdge
-        case "hip_width": return .hipWidthAtWidest
-        case "thigh_width": return .thighWidthCrotchToOuter
-        case "front_rise": return .riseCrotchToWaistFront
-        case "hem_width": return .hemWidthEdgeToEdge
+        case "body_length": return .bodyLengthBackNeckToHem
         case "inseam": return .pantsInseamCrotchToHem
         case "foot_length": return .footLengthHeelToToe
-        case "under_bust_width": return .underBustWidthEdgeToEdge
         default: return nil
         }
     }
@@ -1795,6 +1784,12 @@ final class ShoppingProductViewModel: ObservableObject {
                     detailCategory: resolvedDetailCategory
                 )
             }
+            if hasServerComparisonReadyAuthority {
+                return option.makeSizeOptionForServerConfirmedComparison(
+                    category: resolvedCategory,
+                    detailCategory: resolvedDetailCategory
+                )
+            }
             return option.makeSizeOption(
                 category: resolvedCategory,
                 detailCategory: resolvedDetailCategory
@@ -2102,7 +2097,26 @@ struct ClothingSizeForm: Identifiable, Equatable {
             category: category,
             detailCategory: detailCategory,
             gender: gender,
-            requiresComparisonMeasurementMinimum: true
+            requiresComparisonMeasurementMinimum: true,
+            allowsServerCanonicalSingleMeasurement: false
+        )
+    }
+
+    /// The server-approved comparison path may legitimately contain one
+    /// canonical metric.  This only admits a runtime-backed presentation size;
+    /// authorization, begin snapshot validation, and engine evidence remain
+    /// server controlled farther down the comparison flow.
+    func makeSizeOptionForServerConfirmedComparison(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory = .other,
+        gender: UserGender = .unisex
+    ) -> ProductSize? {
+        makeProductSize(
+            category: category,
+            detailCategory: detailCategory,
+            gender: gender,
+            requiresComparisonMeasurementMinimum: true,
+            allowsServerCanonicalSingleMeasurement: true
         )
     }
 
@@ -2119,7 +2133,8 @@ struct ClothingSizeForm: Identifiable, Equatable {
             category: category,
             detailCategory: detailCategory,
             gender: gender,
-            requiresComparisonMeasurementMinimum: false
+            requiresComparisonMeasurementMinimum: false,
+            allowsServerCanonicalSingleMeasurement: false
         )
     }
 
@@ -2127,7 +2142,8 @@ struct ClothingSizeForm: Identifiable, Equatable {
         category: ClothingCategory,
         detailCategory: ClosetDetailCategory,
         gender: UserGender,
-        requiresComparisonMeasurementMinimum: Bool
+        requiresComparisonMeasurementMinimum: Bool,
+        allowsServerCanonicalSingleMeasurement: Bool
     ) -> ProductSize? {
         guard !sizeName.trimmed.isEmpty else {
             return nil
@@ -2141,9 +2157,16 @@ struct ClothingSizeForm: Identifiable, Equatable {
         let validMeasurementCount = measurementKinds.filter {
             numericValue(for: $0) > 0
         }.count
+        let hasServerCanonicalMeasurement = parsedMeasurementRecords.contains {
+            guard let canonicalCode = $0.canonicalMeasurementCode else { return false }
+            return FitMatchCanonicalMeasurementCode.activeCodes.contains(canonicalCode)
+                && $0.value.isFinite
+                && $0.value > 0
+        }
         let isStandardSizeOption = allowsStandardSizeFallback
         guard !requiresComparisonMeasurementMinimum
             || validMeasurementCount >= min(2, measurementKinds.count)
+            || (allowsServerCanonicalSingleMeasurement && hasServerCanonicalMeasurement)
             || isStandardSizeOption else {
             return nil
         }

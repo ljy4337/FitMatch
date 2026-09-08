@@ -106,7 +106,14 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(item.chest == 59)
         #expect(item.totalLength == 74)
         #expect(item.rise == 31)
-        #expect(item.measurementRecords.first?.measurementCodeRawValue == "rise_crotch_to_waist_front")
+        // The vNext canonical ID is intentionally retained.  The local
+        // `MeasurementCode` is only a projection, so hydration must not
+        // rewrite the server fact into its old parser-specific raw ID.
+        let frontRise = try #require(item.measurementRecords.first {
+            $0.measurementCodeRawValue == "front_rise"
+        })
+        #expect(frontRise.measurementCode == .riseCrotchToWaistFront)
+        #expect(frontRise.value == 31)
         let futureMetric = try #require(item.measurementRecords.first {
             $0.measurementCodeRawValue == "future_metric_v2"
         })

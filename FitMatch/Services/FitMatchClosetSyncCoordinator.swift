@@ -705,14 +705,14 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         excluding clientItemID: UUID,
         request: FitMatchUpsertClosetItemRequest
     ) -> Set<UUID> {
-        let targetGender = request.item.genderCode
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
+        let targetAudience = FitMatchCanonicalAudience.code(
+            from: request.item.genderCode
+        )
         return Set(records.compactMap { record in
             guard record.clientItemID != clientItemID,
                   record.isReference,
-                  record.genderCode?.trimmingCharacters(in: .whitespacesAndNewlines)
-                    .lowercased() == targetGender,
+                  FitMatchCanonicalAudience.code(from: record.genderCode)
+                    == targetAudience,
                   record.categoryCode == request.item.categoryCode,
                   record.detailCode == request.item.detailCode else {
                 return nil
@@ -734,15 +734,15 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         request: FitMatchUpsertClosetItemRequest,
         modelContext: ModelContext
     ) throws -> Set<UUID> {
-        let targetGender = request.item.genderCode
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
+        let targetAudience = FitMatchCanonicalAudience.code(
+            from: request.item.genderCode
+        )
         return Set(try modelContext.fetch(FetchDescriptor<UserFit>()).compactMap { local in
             guard local.id != clientItemID,
                   local.isActiveClosetItem,
                   local.isRepresentative,
-                  local.resolvedGenderCode.trimmingCharacters(in: .whitespacesAndNewlines)
-                    .lowercased() == targetGender,
+                  FitMatchCanonicalAudience.code(from: local.resolvedGenderCode)
+                    == targetAudience,
                   local.resolvedCategoryCode == request.item.categoryCode,
                   local.resolvedDetailCategoryCode == request.item.detailCode else {
                 return nil
@@ -794,6 +794,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     }
 
     private func linkedEditErrorMessage(for error: Error) -> String {
+        if let payloadError = error as? FitMatchClosetPayloadContractError {
+            return payloadError.errorDescription
+                ?? "입력한 분류 또는 실측 정보를 서버에 저장할 수 없습니다. 입력한 내용은 유지됩니다."
+        }
         let text = error.localizedDescription.lowercased()
         if text.contains("usable canonical measurement") {
             return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
@@ -1311,7 +1315,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         return intent
     }
 
-    private func payload(for item: UserFit) -> FitMatchClosetItemPayload {
+    /// Converts the persisted local record set into the single shared
+    /// upsert/update payload.  Keeping this internal lets regression tests
+    /// exercise the same manual-registration serialization path without a
+    /// transport mock or a second test-only mapper.
+    func payload(for item: UserFit) -> FitMatchClosetItemPayload {
         let records = item.measurementRecords.map { record in
             FitMatchClosetMeasurementRecordPayload(
                 value: record.value,
@@ -1707,7 +1715,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         item: UserFit
     ) -> [GarmentMeasurementRecord] {
         record.measurementRecords.map { payload in
-            let code = localMeasurementCode(payload.measurementCode)
+            let projection = FitMatchCanonicalMeasurementCode.projection(
+                for: payload.measurementCode
+            )
+            let code = projection?.localCode ?? localMeasurementCode(payload.measurementCode)
             // Forward-compatible server facts are still Closet facts. Keep
             // the raw code with `.unknown` rather than discarding or guessing
             // a familiar measurement axis; generic sync and accepted
@@ -1715,8 +1726,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             return GarmentMeasurementRecord(
                 value: payload.value,
                 unit: MeasurementUnit(rawValue: payload.unit) ?? .centimeter,
+                unitRawValue: payload.unit,
                 measurementCode: code,
-                displayKind: MeasurementDisplayKind(rawValue: payload.displayKind) ?? .unknown,
+                measurementCodeRawValue: payload.measurementCode,
+                displayKind: projection?.displayKind
+                    ?? MeasurementDisplayKind(rawValue: payload.displayKind)
+                    ?? .unknown,
                 methodSource: payload.methodSource,
                 methodProfile: payload.methodProfile,
                 inputSource: MeasurementInputSource(rawValue: payload.inputSource) ?? .importedSizeChart,
@@ -1760,49 +1775,56 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     }
 
     private func restoredMeasurements(from record: FitMatchClosetItemRecord) -> GarmentMeasurements {
-        var values: [MeasurementDisplayKind: Double] = [:]
-        for measurement in record.measurementRecords where measurement.value > 0 {
-            guard let kind = MeasurementDisplayKind(rawValue: measurement.displayKind) else { continue }
-            values[kind] = measurement.value
-        }
-        func value(_ kind: MeasurementDisplayKind, aliases: [String]) -> Double {
-            if let value = values[kind] { return value }
+        /// Scalar legacy fields are a display convenience only.  Always select
+        /// them by an explicit canonical-code priority, never by the order of
+        /// records that happen to share a display axis.  Every original record
+        /// is still retained independently in `measurementRecords`.
+        func value(aliases: [String]) -> Double {
             for alias in aliases {
-                if let value = record.measurements[alias] { return value }
+                let recordValues = record.measurementRecords
+                    .filter {
+                        $0.measurementCode == alias
+                            && $0.value.isFinite
+                            && $0.value > 0
+                    }
+                    .map(\.value)
+                if !recordValues.isEmpty {
+                    let distinct = Set(recordValues)
+                    if distinct.count == 1 { return recordValues[0] }
+                    // Conflicting duplicate server facts must not become an
+                    // arbitrary scalar based on response array order.
+                    continue
+                }
+                if let fallback = record.measurements[alias],
+                   fallback.isFinite,
+                   fallback > 0 {
+                    return fallback
+                }
             }
             return 0
         }
         return GarmentMeasurements(
-            shoulder: value(.shoulder, aliases: ["shoulder_width", "shoulder_width_seam_to_seam"]),
-            chest: value(.chest, aliases: ["chest_width", "chest_width_pit_to_pit"]),
-            totalLength: value(.totalLength, aliases: ["body_length", "body_length_back_neck_to_hem", "pants_outseam"]),
-            sleeveLength: value(.sleeveLength, aliases: ["sleeve_length", "sleeve_shoulder_seam_to_cuff"]),
-            waist: value(.waist, aliases: ["waist_width", "waist_width_edge_to_edge"]),
-            hip: value(.hip, aliases: ["hip_width", "hip_width_at_widest"]),
-            thigh: value(.thigh, aliases: ["thigh_width", "thigh_width_crotch_to_outer"]),
-            rise: value(.rise, aliases: ["rise", "front_rise", "rise_crotch_to_waist_front"]),
-            hem: value(.hem, aliases: ["hem_width", "hem_width_edge_to_edge"]),
-            footLength: value(.footLength, aliases: ["foot_length", "foot_length_heel_to_toe"]),
-            underBust: value(.underBust, aliases: ["under_bust_width", "under_bust_width_edge_to_edge"])
+            shoulder: value(aliases: ["shoulder_width", "shoulder_width_seam_to_seam"]),
+            chest: value(aliases: ["chest_width", "chest_width_pit_to_pit"]),
+            totalLength: value(aliases: [
+                "total_length", "back_length", "outseam", "body_length",
+                "body_length_back_neck_to_hem", "pants_outseam"
+            ]),
+            sleeveLength: value(aliases: ["sleeve_length", "sleeve_shoulder_seam_to_cuff"]),
+            waist: value(aliases: ["waist_width", "waist_width_edge_to_edge"]),
+            hip: value(aliases: ["hip_width", "hip_width_at_widest"]),
+            thigh: value(aliases: ["thigh_width", "thigh_width_crotch_to_outer"]),
+            rise: value(aliases: ["front_rise", "rise", "rise_crotch_to_waist_front"]),
+            hem: value(aliases: ["hem_width", "hem_width_edge_to_edge"]),
+            footLength: value(aliases: ["foot_length", "foot_length_heel_to_toe"]),
+            underBust: value(aliases: ["under_bust_width", "under_bust_width_edge_to_edge"])
         )
     }
 
     private func localMeasurementCode(_ code: String) -> MeasurementCode {
-        if let exact = MeasurementCode(rawValue: code) { return exact }
-        switch code {
-        case "shoulder_width": return .shoulderWidthSeamToSeam
-        case "chest_width": return .chestWidthPitToPit
-        case "body_length": return .bodyLengthBackNeckToHem
-        case "sleeve_length": return .sleeveShoulderSeamToCuff
-        case "waist_width": return .waistWidthEdgeToEdge
-        case "hip_width": return .hipWidthAtWidest
-        case "thigh_width": return .thighWidthCrotchToOuter
-        case "rise", "front_rise": return .riseCrotchToWaistFront
-        case "hem_width": return .hemWidthEdgeToEdge
-        case "foot_length": return .footLengthHeelToToe
-        case "under_bust_width": return .underBustWidthEdgeToEdge
-        default: return .unknown
-        }
+        FitMatchCanonicalMeasurementCode.projection(for: code)?.localCode
+            ?? MeasurementCode(rawValue: code)
+            ?? .unknown
     }
 
     private func resolvedSourceCode(for item: UserFit) -> String {

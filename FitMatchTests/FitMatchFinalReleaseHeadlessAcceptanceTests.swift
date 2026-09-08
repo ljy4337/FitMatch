@@ -2264,8 +2264,13 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
     @Test func measurementPresenceGatesPrecedeClosetSheetAndReviewRecovery() throws {
         let linkSource = try sourceFile("FitMatch/Views/LinkClosetRegistrationView.swift")
         #expect(linkSource.contains("이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다."))
-        #expect(linkSource.contains("guard productMeasurementPresence != .none else { return }"))
-        #expect(linkSource.contains(".disabled(productMeasurementPresence == .none)"))
+        #expect(linkSource.contains("guard productMeasurementPresence != .none else {"))
+        // The View now asks the shared preparation gate for both measurement
+        // presence and exact server identity.  Keep asserting that the Next
+        // button is disabled by that combined gate rather than the removed
+        // direct `productMeasurementPresence` expression.
+        #expect(linkSource.contains("parsedProduct != nil && registrationBlockMessage == nil"))
+        #expect(linkSource.contains(".disabled(!canOpenRegistration)"))
 
         let compareSource = try sourceFile("FitMatch/Views/CompareFlowSheet.swift")
         let presenceGate = try #require(

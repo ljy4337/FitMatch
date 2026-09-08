@@ -10,6 +10,8 @@ enum FitMatchClosetDeletionAction {
     enum Outcome: Equatable {
         case deleted
         case comparisonSyncUnavailable
+        case authenticationRequired
+        case serverHistoryUnavailable
         case serverHistoryHideFailed
         case localPersistenceFailed(historyWasHiddenOnServer: Bool)
 
@@ -19,6 +21,10 @@ enum FitMatchClosetDeletionAction {
                 nil
             case .comparisonSyncUnavailable:
                 "서버 비교 기록을 삭제할 준비가 되지 않았어요. 다시 시도해 주세요."
+            case .authenticationRequired:
+                "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+            case .serverHistoryUnavailable:
+                "이 비교 기록은 현재 처리할 수 없습니다. 목록을 새로 확인한 뒤 다시 시도해 주세요."
             case .serverHistoryHideFailed:
                 "비교 기록을 삭제하지 못했어요. 다시 시도해 주세요."
             case .localPersistenceFailed(let historyWasHiddenOnServer):
@@ -54,8 +60,11 @@ enum FitMatchClosetDeletionAction {
             break
         case .comparisonSyncUnavailable:
             return .comparisonSyncUnavailable
-        case .authenticationRequired,
-             .serverHideUnavailable,
+        case .authenticationRequired:
+            return .authenticationRequired
+        case .serverHistoryUnavailable:
+            return .serverHistoryUnavailable
+        case .serverHideUnavailable,
              .invalidServerHideRequest,
              .serverHideUncertain,
              .serverHideFailed:

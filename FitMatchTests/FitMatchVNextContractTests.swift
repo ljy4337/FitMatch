@@ -87,6 +87,21 @@ struct FitMatchVNextContractTests {
             == Set([fixture.sizeA, fixture.sizeB]))
     }
 
+    @Test func engineUsesOneServerAuthorizedCanonicalMetricWithoutChangingReliabilityRules() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let result = try VNextComparisonEngineAdapter().analyze(begin)
+
+        #expect(result.recommended.result.comparedItems.count == 1)
+        #expect(result.completionPayload.reliability == 2)
+        #expect(result.completionPayload.coverage == 1)
+        #expect(result.completionPayload.engineVersion
+            == VNextComparisonEngineAdapter.engineVersion)
+        #expect(result.completionPayload.metricEvidence.filter {
+            $0.productSizeID == result.recommended.productSizeID
+        }.map(\.measurementCode) == ["chest_width"])
+    }
+
     @Test func availabilityAndExpiryNeverChangeAuthorizedCandidateScoring() throws {
         let fixture = ComparisonBeginFixture()
         let adapter = VNextComparisonEngineAdapter()

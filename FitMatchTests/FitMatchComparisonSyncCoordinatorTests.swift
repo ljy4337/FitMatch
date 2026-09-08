@@ -470,6 +470,85 @@ struct FitMatchComparisonSyncCoordinatorTests {
         #expect(await remote.completedHistoryRemainsImmutable())
     }
 
+    @Test func historyUnavailableReceiptKeepsLocalHistoryAndClosetWithoutLoginMessage() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let remote = ComparisonHistoryRemoteStub(
+            pending: nil,
+            completed: fixture.completed,
+            visibilityError: .historyUnavailable
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote)
+        let reference = UserFit(
+            brandName: "내 브랜드",
+            productName: "내 반팔 티셔츠",
+            category: .top,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 45,
+                chest: 50,
+                totalLength: 69,
+                sleeveLength: 22
+            ),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        reference.id = fixture.referenceClientItemID
+        context.insert(reference)
+        try context.save()
+
+        await coordinator.synchronize(
+            userID: fixture.userID,
+            histories: [],
+            modelContext: context
+        )
+        let history = try #require(
+            context.fetch(FetchDescriptor<RecommendationHistory>()).first
+        )
+
+        let historyOutcome = await FitMatchHistoryVisibilityAction.delete(
+            history,
+            in: context,
+            comparisonSync: coordinator
+        )
+        #expect(historyOutcome == .serverHistoryUnavailable)
+        #expect(historyOutcome.userVisibleMessage
+            == "이 비교 기록은 현재 처리할 수 없습니다. 목록을 새로 확인한 뒤 다시 시도해 주세요.")
+        #expect(historyOutcome.userVisibleMessage
+            != "로그인 상태를 확인한 뒤 다시 시도해 주세요.")
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
+
+        let closetOutcome = await FitMatchClosetDeletionAction.delete(
+            item: reference,
+            histories: [history],
+            in: context,
+            comparisonSync: coordinator,
+            closetSync: nil
+        )
+        #expect(closetOutcome == .serverHistoryUnavailable)
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
+        #expect(await remote.visibilityRowCount() == 0)
+
+        // The only fixed 42501 that means authentication is still presented
+        // as such to the Closet-delete caller; it must not share the
+        // unavailable-record message above.
+        await remote.setVisibilityError(.authenticationRequired)
+        let authOutcome = await FitMatchClosetDeletionAction.delete(
+            item: reference,
+            histories: [history],
+            in: context,
+            comparisonSync: coordinator,
+            closetSync: nil
+        )
+        #expect(authOutcome == .authenticationRequired)
+        #expect(authOutcome.userVisibleMessage
+            == "로그인 상태를 확인한 뒤 다시 시도해 주세요.")
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
+    }
+
     @Test func historyDeletionActionKeepsLegacyRowsLocalAndDoesNotFabricateServerHide() async throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
@@ -755,6 +834,7 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
     private var hideCalls = 0
     private var idempotentHide = false
     private var hideError: ComparisonHistoryRemoteError?
+    private var visibilityError: FitMatchHistoryVisibilityRPCError?
     private let historyResponses: [[VNextComparisonHistoryDTO]]?
     private let historyGates: [Int: JourneyAsyncGate]
 
@@ -762,12 +842,14 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
         pending: VNextComparisonHistoryDTO?,
         completed: VNextComparisonHistoryDTO?,
         hideError: ComparisonHistoryRemoteError? = nil,
+        visibilityError: FitMatchHistoryVisibilityRPCError? = nil,
         historyResponses: [[VNextComparisonHistoryDTO]]? = nil,
         historyGates: [Int: JourneyAsyncGate] = [:]
     ) {
         self.pending = pending
         self.completed = completed
         self.hideError = hideError
+        self.visibilityError = visibilityError
         self.historyResponses = historyResponses
         self.historyGates = historyGates
     }
@@ -794,6 +876,7 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
         clientComparisonIDs: [UUID]
     ) async throws -> VNextComparisonHistoryVisibilityDTO {
         hideCalls += 1
+        if let visibilityError { throw visibilityError }
         if let hideError { throw hideError }
         guard let completed,
               Set(clientComparisonIDs) == Set([completed.clientComparisonID]) else {
@@ -833,6 +916,9 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
     func lastHideWasIdempotent() -> Bool { idempotentHide }
     func completedHistoryRemainsImmutable() -> Bool { completed != nil }
     func setHideError(_ value: ComparisonHistoryRemoteError?) { hideError = value }
+    func setVisibilityError(_ value: FitMatchHistoryVisibilityRPCError?) {
+        visibilityError = value
+    }
 }
 
 private enum ComparisonHistoryRemoteError: Error, Equatable {

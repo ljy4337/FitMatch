@@ -315,7 +315,9 @@ final class UserFit {
             GarmentMeasurementRecord(
                 value: source.value,
                 unit: MeasurementUnit(rawValue: source.unitRawValue) ?? .centimeter,
+                unitRawValue: source.unitRawValue,
                 measurementCode: source.measurementCode,
+                measurementCodeRawValue: source.measurementCodeRawValue,
                 displayKind: source.displayKind ?? .unknown,
                 methodSource: source.methodSource,
                 methodProfile: source.methodProfile,

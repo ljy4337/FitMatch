@@ -1221,6 +1221,82 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(override["body_length_code"] is NSNull)
     }
 
+    @Test func linkedOuterwearSubmissionPreservesServerSleeveAndBodyAxes() throws {
+        let product = Product(
+            id: UUID(),
+            name: "서버 기준 코트",
+            category: .outer,
+            productCode: "SERVER-COAT",
+            metadata: ProductMetadata(genderCodes: ["MEN"]),
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            source: .catalog
+        )
+        product.garmentTypeRawValue = "coat"
+        product.sleeveTypeRawValue = "long_sleeve"
+        product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
+            CanonicalComparisonProfile(
+                decision: .confirmed,
+                semanticCategoryCode: "outerwear",
+                semanticGarmentType: "coat",
+                comparisonFamily: "outerwear",
+                appComparisonFamily: "outerwear",
+                lengthAxes: CanonicalLengthAxes(
+                    sleeve: "long_sleeve",
+                    pants: "not_applicable",
+                    leggings: "not_applicable",
+                    skirt: "not_applicable",
+                    body: "long_length"
+                ),
+                constructionType: "SINGLE",
+                eligibility: true,
+                requiredMeasurements: [],
+                optionalMeasurements: [],
+                excludedMeasurements: [],
+                policyVersion: "test-vnext",
+                resolutionMethod: "fixture",
+                sourceIdentity: "coat-fixture"
+            )
+        )
+        product.markClassificationAuthority(.serverConfirmed)
+        let size = ProductSize(
+            id: UUID(),
+            name: "M",
+            measurements: .init(shoulder: 48, chest: 55, totalLength: 112, sleeveLength: 64),
+            product: product
+        )
+        product.sizes = [size]
+        let request = FitMatchComparedProductClosetRegistration.SaveRequest(
+            product: product,
+            selectedSize: size,
+            serverIdentity: .init(productID: UUID(), productVariantID: UUID(), productSizeID: UUID()),
+            activeClosetItems: [],
+            brandName: "테스트",
+            gender: .men,
+            genderCode: "male",
+            productName: product.name,
+            category: .outer,
+            categoryCode: "outerwear",
+            detailCategory: .coat,
+            detailCategoryCode: "coat",
+            isRepresentative: false,
+            didExplicitlyChangeClassification: false
+        )
+
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(request)
+        let json = try #require(
+            JSONSerialization.jsonObject(
+                with: FitMatchSupabaseDomainClient.encodedVNextClosetPayload(
+                    submission.remoteRequest
+                )
+            ) as? [String: Any]
+        )
+        #expect(json["garment_type_code"] as? String == "coat")
+        #expect(json["sleeve_length_code"] as? String == "long_sleeve")
+        #expect(json["body_length_code"] as? String == "long_length")
+    }
+
     @Test func linkedRegistrationKeepsDuplicateDisplayLabelsAsDistinctExactSizes() {
         let product = Product(name: "동일 라벨 variant", category: .top)
         let firstM = ProductSize(
@@ -1367,6 +1443,170 @@ struct FitMatchSupabaseProductResolverTests {
                 serverRegistrationContext: preparation.serverRegistrationContext
             ).isEmpty
         )
+    }
+
+    @Test func serverReadyRuntimeKeepsAllCanonicalRecordsAndAllowsOneServerMetricProductPath() async throws {
+        let activeCodes = [
+            "back_length", "chest_circumference", "chest_width", "front_rise",
+            "hem_circumference", "hem_width", "hip_circumference", "hip_width",
+            "outseam", "shoulder_width", "sleeve_length", "thigh_circumference",
+            "thigh_width", "total_length", "under_bust_circumference",
+            "under_bust_width", "waist_circumference", "waist_width"
+        ]
+        let productSizeID = UUID()
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "runtime-canonical-18",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let runtimeSize = Self.runtimeSize(
+            productSizeID: productSizeID,
+            sourceSizeKey: "M",
+            label: "M",
+            displayOrder: 0,
+            measurements: []
+        )
+        let metrics = activeCodes.enumerated().map { index, code in
+            VNextRuntimeMeasurementFixture(
+                code: code,
+                value: Double(index + 10),
+                basisCode: code == "outseam" ? "waist_to_outseam" : "WIDTH"
+            )
+        }
+        let runtime = try Self.vNextMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "ready",
+            comparisonReady: true,
+            variants: [VNextRuntimeVariantFixture(
+                variantID: UUID(),
+                sourceVariantKey: "__default__",
+                sizes: [runtimeSize],
+                canonicalMeasurementsBySizeID: [productSizeID: metrics]
+            )]
+        )
+        let viewModel = Self.authorityViewModel(
+            product: try Self.measurementPresenceProduct(
+                externalProductID: "runtime-canonical-18",
+                sizes: [("M", 0)]
+            ),
+            remote: DatabaseAuthorityRemoteStub(
+                resolutions: [fixture.resolution()],
+                observations: [],
+                runtimes: [runtime]
+            )
+        )
+
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(viewModel.hasServerComparisonReadyAuthority)
+        let form = try #require(viewModel.sizeOptions.first)
+        #expect(form.id == productSizeID)
+        let registrationContext = viewModel.closetRegistrationServerContext
+        #expect(registrationContext.identity(for: form.id)?.productSizeID == productSizeID)
+        #expect(Set(form.parsedMeasurementRecords.compactMap(\.canonicalMeasurementCode))
+            == Set(activeCodes))
+
+        // This enters the actual ViewModel `makeProduct` comparison path;
+        // authorization itself remains later in the coordinator.
+        let reference = UserFit(
+            brandName: "기준 옷",
+            productName: "기준 티셔츠",
+            category: .top,
+            sizeName: "M",
+            measurements: .init(shoulder: 0, chest: 50, totalLength: 0, sleeveLength: 0),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        #expect(viewModel.temporaryComparisonCandidates(userFits: [reference]).map(\.id)
+            == [reference.id])
+
+        let presentationProduct = try #require(
+            viewModel.makeProductForClosetRegistration(brand: nil)
+        )
+        let presentationSize = try #require(presentationProduct.sizes.first)
+        #expect(presentationSize.id == productSizeID)
+        #expect(registrationContext.identity(for: presentationSize.id)?.productSizeID
+            == productSizeID)
+        #expect(Set(presentationSize.measurementRecords.map(\.measurementCodeRawValue))
+            == Set(activeCodes))
+    }
+
+    @Test func eachFormerlyDroppedCanonicalRuntimeMetricSurvivesItsOwnRuntime() async throws {
+        let formerlyDropped = [
+            "chest_circumference", "waist_circumference", "hip_circumference",
+            "thigh_circumference", "hem_circumference", "under_bust_circumference",
+            "outseam"
+        ]
+        let reference = UserFit(
+            brandName: "기준 옷",
+            productName: "기준 티셔츠",
+            category: .top,
+            sizeName: "M",
+            measurements: .init(shoulder: 0, chest: 50, totalLength: 0, sleeveLength: 0),
+            fitMemo: "",
+            satisfaction: 3
+        )
+        for code in formerlyDropped {
+            let productSizeID = UUID()
+            let fixture = DatabaseAuthorityFixture(
+                source: "musinsa",
+                externalProductID: "runtime-one-\(code)",
+                status: .confirmed,
+                categoryCode: "tops",
+                detailCode: "short_sleeve",
+                familyCode: "tshirt",
+                lengthCode: "short_sleeve"
+            )
+            let runtime = try Self.vNextMeasurementRuntime(
+                fixture: fixture,
+                runtimeState: "ready",
+                comparisonReady: true,
+                variants: [VNextRuntimeVariantFixture(
+                    variantID: UUID(),
+                    sourceVariantKey: "__default__",
+                    sizes: [Self.runtimeSize(
+                        productSizeID: productSizeID,
+                        sourceSizeKey: "M",
+                        label: "M",
+                        displayOrder: 0
+                    )],
+                    canonicalMeasurementsBySizeID: [productSizeID: [
+                        VNextRuntimeMeasurementFixture(
+                            code: code,
+                            value: 42,
+                            basisCode: code == "outseam" ? "waist_to_outseam" : "WIDTH"
+                        )
+                    ]]
+                )]
+            )
+            let viewModel = Self.authorityViewModel(
+                product: try Self.measurementPresenceProduct(
+                    externalProductID: "runtime-one-\(code)",
+                    sizes: [("M", 0)]
+                ),
+                remote: DatabaseAuthorityRemoteStub(
+                    resolutions: [fixture.resolution()],
+                    observations: [],
+                    runtimes: [runtime]
+                )
+            )
+
+            #expect(await viewModel.loadProductInfoFromURL())
+            let form = try #require(viewModel.sizeOptions.first)
+            #expect(form.parsedMeasurementRecords.map(\.canonicalMeasurementCode) == [code])
+            // The actual comparison Product path accepts one server-issued
+            // canonical fact. It still does not authorize a comparison; that
+            // happens only through the server permit/begin chain.
+            #expect(viewModel.temporaryComparisonCandidates(userFits: [reference]).map(\.id)
+                == [reference.id])
+            let size = try #require(
+                viewModel.makeProductForClosetRegistration(brand: nil)?.sizes.first
+            )
+            #expect(size.measurementRecords.map(\.measurementCodeRawValue) == [code])
+        }
     }
 
     @Test func linkRegistrationNextRequiresAtLeastOneRegisterableExactIdentity() {
@@ -2725,10 +2965,20 @@ struct FitMatchSupabaseProductResolverTests {
     ) throws -> FitMatchProductRuntimeResponse {
         let variantsJSON = variants.map { variant in
             let sizesJSON = variant.sizes.map { size in
-                """
+                let measurementsJSON = variant.canonicalMeasurementsBySizeID[
+                    size.productSizeID
+                ]?.map { measurement in
+                    """
+                    {"fitmatch_measurement_code":\(jsonString(measurement.code)),
+                    "value":\(measurement.value),"unit_code":"CM",
+                    "basis_code":\(jsonString(measurement.basisCode)),
+                    "source_measurement_code":\(jsonString(measurement.sourceMeasurementCode))}
+                    """
+                }.joined(separator: ",") ?? ""
+                return """
                 {"id":"\(size.productSizeID)","source_size_key":\(jsonString(size.externalSizeID)),
                 "size_label":\(jsonString(size.sizeLabel)),"availability":{"status":\(jsonString(size.stockStatus ?? "UNKNOWN"))},
-                "canonical_measurements":{"semantic_conflict_count":0,"measurements":[]}}
+                "canonical_measurements":{"semantic_conflict_count":0,"measurements":[\(measurementsJSON)]}}
                 """
             }.joined(separator: ",")
             return """
@@ -2791,6 +3041,38 @@ private struct VNextRuntimeVariantFixture {
     let variantID: UUID
     let sourceVariantKey: String?
     let sizes: [FitMatchRuntimeSize]
+    let canonicalMeasurementsBySizeID: [UUID: [VNextRuntimeMeasurementFixture]]
+
+    init(
+        variantID: UUID,
+        sourceVariantKey: String?,
+        sizes: [FitMatchRuntimeSize],
+        canonicalMeasurementsBySizeID: [UUID: [VNextRuntimeMeasurementFixture]] = [:]
+    ) {
+        self.variantID = variantID
+        self.sourceVariantKey = sourceVariantKey
+        self.sizes = sizes
+        self.canonicalMeasurementsBySizeID = canonicalMeasurementsBySizeID
+    }
+}
+
+private struct VNextRuntimeMeasurementFixture {
+    let code: String
+    let value: Double
+    let basisCode: String?
+    let sourceMeasurementCode: String?
+
+    init(
+        code: String,
+        value: Double,
+        basisCode: String? = nil,
+        sourceMeasurementCode: String? = nil
+    ) {
+        self.code = code
+        self.value = value
+        self.basisCode = basisCode
+        self.sourceMeasurementCode = sourceMeasurementCode
+    }
 }
 
 @MainActor

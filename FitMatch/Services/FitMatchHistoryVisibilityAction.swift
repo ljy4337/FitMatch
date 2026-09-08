@@ -8,6 +8,7 @@ nonisolated enum FitMatchHistoryVisibilityRPCError: LocalizedError, Equatable, S
     case authenticationRequired
     case invalidRequest
     case unavailable
+    case historyUnavailable
     case transportUncertain
     case rejected
 
@@ -19,6 +20,8 @@ nonisolated enum FitMatchHistoryVisibilityRPCError: LocalizedError, Equatable, S
             return "비교 기록 삭제 요청을 확인하지 못했습니다. 다시 시도해 주세요."
         case .unavailable:
             return "비교 기록 삭제 기능을 아직 사용할 수 없습니다."
+        case .historyUnavailable:
+            return "이 비교 기록은 현재 처리할 수 없습니다. 목록을 새로 확인한 뒤 다시 시도해 주세요."
         case .transportUncertain:
             return "서버 반영 여부를 확인하지 못했습니다. 같은 기록을 다시 시도해 주세요."
         case .rejected:
@@ -38,6 +41,7 @@ enum FitMatchHistoryVisibilityAction {
         case comparisonSyncUnavailable
         case authenticationRequired
         case serverHideUnavailable
+        case serverHistoryUnavailable
         case invalidServerHideRequest
         case serverHideUncertain
         case serverHideFailed
@@ -54,6 +58,8 @@ enum FitMatchHistoryVisibilityAction {
                 "로그인 상태를 확인한 뒤 다시 시도해 주세요."
             case .serverHideUnavailable:
                 "비교 기록 삭제 기능을 아직 사용할 수 없습니다."
+            case .serverHistoryUnavailable:
+                "이 비교 기록은 현재 처리할 수 없습니다. 목록을 새로 확인한 뒤 다시 시도해 주세요."
             case .invalidServerHideRequest:
                 "비교 기록 삭제 요청을 확인하지 못했습니다. 다시 시도해 주세요."
             case .serverHideUncertain:
@@ -156,6 +162,8 @@ enum FitMatchHistoryVisibilityAction {
             return .authenticationRequired
         case .unavailable:
             return .serverHideUnavailable
+        case .historyUnavailable:
+            return .serverHistoryUnavailable
         case .invalidRequest:
             return .invalidServerHideRequest
         case .transportUncertain:

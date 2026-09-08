@@ -55,6 +55,7 @@ extension Product {
                     ParsedMeasurement(
                         value: record.value,
                         unit: MeasurementUnit(rawValue: record.unitRawValue) ?? .centimeter,
+                        unitRawValue: record.unitRawValue,
                         measurementCode: record.measurementCode,
                         displayKind: record.displayKind ?? .unknown,
                         methodSource: record.methodSource,
@@ -70,7 +71,8 @@ extension Product {
                         evidenceLevel: MeasurementEvidenceLevel(
                             rawValue: record.evidenceLevelRawValue
                         ) ?? .unknown,
-                        semanticStatus: record.semanticStatus
+                        semanticStatus: record.semanticStatus,
+                        canonicalMeasurementCode: record.measurementCodeRawValue
                     )
                 }
             )

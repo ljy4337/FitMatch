@@ -204,6 +204,10 @@ struct ParsedProductSize: Identifiable, Equatable {
 struct ParsedMeasurement: Equatable {
     var value: Double
     var unit: MeasurementUnit = .centimeter
+    /// Original server unit identifier when this fact came from a canonical
+    /// runtime/Closet response. The local enum is deliberately only a
+    /// presentation projection.
+    var unitRawValue: String? = nil
     var measurementCode: MeasurementCode
     var displayKind: MeasurementDisplayKind
     var methodSource: String
@@ -217,12 +221,17 @@ struct ParsedMeasurement: Equatable {
     var rawValueText: String? = nil
     var evidenceLevel: MeasurementEvidenceLevel
     var semanticStatus: MeasurementSemanticStatus
+    /// vNext runtime records retain the exact DB canonical identifier here.
+    /// The local enum remains a display/comparison projection only.
+    var canonicalMeasurementCode: String? = nil
 
     func makeRecord(productSize: ProductSize? = nil, userFit: UserFit? = nil) -> GarmentMeasurementRecord {
         GarmentMeasurementRecord(
             value: value,
             unit: unit,
+            unitRawValue: unitRawValue,
             measurementCode: measurementCode,
+            measurementCodeRawValue: canonicalMeasurementCode,
             displayKind: displayKind,
             methodSource: methodSource,
             methodProfile: methodProfile,

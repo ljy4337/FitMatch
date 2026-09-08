@@ -649,14 +649,14 @@ enum FitMatchComparedProductClosetRegistration {
         let values = measurementValues(for: request.selectedSize, records: records)
         let categoryCode = request.categoryCode
         let serverFamily = request.product.garmentTypeRawValue?.nilIfBlank
+        let serverAxes = request.product.canonicalProfileSnapshot?.lengthAxes
         let serverLength: String? = {
-            let axes = request.product.canonicalProfileSnapshot?.lengthAxes
             switch categoryCode {
-            case "tops": return meaningfulAxis(axes?.sleeve)
+            case "tops": return meaningfulAxis(serverAxes?.sleeve)
                     ?? request.product.sleeveTypeRawValue?.nilIfBlank
-            case "bottoms", "leggings", "skirts": return meaningfulAxis(axes?.pants)
+            case "bottoms", "leggings", "skirts": return meaningfulAxis(serverAxes?.pants)
                     ?? request.product.sleeveTypeRawValue?.nilIfBlank
-            case "dresses": return meaningfulAxis(axes?.body)
+            case "dresses": return meaningfulAxis(serverAxes?.body)
                     ?? request.product.sleeveTypeRawValue?.nilIfBlank
             default: return request.product.sleeveTypeRawValue?.nilIfBlank
             }
@@ -672,6 +672,13 @@ enum FitMatchComparedProductClosetRegistration {
         let lengthCode = serverLength ?? (localClassification?.lengthType == .unknown
             ? nil
             : localClassification?.lengthType.rawValue)
+        // A confirmed outerwear tuple can have both sleeve and body axes.
+        // Keep the server-issued body axis distinct from `lengthCode`; using
+        // the latter as a body fallback would invent a tuple the server did
+        // not issue.  Dresses retain their existing single body-axis fallback
+        // for the legacy local registration path.
+        let bodyLengthCode = meaningfulAxis(serverAxes?.body)
+            ?? (categoryCode == "dresses" ? lengthCode : nil)
         let source = sourceCode(for: request.product)
         return FitMatchClosetItemPayload(
             productName: request.productName,
@@ -683,7 +690,7 @@ enum FitMatchComparedProductClosetRegistration {
             detailCode: request.detailCategoryCode,
             familyCode: familyCode,
             lengthCode: lengthCode,
-            bodyLengthCode: categoryCode == "dresses" ? lengthCode : nil,
+            bodyLengthCode: bodyLengthCode,
             sourceCategoryPath: request.product.sourceCategoryPath,
             productURL: request.product.sourceURLString,
             imageURL: request.product.imageURLString,

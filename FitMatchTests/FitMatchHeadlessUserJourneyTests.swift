@@ -2367,6 +2367,44 @@ struct FitMatchHeadlessUserJourneyTests {
         #expect(!(await run.remote.calls()).contains("begin_comparison") == false)
     }
 
+    /// A READY runtime may expose only one DB-canonical measurement.  Its
+    /// presentation Product must not be discarded by the legacy two-metric
+    /// gate before the existing server authorization, immutable begin
+    /// snapshot, production engine, and completion path run.
+    @Test func serverAuthorizedSingleCanonicalRuntimeMetricReachesPermitEngineAndCompletion() async throws {
+        let fixture = HeadlessJourneyFixture(provider: .musinsa)
+        let candidate = HeadlessServerCandidateFixture(
+            productSizeID: fixture.productSizeID,
+            sizeLabel: "M",
+            // The begin/eligible proof remains the server-issued comparison
+            // metric. The runtime's separate canonical fact is what drives
+            // the screen Product construction under test.
+            metrics: [
+                .init(code: "chest_width_pit_to_pit", referenceValue: 50, targetValue: 51)
+            ],
+            runtimeMetrics: [
+                .init(code: "chest_width", referenceValue: 50, targetValue: 51)
+            ]
+        )
+        let run = try makeCandidateComparison(
+            fixture: fixture,
+            candidates: [candidate],
+            completionSizeID: fixture.productSizeID
+        )
+
+        #expect(await run.viewModel.loadProductInfoFromURL())
+        let history = try #require(await run.viewModel.calculateRecommendation(
+            userFits: [run.reference]
+        ))
+        #expect(history.recommendedSize.id == fixture.productSizeID)
+        #expect(history.product.sizes.map(\.id) == [fixture.productSizeID])
+
+        let calls = await run.remote.calls()
+        #expect(calls.filter { $0 == "eligible_sizes" }.count == 1)
+        #expect(calls.filter { $0 == "begin_comparison" }.count == 1)
+        #expect(calls.filter { $0 == "complete_comparison" }.count == 1)
+    }
+
     /// CP-027: a multi-size candidate set and a one-size candidate set are
     /// independently issued by the server and both complete only through the
     /// exact begin snapshot supplied for that size set.

@@ -1304,6 +1304,24 @@ enum FitMatchSupabaseProductResolverError: LocalizedError {
     }
 }
 
+/// Rejects a mutation before its RPC is issued when the local transport would
+/// otherwise erase a positive measurement or a required classification axis.
+/// This is a client payload contract error, not a server comparison-policy
+/// decision.
+nonisolated enum FitMatchClosetPayloadContractError: LocalizedError, Equatable, Sendable {
+    case unmappablePositiveMeasurement(code: String)
+    case missingRequiredClassificationAxis(garmentTypeCode: String, axis: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .unmappablePositiveMeasurement:
+            return "입력한 실측 항목을 서버에 저장할 수 없습니다. 항목을 확인한 뒤 다시 시도해 주세요."
+        case .missingRequiredClassificationAxis:
+            return "선택한 의류 분류에 필요한 길이 정보를 확인한 뒤 다시 시도해 주세요."
+        }
+    }
+}
+
 nonisolated private struct FitMatchResolveProductParameters: Encodable, Sendable {
     let pPayload: FitMatchProductResolutionRequest
 
@@ -1537,6 +1555,97 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     }
 }
 
+/// A checked projection of one effective Closet tuple into the three SQL
+/// length-axis keys.  The server stays authoritative for tuple validity; this
+/// only prevents the transport layer from deleting an already selected axis
+/// because its category happens not to be `tops` or `bottoms`.
+nonisolated private struct VNextClosetClassificationAxes: Sendable {
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+
+    init(
+        categoryCode: String,
+        garmentTypeCode: String?,
+        lengthCode: String?,
+        bodyLengthCode: String?
+    ) throws {
+        let category = categoryCode.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let garment = garmentTypeCode?.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let length = Self.knownAxisValue(lengthCode)
+        let body = Self.knownAxisValue(bodyLengthCode)
+
+        let usesSleeve = Self.sleeveGarmentTypes.contains(garment ?? "")
+            || (garment == nil && category == "tops")
+        let usesLower = Self.lowerGarmentTypes.contains(garment ?? "")
+            || (garment == nil && ["bottoms", "leggings"].contains(category))
+        let usesBody = Self.bodyGarmentTypes.contains(garment ?? "")
+            || (garment == nil && ["dresses", "skirts"].contains(category))
+        let effectiveBody = body ?? (category == "dresses" ? length : nil)
+
+        if usesSleeve, length == nil {
+            throw FitMatchClosetPayloadContractError.missingRequiredClassificationAxis(
+                garmentTypeCode: garmentTypeCode ?? categoryCode,
+                axis: "sleeve_length_code"
+            )
+        }
+        if usesLower, length == nil {
+            throw FitMatchClosetPayloadContractError.missingRequiredClassificationAxis(
+                garmentTypeCode: garmentTypeCode ?? categoryCode,
+                axis: "lower_length_code"
+            )
+        }
+        if usesBody, effectiveBody == nil {
+            throw FitMatchClosetPayloadContractError.missingRequiredClassificationAxis(
+                garmentTypeCode: garmentTypeCode ?? categoryCode,
+                axis: "body_length_code"
+            )
+        }
+
+        sleeveLengthCode = usesSleeve ? length : nil
+        lowerLengthCode = usesLower ? length : nil
+        // A dress historically stores its body axis in `lengthCode`; retain
+        // that established form while requiring a separate body value for
+        // garments such as coats that use both axes.
+        self.bodyLengthCode = usesBody ? effectiveBody : nil
+    }
+
+    private static func knownAxisValue(_ value: String?) -> String? {
+        guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !value.isEmpty,
+              value.uppercased() != "UNKNOWN",
+              value.lowercased() != "not_applicable" else {
+            return nil
+        }
+        return value
+    }
+
+    // This mirrors the established data-driven garment-axis tuples used by
+    // the app.  It is intentionally a whitelist: outerwear is not assumed to
+    // have sleeves merely because of its broad category (for example vests).
+    private static let sleeveGarmentTypes: Set<String> = [
+        "anorak", "base_layer_top", "blazer", "blouson", "bodysuit_top",
+        "cardigan", "coat", "fleece_jacket", "generic_jacket",
+        "generic_jumper", "hoodie", "jacket", "knit_sweater", "knit_vest",
+        "leather_jacket", "ma1", "mouton", "polo_shirt", "puffer_jacket",
+        "shirt", "shirt_blouse", "sleeveless_tshirt", "sports_top",
+        "sweatshirt", "tank_top", "trench_coat", "tshirt", "windbreaker",
+        "zip_hoodie"
+    ]
+    private static let lowerGarmentTypes: Set<String> = [
+        "cargo_pants", "casual_pants", "chino_cotton_pants", "denim_pants",
+        "homewear_bottom", "leggings", "other_standard_pants", "pants",
+        "slacks_trousers", "sports_bottom", "standard_pants",
+        "sweat_jogger_pants"
+    ]
+    private static let bodyGarmentTypes: Set<String> = [
+        "coat", "coverall_romper", "dress", "outer_vest", "puffer_jacket",
+        "puffer_vest", "skirt", "trench_coat"
+    ]
+}
+
 /// Transport-only representation of `closet_classification_override` for the
 /// upsert/update RPC. Its keys mirror the public production SQL contract.
 nonisolated private struct VNextClosetClassificationOverridePayload: Encodable, Sendable {
@@ -1766,8 +1875,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
 
     func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
         -> FitMatchUpsertClosetItemResponse {
+        let payload = try Self.closetPayload(request)
         let client = try await authenticatedClient()
-        let payload = Self.closetPayload(request)
         let response: VNextClosetMutationResponse = try await client
             .rpc(
                 "fitmatch_vnext_upsert_closet_item",
@@ -1788,8 +1897,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         _ request: FitMatchUpsertClosetItemRequest,
         closetItemID: UUID
     ) async throws -> FitMatchUpsertClosetItemResponse {
+        let payload = try Self.closetPayload(request)
         let client = try await authenticatedClient()
-        let payload = Self.closetPayload(request)
         let response: VNextClosetMutationResponse = try await client
             .rpc(
                 "fitmatch_vnext_update_closet_item",
@@ -1841,8 +1950,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         closetItemID: UUID,
         override: FitMatchClosetClassificationOverride
     ) async throws {
+        let payload = try Self.overridePayload(override)
         let client = try await authenticatedClient()
-        let payload = Self.overridePayload(override)
         let _: VNextClosetMutationResponse = try await client
             .rpc(
                 "fitmatch_vnext_set_closet_classification_override",
@@ -2051,16 +2160,10 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         } catch is CancellationError {
             throw CancellationError()
         } catch let error as PostgrestError {
-            switch error.code?.uppercased() {
-            case "PGRST202":
-                throw FitMatchHistoryVisibilityRPCError.unavailable
-            case "42501":
-                throw FitMatchHistoryVisibilityRPCError.authenticationRequired
-            case "22023", "22P02":
-                throw FitMatchHistoryVisibilityRPCError.invalidRequest
-            default:
-                throw FitMatchHistoryVisibilityRPCError.rejected
-            }
+            throw Self.historyVisibilityError(
+                code: error.code,
+                message: error.message
+            )
         } catch is URLError {
             throw FitMatchHistoryVisibilityRPCError.transportUncertain
         } catch {
@@ -2252,31 +2355,14 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
 
     nonisolated private static func closetPayload(
         _ request: FitMatchUpsertClosetItemRequest
-    ) -> VNextClosetMutationPayload {
-        let category = request.item.categoryCode
-        let garment = request.item.familyCode
-        let length = request.item.lengthCode
-        let measurements: [VNextClosetMeasurementPayload]
-        if request.item.measurementRecords.isEmpty {
-            measurements = request.item.measurements.sorted { $0.key < $1.key }.map {
-                VNextClosetMeasurementPayload(
-                    fitmatchMeasurementCode: $0.key,
-                    value: $0.value,
-                    unitCode: "cm",
-                    rawLabel: $0.key
-                )
-            }
-        } else {
-            measurements = request.item.measurementRecords.compactMap { record in
-                guard record.value.isFinite, record.value > 0 else { return nil }
-                return VNextClosetMeasurementPayload(
-                    fitmatchMeasurementCode: record.measurementCode,
-                    value: record.value,
-                    unitCode: record.unit,
-                    rawLabel: record.rawLabel
-                )
-            }
-        }
+    ) throws -> VNextClosetMutationPayload {
+        let axes = try VNextClosetClassificationAxes(
+            categoryCode: request.item.categoryCode,
+            garmentTypeCode: request.item.familyCode,
+            lengthCode: request.item.lengthCode,
+            bodyLengthCode: request.item.bodyLengthCode
+        )
+        let measurements = try canonicalMeasurements(for: request.item)
         return VNextClosetMutationPayload(
             clientItemID: request.clientItemID,
             productID: request.productID,
@@ -2288,11 +2374,10 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             productURL: request.item.productURL,
             sizeLabel: request.item.sizeName,
             audienceCode: vnextAudience(request.item.genderCode),
-            garmentTypeCode: garment,
-            sleeveLengthCode: category == "tops" ? length : nil,
-            lowerLengthCode: category == "bottoms" ? length : nil,
-            bodyLengthCode: request.item.bodyLengthCode
-                ?? (category == "dresses" ? length : nil),
+            garmentTypeCode: request.item.familyCode,
+            sleeveLengthCode: axes.sleeveLengthCode,
+            lowerLengthCode: axes.lowerLengthCode,
+            bodyLengthCode: axes.bodyLengthCode,
             fitPreferenceCode: request.item.fitPreferenceCode,
             notes: request.item.fitMemo,
             satisfaction: request.item.satisfaction,
@@ -2300,8 +2385,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             // the selected vNext size. Local cache values are never allowed to
             // overwrite sourced measurement authority during an edit.
             measurements: request.productID == nil ? measurements : nil,
-            closetClassificationOverride: request.override.map {
-                Self.mutationOverridePayload($0)
+            closetClassificationOverride: try request.override.map {
+                try Self.mutationOverridePayload($0)
             }
         )
     }
@@ -2309,14 +2394,19 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     nonisolated static func encodedVNextClosetPayload(
         _ request: FitMatchUpsertClosetItemRequest
     ) throws -> Data {
-        try JSONEncoder().encode(closetPayload(request))
+        try JSONEncoder().encode(try closetPayload(request))
     }
 
     nonisolated private static func mutationOverridePayload(
         _ value: FitMatchClosetClassificationOverride
-    ) -> VNextClosetClassificationOverridePayload {
+    ) throws -> VNextClosetClassificationOverridePayload {
         let audience = vnextAudience(value.audienceCode ?? "unknown")
-        let length = value.lengthCode
+        let axes = try VNextClosetClassificationAxes(
+            categoryCode: value.categoryCode,
+            garmentTypeCode: value.familyCode,
+            lengthCode: value.lengthCode,
+            bodyLengthCode: value.bodyLengthCode
+        )
         return VNextClosetClassificationOverridePayload(
             audienceCode: audience,
             categoryCode: value.categoryCode,
@@ -2325,25 +2415,37 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             // ParsedClosetClassification); no display-label inference occurs
             // at this transport boundary.
             garmentTypeCode: value.familyCode,
-            sleeveLengthCode: value.categoryCode == "tops" ? length : nil,
-            lowerLengthCode: ["bottoms", "leggings", "skirts"].contains(value.categoryCode)
-                ? length : nil,
-            bodyLengthCode: value.bodyLengthCode
-                ?? (value.categoryCode == "dresses" ? length : nil)
+            sleeveLengthCode: axes.sleeveLengthCode,
+            lowerLengthCode: axes.lowerLengthCode,
+            bodyLengthCode: axes.bodyLengthCode
         )
     }
 
     nonisolated private static func overridePayload(
         _ value: FitMatchClosetClassificationOverride
-    ) -> VNextClosetOverridePayload {
-        VNextClosetOverridePayload(
+    ) throws -> VNextClosetOverridePayload {
+        let axes = try VNextClosetClassificationAxes(
+            categoryCode: value.categoryCode,
+            garmentTypeCode: value.familyCode,
+            lengthCode: value.lengthCode,
+            bodyLengthCode: value.bodyLengthCode
+        )
+        return VNextClosetOverridePayload(
             audienceCode: vnextAudience(value.audienceCode ?? "unknown"),
             garmentTypeCode: value.familyCode,
-            sleeveLengthCode: value.categoryCode == "tops" ? value.lengthCode : nil,
-            lowerLengthCode: value.categoryCode == "bottoms" ? value.lengthCode : nil,
-            bodyLengthCode: value.bodyLengthCode
-                ?? (value.categoryCode == "dresses" ? value.lengthCode : nil)
+            sleeveLengthCode: axes.sleeveLengthCode,
+            lowerLengthCode: axes.lowerLengthCode,
+            bodyLengthCode: axes.bodyLengthCode
         )
+    }
+
+    /// Testable encoding seam for the standalone override RPC.  It uses the
+    /// exact production adapter and `JSONEncoder`; no test-side JSON shape is
+    /// constructed by hand.
+    nonisolated static func encodedVNextClosetOverridePayload(
+        _ value: FitMatchClosetClassificationOverride
+    ) throws -> Data {
+        try JSONEncoder().encode(try overridePayload(value))
     }
 
     nonisolated private static func closetMutationCompatibilityResponse(
@@ -2364,18 +2466,34 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         )
     }
 
-    nonisolated private static func mapClosetItem(
+    nonisolated static func mapClosetItem(
         _ item: VNextClosetItemDTO
     ) -> FitMatchClosetItemRecord {
-        let measurements = Dictionary(uniqueKeysWithValues: item.measurements.map {
-            ($0.measurementCode, $0.value)
-        })
+        let measurements = item.measurements
+            .reduce(into: [String: [Double]]()) { result, measurement in
+                result[measurement.measurementCode, default: []].append(measurement.value)
+            }
+            .reduce(into: [String: Double]()) { result, entry in
+                // A legacy scalar dictionary cannot represent conflicting
+                // duplicate codes. Keep the full records below and omit only
+                // this convenience projection instead of choosing by array
+                // order.
+                if Set(entry.value).count == 1, let value = entry.value.first {
+                    result[entry.key] = value
+                }
+            }
         let records = item.measurements.map { measurement in
-            FitMatchClosetMeasurementRecordPayload(
+            let projection = FitMatchCanonicalMeasurementCode.projection(
+                for: measurement.measurementCode
+            )
+            let isKnownLocalCode = MeasurementCode(rawValue: measurement.measurementCode)
+                != nil
+            return FitMatchClosetMeasurementRecordPayload(
                 value: measurement.value,
                 unit: measurement.unitCode,
                 measurementCode: measurement.measurementCode,
-                displayKind: displayKind(for: measurement.measurementCode),
+                displayKind: projection?.displayKind.rawValue
+                    ?? displayKind(for: measurement.measurementCode),
                 methodSource: "fitmatch_vnext_snapshot",
                 methodProfile: item.classificationResolverVersion,
                 inputSource: item.productID == nil
@@ -2391,7 +2509,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 evidenceLevel: item.productID == nil
                     ? MeasurementEvidenceLevel.fitmatchDefined.rawValue
                     : MeasurementEvidenceLevel.officialText.rawValue,
-                semanticStatus: MeasurementSemanticStatus.mapped.rawValue
+                semanticStatus: projection != nil || isKnownLocalCode
+                    ? MeasurementSemanticStatus.mapped.rawValue
+                    : MeasurementSemanticStatus.unknownDefinition.rawValue
             )
         }
         return FitMatchClosetItemRecord(
@@ -2464,23 +2584,113 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     }
 
     nonisolated private static func displayKind(for code: String) -> String {
-        if code.contains("shoulder") { return MeasurementDisplayKind.shoulder.rawValue }
-        if code.contains("chest") { return MeasurementDisplayKind.chest.rawValue }
-        if code.contains("sleeve") { return MeasurementDisplayKind.sleeveLength.rawValue }
-        if code.contains("body_length") || code.contains("outseam")
-            || code.contains("inseam") || code.contains("skirt_length") {
-            return MeasurementDisplayKind.totalLength.rawValue
+        if let projection = FitMatchCanonicalMeasurementCode.projection(for: code) {
+            return projection.displayKind.rawValue
         }
-        if code.contains("upper_abdomen") { return MeasurementDisplayKind.upperAbdomen.rawValue }
-        if code.contains("upper_waist") { return MeasurementDisplayKind.upperWaist.rawValue }
-        if code.contains("waist") { return MeasurementDisplayKind.waist.rawValue }
-        if code.contains("hip") { return MeasurementDisplayKind.hip.rawValue }
-        if code.contains("thigh") { return MeasurementDisplayKind.thigh.rawValue }
-        if code.contains("rise") { return MeasurementDisplayKind.rise.rawValue }
-        if code.contains("hem") { return MeasurementDisplayKind.hem.rawValue }
-        if code.contains("foot") { return MeasurementDisplayKind.footLength.rawValue }
-        if code.contains("under_bust") { return MeasurementDisplayKind.underBust.rawValue }
+        if let canonical = FitMatchCanonicalMeasurementCode
+            .canonicalCode(forTransportRawCode: code),
+           let projection = FitMatchCanonicalMeasurementCode.projection(for: canonical) {
+            return projection.displayKind.rawValue
+        }
+        if let localCode = MeasurementCode(rawValue: code),
+           let displayKind = localCode.presentationDisplayKind {
+            return displayKind.rawValue
+        }
+        // These historical public-row labels pre-date method-specific local
+        // codes. Keep their known display meaning without applying a partial
+        // string match to an otherwise unknown future server code.
+        switch code {
+        case "inseam": return MeasurementDisplayKind.totalLength.rawValue
+        case "foot_length": return MeasurementDisplayKind.footLength.rawValue
+        case "upper_abdomen": return MeasurementDisplayKind.upperAbdomen.rawValue
+        case "upper_waist": return MeasurementDisplayKind.upperWaist.rawValue
+        case "under_bust": return MeasurementDisplayKind.underBust.rawValue
+        default: break
+        }
         return MeasurementDisplayKind.unknown.rawValue
+    }
+
+    /// Classifies only the fixed SQLSTATE/message pairs emitted by the
+    /// visibility RPC.  A generic 42501 is deliberately not guessed to be an
+    /// authentication failure.
+    nonisolated static func historyVisibilityError(
+        code: String?,
+        message: String
+    ) -> FitMatchHistoryVisibilityRPCError {
+        switch (code?.uppercased(), message) {
+        case ("PGRST202", _):
+            return .unavailable
+        case ("42501", "FM_HISTORY_AUTH_REQUIRED"):
+            return .authenticationRequired
+        case ("42501", "FM_HISTORY_UNAVAILABLE"):
+            return .historyUnavailable
+        case ("22023", _), ("22P02", _):
+            return .invalidRequest
+        default:
+            return .rejected
+        }
+    }
+
+    nonisolated private static func canonicalMeasurements(
+        for item: FitMatchClosetItemPayload
+    ) throws -> [VNextClosetMeasurementPayload] {
+        if item.measurementRecords.isEmpty {
+            return try item.measurements
+                .sorted { $0.key < $1.key }
+                .compactMap { code, value in
+                    guard value.isFinite, value > 0 else { return nil }
+                    guard let canonicalCode = FitMatchCanonicalMeasurementCode
+                        .canonicalCode(forTransportRawCode: code) else {
+                        throw FitMatchClosetPayloadContractError
+                            .unmappablePositiveMeasurement(code: code)
+                    }
+                    return VNextClosetMeasurementPayload(
+                        fitmatchMeasurementCode: canonicalCode,
+                        value: value,
+                        unitCode: "cm",
+                        rawLabel: code
+                    )
+                }
+        }
+
+        return try item.measurementRecords.compactMap { record in
+            guard record.value.isFinite, record.value > 0 else { return nil }
+            let canonicalCode = try canonicalMeasurementCode(for: record)
+            return VNextClosetMeasurementPayload(
+                fitmatchMeasurementCode: canonicalCode,
+                value: record.value,
+                unitCode: record.unit,
+                rawLabel: record.rawLabel
+            )
+        }
+    }
+
+    nonisolated private static func canonicalMeasurementCode(
+        for record: FitMatchClosetMeasurementRecordPayload
+    ) throws -> String {
+        if let canonical = FitMatchCanonicalMeasurementCode
+            .canonicalCode(forTransportRawCode: record.measurementCode) {
+            return canonical
+        }
+
+        // A future canonical server fact has no local enum yet. Preserve it
+        // only when this exact raw ID was hydrated from a non-manual source;
+        // a new user-entered unknown code must fail before an RPC rather than
+        // being presented as a successful partial save.
+        let code = record.measurementCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isHydratedServerFact = record.methodSource == "fitmatch_vnext_snapshot"
+            && record.rawCode == code
+        if !code.isEmpty,
+           code != MeasurementCode.unknown.rawValue,
+           code != MeasurementCode.legacyUnknown.rawValue,
+           record.rawCode == code,
+           (record.inputSource != MeasurementInputSource.userMeasured.rawValue
+                || isHydratedServerFact) {
+            return code
+        }
+        throw FitMatchClosetPayloadContractError.unmappablePositiveMeasurement(
+            code: record.measurementCode
+        )
     }
 
     private func authenticatedClient() async throws -> SupabaseClient {
