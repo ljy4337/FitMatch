@@ -23,6 +23,10 @@ struct AddComparedProductToClosetSheet: View {
     /// is consumed by the server-first action and never reconstructed from a
     /// size label in this View.
     let serverRegistrationContext: FitMatchClosetRegistrationServerContext?
+    /// The Simple FitMatch link flow deliberately starts with no Closet
+    /// classification selected.  Result/History reuse keeps its established
+    /// behavior unless its caller opts into this explicit user authority.
+    let requiresExplicitClosetClassification: Bool
     /// A Result may be displaying an exact server size which is no longer
     /// registerable in a freshly fetched runtime.  In that case the caller
     /// asks the sheet to leave the selection empty rather than silently
@@ -56,6 +60,7 @@ struct AddComparedProductToClosetSheet: View {
         FitMatchComparedProductClosetRegistration.ServerFirstSubmission?
     @State private var alertMessage: String?
     @State private var savedItemAwaitingAcknowledgement: UserFit?
+    @State private var linkedMeasurementDraft: FitMatchLinkedClosetMeasurementDraft?
 
     /// Only a server-confirmed tuple may be preselected without becoming a
     /// Closet override.  Retain that exact starting tuple so re-selecting the
@@ -73,6 +78,7 @@ struct AddComparedProductToClosetSheet: View {
         preselectedClassification: ParsedClosetClassification? = nil,
         isParsedProductReadOnly: Bool = false,
         serverRegistrationContext: FitMatchClosetRegistrationServerContext? = nil,
+        requiresExplicitClosetClassification: Bool = false,
         startsAtRegistrationConfirmation: Bool = false,
         prefersRepresentativeByDefault: Bool = false,
         requiresExplicitSizeSelection: Bool = false,
@@ -86,6 +92,7 @@ struct AddComparedProductToClosetSheet: View {
         self.preselectedClassification = preselectedClassification
         self.isParsedProductReadOnly = isParsedProductReadOnly
         self.serverRegistrationContext = serverRegistrationContext
+        self.requiresExplicitClosetClassification = requiresExplicitClosetClassification
         self.requiresExplicitSizeSelection = requiresExplicitSizeSelection
         self.initialSizeSelectionMessage = initialSizeSelectionMessage
         self.onSaved = onSaved
@@ -95,15 +102,15 @@ struct AddComparedProductToClosetSheet: View {
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
         _selectedGenderCode = State(initialValue: product.productTargetGender.taxonomyCode)
-        let requiresExplicitClosetClassification = serverRegistrationContext?
-            .classificationState == .reviewRequired
+        let mustExplicitlySelectClosetClassification = requiresExplicitClosetClassification
+            || serverRegistrationContext?.classificationState == .reviewRequired
         let hasServerAuthority = serverRegistrationContext?.classificationState == .confirmed
             || product.classificationAuthorityProvenance == .serverConfirmed
         automaticServerAudienceCode = hasServerAuthority
             ? product.productTargetGender.taxonomyCode
             : nil
         let suppliedCanonical = !hasServerAuthority
-            && !requiresExplicitClosetClassification
+            && !mustExplicitlySelectClosetClassification
             && preselectedClassification?.isValid == true
             ? preselectedClassification
             : nil
@@ -118,16 +125,16 @@ struct AddComparedProductToClosetSheet: View {
         // source path so a comparison detail such as "데님" is stored as the
         // valid closet taxonomy detail "긴바지" instead of falling back to 기타.
         let canonical = suppliedCanonical ?? inferredCanonical
-        let initialCategory = requiresExplicitClosetClassification ? .other : (canonical?.category
+        let initialCategory = mustExplicitlySelectClosetClassification ? .other : (canonical?.category
             ?? (hasServerAuthority ? product.category : preselectedCategory)
             ?? product.category.serviceGroup)
-        let initialCategoryCode = requiresExplicitClosetClassification ? "" : (canonical?.categoryCode
+        let initialCategoryCode = mustExplicitlySelectClosetClassification ? "" : (canonical?.categoryCode
             ?? (hasServerAuthority ? product.resolvedCategoryCode : nil)
             ?? initialCategory.taxonomyCode)
-        let initialDetail = requiresExplicitClosetClassification
+        let initialDetail = mustExplicitlySelectClosetClassification
             ? .other
             : (canonical?.detailCategory ?? productDetailCategory)
-        let initialDetailCode = requiresExplicitClosetClassification ? "" : (canonical?.detailCode
+        let initialDetailCode = mustExplicitlySelectClosetClassification ? "" : (canonical?.detailCode
             ?? (hasServerAuthority ? product.normalizedProductTypeCode : nil)
             ?? FitMatchTaxonomyProvider.shared.detailCode(
                 for: initialDetail.rawValue, categoryCode: initialCategoryCode
@@ -157,10 +164,10 @@ struct AddComparedProductToClosetSheet: View {
         // Reversible previous initialization used only preselectedCategory != nil.
         // Canonical taxonomy validity now controls whether parsed selections appear selected.
         _hasSelectedClosetCategory = State(initialValue:
-            !requiresExplicitClosetClassification && hasValidCanonicalSelection
+            !mustExplicitlySelectClosetClassification && hasValidCanonicalSelection
         )
         _hasSelectedClosetDetailCategory = State(initialValue:
-            !requiresExplicitClosetClassification && hasValidCanonicalSelection
+            !mustExplicitlySelectClosetClassification && hasValidCanonicalSelection
         )
     }
 
@@ -171,15 +178,35 @@ struct AddComparedProductToClosetSheet: View {
         )
     }
 
+    /// All retailer-reported sizes remain visible in the link flow.  A row
+    /// without a verified measurement is visibly unavailable for Closet
+    /// registration, rather than being deleted or hidden from the product.
+    private var displaySizes: [ProductSize] {
+        guard serverRegistrationContext != nil else { return availableSizes }
+        return product.sizes.sorted {
+            if $0.displayOrder != $1.displayOrder {
+                return $0.displayOrder < $1.displayOrder
+            }
+            return $0.name < $1.name
+        }
+    }
+
+    private var unavailableDisplaySizeIDs: Set<UUID> {
+        guard let serverRegistrationContext else { return [] }
+        return Set(displaySizes.compactMap { size in
+            serverRegistrationContext.isRegisterable(displaySizeID: size.id) ? nil : size.id
+        })
+    }
+
     private var unavailableSizeMessage: String {
         isServerFirstLinkedRegistration
             ? "실측 정보가 있는 서버 사이즈를 다시 확인해 주세요."
             : "사이즈 정보를 찾을 수 없습니다."
     }
 
-    /// Filters only the link-registration presentation. The Product keeps all
-    /// runtime sizes and exact IDs for observation, comparison, and later
-    /// reconciliation; unavailable-for-Closet sizes are never deleted.
+    /// Returns the exact sizes usable as a Closet target.  The separate
+    /// `displaySizes` projection keeps every retailer-reported size visible;
+    /// this filter only protects the final selection and mutation.
     static func selectableSizes(
         productSizes: [ProductSize],
         serverRegistrationContext: FitMatchClosetRegistrationServerContext?
@@ -297,12 +324,23 @@ struct AddComparedProductToClosetSheet: View {
                 if !isParsedProductReadOnly {
                     normalizeDetailCategory()
                 }
+                resetLinkedMeasurementDraft()
+            }
+            .onChange(of: selectedDetailCategoryCode) { _, _ in
+                resetLinkedMeasurementDraft()
+            }
+            .onChange(of: selectedGenderCode) { _, _ in
+                resetLinkedMeasurementDraft()
+            }
+            .onChange(of: selectedSizeID) { _, _ in
+                resetLinkedMeasurementDraft()
             }
             .onAppear {
                 if !isParsedProductReadOnly {
                     normalizeDetailCategory()
                 }
                 normalizeSelectedSize()
+                resetLinkedMeasurementDraft()
             }
             .alert("보유한 옷 등록", isPresented: Binding(
                 get: { alertMessage != nil },
@@ -333,7 +371,7 @@ struct AddComparedProductToClosetSheet: View {
                 subtitle: "실제로 가지고 있는 사이즈를 선택해 주세요."
             ) {
                 VStack(alignment: .leading, spacing: 16) {
-                    if availableSizes.isEmpty {
+                    if displaySizes.isEmpty {
                         Text(unavailableSizeMessage)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -345,8 +383,10 @@ struct AddComparedProductToClosetSheet: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         ProductSizeSelectionGrid(
-                            sizes: availableSizes,
-                            selectedSizeID: $selectedSizeID
+                            sizes: displaySizes,
+                            selectedSizeID: $selectedSizeID,
+                            preservesExactIdentities: isServerFirstLinkedRegistration,
+                            disabledSizeIDs: unavailableDisplaySizeIDs
                         )
                     }
                 }
@@ -378,9 +418,11 @@ struct AddComparedProductToClosetSheet: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(availableSizes.isEmpty
+                        Text(displaySizes.isEmpty
                             ? unavailableSizeMessage
-                            : "\(availableSizes.count)개 사이즈를 찾았습니다.")
+                            : availableSizes.count == displaySizes.count
+                                ? "\(displaySizes.count)개 판매 사이즈를 찾았습니다."
+                                : "판매 사이즈 \(displaySizes.count)개 중 실측 있는 \(availableSizes.count)개를 등록할 수 있어요.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -486,7 +528,7 @@ struct AddComparedProductToClosetSheet: View {
                 editableRegistrationRows
             }
 
-            if availableSizes.isEmpty {
+            if displaySizes.isEmpty {
                 Text(unavailableSizeMessage)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -502,10 +544,14 @@ struct AddComparedProductToClosetSheet: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 RegistrationMenuRow(title: "사이즈", value: selectedSize?.name.displaySizeName ?? "선택") {
-                    ForEach(availableSizes) { size in
-                        Button(size.name.displaySizeName) {
+                    ForEach(displaySizes) { size in
+                        let selectable = !unavailableDisplaySizeIDs.contains(size.id)
+                        Button(selectable
+                            ? size.name.displaySizeName
+                            : "\(size.name.displaySizeName) · 실측 없음") {
                             selectedSizeID = size.id
                         }
+                        .disabled(!selectable)
                     }
                 }
             }
@@ -594,36 +640,95 @@ struct AddComparedProductToClosetSheet: View {
     @ViewBuilder
     private var selectedMeasurementSummary: some View {
         if let selectedSize {
-            AddComparedSectionCard(
-                title: "선택한 사이즈 실측",
-                subtitle: "\(selectedSize.name.displaySizeName) 기준으로 자동 저장됩니다."
-            ) {
-                VStack(alignment: .leading, spacing: 14) {
-                    VStack(spacing: 10) {
-                        ForEach(visibleMeasurementKinds(for: selectedSize), id: \.id) { kind in
-                            HStack(spacing: 12) {
-                                Text(MeasurementResolver.title(
-                                    for: kind,
-                                    records: selectedSize.measurementRecords
-                                ))
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text(formatMeasurement(
-                                    MeasurementResolver.value(
+            if isServerFirstLinkedRegistration {
+                linkedMeasurementEditor(for: selectedSize)
+            } else {
+                AddComparedSectionCard(
+                    title: "선택한 사이즈 실측",
+                    subtitle: "\(selectedSize.name.displaySizeName) 기준으로 자동 저장됩니다."
+                ) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        VStack(spacing: 10) {
+                            ForEach(visibleMeasurementKinds(for: selectedSize), id: \.id) { kind in
+                                HStack(spacing: 12) {
+                                    Text(MeasurementResolver.title(
                                         for: kind,
-                                        measurements: selectedSize.measurements,
                                         records: selectedSize.measurementRecords
-                                    ) ?? 0
-                                ))
-                                    .font(.headline.weight(.black))
-                                    .foregroundStyle(.primary)
+                                    ))
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Text(formatMeasurement(
+                                        MeasurementResolver.value(
+                                            for: kind,
+                                            measurements: selectedSize.measurements,
+                                            records: selectedSize.measurementRecords
+                                        ) ?? 0
+                                    ))
+                                        .font(.headline.weight(.black))
+                                        .foregroundStyle(.primary)
+                                }
+                                .padding(.horizontal, 14)
+                                .frame(height: 48)
+                                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                             }
-                            .padding(.horizontal, 14)
-                            .frame(height: 48)
-                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         }
                     }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func linkedMeasurementEditor(for size: ProductSize) -> some View {
+        let draft = linkedMeasurementDraft ?? FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: size,
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: selectedGender
+        )
+        AddComparedSectionCard(
+            title: "선택한 사이즈 실측",
+            subtitle: "쇼핑몰·API 값은 자동 입력됩니다. 실제 옷을 재서 수정하거나 빈 항목을 추가할 수 있어요."
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(draft.kinds, id: \.self) { kind in
+                    VStack(alignment: .leading, spacing: 7) {
+                        HStack(spacing: 8) {
+                            Text(kind.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(draft.sourceLabel(for: kind))
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(
+                                    draft.sourceLabel(for: kind) == "직접 측정/수정 값"
+                                        ? Color.primary
+                                        : Color.secondary
+                                )
+                        }
+                        HStack(spacing: 10) {
+                            TextField(kind.placeholder, text: linkedMeasurementBinding(for: kind))
+                                .keyboardType(.decimalPad)
+                                .textInputAutocapitalization(.never)
+                                .font(.headline.weight(.bold))
+                                .disabled(!draft.isSupported(for: kind))
+                            Text("cm")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.secondary)
+                        }
+                        if !draft.isSupported(for: kind) {
+                            Text("이 항목은 검증된 서버 실측 코드가 없어 원본 값만 보존됩니다.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    .background(
+                        Color(.secondarySystemGroupedBackground),
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
                 }
             }
         }
@@ -707,7 +812,7 @@ struct AddComparedProductToClosetSheet: View {
         case .size:
             return selectedSize == nil ? "등록할 사이즈를 선택해 주세요." : nil
         case .confirm:
-            return validationMessage ?? serverRegistrationContext?.registrationBlockMessage
+            return validationMessage ?? serverRegistrationBlockMessage
         }
     }
 
@@ -755,6 +860,18 @@ struct AddComparedProductToClosetSheet: View {
             return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
         }
 
+        if isServerFirstLinkedRegistration {
+            let draft = linkedMeasurementDraft ?? FitMatchLinkedClosetMeasurementDraft(
+                sourceSize: selectedSize,
+                category: selectedCategory,
+                detailCategory: selectedDetailCategory,
+                gender: selectedGender
+            )
+            if let message = draft.validationMessage() {
+                return message
+            }
+        }
+
         guard !savedProductName.isEmpty else {
             return "상품명을 확인할 수 없습니다."
         }
@@ -766,7 +883,7 @@ struct AddComparedProductToClosetSheet: View {
             alertMessage = validationMessage
             return false
         }
-        if let blockMessage = serverRegistrationContext?.registrationBlockMessage {
+        if let blockMessage = serverRegistrationBlockMessage {
             alertMessage = blockMessage
             return false
         }
@@ -777,6 +894,20 @@ struct AddComparedProductToClosetSheet: View {
         guard let selectedSize else {
             isSaving = false
             return
+        }
+
+        let measurementSnapshot: FitMatchClosetMeasurementSnapshot?
+        if isServerFirstLinkedRegistration {
+            do {
+                measurementSnapshot = try linkedMeasurementDraftSnapshot(for: selectedSize)
+            } catch {
+                alertMessage = (error as? LocalizedError)?.errorDescription
+                    ?? "실측값을 확인한 뒤 다시 저장해 주세요."
+                isSaving = false
+                return
+            }
+        } else {
+            measurementSnapshot = nil
         }
 
         // Only an ambiguous/accepted pending submission is immutable. A
@@ -790,6 +921,7 @@ struct AddComparedProductToClosetSheet: View {
             clientItemID: reusablePendingSubmission?.localRequest.clientItemID ?? UUID(),
             product: product,
             selectedSize: selectedSize,
+            measurementSnapshot: measurementSnapshot,
             serverIdentity: serverRegistrationContext?.identity(for: selectedSize.id),
             hasMeasurementEligibilityProof: serverRegistrationContext?
                 .isRegisterable(displaySizeID: selectedSize.id),
@@ -946,6 +1078,18 @@ struct AddComparedProductToClosetSheet: View {
         serverRegistrationContext != nil
     }
 
+    private var serverRegistrationBlockMessage: String? {
+        guard let serverRegistrationContext else { return nil }
+        if requiresExplicitClosetClassification,
+           serverRegistrationContext.classificationState == .notApplicable {
+            // A comparison-only status cannot invalidate the user's explicit
+            // Closet category, provided the exact identity and measurement
+            // eligibility checks above still pass.
+            return nil
+        }
+        return serverRegistrationContext.registrationBlockMessage
+    }
+
     private func selectAudience(_ gender: TaxonomyOption) {
         let changed = selectedGenderCode != gender.code
         selectedGenderCode = gender.code
@@ -1015,6 +1159,10 @@ struct AddComparedProductToClosetSheet: View {
         case .reviewRequired:
             didExplicitlySelectClosetClassification = true
         case .confirmed:
+            if requiresExplicitClosetClassification {
+                didExplicitlySelectClosetClassification = true
+                return
+            }
             let selectedAudience = FitMatchCanonicalAudience.code(from: selectedGenderCode)
             let automaticAudience = FitMatchCanonicalAudience.code(
                 from: automaticServerAudienceCode
@@ -1023,7 +1171,7 @@ struct AddComparedProductToClosetSheet: View {
                 || selectedCategoryCode != automaticServerCategoryCode
                 || selectedDetailCategoryCode != automaticServerDetailCategoryCode
         case .notApplicable, .unavailable, .none:
-            didExplicitlySelectClosetClassification = false
+            didExplicitlySelectClosetClassification = requiresExplicitClosetClassification
         }
     }
 
@@ -1077,6 +1225,43 @@ struct AddComparedProductToClosetSheet: View {
         if !availableSizes.contains(where: { $0.id == selectedSizeID }) {
             self.selectedSizeID = nil
         }
+    }
+
+    private func resetLinkedMeasurementDraft() {
+        guard isServerFirstLinkedRegistration, let selectedSize else {
+            linkedMeasurementDraft = nil
+            return
+        }
+        linkedMeasurementDraft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: selectedSize,
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: selectedGender
+        )
+    }
+
+    private func linkedMeasurementBinding(for kind: MeasurementKind) -> Binding<String> {
+        Binding(
+            get: { linkedMeasurementDraft?.rawValue(for: kind) ?? "" },
+            set: { value in
+                if linkedMeasurementDraft == nil {
+                    resetLinkedMeasurementDraft()
+                }
+                linkedMeasurementDraft?.setRawValue(value, for: kind)
+            }
+        )
+    }
+
+    private func linkedMeasurementDraftSnapshot(
+        for selectedSize: ProductSize
+    ) throws -> FitMatchClosetMeasurementSnapshot {
+        let draft = linkedMeasurementDraft ?? FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: selectedSize,
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: selectedGender
+        )
+        return try draft.snapshot()
     }
 
     private func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {

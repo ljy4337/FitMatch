@@ -533,7 +533,11 @@ final class ShoppingProductViewModel: ObservableObject {
                 // back to the database later.
                 applyServerRuntime(
                     authority.runtime,
-                    allowsCanonicalMeasurementPresence: false,
+                    // Retailer measurement facts and automatic product
+                    // classification are separate contracts.  A user may
+                    // explicitly choose a Closet taxonomy tuple even while
+                    // the shared product remains REVIEW_REQUIRED.
+                    allowsCanonicalMeasurementPresence: true,
                     preferredProductSizeID: preferredProductSizeID
                 )
                 serverAuthorityState = .reviewRequired(authority)
@@ -556,7 +560,10 @@ final class ShoppingProductViewModel: ObservableObject {
             case .notComparable:
                 applyServerRuntime(
                     authority.runtime,
-                    allowsCanonicalMeasurementPresence: false,
+                    // This only blocks comparison.  Preserve exact retailer
+                    // IDs and available measurement facts for the independent
+                    // user-owned Closet registration flow.
+                    allowsCanonicalMeasurementPresence: true,
                     preferredProductSizeID: preferredProductSizeID
                 )
                 serverAuthorityState = .notComparable(authority)
@@ -819,10 +826,10 @@ final class ShoppingProductViewModel: ObservableObject {
             productMeasurementPresence = parsedProductMeasurementPresence
             return
         }
-        // A CONFIRMED runtime's canonical record can prove actual garment
-        // presence when parser evidence was incomplete. It never changes
-        // comparison readiness and it is intentionally unavailable to a
-        // REVIEW_REQUIRED registration decision.
+        // A runtime canonical record can prove actual garment presence when
+        // parser evidence was incomplete. This never changes comparison
+        // readiness; the link Closet flow may independently use it with an
+        // explicit user-owned classification tuple.
         productMeasurementPresence = .available
     }
 
@@ -982,7 +989,9 @@ final class ShoppingProductViewModel: ObservableObject {
             )
         case .notComparable:
             return FitMatchClosetRegistrationServerContext(
-                classificationState: .notApplicable
+                classificationState: .notApplicable,
+                identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
+                registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )
         case .idle, .resolving, .unavailable:
             return FitMatchClosetRegistrationServerContext(

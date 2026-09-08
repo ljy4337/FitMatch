@@ -694,6 +694,10 @@ nonisolated struct VNextClosetMeasurementDTO: Decodable, Equatable, Sendable {
     let value: Double
     let unitCode: String
     let valueSource: String
+    /// Original retailer/source-code identity is separate from the canonical
+    /// FitMatch code. It is optional for legacy rows, but must survive a
+    /// linked Closet list → hydration → retry round-trip when available.
+    let sourceMeasurementCode: String?
     let rawLabelSnapshot: String?
 
     enum CodingKeys: String, CodingKey {
@@ -701,6 +705,7 @@ nonisolated struct VNextClosetMeasurementDTO: Decodable, Equatable, Sendable {
         case value
         case unitCode = "unit_code"
         case valueSource = "value_source"
+        case sourceMeasurementCode = "source_measurement_code"
         case rawLabelSnapshot = "raw_label_snapshot"
     }
 }

@@ -657,6 +657,13 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         } else {
             override = nil
         }
+        // A linked-size change is also a change of the exact retailer size
+        // chart.  Seed a fresh Closet-local snapshot from that selected size
+        // so the linked snapshot RPC can validate and persist it; do not send
+        // the item's previous M measurements for a newly selected L size.
+        let selectedSnapshot = FitMatchClosetMeasurementSnapshot(
+            sourceSize: selectedOption.productSize
+        )
 
         let payload = FitMatchClosetItemPayload(
             productName: item.productName,
@@ -672,11 +679,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             sourceCategoryPath: item.sourceCategoryPath ?? item.sourceProduct?.sourceCategoryPath,
             productURL: item.sourceProduct?.sourceURLString,
             imageURL: item.sourceProduct?.imageURLString,
-            // The vNext transport omits product-linked measurements, but keep
-            // this request boundary empty as well so stale M facts cannot be
-            // mistaken for selected L facts by a future adapter change.
-            measurements: [:],
-            measurementRecords: [],
+            measurements: measurementValues(
+                for: selectedSnapshot.measurements,
+                records: selectedSnapshot.measurementRecords
+            ),
+            measurementRecords: selectedSnapshot.measurementRecords,
             fitMemo: item.fitMemo,
             fitPreferenceCode: item.fitPreference.databaseCode,
             satisfaction: item.satisfaction,
@@ -1164,7 +1171,16 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
             }
 
-            if existingRemoteItem.classificationStatus == "confirmed",
+            let preservesExplicitLinkedClosetAuthority = existingRemoteItem.productID != nil
+                && item.classificationAuthorityProvenance == .userExplicit
+
+            if preservesExplicitLinkedClosetAuthority {
+                // The row came from this user's list RPC and the exact remote
+                // product/variant/size IDs above have already been retained.
+                // Do not call product classification again: it is global
+                // authority and must not overwrite or gate this user's
+                // explicit Closet tuple/measurement snapshot during retry.
+            } else if existingRemoteItem.classificationStatus == "confirmed",
                existingRemoteItem.classificationSource == "manual_override" {
                 // The list adapter deliberately normalizes the production
                 // USER_EXPLICIT and USER_EDITED strings to manual_override.
@@ -1336,7 +1352,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 rawInfo: record.rawInfo,
                 rawValueText: record.rawValueText,
                 evidenceLevel: record.evidenceLevelRawValue,
-                semanticStatus: record.semanticStatusRawValue
+                semanticStatus: record.semanticStatusRawValue,
+                valueSource: FitMatchClosetMeasurementProvenance.transportValueSource(
+                    valueSource: nil,
+                    inputSource: record.inputSourceRawValue
+                )
             )
         }
         var clientSnapshot = [
@@ -1770,6 +1790,37 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 ("under_bust_width", item.underBust)
             ]
             for (key, value) in values where value.isFinite && value > 0 { result[key] = value }
+        }
+        return result
+    }
+
+    /// A source ProductSize can be an older scalar-only cache or a complete
+    /// record-backed chart. Keep both representations at this boundary; the
+    /// transport mapper gives records precedence per canonical code and uses
+    /// scalar values only for facts without an authoritative record.
+    private func measurementValues(
+        for measurements: GarmentMeasurements,
+        records: [FitMatchClosetMeasurementRecordPayload]
+    ) -> [String: Double] {
+        var result: [String: Double] = [:]
+        for record in records where record.value.isFinite && record.value > 0 {
+            result[record.measurementCode] = record.value
+        }
+        let scalarValues: [(String, Double)] = [
+            ("shoulder_width", measurements.shoulder),
+            ("chest_width", measurements.chest),
+            ("body_length", measurements.totalLength),
+            ("sleeve_length", measurements.sleeveLength),
+            ("waist_width", measurements.waist),
+            ("hip_width", measurements.hip),
+            ("thigh_width", measurements.thigh),
+            ("rise", measurements.rise),
+            ("hem_width", measurements.hem),
+            ("foot_length", measurements.footLength),
+            ("under_bust_width", measurements.underBust)
+        ]
+        for (code, value) in scalarValues where value.isFinite && value > 0 {
+            result[code] = result[code] ?? value
         }
         return result
     }

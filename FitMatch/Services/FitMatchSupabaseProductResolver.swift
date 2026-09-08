@@ -371,6 +371,47 @@ nonisolated struct FitMatchClosetMeasurementRecordPayload: Codable, Equatable, S
     let rawValueText: String?
     let evidenceLevel: String
     let semanticStatus: String
+    /// `closet_item_measurements.value_source` is row-local.  Keep it on the
+    /// app payload rather than deriving every linked row from `product_id`:
+    /// a Closet snapshot can legitimately contain both retailer and personal
+    /// values for the same linked product.
+    let valueSource: String?
+
+    init(
+        value: Double,
+        unit: String,
+        measurementCode: String,
+        displayKind: String,
+        methodSource: String,
+        methodProfile: String?,
+        inputSource: String,
+        standardVersion: String?,
+        mappingVersion: String,
+        rawCode: String?,
+        rawLabel: String,
+        rawInfo: String?,
+        rawValueText: String?,
+        evidenceLevel: String,
+        semanticStatus: String,
+        valueSource: String? = nil
+    ) {
+        self.value = value
+        self.unit = unit
+        self.measurementCode = measurementCode
+        self.displayKind = displayKind
+        self.methodSource = methodSource
+        self.methodProfile = methodProfile
+        self.inputSource = inputSource
+        self.standardVersion = standardVersion
+        self.mappingVersion = mappingVersion
+        self.rawCode = rawCode
+        self.rawLabel = rawLabel
+        self.rawInfo = rawInfo
+        self.rawValueText = rawValueText
+        self.evidenceLevel = evidenceLevel
+        self.semanticStatus = semanticStatus
+        self.valueSource = valueSource
+    }
 
     enum CodingKeys: String, CodingKey {
         case value, unit
@@ -387,6 +428,59 @@ nonisolated struct FitMatchClosetMeasurementRecordPayload: Codable, Equatable, S
         case rawValueText = "raw_value_text"
         case evidenceLevel = "evidence_level"
         case semanticStatus = "semantic_status"
+        case valueSource = "value_source"
+    }
+}
+
+/// The database already has a per-measurement source contract.  This adapter
+/// deliberately has only the two meanings supported by the Closet UI: a
+/// retailer/API fact and a value explicitly measured or entered by the user.
+/// Unknown legacy server values are treated as retailer facts for local
+/// presentation, never upgraded to USER_MANUAL by inference.
+nonisolated enum FitMatchClosetMeasurementProvenance {
+    static let retailerSnapshot = "RETAILER_SNAPSHOT"
+    static let userManual = "USER_MANUAL"
+
+    static func transportValueSource(
+        valueSource: String?,
+        inputSource: String
+    ) -> String {
+        switch normalized(valueSource) {
+        case userManual:
+            return userManual
+        case retailerSnapshot:
+            return retailerSnapshot
+        default:
+            return inputSource == MeasurementInputSource.userMeasured.rawValue
+                ? userManual
+                : retailerSnapshot
+        }
+    }
+
+    static func inputSource(for valueSource: String) -> MeasurementInputSource {
+        normalized(valueSource) == userManual
+            ? .userMeasured
+            : .importedSizeChart
+    }
+
+    static func isUserValue(
+        valueSource: String?,
+        inputSource: String
+    ) -> Bool {
+        transportValueSource(valueSource: valueSource, inputSource: inputSource)
+            == userManual
+    }
+
+    private static func normalized(_ value: String?) -> String? {
+        guard let value else { return nil }
+        switch value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
+        case userManual, "USER_MEASURED", "USER_EDITED":
+            return userManual
+        case retailerSnapshot, "RETAILER", "SERVER", "API", "IMPORTED":
+            return retailerSnapshot
+        default:
+            return nil
+        }
     }
 }
 
@@ -1310,12 +1404,21 @@ enum FitMatchSupabaseProductResolverError: LocalizedError {
 /// decision.
 nonisolated enum FitMatchClosetPayloadContractError: LocalizedError, Equatable, Sendable {
     case unmappablePositiveMeasurement(code: String)
+    case invalidMeasurementValue(code: String)
+    case invalidMeasurementUnit(code: String, unit: String)
+    case invalidUserMeasurementRange(code: String)
     case missingRequiredClassificationAxis(garmentTypeCode: String, axis: String)
 
     var errorDescription: String? {
         switch self {
         case .unmappablePositiveMeasurement:
             return "입력한 실측 항목을 서버에 저장할 수 없습니다. 항목을 확인한 뒤 다시 시도해 주세요."
+        case .invalidMeasurementValue:
+            return "실측값은 0보다 큰 유한한 숫자로 입력해 주세요."
+        case .invalidMeasurementUnit:
+            return "실측 단위는 cm만 저장할 수 있습니다."
+        case .invalidUserMeasurementRange:
+            return "직접 입력한 실측값이 허용 범위를 벗어났습니다."
         case .missingRequiredClassificationAxis:
             return "선택한 의류 분류에 필요한 길이 정보를 확인한 뒤 다시 시도해 주세요."
         }
@@ -1468,15 +1571,19 @@ nonisolated private struct VNextClosetOverrideParameters: Encodable, Sendable {
 
 nonisolated private struct VNextClosetMeasurementPayload: Encodable, Sendable {
     let fitmatchMeasurementCode: String
+    let sourceMeasurementCode: String?
     let value: Double
     let unitCode: String
     let rawLabel: String?
+    let valueSource: String
 
     enum CodingKeys: String, CodingKey {
         case fitmatchMeasurementCode = "fitmatch_measurement_code"
+        case sourceMeasurementCode = "source_measurement_code"
         case value
         case unitCode = "unit_code"
         case rawLabel = "raw_label"
+        case valueSource = "value_source"
     }
 }
 
@@ -2362,7 +2469,12 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             lengthCode: request.item.lengthCode,
             bodyLengthCode: request.item.bodyLengthCode
         )
-        let measurements = try canonicalMeasurements(for: request.item)
+        let measurements = try canonicalMeasurements(
+            for: request.item,
+            defaultValueSource: request.productID == nil
+                ? FitMatchClosetMeasurementProvenance.userManual
+                : FitMatchClosetMeasurementProvenance.retailerSnapshot
+        )
         return VNextClosetMutationPayload(
             clientItemID: request.clientItemID,
             productID: request.productID,
@@ -2380,11 +2492,19 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             bodyLengthCode: axes.bodyLengthCode,
             fitPreferenceCode: request.item.fitPreferenceCode,
             notes: request.item.fitMemo,
-            satisfaction: request.item.satisfaction,
-            // Product-linked items always hydrate canonical measurements from
-            // the selected vNext size. Local cache values are never allowed to
-            // overwrite sourced measurement authority during an edit.
-            measurements: request.productID == nil ? measurements : nil,
+            // The current Closet SQL contract accepts the user-facing 1...5
+            // scale. A compared-product registration has no fit feedback yet
+            // and historically used 0 locally, so transport its neutral
+            // persisted default rather than issuing a mutation that the DB
+            // must reject before the linked snapshot can round-trip.
+            satisfaction: (1...5).contains(request.item.satisfaction)
+                ? request.item.satisfaction
+                : 3,
+            // Linked Closets carry a Closet-local measurement snapshot.  The
+            // RPC validates retailer rows against the exact selected size and
+            // accepts USER_MANUAL rows only for this caller's Closet item;
+            // shared Product/ProductSize facts are never mutated.
+            measurements: measurements,
             closetClassificationOverride: try request.override.map {
                 try Self.mutationOverridePayload($0)
             }
@@ -2488,30 +2608,42 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             )
             let isKnownLocalCode = MeasurementCode(rawValue: measurement.measurementCode)
                 != nil
+            let inputSource = FitMatchClosetMeasurementProvenance.inputSource(
+                for: measurement.valueSource
+            )
+            let isUserValue = inputSource == .userMeasured
             return FitMatchClosetMeasurementRecordPayload(
                 value: measurement.value,
                 unit: measurement.unitCode,
                 measurementCode: measurement.measurementCode,
                 displayKind: projection?.displayKind.rawValue
                     ?? displayKind(for: measurement.measurementCode),
-                methodSource: "fitmatch_vnext_snapshot",
-                methodProfile: item.classificationResolverVersion,
-                inputSource: item.productID == nil
-                    ? MeasurementInputSource.userMeasured.rawValue
-                    : MeasurementInputSource.importedSizeChart.rawValue,
-                standardVersion: nil,
+                methodSource: isUserValue
+                    ? "fitmatch_vnext_user_measurement"
+                    : "fitmatch_vnext_snapshot",
+                methodProfile: isUserValue
+                    ? FitMatchMeasurementStandard.version
+                    : item.classificationResolverVersion,
+                inputSource: inputSource.rawValue,
+                standardVersion: isUserValue
+                    ? FitMatchMeasurementStandard.version
+                    : nil,
                 mappingVersion: item.classificationResolverVersion
                     ?? "fitmatch-vnext-closet-v1",
-                rawCode: measurement.measurementCode,
+                rawCode: measurement.sourceMeasurementCode ?? measurement.measurementCode,
                 rawLabel: measurement.rawLabelSnapshot ?? measurement.measurementCode,
                 rawInfo: nil,
                 rawValueText: String(measurement.value),
-                evidenceLevel: item.productID == nil
+                evidenceLevel: isUserValue
                     ? MeasurementEvidenceLevel.fitmatchDefined.rawValue
                     : MeasurementEvidenceLevel.officialText.rawValue,
                 semanticStatus: projection != nil || isKnownLocalCode
                     ? MeasurementSemanticStatus.mapped.rawValue
-                    : MeasurementSemanticStatus.unknownDefinition.rawValue
+                    : MeasurementSemanticStatus.unknownDefinition.rawValue,
+                valueSource: FitMatchClosetMeasurementProvenance.transportValueSource(
+                    valueSource: measurement.valueSource,
+                    inputSource: inputSource.rawValue
+                )
             )
         }
         return FitMatchClosetItemRecord(
@@ -2632,35 +2764,106 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     }
 
     nonisolated private static func canonicalMeasurements(
-        for item: FitMatchClosetItemPayload
+        for item: FitMatchClosetItemPayload,
+        defaultValueSource: String
     ) throws -> [VNextClosetMeasurementPayload] {
-        if item.measurementRecords.isEmpty {
-            return try item.measurements
-                .sorted { $0.key < $1.key }
-                .compactMap { code, value in
-                    guard value.isFinite, value > 0 else { return nil }
-                    guard let canonicalCode = FitMatchCanonicalMeasurementCode
-                        .canonicalCode(forTransportRawCode: code) else {
-                        throw FitMatchClosetPayloadContractError
-                            .unmappablePositiveMeasurement(code: code)
-                    }
-                    return VNextClosetMeasurementPayload(
-                        fitmatchMeasurementCode: canonicalCode,
-                        value: value,
-                        unitCode: "cm",
-                        rawLabel: code
-                    )
-                }
-        }
+        // Measurement records are the authoritative per-row provenance.  A
+        // few legacy ProductSize rows have scalar values without records, so
+        // add only scalar codes that are not already represented instead of
+        // losing them as soon as a user adds one missing measurement.
+        var payloadByCanonicalCode: [String: VNextClosetMeasurementPayload] = [:]
 
-        return try item.measurementRecords.compactMap { record in
-            guard record.value.isFinite, record.value > 0 else { return nil }
+        for record in item.measurementRecords {
+            guard record.value.isFinite, record.value > 0 else {
+                throw FitMatchClosetPayloadContractError.invalidMeasurementValue(
+                    code: record.measurementCode
+                )
+            }
             let canonicalCode = try canonicalMeasurementCode(for: record)
-            return VNextClosetMeasurementPayload(
+            let valueSource = FitMatchClosetMeasurementProvenance.transportValueSource(
+                valueSource: record.valueSource,
+                inputSource: record.inputSource
+            )
+            try validateMeasurementRecord(
+                record,
+                canonicalCode: canonicalCode,
+                valueSource: valueSource
+            )
+            payloadByCanonicalCode[canonicalCode] = VNextClosetMeasurementPayload(
                 fitmatchMeasurementCode: canonicalCode,
+                sourceMeasurementCode: record.rawCode,
                 value: record.value,
                 unitCode: record.unit,
-                rawLabel: record.rawLabel
+                rawLabel: record.rawLabel,
+                valueSource: valueSource
+            )
+        }
+
+        let recordMeasurementCodes = Set(item.measurementRecords.map {
+            $0.measurementCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        })
+        for (rawCode, value) in item.measurements.sorted(by: { $0.key < $1.key }) {
+            // The scalar projection is a compatibility cache and cannot
+            // represent an unknown future canonical code. If that exact code
+            // already has an authoritative record, preserve the record rather
+            // than trying to remap the projection as a new manual value.
+            guard !recordMeasurementCodes.contains(rawCode) else { continue }
+            guard value.isFinite, value > 0 else {
+                throw FitMatchClosetPayloadContractError.invalidMeasurementValue(
+                    code: rawCode
+                )
+            }
+            guard let canonicalCode = FitMatchCanonicalMeasurementCode
+                .canonicalCode(forTransportRawCode: rawCode) else {
+                throw FitMatchClosetPayloadContractError
+                    .unmappablePositiveMeasurement(code: rawCode)
+            }
+            guard payloadByCanonicalCode[canonicalCode] == nil else { continue }
+            payloadByCanonicalCode[canonicalCode] = VNextClosetMeasurementPayload(
+                fitmatchMeasurementCode: canonicalCode,
+                sourceMeasurementCode: rawCode,
+                value: value,
+                unitCode: "cm",
+                rawLabel: rawCode,
+                valueSource: defaultValueSource
+            )
+        }
+
+        return payloadByCanonicalCode.values.sorted {
+            $0.fitmatchMeasurementCode < $1.fitmatchMeasurementCode
+        }
+    }
+
+    nonisolated private static func validateMeasurementRecord(
+        _ record: FitMatchClosetMeasurementRecordPayload,
+        canonicalCode: String,
+        valueSource: String
+    ) throws {
+        let unit = record.unit.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let isOpaqueHydratedServerFact = record.methodSource == "fitmatch_vnext_snapshot"
+            && record.rawCode == record.measurementCode
+            && !FitMatchCanonicalMeasurementCode.activeCodes.contains(canonicalCode)
+        guard unit == MeasurementUnit.centimeter.rawValue || isOpaqueHydratedServerFact else {
+            throw FitMatchClosetPayloadContractError.invalidMeasurementUnit(
+                code: record.measurementCode,
+                unit: record.unit
+            )
+        }
+
+        // Retailer facts retain their verified source semantics.  Direct
+        // values use the existing FitMatch definition and must be valid before
+        // they ever reach the RPC; no display-name or unit conversion is used.
+        guard valueSource == FitMatchClosetMeasurementProvenance.userManual,
+              let kind = MeasurementKind.allCases.first(where: {
+                  $0.displayKind.rawValue == record.displayKind
+              }) else {
+            return
+        }
+        guard FitMatchMeasurementStandard.transportValidRange(for: kind)
+            .contains(record.value) else {
+            throw FitMatchClosetPayloadContractError.invalidUserMeasurementRange(
+                code: record.measurementCode
             )
         }
     }

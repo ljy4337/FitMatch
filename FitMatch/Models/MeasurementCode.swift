@@ -568,7 +568,7 @@ extension ClothingCategory {
 }
 
 extension MeasurementKind {
-    var displayKind: MeasurementDisplayKind {
+    nonisolated var displayKind: MeasurementDisplayKind {
         switch self {
         case .shoulder: return .shoulder
         case .chest: return .chest

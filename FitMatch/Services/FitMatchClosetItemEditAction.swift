@@ -76,6 +76,7 @@ enum FitMatchClosetItemEditAction {
     static func saveImported(
         item: UserFit,
         selectedSize: ProductSize,
+        measurementSnapshot: FitMatchClosetMeasurementSnapshot? = nil,
         linkedSizeEditIntent: FitMatchLinkedSizeEditIntent? = nil,
         defaults: UserDefaults = .standard,
         category: ClothingCategory,
@@ -131,10 +132,16 @@ enum FitMatchClosetItemEditAction {
             )
         }
         item.sizeName = selectedSize.name.fitMatchDisplaySizeName
-        item.measurements = selectedSize.measurements
+        // A personal measurement edit is a Closet-local snapshot.  The
+        // selected ProductSize remains the retailer source and must not be
+        // changed by this action.
+        item.measurements = measurementSnapshot?.measurements ?? selectedSize.measurements
         item.sourceProductSize = selectedSize
         item.measurementRecords.forEach(modelContext.delete)
-        item.replaceMeasurementRecords(with: selectedSize.measurementRecords)
+        item.replaceMeasurementRecords(with:
+            measurementSnapshot?.makeGarmentMeasurementRecords()
+                ?? selectedSize.measurementRecords
+        )
         item.updatedAt = now
         let outcome = persist(in: modelContext, using: performSave)
         guard case .persistenceFailed = outcome,

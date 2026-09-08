@@ -14,7 +14,30 @@ struct DirectMeasurementDefinition: Equatable {
 }
 
 enum FitMatchMeasurementStandard {
-    static let version = "fitmatch_standard_v1"
+    nonisolated static let version = "fitmatch_standard_v1"
+
+    /// Transport validation has no SwiftUI state and is also used by the
+    /// nonisolated RPC payload builder. Keep the generic ranges in the same
+    /// standard that powers the direct-entry UI rather than creating a second
+    /// measurement policy at the transport boundary.
+    nonisolated static func transportValidRange(
+        for kind: MeasurementKind
+    ) -> ClosedRange<Double> {
+        switch kind {
+        case .shoulder: return 10...90
+        case .chest: return 15...100
+        case .totalLength: return 15...180
+        case .sleeveLength: return 3...110
+        case .upperAbdomen, .upperWaist: return 15...100
+        case .waist: return 15...90
+        case .hip: return 20...100
+        case .thigh: return 10...60
+        case .rise: return 10...50
+        case .hem: return 5...90
+        case .footLength: return 10...40
+        case .underBust: return 15...80
+        }
+    }
 
     static func definition(
         for kind: MeasurementKind,
@@ -39,31 +62,31 @@ enum FitMatchMeasurementStandard {
 
         switch kind {
         case .shoulder:
-            return definition(kind, "양쪽 어깨 봉제선의 가장 바깥점을 직선으로 측정", "어깨선이 없는 라글란 옷은 이 항목을 입력하지 마세요.", 10...90)
+            return definition(kind, "양쪽 어깨 봉제선의 가장 바깥점을 직선으로 측정", "어깨선이 없는 라글란 옷은 이 항목을 입력하지 마세요.", transportValidRange(for: kind))
         case .chest:
-            return definition(kind, "겨드랑이 바로 아래 양쪽 끝을 수평으로 측정", "둘레가 아닌 옷의 단면값을 입력하세요.", 15...100)
+            return definition(kind, "겨드랑이 바로 아래 양쪽 끝을 수평으로 측정", "둘레가 아닌 옷의 단면값을 입력하세요.", transportValidRange(for: kind))
         case .totalLength:
-            return definition(kind, "앞면의 가장 높은 어깨점부터 밑단까지 수직으로 측정", "옷깃과 후드 길이는 포함하지 마세요.", 15...180)
+            return definition(kind, "앞면의 가장 높은 어깨점부터 밑단까지 수직으로 측정", "옷깃과 후드 길이는 포함하지 마세요.", transportValidRange(for: kind))
         case .sleeveLength:
-            return definition(kind, "어깨 봉제선부터 소매 끝까지 소매선을 따라 측정", "목 중심부터 잰 화장과는 비교할 수 없습니다.", 3...110)
+            return definition(kind, "어깨 봉제선부터 소매 끝까지 소매선을 따라 측정", "목 중심부터 잰 화장과는 비교할 수 없습니다.", transportValidRange(for: kind))
         case .upperAbdomen:
-            return definition(kind, "복부 위치의 양쪽 끝을 수평으로 측정", "가슴이나 밑단 치수로 대체하지 마세요.", 15...100)
+            return definition(kind, "복부 위치의 양쪽 끝을 수평으로 측정", "가슴이나 밑단 치수로 대체하지 마세요.", transportValidRange(for: kind))
         case .upperWaist:
-            return definition(kind, "상의 허리 위치의 양쪽 끝을 수평으로 측정", "하의 허리단면과 구분해 입력하세요.", 15...100)
+            return definition(kind, "상의 허리 위치의 양쪽 끝을 수평으로 측정", "하의 허리단면과 구분해 입력하세요.", transportValidRange(for: kind))
         case .waist:
-            return definition(kind, "허리단을 자연스럽게 편 상태에서 양쪽 끝을 수평으로 측정", "허리둘레가 아닌 단면값을 입력하세요.", 15...90)
+            return definition(kind, "허리단을 자연스럽게 편 상태에서 양쪽 끝을 수평으로 측정", "허리둘레가 아닌 옷의 단면값을 입력하세요.", transportValidRange(for: kind))
         case .hip:
-            return definition(kind, "엉덩이 부분에서 가장 넓은 지점의 양쪽 끝을 측정", "주름을 펴되 원단을 늘리지 마세요.", 20...100)
+            return definition(kind, "엉덩이 부분에서 가장 넓은 지점의 양쪽 끝을 측정", "주름을 펴되 원단을 늘리지 마세요.", transportValidRange(for: kind))
         case .thigh:
-            return definition(kind, "가랑이 봉제점 바로 아래부터 바깥쪽 끝까지 측정", "한쪽 다리의 단면값을 입력하세요.", 10...60)
+            return definition(kind, "가랑이 봉제점 바로 아래부터 바깥쪽 끝까지 측정", "한쪽 다리의 단면값을 입력하세요.", transportValidRange(for: kind))
         case .rise:
-            return definition(kind, "앞면 가랑이 봉제점부터 허리단 위까지 측정", "뒷밑위가 아닌 앞밑위를 측정하세요.", 10...50)
+            return definition(kind, "앞면 가랑이 봉제점부터 허리단 위까지 측정", "뒷밑위가 아닌 앞밑위를 측정하세요.", transportValidRange(for: kind))
         case .hem:
-            return definition(kind, "한쪽 바짓단의 양쪽 끝을 수평으로 측정", "양쪽 바짓단을 합산하지 마세요.", 5...90)
+            return definition(kind, "한쪽 바짓단의 양쪽 끝을 수평으로 측정", "양쪽 바짓단을 합산하지 마세요.", transportValidRange(for: kind))
         case .footLength:
-            return definition(kind, "신발 안쪽의 뒤꿈치 끝부터 발가락 끝까지 측정", "발의 실측 길이와 신발 외부 길이를 입력하지 마세요.", 10...40)
+            return definition(kind, "신발 안쪽의 뒤꿈치 끝부터 발가락 끝까지 측정", "발의 실측 길이와 신발 외부 길이를 입력하지 마세요.", transportValidRange(for: kind))
         case .underBust:
-            return definition(kind, "밑가슴 밴드를 편 상태에서 양쪽 끝을 수평으로 측정", "밑가슴둘레가 아닌 옷의 단면값을 입력하세요.", 15...80)
+            return definition(kind, "밑가슴 밴드를 편 상태에서 양쪽 끝을 수평으로 측정", "밑가슴둘레가 아닌 옷의 단면값을 입력하세요.", transportValidRange(for: kind))
         }
     }
 
@@ -240,7 +263,9 @@ enum ManualMeasurementRecordFactory {
         return (code, evidence, .mapped)
     }
 
-    private static func fitmatchCode(
+    /// Shared by direct-entry and linked-Closet editing so a newly added
+    /// personal measurement uses the same existing FitMatch definition.
+    static func fitmatchCode(
         for kind: MeasurementKind,
         category: ClothingCategory
     ) -> MeasurementCode {

@@ -371,6 +371,7 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(request.productVariantID == remoteVariantID)
         #expect(request.productSizeID == remoteSizeID)
         #expect(request.override != nil)
+        #expect(await remote.runtimeFetchCount() == 0)
         #expect(await remote.overrideMutationCount() == 0)
         #expect(await remote.clearOverrideMutationCount() == 0)
     }
@@ -518,9 +519,9 @@ struct FitMatchClosetSyncCoordinatorTests {
             measurements: GarmentMeasurements(
                 shoulder: 0,
                 chest: 0,
-                totalLength: 999,
+                totalLength: 0,
                 sleeveLength: 0,
-                waist: 999
+                waist: 44
             ),
             product: item.sourceProduct
         )
@@ -571,11 +572,13 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(request.productID == productID)
         #expect(request.productVariantID == variantID)
         #expect(request.productSizeID == serverLSizeID)
-        #expect(request.item.measurements.isEmpty)
+        // The request carries the exact L chart snapshot, never stale local
+        // M values. The linked snapshot RPC can therefore validate it against
+        // the selected server ProductSize and keep it retailer provenance.
+        #expect(request.item.measurements == ["waist_width": 44])
         #expect(request.item.measurementRecords.isEmpty)
         #expect(item.sizeName == "L")
         #expect(item.waist == 44)
-        #expect(item.waist != displayL.measurements.waist)
         #expect(item.sourceProductSize?.id == serverLSizeID)
     }
 

@@ -104,6 +104,7 @@ struct LinkClosetRegistrationView: View {
                     preselectedClassification: nil,
                     isParsedProductReadOnly: true,
                     serverRegistrationContext: registrationServerContext,
+                    requiresExplicitClosetClassification: true,
                     startsAtRegistrationConfirmation: true,
                     prefersRepresentativeByDefault: prefersRepresentativeByDefault,
                     requiresExplicitSizeSelection: preferredRecoveredSize == nil
@@ -569,7 +570,11 @@ struct LinkClosetRegistrationPreparation {
         guard let serverRegistrationContext else {
             return "서버 사이즈 정보를 다시 확인해 주세요."
         }
-        if let message = serverRegistrationContext.registrationBlockMessage {
+        if let message = serverRegistrationContext.registrationBlockMessage,
+           // `notApplicable` is a comparison result, not a failure of the
+           // exact product/variant/size identity needed for the Simple
+           // FitMatch user-owned Closet flow.
+           serverRegistrationContext.classificationState != .notApplicable {
             return message
         }
         let hasExactRegisterableSize = displaySizes.contains { size in
