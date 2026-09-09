@@ -899,7 +899,7 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(product.canonicalEligibility == true)
     }
 
-    @Test func linkClosetPreparationKeepsReviewRequiredFailClosed() async throws {
+    @Test func linkClosetPreparationDefersReviewRequiredMessagingToRegistrationSheet() async throws {
         let parsed = try Self.authorityTestProduct(
             source: "musinsa",
             externalProductID: "link-review",
@@ -926,7 +926,7 @@ struct FitMatchSupabaseProductResolverTests {
         let product = try #require(preparation.parsedProduct)
         #expect(product.classificationAuthorityProvenance == .serverReviewRequired)
         #expect(product.canonicalEligibility == false)
-        #expect(preparation.errorMessage != nil)
+        #expect(preparation.errorMessage == nil)
     }
 
     @Test func reviewRequiredLinkKeepsParserFactsAndExactRuntimeSizeIdentity() async throws {
@@ -1647,6 +1647,41 @@ struct FitMatchSupabaseProductResolverTests {
                 displaySizes: [displaySize]
             ) != nil
         )
+    }
+
+    @Test func linkRegistrationResultGateDoesNotBranchOnClassificationState() {
+        let product = Product(name: "Classification-neutral link gate", category: .top)
+        let displaySize = ProductSize(
+            id: UUID(),
+            name: "M",
+            measurements: .init(shoulder: 0, chest: 52, totalLength: 0, sleeveLength: 0),
+            product: product
+        )
+        let exactIdentity = FitMatchClosetRegistrationServerIdentity(
+            productID: UUID(),
+            productVariantID: UUID(),
+            productSizeID: UUID()
+        )
+
+        for classificationState in [
+            FitMatchClosetRegistrationServerContext.ClassificationState.confirmed,
+            .reviewRequired,
+            .notApplicable,
+            .unavailable
+        ] {
+            let context = FitMatchClosetRegistrationServerContext(
+                classificationState: classificationState,
+                identitiesByDisplaySizeID: [displaySize.id: exactIdentity],
+                registerableDisplaySizeIDs: [displaySize.id]
+            )
+            #expect(
+                LinkClosetRegistrationPreparation.registrationBlockMessage(
+                    productMeasurementPresence: .available,
+                    serverRegistrationContext: context,
+                    displaySizes: [displaySize]
+                ) == nil
+            )
+        }
     }
 
     @Test func reviewRequiredRawMeasurementMapsToExactRegisterableRuntimeSize() async throws {

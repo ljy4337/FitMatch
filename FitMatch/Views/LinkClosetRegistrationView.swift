@@ -563,14 +563,15 @@ struct LinkClosetRegistrationPreparation {
         serverRegistrationContext: FitMatchClosetRegistrationServerContext?,
         displaySizes: [ProductSize]
     ) -> String? {
-        guard productMeasurementPresence != .none else {
-            return "이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
+        // Measurement presence is already projected into the registerable
+        // size set. Keep the result screen's decision to product/size
+        // availability and leave classification review to the next sheet.
+        _ = productMeasurementPresence
+        guard !displaySizes.isEmpty else {
+            return "등록할 사이즈 정보를 찾지 못했습니다."
         }
         guard let serverRegistrationContext else {
-            return "서버 사이즈 정보를 다시 확인해 주세요."
-        }
-        if let message = serverRegistrationContext.registrationBlockMessage {
-            return message
+            return "등록 가능한 사이즈 정보를 찾지 못했습니다."
         }
         let hasExactRegisterableSize = displaySizes.contains { size in
             serverRegistrationContext.isRegisterable(displaySizeID: size.id)
@@ -578,7 +579,7 @@ struct LinkClosetRegistrationPreparation {
         }
         return hasExactRegisterableSize
             ? nil
-            : "서버 사이즈 정보를 다시 확인해 주세요."
+            : "등록 가능한 사이즈 정보를 찾지 못했습니다."
     }
 
     static func make(
@@ -593,16 +594,15 @@ struct LinkClosetRegistrationPreparation {
                 productMeasurementPresence: viewModel.productMeasurementPresence,
                 serverRegistrationContext: viewModel.closetRegistrationServerContext,
                 recoveryViewModel: nil,
-                errorMessage: product.classificationAuthorityProvenance == .serverConfirmed
-                    ? nil
-                    : viewModel.errorMessage
+                // The link-result screen reports only whether product facts
+                // and an exact registerable size were loaded. Classification
+                // review belongs to the following registration sheet.
+                errorMessage: nil
             )
         }
 
         guard viewModel.hasLoadedProductInfo,
-              viewModel.hasServerConfirmedAuthority,
-              !viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              case .confirmed(let authority) = viewModel.serverAuthorityState else {
+              !viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return LinkClosetRegistrationPreparation(
                 parsedProduct: nil,
                 partialProduct: nil,
@@ -626,22 +626,31 @@ struct LinkClosetRegistrationPreparation {
             sourceName: viewModel.sourceName,
             sizes: []
         )
-        let classification = authority.classification
-        partial.categoryCode = classification.categoryCode
-        partial.normalizedProductTypeCode = classification.detailCode
-        // `familyCode` is comparison policy, not the garment identity. The
-        // partial registration path must preserve the server-issued garment
-        // tuple without turning a shopping personal authority into Global.
-        partial.garmentTypeRawValue = classification.garmentTypeCode
-            ?? classification.detailCode
-        partial.sleeveTypeRawValue = classification.lengthCode
-        partial.canonicalPolicyVersion = classification.taxonomyPolicyVersion
-            ?? classification.decisionVersion
-        partial.markClassificationAuthority(
-            viewModel.hasActiveUserExplicitClassification ? .localHint : .serverConfirmed,
-            sourceIdentity: classification.classificationID?.uuidString
-                ?? classification.method
-        )
+        switch viewModel.serverAuthorityState {
+        case .confirmed(let authority):
+            let classification = authority.classification
+            partial.categoryCode = classification.categoryCode
+            partial.normalizedProductTypeCode = classification.detailCode
+            // `familyCode` is comparison policy, not the garment identity.
+            partial.garmentTypeRawValue = classification.garmentTypeCode
+                ?? classification.detailCode
+            partial.sleeveTypeRawValue = classification.lengthCode
+            partial.canonicalPolicyVersion = classification.taxonomyPolicyVersion
+                ?? classification.decisionVersion
+            partial.markClassificationAuthority(
+                viewModel.hasActiveUserExplicitClassification ? .localHint : .serverConfirmed,
+                sourceIdentity: classification.classificationID?.uuidString
+                    ?? classification.method
+            )
+        case .reviewRequired:
+            partial.markClassificationAuthority(.serverReviewRequired)
+        case .notComparable:
+            partial.markClassificationAuthority(.serverNotComparable)
+        case .unavailable:
+            partial.markClassificationAuthority(.serverUnavailable)
+        case .idle, .resolving:
+            partial.markClassificationAuthority(.localHint)
+        }
 
         return LinkClosetRegistrationPreparation(
             parsedProduct: nil,
@@ -650,9 +659,10 @@ struct LinkClosetRegistrationPreparation {
             productMeasurementPresence: viewModel.productMeasurementPresence,
             serverRegistrationContext: viewModel.closetRegistrationServerContext,
             recoveryViewModel: viewModel,
-            errorMessage: viewModel.errorMessage
-                ?? viewModel.parserNotice
-                ?? "사이즈표를 찾지 못했습니다. 실측값을 확인해 주세요."
+            // A loaded product without a usable size is the only result-level
+            // failure shown here. Server classification messages are handled
+            // by the registration form on the next screen.
+            errorMessage: "사이즈표를 찾지 못했습니다. 실측값을 확인해 주세요."
         )
     }
 }
