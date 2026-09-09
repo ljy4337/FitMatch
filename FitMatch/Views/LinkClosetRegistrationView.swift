@@ -172,11 +172,8 @@ struct LinkClosetRegistrationView: View {
         guard shouldCompleteAfterSheetDismissal else { return }
         shouldCompleteAfterSheetDismissal = false
         withAnimation { isShowingSavedToast = true }
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.2))
-            onSaved?()
-            dismiss()
-        }
+        onSaved?()
+        dismiss()
     }
 
     private var loadingContent: some View {

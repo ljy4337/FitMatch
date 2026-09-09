@@ -3640,3 +3640,9 @@ git diff -- '*.swift' | grep -E \
 - Removed section 5 `핏 기록` from the direct/manual Closet form. The persisted model/service defaults remain unchanged; this step removes the manual UI inputs only.
 - Added focused tests for confirmed-only database preselection and category-independent numeric measurement visibility. In a complete temporary checkout, app/test `build-for-testing` passed. `FitMatchSupabaseProductResolverTests` executed 52 tests: the two new tests passed, 47 total passed, and the same five pre-existing Result→Closet variant/preferred-size tests failed. The attempted exact-method filter selected zero Swift Testing cases and is not counted as evidence.
 - `git diff --check` passed before the handoff update. No protected TabBar/header-scroll implementation or call site was changed.
+
+## 2026-09-09 connectDB — Link registration immediate completion
+
+- After a successful linked Closet registration, `LinkClosetRegistrationView` now sets the existing `내 옷장에 추가했어요.` toast state, invokes its completion callback, and dismisses the link-registration screen immediately in the same main-actor action.
+- Removed only the previous 1.2-second post-success sleep. Registration validation, server-first persistence, failure/retry handling, partial reference-success acknowledgement, toast copy, and other navigation flows remain unchanged.
+- `xcrun swiftc -parse` for the changed Swift file and `git diff --check` passed. The simulator app build started but produced no build progress for about one minute and was interrupted, so no Xcode build pass is claimed. Protected TabBar/header-scroll diffs remained empty.
