@@ -56,17 +56,21 @@ struct MusinsaParser: ProductURLParsing {
         // Closet/comparison use for this phase.
         onProgress(.loadingSizeChart)
         let actualSize: MusinsaActualSizeResult?
+        let failedActualSizeCapture: FitMatchRetailerAPIResponseCapture?
         do {
             actualSize = try await actualSizeParser.parseActualSize(
                 productID: resolved.productID,
                 isTopCategory: metadata.category.isMusinsaUpperBodyCategory
             )
+            failedActualSizeCapture = nil
         } catch {
             if Task.isCancelled { throw CancellationError() }
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
             #endif
             actualSize = nil
+            failedActualSizeCapture =
+                (error as? FitMatchRetailerAPIResponseError)?.capture
         }
         let actualParsedSizes = actualSize?.sizes ?? []
         var sizes = ParsedSizeValidator.validSizes(
@@ -74,6 +78,9 @@ struct MusinsaParser: ProductURLParsing {
             category: metadata.category
         )
         metadata.applyActualSizeProfile(typeNumber: actualSize?.typeNumber, typeName: actualSize?.typeName)
+        let retailerAPIEvidence = metadata.retailerAPIEvidence(
+            measurements: actualSize?.responseCapture ?? failedActualSizeCapture
+        )
 
         #if DEBUG
         FitMatchDebugLogger.detail(
@@ -112,7 +119,7 @@ struct MusinsaParser: ProductURLParsing {
             var productInfo = metadata.parsedProductInfo(
                 sizes: [],
                 parserNotice: Self.automaticSizeFailureNotice
-            )
+            ).withRetailerAPIEvidence(retailerAPIEvidence)
             productInfo.sizeTableRecoveryContext = SizeTableRecoveryContext(
                 failure: recoveryImages.isEmpty ? .noImageCandidates : .imageCandidatesAvailable,
                 imageURLStrings: recoveryImages
@@ -123,6 +130,7 @@ struct MusinsaParser: ProductURLParsing {
         }
 
         return metadata.parsedProductInfo(sizes: sizes)
+            .withRetailerAPIEvidence(retailerAPIEvidence)
     }
 }
 

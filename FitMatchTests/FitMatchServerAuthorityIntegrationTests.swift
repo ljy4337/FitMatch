@@ -4,6 +4,70 @@ import Testing
 
 @MainActor
 struct FitMatchServerAuthorityIntegrationTests {
+    @Test func freshRetailerEvidenceIsSubmittedOnceForTheFrozenObservation() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "E482514",
+            detail: "short_sleeve",
+            family: "tshirt",
+            length: "short_sleeve"
+        )
+        let detailsURL = try #require(
+            URL(string: "https://www.uniqlo.com/api/details/E482514-000")
+        )
+        let evidence = FitMatchRetailerAPIEvidence(
+            contractVersion: FitMatchRetailerAPIEvidence.v1Contract,
+            sourceCode: "uniqlo",
+            sourceProductKey: fixture.request.externalProductID,
+            identityScheme: nil,
+            selectedVariantKey: nil,
+            details: FitMatchRetailerAPIResponseCapture(
+                requestURL: detailsURL,
+                httpStatus: 200,
+                body: Data(#"{"result":{"productId":"E482514-000"}}"#.utf8)
+            ),
+            measurements: nil
+        )
+        let base = fixture.observationRequest.payload
+        let frozen = FitMatchProductObservationRequest(
+            payload: FitMatchProductObservationPayload(
+                source: base.source,
+                externalProductID: base.externalProductID,
+                productName: base.productName,
+                canonicalURL: base.canonicalURL,
+                audience: base.audience,
+                sourceCategoryPath: base.sourceCategoryPath,
+                sourceCategoryCodes: base.sourceCategoryCodes,
+                imageURL: base.imageURL,
+                observedAt: base.observedAt,
+                rawPayload: base.rawPayload,
+                structuredFacts: base.structuredFacts,
+                retailerAPIEvidence: evidence,
+                variants: base.variants
+            )
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [
+                fixture.resolution(catalogState: "current"),
+                fixture.resolution(catalogState: "current")
+            ],
+            observations: [fixture.observationResponse],
+            runtimes: [fixture.runtime, fixture.runtime, fixture.runtime]
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+
+        _ = try await coordinator.resolveProductAuthority(
+            request: fixture.request,
+            observation: frozen
+        )
+        _ = try await coordinator.resolveProductAuthority(
+            request: fixture.request,
+            observation: frozen
+        )
+
+        #expect(await remote.observationCallCount == 1)
+        #expect(await remote.runtimeCallCount == 3)
+    }
+
     @Test func changedPreviewPromotesThroughObservationAndRequeriesRuntime() async throws {
         let fixture = AuthorityFixture.confirmed(
             externalProductID: "E482514",

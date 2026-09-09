@@ -255,7 +255,58 @@ nonisolated struct FitMatchProductObservationPayload: Encodable, Equatable, Send
     let observedAt: String
     let rawPayload: [String: String]
     let structuredFacts: [String: String]
+    let retailerAPIEvidence: FitMatchRetailerAPIEvidence?
     let variants: [FitMatchProductObservationVariant]
+
+    init(
+        source: String,
+        externalProductID: String,
+        productName: String,
+        canonicalURL: String?,
+        audience: String?,
+        sourceCategoryPath: String?,
+        sourceCategoryCodes: [String],
+        imageURL: String?,
+        observedAt: String,
+        rawPayload: [String: String],
+        structuredFacts: [String: String],
+        retailerAPIEvidence: FitMatchRetailerAPIEvidence? = nil,
+        variants: [FitMatchProductObservationVariant]
+    ) {
+        self.source = source
+        self.externalProductID = externalProductID
+        self.productName = productName
+        self.canonicalURL = canonicalURL
+        self.audience = audience
+        self.sourceCategoryPath = sourceCategoryPath
+        self.sourceCategoryCodes = sourceCategoryCodes
+        self.imageURL = imageURL
+        self.observedAt = observedAt
+        self.rawPayload = rawPayload
+        self.structuredFacts = structuredFacts
+        self.retailerAPIEvidence = retailerAPIEvidence
+        self.variants = variants
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(source, forKey: .source)
+        try container.encode(externalProductID, forKey: .externalProductID)
+        try container.encode(productName, forKey: .productName)
+        try container.encodeIfPresent(canonicalURL, forKey: .canonicalURL)
+        try container.encodeIfPresent(audience, forKey: .audience)
+        try container.encodeIfPresent(sourceCategoryPath, forKey: .sourceCategoryPath)
+        try container.encode(sourceCategoryCodes, forKey: .sourceCategoryCodes)
+        try container.encodeIfPresent(imageURL, forKey: .imageURL)
+        try container.encode(observedAt, forKey: .observedAt)
+        try container.encode(rawPayload, forKey: .rawPayload)
+        var encodedFacts = structuredFacts.mapValues(FitMatchJSONValue.string)
+        if let retailerAPI = retailerAPIEvidence?.jsonValue {
+            encodedFacts["retailer_api"] = retailerAPI
+        }
+        try container.encode(encodedFacts, forKey: .structuredFacts)
+        try container.encode(variants, forKey: .variants)
+    }
 
     enum CodingKeys: String, CodingKey {
         case source
@@ -2362,7 +2413,13 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             lengthCode: request.item.lengthCode,
             bodyLengthCode: request.item.bodyLengthCode
         )
-        let measurements = try canonicalMeasurements(for: request.item)
+        // A linked Closet item is measured by its exact server product-size
+        // row. Do not validate presentation-only retailer records that are
+        // intentionally omitted from this mutation (for example an official
+        // UNIQLO raw axis that has no canonical DB mapping yet).
+        let measurements = request.productID == nil
+            ? try canonicalMeasurements(for: request.item)
+            : nil
         return VNextClosetMutationPayload(
             clientItemID: request.clientItemID,
             productID: request.productID,
@@ -2384,7 +2441,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             // Product-linked items always hydrate canonical measurements from
             // the selected vNext size. Local cache values are never allowed to
             // overwrite sourced measurement authority during an edit.
-            measurements: request.productID == nil ? measurements : nil,
+            measurements: measurements,
             closetClassificationOverride: try request.override.map {
                 try Self.mutationOverridePayload($0)
             }
@@ -2469,6 +2526,14 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     nonisolated static func mapClosetItem(
         _ item: VNextClosetItemDTO
     ) -> FitMatchClosetItemRecord {
+        let categoryCode = item.categoryCode ?? "other"
+        let detailCode = closetDetailCode(
+            categoryCode: categoryCode,
+            garmentTypeCode: item.garmentTypeCode,
+            sleeveLengthCode: item.sleeveLengthCode,
+            lowerLengthCode: item.lowerLengthCode,
+            bodyLengthCode: item.bodyLengthCode
+        )
         let measurements = item.measurements
             .reduce(into: [String: [Double]]()) { result, measurement in
                 result[measurement.measurementCode, default: []].append(measurement.value)
@@ -2526,7 +2591,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             brand: item.brandName,
             productName: item.itemName,
             sizeName: item.sizeLabel,
-            genderCode: item.audienceCode.lowercased(),
+            genderCode: appTaxonomyAudienceCode(item.audienceCode),
             source: item.sourceCode,
             sourceCategoryPath: item.sourceCategoryPath,
             productURL: item.productURL,
@@ -2541,10 +2606,10 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             classificationSource: closetClassificationSource(
                 from: item.classificationSource
             ),
-            categoryCode: item.categoryCode ?? "other",
-            detailCode: item.garmentTypeCode,
+            categoryCode: categoryCode,
+            detailCode: detailCode,
             canonicalCategoryCode: item.categoryCode,
-            canonicalDetailCode: item.garmentTypeCode,
+            canonicalDetailCode: detailCode,
             familyCode: item.garmentTypeCode,
             lengthCode: item.sleeveLengthCode ?? item.lowerLengthCode,
             bodyLengthCode: item.bodyLengthCode,
@@ -2559,6 +2624,89 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             createdAt: item.createdAt,
             updatedAt: item.updatedAt
         )
+    }
+
+    /// The vNext row stores garment identity and length axes separately,
+    /// while the Closet UI uses one detail picker code. Rebuild only from the
+    /// server-issued tuple; retailer names and paths are not classification
+    /// inputs here.
+    nonisolated private static func closetDetailCode(
+        categoryCode: String,
+        garmentTypeCode: String,
+        sleeveLengthCode: String?,
+        lowerLengthCode: String?,
+        bodyLengthCode: String?
+    ) -> String {
+        switch categoryCode {
+        case "tops":
+            switch garmentTypeCode {
+            case "sleeveless_tshirt", "tank_top": return "sleeveless"
+            case "tshirt":
+                if let sleeveLengthCode,
+                   ["sleeveless", "short_sleeve", "three_quarter_sleeve", "long_sleeve"]
+                    .contains(sleeveLengthCode) {
+                    return sleeveLengthCode
+                }
+                return "other_tops"
+            case "polo_shirt": return "polo_shirt"
+            case "shirt_blouse", "shirt": return "shirt"
+            case "knit_sweater", "cardigan", "knit_vest": return "knit_top"
+            case "sweatshirt": return "sweatshirt"
+            case "hoodie", "zip_hoodie": return "hoodie"
+            default: return "other_tops"
+            }
+        case "bottoms":
+            switch lowerLengthCode {
+            case "short_length", "short_sleeve": return "shorts"
+            case "cropped_length", "cropped": return "cropped_pants"
+            case "three_quarter_length", "three_quarter": return "three_quarter_pants"
+            case "nine_tenths_length", "nine_tenths": return "nine_tenths_pants"
+            case "long_length", "long_sleeve": return "long_pants"
+            default: return garmentTypeCode == "shorts" ? "shorts" : "other_bottoms"
+            }
+        case "leggings":
+            switch lowerLengthCode {
+            case "short_length": return "short_leggings"
+            case "three_quarter_length": return "three_quarter_leggings"
+            case "nine_tenths_length": return "nine_tenths_leggings"
+            case "long_length": return "long_leggings"
+            default: return "other_leggings"
+            }
+        case "outerwear":
+            switch garmentTypeCode {
+            case "cardigan": return "cardigan"
+            case "windbreaker": return "windbreaker"
+            case "anorak": return "anorak"
+            case "blazer": return "blazer"
+            case "blouson", "ma1": return "blouson"
+            case "fleece_jacket": return "fleece"
+            case "puffer_vest": return "padded_vest"
+            case "outer_vest": return "vest"
+            case "puffer_jacket": return bodyLengthCode == "long_length" ? "long_padding" : "padding"
+            case "coat": return "coat"
+            case "trench_coat": return "trench_coat"
+            case "mouton": return "mouton"
+            case "jacket": return "jacket"
+            default: return "other_outerwear"
+            }
+        case "skirts": return "skirt"
+        case "dresses": return "one_piece"
+        case "underwear":
+            return ClosetDetailCategory.fromTaxonomyCode(garmentTypeCode) == .other
+                ? "underwear" : garmentTypeCode
+        default: return "other"
+        }
+    }
+
+    nonisolated private static func appTaxonomyAudienceCode(_ audienceCode: String) -> String {
+        switch FitMatchCanonicalAudience.code(from: audienceCode) {
+        case FitMatchCanonicalAudience.men.rawValue: return "male"
+        case FitMatchCanonicalAudience.women.rawValue: return "female"
+        case FitMatchCanonicalAudience.unisex.rawValue: return "unisex"
+        case FitMatchCanonicalAudience.kids.rawValue,
+             FitMatchCanonicalAudience.baby.rawValue: return "kids_unisex"
+        default: return "unknown"
+        }
     }
 
     /// Public Closet list rows use USER_EXPLICIT for an initial personal
@@ -2937,6 +3085,23 @@ extension ParsedProductInfo {
             "local_classification_conflict_evidence": conflictEvidence,
             "local_classification_safety_policy_version": ParsedClosetClassificationSafetyAudit.policyVersion
         ]
+        let observationVariants: [FitMatchProductObservationVariant]
+        if retailerAPIEvidence != nil, observationSizes.isEmpty {
+            // Raw retailer facts can establish classification before a
+            // verified size hierarchy exists. Do not invent a dummy variant
+            // or size merely to carry that evidence.
+            observationVariants = []
+        } else {
+            observationVariants = [
+                FitMatchProductObservationVariant(
+                    externalVariantID: variantID,
+                    variantName: color,
+                    colorCode: color,
+                    colorName: color,
+                    sizes: observationSizes
+                )
+            ]
+        }
         return FitMatchProductObservationRequest(
             payload: FitMatchProductObservationPayload(
                 source: resolution.source,
@@ -2950,15 +3115,8 @@ extension ParsedProductInfo {
                 observedAt: formatter.string(from: observedAt),
                 rawPayload: rawPayload,
                 structuredFacts: resolution.structuredFacts,
-                variants: [
-                    FitMatchProductObservationVariant(
-                        externalVariantID: variantID,
-                        variantName: color,
-                        colorCode: color,
-                        colorName: color,
-                        sizes: observationSizes
-                    )
-                ]
+                retailerAPIEvidence: retailerAPIEvidence,
+                variants: observationVariants
             )
         )
     }

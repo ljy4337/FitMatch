@@ -1188,6 +1188,63 @@ struct ZARAParserPhase1_5Tests {
         }
     }
 
+    @Test func unknownCategoryCarriesParentVariantRawEvidenceBeforeClassification() async throws {
+        let url = try #require(
+            URL(string: "https://www.zara.com/kr/ko/item-p01234567.html?v1=900000011")
+        )
+        let html = try String(
+            contentsOf: fixtureURL("fixtures/zara_unknown_category_synthetic.html"),
+            encoding: .utf8
+        )
+        let detailsURL = try #require(
+            URL(string: "https://www.zara.com/api/product/900000011")
+        )
+        let details = FitMatchRetailerAPIResponseCapture(
+            requestURL: detailsURL,
+            httpStatus: 200,
+            body: Data(
+                #"{"product":{"type":"Product","id":900000001,"detail":{"colors":[{"productId":900000011},{"productId":900000012}]}}}"#.utf8
+            )
+        )
+        let parser = ZARAParser(
+            pageLoader: Phase15ZARAPageLoader(
+                page: .init(url: url, statusCode: 200, html: html)
+            ),
+            sizeGuideLoader: Phase15ZARAGuideLoader(
+                data: Data(#"{"measureGuideInfo":{"sizes":[]}}"#.utf8)
+            ),
+            productDetailsLoader: Phase15ZARADetailsLoader(capture: details)
+        )
+
+        let info = try #require(await partialResult(parser: parser, url: url))
+        let evidence = try #require(info.retailerAPIEvidence)
+        #expect(evidence.contractVersion == FitMatchRetailerAPIEvidence.zaraParentVariantContract)
+        #expect(evidence.sourceProductKey == "900000001")
+        #expect(evidence.selectedVariantKey == "900000011")
+        #expect(evidence.measurements != nil)
+        #expect(info.sizes.isEmpty)
+        #expect(info.fitMatchProductObservationRequest()?.payload.variants.isEmpty == true)
+    }
+
+    @Test func detailsRequestUsesPDPWithExactSelectedVariantAndAjaxFlag() throws {
+        let sourceURL = try #require(
+            URL(string: "https://www.zara.com/kr/ko/item-p06085229.html?v1=111&foo=bar")
+        )
+        let requestURL = try #require(
+            ZARAProductDetailsLoader.requestURL(
+                sourceURL: sourceURL,
+                selectedVariantID: "555528084"
+            )
+        )
+        let components = try #require(
+            URLComponents(url: requestURL, resolvingAgainstBaseURL: false)
+        )
+        #expect(components.path == "/kr/ko/item-p06085229.html")
+        #expect(components.queryItems?.filter { $0.name == "v1" }.map(\.value) == ["555528084"])
+        #expect(components.queryItems?.filter { $0.name == "ajax" }.map(\.value) == ["true"])
+        #expect(components.queryItems?.filter { $0.name == "foo" }.map(\.value) == ["bar"])
+    }
+
     @Test func userConfirmedBottomResumesVerifiedZARAMeasurements() async throws {
         let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p01234567.html?v1=900000011"))
         let html = try String(
@@ -1626,6 +1683,17 @@ private struct Phase15ZARAGuideLoader: ZARASizeGuideLoading {
 
     func load(productID: String) async throws -> Data {
         data
+    }
+}
+
+private struct Phase15ZARADetailsLoader: ZARAProductDetailsLoading {
+    let capture: FitMatchRetailerAPIResponseCapture
+
+    func loadResponse(
+        sourceURL: URL,
+        selectedVariantID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+        capture
     }
 }
 

@@ -931,10 +931,7 @@ private extension CompareFlowSheet {
                         .font(.title2.weight(.black))
                         .multilineTextAlignment(.center)
                 } else {
-                    Text(viewModel.serverAuthorityState.productLoadFailureTitle
-                         ?? (isAutomaticMusinsaSizeFailure
-                             ? "상품 정보를 불러왔어요."
-                             : "상품 정보를 불러오지 못했어요."))
+                    Text(errorScreenTitle)
                         .font(.title2.weight(.black))
                     Text(isAutomaticMusinsaSizeFailure
                          ? "판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했어요. 사이즈표를 확인한 뒤 직접 입력해 주세요."
@@ -989,6 +986,19 @@ private extension CompareFlowSheet {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 20)
+    }
+
+    var errorScreenTitle: String {
+        if let title = viewModel.serverAuthorityState.productLoadFailureTitle {
+            return title
+        }
+        if isAutomaticMusinsaSizeFailure {
+            return "상품 정보를 불러왔어요."
+        }
+        if viewModel.hasServerConfirmedAuthority {
+            return "비교를 시작하지 못했어요."
+        }
+        return "상품 정보를 불러오지 못했어요."
     }
 
     var isAutomaticMusinsaSizeFailure: Bool {
@@ -2077,6 +2087,22 @@ private extension CompareFlowSheet {
             return
         }
 
+        // Setting a Closet item as the user's basis is an explicit, persisted
+        // selection preference. When the server has approved that item as a
+        // manual candidate, reuse the preference instead of asking the user to
+        // select the same item again. Never promote a blocked/non-candidate row.
+        let approvedRepresentativeReferences = manualReferences.filter(\.isRepresentative)
+        if approvedRepresentativeReferences.count == 1,
+           let representative = approvedRepresentativeReferences.first {
+            selectedReferenceItemID = representative.id
+            await calculateAndSaveTemporaryRecommendation(
+                selectedReferenceItem: representative,
+                requestID: requestID,
+                userID: userID
+            )
+            return
+        }
+
         guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
             return
         }
@@ -2187,8 +2213,7 @@ private extension CompareFlowSheet {
                 userFit: item,
                 matchRate: 0,
                 compatibleMeasurementCount: candidate.commonMeasurementCount ?? 0,
-                selectionReason: candidate.reason
-                    ?? "서버가 비교 가능한 기준 옷으로 승인했습니다."
+                selectionReason: candidate.selectionUserMessage
             )
         }
         guard manualCandidates.count == serverPlan.manualCandidates.count else {

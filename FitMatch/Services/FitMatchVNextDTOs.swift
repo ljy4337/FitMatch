@@ -231,6 +231,34 @@ nonisolated enum VNextClassificationRecoveryContractVersion: String, Equatable,
         "fitmatch-vnext-recovery-v6-complete-tuple-garment-first"
     case v7ExplicitAuthority =
         "fitmatch-vnext-recovery-v7-explicit-authority"
+    case retailerAPIR1 =
+        "fitmatch-vnext-recovery-retailer-api-20260909-r1"
+    case retailerAPIR2 =
+        "fitmatch-vnext-recovery-retailer-api-20260909-r2"
+    case currentRetailerFactsV1 =
+        "fitmatch-vnext-recovery-current-retailer-facts-20260909-v1"
+    case currentRetailerFactsV2 =
+        "fitmatch-vnext-recovery-current-retailer-facts-20260909-v2"
+
+    var maximumCandidateCount: Int {
+        switch self {
+        case .v6CompleteTupleGarmentFirst, .v7ExplicitAuthority:
+            return 3
+        case .retailerAPIR1, .retailerAPIR2,
+             .currentRetailerFactsV1, .currentRetailerFactsV2:
+            return 64
+        }
+    }
+
+    var requiresCandidateAudience: Bool {
+        switch self {
+        case .v6CompleteTupleGarmentFirst, .v7ExplicitAuthority:
+            return false
+        case .retailerAPIR1, .retailerAPIR2,
+             .currentRetailerFactsV1, .currentRetailerFactsV2:
+            return true
+        }
+    }
 }
 
 nonisolated struct VNextKnownClassificationFactsDTO: Decodable, Equatable, Sendable {
@@ -260,12 +288,37 @@ nonisolated struct VNextClassificationRecoveryCandidateDTO:
     let candidateID: String
     let candidateFingerprint: String
     let displayName: String
+    let audienceCode: String?
     let categoryCode: String
     let garmentTypeCode: String
     let sleeveLengthCode: String?
     let lowerLengthCode: String?
     let bodyLengthCode: String?
     let comparisonPolicyCode: String
+
+    init(
+        candidateID: String,
+        candidateFingerprint: String,
+        displayName: String,
+        audienceCode: String? = nil,
+        categoryCode: String,
+        garmentTypeCode: String,
+        sleeveLengthCode: String?,
+        lowerLengthCode: String?,
+        bodyLengthCode: String?,
+        comparisonPolicyCode: String
+    ) {
+        self.candidateID = candidateID
+        self.candidateFingerprint = candidateFingerprint
+        self.displayName = displayName
+        self.audienceCode = audienceCode
+        self.categoryCode = categoryCode
+        self.garmentTypeCode = garmentTypeCode
+        self.sleeveLengthCode = sleeveLengthCode
+        self.lowerLengthCode = lowerLengthCode
+        self.bodyLengthCode = bodyLengthCode
+        self.comparisonPolicyCode = comparisonPolicyCode
+    }
 
     var id: String { candidateID }
 
@@ -286,6 +339,7 @@ nonisolated struct VNextClassificationRecoveryCandidateDTO:
         case candidateID = "candidate_id"
         case candidateFingerprint = "candidate_fingerprint"
         case displayName = "display_name"
+        case audienceCode = "audience_code"
         case categoryCode = "category_code"
         case garmentTypeCode = "garment_type_code"
         case sleeveLengthCode = "sleeve_length_code"
@@ -369,12 +423,13 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
 
     var isSafelyRecoverable: Bool {
         guard recoverability == .recoverable,
-              supportedContractVersion != nil,
+              let supportedContractVersion,
               let serverUnknownFields else {
             return false
         }
 
-        return (1...3).contains(candidates.count)
+        return (1...supportedContractVersion.maximumCandidateCount)
+            .contains(candidates.count)
             && candidateCount == candidates.count
             && candidateSetHash?.isEmpty == false
             && !productInputFingerprint.isEmpty
@@ -385,6 +440,11 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
                 == candidates.count
             && candidates.allSatisfy(isCompleteCandidateShape)
             && candidates.allSatisfy(matchesFixedFacts)
+            && candidates.allSatisfy { candidate in
+                !supportedContractVersion.requiresCandidateAudience
+                    || (candidate.audienceCode != nil
+                        && candidate.audienceCode == fixedFacts.audienceCode)
+            }
             && candidates.allSatisfy {
                 $0.candidateID == $0.candidateFingerprint
             }
@@ -442,7 +502,8 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
         switch supportedContractVersion {
         case .v6CompleteTupleGarmentFirst:
             return presentationUnknownFields
-        case .v7ExplicitAuthority:
+        case .v7ExplicitAuthority, .retailerAPIR1, .retailerAPIR2,
+             .currentRetailerFactsV1, .currentRetailerFactsV2:
             return wholeCandidateUnknownFields
         }
     }
@@ -484,7 +545,10 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
     private func matchesFixedFacts(
         _ candidate: VNextClassificationRecoveryCandidateDTO
     ) -> Bool {
-        (fixedFacts.categoryCode == nil
+        (fixedFacts.audienceCode == nil
+            || candidate.audienceCode == nil
+            || fixedFacts.audienceCode == candidate.audienceCode)
+            && (fixedFacts.categoryCode == nil
             || fixedFacts.categoryCode == candidate.categoryCode)
             && (fixedFacts.garmentTypeCode == nil
                 || fixedFacts.garmentTypeCode == candidate.garmentTypeCode)

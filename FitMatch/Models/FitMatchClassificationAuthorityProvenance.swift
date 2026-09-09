@@ -155,11 +155,11 @@ extension UserFit {
 
     func fitMatchServerReferenceSnapshot() -> FitMatchLocalReferenceSnapshot? {
         guard isActiveClosetItem,
-              classificationAuthorityProvenance?.isComparisonAuthority == true,
               !FitMatchClosetClassificationEditPolicy.isExplicitSet(self),
               let categoryCode = resolvedCategoryCode,
               let detailCode = resolvedDetailCategoryCode,
-              let familyCode = garmentTypeRawValue?.trimmingCharacters(
+              let familyCode = (garmentTypeRawValue ?? sourceProduct?.garmentTypeRawValue)?
+                .trimmingCharacters(
                 in: .whitespacesAndNewlines
               ),
               !familyCode.isEmpty,
@@ -190,14 +190,17 @@ extension UserFit {
             }
         }
 
-        let bodyLength = canonicalProfileSnapshot?.lengthAxes.body
+        let sourceProfile = canonicalProfileSnapshot ?? sourceProduct?.canonicalProfileSnapshot
+        let bodyLength = sourceProfile?.lengthAxes.body
+        let lengthCode = (sleeveTypeRawValue ?? sourceProduct?.sleeveTypeRawValue)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         return FitMatchLocalReferenceSnapshot(
             productName: productName,
             sizeName: sizeName.trimmingCharacters(in: .whitespacesAndNewlines),
             categoryCode: categoryCode,
             detailCode: detailCode,
             familyCode: familyCode,
-            lengthCode: sleeveTypeRawValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+            lengthCode: lengthCode,
             bodyLengthCode: bodyLength == "unknown" || bodyLength == "not_applicable"
                 ? nil
                 : bodyLength,

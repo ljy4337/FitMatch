@@ -100,9 +100,11 @@ struct AddComparedProductToClosetSheet: View {
         let hasServerAuthority = serverRegistrationContext == nil
             ? product.classificationAuthorityProvenance == .serverConfirmed
             : serverContextConfirmsClassification
-        let serverCategoryCode = product.categoryCode?
+        let serverCategoryCode = (serverRegistrationContext?.categoryCode
+            ?? product.categoryCode)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let serverDetailCode = product.normalizedProductTypeCode?
+        let serverDetailCode = (serverRegistrationContext?.detailCode
+            ?? product.normalizedProductTypeCode)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let serverCategory: ClothingCategory?
         if let serverCategoryCode {
@@ -325,8 +327,11 @@ struct AddComparedProductToClosetSheet: View {
                 }
                 .padding(20)
                 .padding(.bottom, 112)
+                // Lock editable controls while an immutable server retry is
+                // pending, but leave the parent ScrollView's pan gesture
+                // active so the user can still inspect the whole result.
+                .disabled(isSubmissionInputLocked)
             }
-            .disabled(isSubmissionInputLocked)
             .background(Color(.systemGroupedBackground))
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
@@ -362,7 +367,9 @@ struct AddComparedProductToClosetSheet: View {
                 Text(alertMessage ?? "")
             }
         }
-        .interactiveDismissDisabled(isSubmissionInputLocked)
+        // Only an RPC currently in flight blocks dismissal. A completed,
+        // failed, or result-recheck state must always allow swipe-to-dismiss.
+        .interactiveDismissDisabled(isSaving)
     }
 
     private var sizeStep: some View {

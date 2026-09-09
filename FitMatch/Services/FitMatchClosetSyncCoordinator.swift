@@ -278,6 +278,36 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             modelContext.insert(item)
         }
 
+        // The registration receipt stores the database garment/axis tuple,
+        // not the UI's exact detail picker code. For the initiating device we
+        // still have the accepted request, so retain exactly what the user
+        // selected instead of immediately replacing it with a lossy reverse
+        // projection such as `tshirt -> 기타`.
+        if let override = request.override {
+            item.gender = UserGender.fromTaxonomyCode(
+                Self.appTaxonomyAudienceCode(override.audienceCode)
+            )
+            item.genderCode = Self.appTaxonomyAudienceCode(override.audienceCode)
+            item.category = ClothingCategory.fromTaxonomyCode(override.categoryCode)
+            item.categoryCode = override.categoryCode
+            item.detailCategory = ClosetDetailCategory.fromTaxonomyCode(override.detailCode)
+            item.detailCategoryCode = override.detailCode
+            item.normalizedProductTypeCode = override.detailCode
+            if let classification = ParsedClosetClassification.resolve(
+                category: item.category,
+                detailCategory: item.detailCategory,
+                sourceDepths: [],
+                sourcePath: nil,
+                productName: ""
+            ) {
+                item.garmentTypeRawValue = classification.garmentFamily.rawValue
+                item.sleeveTypeRawValue = classification.lengthType == .unknown
+                    ? nil : classification.lengthType.rawValue
+                item.constructionTypeRawValue = classification.constructionType.rawValue
+            }
+            item.markClassificationAuthority(.userExplicit)
+        }
+
         do {
             try persist(modelContext)
         } catch {
@@ -291,6 +321,17 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             throw error
         }
         return item
+    }
+
+    private static func appTaxonomyAudienceCode(_ audienceCode: String?) -> String {
+        switch FitMatchCanonicalAudience.code(from: audienceCode) {
+        case FitMatchCanonicalAudience.men.rawValue: return "male"
+        case FitMatchCanonicalAudience.women.rawValue: return "female"
+        case FitMatchCanonicalAudience.unisex.rawValue: return "unisex"
+        case FitMatchCanonicalAudience.kids.rawValue,
+             FitMatchCanonicalAudience.baby.rawValue: return "kids_unisex"
+        default: return "unknown"
+        }
     }
 
     /// Prepares a server-linked Closet size edit from two authoritative

@@ -74,12 +74,41 @@ enum MeasurementResolver {
             .map {
                 SourceDisplayRow(
                     id: $0.id,
-                    title: $0.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        ? ($0.displayKind?.rawValue ?? "실측")
-                        : $0.rawLabel,
+                    title: sourceDisplayTitle(for: $0),
                     valueText: sourceValueText(for: $0)
                 )
             }
+    }
+
+    private static func sourceDisplayTitle(for record: GarmentMeasurementRecord) -> String {
+        let rawLabel = record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isProviderMachineCode = rawLabel.hasPrefix("musinsa.")
+            || rawLabel.hasPrefix("uniqlo.")
+            || rawLabel.hasPrefix("zara.")
+        if !rawLabel.isEmpty, !isProviderMachineCode {
+            return rawLabel
+        }
+
+        guard let displayKind = record.displayKind else {
+            return rawLabel.isEmpty ? "실측" : rawLabel
+        }
+        switch displayKind {
+        case .shoulder: return "어깨너비"
+        case .chest: return "가슴단면"
+        case .totalLength: return "총장"
+        case .sleeveLength: return record.measurementCode == .sleeveCenterBackToCuff
+            ? "화장" : "소매길이"
+        case .upperAbdomen: return "복부단면"
+        case .upperWaist: return "상의 허리단면"
+        case .waist: return "허리단면"
+        case .hip: return "엉덩이단면"
+        case .thigh: return "허벅지단면"
+        case .rise: return "밑위"
+        case .hem: return "밑단단면"
+        case .footLength: return "발길이"
+        case .underBust: return "밑가슴단면"
+        case .unknown: return rawLabel.isEmpty ? "실측" : rawLabel
+        }
     }
 
     private static func sourceValueText(for record: GarmentMeasurementRecord) -> String {

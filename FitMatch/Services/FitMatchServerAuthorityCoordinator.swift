@@ -179,6 +179,22 @@ nonisolated struct FitMatchServerReferenceSelectionCandidate: Equatable, Sendabl
     var isSelectable: Bool {
         allowed && (decision == .automatic || decision == .manualSelection)
     }
+
+    /// Keeps the server explanation in `reason` for diagnostics while exposing
+    /// a stable Korean sentence at the presentation boundary.
+    var selectionUserMessage: String {
+        if let commonMeasurementCount, commonMeasurementCount > 0 {
+            return "공통 실측 항목 \(commonMeasurementCount)개로 비교할 수 있습니다."
+        }
+        switch FitMatchComparisonBlockReason(code: reasonCode) {
+        case .userSelectedReference:
+            return "직접 선택해 비교할 수 있는 기준 옷입니다."
+        case .automaticMatch:
+            return "자동 비교가 가능한 기준 옷입니다."
+        default:
+            return "서버가 비교 가능한 기준 옷으로 승인했습니다."
+        }
+    }
 }
 
 nonisolated struct FitMatchServerReferenceSelectionPlan: Equatable, Sendable {
@@ -438,6 +454,7 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
 
 actor FitMatchServerAuthorityCoordinator {
     private let remote: any FitMatchServerAuthorityRemoteServicing
+    private var submittedObservationKeys = Set<String>()
 
     @MainActor
     init() {
@@ -648,6 +665,23 @@ actor FitMatchServerAuthorityCoordinator {
             try Task.checkCancellation()
         }
 
+        return try validatedAuthority(
+            runtime,
+            request: request,
+            expectedProductID: expectedProductID
+        )
+    }
+
+    /// Reads current runtime after a user mutation without creating or
+    /// resubmitting an observation. This preserves the mutation contract's
+    /// evidence fingerprint and revision.
+    func refreshProductAuthority(
+        request: FitMatchProductResolutionRequest,
+        expectedProductID: UUID
+    ) async throws -> FitMatchServerProductAuthority {
+        try Task.checkCancellation()
+        let runtime = try await remote.fetchProductRuntime(request)
+        try Task.checkCancellation()
         return try validatedAuthority(
             runtime,
             request: request,
@@ -1487,6 +1521,7 @@ actor FitMatchServerAuthorityCoordinator {
         if let expectedProductID, expectedProductID != productID {
             throw FitMatchServerAuthorityError.promotedProductMismatch
         }
+        submittedObservationKeys.insert(observationKey(observation))
         return productID
     }
 
@@ -1495,6 +1530,9 @@ actor FitMatchServerAuthorityCoordinator {
         runtimeState: String
     ) -> Bool {
         guard let observation else { return false }
+        if observation.payload.retailerAPIEvidence?.jsonValue != nil {
+            return !submittedObservationKeys.contains(observationKey(observation))
+        }
         switch runtimeState {
         case "classification_required":
             // A previously observed product can remain REVIEW_REQUIRED only
@@ -1519,6 +1557,16 @@ actor FitMatchServerAuthorityCoordinator {
         default:
             return false
         }
+    }
+
+    private func observationKey(
+        _ observation: FitMatchProductObservationRequest
+    ) -> String {
+        [
+            observation.payload.source.lowercased(),
+            observation.payload.externalProductID,
+            observation.payload.observedAt
+        ].joined(separator: "|")
     }
 
     private func validatedAuthority(

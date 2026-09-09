@@ -24,6 +24,11 @@ nonisolated struct FitMatchClosetRegistrationServerContext: Equatable, Sendable 
     }
 
     let classificationState: ClassificationState
+    /// Exact Closet picker tuple projected from the database classification.
+    /// Keeping it beside the server size identities avoids depending on a
+    /// second copy through the presentation Product model.
+    let categoryCode: String?
+    let detailCode: String?
     let identitiesByDisplaySizeID: [UUID: FitMatchClosetRegistrationServerIdentity]
     /// Presentation eligibility derived from retailer garment facts before
     /// runtime forms replace parser data.  It remains separate from
@@ -32,10 +37,14 @@ nonisolated struct FitMatchClosetRegistrationServerContext: Equatable, Sendable 
 
     init(
         classificationState: ClassificationState,
+        categoryCode: String? = nil,
+        detailCode: String? = nil,
         identitiesByDisplaySizeID: [UUID: FitMatchClosetRegistrationServerIdentity] = [:],
         registerableDisplaySizeIDs: Set<UUID> = []
     ) {
         self.classificationState = classificationState
+        self.categoryCode = categoryCode
+        self.detailCode = detailCode
         self.identitiesByDisplaySizeID = identitiesByDisplaySizeID
         self.registerableDisplaySizeIDs = registerableDisplaySizeIDs
     }
@@ -599,9 +608,15 @@ enum FitMatchComparedProductClosetRegistration {
             throw ServerPreparationError.invalidExplicitClassification
         }
 
-        let genericLength = classification.lengthType == .unknown
-            ? nil
-            : classification.lengthType.rawValue
+        let databaseTuple = databaseOverrideTuple(
+            categoryCode: request.categoryCode,
+            detailCode: request.detailCategoryCode,
+            fallbackGarmentTypeCode: classification.garmentFamily.rawValue,
+            fallbackLengthCode: classification.lengthType == .unknown
+                ? nil
+                : classification.lengthType.rawValue
+        )
+        let genericLength = databaseTuple.lengthCode
         let bodyLength = request.categoryCode == "dresses" ? genericLength : nil
         return FitMatchClosetClassificationOverride(
             audienceCode: FitMatchCanonicalAudience.code(from: request.genderCode),
@@ -611,7 +626,7 @@ enum FitMatchComparedProductClosetRegistration {
             // garment-type mapping. Its raw values are the same code family
             // consumed by the existing vNext sync adapter (tshirt, pants,
             // knit_cardigan, ...); it is not a display label.
-            familyCode: classification.garmentFamily.rawValue,
+            familyCode: databaseTuple.garmentTypeCode,
             lengthCode: genericLength,
             bodyLengthCode: bodyLength,
             reason: "user_confirmed_closet_classification",
@@ -621,6 +636,38 @@ enum FitMatchComparedProductClosetRegistration {
                 "client_item_id": request.clientItemID.uuidString
             ]
         )
+    }
+
+    /// Closet picker details describe length, while the database stores a
+    /// concrete garment type and a separate lower-length axis. The app's
+    /// legacy comparison family (`pants`) and sleeve-shaped length values
+    /// (`long_sleeve`) are not valid database classification values for a
+    /// bottom. Use the user's exact picker choice only; retailer text is not
+    /// promoted into a more specific trouser subtype.
+    private static func databaseOverrideTuple(
+        categoryCode: String,
+        detailCode: String,
+        fallbackGarmentTypeCode: String,
+        fallbackLengthCode: String?
+    ) -> (garmentTypeCode: String, lengthCode: String?) {
+        guard categoryCode == "bottoms" else {
+            return (fallbackGarmentTypeCode, fallbackLengthCode)
+        }
+
+        switch detailCode {
+        case "short_pants", "shorts":
+            return ("shorts", "short_length")
+        case "cropped_pants":
+            return ("other_standard_pants", "cropped_length")
+        case "three_quarter_pants":
+            return ("other_standard_pants", "three_quarter_length")
+        case "nine_tenths_pants":
+            return ("other_standard_pants", "nine_tenths_length")
+        case "long_pants":
+            return ("other_standard_pants", "long_length")
+        default:
+            return (fallbackGarmentTypeCode, fallbackLengthCode)
+        }
     }
 
     private static func closetItemPayload(
@@ -668,10 +715,22 @@ enum FitMatchComparedProductClosetRegistration {
             sourcePath: nil,
             productName: ""
         )
-        let familyCode = serverFamily ?? localClassification?.garmentFamily.rawValue
-        let lengthCode = serverLength ?? (localClassification?.lengthType == .unknown
+        let localFamilyCode = localClassification?.garmentFamily.rawValue
+        let localLengthCode = localClassification?.lengthType == .unknown
             ? nil
-            : localClassification?.lengthType.rawValue)
+            : localClassification?.lengthType.rawValue
+        let explicitDatabaseTuple = databaseOverrideTuple(
+            categoryCode: categoryCode,
+            detailCode: request.detailCategoryCode,
+            fallbackGarmentTypeCode: localFamilyCode ?? "unknown",
+            fallbackLengthCode: localLengthCode
+        )
+        let familyCode = request.didExplicitlySelectClosetClassification
+            ? explicitDatabaseTuple.garmentTypeCode
+            : (serverFamily ?? localFamilyCode)
+        let lengthCode = request.didExplicitlySelectClosetClassification
+            ? explicitDatabaseTuple.lengthCode
+            : (serverLength ?? localLengthCode)
         // A confirmed outerwear tuple can have both sleeve and body axes.
         // Keep the server-issued body axis distinct from `lengthCode`; using
         // the latter as a body fallback would invent a tuple the server did

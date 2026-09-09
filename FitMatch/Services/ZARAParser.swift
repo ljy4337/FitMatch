@@ -30,21 +30,25 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
     private let pageLoader: ZARAProductPageLoading
     private let fallbackPageLoader: ZARAProductPageLoading?
     private let sizeGuideLoader: ZARASizeGuideLoading
+    private let productDetailsLoader: (any ZARAProductDetailsLoading)?
 
     init() {
         pageLoader = ZARAProductPageLoader()
         fallbackPageLoader = ZARAWebViewProductPageLoader()
         sizeGuideLoader = ZARASizeGuideLoader()
+        productDetailsLoader = ZARAProductDetailsLoader()
     }
 
     init(
         pageLoader: ZARAProductPageLoading,
         sizeGuideLoader: ZARASizeGuideLoading,
-        fallbackPageLoader: ZARAProductPageLoading? = nil
+        fallbackPageLoader: ZARAProductPageLoading? = nil,
+        productDetailsLoader: (any ZARAProductDetailsLoading)? = nil
     ) {
         self.pageLoader = pageLoader
         self.fallbackPageLoader = fallbackPageLoader
         self.sizeGuideLoader = sizeGuideLoader
+        self.productDetailsLoader = productDetailsLoader
     }
 
     func canParse(_ url: URL) -> Bool {
@@ -108,11 +112,13 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
         // The response is only consumed after page structure independently
         // corroborates the style and selected variant.
         let requestedVariantID = ZARAProductPageParser.variantID(from: url)
-        var prefetchedSizeGuide: Data?
+        var prefetchedSizeGuide: FitMatchRetailerAPIResponseCapture?
         if let requestedVariantID {
             onProgress(.loadingSizeChart)
             do {
-                prefetchedSizeGuide = try await sizeGuideLoader.load(productID: requestedVariantID)
+                prefetchedSizeGuide = try await sizeGuideLoader.loadResponse(
+                    productID: requestedVariantID
+                )
             } catch is CancellationError {
                 throw CancellationError()
             } catch {
@@ -134,6 +140,36 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
+        let detailsCapture: FitMatchRetailerAPIResponseCapture? = if let productDetailsLoader {
+            try? await productDetailsLoader.loadResponse(
+                sourceURL: page.url,
+                selectedVariantID: identity.catentryID
+            )
+        } else {
+            nil
+        }
+        let sizeGuideCapture: FitMatchRetailerAPIResponseCapture?
+        if identity.catentryID == requestedVariantID,
+           let prefetchedSizeGuide {
+            sizeGuideCapture = prefetchedSizeGuide
+        } else {
+            sizeGuideCapture = try? await sizeGuideLoader.loadResponse(
+                productID: identity.catentryID
+            )
+        }
+        if let detailsCapture, detailsCapture.jsonObject != nil {
+            info.retailerAPIEvidence = FitMatchRetailerAPIEvidence(
+                contractVersion: FitMatchRetailerAPIEvidence.zaraParentVariantContract,
+                sourceCode: "zara",
+                sourceProductKey: identity.internalProductID,
+                identityScheme: FitMatchRetailerAPIEvidence
+                    .zaraParentVariantIdentityScheme,
+                selectedVariantKey: identity.catentryID,
+                details: detailsCapture,
+                measurements: sizeGuideCapture
+            )
+        }
+
         if let confirmedCategory, let confirmedDetailCategory {
             info.category = confirmedCategory
             info.detailCategory = confirmedDetailCategory
@@ -152,15 +188,12 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
 
         onProgress(.loadingSizeChart)
         do {
-            let data: Data
-            if identity.catentryID == requestedVariantID,
-               let prefetchedSizeGuide {
-                data = prefetchedSizeGuide
-            } else {
-                data = try await sizeGuideLoader.load(productID: identity.catentryID)
+            guard let sizeGuideCapture,
+                  (200..<300).contains(sizeGuideCapture.httpStatus) else {
+                throw ProductURLParserError.automaticParsingUnavailable
             }
             let sizes = try ZARASizeGuideParser.parseActualGarmentMeasurements(
-                data: data,
+                data: sizeGuideCapture.body,
                 category: info.category
             )
             guard !sizes.isEmpty else { throw ProductURLParserError.automaticParsingUnavailable }
@@ -505,12 +538,39 @@ private final class ZARAWebViewPageCaptureOperation: NSObject, WKNavigationDeleg
 
 protocol ZARASizeGuideLoading: Sendable {
     func load(productID: String) async throws -> Data
+    func loadResponse(
+        productID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture
+}
+
+extension ZARASizeGuideLoading {
+    func loadResponse(
+        productID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+        guard let url = ZARASizeGuideLoader.requestURL(productID: productID) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: url,
+            httpStatus: 200,
+            body: try await load(productID: productID)
+        )
+    }
 }
 
 struct ZARASizeGuideLoader: ZARASizeGuideLoading {
     func load(productID: String) async throws -> Data {
-        guard productID.range(of: #"^\d+$"#, options: .regularExpression) != nil,
-              let url = URL(string: "https://www.zara.com/itxrest/4/catalog/store/11717/product/\(productID)/size-measure-guide?locale=ko_KR") else {
+        let response = try await loadResponse(productID: productID)
+        guard (200...299).contains(response.httpStatus) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return response.body
+    }
+
+    func loadResponse(
+        productID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+        guard let url = Self.requestURL(productID: productID) else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
@@ -521,11 +581,80 @@ struct ZARASizeGuideLoader: ZARASizeGuideLoading {
         request.setValue("ko-KR,ko;q=0.9", forHTTPHeaderField: "Accept-Language")
         request.setValue(ZARARequestHeaders.userAgent, forHTTPHeaderField: "User-Agent")
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
-        return data
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? url,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
+    }
+
+    static func requestURL(productID: String) -> URL? {
+        guard productID.range(of: #"^\d+$"#, options: .regularExpression) != nil else {
+            return nil
+        }
+        return URL(string: "https://www.zara.com/itxrest/4/catalog/store/11717/product/\(productID)/size-measure-guide?locale=ko_KR")
+    }
+}
+
+protocol ZARAProductDetailsLoading: Sendable {
+    func loadResponse(
+        sourceURL: URL,
+        selectedVariantID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture
+}
+
+struct ZARAProductDetailsLoader: ZARAProductDetailsLoading {
+    static func requestURL(
+        sourceURL: URL,
+        selectedVariantID: String
+    ) -> URL? {
+        guard selectedVariantID.range(
+            of: #"^\d+$"#,
+            options: .regularExpression
+        ) != nil,
+        ProductURLSupport.isZARAURL(sourceURL),
+        var components = URLComponents(
+            url: sourceURL,
+            resolvingAgainstBaseURL: false
+        ) else {
+            return nil
+        }
+        var queryItems = components.queryItems ?? []
+        queryItems.removeAll { $0.name == "v1" || $0.name == "ajax" }
+        queryItems.append(URLQueryItem(name: "v1", value: selectedVariantID))
+        queryItems.append(URLQueryItem(name: "ajax", value: "true"))
+        components.queryItems = queryItems
+        return components.url
+    }
+
+    func loadResponse(
+        sourceURL: URL,
+        selectedVariantID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+        guard let url = Self.requestURL(
+            sourceURL: sourceURL,
+            selectedVariantID: selectedVariantID
+        ) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 15
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("ko-KR,ko;q=0.9", forHTTPHeaderField: "Accept-Language")
+        request.setValue(ZARARequestHeaders.userAgent, forHTTPHeaderField: "User-Agent")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? url,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
     }
 }
 

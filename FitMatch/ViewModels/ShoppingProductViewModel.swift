@@ -93,6 +93,10 @@ final class ShoppingProductViewModel: ObservableObject {
     /// request generation, or its authenticated user changes.
     private var activeComparisonRequestID: UUID?
     private var parsedProductForServerAuthority: ParsedProductInfo?
+    /// Frozen once per product-load context. All transport retries and
+    /// comparison authorization in that context reuse the same observed_at
+    /// and exact retailer response bytes.
+    private var frozenProductObservation: FitMatchProductObservationRequest?
     private var parsedProductMeasurementPresence: FitMatchProductMeasurementPresence = .unknown
     /// These keys are the parser observation's source-size identities. They
     /// are intentionally matched only to runtime source_size_key values, not
@@ -265,6 +269,7 @@ final class ShoppingProductViewModel: ObservableObject {
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
+        frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
@@ -369,6 +374,7 @@ final class ShoppingProductViewModel: ObservableObject {
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
+        frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
@@ -410,6 +416,7 @@ final class ShoppingProductViewModel: ObservableObject {
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
         parsedProductForServerAuthority = nil
+        frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
@@ -431,6 +438,7 @@ final class ShoppingProductViewModel: ObservableObject {
 
         let loadID = UUID()
         activeLoadID = loadID
+        frozenProductObservation = nil
         errorMessage = nil
         analysisPhase = .loadingSizeChart
         isLoadingProductInfo = true
@@ -509,7 +517,7 @@ final class ShoppingProductViewModel: ObservableObject {
         do {
             let authority = try await serverAuthorityCoordinator.resolveProductAuthority(
                 request: request,
-                observation: product.fitMatchProductObservationRequest()
+                observation: frozenObservation(for: product)
             )
             guard isCurrentLoad(loadID) else { return false }
             switch authority.status {
@@ -581,12 +589,99 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
+    private func frozenObservation(
+        for product: ParsedProductInfo
+    ) -> FitMatchProductObservationRequest? {
+        if let frozenProductObservation {
+            return frozenProductObservation
+        }
+        let observation = product.fitMatchProductObservationRequest()
+        frozenProductObservation = observation
+        return observation
+    }
+
     private func applyServerClassification(_ classification: FitMatchDatabaseClassification) {
         if let categoryCode = classification.categoryCode {
             category = ClothingCategory.fromTaxonomyCode(categoryCode)
         }
-        if let detailCode = classification.detailCode {
+        if let detailCode = Self.closetDetailCode(for: classification) {
             detailCategory = ClosetDetailCategory.fromTaxonomyCode(detailCode)
+        }
+    }
+
+    /// DB vNext exposes the garment identity and its length axis separately.
+    /// Closet registration needs one active app detail code, so consume the
+    /// first code from that same server tuple that is valid for its category.
+    /// No parser/local classification is used as server authority.
+    private static func closetDetailCode(
+        for classification: FitMatchDatabaseClassification
+    ) -> String? {
+        guard let categoryCode = classification.categoryCode else { return nil }
+        return [classification.detailCode, classification.lengthCode]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first {
+                !$0.isEmpty
+                    && FitMatchTaxonomyProvider.shared.isValidDetail(
+                        $0,
+                        for: categoryCode
+                    )
+            }
+    }
+
+    /// A retailer observation and the runtime read are separate server calls.
+    /// If the first read still reports REVIEW_REQUIRED immediately after a
+    /// successful observation, read current authority once more before a link
+    /// registration is prepared. This is runtime-only: it never rebuilds or
+    /// resubmits the frozen retailer payload.
+    @discardableResult
+    func refreshLinkRegistrationAuthorityIfNeeded() async -> Bool {
+        guard case .reviewRequired(let previousAuthority) = serverAuthorityState,
+              frozenProductObservation?.payload.retailerAPIEvidence?.jsonValue != nil,
+              let parsedProduct = parsedProductForServerAuthority,
+              let request = parsedProduct.fitMatchDatabaseResolutionRequest(),
+              let serverAuthorityCoordinator else {
+            return hasServerConfirmedAuthority
+        }
+
+        do {
+            let authority = try await serverAuthorityCoordinator.refreshProductAuthority(
+                request: request,
+                expectedProductID: previousAuthority.productID
+            )
+            try Task.checkCancellation()
+            switch authority.status {
+            case .confirmed:
+                applyServerClassification(authority.classification)
+                applyServerRuntime(
+                    authority.runtime,
+                    allowsCanonicalMeasurementPresence: true
+                )
+                serverAuthorityState = .confirmed(authority)
+                reviewRecoveryState = .idle
+                databaseShadowState = .checking
+                errorMessage = nil
+                return true
+            case .reviewRequired:
+                applyServerRuntime(
+                    authority.runtime,
+                    allowsCanonicalMeasurementPresence: false
+                )
+                serverAuthorityState = .reviewRequired(authority)
+                return false
+            case .notComparable:
+                applyServerRuntime(
+                    authority.runtime,
+                    allowsCanonicalMeasurementPresence: false
+                )
+                serverAuthorityState = .notComparable(authority)
+                return false
+            }
+        } catch is CancellationError {
+            return false
+        } catch {
+            // Keep the already validated first runtime result. A refresh
+            // failure must not turn a loaded product into a different state.
+            return false
         }
     }
 
@@ -611,7 +706,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 return
             }
             sizeOptions = variant.sizes.enumerated().map { index, size in
-                let parsedRecords = size.canonicalMeasurements.measurements.compactMap {
+                let canonicalRecords = size.canonicalMeasurements.measurements.compactMap {
                     measurement -> ParsedMeasurement? in
                     guard measurement.value.isFinite, measurement.value > 0 else { return nil }
                     let projection = FitMatchCanonicalMeasurementCode.projection(
@@ -653,6 +748,13 @@ final class ShoppingProductViewModel: ObservableObject {
                         canonicalMeasurementCode: measurement.measurementCode
                     )
                 }
+                let parsedRecords = Self.mergedPresentationMeasurementRecords(
+                    runtimeRecords: canonicalRecords,
+                    retailerRecords: retailerMeasurementRecords(
+                        sourceSizeKey: size.sourceSizeKey,
+                        sizeLabel: size.sizeLabel
+                    )
+                )
                 // Runtime canonical facts remain useful for CONFIRMED products
                 // even when an unfamiliar server measurement code has no
                 // current display adapter.  This is only a presence fact;
@@ -720,7 +822,7 @@ final class ShoppingProductViewModel: ObservableObject {
             return
         }
         sizeOptions = variant.sizes.enumerated().map { index, size in
-            let parsedRecords = size.measurements.compactMap {
+            let canonicalRecords = size.measurements.compactMap {
                 measurement -> ParsedMeasurement? in
                 guard let rawCode = measurement.measurementCode else { return nil }
                 let value = measurement.normalizedValue ?? measurement.rawValue
@@ -758,6 +860,13 @@ final class ShoppingProductViewModel: ObservableObject {
                     canonicalMeasurementCode: projection?.canonicalCode
                 )
             }
+            let parsedRecords = Self.mergedPresentationMeasurementRecords(
+                runtimeRecords: canonicalRecords,
+                retailerRecords: retailerMeasurementRecords(
+                    sourceSizeKey: size.externalSizeID,
+                    sizeLabel: size.sizeLabel
+                )
+            )
             let hasCanonicalMeasurement = size.measurements.contains { measurement in
                 let value = measurement.normalizedValue ?? measurement.rawValue
                 return value.isFinite && value > 0
@@ -804,6 +913,73 @@ final class ShoppingProductViewModel: ObservableObject {
             return false
         }
         return parsedGarmentMeasurementSourceSizeKeys.contains(normalized)
+    }
+
+    /// Returns the exact parser row that produced the observation size. The
+    /// ingestion contract derives `source_size_key` from this normalized size
+    /// identity, so this does not guess across labels or variants.
+    private func retailerMeasurementRecords(
+        sourceSizeKey: String?,
+        sizeLabel: String
+    ) -> [ParsedMeasurement] {
+        guard let parsedProductForServerAuthority else { return [] }
+        let runtimeKey = normalizedSourceSizeKey(sourceSizeKey)
+            ?? normalizedSourceSizeKey(sizeLabel)
+        guard let runtimeKey else { return [] }
+        let matches = parsedProductForServerAuthority.sizes.filter {
+            normalizedSourceSizeKey($0.name) == runtimeKey
+        }
+        guard matches.count == 1 else { return [] }
+        return matches[0].measurementRecords.filter {
+            $0.value.isFinite && $0.value > 0
+        }
+    }
+
+    /// Runtime canonical facts remain authoritative for an axis. Retailer
+    /// records are appended only for facts the runtime did not project, so the
+    /// registration screen can show every actual numeric source measurement
+    /// without inventing a canonical mapping or changing comparison inputs.
+    static func mergedPresentationMeasurementRecords(
+        runtimeRecords: [ParsedMeasurement],
+        retailerRecords: [ParsedMeasurement]
+    ) -> [ParsedMeasurement] {
+        var result = runtimeRecords
+        var canonicalCodes = Set(runtimeRecords.compactMap(\.canonicalMeasurementCode))
+        var representedDisplayKinds = Set(runtimeRecords.compactMap { record in
+            record.displayKind == .unknown ? nil : record.displayKind
+        })
+        var rawIdentities = Set(runtimeRecords.map { record in
+            [
+                record.rawCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines),
+                String(record.value)
+            ].joined(separator: "|")
+        })
+
+        for record in retailerRecords where record.value.isFinite && record.value > 0 {
+            if let canonicalCode = record.canonicalMeasurementCode,
+               canonicalCodes.contains(canonicalCode) {
+                continue
+            }
+            if record.displayKind != .unknown,
+               representedDisplayKinds.contains(record.displayKind) {
+                continue
+            }
+            let rawIdentity = [
+                record.rawCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines),
+                String(record.value)
+            ].joined(separator: "|")
+            guard rawIdentities.insert(rawIdentity).inserted else { continue }
+            result.append(record)
+            if let canonicalCode = record.canonicalMeasurementCode {
+                canonicalCodes.insert(canonicalCode)
+            }
+            if record.displayKind != .unknown {
+                representedDisplayKinds.insert(record.displayKind)
+            }
+        }
+        return result
     }
 
     private func normalizedSourceSizeKey(_ sourceSizeKey: String?) -> String? {
@@ -853,13 +1029,16 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     private var observationVariantID: String? {
-        guard let value = parsedProductForServerAuthority?
-            .fitMatchProductObservationRequest()?
+        guard let value = frozenProductObservation?
             .payload.variants.first?.externalVariantID else {
             return nil
         }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
+        // `__default__` is an observation placeholder used when UNIQLO or
+        // MUSINSA supplies no explicit variant identity. It is not a retailer
+        // option key and must not conflict with the server's single concrete
+        // variant. ZARA continues to carry its real catentryID here.
+        return trimmed.isEmpty || trimmed == "__default__" ? nil : trimmed
     }
 
     private func selectedRuntimeVariant(
@@ -968,9 +1147,11 @@ final class ShoppingProductViewModel: ObservableObject {
 
     var closetRegistrationServerContext: FitMatchClosetRegistrationServerContext {
         switch serverAuthorityState {
-        case .confirmed:
+        case .confirmed(let authority):
             return FitMatchClosetRegistrationServerContext(
                 classificationState: .confirmed,
+                categoryCode: authority.classification.categoryCode,
+                detailCode: Self.closetDetailCode(for: authority.classification),
                 identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
                 registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )
@@ -1154,9 +1335,9 @@ final class ShoppingProductViewModel: ObservableObject {
             )
             guard !Task.isCancelled else { return false }
             reviewRecoveryState = .resuming
-            let authority = try await coordinator.resolveProductAuthority(
+            let authority = try await coordinator.refreshProductAuthority(
                 request: request,
-                observation: parsedProduct.fitMatchProductObservationRequest()
+                expectedProductID: contract.productID
             )
             guard !Task.isCancelled else { return false }
             guard authority.status == .confirmed,
@@ -1283,7 +1464,7 @@ final class ShoppingProductViewModel: ObservableObject {
         do {
             let plan = try await coordinator.referenceSelectionPlan(
                 targetRequest: request,
-                targetObservation: product.fitMatchProductObservationRequest(),
+                targetObservation: frozenObservation(for: product),
                 localClientItemIDs: localClientItemIDs
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
@@ -1316,9 +1497,15 @@ final class ShoppingProductViewModel: ObservableObject {
         }
         guard let coordinator = serverAuthorityCoordinator,
               let product = parsedProductForServerAuthority,
-              let request = product.fitMatchDatabaseResolutionRequest(),
-              let localReferenceSnapshot = item.fitMatchServerReferenceSnapshot() else {
+              let request = product.fitMatchDatabaseResolutionRequest() else {
             errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            return nil
+        }
+        guard let localReferenceSnapshot = item.fitMatchServerReferenceSnapshot() else {
+            errorMessage = "기준 옷의 분류 또는 실측 정보를 확인할 수 없습니다. 내 옷장에서 기준 옷 정보를 다시 확인해 주세요."
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 기준 옷 서버 승인][상태: 실패] 원인=local_reference_snapshot_unavailable, 기준옷=\(item.displayName), 분류=\(item.resolvedCategoryCode ?? \"nil\")/\(item.resolvedDetailCategoryCode ?? \"nil\"), garment=\(item.garmentTypeRawValue ?? item.sourceProduct?.garmentTypeRawValue ?? \"nil\"), length=\(item.sleeveTypeRawValue ?? item.sourceProduct?.sleeveTypeRawValue ?? \"nil\"), 실측수=\(item.measurementRecords.filter { $0.value.isFinite && $0.value > 0 }.count)")
+            #endif
             return nil
         }
         do {
@@ -1328,7 +1515,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 referenceClientItemID: item.id,
                 localReferenceSnapshot: localReferenceSnapshot,
                 targetRequest: request,
-                targetObservation: product.fitMatchProductObservationRequest(),
+                targetObservation: frozenObservation(for: product),
                 referenceRequest: usesExplicitUserAuthority
                     ? nil
                     : item.sourceProduct?.fitMatchDatabaseResolutionRequest(),
@@ -1352,10 +1539,16 @@ final class ShoppingProductViewModel: ObservableObject {
             guard isCurrentComparison(comparisonRequestID) else { return nil }
             errorMessage = error.errorDescription
                 ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 기준 옷 서버 승인][상태: 실패] 오류=\(error.localizedDescription)")
+            #endif
             return nil
         } catch {
             guard isCurrentComparison(comparisonRequestID) else { return nil }
             errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            #if DEBUG
+            print("[화면: 상품 비교][동작: 기준 옷 서버 승인][상태: 실패] 오류=\(error.localizedDescription)")
+            #endif
             return nil
         }
     }
@@ -1774,7 +1967,8 @@ final class ShoppingProductViewModel: ObservableObject {
         let resolvedCategory = serverClassification?.categoryCode.map(
             ClothingCategory.fromTaxonomyCode
         ) ?? localHint?.category ?? category
-        let resolvedDetailCategory = serverClassification?.detailCode.map(
+        let serverClosetDetailCode = serverClassification.flatMap(Self.closetDetailCode)
+        let resolvedDetailCategory = serverClosetDetailCode.map(
             ClosetDetailCategory.fromTaxonomyCode
         ) ?? localHint?.detailCategory ?? detailCategory
         let productSizes = sizeOptions.compactMap { option in
@@ -1816,7 +2010,7 @@ final class ShoppingProductViewModel: ObservableObject {
         if let serverClassification {
             product.category = resolvedCategory
             product.categoryCode = serverClassification.categoryCode
-            product.normalizedProductTypeCode = serverClassification.detailCode
+            product.normalizedProductTypeCode = serverClosetDetailCode
             product.garmentTypeRawValue = serverClassification.garmentTypeCode
             product.sleeveTypeRawValue = serverClassification.lengthCode
             let runtimeAudience = confirmedServerAuthority?.runtime.vnext?
@@ -1843,7 +2037,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 let bodyLengthCode = effectiveTuple.bodyLengthCode
                 product.category = ClothingCategory.fromTaxonomyCode(categoryCode ?? "other")
                 product.categoryCode = categoryCode
-                product.normalizedProductTypeCode = garmentTypeCode
+                product.normalizedProductTypeCode = serverClosetDetailCode
                 product.garmentTypeRawValue = garmentTypeCode
                 // These fields belong to the single server-issued effective
                 // tuple. Do not retain parser or global fields when a current

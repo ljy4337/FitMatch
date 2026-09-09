@@ -39,6 +39,11 @@ struct UniqloParser: ProductURLParsing {
                 productInfo: metadata.parsedProductInfo(
                     sizes: [],
                     parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했어요. 상품 URL을 다시 확인해 주세요."
+                ).withRetailerAPIEvidence(
+                    retailerAPIEvidence(
+                        resolved: resolved,
+                        measurements: (error as? FitMatchRetailerAPIResponseError)?.capture
+                    )
                 )
             )
         }
@@ -64,11 +69,39 @@ struct UniqloParser: ProductURLParsing {
                 productInfo: resolvedMetadata.parsedProductInfo(
                     sizes: [],
                     parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했어요. 상품 URL을 다시 확인해 주세요."
+                ).withRetailerAPIEvidence(
+                    retailerAPIEvidence(
+                        resolved: resolved,
+                        measurements: sizeAPIResult.responseCapture
+                    )
                 )
             )
         }
 
         return resolvedMetadata.parsedProductInfo(sizes: sizes)
+            .withRetailerAPIEvidence(
+                retailerAPIEvidence(
+                    resolved: resolved,
+                    measurements: sizeAPIResult.responseCapture
+                )
+            )
+    }
+
+    private func retailerAPIEvidence(
+        resolved: ResolvedUniqloURL,
+        measurements: FitMatchRetailerAPIResponseCapture?
+    ) -> FitMatchRetailerAPIEvidence? {
+        guard let details = resolved.detailsAPICapture,
+              details.jsonObject != nil else { return nil }
+        return FitMatchRetailerAPIEvidence(
+            contractVersion: FitMatchRetailerAPIEvidence.v1Contract,
+            sourceCode: "uniqlo",
+            sourceProductKey: resolved.productID,
+            identityScheme: nil,
+            selectedVariantKey: nil,
+            details: details,
+            measurements: measurements
+        )
     }
 }
 
@@ -83,6 +116,7 @@ struct ResolvedUniqloURL {
     let html: String
     var pldDisplayCode: String? = nil
     var priceGroupCode: String = "00"
+    var detailsAPICapture: FitMatchRetailerAPIResponseCapture? = nil
 }
 
 struct UniqloURLResolver {
@@ -125,13 +159,22 @@ struct UniqloURLResolver {
         } ?? "00"
         let resolvedURL = canonicalURL(productID: productID, colorCode: imageColorCode, fallback: finalURL)
         let metadataHTML: String
-        if let detailsHydration = try? await fetchProductDetailsHydration(productID: productID) {
+        var detailsAPICapture: FitMatchRetailerAPIResponseCapture?
+        if let detailsResponse = try? await fetchProductDetailsResponse(productID: productID) {
+            detailsAPICapture = detailsResponse
+            if let detailsHydration = try? productDetailsHydration(
+                from: detailsResponse,
+                productID: productID
+            ) {
             // The KR PDP is sometimes an Akamai Access Denied document while
             // the official Commerce API remains available. Append only the
             // selected provider product as hydration data so the existing
             // metadata parser can still consume retailer-owned name,
             // audience, and complete ordered breadcrumbs.
-            metadataHTML = response.body + detailsHydration
+                metadataHTML = response.body + detailsHydration
+            } else {
+                metadataHTML = response.body
+            }
         } else {
             metadataHTML = response.body
         }
@@ -150,7 +193,8 @@ struct UniqloURLResolver {
             productIDWithColorCode: productIDWithColorCode,
             html: metadataHTML,
             pldDisplayCode: pldDisplayCode,
-            priceGroupCode: priceGroupCode
+            priceGroupCode: priceGroupCode,
+            detailsAPICapture: detailsAPICapture
         )
     }
 
@@ -238,7 +282,9 @@ struct UniqloURLResolver {
         return UniqloHTMLResponse(url: response.url ?? url, body: html)
     }
 
-    private func fetchProductDetailsHydration(productID: String) async throws -> String {
+    private func fetchProductDetailsResponse(
+        productID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
         let coreID = productID.uppercased().hasSuffix("-000")
             ? productID.uppercased()
             : "\(productID.uppercased())-000"
@@ -267,9 +313,25 @@ struct UniqloURLResolver {
         )
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode),
-              let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+        guard let http = response as? HTTPURLResponse else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? url,
+            httpStatus: http.statusCode,
+            body: data
+        )
+    }
+
+    private func productDetailsHydration(
+        from response: FitMatchRetailerAPIResponseCapture,
+        productID: String
+    ) throws -> String {
+        let coreID = productID.uppercased().hasSuffix("-000")
+            ? productID.uppercased()
+            : "\(productID.uppercased())-000"
+        guard (200..<300).contains(response.httpStatus),
+              let root = try JSONSerialization.jsonObject(with: response.body) as? [String: Any],
               (root["status"] as? String)?.lowercased() == "ok",
               let product = root["result"] as? [String: Any],
               let returnedID = product["productId"] as? String,
@@ -343,6 +405,7 @@ private struct UniqloHTMLResponse {
 struct UniqloSizeAPIResult {
     var sizes: [ParsedProductSize]
     var imageURLString: String?
+    var responseCapture: FitMatchRetailerAPIResponseCapture? = nil
 }
 
 enum UniqloImageURLPolicy {
@@ -426,33 +489,54 @@ struct UniqloSizeAPIParser {
         priceGroupCode: String = "00"
     ) async throws -> UniqloSizeAPIResult {
         let genericProductIDWithColorCode = Self.genericProductIDWithColorCode(for: productID)
-        let baseResult: UniqloSizeAPIResult
-        do {
-            let preferredResult = try await parse(
-                productIDWithColorCode: preferredProductIDWithColorCode
+        guard preferredProductIDWithColorCode != genericProductIDWithColorCode else {
+            let result = try await parse(productIDWithColorCode: genericProductIDWithColorCode)
+            return await applyingLiveAvailabilityIfAvailable(
+                to: result,
+                productID: productID,
+                colorDisplayCode: selectedColorDisplayCode,
+                pldDisplayCode: selectedPLDDisplayCode,
+                priceGroupCode: priceGroupCode
             )
-            guard Self.shouldRetryWithGenericColor(
-                preferredProductIDWithColorCode: preferredProductIDWithColorCode,
-                genericProductIDWithColorCode: genericProductIDWithColorCode,
-                result: preferredResult
-            ) else {
-                baseResult = preferredResult
-                return await applyingLiveAvailabilityIfAvailable(
-                    to: baseResult,
-                    productID: productID,
-                    colorDisplayCode: selectedColorDisplayCode,
-                    pldDisplayCode: selectedPLDDisplayCode,
-                    priceGroupCode: priceGroupCode
-                )
-            }
-        } catch {
-            if Task.isCancelled { throw CancellationError() }
-            guard preferredProductIDWithColorCode != genericProductIDWithColorCode else {
-                throw error
-            }
         }
 
-        baseResult = try await parse(productIDWithColorCode: genericProductIDWithColorCode)
+        var preferredResult: UniqloSizeAPIResult?
+        do {
+            preferredResult = try await parse(
+                productIDWithColorCode: preferredProductIDWithColorCode
+            )
+        } catch {
+            if Task.isCancelled { throw CancellationError() }
+        }
+
+        let genericResult: UniqloSizeAPIResult?
+        do {
+            genericResult = try await parse(
+                productIDWithColorCode: genericProductIDWithColorCode
+            )
+        } catch {
+            if Task.isCancelled { throw CancellationError() }
+            genericResult = nil
+        }
+
+        // A colour-specific UNIQLO chart can expose only the currently sold
+        // size subset. The provider's official -000 chart is the complete
+        // product chart. Keep one untouched API response as evidence and use
+        // whichever official response contains more distinct sizes.
+        let baseResult: UniqloSizeAPIResult
+        switch (preferredResult, genericResult) {
+        case let (preferred?, generic?):
+            baseResult = generic.sizes.count > preferred.sizes.count
+                ? generic
+                : preferred
+        case let (preferred?, nil):
+            baseResult = preferred
+        case let (nil, generic?):
+            baseResult = generic
+        case (nil, nil):
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+
         return await applyingLiveAvailabilityIfAvailable(
             to: baseResult,
             productID: productID,
@@ -491,7 +575,8 @@ struct UniqloSizeAPIParser {
                     colorDisplayCode: colorDisplayCode,
                     pldDisplayCode: pldDisplayCode
                 ),
-                imageURLString: result.imageURLString
+                imageURLString: result.imageURLString,
+                responseCapture: result.responseCapture
             )
         } catch {
             return result
@@ -616,8 +701,25 @@ struct UniqloSizeAPIParser {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
-        let data = try await fetchData(from: apiURL)
-        return try parseResult(from: data)
+        let response = try await fetchResponse(from: apiURL)
+        guard (200..<300).contains(response.httpStatus) else {
+            throw FitMatchRetailerAPIResponseError(
+                capture: response,
+                reason: "unexpected_http_status"
+            )
+        }
+        let parsed: UniqloSizeAPIResult
+        do {
+            parsed = try parseResult(from: response.body)
+        } catch {
+            throw FitMatchRetailerAPIResponseError(
+                capture: response,
+                reason: "invalid_response_body"
+            )
+        }
+        var result = parsed
+        result.responseCapture = response
+        return result
     }
 
     func parseSizes(productIDWithColorCode: String) async throws -> [ParsedProductSize] {
@@ -646,6 +748,16 @@ struct UniqloSizeAPIParser {
     }
 
     private func fetchData(from apiURL: URL) async throws -> Data {
+        let response = try await fetchResponse(from: apiURL)
+        guard (200..<300).contains(response.httpStatus) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return response.body
+    }
+
+    private func fetchResponse(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
         request.timeoutInterval = 12
@@ -657,12 +769,14 @@ struct UniqloSizeAPIParser {
         )
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode) else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
-
-        return data
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? apiURL,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
     }
 
     private func makeParsedSize(

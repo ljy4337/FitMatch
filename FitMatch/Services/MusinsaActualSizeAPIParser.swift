@@ -18,11 +18,18 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         let sizes = actualSize.sizes
         metadata.applyActualSizeProfile(typeNumber: actualSize.typeNumber, typeName: actualSize.typeName)
 
+        let evidence = metadata.retailerAPIEvidence(
+            measurements: actualSize.responseCapture
+        )
         guard !sizes.isEmpty else {
-            throw ProductURLParserPartialError(productInfo: metadata.parsedProductInfo(sizes: []))
+            throw ProductURLParserPartialError(
+                productInfo: metadata.parsedProductInfo(sizes: [])
+                    .withRetailerAPIEvidence(evidence)
+            )
         }
 
         return metadata.parsedProductInfo(sizes: sizes)
+            .withRetailerAPIEvidence(evidence)
     }
 
     func parseSizes(productID: String) async throws -> [ParsedProductSize] {
@@ -34,8 +41,28 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
-        let data = try await fetchData(from: apiURL)
-        return try parseActualSize(from: data, isTopCategory: isTopCategory)
+        let capture = try await fetchResponse(from: apiURL)
+        guard (200..<300).contains(capture.httpStatus) else {
+            throw FitMatchRetailerAPIResponseError(
+                capture: capture,
+                reason: "unexpected_http_status"
+            )
+        }
+        let parsed: MusinsaActualSizeResult
+        do {
+            parsed = try parseActualSize(
+                from: capture.body,
+                isTopCategory: isTopCategory
+            )
+        } catch {
+            throw FitMatchRetailerAPIResponseError(
+                capture: capture,
+                reason: "invalid_response_body"
+            )
+        }
+        var result = parsed
+        result.responseCapture = capture
+        return result
     }
 
     func parseStandardSizeOptions(productID: String) async throws -> [ParsedProductSize] {
@@ -95,6 +122,16 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     }
 
     private func fetchData(from apiURL: URL) async throws -> Data {
+        let response = try await fetchResponse(from: apiURL)
+        guard (200..<300).contains(response.httpStatus) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return response.body
+    }
+
+    private func fetchResponse(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
         request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
@@ -106,12 +143,14 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         )
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode) else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
-
-        return data
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? apiURL,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
     }
 
     private func makeParsedSize(
@@ -217,6 +256,7 @@ struct MusinsaActualSizeResult {
     let webImage: String?
     let mobileImage: String?
     let sizes: [ParsedProductSize]
+    var responseCapture: FitMatchRetailerAPIResponseCapture? = nil
 }
 
 private struct MusinsaActualSizeResponse: Decodable {

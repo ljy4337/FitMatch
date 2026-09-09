@@ -80,6 +80,76 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(observationFacts["size_type"] as? String == "반소매티셔츠")
     }
 
+    @Test func retailerAPIRawJSONIsNestedWithoutChangingStringFacts() throws {
+        let sourceURL = try #require(
+            URL(string: "https://www.musinsa.com/products/123")
+        )
+        let detailsURL = try #require(
+            URL(string: "https://goods-detail.musinsa.com/api2/goods/123")
+        )
+        let sizeURL = try #require(
+            URL(string: "https://goods-detail.musinsa.com/api2/goods/123/actual-size")
+        )
+        var product = ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "원문 상품",
+            category: .top,
+            detailCategory: .other,
+            sizes: [],
+            productID: "123",
+            productMetadata: ProductMetadata(
+                structuredFacts: ["product_structure": "single"]
+            )
+        )
+        product.retailerAPIEvidence = FitMatchRetailerAPIEvidence(
+            contractVersion: FitMatchRetailerAPIEvidence.v1Contract,
+            sourceCode: "musinsa",
+            sourceProductKey: "123",
+            identityScheme: nil,
+            selectedVariantKey: nil,
+            details: FitMatchRetailerAPIResponseCapture(
+                requestURL: detailsURL,
+                httpStatus: 200,
+                collectedAt: Date(timeIntervalSince1970: 1_700_000_000),
+                body: Data(#"{"data":{"goodsNo":123,"display":false,"tags":["a",null]}}"#.utf8)
+            ),
+            measurements: FitMatchRetailerAPIResponseCapture(
+                requestURL: sizeURL,
+                httpStatus: 404,
+                collectedAt: Date(timeIntervalSince1970: 1_700_000_001),
+                body: Data(#"{"code":"NO_ACTUAL_SIZE","retryable":false}"#.utf8)
+            )
+        )
+
+        let observation = try #require(product.fitMatchProductObservationRequest())
+        #expect(observation.payload.structuredFacts == ["product_structure": "single"])
+        #expect(observation.payload.variants.isEmpty)
+        let root = try #require(
+            JSONSerialization.jsonObject(
+                with: JSONEncoder().encode(observation)
+            ) as? [String: Any]
+        )
+        let payload = try #require(root["payload"] as? [String: Any])
+        let facts = try #require(payload["structured_facts"] as? [String: Any])
+        #expect(facts["product_structure"] as? String == "single")
+        let retailer = try #require(facts["retailer_api"] as? [String: Any])
+        #expect(retailer["source_product_key"] as? String == "123")
+        let details = try #require(retailer["details"] as? [String: Any])
+        let data = try #require(details["data"] as? [String: Any])
+        #expect(data["display"] as? Bool == false)
+        let tags = try #require(data["tags"] as? [Any])
+        #expect(tags.count == 2)
+        #expect(tags[1] is NSNull)
+        let requests = try #require(retailer["requests"] as? [String: Any])
+        let measurementRequest = try #require(
+            requests["measurements"] as? [String: Any]
+        )
+        #expect(measurementRequest["http_status"] as? Double == 404)
+    }
+
     @Test func musinsaActualSizeTypeNameIsForwardedWithoutReplacingNumericSizeType() throws {
         let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/123"))
         var metadata = MusinsaProductMetadata(
@@ -1388,6 +1458,72 @@ struct FitMatchSupabaseProductResolverTests {
                 records: size.measurementRecords
             ) == 48
         )
+    }
+
+    @Test func linkedRegistrationKeepsRetailerMeasurementsMissingFromCanonicalRuntime() {
+        let canonicalRecords = [
+            ParsedMeasurement(
+                value: 77.5,
+                measurementCode: .bodyLengthBackNeckToHem,
+                displayKind: .totalLength,
+                methodSource: "fitmatch_vnext_runtime",
+                inputSource: .importedSizeChart,
+                rawLabel: "total_length",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped,
+                canonicalMeasurementCode: "total_length"
+            ),
+            ParsedMeasurement(
+                value: 66.5,
+                measurementCode: .chestWidthPitToPit,
+                displayKind: .chest,
+                methodSource: "fitmatch_vnext_runtime",
+                inputSource: .importedSizeChart,
+                rawLabel: "chest_width",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped,
+                canonicalMeasurementCode: "chest_width"
+            ),
+            ParsedMeasurement(
+                value: 58,
+                measurementCode: .shoulderWidthSeamToSeam,
+                displayKind: .shoulder,
+                methodSource: "fitmatch_vnext_runtime",
+                inputSource: .importedSizeChart,
+                rawLabel: "shoulder_width",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped,
+                canonicalMeasurementCode: "shoulder_width"
+            )
+        ]
+        let retailerRecords = canonicalRecords + [
+            ParsedMeasurement(
+                value: 55.5,
+                measurementCode: .sleeveCenterBackToCuff,
+                displayKind: .sleeveLength,
+                methodSource: "uniqlo_size_chart",
+                inputSource: .importedSizeChart,
+                mappingVersion: MeasurementSourceMappingPolicy.uniqloVersion,
+                rawCode: "sleeve-length-cb",
+                rawLabel: "등 중심부터 소매까지 길이",
+                rawValueText: "55.5",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped
+            )
+        ]
+
+        let merged = ShoppingProductViewModel.mergedPresentationMeasurementRecords(
+            runtimeRecords: canonicalRecords,
+            retailerRecords: retailerRecords
+        )
+
+        #expect(merged.count == 4)
+        #expect(merged.filter { $0.displayKind == .totalLength }.count == 1)
+        #expect(merged.contains {
+            $0.measurementCode == .sleeveCenterBackToCuff
+                && $0.rawLabel == "등 중심부터 소매까지 길이"
+                && $0.value == 55.5
+        })
     }
 
     @Test func vNextClosetListKeepsBothPersonalServerSourcesAsManualAuthority() {

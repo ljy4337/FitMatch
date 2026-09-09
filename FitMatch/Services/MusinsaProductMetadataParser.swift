@@ -15,6 +15,23 @@ struct MusinsaProductMetadata {
     var isUseSize: Bool = false
     var goodsContents: String = ""
     var productMetadata: ProductMetadata = ProductMetadata()
+    var retailerDetailsCapture: FitMatchRetailerAPIResponseCapture? = nil
+
+    func retailerAPIEvidence(
+        measurements: FitMatchRetailerAPIResponseCapture?
+    ) -> FitMatchRetailerAPIEvidence? {
+        guard let details = retailerDetailsCapture,
+              details.jsonObject != nil else { return nil }
+        return FitMatchRetailerAPIEvidence(
+            contractVersion: FitMatchRetailerAPIEvidence.v1Contract,
+            sourceCode: "musinsa",
+            sourceProductKey: productID,
+            identityScheme: nil,
+            selectedVariantKey: nil,
+            details: details,
+            measurements: measurements
+        )
+    }
 
     func parsedProductInfo(sizes: [ParsedProductSize], parserNotice: String? = nil) -> ParsedProductInfo {
         let canonical = ParsedClosetClassification.resolve(
@@ -116,13 +133,25 @@ private extension ClosetDetailCategory {
 struct MusinsaProductMetadataParser {
     func parse(productID: String, sourceURL: URL) async -> MusinsaProductMetadata {
         do {
-            let response = try await fetchProductDetail(productID: productID)
-            return metadata(from: response, productID: productID, sourceURL: sourceURL)
+            let fetched = try await fetchProductDetail(productID: productID)
+            var result = metadata(
+                from: fetched.response,
+                productID: productID,
+                sourceURL: sourceURL
+            )
+            result.retailerDetailsCapture = fetched.capture
+            return result
         } catch {
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 상품 정보 조회", state: "실패", details: "오류=\(error.localizedDescription), HTML대체파싱=시작")
             #endif
-            return await parseHTMLFallback(productID: productID, sourceURL: sourceURL)
+            var fallback = await parseHTMLFallback(
+                productID: productID,
+                sourceURL: sourceURL
+            )
+            fallback.retailerDetailsCapture =
+                (error as? FitMatchRetailerAPIResponseError)?.capture
+            return fallback
         }
     }
 
@@ -180,7 +209,12 @@ struct MusinsaProductMetadataParser {
             )
     }
 
-    private func fetchProductDetail(productID: String) async throws -> MusinsaProductDetailResponse {
+    private func fetchProductDetail(
+        productID: String
+    ) async throws -> (
+        response: MusinsaProductDetailResponse,
+        capture: FitMatchRetailerAPIResponseCapture
+    ) {
         guard let apiURL = URL(string: "https://goods-detail.musinsa.com/api2/goods/\(productID)") else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
@@ -196,12 +230,31 @@ struct MusinsaProductMetadataParser {
         )
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode) else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
-
-        return try JSONDecoder().decode(MusinsaProductDetailResponse.self, from: data)
+        let capture = FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? apiURL,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw FitMatchRetailerAPIResponseError(
+                capture: capture,
+                reason: "unexpected_http_status"
+            )
+        }
+        do {
+            return (
+                try JSONDecoder().decode(MusinsaProductDetailResponse.self, from: data),
+                capture
+            )
+        } catch {
+            throw FitMatchRetailerAPIResponseError(
+                capture: capture,
+                reason: "invalid_response_body"
+            )
+        }
     }
 
     private func parseHTMLFallback(productID: String, sourceURL: URL) async -> MusinsaProductMetadata {

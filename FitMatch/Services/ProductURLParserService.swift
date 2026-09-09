@@ -98,6 +98,9 @@ struct ParsedProductInfo {
     var sizeTableRecoveryContext: SizeTableRecoveryContext? = nil
     var parserProvenance: ProductParserProvenance? = nil
     var recoveryAction: ProductAnalysisRecoveryAction? = nil
+    /// Transient official API bytes and HTTP metadata for the current import.
+    /// This is deliberately not persisted into legacy Product metadata.
+    var retailerAPIEvidence: FitMatchRetailerAPIEvidence? = nil
 }
 
 /// Describes where the product facts came from without changing their runtime meaning.

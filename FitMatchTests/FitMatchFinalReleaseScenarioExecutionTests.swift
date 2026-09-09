@@ -385,7 +385,9 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
 
         // CR-020 / CR-021: a server review/unavailable preparation never
-        // fabricates a comparable sourced Product or a size.
+        // fabricates confirmed classification authority. The link-result
+        // screen still reports a successfully loaded product; classification
+        // selection belongs to the following registration sheet.
         let reviewFixture = HeadlessJourneyFixture(provider: .uniqlo)
         let reviewRemote = JourneyRecordingRemote(
             resolutions: [reviewFixture.resolution(globalStatus: .reviewRequired)],
@@ -403,7 +405,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             return
         }
         #expect(reviewPreparation.parsedProduct?.classificationAuthorityProvenance == .serverReviewRequired)
-        #expect(reviewPreparation.errorMessage != nil)
+        #expect(reviewPreparation.errorMessage == nil)
     }
 
     @Test func comparisonProviderSequenceAndNegativeGatesCoverCP001ThroughCP039() async throws {

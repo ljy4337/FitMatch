@@ -31,6 +31,15 @@ enum FitMatchLinkClosetRegistrationAction {
             return .cancelled
         }
 
+        // A fresh retailer observation can replace an earlier DB review
+        // decision. Read runtime once more only when the first result still
+        // says REVIEW_REQUIRED so the registration sheet receives the latest
+        // confirmed tuple for every supported retailer.
+        _ = await viewModel.refreshLinkRegistrationAuthorityIfNeeded()
+        guard !Task.isCancelled else {
+            return .cancelled
+        }
+
         let brand = existingBrand(viewModel.brand) ?? Brand(name: viewModel.brand)
         return .loaded(
             LinkClosetRegistrationPreparation.make(

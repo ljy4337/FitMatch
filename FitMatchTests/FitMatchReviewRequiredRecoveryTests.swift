@@ -3,6 +3,43 @@ import Testing
 @testable import FitMatch
 
 struct FitMatchReviewRequiredRecoveryTests {
+    @Test func retailerRecoveryContractsAcceptOneThrough64ButReject65() {
+        for version in [
+            VNextClassificationRecoveryContractVersion.retailerAPIR1,
+            .retailerAPIR2
+        ] {
+            for count in [1, 4, 64] {
+                #expect(
+                    makeRetailerRecoveryContract(
+                        candidateCount: count,
+                        contractVersion: version
+                    ).isSafelyRecoverable
+                )
+            }
+            #expect(
+                !makeRetailerRecoveryContract(
+                    candidateCount: 65,
+                    contractVersion: version
+                ).isSafelyRecoverable
+            )
+        }
+    }
+
+    @Test func retailerRecoveryRequiresCandidateAudienceToMatchFixedFacts() {
+        #expect(
+            !makeRetailerRecoveryContract(
+                candidateCount: 1,
+                candidateAudience: nil
+            ).isSafelyRecoverable
+        )
+        #expect(
+            !makeRetailerRecoveryContract(
+                candidateCount: 1,
+                candidateAudience: "WOMEN"
+            ).isSafelyRecoverable
+        )
+    }
+
     @Test func recoveryContractKeepsKnownFactsAndOnlyBoundedServerCandidates() async throws {
         let fixture = try RecoveryContractFixture()
         let remote = RecoveryTransportStub(
@@ -838,6 +875,52 @@ struct FitMatchReviewRequiredRecoveryTests {
         #expect(await remote.setCallCount() == 1)
         #expect(viewModel.reviewRecoveryContract != nil)
     }
+}
+
+private func makeRetailerRecoveryContract(
+    candidateCount: Int,
+    candidateAudience: String? = "MEN",
+    contractVersion: VNextClassificationRecoveryContractVersion = .retailerAPIR1
+) -> VNextClassificationRecoveryContractDTO {
+    let candidates = (0..<candidateCount).map { index in
+        VNextClassificationRecoveryCandidateDTO(
+            candidateID: "retailer-candidate-\(index)",
+            candidateFingerprint: "retailer-candidate-\(index)",
+            displayName: "후보 \(index)",
+            audienceCode: candidateAudience,
+            categoryCode: "tops",
+            garmentTypeCode: "retailer-garment-\(index)",
+            sleeveLengthCode: nil,
+            lowerLengthCode: nil,
+            bodyLengthCode: nil,
+            comparisonPolicyCode: "retailer-policy-\(index)"
+        )
+    }
+    return VNextClassificationRecoveryContractDTO(
+        productID: UUID(),
+        globalStatus: "REVIEW_REQUIRED",
+        recoverability: .recoverable,
+        unrecoverableReason: nil,
+        fixedFacts: VNextKnownClassificationFactsDTO(
+            audienceCode: "MEN",
+            productStructureCode: "SINGLE",
+            categoryCode: "tops",
+            garmentTypeCode: nil,
+            sleeveLengthCode: nil,
+            lowerLengthCode: nil,
+            bodyLengthCode: nil,
+            comparisonPolicyCode: nil
+        ),
+        unknownFields: candidateCount > 1 ? [.garmentType] : [],
+        candidates: candidates,
+        candidateCount: candidateCount,
+        productInputFingerprint: "retailer-input",
+        productEvidenceFingerprint: "retailer-evidence",
+        resolverVersion: "retailer-resolver",
+        candidateContractVersion: contractVersion.rawValue,
+        candidateSetHash: "retailer-candidate-set",
+        currentReviewReason: "retailer evidence needs explicit selection"
+    )
 }
 
 private struct RecoveryContractFixture {
