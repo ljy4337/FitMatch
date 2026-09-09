@@ -1204,7 +1204,14 @@ private extension CompareFlowSheet {
                     ShoppingShortcutButton(title: "유니클로", systemImage: "u.circle", status: "상품추가", isEnabled: true) {
                         openUniqlo()
                     }
-                    ShoppingShortcutButton(title: "ZARA", systemImage: "z.circle", status: "준비중", isEnabled: false) {}
+                    ShoppingShortcutButton(
+                        title: "ZARA",
+                        systemImage: "z.circle",
+                        status: "상품추가",
+                        isEnabled: ZARAIntegrationAvailability.isEnabled
+                    ) {
+                        openZara()
+                    }
                 }
             }
         }
@@ -2494,6 +2501,11 @@ private extension CompareFlowSheet {
 
     func openUniqlo() {
         guard let url = URL(string: "https://www.uniqlo.com/kr/ko/") else { return }
+        UIApplication.shared.open(url)
+    }
+
+    func openZara() {
+        guard let url = URL(string: "https://www.zara.com/kr/ko/") else { return }
         UIApplication.shared.open(url)
     }
 }

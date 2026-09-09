@@ -3646,3 +3646,8 @@ git diff -- '*.swift' | grep -E \
 - After a successful linked Closet registration, `LinkClosetRegistrationView` now sets the existing `내 옷장에 추가했어요.` toast state, invokes its completion callback, and dismisses the link-registration screen immediately in the same main-actor action.
 - Removed only the previous 1.2-second post-success sleep. Registration validation, server-first persistence, failure/retry handling, partial reference-success acknowledgement, toast copy, and other navigation flows remain unchanged.
 - `xcrun swiftc -parse` for the changed Swift file and `git diff --check` passed. The simulator app build started but produced no build progress for about one minute and was interrupted, so no Xcode build pass is claimed. Protected TabBar/header-scroll diffs remained empty.
+
+## 2026-09-09 connectDB — Product comparison ZARA shortcut
+
+- The product-comparison start screen now presents ZARA as an active `상품추가` shopping shortcut, aligned with the already-enabled ZARA parser/runtime support.
+- Tapping the shortcut opens the official Korean ZARA storefront at `https://www.zara.com/kr/ko/`. Direct URL input, parsing, comparison authority, and all other provider behavior remain unchanged.
