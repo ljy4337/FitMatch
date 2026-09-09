@@ -1331,6 +1331,65 @@ struct FitMatchSupabaseProductResolverTests {
         )
     }
 
+    @Test func linkedRegistrationPreselectsOnlyConfirmedDatabaseCategory() {
+        let confirmed = FitMatchClosetRegistrationServerContext(
+            classificationState: .confirmed
+        )
+        let reviewRequired = FitMatchClosetRegistrationServerContext(
+            classificationState: .reviewRequired
+        )
+
+        #expect(
+            AddComparedProductToClosetSheet.hasConfirmedDatabaseClassification(
+                categoryCode: "tops",
+                detailCode: "short_sleeve",
+                serverRegistrationContext: confirmed
+            )
+        )
+        #expect(
+            !AddComparedProductToClosetSheet.hasConfirmedDatabaseClassification(
+                categoryCode: "tops",
+                detailCode: "short_sleeve",
+                serverRegistrationContext: reviewRequired
+            )
+        )
+        #expect(
+            !AddComparedProductToClosetSheet.hasConfirmedDatabaseClassification(
+                categoryCode: "tops",
+                detailCode: nil,
+                serverRegistrationContext: confirmed
+            )
+        )
+    }
+
+    @Test func selectedSizeSummaryKeepsEveryAvailableNumericMeasurement() {
+        let size = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 48,
+                chest: 54,
+                totalLength: 0,
+                sleeveLength: 0
+            )
+        )
+
+        let kinds = AddComparedProductToClosetSheet.visibleMeasurementKinds(
+            for: size,
+            category: .other,
+            detailCategory: .other,
+            gender: .unknown
+        )
+
+        #expect(kinds == [.chest, .shoulder])
+        #expect(
+            MeasurementResolver.value(
+                for: .shoulder,
+                measurements: size.measurements,
+                records: size.measurementRecords
+            ) == 48
+        )
+    }
+
     @Test func vNextClosetListKeepsBothPersonalServerSourcesAsManualAuthority() {
         #expect(
             FitMatchSupabaseDomainClient.closetClassificationSource(

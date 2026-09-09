@@ -95,10 +95,50 @@ struct AddComparedProductToClosetSheet: View {
         _productName = State(initialValue: product.name)
         _selectedGender = State(initialValue: product.productTargetGender)
         _selectedGenderCode = State(initialValue: product.productTargetGender.taxonomyCode)
-        let requiresExplicitClosetClassification = serverRegistrationContext?
-            .classificationState == .reviewRequired
-        let hasServerAuthority = serverRegistrationContext?.classificationState == .confirmed
-            || product.classificationAuthorityProvenance == .serverConfirmed
+        let serverContextConfirmsClassification = serverRegistrationContext?
+            .classificationState == .confirmed
+        let hasServerAuthority = serverRegistrationContext == nil
+            ? product.classificationAuthorityProvenance == .serverConfirmed
+            : serverContextConfirmsClassification
+        let serverCategoryCode = product.categoryCode?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let serverDetailCode = product.normalizedProductTypeCode?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let serverCategory: ClothingCategory?
+        if let serverCategoryCode {
+            serverCategory = ClothingCategory.fromTaxonomyCode(serverCategoryCode)
+        } else {
+            serverCategory = nil
+        }
+        let serverDetail: ClosetDetailCategory?
+        if let serverDetailCode {
+            serverDetail = ClosetDetailCategory.fromTaxonomyCode(serverDetailCode)
+        } else {
+            serverDetail = nil
+        }
+        let hasValidServerClassification: Bool
+        if serverRegistrationContext != nil {
+            hasValidServerClassification = Self.hasConfirmedDatabaseClassification(
+                categoryCode: serverCategoryCode,
+                detailCode: serverDetailCode,
+                serverRegistrationContext: serverRegistrationContext
+            )
+        } else {
+            hasValidServerClassification = hasServerAuthority
+                && Self.hasValidClassificationCodes(
+                    categoryCode: serverCategoryCode,
+                    detailCode: serverDetailCode
+                )
+        }
+        // A linked registration may only preselect the exact category tuple
+        // returned by the database. Any missing or invalid tuple stays visibly
+        // unselected until the user chooses both levels.
+        let requiresExplicitClosetClassification = serverRegistrationContext != nil
+            && !hasValidServerClassification
+        let trustedServerCategory = hasValidServerClassification ? serverCategory : nil
+        let trustedServerCategoryCode = hasValidServerClassification ? serverCategoryCode : nil
+        let trustedServerDetail = hasValidServerClassification ? serverDetail : nil
+        let trustedServerDetailCode = hasValidServerClassification ? serverDetailCode : nil
         automaticServerAudienceCode = hasServerAuthority
             ? product.productTargetGender.taxonomyCode
             : nil
@@ -107,7 +147,7 @@ struct AddComparedProductToClosetSheet: View {
             && preselectedClassification?.isValid == true
             ? preselectedClassification
             : nil
-        let inferredCanonical = hasServerAuthority
+        let inferredCanonical = hasServerAuthority || requiresExplicitClosetClassification
             ? nil
             : ParsedClosetClassification.resolve(
                 product: product,
@@ -118,27 +158,28 @@ struct AddComparedProductToClosetSheet: View {
         // source path so a comparison detail such as "데님" is stored as the
         // valid closet taxonomy detail "긴바지" instead of falling back to 기타.
         let canonical = suppliedCanonical ?? inferredCanonical
-        let initialCategory = requiresExplicitClosetClassification ? .other : (canonical?.category
-            ?? (hasServerAuthority ? product.category : preselectedCategory)
+        let initialCategory = requiresExplicitClosetClassification ? .other : (trustedServerCategory
+            ?? canonical?.category
+            ?? preselectedCategory
             ?? product.category.serviceGroup)
-        let initialCategoryCode = requiresExplicitClosetClassification ? "" : (canonical?.categoryCode
-            ?? (hasServerAuthority ? product.resolvedCategoryCode : nil)
+        let initialCategoryCode = requiresExplicitClosetClassification ? "" : (trustedServerCategoryCode
+            ?? canonical?.categoryCode
             ?? initialCategory.taxonomyCode)
         let initialDetail = requiresExplicitClosetClassification
             ? .other
-            : (canonical?.detailCategory ?? productDetailCategory)
-        let initialDetailCode = requiresExplicitClosetClassification ? "" : (canonical?.detailCode
-            ?? (hasServerAuthority ? product.normalizedProductTypeCode : nil)
+            : (trustedServerDetail ?? canonical?.detailCategory ?? productDetailCategory)
+        let initialDetailCode = requiresExplicitClosetClassification ? "" : (trustedServerDetailCode
+            ?? canonical?.detailCode
             ?? FitMatchTaxonomyProvider.shared.detailCode(
                 for: initialDetail.rawValue, categoryCode: initialCategoryCode
             ) ?? "")
         let hasValidCanonicalSelection = FitMatchTaxonomyProvider.shared.isValidDetail(
             initialDetailCode, for: initialCategoryCode
         )
-        automaticServerCategoryCode = hasServerAuthority && hasValidCanonicalSelection
+        automaticServerCategoryCode = hasValidServerClassification && hasValidCanonicalSelection
             ? initialCategoryCode
             : nil
-        automaticServerDetailCategoryCode = hasServerAuthority && hasValidCanonicalSelection
+        automaticServerDetailCategoryCode = hasValidServerClassification && hasValidCanonicalSelection
             ? initialDetailCode
             : nil
         _selectedCategory = State(initialValue: initialCategory)
@@ -1080,15 +1121,63 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private func visibleMeasurementKinds(for size: ProductSize) -> [MeasurementKind] {
-        selectedCategory
-            .measurementKinds(detailCategory: selectedDetailCategory, gender: selectedGender)
-            .filter {
-                MeasurementResolver.value(
-                    for: $0,
-                    measurements: size.measurements,
-                    records: size.measurementRecords
-                ) != nil
-            }
+        Self.visibleMeasurementKinds(
+            for: size,
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: selectedGender
+        )
+    }
+
+    static func hasValidClassificationCodes(
+        categoryCode: String?,
+        detailCode: String?
+    ) -> Bool {
+        let provider = FitMatchTaxonomyProvider.shared
+        return provider.isActiveCategory(categoryCode)
+            && provider.isValidDetail(detailCode, for: categoryCode)
+            && categoryCode != "other"
+            && detailCode != "other"
+    }
+
+    static func hasConfirmedDatabaseClassification(
+        categoryCode: String?,
+        detailCode: String?,
+        serverRegistrationContext: FitMatchClosetRegistrationServerContext?
+    ) -> Bool {
+        guard serverRegistrationContext?.classificationState == .confirmed else {
+            return false
+        }
+        return hasValidClassificationCodes(
+            categoryCode: categoryCode,
+            detailCode: detailCode
+        )
+    }
+
+    static func visibleMeasurementKinds(
+        for size: ProductSize,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        gender: UserGender
+    ) -> [MeasurementKind] {
+        let categoryKinds = category.measurementKinds(
+            detailCategory: detailCategory,
+            gender: gender
+        )
+        // Keep category-relevant rows first, then include any other actual
+        // values carried by the selected database size. This prevents a valid
+        // measurement from disappearing merely because classification is
+        // still being selected or the retailer supplied extra dimensions.
+        let candidates = categoryKinds + MeasurementKind.allCases.filter {
+            !categoryKinds.contains($0)
+        }
+        return candidates.filter {
+            MeasurementResolver.value(
+                for: $0,
+                measurements: size.measurements,
+                records: size.measurementRecords
+            ) != nil
+        }
     }
 
     private func formatMeasurement(_ value: Double) -> String {

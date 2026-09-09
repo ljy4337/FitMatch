@@ -66,7 +66,6 @@ struct AddClosetItemView: View {
                 categorySection
                 productInfoSection
                 measurementSection
-                fitSection
                 deleteSection
             }
             .padding(20)
@@ -297,26 +296,6 @@ struct AddClosetItemView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-            }
-        }
-    }
-
-    private var fitSection: some View {
-        AddClosetSectionCard(index: 5, title: "핏 기록", subtitle: "나중에 같은 핏을 찾는 기준이 됩니다.", systemImage: "sparkles") {
-            VStack(alignment: .leading, spacing: 16) {
-                AddClosetSelectionMenu(
-                    title: "핏",
-                    value: viewModel.fitPreference.rawValue,
-                    options: FitPreference.allCases,
-                    optionTitle: \.rawValue,
-                    selection: $viewModel.fitPreference
-                )
-                TextField("핏 메모", text: $viewModel.fitMemo, axis: .vertical)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .padding(14)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .lineLimit(3...5)
             }
         }
     }
