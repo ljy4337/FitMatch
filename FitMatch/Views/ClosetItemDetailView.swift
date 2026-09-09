@@ -779,7 +779,7 @@ private struct ImportedClosetItemEditView: View {
                     )
                 ) { _ in
                     normalizeDetailCategory()
-                    resetLinkedMeasurementDraft()
+                    reconfigureLinkedMeasurementDraft()
                 }
                 AddClosetSelectionMenu(
                     title: "세부 카테고리",
@@ -792,7 +792,7 @@ private struct ImportedClosetItemEditView: View {
                             selectedDetailCategoryCode = option.code
                             selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
                             didExplicitlyChangeClassification = true
-                            resetLinkedMeasurementDraft()
+                            reconfigureLinkedMeasurementDraft()
                         }
                     )
                 )
@@ -871,8 +871,11 @@ private struct ImportedClosetItemEditView: View {
                         selectedSizeID: Binding(
                             get: { selectedSizeID },
                             set: { value in
+                                let changed = selectedSizeID != value
                                 selectedSizeID = value
-                                resetLinkedMeasurementDraft()
+                                if changed {
+                                    resetLinkedMeasurementDraft()
+                                }
                             }
                         ),
                         preservesExactIdentities: linkedSizePreparation != nil,
@@ -905,37 +908,37 @@ private struct ImportedClosetItemEditView: View {
                     subtitle: "쇼핑몰·API 값은 자동 입력됩니다. 실제 옷을 재서 수정하거나 빈 항목을 추가할 수 있어요."
                 )
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(draft.kinds, id: \.self) { kind in
+                    ForEach(draft.fields) { field in
                         VStack(alignment: .leading, spacing: 7) {
                             HStack(spacing: 8) {
-                                Text(kind.title)
+                                Text(field.title)
                                     .font(.subheadline.weight(.semibold))
                                 Spacer()
-                                Text(draft.sourceLabel(for: kind))
+                                Text(draft.sourceLabel(for: field))
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(
-                                        draft.sourceLabel(for: kind) == "직접 측정/수정 값"
+                                        draft.sourceLabel(for: field) == "직접 측정/수정 값"
                                             ? Color.primary
                                             : Color.secondary
                                     )
                             }
                             HStack(spacing: 10) {
                                 TextField(
-                                    kind.placeholder,
+                                    field.placeholder,
                                     text: linkedMeasurementBinding(
-                                        for: kind,
+                                        for: field,
                                         fallback: draft
                                     )
                                 )
                                 .keyboardType(.decimalPad)
                                 .textInputAutocapitalization(.never)
                                 .font(.headline.weight(.bold))
-                                .disabled(!draft.isSupported(for: kind))
+                                .disabled(!draft.isSupported(for: field))
                                 Text("cm")
                                     .font(.subheadline.weight(.bold))
                                     .foregroundStyle(.secondary)
                             }
-                            if !draft.isSupported(for: kind) {
+                            if !draft.isSupported(for: field) {
                                 Text("이 항목은 검증된 서버 실측 코드가 없어 원본 값만 보존됩니다.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -1197,20 +1200,36 @@ private struct ImportedClosetItemEditView: View {
         )
     }
 
+    private func reconfigureLinkedMeasurementDraft() {
+        guard selectedSize != nil else {
+            linkedMeasurementDraft = nil
+            return
+        }
+        guard linkedMeasurementDraft != nil else {
+            resetLinkedMeasurementDraft()
+            return
+        }
+        linkedMeasurementDraft?.reconfigure(
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: item.gender
+        )
+    }
+
     private func linkedMeasurementBinding(
-        for kind: MeasurementKind,
+        for field: FitMatchLinkedClosetMeasurementField,
         fallback: FitMatchLinkedClosetMeasurementDraft
     ) -> Binding<String> {
         Binding(
             // Rendering must show the existing Closet snapshot before the
             // first keystroke.  Do not make the UI appear blank merely because
             // the draft has not yet been promoted into @State.
-            get: { linkedMeasurementDraft?.rawValue(for: kind) ?? fallback.rawValue(for: kind) },
+            get: { linkedMeasurementDraft?.rawValue(for: field) ?? fallback.rawValue(for: field) },
             set: { value in
                 if linkedMeasurementDraft == nil {
                     linkedMeasurementDraft = fallback
                 }
-                linkedMeasurementDraft?.setRawValue(value, for: kind)
+                linkedMeasurementDraft?.setRawValue(value, for: field)
             }
         )
     }

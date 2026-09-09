@@ -49,7 +49,10 @@ final class AddClosetItemViewModel: ObservableObject {
     @Published var musinsaSleeveMeasurementMethod: MusinsaSleeveMeasurementMethod = .unknown
     @Published var fitMemo = ""
     @Published var fitPreference: FitPreference = .regular
-    @Published var satisfaction = 4
+    /// Zero is the app's explicit “not rated yet” state. There is currently no
+    /// rating control in this form, so a new item must not silently persist an
+    /// arbitrary score.
+    @Published var satisfaction = 0
     @Published var isRepresentative = false
     let isEditingExistingItem: Bool
 

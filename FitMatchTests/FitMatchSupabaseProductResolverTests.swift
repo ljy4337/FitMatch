@@ -1878,6 +1878,143 @@ struct FitMatchSupabaseProductResolverTests {
         )
     }
 
+    @Test func linkedClosetLoadUsesExactRuntimeWithoutClassificationRecoveryGate() async throws {
+        for status in [
+            FitMatchServerProductAuthorityStatus.reviewRequired,
+            .notComparable
+        ] {
+            let externalID = "closet-runtime-\(status.rawValue)"
+            let parsed = try Self.measurementPresenceProduct(
+                externalProductID: externalID,
+                sizes: [("M", 55)]
+            )
+            let fixture = DatabaseAuthorityFixture(
+                source: "musinsa",
+                externalProductID: externalID,
+                status: status,
+                categoryCode: nil,
+                detailCode: nil,
+                familyCode: nil,
+                lengthCode: nil
+            )
+            let runtimeSize = Self.runtimeSize(
+                sourceSizeKey: "M",
+                label: "M",
+                displayOrder: 0
+            )
+            let runtime = try Self.vNextMeasurementRuntime(
+                fixture: fixture,
+                runtimeState: status == .reviewRequired
+                    ? "classification_required" : "not_comparable",
+                comparisonReady: false,
+                variants: [VNextRuntimeVariantFixture(
+                    variantID: UUID(),
+                    sourceVariantKey: "__default__",
+                    sizes: [runtimeSize],
+                    canonicalMeasurementsBySizeID: [
+                        runtimeSize.productSizeID: [VNextRuntimeMeasurementFixture(
+                            code: "chest_width",
+                            value: 55,
+                            basisCode: "FLAT",
+                            sourceMeasurementCode: "fixture.chest"
+                        )]
+                    ]
+                )]
+            )
+            let remote = DatabaseAuthorityRemoteStub(
+                resolutions: [fixture.resolution(comparisonReady: false)],
+                observations: [],
+                runtimes: [runtime]
+            )
+            let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+            #expect(await viewModel.loadProductInfoFromURL(
+                purpose: .linkedClosetRegistration
+            ))
+            #expect(viewModel.reviewRecoveryState == .idle)
+            #expect(await remote.recoveryCallCount == 0)
+            #expect(await remote.observationCallCount == 0)
+            let product = try #require(
+                viewModel.makeProductForClosetRegistration(brand: nil)
+            )
+            let displayedSize = try #require(product.sizes.first)
+            let context = viewModel.closetRegistrationServerContext
+            #expect(context.identity(for: displayedSize.id)?.productID == fixture.productID)
+            #expect(context.identity(for: displayedSize.id)?.productSizeID
+                == runtimeSize.productSizeID)
+            #expect(LinkClosetRegistrationPreparation.registrationBlockMessage(
+                productMeasurementPresence: viewModel.productMeasurementPresence,
+                serverRegistrationContext: context,
+                displaySizes: product.sizes
+            ) == nil)
+        }
+    }
+
+    @Test func linkedClosetLoadAllowsClassificationMetadataFailureWithExactRuntime() async throws {
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "closet-runtime-classification-unavailable",
+            sizes: [("M", 55)]
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa",
+            externalProductID: "closet-runtime-classification-unavailable",
+            status: .confirmed,
+            categoryCode: "tops",
+            detailCode: "short_sleeve",
+            familyCode: "tshirt",
+            lengthCode: "short_sleeve"
+        )
+        let runtimeSize = Self.runtimeSize(
+            sourceSizeKey: "M",
+            label: "M",
+            displayOrder: 0
+        )
+        let baseRuntime = try Self.vNextMeasurementRuntime(
+            fixture: fixture,
+            runtimeState: "classification_required",
+            comparisonReady: false,
+            variants: [VNextRuntimeVariantFixture(
+                variantID: UUID(),
+                sourceVariantKey: "__default__",
+                sizes: [runtimeSize],
+                canonicalMeasurementsBySizeID: [
+                    runtimeSize.productSizeID: [VNextRuntimeMeasurementFixture(
+                        code: "chest_width",
+                        value: 55,
+                        basisCode: "FLAT",
+                        sourceMeasurementCode: "fixture.chest"
+                    )]
+                ]
+            )]
+        )
+        let runtime = FitMatchProductRuntimeResponse(
+            runtimeState: baseRuntime.runtimeState,
+            comparisonReady: false,
+            product: baseRuntime.product,
+            classification: nil,
+            variants: baseRuntime.variants,
+            vnext: baseRuntime.vnext
+        )
+        let remote = DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [],
+            runtimes: [runtime]
+        )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+        #expect(await viewModel.loadProductInfoFromURL(
+            purpose: .linkedClosetRegistration
+        ))
+        #expect(viewModel.reviewRecoveryState == .idle)
+        #expect(await remote.recoveryCallCount == 0)
+        let product = try #require(viewModel.makeProductForClosetRegistration(brand: nil))
+        #expect(LinkClosetRegistrationPreparation.registrationBlockMessage(
+            productMeasurementPresence: viewModel.productMeasurementPresence,
+            serverRegistrationContext: viewModel.closetRegistrationServerContext,
+            displaySizes: product.sizes
+        ) == nil)
+    }
+
     @Test func unknownParserMeasurementStateNeverBecomesNone() throws {
         var parsed = try Self.measurementPresenceProduct(
             externalProductID: "unknown-presence",
@@ -3264,6 +3401,7 @@ private actor DatabaseAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicin
 
     private(set) var observationCallCount = 0
     private(set) var runtimeCallCount = 0
+    private(set) var recoveryCallCount = 0
 
     init(
         resolutions: [FitMatchProductResolutionResponse],
@@ -3300,6 +3438,12 @@ private actor DatabaseAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicin
         return runtimes.removeFirst()
     }
 
+    func classificationRecoveryOptions(productID: UUID) async throws
+        -> VNextClassificationRecoveryContractDTO {
+        recoveryCallCount += 1
+        throw StubError.unexpectedRecoveryLookup
+    }
+
     func listClosetItems() async throws -> FitMatchClosetItemsResponse {
         .init(state: "ready", items: [])
     }
@@ -3314,5 +3458,6 @@ private actor DatabaseAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicin
         case missingObservation
         case missingRuntime
         case unexpectedCandidateLookup
+        case unexpectedRecoveryLookup
     }
 }

@@ -324,16 +324,18 @@ struct AddComparedProductToClosetSheet: View {
                 if !isParsedProductReadOnly {
                     normalizeDetailCategory()
                 }
-                resetLinkedMeasurementDraft()
+                reconfigureLinkedMeasurementDraft()
             }
             .onChange(of: selectedDetailCategoryCode) { _, _ in
-                resetLinkedMeasurementDraft()
+                reconfigureLinkedMeasurementDraft()
             }
             .onChange(of: selectedGenderCode) { _, _ in
-                resetLinkedMeasurementDraft()
+                reconfigureLinkedMeasurementDraft()
             }
-            .onChange(of: selectedSizeID) { _, _ in
-                resetLinkedMeasurementDraft()
+            .onChange(of: selectedSizeID) { oldValue, newValue in
+                if oldValue != newValue {
+                    resetLinkedMeasurementDraft()
+                }
             }
             .onAppear {
                 if !isParsedProductReadOnly {
@@ -692,38 +694,38 @@ struct AddComparedProductToClosetSheet: View {
             subtitle: "쇼핑몰·API 값은 자동 입력됩니다. 실제 옷을 재서 수정하거나 빈 항목을 추가할 수 있어요."
         ) {
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(draft.kinds, id: \.self) { kind in
+                ForEach(draft.fields) { field in
                     VStack(alignment: .leading, spacing: 7) {
                         HStack(spacing: 8) {
-                            Text(kind.title)
+                            Text(field.title)
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(.primary)
                             Spacer()
-                            Text(draft.sourceLabel(for: kind))
+                            Text(draft.sourceLabel(for: field))
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(
-                                    draft.sourceLabel(for: kind) == "직접 측정/수정 값"
+                                    draft.sourceLabel(for: field) == "직접 측정/수정 값"
                                         ? Color.primary
                                         : Color.secondary
                                 )
                         }
                         HStack(spacing: 10) {
                             TextField(
-                                kind.placeholder,
+                                field.placeholder,
                                 text: linkedMeasurementBinding(
-                                    for: kind,
+                                    for: field,
                                     fallback: draft
                                 )
                             )
                                 .keyboardType(.decimalPad)
                                 .textInputAutocapitalization(.never)
                                 .font(.headline.weight(.bold))
-                                .disabled(!draft.isSupported(for: kind))
+                                .disabled(!draft.isSupported(for: field))
                             Text("cm")
                                 .font(.subheadline.weight(.bold))
                                 .foregroundStyle(.secondary)
                         }
-                        if !draft.isSupported(for: kind) {
+                        if !draft.isSupported(for: field) {
                             Text("이 항목은 검증된 서버 실측 코드가 없어 원본 값만 보존됩니다.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -1087,10 +1089,11 @@ struct AddComparedProductToClosetSheet: View {
     private var serverRegistrationBlockMessage: String? {
         guard let serverRegistrationContext else { return nil }
         if requiresExplicitClosetClassification,
-           serverRegistrationContext.classificationState == .notApplicable {
-            // A comparison-only status cannot invalidate the user's explicit
-            // Closet category, provided the exact identity and measurement
-            // eligibility checks above still pass.
+           let selectedSize,
+           serverRegistrationContext.identity(for: selectedSize.id) != nil,
+           serverRegistrationContext.isRegisterable(displaySizeID: selectedSize.id) {
+            // Classification status belongs to comparison. An explicit
+            // Closet tuple plus an exact measured size is sufficient here.
             return nil
         }
         return serverRegistrationContext.registrationBlockMessage
@@ -1246,19 +1249,35 @@ struct AddComparedProductToClosetSheet: View {
         )
     }
 
+    private func reconfigureLinkedMeasurementDraft() {
+        guard isServerFirstLinkedRegistration, selectedSize != nil else {
+            linkedMeasurementDraft = nil
+            return
+        }
+        guard linkedMeasurementDraft != nil else {
+            resetLinkedMeasurementDraft()
+            return
+        }
+        linkedMeasurementDraft?.reconfigure(
+            category: selectedCategory,
+            detailCategory: selectedDetailCategory,
+            gender: selectedGender
+        )
+    }
+
     private func linkedMeasurementBinding(
-        for kind: MeasurementKind,
+        for field: FitMatchLinkedClosetMeasurementField,
         fallback: FitMatchLinkedClosetMeasurementDraft
     ) -> Binding<String> {
         Binding(
             // The initial frame must expose the API/retailer values even
             // before onAppear has promoted this transient draft into @State.
-            get: { linkedMeasurementDraft?.rawValue(for: kind) ?? fallback.rawValue(for: kind) },
+            get: { linkedMeasurementDraft?.rawValue(for: field) ?? fallback.rawValue(for: field) },
             set: { value in
                 if linkedMeasurementDraft == nil {
                     linkedMeasurementDraft = fallback
                 }
-                linkedMeasurementDraft?.setRawValue(value, for: kind)
+                linkedMeasurementDraft?.setRawValue(value, for: field)
             }
         )
     }

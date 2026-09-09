@@ -1,181 +1,106 @@
-FitMatch — Simple FitMatch V1 Phase 1
-Link → User Category/Size → Editable Measurements → Closet Round-Trip
-작업 종료 보고서
-
+FitMatch — Simple FitMatch V1 Goal 1 작업 보고서
 작성일: 2026-09-09 (Asia/Seoul)
-Repository: ljy4337/FitMatch
-Branch: simplefitmatch
-작업 시작 SHA: 79020702dd1c1253e4a6012d328aa7b512148706
-감사 참조 SHA: 82b6c8e161f2f5b2062a5513c110aa48d330b3bc
-종료 SHA: 이 보고서를 포함하는 simplefitmatch 커밋 (git log -1로 확인)
+Repository/branch: ljy4337/FitMatch / simplefitmatch
 
-A. 기준 / Preflight
+1. 기준
+- 시작 SHA: a55542f40b48d63e4dfeeadd6ecb278429d453c1
+- 시작 시 local HEAD = origin/simplefitmatch, working tree clean.
+- 종료 SHA: 본 보고서를 포함한 simplefitmatch 체크포인트 커밋.
+- 종료 후 로컬 checkout 대상: connectDB.
 
-- 작업 시작 전 origin/simplefitmatch를 fetch했다.
-- local HEAD와 origin/simplefitmatch는 모두
-  79020702dd1c1253e4a6012d328aa7b512148706이었다.
-- 시작 working tree는 clean이었다.
-- reset, stash, clean, rollback, 기존 파일 삭제는 하지 않았다.
+2. 계약 판정
+- exact product/variant/size identity, 전체 판매 size: IMPLEMENTED
+- Closet classifier/recovery 비의존, 사용자 category/detail authority: IMPLEMENTED
+- category/detail 변경 및 동일 size 재선택 시 unsaved draft 보존: IMPLEMENTED
+- 실제 size 변경 시 retailer baseline 교체: IMPLEMENTED
+- same-size 재편집 시 owned Closet snapshot 보호: IMPLEMENTED
+- per-row provenance/source identity, 55.25 precision, exact semantic code: IMPLEMENTED
+- strict save receipt reconciliation: IMPLEMENTED
+- DEV DB migration 및 SQL contract 검증: IMPLEMENTED
+- authenticated actual Swift↔DEV RPC E2E: NOT RUN
+- 최신 변경 포함 Xcode type build/XCTest: NOT RUN
 
-B. GAP 최종 판정
+3. 수정 파일 / 함수·타입
+- FitMatchClosetSyncCoordinator.swift: editor/owned snapshot을 그대로 sync.
+- FitMatchComparedProductClosetRegistration.swift: exact-code draft merge/reseed,
+  same-size 보존과 real-size-change baseline.
+- FitMatchComparedProductClosetSubmissionAction.swift: identity/classification 및
+  measurement value/unit/provenance/source semantic receipt reconciliation.
+- FitMatchLinkClosetRegistrationAction.swift, FitMatchServerAuthorityCoordinator.swift,
+  ShoppingProductViewModel.swift: exact runtime을 유지하며 classifier/recovery gate 제거.
+- FitMatchSupabaseProductResolver.swift, FitMatchVNextDTOs.swift: linked measurements,
+  closet_detail_code, value_source/source identity transport/hydration.
+- AddClosetItemViewModel.swift: 미평가 기본 0.
+- AddComparedProductToClosetSheet.swift, ClosetItemDetailView.swift,
+  LinkClosetRegistrationView.swift: linked 등록/재편집 draft와 size/category 흐름.
+- FitMatchLinkedClosetRoundTripTests.swift,
+  FitMatchSupabaseProductResolverTests.swift: draft, precision, provenance,
+  classifier zero-call, reconciliation regression.
+- supabase/migrations/20260909005903_simplefitmatch_linked_closet_round_trip.sql:
+  DEV 적용 migration.
+- supabase/sql/127_simplefitmatch_linked_closet_round_trip_local_preimage.sql,
+  127_simplefitmatch_linked_closet_round_trip_local_validation.sql:
+  disposable live-contract preimage와 public RPC 검증.
 
-GAP A — IMPLEMENTED
-- product-linked Closet 요청도 최종 Closet measurement snapshot을 전송한다.
-- exact product_id, product_variant_id, product_size_id와 각 항목의
-  value_source/source identity가 함께 전달된다.
+4. DEV DB 변경사항
+Project: hnkplvyegonlhumlejst (DEV)
+실제 적용 SQL/version:
+- 20260909005903_simplefitmatch_linked_closet_round_trip.sql
+- version 20260909005903 / name simplefitmatch_linked_closet_round_trip
 
-GAP B — CANDIDATE IMPLEMENTED / PRODUCTION PARTIAL
-- Production read-only 감사 결과 기존
-  closet_item_measurements_one_semantic_chk 및
-  validate_closet_measurement_mode()는 CANONICAL row에
-  fitmatch_measurement_code와 source_measurement_code를 함께 둘 수 없었다.
-- 기존 제약과 trigger는 약화하거나 교체하지 않았다.
-- migration candidate는 nullable source_measurement_code_snapshot,
-  source_measurements FK, 별도 검증 trigger를 additive하게 제안한다.
-- list DTO는 기존 source_measurement_code 키에
-  coalesce(source_measurement_code_snapshot, source_measurement_code)를 반환한다.
-- candidate는 Production에 적용하지 않았다.
+추가 column:
+- closet_items.closet_detail_code_snapshot
+- closet_item_measurements.source_measurement_code_snapshot
 
-GAP C — IMPLEMENTED
-- exact remote linked identity가 있고 Closet classification authority가
-  USER_EXPLICIT이면 sync가 global Product automatic classification을 다시
-  호출해 사용자 category를 덮거나 저장을 막지 않는다.
-- identity hierarchy, ownership, authentication, stale-session protection,
-  retry/idempotency 검증은 유지했다.
+추가 function/trigger:
+- fitmatch_vnext.apply_linked_closet_snapshot_for_swift(jsonb, uuid)
+- fitmatch_vnext.set_closet_detail_snapshot_for_swift(uuid, jsonb)
+- fitmatch_vnext.validate_closet_measurement_source_snapshot()
+- closet_item_measurements_validate_source_snapshot
+- source snapshot FK/index
 
-C. 구현 내용
+변경 public bridge:
+- upsert_closet_item_for_swift, update_closet_item, list_closet_items
 
-1) 사용자 흐름 / UI
-- AddComparedProductToClosetSheet는 선택 사이즈 API 실측을 첫 frame부터
-  표시하고 수정/추가 가능한 Closet-local draft를 사용한다.
-- ClosetItemDetailView의 linked item 편집도 동일한 measurement editor를
-  사용한다.
-- 전체 판매 사이즈는 유지·표시하고, 실측이 없는 사이즈만 등록 대상으로
-  비활성화한다.
-- 기존 FitMatchTaxonomyProvider, bundled taxonomy,
-  FitMatchMeasurementStandard 정의를 재사용한다.
+Compatibility:
+- linked snapshot만 새 helper로 routing하며 connectDB/legacy/manual 요청은 기존
+  internal path로 fallback.
+- 기존 semantic exclusivity, measurement/hierarchy validation은 약화하지 않음.
+- DEV에서 authenticated execute 허용, anon 거부 확인.
 
-2) Snapshot / provenance
-- FitMatchClosetMeasurementSnapshot은 ProductSize chart뿐 아니라 현재
-  UserFit의 owned snapshot에서도 생성할 수 있다.
-- 같은 exact size의 category-only 또는 measurement-only 편집은 기존
-  USER_MANUAL row를 보존한다.
-- 실제 size 변경은 새 exact ProductSize chart에서 시작한다.
-- 수정한 항목만 USER_MANUAL이며 untouched API row는 RETAILER_SNAPSHOT이다.
-- 신규 FitMatch measurement는 retailer source identity를 위조하지 않고
-  raw/source code를 null로 유지한다.
-- 소수 정밀도(예: 55.25)를 표시용 한 자리 반올림으로 훼손하지 않는다.
+5. 테스트 결과
+- Disposable PostgreSQL 17 DB-only integration: PASS
+  linked create/list, mixed provenance, category/same-size edit, M→L,
+  ProductSize drift 뒤 old snapshot, extra canonical/source-null, manual regression,
+  invalid data, cross-user denial, Product/ProductSize 불변, retry, rollback.
+- DEV catalog/function/privilege verification: PASS
+- git diff --check: PASS
+- 수정 Swift 전체 xcrun swiftc -parse: PASS
+- protected TabBar/scroll diff: PASS (변경 없음)
+- 최신 Xcode build-for-testing: NOT RUN (두 시도 모두 output 전 host 정지)
+- 최신 XCTest: NOT RUN
+- authenticated actual Swift↔DEV RPC E2E: NOT RUN
+- draft/reconciliation tests: 작성됨, 실행 NOT RUN
 
-3) Transport / hydration / sync
-- linked payload의 measurements를 product linkage 때문에 생략하지 않는다.
-- DTO → UserFit → measurementRecords에서 value_source와 source identity를
-  복원한다.
-- 서버에서 source가 없었던 USER_MANUAL 추가값은 다음 sync에서도 source
-  null을 유지한다.
-- coordinator가 editor snapshot을 ProductSize에서 다시 생성하지 않고
-  그대로 upsert/update 요청에 전달한다.
-- unrated satisfaction 0은 서버에 임의 3으로 저장하지 않고 null/omitted로
-  round-trip한다.
+6. Round-trip 증거
+Disposable public RPC에서 API chest=55.25, shoulder=47, back=70, sleeve=23을
+저장하고 chest만 56으로 수정했다. 재조회 결과 chest=56 USER_MANUAL과 원
+retailer source identity가 유지됐고 나머지는 원 값과 RETAILER_SNAPSHOT을
+유지했다. category-only/same-size update도 동일했다. 새 user canonical row는
+USER_MANUAL/source NULL이었다. 이는 DB contract 증거이며 Swift↔DEV E2E는 아니다.
 
-4) Isolation / 기존 동작
-- 사용자 Closet 편집은 shared Product, ProductSize,
-  product_size_measurements 또는 다른 사용자 Closet을 변경하지 않는다.
-- 직접 입력 Closet은 기존 generic upsert/update route를 유지한다.
-- parser, 원본 상품/category metadata, 전체 판매 사이즈, 자동분류 자산,
-  diagnostics, 기존 UI style은 유지했다.
+7. 불변성 / 금지 영역
+- Closet update의 Product/ProductVariant/ProductSize/global retailer measurement
+  불변과 cross-user mutation 거부를 disposable transaction에서 검증.
+- Comparison Engine/scoring/Reliability/ranking/Result/History 변경 없음.
+- TabBarScrollVisibilityModifier/scroll visibility call site 변경 없음.
+- Production DB 미적용. 지정 project는 사용자 지시에 따라 DEV로만 변경.
 
-D. DB READ-ONLY 감사 및 candidate
+8. 남은 영역 / 최종 판정
+- authenticated Swift↔DEV create/edit/list/hydration/re-edit E2E 필요.
+- 최신 소스 Xcode type build 및 focused/full XCTest 필요.
+- DEV advisor의 기존 별도 이슈: manual_cross_comparison_rules와
+  classification_axis_value_authority에 RLS disabled. 범위 밖이라 미수정.
 
-Production에서 catalog/schema/function metadata만 read-only로 확인했다.
-business row 조회, DML, DDL, migration apply, RPC replacement, deploy는 없었다.
-
-확인한 계약:
-- closet_items.measurement_mode
-- closet_item_measurements.value_source
-- source_measurement_code / fitmatch_measurement_code 상호배타 check
-- validate_closet_measurement_mode trigger
-- Product/variant/size hierarchy validation
-- upsert/update/list public bridge와 authenticated/anon privilege
-- context-aware canonical_measurements_for_size_with_context resolver
-
-현재 구조만으로 canonical meaning과 verified parser identity를 동시에 보존할
-수 없어 최소 additive schema candidate가 필요하다고 판정했다.
-
-Candidate 파일:
-- supabase/sql/127_simplefitmatch_linked_closet_round_trip_candidate.sql
-- supabase/sql/127_simplefitmatch_linked_closet_round_trip_local_preimage.sql
-- supabase/sql/127_simplefitmatch_linked_closet_round_trip_local_validation.sql
-
-별도 보안 관찰:
-- fitmatch_vnext.manual_cross_comparison_rules
-- fitmatch_vnext.classification_axis_value_authority
-위 두 table은 Production metadata상 RLS disabled였다. 이번 Phase 범위 및
-Production 변경 금지에 따라 수정하지 않았다.
-
-E. 테스트
-
-1) Disposable PostgreSQL 17 contract test — PASS
-- /tmp의 새 PostgreSQL cluster에 local fixture, 기존 repository migration,
-  live-contract preimage, candidate, validation 순서로 적용했다.
-- public RPC create → update → list/read → subsequent update를 실행했다.
-- outer transaction rollback 후 fixture baseline으로 복귀했고 local server와
-  임시 directory를 종료/삭제했다.
-
-검증 범위:
-- untouched imported 값/identity/provenance
-- one-field edit와 mixed provenance
-- missing measurement addition
-- user category authority
-- exact hierarchy
-- cross-user denial
-- NaN/infinity/invalid unit/out-of-range rejection
-- forged source identity rejection
-- Product/ProductSize 불변
-- 기존 CANONICAL semantic exclusivity 불변
-
-2) Swift static validation — PASS
-- git diff --check
-- 수정 Swift 전체 xcrun swiftc -parse
-- 신규 untracked SQL의 whitespace check
-
-3) Simulator XCTest
-- 마지막 정상 focused bundle: 57 PASS / 0 FAIL / 0 SKIP
-  FitMatchClosetTransportContractTests
-  FitMatchClosetSyncCoordinatorTests
-  FitMatchLinkedClosetRoundTripTests
-  exact-identity NOT_COMPARABLE resolver regression
-- 이후 broad resolver run은 기존 Result→Closet preferred-size/variant 관련
-  5개 baseline failure를 재현했다.
-- 최종 작은 provenance 보완 뒤 재실행은 CoreSimulatorService connection
-  refused 때문에 시작하지 못했다. 해당 실행은 PASS로 계산하지 않았다.
-
-F. Round-trip 증거
-
-Disposable public RPC와 Swift DTO/hydration regression에서 다음을 확인했다.
-
-1. selected ProductSize API chest=55.25, shoulder=47, back=70, sleeve=23
-2. chest만 56으로 사용자 수정
-3. server update
-4. list read-back에서 chest=56, value_source=USER_MANUAL
-5. chest source_measurement_code_snapshot은 원래 parser source identity 유지
-6. shoulder/back/sleeve 값은 47/70/23 유지
-7. 나머지 row value_source=RETAILER_SNAPSHOT 유지
-8. DTO hydration 후 UserFit.measurementRecords가 동일 값/source를 유지
-9. 이후 category-only/re-edit에서도 mixed snapshot 유지
-10. 추가 hem_width=24는 USER_MANUAL, source identity=null 유지
-
-G. 금지 영역 확인
-
-- MeasurementComparisonEngine 점수/추천 계산: 변경 없음
-- VNextComparisonEngineAdapter ranking/reliability: 변경 없음
-- History dedupe/latest/completed comparison: 변경 없음
-- Result 점수 및 화면: 변경 없음
-- TabBarScrollVisibilityModifier/scroll chrome: 변경 없음
-- shared Product/ProductSize/global classification mutation: 없음
-- Production DB write/migration/RPC replacement/deploy: 없음
-- 기존 자동분류 코드/DB 자산 삭제: 없음
-
-운영 활성화를 위한 남은 단계:
-- candidate SQL peer review
-- 비Production Supabase 통합 검증
-- 별도의 명시적 Production migration 승인 및 배포
+Goal 1 최종 판정: PARTIAL
+다음 Goal로 넘어가도 되는지: NO

@@ -655,6 +655,76 @@ actor FitMatchServerAuthorityCoordinator {
         )
     }
 
+    /// Resolves only the server-issued retailer identity and size-measurement
+    /// runtime needed by a linked Closet registration. Classification remains
+    /// available on the returned runtime for diagnostics, but its status is
+    /// deliberately not an authority gate and this path never requests
+    /// REVIEW_REQUIRED recovery candidates.
+    ///
+    /// A new or changed retailer product still has to submit its verified
+    /// parser observation once so the database can issue exact product /
+    /// variant / size UUIDs. For an existing product, an observation is
+    /// resubmitted only when sizes or measurements are actually missing; a
+    /// classification-only state is never promoted just to unblock Closet.
+    func resolveClosetRegistrationRuntime(
+        request: FitMatchProductResolutionRequest,
+        observation: FitMatchProductObservationRequest?
+    ) async throws -> FitMatchProductRuntimeResponse {
+        try Task.checkCancellation()
+        let resolution = try await remote.resolve(request)
+        try Task.checkCancellation()
+
+        let expectedProductID: UUID?
+        var didPromote = false
+        switch resolution.catalogState {
+        case "current":
+            guard let productID = resolution.productID else {
+                throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                    "current_catalog_missing_product_id"
+                )
+            }
+            expectedProductID = productID
+        case "new", "changed":
+            if resolution.catalogState == "changed", resolution.productID == nil {
+                throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                    "changed_catalog_missing_product_id"
+                )
+            }
+            expectedProductID = try await promote(
+                request: request,
+                observation: observation,
+                expectedProductID: resolution.productID
+            )
+            didPromote = true
+        default:
+            throw FitMatchServerAuthorityError.unsupportedCatalogState(
+                resolution.catalogState
+            )
+        }
+
+        try Task.checkCancellation()
+        var runtime = try await remote.fetchProductRuntime(request)
+        try Task.checkCancellation()
+        if !didPromote,
+           ["sizes_required", "measurements_required"].contains(runtime.runtimeState),
+           observationCanImproveRuntime(observation, runtimeState: runtime.runtimeState) {
+            _ = try await promote(
+                request: request,
+                observation: observation,
+                expectedProductID: expectedProductID
+            )
+            try Task.checkCancellation()
+            runtime = try await remote.fetchProductRuntime(request)
+            try Task.checkCancellation()
+        }
+
+        return try validatedClosetRegistrationRuntime(
+            runtime,
+            request: request,
+            expectedProductID: expectedProductID
+        )
+    }
+
     func authorizeReferenceCandidate(
         referenceClientItemID: UUID,
         localReferenceSnapshot: FitMatchLocalReferenceSnapshot,
@@ -1594,6 +1664,26 @@ actor FitMatchServerAuthorityCoordinator {
             classification: classification,
             runtime: runtime
         )
+    }
+
+    private func validatedClosetRegistrationRuntime(
+        _ runtime: FitMatchProductRuntimeResponse,
+        request: FitMatchProductResolutionRequest,
+        expectedProductID: UUID?
+    ) throws -> FitMatchProductRuntimeResponse {
+        if let expectedProductID, runtime.product.productID != expectedProductID {
+            throw FitMatchServerAuthorityError.promotedProductMismatch
+        }
+        guard runtime.product.source.lowercased() == request.source.lowercased(),
+              runtime.product.externalProductID == request.externalProductID,
+              let exact = runtime.vnext,
+              exact.found,
+              exact.product?.id == runtime.product.productID else {
+            throw FitMatchServerAuthorityError.runtimeResponseMalformed(
+                "closet_product_identity_mismatch"
+            )
+        }
+        return runtime
     }
 
     private func classificationStatus(

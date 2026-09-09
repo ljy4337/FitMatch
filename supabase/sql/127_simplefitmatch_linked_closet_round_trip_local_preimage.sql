@@ -18,6 +18,7 @@ create table if not exists fitmatch_vnext.fitmatch_measurements (
 insert into fitmatch_vnext.fitmatch_measurements(measurement_code, is_active)
 values
     ('chest_width', true),
+    ('chest_circumference', true),
     ('shoulder_width', true),
     ('back_length', true),
     ('sleeve_length', true),
@@ -39,6 +40,7 @@ insert into fitmatch_vnext.source_measurements(
     source_code
 ) values
     ('fixture.chest_width.chest_pit_to_pit', 'fixture'),
+    ('fixture.chest_circumference.garment', 'fixture'),
     ('fixture.shoulder_width.shoulder_seam_to_seam', 'fixture'),
     ('fixture.back_length.back_neck_to_hem', 'fixture'),
     ('fixture.sleeve_length.shoulder_seam_to_cuff', 'fixture')
@@ -136,6 +138,7 @@ select jsonb_build_object(
         'basis_code', 'FLAT',
         'source_measurement_code', case m.raw_code
             when 'chest_width' then 'fixture.chest_width.chest_pit_to_pit'
+            when 'chest_circumference' then 'fixture.chest_circumference.garment'
             when 'shoulder_width' then 'fixture.shoulder_width.shoulder_seam_to_seam'
             when 'back_length' then 'fixture.back_length.back_neck_to_hem'
             when 'sleeve_length' then 'fixture.sleeve_length.shoulder_seam_to_cuff'

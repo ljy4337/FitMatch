@@ -254,7 +254,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
               record.closetItemID == acceptedClosetItemID,
               record.productID == request.productID,
               record.variantID == request.productVariantID,
-              record.productSizeID == request.productSizeID else {
+              record.productSizeID == request.productSizeID,
+              FitMatchClosetMutationReceiptValidator.matches(
+                record,
+                request: request,
+                acceptedClosetItemID: acceptedClosetItemID
+              ) else {
             throw AuthoritativeRegistrationProjectionError.receiptMismatch
         }
 
@@ -764,7 +769,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
               record.closetItemID == receipt.closetItemID,
               record.productID == receipt.request.productID,
               record.variantID == receipt.request.productVariantID,
-              record.productSizeID == receipt.request.productSizeID else {
+              record.productSizeID == receipt.request.productSizeID,
+              FitMatchClosetMutationReceiptValidator.matches(
+                record,
+                request: receipt.request,
+                acceptedClosetItemID: receipt.closetItemID
+              ) else {
             throw AuthoritativeRegistrationProjectionError.receiptMismatch
         }
 

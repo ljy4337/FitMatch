@@ -1,4 +1,4 @@
--- CANDIDATE ONLY — NOT A MIGRATION AND NOT APPLIED TO PRODUCTION.
+-- Migration 20260909005903: Simple FitMatch V1 Goal 1 linked Closet round trip.
 --
 -- Simple FitMatch Phase 1 linked Closet round-trip contract.
 --
@@ -19,9 +19,8 @@
 -- current SOURCE_NATIVE-only meaning and `source_measurement_code_snapshot`
 -- stores the verified origin of a CANONICAL Closet-local snapshot row.
 --
--- It must be reviewed and executed only against a disposable/local Supabase
--- database after the companion validation script passes.  Do not apply it to
--- Production from this repository.
+-- Validated against a disposable PostgreSQL preimage before DEV application.
+-- This migration is additive and preserves legacy/manual public RPC routing.
 
 begin;
 
@@ -30,6 +29,95 @@ begin;
 -- retain source provenance on an otherwise canonical Closet-local row.
 alter table fitmatch_vnext.closet_item_measurements
     add column if not exists source_measurement_code_snapshot text;
+
+create index if not exists closet_item_measurements_source_snapshot_idx
+    on fitmatch_vnext.closet_item_measurements(source_measurement_code_snapshot)
+    where source_measurement_code_snapshot is not null;
+
+-- The vNext comparison tuple intentionally stores garment type and length
+-- axes, but those values are not a lossless representation of the app's
+-- user-selected Closet detail (several active details share one tuple). Keep
+-- that personal taxonomy identity as a snapshot; it never changes Product
+-- classification or participates in comparison policy.
+alter table fitmatch_vnext.closet_items
+    add column if not exists closet_detail_code_snapshot text;
+
+do $closet_detail_snapshot_check$
+begin
+    if not exists (
+        select 1
+        from pg_constraint c
+        join pg_class t on t.oid = c.conrelid
+        join pg_namespace n on n.oid = t.relnamespace
+        where n.nspname = 'fitmatch_vnext'
+          and t.relname = 'closet_items'
+          and c.conname = 'closet_items_detail_snapshot_format_chk'
+    ) then
+        alter table fitmatch_vnext.closet_items
+            add constraint closet_items_detail_snapshot_format_chk
+            check (
+                closet_detail_code_snapshot is null
+                or (
+                    length(closet_detail_code_snapshot) between 1 and 80
+                    and closet_detail_code_snapshot ~ '^[a-z0-9_]+$'
+                )
+            );
+    end if;
+end
+$closet_detail_snapshot_check$;
+
+-- New Swift requests carry the exact app taxonomy detail separately from the
+-- vNext comparison tuple. This narrow helper lets the established manual
+-- upsert/update functions remain byte-for-byte untouched while persisting the
+-- new optional field. Legacy requests omit the key and remain a no-op.
+create or replace function fitmatch_vnext.set_closet_detail_snapshot_for_swift(
+    p_closet_item_id uuid,
+    p_request jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+    caller_id uuid := auth.uid();
+    requested_detail_code text;
+begin
+    if caller_id is null then
+        raise exception 'Authentication required';
+    end if;
+    if p_request is null or jsonb_typeof(p_request) <> 'object' then
+        raise exception 'Request must be a JSON object';
+    end if;
+    if not (p_request ? 'closet_detail_code') then
+        return;
+    end if;
+
+    requested_detail_code := lower(nullif(
+        btrim(p_request ->> 'closet_detail_code'),
+        ''
+    ));
+    if requested_detail_code is null
+       or length(requested_detail_code) > 80
+       or requested_detail_code !~ '^[a-z0-9_]+$' then
+        raise exception 'Invalid Closet detail snapshot format';
+    end if;
+
+    update fitmatch_vnext.closet_items ci
+    set closet_detail_code_snapshot = requested_detail_code,
+        updated_at = case
+            when ci.closet_detail_code_snapshot is distinct from requested_detail_code
+                then now()
+            else ci.updated_at
+        end
+    where ci.id = p_closet_item_id
+      and ci.user_id = caller_id
+      and ci.deleted_at is null;
+    if not found then
+        raise exception 'Closet item not found or not owned';
+    end if;
+end
+$function$;
 
 do $source_snapshot_fk$
 begin
@@ -149,6 +237,7 @@ declare
     effective_classification_source text;
     effective_classification_fingerprint text;
     effective_resolver_version text;
+    requested_detail_code text;
     requested_satisfaction smallint;
     measurement_value jsonb;
     requested_measurement_code text;
@@ -158,7 +247,10 @@ declare
     numeric_measurement numeric;
     requested_source_measurement_code text;
     effective_source_measurement_code text;
+    owned_source_measurement_code text;
     canonical_source_identity_count integer;
+    is_same_owned_size boolean := false;
+    matches_owned_retailer_snapshot boolean := false;
 begin
     if caller_id is null then
         raise exception 'Authentication required';
@@ -171,11 +263,17 @@ begin
     linked_product_id := nullif(btrim(p_request ->> 'product_id'), '')::uuid;
     linked_variant_id := nullif(btrim(p_request ->> 'product_variant_id'), '')::uuid;
     linked_size_id := nullif(btrim(p_request ->> 'product_size_id'), '')::uuid;
+    requested_detail_code := lower(nullif(btrim(p_request ->> 'closet_detail_code'), ''));
     if client_id is null then
         raise exception 'client_item_id is required';
     end if;
     if linked_product_id is null or linked_variant_id is null or linked_size_id is null then
         raise exception 'Product-linked closet registration requires product, variant, and size';
+    end if;
+    if requested_detail_code is not null
+       and (length(requested_detail_code) > 80
+            or requested_detail_code !~ '^[a-z0-9_]+$') then
+        raise exception 'Invalid Closet detail snapshot format';
     end if;
 
     -- Match the established linked upsert idempotency contract: reference
@@ -237,6 +335,10 @@ begin
     ) then
         raise exception 'Product, variant, and size hierarchy mismatch';
     end if;
+    is_same_owned_size := not is_create
+        and target_item.product_id = linked_product_id
+        and target_item.product_variant_id = linked_variant_id
+        and target_item.product_size_id = linked_size_id;
 
     override_payload := p_request -> 'closet_classification_override';
     if override_payload is not null then
@@ -328,7 +430,15 @@ begin
     if coalesce((canonical_payload ->> 'semantic_conflict_count')::integer, 0) > 0 then
         raise exception 'Canonical measurement semantics are ambiguous';
     end if;
-    if jsonb_array_length(coalesce(canonical_payload -> 'measurements', '[]'::jsonb)) = 0 then
+    if jsonb_array_length(coalesce(canonical_payload -> 'measurements', '[]'::jsonb)) = 0
+       and not (
+           is_same_owned_size
+           and exists (
+               select 1
+               from fitmatch_vnext.closet_item_measurements cm
+               where cm.closet_item_id = target_item.id
+           )
+       ) then
         raise exception 'Verified canonical measurements are required';
     end if;
 
@@ -406,6 +516,36 @@ begin
             btrim(measurement_value ->> 'source_measurement_code'), ''
         );
         effective_source_measurement_code := null;
+        owned_source_measurement_code := null;
+        matches_owned_retailer_snapshot := false;
+        if is_same_owned_size then
+            select coalesce(
+                       cm.source_measurement_code_snapshot,
+                       cm.source_measurement_code
+                   )
+            into owned_source_measurement_code
+            from fitmatch_vnext.closet_item_measurements cm
+            where cm.closet_item_id = target_item.id
+              and cm.fitmatch_measurement_code = requested_measurement_code
+            limit 1;
+
+            select exists (
+                select 1
+                from fitmatch_vnext.closet_item_measurements cm
+                where cm.closet_item_id = target_item.id
+                  and cm.fitmatch_measurement_code = requested_measurement_code
+                  and cm.value_source = 'RETAILER_SNAPSHOT'
+                  and cm.value = numeric_measurement
+                  and lower(cm.unit_code) = measurement_unit
+                  and (
+                      requested_source_measurement_code is null
+                      or coalesce(
+                          cm.source_measurement_code_snapshot,
+                          cm.source_measurement_code
+                      ) = requested_source_measurement_code
+                  )
+            ) into matches_owned_retailer_snapshot;
+        end if;
         if requested_source_measurement_code is not null then
             if exists (
                 select 1
@@ -417,6 +557,9 @@ begin
                     = requested_source_measurement_code
             ) then
                 effective_source_measurement_code := requested_source_measurement_code;
+            elsif is_same_owned_size
+                  and owned_source_measurement_code = requested_source_measurement_code then
+                effective_source_measurement_code := owned_source_measurement_code;
             elsif exists (
                 select 1
                 from fitmatch_vnext.source_measurements sm
@@ -426,15 +569,17 @@ begin
             end if;
         end if;
 
-        if measurement_source = 'RETAILER_SNAPSHOT' and not exists (
-            select 1
-            from jsonb_array_elements(canonical_payload -> 'measurements')
-                as value(canonical_measurement)
-            where canonical_measurement ->> 'fitmatch_measurement_code'
-                = requested_measurement_code
-              and (canonical_measurement ->> 'value')::numeric = numeric_measurement
-              and lower(canonical_measurement ->> 'unit_code') = measurement_unit
-        ) then
+        if measurement_source = 'RETAILER_SNAPSHOT'
+           and not matches_owned_retailer_snapshot
+           and not exists (
+               select 1
+               from jsonb_array_elements(canonical_payload -> 'measurements')
+                   as value(canonical_measurement)
+               where canonical_measurement ->> 'fitmatch_measurement_code'
+                   = requested_measurement_code
+                 and (canonical_measurement ->> 'value')::numeric = numeric_measurement
+                 and lower(canonical_measurement ->> 'unit_code') = measurement_unit
+           ) then
             raise exception 'Retailer snapshot does not match selected ProductSize';
         end if;
 
@@ -443,35 +588,26 @@ begin
         -- selected ProductSize has exactly one verified source for this
         -- canonical meaning. Never choose one arbitrarily.
         if effective_source_measurement_code is null then
-            if measurement_source = 'RETAILER_SNAPSHOT' then
-                select count(distinct nullif(
-                           canonical_measurement ->> 'source_measurement_code', ''
-                       ))::integer,
-                       min(nullif(
-                           canonical_measurement ->> 'source_measurement_code', ''
-                       ))
-                into canonical_source_identity_count,
-                     effective_source_measurement_code
-                from jsonb_array_elements(canonical_payload -> 'measurements')
-                    as value(canonical_measurement)
-                where canonical_measurement ->> 'fitmatch_measurement_code'
-                    = requested_measurement_code
-                  and (canonical_measurement ->> 'value')::numeric = numeric_measurement
-                  and lower(canonical_measurement ->> 'unit_code') = measurement_unit;
-            else
-                select count(distinct nullif(
-                           canonical_measurement ->> 'source_measurement_code', ''
-                       ))::integer,
-                       min(nullif(
-                           canonical_measurement ->> 'source_measurement_code', ''
-                       ))
-                into canonical_source_identity_count,
-                     effective_source_measurement_code
-                from jsonb_array_elements(canonical_payload -> 'measurements')
-                    as value(canonical_measurement)
-                where canonical_measurement ->> 'fitmatch_measurement_code'
-                    = requested_measurement_code;
+            if is_same_owned_size and owned_source_measurement_code is not null then
+                effective_source_measurement_code := owned_source_measurement_code;
             end if;
+        end if;
+        if effective_source_measurement_code is null
+           and measurement_source = 'RETAILER_SNAPSHOT' then
+            select count(distinct nullif(
+                       canonical_measurement ->> 'source_measurement_code', ''
+                   ))::integer,
+                   min(nullif(
+                       canonical_measurement ->> 'source_measurement_code', ''
+                   ))
+            into canonical_source_identity_count,
+                 effective_source_measurement_code
+            from jsonb_array_elements(canonical_payload -> 'measurements')
+                as value(canonical_measurement)
+            where canonical_measurement ->> 'fitmatch_measurement_code'
+                = requested_measurement_code
+              and (canonical_measurement ->> 'value')::numeric = numeric_measurement
+              and lower(canonical_measurement ->> 'unit_code') = measurement_unit;
 
             if canonical_source_identity_count > 1 then
                 raise exception 'Selected ProductSize canonical measurement has ambiguous source identity';
@@ -495,7 +631,21 @@ begin
     -- selected size chart silently disappear from this Closet-local snapshot.
     -- `canonical_measurements_for_size` can contain duplicate raw rows with
     -- the same resolved code, so compare the distinct canonical identity.
-    if exists (
+    if is_same_owned_size then
+        if exists (
+            select 1
+            from fitmatch_vnext.closet_item_measurements cm
+            where cm.closet_item_id = target_item.id
+              and not exists (
+                  select 1
+                  from jsonb_array_elements(measurement_payload) as value(measurement)
+                  where measurement ->> 'fitmatch_measurement_code'
+                      = cm.fitmatch_measurement_code
+              )
+        ) then
+            raise exception 'Linked Closet snapshot is missing an owned measurement';
+        end if;
+    elsif exists (
         select 1
         from (
             select distinct canonical_measurement ->> 'fitmatch_measurement_code' as code
@@ -533,7 +683,8 @@ begin
         insert into fitmatch_vnext.closet_items (
             user_id, client_item_id, product_id, product_variant_id, product_size_id,
             item_name, brand_name, image_url, product_url, size_label,
-            audience_code, garment_type_code, sleeve_length_code,
+            audience_code, closet_detail_code_snapshot,
+            garment_type_code, sleeve_length_code,
             lower_length_code, body_length_code, classification_source,
             measurement_mode, source_code_snapshot, is_reference,
             fit_preference_code, notes, satisfaction, request_fingerprint,
@@ -542,7 +693,9 @@ begin
         select caller_id, client_id, linked_product_id, linked_variant_id, linked_size_id,
                product_row.product_name, product_row.brand_name, product_row.image_url,
                product_row.canonical_url, ps.size_label,
-               effective_audience_code, effective_garment_type_code,
+               effective_audience_code,
+               coalesce(requested_detail_code, effective_garment_type_code),
+               effective_garment_type_code,
                effective_sleeve_length_code, effective_lower_length_code,
                effective_body_length_code, effective_classification_source,
                'CANONICAL', null, false,
@@ -572,6 +725,11 @@ begin
                 ci.size_label
             ),
             audience_code = effective_audience_code,
+            closet_detail_code_snapshot = coalesce(
+                requested_detail_code,
+                ci.closet_detail_code_snapshot,
+                effective_garment_type_code
+            ),
             garment_type_code = effective_garment_type_code,
             sleeve_length_code = effective_sleeve_length_code,
             lower_length_code = effective_lower_length_code,
@@ -675,6 +833,10 @@ begin
             'size_label', ci.size_label,
             'audience_code', ci.audience_code,
             'category_code', gt.category_code,
+            'closet_detail_code', coalesce(
+                ci.closet_detail_code_snapshot,
+                ci.garment_type_code
+            ),
             'garment_type_code', ci.garment_type_code,
             'sleeve_length_code', ci.sleeve_length_code,
             'lower_length_code', ci.lower_length_code,
@@ -745,13 +907,20 @@ language plpgsql
 security invoker
 set search_path = ''
 as $function$
+declare
+    result_value jsonb;
 begin
     if p_request is not null
        and nullif(btrim(p_request ->> 'product_id'), '') is not null
        and p_request ? 'measurements' then
         return fitmatch_vnext.apply_linked_closet_snapshot_for_swift(p_request);
     end if;
-    return fitmatch_vnext.upsert_closet_item_for_swift(p_request);
+    result_value := fitmatch_vnext.upsert_closet_item_for_swift(p_request);
+    perform fitmatch_vnext.set_closet_detail_snapshot_for_swift(
+        (result_value ->> 'item_id')::uuid,
+        p_request
+    );
+    return result_value;
 end
 $function$;
 
@@ -764,6 +933,8 @@ language plpgsql
 security invoker
 set search_path = ''
 as $function$
+declare
+    result_value jsonb;
 begin
     if p_request is not null
        and nullif(btrim(p_request ->> 'product_id'), '') is not null
@@ -773,10 +944,19 @@ begin
             p_closet_item_id
         );
     end if;
-    return fitmatch_vnext.update_closet_item(p_closet_item_id, p_request);
+    result_value := fitmatch_vnext.update_closet_item(p_closet_item_id, p_request);
+    perform fitmatch_vnext.set_closet_detail_snapshot_for_swift(
+        p_closet_item_id,
+        p_request
+    );
+    return result_value;
 end
 $function$;
 
+revoke all on function fitmatch_vnext.set_closet_detail_snapshot_for_swift(uuid, jsonb)
+    from public, anon;
+grant execute on function fitmatch_vnext.set_closet_detail_snapshot_for_swift(uuid, jsonb)
+    to authenticated, service_role;
 revoke all on function fitmatch_vnext.apply_linked_closet_snapshot_for_swift(jsonb, uuid)
     from public, anon;
 grant execute on function fitmatch_vnext.apply_linked_closet_snapshot_for_swift(jsonb, uuid)

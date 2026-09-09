@@ -35,6 +35,11 @@ enum FitMatchReviewRecoveryState: Equatable {
     case failed(String)
 }
 
+enum ShoppingProductLoadPurpose: Equatable {
+    case comparison
+    case linkedClosetRegistration
+}
+
 @MainActor
 final class ShoppingProductViewModel: ObservableObject {
     @Published var productURL = ""
@@ -256,7 +261,9 @@ final class ShoppingProductViewModel: ObservableObject {
         sizeOptions.removeAll { $0.id == option.id }
     }
 
-    func loadProductInfoFromURL() async -> Bool {
+    func loadProductInfoFromURL(
+        purpose: ShoppingProductLoadPurpose = .comparison
+    ) async -> Bool {
         let loadID = UUID()
         let metricProvider = FitMatchMetricProvider.resolve(urlString: productURL)
         metricsRecorder.record(.parserAttempt(provider: metricProvider))
@@ -296,10 +303,19 @@ final class ShoppingProductViewModel: ObservableObject {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             analysisPhase = .preparingComparison
             apply(parsedProduct)
-            let hasConfirmedComparisonAuthority = await resolveServerAuthority(
-                for: parsedProduct,
-                loadID: loadID
-            )
+            let loadSucceeded: Bool
+            switch purpose {
+            case .comparison:
+                loadSucceeded = await resolveServerAuthority(
+                    for: parsedProduct,
+                    loadID: loadID
+                )
+            case .linkedClosetRegistration:
+                loadSucceeded = await resolveClosetRegistrationRuntime(
+                    for: parsedProduct,
+                    loadID: loadID
+                )
+            }
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             metricsRecorder.record(
                 .parserSuccess(
@@ -314,14 +330,22 @@ final class ShoppingProductViewModel: ObservableObject {
             // signal: parser facts live in hasLoadedProductInfo, while runtime
             // comparison readiness lives in serverComparisonReadiness. Link
             // Closet registration consumes those explicit states directly.
-            return hasConfirmedComparisonAuthority
+            return loadSucceeded
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             apply(partialError.productInfo)
-            _ = await resolveServerAuthority(
-                for: partialError.productInfo,
-                loadID: loadID
-            )
+            switch purpose {
+            case .comparison:
+                _ = await resolveServerAuthority(
+                    for: partialError.productInfo,
+                    loadID: loadID
+                )
+            case .linkedClosetRegistration:
+                _ = await resolveClosetRegistrationRuntime(
+                    for: partialError.productInfo,
+                    loadID: loadID
+                )
+            }
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             metricsRecorder.record(.parserFailure(provider: metricProvider, reason: .partial))
             if partialError.productInfo.sourceName == "무신사",
@@ -584,6 +608,92 @@ final class ShoppingProductViewModel: ObservableObject {
                 details: "오류=\(error.localizedDescription), 로컬 확정 fallback=사용 안 함"
             )
             #endif
+            return false
+        }
+    }
+
+    private func resolveClosetRegistrationRuntime(
+        for product: ParsedProductInfo,
+        loadID: UUID? = nil
+    ) async -> Bool {
+        guard isCurrentLoad(loadID) else { return false }
+        parsedProductForServerAuthority = product
+        guard let request = product.fitMatchDatabaseResolutionRequest() else {
+            databaseShadowState = .skipped
+            serverAuthorityState = .unavailable("retailer_identity_missing")
+            errorMessage = "서버에서 확인할 상품 식별 정보가 없습니다."
+            return false
+        }
+        guard let serverAuthorityCoordinator else {
+            databaseShadowState = .unavailable
+            serverAuthorityState = .unavailable("server_authority_unavailable")
+            errorMessage = "서버 사이즈 정보를 확인할 수 없습니다."
+            return false
+        }
+
+        databaseShadowState = .checking
+        serverAuthorityState = .resolving
+        reviewRecoveryState = .idle
+        do {
+            let runtime = try await serverAuthorityCoordinator
+                .resolveClosetRegistrationRuntime(
+                    request: request,
+                    observation: product.fitMatchProductObservationRequest()
+                )
+            guard isCurrentLoad(loadID) else { return false }
+            applyServerRuntime(
+                runtime,
+                allowsCanonicalMeasurementPresence: true
+            )
+
+            // Retain the server's real classification state for diagnostics
+            // and existing UI copy. Linked registration consumes only the
+            // exact runtime UUID map and measurement eligibility below.
+            if let classification = runtime.classification {
+                let authority: FitMatchServerProductAuthority
+                switch classification.status {
+                case "confirmed":
+                    authority = FitMatchServerProductAuthority(
+                        status: .confirmed,
+                        productID: runtime.product.productID,
+                        classification: classification,
+                        runtime: runtime
+                    )
+                    serverAuthorityState = .confirmed(authority)
+                case "review_required":
+                    authority = FitMatchServerProductAuthority(
+                        status: .reviewRequired,
+                        productID: runtime.product.productID,
+                        classification: classification,
+                        runtime: runtime
+                    )
+                    serverAuthorityState = .reviewRequired(authority)
+                case "not_comparable":
+                    authority = FitMatchServerProductAuthority(
+                        status: .notComparable,
+                        productID: runtime.product.productID,
+                        classification: classification,
+                        runtime: runtime
+                    )
+                    serverAuthorityState = .notComparable(authority)
+                default:
+                    serverAuthorityState = .unavailable("classification_status_unavailable")
+                }
+            } else {
+                serverAuthorityState = .unavailable("classification_unavailable")
+            }
+
+            guard !closetRegistrationIdentitiesByDisplaySizeID.isEmpty else {
+                errorMessage = "서버의 정확한 상품·옵션·사이즈 정보를 확인하지 못했습니다."
+                return false
+            }
+            errorMessage = nil
+            return true
+        } catch {
+            guard isCurrentLoad(loadID) else { return false }
+            databaseShadowState = .unavailable
+            serverAuthorityState = .unavailable(error.localizedDescription)
+            errorMessage = "서버의 정확한 상품·옵션·사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요."
             return false
         }
     }
@@ -995,7 +1105,13 @@ final class ShoppingProductViewModel: ObservableObject {
             )
         case .idle, .resolving, .unavailable:
             return FitMatchClosetRegistrationServerContext(
-                classificationState: .unavailable
+                classificationState: .unavailable,
+                // A link-specific runtime can prove exact identity and
+                // measurements even when classification metadata is absent.
+                // Empty maps preserve the existing fail-closed behavior for
+                // genuine server/identity failures.
+                identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
+                registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )
         }
     }

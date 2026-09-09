@@ -26,7 +26,9 @@ enum FitMatchLinkClosetRegistrationAction {
         }
 
         let viewModel = makeViewModel(url.absoluteString)
-        _ = await viewModel.loadProductInfoFromURL()
+        _ = await viewModel.loadProductInfoFromURL(
+            purpose: .linkedClosetRegistration
+        )
         guard !Task.isCancelled else {
             return .cancelled
         }

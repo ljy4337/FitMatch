@@ -46,6 +46,123 @@ nonisolated enum FitMatchClosetRegistrationRPCError: LocalizedError, Sendable {
     }
 }
 
+/// Verifies that a list/read receipt contains the exact Closet-local snapshot
+/// accepted by the user. Array ordering and presentation metadata are not
+/// authority; canonical code, value, unit, row-local provenance, and the
+/// optional retailer source identity are.
+nonisolated enum FitMatchClosetMutationReceiptValidator {
+    private struct MeasurementReceipt: Equatable {
+        let value: Double
+        let unit: String
+        let valueSource: String
+        let sourceMeasurementCode: String?
+    }
+
+    static func matches(
+        _ record: FitMatchClosetItemRecord,
+        request: FitMatchUpsertClosetItemRequest,
+        acceptedClosetItemID: UUID? = nil
+    ) -> Bool {
+        guard record.clientItemID == request.clientItemID,
+              acceptedClosetItemID == nil || record.closetItemID == acceptedClosetItemID,
+              record.productID == request.productID,
+              record.variantID == request.productVariantID,
+              record.productSizeID == request.productSizeID,
+              record.categoryCode == request.item.categoryCode,
+              record.detailCode == request.item.detailCode,
+              let expected = expectedMeasurements(for: request),
+              let actual = receiptMeasurements(record.measurementRecords) else {
+            return false
+        }
+        return actual == expected
+    }
+
+    private static func expectedMeasurements(
+        for request: FitMatchUpsertClosetItemRequest
+    ) -> [String: MeasurementReceipt]? {
+        var result: [String: MeasurementReceipt] = [:]
+        for record in request.item.measurementRecords {
+            guard record.value.isFinite, record.value > 0,
+                  let code = canonicalCode(record.measurementCode) else {
+                return nil
+            }
+            let receipt = MeasurementReceipt(
+                value: record.value,
+                unit: normalizedUnit(record.unit),
+                valueSource: FitMatchClosetMeasurementProvenance.transportValueSource(
+                    valueSource: record.valueSource,
+                    inputSource: record.inputSource
+                ),
+                sourceMeasurementCode: normalizedSourceIdentity(record.rawCode)
+            )
+            if result.updateValue(receipt, forKey: code) != nil {
+                return nil
+            }
+        }
+
+        let defaultSource = request.productID == nil
+            ? FitMatchClosetMeasurementProvenance.userManual
+            : FitMatchClosetMeasurementProvenance.retailerSnapshot
+        for (rawCode, value) in request.item.measurements {
+            guard value.isFinite, value > 0, let code = canonicalCode(rawCode) else {
+                return nil
+            }
+            result[code] = result[code] ?? MeasurementReceipt(
+                value: value,
+                unit: MeasurementUnit.centimeter.rawValue,
+                valueSource: defaultSource,
+                // The scalar compatibility path sends the exact local/raw
+                // code as source_measurement_code. Match the actual encoded
+                // transport rather than inventing a second receipt rule.
+                sourceMeasurementCode: normalizedSourceIdentity(rawCode)
+            )
+        }
+        return result
+    }
+
+    private static func receiptMeasurements(
+        _ records: [FitMatchClosetMeasurementRecordPayload]
+    ) -> [String: MeasurementReceipt]? {
+        var result: [String: MeasurementReceipt] = [:]
+        for record in records {
+            guard record.value.isFinite, record.value > 0,
+                  let code = canonicalCode(record.measurementCode) else {
+                return nil
+            }
+            let receipt = MeasurementReceipt(
+                value: record.value,
+                unit: normalizedUnit(record.unit),
+                valueSource: FitMatchClosetMeasurementProvenance.transportValueSource(
+                    valueSource: record.valueSource,
+                    inputSource: record.inputSource
+                ),
+                sourceMeasurementCode: normalizedSourceIdentity(record.rawCode)
+            )
+            if result.updateValue(receipt, forKey: code) != nil {
+                return nil
+            }
+        }
+        return result
+    }
+
+    private static func canonicalCode(_ rawCode: String) -> String? {
+        let trimmed = rawCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return FitMatchCanonicalMeasurementCode
+            .canonicalCode(forTransportRawCode: trimmed) ?? trimmed
+    }
+
+    private static func normalizedUnit(_ unit: String) -> String {
+        unit.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private static func normalizedSourceIdentity(_ code: String?) -> String? {
+        guard let code else { return nil }
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
 /// Serializes one compared-product Closet save interaction.  The sheet owns
 /// its visual loading state and presentation, while this action owns the
 /// interaction-level invariant that a second tap cannot begin a second save

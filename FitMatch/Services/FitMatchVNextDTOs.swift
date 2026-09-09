@@ -723,6 +723,10 @@ nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
     let sizeLabel: String?
     let audienceCode: String
     let categoryCode: String?
+    /// Exact app taxonomy detail selected for this personal Closet row. Older
+    /// servers omit it and decode as nil; garment/axis fields remain the
+    /// comparison tuple, not a substitute for this UI taxonomy identity.
+    let closetDetailCode: String?
     let garmentTypeCode: String
     let sleeveLengthCode: String?
     let lowerLengthCode: String?
@@ -754,6 +758,7 @@ nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
         case sizeLabel = "size_label"
         case audienceCode = "audience_code"
         case categoryCode = "category_code"
+        case closetDetailCode = "closet_detail_code"
         case garmentTypeCode = "garment_type_code"
         case sleeveLengthCode = "sleeve_length_code"
         case lowerLengthCode = "lower_length_code"

@@ -1598,6 +1598,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     let productURL: String?
     let sizeLabel: String?
     let audienceCode: String
+    let closetDetailCode: String
     let garmentTypeCode: String?
     let sleeveLengthCode: String?
     let lowerLengthCode: String?
@@ -1625,6 +1626,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         case productURL = "product_url"
         case sizeLabel = "size_label"
         case audienceCode = "audience_code"
+        case closetDetailCode = "closet_detail_code"
         case garmentTypeCode = "garment_type_code"
         case sleeveLengthCode = "sleeve_length_code"
         case lowerLengthCode = "lower_length_code"
@@ -1646,13 +1648,22 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         try container.encodeIfPresent(productURL, forKey: .productURL)
         try container.encodeIfPresent(sizeLabel, forKey: .sizeLabel)
         try container.encode(audienceCode, forKey: .audienceCode)
+        try container.encode(closetDetailCode, forKey: .closetDetailCode)
         try container.encodeIfPresent(garmentTypeCode, forKey: .garmentTypeCode)
         try container.encodeIfPresent(sleeveLengthCode, forKey: .sleeveLengthCode)
         try container.encodeIfPresent(lowerLengthCode, forKey: .lowerLengthCode)
         try container.encodeIfPresent(bodyLengthCode, forKey: .bodyLengthCode)
         try container.encode(fitPreferenceCode, forKey: .fitPreferenceCode)
         try container.encode(notes, forKey: .notes)
-        try container.encodeIfPresent(satisfaction, forKey: .satisfaction)
+        if let satisfaction {
+            try container.encode(satisfaction, forKey: .satisfaction)
+        } else {
+            // Absence and an explicit “not rated” clear are different on an
+            // update. The app's zero state is transported as JSON null so the
+            // nullable database contract does not preserve or fabricate a
+            // rating behind the user's snapshot.
+            try container.encodeNil(forKey: .satisfaction)
+        }
         try container.encodeIfPresent(measurements, forKey: .measurements)
         // `encodeIfPresent` is intentional. A CONFIRMED registration with no
         // personal edit must omit this key completely, not send null or a
@@ -2488,6 +2499,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             productURL: request.item.productURL,
             sizeLabel: request.item.sizeName,
             audienceCode: vnextAudience(request.item.genderCode),
+            closetDetailCode: request.item.detailCode,
             garmentTypeCode: request.item.familyCode,
             sleeveLengthCode: axes.sleeveLengthCode,
             lowerLengthCode: axes.lowerLengthCode,
@@ -2681,7 +2693,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 from: item.classificationSource
             ),
             categoryCode: item.categoryCode ?? "other",
-            detailCode: item.garmentTypeCode,
+            detailCode: item.closetDetailCode ?? item.garmentTypeCode,
             canonicalCategoryCode: item.categoryCode,
             canonicalDetailCode: item.garmentTypeCode,
             familyCode: item.garmentTypeCode,

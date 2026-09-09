@@ -162,15 +162,28 @@ struct FitMatchClosetMeasurementSnapshot: Equatable {
     }
 }
 
-/// Editable state for a single linked ProductSize.  It reuses the selected
-/// Closet taxonomy's existing measurement definitions and only creates a new
-/// user record when the app has an explicit transport mapping for that
-/// definition.  Unknown retailer records stay intact as opaque source facts.
+/// One exact semantic in the linked Closet editor. `id` is either the
+/// canonical server measurement code or a namespaced FitMatch definition
+/// which does not yet have a transport code. A display axis is intentionally
+/// absent from the identity so width and circumference remain separate.
+struct FitMatchLinkedClosetMeasurementField: Identifiable, Equatable, Hashable {
+    let id: String
+    let canonicalCode: String?
+    let kind: MeasurementKind?
+    let title: String
+    let placeholder: String
+    fileprivate let isCategoryDefinition: Bool
+}
+
+/// Editable state for one exact linked ProductSize. It combines the selected
+/// Closet taxonomy's existing definitions with every independently verified
+/// canonical retailer fact. Unknown retailer records remain intact as opaque
+/// source facts and are never promoted by label or display-axis similarity.
 struct FitMatchLinkedClosetMeasurementDraft: Equatable {
     private let baseline: FitMatchClosetMeasurementSnapshot
-    private let category: ClothingCategory
-    private let measurementKinds: [MeasurementKind]
-    private var rawValues: [MeasurementKind: String]
+    private var category: ClothingCategory
+    private var measurementFields: [FitMatchLinkedClosetMeasurementField]
+    private var rawValues: [String: String]
 
     init(
         sourceSize: ProductSize,
@@ -194,81 +207,139 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
     ) {
         self.baseline = baseline
         self.category = category
-        measurementKinds = category.measurementKinds(
+        measurementFields = Self.fields(
+            in: baseline,
+            category: category,
             detailCategory: detailCategory,
             gender: gender
         )
-        rawValues = Dictionary(uniqueKeysWithValues: measurementKinds.map { kind in
-            (kind, Self.formatted(Self.baselineValue(
-                for: kind,
-                in: baseline,
-                category: category
+        rawValues = Dictionary(uniqueKeysWithValues: measurementFields.map { field in
+            (field.id, Self.formatted(Self.baselineValue(
+                for: field,
+                in: baseline
             )))
         })
     }
 
-    var kinds: [MeasurementKind] { measurementKinds }
+    var fields: [FitMatchLinkedClosetMeasurementField] { measurementFields }
+    var kinds: [MeasurementKind] { measurementFields.compactMap(\.kind) }
+
+    mutating func reconfigure(
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        gender: UserGender
+    ) {
+        self.category = category
+        let nextFields = Self.fields(
+            in: baseline,
+            category: category,
+            detailCategory: detailCategory,
+            gender: gender
+        )
+        // Keep values for fields that temporarily disappear so switching a
+        // category back before save does not erase the user's input. Newly
+        // visible exact semantics start from the immutable owned/retailer
+        // baseline, never from another display-axis field.
+        for field in nextFields where rawValues[field.id] == nil {
+            rawValues[field.id] = Self.formatted(Self.baselineValue(
+                for: field,
+                in: baseline
+            ))
+        }
+        measurementFields = nextFields
+    }
+
+    func rawValue(for field: FitMatchLinkedClosetMeasurementField) -> String {
+        rawValues[field.id] ?? ""
+    }
+
+    mutating func setRawValue(
+        _ value: String,
+        for field: FitMatchLinkedClosetMeasurementField
+    ) {
+        guard measurementFields.contains(field) else { return }
+        rawValues[field.id] = value
+    }
 
     func rawValue(for kind: MeasurementKind) -> String {
-        rawValues[kind] ?? ""
+        guard let field = measurementFields.first(where: { $0.kind == kind }) else {
+            return ""
+        }
+        return rawValue(for: field)
     }
 
     mutating func setRawValue(_ value: String, for kind: MeasurementKind) {
-        rawValues[kind] = value
+        guard let field = measurementFields.first(where: { $0.kind == kind }) else {
+            return
+        }
+        setRawValue(value, for: field)
     }
 
-    func sourceLabel(for kind: MeasurementKind) -> String {
-        if isUserEdited(kind) {
+    func sourceLabel(for field: FitMatchLinkedClosetMeasurementField) -> String {
+        if isUserEdited(field) {
             return "직접 측정/수정 값"
         }
-        if let source = Self.sourceRecord(for: kind, in: baseline, category: category),
+        if let source = Self.sourceRecord(for: field, in: baseline),
            FitMatchClosetMeasurementProvenance.isUserValue(
                 valueSource: source.valueSource,
                 inputSource: source.inputSource
            ) {
             return "직접 측정/수정 값"
         }
-        if Self.baselineValue(for: kind, in: baseline, category: category) != nil {
+        if Self.baselineValue(for: field, in: baseline) != nil {
             return "쇼핑몰·API 자동 입력"
         }
         return "직접 추가 가능"
     }
 
-    func isSupported(for kind: MeasurementKind) -> Bool {
-        if let source = Self.sourceRecord(for: kind, in: baseline, category: category) {
-            return FitMatchCanonicalMeasurementCode
-                .canonicalCode(forTransportRawCode: source.measurementCode) != nil
+    func sourceLabel(for kind: MeasurementKind) -> String {
+        guard let field = measurementFields.first(where: { $0.kind == kind }) else {
+            return "직접 추가 가능"
         }
-        guard let desiredCode = Self.desiredCanonicalCode(for: kind, category: category)
-        else { return false }
+        return sourceLabel(for: field)
+    }
+
+    func isSupported(for field: FitMatchLinkedClosetMeasurementField) -> Bool {
+        if Self.sourceRecord(for: field, in: baseline) != nil {
+            return field.canonicalCode != nil
+        }
+        guard let desiredCode = field.canonicalCode else { return false }
 
         // Do not replace an existing canonical retailer fact whose detailed
-        // local meaning is intentionally unknown (for example, an unspecified
-        // sleeve basis) with a guessed user mapping. The source row remains
-        // preserved, but this field is not editable until the definition is
-        // explicitly supported.
+        // semantic status is intentionally unknown with a guessed user row.
         let hasUneditableExistingCode = baseline.measurementRecords.contains {
             Self.canonicalCode(for: $0) == desiredCode
         }
         return !hasUneditableExistingCode
     }
 
+    func isSupported(for kind: MeasurementKind) -> Bool {
+        guard let field = measurementFields.first(where: { $0.kind == kind }) else {
+            return false
+        }
+        return isSupported(for: field)
+    }
+
     func validationMessage() -> String? {
-        for kind in measurementKinds {
-            let raw = rawValue(for: kind).trimmingCharacters(in: .whitespacesAndNewlines)
+        for field in measurementFields {
+            let raw = rawValue(for: field).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !raw.isEmpty else { continue }
             guard let value = Double(raw), value.isFinite, value > 0 else {
-                return "(kind.title) 실측값은 0보다 큰 숫자로 입력해 주세요."
+                return "\(field.title) 실측값은 0보다 큰 숫자로 입력해 주세요."
             }
-            let definition = FitMatchMeasurementStandard.definition(
-                for: kind,
-                category: category
-            )
-            guard definition.validRange.contains(value) else {
-                return "(kind.title)은 (definition.rangeDescription) 범위로 입력해 주세요."
+            if let kind = field.kind, field.isCategoryDefinition {
+                let definition = FitMatchMeasurementStandard.definition(
+                    for: kind,
+                    category: category
+                )
+                guard definition.validRange.contains(value) else {
+                    return "\(field.title)은 \(definition.rangeDescription) 범위로 입력해 주세요."
+                }
+            } else if value > 1_000 {
+                return "\(field.title)은 1000cm 이하로 입력해 주세요."
             }
-            guard isSupported(for: kind) else {
-                return "(kind.title)은 현재 서버 실측 계약으로 추가 또는 수정할 수 없습니다."
+            guard isSupported(for: field) else {
+                return "\(field.title)은 현재 서버 실측 계약으로 추가 또는 수정할 수 없습니다."
             }
         }
         return nil
@@ -281,27 +352,29 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
 
         var measurements = baseline.measurements
         var records = baseline.measurementRecords
-        for kind in measurementKinds {
-            let raw = rawValue(for: kind).trimmingCharacters(in: .whitespacesAndNewlines)
+        for field in measurementFields {
+            let raw = rawValue(for: field).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !raw.isEmpty, let value = Double(raw) else { continue }
-            guard Self.baselineValue(for: kind, in: baseline, category: category) != value
+            guard Self.baselineValue(for: field, in: baseline) != value
             else { continue }
 
-            if let source = Self.sourceRecord(for: kind, in: baseline, category: category),
+            if let source = Self.sourceRecord(for: field, in: baseline),
                let index = records.firstIndex(of: source) {
                 records[index] = Self.userRecord(
                     replacing: source,
                     value: value,
-                    kind: kind
+                    field: field
                 )
-            } else {
+            } else if let kind = field.kind {
                 records.append(Self.addedUserRecord(
                     value: value,
                     kind: kind,
                     category: category
                 ))
             }
-            measurements.set(value, for: kind)
+            if let kind = field.kind, field.isCategoryDefinition {
+                measurements.set(value, for: kind)
+            }
         }
 
         return FitMatchClosetMeasurementSnapshot(
@@ -310,20 +383,20 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
         )
     }
 
-    private func isUserEdited(_ kind: MeasurementKind) -> Bool {
-        let raw = rawValue(for: kind).trimmingCharacters(in: .whitespacesAndNewlines)
+    private func isUserEdited(_ field: FitMatchLinkedClosetMeasurementField) -> Bool {
+        let raw = rawValue(for: field).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty, let value = Double(raw) else { return false }
-        return Self.baselineValue(for: kind, in: baseline, category: category) != value
+        return Self.baselineValue(for: field, in: baseline) != value
     }
 
     private static func baselineValue(
-        for kind: MeasurementKind,
-        in baseline: FitMatchClosetMeasurementSnapshot,
-        category: ClothingCategory
+        for field: FitMatchLinkedClosetMeasurementField,
+        in baseline: FitMatchClosetMeasurementSnapshot
     ) -> Double? {
-        if let source = sourceRecord(for: kind, in: baseline, category: category) {
+        if let source = sourceRecord(for: field, in: baseline) {
             return source.value
         }
+        guard let kind = field.kind else { return nil }
         let hasSourceRecordForKind = baseline.measurementRecords.contains {
             $0.displayKind == kind.displayKind.rawValue
         }
@@ -333,27 +406,15 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
     }
 
     private static func sourceRecord(
-        for kind: MeasurementKind,
-        in baseline: FitMatchClosetMeasurementSnapshot,
-        category: ClothingCategory
+        for field: FitMatchLinkedClosetMeasurementField,
+        in baseline: FitMatchClosetMeasurementSnapshot
     ) -> FitMatchClosetMeasurementRecordPayload? {
+        guard let desiredCode = field.canonicalCode else { return nil }
         let records = baseline.measurementRecords.filter {
-            $0.displayKind == kind.displayKind.rawValue
-                && $0.value.isFinite
+            $0.value.isFinite
                 && $0.value > 0
                 && $0.semanticStatus == MeasurementSemanticStatus.mapped.rawValue
-        }
-        guard !records.isEmpty else { return nil }
-
-        // A display axis is not a measurement semantic.  For example, chest
-        // width and chest circumference can both be presented as “가슴”.  When
-        // the selected Closet definition has a canonical code, only that
-        // exact code may seed an editable field; an unmatched source row is
-        // preserved and the user may add the selected definition separately.
-        if let desiredCode = desiredCanonicalCode(for: kind, category: category) {
-            let exact = records.filter { canonicalCode(for: $0) == desiredCode }
-            if exact.count == 1 { return exact[0] }
-            return nil
+                && canonicalCode(for: $0) == desiredCode
         }
         return records.count == 1 ? records[0] : nil
     }
@@ -381,7 +442,7 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
     private static func userRecord(
         replacing source: FitMatchClosetMeasurementRecordPayload,
         value: Double,
-        kind: MeasurementKind
+        field: FitMatchLinkedClosetMeasurementField
     ) -> FitMatchClosetMeasurementRecordPayload {
         FitMatchClosetMeasurementRecordPayload(
             value: value,
@@ -394,13 +455,91 @@ struct FitMatchLinkedClosetMeasurementDraft: Equatable {
             standardVersion: FitMatchMeasurementStandard.version,
             mappingVersion: "manual_measurement_mapping_v1",
             rawCode: source.rawCode,
-            rawLabel: kind.title,
+            rawLabel: field.title,
             rawInfo: source.rawInfo,
             rawValueText: formatted(value),
             evidenceLevel: MeasurementEvidenceLevel.fitmatchDefined.rawValue,
             semanticStatus: MeasurementSemanticStatus.mapped.rawValue,
             valueSource: FitMatchClosetMeasurementProvenance.userManual
         )
+    }
+
+    private static func fields(
+        in baseline: FitMatchClosetMeasurementSnapshot,
+        category: ClothingCategory,
+        detailCategory: ClosetDetailCategory,
+        gender: UserGender
+    ) -> [FitMatchLinkedClosetMeasurementField] {
+        var result: [FitMatchLinkedClosetMeasurementField] = []
+        var representedIDs = Set<String>()
+
+        for kind in category.measurementKinds(
+            detailCategory: detailCategory,
+            gender: gender
+        ) {
+            let canonical = desiredCanonicalCode(for: kind, category: category)
+            let id = canonical ?? "fitmatch-definition:\(kind.rawValue)"
+            guard representedIDs.insert(id).inserted else { continue }
+            result.append(FitMatchLinkedClosetMeasurementField(
+                id: id,
+                canonicalCode: canonical,
+                kind: kind,
+                title: kind.title,
+                placeholder: kind.placeholder,
+                isCategoryDefinition: true
+            ))
+        }
+
+        let verifiedByCanonical = Dictionary(grouping: baseline.measurementRecords.filter {
+            $0.value.isFinite
+                && $0.value > 0
+                && $0.semanticStatus == MeasurementSemanticStatus.mapped.rawValue
+                && canonicalCode(for: $0).map { code in
+                    FitMatchCanonicalMeasurementCode.activeCodes.contains(code)
+                } == true
+        }, by: { canonicalCode(for: $0)! })
+
+        for record in baseline.measurementRecords {
+            guard let canonical = canonicalCode(for: record),
+                  FitMatchCanonicalMeasurementCode.activeCodes.contains(canonical),
+                  verifiedByCanonical[canonical]?.count == 1,
+                  representedIDs.insert(canonical).inserted else {
+                continue
+            }
+            result.append(FitMatchLinkedClosetMeasurementField(
+                id: canonical,
+                canonicalCode: canonical,
+                kind: nil,
+                title: canonicalTitle(for: canonical),
+                placeholder: formatted(record.value),
+                isCategoryDefinition: false
+            ))
+        }
+        return result
+    }
+
+    private static func canonicalTitle(for code: String) -> String {
+        switch code {
+        case "back_length": return "뒤 총장"
+        case "total_length": return "총장"
+        case "outseam": return "바깥 총장"
+        case "shoulder_width": return "어깨너비"
+        case "chest_width": return "가슴단면"
+        case "chest_circumference": return "가슴둘레"
+        case "sleeve_length": return "소매길이"
+        case "waist_width": return "허리단면"
+        case "waist_circumference": return "허리둘레"
+        case "hip_width": return "엉덩이단면"
+        case "hip_circumference": return "엉덩이둘레"
+        case "thigh_width": return "허벅지단면"
+        case "thigh_circumference": return "허벅지둘레"
+        case "front_rise": return "앞밑위"
+        case "hem_width": return "밑단단면"
+        case "hem_circumference": return "밑단둘레"
+        case "under_bust_width": return "밑가슴단면"
+        case "under_bust_circumference": return "밑가슴둘레"
+        default: return code
+        }
     }
 
     private static func addedUserRecord(

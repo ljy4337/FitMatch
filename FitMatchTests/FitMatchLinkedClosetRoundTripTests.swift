@@ -141,6 +141,120 @@ struct FitMatchLinkedClosetRoundTripTests {
             == FitMatchClosetMeasurementProvenance.retailerSnapshot)
     }
 
+    @Test func linkedVerifiedAdditionalCanonicalMeasurementIsIndependentlyEditable() throws {
+        let fixture = linkedFixture()
+        fixture.size.measurementRecords.append(importedRecord(
+            value: 110,
+            code: .chestCircumferenceGarment,
+            rawCode: "chest_circumference",
+            kind: .chest,
+            productSize: fixture.size
+        ))
+        var draft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: fixture.size,
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+
+        let width = try #require(draft.fields.first { $0.id == "chest_width" })
+        let circumference = try #require(
+            draft.fields.first { $0.id == "chest_circumference" }
+        )
+        #expect(width.title == "가슴단면")
+        #expect(circumference.title == "가슴둘레")
+        #expect(draft.rawValue(for: width) == "55")
+        #expect(draft.rawValue(for: circumference) == "110")
+
+        draft.setRawValue("111", for: circumference)
+        let snapshot = try draft.snapshot()
+        let widthRow = try #require(snapshot.measurementRecords.first {
+            $0.measurementCode == "chest_width"
+        })
+        let circumferenceRow = try #require(snapshot.measurementRecords.first {
+            $0.measurementCode == "chest_circumference"
+        })
+        #expect(widthRow.value == 55)
+        #expect(widthRow.valueSource == FitMatchClosetMeasurementProvenance.retailerSnapshot)
+        #expect(circumferenceRow.value == 111)
+        #expect(circumferenceRow.valueSource == FitMatchClosetMeasurementProvenance.userManual)
+    }
+
+    @Test func linkedCategoryReconfigurationPreservesUnsavedCompatibleValue() throws {
+        let fixture = linkedFixture()
+        var draft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: fixture.size,
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        draft.setRawValue("56", for: .chest)
+
+        draft.reconfigure(
+            category: .bottom,
+            detailCategory: .longPants,
+            gender: .men
+        )
+        let retainedChest = try #require(draft.fields.first { $0.id == "chest_width" })
+        #expect(draft.rawValue(for: retainedChest) == "56")
+
+        draft.reconfigure(
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        #expect(draft.rawValue(for: .chest) == "56")
+        let snapshot = try draft.snapshot()
+        let chest = try #require(snapshot.measurementRecords.first {
+            $0.measurementCode == "chest_width"
+        })
+        #expect(chest.value == 56)
+        #expect(chest.valueSource == FitMatchClosetMeasurementProvenance.userManual)
+    }
+
+    @Test func linkedTrueSizeChangeUsesNewRetailerBaseline() throws {
+        let fixture = linkedFixture()
+        var mDraft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: fixture.size,
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        mDraft.setRawValue("56", for: .chest)
+        mDraft.reconfigure(
+            category: .top,
+            detailCategory: .longSleeve,
+            gender: .men
+        )
+        #expect(mDraft.rawValue(for: .chest) == "56")
+
+        let lSize = ProductSize(
+            name: "L",
+            measurements: GarmentMeasurements(
+                shoulder: 49,
+                chest: 60,
+                totalLength: 72,
+                sleeveLength: 25
+            )
+        )
+        lSize.measurementRecords = [
+            importedRecord(
+                value: 60,
+                code: .chestWidthPitToPit,
+                rawCode: "chest_width",
+                kind: .chest,
+                productSize: lSize
+            )
+        ]
+        let lDraft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: lSize,
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        #expect(lDraft.rawValue(for: .chest) == "60")
+    }
+
     /// A sole circumference fact cannot silently become a chest-width field
     /// just because both render on the chest axis.  The selected taxonomy's
     /// exact chest-width definition is added independently instead.
@@ -274,7 +388,8 @@ struct FitMatchLinkedClosetRoundTripTests {
             identity: fixture.identity,
             rows: rows.map { code, row in
                 (code, try! #require(row["value"] as? Double),
-                 try! #require(row["value_source"] as? String))
+                 try! #require(row["value_source"] as? String),
+                 row["source_measurement_code"] as? String)
             }
         )
         let serverRecord = FitMatchSupabaseDomainClient.mapClosetItem(dto)
@@ -297,6 +412,8 @@ struct FitMatchLinkedClosetRoundTripTests {
 
         #expect(hydrated === rehydrated)
         #expect(rehydrated.chest == 56)
+        #expect(rehydrated.category == .top)
+        #expect(rehydrated.detailCategory == .shortSleeve)
         #expect(rehydrated.shoulder == 47)
         #expect(rehydrated.totalLength == 70)
         #expect(rehydrated.sleeveLength == 23)
@@ -358,6 +475,114 @@ struct FitMatchLinkedClosetRoundTripTests {
         #expect(values["shoulder_width"]?.0 == 47)
         #expect(values["shoulder_width"]?.1
             == FitMatchClosetMeasurementProvenance.retailerSnapshot)
+    }
+
+    @Test func linkedMutationReceiptRejectsCategoryDetailValueAndProvenanceMismatch() throws {
+        let fixture = linkedFixture()
+        var draft = FitMatchLinkedClosetMeasurementDraft(
+            sourceSize: fixture.size,
+            category: .top,
+            detailCategory: .shortSleeve,
+            gender: .men
+        )
+        draft.setRawValue("56", for: .chest)
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(linkedRequest(
+                fixture: fixture,
+                snapshot: try draft.snapshot(),
+                explicitClassification: true
+            ))
+        let encoded = try encodedMeasurements(for: submission.remoteRequest)
+        let expectedRows = encoded.map { code, row in
+            (
+                code,
+                try! #require(row["value"] as? Double),
+                try! #require(row["value_source"] as? String),
+                row["source_measurement_code"] as? String
+            )
+        }
+        let acceptedDTO = try linkedListDTO(
+            clientItemID: submission.remoteRequest.clientItemID,
+            identity: fixture.identity,
+            rows: expectedRows
+        )
+        let accepted = FitMatchSupabaseDomainClient.mapClosetItem(acceptedDTO)
+        #expect(FitMatchClosetMutationReceiptValidator.matches(
+            accepted,
+            request: submission.remoteRequest,
+            acceptedClosetItemID: accepted.closetItemID
+        ))
+
+        let wrongCategory = FitMatchSupabaseDomainClient.mapClosetItem(try linkedListDTO(
+            clientItemID: submission.remoteRequest.clientItemID,
+            identity: fixture.identity,
+            rows: expectedRows,
+            categoryCode: "bottoms"
+        ))
+        #expect(!FitMatchClosetMutationReceiptValidator.matches(
+            wrongCategory,
+            request: submission.remoteRequest
+        ))
+        let wrongDetail = FitMatchSupabaseDomainClient.mapClosetItem(try linkedListDTO(
+            clientItemID: submission.remoteRequest.clientItemID,
+            identity: fixture.identity,
+            rows: expectedRows,
+            closetDetailCode: "long_sleeve"
+        ))
+        #expect(!FitMatchClosetMutationReceiptValidator.matches(
+            wrongDetail,
+            request: submission.remoteRequest
+        ))
+
+        let wrongValueRows = expectedRows.map { row in
+            row.0 == "chest_width" ? (row.0, 55.0, row.2, row.3) : row
+        }
+        let wrongValue = FitMatchSupabaseDomainClient.mapClosetItem(try linkedListDTO(
+            clientItemID: submission.remoteRequest.clientItemID,
+            identity: fixture.identity,
+            rows: wrongValueRows
+        ))
+        #expect(!FitMatchClosetMutationReceiptValidator.matches(
+            wrongValue,
+            request: submission.remoteRequest
+        ))
+
+        let wrongProvenanceRows = expectedRows.map { row in
+            row.0 == "chest_width"
+                ? (
+                    row.0,
+                    row.1,
+                    FitMatchClosetMeasurementProvenance.retailerSnapshot,
+                    row.3
+                )
+                : row
+        }
+        let wrongProvenance = FitMatchSupabaseDomainClient.mapClosetItem(try linkedListDTO(
+            clientItemID: submission.remoteRequest.clientItemID,
+            identity: fixture.identity,
+            rows: wrongProvenanceRows
+        ))
+        #expect(!FitMatchClosetMutationReceiptValidator.matches(
+            wrongProvenance,
+            request: submission.remoteRequest
+        ))
+
+        let wrongSourceIdentityRows = expectedRows.map { row in
+            row.0 == "chest_width"
+                ? (row.0, row.1, row.2, "fixture.other_chest_semantic")
+                : row
+        }
+        let wrongSourceIdentity = FitMatchSupabaseDomainClient.mapClosetItem(
+            try linkedListDTO(
+                clientItemID: submission.remoteRequest.clientItemID,
+                identity: fixture.identity,
+                rows: wrongSourceIdentityRows
+            )
+        )
+        #expect(!FitMatchClosetMutationReceiptValidator.matches(
+            wrongSourceIdentity,
+            request: submission.remoteRequest
+        ))
     }
 
     /// T5: a user's Closet category wins even when the linked global Product
@@ -499,13 +724,18 @@ struct FitMatchLinkedClosetRoundTripTests {
         let encoded = try decodedJSON(FitMatchSupabaseDomainClient.encodedVNextClosetPayload(
             manualRequest(record: measurementRecord(value: 51), satisfaction: 0)
         ))
-        #expect(encoded["satisfaction"] == nil)
+        #expect(encoded["satisfaction"] is NSNull)
 
         let fixture = linkedFixture()
         let dto = try linkedListDTO(
             clientItemID: UUID(),
             identity: fixture.identity,
-            rows: [("chest_width", 55, FitMatchClosetMeasurementProvenance.retailerSnapshot)],
+            rows: [(
+                "chest_width",
+                55,
+                FitMatchClosetMeasurementProvenance.retailerSnapshot,
+                "chest_width"
+            )],
             satisfaction: NSNull()
         )
         #expect(FitMatchSupabaseDomainClient.mapClosetItem(dto).satisfaction == 0)
@@ -657,7 +887,9 @@ struct FitMatchLinkedClosetRoundTripTests {
     private func linkedListDTO(
         clientItemID: UUID,
         identity: FitMatchClosetRegistrationServerIdentity,
-        rows: [(String, Double, String)],
+        rows: [(String, Double, String, String?)],
+        categoryCode: String = "tops",
+        closetDetailCode: String = "short_sleeve",
         satisfaction: Any = 3
     ) throws -> VNextClosetItemDTO {
         let object: [String: Any] = [
@@ -672,7 +904,8 @@ struct FitMatchLinkedClosetRoundTripTests {
             "product_url": "https://www.musinsa.com/products/fixture-api-shirt",
             "size_label": "M",
             "audience_code": "MEN",
-            "category_code": "tops",
+            "category_code": categoryCode,
+            "closet_detail_code": closetDetailCode,
             "garment_type_code": "tshirt",
             "sleeve_length_code": "short_sleeve",
             "lower_length_code": NSNull(),
@@ -689,13 +922,14 @@ struct FitMatchLinkedClosetRoundTripTests {
             "satisfaction": satisfaction,
             "created_at": "2026-09-08T00:00:00Z",
             "updated_at": "2026-09-08T00:00:00Z",
-            "measurements": rows.map { code, value, source in
+            "measurements": rows.map { code, value, source, sourceMeasurementCode in
                 [
                     "fitmatch_measurement_code": code,
                     "value": value,
                     "unit_code": "cm",
                     "value_source": source,
-                    "source_measurement_code": "source_\(code)",
+                    "source_measurement_code": sourceMeasurementCode.map { $0 as Any }
+                        ?? NSNull(),
                     "raw_label_snapshot": code
                 ]
             }
