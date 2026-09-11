@@ -240,7 +240,7 @@ struct ClosetItemDetailView: View {
     }
 
     private var imageURLString: String? {
-        item.sourceProduct?.imageURLStringForDisplay?
+        item.imageURLStringForDisplay?
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -543,7 +543,7 @@ private struct ImportedClosetItemEditView: View {
         CardView(radius: 26, padding: 20) {
             HStack(alignment: .center, spacing: 16) {
                 ProductThumbnailView(
-                    imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+                    imageURLString: item.imageURLStringForDisplay,
                     category: item.category,
                     width: 72,
                     height: 88,

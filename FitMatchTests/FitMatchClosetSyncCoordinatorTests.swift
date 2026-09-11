@@ -121,6 +121,11 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(futureMetric.value == 7)
         #expect(futureMetric.rawCode == "future_metric_v2")
         #expect(item.sourceProduct?.id == productID)
+        #expect(item.imageURLStringSnapshot == record.imageURL)
+        let sharedProduct = try #require(item.sourceProduct)
+        sharedProduct.imageURLString = "https://example.com/other-color.jpg"
+        #expect(item.imageURLStringForDisplay == record.imageURL)
+        #expect(coordinator.payload(for: item).imageURL == record.imageURL)
         #expect(item.sourceProduct?.productCode == "E492123")
         #expect(item.sourceProduct?.categoryDepth3Code == "95381")
         #expect(item.sourceProductSize?.id == productSizeID)
@@ -153,6 +158,33 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(item.classificationAuthorityProvenance == .userExplicit)
         #expect(item.canonicalEligibility == true)
         #expect(item.isRepresentative == true)
+    }
+
+    @Test func ownedReferencePreservesAbsentLengthDespiteSharedProductLength() async throws {
+        let productID = UUID()
+        let record = remoteRecord(
+            clientItemID: UUID(),
+            productID: productID,
+            classificationSource: "manual_override",
+            lengthCode: nil
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let product = Product(id: productID, name: "Shared product", category: .bottom)
+        product.garmentTypeRawValue = "pants"
+        product.sleeveTypeRawValue = "long"
+        context.insert(product)
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: ClosetSyncRemoteStub(items: [record]),
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+        await coordinator.synchronize(userID: UUID(), modelContext: context)
+        let item = try #require(try context.fetch(FetchDescriptor<UserFit>()).first)
+        let snapshot = try #require(item.fitMatchServerReferenceSnapshot())
+        #expect(snapshot.lengthCode == record.lengthCode)
+        #expect(snapshot.familyCode == record.familyCode)
+        #expect(snapshot.measurements == record.measurements)
+        #expect(product.sleeveTypeRawValue == "long")
     }
 
     @Test func remoteOnlyReviewAndNotComparableStatesRemainFailClosed() async throws {
@@ -553,7 +585,8 @@ struct FitMatchClosetSyncCoordinatorTests {
             detailCategory: .longPants,
             categoryCode: "bottoms",
             detailCode: "long_pants",
-            didExplicitlyChangeClassification: false
+            didExplicitlyChangeClassification: false,
+            comparisonGroupCode: "C"
         )
 
         let outcome = await coordinator.saveLinkedClosetEdit(
@@ -650,7 +683,8 @@ struct FitMatchClosetSyncCoordinatorTests {
             detailCategory: .longPants,
             categoryCode: "bottoms",
             detailCode: "long_pants",
-            didExplicitlyChangeClassification: false
+            didExplicitlyChangeClassification: false,
+            comparisonGroupCode: "C"
         )
 
         let outcome = await coordinator.saveLinkedClosetEdit(
@@ -1601,7 +1635,8 @@ struct FitMatchClosetSyncCoordinatorTests {
         classificationSource: String,
         classificationStatus: String = "confirmed",
         variantID: UUID = UUID(),
-        productSizeID: UUID = UUID()
+        productSizeID: UUID = UUID(),
+        lengthCode: String? = "long"
     ) -> FitMatchClosetItemRecord {
         FitMatchClosetItemRecord(
             closetItemID: UUID(),
@@ -1633,7 +1668,7 @@ struct FitMatchClosetSyncCoordinatorTests {
             canonicalCategoryCode: "bottoms",
             canonicalDetailCode: "long_pants",
             familyCode: "pants",
-            lengthCode: "long",
+            lengthCode: lengthCode,
             bodyLengthCode: nil,
             classificationSnapshot: ["decision_version": "legacy-v3"],
             clientSnapshot: ["local_model": "UserFit"],

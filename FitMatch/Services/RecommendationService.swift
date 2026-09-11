@@ -308,7 +308,7 @@ struct RecommendationService {
 
         let authority: FitMatchClassificationAuthorityProvenance
         switch tuple.effectiveSource {
-        case "GLOBAL_CONFIRMED":
+        case "GLOBAL_CONFIRMED", "CATEGORY_GROUP":
             authority = .serverConfirmed
         case "USER_EXPLICIT":
             guard tuple.overrideRevision != nil,
@@ -570,7 +570,10 @@ struct RecommendationService {
 
         switch product.classificationAuthorityProvenance {
         case .serverConfirmed:
-            return effective.effectiveSource == "GLOBAL_CONFIRMED"
+            return (
+                effective.effectiveSource == "GLOBAL_CONFIRMED"
+                    || effective.effectiveSource == "CATEGORY_GROUP"
+            )
                 && runtimeAuthorityStatus != "user_explicit"
 
         case .userExplicit:

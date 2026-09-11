@@ -2864,7 +2864,7 @@ private struct ClosetComparisonSummaryCard: View {
         FitMatchCard {
             HStack(alignment: .center, spacing: 12) {
                 ProductThumbnailView(
-                    imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+                    imageURLString: item.imageURLStringForDisplay,
                     category: item.category,
                     width: 62,
                     height: 76,
@@ -2984,7 +2984,7 @@ private struct ClosetReferenceChoiceCard: View {
         FitMatchCard {
             HStack(alignment: .top, spacing: 12) {
                 ProductThumbnailView(
-                    imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+                    imageURLString: item.imageURLStringForDisplay,
                     category: item.category,
                     width: 58,
                     height: 70,

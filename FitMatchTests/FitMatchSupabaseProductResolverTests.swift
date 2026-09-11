@@ -1251,6 +1251,7 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(confirmedJSON["product_id"] as? String == exactIdentity.productID.uuidString)
         #expect(confirmedJSON["product_variant_id"] as? String == exactIdentity.productVariantID.uuidString)
         #expect(confirmedJSON["product_size_id"] as? String == exactIdentity.productSizeID.uuidString)
+        #expect(confirmedJSON["satisfaction"] == nil)
 
         product.markClassificationAuthority(.serverReviewRequired)
         let reviewExplicit = FitMatchComparedProductClosetRegistration.SaveRequest(

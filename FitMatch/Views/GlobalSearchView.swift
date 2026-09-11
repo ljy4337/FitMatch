@@ -233,7 +233,7 @@ private struct SearchClosetResultRow: View {
     @ViewBuilder
     private var thumbnail: some View {
         ProductThumbnailView(
-            imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+            imageURLString: item.imageURLStringForDisplay,
             category: item.category,
             width: 76,
             height: 92,

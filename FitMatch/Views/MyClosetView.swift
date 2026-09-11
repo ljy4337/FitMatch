@@ -578,7 +578,7 @@ private struct ClosetItemCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+                        imageURLString: item.imageURLStringForDisplay,
                         category: item.category,
                         width: 72,
                         height: 88,
@@ -634,7 +634,7 @@ private struct ClosetItemCard: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+                        imageURLString: item.imageURLStringForDisplay,
                         category: item.category,
                         width: 72,
                         height: 88,
@@ -821,7 +821,7 @@ private struct ClosetGridCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 ZStack(alignment: .topTrailing) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+                        imageURLString: item.imageURLStringForDisplay,
                         category: item.category,
                         width: 126,
                         height: 142,

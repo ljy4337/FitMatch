@@ -322,7 +322,7 @@ struct VNextHistoryCacheHydrator {
                 )
                 : referenceClientID
             let activeReferenceImageURL = closetByClientID[referenceClientID]?
-                .sourceProduct?.imageURLStringForDisplay
+                .imageURLStringForDisplay
             let reference = closetByClientID[referenceProjectionID]
                 ?? makeReference(
                     id: referenceProjectionID,

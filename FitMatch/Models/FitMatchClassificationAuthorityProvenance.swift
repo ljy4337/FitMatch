@@ -154,11 +154,16 @@ extension UserFit {
     }
 
     func fitMatchServerReferenceSnapshot() -> FitMatchLocalReferenceSnapshot? {
+        let preservesAuthoritativeTuple = classificationAuthorityProvenance?
+            .isComparisonAuthority == true
+        let referenceFamily = preservesAuthoritativeTuple
+            ? garmentTypeRawValue
+            : (garmentTypeRawValue ?? sourceProduct?.garmentTypeRawValue)
         guard isActiveClosetItem,
               !FitMatchClosetClassificationEditPolicy.isExplicitSet(self),
               let categoryCode = resolvedCategoryCode,
               let detailCode = resolvedDetailCategoryCode,
-              let familyCode = (garmentTypeRawValue ?? sourceProduct?.garmentTypeRawValue)?
+              let familyCode = referenceFamily?
                 .trimmingCharacters(
                 in: .whitespacesAndNewlines
               ),
@@ -198,9 +203,16 @@ extension UserFit {
             }
         }
 
-        let sourceProfile = canonicalProfileSnapshot ?? sourceProduct?.canonicalProfileSnapshot
+        // A missing axis in the owned server tuple is intentional; another
+        // Product tuple must not fill it and make the reference appear stale.
+        let sourceProfile = preservesAuthoritativeTuple
+            ? canonicalProfileSnapshot
+            : (canonicalProfileSnapshot ?? sourceProduct?.canonicalProfileSnapshot)
         let bodyLength = sourceProfile?.lengthAxes.body
-        let lengthCode = (sleeveTypeRawValue ?? sourceProduct?.sleeveTypeRawValue)?
+        let referenceLength = preservesAuthoritativeTuple
+            ? sleeveTypeRawValue
+            : (sleeveTypeRawValue ?? sourceProduct?.sleeveTypeRawValue)
+        let lengthCode = referenceLength?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return FitMatchLocalReferenceSnapshot(
             productName: productName,

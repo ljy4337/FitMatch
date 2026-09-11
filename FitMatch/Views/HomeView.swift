@@ -259,7 +259,7 @@ private struct HomeClosetPreviewCard: View {
                         .background(Color(.systemBackground).opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                         ProductThumbnailView(
-                            imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+                            imageURLString: item.imageURLStringForDisplay,
                             category: item.category,
                             width: 168,
                             height: 78,
@@ -297,6 +297,9 @@ private struct HomeClosetPreviewCard: View {
     }
 
     private var detailCategoryName: String {
+        if let group = item.comparisonGroup {
+            return group.displayName
+        }
         guard let categoryCode = item.resolvedCategoryCode,
               let detailCode = item.resolvedDetailCategoryCode else {
             return item.detailCategory.rawValue

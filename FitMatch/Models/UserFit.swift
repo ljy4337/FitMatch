@@ -63,6 +63,15 @@ final class UserFit {
 
     var sourceProduct: Product?
     var sourceProductSize: ProductSize?
+    var imageURLStringSnapshot: String?
+
+    var imageURLStringForDisplay: String? {
+        if let image = imageURLStringSnapshot?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !image.isEmpty {
+            return image
+        }
+        return sourceProduct?.imageURLStringForDisplay
+    }
 
     @Relationship(deleteRule: .cascade, inverse: \GarmentMeasurementRecord.userFit)
     var measurementRecords: [GarmentMeasurementRecord] = []

@@ -1,5 +1,86 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-09-12 Requested ZARA registration smoke / BUILD PASS, LOGIN BLOCKED
+
+- User explicitly authorized a registration test for the Zara URL with v1=545485813, superseding the no-test instruction for this targeted scenario only.
+- Initial build exposed an exhaustive-switch omission caused by the newly added observationRejected error. ShoppingProductViewModel now classifies that domain rejection as non-retryable rather than malformed runtime. Rebuilt and launched successfully using XcodeBuildMCP on iPhone 17 Pro 03BAF093-552E-4E53-ABFB-7DE0653BE676, bundle com.ljy4337.fitmatch. Existing concurrency warnings remain.
+- Screenshot confirms the simulator is signed out at Continue with Apple. No registration attempt, ingestion request, or Closet write was performed; the 422 cause remains unverified. Asked user to sign in directly on simulator; no credential extraction or impersonation attempted. App remains available for login and continuation.
+- Build log: /Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/logs/build_run_sim_2026-09-11T15-14-58-567Z_pid13475_34efe286.log. No automated regression suite, Production change, commit or push. Protected scroll behavior unchanged.
+
+## 2026-09-12 Observation HTTP 422 diagnostic repair / ROOT CAUSE PENDING RESPONSE DETAIL
+
+- User now reports product-observation HTTP 422, distinct from runtime classification validation. Inspected deployed Edge function version 5: it returns observation_rejected with ingestionError.message in detail for PostgreSQL P0001/22*/23* ingestion failures. Domain rejections are not logged by the function. Available tools expose no server log retrieval, and the user supplied only the SDK status message; the exact rejected payload/constraint remains unknown.
+- FitMatchSupabaseDomainClient.submitProductObservation now decodes the known 422 observation_rejected response and preserves its detail in a localized typed error consumed by existing diagnostics. Other HTTP/auth/transient errors are rethrown unchanged; no ingestion bypass, speculative DB change, or extra retry was added.
+- Next evidence needed: user rebuild/retry and the detailed rejection log. The underlying ingestion failure is NOT claimed fixed. No build or automated tests per user request; no Production mutation, commit or push. Protected scroll file/call sites unchanged.
+
+## 2026-09-12 Missing group policy must preserve user-input recovery / PRODUCTION APPLIED
+
+- User reaffirmed that unmapped products proceed to explicit classification input. Supersedes the missing-policy exception introduced by group_authority_policy_payload: a missing group or active group policy now returns the existing detail authority/review tuple, never a fabricated confirmed group and never this transport-blocking exception.
+- Applied group_policy_review_recovery to Production hnkplvyegonlhumlejst; source supabase/sql/group_policy_review_recovery_Apply.sql. E486117 currently has REVIEW_REQUIRED and UNMAPPED metadata, and comparison_group_tuple returns NULL. The supplied error corresponds to the earlier missing-policy exception; no authenticated runtime reproduction was attempted.
+- Existing Swift registrationBlockMessage already accepts reviewRequired; exact server size identity remains required before Next, and user classification input remains on the registration sheet. No client validation relaxation or product-specific classification mapping was added.
+- Read-only deployed function inspection confirms removal of the blocking exception and recovery branch installation. No builds/automated tests, authenticated end-to-end verification, commit or push. Protected scroll file and call sites unchanged.
+
+## 2026-09-12 Result recompare entry and ZARA unmapped group / PRODUCTION APPLIED, UI NOT TESTED
+
+- RecommendationResultView hid the other-Closet comparison button when its optional callback was absent (Home, History, search and legacy form entry points). The button now preserves the active CompareFlow callback or opens the existing CompareFlowSheet(initialHistoricalProduct:) flow, which reacquires current server authority rather than reusing historical authorization.
+- ZARA product 29e428cd-07df-482c-9039-7cc979d7e2b1 (source key 545482161, slim-fit basic T-shirt /01) was UNMAPPED for its exact persisted official path ZARA > 남성 > 티셔츠 > B. Camiseta. Unlike E486117, it had no group; SQL NULL NOT IN did not reject the absent group, so comparison_group_tuple returned a non-null object with null category/garment. Before the policy fix this generated an invalid CONFIRMED response; afterward it raised the missing-policy error.
+- Applied migration zara_group_mapping_null_guard to Production hnkplvyegonlhumlejst. SQL source: supabase/sql/zara_group_mapping_null_guard_Apply.sql. Added an explicit NULL guard and the exact official category-path mapping to group A. No product-name inference, detailed classification rewrite, authentication impersonation, new grants, or Swift validation bypass.
+- Read-only postflight confirms the affected product now resolves to A / tops / comparison_group_top with active tshirt policy, and the function NULL guard is deployed. User-specific runtime and registration are not verified. No app builds or automated tests per user request. Existing dirty work preserved; no commit/push. Protected scroll file/call sites unchanged.
+
+## 2026-09-12 E486117 group authority policy payload / PRODUCTION APPLIED
+
+- Product E486117 has global REVIEW_REQUIRED with no garment type. The deployed effective_target_classification overrides group authority status/category/garment but omits comparison_policy_code, retaining the legacy detail value. Swift requires this field for CONFIRMED runtime validation. The group garment catalog has an active policy (comparison_group_top -> tshirt).
+- Prepared supabase/sql/group_authority_policy_payload_Apply.sql: resolve policy from the exact active group garment/category row and return it with the effective tuple, failing closed if missing. No client-side policy inference or weakened validation.
+- Authenticated runtime inspection was rejected by automatic approval review because setting another user's JWT subject impersonates that user. It was not retried or bypassed. Diagnosis used read-only function definitions and catalog/product rows; user-specific runtime output remains unverified.
+- Superseding the prepared-only state: after the user authorized immediate correction of confirmed causes, applied migration `group_authority_policy_payload` to Production project `hnkplvyegonlhumlejst`. Read-only function-definition inspection confirms the active catalog lookup and comparison_policy_code overlay are deployed. No product rows or client validation rules were changed.
+- No builds/tests, commit or push. Authenticated end-to-end registration remains unverified; the user will retry loading the product on device. This server-only correction requires no app rebuild.
+
+## 2026-09-11 Home Closet classification label / NOT TESTED
+
+- Home Closet cards now prioritize the stored comparisonGroup.displayName, matching Closet list/detail. Group A displays as 상의 instead of the legacy other_tops label 미분류 상의. Existing detail-label fallback remains for items without a comparison group. No DB or classification-authority changes.
+- Per user request, no build/tests run. Protected scroll file and modifier call sites unchanged. No commit/push.
+
+## 2026-09-11 Completed comparison presentation identity repair / NOT TESTED
+
+- Read-only Production inspection found the latest two comparisons COMPLETED with recommended size XXL. The UI failure occurs after completion: parsed display size IDs are preserved during runtime reconciliation, but makeCompletedVNextHistory requires exact authorized ProductSize IDs.
+- ShoppingProductViewModel.completeVNextRecommendation now uses the existing makeServerAuthorizedComparisonTarget converter before analysis/completion and passes its detached, exact-server-ID Product into history construction. Display-size selection identities remain unchanged; receipt and authority validation remain enforced.
+- User requested code-only work. No build or tests run. No Production mutation, commit or push.
+
+## 2026-09-11 Comparison reference null-axis preservation / NOT COMMITTED
+
+- User reported the stale-reference message after selecting a Closet item. The server Closet tuple has a null length axis while the shared Product has long_sleeve; fitMatchServerReferenceSnapshot filled the null via Product fallback, causing strict local/server comparison to reject it.
+- Authoritative UserFit snapshots now preserve their own family/length/profile fields, including absent axes, without coalescing a different Product tuple. Legacy non-authoritative fallback remains. Added a hydration regression test with conflicting shared Product length.
+- User requested code-only work and will run tests to save tokens. The already-started focused test was interrupted; no test PASS is claimed. Do not run further builds/tests unless requested. No Production changes or commit/push in this step.
+
+## 2026-09-11 Closet selected-colour thumbnail preservation / NOT COMMITTED
+
+- Read-only Production inspection found the saved E484080 Closet row has colour 73 in its image/product URL, while the shared Product image is colour 07. SwiftData reuses Product by product ID and Closet surfaces read that shared image, discarding the row-specific server image on hydration.
+- Added optional UserFit.imageURLStringSnapshot and an item-level display accessor with legacy Product fallback. Both new-row and existing-row server hydration consume record.imageURL. Closet list/detail, Home/search/comparison references and history image capture use the item accessor. Both Closet edit/sync payload paths preserve the item image instead of overwriting it with another colour's shared Product image. No global Product identity change or DB mutation in this step.
+- Added regression assertions for hydrated image preservation after the shared Product image changes, including outbound payload. Fixed two existing test draft initializer omissions with pants comparisonGroupCode C so the focused test target can compile.
+- App/test compilation PASS. The first method filter selected zero executed tests and is not counted as a pass. Reusing built test products with the Swift Testing method suffix `()` executed the regression: 1 PASS / 0 FAIL / 0 SKIP, result bundle `test_sim_2026-09-11T14-40-16-477Z_pid13475_fabda0b5.xcresult` under the XcodeBuildMCP FitMatch workspace. `git diff --check` and protected scroll checks pass. Device migration and UI retry remain unverified; no commit or push.
+
+## 2026-09-11 Closet RPC permission repair / PRODUCTION APPLIED
+
+- User authorized fixing the confirmed `permission denied for table closet_items` failure. Applied migration `closet_group_mutation_permissions` to FitMatch project `hnkplvyegonlhumlejst`.
+- The group-generated snapshot UPDATE was in a public SECURITY INVOKER bridge although authenticated has no direct table UPDATE permission. Moved both audited upsert/update bodies into private `fitmatch_vnext.*_closet_item_with_group_for_swift` SECURITY DEFINER functions, with an explicit auth.uid() guard and empty search_path. Existing helpers retain exact identity and ownership checks. Public bridges remain SECURITY INVOKER; anon/PUBLIC execution is revoked. No direct table write grants were added.
+- Source hashes guard deployment against overwriting changed RPC bodies. Apply SQL is intentionally one-shot, not a repeatable migration. Files: `supabase/sql/closet_group_mutation_permissions_Apply.sql` and `_Verify.sql`.
+- Production transaction test for UNIQLO E484080 under SET LOCAL ROLE authenticated passed save, identical-ID retry, update, exact receipt/readback, null satisfaction, cross-user rejection and missing-session rejection. Final ROLLBACK removed the fixture. Postflight confirms both public bridges are invoker, private helpers are definer, anon cannot execute and authenticated still cannot UPDATE the table directly.
+- No Swift changes or app build in this step. Device UI retry remains unverified. No commit or push.
+- Security advisor postflight returned no finding for the changed functions. It reported an unrelated public history-hide definer warning (https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), disabled leaked-password protection (https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), and nine RLS-without-policy INFO findings. These were not changed; no advisor baseline comparison was performed.
+
+## 2026-09-11 보유한 옷 등록 satisfaction 계약 복구 / NOT COMMITTED
+
+- 비교 상품의 보유한 옷 등록은 핏 기록 UI가 없는 상태를 로컬 sentinel `satisfaction=0`으로 유지하지만, vNext 서버 계약은 요청에 `satisfaction` 키가 있으면 `1...5`만 허용한다. 이 때문에 정상 등록이 `satisfaction must be between 1 and 5` 팝업으로 차단됐다.
+- vNext 전송 어댑터는 로컬 `0`을 미입력으로 해석해 `satisfaction` 키를 생략한다. 실제 `1...5` 평점은 기존처럼 전송하며, 임의의 기본 평점을 만들어 저장하지 않는다. 공유 로컬 모델과 UI는 변경하지 않았다.
+- 회귀 테스트는 비교 상품 서버 우선 등록 payload에 `satisfaction` 키가 없음을 검증한다. XcodeBuildMCP Simulator Debug 앱 빌드는 PASS했다. 해당 1건 테스트는 정상 발견됐지만 테스트 타깃의 기존 별도 컴파일 오류(`FitMatchClosetSyncCoordinatorTests.swift`의 `comparisonGroupCode` 누락 2건) 때문에 실행 전 중단되어 PASS로 표기하지 않는다. Production DB/RPC/SQL 적용, 실제 기기 재현, 커밋, 푸시는 하지 않았다.
+
+## 2026-09-11 서버 v4 분류 검증 차단 복구 — CATEGORY_GROUP effective authority 허용 / BUILD PASS / NOT COMMITTED
+
+- 런타임 로그에서 유니클로 `E484080` 파싱은 성공했지만 `서버 v4 분류` 단계가 `vNext 서버 응답을 검증할 수 없습니다.`로 안전 차단됐다. 원인은 `144_group_authority_precedence_Apply.sql`이 정상 서버 권한으로 `effective_source='CATEGORY_GROUP'`을 발급할 수 있는데, iOS runtime validator와 추천 서비스의 서버 권한 재검증이 아직 `GLOBAL_CONFIRMED`/`USER_EXPLICIT` 중심으로만 열려 있었던 계약 불일치다.
+- `FitMatchSupabaseProductResolver.mapRuntime`은 `CATEGORY_GROUP + CONFIRMED` effective tuple을 정상 서버 발급 분류로 허용한다. 기존 confirmed guard가 category/garment/policy 필수값을 계속 요구하므로, 로컬 분류·라벨·배열 순서 fallback은 추가하지 않았다.
+- `RecommendationService`는 `CATEGORY_GROUP`을 `serverConfirmed` provenance로 투영하고, comparison begin 재검증에서도 `GLOBAL_CONFIRMED`와 같은 서버 발급 권한으로 인정한다. `USER_EXPLICIT` 개인 권한 경로와 revision/fingerprint 검증은 그대로 분리했다.
+- `xcrun swiftc -parse FitMatch/Services/FitMatchSupabaseProductResolver.swift FitMatch/Services/RecommendationService.swift` PASS. `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build` PASS. XCTest, 실제 기기 실행, Production DB/RPC/SQL 적용, 커밋, 푸시는 하지 않았다.
+
 ## 2026-09-11 로컬 사본 빌드 복구 — 그룹 목록 compactMap 타입 명시 / BUILD PASS / NOT COMMITTED
 
 - iCloud 밖의 로컬 작업 사본 `/Users/jinyoung/Developer/FitMatchLocal/FitMatch`에서 앱 타깃 Simulator Debug 빌드를 처음 수행했다. `CompareFlowSheet.closetComparisonGroupSections`의 바깥/안쪽 `compactMap`이 Swift 컴파일러에서 반환 타입을 추론하지 못해 실패하던 두 지점에 각각 `ClosetComparisonGroupSection?`, `ClosetComparisonSummaryRow?`를 명시했다.

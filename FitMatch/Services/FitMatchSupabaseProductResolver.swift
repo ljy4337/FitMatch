@@ -1353,6 +1353,7 @@ enum FitMatchSupabaseProductResolverError: LocalizedError {
     case vnextIdentityRequired
     case vnextCompletionRequired
     case invalidVNextResponse
+    case observationRejected(detail: String)
 
     var errorDescription: String? {
         switch self {
@@ -1366,8 +1367,15 @@ enum FitMatchSupabaseProductResolverError: LocalizedError {
             return "vNext begin 스냅샷 기반 완료 요청이 필요합니다."
         case .invalidVNextResponse:
             return "vNext 서버 응답을 검증할 수 없습니다."
+        case .observationRejected(let detail):
+            return "상품 데이터 저장 요청이 거절됐습니다: \(detail)"
         }
     }
+}
+
+nonisolated private struct FitMatchObservationRejectionResponse: Decodable {
+    let error: String
+    let detail: String?
 }
 
 /// Rejects a mutation before its RPC is issued when the local transport would
@@ -1566,7 +1574,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     let bodyLengthCode: String?
     let fitPreferenceCode: String
     let notes: String
-    let satisfaction: Int
+    let satisfaction: Int?
     let measurements: [VNextClosetMeasurementPayload]?
     /// The vNext upsert/update contract consumes a Closet-local override as
     /// one nested value. Do not flatten it into the product snapshot fields:
@@ -1614,7 +1622,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         try container.encodeIfPresent(bodyLengthCode, forKey: .bodyLengthCode)
         try container.encode(fitPreferenceCode, forKey: .fitPreferenceCode)
         try container.encode(notes, forKey: .notes)
-        try container.encode(satisfaction, forKey: .satisfaction)
+        try container.encodeIfPresent(satisfaction, forKey: .satisfaction)
         try container.encodeIfPresent(measurements, forKey: .measurements)
         // `encodeIfPresent` is intentional. A CONFIRMED registration with no
         // personal edit must omit this key completely, not send null or a
@@ -1935,10 +1943,24 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
         -> FitMatchProductObservationResponse {
         let client = try await authenticatedClient()
-        return try await client.functions.invoke(
-            "product-observation",
-            options: FunctionInvokeOptions(body: request)
-        )
+        do {
+            return try await client.functions.invoke(
+                "product-observation",
+                options: FunctionInvokeOptions(body: request)
+            )
+        } catch let error as FunctionsError {
+            if case .httpError(let status, let data) = error,
+               status == 422,
+               let rejection = try? JSONDecoder().decode(
+                   FitMatchObservationRejectionResponse.self, from: data
+               ),
+               rejection.error == "observation_rejected",
+               let detail = rejection.detail?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !detail.isEmpty {
+                throw FitMatchSupabaseProductResolverError.observationRejected(detail: detail)
+            }
+            throw error
+        }
     }
 
     func registerClosetItem(_ request: FitMatchRegisterClosetItemRequest) async throws -> UUID {
@@ -2306,6 +2328,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             case ("GLOBAL_CONFIRMED", "CONFIRMED", "GLOBAL_CONFIRMED"),
                  ("SUPERSEDED_MATCH", "CONFIRMED", "GLOBAL_CONFIRMED"),
                  ("SUPERSEDED_CONFLICT", "CONFIRMED", "GLOBAL_CONFIRMED"),
+                 (_, "CONFIRMED", "CATEGORY_GROUP"),
                  ("PERSONAL_CONFIRMED", "CONFIRMED", "USER_EXPLICIT"),
                  ("REVIEW_REQUIRED", "REVIEW_REQUIRED", "NONE"),
                  ("STALE_RECONFIRM_REQUIRED", "REVIEW_REQUIRED", "NONE"),
@@ -2458,7 +2481,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             bodyLengthCode: axes.bodyLengthCode,
             fitPreferenceCode: request.item.fitPreferenceCode,
             notes: request.item.fitMemo,
-            satisfaction: request.item.satisfaction,
+            satisfaction: request.item.satisfaction == 0
+                ? nil
+                : request.item.satisfaction,
             // Product-linked items always hydrate canonical measurements from
             // the selected vNext size. Local cache values are never allowed to
             // overwrite sourced measurement authority during an edit.

@@ -242,7 +242,8 @@ final class ShoppingProductViewModel: ObservableObject {
             case .notConfigured,
                  .authenticationRequired,
                  .vnextIdentityRequired,
-                 .vnextCompletionRequired:
+                 .vnextCompletionRequired,
+                 .observationRejected:
                 return false
             }
         }
@@ -1916,6 +1917,13 @@ final class ShoppingProductViewModel: ObservableObject {
               let serverAuthorityCoordinator else { return nil }
         do {
             guard isCurrentComparison(comparisonRequestID) else { return nil }
+            guard let authorizedProduct = recommendationService.makeServerAuthorizedComparisonTarget(
+                from: product,
+                permit: permit
+            ) else {
+                errorMessage = "서버가 승인한 비교 상품 정보를 확인하지 못했습니다."
+                return nil
+            }
             let analysis = try recommendationService.analyzeVNextComparison(
                 permit: permit
             )
@@ -1926,7 +1934,7 @@ final class ShoppingProductViewModel: ObservableObject {
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
             guard let history = recommendationService.makeCompletedVNextHistory(
-                product: product,
+                product: authorizedProduct,
                 selectedReferenceItem: reference,
                 productDetailCategory: productDetailCategory,
                 permit: permit,

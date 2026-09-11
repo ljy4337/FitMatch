@@ -18,6 +18,7 @@ struct RecommendationResultView: View {
     @State private var isShowingReliabilityInfo = false
     @State private var isShowingMeasurementInfo = false
     @State private var isShowingAlternativeSizeComparison = false
+    @State private var isShowingOtherClosetComparison = false
     @State private var selectedAlternativeSizeID: UUID?
     @State private var temporarySizeAnalysis: TemporarySizeAnalysis?
     @State private var temporaryAnalysisCache: [TemporarySizeAnalysisCacheKey: TemporarySizeAnalysis] = [:]
@@ -138,6 +139,13 @@ struct RecommendationResultView: View {
                 alternativeSizeComparisonSheet
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $isShowingOtherClosetComparison) {
+                NavigationStack {
+                    CompareFlowSheet(initialHistoricalProduct: currentResult.product)
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
             .alert(
                 "옷장 등록을 준비할 수 없어요",
@@ -489,16 +497,22 @@ struct RecommendationResultView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
-                    if let onShowOtherClosetComparison {
-                        Button("다른 옷과 비교", action: onShowOtherClosetComparison)
-                            .font(.subheadline.weight(.bold))
-                            .buttonStyle(.plain)
-                            .foregroundStyle(.primary)
-                            .padding(.horizontal, 14)
-                            .frame(height: 38)
-                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
+                    Button {
+                        if let onShowOtherClosetComparison {
+                            onShowOtherClosetComparison()
+                        } else {
+                            isShowingOtherClosetComparison = true
+                        }
+                    } label: {
+                        Text("다른 옷과 비교")
                     }
+                    .font(.subheadline.weight(.bold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 14)
+                    .frame(height: 38)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
                 }
             }
         }
@@ -676,7 +690,7 @@ struct RecommendationResultView: View {
         return closetItems.first { item in
             item.isActiveClosetItem
                 && currentResult.referencesClosetItem(clientItemID: item.id)
-        }?.sourceProduct?.imageURLStringForDisplay
+        }?.imageURLStringForDisplay
     }
 
     private var activeReferenceItemForDisplay: UserFit? {

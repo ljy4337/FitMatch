@@ -693,7 +693,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             bodyLengthCode: resolvedBodyLengthCode(for: item),
             sourceCategoryPath: item.sourceCategoryPath ?? item.sourceProduct?.sourceCategoryPath,
             productURL: item.sourceProduct?.sourceURLString,
-            imageURL: item.sourceProduct?.imageURLString,
+            imageURL: item.imageURLStringForDisplay,
             // The vNext transport omits product-linked measurements, but keep
             // this request boundary empty as well so stale M facts cannot be
             // mistaken for selected L facts by a future adapter change.
@@ -1394,7 +1394,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             bodyLengthCode: resolvedBodyLengthCode(for: item),
             sourceCategoryPath: item.sourceCategoryPath ?? item.sourceProduct?.sourceCategoryPath,
             productURL: item.sourceProduct?.sourceURLString,
-            imageURL: item.sourceProduct?.imageURLString,
+            imageURL: item.imageURLStringForDisplay,
             measurements: measurementValues(for: item),
             measurementRecords: records,
             fitMemo: item.fitMemo,
@@ -1597,6 +1597,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             to: item,
             automaticConfirmedIsActiveRuntimeValidated: false
         )
+        item.imageURLStringSnapshot = record.imageURL
         applyComparisonGroup(record, to: item)
         item.replaceMeasurementRecords(with: restoredMeasurementRecords(from: record, item: item))
         item.updatedAt = decodeDate(record.clientUpdatedAt ?? record.updatedAt) ?? item.updatedAt
@@ -1614,6 +1615,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         item.sourceName = sourceDisplayName(for: record.source)
         item.sourcePlatformCode = record.source
         item.sourceCategoryPath = record.sourceCategoryPath
+        item.imageURLStringSnapshot = record.imageURL
         item.brandName = record.brand ?? "브랜드 없음"
         item.gender = UserGender.fromTaxonomyCode(record.genderCode ?? "unknown")
         item.productName = record.productName
