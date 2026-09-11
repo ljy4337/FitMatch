@@ -1,5 +1,20 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-09-12 Group-only readiness supersedes detailed REVIEW_REQUIRED gating / PRODUCTION APPLIED
+
+- Product decision supersedes the older detailed-category recovery contract for linked registration and comparison: A-G comparison group plus its active group policy is the authority. Sleeve/detail labels may remain as parser/display facts but cannot gate registration, readiness, scoring, or comparison.
+- Production product_readiness was still joining products.garment_type_code and requiring products.classification_status=CONFIRMED. Added product_measurement_readiness(uuid,jsonb) and replaced product_readiness(uuid) so a valid comparison_group_tuple supplies CONFIRMED/CATEGORY_GROUP and its active policy; group-less products remain group-selection-required. Source: supabase/sql/group_only_product_readiness_Apply.sql; migration group_only_product_readiness applied to hnkplvyegonlhumlejst.
+- Linked Closet UI already presents only the comparison-group selector for parsed products. Removed the remaining behavior that treated legacy reviewRequired as an implicit hidden detailed Closet override; selected comparisonGroupCode remains the explicit input.
+- Read-only Production postflight: UNIQLO E486117 resolves A/tshirt and READY=true despite its legacy product row status. ZARA 545482161 resolves A/tshirt without classification-required; it separately reports INSUFFICIENT_MEASUREMENTS because its canonical group-policy metrics are unresolved. No detailed subtype was inferred or written.
+- Security advisor shows no new finding for these functions. Existing unrelated findings remain: one public history-hide SECURITY DEFINER warning, leaked-password protection disabled, and nine RLS-without-policy INFO notices. No app build or automated tests per user preference; no commit/push. Protected scroll file/call sites unchanged.
+
+## 2026-09-12 ZARA server procedure inspection / PARSING CONFIRMED, AUTH RECOVERY BLOCKED
+
+- Per user request, executed read-only Production procedures for Zara source key 545482161 without app login. product_comparison_group resolves COMPARABLE group A (tops), and product_readiness reports five sizes with five raw measurements each (25 total).
+- Existing ingestion receipt is PROCESSED. Its classification result remains REVIEW_REQUIRED because product_structure is UNKNOWN and the retailer-fact resolver reports INVALID_CURRENT_RETAILER_FACTS with zero detailed candidates. This confirms parsing/ingestion succeeded; it is not the cause of the HTTP 422 currently emitted by a new app observation.
+- classification_recovery_options cannot be executed anonymously and correctly raised Authentication required. User-specific candidate selection and Closet registration still require an authenticated user; no JWT impersonation, data write, or authority bypass was attempted.
+- No source changes, build, automated tests, Production writes, commit or push in this inspection. Protected scroll file/call sites unchanged.
+
 ## 2026-09-12 Requested ZARA registration smoke / BUILD PASS, LOGIN BLOCKED
 
 - User explicitly authorized a registration test for the Zara URL with v1=545485813, superseding the no-test instruction for this targeted scenario only.

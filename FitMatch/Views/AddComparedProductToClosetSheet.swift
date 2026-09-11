@@ -1068,7 +1068,9 @@ struct AddComparedProductToClosetSheet: View {
 
         switch serverRegistrationContext?.classificationState {
         case .reviewRequired:
-            didExplicitlySelectClosetClassification = true
+            // Linked registration is comparison-group-only. A legacy detailed
+            // REVIEW_REQUIRED state must not fabricate a hidden Closet override.
+            didExplicitlySelectClosetClassification = false
         case .confirmed:
             let selectedAudience = FitMatchCanonicalAudience.code(from: selectedGenderCode)
             let automaticAudience = FitMatchCanonicalAudience.code(
