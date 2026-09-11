@@ -67,11 +67,7 @@ struct LinkClosetRegistrationView: View {
     }
 
     private var canOpenRegistration: Bool {
-        guard parsedProduct != nil else { return false }
-        if registrationServerContext?.classificationState == .preparing {
-            return true
-        }
-        return registrationBlockMessage == nil
+        parsedProduct != nil
     }
 
     var body: some View {
@@ -107,7 +103,10 @@ struct LinkClosetRegistrationView: View {
                     // here would make REVIEW_REQUIRED look user-confirmed.
                     preselectedClassification: nil,
                     isParsedProductReadOnly: true,
-                    serverRegistrationContext: registrationServerContext,
+                    serverRegistrationContext: registrationServerContext
+                        ?? FitMatchClosetRegistrationServerContext(
+                            classificationState: isLoading ? .preparing : .unavailable
+                        ),
                     startsAtRegistrationConfirmation: true,
                     prefersRepresentativeByDefault: prefersRepresentativeByDefault,
                     requiresExplicitSizeSelection: preferredRecoveredSize == nil

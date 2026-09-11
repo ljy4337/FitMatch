@@ -243,7 +243,8 @@ struct AddComparedProductToClosetSheet: View {
         guard let serverRegistrationContext else {
             return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
         }
-        if serverRegistrationContext.classificationState == .preparing {
+        if serverRegistrationContext.classificationState == .preparing
+            || serverRegistrationContext.classificationState == .unavailable {
             return sortedSizes
         }
         return sortedSizes.filter {
@@ -764,6 +765,7 @@ struct AddComparedProductToClosetSheet: View {
             }
             if let serverRegistrationContext,
                serverRegistrationContext.classificationState != .preparing,
+               serverRegistrationContext.classificationState != .unavailable,
                !serverRegistrationContext.isRegisterable(displaySizeID: selectedSize.id) {
                 return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
             }

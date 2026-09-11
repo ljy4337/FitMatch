@@ -1,5 +1,19 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-09-12 MUSINSA 5746363 ingestion rejection and Next / SERVER APPLY BLOCKED
+
+- Confirmed Production validate_garment_axis_values still requires known sleeve/lower/body length on CONFIRMED products and Closet rows. The supplied slacks_trousers error occurs before group readiness. The active MUSINSA mapping catalog also lacks the exact pants/slacks path.
+- Prepared group_only_ingestion_axes_Apply.sql to remove mandatory legacy length presence while retaining garment validity, axis applicability, structure and audience checks, and to add the exact supplied pants/slacks path to C. Production apply_migration was rejected by automatic approval review because the global product/Closet impact requires explicit approval. Read-only postflight confirms the old lower-length requirement remains. SQL and mapping are NOT APPLIED; user approval remains required for this scope.
+- Link Closet Next now opens whenever a parsed product exists, independently of server failure. Missing context is explicitly preparing/unavailable, preserving server-first save guards. Unavailable context retains API size choices and does not misleadingly label them as missing measurements; users can select group/size while persistence remains unavailable.
+- No build or automated tests per user preference. Device registration and successful ingestion remain unverified. No commit/push; protected scroll file/call sites unchanged.
+
+## 2026-09-12 UNIQLO E487929 group selection repair / PRODUCTION APPLIED
+
+- The official API classifies E487929 under MEN / tops / t shirts / subcategory 125775 `(X)후리스`. The parser correctly retained that tops path, but the active comparison-group catalog had no exact row for category key `uniqlo:57893:57967:58039:125775`.
+- Because `fitmatch_vnext.product_comparison_group` returned `UNMAPPED` with a null group, the linked Closet registration context could not preselect a comparison group and readiness returned `CLASSIFICATION_REQUIRED`. This was a server mapping gap, not a picker-state bug.
+- Added and applied `supabase/sql/uniqlo_125775_group_mapping_Apply.sql`, mapping only that official tops breadcrumb to group A. No product-name inference, detailed subtype authority, client fallback, or unrelated category mapping was added.
+- Read-only postflight confirms E487929 resolves through `RETAILER_CATEGORY` to A / 상의. No app build or automated tests per user preference; no commit/push. Protected scroll file and modifier call sites unchanged.
+
 ## 2026-09-12 Group-only readiness supersedes detailed REVIEW_REQUIRED gating / PRODUCTION APPLIED
 
 - Product decision supersedes the older detailed-category recovery contract for linked registration and comparison: A-G comparison group plus its active group policy is the authority. Sleeve/detail labels may remain as parser/display facts but cannot gate registration, readiness, scoring, or comparison.
