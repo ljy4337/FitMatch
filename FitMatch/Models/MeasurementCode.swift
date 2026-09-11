@@ -56,6 +56,7 @@ nonisolated enum FitMatchCanonicalMeasurementCode {
     /// deliberately not assigned a local comparison/display meaning here.
     static let activeCodes: Set<String> = [
         "back_length",
+        "back_rise",
         "chest_circumference",
         "chest_width",
         "front_rise",
@@ -63,9 +64,13 @@ nonisolated enum FitMatchCanonicalMeasurementCode {
         "hem_width",
         "hip_circumference",
         "hip_width",
+        "inseam",
+        "neck_circumference",
         "outseam",
         "shoulder_width",
         "sleeve_length",
+        "sleeve_center_back_length",
+        "sleeve_raglan_length",
         "thigh_circumference",
         "thigh_width",
         "total_length",
@@ -132,6 +137,14 @@ nonisolated enum FitMatchCanonicalMeasurementCode {
             return projection(code, .thighWidthCrotchToOuter, .thigh)
         case "front_rise":
             return projection(code, .riseCrotchToWaistFront, .rise)
+        case "back_rise":
+            return projection(code, .riseCrotchToWaistBack, .rise)
+        case "inseam":
+            return projection(code, .pantsInseamCrotchToHem, .totalLength)
+        case "sleeve_center_back_length":
+            return projection(code, .sleeveCenterBackToCuff, .sleeveLength)
+        case "sleeve_raglan_length":
+            return projection(code, .sleeveRaglanNeckToCuff, .sleeveLength)
         case "hem_width":
             return projection(code, .hemWidthEdgeToEdge, .hem)
         case "under_bust_width":
@@ -167,6 +180,10 @@ nonisolated enum FitMatchCanonicalMeasurementCode {
             return "back_length"
         case .sleeveShoulderSeamToCuff:
             return "sleeve_length"
+        case .sleeveCenterBackToCuff:
+            return "sleeve_center_back_length"
+        case .sleeveRaglanNeckToCuff:
+            return "sleeve_raglan_length"
         case .waistWidthEdgeToEdge:
             return "waist_width"
         case .waistCircumferenceGarment:
@@ -181,15 +198,15 @@ nonisolated enum FitMatchCanonicalMeasurementCode {
             return "hem_width"
         case .pantsOutseamWaistToHem:
             return "outseam"
+        case .pantsInseamCrotchToHem:
+            return "inseam"
+        case .riseCrotchToWaistBack:
+            return "back_rise"
         case .underBustWidthEdgeToEdge:
             return "under_bust_width"
         case .standardBodyChestCircumference,
-             .sleeveCenterBackToCuff,
-             .sleeveRaglanNeckToCuff,
              .upperAbdomenWidthEdgeToEdge,
              .upperWaistWidthEdgeToEdge,
-             .riseCrotchToWaistBack,
-             .pantsInseamCrotchToHem,
              .footLengthHeelToToe,
              .unknown,
              .legacyUnknown:
@@ -382,8 +399,8 @@ struct SourceMeasurementMapping: Equatable {
 }
 
 enum MeasurementSourceMappingPolicy {
-    static let musinsaVersion = "musinsa_actual_size_mapping_v8"
-    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v7"
+    static let musinsaVersion = "musinsa_actual_size_mapping_v9"
+    static let uniqloVersion = "uniqlo_kr_size_chart_mapping_v8"
 
     static func musinsa(
         typeNumber: Int?,
@@ -471,7 +488,8 @@ enum MeasurementSourceMappingPolicy {
             case .totalLength where normalizedLabel == "총장": return mapping(.bodyLengthBackNeckToHem)
             case .shoulder where normalizedLabel == "어깨너비": return mapping(.shoulderWidthSeamToSeam)
             case .chest where normalizedLabel == "가슴단면": return mapping(.chestWidthPitToPit)
-            case .sleeveLength: return mapping(.sleeveShoulderSeamToCuff)
+            case .sleeveLength where normalizedLabel == "소매길이":
+                return mapping(.sleeveShoulderSeamToCuff)
             case .hip where typeNumber == 38
                 && isExactWidthLabel(normalizedLabel, labels: ["엉덩이단면", "엉덩이너비", "힙단면", "힙너비"]):
                 return mapping(.hipWidthAtWidest)
@@ -482,7 +500,8 @@ enum MeasurementSourceMappingPolicy {
             switch displayKind {
             case .totalLength where normalizedLabel == "총장": return mapping(.bodyLengthBackNeckToHem)
             case .chest where normalizedLabel == "가슴단면": return mapping(.chestWidthPitToPit)
-            case .sleeveLength: return mapping(.sleeveRaglanNeckToCuff)
+            case .sleeveLength where ["화장", "전체소매길이"].contains(normalizedLabel):
+                return mapping(.sleeveRaglanNeckToCuff)
             default: return nil
             }
         }
@@ -525,24 +544,16 @@ enum MeasurementSourceMappingPolicy {
         // "bodylengthback" used .bodyLengthUniqloBack.
         // "bodylength" used .bodyLengthUniqloShirt.
         // "knitbodylengthfront" used .bodyLengthUniqloKnitFront.
-        case "bodylengthback", "bodylength", "knitbodylengthfront": code = .bodyLengthBackNeckToHem
+        case "bodylengthback", "bodylength": code = .bodyLengthBackNeckToHem
+        case "knitbodylengthfront": code = .bodyLengthUniqloKnitFront
         case "sleevelength": code = .sleeveShoulderSeamToCuff
         case "sleevelengthcb": code = .sleeveCenterBackToCuff
         case "skirtlength": code = .skirtLengthWaistToHem
-        case "waistproductsize", "waistproductsizebottoms":
-            return SourceMeasurementMapping(
-                code: .waistWidthEdgeToEdge,
-                evidence: .officialText,
-                mappingVersion: uniqloVersion,
-                valueMultiplier: 0.5
-            )
-        case "hipproductsize":
-            return SourceMeasurementMapping(
-                code: .hipWidthAtWidest,
-                evidence: .officialText,
-                mappingVersion: uniqloVersion,
-                valueMultiplier: 0.5
-            )
+        case "waistproductsize", "waistproductsizebottoms": code = .waistCircumferenceGarment
+        // There is no exact local hip-circumference code. Keep the official
+        // circumference as a raw fact for the server resolver; never project
+        // it onto the flat-width axis.
+        case "hipproductsize": return nil
         case "thigh": code = .thighWidthCrotchToOuter
         case "risinglength": code = .riseCrotchToWaistFront
         case "bottomwidth": code = .hemWidthEdgeToEdge

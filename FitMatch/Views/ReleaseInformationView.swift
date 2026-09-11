@@ -45,7 +45,7 @@ struct FitMatchPrivacyPolicyView: View {
                 )
                 FitMatchReleaseSection(
                     title: "기기와 서버에 저장하는 정보",
-                    content: "등록한 옷, 선택한 사이즈와 실측, 기준 옷 설정, 상품 링크·카테고리, 비교 상품과 결과 기록을 기기와 FitMatch 서버에 저장합니다. 공용 쇼핑몰 상품 정보는 다른 사용자에게도 쓰이는 상품 카탈로그로 보관될 수 있습니다."
+                    content: "등록한 옷, 선택한 사이즈와 실측, 비교 그룹, 상품 링크·카테고리, 비교 상품과 결과 기록을 기기와 FitMatch 서버에 저장합니다. 공용 쇼핑몰 상품 정보는 다른 사용자에게도 쓰이는 상품 카탈로그로 보관될 수 있습니다."
                 )
                 FitMatchReleaseSection(
                     title: "상품 정보 요청",

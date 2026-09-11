@@ -321,6 +321,8 @@ struct VNextHistoryCacheHydrator {
                     clientItemID: referenceClientID
                 )
                 : referenceClientID
+            let activeReferenceImageURL = closetByClientID[referenceClientID]?
+                .sourceProduct?.imageURLStringForDisplay
             let reference = closetByClientID[referenceProjectionID]
                 ?? makeReference(
                     id: referenceProjectionID,
@@ -358,6 +360,8 @@ struct VNextHistoryCacheHydrator {
                 reason: "vNext immutable comparison history에서 복원했습니다.",
                 createdAt: decodeDate(row.createdAt) ?? Date()
             )
+            history.referenceImageURLStringSnapshot = activeReferenceImageURL
+                ?? row.referenceSnapshot.objectValue?["image_url"]?.stringValue
             modelContext.insert(history)
             hydrated.insert(row.clientComparisonID)
         }

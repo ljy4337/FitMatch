@@ -1016,7 +1016,7 @@ enum ZARAProductPageParser {
 }
 
 private enum ZARASizeGuideParser {
-    private static let mappingVersion = "zara_kr_measure_guide_verified_subset_v4"
+    private static let mappingVersion = "zara_kr_measure_guide_verified_subset_v5"
 
     static func parseActualGarmentMeasurements(
         data: Data,
@@ -1122,8 +1122,8 @@ private enum ZARASizeGuideParser {
         switch (category, rawCode.lowercased()) {
         case (.top, "zone-name-chest"), (.outer, "zone-name-chest"):
             return (.chestWidthPitToPit, .chest)
-        case (.top, "zone-name-back-width"), (.outer, "zone-name-back-width"):
-            return (.shoulderWidthSeamToSeam, .shoulder)
+        // `back-width` is a distinct back/armhole width, not shoulder width.
+        // Preserve it as a raw fact until the local vocabulary exposes that axis.
         case (.top, "zone-name-sleeve-length"), (.outer, "zone-name-sleeve-length"):
             return (.sleeveShoulderSeamToCuff, .sleeveLength)
         case (.bottom, "zone-name-waist"):
@@ -1256,8 +1256,22 @@ enum ZARACategoryClassifier {
         styleNumber: String? = nil
     ) -> Classification {
         let haystack = [family, subfamily].compactMap { $0 }.joined(separator: " ").lowercased()
-        let gender: UserGender = section.uppercased() == "MAN" ? .men : (section.uppercased() == "WOMAN" ? .women : .unknown)
-        let sectionName = gender == .men ? "남성" : (gender == .women ? "여성" : section)
+        let gender: UserGender
+        switch section.uppercased() {
+        case "MAN": gender = .men
+        case "WOMAN": gender = .women
+        case "KID", "KIDS": gender = .kids
+        case "BABY": gender = .baby
+        default: gender = .unknown
+        }
+        let sectionName: String
+        switch gender {
+        case .men: sectionName = "남성"
+        case .women: sectionName = "여성"
+        case .kids: sectionName = "키즈"
+        case .baby: sectionName = "베이비"
+        case .unisex, .unknown: sectionName = section
+        }
         let path = (["ZARA", sectionName, family, subfamily].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }).joined(separator: " > ")
 
         guard gender != .unknown,

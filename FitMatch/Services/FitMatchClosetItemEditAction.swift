@@ -2,9 +2,9 @@ import Foundation
 import SwiftData
 
 /// The non-visual persistence actions behind Closet detail editing.  This
-/// keeps the detail View as the presentation owner (including its reference
-/// replacement confirmation) while ensuring that manual and imported edits
-/// have one production implementation available to headless callers.
+/// keeps the detail View as the presentation owner while ensuring that manual
+/// and imported edits have one production implementation available to
+/// headless callers.
 @MainActor
 enum FitMatchClosetItemEditAction {
     enum Outcome: Equatable {
@@ -17,7 +17,7 @@ enum FitMatchClosetItemEditAction {
     static func saveManual(
         item: UserFit,
         editedItem: UserFit,
-        activeClosetItems: [UserFit],
+        activeClosetItems _: [UserFit],
         in modelContext: ModelContext,
         now: Date = Date(),
         performSave: (ModelContext) throws -> Void = { try $0.save() }
@@ -49,23 +49,11 @@ enum FitMatchClosetItemEditAction {
         item.fitMemo = editedItem.fitMemo
         item.fitPreference = editedItem.fitPreference
         item.satisfaction = editedItem.satisfaction
-        item.isRepresentative = editedItem.isRepresentative
+        item.isRepresentative = false
         item.measurementRecords.forEach(modelContext.delete)
         item.replaceMeasurementRecords(with: editedItem.measurementRecords)
         _ = ComparisonProfileMatcher().profile(for: item)
 
-        if item.isRepresentative {
-            activeClosetItems
-                .filter {
-                    $0.id != item.id
-                        && $0.isRepresentative
-                        && ReferenceGarmentPolicy.conflicts($0, item)
-                }
-                .forEach {
-                    $0.isRepresentative = false
-                    $0.updatedAt = now
-                }
-        }
         item.updatedAt = now
         return persist(in: modelContext, using: performSave)
     }

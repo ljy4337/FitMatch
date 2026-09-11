@@ -1,7 +1,154 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-09-11 로컬 사본 빌드 복구 — 그룹 목록 compactMap 타입 명시 / BUILD PASS / NOT COMMITTED
+
+- iCloud 밖의 로컬 작업 사본 `/Users/jinyoung/Developer/FitMatchLocal/FitMatch`에서 앱 타깃 Simulator Debug 빌드를 처음 수행했다. `CompareFlowSheet.closetComparisonGroupSections`의 바깥/안쪽 `compactMap`이 Swift 컴파일러에서 반환 타입을 추론하지 못해 실패하던 두 지점에 각각 `ClosetComparisonGroupSection?`, `ClosetComparisonSummaryRow?`를 명시했다.
+- 수정 뒤 `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build`는 `BUILD SUCCEEDED`다. 기존 iCloud 사본과 핵심 비교 UX 파일은 이동 직후 SHA-256 동일을 확인했고, 이번 보정은 새 로컬 사본에만 있다. XCTest, DB 적용, 커밋, 푸시는 하지 않았다.
+
+## 2026-09-11 Swift 컴파일 복구 — 옵셔널 콜백 escaping 중복 제거 / STATIC PASS / XCODEBUILD BLOCKED / NOT COMMITTED
+
+- `FitMatchLinkClosetRegistrationAction.load`의 `onRetailerProductLoaded`는 옵셔널 클로저 타입이라 이미 escaping이다. 이전 복구에서 붙인 중복 `@escaping`을 제거해 Xcode의 `Closure is already escaping in optional type argument` 오류를 해소했다. `existingBrand`는 실제 escaping closure에서 캡처되므로 `@escaping`을 유지했다.
+- 해당 파일의 `swiftc -parse`는 PASS다. Simulator Debug `xcodebuild`는 컴파일 출력 전 프로젝트 준비 단계에서 60초 이상 추가 로그 없이 멈춰 중단했다. 따라서 전체 Xcode build/XCTest PASS로 표기하지 않는다. DB 적용·커밋·푸시는 하지 않았다.
+
+## 2026-09-11 Swift 컴파일 복구 — 링크 등록 콜백 escaping 선언 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- `FitMatchLinkClosetRegistrationAction.load`가 retailer 로드 완료 콜백 안에서 `existingBrand`와 `onRetailerProductLoaded`를 캡처하므로 두 클로저 파라미터를 `@escaping`으로 명시했다. 동작·네트워크·DB 요청 순서는 바꾸지 않았다.
+- 해당 Swift 파일의 `swiftc -parse` 및 `git diff --check`는 PASS다. Xcode 전체 빌드와 XCTest는 사용자 요청에 따라 실행하지 않았다. 보호된 TabBar scroll 파일과 호출 modifier는 변경하지 않았다.
+
+## 2026-09-11 비교 UX Swift 7단계 — 구형 기준 옷 흐름 정리 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 새 목록형 비교 흐름에서 호출되지 않던 `CompareFlowSheet.calculateAndSaveRecommendation(automaticReferenceCandidates:)`와 `ShoppingProductViewModel.calculateRecommendation(automaticReferenceCandidates:)`를 제거했다. 서버 계획의 자동 후보를 로컬에서 다시 투영해야만 진행하던 불필요한 guard도 제거해, 실제로 사용하는 서버 승인 후보 목록만 동기화한다.
+- 결과 화면의 과거 기준 옷 picker 상태·시트·교체 저장 경로와 DEBUG 전용 구형 결과 화면 분기를 제거했다. 기록 화면 재비교는 기존 상품으로 새 비교 흐름을 시작하며, 상세 화면의 `비교 목록`과 `다른 옷과 비교` 연결은 6단계 구현을 유지한다.
+- 온보딩, 검색, 내 정보 가이드, 추천 안내, 개인정보 문구, 비교 오류·복구 안내에서 기준 옷 지정/우선선택 표현과 배지를 제거하고 비교 그룹·선택한 내 옷 표현으로 통일했다. 내 옷장 정렬 UI에서는 `기준 옷 우선`을 숨겼다.
+- 기존 로컬 저장값, 서버 DTO/RPC, 동기화 receipt 및 테스트 계약을 깨지 않도록 `isRepresentative` 필드, legacy sort raw value, `FitMatchClosetReferenceMutation`, 서버 승인/저장 호환 코드는 유지했다. 새 등록 요청은 앞 단계와 동일하게 항상 `false`이며 새 목록 계산·순위에는 이 값이 사용되지 않는다.
+- 관련 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS다. 보호된 TabBar scroll 파일 및 호출 modifier에는 새 변경이 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX 사용자 계획 6번 — 상세 비교 + 다른 옷 비교 시트 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 사용자 계획의 5번인 목록형 비교 결과는 현재 `comparisonSummaryContent`에 구현되어 있다. 같은 비교 그룹의 옷을 유사도순으로 나열하고, 각 행에 유사도·추천 구매 사이즈·비교 근거 또는 `근거 부족`을 표시하며, 비교 가능한 행만 상세 진입을 허용한다.
+- 목록의 옷을 누르면 기존 `RecommendationResultView`를 재사용해 `개별 비교 결과`를 연다. 상세에는 선택한 내 옷, 추천 구매 사이즈, 상품값·내 옷값·차이, 쇼핑몰 원본/FitMatch 공통/검증 환산 근거, 제외 항목과 사유가 표시된다.
+- 상세 화면의 상단 `비교 목록`은 목록으로 돌아가고, 카드의 `다른 옷과 비교`는 이제 목록을 한 번 거치지 않고 기존 그룹 선택 시트를 직접 연다. 시트 소유권을 비교 입력 하위 화면에서 전체 비교 흐름 root로 옮겨 상세 화면이 열린 상태에서도 정상 표시되게 했다.
+- 다른 옷 비교 시트는 서버가 허용한 후보만 그룹별로 표시하며, 행 선택 후 기존 서버 재승인→begin→complete→History 저장 흐름을 그대로 사용한다. 로컬 후보나 근거 부족 행이 서버 권한을 우회하지 않는다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS다. 보호된 TabBar scroll 파일 및 호출 modifier에는 새 변경이 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 5단계 — 개별 상세 비교 화면 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 비교 목록에서 진입한 결과 화면 제목을 `개별 비교 결과`로 구분하고, 기존 `비교 기준 옷`·`기준 옷 변경` 표현을 `선택한 내 옷`·`다른 옷과 비교`로 교체했다. 새 비교 흐름에서는 버튼이 서버 후보를 다시 불러오는 과거 picker 대신 이미 준비된 비교 목록으로 돌아간다.
+- 실측 비교 카드에 서버/엔진이 보존한 입력 근거를 표시한다. 전체 비교 방식은 `쇼핑몰 원본 항목 비교`, `FitMatch 공통 항목 비교`, `검증된 단면 환산 포함`, 혼합 비교 중 하나로 보이며, 각 실측 행에도 `쇼핑몰 원본`·`FitMatch`·`검증 환산`·`참고`를 표시한다. 검증 환산이 포함되면 항목 수도 함께 표시한다.
+- 비교 항목별 상품값·선택한 내 옷 값·차이와 기존 제외 사유 표시는 유지했다. `실측값 없음`·`측정 방식 미확인` 안내도 기준 옷 대신 선택한 내 옷으로 표현한다. 점수·추천 사이즈·신뢰도·서버 승인 및 History 저장 로직은 변경하지 않았다.
+- 새 비교 목록에서 상세 화면을 열 때는 과거 기준 옷 picker용 후보 조회를 선행하지 않아 불필요한 서버 요청을 줄였다. 과거 결과 진입점과 명시적으로 picker를 여는 호환 경로는 기존 서버 승인 절차를 유지한다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS이며 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 4단계 — 다른 옷과 비교 그룹 시트 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 3단계의 같은 그룹 비교 목록 아래에 `다른 옷과 비교` 버튼을 추가하고, 기존 디자인의 큰 시트 안에서 비교 가능한 그룹 칩과 해당 그룹의 옷 목록을 선택하도록 연결했다. 대상 상품과 같은 그룹은 `같은 그룹 N`, 그 외는 `아우터 N`처럼 표시한다.
+- 그룹별 행은 2단계와 같은 썸네일·추천 상품 사이즈·유사도·비교 근거·근거 부족 표시를 재사용한다. 안정적인 comparison-group code와 Closet UUID를 목록 식별자로 사용하며, 근거 부족 행은 상세 진입을 막는다.
+- 서버 후보 계획이 선택 가능하다고 반환한 활성 Closet item만 그룹별 미리보기 대상으로 삼는다. 행을 누르면 시트를 닫은 뒤 기존 서버 후보 재승인→begin→complete→History 저장 흐름으로 상세 결과를 연다. 차단된 그룹이나 로컬 추정 후보를 화면에서 우회 허용하지 않는다.
+- 같은 그룹 옷이 0벌이어도 서버가 허용한 다른 그룹 후보가 있으면 `기준 옷 없음` 오류로 보내지 않고 비교 목록을 유지해 선택 시트로 진입할 수 있게 했다. 현재 SQL 정책상 다른 그룹 허용 범위는 같은 그룹 외 `상의↔아우터`이며 프로시저·DB는 이 단계에서 수정하지 않았다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS이며 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 3단계 — 같은 그룹 목록 UI / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 상품 분석 뒤 첫 기준 옷으로 자동 비교·저장하던 전환을 중단하고 `내 옷과 비교` 목록 단계를 추가했다. 2단계에서 계산·정렬한 같은 그룹 배치 결과만 표시하므로 SwiftUI `body`에서 점수나 순위를 다시 계산하지 않는다.
+- 각 행은 안정적인 Closet UUID를 사용하며 옷 썸네일·상품명·쇼핑몰/보유 사이즈·순위·추천 상품 사이즈·유사도·사용한 비교 기준·실측 수·검증된 환산 수를 보여준다. 근거 부족 행은 사유를 표시하고 상세 진입을 막는다.
+- 비교 가능한 행을 누른 경우에만 기존 서버 후보 재승인→begin→complete→History 저장 흐름을 실행해 상세 `RecommendationResultView`를 연다. 목록 미리보기 자체는 추가 RPC나 비교 기록을 만들지 않는다.
+- 비교 흐름에서 연 상세 화면에만 `비교 목록` 뒤로가기 버튼을 추가했다. 홈·기록·검색 등 기존 진입점의 결과 화면은 콜백이 없어 UI가 바뀌지 않는다.
+- 다른 그룹을 고르는 `다른 옷과 비교` 시트는 이 단계에 섞지 않고 후속 작업으로 남겼다. 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS이며 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 2단계 — 같은 그룹 배치 미리보기 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 기존 서버 후보 계획 조회 1회 뒤, 서버가 허용한 후보 중 대상 상품과 비교 그룹이 정확히 같은 활성 내 옷만 배치 미리보기 대상으로 만든다. 로컬 카테고리 추정이나 다른 그룹 fallback은 사용하지 않는다.
+- 이미 불러온 상품의 모든 사이즈와 내 옷의 저장 실측을 기존 `MeasurementComparisonEngine`으로 한 번씩 비교해, 옷별 최적 상품 사이즈·유사도·공통 실측 수·비교 근거·환산 수·근거 부족 사유를 계산하고 안정적인 순서와 순위를 부여한다.
+- 배치 결과는 상품 ID, 그룹, 상품 사이즈 ID, Closet UUID와 수정 시각을 키로 메모리 캐시한다. 동일 입력은 다시 계산하거나 `@Published` 값을 다시 쓰지 않으며 새 URL 로딩·과거 상품 로딩·취소 시 캐시를 초기화한다.
+- 이 단계는 비교 기록을 생성하거나 후보마다 서버 RPC를 호출하지 않는다. 실제 상세 비교는 이후에도 기존 서버 승인 흐름을 사용한다. 화면 구성은 바꾸지 않았고 기존 단일 결과 자동 전환도 3단계 목록 UI 연결 전까지 그대로 유지한다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS다. 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 1단계 — 최소 수정 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 사용자 지정 `기준 옷` 저장 기능의 새 쓰기를 중단했다. 링크 등록, 직접 등록, 수정 화면과 홈·내 옷장 카드에서 지정 토글·배지·확인창을 제거하고 저장 요청은 항상 `isRepresentative=false`로 만든다. 기존 DB/RPC 필드와 호출 시그니처는 다음 서버 정리 전까지 호환용으로 보존하며 대량 데이터 변경은 하지 않았다.
+- 기존 `MeasurementComparisonEngine` 안에 비교 입력 근거를 추가했다. 같은 쇼핑몰의 동일 원본 항목은 `retailer_exact`, 같은 canonical 항목은 `canonical_exact`, 명시적으로 허용한 가슴·허리 단면/둘레 조합만 `verified_conversion`으로 기록한다. 의미가 확정되지 않은 항목과 신체 기준 가슴둘레는 환산하지 않으며 파서가 정규화한 저장값을 수정하지 않는다.
+- 전체 옷장 비교 목록 2단계를 위해 안정적인 Closet UUID, 추천 사이즈, 유사도, 공통 실측 수, 비교 근거, 환산 수, 근거 부족 상태를 담는 요약 모델만 기존 `RecommendationService` 파일에 준비했다. 아직 화면·네트워크 호출에는 연결하지 않아 기존 결과 UI는 그대로다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS다. 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 무신사 API 분류 신뢰도 보정 — SQL 후보 완료 / LOCAL PASS / NOT APPLIED / NOT COMMITTED
+
+- `supabase/sql/134_musinsa_provider_hardening_r1_{Apply,Verify,Rollback}.sql` 후보를 추가했다. 129 UNIQLO u904와 132 Zara v2가 적용된 정확한 classifier MD5 `c8cc257a2e2eaface85beae5cf593dd4`만 preimage로 허용하며, 공개 RPC·recovery 함수·기존 상품/사용자 row는 변경하지 않는다.
+- 실제 Swift가 export한 무신사 API payload 350건을 격리 PostgreSQL에 넣어 전후 비교했다. `CONFIRMED 207 → 233`, `REVIEW_REQUIRED 123 → 97`, `NOT_APPLICABLE 20 → 20`이었다. REVIEW 26건만 CONFIRMED로 바뀌었고 기존 CONFIRMED tuple 변경/퇴행, NOT_APPLICABLE→CONFIRMED, 처리 오류는 모두 0이었다.
+- 개선 범위는 정확한 무신사 leaf인 트레이닝 재킷·아노락 재킷·숏/롱 패딩, 명시적 후드 집업/카디건/코트가 일반 `자켓` 문자열 때문에 충돌하던 경우, 맨투맨·후드·collared T-shirt가 일반 T-shirt 규칙과 충돌하던 경우다. 사파리/헌팅 재킷은 실제 수집 데이터에 coat가 함께 있어 `jacket|coat` 후보로만 좁히고 자동 단일 확정하지 않았다. 레더/라이더스, 기타 아우터, 블루종/MA-1, 세트 등 의미가 갈리는 그룹은 REVIEW를 유지했다.
+- 현재 활성 evaluator가 이미 `provider IN ('any', source_code)`를 적용하고 있음을 재확인했으며 이 guard를 그대로 보존했다. 전역 `scope.jacket`은 세부 provider category를 잘못 배제하지 않는 상위 아우터 범위로 넓혔다. 유니클로 76건과 Zara 60건의 Swift payload 표본 전후 비교에서 CONFIRMED 상태/tuple 변경, 퇴행, NOT_APPLICABLE→CONFIRMED, 오류는 모두 0이었다.
+- 동일 무신사 payload 재시도는 350/350에서 동일 payload fingerprint를 유지했다. Apply→Verify→Rollback→원본 MD5 복귀→재적용을 실제 격리 PostgreSQL에서 통과했고 최종 candidate classifier MD5는 `10e98b939e3886bdabda5f48bbb3cdc6`, recovery MD5는 `d01db739db96a46d5725fbfb8d215e61`로 불변이다.
+- 1,787건을 한 트랜잭션으로 ingest하는 감사 방식은 UNIQLO audience-invariant category promotion의 누적 탐색 때문에 10분 이상 걸려 중단했다. Swift parser/encoder 전체 1,787건 PASS는 기존 같은 날 실행 결과를 유지하되, 이번 SQL 후보의 DB 회귀는 무신사 전수 350건과 유니클로/Zara 표본 136건으로 검증했다. Production DB 적용·Edge 배포·기존 데이터 수정·커밋·푸시는 하지 않았다.
+
+## 2026-09-10 신뢰도 우선 retailer 분류 재감사 — SQL 후보 검증 완료 / NOT APPLIED / NOT COMMITTED
+
+- Production은 SELECT-only로 재확인했다. 현재 `classification_decision(text,text)` body MD5는 `291bf9bdf95b37d234f344e7d4d80303`, recovery는 `d01db739db96a46d5725fbfb8d215e61`이다. 공개 RPC나 Production 데이터는 변경하지 않았다.
+- 최종 UNIQLO 후보는 `129_uniqlo_904_provider_classification_{Apply,Verify,Rollback}.sql`의 u904-r3이다. 올바른 현재 catalog를 넣은 격리 PostgreSQL에서 표본 51건을 전후 비교해 기존 CONFIRMED tuple 변경 0, CONFIRMED 퇴행 0, NOT_APPLICABLE→CONFIRMED 0을 유지하면서 REVIEW 6건을 CONFIRMED로, 룸슈즈 1건을 NOT_APPLICABLE로 바꿨다. 처음 후보가 `E487950 BN살로페트`를 bodysuit로 잘못 확정한 것을 발견해 해당 규칙을 삭제했고, 최종 r3에서는 REVIEW로 남는 것을 확인했다.
+- 현재 Production classifier는 Zara v1만 수용하므로 Swift v2 parent `internalProductID`와 selected `catentryID`를 구분한 정상 payload도 거부한다. `132_zara_v2_current_r3_{Apply,Verify,Rollback}.sql` 후보는 v1을 유지하면서 Zara에만 v2를 허용하고 API root product ID와 selected color/실측 request ID를 각각 검증한다. recovery 함수와 r3 출력 계약은 바꾸지 않는다.
+- Zara 544 payload는 parent API product ID와 selected color가 544/544 일치했다. 그러나 API `familyName` 자체가 일부 상품에서 신뢰할 수 없었다. 예: `유아용 셔츠`가 실제 버뮤다 팬츠이고 `유아용 니트조끼`가 실제 봄버 재킷이었다. 따라서 그런 카테고리 단독 확정 규칙은 후보에서 제거했다. 남은 정책은 name과 함께 후보를 좁히는 `유아용 티셔츠`/`유아용 스웨터` 범위, 상품명에 명시된 양말·스타킹·보닛 등 비의류, 명시적 상하의 세트 차단뿐이다.
+- Zara 표본 20건의 최종 전후 비교는 새 CONFIRMED 5, 새 NOT_APPLICABLE 6, REVIEW 유지 3이었다. 중복 parent 6건은 개별 재생으로 추가 확인했다. 정상 v2 control은 CONFIRMED였고 parent ID, selected variant, 중복 selected variant, details URL, measurement URL을 각각 변조한 5건은 전부 `REVIEW_REQUIRED / INVALID_CURRENT_RETAILER_FACTS`로 fail closed했다. 전 입력의 동일 payload 재시도 fingerprint가 일치했다.
+- 무신사 표본 20건은 현재 catalog 기준 15 CONFIRMED / 4 REVIEW / 1 NOT_APPLICABLE이고 SQL 적용 전후 결과가 동일했다. 기존 v1 입력과 retry도 유지됐으므로 이번 후보에는 무신사 규칙을 추가하지 않았다.
+- Swift `ZARAParser`가 API `sectionName=KID/BABY`를 UNKNOWN으로 보내던 transport mapping을 KIDS/BABY로 보정했다. 로컬 분류 결과를 DB 근거로 보내거나 first color/size를 선택하지 않는다.
+- 기존 격리 fixture는 활성 garment type 일부만 seed해 무신사 경량 패딩 등에 가짜 `TYPE_EVIDENCE_CONFLICT`를 만들었다. `fixtures/133_current_production_classification_catalog_local_fixture.sql`에 Production SELECT로 확인한 현재 활성 47개 garment type과 검증된 12개 axis value의 최소 로컬 스냅샷을 추가했다. 이 파일은 로컬 테스트 전용이며 Production migration이 아니다.
+- 일회용 PostgreSQL에서 129→132 Apply, Verify, rollback, 원본 semantic checksum 복귀, 재적용과 재검증을 완료했다. 최종 classifier MD5는 `c8cc257a2e2eaface85beae5cf593dd4`, 132 rollback 후 129-r3 MD5는 `07a0e672019501a2eb819de42da00b37`, 전체 rollback 후 baseline semantic MD5는 `a70ddfd0b3873486357d6f2022c2210a`였다. recovery MD5는 전 과정에서 `d01db739db96a46d5725fbfb8d215e61`로 불변이다.
+- Swift parser syntax는 PASS했다. 수집 JSON을 현재 Swift parser/encoder로 다시 돌리는 normalized-size XCTest와 전체 앱 빌드는 iCloud checkout stall 때문에 이번 재감사에서는 NOT RUN이다. 따라서 분류 SQL·identity·retry 검증은 완료했지만 링크 등록/상품 비교 전체 UI 여정 PASS를 이번 결과로 주장하지 않는다.
+
+## 2026-09-10 수집 JSON 기반 FitMatch 회귀 실행기 — 작성 완료 / LOCAL SMOKE PASS / NOT COMMITTED
+
+- `scripts/run-fitmatch-fixture-tests.sh`를 추가했다. `fixtures`는 수집기 fixture builder 단위 테스트 후 실제 FitMatch Swift의 UNIQLO/MUSINSA/ZARA parser와 observation encoder로 원문 JSON을 재생한다. `closet`과 `compare`는 기존 `FitMatchFinalReleaseProviderSnapshotTests` 12건 전체를 실행하며 링크 등록, 제시된 사이즈 저장, 서버-authorized 비교 흐름을 함께 검증한다. `all`은 세 단계를 한 번에 실행한다.
+- `FitMatchTests/FitMatchCollectedFixtureReplayTests.swift`는 normal/warning manifest의 raw 파일을 읽고 현재 Swift parser output, `structured_facts.retailer_api` object, 나머지 string facts, `catalog_decision` 미전송, frozen request 재인코딩 동일성, ZARA parent/selected variant 분리를 검사한다. 원본 JSON이나 fixture를 수정하지 않는다.
+- `supabase/sql/130_fixture_replay_local_transaction.sql`과 `database` 모드는 Swift가 실제 인코딩한 payload를 로컬 Supabase에 넣어 ingest → 동일 retry → runtime → recovery → recoverable일 때 첫 서버 후보 사용자 선택 → runtime → 동일 payload retry를 실행한 뒤 전부 rollback한다. `localhost/127.0.0.1` URL과 로컬 DB에 이미 seed된 사용자 UUID를 필수로 하며 Production URL은 거부한다.
+- 검증: fixture builder Python **5/5 PASS**. 임시 비-iCloud worktree의 iPhone 17 Pro Simulator에서 전체 active raw **1,787/1,787 payload PASS / failures 0**: UNIQLO 893건(실측 보유 886, classification-only 7, 5,267 sizes/22,929 measurements), MUSINSA 350건(실측 보유 290, classification-only 60, 722 sizes/3,226 measurements), ZARA 544건(첫 단계 전부 classification-only). 전체 Swift replay XCTest **1/1 PASS**, 기존 provider registration/comparison suite **12/12 PASS**. 원본 checkout 첫 컴파일을 막던 `FitMatch/Models/Product.swift` 첫 줄의 우발적 `ㅋㅋ...` 접두사만 제거했다.
+- ZARA 544건의 0 sizes는 수집 원문 부재를 뜻하지 않는다. normal 예시 `558188272`에는 실제 `measureGuideInfo` 4 sizes가 있다. 현재 앱 계약이 `raw 수집 → DB category 확정 → confirmed category로 실측 parser 재실행`이므로 DB 없는 첫 Swift 재생은 의도대로 `confirmCategoryBeforeMeasurements` partial에서 멈춘다. 별도 provider suite는 authority-confirmed ZARA 4-size 등록/비교를 통과했지만, 수집 544건 각각의 DB round-trip 뒤 Swift 2차 파싱은 아직 검증하지 않았다.
+- 로컬 Supabase URL/seed user가 제공되지 않아 `database` 모드는 **NOT RUN**이다. ZARA 수집 파일은 exact product-page HTML bytes가 아니라 저장된 analytics object를 보존하므로 Swift replay는 그 실제 analytics JSON으로 최소 script wrapper를 구성한다. Production DB/Edge/기존 사용자 데이터/커밋/푸시는 변경하지 않았다. 보호된 TabBar 파일과 호출부는 수정하지 않았다.
+
+## 2026-09-10 ZARA 의류 카테고리 탐색 보정 — 완료 / NOT COMMITTED
+
+- `/Users/jinyoung/Documents/RetailerCatalogCollector/collector.py`가 WOMAN/MAN/KIDS 시작 화면의 공식 `categories` 트리에서 현재 섹션에 속하고 화면에 노출된 명시적 의류 카테고리 URL만 큐에 넣도록 보정했다. 의류 목록 화면의 공식 `productGroups`에서 상품 URL과 선택 variant를 수집한다. HOME·신발·가방·액세서리는 목록 큐에서 제외하며, 이 로컬 판정은 수집 범위 필터일 뿐 `retailer_api`나 DB 분류 근거로 전송하지 않는다.
+- 실제 `woman-l1000.html` → `woman-blazers-l1055.html` 임시 탐색에서 여성 목록만 열고 선택 variant 121개를 발견했다. 그중 `593928619`을 실제 수집해 details/measurements HTTP 200, 5 sizes, `internalProductID=568676050`, `selected_variant_key=593928619`, 상세 colors 내 selected variant 정확히 1개 일치를 확인했다. Swift v2 payload는 두 ID를 구분해 보존했다.
+- Python compile PASS, ZARA 단위 테스트 16건 PASS, 임시 DB category discovery 및 실제 상품 1건 raw 수집 PASS. 기존 수집 DB·원본 JSON·기존 HOME raw 20건·Production DB·Edge·Swift 코드는 변경하지 않았고 커밋·푸시하지 않았다.
+
+## 2026-09-10 ZARA 수집기 Swift 동일 API 재현 — 완료 / NOT COMMITTED
+
+- `/Users/jinyoung/Documents/RetailerCatalogCollector/collector.py`를 수정했다. ZARA PDP identity는 재사용 가능한 일반 Chrome 프로필에서 공식 `window.zara.viewPayload`와 `zara.analyticsData` 원문으로 검증하되, FitMatch/DB 테스트용 `details`와 `measurements`는 현재 Swift `ZARAProductDetailsLoader`/`ZARASizeGuideLoader`와 동일한 URL, `FitMatch/1.0 (iPhone; iOS 18.0)` User-Agent, Accept/Accept-Language 헤더로 별도 호출한다. PDP 내장 JSON을 Swift API 응답으로 대체하지 않는다.
+- URL `v1`과 analytics `catentryId`가 함께 있으면 정확히 일치해야 하며, 사이트맵 URL에 `v1`이 없을 때만 analytics가 명시한 선택 catentry를 사용한다. internal product ID와 selected catentry ID를 분리하고 첫 색상/첫 사이즈 추정은 하지 않는다. `swift_retailer_api`에는 v2 identity와 실제 request URL/HTTP status/collected_at/body를 기록한다.
+- 실제 사용자 URL `p05584401?v1=545485813` live 검증에서 PDP identity `internalProductID=545482161`, `selected_variant_key=545485813`, 실측 HTTP 200/5 sizes를 확인했다. 같은 시점 Swift 동일 details 요청은 HTTP 278, body `{location, body:{}}`였다. 수집기는 이를 200이나 PDP product JSON으로 바꾸지 않고 그대로 저장하므로, 현재 Swift가 만드는 v2 details도 DB의 `details.product` 검증을 통과하지 못할 수 있다는 실제 회귀 증거가 확보됐다.
+- 실측이 없는 상품은 분류 원문 수집 실패가 아니라 `measurementAvailable=false` warning으로 분리했다. `--new-only`는 정상 raw만 건너뛰고 이전 실패를 다시 시도한다. Python 단위 테스트 12건 PASS, 실제 v1 없는 PDP 1건 PASS, 실제 기존 실패 사이트맵 상품 1건 raw 저장 PASS, 사용자 URL Swift 동일 envelope live PASS. Production DB/Edge/Swift 코드/기존 수집 DB는 변경하지 않았고 커밋·푸시하지 않았다.
+
+## 2026-09-10 UNIQLO 904건 기반 분류 프로시저 후보 — 작성 완료 / NOT APPLIED / NOT COMMITTED
+
+- `supabase/sql/129_uniqlo_904_provider_classification_{Apply,Verify,Rollback}.sql`을 추가했다. 904개 개별 API JSON의 의류/비의류/review 분리 결과를 사용하되, 해당 결과는 의류 존재 판정이지 FitMatch 세부 tuple 정답이 아니므로 모호한 항목을 자동 확정하지 않는다. 실제 review 제안에서 `룸슈즈`가 clothing으로 제안된 오분류를 발견해 `NOT_APPLICABLE` 명시 규칙으로 교정했다.
+- Apply는 현재 Production r3 preimage `0c0dabc...`, 128 호환 후보 postimage `291bf9bd...`, 자체 rollback semantic postimage `a70ddfd...`만 허용한다. 필요하면 128의 바깥 previous-version guard 제거를 함께 수행하고, UNIQLO `details.status=ok/result object` 검증, 전체 breadcrumb name/id path 보존, provider가 명확한 13개 UNIQLO 한정 규칙만 추가한다. 공개 RPC, raw resolver/recovery의 r3 계약, 기존 Product/User/measurement row, MUSINSA/ZARA 규칙은 변경하지 않는다.
+- Verify는 E465185/E484080 비교 회귀, 명확한 review 대표군, 룸슈즈 차단, `E487950 BN살로페트` REVIEW 유지, r3 Swift/recovery 계약 및 MUSINSA/ZARA 결과를 SELECT-only로 노출한다. Rollback은 u904 정책/13개 규칙/추가 fact reader만 제거해 semantic baseline으로 복귀한다.
+- SQL 파일 정적 검증과 dollar-quote 균형, `git diff --check`, 보호된 TabBar 파일/호출부 무변경을 확인했다. 이후 보강 catalog를 사용한 격리 PostgreSQL에서 Apply/Verify/fixture replay/rollback/reapply를 실행했고, 최종 결과는 문서 최상단 재감사 절에 기록했다. Production 적용·DB write·Edge 배포·커밋·푸시는 하지 않았다.
+
+## 2026-09-10 review 그룹 보고서 보강 — 완료 / NOT COMMITTED
+
+- `scripts/split-clothing-json.py`의 중복 `NON_CLOTHING_CODES` 선언을 하나로 합치고 기존 값을 모두 유지했다. review 58건은 상품 단위 manifest와 별도로 `data/reports/uniqlo-raw-904-review-groups.json`에 category_path 22개 그룹 + category 정보 없음 1개 그룹으로 기록했다. 각 그룹은 대표 상품 ID·상품명·건수와 `proposed_decision`·`proposed_rule`을 가진다. 실제 `decision`은 계속 `review_needed`이며 의류를 자동 확정하지 않는다.
+- 지정 원본 904개를 다시 읽어 결과 수는 clothing 752, non_clothing 94, review_needed 58이다. category 정보 없음 그룹은 8건이며, review group 합계 검증과 원본 SHA-256 불변 검증을 통과했다. 원본 수정·네트워크·커밋·푸시는 없었다.
+
+## 2026-09-10 로컬 MUSINSA/ZARA JSON 수집기 재구성 — live sample PASS / NOT COMMITTED
+
+- `/Users/jinyoung/Documents/RetailerCatalogCollector`의 무신사 카테고리 무한 증식을 제거했다. 무신사·자라는 설정된 seed 카테고리만 순회하며, 미수집 상품을 먼저 처리한다. `run_musinsa.command`, `run_zara.command`를 추가했고 기본 실행은 증분 수집이다.
+- urllib 403에는 제한된 curl fallback을 사용하고 실제 응답이 없는 ID는 raw JSON을 남기지 않는다. ZARA는 PDP용 catentryID와 실측용 내부 product ID를 분리한다. 숫자 전수 대입은 사용하지 않는다.
+- ZARA 탐색은 공식 `sitemap-product-kr-ko.xml.gz`를 우선하고 실패 시 제한된 seed 카테고리로 fallback한다. 현재 실행 네트워크에서는 공식 사이트맵 HTTP 403과 카테고리 `Access Denied`가 모두 확인돼 신규 ZARA ID 자동 발견은 환경 차단 상태다.
+- live 검증: MUSINSA 5746362의 detail/actual_size/options 및 ZARA catentry 549569317·internal 549551955의 product_details/size_guide JSON·JSONL 생성 PASS. 전체 장시간 수집은 실행하지 않았다.
+
+## 2026-09-10 로컬 쇼핑몰 JSON 의류 분리 dry-run 도구 — 완료 / NOT COMMITTED
+
+- `scripts/split-clothing-json.py`를 추가했다. 네트워크 호출 없이 JSON만 읽고, API breadcrumb/category code를 상품명보다 우선해 `clothing`, `non_clothing`, `review_needed` JSONL manifest를 생성한다. 애매하거나 API 관측이 충돌하면 `review_needed`로 보낸다.
+- 기본 입력은 `data/raw/**/*.json`이며 `--input`으로 파일/디렉터리를 지정할 수 있다. 결과는 `data/manifests/*.jsonl`, 카테고리별 판정 개수·대표 상품 ID·입력 SHA-256은 `data/reports/*.json`에 저장한다. 원본 JSON에는 쓰지 않는다.
+- 처음 사용한 194/880건 fixture 산출물은 제거했다. 지정 원본 `/Users/jinyoung/Documents/RetailerCatalogCollector/data/raw/uniqlo`의 개별 JSON 904개를 직접 읽어 `data/manifests/uniqlo-raw-904.*.jsonl`로 실행했다. 결과는 clothing 752, non_clothing 94, review_needed 58, 양말/삭스 47개는 전부 non_clothing이다. clothing 각 행의 matched rule/code/label, broad-context-only clothing 0건, 원본 SHA-256 불변 및 JSONL 검증을 확인했다. 커밋·푸시는 하지 않았다.
+
 ## 2026-09-09 링크 내 옷 등록 자동 분류·전체 실측 표시 보정 — targeted PASS / NOT COMMITTED
 
+- 비교 결과의 `기준 옷 변경` 버튼은 기존에 로컬 후보마다 `상품 authority 확인 → 옷장 조회 → 후보 RPC`를 순차 반복해, 옷장 수에 비례해 느려졌다. 이미 존재하는 `referenceSelectionPlan` 전체 후보 조회를 연결해 상품 authority·옷장·후보 목록을 각각 한 번의 서버 흐름으로 가져오고, 서버가 승인한 client item ID만 로컬 Closet에 투영한다. 결과 화면 진입 직후 이 1회 조회를 미리 시작하므로 버튼은 준비된 목록을 즉시 열며, 사용자가 먼저 누른 경우에는 진행 중인 동일 요청의 완료만 이어서 사용한다. 같은 상품에서 다시 버튼을 누르면 결과 화면에 보관한 후보 목록을 즉시 재사용하며, SwiftData 옷장 조회도 별도 fetch 없이 기존 `@Query` 결과를 사용한다. 사용자가 최종 옷을 선택할 때의 최신 snapshot/서버 재승인과 begin-comparison 검증은 그대로 유지한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았고 `git diff --check`만 통과했다.
+- E465185 결과에서 네 번째 유니클로 원문 실측이 여전히 보이지 않은 원인은 완료 비교를 만들 때 대상 상품 사이즈와 기준 옷 모두 서버 canonical 3개짜리 이력 projection으로 바뀌어 retailer raw `화장` record가 결과 객체에 없었기 때문이다. `begin_comparison`의 exact size label과 파서 상품의 size label이 유일하게 일치할 때만 대상 결과 사이즈에 retailer measurement record를 복사하고, 결과 이력이 참조하는 active Closet item도 comparison-derived reference ID로 찾아 같은 쇼핑몰 원문 참고 실측 계산에 사용한다. 일치하지 않거나 active 원본이 없으면 기존 immutable snapshot만 사용한다. 복사된 원문은 표시 전용이며 점수·추천·서버 canonical 증거는 변경하지 않는다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 비교 결과 화면의 세 가지 표시 결함을 수정했다. 저장 직후 ProductSize가 이력 전용 UUID로 투영되는데 `다른 사이즈 비교`는 원본 서버 UUID만 검사해 전체 버튼이 비활성화되던 문제를 원본/이력 UUID 양쪽을 동일 서버 후보로 연결하도록 고쳤고, 실제 분석 cache 조회도 서버 원본 UUID로 역연결한다. 기준 옷은 이력 저장 전에 이미지 URL을 별도 snapshot으로 보존하고 서버 이력 복원 시에는 현재 Closet 원본 또는 reference snapshot의 이미지 URL을 사용한다. DB 승인 점수·순위·신뢰도는 기존 canonical 3개를 그대로 사용하며, 같은 쇼핑몰의 동일한 측정 정의로 로컬에 보존된 추가 원문 실측(현재 E465185의 화장)은 네 번째 참고 행으로 표시하되 추천 점수에는 포함하지 않는다. 사용자의 현재 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 새 r3 분류 프로시저 보정 후보 `128_retailer_r3_previous_version_compatibility_{Apply,Verify,Rollback}.sql`을 작성했다. 현재 설치 checksum `0c0dabc...`의 가장 바깥 r3 wrapper가 이전 r1/r2 `resolver_version`을 만나 API 원문 평가 전에 `base`로 반환하던 조기 종료만 제거한다. 내부 과거 버전 guard, 공개 RPC명/시그니처/ACL, recovery 함수와 기존 Product/User row는 변경하지 않는다. 예상 postimage MD5는 `291bf9bd...`이며 Verify는 E465185/E484080 회귀와 기존 무신사 v1 5746363의 r3 CONFIRMED 복구를 SELECT-only로 확인한다. Swift recovery enum에는 서버의 정확한 r3 문자열과 64개 상한/필수 audience/전체 후보 unknown-fields 규칙을 모두 추가했다. 처음 추가할 때 `serverUnknownFields` switch의 r3 case가 빠져 발생한 exhaustive-switch 컴파일 오류도 보정했다. 원격 적용과 SQL 실행은 하지 않았다.
+- Production SELECT-only 재확인에서 새 `classification_decision(text,text)` body MD5는 `0c0dabc519fa9d1f4ffb9b8ecf87ce95`, 새 recovery body MD5는 `d01db739db96a46d5725fbfb8d215e61`로 설계 당시와 저장소 `127_zara_retailer_api_v2_Apply.sql` 후보 어느 쪽과도 다르다. 새 분류 함수는 실제 호출되고 E465185는 retailer API r3로 `CONFIRMED(tshirt/short_sleeve)`를 반환한다. 반면 기존 DB row가 r2 `CONFIRMED(slacks_trousers/long_length)`인 무신사 5746363을 현재 함수로 다시 판정하면 `REVIEW_REQUIRED / Product-exact verified evidence is required`가 반환되어, 새 함수의 기존 v1 무신사 증거 수용 규칙에 별도 DB 회귀가 있다. 무신사 5746362는 Product row 자체가 없어 observation 미도달 문제도 별도로 남아 있다. DB write/apply는 하지 않았다.
+- 실제 E465185 비교 로그에서 상품 파싱/분류는 성공했지만 기준 옷 `B124FAC6-1EC4-460B-8BC2-203C2734108F` 동기화가 `CANONICAL closet item requires fitmatch_measurement_code only`로 반복 실패한 것을 확인했다. Production의 현재 linked-Closet helper는 정확한 ProductSize에 대응하는 비어 있지 않은 canonical `measurements` 배열을 요구하지만 Swift는 product-linked 요청에서 이 키를 생략하던 계약 불일치가 있었다. linked 요청도 명시적으로 매핑 가능한 canonical 실측만 코드별 1개씩 전송하도록 수정했고, 화면용 미분류 retailer raw 실측은 로컬에 그대로 보존한다. 같은 canonical 코드에 값/단위가 충돌하면 임의 선택하지 않고 RPC 전에 차단한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- `ShoppingProductViewModel.authorizeReferenceForComparison`의 DEBUG 진단 문자열에서 interpolation 내부 기본값 따옴표를 잘못 escape해 발생한 `Unterminated string literal` / `Cannot find ')'` 컴파일 오류를 수정했다. 진단값을 지역 상수로 먼저 계산한 뒤 동일 로그를 출력하며 실행 로직은 바꾸지 않았다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 무신사 공유 링크 `g8gv7iyp`와 `kk7c2n5l`은 모두 실제 상품 `5746362`(더스티 베이지)로 resolve되며 공식 detail/actual-size API에는 28, 29, 30, 31, 32, 33, 34, 36, 38의 9개 사이즈와 각 6개 실측이 정상 존재한다. Production SELECT-only 확인에서는 동일 계열 `5746363`(그레이)이 동일 category/audience/size shape의 v1 envelope/`__default__`/9개 사이즈로 정상 수집됐지만 `5746362` 상품·receipt는 없었다. 즉 해당 상품의 파서·API 형식 차이가 아니라 새 상품 observation 전송이 완료되지 않아 runtime UUID 연결이 비어 있던 상태다. coordinator는 URL transport, Functions relay, HTTP 408/429/5xx에 한해 frozen observation을 정확히 한 번 재전송하며 payload/`observed_at`을 재생성하지 않는다. 401/422 계약·인증 오류는 재시도하지 않는다. 링크 결과도 서버 authority가 unavailable/not-applicable이거나 context 자체가 없으면 이를 우선 표시하고 더 이상 `9개 사이즈를 찾았습니다`와 `등록 가능한 사이즈 정보를 찾지 못했습니다`를 모순되게 함께 표시하지 않는다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
 - E465185 비교 로그는 parser/DB 상품 분류/8개 사이즈/서버 후보 조회까지 성공한 뒤, 자동 선택된 기준 옷의 재승인 준비에서 generic `SERVER_UNAVAILABLE`로 끝났다. 로컬 `fitMatchServerReferenceSnapshot()`이 서버가 이미 승인 후보로 반환한 옷에도 로컬 provenance 표식을 별도로 요구해, 과거 캐시에 그 표식이 없으면 서버 검증 전에 차단한 것이 원인이다. 스냅샷 생성은 로컬에 저장된 exact category/detail/measurement를 유지하고 누락된 garment/length/profile만 동일 linked Product의 저장값에서 읽는다. 비교 권한은 부여하지 않으며 coordinator가 최신 Closet row, classification authority, exact snapshot, 서버 후보를 기존대로 전부 재검증한다. 스냅샷 생성 실패와 coordinator 오류는 DEBUG 로그에서 구분한다. 상품 authority가 이미 confirmed인 뒤의 오류 화면 제목은 `상품 정보를 불러오지 못했어요`가 아니라 `비교를 시작하지 못했어요`로 표시한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
 - 상품 비교에서 서버가 `automatic` 후보를 주지 않고 `manual_selection` 후보만 준 경우, 앱이 사용자의 저장된 `기준 옷(isRepresentative)` 선택을 무시해 다시 후보 선택 화면을 열었다. 이제 서버가 승인한 manual 후보 중 기준 옷이 정확히 1개면 그 옷을 자동 선택해 기존 manual authorization 경로로 바로 비교한다. 서버 blocked 후보나 후보 밖의 로컬 옷은 승격하지 않고, 승인된 기준 옷이 없거나 여러 개면 기존 선택 화면을 유지한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
 - 비교할 옷 선택 카드가 서버의 영문 `reason`(`User-selected comparison with at least one common canonical measurement`)을 그대로 표시하던 경로를 수정했다. 서버 원문은 진단/계약 데이터에 그대로 보존하고, 화면의 `FitMatchCandidate.selectionReason`에는 서버 `reason_code`와 `common_measurement_count`로 만든 한글 안내만 전달한다. 공통 실측 개수가 있으면 `공통 실측 항목 N개로 비교할 수 있습니다.`로 표시하며, 개수가 없을 때도 선택 방식에 맞는 한글 문구로 대체한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
@@ -3706,3 +3853,35 @@ git diff -- '*.swift' | grep -E \
 - Linked Closet persistence is server-first. Swift allocates one stable `client_item_id`, sends the exact product/variant/size IDs, optionally calls reference selection, then reads the Closet list back. The receipt must have `state == ready` and exactly one matching `client_item_id`; its DB-owned measurements, classification, `is_reference`, and revision are projected into SwiftData. A requested reference that returns `is_reference == false` becomes partial success with the existing warning; ambiguous transport/receipt failures retain the same client ID for safe result recheck rather than creating a duplicate.
 - Successful registration sets the existing `내 옷장에 추가했어요.` state, invokes the completion callback, and dismisses immediately; the former 1.2-second wait was removed. Manual-add section 5 `핏 기록` was removed only from the UI; existing `fit_memo`, `fit_preference_code`, and `satisfaction` persistence fields/defaults were not removed or migrated.
 - The newly enabled ZARA shopping shortcut has no DB branch. It uses the existing local `ZARAIntegrationAvailability.isEnabled == true` flag and opens the official Korean storefront. Parser and DB resolution begin only after a supported product URL is submitted through the comparison flow; the underlying comparison authority/readiness logic was not changed by the shortcut activation.
+
+## 2026-09-09 connectDB — comparison reference snapshot canonicalization
+
+- Investigated the reported comparison failure for target UNIQLO `E465185` with the saved `E484080` XXL Closet item. Read-only server inspection showed the target and reference were both confirmed/ready, and the reference-candidate contract approved `E484080` as `MANUAL_EXTENDED` with three common canonical measurements. No comparison row was created for the failed attempt, locating the rejection before the begin-comparison RPC.
+- The local authorization snapshot previously copied every positive `GarmentMeasurementRecord` key, including a fourth retained UNIQLO raw measurement that the server had not mapped into its canonical comparison vocabulary. `referenceMatchesLocalSnapshot` intentionally requires exact canonical key equality, so the local four-key snapshot was rejected against the server's three-key Closet snapshot as `local_reference_snapshot_mismatch`.
+- `UserFit.fitMatchServerReferenceSnapshot()` now converts only explicitly supported transport/canonical measurement codes through `FitMatchCanonicalMeasurementCode.canonicalCode(forTransportRawCode:)`. Unmapped retailer raw measurements remain stored and visible in the UI; they are excluded only from the server comparison-authorization snapshot. Existing legacy scalar fallback remains unchanged when no canonical measurement record exists.
+- Per user instruction, no Swift tests or Xcode build were run. No commit, push, Production DB/RPC mutation, migration apply, or Edge deployment occurred.
+
+## 2026-09-09 connectDB — vNext reference tuple axis alignment
+
+- Rechecked the latest failed UNIQLO `E465185` comparison from the supplied device log. Product parsing, eight sizes, target classification, and reference-plan presentation all completed; the failure remained at manual-reference authorization. The earlier linked-Closet `CANONICAL ... fitmatch_measurement_code only` error no longer appeared.
+- Production was inspected read-only only. Both current Closet rows are present with exact linked product/variant/size IDs and three canonical measurements. `fitmatch_vnext_find_reference_candidates` returns both `E484080` and `E465185` as allowed `MANUAL_EXTENDED` candidates with three common measurements, and `fitmatch_vnext_eligible_candidate_sizes` returns all eight target sizes as allowed. No Production write, comparison begin, migration, or Edge deployment was performed.
+- Found a second Swift-side authority mismatch: `referenceTupleMatches` compared the Closet app projection `detailCode` (for example `long_sleeve`) to `FitMatchDatabaseClassification.detailCode`, which the vNext runtime adapter currently fills with the garment identity (`tshirt`). It also compared the Closet garment identity to the runtime comparison-policy field. This rejected a DB-approved reference before `fitmatch_vnext_begin_comparison`.
+- `FitMatchServerAuthorityCoordinator.referenceTupleMatches` now compares like-for-like server axes only: category to category, Closet garment identity to runtime `garmentTypeCode`, length to length, and body length to body length. The app-facing detail picker projection is still checked separately by the local-versus-remote Closet snapshot and is no longer confused with garment identity.
+- Per user instruction, no Swift tests or Xcode build were run. `git diff --check` passed. No commit or push occurred.
+
+## 2026-09-11 connectDB — three-retailer measurement-basis completion
+
+- Continued on `connectDB` at `039ec76c126e870452b5a1398a35f3a9bcf7cb0e` and preserved the pre-existing dirty worktree. No commit, push, migration apply, Edge deployment, or persistent Supabase mutation occurred.
+- Product decision confirmed with the user: raw facts are always preserved; circumference is not silently halved into flat width; shoulder/back width and set-in/centre-back/raglan sleeve lengths remain distinct; non-core, lining, petticoat, and unresolved armhole measurements may be stored/displayed but are excluded from default scoring.
+- Added `Docs/MeasurementBasisPolicy-20260911.md` as the authoritative collected-field basis table for UNIQLO, MUSINSA, and ZARA. It includes the observed clothing fields, non-clothing exclusions, score eligibility, and six explicit wrong-mapping prohibitions.
+- Swift mapping corrections: UNIQLO knit front length is no longer back length; UNIQLO waist circumference remains circumference with multiplier 1 and hip circumference remains raw/server-resolved rather than becoming width; MUSINSA set-in/raglan sleeve mapping now requires exact labels and `소매부리단면`/`암홀` are intercepted as distinct raw fields; ZARA back width is no longer projected as shoulder width. Canonical transport now preserves distinct centre-back/raglan sleeve codes plus back rise and inseam.
+- Added non-applied SQL `supabase/sql/145_measurement_basis_completion_Apply.sql` and read-only verification query. It extends existing vNext canonical/source identities, corrects circumference mappings, adds scoped aliases for current and legacy parser rows, and aborts if the three known lossy mappings survive. The Apply SQL was executed only inside a transaction whose final statement was replaced with `rollback`; syntax, constraints, and embedded guards passed with no persisted state.
+- `xcrun swiftc -parse` passed for all changed Swift and test files; `git diff --check` passed. Focused Xcode tests were started but emitted no build progress for about three minutes in the current checkout and were interrupted, so no XCTest pass is claimed. Protected TabBar file and protected scroll-modifier call-site diffs remained empty.
+
+## 2026-09-11 connectDB — immediate API Closet preview and frozen size snapshot
+
+- Link-based Closet entry now publishes the parsed retailer/API product immediately, before product ingestion and server authority resolution finish. The user can open the registration sheet, inspect the API sizes and measurements, and select a size/comparison group while the server prepares the exact product/variant/size UUID tuple.
+- Added an explicit `preparing` registration state. Saving remains server-authoritative and is blocked with a visible preparation message until the server context arrives; no local-only fallback or optimistic local persistence was introduced.
+- Runtime reconciliation preserves each uniquely matched API display-size ID so an in-progress user selection survives the server response. For a captured retailer row, its exact positive measurement records, raw labels, values, and units remain the registration presentation/submission snapshot; runtime canonical records are used only when no matching API measurement row exists.
+- When the server context arrives, the hidden canonical category tuple and automatic comparison group are synchronized into the open sheet. A comparison group explicitly changed by the user is not overwritten.
+- Added focused regression coverage for API-record precedence and runtime-only fallback. `swiftc -parse` and `git diff --check` passed. A generic Simulator build emitted no progress after project setup for about 90 seconds and was interrupted, so no Xcode build or XCTest pass is claimed. Protected TabBar/scroll files were unchanged.

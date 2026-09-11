@@ -343,10 +343,14 @@ private enum MusinsaActualSizeColumn {
     case rise
     case inseam
     case hem
+    case sleeveOpening
+    case armhole
 
     static func column(for name: String, isTopCategory: Bool = false) -> MusinsaActualSizeColumn? {
         if isTopCategory, name == "복부단면" { return .upperAbdomen }
         if isTopCategory, name == "허리단면" { return .upperWaist }
+        if name == "소매부리단면" { return .sleeveOpening }
+        if name == "암홀" { return .armhole }
         let searchOrder: [MusinsaActualSizeColumn] = [
             .shoulder, .chest, .sleeveLength, .waist, .hip, .thigh, .rise, .inseam, .hem, .totalLength
         ]
@@ -366,6 +370,7 @@ private enum MusinsaActualSizeColumn {
         case .thigh: return .thigh
         case .rise: return .rise
         case .hem: return .hem
+        case .sleeveOpening, .armhole: return .unknown
         }
     }
 
@@ -399,6 +404,10 @@ private enum MusinsaActualSizeColumn {
             return ["인심", "밑단기장", "inseam"]
         case .hem:
             return ["밑단", "hem"]
+        case .sleeveOpening:
+            return ["소매부리단면"]
+        case .armhole:
+            return ["암홀"]
         }
     }
 }

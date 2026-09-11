@@ -429,7 +429,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         _ draft: FitMatchLinkedClosetEditDraft,
         userID: UUID,
         modelContext: ModelContext,
-        confirmsReferenceReplacement: Bool
+        confirmsReferenceReplacement _: Bool
     ) async -> FitMatchLinkedClosetEditSaveOutcome {
         guard isCurrentSyncUser(userID),
               draft.preparation.userID == userID,
@@ -484,36 +484,14 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 categoryCode: draft.categoryCode,
                 detailCode: draft.detailCode,
                 didExplicitlyChangeClassification: draft.didExplicitlyChangeClassification,
-                isReference: currentRow.isReference
+                comparisonGroupCode: draft.comparisonGroupCode,
+                isReference: false
             )
         } catch {
             return .failed("선택한 분류를 서버에 안전하게 저장할 수 없습니다. 다시 확인해 주세요.")
         }
 
-        let remotelyConflictingReferenceClientIDs = possibleServerReferenceConflicts(
-            in: rows.items,
-            excluding: currentRow.clientItemID,
-            request: request
-        )
-        let locallyConflictingReferenceClientIDs: Set<UUID>
-        do {
-            locallyConflictingReferenceClientIDs = try possibleLocalReferenceConflicts(
-                excluding: currentRow.clientItemID,
-                request: request,
-                modelContext: modelContext
-            )
-        } catch {
-            return .failed("기준 옷 상태를 안전하게 확인하지 못했습니다. 다시 시도해 주세요.")
-        }
-        let possiblyReplacedReferenceClientIDs = remotelyConflictingReferenceClientIDs
-            .union(locallyConflictingReferenceClientIDs)
-        if currentRow.isReference,
-           !possiblyReplacedReferenceClientIDs.isEmpty,
-           !confirmsReferenceReplacement {
-            // This is a read-only preflight. The sheet owns the confirmation
-            // so cancelling leaves every local value and server row intact.
-            return .needsReferenceConfirmation
-        }
+        let possiblyReplacedReferenceClientIDs: Set<UUID> = []
 
         let updateResponse: FitMatchUpsertClosetItemResponse
         do {
@@ -533,9 +511,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 userID: userID,
                 closetItemID: currentRow.closetItemID,
                 request: request,
-                wantsReference: currentRow.isReference,
+                wantsReference: false,
                 possibleReplacedReferenceClientIDs: possiblyReplacedReferenceClientIDs,
-                shouldRetryReferenceMutation: currentRow.isReference
+                shouldRetryReferenceMutation: false
             )
             acceptedLinkedEditReceipts[draft.item.id] = receipt
             return .reconciliationRequired(
@@ -550,9 +528,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             userID: userID,
             closetItemID: currentRow.closetItemID,
             request: request,
-            wantsReference: currentRow.isReference,
+            wantsReference: false,
             possibleReplacedReferenceClientIDs: possiblyReplacedReferenceClientIDs,
-            shouldRetryReferenceMutation: currentRow.isReference
+            shouldRetryReferenceMutation: false
         )
         acceptedLinkedEditReceipts[draft.item.id] = receipt
         return await reconcileAcceptedLinkedEdit(
@@ -611,7 +589,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
               record.closetItemID == receipt.closetItemID,
               record.productID == receipt.request.productID,
               record.variantID == receipt.request.productVariantID,
-              record.productSizeID == receipt.request.productSizeID else {
+              record.productSizeID == receipt.request.productSizeID,
+              receipt.request.comparisonGroupCode == nil
+                || record.comparisonGroupCode == receipt.request.comparisonGroupCode else {
             return .reconciliationRequired(
                 "서버 수정 결과를 확인하는 중입니다. 등록 결과를 다시 확인해 주세요."
             )
@@ -623,7 +603,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             receipt.shouldRetryReferenceMutation = true
             acceptedLinkedEditReceipts[item.id] = receipt
             return .reconciliationRequired(
-                "사이즈는 수정됐지만 기준 옷 상태를 서버에서 확인하지 못했습니다. 등록 결과를 다시 확인해 주세요."
+                "사이즈는 수정됐지만 옷장 저장 상태를 서버에서 확인하지 못했습니다. 등록 결과를 다시 확인해 주세요."
             )
         }
 
@@ -655,6 +635,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         categoryCode: String,
         detailCode: String,
         didExplicitlyChangeClassification: Bool,
+        comparisonGroupCode: String,
         isReference: Bool
     ) throws -> FitMatchUpsertClosetItemRequest {
         let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
@@ -737,7 +718,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             productID: selectedOption.identity.productID,
             productVariantID: selectedOption.identity.productVariantID,
             productSizeID: selectedOption.identity.productSizeID,
-            override: override
+            override: override,
+            comparisonGroupCode: comparisonGroupCode
         )
     }
 
@@ -753,10 +735,14 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             guard record.clientItemID != clientItemID,
                   record.isReference,
                   FitMatchCanonicalAudience.code(from: record.genderCode)
-                    == targetAudience,
-                  record.categoryCode == request.item.categoryCode,
-                  record.detailCode == request.item.detailCode else {
+                    == targetAudience else {
                 return nil
+            }
+            if let groupCode = request.comparisonGroupCode {
+                guard record.comparisonGroupCode == groupCode else { return nil }
+            } else {
+                guard record.categoryCode == request.item.categoryCode,
+                      record.detailCode == request.item.detailCode else { return nil }
             }
             // This is intentionally conservative: the existing product
             // policy and the server tuple both agree that a same audience /
@@ -783,10 +769,14 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                   local.isActiveClosetItem,
                   local.isRepresentative,
                   FitMatchCanonicalAudience.code(from: local.resolvedGenderCode)
-                    == targetAudience,
-                  local.resolvedCategoryCode == request.item.categoryCode,
-                  local.resolvedDetailCategoryCode == request.item.detailCode else {
+                    == targetAudience else {
                 return nil
+            }
+            if let groupCode = request.comparisonGroupCode {
+                guard local.comparisonGroup?.rawValue == groupCode else { return nil }
+            } else {
+                guard local.resolvedCategoryCode == request.item.categoryCode,
+                      local.resolvedDetailCategoryCode == request.item.detailCode else { return nil }
             }
             return local.id
         })
@@ -1607,6 +1597,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             to: item,
             automaticConfirmedIsActiveRuntimeValidated: false
         )
+        applyComparisonGroup(record, to: item)
         item.replaceMeasurementRecords(with: restoredMeasurementRecords(from: record, item: item))
         item.updatedAt = decodeDate(record.clientUpdatedAt ?? record.updatedAt) ?? item.updatedAt
         return item
@@ -1643,6 +1634,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             modelContext: modelContext
         )
         applyClassification(record, to: item)
+        applyComparisonGroup(record, to: item)
         item.createdAt = decodeDate(record.clientCreatedAt ?? record.createdAt) ?? item.createdAt
         item.updatedAt = decodeDate(record.clientUpdatedAt ?? record.updatedAt) ?? item.updatedAt
     }
@@ -1697,6 +1689,15 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             provenance,
             sourceIdentity: record.classificationSource
         )
+    }
+
+    private func applyComparisonGroup(
+        _ record: FitMatchClosetItemRecord,
+        to item: UserFit
+    ) {
+        item.comparisonGroupCode = record.comparisonGroupCode
+        item.comparisonGroupSource = record.comparisonGroupSource
+        item.comparisonGroupPolicyVersion = record.comparisonGroupPolicyVersion
     }
 
     private func restoredProduct(

@@ -169,7 +169,15 @@ extension UserFit {
 
         var values: [String: Double] = [:]
         for record in measurementRecords where record.value.isFinite && record.value > 0 {
-            values[record.measurementCodeRawValue] = record.value
+            // The server reference snapshot contains only its canonical
+            // comparison vocabulary. Retailer-only/raw measurements remain
+            // on the Closet item for display, but must not make an otherwise
+            // current server snapshot look stale.
+            guard let canonicalCode = FitMatchCanonicalMeasurementCode
+                .canonicalCode(forTransportRawCode: record.measurementCodeRawValue) else {
+                continue
+            }
+            values[canonicalCode] = record.value
         }
         if values.isEmpty {
             let legacyValues: [(String, Double)] = [

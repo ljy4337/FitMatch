@@ -2269,7 +2269,8 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         // presence and exact server identity.  Keep asserting that the Next
         // button is disabled by that combined gate rather than the removed
         // direct `productMeasurementPresence` expression.
-        #expect(linkSource.contains("parsedProduct != nil && registrationBlockMessage == nil"))
+        #expect(linkSource.contains("classificationState == .preparing"))
+        #expect(linkSource.contains("return registrationBlockMessage == nil"))
         #expect(linkSource.contains(".disabled(!canOpenRegistration)"))
 
         let compareSource = try sourceFile("FitMatch/Views/CompareFlowSheet.swift")

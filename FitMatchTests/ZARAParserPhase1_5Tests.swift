@@ -857,13 +857,13 @@ struct ZARAParserPhase1_5Tests {
         #expect(!info.sizes.isEmpty)
         let records = info.sizes.flatMap(\.measurementRecords)
         #expect(records.first { $0.rawCode == "zone-name-chest" }?.measurementCode == .chestWidthPitToPit)
-        #expect(records.first { $0.rawCode == "zone-name-back-width" }?.measurementCode == .shoulderWidthSeamToSeam)
+        #expect(records.first { $0.rawCode == "zone-name-back-width" }?.semanticStatus == .unknownDefinition)
         #expect(records.first { $0.rawCode == "zone-name-sleeve-length" }?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect(records.first { $0.rawCode == "zone-name-front-length" }?.semanticStatus == .unknownDefinition)
         #expect(records.first { $0.rawCode == "zone-name-arm-width" }?.semanticStatus == .unknownDefinition)
         #expect(records.filter { $0.semanticStatus == .mapped }.allSatisfy {
             $0.evidenceLevel == .officialText
-                && $0.mappingVersion == "zara_kr_measure_guide_verified_subset_v4"
+                && $0.mappingVersion == "zara_kr_measure_guide_verified_subset_v5"
         })
         #expect(records.contains {
             $0.rawCode == "zone-name-chest"
@@ -902,7 +902,7 @@ struct ZARAParserPhase1_5Tests {
         #expect(info.category == .outer)
         #expect(info.measurementAvailability == .actualMeasurements)
         #expect(records.first { $0.rawCode == "zone-name-chest" }?.measurementCode == .chestWidthPitToPit)
-        #expect(records.first { $0.rawCode == "zone-name-back-width" }?.measurementCode == .shoulderWidthSeamToSeam)
+        #expect(records.first { $0.rawCode == "zone-name-back-width" }?.semanticStatus == .unknownDefinition)
         #expect(records.first { $0.rawCode == "zone-name-sleeve-length" }?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect(records.first { $0.rawCode == "zone-name-front-length" }?.semanticStatus == .unknownDefinition)
         #expect(records.first { $0.rawCode == "zone-name-arm-width" }?.semanticStatus == .unknownDefinition)

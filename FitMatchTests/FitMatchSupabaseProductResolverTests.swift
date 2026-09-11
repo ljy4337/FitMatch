@@ -1526,6 +1526,69 @@ struct FitMatchSupabaseProductResolverTests {
         })
     }
 
+    @Test func linkedRegistrationUsesTheExactRetailerSnapshotInsteadOfRuntimeReplacement() {
+        let runtimeRecords = [
+            ParsedMeasurement(
+                value: 66.5,
+                measurementCode: .chestWidthPitToPit,
+                displayKind: .chest,
+                methodSource: "fitmatch_vnext_runtime",
+                inputSource: .importedSizeChart,
+                rawLabel: "chest_width",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped,
+                canonicalMeasurementCode: "chest_width"
+            )
+        ]
+        let retailerRecords = [
+            ParsedMeasurement(
+                value: 133,
+                measurementCode: .chestCircumferenceGarment,
+                displayKind: .chest,
+                methodSource: "uniqlo_size_chart",
+                inputSource: .importedSizeChart,
+                rawCode: "chest-circumference",
+                rawLabel: "가슴둘레",
+                rawValueText: "133",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped,
+                canonicalMeasurementCode: "chest_circumference_garment"
+            )
+        ]
+
+        let displayed = ShoppingProductViewModel.registrationPresentationMeasurementRecords(
+            runtimeRecords: runtimeRecords,
+            retailerRecords: retailerRecords
+        )
+
+        #expect(displayed == retailerRecords)
+        #expect(displayed.first?.rawLabel == "가슴둘레")
+        #expect(displayed.first?.value == 133)
+    }
+
+    @Test func linkedRegistrationUsesRuntimeMeasurementsOnlyWithoutAnAPIRow() {
+        let runtimeRecords = [
+            ParsedMeasurement(
+                value: 66.5,
+                measurementCode: .chestWidthPitToPit,
+                displayKind: .chest,
+                methodSource: "fitmatch_vnext_runtime",
+                inputSource: .importedSizeChart,
+                rawLabel: "chest_width",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped,
+                canonicalMeasurementCode: "chest_width"
+            )
+        ]
+
+        let displayed = ShoppingProductViewModel.registrationPresentationMeasurementRecords(
+            runtimeRecords: runtimeRecords,
+            retailerRecords: []
+        )
+
+        #expect(displayed == runtimeRecords)
+    }
+
     @Test func vNextClosetListKeepsBothPersonalServerSourcesAsManualAuthority() {
         #expect(
             FitMatchSupabaseDomainClient.closetClassificationSource(

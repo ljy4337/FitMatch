@@ -500,6 +500,7 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
     let productVariantID: UUID?
     let productSizeID: UUID?
     let override: FitMatchClosetClassificationOverride?
+    let comparisonGroupCode: String?
 
     init(
         clientItemID: UUID,
@@ -507,7 +508,8 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
         productID: UUID?,
         productVariantID: UUID? = nil,
         productSizeID: UUID?,
-        override: FitMatchClosetClassificationOverride?
+        override: FitMatchClosetClassificationOverride?,
+        comparisonGroupCode: String? = nil
     ) {
         self.clientItemID = clientItemID
         self.item = item
@@ -515,6 +517,7 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
         self.productVariantID = productVariantID
         self.productSizeID = productSizeID
         self.override = override
+        self.comparisonGroupCode = comparisonGroupCode
     }
 }
 
@@ -600,6 +603,9 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
     let familyCode: String?
     let lengthCode: String?
     let bodyLengthCode: String?
+    let comparisonGroupCode: String?
+    let comparisonGroupSource: String?
+    let comparisonGroupPolicyVersion: String?
     let classificationSnapshot: [String: String?]
     let clientSnapshot: [String: String]
     let clientCreatedAt: String?
@@ -640,6 +646,9 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         familyCode: String?,
         lengthCode: String?,
         bodyLengthCode: String?,
+        comparisonGroupCode: String? = nil,
+        comparisonGroupSource: String? = nil,
+        comparisonGroupPolicyVersion: String? = nil,
         classificationSnapshot: [String: String?],
         clientSnapshot: [String: String],
         clientCreatedAt: String?,
@@ -679,6 +688,9 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         self.familyCode = familyCode
         self.lengthCode = lengthCode
         self.bodyLengthCode = bodyLengthCode
+        self.comparisonGroupCode = comparisonGroupCode
+        self.comparisonGroupSource = comparisonGroupSource
+        self.comparisonGroupPolicyVersion = comparisonGroupPolicyVersion
         self.classificationSnapshot = classificationSnapshot
         self.clientSnapshot = clientSnapshot
         self.clientCreatedAt = clientCreatedAt
@@ -720,6 +732,9 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         case familyCode = "family_code"
         case lengthCode = "length_code"
         case bodyLengthCode = "body_length_code"
+        case comparisonGroupCode = "comparison_group_code"
+        case comparisonGroupSource = "comparison_group_source"
+        case comparisonGroupPolicyVersion = "comparison_group_policy_version"
         case classificationSnapshot = "classification_snapshot"
         case clientSnapshot = "client_snapshot"
         case clientCreatedAt = "client_created_at"
@@ -1361,12 +1376,15 @@ enum FitMatchSupabaseProductResolverError: LocalizedError {
 /// decision.
 nonisolated enum FitMatchClosetPayloadContractError: LocalizedError, Equatable, Sendable {
     case unmappablePositiveMeasurement(code: String)
+    case conflictingCanonicalMeasurement(code: String)
     case missingRequiredClassificationAxis(garmentTypeCode: String, axis: String)
 
     var errorDescription: String? {
         switch self {
         case .unmappablePositiveMeasurement:
             return "입력한 실측 항목을 서버에 저장할 수 없습니다. 항목을 확인한 뒤 다시 시도해 주세요."
+        case .conflictingCanonicalMeasurement:
+            return "같은 실측 항목에 서로 다른 값이 있어 서버에 저장할 수 없습니다."
         case .missingRequiredClassificationAxis:
             return "선택한 의류 분류에 필요한 길이 정보를 확인한 뒤 다시 시도해 주세요."
         }
@@ -1555,6 +1573,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     /// the database must distinguish a global product tuple from a user's
     /// personal Closet tuple atomically inside the mutation.
     let closetClassificationOverride: VNextClosetClassificationOverridePayload?
+    let comparisonGroupCode: String?
 
     enum CodingKeys: String, CodingKey {
         case clientItemID = "client_item_id"
@@ -1574,6 +1593,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         case fitPreferenceCode = "fit_preference_code"
         case notes, satisfaction, measurements
         case closetClassificationOverride = "closet_classification_override"
+        case comparisonGroupCode = "comparison_group_code"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -1603,6 +1623,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
             closetClassificationOverride,
             forKey: .closetClassificationOverride
         )
+        try container.encodeIfPresent(comparisonGroupCode, forKey: .comparisonGroupCode)
     }
 }
 
@@ -2413,13 +2434,13 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             lengthCode: request.item.lengthCode,
             bodyLengthCode: request.item.bodyLengthCode
         )
-        // A linked Closet item is measured by its exact server product-size
-        // row. Do not validate presentation-only retailer records that are
-        // intentionally omitted from this mutation (for example an official
-        // UNIQLO raw axis that has no canonical DB mapping yet).
+        // The current linked-Closet contract verifies a complete canonical
+        // snapshot against the exact server ProductSize. Keep retailer-only
+        // raw facts on the local item, but do not put them in this canonical
+        // mutation payload.
         let measurements = request.productID == nil
             ? try canonicalMeasurements(for: request.item)
-            : nil
+            : try linkedCanonicalMeasurements(for: request.item)
         return VNextClosetMutationPayload(
             clientItemID: request.clientItemID,
             productID: request.productID,
@@ -2444,7 +2465,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             measurements: measurements,
             closetClassificationOverride: try request.override.map {
                 try Self.mutationOverridePayload($0)
-            }
+            },
+            comparisonGroupCode: request.comparisonGroupCode
         )
     }
 
@@ -2613,6 +2635,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             familyCode: item.garmentTypeCode,
             lengthCode: item.sleeveLengthCode ?? item.lowerLengthCode,
             bodyLengthCode: item.bodyLengthCode,
+            comparisonGroupCode: item.comparisonGroup?.groupCode,
+            comparisonGroupSource: item.comparisonGroup?.source,
+            comparisonGroupPolicyVersion: item.comparisonGroup?.policyVersion,
             classificationSnapshot: [
                 "classification_fingerprint": item.classificationFingerprint,
                 "decision_version": item.classificationResolverVersion
@@ -2811,6 +2836,59 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 rawLabel: record.rawLabel
             )
         }
+    }
+
+    /// Product-linked items carry the exact canonical subset for the selected
+    /// server size. An official retailer may retain additional raw axes for
+    /// display; those are not silently promoted into FitMatch measurements.
+    nonisolated private static func linkedCanonicalMeasurements(
+        for item: FitMatchClosetItemPayload
+    ) throws -> [VNextClosetMeasurementPayload] {
+        var byCode: [String: VNextClosetMeasurementPayload] = [:]
+
+        func insert(
+            code: String,
+            value: Double,
+            unit: String,
+            rawLabel: String?
+        ) throws {
+            guard value.isFinite, value > 0 else { return }
+            guard let canonicalCode = FitMatchCanonicalMeasurementCode
+                .canonicalCode(forTransportRawCode: code) else {
+                return
+            }
+            if let existing = byCode[canonicalCode] {
+                guard abs(existing.value - value) < 0.000_001,
+                      existing.unitCode == unit else {
+                    throw FitMatchClosetPayloadContractError
+                        .conflictingCanonicalMeasurement(code: canonicalCode)
+                }
+                return
+            }
+            byCode[canonicalCode] = VNextClosetMeasurementPayload(
+                fitmatchMeasurementCode: canonicalCode,
+                value: value,
+                unitCode: unit,
+                rawLabel: rawLabel
+            )
+        }
+
+        if item.measurementRecords.isEmpty {
+            for (code, value) in item.measurements {
+                try insert(code: code, value: value, unit: "cm", rawLabel: code)
+            }
+        } else {
+            for record in item.measurementRecords {
+                try insert(
+                    code: record.measurementCode,
+                    value: record.value,
+                    unit: record.unit,
+                    rawLabel: record.rawLabel
+                )
+            }
+        }
+
+        return byCode.keys.sorted().compactMap { byCode[$0] }
     }
 
     nonisolated private static func canonicalMeasurementCode(

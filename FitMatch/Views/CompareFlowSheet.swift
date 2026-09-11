@@ -26,6 +26,7 @@ struct CompareFlowSheet: View {
     @State private var referenceRegistrationRoute: ReferenceRegistrationRoute?
     @State private var isPreparingManualComparison = false
     @State private var isShowingSizeTableRecovery = false
+    @State private var otherClosetComparisonRoute: OtherClosetComparisonRoute?
     @State private var usesLegacySizeFailureScreen = false
     @State private var showsAllReferenceCandidates = false
     @State private var hasConfirmedComparisonCategory = false
@@ -63,6 +64,12 @@ struct CompareFlowSheet: View {
             if case .result(let history) = step {
                 RecommendationResultView(
                     result: history,
+                    onShowComparisonList: {
+                        setStep(.comparisonSummary)
+                    },
+                    onShowOtherClosetComparison: {
+                        otherClosetComparisonRoute = .picker
+                    },
                     onReselectClassification:
                         viewModel.hasActiveUserExplicitClassification
                         ? { startReviewRecoveryReselection() } : nil,
@@ -85,6 +92,16 @@ struct CompareFlowSheet: View {
             invalidateForegroundComparison()
             invalidateForegroundLoad()
         }
+        .sheet(item: $otherClosetComparisonRoute) { _ in
+            OtherClosetComparisonSheet(
+                targetGroup: viewModel.closetComparisonBatch?.comparisonGroup,
+                sections: closetComparisonGroupSections
+            ) { row in
+                openComparisonDetail(row)
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     private var comparisonInputContent: some View {
@@ -103,6 +120,8 @@ struct CompareFlowSheet: View {
                     categoryConfirmationContent
                 case .missingReference:
                     missingReferenceContent
+                case .comparisonSummary:
+                    comparisonSummaryContent
                 case .closetSelection:
                     closetSelectionContent
                 case .insufficientEvidence:
@@ -195,7 +214,7 @@ struct CompareFlowSheet: View {
                 .presentationDragIndicator(.visible)
             case .link:
                 NavigationStack {
-                    LinkClosetRegistrationView(prefersRepresentativeByDefault: true) {
+                    LinkClosetRegistrationView(prefersRepresentativeByDefault: false) {
                         completeReferenceRegistration()
                     }
                 }
@@ -207,7 +226,7 @@ struct CompareFlowSheet: View {
                         prefillCategory: viewModel.category,
                         prefillDetailCategory: viewModel.detailCategory,
                         prefillGender: currentProduct?.productTargetGender,
-                        prefersRepresentativeByDefault: true
+                        prefersRepresentativeByDefault: false
                     ) { item in
                         modelContext.insert(item)
                         do {
@@ -295,7 +314,7 @@ private extension CompareFlowSheet {
         case .categoryConfirmation, .missingReference, .closetSelection,
              .insufficientEvidence:
             return true
-        case .start, .loading, .result, .error:
+        case .start, .loading, .comparisonSummary, .result, .error:
             return false
         }
     }
@@ -452,7 +471,7 @@ private extension CompareFlowSheet {
                         setStep(.start)
                     }
                 } else {
-                    PrimaryButton(title: "내 옷장에서 기준 옷 선택", systemImage: "list.bullet.rectangle") {
+                    PrimaryButton(title: "내 옷장에서 비교할 옷 선택", systemImage: "list.bullet.rectangle") {
                         showsAllReferenceCandidates = false
                         setStep(.closetSelection)
                     }
@@ -747,6 +766,69 @@ private extension CompareFlowSheet {
         }
     }
 
+    var comparisonSummaryContent: some View {
+        let rows = comparisonSummaryRows
+        return VStack(alignment: .leading, spacing: 20) {
+            sheetHeader(
+                title: "내 옷과 비교",
+                subtitle: "같은 비교 그룹의 옷을 유사도순으로 보여드려요. 옷을 누르면 상세 결과를 확인할 수 있어요."
+            )
+
+            if let product = currentProduct {
+                productCompactCard(product)
+            }
+
+            if rows.isEmpty {
+                FitMatchCard {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("같은 그룹의 옷이 없어요")
+                            .font(.headline.weight(.bold))
+                        Text(hasOtherComparisonGroup
+                             ? "다른 옷과 비교에서 비교 가능한 그룹의 옷을 선택할 수 있어요."
+                             : "같은 비교 그룹에 저장된 옷을 확인해 주세요.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else {
+                CompareSheetSectionTitle(
+                    title: comparisonSummarySectionTitle(itemCount: rows.count),
+                    subtitle: "저장된 실측으로 먼저 비교했어요. 옷을 누르면 서버에서 확인한 상세 결과를 보여드려요."
+                )
+
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    ForEach(rows) { row in
+                        Button {
+                            openComparisonDetail(row)
+                        } label: {
+                            ClosetComparisonSummaryCard(
+                                item: row.item,
+                                summary: row.summary,
+                                isProcessing: isProcessingReferenceSelection
+                                    && selectedReferenceItemID == row.id
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(
+                            isProcessingReferenceSelection
+                                || row.summary.evidenceState != .comparable
+                        )
+                    }
+                }
+            }
+
+            if !closetComparisonGroupSections.isEmpty {
+                SecondaryButton(
+                    title: "다른 옷과 비교",
+                    systemImage: "rectangle.stack"
+                ) {
+                    otherClosetComparisonRoute = .picker
+                }
+            }
+        }
+    }
+
     var referenceSelectionSituationCard: some View {
         FitMatchCard {
             HStack(alignment: .top, spacing: 12) {
@@ -756,9 +838,9 @@ private extension CompareFlowSheet {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("비교할 기준 옷을 선택해 주세요")
+                    Text("비교할 내 옷을 선택해 주세요")
                         .font(.headline.weight(.bold))
-                    Text("서버가 이번 상품과 비교 가능하다고 승인한 기준 옷입니다.")
+                    Text("서버가 이번 상품과 비교 가능하다고 승인한 내 옷입니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -770,7 +852,7 @@ private extension CompareFlowSheet {
     var recommendedCandidateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             CompareSheetSectionTitle(
-                title: "비교할 기준 옷",
+                title: "비교할 내 옷",
                 subtitle: "서버가 반환한 비교 후보 순서입니다."
             )
             ForEach(recommendedReferenceCandidates) { candidate in
@@ -1046,7 +1128,7 @@ private extension CompareFlowSheet {
                             subtitle: "현재 정보만으로는 사이즈를 추천하지 않아요."
                         )
 
-                        Text("기준 옷 · \(evidence.referenceItem.displayName) / \(evidence.referenceItem.sizeName)")
+                        Text("선택한 내 옷 · \(evidence.referenceItem.displayName) / \(evidence.referenceItem.sizeName)")
                             .font(.subheadline.weight(.semibold))
 
                         if evidence.comparedKinds.isEmpty {
@@ -1531,12 +1613,12 @@ private extension CompareFlowSheet {
         if hasSleeveLengthExpansionCandidate {
             return "소매 길이가 다른 상의와 부분 비교할 수 있어요"
         }
-        return "같은 종류의 기준 옷이 없어 유사한 옷을 보여드려요"
+        return "같은 종류의 옷이 없어 유사한 옷을 보여드려요"
     }
 
     var referenceSelectionSituationDescription: String {
         if hasMatchingStructureCandidate {
-            return "선택한 옷은 이번 비교에만 사용하며, 기존 기준 옷 설정은 변경되지 않아요."
+            return "선택한 옷은 이번 비교 결과에만 사용해요."
         }
         if hasSleeveLengthExpansionCandidate {
             return "가슴·어깨·총장처럼 함께 비교할 수 있는 실측만 사용하고, 소매길이는 결과와 점수에서 제외해요. 비교할 옷을 직접 선택해 주세요."
@@ -1580,6 +1662,54 @@ private extension CompareFlowSheet {
         return userFits.first { $0.id == selectedReferenceItemID }
     }
 
+    var comparisonSummaryRows: [ClosetComparisonSummaryRow] {
+        guard let targetGroup = viewModel.closetComparisonBatch?.comparisonGroup else {
+            return []
+        }
+        return closetComparisonGroupSections
+            .first { $0.group == targetGroup }?
+            .rows ?? []
+    }
+
+    var closetComparisonGroupSections: [ClosetComparisonGroupSection] {
+        let itemByID = Dictionary(uniqueKeysWithValues: userFits.map { ($0.id, $0) })
+        return viewModel.closetComparisonBatches.compactMap { batch -> ClosetComparisonGroupSection? in
+            guard let group = batch.comparisonGroup else { return nil }
+            let rows: [ClosetComparisonSummaryRow] = batch.items.compactMap { summary -> ClosetComparisonSummaryRow? in
+                guard let item = itemByID[summary.closetItemID] else { return nil }
+                return ClosetComparisonSummaryRow(item: item, summary: summary)
+            }
+            guard !rows.isEmpty else { return nil }
+            return ClosetComparisonGroupSection(group: group, rows: rows)
+        }
+    }
+
+    var hasOtherComparisonGroup: Bool {
+        guard let targetGroup = viewModel.closetComparisonBatch?.comparisonGroup else {
+            return !closetComparisonGroupSections.isEmpty
+        }
+        return closetComparisonGroupSections.contains { $0.group != targetGroup }
+    }
+
+    func comparisonSummarySectionTitle(itemCount: Int) -> String {
+        let groupName = viewModel.closetComparisonBatch?
+            .comparisonGroup?.displayName ?? "같은 그룹"
+        return "\(groupName) · \(itemCount)벌"
+    }
+
+    func openComparisonDetail(_ row: ClosetComparisonSummaryRow) {
+        guard row.summary.evidenceState == .comparable,
+              !isProcessingReferenceSelection else { return }
+        selectedReferenceItemID = row.id
+        startForegroundComparisonTask(locksReferenceSelection: true) { requestID, userID in
+            await calculateAndSaveTemporaryRecommendation(
+                selectedReferenceItem: row.item,
+                requestID: requestID,
+                userID: userID
+            )
+        }
+    }
+
     var selectedReferenceComparisonNote: String {
         guard let product = currentProduct, let selectedReferenceItem else {
             return "호환 가능한 실측 항목만 비교합니다."
@@ -1613,15 +1743,15 @@ private extension CompareFlowSheet {
               result.state == .sameFamilyLengthConflict,
               result.incomingProfile.lengthType != .unknown,
               result.incomingProfile.garmentFamily != .unknown else {
-            return "자동으로 선택할 기준 옷이 없어요. 내 옷장에서 비교할 옷을 직접 선택해 주세요."
+            return "자동으로 비교할 옷을 고르지 못했어요. 내 옷장에서 직접 선택해 주세요."
         }
-        return "자동으로 선택할 기준 옷이 없어요. 내 옷장에서 비교할 옷을 직접 선택해 주세요."
+        return "자동으로 비교할 옷을 고르지 못했어요. 내 옷장에서 직접 선택해 주세요."
     }
 
     var missingReferencePresentation: MissingReferencePresentation {
         if serverReferenceSelectionPlan?.measurementRequiredCandidates.isEmpty == false {
             return MissingReferencePresentation(
-                title: "기준 옷 실측 보완이 필요해요",
+                title: "내 옷 실측 보완이 필요해요",
                 message: "서버가 현재 옷장 후보의 실측 정보가 부족하다고 판단했습니다. 실측을 보완한 뒤 다시 비교해 주세요.",
                 registrationButtonTitle: "실측 옷 등록하기"
             )
@@ -1629,9 +1759,9 @@ private extension CompareFlowSheet {
 
         if serverReferenceSelectionPlan?.allBlockedCandidates.isEmpty == false {
             return MissingReferencePresentation(
-                title: "비교 가능한 기준 옷이 없어요",
-                message: "서버 비교 정책상 현재 옷장에는 이 상품과 비교할 수 있는 기준 옷이 없습니다.",
-                registrationButtonTitle: "비교할 기준 옷 등록하기"
+                title: "비교 가능한 내 옷이 없어요",
+                message: "서버 비교 정책상 현재 옷장에는 이 상품과 비교할 수 있는 옷이 없습니다.",
+                registrationButtonTitle: "비교할 옷 등록하기"
             )
         }
 
@@ -1639,7 +1769,7 @@ private extension CompareFlowSheet {
             return MissingReferencePresentation(
                 title: "비교할 옷 선택",
                 message: missingCompatibleGarmentMessage,
-                registrationButtonTitle: "비교할 기준 옷 등록하기"
+                registrationButtonTitle: "비교할 옷 등록하기"
             )
         }
 
@@ -1719,7 +1849,7 @@ private extension CompareFlowSheet {
 
     func completeReferenceRegistration() {
         referenceRegistrationRoute = nil
-        statusMessage = "비교할 기준 옷을 등록했어요."
+        statusMessage = "비교할 옷을 등록했어요."
         serverReferenceSelectionPlan = nil
         preparedComparison = nil
         setStep(.loading)
@@ -2051,14 +2181,12 @@ private extension CompareFlowSheet {
             serverReferenceSelectionPlan = nil
             preparedComparison = nil
             errorMessage = viewModel.errorMessage
-                ?? "서버 기준 옷 정보를 확인하지 못했습니다."
+                ?? "서버의 비교 후보 정보를 확인하지 못했습니다."
             setStep(.error)
             return
         }
 
-        guard let automaticReferences = localReferenceProjection(
-            for: plan.automaticCandidates
-        ), let manualReferences = localReferenceProjection(
+        guard let manualReferences = localReferenceProjection(
             for: plan.manualCandidates
         ) else {
             guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
@@ -2066,48 +2194,28 @@ private extension CompareFlowSheet {
             }
             serverReferenceSelectionPlan = nil
             preparedComparison = nil
-            errorMessage = "서버 기준 옷과 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
+            errorMessage = "서버의 비교 후보와 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
             setStep(.error)
             return
         }
 
         serverReferenceSelectionPlan = plan
+        viewModel.prepareClosetComparisonBatch(
+            product: product,
+            userFits: userFits,
+            referenceSelectionPlan: plan,
+            comparisonRequestID: requestID
+        )
         rebuildPreparedComparison(
             using: product,
             manualReferences: manualReferences
         )
 
-        if !automaticReferences.isEmpty {
-            selectedReferenceItemID = automaticReferences[0].id
-            await calculateAndSaveRecommendation(
-                automaticReferenceCandidates: automaticReferences,
-                requestID: requestID,
-                userID: userID
-            )
-            return
-        }
-
-        // Setting a Closet item as the user's basis is an explicit, persisted
-        // selection preference. When the server has approved that item as a
-        // manual candidate, reuse the preference instead of asking the user to
-        // select the same item again. Never promote a blocked/non-candidate row.
-        let approvedRepresentativeReferences = manualReferences.filter(\.isRepresentative)
-        if approvedRepresentativeReferences.count == 1,
-           let representative = approvedRepresentativeReferences.first {
-            selectedReferenceItemID = representative.id
-            await calculateAndSaveTemporaryRecommendation(
-                selectedReferenceItem: representative,
-                requestID: requestID,
-                userID: userID
-            )
-            return
-        }
-
         guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
             return
         }
 
-        guard !manualReferences.isEmpty else {
+        guard !viewModel.closetComparisonBatches.isEmpty else {
             selectedReferenceItemID = nil
             logMissingReferenceDiagnostics(product: product)
             setStep(.missingReference)
@@ -2116,7 +2224,7 @@ private extension CompareFlowSheet {
 
         selectedReferenceItemID = nil
         showsAllReferenceCandidates = false
-        setStep(.closetSelection)
+        setStep(.comparisonSummary)
     }
 
     func presentServerReadinessRecovery(
@@ -2253,74 +2361,6 @@ private extension CompareFlowSheet {
         return projected
     }
 
-    func calculateAndSaveRecommendation(
-        automaticReferenceCandidates: [UserFit],
-        requestID: UUID,
-        userID: UUID?
-    ) async {
-        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
-            return
-        }
-        let outcome = await comparisonSubmission.submit {
-            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
-                return nil
-            }
-            let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
-            return await viewModel.calculateRecommendation(
-                automaticReferenceCandidates: automaticReferenceCandidates,
-                brand: brand,
-                comparisonRequestID: requestID
-            )
-        }
-        guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
-            return
-        }
-        guard case .finished(let history) = outcome else { return }
-        guard let history else {
-            selectedReferenceItemID = nil
-            if referenceSelectionPlan?.recommendedCandidates.isEmpty == false
-                || !allSimilarClosetCandidates.isEmpty {
-                errorMessage = nil
-                statusMessage = viewModel.errorMessage
-                showsAllReferenceCandidates = false
-                setStep(.closetSelection)
-            } else {
-                errorMessage = viewModel.errorMessage
-                    ?? "서버 비교 정책 또는 실측 조건을 충족하지 못했습니다."
-                setStep(.error)
-            }
-            return
-        }
-
-        do {
-            if let brand = history.product.brand,
-               existingBrand(named: brand.name) == nil {
-                modelContext.insert(brand)
-            }
-            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
-                return
-            }
-            try saveUniqueHistory(history)
-            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
-                return
-            }
-            #if DEBUG
-            print("[화면: 상품 비교][동작: 추천 기록 저장][상태: 성공] 상품=\(history.product.name), 추천사이즈=\(history.recommendedSize.name), 기준옷=\(history.userFit.displayName)")
-            #endif
-            setStep(.result(history))
-        } catch {
-            guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
-                return
-            }
-            modelContext.rollback()
-            #if DEBUG
-            print("[화면: 상품 비교][동작: 추천 기록 저장][상태: 실패] 오류=\(error.localizedDescription), 상품=\(history.product.name)")
-            #endif
-            errorMessage = "추천 결과를 저장하지 못했습니다. 다시 시도해 주세요."
-            setStep(.error)
-        }
-    }
-
     func calculateAndSaveTemporaryRecommendation(
         selectedReferenceItem: UserFit,
         requestID: UUID,
@@ -2365,7 +2405,7 @@ private extension CompareFlowSheet {
                 return
             }
             #if DEBUG
-            print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 성공] 상품=\(history.product.name), 추천사이즈=\(history.recommendedSize.name), 기준옷=\(history.userFit.displayName)")
+            print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 성공] 상품=\(history.product.name), 추천사이즈=\(history.recommendedSize.name), 선택옷=\(history.userFit.displayName)")
             #endif
             setStep(.result(history))
         } catch {
@@ -2540,6 +2580,7 @@ private enum CompareFlowStep: Equatable {
     case loading
     case categoryConfirmation
     case missingReference
+    case comparisonSummary
     case closetSelection
     case insufficientEvidence
     case result(RecommendationHistory)
@@ -2555,6 +2596,7 @@ private enum CompareFlowStep: Equatable {
         case .loading: return "loading"
         case .categoryConfirmation: return "categoryConfirmation"
         case .missingReference: return "missingReference"
+        case .comparisonSummary: return "comparisonSummary"
         case .closetSelection: return "closetSelection"
         case .insufficientEvidence: return "insufficientEvidence"
         case .result: return "result"
@@ -2567,8 +2609,9 @@ private enum CompareFlowStep: Equatable {
         case .start: return "비교 시작"
         case .loading: return "상품 분석"
         case .categoryConfirmation: return "분류 확인"
-        case .missingReference: return "기준 옷 직접 선택 안내"
-        case .closetSelection: return "기준 옷 직접 선택"
+        case .missingReference: return "비교할 옷 선택 안내"
+        case .comparisonSummary: return "내 옷 비교 목록"
+        case .closetSelection: return "비교할 옷 직접 선택"
         case .insufficientEvidence: return "실측 정보 부족"
         case .result: return "비교 결과"
         case .error: return "오류"
@@ -2681,6 +2724,257 @@ private struct CompareSelectionMenu<Content: View>: View {
     }
 }
 
+private struct ClosetComparisonSummaryRow: Identifiable {
+    var id: UUID { summary.closetItemID }
+
+    let item: UserFit
+    let summary: FitMatchClosetComparisonSummary
+}
+
+private struct ClosetComparisonGroupSection: Identifiable {
+    var id: String { group.rawValue }
+
+    let group: FitMatchComparisonGroup
+    let rows: [ClosetComparisonSummaryRow]
+}
+
+private enum OtherClosetComparisonRoute: String, Identifiable {
+    case picker
+
+    var id: String { rawValue }
+}
+
+private struct OtherClosetComparisonSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let targetGroup: FitMatchComparisonGroup?
+    let sections: [ClosetComparisonGroupSection]
+    let onSelect: (ClosetComparisonSummaryRow) -> Void
+
+    @State private var selectedGroup: FitMatchComparisonGroup?
+
+    init(
+        targetGroup: FitMatchComparisonGroup?,
+        sections: [ClosetComparisonGroupSection],
+        onSelect: @escaping (ClosetComparisonSummaryRow) -> Void
+    ) {
+        self.targetGroup = targetGroup
+        self.sections = sections
+        self.onSelect = onSelect
+        _selectedGroup = State(
+            initialValue: sections.contains { $0.group == targetGroup }
+                ? targetGroup
+                : sections.first?.group
+        )
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 18) {
+                    Text("그룹을 고른 뒤 비교할 옷을 선택해 주세요. 서버가 비교 가능하다고 확인한 옷만 보여드려요.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(sections) { section in
+                                Button {
+                                    selectedGroup = section.group
+                                } label: {
+                                    Text(groupButtonTitle(section))
+                                        .font(.subheadline.weight(.bold))
+                                        .foregroundStyle(
+                                            selectedGroup == section.group
+                                                ? Color(.systemBackground)
+                                                : .primary
+                                        )
+                                        .padding(.horizontal, 14)
+                                        .frame(height: 42)
+                                        .background(
+                                            selectedGroup == section.group
+                                                ? Color.primary
+                                                : Color(.secondarySystemGroupedBackground),
+                                            in: Capsule()
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+
+                    if let selectedSection {
+                        CompareSheetSectionTitle(
+                            title: selectedSection.group.displayName,
+                            subtitle: "유사도는 저장된 실측으로 미리 계산한 값입니다."
+                        )
+
+                        LazyVStack(alignment: .leading, spacing: 12) {
+                            ForEach(selectedSection.rows) { row in
+                                Button {
+                                    dismiss()
+                                    onSelect(row)
+                                } label: {
+                                    ClosetComparisonSummaryCard(
+                                        item: row.item,
+                                        summary: row.summary,
+                                        isProcessing: false
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(row.summary.evidenceState != .comparable)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 30)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("다른 옷과 비교")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("닫기") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private var selectedSection: ClosetComparisonGroupSection? {
+        sections.first { $0.group == selectedGroup }
+    }
+
+    private func groupButtonTitle(_ section: ClosetComparisonGroupSection) -> String {
+        let title = section.group == targetGroup
+            ? "같은 그룹"
+            : section.group.displayName
+        return "\(title) \(section.rows.count)"
+    }
+}
+
+private struct ClosetComparisonSummaryCard: View {
+    let item: UserFit
+    let summary: FitMatchClosetComparisonSummary
+    let isProcessing: Bool
+
+    var body: some View {
+        FitMatchCard {
+            HStack(alignment: .center, spacing: 12) {
+                ProductThumbnailView(
+                    imageURLString: item.sourceProduct?.imageURLStringForDisplay,
+                    category: item.category,
+                    width: 62,
+                    height: 76,
+                    cornerRadius: 14
+                )
+
+                VStack(alignment: .leading, spacing: 5) {
+                    if let rankTitle {
+                        Text(rankTitle)
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(rankForegroundStyle)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(rankBackgroundStyle, in: Capsule())
+                    }
+
+                    Text(item.displayName)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+
+                    Text("\(item.sourceName) · \(item.sizeName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Text(comparisonEvidenceText)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if isProcessing {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    VStack(alignment: .trailing, spacing: 5) {
+                        Text(similarityText)
+                            .font(summary.similarityPercent == nil
+                                  ? .caption.weight(.bold)
+                                  : .title3.weight(.black))
+                            .foregroundStyle(similarityForegroundStyle)
+                            .multilineTextAlignment(.trailing)
+
+                        if let sizeLabel = summary.recommendedSizeLabel {
+                            Text("추천 \(sizeLabel.displaySizeName)")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if summary.evidenceState == .comparable {
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint(
+            summary.evidenceState == .comparable
+                ? "상세 비교 결과를 확인합니다."
+                : "비교 근거가 부족하여 상세 비교를 열 수 없습니다."
+        )
+    }
+
+    private var rankTitle: String? {
+        guard summary.evidenceState == .comparable,
+              let rank = summary.rank else { return nil }
+        return rank == 1 ? "가장 유사" : "\(rank)위"
+    }
+
+    private var rankForegroundStyle: Color {
+        summary.rank == 1 ? Color(.systemBackground) : .primary
+    }
+
+    private var rankBackgroundStyle: Color {
+        summary.rank == 1 ? .primary : Color(.secondarySystemGroupedBackground)
+    }
+
+    private var similarityText: String {
+        summary.similarityPercent.map { "\($0)%" } ?? "근거 부족"
+    }
+
+    private var similarityForegroundStyle: Color {
+        summary.similarityPercent == nil ? .secondary : .primary
+    }
+
+    private var comparisonEvidenceText: String {
+        if summary.evidenceState != .comparable {
+            return summary.reason ?? "비교 가능한 실측이 부족해요."
+        }
+        let basis = summary.comparisonBasis?.displayName ?? "실측 항목 비교"
+        let conversion = summary.conversionCount > 0
+            ? " · 환산 \(summary.conversionCount)개"
+            : ""
+        return "\(basis) · 실측 \(summary.commonMeasurementCount)개\(conversion)"
+    }
+
+    private var accessibilitySummary: String {
+        let size = summary.recommendedSizeLabel.map { ", 추천 사이즈 \($0.displaySizeName)" }
+            ?? ""
+        return "\(item.displayName), \(similarityText)\(size), \(comparisonEvidenceText)"
+    }
+}
+
 private struct ClosetReferenceChoiceCard: View {
     let item: UserFit
     let compatibilityNote: String?
@@ -2720,14 +3014,6 @@ private struct ClosetReferenceChoiceCard: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
 
-                    if item.isRepresentative {
-                        Text("기준 옷")
-                            .font(.caption2.weight(.bold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 5)
-                            .background(.primary.opacity(0.08), in: Capsule())
-                    }
-
                     if let compatibilityNote {
                         Label(compatibilityNote, systemImage: "info.circle.fill")
                             .font(.caption2.weight(.semibold))
@@ -2759,7 +3045,7 @@ private struct MeasurementMethodGuideSheet: View {
                     VStack(alignment: .leading, spacing: 7) {
                         Text("추가로 확인하면 좋아요")
                             .font(.title2.weight(.black))
-                        Text("기준 옷을 평평하게 놓고 FitMatch 기준으로 측정하면 비교 가능한 항목을 늘릴 수 있습니다.")
+                        Text("내 옷을 평평하게 놓고 FitMatch 기준으로 측정하면 비교 가능한 항목을 늘릴 수 있습니다.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)

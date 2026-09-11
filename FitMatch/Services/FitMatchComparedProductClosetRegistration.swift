@@ -17,6 +17,7 @@ nonisolated struct FitMatchClosetRegistrationServerIdentity: Equatable, Sendable
 /// submission.
 nonisolated struct FitMatchClosetRegistrationServerContext: Equatable, Sendable {
     enum ClassificationState: Equatable, Sendable {
+        case preparing
         case confirmed
         case reviewRequired
         case notApplicable
@@ -29,6 +30,7 @@ nonisolated struct FitMatchClosetRegistrationServerContext: Equatable, Sendable 
     /// second copy through the presentation Product model.
     let categoryCode: String?
     let detailCode: String?
+    let comparisonGroupCode: String?
     let identitiesByDisplaySizeID: [UUID: FitMatchClosetRegistrationServerIdentity]
     /// Presentation eligibility derived from retailer garment facts before
     /// runtime forms replace parser data.  It remains separate from
@@ -39,12 +41,14 @@ nonisolated struct FitMatchClosetRegistrationServerContext: Equatable, Sendable 
         classificationState: ClassificationState,
         categoryCode: String? = nil,
         detailCode: String? = nil,
+        comparisonGroupCode: String? = nil,
         identitiesByDisplaySizeID: [UUID: FitMatchClosetRegistrationServerIdentity] = [:],
         registerableDisplaySizeIDs: Set<UUID> = []
     ) {
         self.classificationState = classificationState
         self.categoryCode = categoryCode
         self.detailCode = detailCode
+        self.comparisonGroupCode = comparisonGroupCode
         self.identitiesByDisplaySizeID = identitiesByDisplaySizeID
         self.registerableDisplaySizeIDs = registerableDisplaySizeIDs
     }
@@ -59,6 +63,8 @@ nonisolated struct FitMatchClosetRegistrationServerContext: Equatable, Sendable 
 
     var registrationBlockMessage: String? {
         switch classificationState {
+        case .preparing:
+            return "상품·사이즈 저장 정보를 확인하고 있어요."
         case .confirmed, .reviewRequired:
             return nil
         case .notApplicable:
@@ -114,6 +120,7 @@ enum FitMatchComparedProductClosetRegistration {
         let didExplicitlyChangeAudience: Bool
         let didExplicitlySelectClosetClassification: Bool
         let didExplicitlyChangeClassification: Bool
+        let comparisonGroupCode: String?
 
         init(
             clientItemID: UUID = UUID(),
@@ -130,6 +137,7 @@ enum FitMatchComparedProductClosetRegistration {
             categoryCode: String,
             detailCategory: ClosetDetailCategory,
             detailCategoryCode: String,
+            comparisonGroupCode: String? = nil,
             isRepresentative: Bool,
             didExplicitlyChangeClassification: Bool,
             didExplicitlyChangeAudience: Bool = false,
@@ -150,6 +158,7 @@ enum FitMatchComparedProductClosetRegistration {
             self.categoryCode = categoryCode
             self.detailCategory = detailCategory
             self.detailCategoryCode = detailCategoryCode
+            self.comparisonGroupCode = comparisonGroupCode
             self.isRepresentative = isRepresentative
             self.didExplicitlyChangeAudience = didExplicitlyChangeAudience
             self.didExplicitlySelectClosetClassification =
@@ -173,6 +182,7 @@ enum FitMatchComparedProductClosetRegistration {
                 categoryCode: categoryCode,
                 detailCategory: detailCategory,
                 detailCategoryCode: detailCategoryCode,
+                comparisonGroupCode: comparisonGroupCode,
                 isRepresentative: isRepresentative,
                 didExplicitlyChangeClassification: didExplicitlyChangeClassification,
                 didExplicitlyChangeAudience: didExplicitlyChangeAudience,
@@ -260,7 +270,8 @@ enum FitMatchComparedProductClosetRegistration {
                 productID: identity.productID,
                 productVariantID: identity.productVariantID,
                 productSizeID: identity.productSizeID,
-                override: override
+                override: override,
+                comparisonGroupCode: request.comparisonGroupCode
             )
         )
     }
@@ -335,6 +346,7 @@ enum FitMatchComparedProductClosetRegistration {
             isRepresentative: request.isRepresentative,
             didExplicitlyChangeClassification: request.didExplicitlyChangeClassification,
             didExplicitlySelectClosetClassification: request.didExplicitlySelectClosetClassification,
+            comparisonGroupCode: request.comparisonGroupCode,
             serverApprovedAutomaticRegistration: request.serverIdentity != nil
                 && !request.didExplicitlySelectClosetClassification,
             id: request.clientItemID
@@ -396,6 +408,7 @@ enum FitMatchComparedProductClosetRegistration {
         isRepresentative: Bool,
         didExplicitlyChangeClassification: Bool,
         didExplicitlySelectClosetClassification: Bool? = nil,
+        comparisonGroupCode: String? = nil,
         serverApprovedAutomaticRegistration: Bool = false,
         id: UUID = UUID()
     ) -> UserFit {
@@ -425,6 +438,8 @@ enum FitMatchComparedProductClosetRegistration {
         item.genderCode = genderCode
         item.categoryCode = categoryCode
         item.detailCategoryCode = detailCategoryCode
+        item.comparisonGroupCode = comparisonGroupCode
+        item.comparisonGroupSource = comparisonGroupCode == nil ? nil : "USER_SELECTED"
 
         let savedAuthority: FitMatchClassificationAuthorityProvenance
         if serverApprovedAutomaticRegistration {

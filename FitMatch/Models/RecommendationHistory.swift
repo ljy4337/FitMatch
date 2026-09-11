@@ -48,6 +48,7 @@ final class RecommendationHistory {
     var productBrandNameSnapshot: String?
     var productNameSnapshot: String?
     var productImageURLStringSnapshot: String?
+    var referenceImageURLStringSnapshot: String? = nil
     var productURLStringSnapshot: String?
     var productCodeSnapshot: String?
     var productTargetGenderRawValueSnapshot: String?
@@ -129,6 +130,7 @@ final class RecommendationHistory {
         self.productBrandNameSnapshot = product.brand?.name
         self.productNameSnapshot = product.name
         self.productImageURLStringSnapshot = product.imageURLStringForDisplay
+        self.referenceImageURLStringSnapshot = userFit.sourceProduct?.imageURLStringForDisplay
         self.productURLStringSnapshot = product.sourceURLString
         self.productCodeSnapshot = product.productCode
         self.productTargetGenderRawValueSnapshot = product.productTargetGender.rawValue
@@ -282,6 +284,11 @@ final class RecommendationHistory {
 
     var productImageURLStringForDisplay: String? {
         productImageURLStringSnapshot ?? product.imageURLStringForDisplay
+    }
+
+    var referenceImageURLStringForDisplay: String? {
+        referenceImageURLStringSnapshot
+            ?? userFit.sourceProduct?.imageURLStringForDisplay
     }
 
     var sourceCategoryPathForDisplay: String {

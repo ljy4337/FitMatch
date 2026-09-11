@@ -35,6 +35,14 @@ enum FitMatchReviewRecoveryState: Equatable {
     case failed(String)
 }
 
+private struct FitMatchClosetComparisonBatchCacheKey: Equatable {
+    let targetProductID: UUID
+    let comparisonGroup: FitMatchComparisonGroup
+    let productSizeIDs: [UUID]
+    let closetItemIDs: [UUID]
+    let closetItemUpdatedAt: [Date]
+}
+
 @MainActor
 final class ShoppingProductViewModel: ObservableObject {
     @Published var productURL = ""
@@ -82,6 +90,10 @@ final class ShoppingProductViewModel: ObservableObject {
     /// prove at least one measurement. This is presentation eligibility for
     /// Closet registration, not comparison eligibility.
     @Published private(set) var closetRegisterableDisplaySizeIDs: Set<UUID> = []
+    @Published private(set) var closetComparisonBatch:
+        FitMatchClosetComparisonBatchSummary?
+    @Published private(set) var closetComparisonBatches:
+        [FitMatchClosetComparisonBatchSummary] = []
 
     private let recommendationService: RecommendationService
     private let parserService: ProductURLParserService
@@ -102,6 +114,8 @@ final class ShoppingProductViewModel: ObservableObject {
     /// are intentionally matched only to runtime source_size_key values, not
     /// to rendered ProductSize labels.
     private var parsedGarmentMeasurementSourceSizeKeys = Set<String>()
+    private var closetComparisonBatchCacheKey:
+        FitMatchClosetComparisonBatchCacheKey?
 
     init(
         initialURL: String? = nil,
@@ -260,7 +274,9 @@ final class ShoppingProductViewModel: ObservableObject {
         sizeOptions.removeAll { $0.id == option.id }
     }
 
-    func loadProductInfoFromURL() async -> Bool {
+    func loadProductInfoFromURL(
+        onRetailerProductLoaded: ((ShoppingProductViewModel) -> Void)? = nil
+    ) async -> Bool {
         let loadID = UUID()
         let metricProvider = FitMatchMetricProvider.resolve(urlString: productURL)
         metricsRecorder.record(.parserAttempt(provider: metricProvider))
@@ -271,6 +287,7 @@ final class ShoppingProductViewModel: ObservableObject {
         parsedProductForServerAuthority = nil
         frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        resetClosetComparisonBatch()
         resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
         errorMessage = nil
@@ -301,6 +318,11 @@ final class ShoppingProductViewModel: ObservableObject {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             analysisPhase = .preparingComparison
             apply(parsedProduct)
+            // Publish the immutable retailer/API snapshot before server
+            // ingestion and authority resolution. Link-based Closet entry can
+            // render the product and its sizes immediately while the exact
+            // server UUID tuple is prepared in the background.
+            onRetailerProductLoaded?(self)
             let hasConfirmedComparisonAuthority = await resolveServerAuthority(
                 for: parsedProduct,
                 loadID: loadID
@@ -323,6 +345,7 @@ final class ShoppingProductViewModel: ObservableObject {
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             apply(partialError.productInfo)
+            onRetailerProductLoaded?(self)
             _ = await resolveServerAuthority(
                 for: partialError.productInfo,
                 loadID: loadID
@@ -376,6 +399,7 @@ final class ShoppingProductViewModel: ObservableObject {
         parsedProductForServerAuthority = nil
         frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        resetClosetComparisonBatch()
         resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
         errorMessage = nil
@@ -418,6 +442,7 @@ final class ShoppingProductViewModel: ObservableObject {
         parsedProductForServerAuthority = nil
         frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
+        resetClosetComparisonBatch()
         resetMeasurementPresenceState()
         classificationSafetyAudit = .safe
         isLoadingProductInfo = false
@@ -690,6 +715,12 @@ final class ShoppingProductViewModel: ObservableObject {
         allowsCanonicalMeasurementPresence: Bool,
         preferredProductSizeID: UUID? = nil
     ) {
+        let retailerDisplayIDsBySizeKey = Dictionary(
+            grouping: sizeOptions,
+            by: { ParsedProductSizeNormalizer.normalizedSizeKey(for: $0.sizeName) }
+        ).compactMapValues { matches in
+            matches.count == 1 ? matches[0].id : nil
+        }
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
         closetRegisterableDisplaySizeIDs.removeAll()
         var hasConfirmedCanonicalMeasurement = false
@@ -748,7 +779,7 @@ final class ShoppingProductViewModel: ObservableObject {
                         canonicalMeasurementCode: measurement.measurementCode
                     )
                 }
-                let parsedRecords = Self.mergedPresentationMeasurementRecords(
+                let parsedRecords = Self.registrationPresentationMeasurementRecords(
                     runtimeRecords: canonicalRecords,
                     retailerRecords: retailerMeasurementRecords(
                         sourceSizeKey: size.sourceSizeKey,
@@ -791,7 +822,10 @@ final class ShoppingProductViewModel: ObservableObject {
                     displayOrder: index,
                     allowsStandardSizeFallback: false
                 )
-                form.id = size.id
+                let sourceSizeKey = normalizedSourceSizeKey(size.sourceSizeKey)
+                    ?? normalizedSourceSizeKey(size.sizeLabel)
+                form.id = sourceSizeKey.flatMap { retailerDisplayIDsBySizeKey[$0] }
+                    ?? size.id
                 closetRegistrationIdentitiesByDisplaySizeID[form.id] =
                     FitMatchClosetRegistrationServerIdentity(
                         productID: runtime.product.productID,
@@ -860,7 +894,7 @@ final class ShoppingProductViewModel: ObservableObject {
                     canonicalMeasurementCode: projection?.canonicalCode
                 )
             }
-            let parsedRecords = Self.mergedPresentationMeasurementRecords(
+            let parsedRecords = Self.registrationPresentationMeasurementRecords(
                 runtimeRecords: canonicalRecords,
                 retailerRecords: retailerMeasurementRecords(
                     sourceSizeKey: size.externalSizeID,
@@ -889,7 +923,10 @@ final class ShoppingProductViewModel: ObservableObject {
                 displayOrder: index,
                 allowsStandardSizeFallback: false
             )
-            form.id = size.productSizeID
+            let sourceSizeKey = normalizedSourceSizeKey(size.externalSizeID)
+                ?? normalizedSourceSizeKey(size.sizeLabel)
+            form.id = sourceSizeKey.flatMap { retailerDisplayIDsBySizeKey[$0] }
+                ?? size.productSizeID
             closetRegistrationIdentitiesByDisplaySizeID[form.id] =
                 FitMatchClosetRegistrationServerIdentity(
                     productID: runtime.product.productID,
@@ -982,6 +1019,20 @@ final class ShoppingProductViewModel: ObservableObject {
         return result
     }
 
+    /// Closet registration displays and submits the exact retailer/API row
+    /// that the user reviewed. Runtime canonical records are only a fallback
+    /// for older server rows whose matching retailer row was unavailable;
+    /// they never replace a captured API value or label.
+    static func registrationPresentationMeasurementRecords(
+        runtimeRecords: [ParsedMeasurement],
+        retailerRecords: [ParsedMeasurement]
+    ) -> [ParsedMeasurement] {
+        let exactRetailerRecords = retailerRecords.filter {
+            $0.value.isFinite && $0.value > 0
+        }
+        return exactRetailerRecords.isEmpty ? runtimeRecords : exactRetailerRecords
+    }
+
     private func normalizedSourceSizeKey(_ sourceSizeKey: String?) -> String? {
         guard let sourceSizeKey else { return nil }
         let normalized = ParsedProductSizeNormalizer.normalizedSizeKey(for: sourceSizeKey)
@@ -1007,6 +1058,12 @@ final class ShoppingProductViewModel: ObservableObject {
         parsedProductMeasurementPresence = .unknown
         parsedGarmentMeasurementSourceSizeKeys.removeAll()
         closetRegisterableDisplaySizeIDs.removeAll()
+    }
+
+    private func resetClosetComparisonBatch() {
+        closetComparisonBatch = nil
+        closetComparisonBatches = []
+        closetComparisonBatchCacheKey = nil
     }
 
     private func captureParsedMeasurementPresence(from parsedProduct: ParsedProductInfo) {
@@ -1152,12 +1209,14 @@ final class ShoppingProductViewModel: ObservableObject {
                 classificationState: .confirmed,
                 categoryCode: authority.classification.categoryCode,
                 detailCode: Self.closetDetailCode(for: authority.classification),
+                comparisonGroupCode: authority.runtime.vnext?.comparisonGroup?.groupCode,
                 identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
                 registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )
-        case .reviewRequired:
+        case .reviewRequired(let authority):
             return FitMatchClosetRegistrationServerContext(
                 classificationState: .reviewRequired,
+                comparisonGroupCode: authority.runtime.vnext?.comparisonGroup?.groupCode,
                 identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
                 registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )
@@ -1165,7 +1224,11 @@ final class ShoppingProductViewModel: ObservableObject {
             return FitMatchClosetRegistrationServerContext(
                 classificationState: .notApplicable
             )
-        case .idle, .resolving, .unavailable:
+        case .idle, .resolving:
+            return FitMatchClosetRegistrationServerContext(
+                classificationState: .preparing
+            )
+        case .unavailable:
             return FitMatchClosetRegistrationServerContext(
                 classificationState: .unavailable
             )
@@ -1483,6 +1546,79 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
+    /// Calculates grouped list previews once from the already loaded retailer
+    /// sizes and the server-approved candidate IDs. It performs no extra RPC
+    /// and does not persist comparison history.
+    @discardableResult
+    func prepareClosetComparisonBatch(
+        product: Product,
+        userFits: [UserFit],
+        referenceSelectionPlan: FitMatchServerReferenceSelectionPlan,
+        comparisonRequestID: UUID? = nil
+    ) -> FitMatchClosetComparisonBatchSummary? {
+        guard isCurrentComparison(comparisonRequestID),
+              product.id == referenceSelectionPlan.target.productID,
+              let rawGroup = referenceSelectionPlan.target.runtime.vnext?
+                .comparisonGroup?.groupCode,
+              let comparisonGroup = FitMatchComparisonGroup(rawValue: rawGroup) else {
+            resetClosetComparisonBatch()
+            return nil
+        }
+
+        let selectableIDs = Set(
+            referenceSelectionPlan.candidates
+                .filter(\.isSelectable)
+                .map(\.clientItemID)
+        )
+        let candidates = userFits
+            .filter {
+                selectableIDs.contains($0.id)
+                    && $0.isActiveClosetItem
+                    && $0.comparisonGroup != nil
+            }
+            .sorted { $0.id.uuidString < $1.id.uuidString }
+        let key = FitMatchClosetComparisonBatchCacheKey(
+            targetProductID: product.id,
+            comparisonGroup: comparisonGroup,
+            productSizeIDs: product.sizes.map(\.id).sorted {
+                $0.uuidString < $1.uuidString
+            },
+            closetItemIDs: candidates.map(\.id),
+            closetItemUpdatedAt: candidates.map(\.updatedAt)
+        )
+        if key == closetComparisonBatchCacheKey {
+            return closetComparisonBatch
+        }
+
+        let batches: [FitMatchClosetComparisonBatchSummary] =
+            FitMatchComparisonGroup.allCases.compactMap { group -> FitMatchClosetComparisonBatchSummary? in
+            let groupCandidates = candidates.filter { $0.comparisonGroup == group }
+            guard !groupCandidates.isEmpty else { return nil }
+            return recommendationService.makeClosetComparisonBatchSummary(
+                product: product,
+                productDetailCategory: detailCategory,
+                comparisonGroup: group,
+                candidates: groupCandidates
+            )
+        }
+        let batch = batches.first { $0.comparisonGroup == comparisonGroup }
+            ?? recommendationService.makeClosetComparisonBatchSummary(
+                product: product,
+                productDetailCategory: detailCategory,
+                comparisonGroup: comparisonGroup,
+                candidates: []
+            )
+        guard isCurrentComparison(comparisonRequestID) else { return nil }
+        closetComparisonBatchCacheKey = key
+        if closetComparisonBatches != batches {
+            closetComparisonBatches = batches
+        }
+        if closetComparisonBatch != batch {
+            closetComparisonBatch = batch
+        }
+        return batch
+    }
+
     func authorizeReferenceForComparison(
         _ item: UserFit,
         allowsManualSelection: Bool,
@@ -1502,9 +1638,20 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
         guard let localReferenceSnapshot = item.fitMatchServerReferenceSnapshot() else {
-            errorMessage = "기준 옷의 분류 또는 실측 정보를 확인할 수 없습니다. 내 옷장에서 기준 옷 정보를 다시 확인해 주세요."
+            errorMessage = "선택한 내 옷의 분류 또는 실측 정보를 확인할 수 없습니다. 내 옷장에서 정보를 다시 확인해 주세요."
             #if DEBUG
-            print("[화면: 상품 비교][동작: 기준 옷 서버 승인][상태: 실패] 원인=local_reference_snapshot_unavailable, 기준옷=\(item.displayName), 분류=\(item.resolvedCategoryCode ?? \"nil\")/\(item.resolvedDetailCategoryCode ?? \"nil\"), garment=\(item.garmentTypeRawValue ?? item.sourceProduct?.garmentTypeRawValue ?? \"nil\"), length=\(item.sleeveTypeRawValue ?? item.sourceProduct?.sleeveTypeRawValue ?? \"nil\"), 실측수=\(item.measurementRecords.filter { $0.value.isFinite && $0.value > 0 }.count)")
+            let categoryCode = item.resolvedCategoryCode ?? "nil"
+            let detailCode = item.resolvedDetailCategoryCode ?? "nil"
+            let garmentCode = item.garmentTypeRawValue
+                ?? item.sourceProduct?.garmentTypeRawValue
+                ?? "nil"
+            let lengthCode = item.sleeveTypeRawValue
+                ?? item.sourceProduct?.sleeveTypeRawValue
+                ?? "nil"
+            let measurementCount = item.measurementRecords.filter {
+                $0.value.isFinite && $0.value > 0
+            }.count
+            print("[화면: 상품 비교][동작: 내 옷 서버 승인][상태: 실패] 원인=local_reference_snapshot_unavailable, 선택옷=\(item.displayName), 분류=\(categoryCode)/\(detailCode), garment=\(garmentCode), length=\(lengthCode), 실측수=\(measurementCount)")
             #endif
             return nil
         }
@@ -1540,14 +1687,14 @@ final class ShoppingProductViewModel: ObservableObject {
             errorMessage = error.errorDescription
                 ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
             #if DEBUG
-            print("[화면: 상품 비교][동작: 기준 옷 서버 승인][상태: 실패] 오류=\(error.localizedDescription)")
+            print("[화면: 상품 비교][동작: 내 옷 서버 승인][상태: 실패] 오류=\(error.localizedDescription)")
             #endif
             return nil
         } catch {
             guard isCurrentComparison(comparisonRequestID) else { return nil }
             errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
             #if DEBUG
-            print("[화면: 상품 비교][동작: 기준 옷 서버 승인][상태: 실패] 오류=\(error.localizedDescription)")
+            print("[화면: 상품 비교][동작: 내 옷 서버 승인][상태: 실패] 오류=\(error.localizedDescription)")
             #endif
             return nil
         }
@@ -1613,7 +1760,7 @@ final class ShoppingProductViewModel: ObservableObject {
 
         guard !userFits.isEmpty else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .missingReference))
-            errorMessage = "먼저 내 옷장에 기준 옷을 추가해 주세요."
+            errorMessage = "먼저 내 옷장에 비교할 옷을 추가해 주세요."
             recommendation = nil
             return nil
         }
@@ -1655,7 +1802,7 @@ final class ShoppingProductViewModel: ObservableObject {
         let automaticCandidates = automaticIDs.compactMap { fitByID[$0] }
         guard automaticCandidates.count == automaticIDs.count else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
-            errorMessage = "서버 기준 옷과 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
+            errorMessage = "서버의 비교 후보와 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
             recommendation = nil
             return nil
         }
@@ -1693,77 +1840,11 @@ final class ShoppingProductViewModel: ObservableObject {
         metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
         guard isCurrentComparison(comparisonRequestID) else { return nil }
         errorMessage = errorMessage
-            ?? "서버 비교 정책 또는 실측 조건을 충족하는 기준 옷이 없습니다."
+            ?? "서버 비교 정책 또는 실측 조건을 충족하는 내 옷이 없습니다."
         recommendation = nil
         return nil
     }
 
-    /// Executes only server-ordered AUTOMATIC references that the caller has
-    /// already obtained from `loadServerReferenceSelectionPlan`. It never
-    /// queries local `isRepresentative` state to construct that order.
-    @discardableResult
-    func calculateRecommendation(
-        automaticReferenceCandidates: [UserFit],
-        brand: Brand? = nil,
-        comparisonRequestID: UUID? = nil
-    ) async -> RecommendationHistory? {
-        guard isCurrentComparison(comparisonRequestID) else { return nil }
-        errorMessage = nil
-        let metricMode = FitMatchMetricComparisonMode.automatic
-        metricsRecorder.record(.comparisonAttempt(mode: metricMode))
-
-        guard hasServerComparisonReadyAuthority else {
-            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
-            errorMessage = serverComparisonReadiness?.userMessage
-                ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
-            recommendation = nil
-            return nil
-        }
-        guard !automaticReferenceCandidates.isEmpty else {
-            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .missingReference))
-            recommendation = nil
-            return nil
-        }
-        guard let product = makeProduct(brand: brand),
-              product.classificationAuthorityProvenance?.isComparisonAuthority == true else {
-            metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
-            errorMessage = "서버에서 확정된 상품만 비교할 수 있습니다."
-            recommendation = nil
-            return nil
-        }
-        let comparisonDetailCategory = detailCategory
-
-        for reference in automaticReferenceCandidates {
-            guard isCurrentComparison(comparisonRequestID) else { return nil }
-            guard let permit = await authorizeReferenceForComparison(
-                reference,
-                allowsManualSelection: false,
-                comparisonRequestID: comparisonRequestID
-            ) else { continue }
-            guard isCurrentComparison(comparisonRequestID) else { return nil }
-            guard let history = await completeVNextRecommendation(
-                product: product,
-                reference: reference,
-                permit: permit,
-                productDetailCategory: comparisonDetailCategory,
-                comparisonRequestID: comparisonRequestID
-            ) else { continue }
-
-            guard isCurrentComparison(comparisonRequestID) else { return nil }
-            recommendation = history
-            recordComparisonResult(history, mode: metricMode)
-            return history
-        }
-
-        metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
-        guard isCurrentComparison(comparisonRequestID) else { return nil }
-        errorMessage = errorMessage
-            ?? "서버 비교 정책 또는 실측 조건을 충족하는 기준 옷이 없습니다."
-        recommendation = nil
-        return nil
-    }
-
-    @discardableResult
     func calculateTemporaryRecommendation(
         selectedReferenceItem: UserFit,
         brand: Brand? = nil,

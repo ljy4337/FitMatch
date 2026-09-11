@@ -61,12 +61,12 @@ final class AddClosetItemViewModel: ObservableObject {
         prefillSourceOption: ClosetProductSourceOption? = nil,
         prefillBrand: String? = nil,
         prefillProductName: String? = nil,
-        prefersRepresentativeByDefault: Bool = false
+        prefersRepresentativeByDefault _: Bool = false
     ) {
         isEditingExistingItem = item != nil
         guard let item else {
             measurementEntrySource = .fitmatchMeasured
-            isRepresentative = prefersRepresentativeByDefault
+            isRepresentative = false
             if let prefillSourceOption {
                 selectProductSource(prefillSourceOption)
             }
@@ -145,7 +145,7 @@ final class AddClosetItemViewModel: ObservableObject {
         fitMemo = item.fitMemo
         fitPreference = item.fitPreference
         satisfaction = item.satisfaction
-        isRepresentative = item.isRepresentative
+        isRepresentative = false
     }
 
     var productSourceOption: ClosetProductSourceOption? {
@@ -342,7 +342,7 @@ final class AddClosetItemViewModel: ObservableObject {
             fitMemo: fitMemo.trimmed,
             fitPreference: fitPreference,
             satisfaction: satisfaction,
-            isRepresentative: isRepresentative
+            isRepresentative: false
         )
         item.genderCode = genderCode
         item.categoryCode = categoryCode

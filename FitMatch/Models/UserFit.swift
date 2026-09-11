@@ -24,6 +24,9 @@ final class UserFit {
     var detailCategoryRawValue: String = ClosetDetailCategory.other.rawValue
     var categoryCode: String?
     var detailCategoryCode: String?
+    var comparisonGroupCode: String?
+    var comparisonGroupSource: String?
+    var comparisonGroupPolicyVersion: String?
     var normalizedProductTypeCode: String?
     var garmentTypeRawValue: String?
     var sleeveTypeRawValue: String?
@@ -153,6 +156,17 @@ final class UserFit {
             categoryCode = newValue.taxonomyCode
             clearStoredComparisonAttributes()
         }
+    }
+
+    var comparisonGroup: FitMatchComparisonGroup? {
+        get {
+            comparisonGroupCode.flatMap(FitMatchComparisonGroup.init(rawValue:))
+                ?? FitMatchComparisonGroup.legacyFallback(
+                    category: category,
+                    detailCategory: detailCategory
+                )
+        }
+        set { comparisonGroupCode = newValue?.rawValue }
     }
 
     var sourceType: ProductSourceType {

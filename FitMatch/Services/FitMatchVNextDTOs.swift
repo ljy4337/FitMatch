@@ -235,6 +235,8 @@ nonisolated enum VNextClassificationRecoveryContractVersion: String, Equatable,
         "fitmatch-vnext-recovery-retailer-api-20260909-r1"
     case retailerAPIR2 =
         "fitmatch-vnext-recovery-retailer-api-20260909-r2"
+    case retailerAPIR3 =
+        "fitmatch-vnext-recovery-retailer-api-20260909-r3"
     case currentRetailerFactsV1 =
         "fitmatch-vnext-recovery-current-retailer-facts-20260909-v1"
     case currentRetailerFactsV2 =
@@ -244,7 +246,7 @@ nonisolated enum VNextClassificationRecoveryContractVersion: String, Equatable,
         switch self {
         case .v6CompleteTupleGarmentFirst, .v7ExplicitAuthority:
             return 3
-        case .retailerAPIR1, .retailerAPIR2,
+        case .retailerAPIR1, .retailerAPIR2, .retailerAPIR3,
              .currentRetailerFactsV1, .currentRetailerFactsV2:
             return 64
         }
@@ -254,7 +256,7 @@ nonisolated enum VNextClassificationRecoveryContractVersion: String, Equatable,
         switch self {
         case .v6CompleteTupleGarmentFirst, .v7ExplicitAuthority:
             return false
-        case .retailerAPIR1, .retailerAPIR2,
+        case .retailerAPIR1, .retailerAPIR2, .retailerAPIR3,
              .currentRetailerFactsV1, .currentRetailerFactsV2:
             return true
         }
@@ -502,7 +504,7 @@ nonisolated struct VNextClassificationRecoveryContractDTO:
         switch supportedContractVersion {
         case .v6CompleteTupleGarmentFirst:
             return presentationUnknownFields
-        case .v7ExplicitAuthority, .retailerAPIR1, .retailerAPIR2,
+        case .v7ExplicitAuthority, .retailerAPIR1, .retailerAPIR2, .retailerAPIR3,
              .currentRetailerFactsV1, .currentRetailerFactsV2:
             return wholeCandidateUnknownFields
         }
@@ -725,16 +727,34 @@ nonisolated struct VNextUserClassificationMutationDTO:
     }
 }
 
+nonisolated struct VNextComparisonGroupDTO: Decodable, Equatable, Sendable {
+    let status: String?
+    let groupCode: String?
+    let displayName: String?
+    let source: String?
+    let policyVersion: String?
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case groupCode = "group_code"
+        case displayName = "display_name"
+        case source
+        case policyVersion = "policy_version"
+    }
+}
+
 nonisolated struct VNextProductRuntimeDTO: Decodable, Equatable, Sendable {
     let found: Bool
     let product: VNextRuntimeProductDTO?
     let readiness: VNextProductReadinessDTO?
     let variants: [VNextRuntimeVariantDTO]
     let effectiveClassification: VNextEffectiveTargetClassificationDTO?
+    let comparisonGroup: VNextComparisonGroupDTO?
 
     enum CodingKeys: String, CodingKey {
         case found, product, readiness, variants
         case effectiveClassification = "effective_classification"
+        case comparisonGroup = "comparison_group"
     }
 
     init(from decoder: Decoder) throws {
@@ -749,6 +769,10 @@ nonisolated struct VNextProductRuntimeDTO: Decodable, Equatable, Sendable {
         effectiveClassification = try container.decodeIfPresent(
             VNextEffectiveTargetClassificationDTO.self,
             forKey: .effectiveClassification
+        )
+        comparisonGroup = try container.decodeIfPresent(
+            VNextComparisonGroupDTO.self,
+            forKey: .comparisonGroup
         )
     }
 }
@@ -799,6 +823,7 @@ nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
     let createdAt: String
     let updatedAt: String
     let measurements: [VNextClosetMeasurementDTO]
+    let comparisonGroup: VNextComparisonGroupDTO?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -829,6 +854,7 @@ nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case measurements
+        case comparisonGroup = "comparison_group"
     }
 }
 

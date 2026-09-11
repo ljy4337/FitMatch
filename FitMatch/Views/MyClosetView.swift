@@ -11,10 +11,7 @@ struct MyClosetView: View {
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.closetViewLayout") private var closetViewLayoutRaw = ContentListLayout.list.rawValue
     @State private var activeSheet: ClosetActiveSheet?
-    @State private var pendingBasisItem: UserFit?
-    @State private var existingBasisItem: UserFit?
-    @State private var isShowingBasisChangeAlert = false
-    @State private var selectedCategory: ClothingCategory?
+    @State private var selectedComparisonGroup: FitMatchComparisonGroup?
     @State private var selectedBrand: String?
     @State private var sortOption: FitMatchClosetSortOption = .recent
     @State private var saveErrorMessage: String?
@@ -84,18 +81,6 @@ struct MyClosetView: View {
                 .presentationDragIndicator(.visible)
             }
         }
-        .alert(basisAlertTitle, isPresented: $isShowingBasisChangeAlert) {
-            Button("취소", role: .cancel) {
-                clearPendingBasisChange()
-            }
-
-            Button(existingBasisItem == nil ? "설정" : "변경") {
-                isShowingBasisChangeAlert = false
-                applyPendingBasisChange()
-            }
-        } message: {
-            Text(basisAlertMessage)
-        }
         .alert("저장 실패", isPresented: Binding(
             get: { saveErrorMessage != nil },
             set: { if !$0 { saveErrorMessage = nil } }
@@ -127,7 +112,7 @@ struct MyClosetView: View {
         .onAppear {
             rebuildDisplayedItems()
         }
-        .onChange(of: selectedCategory) { _, _ in
+        .onChange(of: selectedComparisonGroup) { _, _ in
             rebuildDisplayedItems()
         }
         .onChange(of: selectedBrand) { _, _ in
@@ -136,7 +121,7 @@ struct MyClosetView: View {
         .onChange(of: sortOption) { _, _ in
             rebuildDisplayedItems()
         }
-        .onChange(of: userFits.count) { _, _ in
+        .onChange(of: closetItemsPresentationRevision) { _, _ in
             rebuildDisplayedItems()
         }
     }
@@ -184,19 +169,12 @@ struct MyClosetView: View {
                     Button {
                         selectedClosetItemID = item.id
                     } label: {
-                        ClosetItemCard(item: item) {
-                            toggleRepresentative(item)
-                        }
+                        ClosetItemCard(item: item)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                    // Temporarily disabled: restore these lines to re-enable
-                    // right-swipe reference-garment assignment/removal.
-//                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-//                        basisSwipeButton(for: item)
-//                    }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         deleteSwipeButton(for: item)
                     }
@@ -264,7 +242,7 @@ struct MyClosetView: View {
     private func rebuildDisplayedItems() {
         displayedItems = FitMatchClosetPresentation.displayedItems(
             from: cachedUserFits,
-            category: selectedCategory,
+            comparisonGroup: selectedComparisonGroup,
             brand: selectedBrand,
             sort: sortOption
         )
@@ -285,13 +263,17 @@ struct MyClosetView: View {
     private var closetFilterItems: [ContentFilterItem] {
         [
             ContentFilterItem(
-                id: "category",
-                selectedID: selectedCategory?.rawValue ?? "all",
-                selectedTitle: selectedCategory?.rawValue ?? "전체",
+                id: "comparison_group",
+                selectedID: selectedComparisonGroup?.rawValue ?? "all",
+                selectedTitle: selectedComparisonGroup?.displayName ?? "전체 그룹",
                 options: [ContentFilterOption(id: "all", title: "전체")]
-                    + availableCategories.map { ContentFilterOption(id: $0.rawValue, title: $0.rawValue) },
+                    + availableComparisonGroups.map {
+                        ContentFilterOption(id: $0.rawValue, title: $0.displayName)
+                    },
                 onSelect: { id in
-                    selectedCategory = id == "all" ? nil : ClothingCategory(rawValue: id)
+                    selectedComparisonGroup = id == "all"
+                        ? nil
+                        : FitMatchComparisonGroup(rawValue: id)
                 }
             ),
             ContentFilterItem(
@@ -323,12 +305,20 @@ struct MyClosetView: View {
         ]
     }
 
-    private var availableCategories: [ClothingCategory] {
-        Array(Set(userFits.map(\.category))).sorted { $0.rawValue < $1.rawValue }
+    private var availableComparisonGroups: [FitMatchComparisonGroup] {
+        FitMatchComparisonGroup.allCases.filter { group in
+            userFits.contains { $0.comparisonGroup == group }
+        }
     }
 
     private var availableBrands: [String] {
         Array(Set(userFits.map(\.brandName))).sorted()
+    }
+
+    private var closetItemsPresentationRevision: [String] {
+        userFits.map { item in
+            "\(item.id.uuidString)|\(item.comparisonGroupCode ?? "")|\(item.brandName)|\(item.updatedAt.timeIntervalSinceReferenceDate)"
+        }
     }
 
     private func presentActiveSheet(_ sheet: ClosetActiveSheet) {
@@ -346,107 +336,6 @@ struct MyClosetView: View {
         print("[MyClosetView] activeSheet -> nil")
         #endif
         activeSheet = nil
-    }
-
-    @ViewBuilder
-    private func basisSwipeButton(for item: UserFit) -> some View {
-        Button {
-            toggleRepresentative(item)
-        } label: {
-            Label(
-                item.isRepresentative ? "기준 옷 해제" : "기준 옷으로 설정",
-                systemImage: item.isRepresentative ? "tshirt" : "tshirt.fill"
-            )
-        }
-        .tint(item.isRepresentative ? .gray : .black)
-    }
-
-    private func toggleRepresentative(_ item: UserFit) {
-        if item.isRepresentative {
-            FitMatchClosetReferenceMutation.clearRepresentative(item)
-            do {
-                try modelContext.save()
-                rebuildDisplayedItems()
-            } catch {
-                modelContext.rollback()
-                rebuildDisplayedItems()
-                saveErrorMessage = "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요."
-            }
-            return
-        }
-
-        pendingBasisItem = item
-        existingBasisItem = userFits.first {
-            $0.id != item.id
-                && $0.isRepresentative
-                && ReferenceGarmentPolicy.conflicts($0, item)
-        }
-        isShowingBasisChangeAlert = true
-    }
-
-    private var basisAlertTitle: String {
-        guard let pendingBasisItem else {
-            return "기준 옷 설정"
-        }
-
-        if existingBasisItem == nil {
-            return "이 옷을 기준 옷으로 설정할까요?"
-        }
-
-        return "\(pendingBasisItem.detailCategory.rawValue) 기준 옷을 변경할까요?"
-    }
-
-    private var basisAlertMessage: String {
-        guard let pendingBasisItem else {
-            return ""
-        }
-
-        if let existingBasisItem {
-            return """
-            현재 기준 옷
-            \(existingBasisItem.displayName)
-
-            새 기준 옷
-            \(pendingBasisItem.displayName)
-
-            기준 옷은 같은 종류마다 1개만 설정할 수 있어요.
-            변경하면 기존 기준 옷은 자동으로 해제돼요.
-            """
-        }
-
-        return """
-        기준 옷은 같은 종류의 상품을 비교할 때 가장 먼저 사용됩니다.
-        기준 옷은 종류별로 1개만 설정할 수 있으며 언제든 변경할 수 있습니다.
-        """
-    }
-
-    private func applyPendingBasisChange() {
-        guard let pendingBasisItem else {
-            return
-        }
-
-        FitMatchClosetReferenceMutation.setRepresentative(
-            pendingBasisItem,
-            among: userFits
-        )
-        do {
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            rebuildDisplayedItems()
-            saveErrorMessage = "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요."
-            clearPendingBasisChange()
-            return
-        }
-
-        rebuildDisplayedItems()
-        clearPendingBasisChange()
-    }
-
-    private func clearPendingBasisChange() {
-        pendingBasisItem = nil
-        existingBasisItem = nil
-        isShowingBasisChangeAlert = false
     }
 
     private func deleteItem(_ item: UserFit) {
@@ -683,7 +572,6 @@ private struct EmptyClosetView: View {
 
 private struct ClosetItemCard: View {
     let item: UserFit
-    let onToggleRepresentative: () -> Void
 
     var body: some View {
         FitMatchCard {
@@ -709,23 +597,13 @@ private struct ClosetItemCard: View {
                             .lineLimit(2)
                             .truncationMode(.tail)
 
-                        Text("\(item.category.rawValue) · \(item.detailCategory.rawValue) / \(item.sizeName)")
+                        Text("\(item.comparisonGroup?.displayName ?? "미지정") / \(item.sizeName)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
 
                     Spacer(minLength: 4)
-
-                    Button(action: onToggleRepresentative) {
-                        Image(systemName: item.isRepresentative ? "tshirt.fill" : "tshirt")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(item.isRepresentative ? "기준 옷" : "기준 옷으로 설정")
                 }
 
                 ClosetMeasurementGrid(item: item)
@@ -783,19 +661,6 @@ private struct ClosetItemCard: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 8) {
-                        Button(action: onToggleRepresentative) {
-                            Image(systemName: item.isRepresentative ? "tshirt.fill" : "tshirt")
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(item.isRepresentative ? Color(.systemBackground) : .primary)
-                                .frame(width: 34, height: 34)
-                                .background(
-                                    item.isRepresentative ? Color.primary : Color(.secondarySystemGroupedBackground),
-                                    in: Circle()
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(item.isRepresentative ? "기준 옷" : "기준 옷으로 설정")
-
                         Text(item.fitPreference.rawValue)
                             .font(.caption.weight(.bold))
                             .padding(.horizontal, 8)
@@ -964,15 +829,6 @@ private struct ClosetGridCard: View {
                     )
                     .frame(maxWidth: .infinity)
 
-                    if item.isRepresentative {
-                        Text("기준")
-                            .font(.caption2.weight(.black))
-                            .foregroundStyle(Color(.systemBackground))
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 4)
-                            .background(Color.primary, in: Capsule())
-                            .padding(8)
-                    }
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -987,7 +843,7 @@ private struct ClosetGridCard: View {
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("\(item.sizeName) · \(item.detailCategory.rawValue)")
+                    Text("\(item.sizeName) · \(item.comparisonGroup?.displayName ?? "미지정")")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)

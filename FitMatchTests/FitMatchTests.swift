@@ -1821,7 +1821,7 @@ struct FitMatchTests {
         #expect(valid.first?.measurements.totalLength == 75)
     }
 
-    @Test func uniqloBottomCircumferencesBecomeWidthsAndPreserveRawValues() throws {
+    @Test func uniqloBottomCircumferencesRemainCircumferencesAndPreserveRawValues() throws {
         let json = """
         {
           "result": {
@@ -1849,14 +1849,15 @@ struct FitMatchTests {
         let waist = records.first { $0.rawCode == "waist-product-size" }
         let hip = records.first { $0.rawCode == "hip-product-size" }
 
-        #expect(size.measurements.waist == 35)
-        #expect(size.measurements.hip == 52)
-        #expect(waist?.value == 35)
+        #expect(size.measurements.waist == 70)
+        #expect(size.measurements.hip == 104)
+        #expect(waist?.value == 70)
         #expect(waist?.rawValueText == "70")
-        #expect(waist?.measurementCode == .waistWidthEdgeToEdge)
-        #expect(hip?.value == 52)
+        #expect(waist?.measurementCode == .waistCircumferenceGarment)
+        #expect(hip?.value == 104)
         #expect(hip?.rawValueText == "104")
-        #expect(hip?.measurementCode == .hipWidthAtWidest)
+        #expect(hip?.measurementCode == .unknown)
+        #expect(hip?.semanticStatus == .unknownDefinition)
         #expect(records.first { $0.rawCode == "thigh" }?.measurementCode == .thighWidthCrotchToOuter)
         let rise = records.first { $0.rawCode == "rising-length" }
         #expect(rise?.measurementCode == .riseCrotchToWaistFront)
@@ -2076,10 +2077,10 @@ struct FitMatchTests {
         #expect(verifiedUniqloLengths == [
             .bodyLengthBackNeckToHem,
             .bodyLengthBackNeckToHem,
-            .bodyLengthBackNeckToHem
+            .bodyLengthUniqloKnitFront
         ])
         #expect(Set(verifiedMusinsaLengths) == [.bodyLengthBackNeckToHem])
-        #expect(Set(verifiedUniqloLengths) == [.bodyLengthBackNeckToHem])
+        #expect(Set(verifiedUniqloLengths) == [.bodyLengthBackNeckToHem, .bodyLengthUniqloKnitFront])
     }
 
     @Test func musinsaOfficialUpperTypesMapExactTotalLengthLabel() {
@@ -2180,11 +2181,17 @@ struct FitMatchTests {
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "sleeve-length-cb")?.code == .sleeveCenterBackToCuff)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "skirt-length")?.code == .skirtLengthWaistToHem)
         let bottomsWaist = MeasurementSourceMappingPolicy.uniqlo(rawCode: "waist-product-size-bottoms")
-        #expect(bottomsWaist?.code == .waistWidthEdgeToEdge)
-        #expect(bottomsWaist?.valueMultiplier == 0.5)
+        #expect(bottomsWaist?.code == .waistCircumferenceGarment)
+        #expect(bottomsWaist?.valueMultiplier == 1)
         #expect(bottomsWaist?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "body-width-gather-and-tack") == nil)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "neck-circumference") == nil)
+        #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "hip-product-size") == nil)
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 5,
+            displayKind: .sleeveLength,
+            rawLabel: "소매부리단면"
+        ) == nil)
     }
 
     @Test func comparisonUsesMatchedRecordValuesInsteadOfScalarMeasurements() {
@@ -6068,10 +6075,10 @@ struct FitMatchTests {
         try context.save()
 
         try MeasurementLegacyBackfillService.run(modelContext: context, products: [product], userFits: [])
-        #expect(waist.value == 35)
-        #expect(hip.value == 52)
-        #expect(size.measurements.waist == 35)
-        #expect(size.measurements.hip == 52)
+        #expect(waist.value == 70)
+        #expect(hip.value == 104)
+        #expect(size.measurements.waist == 70)
+        #expect(size.measurements.hip == 104)
         #expect(waist.rawValueText == "70")
         #expect(hip.rawValueText == "104")
 

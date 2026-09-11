@@ -16,7 +16,6 @@ struct ClosetItemDetailView: View {
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var isShowingEdit = false
     @State private var saveErrorMessage: String?
-    @State private var pendingReferenceChange: PendingClosetEdit?
 
     let item: UserFit
     private let diagnosticsStartedAt: TimeInterval
@@ -101,22 +100,6 @@ struct ClosetItemDetailView: View {
         } message: {
             Text(saveErrorMessage ?? "")
         }
-        .alert(
-            "\(pendingReferenceChange?.detailCategory.rawValue ?? "이 분류") 기준 옷을 변경할까요?",
-            isPresented: Binding(
-                get: { pendingReferenceChange != nil },
-                set: { if !$0 { pendingReferenceChange = nil } }
-            )
-        ) {
-            Button("취소", role: .cancel) {
-                pendingReferenceChange = nil
-            }
-            Button("변경") {
-                applyPendingReferenceChange()
-            }
-        } message: {
-            Text("같은 분류의 기존 기준 옷은 자동으로 해제돼요.")
-        }
         .onAppear {
             logInitialPerformance()
             tabBarVisibilityController.hide(reason: .navigationDetail, source: "closet detail")
@@ -170,19 +153,10 @@ struct ClosetItemDetailView: View {
                         }
 
                         Spacer()
-
-                        if item.isRepresentative {
-                            Text("기준 옷")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(Color(.systemBackground))
-                                .padding(.horizontal, 9)
-                                .padding(.vertical, 6)
-                                .background(Color.primary, in: Capsule())
-                        }
                     }
 
                     HStack(spacing: 8) {
-                        ClosetDetailChip(title: item.detailCategory.rawValue)
+                        ClosetDetailChip(title: comparisonGroupDisplayName)
                         ClosetDetailChip(title: item.sizeName)
                         ClosetDetailChip(title: item.fitPreference.rawValue)
                     }
@@ -193,7 +167,7 @@ struct ClosetItemDetailView: View {
 
     private var quickSummaryCard: some View {
         HStack(spacing: 10) {
-            ClosetSummaryTile(title: "카테고리", value: item.category.rawValue)
+            ClosetSummaryTile(title: "비교 그룹", value: comparisonGroupDisplayName)
             ClosetSummaryTile(title: "사이즈", value: item.sizeName)
             ClosetSummaryTile(title: "핏", value: item.fitPreference.rawValue)
         }
@@ -208,12 +182,15 @@ struct ClosetItemDetailView: View {
                     DetailInfoRow(title: "브랜드", value: item.brandName)
                     DetailInfoRow(title: "상품명", value: item.productName)
                     DetailInfoRow(title: "출처", value: sourceDescription)
-                    DetailInfoRow(title: "성별", value: item.gender.rawValue)
-                    DetailInfoRow(title: "분류", value: "\(item.category.rawValue) / \(item.detailCategory.rawValue)")
+                    DetailInfoRow(title: "비교 그룹", value: comparisonGroupDisplayName)
                     DetailInfoRow(title: "원본 카테고리", value: item.sourceCategoryDisplayText)
                 }
             }
         }
+    }
+
+    private var comparisonGroupDisplayName: String {
+        item.comparisonGroup?.displayName ?? "미지정"
     }
 
     private var measurementCard: some View {
@@ -282,25 +259,6 @@ struct ClosetItemDetailView: View {
     }
 
     private func applyChanges(from editedItem: UserFit) -> Bool {
-        if editedItem.isRepresentative,
-           userFits.contains(where: {
-               $0.id != item.id
-                   && $0.isRepresentative
-                   && ReferenceGarmentPolicy.conflicts($0, editedItem)
-           }) {
-            pendingReferenceChange = PendingClosetEdit(
-                editedItem: editedItem,
-                selectedSize: nil,
-                category: editedItem.category,
-                detailCategory: editedItem.detailCategory,
-                categoryCode: editedItem.resolvedCategoryCode,
-                detailCode: editedItem.resolvedDetailCategoryCode,
-                didExplicitlyChangeClassification: false,
-                linkedSizeEditIntent: nil
-            )
-            return true
-        }
-
         return applyChangesImmediately(from: editedItem)
     }
 
@@ -318,188 +276,6 @@ struct ClosetItemDetailView: View {
             saveErrorMessage = "수정 내용을 저장하지 못했습니다."
             return false
         }
-    }
-
-    private func saveImportedChanges(
-        _ selectedSize: ProductSize,
-        category: ClothingCategory,
-        detailCategory: ClosetDetailCategory,
-        categoryCode: String,
-        detailCode: String,
-        didExplicitlyChangeClassification: Bool,
-        linkedSizeEditIntent: FitMatchLinkedSizeEditIntent?
-    ) -> Bool {
-        let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
-            current: item.classificationAuthorityProvenance,
-            isSourced: FitMatchClosetClassificationEditPolicy.isSourced(item),
-            isExplicitSet: FitMatchClosetClassificationEditPolicy.isExplicitSet(item),
-            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
-            scope: .existingClosetItem
-        )
-        let appliesUserClassification = didExplicitlyChangeClassification
-            && resultingAuthority == .userExplicit
-        let effectiveCategory = appliesUserClassification ? category : item.category
-        let effectiveDetail = appliesUserClassification ? detailCategory : item.detailCategory
-        let effectiveCategoryCode = appliesUserClassification
-            ? categoryCode
-            : (item.resolvedCategoryCode ?? item.category.taxonomyCode)
-        let effectiveDetailCode = appliesUserClassification
-            ? detailCode
-            : (item.resolvedDetailCategoryCode ?? "")
-
-        if item.isRepresentative,
-           resultingAuthority.isComparisonAuthority,
-           hasAnotherReference(
-                category: effectiveCategory,
-                detailCategory: effectiveDetail,
-                categoryCode: effectiveCategoryCode,
-                detailCode: effectiveDetailCode
-           ) {
-            pendingReferenceChange = PendingClosetEdit(
-                editedItem: nil,
-                selectedSize: selectedSize,
-                category: effectiveCategory,
-                detailCategory: effectiveDetail,
-                categoryCode: effectiveCategoryCode,
-                detailCode: effectiveDetailCode,
-                didExplicitlyChangeClassification: didExplicitlyChangeClassification,
-                linkedSizeEditIntent: linkedSizeEditIntent
-            )
-            return true
-        }
-
-        return applyImportedChanges(
-            selectedSize,
-            category: effectiveCategory,
-            detailCategory: effectiveDetail,
-            categoryCode: effectiveCategoryCode,
-            detailCode: effectiveDetailCode,
-            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
-            linkedSizeEditIntent: linkedSizeEditIntent
-        )
-    }
-
-    private func applyImportedChanges(
-        _ selectedSize: ProductSize,
-        category: ClothingCategory,
-        detailCategory: ClosetDetailCategory,
-        categoryCode: String,
-        detailCode: String,
-        didExplicitlyChangeClassification: Bool,
-        linkedSizeEditIntent: FitMatchLinkedSizeEditIntent? = nil
-    ) -> Bool {
-        switch FitMatchClosetItemEditAction.saveImported(
-            item: item,
-            selectedSize: selectedSize,
-            linkedSizeEditIntent: linkedSizeEditIntent,
-            category: category,
-            detailCategory: detailCategory,
-            categoryCode: categoryCode,
-            detailCode: detailCode,
-            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
-            in: modelContext
-        ) {
-        case .saved:
-            return true
-        case .persistenceFailed:
-            saveErrorMessage = "수정 내용을 저장하지 못했습니다."
-            return false
-        }
-    }
-
-    private func hasAnotherReference(
-        category: ClothingCategory,
-        detailCategory: ClosetDetailCategory,
-        categoryCode: String,
-        detailCode: String
-    ) -> Bool {
-        userFits.contains {
-            $0.id != item.id
-                && $0.isRepresentative
-                && ReferenceGarmentPolicy.conflicts(
-                    $0,
-                    referenceCandidate(
-                        category: category,
-                        detailCategory: detailCategory,
-                        categoryCode: categoryCode,
-                        detailCode: detailCode
-                    )
-                )
-        }
-    }
-
-    private func applyPendingReferenceChange() {
-        guard let pendingReferenceChange else { return }
-        let referenceCandidate = pendingReferenceChange.editedItem ?? referenceCandidate(
-            category: pendingReferenceChange.category,
-            detailCategory: pendingReferenceChange.detailCategory,
-            categoryCode: pendingReferenceChange.categoryCode ?? item.resolvedCategoryCode,
-            detailCode: pendingReferenceChange.detailCode ?? item.resolvedDetailCategoryCode
-        )
-
-        userFits
-            .filter {
-                $0.id != item.id
-                    && $0.isRepresentative
-                    && ReferenceGarmentPolicy.conflicts(
-                        $0,
-                        referenceCandidate
-                    )
-            }
-            .forEach {
-                $0.isRepresentative = false
-                $0.updatedAt = Date()
-            }
-
-        if let editedItem = pendingReferenceChange.editedItem {
-            _ = applyChangesImmediately(from: editedItem)
-        } else if let selectedSize = pendingReferenceChange.selectedSize {
-            _ = applyImportedChanges(
-                selectedSize,
-                category: pendingReferenceChange.category,
-                detailCategory: pendingReferenceChange.detailCategory,
-                categoryCode: pendingReferenceChange.categoryCode
-                    ?? item.resolvedCategoryCode
-                    ?? item.category.taxonomyCode,
-                detailCode: pendingReferenceChange.detailCode
-                    ?? item.resolvedDetailCategoryCode
-                    ?? "",
-                didExplicitlyChangeClassification: pendingReferenceChange
-                    .didExplicitlyChangeClassification,
-                linkedSizeEditIntent: pendingReferenceChange.linkedSizeEditIntent
-            )
-        }
-        self.pendingReferenceChange = nil
-    }
-
-    private func referenceCandidate(
-        category: ClothingCategory,
-        detailCategory: ClosetDetailCategory,
-        categoryCode: String?,
-        detailCode: String?
-    ) -> UserFit {
-        let candidate = UserFit(
-            sourceType: item.sourceType,
-            sourceName: item.sourceName,
-            sourceCategoryPath: item.sourceCategoryPath,
-            brandName: item.brandName,
-            gender: item.gender,
-            productName: item.productName,
-            category: category,
-            detailCategory: detailCategory,
-            sizeName: item.sizeName,
-            measurements: item.measurements,
-            fitMemo: item.fitMemo,
-            satisfaction: item.satisfaction,
-            sourceProduct: item.sourceProduct,
-            sourceProductSize: item.sourceProductSize
-        )
-        candidate.genderCode = item.resolvedGenderCode
-        candidate.categoryCode = categoryCode
-        candidate.detailCategoryCode = detailCode
-        candidate.normalizedProductTypeCode = detailCode
-        candidate.replaceMeasurementRecords(with: item.measurementRecords)
-        return candidate
     }
 
     private func deleteItemAndDismiss() async -> Bool {
@@ -657,6 +433,7 @@ private struct ImportedClosetItemEditView: View {
     @State private var selectedCategoryCode: String
     @State private var selectedDetailCategoryCode: String
     @State private var didExplicitlyChangeClassification = false
+    @State private var selectedComparisonGroup: FitMatchComparisonGroup
     @State private var isShowingDeleteAlert = false
     @State private var isShowingSaveError = false
     @State private var isDeleting = false
@@ -666,7 +443,6 @@ private struct ImportedClosetItemEditView: View {
     @State private var isSaving = false
     @State private var isReconcilingAcceptedServerEdit = false
     @State private var saveErrorMessage: String?
-    @State private var pendingReferenceConfirmationDraft: FitMatchLinkedClosetEditDraft?
 
     init(
         item: UserFit,
@@ -695,6 +471,12 @@ private struct ImportedClosetItemEditView: View {
         _selectedDetailCategory = State(initialValue: item.detailCategory)
         _selectedCategoryCode = State(initialValue: item.resolvedCategoryCode ?? item.category.taxonomyCode)
         _selectedDetailCategoryCode = State(initialValue: item.resolvedDetailCategoryCode ?? "")
+        _selectedComparisonGroup = State(initialValue: item.comparisonGroup
+            ?? FitMatchComparisonGroup.legacyFallback(
+                category: item.category,
+                detailCategory: item.detailCategory
+            )
+            ?? .tops)
     }
 
     var body: some View {
@@ -736,23 +518,6 @@ private struct ImportedClosetItemEditView: View {
         } message: {
             Text(saveErrorMessage ?? "입력한 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.")
         }
-        .alert("기준 옷을 변경할까요?", isPresented: Binding(
-            get: { pendingReferenceConfirmationDraft != nil },
-            set: { if !$0 { pendingReferenceConfirmationDraft = nil } }
-        )) {
-            Button("취소", role: .cancel) {
-                // The preflight was read-only. Keep the editor and every
-                // selected input exactly as the user left them.
-                pendingReferenceConfirmationDraft = nil
-            }
-            Button("변경") {
-                guard let draft = pendingReferenceConfirmationDraft else { return }
-                pendingReferenceConfirmationDraft = nil
-                submitLinkedEdit(draft, confirmsReferenceReplacement: true)
-            }
-        } message: {
-            Text("같은 분류의 기존 기준 옷은 서버에서 해제될 수 있어요.")
-        }
         .interactiveDismissDisabled(isSubmissionInputLocked)
     }
 
@@ -760,38 +525,15 @@ private struct ImportedClosetItemEditView: View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 16) {
                 SectionHeader(
-                    title: "내 옷장 분류",
-                    subtitle: "추천 비교에 사용할 카테고리입니다."
+                    title: "비교 그룹",
+                    subtitle: "이 옷과 함께 비교할 상품 그룹입니다."
                 )
                 AddClosetSelectionMenu(
-                    title: "대분류",
-                    value: selectedCategoryOption?.displayName ?? selectedCategory.rawValue,
-                    options: availableCategories,
+                    title: "비교 그룹",
+                    value: selectedComparisonGroup.displayName,
+                    options: FitMatchComparisonGroup.allCases,
                     optionTitle: \.displayName,
-                    selection: Binding(
-                        get: { selectedCategoryOption ?? availableCategories[0] },
-                        set: { option in
-                            selectedCategoryCode = option.code
-                            selectedCategory = ClothingCategory.fromTaxonomyCode(option.code)
-                            didExplicitlyChangeClassification = true
-                        }
-                    )
-                ) { _ in
-                    normalizeDetailCategory()
-                }
-                AddClosetSelectionMenu(
-                    title: "세부 카테고리",
-                    value: selectedDetailOption?.displayName ?? "선택",
-                    options: availableDetailCategories,
-                    optionTitle: \.displayName,
-                    selection: Binding(
-                        get: { selectedDetailOption ?? availableDetailCategories[0] },
-                        set: { option in
-                            selectedDetailCategoryCode = option.code
-                            selectedDetailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
-                            didExplicitlyChangeClassification = true
-                        }
-                    )
+                    selection: $selectedComparisonGroup
                 )
             }
         }
@@ -830,7 +572,10 @@ private struct ImportedClosetItemEditView: View {
                     DetailInfoRow(title: "쇼핑몰", value: item.sourceName)
                     DetailInfoRow(title: "브랜드", value: item.brandName)
                     DetailInfoRow(title: "상품명", value: item.productName)
-                    DetailInfoRow(title: "분류", value: "\(item.category.rawValue) / \(item.detailCategory.rawValue)")
+                    DetailInfoRow(
+                        title: "저장된 비교 그룹",
+                        value: item.comparisonGroup?.displayName ?? "미지정"
+                    )
                     DetailInfoRow(title: "원본 카테고리", value: item.sourceCategoryDisplayText)
                 }
             }
@@ -956,10 +701,7 @@ private struct ImportedClosetItemEditView: View {
                     isShowingSaveError = true
                     return
                 }
-                submitLinkedEdit(
-                    draft,
-                    confirmsReferenceReplacement: false
-                )
+                submitLinkedEdit(draft)
             } label: {
                 Text(isSaving ? "저장 중" : (
                     isReconcilingAcceptedServerEdit
@@ -1007,28 +749,24 @@ private struct ImportedClosetItemEditView: View {
             detailCategory: selectedDetailCategory,
             categoryCode: selectedCategoryCode,
             detailCode: selectedDetailCategoryCode,
-            didExplicitlyChangeClassification: didExplicitlyChangeClassification
+            didExplicitlyChangeClassification: didExplicitlyChangeClassification,
+            comparisonGroupCode: selectedComparisonGroup.rawValue
         )
     }
 
-    private func submitLinkedEdit(
-        _ draft: FitMatchLinkedClosetEditDraft,
-        confirmsReferenceReplacement: Bool
-    ) {
+    private func submitLinkedEdit(_ draft: FitMatchLinkedClosetEditDraft) {
         guard !isSaving else { return }
         isSaving = true
         Task { @MainActor in
             defer { isSaving = false }
-            let outcome = await onSave(draft, confirmsReferenceReplacement)
+            let outcome = await onSave(draft, false)
             switch outcome {
             case .saved:
                 isReconcilingAcceptedServerEdit = false
                 dismiss()
             case .needsReferenceConfirmation:
-                // No remote update has occurred on this outcome.  The child
-                // sheet owns the confirmation so it cannot disappear behind
-                // the parent detail alert before the user chooses.
-                pendingReferenceConfirmationDraft = draft
+                saveErrorMessage = "이전 옷장 설정을 정리하지 못했습니다. 다시 시도해 주세요."
+                isShowingSaveError = true
             case .reconciliationRequired(let message):
                 isReconcilingAcceptedServerEdit = true
                 saveErrorMessage = message
@@ -1145,17 +883,6 @@ private struct ImportedClosetItemEditView: View {
     private func measurementText(_ value: Double) -> String {
         value > 0 ? value.cmText : "-"
     }
-}
-
-private struct PendingClosetEdit {
-    let editedItem: UserFit?
-    let selectedSize: ProductSize?
-    let category: ClothingCategory
-    let detailCategory: ClosetDetailCategory
-    let categoryCode: String?
-    let detailCode: String?
-    let didExplicitlyChangeClassification: Bool
-    let linkedSizeEditIntent: FitMatchLinkedSizeEditIntent?
 }
 
 private struct MeasurementValueTile: View {

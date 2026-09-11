@@ -15,7 +15,6 @@ struct RecommendationHistoryView: View {
     @State private var closetRegistrationPreparation: FitMatchResultClosetRegistrationPreparation?
     @State private var preparingHistoryClosetIDs = Set<UUID>()
     @State private var selectedHistoryIDForDetail: UUID?
-    @State private var opensReferencePickerOnDetail = false
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
     @State private var isShowingClosetSavedToast = false
@@ -50,13 +49,7 @@ struct RecommendationHistoryView: View {
             set: { if !$0 { selectedHistoryIDForDetail = nil } }
         )) {
             if let selectedHistoryForDetail {
-                RecommendationResultView(
-                    result: selectedHistoryForDetail,
-                    opensReferencePickerOnAppear: opensReferencePickerOnDetail
-                ) { updatedHistory in
-                    opensReferencePickerOnDetail = false
-                    selectedHistoryIDForDetail = updatedHistory.id
-                }
+                RecommendationResultView(result: selectedHistoryForDetail)
             }
         }
         .sheet(item: $closetRegistrationPreparation) { preparation in
@@ -167,12 +160,10 @@ struct RecommendationHistoryView: View {
                     } onOpen: {
                         openShoppingMall(history)
                     } onRecompare: {
-                        opensReferencePickerOnDetail = true
-                        showDetail(history)
+                        recompare(history)
                     } onAddToCloset: {
                         prepareHistoryClosetRegistration(history)
                     } onShowDetail: {
-                        opensReferencePickerOnDetail = false
                         showDetail(history)
                     }
                     .listRowSeparator(.hidden)
@@ -214,7 +205,6 @@ struct RecommendationHistoryView: View {
                                 toggleFavorite(history)
                             },
                             onShowDetail: {
-                                opensReferencePickerOnDetail = false
                                 showDetail(history)
                             }
                         )

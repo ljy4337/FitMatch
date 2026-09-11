@@ -1,4 +1,5 @@
 import Foundation
+import Supabase
 
 protocol FitMatchServerAuthorityRemoteServicing: Sendable {
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
@@ -188,11 +189,11 @@ nonisolated struct FitMatchServerReferenceSelectionCandidate: Equatable, Sendabl
         }
         switch FitMatchComparisonBlockReason(code: reasonCode) {
         case .userSelectedReference:
-            return "직접 선택해 비교할 수 있는 기준 옷입니다."
+            return "직접 선택해 비교할 수 있는 내 옷입니다."
         case .automaticMatch:
-            return "자동 비교가 가능한 기준 옷입니다."
+            return "자동 비교가 가능한 내 옷입니다."
         default:
-            return "서버가 비교 가능한 기준 옷으로 승인했습니다."
+            return "서버가 비교 가능한 내 옷으로 승인했습니다."
         }
     }
 }
@@ -253,7 +254,7 @@ nonisolated enum FitMatchComparisonBlockReason: String, Equatable, Sendable {
         case .classificationRequired:
             return "상품 분류를 다시 확인한 뒤 비교해 주세요."
         case .noAutomaticReference:
-            return "자동으로 선택할 기준 옷이 없어 직접 선택해 주세요."
+            return "자동으로 비교할 옷을 고르지 못해 직접 선택이 필요합니다."
         case .incompatibleBodyRegion:
             return "이 두 옷은 측정하는 신체 부위가 달라 비교하기 어려워요."
         case .noCommonMeasurements:
@@ -261,9 +262,9 @@ nonisolated enum FitMatchComparisonBlockReason: String, Equatable, Sendable {
         case .structurallyNotComparable:
             return "여러 종류의 옷이 함께 구성된 상품은 비교할 수 없어요."
         case .invalidAuthority:
-            return "기준 옷 또는 상품 정보를 다시 확인해 주세요."
+            return "선택한 내 옷 또는 상품 정보를 다시 확인해 주세요."
         case .staleReference:
-            return "기준 옷 정보가 바뀌었어요. 최신 정보로 다시 확인해 주세요."
+            return "선택한 내 옷 정보가 바뀌었어요. 최신 정보로 다시 확인해 주세요."
         case .noEligibleTargetSize:
             return "비교에 사용할 상품 사이즈 실측이 없어요."
         case .serverUnavailable:
@@ -418,7 +419,7 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
         case .referenceItemNotFound:
             return "서버 옷장에서 기준 의류를 찾지 못했습니다."
         case .localReferenceProjectionMissing:
-            return "서버 기준 옷과 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
+            return "서버의 비교 후보와 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
         case .targetClassificationRequired:
             return "대상 상품의 서버 분류 승격이 필요합니다."
         case .comparisonNotReady(let state):
@@ -1505,7 +1506,9 @@ actor FitMatchServerAuthorityCoordinator {
             throw FitMatchServerAuthorityError.observationIdentityMismatch
         }
 
-        let response = try await remote.submitProductObservation(observation)
+        let response = try await submitProductObservationWithTransientRetry(
+            observation
+        )
         try Task.checkCancellation()
         guard response.observation.observationID == response.processing.observationID else {
             throw FitMatchServerAuthorityError.promotionResponseMalformed
@@ -1523,6 +1526,48 @@ actor FitMatchServerAuthorityCoordinator {
         }
         submittedObservationKeys.insert(observationKey(observation))
         return productID
+    }
+
+    /// A lost Edge response can happen after the database has already accepted
+    /// the observation. Retry only transient transport/server failures and
+    /// reuse the exact frozen request so the ingestion fingerprint and
+    /// `observed_at` remain unchanged. Contract/authentication failures are
+    /// returned immediately instead of being hidden by a retry.
+    private func submitProductObservationWithTransientRetry(
+        _ observation: FitMatchProductObservationRequest
+    ) async throws -> FitMatchProductObservationResponse {
+        do {
+            return try await remote.submitProductObservation(observation)
+        } catch {
+            guard Self.isTransientObservationSubmissionError(error) else {
+                throw error
+            }
+            try Task.checkCancellation()
+            await Task.yield()
+            return try await remote.submitProductObservation(observation)
+        }
+    }
+
+    nonisolated private static func isTransientObservationSubmissionError(
+        _ error: Error
+    ) -> Bool {
+        if error is URLError {
+            return true
+        }
+        if let functionsError = error as? FunctionsError {
+            switch functionsError {
+            case .relayError:
+                return true
+            case .httpError(let code, _):
+                return code == 408 || code == 429 || (500...599).contains(code)
+            }
+        }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return true
+        }
+        return (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain
+            == NSURLErrorDomain
     }
 
     private func observationCanImproveRuntime(
@@ -1696,10 +1741,14 @@ actor FitMatchServerAuthorityCoordinator {
         classification: FitMatchDatabaseClassification
     ) -> Bool {
         let category = reference.canonicalCategoryCode ?? reference.categoryCode
-        let detail = reference.canonicalDetailCode ?? reference.detailCode
+        // `detailCode` on a Closet projection is an app-facing picker value
+        // (for example `long_sleeve`), while the vNext runtime classification
+        // carries garment identity and length on separate axes. Comparing that
+        // projection with the runtime garment code (`tshirt`) rejects a valid
+        // reference before the DB-authorized candidate can begin comparison.
+        // Validate only like-for-like server authority axes here.
         return category == classification.categoryCode
-            && detail == classification.detailCode
-            && reference.familyCode == classification.familyCode
+            && reference.familyCode == classification.garmentTypeCode
             && reference.lengthCode == classification.lengthCode
             && reference.bodyLengthCode == classification.bodyLengthCode
     }

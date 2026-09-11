@@ -67,13 +67,17 @@ struct LinkClosetRegistrationView: View {
     }
 
     private var canOpenRegistration: Bool {
-        parsedProduct != nil && registrationBlockMessage == nil
+        guard parsedProduct != nil else { return false }
+        if registrationServerContext?.classificationState == .preparing {
+            return true
+        }
+        return registrationBlockMessage == nil
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                if isLoading {
+                if isLoading && parsedProduct == nil && partialProduct == nil {
                     loadingContent
                 } else {
                     urlCard
@@ -307,7 +311,15 @@ struct LinkClosetRegistrationView: View {
                         }
                     }
 
-                    if let registrationBlockMessage {
+                    if isLoading {
+                        Label(
+                            "상품·사이즈 저장 정보를 확인하고 있어요.",
+                            systemImage: "arrow.triangle.2.circlepath"
+                        )
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    } else if let registrationBlockMessage {
                         Label(
                             registrationBlockMessage,
                             systemImage: "ruler"
@@ -317,7 +329,10 @@ struct LinkClosetRegistrationView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    PrimaryButton(title: "다음", systemImage: "chevron.right") {
+                    PrimaryButton(
+                        title: isLoading ? "사이즈와 비교 그룹 선택" : "다음",
+                        systemImage: "chevron.right"
+                    ) {
                         guard canOpenRegistration else { return }
                         isShowingAddToClosetSheet = true
                     }
@@ -413,7 +428,18 @@ struct LinkClosetRegistrationView: View {
         let outcome = await FitMatchLinkClosetRegistrationAction.load(
             urlString: normalizedURLString,
             makeViewModel: { ShoppingProductViewModel(initialURL: $0) },
-            existingBrand: existingBrand(named:)
+            existingBrand: existingBrand(named:),
+            onRetailerProductLoaded: { preparation in
+                // This is the retailer/API snapshot. It is intentionally
+                // visible before server authority finishes and is replaced
+                // only by the same source rows carrying exact server IDs.
+                parsedProduct = preparation.parsedProduct
+                partialProduct = preparation.partialProduct
+                parsedDetailCategory = preparation.detailCategory
+                productMeasurementPresence = preparation.productMeasurementPresence
+                recoveryViewModel = preparation.recoveryViewModel
+                errorMessage = preparation.errorMessage
+            }
         )
         switch outcome {
         case .blocked(let validation):
@@ -568,7 +594,10 @@ struct LinkClosetRegistrationPreparation {
             return "등록할 사이즈 정보를 찾지 못했습니다."
         }
         guard let serverRegistrationContext else {
-            return "등록 가능한 사이즈 정보를 찾지 못했습니다."
+            return "서버에서 상품·사이즈 연결을 확인하지 못했습니다. 다시 시도해 주세요."
+        }
+        if let authorityBlockMessage = serverRegistrationContext.registrationBlockMessage {
+            return authorityBlockMessage
         }
         let hasExactRegisterableSize = displaySizes.contains { size in
             serverRegistrationContext.isRegisterable(displaySizeID: size.id)

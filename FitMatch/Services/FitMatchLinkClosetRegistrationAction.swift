@@ -14,7 +14,8 @@ enum FitMatchLinkClosetRegistrationAction {
     static func load(
         urlString: String,
         makeViewModel: (String) -> ShoppingProductViewModel,
-        existingBrand: (String) -> Brand?
+        existingBrand: @escaping (String) -> Brand?,
+        onRetailerProductLoaded: ((LinkClosetRegistrationPreparation) -> Void)? = nil
     ) async -> Outcome {
         let validation = FitMatchProductLinkInput.validate(urlString)
         guard case .supported(let url) = validation else {
@@ -26,7 +27,16 @@ enum FitMatchLinkClosetRegistrationAction {
         }
 
         let viewModel = makeViewModel(url.absoluteString)
-        _ = await viewModel.loadProductInfoFromURL()
+        _ = await viewModel.loadProductInfoFromURL { loadedViewModel in
+            let brand = existingBrand(loadedViewModel.brand)
+                ?? Brand(name: loadedViewModel.brand)
+            onRetailerProductLoaded?(
+                LinkClosetRegistrationPreparation.make(
+                    from: loadedViewModel,
+                    brand: brand
+                )
+            )
+        }
         guard !Task.isCancelled else {
             return .cancelled
         }

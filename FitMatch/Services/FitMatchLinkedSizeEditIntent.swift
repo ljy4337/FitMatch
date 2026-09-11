@@ -80,6 +80,7 @@ struct FitMatchLinkedClosetEditDraft {
     let categoryCode: String
     let detailCode: String
     let didExplicitlyChangeClassification: Bool
+    let comparisonGroupCode: String
 
     var selectedOption: FitMatchLinkedClosetSizeEditOption? {
         preparation.option(displaySizeID: selectedDisplaySizeID)

@@ -48,7 +48,7 @@ struct MyPageView: View {
                 //
                 //         HStack(spacing: 10) {
                 //             MyStatPill(title: "내 옷", value: "\(userFits.count)")
-                //             MyStatPill(title: "기준 옷", value: "\(representativeFitCount)")
+                //             MyStatPill(title: "비교 그룹", value: "\(userFits.compactMap(\.comparisonGroup).count)")
                 //             MyStatPill(title: "비교 기록", value: "\(histories.count)")
                 //         }
                 //     }
@@ -149,10 +149,6 @@ struct MyPageView: View {
         } message: {
             Text(accountDeletionErrorMessage ?? "잠시 후 다시 시도해 주세요.")
         }
-    }
-
-    private var representativeFitCount: Int {
-        userFits.filter(\.isRepresentative).count
     }
 
     private func menuRow(_ item: MyMenuItem) -> some View {
@@ -295,8 +291,8 @@ private struct FitMatchUsageGuideView: View {
             description: "MY 탭의 내 옷장에서 링크로 상품을 불러오거나 직접 실측을 입력해 옷을 등록할 수 있습니다. 분류와 보유 사이즈를 정확히 선택해 주세요."
         ),
         FitMatchGuideItem(
-            title: "기준 옷이란?",
-            description: "평소 핏을 잘 아는 옷을 기준 옷으로 지정하면 호환되는 후보 중 우선 비교합니다. 기준 옷이 없어도 같은 종류의 호환되는 옷이 있으면 비교할 수 있습니다."
+            title: "비교 그룹이란?",
+            description: "비슷한 부위의 실측을 비교할 수 있도록 옷을 묶은 그룹입니다. 상품을 불러오면 같은 그룹의 내 옷들을 가까운 순서로 보여줍니다."
         ),
         FitMatchGuideItem(
             title: "쇼핑 상품 비교하기",
@@ -308,7 +304,7 @@ private struct FitMatchUsageGuideView: View {
         ),
         FitMatchGuideItem(
             title: "비교할 옷이 없을 때",
-            description: "호환되는 옷이 없으면 필요한 종류의 기준 옷을 등록하거나, 호환 가능한 내 옷을 직접 선택할 수 있습니다. 비교한 쇼핑 상품은 실제로 보유한 경우에만 내 옷장에 등록해 주세요."
+            description: "같은 그룹에 옷이 없으면 다른 그룹이나 내 옷장 전체에서 비교할 옷을 직접 선택할 수 있습니다. 비교한 쇼핑 상품은 실제로 보유한 경우에만 내 옷장에 등록해 주세요."
         ),
         FitMatchGuideItem(
             title: "결과 화면 보는 방법",

@@ -208,15 +208,6 @@ private struct SearchClosetResultRow: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
 
-                        if item.isRepresentative {
-                            Text("기준 옷")
-                                .font(.caption2.weight(.black))
-                                .foregroundStyle(Color(.systemBackground))
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 4)
-                                .background(Color.primary, in: Capsule())
-                        }
-
                         Spacer(minLength: 0)
                     }
 
