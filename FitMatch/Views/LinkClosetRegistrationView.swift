@@ -67,7 +67,10 @@ struct LinkClosetRegistrationView: View {
     }
 
     private var canOpenRegistration: Bool {
-        parsedProduct != nil
+        guard parsedProduct != nil, !isLoading else {
+            return false
+        }
+        return registrationBlockMessage == nil
     }
 
     var body: some View {
@@ -329,7 +332,7 @@ struct LinkClosetRegistrationView: View {
                     }
 
                     PrimaryButton(
-                        title: isLoading ? "사이즈와 비교 그룹 선택" : "다음",
+                        title: isLoading ? "서버에 상품 저장 중" : "다음",
                         systemImage: "chevron.right"
                     ) {
                         guard canOpenRegistration else { return }
