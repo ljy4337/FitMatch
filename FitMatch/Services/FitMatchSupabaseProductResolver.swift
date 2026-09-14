@@ -1095,6 +1095,7 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
     let candidateProductSizeIDs: [UUID]?
     let effectiveAuthorityFingerprint: String?
     let personalOverrideRevision: Int?
+    let requestedComparisonGroupCode: String?
 
     init(
         referenceItemID: UUID,
@@ -1105,7 +1106,8 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
         authorizationProductSizeID: UUID? = nil,
         candidateProductSizeIDs: [UUID]? = nil,
         effectiveAuthorityFingerprint: String? = nil,
-        personalOverrideRevision: Int? = nil
+        personalOverrideRevision: Int? = nil,
+        requestedComparisonGroupCode: String? = nil
     ) {
         self.referenceItemID = referenceItemID
         self.targetProductID = targetProductID
@@ -1116,6 +1118,7 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
         self.candidateProductSizeIDs = candidateProductSizeIDs
         self.effectiveAuthorityFingerprint = effectiveAuthorityFingerprint
         self.personalOverrideRevision = personalOverrideRevision
+        self.requestedComparisonGroupCode = requestedComparisonGroupCode
     }
 }
 
@@ -1779,10 +1782,12 @@ nonisolated private struct VNextClosetOverridePayload: Encodable, Sendable {
 nonisolated private struct VNextReferenceCandidatesParameters: Encodable, Sendable {
     let pTargetProductID: UUID
     let pTargetVariantID: UUID
+    let pRequestedGroupCode: String?
 
     enum CodingKeys: String, CodingKey {
         case pTargetProductID = "p_target_product_id"
         case pTargetVariantID = "p_target_variant_id"
+        case pRequestedGroupCode = "p_requested_group_code"
     }
 }
 
@@ -1791,12 +1796,14 @@ nonisolated private struct VNextEligibleCandidateParameters: Encodable, Sendable
     let pTargetProductID: UUID
     let pTargetVariantID: UUID
     let pManualExplicit: Bool
+    let pRequestedGroupCode: String?
 
     enum CodingKeys: String, CodingKey {
         case pReferenceClosetItemID = "p_reference_closet_item_id"
         case pTargetProductID = "p_target_product_id"
         case pTargetVariantID = "p_target_variant_id"
         case pManualExplicit = "p_manual_explicit"
+        case pRequestedGroupCode = "p_requested_group_code"
     }
 }
 
@@ -1852,6 +1859,7 @@ nonisolated private struct VNextBeginComparisonPayload: Encodable, Sendable {
     let candidateProductSizeIDs: [UUID]?
     let effectiveAuthorityFingerprint: String?
     let personalOverrideRevision: Int?
+    let requestedComparisonGroupCode: String?
 
     enum CodingKeys: String, CodingKey {
         case clientComparisonID = "client_comparison_id"
@@ -1863,6 +1871,7 @@ nonisolated private struct VNextBeginComparisonPayload: Encodable, Sendable {
         case candidateProductSizeIDs = "candidate_product_size_ids"
         case effectiveAuthorityFingerprint = "effective_authority_fingerprint"
         case personalOverrideRevision = "personal_override_revision"
+        case requestedComparisonGroupCode = "requested_comparison_group_code"
     }
 }
 
@@ -2152,11 +2161,28 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 "fitmatch_vnext_find_reference_candidates",
                 params: VNextReferenceCandidatesParameters(
                     pTargetProductID: targetProductID,
-                    pTargetVariantID: targetVariantID
+                    pTargetVariantID: targetVariantID,
+                    pRequestedGroupCode: nil
                 )
             )
             .execute()
             .value
+        return FitMatchReferenceCandidatesResponse(vnext: exact)
+    }
+
+    func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID,
+                                 requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        guard let requestedComparisonGroupCode else {
+            return try await findReferenceCandidates(targetProductID: targetProductID, targetVariantID: targetVariantID)
+        }
+        let client = try await authenticatedClient()
+        let exact: VNextReferenceCandidatesDTO = try await client.rpc(
+            "fitmatch_vnext_find_reference_candidates",
+            params: VNextReferenceCandidatesParameters(pTargetProductID: targetProductID,
+                                                       pTargetVariantID: targetVariantID,
+                                                       pRequestedGroupCode: requestedComparisonGroupCode)
+        ).execute().value
         return FitMatchReferenceCandidatesResponse(vnext: exact)
     }
 
@@ -2174,11 +2200,28 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     pReferenceClosetItemID: referenceClosetItemID,
                     pTargetProductID: targetProductID,
                     pTargetVariantID: targetVariantID,
-                    pManualExplicit: manualExplicit
+                    pManualExplicit: manualExplicit,
+                    pRequestedGroupCode: nil
                 )
             )
             .execute()
             .value
+    }
+
+    func eligibleCandidateSizes(referenceClosetItemID: UUID, targetProductID: UUID,
+                                targetVariantID: UUID, manualExplicit: Bool,
+                                requestedComparisonGroupCode: String?) async throws
+        -> VNextEligibleCandidateSizesDTO {
+        guard let requestedComparisonGroupCode else {
+            return try await eligibleCandidateSizes(referenceClosetItemID: referenceClosetItemID, targetProductID: targetProductID, targetVariantID: targetVariantID, manualExplicit: manualExplicit)
+        }
+        let client = try await authenticatedClient()
+        return try await client.rpc("fitmatch_vnext_eligible_candidate_sizes",
+            params: VNextEligibleCandidateParameters(pReferenceClosetItemID: referenceClosetItemID,
+                                                     pTargetProductID: targetProductID,
+                                                     pTargetVariantID: targetVariantID,
+                                                     pManualExplicit: manualExplicit,
+                                                     pRequestedGroupCode: requestedComparisonGroupCode)).execute().value
     }
 
     func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
@@ -2200,7 +2243,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     candidateProductSizeIDs: request.candidateProductSizeIDs,
                     effectiveAuthorityFingerprint:
                         request.effectiveAuthorityFingerprint,
-                    personalOverrideRevision: request.personalOverrideRevision
+                    personalOverrideRevision: request.personalOverrideRevision,
+                    requestedComparisonGroupCode: request.requestedComparisonGroupCode
                 ))
             )
             .execute()

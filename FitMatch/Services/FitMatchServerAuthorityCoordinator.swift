@@ -21,12 +21,19 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
         -> FitMatchReferenceCandidatesResponse
     func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID) async throws
         -> FitMatchReferenceCandidatesResponse
+    func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID,
+                                 requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse
     func eligibleCandidateSizes(
         referenceClosetItemID: UUID,
         targetProductID: UUID,
         targetVariantID: UUID,
         manualExplicit: Bool
     ) async throws -> VNextEligibleCandidateSizesDTO
+    func eligibleCandidateSizes(referenceClosetItemID: UUID, targetProductID: UUID,
+                                targetVariantID: UUID, manualExplicit: Bool,
+                                requestedComparisonGroupCode: String?) async throws
+        -> VNextEligibleCandidateSizesDTO
     func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
         -> FitMatchBeginComparisonResponse
     func completeVNextComparison(
@@ -60,6 +67,15 @@ extension FitMatchServerAuthorityRemoteServicing {
         try await findReferenceCandidates(targetProductID: targetProductID)
     }
 
+    func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID,
+                                 requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        guard requestedComparisonGroupCode == nil else {
+            throw FitMatchServerAuthorityError.comparisonBeginUnavailable
+        }
+        try await findReferenceCandidates(targetProductID: targetProductID, targetVariantID: targetVariantID)
+    }
+
     func eligibleCandidateSizes(
         referenceClosetItemID: UUID,
         targetProductID: UUID,
@@ -67,6 +83,19 @@ extension FitMatchServerAuthorityRemoteServicing {
         manualExplicit: Bool
     ) async throws -> VNextEligibleCandidateSizesDTO {
         throw FitMatchServerAuthorityError.comparisonBeginUnavailable
+    }
+
+    func eligibleCandidateSizes(referenceClosetItemID: UUID, targetProductID: UUID,
+                                targetVariantID: UUID, manualExplicit: Bool,
+                                requestedComparisonGroupCode: String?) async throws
+        -> VNextEligibleCandidateSizesDTO {
+        guard requestedComparisonGroupCode == nil else {
+            throw FitMatchServerAuthorityError.comparisonBeginUnavailable
+        }
+        try await eligibleCandidateSizes(referenceClosetItemID: referenceClosetItemID,
+                                         targetProductID: targetProductID,
+                                         targetVariantID: targetVariantID,
+                                         manualExplicit: manualExplicit)
     }
 
     func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
@@ -204,6 +233,24 @@ nonisolated struct FitMatchServerReferenceSelectionPlan: Equatable, Sendable {
     /// Preserves the order returned by the vNext candidate RPC.
     let candidates: [FitMatchServerReferenceSelectionCandidate]
     let blockedCandidates: [FitMatchServerReferenceSelectionCandidate]
+    /// The DB-issued mapped group, or a session-only requested group accepted
+    /// by the candidate RPC. It never changes product classification.
+    let targetComparisonGroupCode: String?
+
+    init(
+        target: FitMatchServerProductAuthority,
+        status: FitMatchServerReferenceSelectionStatus,
+        candidates: [FitMatchServerReferenceSelectionCandidate],
+        blockedCandidates: [FitMatchServerReferenceSelectionCandidate],
+        targetComparisonGroupCode: String? = nil
+    ) {
+        self.target = target
+        self.status = status
+        self.candidates = candidates
+        self.blockedCandidates = blockedCandidates
+        self.targetComparisonGroupCode = targetComparisonGroupCode
+            ?? target.runtime.vnext?.comparisonGroup?.groupCode
+    }
 
     var automaticCandidates: [FitMatchServerReferenceSelectionCandidate] {
         candidates.filter { $0.allowed && $0.decision == .automatic }
@@ -289,6 +336,7 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
     let candidate: FitMatchReferenceCandidate?
     let candidateState: String?
     let targetVariantID: UUID?
+    let requestedComparisonGroupCode: String?
     let authorizedCandidateSizeIDs: [UUID]
 
     init(
@@ -301,6 +349,7 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
         candidate: FitMatchReferenceCandidate?,
         candidateState: String?,
         targetVariantID: UUID? = nil,
+        requestedComparisonGroupCode: String? = nil,
         authorizedCandidateSizeIDs: [UUID] = []
     ) {
         self.decision = decision
@@ -312,6 +361,7 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
         self.candidate = candidate
         self.candidateState = candidateState
         self.targetVariantID = targetVariantID
+        self.requestedComparisonGroupCode = requestedComparisonGroupCode
         self.authorizedCandidateSizeIDs = authorizedCandidateSizeIDs
     }
 
@@ -725,7 +775,8 @@ actor FitMatchServerAuthorityCoordinator {
         targetRequest: FitMatchProductResolutionRequest,
         targetObservation: FitMatchProductObservationRequest?,
         referenceRequest: FitMatchProductResolutionRequest? = nil,
-        referenceObservation: FitMatchProductObservationRequest? = nil
+        referenceObservation: FitMatchProductObservationRequest? = nil,
+        requestedComparisonGroupCode: String? = nil
     ) async throws -> FitMatchServerReferenceAuthorization {
         try Task.checkCancellation()
         var target = try await resolveProductAuthority(
@@ -735,6 +786,7 @@ actor FitMatchServerAuthorityCoordinator {
         try Task.checkCancellation()
 
         if target.status == .confirmed,
+           requestedComparisonGroupCode == nil,
            !target.comparisonReadiness.isReady {
             throw FitMatchServerAuthorityError.comparisonNotReady(
                 target.runtime.runtimeState
@@ -765,7 +817,7 @@ actor FitMatchServerAuthorityCoordinator {
             throw FitMatchServerAuthorityError.referenceItemNotFound
         }
 
-        guard target.status == .confirmed else {
+        guard target.status == .confirmed || requestedComparisonGroupCode != nil else {
             return blockedAuthorization(
                 reason: target.status == .notComparable
                     ? "target_not_comparable"
@@ -822,7 +874,8 @@ actor FitMatchServerAuthorityCoordinator {
             try Task.checkCancellation()
             candidates = try await remote.findReferenceCandidates(
                 targetProductID: target.productID,
-                targetVariantID: targetVariantID
+                targetVariantID: targetVariantID,
+                requestedComparisonGroupCode: requestedComparisonGroupCode
             )
             try Task.checkCancellation()
         } else {
@@ -853,7 +906,8 @@ actor FitMatchServerAuthorityCoordinator {
                 try Task.checkCancellation()
                 candidates = try await remote.findReferenceCandidates(
                     targetProductID: target.productID,
-                    targetVariantID: targetVariantID
+                    targetVariantID: targetVariantID,
+                    requestedComparisonGroupCode: requestedComparisonGroupCode
                 )
                 try Task.checkCancellation()
             } else {
@@ -931,6 +985,7 @@ actor FitMatchServerAuthorityCoordinator {
                     candidate: candidate,
                     candidateState: candidates.state,
                     targetVariantID: targetVariantID,
+                    requestedComparisonGroupCode: requestedComparisonGroupCode,
                     authorizedCandidateSizeIDs: vnextCandidate.eligibleProductSizeIDs
                 )
             case "MANUAL_EXTENDED" where vnextCandidate.allowed:
@@ -944,6 +999,7 @@ actor FitMatchServerAuthorityCoordinator {
                     candidate: candidate,
                     candidateState: candidates.state,
                     targetVariantID: targetVariantID,
+                    requestedComparisonGroupCode: requestedComparisonGroupCode,
                     authorizedCandidateSizeIDs: vnextCandidate.eligibleProductSizeIDs
                 )
             case "MEASUREMENTS_REQUIRED":
@@ -957,6 +1013,7 @@ actor FitMatchServerAuthorityCoordinator {
                     candidate: candidate,
                     candidateState: candidates.state,
                     targetVariantID: targetVariantID,
+                    requestedComparisonGroupCode: requestedComparisonGroupCode,
                     authorizedCandidateSizeIDs: []
                 )
             default:
@@ -1035,7 +1092,8 @@ actor FitMatchServerAuthorityCoordinator {
     func referenceSelectionPlan(
         targetRequest: FitMatchProductResolutionRequest,
         targetObservation: FitMatchProductObservationRequest?,
-        localClientItemIDs: Set<UUID>? = nil
+        localClientItemIDs: Set<UUID>? = nil,
+        requestedComparisonGroupCode: String? = nil
     ) async throws -> FitMatchServerReferenceSelectionPlan {
         try Task.checkCancellation()
         let target = try await resolveProductAuthority(
@@ -1043,10 +1101,10 @@ actor FitMatchServerAuthorityCoordinator {
             observation: targetObservation
         )
         try Task.checkCancellation()
-        guard target.status == .confirmed else {
+        guard target.status == .confirmed || requestedComparisonGroupCode != nil else {
             throw FitMatchServerAuthorityError.targetClassificationRequired
         }
-        guard target.comparisonReadiness.isReady else {
+        guard target.comparisonReadiness.isReady || requestedComparisonGroupCode != nil else {
             throw FitMatchServerAuthorityError.comparisonNotReady(
                 target.runtime.runtimeState
             )
@@ -1070,7 +1128,8 @@ actor FitMatchServerAuthorityCoordinator {
         try Task.checkCancellation()
         let response = try await findReferenceCandidates(
             targetProductID: target.productID,
-            targetVariantID: targetVariantID
+            targetVariantID: targetVariantID,
+            requestedComparisonGroupCode: requestedComparisonGroupCode
         )
         try Task.checkCancellation()
         guard response.state != "target_classification_required" else {
@@ -1095,7 +1154,8 @@ actor FitMatchServerAuthorityCoordinator {
                 target: target,
                 status: try referenceSelectionStatus(vnext.status),
                 candidates: candidates,
-                blockedCandidates: blocked
+                blockedCandidates: blocked,
+                targetComparisonGroupCode: requestedComparisonGroupCode
             )
         } else {
             try validateCandidateResponse(response)
@@ -1109,7 +1169,8 @@ actor FitMatchServerAuthorityCoordinator {
                 target: target,
                 status: try referenceSelectionStatus(response.state),
                 candidates: candidates,
-                blockedCandidates: []
+                blockedCandidates: [],
+                targetComparisonGroupCode: requestedComparisonGroupCode
             )
         }
 
@@ -1155,13 +1216,18 @@ actor FitMatchServerAuthorityCoordinator {
 
     private func findReferenceCandidates(
         targetProductID: UUID,
-        targetVariantID: UUID?
+        targetVariantID: UUID?,
+        requestedComparisonGroupCode: String? = nil
     ) async throws -> FitMatchReferenceCandidatesResponse {
         if let targetVariantID {
             return try await remote.findReferenceCandidates(
                 targetProductID: targetProductID,
-                targetVariantID: targetVariantID
+                targetVariantID: targetVariantID,
+                requestedComparisonGroupCode: requestedComparisonGroupCode
             )
+        }
+        guard requestedComparisonGroupCode == nil else {
+            throw FitMatchServerAuthorityError.comparisonBeginUnavailable
         }
         return try await remote.findReferenceCandidates(
             targetProductID: targetProductID
@@ -1264,7 +1330,8 @@ actor FitMatchServerAuthorityCoordinator {
               let reference = authorization.reference else {
             throw FitMatchServerAuthorityError.comparisonNotAuthorized
         }
-        guard authorization.target.comparisonReadiness.isReady else {
+        if !authorization.target.comparisonReadiness.isReady,
+           authorization.requestedComparisonGroupCode == nil {
             throw FitMatchServerAuthorityError.comparisonNotReady(
                 authorization.target.runtime.runtimeState
             )
@@ -1277,7 +1344,8 @@ actor FitMatchServerAuthorityCoordinator {
                 referenceClosetItemID: reference.closetItemID,
                 targetProductID: authorization.target.productID,
                 targetVariantID: targetVariantID,
-                manualExplicit: allowExtended
+                manualExplicit: allowExtended,
+                requestedComparisonGroupCode: authorization.requestedComparisonGroupCode
             )
             try Task.checkCancellation()
             guard value.allowed,
@@ -1315,7 +1383,8 @@ actor FitMatchServerAuthorityCoordinator {
                 effectiveAuthorityFingerprint: exactCandidates?
                     .effectiveAuthorityFingerprint,
                 personalOverrideRevision: exactCandidates?
-                    .personalOverrideRevision
+                    .personalOverrideRevision,
+                requestedComparisonGroupCode: authorization.requestedComparisonGroupCode
             )
         )
         try Task.checkCancellation()

@@ -17,6 +17,7 @@ struct CompareFlowSheet: View {
     @State private var productURL = ""
     @State private var errorMessage: String?
     @State private var selectedReferenceItemID: UUID?
+    @State private var selectedComparisonGroup: FitMatchComparisonGroup?
     @State private var statusMessage: String?
     @State private var registrationRoute: CompareProductRegistrationRoute?
     @State private var insufficientEvidence: InsufficientComparisonEvidence?
@@ -118,6 +119,8 @@ struct CompareFlowSheet: View {
                     loadingContent
                 case .categoryConfirmation:
                     categoryConfirmationContent
+                case .comparisonGroupSelection:
+                    comparisonGroupSelectionContent
                 case .missingReference:
                     missingReferenceContent
                 case .comparisonSummary:
@@ -412,6 +415,38 @@ private extension CompareFlowSheet {
             return .loading
         }
         return viewModel.analysisPhase.rawValue > phase.rawValue ? .done : .waiting
+    }
+
+    var comparisonGroupSelectionContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sheetHeader(
+                title: "비교할 그룹을 선택해 주세요",
+                subtitle: "이 상품과 비교할 내 옷의 그룹을 선택해 주세요."
+            )
+            if let product = currentProduct { productCompactCard(product) }
+            FitMatchCard {
+                VStack(spacing: 10) {
+                    ForEach(FitMatchComparisonGroup.allCases) { group in
+                        Button { selectedComparisonGroup = group } label: {
+                            HStack {
+                                Text(group.displayName).font(.subheadline.weight(.bold))
+                                Spacer()
+                                if selectedComparisonGroup == group { Image(systemName: "checkmark") }
+                            }
+                            .padding(.horizontal, 14).frame(height: 48)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            Button("비교할 내 옷 보기") {
+                guard let selectedComparisonGroup else { return }
+                viewModel.selectComparisonGroupForCurrentComparison(selectedComparisonGroup)
+                continueComparisonAfterProductInput()
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(selectedComparisonGroup == nil)
+        }
     }
 
     var missingReferenceContent: some View {
@@ -2053,6 +2088,10 @@ private extension CompareFlowSheet {
         }
 
         guard didLoad else {
+            if viewModel.requiresComparisonGroupSelection {
+                setStep(.comparisonGroupSelection)
+                return
+            }
             if viewModel.hasServerReviewRequiredAuthority {
                 if viewModel.reviewRecoveryContract != nil {
                     errorMessage = nil
@@ -2086,7 +2125,13 @@ private extension CompareFlowSheet {
     }
 
     func continueComparisonAfterProductInput() {
-        guard viewModel.hasServerConfirmedAuthority else {
+        if viewModel.requiresComparisonGroupSelection,
+           viewModel.requestedComparisonGroupCode == nil {
+            setStep(.comparisonGroupSelection)
+            return
+        }
+        guard viewModel.hasServerConfirmedAuthority
+                || viewModel.requestedComparisonGroupCode != nil else {
             errorMessage = viewModel.errorMessage
                 ?? "서버에서 상품 분류를 확정하지 못해 비교할 수 없습니다."
             setStep(.error)
@@ -2579,6 +2624,7 @@ private enum CompareFlowStep: Equatable {
     case start
     case loading
     case categoryConfirmation
+    case comparisonGroupSelection
     case missingReference
     case comparisonSummary
     case closetSelection
@@ -2595,6 +2641,7 @@ private enum CompareFlowStep: Equatable {
         case .start: return "start"
         case .loading: return "loading"
         case .categoryConfirmation: return "categoryConfirmation"
+        case .comparisonGroupSelection: return "comparisonGroupSelection"
         case .missingReference: return "missingReference"
         case .comparisonSummary: return "comparisonSummary"
         case .closetSelection: return "closetSelection"
@@ -2609,6 +2656,7 @@ private enum CompareFlowStep: Equatable {
         case .start: return "비교 시작"
         case .loading: return "상품 분석"
         case .categoryConfirmation: return "분류 확인"
+        case .comparisonGroupSelection: return "비교 그룹 선택"
         case .missingReference: return "비교할 옷 선택 안내"
         case .comparisonSummary: return "내 옷 비교 목록"
         case .closetSelection: return "비교할 옷 직접 선택"

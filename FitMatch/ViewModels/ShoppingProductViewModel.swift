@@ -104,6 +104,9 @@ final class ShoppingProductViewModel: ObservableObject {
     /// It is owned by CompareFlowSheet and invalidated when that sheet, its
     /// request generation, or its authenticated user changes.
     private var activeComparisonRequestID: UUID?
+    /// A one-comparison choice for an unmapped retailer category. This is not
+    /// product, observation, or category-mapping authority.
+    private(set) var requestedComparisonGroupCode: String?
     private var parsedProductForServerAuthority: ParsedProductInfo?
     /// Frozen once per product-load context. All transport retries and
     /// comparison authorization in that context reuse the same observed_at
@@ -285,6 +288,7 @@ final class ShoppingProductViewModel: ObservableObject {
         databaseShadowState = .idle
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
+        requestedComparisonGroupCode = nil
         parsedProductForServerAuthority = nil
         frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
@@ -397,6 +401,7 @@ final class ShoppingProductViewModel: ObservableObject {
         databaseShadowState = .idle
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
+        requestedComparisonGroupCode = nil
         parsedProductForServerAuthority = nil
         frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
@@ -1279,6 +1284,19 @@ final class ShoppingProductViewModel: ObservableObject {
         return false
     }
 
+    var requiresComparisonGroupSelection: Bool {
+        guard case .reviewRequired(let authority) = serverAuthorityState,
+              authority.runtime.vnext?.comparisonGroup?.groupCode == nil,
+              authority.classification.authorityStatus != "not_applicable" else {
+            return false
+        }
+        return true
+    }
+
+    func selectComparisonGroupForCurrentComparison(_ group: FitMatchComparisonGroup) {
+        requestedComparisonGroupCode = group.rawValue
+    }
+
     @discardableResult
     func beginReviewRecoveryReselection() async -> Bool {
         guard !Task.isCancelled else { return false }
@@ -1506,6 +1524,11 @@ final class ShoppingProductViewModel: ObservableObject {
         return authority
     }
 
+    private var reviewRequiredServerAuthority: FitMatchServerProductAuthority? {
+        guard case .reviewRequired(let authority) = serverAuthorityState else { return nil }
+        return authority
+    }
+
     /// Fetches the complete DB-issued reference plan. Local Closet rows are
     /// only a projection for the UI, so a missing projection is fail-closed
     /// rather than an opportunity to choose a different representative item.
@@ -1514,7 +1537,8 @@ final class ShoppingProductViewModel: ObservableObject {
         comparisonRequestID: UUID? = nil
     ) async -> FitMatchServerReferenceSelectionPlan? {
         guard isCurrentComparison(comparisonRequestID) else { return nil }
-        guard let authority = confirmedServerAuthority else {
+        guard let authority = confirmedServerAuthority
+            ?? (requestedComparisonGroupCode == nil ? nil : reviewRequiredServerAuthority) else {
             errorMessage = "서버에서 상품 분류를 확정하지 못해 비교할 수 없습니다."
             return nil
         }
@@ -1532,7 +1556,8 @@ final class ShoppingProductViewModel: ObservableObject {
             let plan = try await coordinator.referenceSelectionPlan(
                 targetRequest: request,
                 targetObservation: frozenObservation(for: product),
-                localClientItemIDs: localClientItemIDs
+                localClientItemIDs: localClientItemIDs,
+                requestedComparisonGroupCode: requestedComparisonGroupCode
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
             return plan
@@ -1629,8 +1654,8 @@ final class ShoppingProductViewModel: ObservableObject {
         comparisonRequestID: UUID? = nil
     ) async -> FitMatchServerComparisonPermit? {
         guard isCurrentComparison(comparisonRequestID) else { return nil }
-        guard let readiness = serverComparisonReadiness,
-              readiness.isReady else {
+        guard serverComparisonReadiness?.isReady == true
+            || requestedComparisonGroupCode != nil else {
             errorMessage = serverComparisonReadiness?.userMessage
                 ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
             return nil
@@ -1672,7 +1697,8 @@ final class ShoppingProductViewModel: ObservableObject {
                     : item.sourceProduct?.fitMatchDatabaseResolutionRequest(),
                 referenceObservation: usesExplicitUserAuthority
                     ? nil
-                    : item.sourceProduct?.fitMatchProductObservationRequest()
+                    : item.sourceProduct?.fitMatchProductObservationRequest(),
+                requestedComparisonGroupCode: requestedComparisonGroupCode
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
             let allowed = authorization.decision == .automatic
