@@ -541,9 +541,12 @@ final class ShoppingProductViewModel: ObservableObject {
         databaseShadowState = .checking
         serverAuthorityState = .resolving
         do {
-            let authority = try await serverAuthorityCoordinator.resolveProductAuthority(
+            guard let observation = frozenObservation(for: product) else {
+                throw FitMatchServerAuthorityError.missingObservationForPromotion
+            }
+            let authority = try await serverAuthorityCoordinator.resolveFreshRetailerProductAuthority(
                 request: request,
-                observation: frozenObservation(for: product)
+                observation: observation
             )
             guard isCurrentLoad(loadID) else { return false }
             switch authority.status {

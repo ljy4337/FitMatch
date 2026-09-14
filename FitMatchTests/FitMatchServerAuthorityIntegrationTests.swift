@@ -4,6 +4,29 @@ import Testing
 
 @MainActor
 struct FitMatchServerAuthorityIntegrationTests {
+    @Test func freshRetailerProductPersistsObservationBeforeRuntimeRead() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "E486610",
+            detail: "long_sleeve",
+            family: "shirt",
+            length: "long_sleeve"
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [],
+            observations: [fixture.observationResponse],
+            runtimes: [fixture.runtime]
+        )
+        let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+
+        let authority = try await coordinator.resolveFreshRetailerProductAuthority(
+            request: fixture.request,
+            observation: fixture.observationRequest
+        )
+
+        #expect(authority.productID == fixture.productID)
+        #expect(await remote.eventLog == ["observation", "runtime"])
+    }
+
     @Test func freshRetailerEvidenceIsSubmittedOnceForTheFrozenObservation() async throws {
         let fixture = AuthorityFixture.confirmed(
             externalProductID: "E482514",

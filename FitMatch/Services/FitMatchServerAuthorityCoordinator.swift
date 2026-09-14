@@ -673,6 +673,35 @@ actor FitMatchServerAuthorityCoordinator {
         )
     }
 
+    /// Persists a retailer API snapshot before reading any existing runtime.
+    /// Ingestion owns idempotency and returns the exact product identity used
+    /// for the subsequent authoritative runtime read.
+    func resolveFreshRetailerProductAuthority(
+        request: FitMatchProductResolutionRequest,
+        observation: FitMatchProductObservationRequest
+    ) async throws -> FitMatchServerProductAuthority {
+        try Task.checkCancellation()
+        let productID = try await promote(
+            request: request,
+            observation: observation,
+            expectedProductID: nil
+        )
+        try Task.checkCancellation()
+        let runtime = try await remote.fetchProductRuntime(request)
+        try Task.checkCancellation()
+        guard runtime.runtimeState != "classification_promotion_required" else {
+            throw FitMatchServerAuthorityError.inconsistentRuntimeState(
+                state: runtime.runtimeState,
+                status: runtime.classification?.status ?? "missing"
+            )
+        }
+        return try validatedAuthority(
+            runtime,
+            request: request,
+            expectedProductID: productID
+        )
+    }
+
     /// Reads current runtime after a user mutation without creating or
     /// resubmitting an observation. This preserves the mutation contract's
     /// evidence fingerprint and revision.
