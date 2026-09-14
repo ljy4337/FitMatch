@@ -858,7 +858,12 @@ struct AddComparedProductToClosetSheet: View {
             categoryCode: selectedCategoryCode,
             detailCategory: selectedDetailCategory,
             detailCategoryCode: selectedDetailCategoryCode,
-            comparisonGroupCode: selectedComparisonGroup?.rawValue,
+            // A server-suggested group is presentation only.  Omitting this
+            // key preserves RETAILER_CATEGORY; the DB treats its presence as
+            // an explicit Closet choice.
+            comparisonGroupCode: didExplicitlyChangeComparisonGroup
+                ? selectedComparisonGroup?.rawValue
+                : nil,
             isRepresentative: false,
             didExplicitlyChangeClassification: didExplicitlyChangeClassification,
             didExplicitlyChangeAudience: didExplicitlyChangeAudience,

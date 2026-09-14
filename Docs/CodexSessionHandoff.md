@@ -1,5 +1,11 @@
 # FitMatch 최신 누적 인수인계서
 
+## 2026-09-14 Closet comparison-group source attribution / NOT APPLIED
+
+- `AddComparedProductToClosetSheet` now keeps the server-provided group in `selectedComparisonGroup` for display, but sends `comparison_group_code` only when `didExplicitlyChangeComparisonGroup` is true. This preserves the existing picker and group-decision UX.
+- The existing payload encoder omits a nil `comparison_group_code` key. The existing DB wrapper treats key presence as explicit, so an unchanged retailer-mapped group is re-evaluated and stored as `RETAILER_CATEGORY`; a user selection/change is stored as `USER_SELECTED`.
+- No database SQL or migration was changed or applied. `xcrun swiftc -parse` for the sheet, registration, resolver, and focused test passed; `git diff --check` and protected-scroll checks passed. The focused `xcodebuild test` was attempted but did not complete: its original result bundle remained incomplete and a retry failed because that build's DerivedData database was locked. No database round trip was run. No Production write, commit, or push.
+
 ## 2026-09-12 UNIQLO collector 403 path correction / API LISTING INPUT STILL MISSING
 
 - The external collector at `/Users/jinyoung/Developer/RetailerCatalogCollectorLocal/collector.py` no longer invokes the separate `category_corpus` urllib audit path from `discover_uniqlo_verified`; normal UNIQLO discovery is explicitly routed through the collector's existing Playwright/listing-response capture path. Product detail and size-chart endpoints, local catalog schema, and MUSINSA/ZARA flows were not changed.

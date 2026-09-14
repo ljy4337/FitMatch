@@ -1292,6 +1292,70 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(override["body_length_code"] is NSNull)
     }
 
+    @Test func closetComparisonGroupPayloadOmitsAutomaticGroupAndKeepsExplicitChoices() throws {
+        let product = Product(
+            id: UUID(),
+            name: "그룹 출처 테스트 티셔츠",
+            category: .top,
+            productCode: "GROUP-SOURCE",
+            sourceURLString: "https://www.musinsa.com/products/GROUP-SOURCE",
+            metadata: ProductMetadata(genderCodes: ["MEN"]),
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            source: .catalog
+        )
+        product.garmentTypeRawValue = "tshirt"
+        product.sleeveTypeRawValue = "short_sleeve"
+        product.markClassificationAuthority(.serverConfirmed)
+        let size = ProductSize(
+            id: UUID(),
+            name: "M",
+            measurements: .init(shoulder: 47, chest: 53, totalLength: 69, sleeveLength: 23),
+            product: product
+        )
+        product.sizes = [size]
+        let identity = FitMatchClosetRegistrationServerIdentity(
+            productID: UUID(), productVariantID: UUID(), productSizeID: UUID()
+        )
+
+        func encodedRequest(comparisonGroupCode: String?) throws -> [String: Any] {
+            let request = FitMatchComparedProductClosetRegistration.SaveRequest(
+                product: product,
+                selectedSize: size,
+                serverIdentity: identity,
+                activeClosetItems: [],
+                brandName: "테스트",
+                gender: .men,
+                genderCode: "male",
+                productName: product.name,
+                category: .top,
+                categoryCode: "tops",
+                detailCategory: .shortSleeve,
+                detailCategoryCode: "short_sleeve",
+                comparisonGroupCode: comparisonGroupCode,
+                isRepresentative: false,
+                didExplicitlyChangeClassification: false
+            )
+            let submission = try FitMatchComparedProductClosetRegistration
+                .prepareServerFirstSubmission(request)
+            return try #require(
+                JSONSerialization.jsonObject(
+                    with: FitMatchSupabaseDomainClient.encodedVNextClosetPayload(
+                        submission.remoteRequest
+                    )
+                ) as? [String: Any]
+            )
+        }
+
+        // Server A remains presentation-only; no JSON key makes the DB
+        // resolve the retailer mapping and retain RETAILER_CATEGORY.
+        #expect(try encodedRequest(comparisonGroupCode: nil)["comparison_group_code"] == nil)
+        // User changes A -> B, and a user selection from an unmapped category
+        // to C, are both explicit mutation choices.
+        #expect(try encodedRequest(comparisonGroupCode: "B")["comparison_group_code"] as? String == "B")
+        #expect(try encodedRequest(comparisonGroupCode: "C")["comparison_group_code"] as? String == "C")
+    }
+
     @Test func linkedOuterwearSubmissionPreservesServerSleeveAndBodyAxes() throws {
         let product = Product(
             id: UUID(),
