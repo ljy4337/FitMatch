@@ -107,6 +107,7 @@ final class ShoppingProductViewModel: ObservableObject {
     /// A one-comparison choice for an unmapped retailer category. This is not
     /// product, observation, or category-mapping authority.
     private(set) var requestedComparisonGroupCode: String?
+    private var validatedSessionComparisonGroup: VNextComparisonGroupDTO?
     private var parsedProductForServerAuthority: ParsedProductInfo?
     /// Frozen once per product-load context. All transport retries and
     /// comparison authorization in that context reuse the same observed_at
@@ -289,6 +290,7 @@ final class ShoppingProductViewModel: ObservableObject {
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
         requestedComparisonGroupCode = nil
+        validatedSessionComparisonGroup = nil
         parsedProductForServerAuthority = nil
         frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
@@ -402,6 +404,7 @@ final class ShoppingProductViewModel: ObservableObject {
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
         requestedComparisonGroupCode = nil
+        validatedSessionComparisonGroup = nil
         parsedProductForServerAuthority = nil
         frozenProductObservation = nil
         closetRegistrationIdentitiesByDisplaySizeID.removeAll()
@@ -442,6 +445,8 @@ final class ShoppingProductViewModel: ObservableObject {
     func cancelProductLoading() {
         activeLoadID = nil
         activeComparisonRequestID = nil
+        requestedComparisonGroupCode = nil
+        validatedSessionComparisonGroup = nil
         databaseShadowState = .idle
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
@@ -1294,7 +1299,19 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     func selectComparisonGroupForCurrentComparison(_ group: FitMatchComparisonGroup) {
+        guard requestedComparisonGroupCode != group.rawValue else { return }
+        activeComparisonRequestID = nil
         requestedComparisonGroupCode = group.rawValue
+        validatedSessionComparisonGroup = nil
+        resetClosetComparisonBatch()
+    }
+
+    var hasServerValidatedSessionComparisonContext: Bool {
+        guard let requestedComparisonGroupCode,
+              let context = validatedSessionComparisonGroup else { return false }
+        return context.groupCode == requestedComparisonGroupCode
+            && context.source == "SESSION_USER_SELECTED"
+            && context.authorityFingerprint?.isEmpty == false
     }
 
     @discardableResult
@@ -1542,7 +1559,8 @@ final class ShoppingProductViewModel: ObservableObject {
             errorMessage = "서버에서 상품 분류를 확정하지 못해 비교할 수 없습니다."
             return nil
         }
-        guard authority.comparisonReadiness.isReady else {
+        guard requestedComparisonGroupCode != nil
+                || authority.comparisonReadiness.isReady else {
             errorMessage = authority.comparisonReadiness.userMessage
             return nil
         }
@@ -1560,6 +1578,16 @@ final class ShoppingProductViewModel: ObservableObject {
                 requestedComparisonGroupCode: requestedComparisonGroupCode
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
+            if let requestedComparisonGroupCode {
+                guard plan.targetComparisonGroupCode == requestedComparisonGroupCode,
+                      plan.targetComparisonGroup?.source == "SESSION_USER_SELECTED" else {
+                    errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+                    return nil
+                }
+                validatedSessionComparisonGroup = plan.targetComparisonGroup
+            } else {
+                validatedSessionComparisonGroup = nil
+            }
             return plan
         } catch is CancellationError {
             return nil
@@ -1587,8 +1615,7 @@ final class ShoppingProductViewModel: ObservableObject {
     ) -> FitMatchClosetComparisonBatchSummary? {
         guard isCurrentComparison(comparisonRequestID),
               product.id == referenceSelectionPlan.target.productID,
-              let rawGroup = referenceSelectionPlan.target.runtime.vnext?
-                .comparisonGroup?.groupCode,
+              let rawGroup = referenceSelectionPlan.targetComparisonGroupCode,
               let comparisonGroup = FitMatchComparisonGroup(rawValue: rawGroup) else {
             resetClosetComparisonBatch()
             return nil
@@ -1795,7 +1822,8 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         }
 
-        guard hasServerComparisonReadyAuthority else {
+        guard hasServerComparisonReadyAuthority
+                || hasServerValidatedSessionComparisonContext else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
             errorMessage = serverComparisonReadiness?.userMessage
                 ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
@@ -1885,7 +1913,8 @@ final class ShoppingProductViewModel: ObservableObject {
         let metricMode = FitMatchMetricComparisonMode.selectedReference
         metricsRecorder.record(.comparisonAttempt(mode: metricMode))
 
-        guard hasServerComparisonReadyAuthority else {
+        guard hasServerComparisonReadyAuthority
+                || hasServerValidatedSessionComparisonContext else {
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .invalidProduct))
             errorMessage = serverComparisonReadiness?.userMessage
                 ?? FitMatchComparisonBlockReason.serverUnavailable.userMessage
@@ -2070,6 +2099,9 @@ final class ShoppingProductViewModel: ObservableObject {
         isClosetRegistration: Bool = false
     ) -> Product? {
         let serverClassification = confirmedServerAuthority?.classification
+        let sessionGroup = validatedSessionComparisonGroup
+        let serverProductID = confirmedServerAuthority?.productID
+            ?? (sessionGroup == nil ? nil : reviewRequiredServerAuthority?.productID)
         let localHint = ParsedClosetClassification.resolve(
             category: category,
             detailCategory: detailCategory,
@@ -2096,7 +2128,7 @@ final class ShoppingProductViewModel: ObservableObject {
                     detailCategory: resolvedDetailCategory
                 )
             }
-            if hasServerComparisonReadyAuthority {
+            if hasServerComparisonReadyAuthority || sessionGroup != nil {
                 return option.makeSizeOptionForServerConfirmedComparison(
                     category: resolvedCategory,
                     detailCategory: resolvedDetailCategory
@@ -2112,7 +2144,7 @@ final class ShoppingProductViewModel: ObservableObject {
         }
 
         let product = Product(
-            id: confirmedServerAuthority?.productID ?? UUID(),
+            id: serverProductID ?? UUID(),
             name: productName.trimmed,
             brand: brand,
             category: resolvedCategory,
@@ -2196,6 +2228,51 @@ final class ShoppingProductViewModel: ObservableObject {
                     ? .userExplicit : .serverConfirmed,
                 sourceIdentity: serverClassification.classificationID?.uuidString
                     ?? serverClassification.method
+            )
+            return product
+        }
+
+        if let sessionGroup,
+           sessionGroup.groupCode == requestedComparisonGroupCode,
+           sessionGroup.source == "SESSION_USER_SELECTED",
+           let categoryCode = sessionGroup.categoryCode,
+           let garmentTypeCode = sessionGroup.garmentTypeCode,
+           let policyCode = sessionGroup.comparisonPolicyCode,
+           let authorityFingerprint = sessionGroup.authorityFingerprint {
+            product.category = ClothingCategory.fromTaxonomyCode(categoryCode)
+            product.categoryCode = categoryCode
+            product.garmentTypeRawValue = garmentTypeCode
+            product.genderCodes = reviewRequiredServerAuthority?.runtime.vnext?
+                .product?.audienceCode ?? product.genderCodes
+            product.canonicalPolicyVersion = sessionGroup.policyVersion
+            product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
+                CanonicalComparisonProfile(
+                    decision: .confirmed,
+                    semanticCategoryCode: categoryCode,
+                    semanticGarmentType: garmentTypeCode,
+                    comparisonFamily: policyCode,
+                    appComparisonFamily: policyCode,
+                    lengthAxes: CanonicalLengthAxes(
+                        sleeve: "not_applicable",
+                        pants: "not_applicable",
+                        leggings: "not_applicable",
+                        skirt: "not_applicable",
+                        body: "not_applicable"
+                    ),
+                    constructionType: reviewRequiredServerAuthority?.runtime.vnext?
+                        .product?.productStructureCode ?? "UNKNOWN",
+                    eligibility: true,
+                    requiredMeasurements: [],
+                    optionalMeasurements: [],
+                    excludedMeasurements: [],
+                    policyVersion: sessionGroup.policyVersion ?? "fitmatch-vnext-session-group",
+                    resolutionMethod: "fitmatch_vnext_session_group",
+                    sourceIdentity: authorityFingerprint
+                )
+            )
+            product.markClassificationAuthority(
+                .serverSessionComparison,
+                sourceIdentity: authorityFingerprint
             )
             return product
         }

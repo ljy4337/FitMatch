@@ -289,6 +289,15 @@ struct RecommendationService {
             return nil
         }
 
+        if permit.referenceAuthorization.requestedComparisonGroupCode != nil {
+            return makeSessionGroupAuthorizedComparisonTarget(
+                from: displayedProduct,
+                permit: permit,
+                begin: begin,
+                runtimeProduct: runtimeProduct
+            )
+        }
+
         let tuple = VNextRuntimeClassificationTuple(
             product: runtimeProduct,
             effective: runtime.effectiveClassification
@@ -383,6 +392,101 @@ struct RecommendationService {
         product.sizes = begin.snapshot.target.candidates.enumerated().map {
             index,
             candidate in
+            makeServerAuthorizedPresentationSize(
+                candidate,
+                displayOrder: index,
+                product: product
+            )
+        }
+        copyRetailerSizePresentation(from: displayedProduct, to: product)
+        return product
+    }
+
+    private func makeSessionGroupAuthorizedComparisonTarget(
+        from displayedProduct: Product,
+        permit: FitMatchServerComparisonPermit,
+        begin: VNextBeginComparisonDTO,
+        runtimeProduct: VNextRuntimeProductDTO
+    ) -> Product? {
+        let target = begin.snapshot.target
+        guard let requestedGroup = permit.referenceAuthorization
+                .requestedComparisonGroupCode,
+              target.classificationStatus == "CONFIRMED",
+              target.classificationSource == "SESSION_USER_SELECTED",
+              target.comparisonGroup?.groupCode == requestedGroup,
+              target.comparisonGroup?.source == "SESSION_USER_SELECTED",
+              let categoryCode = target.categoryCode,
+              let garmentCode = target.garmentTypeCode,
+              let audienceCode = target.audienceCode,
+              let policyCode = target.comparisonGroup?.comparisonPolicyCode,
+              policyCode == begin.snapshot.policy.policyCode,
+              target.comparisonGroup?.authorityFingerprint
+                == begin.effectiveAuthorityFingerprint,
+              Set(target.authorizedCandidateProductSizeIDs)
+                == Set(begin.authorizedCandidateProductSizeIDs),
+              !target.candidates.isEmpty else {
+            return nil
+        }
+
+        let product = Product(
+            id: permit.referenceAuthorization.target.productID,
+            name: displayedProduct.name,
+            brand: displayedProduct.brand,
+            category: ClothingCategory.fromTaxonomyCode(categoryCode),
+            productCode: displayedProduct.productCode,
+            sourceURLString: displayedProduct.sourceURLString,
+            imageURLString: displayedProduct.imageURLString,
+            sourceType: displayedProduct.sourceType,
+            sourceName: displayedProduct.sourceName,
+            source: displayedProduct.source,
+            notes: displayedProduct.notes,
+            createdAt: displayedProduct.createdAt,
+            updatedAt: Date()
+        )
+        copyRetailerPresentation(from: displayedProduct, to: product)
+        product.categoryRawValue = ClothingCategory.fromTaxonomyCode(categoryCode).rawValue
+        product.categoryCode = categoryCode
+        product.normalizedProductTypeCode = garmentCode
+        product.garmentTypeRawValue = garmentCode
+        product.genderCodes = audienceCode
+        product.constructionTypeRawValue = target.productStructureCode
+        product.canonicalPolicyVersion = target.comparisonGroup?.policyVersion
+            ?? begin.snapshot.policy.policyVersion
+        product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
+            CanonicalComparisonProfile(
+                decision: .confirmed,
+                semanticCategoryCode: categoryCode,
+                semanticGarmentType: garmentCode,
+                comparisonFamily: policyCode,
+                appComparisonFamily: policyCode,
+                lengthAxes: CanonicalLengthAxes(
+                    sleeve: target.sleeveLengthCode ?? "not_applicable",
+                    pants: target.lowerLengthCode ?? "not_applicable",
+                    leggings: "not_applicable",
+                    skirt: "not_applicable",
+                    body: target.bodyLengthCode ?? "not_applicable"
+                ),
+                constructionType: target.productStructureCode
+                    ?? runtimeProduct.productStructureCode,
+                eligibility: true,
+                requiredMeasurements: begin.snapshot.policy.metrics.compactMap(
+                    \.measurementCode
+                ),
+                optionalMeasurements: [],
+                excludedMeasurements: begin.snapshot.excludedMeasurementCodes,
+                policyVersion: target.comparisonGroup?.policyVersion
+                    ?? begin.snapshot.policy.policyVersion
+                    ?? "fitmatch_vnext",
+                resolutionMethod: FitMatchClassificationAuthorityProvenance
+                    .serverSessionComparison.rawValue,
+                sourceIdentity: begin.effectiveAuthorityFingerprint
+            )
+        )
+        product.markClassificationAuthority(
+            .serverSessionComparison,
+            sourceIdentity: begin.effectiveAuthorityFingerprint
+        )
+        product.sizes = target.candidates.enumerated().map { index, candidate in
             makeServerAuthorizedPresentationSize(
                 candidate,
                 displayOrder: index,
@@ -497,7 +601,8 @@ struct RecommendationService {
               begin.resultStatus == "PENDING",
               begin.snapshot.authorization.allowed,
               begin.snapshot.target.classificationStatus == "CONFIRMED",
-              permit.referenceAuthorization.target.status == .confirmed,
+              (permit.referenceAuthorization.target.status == .confirmed
+                || permit.referenceAuthorization.requestedComparisonGroupCode != nil),
               permit.referenceAuthorization.target.productID == product.id,
               begin.snapshot.target.productID == product.id,
               let targetVariantID = permit.referenceAuthorization.targetVariantID,
@@ -554,6 +659,30 @@ struct RecommendationService {
         begin: VNextBeginComparisonDTO,
         effectiveAuthorityFingerprint: String
     ) -> Bool {
+        if product.classificationAuthorityProvenance == .serverSessionComparison {
+            let target = begin.snapshot.target
+            guard let requestedGroup = permit.referenceAuthorization
+                    .requestedComparisonGroupCode,
+                  permit.referenceAuthorization.target.status == .reviewRequired,
+                  target.classificationSource == "SESSION_USER_SELECTED",
+                  target.comparisonGroup?.groupCode == requestedGroup,
+                  target.comparisonGroup?.source == "SESSION_USER_SELECTED",
+                  target.comparisonGroup?.authorityFingerprint
+                    == effectiveAuthorityFingerprint,
+                  snapshotString(
+                    begin.snapshot.inputSnapshot,
+                    key: "requested_comparison_group_code"
+                  ) == requestedGroup,
+                  let authority = begin.snapshot.authoritySnapshot.objectValue,
+                  authority["authority_fingerprint"]?.stringValue
+                    == effectiveAuthorityFingerprint,
+                  authority["comparison_group_at_begin"]?.objectValue?["group_code"]?
+                    .stringValue == requestedGroup else {
+                return false
+            }
+            return true
+        }
+
         guard let effective = permit.referenceAuthorization.target.runtime.vnext?
             .effectiveClassification,
               effective.productID == product.id,

@@ -733,6 +733,12 @@ nonisolated struct VNextComparisonGroupDTO: Decodable, Equatable, Sendable {
     let displayName: String?
     let source: String?
     let policyVersion: String?
+    let categoryCode: String?
+    let garmentTypeCode: String?
+    let comparisonPolicyCode: String?
+    let policyChecksum: String?
+    let authorityVersion: String?
+    let authorityFingerprint: String?
 
     enum CodingKeys: String, CodingKey {
         case status
@@ -740,6 +746,12 @@ nonisolated struct VNextComparisonGroupDTO: Decodable, Equatable, Sendable {
         case displayName = "display_name"
         case source
         case policyVersion = "policy_version"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case comparisonPolicyCode = "comparison_policy_code"
+        case policyChecksum = "policy_checksum"
+        case authorityVersion = "authority_version"
+        case authorityFingerprint = "authority_fingerprint"
     }
 }
 
@@ -996,11 +1008,42 @@ nonisolated struct VNextReferenceCandidatesDTO: Decodable, Equatable, Sendable {
     let candidates: [VNextReferenceCandidateDTO]
     let blocked: [VNextReferenceCandidateDTO]
     let status: String
+    let targetComparisonGroup: VNextComparisonGroupDTO?
+    let effectiveClassification: VNextEffectiveTargetClassificationDTO?
 
     enum CodingKeys: String, CodingKey {
         case targetProductID = "target_product_id"
         case targetVariantID = "target_variant_id"
         case candidates, blocked, status
+        case targetComparisonGroup = "target_comparison_group"
+        case comparisonGroup = "comparison_group"
+        case effectiveClassification = "effective_classification"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        targetProductID = try container.decode(UUID.self, forKey: .targetProductID)
+        targetVariantID = try container.decode(UUID.self, forKey: .targetVariantID)
+        candidates = try container.decodeIfPresent(
+            [VNextReferenceCandidateDTO].self,
+            forKey: .candidates
+        ) ?? []
+        blocked = try container.decodeIfPresent(
+            [VNextReferenceCandidateDTO].self,
+            forKey: .blocked
+        ) ?? []
+        status = try container.decode(String.self, forKey: .status)
+        targetComparisonGroup = try container.decodeIfPresent(
+            VNextComparisonGroupDTO.self,
+            forKey: .targetComparisonGroup
+        ) ?? container.decodeIfPresent(
+            VNextComparisonGroupDTO.self,
+            forKey: .comparisonGroup
+        )
+        effectiveClassification = try container.decodeIfPresent(
+            VNextEffectiveTargetClassificationDTO.self,
+            forKey: .effectiveClassification
+        )
     }
 }
 
@@ -1061,6 +1104,8 @@ nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendabl
     let effectiveAuthorityFingerprint: String?
     let effectiveSource: String?
     let personalOverrideRevision: Int?
+    let candidateAuthorityVersion: String?
+    let targetComparisonGroup: VNextComparisonGroupDTO?
 
     enum CodingKeys: String, CodingKey {
         case allowed, decision, mode, reason, candidates
@@ -1073,6 +1118,8 @@ nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendabl
         case effectiveAuthorityFingerprint = "effective_authority_fingerprint"
         case effectiveSource = "classification_source"
         case personalOverrideRevision = "override_revision"
+        case candidateAuthorityVersion = "candidate_authority_version"
+        case targetComparisonGroup = "target_comparison_group"
     }
 }
 
@@ -1113,7 +1160,12 @@ nonisolated struct VNextComparisonTargetSnapshotDTO: Decodable, Equatable, Senda
     let authorizedCandidateProductSizeIDs: [UUID]
     let candidateAuthorityFingerprint: String?
     let classificationStatus: String
+    let classificationSource: String?
+    let categoryCode: String?
     let garmentTypeCode: String?
+    let audienceCode: String?
+    let productStructureCode: String?
+    let comparisonGroup: VNextComparisonGroupDTO?
     let sleeveLengthCode: String?
     let lowerLengthCode: String?
     let bodyLengthCode: String?
@@ -1125,7 +1177,12 @@ nonisolated struct VNextComparisonTargetSnapshotDTO: Decodable, Equatable, Senda
         case authorizedCandidateProductSizeIDs = "authorized_candidate_product_size_ids"
         case candidateAuthorityFingerprint = "candidate_authority_fingerprint"
         case classificationStatus = "classification_status"
+        case classificationSource = "classification_source"
+        case categoryCode = "category_code"
         case garmentTypeCode = "garment_type_code"
+        case audienceCode = "audience_code"
+        case productStructureCode = "product_structure_code"
+        case comparisonGroup = "comparison_group"
         case sleeveLengthCode = "sleeve_length_code"
         case lowerLengthCode = "lower_length_code"
         case bodyLengthCode = "body_length_code"

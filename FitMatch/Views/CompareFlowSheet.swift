@@ -92,6 +92,10 @@ struct CompareFlowSheet: View {
         .onChange(of: authSession.authenticatedUserID) { _, _ in
             invalidateForegroundComparison()
             invalidateForegroundLoad()
+            selectedComparisonGroup = nil
+            serverReferenceSelectionPlan = nil
+            preparedComparison = nil
+            selectedReferenceItemID = nil
         }
         .sheet(item: $otherClosetComparisonRoute) { _ in
             OtherClosetComparisonSheet(
@@ -314,7 +318,8 @@ private extension CompareFlowSheet {
     var showsPersonalRecoveryActions: Bool {
         guard viewModel.hasActiveUserExplicitClassification else { return false }
         switch step {
-        case .categoryConfirmation, .missingReference, .closetSelection,
+        case .categoryConfirmation, .comparisonGroupSelection,
+             .missingReference, .closetSelection,
              .insufficientEvidence:
             return true
         case .start, .loading, .comparisonSummary, .result, .error:
@@ -441,6 +446,10 @@ private extension CompareFlowSheet {
             }
             Button("비교할 내 옷 보기") {
                 guard let selectedComparisonGroup else { return }
+                invalidateForegroundComparison()
+                serverReferenceSelectionPlan = nil
+                preparedComparison = nil
+                selectedReferenceItemID = nil
                 viewModel.selectComparisonGroupForCurrentComparison(selectedComparisonGroup)
                 continueComparisonAfterProductInput()
             }
@@ -499,11 +508,7 @@ private extension CompareFlowSheet {
                     }
 
                     SecondaryButton(title: "다른 상품 비교하기", systemImage: "arrow.left.arrow.right") {
-                        productURL = ""
-                        preparedComparison = nil
-                        errorMessage = nil
-                        statusMessage = nil
-                        setStep(.start)
+                        resetCompareFlowToStart()
                     }
                 } else {
                     PrimaryButton(title: "내 옷장에서 비교할 옷 선택", systemImage: "list.bullet.rectangle") {
@@ -1097,7 +1102,7 @@ private extension CompareFlowSheet {
                 } else if viewModel.isNetworkFailure {
                     startCompareTask(with: productURL)
                 } else {
-                    setStep(.start)
+                    resetCompareFlowToStart()
                 }
             }
         }
@@ -2064,6 +2069,7 @@ private extension CompareFlowSheet {
     }
 
     func prepareForProductLoad() {
+        selectedComparisonGroup = nil
         errorMessage = nil
         statusMessage = nil
         usesLegacySizeFailureScreen = false
@@ -2073,6 +2079,19 @@ private extension CompareFlowSheet {
         serverReferenceSelectionPlan = nil
         preparedComparison = nil
         setStep(.loading)
+    }
+
+    func resetCompareFlowToStart() {
+        invalidateForegroundComparison()
+        invalidateForegroundLoad()
+        selectedComparisonGroup = nil
+        selectedReferenceItemID = nil
+        serverReferenceSelectionPlan = nil
+        preparedComparison = nil
+        productURL = ""
+        errorMessage = nil
+        statusMessage = nil
+        setStep(.start)
     }
 
     func handleProductLoadCompletion(_ didLoad: Bool) {
@@ -2137,20 +2156,22 @@ private extension CompareFlowSheet {
             setStep(.error)
             return
         }
-        guard let readiness = viewModel.serverComparisonReadiness,
-              readiness.isReady else {
+        if viewModel.requestedComparisonGroupCode == nil,
+           viewModel.serverComparisonReadiness?.isReady != true {
             presentServerReadinessRecovery(
                 viewModel.serverComparisonReadiness
                     ?? .unavailable("server_authority_unavailable")
             )
             return
         }
-        guard let product = makeProduct(insertBrandIfNeeded: false), !product.sizes.isEmpty else {
+        guard let product = makeProduct(insertBrandIfNeeded: false),
+              !product.sizes.isEmpty else {
             errorMessage = "사이즈명과 실측값을 확인해 주세요."
             setStep(.error)
             return
         }
-        guard product.classificationAuthorityProvenance?.isComparisonAuthority == true else {
+        if viewModel.requestedComparisonGroupCode == nil,
+           product.classificationAuthorityProvenance?.isComparisonAuthority != true {
             errorMessage = "서버에서 확인된 상품만 비교할 수 있습니다."
             setStep(.error)
             return
@@ -2208,8 +2229,8 @@ private extension CompareFlowSheet {
             return
         }
         hasConfirmedComparisonCategory = false
-        guard let readiness = viewModel.serverComparisonReadiness,
-              readiness.isReady else {
+        if viewModel.requestedComparisonGroupCode == nil,
+           viewModel.serverComparisonReadiness?.isReady != true {
             presentServerReadinessRecovery(
                 viewModel.serverComparisonReadiness
                     ?? .unavailable("server_authority_unavailable")
@@ -2231,6 +2252,23 @@ private extension CompareFlowSheet {
             return
         }
 
+        let effectiveProduct: Product
+        if viewModel.requestedComparisonGroupCode != nil {
+            guard let sessionProduct = makeProduct(insertBrandIfNeeded: false),
+                  sessionProduct.id == plan.target.productID,
+                  sessionProduct.classificationAuthorityProvenance
+                    == .serverSessionComparison else {
+                serverReferenceSelectionPlan = nil
+                preparedComparison = nil
+                errorMessage = "서버가 확인한 비교 그룹을 상품에 적용하지 못했습니다."
+                setStep(.error)
+                return
+            }
+            effectiveProduct = sessionProduct
+        } else {
+            effectiveProduct = product
+        }
+
         guard let manualReferences = localReferenceProjection(
             for: plan.manualCandidates
         ) else {
@@ -2246,13 +2284,13 @@ private extension CompareFlowSheet {
 
         serverReferenceSelectionPlan = plan
         viewModel.prepareClosetComparisonBatch(
-            product: product,
+            product: effectiveProduct,
             userFits: userFits,
             referenceSelectionPlan: plan,
             comparisonRequestID: requestID
         )
         rebuildPreparedComparison(
-            using: product,
+            using: effectiveProduct,
             manualReferences: manualReferences
         )
 
@@ -2262,7 +2300,7 @@ private extension CompareFlowSheet {
 
         guard !viewModel.closetComparisonBatches.isEmpty else {
             selectedReferenceItemID = nil
-            logMissingReferenceDiagnostics(product: product)
+            logMissingReferenceDiagnostics(product: effectiveProduct)
             setStep(.missingReference)
             return
         }

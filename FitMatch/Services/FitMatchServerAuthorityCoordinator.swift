@@ -73,7 +73,10 @@ extension FitMatchServerAuthorityRemoteServicing {
         guard requestedComparisonGroupCode == nil else {
             throw FitMatchServerAuthorityError.comparisonBeginUnavailable
         }
-        try await findReferenceCandidates(targetProductID: targetProductID, targetVariantID: targetVariantID)
+        return try await findReferenceCandidates(
+            targetProductID: targetProductID,
+            targetVariantID: targetVariantID
+        )
     }
 
     func eligibleCandidateSizes(
@@ -92,10 +95,12 @@ extension FitMatchServerAuthorityRemoteServicing {
         guard requestedComparisonGroupCode == nil else {
             throw FitMatchServerAuthorityError.comparisonBeginUnavailable
         }
-        try await eligibleCandidateSizes(referenceClosetItemID: referenceClosetItemID,
-                                         targetProductID: targetProductID,
-                                         targetVariantID: targetVariantID,
-                                         manualExplicit: manualExplicit)
+        return try await eligibleCandidateSizes(
+            referenceClosetItemID: referenceClosetItemID,
+            targetProductID: targetProductID,
+            targetVariantID: targetVariantID,
+            manualExplicit: manualExplicit
+        )
     }
 
     func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
@@ -236,19 +241,23 @@ nonisolated struct FitMatchServerReferenceSelectionPlan: Equatable, Sendable {
     /// The DB-issued mapped group, or a session-only requested group accepted
     /// by the candidate RPC. It never changes product classification.
     let targetComparisonGroupCode: String?
+    let targetComparisonGroup: VNextComparisonGroupDTO?
 
     init(
         target: FitMatchServerProductAuthority,
         status: FitMatchServerReferenceSelectionStatus,
         candidates: [FitMatchServerReferenceSelectionCandidate],
         blockedCandidates: [FitMatchServerReferenceSelectionCandidate],
-        targetComparisonGroupCode: String? = nil
+        targetComparisonGroupCode: String? = nil,
+        targetComparisonGroup: VNextComparisonGroupDTO? = nil
     ) {
         self.target = target
         self.status = status
         self.candidates = candidates
         self.blockedCandidates = blockedCandidates
+        self.targetComparisonGroup = targetComparisonGroup
         self.targetComparisonGroupCode = targetComparisonGroupCode
+            ?? targetComparisonGroup?.groupCode
             ?? target.runtime.vnext?.comparisonGroup?.groupCode
     }
 
@@ -817,14 +826,20 @@ actor FitMatchServerAuthorityCoordinator {
             throw FitMatchServerAuthorityError.referenceItemNotFound
         }
 
+        guard target.status != .notComparable else {
+            return blockedAuthorization(
+                reason: "target_not_comparable",
+                reasonCode: FitMatchComparisonBlockReason
+                    .structurallyNotComparable.rawValue,
+                target: target,
+                reference: reference
+            )
+        }
         guard target.status == .confirmed || requestedComparisonGroupCode != nil else {
             return blockedAuthorization(
-                reason: target.status == .notComparable
-                    ? "target_not_comparable"
-                    : "target_review_required",
-                reasonCode: target.status == .notComparable
-                    ? FitMatchComparisonBlockReason.structurallyNotComparable.rawValue
-                    : FitMatchComparisonBlockReason.classificationRequired.rawValue,
+                reason: "target_review_required",
+                reasonCode: FitMatchComparisonBlockReason
+                    .classificationRequired.rawValue,
                 target: target,
                 reference: reference
             )
@@ -869,22 +884,13 @@ actor FitMatchServerAuthorityCoordinator {
             }
             return runtime.variants.count == 1 ? runtime.variants[0].id : nil
         }
-        var candidates: FitMatchReferenceCandidatesResponse
-        if let targetVariantID {
-            try Task.checkCancellation()
-            candidates = try await remote.findReferenceCandidates(
-                targetProductID: target.productID,
-                targetVariantID: targetVariantID,
-                requestedComparisonGroupCode: requestedComparisonGroupCode
-            )
-            try Task.checkCancellation()
-        } else {
-            try Task.checkCancellation()
-            candidates = try await remote.findReferenceCandidates(
-                targetProductID: target.productID
-            )
-            try Task.checkCancellation()
-        }
+        try Task.checkCancellation()
+        var candidates = try await findReferenceCandidates(
+            targetProductID: target.productID,
+            targetVariantID: targetVariantID,
+            requestedComparisonGroupCode: requestedComparisonGroupCode
+        )
+        try Task.checkCancellation()
         if candidates.state == "target_classification_required" {
             try Task.checkCancellation()
             target = try await resolveProductAuthority(
@@ -902,23 +908,29 @@ actor FitMatchServerAuthorityCoordinator {
                     candidateState: candidates.state
                 )
             }
-            if let targetVariantID {
-                try Task.checkCancellation()
-                candidates = try await remote.findReferenceCandidates(
-                    targetProductID: target.productID,
-                    targetVariantID: targetVariantID,
-                    requestedComparisonGroupCode: requestedComparisonGroupCode
-                )
-                try Task.checkCancellation()
-            } else {
-                try Task.checkCancellation()
-                candidates = try await remote.findReferenceCandidates(
-                    targetProductID: target.productID
-                )
-                try Task.checkCancellation()
-            }
+            try Task.checkCancellation()
+            candidates = try await findReferenceCandidates(
+                targetProductID: target.productID,
+                targetVariantID: targetVariantID,
+                requestedComparisonGroupCode: requestedComparisonGroupCode
+            )
+            try Task.checkCancellation()
             if candidates.state == "target_classification_required" {
                 throw FitMatchServerAuthorityError.targetClassificationRequired
+            }
+        }
+        if let requestedComparisonGroupCode {
+            guard let responseGroup = candidates.vnext?.targetComparisonGroup,
+                  responseGroup.groupCode == requestedComparisonGroupCode,
+                  responseGroup.source == "SESSION_USER_SELECTED",
+                  responseGroup.comparisonPolicyCode?.isEmpty == false,
+                  responseGroup.policyVersion?.isEmpty == false,
+                  responseGroup.authorityVersion?.isEmpty == false,
+                  responseGroup.authorityFingerprint?.isEmpty == false else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: candidates.state,
+                    reason: "requested_group_context_mismatch"
+                )
             }
         }
 
@@ -1101,6 +1113,9 @@ actor FitMatchServerAuthorityCoordinator {
             observation: targetObservation
         )
         try Task.checkCancellation()
+        guard target.status != .notComparable else {
+            throw FitMatchServerAuthorityError.targetClassificationRequired
+        }
         guard target.status == .confirmed || requestedComparisonGroupCode != nil else {
             throw FitMatchServerAuthorityError.targetClassificationRequired
         }
@@ -1138,6 +1153,20 @@ actor FitMatchServerAuthorityCoordinator {
 
         let plan: FitMatchServerReferenceSelectionPlan
         if let vnext = response.vnext {
+            let responseGroup = vnext.targetComparisonGroup
+            if let requestedComparisonGroupCode {
+                guard responseGroup?.groupCode == requestedComparisonGroupCode,
+                      responseGroup?.source == "SESSION_USER_SELECTED",
+                      responseGroup?.comparisonPolicyCode?.isEmpty == false,
+                      responseGroup?.policyVersion?.isEmpty == false,
+                      responseGroup?.authorityVersion?.isEmpty == false,
+                      responseGroup?.authorityFingerprint?.isEmpty == false else {
+                    throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                        state: vnext.status,
+                        reason: "requested_group_context_mismatch"
+                    )
+                }
+            }
             let candidates = try vnext.candidates.map {
                 try makeReferenceSelectionCandidate(
                     from: $0,
@@ -1155,9 +1184,16 @@ actor FitMatchServerAuthorityCoordinator {
                 status: try referenceSelectionStatus(vnext.status),
                 candidates: candidates,
                 blockedCandidates: blocked,
-                targetComparisonGroupCode: requestedComparisonGroupCode
+                targetComparisonGroupCode: responseGroup?.groupCode,
+                targetComparisonGroup: responseGroup
             )
         } else {
+            guard requestedComparisonGroupCode == nil else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: response.state,
+                    reason: "requested_group_context_missing"
+                )
+            }
             try validateCandidateResponse(response)
             let candidates = try response.candidates.map {
                 try makeLegacyReferenceSelectionCandidate(
@@ -1380,6 +1416,8 @@ actor FitMatchServerAuthorityCoordinator {
                     .authorizedCandidateProductSizeIDs.first,
                 candidateProductSizeIDs: exactCandidates?
                     .authorizedCandidateProductSizeIDs,
+                candidateAuthorityFingerprint: exactCandidates?
+                    .candidateAuthorityFingerprint,
                 effectiveAuthorityFingerprint: exactCandidates?
                     .effectiveAuthorityFingerprint,
                 personalOverrideRevision: exactCandidates?
@@ -1429,6 +1467,32 @@ actor FitMatchServerAuthorityCoordinator {
             }
             guard exact.resultStatus == "PENDING" else {
                 throw FitMatchServerAuthorityError.comparisonAlreadyCompleted
+            }
+            if let requestedGroup = authorization.requestedComparisonGroupCode {
+                let targetGroup = exact.snapshot.target.comparisonGroup
+                let inputGroup = exact.snapshot.inputSnapshot.objectValue?[
+                    "requested_comparison_group_code"
+                ]?.stringValue
+                let authorityGroup = exact.snapshot.authoritySnapshot.objectValue?[
+                    "comparison_group_at_begin"
+                ]?.objectValue?["group_code"]?.stringValue
+                guard exact.snapshot.snapshotSchemaVersion == 4,
+                      exact.snapshot.target.classificationSource
+                        == "SESSION_USER_SELECTED",
+                      targetGroup?.groupCode == requestedGroup,
+                      targetGroup?.source == "SESSION_USER_SELECTED",
+                      targetGroup?.authorityFingerprint
+                        == exact.effectiveAuthorityFingerprint,
+                      exact.effectiveAuthorityFingerprint
+                        == exactCandidates?.effectiveAuthorityFingerprint,
+                      exact.candidateAuthorityFingerprint
+                        == exactCandidates?.candidateAuthorityFingerprint,
+                      inputGroup == requestedGroup,
+                      authorityGroup == requestedGroup else {
+                    throw FitMatchServerAuthorityError.comparisonBeginMalformed(
+                        "requested_group_authority_snapshot_mismatch"
+                    )
+                }
             }
             if exactCandidates?.effectiveSource == "USER_EXPLICIT" {
                 guard exact.snapshot.snapshotSchemaVersion == 4,

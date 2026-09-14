@@ -1093,6 +1093,7 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
     let targetVariantID: UUID?
     let authorizationProductSizeID: UUID?
     let candidateProductSizeIDs: [UUID]?
+    let candidateAuthorityFingerprint: String?
     let effectiveAuthorityFingerprint: String?
     let personalOverrideRevision: Int?
     let requestedComparisonGroupCode: String?
@@ -1105,6 +1106,7 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
         targetVariantID: UUID? = nil,
         authorizationProductSizeID: UUID? = nil,
         candidateProductSizeIDs: [UUID]? = nil,
+        candidateAuthorityFingerprint: String? = nil,
         effectiveAuthorityFingerprint: String? = nil,
         personalOverrideRevision: Int? = nil,
         requestedComparisonGroupCode: String? = nil
@@ -1116,6 +1118,7 @@ nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendabl
         self.targetVariantID = targetVariantID
         self.authorizationProductSizeID = authorizationProductSizeID
         self.candidateProductSizeIDs = candidateProductSizeIDs
+        self.candidateAuthorityFingerprint = candidateAuthorityFingerprint
         self.effectiveAuthorityFingerprint = effectiveAuthorityFingerprint
         self.personalOverrideRevision = personalOverrideRevision
         self.requestedComparisonGroupCode = requestedComparisonGroupCode
@@ -1857,6 +1860,7 @@ nonisolated private struct VNextBeginComparisonPayload: Encodable, Sendable {
     let authorizationProductSizeID: UUID?
     let manualExplicit: Bool
     let candidateProductSizeIDs: [UUID]?
+    let candidateAuthorityFingerprint: String?
     let effectiveAuthorityFingerprint: String?
     let personalOverrideRevision: Int?
     let requestedComparisonGroupCode: String?
@@ -1869,6 +1873,7 @@ nonisolated private struct VNextBeginComparisonPayload: Encodable, Sendable {
         case authorizationProductSizeID = "authorization_product_size_id"
         case manualExplicit = "manual_explicit"
         case candidateProductSizeIDs = "candidate_product_size_ids"
+        case candidateAuthorityFingerprint = "candidate_authority_fingerprint"
         case effectiveAuthorityFingerprint = "effective_authority_fingerprint"
         case personalOverrideRevision = "personal_override_revision"
         case requestedComparisonGroupCode = "requested_comparison_group_code"
@@ -2183,6 +2188,16 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                                                        pTargetVariantID: targetVariantID,
                                                        pRequestedGroupCode: requestedComparisonGroupCode)
         ).execute().value
+        guard exact.targetProductID == targetProductID,
+              exact.targetVariantID == targetVariantID,
+              exact.targetComparisonGroup?.groupCode == requestedComparisonGroupCode,
+              exact.targetComparisonGroup?.source == "SESSION_USER_SELECTED",
+              exact.targetComparisonGroup?.comparisonPolicyCode?.isEmpty == false,
+              exact.targetComparisonGroup?.policyVersion?.isEmpty == false,
+              exact.targetComparisonGroup?.authorityVersion?.isEmpty == false,
+              exact.targetComparisonGroup?.authorityFingerprint?.isEmpty == false else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
         return FitMatchReferenceCandidatesResponse(vnext: exact)
     }
 
@@ -2216,12 +2231,23 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             return try await eligibleCandidateSizes(referenceClosetItemID: referenceClosetItemID, targetProductID: targetProductID, targetVariantID: targetVariantID, manualExplicit: manualExplicit)
         }
         let client = try await authenticatedClient()
-        return try await client.rpc("fitmatch_vnext_eligible_candidate_sizes",
+        let exact: VNextEligibleCandidateSizesDTO = try await client.rpc("fitmatch_vnext_eligible_candidate_sizes",
             params: VNextEligibleCandidateParameters(pReferenceClosetItemID: referenceClosetItemID,
                                                      pTargetProductID: targetProductID,
                                                      pTargetVariantID: targetVariantID,
                                                      pManualExplicit: manualExplicit,
                                                      pRequestedGroupCode: requestedComparisonGroupCode)).execute().value
+        guard exact.targetProductID == targetProductID,
+              exact.targetVariantID == targetVariantID,
+              exact.targetComparisonGroup?.groupCode == requestedComparisonGroupCode,
+              exact.targetComparisonGroup?.source == "SESSION_USER_SELECTED",
+              exact.targetComparisonGroup?.authorityFingerprint
+                == exact.effectiveAuthorityFingerprint,
+              exact.candidateAuthorityFingerprint?.isEmpty == false,
+              exact.candidateAuthorityVersion?.isEmpty == false else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        return exact
     }
 
     func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
@@ -2241,6 +2267,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     authorizationProductSizeID: request.authorizationProductSizeID,
                     manualExplicit: request.allowExtended,
                     candidateProductSizeIDs: request.candidateProductSizeIDs,
+                    candidateAuthorityFingerprint:
+                        request.candidateAuthorityFingerprint,
                     effectiveAuthorityFingerprint:
                         request.effectiveAuthorityFingerprint,
                     personalOverrideRevision: request.personalOverrideRevision,

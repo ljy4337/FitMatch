@@ -4,6 +4,56 @@ import Testing
 
 @MainActor
 struct FitMatchServerAuthorityIntegrationTests {
+    @Test func requestedComparisonGroupResponseRetainsServerAuthorityContext() throws {
+        let productID = UUID()
+        let variantID = UUID()
+        let value = try JSONDecoder().decode(
+            VNextReferenceCandidatesDTO.self,
+            from: Data("""
+            {
+              "target_product_id":"\(productID)",
+              "target_variant_id":"\(variantID)",
+              "status":"NO_REFERENCE_CANDIDATE",
+              "candidates":[],
+              "blocked":[],
+              "target_comparison_group":{
+                "status":"COMPARABLE",
+                "group_code":"C",
+                "display_name":"바지",
+                "source":"SESSION_USER_SELECTED",
+                "category_code":"bottoms",
+                "garment_type_code":"comparison_group_bottom",
+                "comparison_policy_code":"bottom_group",
+                "policy_version":"policy-v1",
+                "policy_checksum":"checksum-v1",
+                "authority_version":"authority-v1",
+                "authority_fingerprint":"fingerprint-v1"
+              }
+            }
+            """.utf8)
+        )
+
+        #expect(value.targetProductID == productID)
+        #expect(value.targetVariantID == variantID)
+        #expect(value.targetComparisonGroup?.groupCode == "C")
+        #expect(value.targetComparisonGroup?.source == "SESSION_USER_SELECTED")
+        #expect(value.targetComparisonGroup?.authorityFingerprint == "fingerprint-v1")
+    }
+
+    @Test func cancellingProductContextClearsRequestedComparisonGroup() {
+        let viewModel = ShoppingProductViewModel(
+            databaseProductResolver: nil,
+            serverAuthorityCoordinator: nil
+        )
+        viewModel.selectComparisonGroupForCurrentComparison(.pants)
+        #expect(viewModel.requestedComparisonGroupCode == "C")
+
+        viewModel.cancelProductLoading()
+
+        #expect(viewModel.requestedComparisonGroupCode == nil)
+        #expect(!viewModel.hasServerValidatedSessionComparisonContext)
+    }
+
     @Test func freshRetailerProductPersistsObservationBeforeRuntimeRead() async throws {
         let fixture = AuthorityFixture.confirmed(
             externalProductID: "E486610",

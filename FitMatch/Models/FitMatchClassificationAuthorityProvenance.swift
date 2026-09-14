@@ -6,6 +6,7 @@ import Foundation
 /// integration does not require a SwiftData schema migration.
 enum FitMatchClassificationAuthorityProvenance: String, Codable, Sendable {
     case serverConfirmed = "server_confirmed"
+    case serverSessionComparison = "server_session_comparison"
     case userExplicit = "user_explicit"
     case localHint = "local_hint"
     case serverReviewRequired = "server_review_required"
@@ -13,7 +14,8 @@ enum FitMatchClassificationAuthorityProvenance: String, Codable, Sendable {
     case serverUnavailable = "server_unavailable"
 
     var isComparisonAuthority: Bool {
-        self == .serverConfirmed || self == .userExplicit
+        self == .serverConfirmed || self == .serverSessionComparison
+            || self == .userExplicit
     }
 
     static func storedValue(_ value: String?) -> Self? {
@@ -62,6 +64,10 @@ enum FitMatchClosetClassificationEditPolicy {
 
         if isSourced {
             switch current {
+            case .serverSessionComparison:
+                return didExplicitlyChangeClassification
+                    ? .userExplicit
+                    : .serverReviewRequired
             case .serverReviewRequired:
                 // REVIEW_REQUIRED means the server could not establish a
                 // global classification. A distinct Closet picker edit is an
