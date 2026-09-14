@@ -1541,7 +1541,7 @@ struct FitMatchServerAuthorityIntegrationTests {
             return
         }
         #expect(Set(selectable.keys) == [recentClientID])
-        #expect(await remote.candidateCallCount == 2)
+        #expect(await remote.candidateCallCount == 1)
     }
 
     private static func closetRecord(
