@@ -1364,17 +1364,17 @@ enum FitMatchSupabaseProductResolverError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            return "FitMatch DB 연결 설정이 없습니다."
+            return "서비스 연결을 준비하지 못했어요. 잠시 후 다시 시도해 주세요."
         case .authenticationRequired:
             return "로그인이 필요한 기능입니다."
         case .vnextIdentityRequired:
-            return "vNext 상품·variant·size 식별자가 필요합니다."
+            return "상품·옵션·사이즈 정보를 확인하지 못했어요. 상품을 다시 불러와 주세요."
         case .vnextCompletionRequired:
-            return "vNext begin 스냅샷 기반 완료 요청이 필요합니다."
+            return "비교 결과를 완료하지 못했어요. 같은 비교를 다시 시도해 주세요."
         case .invalidVNextResponse:
-            return "vNext 서버 응답을 검증할 수 없습니다."
-        case .observationRejected(let detail):
-            return "상품 데이터 저장 요청이 거절됐습니다: \(detail)"
+            return "서버 상품 응답을 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
+        case .observationRejected:
+            return "상품 정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
         }
     }
 }
@@ -3117,7 +3117,7 @@ extension ParsedProductInfo {
         let providerVariantID = metadata.externalVariantID?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let variantID: String
-        if resolution.source == "zara", providerVariantID?.isEmpty == false {
+        if providerVariantID?.isEmpty == false {
             variantID = providerVariantID!
         } else {
             variantID = color?.isEmpty == false ? color! : "__default__"

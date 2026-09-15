@@ -390,11 +390,13 @@ enum FitMatchStoredRetailerFacts {
         let labelNames: [String]
         let structuredFacts: [String: String]
         let hasVersionedPayload: Bool
+        let externalVariantID: String?
     }
 
     private struct Envelope: Codable {
         let version: Int
         let structuredFacts: [String: String]
+        let externalVariantID: String?
     }
 
     private static let tokenPrefix = "__fitmatch_retailer_facts_v1__:"
@@ -402,12 +404,14 @@ enum FitMatchStoredRetailerFacts {
 
     static func encode(
         labelNames: [String],
-        structuredFacts: [String: String]
+        structuredFacts: [String: String],
+        externalVariantID: String? = nil
     ) -> String {
         let retailerLabels = labelNames.filter { !$0.hasPrefix(tokenPrefix) }
         let envelope = Envelope(
             version: currentVersion,
-            structuredFacts: structuredFacts
+            structuredFacts: structuredFacts,
+            externalVariantID: externalVariantID
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
@@ -423,6 +427,7 @@ enum FitMatchStoredRetailerFacts {
         var labels: [String] = []
         var facts: [String: String] = [:]
         var hasVersionedPayload = false
+        var externalVariantID: String?
 
         for token in tokens {
             guard token.hasPrefix(tokenPrefix) else {
@@ -438,13 +443,15 @@ enum FitMatchStoredRetailerFacts {
                 continue
             }
             facts = envelope.structuredFacts
+            externalVariantID = envelope.externalVariantID
             hasVersionedPayload = true
         }
 
         return Decoded(
             labelNames: labels,
             structuredFacts: facts,
-            hasVersionedPayload: hasVersionedPayload
+            hasVersionedPayload: hasVersionedPayload,
+            externalVariantID: externalVariantID
         )
     }
 }

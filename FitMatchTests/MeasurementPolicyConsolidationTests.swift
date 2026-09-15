@@ -50,7 +50,7 @@ struct MeasurementPolicyConsolidationTests {
     }
 
     @Test
-    func canonicalNewMerchantSupportsVerifiedSameSourceRawComparisonWithoutEngineChanges() {
+    func differentWaistRepresentationsUseVerifiedConversionWithoutChangingStoredValues() {
         let fixture = bottomFixture(sourceCode: "futuremerchant", methodSource: "html")
 
         let result = MeasurementComparisonEngine().compare(
@@ -62,13 +62,13 @@ struct MeasurementPolicyConsolidationTests {
 
         #expect(result.status == .confirmed)
         #expect(result.comparedKinds == [.waist, .hip])
-        #expect(result.score == 92)
-        #expect(result.comparedItems.first { $0.kind == .waist }?.signedDifference == 2)
+        #expect(result.score == 44)
+        #expect(result.comparedItems.first { $0.kind == .waist }?.signedDifference == 41)
         #expect(result.comparedItems.first { $0.kind == .hip }?.signedDifference == 1)
     }
 
     @Test
-    func unknownSourceDoesNotGainSameSourceRawCompatibility() {
+    func mappedWaistCodesAllowVerifiedConversionWithoutInventingRetailerIdentity() {
         let fixture = bottomFixture(sourceCode: nil, methodSource: "html")
 
         let result = MeasurementComparisonEngine().compare(
@@ -78,11 +78,12 @@ struct MeasurementPolicyConsolidationTests {
             productDetailCategory: .slacks
         )
 
-        #expect(result.status == .insufficientEvidence)
-        #expect(result.comparedKinds == [.hip])
-        #expect(result.exclusions.contains {
-            $0.kind == .waist && $0.reason == .incompatibleMeasurementCode
-        })
+        #expect(result.status == .confirmed)
+        #expect(result.comparedKinds == [.waist, .hip])
+        #expect(result.comparedItems.first { $0.kind == .waist }?.signedDifference == 41)
+        #expect(fixture.size.measurementRecords.first?.value == 80)
+        #expect(fixture.reference.measurementRecords.first?.value == 78)
+        #expect(fixture.size.measurementRecords.first?.sourceIdentity == nil)
     }
 
     @Test

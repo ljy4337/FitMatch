@@ -30,13 +30,8 @@ struct FitMatchComparisonPermitSequencingTests {
 
         let resultView = try sourceFile("FitMatch/Views/RecommendationResultView.swift")
         let releaseResultView = strippingDebugOnlyCode(from: resultView)
-        let resultBegin = try #require(
-            releaseResultView.range(of: "permit = try await coordinator.beginAuthorizedComparison")
-        )
-        let resultScore = try #require(
-            releaseResultView.range(of: "ResultReferenceComparisonPersistence.resolveAndSave")
-        )
-        #expect(resultBegin.lowerBound < resultScore.lowerBound)
+        #expect(releaseResultView.contains("CompareFlowSheet(initialHistoricalProduct: currentResult.product)"))
+        // Recomparison now re-enters the same ViewModel permit/complete flow above.
         #expect(!releaseResultView.contains(".recommend("))
         #expect(!releaseResultView.contains(".insufficientEvidence("))
         let resultComplete = try #require(

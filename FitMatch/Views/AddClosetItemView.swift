@@ -89,7 +89,7 @@ struct AddClosetItemView: View {
         } message: {
             Text("내 옷장에서 삭제하면 이 옷으로 진행한 비교 기록도 목록에서 함께 삭제됩니다. 그래도 삭제하시겠어요?")
         }
-        .alert("저장 실패", isPresented: $isShowingSaveError) {
+        .alert("저장하지 못했어요", isPresented: $isShowingSaveError) {
             Button("확인", role: .cancel) {}
         } message: {
             Text("내 옷장에 저장하지 못했습니다. 입력한 내용을 확인한 뒤 다시 시도해 주세요.")

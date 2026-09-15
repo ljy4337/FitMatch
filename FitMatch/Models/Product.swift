@@ -133,7 +133,8 @@ final class Product {
         self.genderCodes = metadata.genderCodes.joined(separator: ",")
         self.labelNames = FitMatchStoredRetailerFacts.encode(
             labelNames: metadata.labelNames,
-            structuredFacts: metadata.structuredFacts
+            structuredFacts: metadata.structuredFacts,
+            externalVariantID: metadata.externalVariantID
         )
         self.imageURLStrings = metadata.imageURLStrings.joined(separator: "\n")
         self.normalPrice = metadata.normalPrice

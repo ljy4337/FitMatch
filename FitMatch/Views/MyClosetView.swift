@@ -81,7 +81,7 @@ struct MyClosetView: View {
                 .presentationDragIndicator(.visible)
             }
         }
-        .alert("저장 실패", isPresented: Binding(
+        .alert("요청을 완료하지 못했어요", isPresented: Binding(
             get: { saveErrorMessage != nil },
             set: { if !$0 { saveErrorMessage = nil } }
         )) {

@@ -2860,7 +2860,7 @@ enum ResultReferenceComparisonPersistence {
                 analysis: analysis
             )
         } catch {
-            return .saveFailed(error.localizedDescription)
+            return .saveFailed("비교 결과를 완료하지 못했어요. 같은 비교를 다시 시도해 주세요.")
         }
         guard let history = service.makeCompletedVNextHistory(
             product: product,
@@ -2882,7 +2882,7 @@ enum ResultReferenceComparisonPersistence {
             return .success(history)
         } catch {
             modelContext.rollback()
-            return .saveFailed(error.localizedDescription)
+            return .saveFailed("비교 결과를 저장하지 못했어요. 다시 시도해 주세요.")
         }
     }
 
@@ -2927,7 +2927,7 @@ enum ResultReferenceComparisonPersistence {
             return .success(history)
         } catch {
             modelContext.rollback()
-            return .saveFailed(error.localizedDescription)
+            return .saveFailed("비교 결과를 저장하지 못했어요. 다시 시도해 주세요.")
         }
     }
     #endif

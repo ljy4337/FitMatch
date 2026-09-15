@@ -1,87 +1,19 @@
-begin;
-
-do $preflight$
-begin
-    if to_regprocedure(
-        'fitmatch_vnext.product_measurement_readiness(uuid,jsonb)'
-    ) is null then
-        raise exception 'product_measurement_readiness(uuid,jsonb) is missing';
-    end if;
-    if to_regprocedure(
-        'fitmatch_vnext.effective_target_classification(uuid)'
-    ) is null then
-        raise exception 'effective_target_classification(uuid) is missing';
-    end if;
-end
-$preflight$;
-
--- Classification authority and measurement readiness are separate contracts.
--- A confirmed category group must retain its authority while sizes, canonical
--- measurements, structure, or policy readiness remain fail-closed.
-create or replace function fitmatch_vnext.product_readiness_with_context(
-    p_product_id uuid,
-    p_effective_classification jsonb
-)
-returns jsonb
-language sql
-stable
-security definer
-set search_path = ''
-as $function$
-    select fitmatch_vnext.product_measurement_readiness(
-        p_product_id,
-        p_effective_classification
-    )
-$function$;
-
-create or replace function fitmatch_vnext.effective_product_readiness(
-    p_product_id uuid
-)
-returns jsonb
-language sql
-stable
-security definer
-set search_path = ''
-as $function$
-    select fitmatch_vnext.product_measurement_readiness(
-        p_product_id,
-        fitmatch_vnext.effective_target_classification(p_product_id)
-    )
-$function$;
-
-alter function fitmatch_vnext.product_readiness_with_context(uuid,jsonb)
-    owner to postgres;
-alter function fitmatch_vnext.effective_product_readiness(uuid)
-    owner to postgres;
-
-revoke all on function fitmatch_vnext.product_readiness_with_context(uuid,jsonb)
-    from public, anon, authenticated;
-grant execute on function fitmatch_vnext.product_readiness_with_context(uuid,jsonb)
-    to service_role;
-revoke all on function fitmatch_vnext.effective_product_readiness(uuid)
-    from public, anon, authenticated;
-grant execute on function fitmatch_vnext.effective_product_readiness(uuid)
-    to service_role;
-
-do $postflight$
+-- Superseded BEFORE application by 20260915064910_cleanup_retired_paths_and_align_group_readiness.
+-- The original proposal could mislabel an unverified measurement contract as
+-- NOT_APPLICABLE and rewrite existing ACLs. It must not overwrite the repaired
+-- wrapper. Kept as a read-only compatibility gate for pending migration replay.
+-- Historical proposal is retained in CleanupArchive/20260915.
+do $verify_current_contract$
 declare
-    definition text;
+    body text;
 begin
-    definition := pg_get_functiondef(
-        'fitmatch_vnext.product_readiness_with_context(uuid,jsonb)'::regprocedure
-    );
-    if definition not like '%product_measurement_readiness%' then
-        raise exception 'Context readiness is not measurement-readiness based';
-    end if;
-
-    definition := pg_get_functiondef(
-        'fitmatch_vnext.effective_product_readiness(uuid)'::regprocedure
-    );
-    if definition not like '%product_measurement_readiness%'
-       or definition not like '%effective_target_classification%' then
-        raise exception 'Effective readiness contract was not aligned';
+    select prosrc into body from pg_proc
+    where oid=to_regprocedure('fitmatch_vnext.product_readiness_with_context(uuid,jsonb)');
+    if body is null
+       or body not like '%product_measurement_readiness(%'
+       or body not like '%product_comparison_unit_decision(%'
+       or body like '%product_readiness_with_context_v1(%' then
+        raise exception 'Apply the reviewed group-readiness cleanup before replaying this superseded proposal';
     end if;
 end
-$postflight$;
-
-commit;
+$verify_current_contract$;

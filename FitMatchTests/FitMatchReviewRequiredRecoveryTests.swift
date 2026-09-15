@@ -217,7 +217,7 @@ struct FitMatchReviewRequiredRecoveryTests {
     }
 
     @MainActor
-    @Test func reviewRequiredLoadAcceptsV7RecoveryWithoutNetworkFailurePresentation() async throws {
+    @Test func reviewRequiredLoadRoutesToGroupSelectionWithoutLegacyRecovery() async throws {
         let productID = UUID()
         let contract = try makeV7CrossGarmentAxisRecoveryContract(
             productID: productID
@@ -236,11 +236,8 @@ struct FitMatchReviewRequiredRecoveryTests {
         // false; the recovery contract itself must still reach its chooser.
         #expect(!(await viewModel.loadProductInfoFromURL()))
         #expect(viewModel.errorMessage == nil)
-        if case .choosingGarment(let issuedContract) = viewModel.reviewRecoveryState {
-            #expect(issuedContract == contract)
-        } else {
-            Issue.record("유효한 v7 REVIEW_REQUIRED contract가 chooser로 전환되지 않았습니다.")
-        }
+        #expect(viewModel.requiresComparisonGroupSelection)
+        #expect(viewModel.reviewRecoveryContract == nil)
         #expect(await remote.setCallCount() == 0)
     }
 
@@ -757,16 +754,12 @@ struct FitMatchReviewRequiredRecoveryTests {
         #expect(await remote.globalClassificationStatus() == "REVIEW_REQUIRED")
         #expect(await remote.referenceDiscoveryCallCount() == 0)
         #expect(await remote.beginCallCount() == 0)
-        if case .choosingGarment(let refreshedContract) =
-            viewModel.reviewRecoveryState {
-            #expect(refreshedContract == contract)
-        } else {
-            Issue.record("초기화 후 새 recovery contract로 재구성되지 않았습니다.")
-        }
+        #expect(viewModel.requiresComparisonGroupSelection)
+        #expect(viewModel.reviewRecoveryContract == nil)
     }
 
     @MainActor
-    @Test func reviewRecoveryOptionsPresentContractAndNetworkFailuresDifferently() async throws {
+    @Test func groupSelectionDoesNotRequestObsoleteRecoveryEvenIfItsTransportWouldFail() async throws {
         let productID = UUID()
         let contract = try makeV7CrossGarmentAxisRecoveryContract(
             productID: productID
@@ -784,10 +777,9 @@ struct FitMatchReviewRequiredRecoveryTests {
         )
 
         #expect(!(await contractViewModel.loadProductInfoFromURL()))
-        #expect(
-            contractViewModel.errorMessage
-                == "상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요."
-        )
+        #expect(contractViewModel.errorMessage == nil)
+        #expect(contractViewModel.requiresComparisonGroupSelection)
+        #expect(contractViewModel.reviewRecoveryContract == nil)
         #expect(await contractRemote.setCallCount() == 0)
 
         let malformedRemote = try RecoveryLifecycleTransportStub(
@@ -802,10 +794,9 @@ struct FitMatchReviewRequiredRecoveryTests {
         )
 
         #expect(!(await malformedViewModel.loadProductInfoFromURL()))
-        #expect(
-            malformedViewModel.errorMessage
-                == "상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요."
-        )
+        #expect(malformedViewModel.errorMessage == nil)
+        #expect(malformedViewModel.requiresComparisonGroupSelection)
+        #expect(malformedViewModel.reviewRecoveryContract == nil)
         #expect(await malformedRemote.setCallCount() == 0)
 
         let networkRemote = try RecoveryLifecycleTransportStub(
@@ -820,10 +811,9 @@ struct FitMatchReviewRequiredRecoveryTests {
         )
 
         #expect(!(await networkViewModel.loadProductInfoFromURL()))
-        #expect(
-            networkViewModel.errorMessage
-                == "상품 분류 선택지를 확인하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
-        )
+        #expect(networkViewModel.errorMessage == nil)
+        #expect(networkViewModel.requiresComparisonGroupSelection)
+        #expect(networkViewModel.reviewRecoveryContract == nil)
         #expect(await networkRemote.setCallCount() == 0)
 
         let cancelledRemote = try RecoveryLifecycleTransportStub(
@@ -1560,7 +1550,7 @@ private actor RecoveryLifecycleTransportStub: FitMatchServerAuthorityRemoteServi
 
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
         -> FitMatchProductObservationResponse {
-        throw StubError.unexpected
+        return promotedObservationFixture(productID: productID)
     }
 
     func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws

@@ -146,7 +146,7 @@ struct LinkClosetRegistrationView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .alert("저장 실패", isPresented: Binding(
+        .alert("저장하지 못했어요", isPresented: Binding(
             get: { saveErrorMessage != nil },
             set: { if !$0 { saveErrorMessage = nil } }
         )) {
@@ -445,7 +445,7 @@ struct LinkClosetRegistrationView: View {
         )
         switch outcome {
         case .blocked(let validation):
-            errorMessage = validation == .empty ? nil : "올바른 상품 URL을 입력해 주세요."
+            errorMessage = validation.userMessage
             return
         case .cancelled:
             return

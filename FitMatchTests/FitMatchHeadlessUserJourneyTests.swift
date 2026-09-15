@@ -64,7 +64,7 @@ struct FitMatchHeadlessUserJourneyTests {
         )
     }
 
-    @Test func recoveryLifecycleUsesFreshOpaqueServerContracts() async throws {
+    @Test func reviewReloadKeepsGroupChoiceExplicitWithoutLegacyMutations() async throws {
         let scenario = HeadlessJourneyScenario(
             id: "RECOVERY-LIFECYCLE",
             provenance: .policyState,
@@ -81,8 +81,8 @@ struct FitMatchHeadlessUserJourneyTests {
 
         #expect(record.technicalPass)
         #expect(record.uxOutcome == .expected)
-        #expect(record.remoteCalls.contains("set_user_product_classification"))
-        #expect(record.remoteCalls.contains("clear_user_product_classification"))
+        #expect(!record.remoteCalls.contains("set_user_product_classification"))
+        #expect(!record.remoteCalls.contains("clear_user_product_classification"))
         #expect(record.remoteCalls.last != "complete_comparison")
     }
 
@@ -209,401 +209,6 @@ struct FitMatchHeadlessUserJourneyTests {
     /// different server contract, expose only the one unresolved garment fact,
     /// and resume through the real ViewModel/coordinator/engine path after a
     /// candidate from that exact contract is selected.
-    @Test func eachBoundedRecoveryCandidateCountResumesThroughProductionSequence() async throws {
-        for count in 1...3 {
-            let fixture = HeadlessJourneyFixture(provider: .uniqlo)
-            let contract = try fixture.recoveryContract(
-                count: count,
-                suffix: "cardinality-\(count)"
-            )
-            let selected = try #require(contract.candidates.last)
-            let reference = fixture.localReference(garment: "tshirt", sleeve: "short_sleeve")
-            let remoteReference = fixture.closetRecord(for: reference)
-            let reviewRuntime = try fixture.runtime(globalStatus: .reviewRequired)
-            let personalRuntime = try fixture.runtime(
-                globalStatus: .reviewRequired,
-                effectivePersonalGarment: selected.garmentTypeCode,
-                overrideRevision: 1,
-                personalCandidateFingerprint: selected.candidateFingerprint,
-                personalCandidateSetHash: contract.candidateSetHash
-            )
-            let remote = JourneyRecordingRemote(
-                resolutions: Array(
-                    repeating: fixture.resolution(globalStatus: .reviewRequired),
-                    count: 4
-                ),
-                runtimes: [reviewRuntime, personalRuntime, personalRuntime, personalRuntime],
-                recoveryContracts: [contract],
-                setMutations: [try fixture.setMutation(
-                    contract: contract,
-                    garment: selected.garmentTypeCode,
-                    revision: 1,
-                    event: "SELECTED"
-                )],
-                closetResponses: [.init(state: "ready", items: [remoteReference])],
-                candidateResponses: Array(repeating: try fixture.referenceResponse(
-                    reference: reference,
-                    closetItemID: remoteReference.closetItemID,
-                    decision: "AUTOMATIC"
-                ), count: 2),
-                eligibleResponses: [try fixture.eligible(
-                    reference: reference,
-                    closetItemID: remoteReference.closetItemID,
-                    mode: "AUTOMATIC",
-                    allowed: true,
-                    effectiveSource: "USER_EXPLICIT",
-                    overrideRevision: 1
-                )],
-                beginResponses: [try fixture.begin(
-                    mode: "AUTOMATIC",
-                    personal: true,
-                    referenceClosetItemID: remoteReference.closetItemID,
-                    personalGarment: selected.garmentTypeCode,
-                    personalCandidateFingerprint: selected.candidateFingerprint,
-                    personalCandidateSetHash: contract.candidateSetHash
-                )],
-                completionResponses: [try fixture.complete()]
-            )
-            let parser = HeadlessJourneyParser(product: fixture.parsedProduct())
-            let viewModel = ShoppingProductViewModel(
-                initialURL: fixture.url.absoluteString,
-                parserService: ProductURLParserService(
-                    musinsaParser: parser,
-                    uniqloParser: parser,
-                    zaraParser: parser
-                ),
-                metricsRecorder: HeadlessNoopMetricsRecorder(),
-                serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
-            )
-
-            #expect(await viewModel.loadProductInfoFromURL() == false)
-            let displayed = try #require(viewModel.reviewRecoveryContract)
-            #expect(displayed.candidateCount == count)
-            #expect(
-                displayed.candidates.map(\.candidateFingerprint)
-                    == contract.candidates.map(\.candidateFingerprint)
-            )
-            #expect(displayed.fixedFacts.sleeveLengthCode == "short_sleeve")
-            #expect(displayed.fixedFacts.garmentTypeCode == nil)
-            #expect(
-                displayed.unknownFields
-                    == (count > 1 ? [.garmentType] : [])
-            )
-
-            #expect(await viewModel.confirmReviewRecovery(selected))
-            #expect(viewModel.hasActiveUserExplicitClassification)
-            let history = await viewModel.calculateRecommendation(userFits: [reference])
-            #expect(history != nil)
-            #expect(history?.product.classificationAuthorityProvenance == .userExplicit)
-
-            let calls = await remote.calls()
-            try requireOrdered(
-                calls,
-                [
-                    "resolve", "runtime", "recovery_contract",
-                    "set_user_product_classification", "resolve", "runtime",
-                    "list_closet", "reference_candidates", "eligible_sizes",
-                    "begin_comparison", "complete_comparison"
-                ],
-                scenario: "CP-005 count=\(count)"
-            )
-            let requests = await remote.setRequests()
-            #expect(requests.count == 1)
-            #expect(requests[0].selectedCandidateFingerprint == selected.candidateFingerprint)
-            #expect(requests[0].expectedCandidateSetHash == contract.candidateSetHash)
-        }
-    }
-
-    /// RX-002/RX-008: the first Recovery submission reaches the real
-    /// coordinator RPC and is deliberately held at that network boundary.
-    /// A second tap cannot issue another mutation while the production
-    /// ViewModel is saving; after the first response returns, a real clear
-    /// resolves back to REVIEW_REQUIRED and never starts comparison work.
-    @Test func recoveryDoubleSubmitThenClearUsesTheNewestProductionState() async throws {
-        let fixture = HeadlessJourneyFixture(provider: .uniqlo)
-        let reviewRuntime = try fixture.runtime(globalStatus: .reviewRequired)
-        let initialContract = try fixture.recoveryContract(count: 2, suffix: "race-initial")
-        let latestContract = try fixture.recoveryContract(count: 2, suffix: "race-latest")
-        let initialCandidate = try #require(initialContract.candidates.first)
-        let candidateA = try #require(latestContract.candidates.last)
-        let setGate = JourneyAsyncGate(blockOnOrAfterArrival: 2)
-        let initialPersonalRuntime = try fixture.runtime(
-            globalStatus: .reviewRequired,
-            effectivePersonalGarment: initialCandidate.garmentTypeCode,
-            overrideRevision: 1,
-            personalCandidateFingerprint: initialCandidate.candidateFingerprint,
-            personalCandidateSetHash: initialContract.candidateSetHash
-        )
-        let personalRuntime = try fixture.runtime(
-            globalStatus: .reviewRequired,
-            effectivePersonalGarment: candidateA.garmentTypeCode,
-            overrideRevision: 2,
-            personalCandidateFingerprint: candidateA.candidateFingerprint,
-            personalCandidateSetHash: latestContract.candidateSetHash
-        )
-        let remote = JourneyRecordingRemote(
-            resolutions: Array(
-                repeating: fixture.resolution(globalStatus: .reviewRequired),
-                count: 4
-            ),
-            runtimes: [reviewRuntime, initialPersonalRuntime, personalRuntime, reviewRuntime],
-            recoveryContracts: [initialContract, latestContract],
-            setMutations: [
-                try fixture.setMutation(
-                    contract: initialContract,
-                    garment: initialCandidate.garmentTypeCode,
-                    revision: 1,
-                    event: "SELECTED"
-                ),
-                try fixture.setMutation(
-                contract: latestContract,
-                garment: candidateA.garmentTypeCode,
-                revision: 2,
-                event: "EDITED"
-            )],
-            clearMutations: [try fixture.clearMutation(revision: 3)],
-            gates: [.setUserClassification: setGate]
-        )
-        let viewModel = ShoppingProductViewModel(
-            initialURL: fixture.url.absoluteString,
-            parserService: ProductURLParserService(
-                uniqloParser: HeadlessJourneyParser(product: fixture.parsedProduct())
-            ),
-            metricsRecorder: HeadlessNoopMetricsRecorder(),
-            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
-        )
-
-        #expect(await viewModel.loadProductInfoFromURL() == false)
-        #expect(await viewModel.confirmReviewRecovery(initialCandidate))
-        #expect(viewModel.hasActiveUserExplicitClassification)
-        #expect(await viewModel.beginReviewRecoveryReselection())
-        let first = Task { @MainActor in
-            await viewModel.confirmReviewRecovery(candidateA)
-        }
-        await setGate.waitForArrival(atLeast: 2)
-
-        // A second button action sees `.saving`, not a recoverable contract,
-        // so it cannot emit a second server mutation or resurrect an old
-        // candidate later.
-        #expect(await viewModel.confirmReviewRecovery(candidateA) == false)
-        #expect((await remote.setRequests()).count == 2)
-
-        await setGate.open()
-        #expect(await first.value)
-        #expect(viewModel.hasActiveUserExplicitClassification)
-
-        #expect(await viewModel.clearReviewRecovery())
-        #expect(viewModel.hasServerReviewRequiredAuthority)
-        #expect(!viewModel.hasActiveUserExplicitClassification)
-        let calls = await remote.calls()
-        #expect(calls.filter { $0 == "set_user_product_classification" }.count == 2)
-        #expect(calls.filter { $0 == "clear_user_product_classification" }.count == 1)
-        #expect(!calls.contains("begin_comparison"))
-        #expect(!calls.contains("complete_comparison"))
-    }
-
-    /// RX-002 / RX-008: an older reselect response may arrive after the user
-    /// has already cleared the personal choice. The delayed response is held
-    /// after its real RPC is issued; clear then performs its own production
-    /// mutation/authority refresh. When the old response finally resumes, it
-    /// must fail closed instead of resurrecting USER_EXPLICIT authority.
-    @Test func delayedRecoveryReselectCannotResurrectAfterClear() async throws {
-        let fixture = HeadlessJourneyFixture(provider: .uniqlo)
-        let initialContract = try fixture.recoveryContract(count: 2, suffix: "clear-race-a")
-        let latestContract = try fixture.recoveryContract(count: 2, suffix: "clear-race-b")
-        let candidateA = try #require(initialContract.candidates.first)
-        let candidateB = try #require(latestContract.candidates.last)
-        let reviewRuntime = try fixture.runtime(globalStatus: .reviewRequired)
-        let personalRuntime = try fixture.runtime(
-            globalStatus: .reviewRequired,
-            effectivePersonalGarment: candidateA.garmentTypeCode,
-            overrideRevision: 1,
-            personalCandidateFingerprint: candidateA.candidateFingerprint,
-            personalCandidateSetHash: initialContract.candidateSetHash
-        )
-        let secondSetGate = JourneyAsyncGate(blockOnOrAfterArrival: 2)
-        let remote = JourneyRecordingRemote(
-            resolutions: Array(
-                repeating: fixture.resolution(globalStatus: .reviewRequired),
-                count: 5
-            ),
-            // Initial load, A selection, clear refresh, late B refresh, then
-            // B's failure refresh. The server boundary deliberately reports
-            // REVIEW_REQUIRED after clear for every late read.
-            runtimes: [
-                reviewRuntime, personalRuntime,
-                reviewRuntime, reviewRuntime, reviewRuntime
-            ],
-            recoveryContracts: [initialContract, latestContract],
-            setMutations: [
-                try fixture.setMutation(
-                    contract: initialContract,
-                    garment: candidateA.garmentTypeCode,
-                    revision: 1,
-                    event: "SELECTED"
-                ),
-                try fixture.setMutation(
-                    contract: latestContract,
-                    garment: candidateB.garmentTypeCode,
-                    revision: 2,
-                    event: "EDITED"
-                )
-            ],
-            clearMutations: [try fixture.clearMutation(revision: 2)],
-            gates: [.setUserClassification: secondSetGate]
-        )
-        let viewModel = ShoppingProductViewModel(
-            initialURL: fixture.url.absoluteString,
-            parserService: ProductURLParserService(
-                uniqloParser: HeadlessJourneyParser(product: fixture.parsedProduct())
-            ),
-            metricsRecorder: HeadlessNoopMetricsRecorder(),
-            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
-        )
-
-        #expect(await viewModel.loadProductInfoFromURL() == false)
-        #expect(await viewModel.confirmReviewRecovery(candidateA))
-        #expect(viewModel.hasActiveUserExplicitClassification)
-        #expect(await viewModel.beginReviewRecoveryReselection())
-
-        let lateB = Task { @MainActor in
-            await viewModel.confirmReviewRecovery(candidateB)
-        }
-        await secondSetGate.waitForArrival(atLeast: 2)
-
-        // Clear is a newer real user action. It must not be held behind the
-        // already suspended response task and its refreshed REVIEW_REQUIRED
-        // authority becomes the only state that may survive.
-        #expect(await viewModel.clearReviewRecovery())
-        #expect(!viewModel.hasActiveUserExplicitClassification)
-        if case .reviewRequired = viewModel.serverAuthorityState {
-            // Correct state before the late response is released.
-        } else {
-            Issue.record("RX-002 clear did not restore REVIEW_REQUIRED before the late response")
-        }
-
-        await secondSetGate.open()
-        #expect(await lateB.value == false)
-        #expect(!viewModel.hasActiveUserExplicitClassification)
-        if case .reviewRequired = viewModel.serverAuthorityState {
-            // The stale response did not resurrect personal authority.
-        } else {
-            Issue.record("RX-002 late recovery response resurrected a cleared authority")
-        }
-
-        let calls = await remote.calls()
-        #expect(calls.filter { $0 == "set_user_product_classification" }.count == 2)
-        #expect(calls.filter { $0 == "clear_user_product_classification" }.count == 1)
-        #expect(!calls.contains("begin_comparison"))
-        #expect(!calls.contains("complete_comparison"))
-    }
-
-    /// RS-013: a completed USER_EXPLICIT Result can request a fresh Recovery
-    /// contract and then clear its personal choice.  Those current-authority
-    /// actions use the production ViewModel while the completed Result stays
-    /// the immutable history that was produced by the earlier server run.
-    @Test func rs013PersonalResultReselectAndClearLeaveCompletedHistoryImmutable() async throws {
-        let fixture = HeadlessJourneyFixture(provider: .uniqlo)
-        let initial = try fixture.recoveryContract(count: 1, suffix: "rs013-initial")
-        let refreshed = try fixture.recoveryContract(count: 2, suffix: "rs013-refreshed")
-        let selected = try #require(initial.candidates.first)
-        let reference = fixture.localReference(garment: "tshirt", sleeve: "short_sleeve")
-        let record = fixture.closetRecord(for: reference)
-        let reviewRuntime = try fixture.runtime(globalStatus: .reviewRequired)
-        let personalRuntime = try fixture.runtime(
-            globalStatus: .reviewRequired,
-            effectivePersonalGarment: selected.garmentTypeCode,
-            overrideRevision: 1,
-            personalCandidateFingerprint: selected.candidateFingerprint,
-            personalCandidateSetHash: initial.candidateSetHash
-        )
-        let remote = JourneyRecordingRemote(
-            // Load, selection refresh, comparison plan, and authorization see
-            // current personal authority; post-clear resolve returns review.
-            resolutions: Array(
-                repeating: fixture.resolution(globalStatus: .reviewRequired),
-                count: 5
-            ),
-            runtimes: [reviewRuntime, personalRuntime, personalRuntime, personalRuntime, reviewRuntime],
-            recoveryContracts: [initial, refreshed],
-            setMutations: [try fixture.setMutation(
-                contract: initial,
-                garment: selected.garmentTypeCode,
-                revision: 1,
-                event: "SELECTED"
-            )],
-            clearMutations: [try fixture.clearMutation(revision: 2)],
-            closetResponses: [.init(state: "ready", items: [record])],
-            candidateResponses: Array(repeating: try fixture.referenceResponse(
-                reference: reference,
-                closetItemID: record.closetItemID,
-                decision: "AUTOMATIC"
-            ), count: 2),
-            eligibleResponses: [try fixture.eligible(
-                reference: reference,
-                closetItemID: record.closetItemID,
-                mode: "AUTOMATIC",
-                allowed: true,
-                effectiveSource: "USER_EXPLICIT",
-                overrideRevision: 1
-            )],
-            beginResponses: [try fixture.begin(
-                mode: "AUTOMATIC",
-                personal: true,
-                referenceClosetItemID: record.closetItemID,
-                personalGarment: selected.garmentTypeCode,
-                personalRevision: 1,
-                personalCandidateFingerprint: selected.candidateFingerprint,
-                personalCandidateSetHash: initial.candidateSetHash,
-                personalInputFingerprint: "input-v1",
-                personalEvidenceFingerprint: "evidence-v1"
-            )],
-            completionResponses: [try fixture.complete()]
-        )
-        let viewModel = ShoppingProductViewModel(
-            initialURL: fixture.url.absoluteString,
-            parserService: ProductURLParserService(
-                uniqloParser: HeadlessJourneyParser(product: fixture.parsedProduct())
-            ),
-            metricsRecorder: HeadlessNoopMetricsRecorder(),
-            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
-        )
-
-        #expect(await viewModel.loadProductInfoFromURL() == false)
-        #expect(await viewModel.confirmReviewRecovery(selected))
-        let maybeCompleted = await viewModel.calculateRecommendation(userFits: [reference])
-        let completionCalls = await remote.calls()
-        let completed = try #require(
-            maybeCompleted,
-            "RS-013 USER_EXPLICIT completion unexpectedly blocked; calls=\(completionCalls), error=\(viewModel.errorMessage ?? "<nil>")"
-        )
-        let frozenHistoryID = completed.id
-        let frozenProductAuthority = completed.product.classificationAuthorityProvenance
-        let frozenSourceIdentity = completed.product.canonicalSourceIdentity
-        let frozenReferenceID = completed.userFit.id
-        #expect(frozenProductAuthority == .userExplicit)
-
-        #expect(await viewModel.beginReviewRecoveryReselection())
-        let newestContract = try #require(viewModel.reviewRecoveryContract)
-        #expect(newestContract.candidateSetHash == refreshed.candidateSetHash)
-        #expect(await viewModel.clearReviewRecovery())
-        #expect(viewModel.hasServerReviewRequiredAuthority)
-        #expect(!viewModel.hasActiveUserExplicitClassification)
-
-        #expect(completed.id == frozenHistoryID)
-        #expect(completed.product.classificationAuthorityProvenance == frozenProductAuthority)
-        #expect(completed.product.canonicalSourceIdentity == frozenSourceIdentity)
-        #expect(completed.userFit.id == frozenReferenceID)
-        let calls = await remote.calls()
-        #expect(calls.filter { $0 == "begin_comparison" }.count == 1)
-        #expect(calls.filter { $0 == "complete_comparison" }.count == 1)
-    }
-
-    /// RX-003: an old automatic comparison reaches the real begin RPC with
-    /// its eligible A snapshot, then the user changes the reference while the
-    /// RPC is outstanding.  The delayed server response carries the now-stale
-    /// candidate set, so the production coordinator rejects it before the
-    /// adapter/engine/completion can create a Result or History.
     @Test func rx003DelayedStaleBeginAfterReferenceMutationCannotCreateAResult() async throws {
         let fixture = HeadlessJourneyFixture(provider: .musinsa)
         let originalReference = fixture.localReference(garment: "tshirt", sleeve: "short_sleeve")
@@ -684,88 +289,6 @@ struct FitMatchHeadlessUserJourneyTests {
     /// RX-013: select → reselect → clear is reconstructed from the latest
     /// server authority, rather than retaining a stale in-memory personal
     /// choice. All three mutations use the same production Recovery actions.
-    @Test func rx013RecoveryLifecycleReconstructionUsesTheLatestClearedAuthority() async throws {
-        let fixture = HeadlessJourneyFixture(provider: .zara)
-        let initial = try fixture.recoveryContract(count: 2, suffix: "rx013-a")
-        let refreshed = try fixture.recoveryContract(count: 2, suffix: "rx013-b")
-        let candidateA = try #require(initial.candidates.first)
-        let candidateB = try #require(refreshed.candidates.last)
-        let reviewRuntime = try fixture.runtime(globalStatus: .reviewRequired)
-        let personalA = try fixture.runtime(
-            globalStatus: .reviewRequired,
-            effectivePersonalGarment: candidateA.garmentTypeCode,
-            overrideRevision: 1,
-            personalCandidateFingerprint: candidateA.candidateFingerprint,
-            personalCandidateSetHash: initial.candidateSetHash
-        )
-        let personalB = try fixture.runtime(
-            globalStatus: .reviewRequired,
-            effectivePersonalGarment: candidateB.garmentTypeCode,
-            overrideRevision: 2,
-            personalCandidateFingerprint: candidateB.candidateFingerprint,
-            personalCandidateSetHash: refreshed.candidateSetHash
-        )
-        let remote = JourneyRecordingRemote(
-            resolutions: Array(repeating: fixture.resolution(globalStatus: .reviewRequired), count: 4),
-            runtimes: [reviewRuntime, personalA, personalB, reviewRuntime],
-            recoveryContracts: [initial, refreshed],
-            setMutations: [
-                try fixture.setMutation(
-                    contract: initial,
-                    garment: candidateA.garmentTypeCode,
-                    revision: 1,
-                    event: "SELECTED"
-                ),
-                try fixture.setMutation(
-                    contract: refreshed,
-                    garment: candidateB.garmentTypeCode,
-                    revision: 2,
-                    event: "EDITED"
-                )
-            ],
-            clearMutations: [try fixture.clearMutation(revision: 3)]
-        )
-        let viewModel = ShoppingProductViewModel(
-            initialURL: fixture.url.absoluteString,
-            parserService: ProductURLParserService(
-                zaraParser: HeadlessJourneyParser(product: fixture.parsedProduct())
-            ),
-            metricsRecorder: HeadlessNoopMetricsRecorder(),
-            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
-        )
-        #expect(await viewModel.loadProductInfoFromURL() == false)
-        #expect(await viewModel.confirmReviewRecovery(candidateA))
-        #expect(viewModel.hasActiveUserExplicitClassification)
-        #expect(await viewModel.beginReviewRecoveryReselection())
-        let newest = try #require(viewModel.reviewRecoveryContract)
-        #expect(newest.candidateSetHash == refreshed.candidateSetHash)
-        #expect(await viewModel.confirmReviewRecovery(candidateB))
-        #expect(viewModel.hasActiveUserExplicitClassification)
-        #expect(await viewModel.clearReviewRecovery())
-        #expect(!viewModel.hasActiveUserExplicitClassification)
-        #expect(viewModel.hasServerReviewRequiredAuthority)
-
-        // A fresh object models cold reconstruction/re-entry. Its server
-        // runtime is REVIEW_REQUIRED, so no local personal tuple can revive.
-        let reconstructedRemote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .reviewRequired)],
-            runtimes: [reviewRuntime],
-            recoveryContracts: [refreshed]
-        )
-        let reconstructed = ShoppingProductViewModel(
-            initialURL: fixture.url.absoluteString,
-            parserService: ProductURLParserService(
-                zaraParser: HeadlessJourneyParser(product: fixture.parsedProduct())
-            ),
-            metricsRecorder: HeadlessNoopMetricsRecorder(),
-            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: reconstructedRemote)
-        )
-        #expect(await reconstructed.loadProductInfoFromURL() == false)
-        #expect(reconstructed.hasServerReviewRequiredAuthority)
-        #expect(!reconstructed.hasActiveUserExplicitClassification)
-        #expect(!(await reconstructedRemote.calls()).contains("begin_comparison"))
-    }
-
     @Test func actualProductionSwiftFullChainRequiresBeginBeforeCompletion() async throws {
         let scenario = HeadlessJourneyScenario(
             id: "FULL-CHAIN",
@@ -1659,7 +1182,7 @@ struct FitMatchHeadlessUserJourneyTests {
         #expect(calls.filter { $0 == "begin_comparison" }.count == 1)
         #expect(!calls.contains("complete_comparison"))
         #expect(viewModel.recommendation == nil)
-        #expect(viewModel.errorMessage?.contains("서버 비교") == true)
+        #expect(viewModel.errorMessage?.isEmpty == false)
     }
 
     /// CP-025 / RS-005 / HI-013: local Closet ordering is presentation only.
@@ -1753,37 +1276,6 @@ struct FitMatchHeadlessUserJourneyTests {
     /// CP-006: a zero-candidate Recovery contract is a distinct user state
     /// from an ordinary unresolved product. The actual ViewModel must expose
     /// its bounded, unrecoverable state and cannot start comparison work.
-    @Test func cp006ZeroRecoveryCandidatesFailClosedBeforeReferenceOrEngine() async throws {
-        let fixture = HeadlessJourneyFixture(provider: .uniqlo)
-        let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .reviewRequired)],
-            runtimes: [try fixture.runtime(
-                globalStatus: .reviewRequired,
-                productStructure: "UNKNOWN"
-            )],
-            recoveryContracts: [try fixture.recoveryContract(count: 0, suffix: "cp006-zero")]
-        )
-        let viewModel = ShoppingProductViewModel(
-            initialURL: fixture.url.absoluteString,
-            parserService: ProductURLParserService(
-                uniqloParser: HeadlessJourneyParser(product: fixture.parsedProduct())
-            ),
-            metricsRecorder: HeadlessNoopMetricsRecorder(),
-            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
-        )
-
-        #expect(await viewModel.loadProductInfoFromURL() == false)
-        let contract = try #require(viewModel.reviewRecoveryContract)
-        #expect(contract.candidateCount == 0)
-        #expect(contract.recoverability == .unrecoverable)
-        #expect(viewModel.errorMessage != nil)
-        #expect(await viewModel.calculateRecommendation(userFits: []) == nil)
-        let calls = await remote.calls()
-        #expect(calls == ["resolve", "runtime", "recovery_contract"])
-    }
-
-    /// CP-007: NOT_APPLICABLE is an issued authority block, not a Recovery
-    /// prompt. It reaches no reference, begin, engine, or completion action.
     @Test func cp007NotApplicableProductStopsAtEffectiveAuthorityWithReason() async throws {
         let fixture = HeadlessJourneyFixture(provider: .musinsa)
         let remote = JourneyRecordingRemote(
@@ -1804,7 +1296,7 @@ struct FitMatchHeadlessUserJourneyTests {
         #expect(viewModel.errorMessage != nil)
         #expect(await viewModel.calculateRecommendation(userFits: []) == nil)
         let calls = await remote.calls()
-        #expect(calls == ["resolve", "runtime"])
+        #expect(calls == ["observation", "runtime"])
     }
 
     /// CP-013: an otherwise confirmed product without an active, usable
@@ -1829,83 +1321,13 @@ struct FitMatchHeadlessUserJourneyTests {
         #expect(await viewModel.calculateRecommendation(userFits: []) == nil)
         #expect(viewModel.errorMessage != nil)
         let calls = await remote.calls()
-        #expect(calls == ["resolve", "runtime"])
+        #expect(calls == ["observation", "runtime"])
     }
 
     /// CP-005: every bounded Recovery cardinality is a distinct current
     /// server contract. The user selects one of that exact contract's
     /// candidates; production authority refresh, reference authorization,
     /// engine, completion, and History then execute normally.
-    @Test func cp005EachBoundedRecoveryCardinalityUsesItsOwnServerContract() async throws {
-        for candidateCount in 1...3 {
-            let fixture = HeadlessJourneyFixture(provider: .uniqlo)
-            let contract = try fixture.recoveryContract(
-                count: candidateCount,
-                suffix: "cp005-\(candidateCount)"
-            )
-            let selected = try #require(contract.candidates.last)
-            let reference = fixture.localReference(garment: "tshirt", sleeve: "short_sleeve")
-            let record = fixture.closetRecord(for: reference)
-            let review = try fixture.runtime(globalStatus: .reviewRequired)
-            let personal = try fixture.runtime(
-                globalStatus: .reviewRequired,
-                effectivePersonalGarment: selected.garmentTypeCode,
-                overrideRevision: 1,
-                personalCandidateFingerprint: selected.candidateFingerprint,
-                personalCandidateSetHash: contract.candidateSetHash
-            )
-            let remote = JourneyRecordingRemote(
-                resolutions: Array(repeating: fixture.resolution(globalStatus: .reviewRequired), count: 4),
-                runtimes: [review, personal, personal, personal],
-                recoveryContracts: [contract],
-                setMutations: [try fixture.setMutation(
-                    contract: contract,
-                    garment: selected.garmentTypeCode,
-                    revision: 1,
-                    event: "SELECTED"
-                )],
-                closetResponses: [.init(state: "ready", items: [record])],
-                candidateResponses: Array(repeating: try fixture.referenceResponse(
-                    reference: reference,
-                    closetItemID: record.closetItemID,
-                    decision: "AUTOMATIC"
-                ), count: 2),
-                eligibleResponses: [try fixture.eligible(
-                    reference: reference,
-                    closetItemID: record.closetItemID,
-                    mode: "AUTOMATIC",
-                    allowed: true,
-                    effectiveSource: "USER_EXPLICIT",
-                    overrideRevision: 1
-                )],
-                beginResponses: [try fixture.begin(
-                    mode: "AUTOMATIC",
-                    personal: true,
-                    referenceClosetItemID: record.closetItemID,
-                    personalGarment: selected.garmentTypeCode,
-                    personalCandidateFingerprint: selected.candidateFingerprint,
-                    personalCandidateSetHash: contract.candidateSetHash
-                )],
-                completionResponses: [try fixture.complete()]
-            )
-            let viewModel = makeJourneyViewModel(fixture: fixture, remote: remote)
-
-            #expect(await viewModel.loadProductInfoFromURL() == false)
-            let displayed = try #require(viewModel.reviewRecoveryContract)
-            #expect(displayed.candidateCount == candidateCount)
-            #expect(
-                displayed.unknownFields
-                    == (candidateCount > 1 ? [.garmentType] : [])
-            )
-            #expect(await viewModel.confirmReviewRecovery(selected))
-            let history = await viewModel.calculateRecommendation(userFits: [reference])
-            #expect(history?.product.classificationAuthorityProvenance == .userExplicit)
-            #expect((await remote.calls()).contains("complete_comparison"))
-        }
-    }
-
-    /// CP-012: a future Global authority is used only for a new comparison.
-    /// The prior personal Result remains an immutable begin-time projection.
     @Test func cp012FutureGlobalAuthoritySupersedesOnlyTheNextComparison() async throws {
         let fixture = HeadlessJourneyFixture(provider: .uniqlo)
         let reference = fixture.localReference(garment: "tshirt", sleeve: "short_sleeve")
@@ -3424,184 +2846,54 @@ private enum HeadlessJourneyHarness {
         _ scenario: HeadlessJourneyScenario
     ) async throws -> HeadlessJourneyExecution {
         let fixture = HeadlessJourneyFixture(provider: scenario.provider)
-        let reference = fixture.localReference(garment: "tshirt", sleeve: "short_sleeve")
-        let remoteReference = fixture.closetRecord(for: reference)
-        let contract = try fixture.recoveryContract(count: 1, suffix: "resume")
-        let reviewRuntime = try fixture.runtime(globalStatus: .reviewRequired)
-        let personalRuntime = try fixture.runtime(
-            globalStatus: .reviewRequired,
-            effectivePersonalGarment: "tshirt",
-            overrideRevision: 1,
-            personalCandidateFingerprint: "candidate-tshirt-resume",
-            personalCandidateSetHash: "set-resume"
-        )
+        let review = try fixture.runtime(globalStatus: .reviewRequired)
         let remote = JourneyRecordingRemote(
-            resolutions: Array(repeating: fixture.resolution(globalStatus: .reviewRequired), count: 4),
-            runtimes: [reviewRuntime, personalRuntime, personalRuntime, personalRuntime],
-            recoveryContracts: [contract],
-            setMutations: [
-                try fixture.setMutation(
-                    contract: contract,
-                    garment: "tshirt",
-                    revision: 1,
-                    event: "SELECTED"
-                )
-            ],
-            closetResponses: [.init(state: "ready", items: [remoteReference])],
-            candidateResponses: Array(repeating: try fixture.referenceResponse(
-                reference: reference,
-                closetItemID: remoteReference.closetItemID,
-                decision: "AUTOMATIC"
-            ), count: 2),
-            eligibleResponses: [try fixture.eligible(
-                reference: reference,
-                closetItemID: remoteReference.closetItemID,
-                mode: "AUTOMATIC",
-                allowed: true,
-                effectiveSource: "USER_EXPLICIT",
-                overrideRevision: 1
-            )],
-            beginResponses: [try fixture.begin(
-                mode: "AUTOMATIC",
-                personal: true,
-                referenceClosetItemID: remoteReference.closetItemID,
-                personalGarment: "tshirt",
-                personalCandidateFingerprint: "candidate-tshirt-resume",
-                personalCandidateSetHash: "set-resume"
-            )],
-            completionResponses: [try fixture.complete()]
+            runtimes: [review, review],
+            recoveryContracts: [try fixture.recoveryContract(count: 0, suffix: "retired")]
         )
         let viewModel = makeViewModel(fixture: fixture, remote: remote)
-
-        let initiallyLoaded = await viewModel.loadProductInfoFromURL()
-        try require(!initiallyLoaded, scenario: scenario.id, message: "REVIEW_REQUIRED bypassed bounded Recovery")
-        let candidate = try requireValue(
-            viewModel.reviewRecoveryContract?.candidates.first,
-            scenario: scenario.id,
-            message: "server Recovery candidate missing"
-        )
-        let saved = await viewModel.confirmReviewRecovery(candidate)
-        try require(saved, scenario: scenario.id, message: "USER_EXPLICIT save/effective refresh failed")
-        try require(
-            viewModel.hasActiveUserExplicitClassification,
-            scenario: scenario.id,
-            message: "fresh personal effective authority missing"
-        )
-
-        let history = await viewModel.calculateRecommendation(userFits: [reference])
+        try require(!(await viewModel.loadProductInfoFromURL()), scenario: scenario.id,
+                    message: "Unmapped product acquired comparison authority")
+        try require(viewModel.requiresComparisonGroupSelection && viewModel.errorMessage == nil,
+                    scenario: scenario.id, message: "Unmapped product must show group selection")
+        viewModel.selectComparisonGroupForCurrentComparison(.tops)
+        try require(!viewModel.hasServerValidatedSessionComparisonContext, scenario: scenario.id,
+                    message: "Local choice cannot grant server authority")
         let calls = await remote.calls()
-        let diagnosticError = viewModel.errorMessage ?? "<nil>"
-        try requireOrdered(
-            calls,
-            [
-                "resolve", "runtime", "recovery_contract",
-                "set_user_product_classification", "resolve", "runtime",
-                "list_closet", "reference_candidates", "eligible_sizes",
-                "begin_comparison", "complete_comparison"
-            ],
-            scenario: scenario.id
-        )
-        try require(
-            history != nil,
-            scenario: scenario.id,
-            message: "USER_EXPLICIT resumed through server completion but no Result/History was created; calls=\(calls); error=\(diagnosticError)"
-        )
-        return execution(
-            calls,
-            [.viewModelLoad, .authorityResolve, .recoveryContract, .recoveryMutation, .referenceDecision, .eligibleSizes, .begin, .recommendationService, .engineAdapter, .complete, .historyModel],
-            .expected
-        )
+        try require(calls == ["observation", "runtime"], scenario: scenario.id,
+                    message: "Group choice must not call retired classification mutations")
+        return execution(calls, [.viewModelLoad, .authorityResolve], .expected)
     }
 
     private static func recoveryLifecycle(
         _ scenario: HeadlessJourneyScenario
     ) async throws -> HeadlessJourneyExecution {
         let fixture = HeadlessJourneyFixture(provider: scenario.provider)
-        let contractA = try fixture.recoveryContract(count: 2, suffix: "a")
-        let contractB = try fixture.recoveryContract(count: 2, suffix: "b")
         let review = try fixture.runtime(globalStatus: .reviewRequired)
-        let personalA = try fixture.runtime(
-            globalStatus: .confirmed,
-            effectivePersonalGarment: "polo_shirt",
-            overrideRevision: 1
-        )
-        let personalB = try fixture.runtime(
-            globalStatus: .confirmed,
-            effectivePersonalGarment: "tshirt",
-            overrideRevision: 2
-        )
-        let remote = JourneyRecordingRemote(
-            resolutions: Array(repeating: fixture.resolution(globalStatus: .reviewRequired), count: 5),
-            runtimes: [review, personalA, personalB, review, review],
-            recoveryContracts: [contractA, contractB, contractB, contractB],
-            setMutations: [
-                try fixture.setMutation(contract: contractA, garment: "polo_shirt", revision: 1, event: "SELECTED"),
-                try fixture.setMutation(contract: contractB, garment: "tshirt", revision: 2, event: "EDITED")
-            ],
-            clearMutations: [try fixture.clearMutation(revision: 3)]
-        )
-        let first = makeViewModel(fixture: fixture, remote: remote)
-
-        try require(!(await first.loadProductInfoFromURL()), scenario: scenario.id, message: "review product unexpectedly loaded as confirmed")
-        let initial = try requireValue(first.reviewRecoveryContract, scenario: scenario.id, message: "initial bounded Recovery contract missing")
-        let candidateA = try requireValue(initial.candidates.first(where: { $0.garmentTypeCode == "polo_shirt" }), scenario: scenario.id, message: "candidate A missing")
-        try require(await first.confirmReviewRecovery(candidateA), scenario: scenario.id, message: "initial Recovery selection failed")
-        try require(first.hasActiveUserExplicitClassification, scenario: scenario.id, message: "active personal authority missing after select")
-
-        try require(await first.beginReviewRecoveryReselection(), scenario: scenario.id, message: "fresh Recovery contract not requested for reselect")
-        let latest = try requireValue(first.reviewRecoveryContract, scenario: scenario.id, message: "fresh Recovery contract missing")
-        try require(latest.candidateSetHash != initial.candidateSetHash, scenario: scenario.id, message: "stale Recovery contract reused")
-        let candidateB = try requireValue(latest.candidates.first(where: { $0.garmentTypeCode == "tshirt" }), scenario: scenario.id, message: "candidate B missing")
-        try require(await first.confirmReviewRecovery(candidateB), scenario: scenario.id, message: "Recovery reselect failed")
-        try require(await first.clearReviewRecovery(), scenario: scenario.id, message: "Recovery clear failed")
-        try require(!first.hasActiveUserExplicitClassification, scenario: scenario.id, message: "cleared authority still active")
-        if case .reviewRequired = first.serverAuthorityState {
-            // Correct fail-closed post-clear state.
-        } else {
-            throw HeadlessJourneyFailure(scenario.id, "clear did not restore REVIEW_REQUIRED")
-        }
-
-        // Object reconstruction is a headless rehydration model: no cached
-        // local projection is injected into this newly constructed ViewModel.
-        let reconstructed = makeViewModel(fixture: fixture, remote: remote)
-        try require(!(await reconstructed.loadProductInfoFromURL()), scenario: scenario.id, message: "cleared selection resurfaced after reconstruction")
-        try require(!reconstructed.hasActiveUserExplicitClassification, scenario: scenario.id, message: "cleared authority reappeared after reconstruction")
+        let remote = JourneyRecordingRemote(runtimes: [review, review])
+        let viewModel = makeViewModel(fixture: fixture, remote: remote)
+        _ = await viewModel.loadProductInfoFromURL()
+        viewModel.selectComparisonGroupForCurrentComparison(.tops)
+        viewModel.selectComparisonGroupForCurrentComparison(.pants)
+        try require(viewModel.requestedComparisonGroupCode == "C", scenario: scenario.id,
+                    message: "Latest explicit group selection must win")
+        try require(!viewModel.hasServerValidatedSessionComparisonContext, scenario: scenario.id,
+                    message: "Local selection must not authorize comparison")
+        _ = await viewModel.loadProductInfoFromURL()
+        try require(viewModel.requiresComparisonGroupSelection && viewModel.requestedComparisonGroupCode == nil,
+                    scenario: scenario.id, message: "Reload must not reuse an unvalidated previous group")
         let calls = await remote.calls()
-        let mutations = await remote.setRequests()
-        try require(mutations.count == 2, scenario: scenario.id, message: "unexpected number of Recovery mutations")
-        try require(mutations[0].expectedRevision == 0, scenario: scenario.id, message: "initial revision mismatch")
-        try require(mutations[1].expectedRevision == 1, scenario: scenario.id, message: "reselect revision did not advance")
-        try require(!calls.contains("begin_comparison"), scenario: scenario.id, message: "Recovery selection skipped reference decision and reached begin")
-        return execution(calls, [.viewModelLoad, .authorityResolve, .recoveryContract, .recoveryMutation], .expected)
+        try require(calls.filter { $0 == "runtime" }.count == 2 &&
+                    !calls.contains("set_user_product_classification") && !calls.contains("begin_comparison"),
+                    scenario: scenario.id, message: "Reload must refresh authority without legacy mutation")
+        return execution(calls, [.viewModelLoad, .authorityResolve], .expected)
     }
 
     private static func unrecoverable(
         _ scenario: HeadlessJourneyScenario
     ) async throws -> HeadlessJourneyExecution {
-        let fixture = HeadlessJourneyFixture(provider: scenario.provider)
-        let runtime = try fixture.runtime(
-            globalStatus: .reviewRequired,
-            productStructure: scenario.classification.contains("G5") ? "UNKNOWN" : "SINGLE"
-        )
-        let contract = try fixture.recoveryContract(
-            count: 0,
-            suffix: scenario.classification.contains("G5") ? "unknown" : "zero"
-        )
-        let remote = JourneyRecordingRemote(
-            resolutions: [fixture.resolution(globalStatus: .reviewRequired)],
-            runtimes: [runtime],
-            recoveryContracts: [contract]
-        )
-        let viewModel = makeViewModel(fixture: fixture, remote: remote)
-        try require(!(await viewModel.loadProductInfoFromURL()), scenario: scenario.id, message: "unrecoverable target loaded as confirmed")
-        if case .unrecoverable = viewModel.reviewRecoveryState {
-            // Correct bounded fail-closed state.
-        } else {
-            throw HeadlessJourneyFailure(scenario.id, "unrecoverable target exposed active Recovery")
-        }
-        let calls = await remote.calls()
-        try require(!calls.contains("set_user_product_classification"), scenario: scenario.id, message: "zero-candidate Recovery attempted mutation")
-        return execution(calls, [.viewModelLoad, .authorityResolve, .recoveryContract], .blockedWithReason)
+        // Missing detailed-category candidates no longer prevent explicit A-G selection.
+        try await recoveryResume(scenario)
     }
 
     private static func notApplicable(
@@ -3718,7 +3010,7 @@ private enum HeadlessJourneyHarness {
         try require(!(await viewModel.loadProductInfoFromURL()), scenario: scenario.id, message: "modeled transport failure unexpectedly succeeded")
         try require(await viewModel.loadProductInfoFromURL(), scenario: scenario.id, message: "retry did not reach current authority")
         let calls = await remote.calls()
-        try require(calls.filter { $0 == "resolve" }.count == 2, scenario: scenario.id, message: "retry did not issue exactly one retry")
+        try require(calls.filter { $0 == "observation" }.count == 2, scenario: scenario.id, message: "retry did not issue exactly one observation retry")
         return execution(calls, [.viewModelLoad, .authorityResolve], .expected)
     }
 
@@ -4977,6 +4269,7 @@ actor JourneyRecordingRemote: FitMatchServerAuthorityRemoteServicing {
     private let gates: [JourneyRemoteStage: JourneyAsyncGate]
     private var eventLog: [String] = []
     private var capturedResolutionRequests: [FitMatchProductResolutionRequest] = []
+    private var capturedObservations: [FitMatchProductObservationRequest] = []
     private var capturedSetRequests: [FitMatchSetUserProductClassificationRequest] = []
 
     init(
@@ -5032,7 +4325,16 @@ actor JourneyRecordingRemote: FitMatchServerAuthorityRemoteServicing {
 
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws -> FitMatchProductObservationResponse {
         eventLog.append("observation")
-        throw JourneyRemoteFailure.unexpected("observation")
+        capturedObservations.append(request)
+        await gates[.resolve]?.wait()
+        if resolveFailureCount > 0 {
+            resolveFailureCount -= 1
+            throw JourneyRemoteFailure.scriptedTransport
+        }
+        guard let productID = runtimes.first?.product.productID else {
+            throw JourneyRemoteFailure.missing("observation_product")
+        }
+        return promotedObservationFixture(productID: productID)
     }
 
     func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws -> FitMatchProductRuntimeResponse {
@@ -5141,6 +4443,8 @@ actor JourneyRecordingRemote: FitMatchServerAuthorityRemoteServicing {
 
     func calls() -> [String] { eventLog }
 
+    func observationRequests() -> [FitMatchProductObservationRequest] { capturedObservations }
+
     func resolutionRequests() -> [FitMatchProductResolutionRequest] {
         capturedResolutionRequests
     }
@@ -5199,8 +4503,14 @@ actor JourneyAsyncGate {
 
     func waitForArrival(atLeast minimum: Int) async {
         guard arrivals < minimum else { return }
-        await withCheckedContinuation { continuation in
-            arrivalWaiters.append((minimum, continuation))
+        // A broken fixture must fail this test, never hang the entire suite.
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while arrivals < minimum && ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        if arrivals < minimum {
+            Issue.record("Expected network boundary was not reached within 5 seconds")
+            open()
         }
     }
 

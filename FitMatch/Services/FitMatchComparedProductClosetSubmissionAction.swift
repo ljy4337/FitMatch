@@ -41,7 +41,7 @@ nonisolated enum FitMatchClosetRegistrationRPCError: LocalizedError, Sendable {
 
     var errorDescription: String? {
         switch self {
-        case .rejected(_, let message): return message
+        case .rejected: return "내 옷장에 저장하지 못했어요. 입력한 내용은 유지됩니다."
         }
     }
 }
@@ -296,11 +296,12 @@ final class FitMatchComparedProductClosetSubmissionAction {
     }
 
     private func serverMessage(for error: Error) -> String {
-        let localized = (error as? LocalizedError)?.errorDescription?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let localizedMessage = localized?.isEmpty == false ? localized : nil
-        let diagnosticMessage = localizedMessage
-            ?? error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        let diagnosticMessage: String
+        if case let .rejected(_, message)? = error as? FitMatchClosetRegistrationRPCError {
+            diagnosticMessage = message
+        } else {
+            diagnosticMessage = error.localizedDescription
+        }
         let normalized = diagnosticMessage.lowercased()
         // The public RPC is the final canonical-measurement authority. Keep
         // its SQL-facing rejection out of the View and translate it here at
@@ -310,7 +311,6 @@ final class FitMatchComparedProductClosetSubmissionAction {
                 && normalized.contains("closet")) {
             return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
         }
-        if let localizedMessage { return localizedMessage }
-        return "서버에 옷장을 저장하지 못했습니다. 다시 시도해 주세요."
+        return "내 옷장에 저장하지 못했어요. 입력한 내용은 유지됩니다."
     }
 }

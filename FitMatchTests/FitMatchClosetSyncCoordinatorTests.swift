@@ -521,7 +521,8 @@ struct FitMatchClosetSyncCoordinatorTests {
             remoteM,
             productSizeID: serverLSizeID,
             sizeName: "L",
-            measurements: ["waist_width": 44]
+            measurements: ["waist_width": 44],
+            comparisonGroupCode: "C"
         )
         let remote = ClosetSyncRemoteStub(
             items: [remoteM],
@@ -614,7 +615,7 @@ struct FitMatchClosetSyncCoordinatorTests {
 
     /// Reference replacement consent is an editor-owned, read-only preflight:
     /// cancelling at this point must not send an update or a reference RPC.
-    @Test func linkedClosetEditRequiresReferenceConfirmationBeforeServerMutation() async throws {
+    @Test func linkedClosetEditDoesNotRestoreRetiredReferenceConfirmation() async throws {
         let userID = UUID()
         let clientItemID = UUID()
         let productID = UUID()
@@ -633,7 +634,11 @@ struct FitMatchClosetSyncCoordinatorTests {
             productID: UUID(),
             classificationSource: "manual_override"
         )
-        let remote = ClosetSyncRemoteStub(items: [current, otherReference])
+        let updated = withLinkedSize(current, productSizeID: serverLSizeID,
+                                     sizeName: "L", measurements: current.measurements,
+                                     comparisonGroupCode: "C")
+        let remote = ClosetSyncRemoteStub(items: [current, otherReference],
+                                         listResponses: [[current, otherReference], [updated, otherReference]])
         let container = try inMemoryContainer()
         let context = ModelContext(container)
         let coordinator = FitMatchClosetSyncCoordinator(
@@ -694,13 +699,13 @@ struct FitMatchClosetSyncCoordinatorTests {
             confirmsReferenceReplacement: false
         )
 
-        guard case .needsReferenceConfirmation = outcome else {
-            Issue.record("The server-visible reference conflict needs explicit consent")
+        guard case .saved = outcome else {
+            Issue.record("Editing must save without the retired reference consent")
             return
         }
-        #expect(await remote.capturedUpsertRequest() == nil)
+        #expect(await remote.capturedUpsertRequest() != nil)
         #expect(await remote.referenceMutations().isEmpty)
-        #expect(item.sizeName == "M")
+        #expect(item.sizeName == "L")
     }
 
     @Test func existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime() async throws {
@@ -1835,7 +1840,8 @@ private func withLinkedSize(
     _ record: FitMatchClosetItemRecord,
     productSizeID: UUID,
     sizeName: String,
-    measurements: [String: Double]
+    measurements: [String: Double],
+    comparisonGroupCode: String? = nil
 ) -> FitMatchClosetItemRecord {
     FitMatchClosetItemRecord(
         closetItemID: record.closetItemID,
@@ -1869,6 +1875,7 @@ private func withLinkedSize(
         familyCode: record.familyCode,
         lengthCode: record.lengthCode,
         bodyLengthCode: record.bodyLengthCode,
+        comparisonGroupCode: comparisonGroupCode ?? record.comparisonGroupCode,
         classificationSnapshot: record.classificationSnapshot,
         clientSnapshot: record.clientSnapshot,
         clientCreatedAt: record.clientCreatedAt,

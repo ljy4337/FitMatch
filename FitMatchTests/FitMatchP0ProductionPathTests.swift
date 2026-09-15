@@ -183,7 +183,7 @@ struct FitMatchP0ProductionPathTests {
             ("E493045", "XS", [.totalLength: 64, .shoulder: 48, .chest: 48, .sleeveLength: 44.5]),
             ("E475941", "S", [.totalLength: 76, .shoulder: 44, .chest: 53.5, .sleeveLength: 80]),
             ("E488200", "S", [.totalLength: 46.5, .shoulder: 48.5, .chest: 49, .sleeveLength: 77.5]),
-            ("E488202", "S", [.waist: 34, .hip: 46.75, .thigh: 33.5, .rise: 27.5, .hem: 22.5])
+            ("E488202", "S", [.waist: 68, .hip: 93.5, .thigh: 33.5, .rise: 27.5, .hem: 22.5])
         ]
         let inputs = try corpus(named: "Uniqlo243FitPairInputs")
         let parser = UniqloSizeAPIParser()

@@ -66,7 +66,7 @@ actor FitMatchEchoServerAuthorityRemote: FitMatchServerAuthorityRemoteServicing 
 
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
         -> FitMatchProductObservationResponse {
-        throw StubError.unexpectedObservation
+        return promotedObservationFixture(productID: productID(for: request.payload.externalProductID))
     }
 
     func listClosetItems() async throws -> FitMatchClosetItemsResponse {
@@ -108,4 +108,11 @@ actor FitMatchEchoServerAuthorityRemote: FitMatchServerAuthorityRemoteServicing 
         case unexpectedObservation
         case unexpectedCandidateLookup
     }
+}
+
+/// A successful ingestion receipt for an explicitly scripted server product.
+func promotedObservationFixture(productID: UUID) -> FitMatchProductObservationResponse {
+    let id = UUID()
+    return .init(observation: .init(observationID: id, status: "promoted", rawMeasurementCount: 0),
+                 processing: .init(observationID: id, status: "promoted", productID: productID))
 }

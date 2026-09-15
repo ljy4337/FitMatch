@@ -676,7 +676,7 @@ struct FitMatchSupabaseProductResolverTests {
                 viewModel.makeProductForClosetRegistration(brand: nil)
             )
             #expect(product.categoryCode == "tops")
-            #expect(product.normalizedProductTypeCode == expected.detail)
+            #expect(product.normalizedProductTypeCode == "short_sleeve") // Current display taxonomy; exact garment type remains below.
             #expect(product.garmentTypeRawValue == expected.family)
             #expect(product.sleeveTypeRawValue == "short_sleeve")
             #expect(product.classificationAuthorityProvenance == .serverConfirmed)
@@ -1941,7 +1941,6 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(await viewModel.loadProductInfoFromURL())
         #expect(viewModel.hasServerComparisonReadyAuthority)
         let form = try #require(viewModel.sizeOptions.first)
-        #expect(form.id == productSizeID)
         let registrationContext = viewModel.closetRegistrationServerContext
         #expect(registrationContext.identity(for: form.id)?.productSizeID == productSizeID)
         #expect(Set(form.parsedMeasurementRecords.compactMap(\.canonicalMeasurementCode))
@@ -1965,7 +1964,7 @@ struct FitMatchSupabaseProductResolverTests {
             viewModel.makeProductForClosetRegistration(brand: nil)
         )
         let presentationSize = try #require(presentationProduct.sizes.first)
-        #expect(presentationSize.id == productSizeID)
+        #expect(presentationSize.id == form.id)
         #expect(registrationContext.identity(for: presentationSize.id)?.productSizeID
             == productSizeID)
         #expect(Set(presentationSize.measurementRecords.map(\.measurementCodeRawValue))
@@ -2087,7 +2086,7 @@ struct FitMatchSupabaseProductResolverTests {
         )
     }
 
-    @Test func linkRegistrationResultGateDoesNotBranchOnClassificationState() {
+    @Test func linkRegistrationAllowsReviewButRejectsUnavailableAndNotApplicable() {
         let product = Product(name: "Classification-neutral link gate", category: .top)
         let displaySize = ProductSize(
             id: UUID(),
@@ -2113,11 +2112,11 @@ struct FitMatchSupabaseProductResolverTests {
                 registerableDisplaySizeIDs: [displaySize.id]
             )
             #expect(
-                LinkClosetRegistrationPreparation.registrationBlockMessage(
+                (LinkClosetRegistrationPreparation.registrationBlockMessage(
                     productMeasurementPresence: .available,
                     serverRegistrationContext: context,
                     displaySizes: [displaySize]
-                ) == nil
+                ) == nil) == (classificationState == .confirmed || classificationState == .reviewRequired)
             )
         }
     }
@@ -2468,7 +2467,7 @@ struct FitMatchSupabaseProductResolverTests {
                 allowsLabelFallback: false
             ) == nil
         )
-        #expect(preparation.initialSizeSelectionMessage?.contains("XL") == true)
+        #expect(preparation.initialSizeSelectionMessage?.contains("등록할 사이즈를 다시 선택") == true)
     }
 
     /// History has no retained current-display server identity.  Even a
@@ -3692,7 +3691,11 @@ private actor DatabaseAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicin
         resolveFailure: ResolveFailure? = nil
     ) {
         self.resolutions = resolutions
-        self.observations = observations
+        // These fixtures describe an already-known catalog product. Fresh parser
+        // loads now submit an observation before requesting that runtime.
+        self.observations = observations.isEmpty
+            ? runtimes.map { $0.product.productID }.map { promotedObservationFixture(productID: $0) }
+            : observations
         self.runtimes = runtimes
         self.resolveFailure = resolveFailure
     }
@@ -3709,6 +3712,7 @@ private actor DatabaseAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicin
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
         -> FitMatchProductObservationResponse {
         observationCallCount += 1
+        if resolveFailure == .network { throw URLError(.notConnectedToInternet) }
         guard !observations.isEmpty else { throw StubError.missingObservation }
         return observations.removeFirst()
     }

@@ -1094,12 +1094,12 @@ private extension CompareFlowSheet {
             PrimaryButton(
                 title: isAutomaticMusinsaSizeFailure
                     ? "상품 사이즈 직접 입력"
-                    : (viewModel.isNetworkFailure ? "다시 시도" : "다시 입력하기"),
+                    : (canRetryCurrentProductURL ? "다시 시도" : "다시 입력하기"),
                 systemImage: isAutomaticMusinsaSizeFailure ? "square.and.pencil" : "arrow.clockwise"
             ) {
                 if isAutomaticMusinsaSizeFailure {
                     isShowingManualProductEntry = true
-                } else if viewModel.isNetworkFailure {
+                } else if canRetryCurrentProductURL {
                     startCompareTask(with: productURL)
                 } else {
                     resetCompareFlowToStart()
@@ -1108,6 +1108,10 @@ private extension CompareFlowSheet {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 20)
+    }
+
+    var canRetryCurrentProductURL: Bool {
+        FitMatchProductLinkInput.validate(productURL).canStartLoad
     }
 
     var errorScreenTitle: String {

@@ -2228,7 +2228,7 @@ struct FitMatchTests {
         #expect(result.comparedItems.first { $0.kind == .totalLength }?.signedDifference == 1)
     }
 
-    @Test func samePlatformAndFormatUsesMatchingSourceFieldsDirectly() {
+    @Test func matchingRawLabelsNeverOverrideConflictingCanonicalCodes() {
         let size = ProductSize(
             name: "L",
             measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 0, sleeveLength: 0)
@@ -2266,9 +2266,8 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(result.status == .confirmed)
-        #expect(result.comparedItems.first { $0.kind == .shoulder }?.signedDifference == 1)
-        #expect(result.comparedItems.first { $0.kind == .chest }?.signedDifference == 1)
+        #expect(result.status == .insufficientEvidence)
+        #expect(result.comparedItems.isEmpty)
     }
 
     @Test func comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat() throws {
@@ -2288,7 +2287,7 @@ struct FitMatchTests {
             )
             size.measurementRecords = [
                 comparisonRecord(
-                    value: waistValue, code: .waistWidthEdgeToEdge, kind: .waist,
+                    value: waistValue, code: rawLabel == "허리둘레" ? .waistCircumferenceGarment : .waistWidthEdgeToEdge, kind: .waist,
                     methodSource: source, methodProfile: profile,
                     rawCode: "waist-product-size", rawLabel: rawLabel,
                     rawValueText: rawValue, productSize: size
@@ -2309,7 +2308,7 @@ struct FitMatchTests {
             )
             item.measurementRecords = [
                 comparisonRecord(
-                    value: waistValue, code: .waistWidthEdgeToEdge, kind: .waist,
+                    value: waistValue, code: rawLabel == "허리둘레" ? .waistCircumferenceGarment : .waistWidthEdgeToEdge, kind: .waist,
                     methodSource: source, methodProfile: profile,
                     rawCode: "waist-product-size", rawLabel: rawLabel,
                     rawValueText: rawValue, userFit: item
@@ -2330,11 +2329,11 @@ struct FitMatchTests {
         let uniqloToUniqlo = try waistItem(
             product(
                 source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
-                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+                waistValue: 80, rawLabel: "허리둘레", rawValue: "80"
             ),
             reference(
                 source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
-                waistValue: 39, rawLabel: "허리둘레", rawValue: "78"
+                waistValue: 78, rawLabel: "허리둘레", rawValue: "78"
             )
         )
         #expect(uniqloToUniqlo.displayTitle == "허리둘레")
@@ -2345,7 +2344,7 @@ struct FitMatchTests {
         let circumferenceToWidth = try waistItem(
             product(
                 source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
-                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+                waistValue: 80, rawLabel: "허리둘레", rawValue: "80"
             ),
             reference(
                 source: "musinsa", profile: "musinsa_type_6",
@@ -2360,11 +2359,11 @@ struct FitMatchTests {
         let differentBrandCircumferences = try waistItem(
             product(
                 source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
-                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+                waistValue: 80, rawLabel: "허리둘레", rawValue: "80"
             ),
             reference(
                 source: "other_shop", profile: "brand_chart",
-                waistValue: 39, rawLabel: "허리둘레", rawValue: "78"
+                waistValue: 78, rawLabel: "허리둘레", rawValue: "78"
             )
         )
         #expect(differentBrandCircumferences.displayTitle == "허리둘레")
@@ -4549,7 +4548,7 @@ struct FitMatchTests {
             #expect(info.sizes[0].measurements.chest == 48.5)
             #expect(info.sizes[0].measurements.totalLength == 0)
             #expect(info.sizes[0].measurements.sleeveLength == 15.0)
-            #expect(info.sizes[0].measurements.shoulder == 42.5)
+            #expect(info.sizes[0].measurements.shoulder == 0) // Back width is retained separately, not promoted to shoulder.
             #expect(info.sizes[0].measurementRecords.count == 4)
             let chestCandidate = info.sizes[0].measurementRecords.first {
                 $0.rawCode == "zone-name-chest"
@@ -4596,69 +4595,6 @@ struct FitMatchTests {
         } catch {
             Issue.record("예상하지 못한 ZARA 파서 오류: \(error)")
         }
-    }
-
-    @Test func cosParserPreservesOfficialMetadataButFailsClosedWithoutSizeChart() async {
-        let url = URL(string: "https://www.cos.com/ko-kr/men/t-shirts/product.slim-ribbed-cotton-t-shirt.1229297007.html")!
-        let html = """
-        <html><head>
-        <meta property="og:title" content="슬림 리브드 코튼 티셔츠" />
-        <meta property="og:image" content="https://images.cos.com/example.jpg" />
-        <meta property="og:url" content="https://www.cos.com/ko-kr/men/t-shirts/product.slim-ribbed-cotton-t-shirt.1229297007.html" />
-        <script type="application/ld+json">{"@type":"Product","name":"슬림 리브드 코튼 티셔츠","offers":{"price":"59000"}}</script>
-        </head><body></body></html>
-        """
-        let parser = COSParser(pageLoader: COSProductPageLoaderSpy(page: COSProductPage(url: url, statusCode: 200, html: html)))
-
-        do {
-            _ = try await parser.parse(from: url)
-            Issue.record("실측표 없는 COS 상품이 자동 비교용 파싱에 성공했습니다.")
-        } catch let error as ProductURLParserPartialError {
-            let info = error.productInfo
-            #expect(info.sourceName == "COS 공식몰")
-            #expect(info.productID == "1229297007")
-            #expect(info.productName == "슬림 리브드 코튼 티셔츠")
-            #expect(info.category == .top)
-            #expect(info.detailCategory == .other)
-            #expect(info.productMetadata.categoryDepth2Code == "t-shirts")
-            #expect(info.measurementAvailability == .unavailable)
-        } catch {
-            Issue.record("예상하지 못한 COS 파서 오류: \(error)")
-        }
-    }
-
-    @Test func cosParserUsesOfficialSizeGuideForGarmentMeasurements() async throws {
-        let url = URL(string: "https://www.cos.com/ko-kr/men/view-all/product.ribbed-wool-cotton-t-shirt-cobalt-blue.1349394002.html")!
-        let html = """
-        <html><head>
-        <script type="application/ld+json">{"@type":"Product","name":"리브드 메리노 울 코튼 티셔츠","offers":{"price":115000}}</script>
-        </head><body>
-        <script>window.__DATA__ = {"productInfo":{"slitmCd":"40B1490048","sectId":"254652"}};</script>
-        </body></html>
-        """
-        let guide = """
-        {"data":{"sizeHeaders":["S","M"],"rows":[
-          {"name":"Shoulder to shoulder","values":["41.5","43.0"]},
-          {"name":"½ Chest","values":["50.5","53.5"]},
-          {"name":"Sleeve length","values":["24.75","25.25"]},
-          {"name":"Back length","values":["63.0","64.0"]}
-        ]}}
-        """.data(using: .utf8)!
-        let parser = COSParser(
-            pageLoader: COSProductPageLoaderSpy(page: COSProductPage(url: url, statusCode: 200, html: html)),
-            sizeGuideLoader: COSSizeGuideLoaderSpy(data: guide)
-        )
-
-        let info = try await parser.parse(from: url)
-
-        #expect(info.productID == "40B1490048")
-        #expect(info.productMetadata.styleNo == "1349394002")
-        #expect(info.measurementAvailability == .actualMeasurements)
-        #expect(info.sizes.map(\.name) == ["S", "M"])
-        #expect(info.sizes[1].measurements.shoulder == 43.0)
-        #expect(info.sizes[1].measurements.chest == 53.5)
-        #expect(info.sizes[1].measurements.totalLength == 64.0)
-        #expect(info.sizes[1].measurements.sleeveLength == 25.25)
     }
 
     @Test func manualClosetItemAndMeasurementRecordsPersistTogether() throws {
@@ -5968,9 +5904,8 @@ struct FitMatchTests {
         )
 
         #expect(sizeRecords.first?.measurementCode == .chestWidthPitToPit)
-        #expect(sizeRecords.dropFirst().dropLast().allSatisfy {
-            $0.measurementCode == .bodyLengthBackNeckToHem
-        })
+        #expect(sizeRecords[1...5].allSatisfy { $0.measurementCode == .bodyLengthBackNeckToHem })
+        #expect(sizeRecords[6].measurementCode == .bodyLengthUniqloKnitFront) // Front and back endpoints stay distinct.
         #expect(sizeRecords.last?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect(itemChest.measurementCode == .chestWidthPitToPit)
         #expect(itemLength.measurementCode == .bodyLengthBackNeckToHem)
@@ -6027,7 +5962,7 @@ struct FitMatchTests {
         #expect(size.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
     }
 
-    @Test func migrationVersionSevenHalvesUniqloCircumferencesExactlyOnce() throws {
+    @Test func migrationPreservesUniqloCircumferencesAcrossRepeatedRuns() throws {
         let container = try inMemoryModelContainer()
         let context = ModelContext(container)
         let size = ProductSize(
@@ -6083,10 +6018,10 @@ struct FitMatchTests {
         #expect(hip.rawValueText == "104")
 
         try MeasurementLegacyBackfillService.run(modelContext: context, products: [product], userFits: [])
-        #expect(waist.value == 35)
-        #expect(hip.value == 52)
-        #expect(size.measurements.waist == 35)
-        #expect(size.measurements.hip == 52)
+        #expect(waist.value == 70)
+        #expect(hip.value == 104)
+        #expect(size.measurements.waist == 70)
+        #expect(size.measurements.hip == 104)
         #expect(size.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
     }
 
@@ -6114,7 +6049,7 @@ struct FitMatchTests {
         let setInSleeve = MeasurementLegacyBackfillFactory.records(for: setInSize, product: setInProduct)
             .first { $0.displayKind == .sleeveLength }
 
-        #expect(raglanSleeve?.measurementCode == .sleeveRaglanNeckToCuff)
+        #expect(raglanSleeve?.measurementCode == .legacyUnknown) // Type number alone does not establish raglan endpoints.
         #expect(setInSleeve?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect(raglanSleeve?.measurementCode != setInSleeve?.measurementCode)
     }
@@ -9740,22 +9675,6 @@ private final class ProductURLParserSpy: ProductURLParsing {
 
 private enum ParserSpyError: Error {
     case failed
-}
-
-private struct COSProductPageLoaderSpy: COSProductPageLoading {
-    let page: COSProductPage
-
-    func load(url: URL) async throws -> COSProductPage {
-        page
-    }
-}
-
-private struct COSSizeGuideLoaderSpy: COSSizeGuideLoading {
-    let data: Data
-
-    func load(request: COSSizeGuideRequest, referringProductURL: URL) async throws -> Data {
-        data
-    }
 }
 
 private struct ZARAProductPageLoaderSpy: ZARAProductPageLoading {

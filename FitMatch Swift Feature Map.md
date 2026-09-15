@@ -64,9 +64,9 @@ Reuse the existing domain/presentation owner.
 
 ## Product Link / Retailer Product Loading
 
-### FitMatch/Views/ShoppingProductFormView.swift
+### FitMatch/Views/CompareFlowSheet.swift
 
-Product URL/form presentation used by shopping-product flows.
+Current comparison product-link entry and flow presentation.
 
 ### FitMatch/ViewModels/ShoppingProductViewModel.swift
 
@@ -119,16 +119,11 @@ Retailer implementations include:
 • FitMatch/Services/MusinsaFallbackSizeParser.swift
 • FitMatch/Services/MusinsaProductMetadataParser.swift
 • FitMatch/Services/MusinsaURLResolver.swift
-• FitMatch/Services/MusinsaWebViewParser.swift
 
 ### ZARA
 
 • FitMatch/Services/ZARAParser.swift
 • FitMatch/Services/ZARAWebViewMetadataAudit.swift
-
-### COS / legacy research support
-
-• FitMatch/Services/COSParser.swift
 
 Parser responsibility:
 

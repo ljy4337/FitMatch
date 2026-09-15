@@ -95,7 +95,7 @@ extension Product {
         }
         let metadata = ProductMetadata(
             styleNo: styleNo,
-            externalVariantID: nil,
+            externalVariantID: persistedRetailerFacts.externalVariantID,
             externalProductReference: nil,
             variantSelectionMethod: nil,
             variantSelectionConfidence: nil,

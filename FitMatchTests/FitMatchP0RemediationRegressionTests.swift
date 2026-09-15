@@ -267,7 +267,6 @@ struct FitMatchP0RemediationRegressionTests {
             "FitMatch/Views/ClosetItemDetailView.swift",
             "FitMatch/Views/AddComparedProductToClosetSheet.swift",
             "FitMatch/Views/CompareFlowSheet.swift",
-            "FitMatch/Views/ShoppingProductFormView.swift",
             "FitMatch/Views/RecommendationResultView.swift"
         ] {
             let source = try sourceFile(relativePath)
@@ -279,6 +278,9 @@ struct FitMatchP0RemediationRegressionTests {
                 source.contains("filter(\\.isActiveClosetItem)")
                     || source.contains("FitMatchClosetPresentation.activeItems")
                     || usesGlobalSearchPresentation
+                    || (relativePath == "FitMatch/Views/RecommendationResultView.swift"
+                        && source.contains("$0.isActiveClosetItem")
+                        && source.contains("$0.fitMatchServerReferenceSnapshot() != nil"))
             )
         }
     }

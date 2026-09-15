@@ -257,8 +257,8 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             activeClosetItems: [initialReference, independentBottom],
             persist: { FitMatchClosetRegistrationPersistence.save($0, in: context) }
         ) else { Issue.record("CR-008 reference replacement failed"); return }
-        #expect(!initialReference.isRepresentative)
-        #expect(nextReference.isRepresentative)
+        #expect(initialReference.isRepresentative) // Existing legacy data is preserved.
+        #expect(!nextReference.isRepresentative)
         #expect(independentBottom.isRepresentative)
         FitMatchClosetReferenceMutation.clearRepresentative(nextReference)
         #expect(!nextReference.isRepresentative)
@@ -340,7 +340,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             #expect(product.classificationAuthorityProvenance == .serverConfirmed)
             #expect(product.sizes.count == 1)
             let calls = await remote.calls()
-            #expect(calls == ["resolve", "runtime"])
+            #expect(calls == ["observation", "runtime"])
         }
 
         // CR-014: every approved provider takes the production parser dispatch
@@ -436,10 +436,9 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
                 parser: FinalSnapshotParser(products: [fixture.parsedProduct()])
             )
             #expect(await viewModel.loadProductInfoFromURL() == false)
-            let contract = try #require(viewModel.reviewRecoveryContract)
-            #expect(contract.candidateCount == count)
-            #expect(contract.fixedFacts.sleeveLengthCode == "short_sleeve")
-            #expect(contract.fixedFacts.garmentTypeCode == nil)
+            #expect(viewModel.requiresComparisonGroupSelection)
+            #expect(viewModel.reviewRecoveryContract == nil)
+            #expect(await remote.calls() == ["observation", "runtime"])
         }
 
         // CP-006 / CP-007 / CP-039: unrecoverable, NOT_APPLICABLE, missing
@@ -453,7 +452,8 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         )
         let zeroVM = makeViewModel(fixture: zeroFixture, remote: zeroRemote, parser: FinalSnapshotParser(products: [zeroFixture.parsedProduct()]))
         #expect(await zeroVM.loadProductInfoFromURL() == false)
-        #expect(zeroVM.reviewRecoveryContract?.recoverability == .unrecoverable)
+        #expect(zeroVM.requiresComparisonGroupSelection)
+        #expect(zeroVM.reviewRecoveryContract == nil)
 
         let notApplicableFixture = HeadlessJourneyFixture(provider: .uniqlo)
         let notApplicableRemote = JourneyRecordingRemote(
@@ -1006,7 +1006,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         #expect(viewModel.productCode == fixture.productCode)
         #expect(viewModel.sourceName == fixture.sourceName)
         #expect(viewModel.hasServerConfirmedAuthority)
-        #expect(await remote.calls() == ["resolve", "runtime"])
+        #expect(await remote.calls() == ["observation", "runtime"])
     }
 
     /// HI-003 / HI-004 / HI-005 / HI-013: a later current authority or a
@@ -1433,10 +1433,10 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             return
         }
         #expect(preparation.parsedProduct?.classificationAuthorityProvenance == .serverReviewRequired)
-        #expect(preparation.errorMessage != nil)
+        #expect(preparation.errorMessage == nil)
         #expect(preparation.parsedProduct?.canonicalEligibility == false)
         let calls = await remote.calls()
-        #expect(calls == ["resolve", "runtime", "recovery_contract"])
+        #expect(calls == ["observation", "runtime"])
     }
 
     /// CR-022: a linked/compared product save retries through the same action.

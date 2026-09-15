@@ -284,7 +284,7 @@ struct FitMatchFinalReleaseProviderSnapshotTests {
             #expect(viewModel.hasServerConfirmedAuthority)
         }
 
-        let requests = await remote.resolutionRequests()
+        let requests = await remote.observationRequests().map(\.payload)
         #expect(requests.map(\.source) == ["uniqlo", "uniqlo", "musinsa", "zara"])
         #expect(requests.map(\.externalProductID) == [
             uniqlo.productID,

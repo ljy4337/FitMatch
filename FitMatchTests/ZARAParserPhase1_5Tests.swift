@@ -1630,7 +1630,7 @@ struct ZARAParserPhase1_5Tests {
             """
             {"measureGuideInfo":{"sizes":[{"name":"S","measures":[
               {"zoneId":"A","tableTitleZone":"zone-name-chest","dimensions":[{"unitId":"cm","value":"48.0"}]},
-              {"zoneId":"D","tableTitleZone":"zone-name-back-width","dimensions":[{"unitId":"cm","value":"42.0"}]}
+              {"zoneId":"D","tableTitleZone":"zone-name-sleeve-length","dimensions":[{"unitId":"cm","value":"42.0"}]}
             ]}]},"sizeGuideInfo":null}
             """.utf8
         )

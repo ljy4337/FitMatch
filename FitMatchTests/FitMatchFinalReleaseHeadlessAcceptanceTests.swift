@@ -432,7 +432,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(bottom.isRepresentative)
     }
 
-    @Test func directRegistrationReferenceReplacementPersistsOnlyTheCurrentSameScopeReference() throws {
+    @Test func directRegistrationIgnoresRetiredReferenceFlagAndPreservesSaveFailure() throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
 
@@ -494,11 +494,10 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             return
         }
 
-        // CR-008: registering a new same-scope reference replaces only the
-        // conflicting top reference; the independent bottom reference stays.
+        // New registration no longer writes permanent reference flags.
         #expect(!existing.isRepresentative)
-        #expect(incoming.isRepresentative)
-        #expect(independentBottom.isRepresentative)
+        #expect(!incoming.isRepresentative)
+        #expect(!independentBottom.isRepresentative)
         #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 3)
 
         let failingForm = configuredDirectItem(
@@ -516,8 +515,8 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             activeClosetItems: [incoming, independentBottom],
             persist: { _ in false }
         ) {
-            #expect(incoming.isRepresentative)
-            #expect(independentBottom.isRepresentative)
+            #expect(!incoming.isRepresentative)
+            #expect(!independentBottom.isRepresentative)
         } else {
             Issue.record("Expected failed manual-reference save to preserve existing references")
         }
@@ -811,12 +810,10 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             "상품 링크를 입력해 주세요."
         ))
         #expect(FitMatchProductLinkInput.entryOutcome(for: "not a url") == .blocked(
-            ProductURLParserError.unsupportedURL.errorDescription
-                ?? "지원하는 상품 링크인지 확인해 주세요."
+            "올바른 상품 URL을 입력해 주세요."
         ))
         #expect(FitMatchProductLinkInput.entryOutcome(for: cos) == .blocked(
-            ProductURLParserError.unsupportedURL.errorDescription
-                ?? "지원하는 상품 링크인지 확인해 주세요."
+            "현재는 무신사, 유니클로, ZARA 상품 링크를 지원합니다."
         ))
         guard case .begin(let approvedURL) = FitMatchProductLinkInput.entryOutcome(
             for: supported[0]
@@ -918,7 +915,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
 
     @Test func linkRegistrationInputFailsClosedBeforeParserForEmptyMalformedAndUnsupportedURLs() async {
         #expect(FitMatchProductLinkInput.validate("   ") == .empty)
-        #expect(FitMatchProductLinkInput.validate("not a URL") == .unsupported)
+        #expect(FitMatchProductLinkInput.validate("not a URL") == .malformed)
         #expect(FitMatchProductLinkInput.validate(
             "https://www.uniqlo.example/kr/ko/products/E450259-000/00"
         ) == .unsupported)
@@ -941,7 +938,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         // boundary; blocked input must never reach it.
         let invalidInputs: [(String, FitMatchProductLinkInput.Validation)] = [
             ("   ", .empty),
-            ("not a URL", .unsupported),
+            ("not a URL", .malformed),
             ("https://www.uniqlo.example/kr/ko/products/E450259-000/00", .unsupported),
             ("https://www.cos.com/ko-kr/product.example.1229297007.html", .unsupported)
         ]
@@ -975,8 +972,13 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             Issue.record("EN-006 empty Home/Compare input unexpectedly began a product flow")
         }
 
+        if case .blocked(let message) = FitMatchProductLinkInput.entryOutcome(for: "not a url") {
+            #expect(message == "올바른 상품 URL을 입력해 주세요.")
+        } else {
+            Issue.record("EN-006 malformed input unexpectedly began a parser flow")
+        }
+
         for value in [
-            "not a url",
             "https://example.com/products/unknown",
             "https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html"
         ] {
@@ -2264,12 +2266,12 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
     @Test func measurementPresenceGatesPrecedeClosetSheetAndReviewRecovery() throws {
         let linkSource = try sourceFile("FitMatch/Views/LinkClosetRegistrationView.swift")
         #expect(linkSource.contains("이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다."))
-        #expect(linkSource.contains("guard productMeasurementPresence != .none else {"))
+        #expect(linkSource.contains("guard viewModel.productMeasurementPresence != .none else {"))
         // The View now asks the shared preparation gate for both measurement
         // presence and exact server identity.  Keep asserting that the Next
         // button is disabled by that combined gate rather than the removed
         // direct `productMeasurementPresence` expression.
-        #expect(linkSource.contains("classificationState == .preparing"))
+        #expect(linkSource.contains("guard parsedProduct != nil, !isLoading"))
         #expect(linkSource.contains("return registrationBlockMessage == nil"))
         #expect(linkSource.contains(".disabled(!canOpenRegistration)"))
 
@@ -2278,7 +2280,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             compareSource.range(of: "viewModel.productMeasurementPresence == .none")
         )
         let reviewRecovery = try #require(
-            compareSource.range(of: "if viewModel.hasServerReviewRequiredAuthority")
+            compareSource.range(of: "if CompareFlowRouting.shouldPresentComparisonGroupSelection")
         )
         #expect(presenceGate.lowerBound < reviewRecovery.lowerBound)
         #expect(compareSource.contains("이 상품은 실측 정보가 없어 비교할 수 없습니다."))
@@ -2959,7 +2961,7 @@ private actor AtomicEffectiveTupleRemote: FitMatchServerAuthorityRemoteServicing
 
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
         -> FitMatchProductObservationResponse {
-        throw AtomicEffectiveTupleError.unexpected
+        return promotedObservationFixture(productID: fixture.productID)
     }
 
     func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws

@@ -1,6 +1,16 @@
 -- Group-only comparison does not require legacy length-axis facts.
 begin;
 
+-- Refuse to overwrite a concurrently changed trigger definition.
+do $guard$
+begin
+  if md5(pg_get_functiondef('fitmatch_vnext.validate_garment_axis_values()'::regprocedure))
+     <> '1eaf0cf9b69756335862218f770bb1f0' then
+    raise exception 'Unexpected garment-axis trigger definition; re-audit before applying';
+  end if;
+end
+$guard$;
+
 CREATE OR REPLACE FUNCTION fitmatch_vnext.validate_garment_axis_values()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -78,7 +88,7 @@ insert into fitmatch_catalog.source_category_comparison_groups(
   array['바지','슈트 팬츠/슬랙스'],'{}'::jsonb,
   jsonb_build_object('depth1','바지','depth2','슈트 팬츠/슬랙스'),
   array['MEN'],1,
-  '[{"product_id":"5746363"}]'::jsonb,
+  '[{"product_id":"5746364"}]'::jsonb,
   'EXACT_RETAILER_CATEGORY_PATH',
   array['Official pants path; no length-axis inference'],
   jsonb_build_object('source_category_path','바지 > 슈트 팬츠/슬랙스')

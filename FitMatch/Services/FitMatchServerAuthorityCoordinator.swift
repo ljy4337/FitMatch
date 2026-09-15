@@ -449,32 +449,29 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
 
     var errorDescription: String? {
         switch self {
-        case .unsupportedCatalogState(let state):
-            return "지원하지 않는 서버 상품 상태입니다: \(state)"
+        case .unsupportedCatalogState:
+            return "상품 정보를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
         case .missingObservationForPromotion:
             return "서버 분류 승격에 필요한 상품 관측 정보가 없습니다."
         case .observationIdentityMismatch:
             return "상품 관측 정보가 분류 요청과 일치하지 않습니다."
-        case .promotionRejected(let status):
-            return "서버 분류 승격이 완료되지 않았습니다: \(status)"
+        case .promotionRejected:
+            return "상품 정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
         case .promotionResponseMalformed:
             return "서버 분류 승격 응답이 올바르지 않습니다."
         case .promotedProductMismatch:
             return "승격된 서버 상품 식별자가 요청과 일치하지 않습니다."
-        case .runtimeResponseMalformed(let reason):
-            return "서버 상품 런타임 응답이 올바르지 않습니다: \(reason)"
-        case .unknownClassificationStatus(let status):
-            return "알 수 없는 서버 분류 상태입니다: \(status)"
-        case .inconsistentRuntimeState(let state, let status):
-            return "서버 런타임과 분류 상태가 일치하지 않습니다: \(state)/\(status)"
+        case .runtimeResponseMalformed, .unknownClassificationStatus,
+             .inconsistentRuntimeState:
+            return "상품 정보를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
         case .classificationRecoveryUnavailable:
             return "서버 상품 분류 확인 기능을 사용할 수 없습니다."
-        case .invalidClassificationRecoveryContract(let reason):
-            return "서버 상품 분류 선택지가 올바르지 않습니다: \(reason)"
-        case .classificationRecoveryRejected(let reason):
-            return "상품 분류 선택을 저장하지 못했습니다: \(reason)"
-        case .closetRuntimeUnavailable(let state):
-            return "서버 옷장 상태를 사용할 수 없습니다: \(state)"
+        case .invalidClassificationRecoveryContract:
+            return "상품 분류 선택지를 확인하지 못했어요. 다시 시도해 주세요."
+        case .classificationRecoveryRejected:
+            return "상품 분류 선택을 저장하지 못했어요. 다시 시도해 주세요."
+        case .closetRuntimeUnavailable:
+            return "내 옷장 정보를 확인하지 못했어요. 다시 시도해 주세요."
         case .referenceItemNotFound:
             return "서버 옷장에서 기준 의류를 찾지 못했습니다."
         case .localReferenceProjectionMissing:
@@ -486,28 +483,26 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
                 runtimeState: state,
                 comparisonReady: false
             ).userMessage
-        case .unknownCandidateState(let state):
-            return "알 수 없는 서버 비교 후보 상태입니다: \(state)"
-        case .inconsistentCandidateState(let state, let reason):
-            return "서버 비교 후보 응답이 일관되지 않습니다: \(state)/\(reason)"
+        case .unknownCandidateState, .inconsistentCandidateState:
+            return "비교할 내 옷 정보를 확인하지 못했어요. 다시 시도해 주세요."
         case .comparisonBeginUnavailable:
             return "서버 비교 시작 API를 사용할 수 없습니다."
         case .comparisonNotAuthorized:
             return "서버에서 승인되지 않은 비교입니다."
         case .comparisonAuthorizationRejected(let reason):
             return reason.userMessage
-        case .comparisonBeginRejected(let reason):
-            return "서버 비교 시작이 차단되었습니다: \(reason)"
+        case .comparisonBeginRejected:
+            return "비교를 시작하지 못했어요. 같은 비교를 다시 시도해 주세요."
         case .comparisonAlreadyCompleted:
             return "이미 완료된 비교입니다. 비교 기록에서 확인해 주세요."
-        case .comparisonBeginMalformed(let reason):
-            return "서버 비교 시작 응답이 올바르지 않습니다: \(reason)"
+        case .comparisonBeginMalformed:
+            return "비교를 시작하지 못했어요. 같은 비교를 다시 시도해 주세요."
         case .comparisonContractViolation(let error):
             return error.errorDescription
         case .comparisonCompletionUnavailable:
             return "서버 비교 완료 API를 사용할 수 없습니다."
-        case .comparisonCompletionRejected(let reason):
-            return "서버가 비교 결과를 승인하지 않았습니다: \(reason)"
+        case .comparisonCompletionRejected:
+            return "비교 결과를 완료하지 못했어요. 같은 비교를 다시 시도해 주세요."
         }
     }
 }

@@ -90,7 +90,7 @@ struct ClosetItemDetailView: View {
             }
             .presentationDragIndicator(.visible)
         }
-        .alert("저장 실패", isPresented: Binding(
+        .alert("저장하지 못했어요", isPresented: Binding(
             get: { saveErrorMessage != nil },
             set: { if !$0 { saveErrorMessage = nil } }
         )) {
