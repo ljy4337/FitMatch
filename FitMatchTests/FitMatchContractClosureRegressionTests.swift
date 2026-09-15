@@ -153,6 +153,34 @@ struct FitMatchContractClosureRegressionTests {
         }
     }
 
+    @Test func F04AConfirmedLegacyStructureReasonIsMeasurementReadiness() throws {
+        let readiness: VNextProductReadinessDTO = try decode(
+            """
+            {"status":"CLASSIFICATION_REQUIRED",
+             "reason":"STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED"}
+            """
+        )
+        #expect(try FitMatchVNextContractValidator.runtimeState(
+            readiness: readiness,
+            classificationStatus: "confirmed"
+        ) == "measurements_required")
+        #expect(try FitMatchVNextContractValidator.runtimeState(
+            readiness: readiness,
+            classificationStatus: "review_required"
+        ) == "classification_required")
+    }
+
+    @Test func F04BComparisonGroupAcceptsDeployedMappingSourceKey() throws {
+        let group: VNextComparisonGroupDTO = try decode(
+            """
+            {"status":"CONFIRMED","group_code":"A",
+             "mapping_source":"RETAILER_CATEGORY"}
+            """
+        )
+        #expect(group.groupCode == "A")
+        #expect(group.source == "RETAILER_CATEGORY")
+    }
+
     @Test func F05EngineRejectsDirectlyConstructedUnsupportedSnapshot() throws {
         let decoded: VNextBeginComparisonDTO = try decode(validBeginJSON())
         let unsupportedSnapshot = VNextComparisonBeginSnapshotDTO(

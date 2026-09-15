@@ -999,6 +999,121 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(preparation.errorMessage == nil)
     }
 
+    @Test func suppliedUnmappedProductsRouteToExplicitGroupSelectionWithoutServerError() async throws {
+        let products: [(source: String, id: String)] = [
+            ("musinsa", "5746364"), ("musinsa", "7051965"),
+            ("musinsa", "4213064"), ("musinsa", "5864299"),
+            ("uniqlo", "E487883"), ("uniqlo", "E489060"),
+            ("uniqlo", "E489061"), ("uniqlo", "E481731"),
+            ("uniqlo", "E488182"), ("uniqlo", "E488560"),
+            ("uniqlo", "E489427"), ("uniqlo", "E489509"),
+            ("uniqlo", "E491294"), ("uniqlo", "E491297"),
+            ("uniqlo", "E489409"), ("uniqlo", "E483880"),
+            ("uniqlo", "E489408"), ("uniqlo", "E492900"),
+            ("uniqlo", "E489417"), ("uniqlo", "E479791"),
+            ("uniqlo", "E488758"), ("uniqlo", "E478141"),
+            ("uniqlo", "E486627"), ("uniqlo", "E486629"),
+            ("uniqlo", "E480856"), ("zara", "553949188"),
+            ("zara", "551151802"), ("zara", "545478190")
+        ]
+
+        for entry in products {
+            let parsed = try Self.authorityTestProduct(
+                source: entry.source,
+                externalProductID: entry.id,
+                localCategory: .top,
+                localDetail: .shortSleeve
+            )
+            let fixture = DatabaseAuthorityFixture(
+                source: entry.source,
+                externalProductID: entry.id,
+                status: .reviewRequired
+            )
+            let displaySize = try #require(parsed.sizes.first)
+            let variantID = UUID()
+            let sizeID = UUID()
+            let runtime = FitMatchProductRuntimeResponse(
+                runtimeState: "classification_required",
+                comparisonReady: false,
+                product: FitMatchRuntimeProduct(
+                    productID: fixture.productID,
+                    source: entry.source,
+                    externalProductID: entry.id,
+                    productName: parsed.productName,
+                    canonicalURL: parsed.sourceURL.absoluteString,
+                    audience: "UNISEX",
+                    sourceCategoryPath: parsed.sourceCategoryPath,
+                    sourceCategoryCodes: [],
+                    imageURL: nil,
+                    lifecycleStatus: "active",
+                    inputFingerprint: "unmapped-\(entry.id)"
+                ),
+                classification: fixture.classification,
+                variants: [
+                    FitMatchRuntimeVariant(
+                        variantID: variantID,
+                        externalVariantID: "__default__",
+                        variantName: nil,
+                        colorCode: nil,
+                        colorName: nil,
+                        sizes: [
+                            FitMatchRuntimeSize(
+                                productSizeID: sizeID,
+                                externalSizeID: displaySize.name,
+                                sizeLabel: displaySize.name,
+                                normalizedSizeLabel: displaySize.name,
+                                displayOrder: 0,
+                                stockStatus: "UNKNOWN",
+                                measurements: []
+                            )
+                        ]
+                    )
+                ]
+            )
+            let remote = DatabaseAuthorityRemoteStub(
+                resolutions: [fixture.resolution()],
+                observations: [fixture.observation(status: "promoted")],
+                runtimes: [runtime]
+            )
+            let viewModel = Self.authorityViewModel(product: parsed, remote: remote)
+
+            #expect(!(await viewModel.loadProductInfoFromURL()), Comment(rawValue: entry.id))
+            #expect(viewModel.requiresComparisonGroupSelection, Comment(rawValue: entry.id))
+            #expect(viewModel.requestedComparisonGroupCode == nil, Comment(rawValue: entry.id))
+            #expect(
+                CompareFlowRouting.shouldPresentComparisonGroupSelection(
+                    requiresSelection: viewModel.requiresComparisonGroupSelection,
+                    requestedGroupCode: viewModel.requestedComparisonGroupCode
+                ),
+                Comment(rawValue: entry.id)
+            )
+
+            let preparation = LinkClosetRegistrationPreparation.make(
+                from: viewModel,
+                brand: nil
+            )
+            #expect(preparation.canBeginRegistration, Comment(rawValue: entry.id))
+            #expect(preparation.errorMessage == nil, Comment(rawValue: entry.id))
+            #expect(preparation.registrationBlockMessage == nil, Comment(rawValue: entry.id))
+            #expect(
+                preparation.serverRegistrationContext.classificationState == .reviewRequired,
+                Comment(rawValue: entry.id)
+            )
+            #expect(
+                preparation.serverRegistrationContext.comparisonGroupCode == nil,
+                Comment(rawValue: entry.id)
+            )
+            #expect(
+                !(viewModel.errorMessage ?? "").contains("서버에 연결하지 못했습니다"),
+                Comment(rawValue: entry.id)
+            )
+            #expect(
+                !(viewModel.errorMessage ?? "").contains("서버 상품 응답을 처리하지 못했습니다"),
+                Comment(rawValue: entry.id)
+            )
+        }
+    }
+
     @Test func reviewRequiredLinkKeepsParserFactsAndExactRuntimeSizeIdentity() async throws {
         let parsed = try Self.authorityTestProduct(
             source: "musinsa",
@@ -3094,7 +3209,8 @@ struct FitMatchSupabaseProductResolverTests {
         let parser = DatabaseAuthorityParserStub(product: product)
         let service = ProductURLParserService(
             musinsaParser: parser,
-            uniqloParser: parser
+            uniqloParser: parser,
+            zaraParser: parser
         )
         return ShoppingProductViewModel(
             initialURL: product.sourceURL.absoluteString,
@@ -3120,6 +3236,12 @@ struct FitMatchSupabaseProductResolverTests {
             )
             sourceType = .officialStore
             sourceName = "유니클로 공식몰"
+        case "zara":
+            sourceURL = try #require(
+                URL(string: "https://www.zara.com/kr/ko/test-p\(externalProductID).html")
+            )
+            sourceType = .officialStore
+            sourceName = "ZARA 공식몰"
         default:
             sourceURL = try #require(
                 URL(string: "https://www.musinsa.com/products/\(externalProductID)")

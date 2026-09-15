@@ -8,12 +8,140 @@ private let runsLiveMusinsaValidation =
 
 private let runsLiveUniqloValidation = runsLiveMusinsaValidation
 
+private let groupAuditDefaultInputPath = "/tmp/fitmatch_group_audit_urls.txt"
+private let runsProductGroupURLAudit =
+    ProcessInfo.processInfo.environment["FITMATCH_GROUP_AUDIT_URLS"] != nil
+    || FileManager.default.fileExists(atPath: groupAuditDefaultInputPath)
+
+@MainActor
+@Suite(.enabled(
+    if: runsProductGroupURLAudit,
+    "상품 그룹 URL 감사는 입력 파일을 지정한 경우에만 실행합니다."
+))
+struct LiveProductGroupURLAuditTests {
+    private struct Record: Codable {
+        let url: String
+        let source: String?
+        let productID: String?
+        let productName: String?
+        let sourceCategoryPath: String?
+        let sourceCategoryCodes: [String]
+        let parserCategory: String?
+        let parserDetailCategory: String?
+        let sizeCount: Int
+        let status: String
+        let error: String?
+    }
+
+    @Test func parsesEveryUniqueURLIntoServerCategoryEvidence() async throws {
+        let environment = ProcessInfo.processInfo.environment
+        let inputPath = environment["FITMATCH_GROUP_AUDIT_URLS"]
+            ?? groupAuditDefaultInputPath
+        let outputPath = environment["FITMATCH_GROUP_AUDIT_OUTPUT"]
+            ?? "/tmp/fitmatch_group_audit_results.json"
+        let input = try String(contentsOfFile: inputPath, encoding: .utf8)
+        var seen = Set<String>()
+        let urls = input.components(separatedBy: .newlines).compactMap { raw -> String? in
+            let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !value.isEmpty, seen.insert(value).inserted else { return nil }
+            return value
+        }
+        var records: [Record] = []
+        for (index, url) in urls.enumerated() {
+            do {
+                let parsed = try await parseCategoryEvidence(urlString: url)
+                let observation = parsed.fitMatchProductObservationRequest()
+                records.append(Record(
+                    url: url,
+                    source: observation?.payload.source,
+                    productID: parsed.productID,
+                    productName: parsed.productName,
+                    sourceCategoryPath: observation?.payload.sourceCategoryPath,
+                    sourceCategoryCodes: observation?.payload.sourceCategoryCodes ?? [],
+                    parserCategory: parsed.category.rawValue,
+                    parserDetailCategory: parsed.detailCategory.rawValue,
+                    sizeCount: parsed.sizes.count,
+                    status: observation == nil ? "OBSERVATION_MISSING" : "PARSED",
+                    error: nil
+                ))
+            } catch {
+                records.append(Record(
+                    url: url,
+                    source: nil,
+                    productID: nil,
+                    productName: nil,
+                    sourceCategoryPath: nil,
+                    sourceCategoryCodes: [],
+                    parserCategory: nil,
+                    parserDetailCategory: nil,
+                    sizeCount: 0,
+                    status: "FAILED",
+                    error: error.localizedDescription
+                ))
+            }
+            print("GROUP_AUDIT_PROGRESS \(index + 1)/\(urls.count)")
+        }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try encoder.encode(records).write(to: URL(fileURLWithPath: outputPath), options: .atomic)
+        #expect(records.count == urls.count)
+    }
+
+    private func parseCategoryEvidence(urlString: String) async throws -> ParsedProductInfo {
+        let url = try #require(ProductURLSupport.normalizedURL(from: urlString))
+        if ProductURLSupport.isMusinsaURL(url) {
+            let resolved = try await MusinsaURLResolver().resolve(url)
+            return await MusinsaProductMetadataParser()
+                .parse(productID: resolved.productID, sourceURL: resolved.resolvedURL)
+                .parsedProductInfo(sizes: [])
+                .recordingParserProvenance(parserCode: "musinsa")
+        }
+        if ProductURLSupport.isUniqloURL(url) {
+            let resolved = try await UniqloURLResolver().resolve(url)
+            return UniqloProductMetadataParser()
+                .parse(resolved: resolved)
+                .parsedProductInfo(sizes: [])
+                .recordingParserProvenance(parserCode: "uniqlo")
+        }
+        return try await ProductURLParserService().parse(urlString: urlString)
+    }
+}
+
 @MainActor
 @Suite(.enabled(
     if: runsLiveUniqloValidation,
     "유니클로 실서버 검증은 명시적으로만 실행합니다."
 ))
 struct LiveUniqloValidationTests {
+    @Test func legacyPocketableParkaUsesGenericOfficialSizeChart() async throws {
+        let result = try await ProductURLParserService().parse(
+            urlString: "https://www.uniqlo.com/kr/ko/products/E469292-000/00?colorDisplayCode=03&sizeDisplayCode=005&pldDisplayCode=000"
+        )
+
+        #expect(result.productID == "E469292")
+        #expect(result.sourceCategoryPath == "아우터 > 파카 & 블루종 > 포켓터블")
+        #expect(result.sizes.count == 7)
+        #expect(result.sizes.allSatisfy { !$0.measurementRecords.isEmpty })
+        #expect(
+            result.productMetadata.structuredFacts[
+                "comparison_measurement_contract"
+            ] == "single_coherent"
+        )
+        #expect(result.retailerAPIEvidence?.details.httpStatus == 200)
+        #expect(result.retailerAPIEvidence?.measurements?.httpStatus == 200)
+
+        let observation = try #require(result.fitMatchProductObservationRequest())
+        #expect(observation.payload.source == "uniqlo")
+        #expect(observation.payload.externalProductID == "E469292")
+        #expect(observation.payload.variants.count == 1)
+        #expect(observation.payload.variants.first?.sizes.count == 7)
+        #expect(
+            observation.payload.variants.first?.sizes.allSatisfy {
+                !$0.measurements.isEmpty
+            } == true
+        )
+    }
+
     @Test func koreanUnderwearProductsUseUnderwearBriefsClassification() async throws {
         let parser = ProductURLParserService()
         for productID in ["E478656", "E482565", "E484997"] {
@@ -291,6 +419,36 @@ struct LiveManualProductClassificationTests {
     "실서버 검증은 FitMatchLiveValidation scheme으로 명시적으로 실행합니다."
 ))
 struct LiveMusinsaValidationTests {
+    @Test func sharedSlacksLinksProduceServerObservations() async throws {
+        let fixtures = [
+            (
+                url: "https://musinsa.onelink.me/PvkC/yr86fcq1",
+                productID: "5328103",
+                sizeCount: 4
+            ),
+            (
+                url: "https://musinsa.onelink.me/PvkC/tlrprnvi",
+                productID: "5746364",
+                sizeCount: 9
+            )
+        ]
+
+        for fixture in fixtures {
+            let result = try await ProductURLParserService().parse(urlString: fixture.url)
+
+            #expect(result.productID == fixture.productID)
+            #expect(result.sourceCategoryPath == "바지 > 슈트 팬츠/슬랙스")
+            #expect(result.sizes.count == fixture.sizeCount)
+            #expect(result.sizes.allSatisfy { !$0.measurementRecords.isEmpty })
+
+            let observation = try #require(result.fitMatchProductObservationRequest())
+            #expect(observation.payload.source == "musinsa")
+            #expect(observation.payload.externalProductID == fixture.productID)
+            #expect(observation.payload.variants.count == 1)
+            #expect(observation.payload.variants.first?.sizes.count == fixture.sizeCount)
+        }
+    }
+
     @Test func circumferencePipelineSamplesPreserveParsedValues() async {
         let parser = MusinsaParser()
 

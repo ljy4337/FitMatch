@@ -2480,24 +2480,10 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             )
         }
         let readinessState = try FitMatchVNextContractValidator.readinessState(readiness)
-        let runtimeState: String
-        switch readinessState {
-        case .ready:
-            runtimeState = "ready"
-        case .classificationRequired:
-            runtimeState = "classification_required"
-        case .notApplicable:
-            runtimeState = "not_comparable"
-        case .noAvailableSize:
-            runtimeState = "sizes_required"
-        case .noMeasurementData, .mappingRequired, .insufficientMeasurements:
-            // These are distinct database reasons. The existing UI presents
-            // one measurement-completion flow while retaining `readiness`
-            // unchanged inside the vNext runtime for diagnostics.
-            runtimeState = "measurements_required"
-        case .policyUnavailable:
-            runtimeState = "policy_unavailable"
-        }
+        let runtimeState = try FitMatchVNextContractValidator.runtimeState(
+            readiness: readiness,
+            classificationStatus: normalizedStatus
+        )
         return FitMatchProductRuntimeResponse(
             runtimeState: runtimeState,
             comparisonReady: readinessState == .ready,

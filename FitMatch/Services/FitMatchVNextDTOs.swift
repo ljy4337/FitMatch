@@ -745,6 +745,7 @@ nonisolated struct VNextComparisonGroupDTO: Decodable, Equatable, Sendable {
         case groupCode = "group_code"
         case displayName = "display_name"
         case source
+        case mappingSource = "mapping_source"
         case policyVersion = "policy_version"
         case categoryCode = "category_code"
         case garmentTypeCode = "garment_type_code"
@@ -752,6 +753,22 @@ nonisolated struct VNextComparisonGroupDTO: Decodable, Equatable, Sendable {
         case policyChecksum = "policy_checksum"
         case authorityVersion = "authority_version"
         case authorityFingerprint = "authority_fingerprint"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = try container.decodeIfPresent(String.self, forKey: .status)
+        groupCode = try container.decodeIfPresent(String.self, forKey: .groupCode)
+        displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
+        source = try container.decodeIfPresent(String.self, forKey: .source)
+            ?? container.decodeIfPresent(String.self, forKey: .mappingSource)
+        policyVersion = try container.decodeIfPresent(String.self, forKey: .policyVersion)
+        categoryCode = try container.decodeIfPresent(String.self, forKey: .categoryCode)
+        garmentTypeCode = try container.decodeIfPresent(String.self, forKey: .garmentTypeCode)
+        comparisonPolicyCode = try container.decodeIfPresent(String.self, forKey: .comparisonPolicyCode)
+        policyChecksum = try container.decodeIfPresent(String.self, forKey: .policyChecksum)
+        authorityVersion = try container.decodeIfPresent(String.self, forKey: .authorityVersion)
+        authorityFingerprint = try container.decodeIfPresent(String.self, forKey: .authorityFingerprint)
     }
 }
 

@@ -585,6 +585,11 @@ final class ShoppingProductViewModel: ObservableObject {
                 )
                 serverAuthorityState = .reviewRequired(authority)
                 databaseShadowState = .unavailable
+                if requiresComparisonGroupSelection {
+                    reviewRecoveryState = .idle
+                    errorMessage = nil
+                    return false
+                }
                 reviewRecoveryState = .loading
                 do {
                     let contract = try await serverAuthorityCoordinator
@@ -615,7 +620,7 @@ final class ShoppingProductViewModel: ObservableObject {
             guard isCurrentLoad(loadID) else { return false }
             databaseShadowState = .unavailable
             serverAuthorityState = .unavailable(error.localizedDescription)
-            errorMessage = "서버 상품 분류를 확인하지 못했습니다. 네트워크 연결 후 다시 시도해 주세요."
+            errorMessage = serverAuthorityLoadErrorMessage(for: error)
             #if DEBUG
             FitMatchDebugLogger.event(
                 screen: "상품 분석",
@@ -626,6 +631,25 @@ final class ShoppingProductViewModel: ObservableObject {
             #endif
             return false
         }
+    }
+
+    private func serverAuthorityLoadErrorMessage(for error: Error) -> String {
+        if error is URLError {
+            return "서버에 연결하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+        }
+        if let authorityError = error as? FitMatchServerAuthorityError {
+            return authorityError.errorDescription
+                ?? "서버 상품 정보를 처리하지 못했습니다. 다시 시도해 주세요."
+        }
+        if let contractError = error as? FitMatchVNextContractError {
+            return contractError.errorDescription
+                ?? "서버 상품 응답을 처리하지 못했습니다. 앱을 업데이트한 뒤 다시 시도해 주세요."
+        }
+        let nsError = error as NSError
+        if nsError.code == 401 || nsError.code == 403 {
+            return "로그인 정보를 확인하지 못했습니다. 다시 로그인한 뒤 시도해 주세요."
+        }
+        return "서버 상품 응답을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
     }
 
     private func frozenObservation(

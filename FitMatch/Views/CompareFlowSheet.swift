@@ -2107,7 +2107,10 @@ private extension CompareFlowSheet {
         }
 
         guard didLoad else {
-            if viewModel.requiresComparisonGroupSelection {
+            if CompareFlowRouting.shouldPresentComparisonGroupSelection(
+                requiresSelection: viewModel.requiresComparisonGroupSelection,
+                requestedGroupCode: viewModel.requestedComparisonGroupCode
+            ) {
                 setStep(.comparisonGroupSelection)
                 return
             }
@@ -2144,8 +2147,10 @@ private extension CompareFlowSheet {
     }
 
     func continueComparisonAfterProductInput() {
-        if viewModel.requiresComparisonGroupSelection,
-           viewModel.requestedComparisonGroupCode == nil {
+        if CompareFlowRouting.shouldPresentComparisonGroupSelection(
+            requiresSelection: viewModel.requiresComparisonGroupSelection,
+            requestedGroupCode: viewModel.requestedComparisonGroupCode
+        ) {
             setStep(.comparisonGroupSelection)
             return
         }
@@ -2655,6 +2660,15 @@ private extension CompareFlowSheet {
     func openZara() {
         guard let url = URL(string: "https://www.zara.com/kr/ko/") else { return }
         UIApplication.shared.open(url)
+    }
+}
+
+enum CompareFlowRouting {
+    static func shouldPresentComparisonGroupSelection(
+        requiresSelection: Bool,
+        requestedGroupCode: String?
+    ) -> Bool {
+        requiresSelection && requestedGroupCode == nil
     }
 }
 

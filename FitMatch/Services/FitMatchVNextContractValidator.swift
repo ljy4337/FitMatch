@@ -61,6 +61,35 @@ nonisolated enum FitMatchVNextContractValidator {
         try VNextReadinessState(status: readiness.status)
     }
 
+    static func runtimeState(
+        readiness: VNextProductReadinessDTO,
+        classificationStatus: String
+    ) throws -> String {
+        let state = try readinessState(readiness)
+        switch state {
+        case .ready:
+            return "ready"
+        case .classificationRequired:
+            // Older deployed readiness functions used CLASSIFICATION_REQUIRED
+            // for a confirmed group whose structure/measurement contract was
+            // not ready. Preserve fail-closed comparison behavior while keeping
+            // that condition distinct from a genuinely unmapped product.
+            if classificationStatus == "confirmed",
+               readiness.reason == "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED" {
+                return "measurements_required"
+            }
+            return "classification_required"
+        case .notApplicable:
+            return "not_comparable"
+        case .noAvailableSize:
+            return "sizes_required"
+        case .noMeasurementData, .mappingRequired, .insufficientMeasurements:
+            return "measurements_required"
+        case .policyUnavailable:
+            return "policy_unavailable"
+        }
+    }
+
     /// Live RPC responses must carry an explicit lifecycle status and an
     /// explicit top-level schema when the nested snapshot is present.
     static func validateLiveBegin(_ begin: VNextBeginComparisonDTO) throws {
