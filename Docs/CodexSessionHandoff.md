@@ -1,3 +1,10 @@
+## 2026-09-21 현재 로컬 소스 커밋·푸시 완료
+
+- 사용자 요청에 따라 검토한 현재 로컬 FitMatch 소스를 `connectDB` 브랜치에 커밋하고 `origin/connectDB`로 푸시했다.
+- 커밋: `af462d0` (`chore: sync current FitMatch source`). 원격 푸시 성공, 로컬 HEAD와 `origin/connectDB`가 동일하다.
+- 포함 범위: 추적 중인 앱 소스/테스트/안내 문서와 선택한 앱 소스·테스트·Feature/Behavior Map·`Package.resolved`. `.build`, `outputs`, QA 증거 산출물, 준비만 된 Supabase SQL/migration, 기타 untracked 감사 자료는 스테이징하지 않고 보존했다.
+- 검증: staged diff secret scan 무검출, `git diff --cached --check` PASS, 보호 스크롤 검사 PASS. 기존 handoff에 기록된 테스트 실패 및 live/API/UI E2E 미검증 상태는 변경하지 않았다. DB write/migration 없음.
+
 ## 2026-09-21 실측 의미·그룹 결합 READ-ONLY 감사 완료
 
 - 보고서: `Docs/QA/MeasurementSemanticAudit-20260921.md`. 실행한 읽기 전용 검증: `Docs/QA/MeasurementSemanticAudit-20260921-Verify.sql`. 개별 alias UUID·현재 사전·배포 함수 증거는 같은 이름의 Evidence 디렉터리.
