@@ -822,6 +822,43 @@ nonisolated struct VNextClosetMeasurementDTO: Decodable, Equatable, Sendable {
     }
 }
 
+/// Immutable retailer facts copied from the exact linked product size when a
+/// Closet item is first saved.  They are presentation/provenance data; the
+/// canonical `measurements` DTO remains the only comparison input here.
+nonisolated struct VNextClosetSourceMeasurementDTO: Decodable, Equatable, Sendable {
+    let rawMeasurementKey: String
+    let sourceCode: String
+    let parserCode: String
+    let rawCode: String?
+    let rawLabel: String?
+    let rawValue: Double?
+    let rawValueText: String?
+    let rawUnitCode: String?
+    let rawRepresentation: String?
+    let sourceMeasurementCode: String?
+    let resolutionStatus: String
+    let mappingVersion: String?
+    let evidence: FitMatchJSONValue?
+    let observedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case rawMeasurementKey = "raw_measurement_key"
+        case sourceCode = "source_code"
+        case parserCode = "parser_code"
+        case rawCode = "raw_code"
+        case rawLabel = "raw_label"
+        case rawValue = "raw_value"
+        case rawValueText = "raw_value_text"
+        case rawUnitCode = "raw_unit_code"
+        case rawRepresentation = "raw_representation"
+        case sourceMeasurementCode = "source_measurement_code"
+        case resolutionStatus = "resolution_status"
+        case mappingVersion = "mapping_version"
+        case evidence
+        case observedAt = "observed_at"
+    }
+}
+
 nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
     let id: UUID
     let clientItemID: UUID
@@ -852,6 +889,8 @@ nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
     let createdAt: String
     let updatedAt: String
     let measurements: [VNextClosetMeasurementDTO]
+    /// Optional for pre-migration list responses.
+    let sourceMeasurements: [VNextClosetSourceMeasurementDTO]?
     let comparisonGroup: VNextComparisonGroupDTO?
 
     enum CodingKeys: String, CodingKey {
@@ -883,6 +922,7 @@ nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case measurements
+        case sourceMeasurements = "source_measurements"
         case comparisonGroup = "comparison_group"
     }
 }

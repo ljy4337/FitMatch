@@ -1875,10 +1875,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 inputSource: MeasurementInputSource(rawValue: payload.inputSource) ?? .importedSizeChart,
                 standardVersion: payload.standardVersion,
                 mappingVersion: payload.mappingVersion,
-                rawCode: payload.rawCode ?? payload.measurementCode,
-                rawLabel: payload.rawLabel.isEmpty
-                    ? payload.measurementCode
-                    : payload.rawLabel,
+                // Do not manufacture retailer identity from canonical fields
+                // during authoritative read-back.  Older canonical-only rows
+                // remain readable through measurementCodeRawValue, while a
+                // captured empty retailer label stays empty.
+                rawCode: payload.rawCode,
+                rawLabel: payload.rawLabel,
                 rawInfo: payload.rawInfo,
                 rawValueText: payload.rawValueText,
                 evidenceLevel: MeasurementEvidenceLevel(rawValue: payload.evidenceLevel) ?? .unknown,

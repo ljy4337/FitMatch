@@ -4,6 +4,113 @@ import Testing
 
 @MainActor
 struct FitMatchSupabaseProductResolverTests {
+    @Test func observationRetainsFiniteZeroAndRawCodeWhenProviderLabelIsEmpty() throws {
+        let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/raw-zero"))
+        let product = ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: .marketplace,
+            sourceName: "무신사",
+            brandName: "테스트",
+            productName: "원본 실측 보존 테스트",
+            category: .top,
+            detailCategory: .other,
+            sizes: [
+                ParsedProductSize(
+                    name: "M",
+                    measurements: GarmentMeasurements(
+                        shoulder: 0,
+                        chest: 0,
+                        totalLength: 0,
+                        sleeveLength: 0
+                    ),
+                    measurementRecords: [
+                        ParsedMeasurement(
+                            value: 0,
+                            unitRawValue: "",
+                            measurementCode: .unknown,
+                            displayKind: .unknown,
+                            methodSource: "musinsa_actual_size",
+                            inputSource: .importedSizeChart,
+                            rawCode: "unknown-size-part",
+                            rawLabel: "",
+                            rawValueText: "0",
+                            evidenceLevel: .officialText,
+                            semanticStatus: .unknownDefinition
+                        )
+                    ]
+                )
+            ],
+            productID: "raw-zero",
+            sourceCategoryPath: "상의",
+            productMetadata: ProductMetadata(categoryDepth1Code: "001")
+        )
+
+        let observation = try #require(product.fitMatchProductObservationRequest())
+        let measurement = try #require(
+            observation.payload.variants.first?.sizes.first?.measurements.first
+        )
+        #expect(measurement.measurementIdentity == "unknown-size-part")
+        #expect(measurement.rawLabel.isEmpty)
+        #expect(measurement.rawValue == 0)
+        #expect(measurement.rawValueText == "0")
+        #expect(measurement.rawUnit.isEmpty)
+    }
+
+    @Test func observationKeepsRepeatedRawCodesAsDistinctSourceFacts() throws {
+        let sourceURL = try #require(URL(string: "https://www.zara.com/kr/ko/item-p00000001.html?v1=1"))
+        let product = ParsedProductInfo(
+            sourceURL: sourceURL,
+            sourceType: .zara,
+            sourceName: "ZARA",
+            brandName: "테스트",
+            productName: "구성품별 원본 실측",
+            category: .bottom,
+            detailCategory: .other,
+            sizes: [
+                ParsedProductSize(
+                    name: "M",
+                    measurements: GarmentMeasurements(),
+                    measurementRecords: [
+                        ParsedMeasurement(
+                            value: 28,
+                            measurementCode: .unknown,
+                            displayKind: .unknown,
+                            methodSource: "zara_measure_guide",
+                            inputSource: .importedSizeChart,
+                            rawCode: "zone-name-length",
+                            rawLabel: "본체 길이",
+                            rawValueText: "28",
+                            evidenceLevel: .officialText,
+                            semanticStatus: .unknownDefinition
+                        ),
+                        ParsedMeasurement(
+                            value: 31,
+                            measurementCode: .unknown,
+                            displayKind: .unknown,
+                            methodSource: "zara_measure_guide",
+                            inputSource: .importedSizeChart,
+                            rawCode: "zone-name-length",
+                            rawLabel: "안감 길이",
+                            rawValueText: "31",
+                            evidenceLevel: .officialText,
+                            semanticStatus: .unknownDefinition
+                        )
+                    ]
+                )
+            ],
+            productID: "00000001",
+            sourceCategoryPath: "바지",
+            productMetadata: ProductMetadata()
+        )
+
+        let observation = try #require(product.fitMatchProductObservationRequest())
+        let measurements = try #require(observation.payload.variants.first?.sizes.first?.measurements)
+        #expect(measurements.count == 2)
+        #expect(Set(measurements.map(\.measurementIdentity)).count == 2)
+        #expect(measurements.map(\.rawCode) == ["zone-name-length", "zone-name-length"])
+        #expect(measurements.map(\.rawLabel) == ["본체 길이", "안감 길이"])
+    }
+
     @Test func retailerPayloadUsesStableProductAndCategoryEvidence() throws {
         let metadata = ProductMetadata(
             sourceCategoryPath: "상의 > 셔츠 > 긴팔",

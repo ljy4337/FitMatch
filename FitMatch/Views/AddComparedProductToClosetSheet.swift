@@ -6,29 +6,8 @@ struct RegistrationMeasurementRow: Identifiable, Equatable {
     let id: String
     let title: String
     let value: Double
+    let valueText: String
     let isCanonical: Bool
-}
-
-/// Retailer presentation labels are deliberately separate from FitMatch's
-/// comparison vocabulary. A label here never assigns a canonical measurement
-/// code or makes an otherwise raw retailer fact comparable.
-enum ZARAMeasurementPresentation {
-    static func title(for rawCode: String) -> String? {
-        switch rawCode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-        case "zone-name-chest":
-            return "가슴 둘레"
-        case "zone-name-front-length":
-            return "앞면 길이"
-        case "zone-name-sleeve-length":
-            return "소매 길이"
-        case "zone-name-back-width":
-            return "등 너비"
-        case "zone-name-arm-width":
-            return "팔 너비"
-        default:
-            return nil
-        }
-    }
 }
 
 struct AddComparedProductToClosetSheet: View {
@@ -691,7 +670,7 @@ struct AddComparedProductToClosetSheet: View {
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(.secondary)
                                 Spacer()
-                                Text(formatMeasurement(row.value))
+                                Text(row.valueText)
                                     .font(.headline.weight(.black))
                                     .foregroundStyle(.primary)
                             }
@@ -1268,96 +1247,27 @@ struct AddComparedProductToClosetSheet: View {
         }
     }
 
-    /// Keeps the existing canonical presentation, then inserts ZARA's exact
-    /// retailer rows where a user-facing label is known. The raw-only rows do
-    /// not receive a display kind or canonical code here.
+    /// Registration shows each selected-size retailer row, rather than the
+    /// canonical projection.  A canonical mapping is comparison metadata and
+    /// must not merge, replace, or hide an original provider measurement.
     static func registrationMeasurementRows(
         for size: ProductSize,
         category: ClothingCategory,
         detailCategory: ClosetDetailCategory,
         gender: UserGender
     ) -> [RegistrationMeasurementRow] {
-        let canonicalRows = visibleMeasurementKinds(
-            for: size,
-            category: category,
-            detailCategory: detailCategory,
-            gender: gender
-        ).compactMap { kind -> (MeasurementKind, RegistrationMeasurementRow)? in
-            guard let value = MeasurementResolver.value(
-                for: kind,
-                measurements: size.measurements,
-                records: size.measurementRecords
-            ) else {
-                return nil
-            }
-            return (
-                kind,
-                RegistrationMeasurementRow(
-                    id: "canonical-\(kind.rawValue)",
-                    title: MeasurementResolver.title(for: kind, records: size.measurementRecords),
-                    value: value,
-                    isCanonical: true
-                )
+        MeasurementResolver.sourceDisplayRows(
+            records: size.measurementRecords,
+            includeAllRecords: true
+        ).map {
+            RegistrationMeasurementRow(
+                id: $0.id,
+                title: $0.title,
+                value: $0.value,
+                valueText: $0.valueText,
+                isCanonical: $0.isCanonical
             )
         }
-
-        var rows: [RegistrationMeasurementRow] = []
-        var representedCanonicalKinds = Set<MeasurementKind>()
-        var representedRawCodes = Set<String>()
-
-        for record in size.measurementRecords {
-            guard record.value.isFinite, record.value > 0,
-                  record.methodSource.caseInsensitiveCompare("zara") == .orderedSame,
-                  let rawCode = record.rawCode,
-                  let title = ZARAMeasurementPresentation.title(for: rawCode) else {
-                continue
-            }
-
-            let normalizedRawCode = rawCode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            guard representedRawCodes.insert(normalizedRawCode).inserted else {
-                continue
-            }
-
-            if record.isComparable,
-               let displayKind = record.displayKind,
-               let canonical = canonicalRows.first(where: {
-                   MeasurementResolver.displayKind(for: $0.0) == displayKind
-               }) {
-                representedCanonicalKinds.insert(canonical.0)
-                rows.append(RegistrationMeasurementRow(
-                    id: "zara-\(normalizedRawCode)",
-                    title: title,
-                    value: canonical.1.value,
-                    isCanonical: true
-                ))
-            } else if record.measurementCode == .unknown,
-                      record.displayKind == .unknown,
-                      record.semanticStatus == .unknownDefinition {
-                rows.append(RegistrationMeasurementRow(
-                    id: "zara-\(normalizedRawCode)",
-                    title: title,
-                    value: record.value,
-                    isCanonical: false
-                ))
-            }
-        }
-
-        rows.append(contentsOf: canonicalRows.compactMap { kind, row in
-            representedCanonicalKinds.contains(kind) ? nil : row
-        })
-        return rows
-    }
-
-    private func formatMeasurement(_ value: Double) -> String {
-        guard value > 0 else {
-            return "-"
-        }
-
-        if value.rounded() == value {
-            return "\(Int(value))cm"
-        }
-
-        return String(format: "%.1fcm", value)
     }
 
     private var savedBrandName: String {

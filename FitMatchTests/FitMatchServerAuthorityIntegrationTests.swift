@@ -1929,6 +1929,7 @@ private struct AuthorityFixture {
                                         rawCode: "chest_width",
                                         rawLabel: "chest_width",
                                         rawValue: 52,
+                                        rawValueText: "52",
                                         rawUnit: "cm",
                                         rawRepresentation: "52",
                                         evidence: [:]

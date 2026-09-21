@@ -1109,56 +1109,17 @@ final class ShoppingProductViewModel: ObservableObject {
             normalizedSourceSizeKey($0.name) == runtimeKey
         }
         guard matches.count == 1 else { return [] }
-        return matches[0].measurementRecords.filter {
-            $0.value.isFinite && $0.value > 0
-        }
+        return matches[0].measurementRecords
     }
 
-    /// Runtime canonical facts remain authoritative for an axis. Retailer
-    /// records are appended only for facts the runtime did not project, so the
-    /// registration screen can show every actual numeric source measurement
-    /// without inventing a canonical mapping or changing comparison inputs.
+    /// Presentation keeps the exact retailer snapshot whenever it exists.
+    /// Runtime rows are canonical projections, not a substitute for original
+    /// provider facts, and therefore cannot coalesce distinct raw rows.
     static func mergedPresentationMeasurementRecords(
         runtimeRecords: [ParsedMeasurement],
         retailerRecords: [ParsedMeasurement]
     ) -> [ParsedMeasurement] {
-        var result = runtimeRecords
-        var canonicalCodes = Set(runtimeRecords.compactMap(\.canonicalMeasurementCode))
-        var representedDisplayKinds = Set(runtimeRecords.compactMap { record in
-            record.displayKind == .unknown ? nil : record.displayKind
-        })
-        var rawIdentities = Set(runtimeRecords.map { record in
-            [
-                record.rawCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
-                record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines),
-                String(record.value)
-            ].joined(separator: "|")
-        })
-
-        for record in retailerRecords where record.value.isFinite && record.value > 0 {
-            if let canonicalCode = record.canonicalMeasurementCode,
-               canonicalCodes.contains(canonicalCode) {
-                continue
-            }
-            if record.displayKind != .unknown,
-               representedDisplayKinds.contains(record.displayKind) {
-                continue
-            }
-            let rawIdentity = [
-                record.rawCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
-                record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines),
-                String(record.value)
-            ].joined(separator: "|")
-            guard rawIdentities.insert(rawIdentity).inserted else { continue }
-            result.append(record)
-            if let canonicalCode = record.canonicalMeasurementCode {
-                canonicalCodes.insert(canonicalCode)
-            }
-            if record.displayKind != .unknown {
-                representedDisplayKinds.insert(record.displayKind)
-            }
-        }
-        return result
+        retailerRecords.isEmpty ? runtimeRecords : retailerRecords
     }
 
     /// Closet registration displays and submits the exact retailer/API row
@@ -1169,10 +1130,7 @@ final class ShoppingProductViewModel: ObservableObject {
         runtimeRecords: [ParsedMeasurement],
         retailerRecords: [ParsedMeasurement]
     ) -> [ParsedMeasurement] {
-        let exactRetailerRecords = retailerRecords.filter {
-            $0.value.isFinite && $0.value > 0
-        }
-        return exactRetailerRecords.isEmpty ? runtimeRecords : exactRetailerRecords
+        retailerRecords.isEmpty ? runtimeRecords : retailerRecords
     }
 
     private func normalizedSourceSizeKey(_ sourceSizeKey: String?) -> String? {

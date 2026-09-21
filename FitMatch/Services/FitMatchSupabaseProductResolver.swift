@@ -165,6 +165,7 @@ nonisolated struct FitMatchProductObservationMeasurement: Encodable, Equatable, 
     let rawCode: String?
     let rawLabel: String
     let rawValue: Double
+    let rawValueText: String?
     let rawUnit: String
     let rawRepresentation: String?
     let evidence: [String: String]
@@ -175,6 +176,7 @@ nonisolated struct FitMatchProductObservationMeasurement: Encodable, Equatable, 
         case rawCode = "raw_code"
         case rawLabel = "raw_label"
         case rawValue = "raw_value"
+        case rawValueText = "raw_value_text"
         case rawUnit = "raw_unit"
         case rawRepresentation = "raw_representation"
         case evidence
@@ -2688,7 +2690,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     result[entry.key] = value
                 }
             }
-        let records = item.measurements.map { measurement in
+        let canonicalRecords = item.measurements.map { measurement in
             let projection = FitMatchCanonicalMeasurementCode.projection(
                 for: measurement.measurementCode
             )
@@ -2720,6 +2722,36 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     : MeasurementSemanticStatus.unknownDefinition.rawValue
             )
         }
+        let sourceRecords = (item.sourceMeasurements ?? []).map { measurement in
+            // These are the immutable retailer-fact snapshots for display.
+            // Canonical values remain in `measurements`; never make raw rows
+            // locally comparable merely because the server once resolved one.
+            let code = MeasurementCode.unknown
+            return FitMatchClosetMeasurementRecordPayload(
+                value: measurement.rawValue ?? 0,
+                unit: measurement.rawUnitCode ?? "",
+                measurementCode: code.rawValue,
+                displayKind: code.presentationDisplayKind?.rawValue
+                    ?? MeasurementDisplayKind.unknown.rawValue,
+                methodSource: "\(measurement.sourceCode)_\(measurement.parserCode)",
+                methodProfile: measurement.mappingVersion,
+                inputSource: MeasurementInputSource.importedSizeChart.rawValue,
+                standardVersion: nil,
+                mappingVersion: measurement.mappingVersion
+                    ?? "fitmatch-vnext-source-snapshot-v1",
+                rawCode: measurement.rawCode,
+                rawLabel: measurement.rawLabel ?? "",
+                rawInfo: Self.sourceSnapshotProvenance(
+                    rawRepresentation: measurement.rawRepresentation,
+                    evidence: measurement.evidence,
+                    observedAt: measurement.observedAt
+                ),
+                rawValueText: measurement.rawValueText,
+                evidenceLevel: MeasurementEvidenceLevel.officialText.rawValue,
+                semanticStatus: MeasurementSemanticStatus.unknownDefinition.rawValue
+            )
+        }
+        let records = sourceRecords.isEmpty ? canonicalRecords : sourceRecords
         return FitMatchClosetItemRecord(
             closetItemID: item.id,
             clientItemID: item.clientItemID,
@@ -2768,6 +2800,28 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             createdAt: item.createdAt,
             updatedAt: item.updatedAt
         )
+    }
+
+    nonisolated private static func sourceSnapshotProvenance(
+        rawRepresentation: String?,
+        evidence: FitMatchJSONValue?,
+        observedAt: String?
+    ) -> String? {
+        var fields: [String: FitMatchJSONValue] = [:]
+        if let rawRepresentation, !rawRepresentation.isEmpty {
+            fields["raw_representation"] = .string(rawRepresentation)
+        }
+        if let evidence {
+            fields["evidence"] = evidence
+        }
+        if let observedAt, !observedAt.isEmpty {
+            fields["observed_at"] = .string(observedAt)
+        }
+        guard !fields.isEmpty,
+              let data = try? JSONEncoder().encode(FitMatchJSONValue.object(fields)) else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
     }
 
     /// The vNext row stores garment identity and length axes separately,
@@ -3167,24 +3221,45 @@ extension ParsedProductInfo {
             let measurements = size.measurementRecords.enumerated().compactMap {
                 measurementIndex,
                 measurement -> FitMatchProductObservationMeasurement? in
-                guard measurement.value.isFinite, measurement.value > 0 else { return nil }
+                // Observation preserves raw retailer facts.  Comparison
+                // eligibility is evaluated by the server separately, so a
+                // finite zero is retained rather than silently dropped.
+                guard measurement.value.isFinite else { return nil }
                 let rawLabel = measurement.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !rawLabel.isEmpty else { return nil }
                 let trimmedRawCode = measurement.rawCode?
                     .trimmingCharacters(in: .whitespacesAndNewlines)
-                let identity = trimmedRawCode?.isEmpty == false
-                    ? trimmedRawCode!
-                    : "\(measurement.measurementCode.rawValue):\(measurementIndex)"
+                let rawCode = trimmedRawCode?.isEmpty == false ? trimmedRawCode! : nil
+                // A provider may publish different component measurements
+                // under the same raw code. Keep the legacy code identity for
+                // unique rows, but make repeated codes distinct so one row
+                // cannot overwrite another during observation persistence.
+                let duplicateRawCodeCount = rawCode.map { code in
+                    size.measurementRecords.lazy.filter {
+                        $0.rawCode?.trimmingCharacters(in: .whitespacesAndNewlines) == code
+                    }.count
+                } ?? 0
+                let identity: String
+                if let rawCode {
+                    identity = duplicateRawCodeCount > 1
+                        ? "\(rawCode)#\(measurementIndex)"
+                        : rawCode
+                } else {
+                    identity = "\(measurement.measurementCode.rawValue):\(measurementIndex)"
+                }
                 return FitMatchProductObservationMeasurement(
                     measurementIdentity: identity,
                     parserCode: Self.observationMeasurementParserCode(
                         sourceCode: resolution.source,
                         methodSource: measurement.methodSource
                     ),
-                    rawCode: trimmedRawCode?.isEmpty == false ? trimmedRawCode : nil,
+                    rawCode: rawCode,
                     rawLabel: rawLabel,
                     rawValue: measurement.value,
-                    rawUnit: measurement.unit.rawValue,
+                    rawValueText: measurement.rawValueText,
+                    // `nil` means an older parser supplied the typed cm fact;
+                    // an explicit empty/raw unknown unit must remain unknown.
+                    rawUnit: measurement.unitRawValue
+                        ?? measurement.unit.rawValue,
                     rawRepresentation: measurement.rawInfo.flatMap {
                         let value = $0.trimmingCharacters(in: .whitespacesAndNewlines)
                         return value.isEmpty ? nil : value

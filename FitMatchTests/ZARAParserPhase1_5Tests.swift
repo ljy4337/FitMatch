@@ -968,6 +968,75 @@ struct ZARAParserPhase1_5Tests {
         #expect(observation.payload.variants.first?.sizes.first?.measurements.count == 5)
     }
 
+    @Test func registrationKeepsDistinctRawRowsAndUnknownUnitsWithoutCanonicalCoalescing() {
+        let parsedRecords = [
+            ParsedMeasurement(
+                value: 54,
+                measurementCode: .chestWidthPitToPit,
+                displayKind: .chest,
+                methodSource: "zara_measure_guide",
+                inputSource: .importedSizeChart,
+                rawCode: "zone-name-chest",
+                rawLabel: "",
+                rawValueText: "54.0",
+                evidenceLevel: .officialText,
+                semanticStatus: .mapped
+            ),
+            ParsedMeasurement(
+                value: 108,
+                unitRawValue: "",
+                measurementCode: .chestCircumferenceGarment,
+                displayKind: .chest,
+                methodSource: "zara_measure_guide",
+                inputSource: .importedSizeChart,
+                rawCode: "zone-name-chest-circumference",
+                rawLabel: "가슴 둘레(둘레)",
+                rawValueText: "108",
+                evidenceLevel: .officialText,
+                semanticStatus: .unknownDefinition
+            ),
+            ParsedMeasurement(
+                value: 0,
+                unitRawValue: "",
+                measurementCode: .unknown,
+                displayKind: .unknown,
+                methodSource: "zara_measure_guide",
+                inputSource: .userMeasured,
+                rawCode: "zone-name-unknown",
+                rawLabel: "확인 필요 항목",
+                rawValueText: "0",
+                evidenceLevel: .officialText,
+                semanticStatus: .unknownDefinition
+            )
+        ]
+        let productSize = ProductSize(
+            name: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0,
+                chest: 0,
+                totalLength: 0,
+                sleeveLength: 0
+            )
+        )
+        productSize.measurementRecords = parsedRecords.map {
+            $0.makeRecord(productSize: productSize)
+        }
+
+        let rows = AddComparedProductToClosetSheet.registrationMeasurementRows(
+            for: productSize,
+            category: .top,
+            detailCategory: .other,
+            gender: .unisex
+        )
+
+        #expect(rows.count == 3)
+        #expect(rows.map(\.title) == ["가슴 둘레", "가슴 둘레(둘레)", "확인 필요 항목"])
+        #expect(rows.map(\.value) == [54, 108, 0])
+        #expect(rows.map(\.valueText) == ["54.0 cm", "108", "0"])
+        #expect(Set(rows.map(\.id)).count == 3)
+        #expect(rows.filter(\.isCanonical).count == 1)
+    }
+
     @Test func verifiedPantsSubsetMapsWaistHipAndFrontRiseOnly() async throws {
         let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p08372248.html?v1=582770476"))
         let html = productHTML(
