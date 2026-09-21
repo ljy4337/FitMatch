@@ -908,6 +908,66 @@ struct ZARAParserPhase1_5Tests {
         #expect(records.first { $0.rawCode == "zone-name-arm-width" }?.semanticStatus == .unknownDefinition)
     }
 
+    @Test func zaraKnitRegistrationDisplaysAllRawGarmentMeasurementsWithoutCanonicalPromotion() async throws {
+        let url = try #require(URL(
+            string: "https://www.zara.com/kr/ko/item-p02893319.html?v1=555354850"
+        ))
+        let html = productHTML(
+            internalProductID: "555354850",
+            styleNumber: "02893319",
+            catentryID: "555354850",
+            section: "MAN",
+            family: "니트웨어",
+            subfamily: "SWEATER"
+        )
+        let data = Data("""
+        {"measureGuideInfo":{"sizes":[{"name":"M","measures":[
+          {"zoneId":"A","tableTitleZone":"zone-name-chest","dimensions":[{"unitId":"cm","value":"54.0"}]},
+          {"zoneId":"B","tableTitleZone":"zone-name-front-length","dimensions":[{"unitId":"cm","value":"68.0"}]},
+          {"zoneId":"C","tableTitleZone":"zone-name-sleeve-length","dimensions":[{"unitId":"cm","value":"65.0"}]},
+          {"zoneId":"D","tableTitleZone":"zone-name-back-width","dimensions":[{"unitId":"cm","value":"44.0"}]},
+          {"zoneId":"E","tableTitleZone":"zone-name-arm-width","dimensions":[{"unitId":"cm","value":"18.0"}]}
+        ]}]}}
+        """.utf8)
+        let parser = ZARAParser(
+            pageLoader: Phase15ZARAPageLoader(page: .init(url: url, statusCode: 200, html: html)),
+            sizeGuideLoader: Phase15ZARAGuideLoader(data: data)
+        )
+
+        let info = try await parser.parse(from: url)
+        let parsedSize = try #require(info.sizes.first)
+        let records = parsedSize.measurementRecords
+        #expect(records.count == 5)
+        #expect(records.first { $0.rawCode == "zone-name-chest" }?.measurementCode == .chestWidthPitToPit)
+        #expect(records.first { $0.rawCode == "zone-name-sleeve-length" }?.measurementCode == .sleeveShoulderSeamToCuff)
+
+        for rawCode in ["zone-name-front-length", "zone-name-back-width", "zone-name-arm-width"] {
+            let record = try #require(records.first { $0.rawCode == rawCode })
+            #expect(record.measurementCode == .unknown)
+            #expect(record.displayKind == .unknown)
+            #expect(record.semanticStatus == .unknownDefinition)
+        }
+
+        let productSize = ProductSize(name: parsedSize.name, measurements: parsedSize.measurements)
+        productSize.measurementRecords = parsedSize.measurementRecords.map {
+            $0.makeRecord(productSize: productSize)
+        }
+        let rows = AddComparedProductToClosetSheet.registrationMeasurementRows(
+            for: productSize,
+            category: .top,
+            detailCategory: .other,
+            gender: .unisex
+        )
+        #expect(rows.map(\.title) == ["가슴 둘레", "앞면 길이", "소매 길이", "등 너비", "팔 너비"])
+        #expect(rows.map(\.value) == [54.0, 68.0, 65.0, 44.0, 18.0])
+        #expect(Set(rows.map(\.id)).count == 5)
+        #expect(rows.filter(\.isCanonical).map(\.title) == ["가슴 둘레", "소매 길이"])
+        #expect(rows.filter { !$0.isCanonical }.map(\.title) == ["앞면 길이", "등 너비", "팔 너비"])
+
+        let observation = try #require(info.fitMatchProductObservationRequest())
+        #expect(observation.payload.variants.first?.sizes.first?.measurements.count == 5)
+    }
+
     @Test func verifiedPantsSubsetMapsWaistHipAndFrontRiseOnly() async throws {
         let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p08372248.html?v1=582770476"))
         let html = productHTML(
