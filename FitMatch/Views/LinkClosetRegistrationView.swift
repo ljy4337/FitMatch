@@ -373,7 +373,7 @@ struct LinkClosetRegistrationView: View {
                     }
 
                     if let partialProduct, !isUnsupportedTopBottomSet {
-                        Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했어요. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
+                        Text(errorMessage)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -399,8 +399,10 @@ struct LinkClosetRegistrationView: View {
                             }
                         }
 
-                        PrimaryButton(title: "사이즈표 이미지 분석", systemImage: "viewfinder") {
-                            isShowingSizeTableRecovery = true
+                        if productMeasurementPresence != .available {
+                            PrimaryButton(title: "사이즈표 이미지 분석", systemImage: "viewfinder") {
+                                isShowingSizeTableRecovery = true
+                            }
                         }
 
                         Text("링크 상품은 서버가 확인한 상품·옵션·사이즈 식별자가 있어야 저장할 수 있어요. 서버 사이즈 정보를 다시 확인한 뒤 등록해 주세요.")
@@ -596,7 +598,7 @@ struct LinkClosetRegistrationPreparation {
             return "등록할 사이즈 정보를 찾지 못했습니다."
         }
         guard let serverRegistrationContext else {
-            return "서버에서 상품·사이즈 연결을 확인하지 못했습니다. 다시 시도해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         }
         if let authorityBlockMessage = serverRegistrationContext.registrationBlockMessage {
             return authorityBlockMessage
@@ -638,7 +640,8 @@ struct LinkClosetRegistrationPreparation {
                 productMeasurementPresence: viewModel.productMeasurementPresence,
                 serverRegistrationContext: viewModel.closetRegistrationServerContext,
                 recoveryViewModel: nil,
-                errorMessage: viewModel.errorMessage ?? "서버 상품 분류를 확인하지 못했습니다."
+                errorMessage: viewModel.errorMessage
+                    ?? FitMatchFailureCopy.productServiceInspection
             )
         }
 
@@ -687,10 +690,8 @@ struct LinkClosetRegistrationPreparation {
             productMeasurementPresence: viewModel.productMeasurementPresence,
             serverRegistrationContext: viewModel.closetRegistrationServerContext,
             recoveryViewModel: viewModel,
-            // A loaded product without a usable size is the only result-level
-            // failure shown here. Server classification messages are handled
-            // by the registration form on the next screen.
-            errorMessage: "사이즈표를 찾지 못했습니다. 실측값을 확인해 주세요."
+            errorMessage: viewModel.errorMessage
+                ?? FitMatchFailureCopy.productServiceInspection
         )
     }
 }

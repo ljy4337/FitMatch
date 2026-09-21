@@ -101,7 +101,7 @@ enum FitMatchAuthSessionError: LocalizedError {
         case .missingNonce:
             return "Apple 로그인 요청이 만료되었습니다. 다시 시도해 주세요."
         case .accountDeletionFailed:
-            return "계정 삭제를 완료하지 못했습니다. 잠시 후 다시 시도해 주세요."
+            return "계정 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
         }
     }
 }
@@ -255,7 +255,7 @@ final class FitMatchAuthSessionStore: ObservableObject {
             request.nonce = FitMatchAppleSignInNonce.hashed(nonce)
         } catch {
             currentNonce = nil
-            errorMessage = error.localizedDescription
+            errorMessage = FitMatchFailureCopy.authenticationServiceInspection
         }
     }
 
@@ -285,7 +285,7 @@ final class FitMatchAuthSessionStore: ObservableObject {
             errorMessage = nil
         } catch {
             state = .signedOut
-            errorMessage = error.localizedDescription
+            errorMessage = authenticationErrorMessage(for: error)
         }
     }
 
@@ -313,7 +313,7 @@ final class FitMatchAuthSessionStore: ObservableObject {
             errorMessage = nil
         } catch {
             state = .signedOut
-            errorMessage = error.localizedDescription
+            errorMessage = authenticationErrorMessage(for: error)
         }
     }
 
@@ -335,7 +335,7 @@ final class FitMatchAuthSessionStore: ObservableObject {
             state = .signedOut
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = authenticationErrorMessage(for: error)
         }
     }
 
@@ -361,5 +361,21 @@ final class FitMatchAuthSessionStore: ObservableObject {
             errorMessage = FitMatchAuthSessionError.accountDeletionFailed.localizedDescription
             return false
         }
+    }
+
+    private func authenticationErrorMessage(for error: Error) -> String {
+        if let knownError = error as? FitMatchAuthSessionError {
+            return knownError.errorDescription
+                ?? FitMatchFailureCopy.authenticationServiceInspection
+        }
+        if error is URLError {
+            return FitMatchFailureCopy.transientNetwork
+        }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain
+            || (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain == NSURLErrorDomain {
+            return FitMatchFailureCopy.transientNetwork
+        }
+        return FitMatchFailureCopy.authenticationServiceInspection
     }
 }

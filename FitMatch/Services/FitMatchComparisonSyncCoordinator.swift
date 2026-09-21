@@ -230,7 +230,8 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
                 } catch {
                     guard isCurrentSyncUser(userID) else { return }
                     hasRetryableFailure = true
-                    lastErrorMessage = error.localizedDescription
+                    lastErrorMessage = lastErrorMessage
+                        ?? synchronizationErrorMessage(for: error)
                     #if DEBUG
                     print(
                         "[FitMatchComparisonSync] pending=\(row.id) recovery failed: "
@@ -298,7 +299,8 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
                 } catch {
                     guard isCurrentSyncUser(userID) else { return }
                     hasRetryableFailure = true
-                    lastErrorMessage = error.localizedDescription
+                    lastErrorMessage = lastErrorMessage
+                        ?? synchronizationErrorMessage(for: error)
                 }
             } else {
                 missingLocalCompletedCount = completedClientIDs.subtracting(localIDs).count
@@ -346,11 +348,22 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
         } catch {
             guard isCurrentSyncUser(userID) else { return }
             state = .pendingRetry
-            lastErrorMessage = error.localizedDescription
+            lastErrorMessage = synchronizationErrorMessage(for: error)
             #if DEBUG
             print("[FitMatchComparisonSync] sync failed: \(error.localizedDescription)")
             #endif
         }
+    }
+
+    private func synchronizationErrorMessage(for error: Error) -> String {
+        if error is URLError {
+            return FitMatchFailureCopy.transientNetwork
+        }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return FitMatchFailureCopy.transientNetwork
+        }
+        return FitMatchFailureCopy.serviceInspection
     }
 
     private func isCurrentSyncUser(_ userID: UUID) -> Bool {

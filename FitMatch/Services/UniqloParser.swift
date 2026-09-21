@@ -32,6 +32,13 @@ struct UniqloParser: ProductURLParsing {
             )
         } catch {
             if Task.isCancelled { throw CancellationError() }
+            if let retailerError = error as? FitMatchRetailerAPIResponseError,
+               retailerError.isTransient {
+                throw error
+            }
+            if error is URLError {
+                throw error
+            }
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
             #endif
@@ -160,7 +167,7 @@ struct UniqloURLResolver {
         let resolvedURL = canonicalURL(productID: productID, colorCode: imageColorCode, fallback: finalURL)
         let metadataHTML: String
         var detailsAPICapture: FitMatchRetailerAPIResponseCapture?
-        if let detailsResponse = try? await fetchProductDetailsResponse(productID: productID) {
+        if let detailsResponse = try? await fetchProductDetailsResponse(productID: productID, priceGroupCode: priceGroupCode) {
             detailsAPICapture = detailsResponse
             if let detailsHydration = try? productDetailsHydration(
                 from: detailsResponse,
@@ -282,14 +289,12 @@ struct UniqloURLResolver {
         return UniqloHTMLResponse(url: response.url ?? url, body: html)
     }
 
-    private func fetchProductDetailsResponse(
-        productID: String
-    ) async throws -> FitMatchRetailerAPIResponseCapture {
+    static func productDetailsURL(productID: String, priceGroupCode: String) throws -> URL {
         let coreID = productID.uppercased().hasSuffix("-000")
             ? productID.uppercased()
             : "\(productID.uppercased())-000"
         guard var components = URLComponents(
-            string: "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/\(coreID)/price-groups/00/details"
+            string: "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/\(coreID)/price-groups/\(priceGroupCode)/details"
         ) else {
             throw ProductURLParserError.unsupportedURL
         }
@@ -301,6 +306,15 @@ struct UniqloURLResolver {
         guard let url = components.url else {
             throw ProductURLParserError.unsupportedURL
         }
+
+        return url
+    }
+
+    private func fetchProductDetailsResponse(
+        productID: String,
+        priceGroupCode: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+        let url = try Self.productDetailsURL(productID: productID, priceGroupCode: priceGroupCode)
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"

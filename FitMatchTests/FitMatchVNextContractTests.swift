@@ -165,6 +165,49 @@ struct FitMatchVNextContractTests {
         ])
     }
 
+    @Test func differentSleeveBasisAddsExplanationWithoutChangingScoresOrEvidence() throws {
+        let fixture = ComparisonBeginFixture()
+        let baseline: VNextBeginComparisonDTO = try decode(fixture.json())
+        let expected = try VNextComparisonEngineAdapter().analyze(baseline)
+        var json = try #require(JSONSerialization.jsonObject(with: Data(fixture.json().utf8)) as? [String: Any])
+        var snapshot = try #require(json["snapshot"] as? [String: Any])
+        var target = try #require(snapshot["target_snapshot"] as? [String: Any])
+        var candidates = try #require(target["candidates"] as? [[String: Any]])
+        for index in candidates.indices {
+            candidates[index]["canonical_measurements"] = [
+                "semantic_conflict_count": 0,
+                "measurements": [["fitmatch_measurement_code": "sleeve_center_back_length",
+                                  "value": 71, "unit_code": "cm",
+                                  "basis_code": "sleeve_center_back_to_cuff"]]
+            ]
+        }
+        target["candidates"] = candidates
+        snapshot["target_snapshot"] = target
+        snapshot["reference_snapshot"] = ["measurements": [[
+            "fitmatch_measurement_code": "sleeve_length", "value": 59, "unit_code": "cm",
+            "raw_label_snapshot": "musinsa.sleeve_length.sleeve_shoulder_seam_to_cuff"
+        ]]]
+        json["snapshot"] = snapshot
+        let begin = try JSONDecoder().decode(VNextBeginComparisonDTO.self, from: JSONSerialization.data(withJSONObject: json))
+        let actual = try VNextComparisonEngineAdapter().analyze(begin)
+        #expect(actual.completionPayload == expected.completionPayload)
+        #expect(actual.analyses.map(\.productSizeID) == expected.analyses.map(\.productSizeID))
+        #expect(actual.analyses.allSatisfy { $0.result.exclusions.contains {
+            $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode
+                && $0.productCode == .sleeveCenterBackToCuff
+                && $0.referenceCode == .sleeveShoulderSeamToCuff
+        } })
+        let candidate = try #require(begin.snapshot.target.candidates.first)
+        #expect(VNextComparisonEngineAdapter.sleevePresentationExclusions(
+            candidate: candidate, referenceSnapshot: .object([:]),
+            alreadyExplained: [], comparedKinds: []
+        ).isEmpty)
+        #expect(VNextComparisonEngineAdapter.sleevePresentationExclusions(
+            candidate: candidate, referenceSnapshot: begin.snapshot.referenceSnapshot,
+            alreadyExplained: [], comparedKinds: [.sleeveLength]
+        ).isEmpty)
+    }
+
     @Test func eligibleCandidateDTOKeepsStableBlockedReasonCode() throws {
         let response: VNextEligibleCandidateSizesDTO = try decode(
             """
@@ -200,7 +243,9 @@ struct FitMatchVNextContractTests {
             ("under_bust_circumference", .underBust),
             ("under_bust_width", .underBust),
             ("waist_circumference", .waist),
-            ("waist_width", .waist)
+            ("waist_width", .waist),
+            ("sleeve_center_back_length", .sleeveLength),
+            ("sleeve_raglan_length", .sleeveLength)
         ]
 
         for (code, kind) in expected {

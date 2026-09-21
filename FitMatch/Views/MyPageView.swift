@@ -147,7 +147,8 @@ struct MyPageView: View {
         ) {
             Button("확인", role: .cancel) {}
         } message: {
-            Text(accountDeletionErrorMessage ?? "잠시 후 다시 시도해 주세요.")
+            Text(accountDeletionErrorMessage
+                ?? "계정 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요.")
         }
     }
 

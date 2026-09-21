@@ -860,7 +860,7 @@ struct FitMatchReviewRequiredRecoveryTests {
         #expect(!(await viewModel.confirmReviewRecovery(candidate)))
         #expect(
             viewModel.errorMessage
-                == "상품 분류 선택을 저장하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+                == "상품 분류 선택을 저장하지 못했어요. 네트워크를 확인한 뒤 다시 시도해 주세요."
         )
         #expect(await remote.setCallCount() == 1)
         #expect(viewModel.reviewRecoveryContract != nil)

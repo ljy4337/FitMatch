@@ -113,6 +113,24 @@ final class FitMatchComparedProductClosetSubmissionAction {
         isSubmitting = true
         defer { isSubmitting = false }
 
+#if DEBUG
+        let diagnosticTraceID = submission.remoteRequest.clientItemID
+        FitMatchDebugLogger.flow(
+            traceID: diagnosticTraceID,
+            stage: "내 옷장 저장",
+            state: "시작",
+            fields: [
+                "클라이언트옷UUID": submission.remoteRequest.clientItemID.uuidString,
+                "DB상품UUID": submission.remoteRequest.productID?.uuidString ?? "없음",
+                "DB변형UUID": submission.remoteRequest.productVariantID?.uuidString ?? "없음",
+                "DB사이즈UUID": submission.remoteRequest.productSizeID?.uuidString ?? "없음",
+                "표시사이즈": submission.remoteRequest.item.sizeName ?? "없음",
+                "명시적그룹": submission.remoteRequest.comparisonGroupCode ?? "생략(서버 자동 그룹 사용)",
+                "명시적분류변경": String(submission.remoteRequest.override != nil)
+            ]
+        )
+#endif
+
         if recovery.mayEditInput,
            FitMatchComparedProductClosetRegistration.isDuplicate(submission.localRequest) {
             return .completed(.duplicate)
@@ -130,7 +148,29 @@ final class FitMatchComparedProductClosetSubmissionAction {
             acceptedClosetItemID = closetItemID
         case .editable, .retrySameRequest:
             do {
+#if DEBUG
+                FitMatchDebugLogger.flow(
+                    traceID: diagnosticTraceID,
+                    stage: "내 옷장 DB 저장 RPC",
+                    state: "요청",
+                    fields: [
+                        "RPC": "fitmatch_vnext_upsert_closet_item",
+                        "재시도상태": String(describing: recovery)
+                    ]
+                )
+#endif
                 let response = try await remote.upsertClosetItem(submission.remoteRequest)
+#if DEBUG
+                FitMatchDebugLogger.flow(
+                    traceID: diagnosticTraceID,
+                    stage: "내 옷장 DB 저장 RPC",
+                    state: "서버승인",
+                    fields: [
+                        "서버옷UUID": response.closetItemID.uuidString,
+                        "응답클라이언트UUID": response.clientItemID.uuidString
+                    ]
+                )
+#endif
                 guard response.clientItemID == submission.remoteRequest.clientItemID else {
                     // A decode/identity anomaly can follow a committed RPC.
                     // Keep exactly this immutable request for reconciliation.
@@ -148,6 +188,23 @@ final class FitMatchComparedProductClosetSubmissionAction {
                 acceptedClosetItemID = response.closetItemID
                 recovery = .serverAccepted(closetItemID: acceptedClosetItemID)
             } catch {
+#if DEBUG
+                let rejection = deterministicRejection(from: error)
+                FitMatchDebugLogger.failure(
+                    traceID: diagnosticTraceID,
+                    stage: "내 옷장 DB 저장 RPC",
+                    error: error,
+                    nextAction: "상품/변형/사이즈 UUID, 로그인 사용자, SQL 거절 사유를 확인하세요.",
+                    fields: [
+                        "DB상품UUID": submission.remoteRequest.productID?.uuidString ?? "없음",
+                        "DB변형UUID": submission.remoteRequest.productVariantID?.uuidString ?? "없음",
+                        "DB사이즈UUID": submission.remoteRequest.productSizeID?.uuidString ?? "없음",
+                        "표시사이즈": submission.remoteRequest.item.sizeName ?? "없음",
+                        "SQL상태": rejection?.code ?? "없음",
+                        "서버거절사유": rejection?.message ?? "없음"
+                    ]
+                )
+#endif
                 if deterministicRejection(from: error) != nil, recovery.mayEditInput {
                     // A first SQL-state rejection proves this transaction did
                     // not commit, so a user may change XL to M and form a new
@@ -311,6 +368,25 @@ final class FitMatchComparedProductClosetSubmissionAction {
                 && normalized.contains("closet")) {
             return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
         }
-        return "내 옷장에 저장하지 못했어요. 입력한 내용은 유지됩니다."
+        if isTransientTransportError(error) {
+            return "일시적인 연결 문제예요. 같은 저장 요청을 다시 시도해 주세요."
+        }
+        if let resolverError = error as? FitMatchSupabaseProductResolverError,
+           case .authenticationRequired = resolverError {
+            return FitMatchFailureCopy.loginRequired
+        }
+        return "내 옷장 저장 서비스에 문제가 있어요. 입력한 내용은 유지됩니다. 문제가 계속되면 문의해 주세요."
+    }
+
+    private func isTransientTransportError(_ error: Error) -> Bool {
+        if error is URLError {
+            return true
+        }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return true
+        }
+        return (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain
+            == NSURLErrorDomain
     }
 }

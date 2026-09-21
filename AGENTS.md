@@ -30,7 +30,8 @@ Verification status must be PASS, FAIL, NOT RUN, or BLOCKED. Never describe skip
 ## Sources of Authority
 
 - `AGENTS.md`: stable operating, architecture-boundary, safety, Git, and verification rules.
-- `Docs/AgentArchitectureMap.md`: detailed Swift ownership/navigation map; read only relevant sections before broad searches.
+- `FitMatch Behavior Map.md`: primary flow/RPC navigation. Start with the relevant Flow ID and its READ FIRST owners before broader searches.
+- `FitMatch Swift Feature Map.md`: supplementary detailed Swift ownership; read only relevant sections.
 - `Docs/CodexSessionHandoff.md`: current implementation state, recent product decisions, Production changes, and unresolved issues.
 
 At the start of every new session, read the current-state portion of `Docs/CodexSessionHandoff.md` completely before changing code. Before finishing meaningful work, update it with actual changes, decisions, tests/builds run, unverified areas, and remaining issues. Preserve history and mark superseded policy explicitly. Never describe prepared SQL as applied or unexecuted work as passed.
@@ -95,4 +96,4 @@ For consequential product, UX, architecture, data, database, or release tradeoff
 
 ## Rule Maintenance
 
-Keep this file limited to stable operating rules and high-level navigation. Put temporary blockers, current DB state, incidents, one-off test results, and pending evidence in `Docs/CodexSessionHandoff.md`. Keep detailed ownership/navigation in `Docs/AgentArchitectureMap.md`. Update those sources when stable architecture or product rules change.
+Keep this file limited to stable operating rules and high-level navigation. Put temporary blockers, current DB state, incidents, one-off test results, and pending evidence in `Docs/CodexSessionHandoff.md`. Keep flow/RPC navigation in `FitMatch Behavior Map.md` and detailed Swift ownership in `FitMatch Swift Feature Map.md`. Update affected sections when owners or contracts change. Maps are navigation aids, not authority over actual source/deployed contracts; verify stale entries and expand searches narrowly when needed.

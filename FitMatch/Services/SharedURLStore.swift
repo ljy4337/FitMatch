@@ -80,7 +80,7 @@ enum FitMatchPendingShareEntryAction {
         case .malformed:
             return .blocked("공유한 링크를 읽지 못했어요. 상품 페이지에서 다시 공유해 주세요.")
         case .storageUnavailable:
-            return .blocked("공유한 링크를 열 준비를 하지 못했어요. 잠시 후 다시 시도해 주세요.")
+            return .blocked("공유한 링크를 열 준비를 하지 못했어요. 문제가 계속되면 문의해 주세요.")
         }
     }
 }

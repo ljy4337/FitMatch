@@ -863,7 +863,7 @@ struct ZARAParserPhase1_5Tests {
         #expect(records.first { $0.rawCode == "zone-name-arm-width" }?.semanticStatus == .unknownDefinition)
         #expect(records.filter { $0.semanticStatus == .mapped }.allSatisfy {
             $0.evidenceLevel == .officialText
-                && $0.mappingVersion == "zara_kr_measure_guide_verified_subset_v5"
+                && $0.mappingVersion == "zara_kr_measure_guide_verified_subset_v6"
         })
         #expect(records.contains {
             $0.rawCode == "zone-name-chest"
@@ -1040,7 +1040,7 @@ struct ZARAParserPhase1_5Tests {
         #expect(records.first { $0.rawCode == "zone-name-front-length-full-body" }?.semanticStatus == .unknownDefinition)
     }
 
-    @Test func incompletePantsSubsetFailsClosedEvenWhenOneFieldMaps() async throws {
+    @Test func singlePantsMeasurementReachesServerWithoutLocalComparisonGate() async throws {
         let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p08372248.html?v1=582770476"))
         let html = productHTML(
             internalProductID: "548577264",
@@ -1060,9 +1060,10 @@ struct ZARAParserPhase1_5Tests {
             sizeGuideLoader: Phase15ZARAGuideLoader(data: data)
         )
 
-        let info = try #require(await partialResult(parser: parser, url: url))
-        #expect(info.measurementAvailability == .unavailable)
+        let info = try await parser.parse(from: url)
+        #expect(info.measurementAvailability == .actualMeasurements)
         #expect(info.sizes.first?.measurementRecords.first?.measurementCode == .waistWidthEdgeToEdge)
+        #expect(info.fitMatchProductObservationRequest()?.payload.variants.first?.sizes.first?.measurements.count == 1)
     }
 
     @Test func bodyOnlyFixtureNeverCreatesParsedMeasurements() async throws {
@@ -1174,8 +1175,8 @@ struct ZARAParserPhase1_5Tests {
             sizeGuideLoader: Phase15ZARAGuideLoader(data: data)
         )
 
-        let info = try #require(await partialResult(parser: parser, url: url))
-        #expect(info.measurementAvailability == .unavailable)
+        let info = try await parser.parse(from: url)
+        #expect(info.measurementAvailability == .actualMeasurements)
         #expect(info.sizes.count == 1)
         #expect(info.sizes[0].measurementRecords.count == 1)
         #expect(info.sizes[0].measurementRecords[0].rawValueText == "48.5")
@@ -1244,8 +1245,49 @@ struct ZARAParserPhase1_5Tests {
             #expect(info.category == .other)
             #expect(info.detailCategory == .other)
             #expect(info.measurementAvailability == .unavailable)
-            #expect(info.recoveryAction == .confirmCategoryBeforeMeasurements)
+            #expect(info.recoveryAction == .enterMeasurementsManually)
         }
+    }
+
+    @Test func unclassifiedOvershirtPreservesMeasurementsForClosetAndComparison() async throws {
+        let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p01957601.html?v1=565606719"))
+        let html = productHTML(
+            internalProductID: "565594458", styleNumber: "01957601",
+            catentryID: "565606719", section: "MAN",
+            family: "오버셔츠", subfamily: "Sobrecamisa"
+        )
+        let data = Data("""
+        {"measureGuideInfo":{"sizes":[{"name":"M","measures":[
+          {"zoneId":"A","tableTitleZone":"zone-name-chest","dimensions":[{"unitId":"cm","value":"63"}]},
+          {"zoneId":"B","tableTitleZone":"zone-name-front-length","dimensions":[{"unitId":"cm","value":"75.5"}]},
+          {"zoneId":"C","tableTitleZone":"zone-name-sleeve-length","dimensions":[{"unitId":"cm","value":"59.5"}]},
+          {"zoneId":"D","tableTitleZone":"zone-name-back-width","dimensions":[{"unitId":"cm","value":"56"}]},
+          {"zoneId":"E","tableTitleZone":"zone-name-arm-width","dimensions":[{"unitId":"cm","value":"24.5"}]}
+        ]}]},"sizeGuideInfo":null}
+        """.utf8)
+        let parser = ZARAParser(
+            pageLoader: Phase15ZARAPageLoader(page: .init(url: url, statusCode: 200, html: html)),
+            sizeGuideLoader: Phase15ZARAGuideLoader(data: data)
+        )
+        let info = try await parser.parse(from: url)
+        #expect(info.category == .other)
+        #expect(info.detailCategory == .other)
+        #expect(info.recoveryAction == nil)
+        #expect(info.measurementAvailability == .actualMeasurements)
+        let records = try #require(info.sizes.first?.measurementRecords)
+        #expect(records.count == 5)
+        #expect(records.first { $0.rawCode == "zone-name-chest" }?.measurementCode == .chestWidthPitToPit)
+        #expect(records.first { $0.rawCode == "zone-name-sleeve-length" }?.measurementCode == .sleeveShoulderSeamToCuff)
+        #expect(records.filter { $0.measurementCode == .unknown }.count == 3)
+        #expect(RetailerComparisonMeasurementContractFact.retailerSizeTable(
+            sizes: info.sizes, productStructure: nil
+        ).contract == .singleCoherent)
+        #expect(RetailerComparisonMeasurementContractFact.retailerSizeTable(
+            sizes: info.sizes, productStructure: .set
+        ).contract == .multipleComponent)
+        let request = try #require(info.normalizedSizes().fitMatchProductObservationRequest())
+        #expect(request.payload.variants.first?.sizes.first?.measurements.count == 5)
+        // Facts reach the shared observation path; no local category/group is invented.
     }
 
     @Test func unknownCategoryCarriesParentVariantRawEvidenceBeforeClassification() async throws {
@@ -1337,7 +1379,7 @@ struct ZARAParserPhase1_5Tests {
         })
     }
 
-    @Test func userConfirmedTopWithoutVerifiedUpperFieldsStillRequestsManualEntry() async throws {
+    @Test func userConfirmedCategoryPreservesRawFactsWithoutInventingCanonicalMeasurements() async throws {
         let url = try #require(URL(string: "https://www.zara.com/kr/ko/item-p01234567.html?v1=900000011"))
         let html = try String(
             contentsOf: fixtureURL("fixtures/zara_unknown_category_synthetic.html"),
@@ -1351,22 +1393,19 @@ struct ZARAParserPhase1_5Tests {
             sizeGuideLoader: Phase15ZARAGuideLoader(data: guide)
         )
 
-        do {
-            _ = try await parser.parse(
-                from: url,
-                confirmedCategory: .top,
-                confirmedDetailCategory: .shortSleeve,
-                onProgress: { _ in }
-            )
-            Issue.record("검증되지 않은 ZARA 상의 실측 기준이 자동 비교로 통과했습니다.")
-        } catch let error as ProductURLParserPartialError {
-            #expect(error.productInfo.category == .top)
-            #expect(error.productInfo.detailCategory == .shortSleeve)
-            #expect(error.productInfo.recoveryAction == .enterMeasurementsManually)
-            #expect(error.productInfo.measurementAvailability == .unavailable)
-        } catch {
-            Issue.record("직접 입력 복구 상태 대신 예상하지 못한 오류가 발생했습니다: \(error)")
-        }
+        let info = try await parser.parse(
+            from: url, confirmedCategory: .top,
+            confirmedDetailCategory: .shortSleeve, onProgress: { _ in }
+        )
+        #expect(info.category == .top)
+        #expect(info.detailCategory == .shortSleeve)
+        #expect(info.measurementAvailability == .actualMeasurements)
+        let records = info.sizes.flatMap(\.measurementRecords)
+        #expect(!records.isEmpty)
+        #expect(records.allSatisfy { $0.semanticStatus == .unknownDefinition })
+        #expect(info.fitMatchProductObservationRequest() != nil)
+        // Parsing success provides retailer evidence; it never grants comparison authority.
+
     }
 
     @Test func viewModelKeepsUserCategoryWhileResumingZARAImport() async throws {

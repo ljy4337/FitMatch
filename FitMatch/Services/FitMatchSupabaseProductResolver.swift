@@ -1364,17 +1364,17 @@ enum FitMatchSupabaseProductResolverError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            return "서비스 연결을 준비하지 못했어요. 잠시 후 다시 시도해 주세요."
+            return FitMatchFailureCopy.serviceInspection
         case .authenticationRequired:
-            return "로그인이 필요한 기능입니다."
+            return FitMatchFailureCopy.loginRequired
         case .vnextIdentityRequired:
-            return "상품·옵션·사이즈 정보를 확인하지 못했어요. 상품을 다시 불러와 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         case .vnextCompletionRequired:
-            return "비교 결과를 완료하지 못했어요. 같은 비교를 다시 시도해 주세요."
+            return FitMatchFailureCopy.comparisonServiceInspection
         case .invalidVNextResponse:
-            return "서버 상품 응답을 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
+            return FitMatchFailureCopy.serviceInspection
         case .observationRejected:
-            return "상품 정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         }
     }
 }
@@ -1400,7 +1400,7 @@ nonisolated enum FitMatchClosetPayloadContractError: LocalizedError, Equatable, 
         case .conflictingCanonicalMeasurement:
             return "같은 실측 항목에 서로 다른 값이 있어 서버에 저장할 수 없습니다."
         case .missingRequiredClassificationAxis:
-            return "선택한 의류 분류에 필요한 길이 정보를 확인한 뒤 다시 시도해 주세요."
+            return "선택한 의류 분류에 필요한 길이 정보를 입력해 주세요."
         }
     }
 }
@@ -1588,6 +1588,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     /// personal Closet tuple atomically inside the mutation.
     let closetClassificationOverride: VNextClosetClassificationOverridePayload?
     let comparisonGroupCode: String?
+    var useServerMeasurements: Bool? = nil
 
     enum CodingKeys: String, CodingKey {
         case clientItemID = "client_item_id"
@@ -1608,11 +1609,13 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         case notes, satisfaction, measurements
         case closetClassificationOverride = "closet_classification_override"
         case comparisonGroupCode = "comparison_group_code"
+        case useServerMeasurements = "use_server_measurements"
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(clientItemID, forKey: .clientItemID)
+        try container.encodeIfPresent(useServerMeasurements, forKey: .useServerMeasurements)
         try container.encodeIfPresent(productID, forKey: .productID)
         try container.encodeIfPresent(productVariantID, forKey: .productVariantID)
         try container.encodeIfPresent(productSizeID, forKey: .productSizeID)
@@ -1928,6 +1931,13 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         }
     }
 
+    /// Keeps command-line release validation on the same authenticated
+    /// domain/RPC implementation as the app without exposing credentials or
+    /// replacing server authority with a test remote.
+    init(authenticatedClient: SupabaseClient) {
+        client = authenticatedClient
+    }
+
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductResolutionResponse {
         let exact = try await fetchVNextRuntime(request)
@@ -1983,7 +1993,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
 
     func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
         -> FitMatchUpsertClosetItemResponse {
-        let payload = try Self.closetPayload(request)
+        let payload = try Self.closetCreationPayload(request)
         let client = try await authenticatedClient()
         let response: VNextClosetMutationResponse = try await client
             .rpc(
@@ -2172,6 +2182,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             )
             .execute()
             .value
+        try FitMatchVNextContractValidator.validateCandidateEnvelope(
+            exact, targetProductID: targetProductID, targetVariantID: targetVariantID
+        )
         return FitMatchReferenceCandidatesResponse(vnext: exact)
     }
 
@@ -2188,6 +2201,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                                                        pTargetVariantID: targetVariantID,
                                                        pRequestedGroupCode: requestedComparisonGroupCode)
         ).execute().value
+        try FitMatchVNextContractValidator.validateCandidateEnvelope(
+            exact, targetProductID: targetProductID, targetVariantID: targetVariantID
+        )
         guard exact.targetProductID == targetProductID,
               exact.targetVariantID == targetVariantID,
               exact.targetComparisonGroup?.groupCode == requestedComparisonGroupCode,
@@ -2507,7 +2523,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     }
 
     nonisolated private static func closetPayload(
-        _ request: FitMatchUpsertClosetItemRequest
+        _ request: FitMatchUpsertClosetItemRequest,
+        serverSnapshot: Bool = false
     ) throws -> VNextClosetMutationPayload {
         let axes = try VNextClosetClassificationAxes(
             categoryCode: request.item.categoryCode,
@@ -2519,9 +2536,11 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         // snapshot against the exact server ProductSize. Keep retailer-only
         // raw facts on the local item, but do not put them in this canonical
         // mutation payload.
-        let measurements = request.productID == nil
-            ? try canonicalMeasurements(for: request.item)
-            : try linkedCanonicalMeasurements(for: request.item)
+        let measurements: [VNextClosetMeasurementPayload] = serverSnapshot
+            ? []
+            : request.productID == nil
+                ? try canonicalMeasurements(for: request.item)
+                : try linkedCanonicalMeasurements(for: request.item)
         return VNextClosetMutationPayload(
             clientItemID: request.clientItemID,
             productID: request.productID,
@@ -2551,6 +2570,23 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             },
             comparisonGroupCode: request.comparisonGroupCode
         )
+    }
+
+    /// Linked creation asks the server to snapshot its exact selected size.
+    /// Retailer display facts stay in the observation; manual/edit payloads retain
+    /// their explicit measurement contract. No client mapping authorizes a value.
+    nonisolated private static func closetCreationPayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> VNextClosetMutationPayload {
+        var payload = try closetPayload(request, serverSnapshot: request.productID != nil)
+        if request.productID != nil { payload.useServerMeasurements = true }
+        return payload
+    }
+
+    nonisolated static func encodedVNextClosetCreationPayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> Data {
+        try JSONEncoder().encode(try closetCreationPayload(request))
     }
 
     nonisolated static func encodedVNextClosetPayload(

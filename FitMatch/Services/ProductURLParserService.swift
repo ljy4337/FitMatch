@@ -390,9 +390,9 @@ enum ProductURLParserError: LocalizedError {
         case .invalidURL:
             return "올바른 상품 URL을 입력해 주세요."
         case .unsupportedURL:
-            return "아직 지원하지 않는 상품 링크예요. 현재는 무신사, 유니클로, ZARA 상품 URL을 지원합니다."
+            return "현재는 무신사, 유니클로, ZARA 상품 링크를 지원합니다."
         case .automaticParsingUnavailable:
-            return "상품 정보를 불러오지 못했어요. 잠시 후 다시 시도하거나 지원하는 쇼핑몰의 상품 URL인지 확인해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         }
     }
 }
@@ -551,6 +551,7 @@ struct ProductURLParserService {
                 )
             } catch {
                 if Task.isCancelled { throw CancellationError() }
+                if Self.isTransientTransportError(error) { throw error }
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
                 #endif
@@ -574,6 +575,7 @@ struct ProductURLParserService {
                 )
             } catch {
                 if Task.isCancelled { throw CancellationError() }
+                if Self.isTransientTransportError(error) { throw error }
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
                 #endif
@@ -600,6 +602,7 @@ struct ProductURLParserService {
                 )
             } catch {
                 if Task.isCancelled { throw CancellationError() }
+                if Self.isTransientTransportError(error) { throw error }
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "ZARA 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
                 #endif
@@ -608,6 +611,21 @@ struct ProductURLParserService {
         }
 
         throw ProductURLParserError.unsupportedURL
+    }
+
+    private static func isTransientTransportError(_ error: Error) -> Bool {
+        if error is URLError {
+            return true
+        }
+        if let retailerError = error as? FitMatchRetailerAPIResponseError {
+            return retailerError.isTransient
+        }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return true
+        }
+        return (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain
+            == NSURLErrorDomain
     }
 
     /// Continues a fail-closed ZARA import after the user explicitly chooses

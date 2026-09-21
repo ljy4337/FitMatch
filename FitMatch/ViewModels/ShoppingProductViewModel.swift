@@ -177,26 +177,27 @@ final class ShoppingProductViewModel: ObservableObject {
     /// a server contract mismatch is never presented as a connectivity issue.
     private func reviewRecoveryRequestErrorMessage(for error: Error) -> String {
         if isRecoveryContractError(error) {
-            return "상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         }
         if isNetworkTransportError(error) {
-            return "상품 분류 선택지를 확인하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+            return FitMatchFailureCopy.transientNetwork
         }
-        return "상품 분류 선택지를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."
+        return FitMatchFailureCopy.productServiceInspection
     }
 
     private func reviewRecoverySaveErrorMessage(for error: Error) -> String {
         if isRecoveryContractError(error) {
-            return "상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         }
         if isNetworkTransportError(error) {
-            return "상품 분류 선택을 저장하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+            return "상품 분류 선택을 저장하지 못했어요. 네트워크를 확인한 뒤 다시 시도해 주세요."
         }
-        if let localized = (error as? LocalizedError)?.errorDescription,
-           !localized.isEmpty {
-            return localized
+        if let authorityError = error as? FitMatchServerAuthorityError,
+           case .classificationRecoveryRejected = authorityError {
+            return authorityError.errorDescription
+                ?? "상품 분류 선택을 저장하지 못했어요. 최신 상품 상태를 다시 확인해 주세요."
         }
-        return "상품 분류를 저장하지 못했습니다. 최신 상태를 다시 확인해 주세요."
+        return FitMatchFailureCopy.productServiceInspection
     }
 
     private func isRecoveryContractError(_ error: Error) -> Bool {
@@ -256,6 +257,9 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     private func isNetworkTransportError(_ error: Error) -> Bool {
+        if let retailerError = error as? FitMatchRetailerAPIResponseError {
+            return retailerError.isTransient
+        }
         if error is URLError {
             return true
         }
@@ -265,6 +269,43 @@ final class ShoppingProductViewModel: ObservableObject {
         }
         return (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain
             == NSURLErrorDomain
+    }
+
+    private func productLoadErrorMessage(for error: Error) -> String {
+        if isNetworkTransportError(error) {
+            return FitMatchFailureCopy.transientNetwork
+        }
+        if let parserError = error as? ProductURLParserError {
+            return parserError.errorDescription
+                ?? FitMatchFailureCopy.productServiceInspection
+        }
+        return FitMatchFailureCopy.productServiceInspection
+    }
+
+    private func comparisonFailureMessage(for error: Error) -> String {
+        if isNetworkTransportError(error) {
+            return FitMatchFailureCopy.transientNetwork
+        }
+        let nsError = error as NSError
+        if nsError.code == 401 {
+            return FitMatchFailureCopy.loginRequired
+        }
+        if nsError.code == 403 {
+            return FitMatchFailureCopy.authorizationInspection
+        }
+        if let localizedError = error as? FitMatchServerAuthorityError {
+            return localizedError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        if let localizedError = error as? FitMatchVNextContractError {
+            return localizedError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        if let localizedError = error as? FitMatchSupabaseProductResolverError {
+            return localizedError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        return FitMatchFailureCopy.comparisonServiceInspection
     }
 
     func addSizeOption() {
@@ -283,6 +324,14 @@ final class ShoppingProductViewModel: ObservableObject {
         onRetailerProductLoaded: ((ShoppingProductViewModel) -> Void)? = nil
     ) async -> Bool {
         let loadID = UUID()
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: loadID,
+            stage: "상품 링크 입력",
+            state: "시작",
+            fields: ["입력URL": productURL]
+        )
+#endif
         let metricProvider = FitMatchMetricProvider.resolve(urlString: productURL)
         metricsRecorder.record(.parserAttempt(provider: metricProvider))
         activeLoadID = loadID
@@ -323,6 +372,14 @@ final class ShoppingProductViewModel: ObservableObject {
                 }
             )
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
+#if DEBUG
+            FitMatchDebugLogger.flow(
+                traceID: loadID,
+                stage: "쇼핑몰 API 데이터 수신",
+                state: "완료",
+                fields: parsedProduct.fitMatchDebugFields
+            )
+#endif
             analysisPhase = .preparingComparison
             apply(parsedProduct)
             // Publish the immutable retailer/API snapshot before server
@@ -351,6 +408,17 @@ final class ShoppingProductViewModel: ObservableObject {
             return hasConfirmedComparisonAuthority
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
+#if DEBUG
+            FitMatchDebugLogger.flow(
+                traceID: loadID,
+                stage: "쇼핑몰 API 데이터 수신",
+                state: "일부완료",
+                fields: partialError.productInfo.fitMatchDebugFields.merging(
+                    ["누락사유": partialError.localizedDescription],
+                    uniquingKeysWith: { _, new in new }
+                )
+            )
+#endif
             apply(partialError.productInfo)
             onRetailerProductLoaded?(self)
             _ = await resolveServerAuthority(
@@ -369,6 +437,15 @@ final class ShoppingProductViewModel: ObservableObject {
             return false
         } catch {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
+#if DEBUG
+            FitMatchDebugLogger.failure(
+                traceID: loadID,
+                stage: "상품 링크/API 해석",
+                error: error,
+                nextAction: "입력 URL, 쇼핑몰 응답 상태, 상품 ID 추출 로그를 확인하세요.",
+                fields: ["입력URL": productURL]
+            )
+#endif
             let nsError = error as NSError
             isNetworkFailure = nsError.domain == NSURLErrorDomain
                 || (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain == NSURLErrorDomain
@@ -378,7 +455,7 @@ final class ShoppingProductViewModel: ObservableObject {
                     reason: parserFailureReason(error: error, isNetworkFailure: isNetworkFailure)
                 )
             )
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
+            errorMessage = productLoadErrorMessage(for: error)
             return false
         }
     }
@@ -522,8 +599,7 @@ final class ShoppingProductViewModel: ObservableObject {
         } catch {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
             productAnalysisRecoveryAction = .enterMeasurementsManually
-            errorMessage = (error as? LocalizedError)?.errorDescription
-                ?? "ZARA 실측 정보를 불러오지 못했어요."
+            errorMessage = productLoadErrorMessage(for: error)
             return false
         }
     }
@@ -554,9 +630,18 @@ final class ShoppingProductViewModel: ObservableObject {
             guard let observation = frozenObservation(for: product) else {
                 throw FitMatchServerAuthorityError.missingObservationForPromotion
             }
+#if DEBUG
+            FitMatchDebugLogger.flow(
+                traceID: loadID,
+                stage: "DB 상품 데이터 전송",
+                state: "요청",
+                fields: observation.fitMatchDebugFields
+            )
+#endif
             let authority = try await serverAuthorityCoordinator.resolveFreshRetailerProductAuthority(
                 request: request,
-                observation: observation
+                observation: observation,
+                diagnosticTraceID: loadID
             )
             guard isCurrentLoad(loadID) else { return false }
             switch authority.status {
@@ -596,10 +681,22 @@ final class ShoppingProductViewModel: ObservableObject {
                         .classificationRecoveryOptions(productID: authority.productID)
                     guard isCurrentLoad(loadID) else { return false }
                     presentReviewRecovery(contract)
-                } catch is CancellationError {
-                    return false
-                } catch {
-                    guard isCurrentLoad(loadID) else { return false }
+        } catch is CancellationError {
+            return false
+        } catch {
+            guard isCurrentLoad(loadID) else { return false }
+#if DEBUG
+            FitMatchDebugLogger.failure(
+                traceID: loadID,
+                stage: "DB 상품 저장/그룹 판정",
+                error: error,
+                nextAction: "DB 전송값, observation 응답, runtime 상태와 분류 계약을 순서대로 확인하세요.",
+                fields: [
+                    "쇼핑몰": product.sourceName,
+                    "상품ID": product.productID ?? "없음"
+                ]
+            )
+#endif
                     let message = reviewRecoveryRequestErrorMessage(for: error)
                     reviewRecoveryState = .failed(message)
                     errorMessage = message
@@ -635,21 +732,28 @@ final class ShoppingProductViewModel: ObservableObject {
 
     private func serverAuthorityLoadErrorMessage(for error: Error) -> String {
         if error is URLError {
-            return "서버에 연결하지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+            return FitMatchFailureCopy.transientNetwork
+        }
+        let nsError = error as NSError
+        if nsError.code == 401 {
+            return FitMatchFailureCopy.loginRequired
+        }
+        if nsError.code == 403 {
+            return FitMatchFailureCopy.authorizationInspection
         }
         if let authorityError = error as? FitMatchServerAuthorityError {
             return authorityError.errorDescription
-                ?? "서버 상품 정보를 처리하지 못했습니다. 다시 시도해 주세요."
+                ?? FitMatchFailureCopy.productServiceInspection
         }
         if let contractError = error as? FitMatchVNextContractError {
             return contractError.errorDescription
-                ?? "서버 상품 응답을 처리하지 못했습니다. 앱을 업데이트한 뒤 다시 시도해 주세요."
+                ?? FitMatchFailureCopy.serviceInspection
         }
-        let nsError = error as NSError
-        if nsError.code == 401 || nsError.code == 403 {
-            return "로그인 정보를 확인하지 못했습니다. 다시 로그인한 뒤 시도해 주세요."
+        if let resolverError = error as? FitMatchSupabaseProductResolverError {
+            return resolverError.errorDescription
+                ?? FitMatchFailureCopy.productServiceInspection
         }
-        return "서버 상품 응답을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+        return FitMatchFailureCopy.productServiceInspection
     }
 
     private func frozenObservation(
@@ -1554,8 +1658,9 @@ final class ShoppingProductViewModel: ObservableObject {
         } catch {
             guard !Task.isCancelled else { return false }
             reviewRecoveryState = .idle
-            errorMessage = (error as? LocalizedError)?.errorDescription
-                ?? "개인 분류를 해제하지 못했습니다."
+            errorMessage = isNetworkTransportError(error)
+                ? FitMatchFailureCopy.transientNetwork
+                : FitMatchFailureCopy.productServiceInspection
             return false
         }
     }
@@ -1773,7 +1878,7 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         } catch {
             guard isCurrentComparison(comparisonRequestID) else { return nil }
-            errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            errorMessage = comparisonFailureMessage(for: error)
             #if DEBUG
             print("[화면: 상품 비교][동작: 내 옷 서버 승인][상태: 실패] 오류=\(error.localizedDescription)")
             #endif
@@ -1977,7 +2082,7 @@ final class ShoppingProductViewModel: ObservableObject {
             guard isCurrentComparison(comparisonRequestID) else { return nil }
             metricsRecorder.record(.comparisonBlocked(mode: metricMode, reason: .insufficientEvidence))
             errorMessage = errorMessage
-                ?? "서버 비교 결과를 완료하지 못했습니다. 같은 비교를 다시 시도해 주세요."
+                ?? FitMatchFailureCopy.comparisonServiceInspection
             recommendation = nil
             return nil
         }
@@ -2035,8 +2140,7 @@ final class ShoppingProductViewModel: ObservableObject {
             return nil
         } catch {
             guard isCurrentComparison(comparisonRequestID) else { return nil }
-            errorMessage = (error as? LocalizedError)?.errorDescription
-                ?? "서버 비교 결과를 완료하지 못했습니다. 같은 비교를 다시 시도해 주세요."
+            errorMessage = comparisonFailureMessage(for: error)
             return nil
         }
     }

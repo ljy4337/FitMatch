@@ -163,7 +163,7 @@ struct FitMatchAuthSessionStoreTests {
         // production action, followed by a new account's successful login.
         await store.completeAppleSignIn(identityToken: "token-failure", nonce: "nonce-failure")
         #expect(store.state == .signedOut)
-        #expect(store.errorMessage == AuthSessionStubError.transport.localizedDescription)
+        #expect(store.errorMessage == FitMatchFailureCopy.authenticationServiceInspection)
 
         await store.completeAppleSignIn(identityToken: "token-b", nonce: "nonce-b")
         #expect(store.state == .signedIn(userID: userB))

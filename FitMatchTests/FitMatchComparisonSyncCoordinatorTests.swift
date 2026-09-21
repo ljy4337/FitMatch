@@ -337,7 +337,7 @@ struct FitMatchComparisonSyncCoordinatorTests {
             histories: [history],
             in: context,
             comparisonSync: coordinator,
-            closetSync: nil
+            closetSync: ConfirmedClosetDeletionStub()
         )
         #expect(outcome == .deleted)
 
@@ -400,7 +400,7 @@ struct FitMatchComparisonSyncCoordinatorTests {
             histories: [],
             in: context,
             comparisonSync: nil,
-            closetSync: nil
+            closetSync: ConfirmedClosetDeletionStub()
         )
         #expect(outcome == .deleted)
         let remaining = try context.fetch(FetchDescriptor<UserFit>())
@@ -449,7 +449,7 @@ struct FitMatchComparisonSyncCoordinatorTests {
             histories: [history],
             in: context,
             comparisonSync: coordinator,
-            closetSync: nil
+            closetSync: ConfirmedClosetDeletionStub()
         )
         #expect(failed == .serverHistoryHideFailed)
         #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
@@ -462,7 +462,7 @@ struct FitMatchComparisonSyncCoordinatorTests {
             histories: [history],
             in: context,
             comparisonSync: coordinator,
-            closetSync: nil
+            closetSync: ConfirmedClosetDeletionStub()
         )
         #expect(retried == .deleted)
         #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
@@ -524,7 +524,7 @@ struct FitMatchComparisonSyncCoordinatorTests {
             histories: [history],
             in: context,
             comparisonSync: coordinator,
-            closetSync: nil
+            closetSync: ConfirmedClosetDeletionStub()
         )
         #expect(closetOutcome == .serverHistoryUnavailable)
         #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
@@ -540,7 +540,7 @@ struct FitMatchComparisonSyncCoordinatorTests {
             histories: [history],
             in: context,
             comparisonSync: coordinator,
-            closetSync: nil
+            closetSync: ConfirmedClosetDeletionStub()
         )
         #expect(authOutcome == .authenticationRequired)
         #expect(authOutcome.userVisibleMessage
@@ -924,4 +924,17 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
 private enum ComparisonHistoryRemoteError: Error, Equatable {
     case unknownComparison
     case transportFailure
+}
+
+// History tests supply an explicit successful Closet receipt rather than
+// treating an unavailable Closet service as a successful server deletion.
+@MainActor
+private final class ConfirmedClosetDeletionStub: FitMatchClosetDeleting {
+    func deleteServerFirst(clientItemID: UUID, prepare: () async throws -> Void,
+                           commit: () throws -> Void) async throws {
+        try await FitMatchClosetDeletionTransaction.run(
+            isCurrent: { true }, prepare: prepare, resolve: { clientItemID }, recordIntent: {},
+            delete: { id in (id, "2026-09-16T00:00:00Z") }, commit: commit
+        )
+    }
 }

@@ -28,7 +28,8 @@ enum FitMatchAccountDeletionAction {
     ) async -> Outcome {
         guard await authSession.deleteAccount() else {
             return .serverDeletionFailed(
-                authSession.errorMessage ?? "잠시 후 다시 시도해 주세요."
+                authSession.errorMessage
+                    ?? "계정 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
             )
         }
 

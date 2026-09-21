@@ -90,7 +90,7 @@ private enum FitMatchClosetSyncInterruption: Error {
 }
 
 @MainActor
-final class FitMatchClosetSyncCoordinator: ObservableObject {
+final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDeleting {
     @Published private(set) var state: FitMatchClosetSyncState = .idle
     @Published private(set) var lastErrorMessage: String?
 
@@ -98,9 +98,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     private let authorityCoordinator: FitMatchServerAuthorityCoordinator
     private let defaults: UserDefaults
     private var activeUserID: UUID?
+    private var accountGeneration = UUID()
     private var isSynchronizing = false
     private var needsAnotherPass = false
     private var pendingSyncUserID: UUID?
+    private var pendingSyncContext: ModelContext?
     private var remoteItemsByClientID: [UUID: FitMatchClosetItemRecord] = [:]
     /// A user-triggered linked edit has already reached the update RPC.  Keep
     /// its exact request in memory until the list receipt is projected so a
@@ -136,10 +138,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
     /// `prepareLocalCache` then owns the durable SwiftData boundary.
     func prepareForAuthenticatedUser(_ userID: UUID?) {
         guard activeUserID != userID else { return }
+        accountGeneration = UUID()
         activeUserID = userID
         remoteItemsByClientID.removeAll()
         acceptedLinkedEditReceipts.removeAll()
         pendingSyncUserID = nil
+        pendingSyncContext = nil
         needsAnotherPass = false
         if userID == nil {
             state = .idle
@@ -156,6 +160,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         if isSynchronizing {
             needsAnotherPass = true
             pendingSyncUserID = userID
+            pendingSyncContext = modelContext
             return
         }
 
@@ -166,6 +171,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         while true {
             needsAnotherPass = false
             pendingSyncUserID = nil
+            pendingSyncContext = nil
             await synchronizeOnce(userID: passUserID, modelContext: modelContext)
 
             // A later authenticated session always owns the follow-up pass.
@@ -194,6 +200,58 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         storePendingDeleteIDs(pending, for: activeUserID)
     }
 
+    /// Serializes user deletion with uploads so an item cannot be recreated
+    /// between its remote deletion and local commit. Failed intents survive retry.
+    func deleteServerFirst(
+        clientItemID: UUID,
+        prepare: () async throws -> Void,
+        commit: () throws -> Void
+    ) async throws {
+        guard let userID = activeUserID else {
+            throw FitMatchSupabaseProductResolverError.authenticationRequired
+        }
+        let deletionGeneration = accountGeneration
+        try await FitMatchClosetDeletionTransaction.waitForSynchronization(
+            isCurrent: { self.activeUserID == userID && self.accountGeneration == deletionGeneration },
+            isBusy: { self.isSynchronizing }
+        )
+        isSynchronizing = true
+        defer {
+            isSynchronizing = false
+            // A refresh/account transition queued while deletion awaited the
+            // server must not disappear merely because this was not a sync loop.
+            if let queuedUser = pendingSyncUserID, let context = pendingSyncContext {
+                pendingSyncUserID = nil
+                pendingSyncContext = nil
+                Task { @MainActor [weak self] in
+                    guard let self, self.activeUserID == queuedUser else { return }
+                    await self.synchronize(userID: queuedUser, modelContext: context)
+                }
+            }
+        }
+        try await FitMatchClosetDeletionTransaction.run(
+            isCurrent: { self.isCurrentSyncUser(userID) && self.accountGeneration == deletionGeneration },
+            prepare: prepare,
+            resolve: {
+                let response = try await self.remote.listClosetItems()
+                guard response.state == "ready" else {
+                    throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+                }
+                return try self.validatedClosetIndex(response)[clientItemID]?.closetItemID
+            },
+            recordIntent: { self.enqueueDeletion(clientItemID: clientItemID) },
+            delete: {
+                let receipt = try await self.remote.deleteClosetItem(closetItemID: $0)
+                return (receipt.closetItemID, receipt.deletedAt)
+            },
+            commit: commit
+        )
+        cancelDeletion(clientItemID: clientItemID)
+        remoteItemsByClientID.removeValue(forKey: clientItemID)
+        acceptedLinkedEditReceipts.removeValue(forKey: clientItemID)
+        FitMatchLinkedSizeEditIntentStore.remove(userID: userID, clientItemID: clientItemID, defaults: defaults)
+    }
+
     func cancelDeletion(clientItemID: UUID) {
         guard let activeUserID else { return }
         var pending = pendingDeleteIDs(for: activeUserID)
@@ -216,11 +274,13 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         defaults.removeObject(forKey: Self.cacheOwnerKey)
         FavoriteProductStore(defaults: defaults).removeAll()
         SourceCategoryHistoryMatcher.clearStoredMappings(defaults: defaults)
+        accountGeneration = UUID()
         activeUserID = nil
         remoteItemsByClientID.removeAll()
         acceptedLinkedEditReceipts.removeAll()
         needsAnotherPass = false
         pendingSyncUserID = nil
+        pendingSyncContext = nil
         state = .idle
         lastErrorMessage = nil
     }
@@ -435,7 +495,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
               draft.preparation.userID == userID,
               draft.preparation.clientItemID == draft.item.id,
               let selectedOption = draft.selectedOption else {
-            return .failed("서버의 최신 사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요.")
+            return .failed("서버의 최신 사이즈 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요.")
         }
 
         if let accepted = acceptedLinkedEditReceipts[draft.item.id] {
@@ -461,7 +521,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             return .failed(linkedEditErrorMessage(for: error))
         }
         guard isCurrentSyncUser(userID), rows.state == "ready" else {
-            return .failed("서버의 현재 옷장 정보를 확인하지 못했습니다. 다시 시도해 주세요.")
+            return .failed("서버의 현재 옷장 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요.")
         }
 
         let currentRows = rows.items.filter { $0.clientItemID == draft.item.id }
@@ -471,7 +531,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
               currentRow.productSizeID == draft.preparation.currentServerIdentity.productSizeID,
               selectedOption.identity.productID == currentRow.productID,
               selectedOption.identity.productVariantID == currentRow.variantID else {
-            return .failed("서버의 최신 사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요.")
+            return .failed("서버의 최신 사이즈 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요.")
         }
 
         let request: FitMatchUpsertClosetItemRequest
@@ -833,7 +893,26 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         if text.contains("usable canonical measurement") {
             return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
         }
-        return "서버에 수정 내용을 저장하지 못했습니다. 입력한 내용은 유지됩니다. 다시 시도해 주세요."
+        if isTransientTransportError(error) {
+            return "일시적인 연결 문제예요. 입력한 내용은 유지됩니다. 다시 시도해 주세요."
+        }
+        if let resolverError = error as? FitMatchSupabaseProductResolverError,
+           case .authenticationRequired = resolverError {
+            return FitMatchFailureCopy.loginRequired
+        }
+        return "서버 수정 서비스에 문제가 있어요. 입력한 내용은 유지됩니다. 문제가 계속되면 문의해 주세요."
+    }
+
+    private func isTransientTransportError(_ error: Error) -> Bool {
+        if error is URLError {
+            return true
+        }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return true
+        }
+        return (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain
+            == NSURLErrorDomain
     }
 
     private func synchronizeOnce(userID: UUID, modelContext: ModelContext) async {
@@ -850,16 +929,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
 
-            remoteItemsByClientID = Dictionary(
-                uniqueKeysWithValues: remoteResponse.items.map { ($0.clientItemID, $0) }
-            )
-            try await flushPendingDeletes(userID: userID)
+            remoteItemsByClientID = try validatedClosetIndex(remoteResponse)
+            try await flushPendingDeletes(userID: userID, modelContext: modelContext)
             guard isCurrentSyncUser(userID) else { return }
             remoteResponse = try await remote.listClosetItems()
             guard isCurrentSyncUser(userID) else { return }
-            remoteItemsByClientID = Dictionary(
-                uniqueKeysWithValues: remoteResponse.items.map { ($0.clientItemID, $0) }
-            )
+            remoteItemsByClientID = try validatedClosetIndex(remoteResponse)
 
             let localItems = try modelContext.fetch(FetchDescriptor<UserFit>())
                 .filter(\.isActiveClosetItem)
@@ -937,9 +1012,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             guard beforeReference.state == "ready" else {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
-            remoteItemsByClientID = Dictionary(
-                uniqueKeysWithValues: beforeReference.items.map { ($0.clientItemID, $0) }
-            )
+            remoteItemsByClientID = try validatedClosetIndex(beforeReference)
             try await synchronizeReferenceAuthority(localItems: localItems, userID: userID)
             guard isCurrentSyncUser(userID) else { return }
 
@@ -948,9 +1021,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             guard authoritative.state == "ready" else {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
-            remoteItemsByClientID = Dictionary(
-                uniqueKeysWithValues: authoritative.items.map { ($0.clientItemID, $0) }
-            )
+            remoteItemsByClientID = try validatedClosetIndex(authoritative)
 
             let currentLocalItems = try modelContext.fetch(FetchDescriptor<UserFit>())
             let currentByID = Dictionary(uniqueKeysWithValues: currentLocalItems.map { ($0.id, $0) })
@@ -1021,7 +1092,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
             guard isCurrentSyncUser(userID) else { return }
             modelContext.rollback()
             state = .pendingRetry
-            lastErrorMessage = error.localizedDescription
+            lastErrorMessage = isTransientTransportError(error)
+                ? FitMatchFailureCopy.transientNetwork
+                : FitMatchFailureCopy.serviceInspection
             #if DEBUG
             print("[FitMatchClosetSync] sync failed: \(error.localizedDescription)")
             #endif
@@ -1122,19 +1195,40 @@ final class FitMatchClosetSyncCoordinator: ObservableObject {
         SourceCategoryHistoryMatcher.clearStoredMappings(defaults: defaults)
     }
 
-    private func flushPendingDeletes(userID: UUID) async throws {
+    private func validatedClosetIndex(_ response: FitMatchClosetItemsResponse) throws
+        -> [UUID: FitMatchClosetItemRecord] {
+        guard response.state == "ready" else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        _ = try FitMatchVNextContractValidator.uniqueIdentityIndex(response.items, id: { $0.closetItemID })
+        return try FitMatchVNextContractValidator.uniqueIdentityIndex(response.items, id: { $0.clientItemID })
+    }
+
+    private func flushPendingDeletes(userID: UUID, modelContext: ModelContext) async throws {
         guard isCurrentSyncUser(userID) else { return }
         var pending = pendingDeleteIDs(for: userID)
         guard !pending.isEmpty else { return }
 
         for clientItemID in pending {
             guard isCurrentSyncUser(userID) else { return }
-            guard let remoteItem = remoteItemsByClientID[clientItemID] else {
-                pending.remove(clientItemID)
-                continue
-            }
-            _ = try await remote.deleteClosetItem(closetItemID: remoteItem.closetItemID)
-            guard isCurrentSyncUser(userID) else { return }
+            try await FitMatchClosetDeletionTransaction.run(
+                isCurrent: { self.isCurrentSyncUser(userID) },
+                prepare: {},
+                resolve: { self.remoteItemsByClientID[clientItemID]?.closetItemID },
+                recordIntent: {},
+                delete: {
+                    let receipt = try await self.remote.deleteClosetItem(closetItemID: $0)
+                    return (receipt.closetItemID, receipt.deletedAt)
+                },
+                commit: {
+                    let histories = try modelContext.fetch(FetchDescriptor<RecommendationHistory>())
+                    histories.filter { $0.referencesClosetItem(clientItemID: clientItemID) }
+                        .forEach(modelContext.delete)
+                    let items = try modelContext.fetch(FetchDescriptor<UserFit>())
+                    items.filter { $0.id == clientItemID }.forEach(modelContext.delete)
+                    try modelContext.save()
+                }
+            )
             pending.remove(clientItemID)
             remoteItemsByClientID.removeValue(forKey: clientItemID)
             acceptedLinkedEditReceipts.removeValue(forKey: clientItemID)

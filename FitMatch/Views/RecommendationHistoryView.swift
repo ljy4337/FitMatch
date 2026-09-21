@@ -344,7 +344,7 @@ struct RecommendationHistoryView: View {
         }
 
         guard let comparisonSync else {
-            saveErrorMessage = "서버 비교 기록을 삭제할 준비가 되지 않았어요. 다시 시도해 주세요."
+            saveErrorMessage = "비교 기록 삭제 서비스를 준비하지 못했어요. 문제가 계속되면 문의해 주세요."
             return
         }
 

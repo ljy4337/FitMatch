@@ -56,11 +56,11 @@ enum FitMatchLinkedClosetSizeEditPreparationError: LocalizedError {
         case .authenticationChanged:
             return "로그인 상태가 변경되어 최신 사이즈 정보를 확인할 수 없습니다."
         case .currentClosetRowUnavailable:
-            return "서버의 현재 옷장 정보를 확인하지 못했습니다. 새로고침 후 다시 시도해 주세요."
+            return "서버의 현재 옷장 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요."
         case .missingRetailerFacts:
             return "이 옷의 쇼핑몰 상품 정보를 확인할 수 없어 사이즈를 안전하게 변경할 수 없습니다."
         case .runtimeIdentityUnavailable:
-            return "서버의 최신 사이즈 정보를 확인하지 못했습니다. 새로고침 후 다시 시도해 주세요."
+            return "서버의 최신 사이즈 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요."
         }
     }
 }

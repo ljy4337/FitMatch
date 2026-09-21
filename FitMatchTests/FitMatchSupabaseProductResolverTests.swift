@@ -2175,8 +2175,9 @@ struct FitMatchSupabaseProductResolverTests {
             serverRegistrationContext: preparation.serverRegistrationContext
         )
         #expect(product.sizes.map(\.name) == ["S", "M", "L (Runtime)", "XL"])
-        #expect(registerable.map(\.name) == ["L (Runtime)"])
-        let selected = try #require(registerable.first)
+        #expect(registerable.map(\.name) == ["S", "M", "L (Runtime)", "XL"])
+        #expect(registerable.filter { preparation.serverRegistrationContext.isRegisterable(displaySizeID: $0.id) }.map(\.name) == ["L (Runtime)"])
+        let selected = try #require(registerable.first { preparation.serverRegistrationContext.isRegisterable(displaySizeID: $0.id) })
         let exact = try #require(
             preparation.serverRegistrationContext.identity(for: selected.id)
         )
@@ -2186,7 +2187,45 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(preparation.serverRegistrationContext.isRegisterable(displaySizeID: selected.id))
     }
 
-    @Test func linkedClosetPickerFiltersExactRegisterableSizesWithoutMutatingSourceSizes() {
+    @Test func reportedZaraFourSizeLabelsSurviveUnmappedClosetPreparation() async throws {
+        // Observed 564228855 guide labels/chest widths. Injected transport;
+        // this checks the actual ViewModel -> registration picker boundary.
+        let names = ["S (KR 90)", "M (KR 95-100)", "L (KR 100-105)", "XL (KR 105-110)"]
+        let parsed = try Self.measurementPresenceProduct(
+            externalProductID: "zara-four-size-regression",
+            sizes: Array(zip(names, [52.0, 56.0, 60.0, 64.0]))
+        )
+        let fixture = DatabaseAuthorityFixture(
+            source: "musinsa", externalProductID: "zara-four-size-regression",
+            status: .reviewRequired
+        )
+        let variantID = UUID()
+        let sizes = names.enumerated().map { index, name in
+            Self.runtimeSize(sourceSizeKey: SizeTokenNormalizer.normalizedKey(for: name),
+                             label: name, displayOrder: index, stockStatus: "UNKNOWN")
+        }
+        let runtime = Self.measurementRuntime(
+            fixture: fixture, runtimeState: "classification_required",
+            comparisonReady: false, variantID: variantID, sizes: sizes
+        )
+        let viewModel = Self.authorityViewModel(product: parsed, remote: DatabaseAuthorityRemoteStub(
+            resolutions: [fixture.resolution(comparisonReady: false)],
+            observations: [], runtimes: [runtime]
+        ))
+        _ = await viewModel.loadProductInfoFromURL()
+        let preparation = LinkClosetRegistrationPreparation.make(from: viewModel, brand: nil)
+        let product = try #require(preparation.parsedProduct)
+        #expect(preparation.canBeginRegistration)
+        let choices = AddComparedProductToClosetSheet.selectableSizes(
+            productSizes: product.sizes, serverRegistrationContext: preparation.serverRegistrationContext
+        )
+        #expect(choices.map(\.name) == names)
+        for (choice, size) in zip(choices, sizes) {
+            #expect(preparation.serverRegistrationContext.identity(for: choice.id)?.productSizeID == size.productSizeID)
+        }
+    }
+
+    @Test func linkedClosetPickerShowsAllSizesWithoutChangingRegistrationEligibility() {
         let product = Product(name: "Picker measurement fixture", category: .top)
         let sizes = ["S", "M", "L", "XL"].enumerated().map { index, name in
             ProductSize(
@@ -2226,7 +2265,8 @@ struct FitMatchSupabaseProductResolverTests {
         )
 
         #expect(product.sizes.map(\.name) == ["S", "M", "L", "XL"])
-        #expect(pickerSizes.map(\.name) == ["M", "L"])
+        #expect(pickerSizes.map(\.name) == product.sizes.map(\.name))
+        #expect(pickerSizes.filter { context.isRegisterable(displaySizeID: $0.id) }.map(\.name) == ["M", "L"])
     }
 
     @Test func confirmedCanonicalMeasurementCanEstablishPresenceWithoutParserProof() async throws {
@@ -2366,7 +2406,8 @@ struct FitMatchSupabaseProductResolverTests {
             productSizes: preparation.product.sizes,
             serverRegistrationContext: context
         )
-        #expect(pickerSizes.map(\.name) == ["M", "L", "XL"])
+        #expect(pickerSizes.map(\.name) == ["S", "M", "L", "XL"])
+        #expect(pickerSizes.filter { context.isRegisterable(displaySizeID: $0.id) }.map(\.name) == ["M", "L", "XL"])
         let preferred = try #require(preparation.preferredSize)
         #expect(preferred.name == "XL")
         #expect(context.identity(for: preferred.id)?.productID == fixture.productID)
@@ -2459,7 +2500,8 @@ struct FitMatchSupabaseProductResolverTests {
             productSizes: preparation.product.sizes,
             serverRegistrationContext: context
         )
-        #expect(pickerSizes.map(\.name) == ["M", "L"])
+        #expect(pickerSizes.map(\.name) == ["M", "L", "XL"])
+        #expect(pickerSizes.filter { context.isRegisterable(displaySizeID: $0.id) }.map(\.name) == ["M", "L"])
         #expect(
             AddComparedProductToClosetSheet.initialSelectedSizeID(
                 recommendedSize: preparation.preferredSize,

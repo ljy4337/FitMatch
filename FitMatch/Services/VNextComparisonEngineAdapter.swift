@@ -142,7 +142,12 @@ struct VNextComparisonEngineAdapter {
             unranked.append((
                 candidate,
                 Self.applyingPresentationExclusions(
-                    snapshotPresentationExclusions,
+                    snapshotPresentationExclusions + Self.sleevePresentationExclusions(
+                        candidate: candidate,
+                        referenceSnapshot: begin.snapshot.referenceSnapshot,
+                        alreadyExplained: snapshotPresentationExclusions,
+                        comparedKinds: Set(result.comparedItems.map(\.kind))
+                    ),
                     to: result
                 )
             ))
@@ -214,6 +219,52 @@ struct VNextComparisonEngineAdapter {
             recommended: recommended,
             completionPayload: completion
         )
+    }
+
+    /// Presentation only: never adds metrics or changes authorized scoring.
+    static func sleevePresentationExclusions(
+        candidate: VNextAuthorizedCandidateDTO,
+        referenceSnapshot: FitMatchJSONValue,
+        alreadyExplained: [MeasurementComparisonExclusion],
+        comparedKinds: Set<MeasurementKind>
+    ) -> [MeasurementComparisonExclusion] {
+        guard !comparedKinds.contains(.sleeveLength),
+              !alreadyExplained.contains(where: { $0.kind == .sleeveLength }),
+              let measurements = candidate.canonicalMeasurements?.measurements,
+              let referenceRows = referenceSnapshot.objectValue?["measurements"]?.arrayValue else {
+            return []
+        }
+        let sleeveCodes: Set<MeasurementCode> = [
+            .sleeveShoulderSeamToCuff, .sleeveCenterBackToCuff, .sleeveRaglanNeckToCuff
+        ]
+        let targetCodes = Set(measurements.compactMap { measurement -> MeasurementCode? in
+            guard measurement.value.isFinite, measurement.value > 0,
+                  measurement.unitCode.lowercased() == "cm",
+                  let projection = FitMatchCanonicalMeasurementCode.projection(
+                    for: measurement.measurementCode, basisCode: measurement.basisCode
+                  ), sleeveCodes.contains(projection.localCode) else { return nil }
+            return projection.localCode
+        })
+        let referenceCodes = Set(referenceRows.compactMap { row -> MeasurementCode? in
+            guard let fields = row.objectValue,
+                  let value = fields["value"]?.numberValue, value.isFinite, value > 0,
+                  fields["unit_code"]?.stringValue?.lowercased() == "cm",
+                  let code = fields["fitmatch_measurement_code"]?.stringValue else { return nil }
+            let basis = fields["raw_label_snapshot"]?.stringValue?
+                .split(separator: ".").last.map(String.init)
+            guard let projection = FitMatchCanonicalMeasurementCode.projection(
+                for: code, basisCode: basis
+            ), sleeveCodes.contains(projection.localCode) else { return nil }
+            return projection.localCode
+        })
+        // Do not pick the first of multiple definitions or infer an unknown basis.
+        guard targetCodes.count == 1, referenceCodes.count == 1,
+              let productCode = targetCodes.first, let referenceCode = referenceCodes.first,
+              productCode != referenceCode else { return [] }
+        return [MeasurementComparisonExclusion(
+            kind: .sleeveLength, reason: .incompatibleMeasurementCode,
+            productCode: productCode, referenceCode: referenceCode
+        )]
     }
 
     private static func reliability(evidenceCount: Int, coverage: Double) -> Int {

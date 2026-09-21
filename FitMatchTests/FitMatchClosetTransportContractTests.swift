@@ -5,6 +5,36 @@ import Testing
 
 @MainActor
 struct FitMatchClosetTransportContractTests {
+    @Test func linkedCreationUsesExactServerSizeWithoutClientMeasurementConversion() throws {
+        let item = manualItem()
+        item.measurementRecords = [GarmentMeasurementRecord(
+            value: 106, measurementCode: .unknown, measurementCodeRawValue: "retailer_total",
+            displayKind: .totalLength, methodSource: "musinsa", inputSource: .importedSizeChart,
+            mappingVersion: "regression_raw_only", rawCode: "총장", rawLabel: "총장", evidenceLevel: .officialText, semanticStatus: .unknownDefinition, userFit: item
+        )]
+        let product = UUID(), variant = UUID(), size = UUID()
+        let request = FitMatchUpsertClosetItemRequest(
+            clientItemID: item.id, item: FitMatchClosetSyncCoordinator().payload(for: item),
+            productID: product, productVariantID: variant, productSizeID: size, override: nil
+        )
+        let json = try decodedJSON(FitMatchSupabaseDomainClient.encodedVNextClosetCreationPayload(request))
+        #expect(json["use_server_measurements"] as? Bool == true)
+        #expect((json["measurements"] as? [[String: Any]])?.isEmpty == true)
+        #expect(json["product_id"] as? String == product.uuidString)
+        #expect(json["product_variant_id"] as? String == variant.uuidString)
+        #expect(json["product_size_id"] as? String == size.uuidString)
+        #expect(json["comparison_group_code"] == nil)
+        #expect(item.measurementRecords[0].value == 106)
+        #expect(item.measurementRecords[0].rawLabel == "총장")
+    }
+
+    @Test func uniqloDetailsRequestPreservesRequestedPriceGroup() throws {
+        let url = try UniqloURLResolver.productDetailsURL(productID: "E485575", priceGroupCode: "01")
+        #expect(url.path == "/kr/api/commerce/v5/ko/products/E485575-000/price-groups/01/details")
+        #expect(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains(
+            URLQueryItem(name: "includeModelSize", value: "true")) == true)
+    }
+
     @Test func manualFactoryRecordsEncodeVerifiedCanonicalCodesForSharedUpsertAndUpdatePayload() throws {
         let item = manualItem()
         let factoryRecords = ManualMeasurementRecordFactory.records(
@@ -51,8 +81,9 @@ struct FitMatchClosetTransportContractTests {
         // update before either RPC is issued. Encode it twice to assert the
         // real JSON contract rather than rebuilding a test-side dictionary.
         let upsertJSON = try decodedJSON(
-            FitMatchSupabaseDomainClient.encodedVNextClosetPayload(request)
+            FitMatchSupabaseDomainClient.encodedVNextClosetCreationPayload(request)
         )
+        #expect(upsertJSON["use_server_measurements"] == nil)
         let updateJSON = try decodedJSON(
             FitMatchSupabaseDomainClient.encodedVNextClosetPayload(request)
         )

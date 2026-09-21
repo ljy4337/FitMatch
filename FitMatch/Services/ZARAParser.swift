@@ -176,15 +176,8 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
             info.recoveryAction = nil
             info.parserNotice = "사용자가 선택한 상품 종류로 ZARA 실측표를 다시 확인했어요."
         }
-        guard info.category != .other, info.detailCategory != .other else {
-            info.measurementAvailability = .unavailable
-            info.recoveryAction = .confirmCategoryBeforeMeasurements
-            throw ProductURLParserPartialError(
-                productInfo: info.withNotice(
-                    "ZARA 공식 분류만으로 상품 종류를 확정할 수 없어요. 상품 종류를 선택하면 실측 분석을 이어갈게요."
-                )
-            )
-        }
+        // Detailed classification is not a prerequisite for retailer facts.
+        // Preserve the official garment table; the server owns group eligibility.
 
         onProgress(.loadingSizeChart)
         do {
@@ -200,18 +193,8 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
 
             var resolved = info
             resolved.sizes = sizes
-            guard ZARASizeGuideParser.hasComparisonReadySize(
-                sizes,
-                category: info.category
-            ) else {
-                resolved.measurementAvailability = .unavailable
-                resolved.recoveryAction = .enterMeasurementsManually
-                throw ProductURLParserPartialError(
-                    productInfo: resolved.withNotice(
-                        "ZARA 의류 실측 후보는 확인했지만 측정 기준이 아직 검증되지 않았어요. 안전하게 직접 입력해 주세요."
-                    )
-                )
-            }
+            // This parser reports garment facts. Server group policy decides
+            // whether these measurements can be compared with the selected Closet item.
             resolved.measurementAvailability = .actualMeasurements
             return resolved
         } catch is CancellationError {
@@ -1016,7 +999,7 @@ enum ZARAProductPageParser {
 }
 
 private enum ZARASizeGuideParser {
-    private static let mappingVersion = "zara_kr_measure_guide_verified_subset_v5"
+    private static let mappingVersion = "zara_kr_measure_guide_verified_subset_v6"
 
     static func parseActualGarmentMeasurements(
         data: Data,
@@ -1083,32 +1066,6 @@ private enum ZARASizeGuideParser {
         }
     }
 
-    static func hasComparisonReadySize(
-        _ sizes: [ParsedProductSize],
-        category: ClothingCategory
-    ) -> Bool {
-        sizes.contains { size in
-            let mappedKinds = Set(
-                size.measurementRecords.compactMap { record in
-                    record.semanticStatus == .mapped ? record.displayKind : nil
-                }
-            )
-            switch category.serviceGroup {
-            case .top:
-                return mappedKinds.count >= 2
-                    && !mappedKinds.intersection([.shoulder, .chest]).isEmpty
-            case .outer:
-                return mappedKinds.count >= 2 && mappedKinds.contains(.chest)
-            case .bottom:
-                return mappedKinds.contains(.waist) && mappedKinds.contains(.hip)
-            case .dress:
-                return mappedKinds.intersection([.chest, .waist, .hip]).count >= 2
-            default:
-                return false
-            }
-        }
-    }
-
     /// ZARA's official KR modal says these are garment measurements taken with
     /// the item laid flat. The reviewed upper-garment instructions define chest
     /// edge-to-edge at armhole height, back width between shoulder sleeve seams,
@@ -1120,11 +1077,15 @@ private enum ZARASizeGuideParser {
         category: ClothingCategory
     ) -> (code: MeasurementCode, displayKind: MeasurementDisplayKind)? {
         switch (category, rawCode.lowercased()) {
-        case (.top, "zone-name-chest"), (.outer, "zone-name-chest"):
+        // These semantic zones retain their verified measurement meaning even
+        // when local detailed classification is unresolved. This assigns no group.
+        case (.top, "zone-name-chest"), (.outer, "zone-name-chest"),
+             (.other, "zone-name-chest"):
             return (.chestWidthPitToPit, .chest)
         // `back-width` is a distinct back/armhole width, not shoulder width.
         // Preserve it as a raw fact until the local vocabulary exposes that axis.
-        case (.top, "zone-name-sleeve-length"), (.outer, "zone-name-sleeve-length"):
+        case (.top, "zone-name-sleeve-length"), (.outer, "zone-name-sleeve-length"),
+             (.other, "zone-name-sleeve-length"):
             return (.sleeveShoulderSeamToCuff, .sleeveLength)
         case (.bottom, "zone-name-waist"):
             return (.waistWidthEdgeToEdge, .waist)

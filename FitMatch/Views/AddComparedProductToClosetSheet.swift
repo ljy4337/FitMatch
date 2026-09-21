@@ -252,9 +252,8 @@ struct AddComparedProductToClosetSheet: View {
             : "사이즈 정보를 찾을 수 없습니다."
     }
 
-    /// Filters only the link-registration presentation. The Product keeps all
-    /// runtime sizes and exact IDs for observation, comparison, and later
-    /// reconciliation; unavailable-for-Closet sizes are never deleted.
+    /// Show every received size. Registration eligibility is checked separately
+    /// after selection; missing evidence must never silently hide a size.
     static func selectableSizes(
         productSizes: [ProductSize],
         serverRegistrationContext: FitMatchClosetRegistrationServerContext?
@@ -269,16 +268,20 @@ struct AddComparedProductToClosetSheet: View {
         // A normal legacy product view can coalesce duplicate presentation
         // labels. A linked server-first registration cannot: two visible "M"
         // rows may carry different exact variant/product-size UUIDs.
-        guard let serverRegistrationContext else {
+        guard serverRegistrationContext != nil else {
             return ParsedProductSizeNormalizer.uniqueProductSizes(sortedSizes)
         }
-        if serverRegistrationContext.classificationState == .preparing
-            || serverRegistrationContext.classificationState == .unavailable {
-            return sortedSizes
+        return sortedSizes
+    }
+
+    private var selectedSizeRegistrationMessage: String? {
+        guard let selectedSize, let context = serverRegistrationContext else { return nil }
+        if let block = context.registrationBlockMessage { return block }
+        guard context.identity(for: selectedSize.id) != nil else {
+            return "선택한 사이즈의 저장 정보를 확인하지 못했어요. 상품을 다시 불러와 주세요."
         }
-        return sortedSizes.filter {
-            serverRegistrationContext.isRegisterable(displaySizeID: $0.id)
-        }
+        return context.isRegisterable(displaySizeID: selectedSize.id) ? nil
+            : "선택한 사이즈의 등록 가능한 실측을 확인하지 못했어요. 사이즈는 표시되지만 현재 등록할 수 없어요."
     }
 
     static func initialSelectedSizeID(
@@ -595,6 +598,13 @@ struct AddComparedProductToClosetSheet: View {
                         }
                     }
                 }
+                .accessibilityIdentifier("closet.sizeSelector")
+                if let message = selectedSizeRegistrationMessage {
+                    Label(message, systemImage: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
@@ -665,7 +675,8 @@ struct AddComparedProductToClosetSheet: View {
         if let selectedSize {
             AddComparedSectionCard(
                 title: "선택한 사이즈 실측",
-                subtitle: "\(selectedSize.name.displaySizeName) 기준으로 자동 저장됩니다."
+                subtitle: selectedSizeRegistrationMessage
+                    ?? "\(selectedSize.name.displaySizeName) 기준으로 자동 저장됩니다."
             ) {
                 VStack(alignment: .leading, spacing: 14) {
                     VStack(spacing: 10) {

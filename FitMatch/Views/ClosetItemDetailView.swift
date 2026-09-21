@@ -273,7 +273,7 @@ struct ClosetItemDetailView: View {
         case .saved:
             return true
         case .persistenceFailed:
-            saveErrorMessage = "수정 내용을 저장하지 못했습니다."
+            saveErrorMessage = "수정 내용을 저장하지 못했어요. 입력한 내용은 유지됩니다. 다시 저장해 주세요."
             return false
         }
     }
@@ -513,10 +513,10 @@ private struct ImportedClosetItemEditView: View {
         } message: {
             Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 목록에서 함께 삭제돼요. 그래도 삭제할까요?")
         }
-        .alert("저장하지 못했습니다", isPresented: $isShowingSaveError) {
+        .alert("저장하지 못했어요", isPresented: $isShowingSaveError) {
             Button("확인", role: .cancel) {}
         } message: {
-            Text(saveErrorMessage ?? "입력한 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.")
+            Text(saveErrorMessage ?? "입력한 내용은 유지됩니다. 다시 저장해 주세요.")
         }
         .interactiveDismissDisabled(isSubmissionInputLocked)
     }
@@ -697,7 +697,7 @@ private struct ImportedClosetItemEditView: View {
 
             Button {
                 guard let draft = currentLinkedEditDraft else {
-                    saveErrorMessage = "서버의 최신 사이즈 정보를 확인하지 못했습니다. 다시 시도해 주세요."
+                    saveErrorMessage = "서버의 최신 사이즈 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요."
                     isShowingSaveError = true
                     return
                 }
@@ -765,7 +765,7 @@ private struct ImportedClosetItemEditView: View {
                 isReconcilingAcceptedServerEdit = false
                 dismiss()
             case .needsReferenceConfirmation:
-                saveErrorMessage = "이전 옷장 설정을 정리하지 못했습니다. 다시 시도해 주세요."
+                saveErrorMessage = "이전 옷장 설정을 정리하지 못했어요. 문제가 계속되면 문의해 주세요."
                 isShowingSaveError = true
             case .reconciliationRequired(let message):
                 isReconcilingAcceptedServerEdit = true
@@ -857,8 +857,13 @@ private struct ImportedClosetItemEditView: View {
             linkedSizePreparation = preparation
             selectedSizeID = preparation.initialDisplaySizeID
         } catch {
-            linkedSizePreparationMessage = (error as? LocalizedError)?.errorDescription
-                ?? "서버의 최신 사이즈 정보를 확인하지 못했습니다. 새로고침 후 다시 시도해 주세요."
+            if let preparationError = error as? FitMatchLinkedClosetSizeEditPreparationError {
+                linkedSizePreparationMessage = preparationError.errorDescription
+            } else if error is URLError {
+                linkedSizePreparationMessage = FitMatchFailureCopy.transientNetwork
+            } else {
+                linkedSizePreparationMessage = "서버의 최신 사이즈 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요."
+            }
             selectedSizeID = nil
         }
     }

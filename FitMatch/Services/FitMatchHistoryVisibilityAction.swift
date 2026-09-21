@@ -15,17 +15,17 @@ nonisolated enum FitMatchHistoryVisibilityRPCError: LocalizedError, Equatable, S
     var errorDescription: String? {
         switch self {
         case .authenticationRequired:
-            return "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+            return FitMatchFailureCopy.loginRequired
         case .invalidRequest:
-            return "비교 기록 삭제 요청을 확인하지 못했습니다. 다시 시도해 주세요."
+            return "비교 기록 삭제 요청에 문제가 있어요. 문제가 계속되면 문의해 주세요."
         case .unavailable:
-            return "비교 기록 삭제 기능을 아직 사용할 수 없습니다."
+            return "비교 기록 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
         case .historyUnavailable:
             return "이 비교 기록은 현재 처리할 수 없습니다. 목록을 새로 확인한 뒤 다시 시도해 주세요."
         case .transportUncertain:
-            return "서버 반영 여부를 확인하지 못했습니다. 같은 기록을 다시 시도해 주세요."
+            return "서버 반영 여부를 확인하지 못했어요. 기록 목록을 새로고침해 확인해 주세요."
         case .rejected:
-            return "비교 기록을 삭제하지 못했습니다. 다시 시도해 주세요."
+            return "비교 기록 삭제 서비스에서 요청을 거절했어요. 문제가 계속되면 문의해 주세요."
         }
     }
 }
@@ -53,19 +53,19 @@ enum FitMatchHistoryVisibilityAction {
             case .deleted:
                 nil
             case .comparisonSyncUnavailable:
-                "서버 비교 기록을 삭제할 준비가 되지 않았어요. 다시 시도해 주세요."
+                "비교 기록 삭제 서비스를 준비하지 못했어요. 문제가 계속되면 문의해 주세요."
             case .authenticationRequired:
-                "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+                FitMatchFailureCopy.loginRequired
             case .serverHideUnavailable:
-                "비교 기록 삭제 기능을 아직 사용할 수 없습니다."
+                "비교 기록 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
             case .serverHistoryUnavailable:
                 "이 비교 기록은 현재 처리할 수 없습니다. 목록을 새로 확인한 뒤 다시 시도해 주세요."
             case .invalidServerHideRequest:
-                "비교 기록 삭제 요청을 확인하지 못했습니다. 다시 시도해 주세요."
+                "비교 기록 삭제 요청에 문제가 있어요. 문제가 계속되면 문의해 주세요."
             case .serverHideUncertain:
-                "서버 반영 여부를 확인하지 못했습니다. 같은 기록을 다시 시도해 주세요."
+                "서버 반영 여부를 확인하지 못했어요. 기록 목록을 새로고침해 확인해 주세요."
             case .serverHideFailed:
-                "비교 기록을 삭제하지 못했어요. 다시 시도해 주세요."
+                "비교 기록 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
             case .localPersistenceFailedAfterServerHide:
                 "비교 기록은 서버에서 삭제됐지만 이 기기에 반영하지 못했어요. 화면을 다시 열어 확인해 주세요."
             case .localPersistenceFailed:

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftSoup
 
 struct MusinsaProductMetadata {
     var sourceURL: URL
@@ -542,13 +543,21 @@ struct MusinsaProductMetadataParser {
             return composite
         }
 
+        var ignoredMarkupOnlyComposite = false
         if let contents = data.goodsContents,
-           let composite = RetailerProductStructureFact.explicitCompositeRetailerText(
+           let visibleContents = try? SwiftSoup.parseBodyFragment(contents).text() {
+            if let composite = RetailerProductStructureFact.explicitCompositeRetailerText(
+                visibleContents,
+                source: "musinsa_product_detail",
+                evidenceField: "goods_contents_visible_text"
+            ) {
+                return composite
+            }
+            ignoredMarkupOnlyComposite = RetailerProductStructureFact.explicitCompositeRetailerText(
                 contents,
                 source: "musinsa_product_detail",
                 evidenceField: "goods_contents"
-           ) {
-            return composite
+            ) != nil
         }
 
         let officialCategory = sourcePath.depths
@@ -560,6 +569,14 @@ struct MusinsaProductMetadataParser {
                 structure: .set,
                 source: "musinsa_official_category",
                 evidence: "official_category:top_bottom_set"
+            )
+        }
+
+        if ignoredMarkupOnlyComposite {
+            return RetailerProductStructureFact(
+                structure: .unknown,
+                source: "musinsa_product_detail",
+                evidence: "goods_contents:markup_only_composite_tokens_ignored"
             )
         }
 

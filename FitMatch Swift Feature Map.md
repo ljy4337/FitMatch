@@ -2,6 +2,8 @@
 
 This document is repository navigation for coding agents. It is not a chronological project log and does not override AGENTS.md.
 
+Start with the relevant Flow ID in `FitMatch Behavior Map.md`; use this file for deeper Swift ownership.
+
 Use it selectively:
 
 • Consult the relevant section before broad repository searches.
@@ -162,6 +164,9 @@ Start here when investigating:
 • server-first product flow
 
 ### FitMatch/Services/FitMatchSupabaseProductResolver.swift
+
+Linked creation transport uses `closetCreationPayload` with `use_server_measurements=true` and exact server size identity. Server snapshots canonical measurements; manual creation/update retain existing payload semantics. Detailed flow: Behavior Map FLOW-CLOSET-LINK.
+
 
 Supabase transport/domain implementation for server product/runtime operations.
 
@@ -339,7 +344,7 @@ Do not modify shared domain semantics to fix a single screen unless the domain b
 
 ### FitMatch/Views/RecommendationResultView.swift
 
-Comparison/recommendation result presentation.
+Comparison/recommendation result presentation. Supplemental read-only measurement computation uses FitMatch/Services/FitMatchResultSupplementalComparisonCache.swift with complete input invalidation; TemporarySizeAnalysis in RecommendationService stores its immutable calculation snapshot once.
 
 Do not recompute canonical comparison policy in the result View.
 

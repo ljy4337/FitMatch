@@ -14,12 +14,12 @@ nonisolated enum FitMatchVNextContractError: Error, LocalizedError, Equatable, S
     var errorDescription: String? {
         switch self {
         case .missingRequiredField:
-            return "서버 비교 계약의 필수 값이 없습니다. 앱을 업데이트한 뒤 다시 시도해 주세요."
+            return FitMatchFailureCopy.serviceInspection
         case .unknownState:
-            return "서버 비교 상태를 해석할 수 없습니다. 앱을 업데이트한 뒤 다시 시도해 주세요."
+            return FitMatchFailureCopy.serviceInspection
         case .unsupportedSnapshotVersion, .unsupportedEngineVersion,
              .snapshotVersionMismatch, .conflictingProof:
-            return "이 비교 기록은 현재 앱에서 안전하게 재생할 수 없습니다. 앱을 업데이트한 뒤 다시 확인해 주세요."
+            return FitMatchFailureCopy.appUpdateRequired
         }
     }
 }
@@ -54,6 +54,40 @@ nonisolated enum FitMatchVNextContractValidator {
     static let supportedSnapshotSchemaVersions: Set<Int> = [3, 4]
     static let completedReplayEngineVersion = "fitmatch-ios-vnext-snapshot-v1"
     static let pendingEngineVersion = "pending"
+
+    /// Do not let duplicate server identities trap in Dictionary construction
+    /// or silently choose one of conflicting rows.
+    static func uniqueIdentityIndex<Value, ID: Hashable>(
+        _ values: [Value], id: (Value) -> ID
+    ) throws -> [ID: Value] {
+        var result: [ID: Value] = [:]
+        for value in values {
+            let key = id(value)
+            guard result.updateValue(value, forKey: key) == nil else {
+                throw FitMatchVNextContractError.conflictingProof("duplicate_server_identity")
+            }
+        }
+        return result
+    }
+
+    /// Candidate lists belong to the exact requested product/variant. Reject
+    /// malformed envelopes before they reach identity-keyed UI projections.
+    static func validateCandidateEnvelope(
+        _ response: VNextReferenceCandidatesDTO,
+        targetProductID: UUID,
+        targetVariantID: UUID
+    ) throws {
+        guard response.targetProductID == targetProductID,
+              response.targetVariantID == targetVariantID else {
+            throw FitMatchVNextContractError.conflictingProof("candidate_target_identity")
+        }
+        var closetIDs = Set<UUID>()
+        for candidate in response.candidates + response.blocked {
+            guard closetIDs.insert(candidate.closetItemID).inserted else {
+                throw FitMatchVNextContractError.conflictingProof("candidate_closet_identity")
+            }
+        }
+    }
 
     static func readinessState(
         _ readiness: VNextProductReadinessDTO

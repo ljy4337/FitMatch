@@ -49,6 +49,18 @@ nonisolated struct FitMatchRetailerAPIResponseCapture: Equatable, Sendable {
 nonisolated struct FitMatchRetailerAPIResponseError: Error, Sendable {
     let capture: FitMatchRetailerAPIResponseCapture
     let reason: String
+
+    /// HTTP failures that can change without any user input. Parser owners
+    /// may preserve these as retryable instead of collapsing them into a
+    /// permanent product/parser failure.
+    var isTransient: Bool {
+        switch capture.httpStatus {
+        case 408, 425, 429, 500...599:
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 /// Typed transport-only envelope for `structured_facts.retailer_api`.

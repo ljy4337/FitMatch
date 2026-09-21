@@ -430,21 +430,17 @@ private extension CompareFlowSheet {
             )
             if let product = currentProduct { productCompactCard(product) }
             FitMatchCard {
-                VStack(spacing: 10) {
+                CompareSelectionMenu(
+                    title: selectedComparisonGroup?.displayName ?? "비교할 그룹을 선택해 주세요"
+                ) {
                     ForEach(FitMatchComparisonGroup.allCases) { group in
-                        Button { selectedComparisonGroup = group } label: {
-                            HStack {
-                                Text(group.displayName).font(.subheadline.weight(.bold))
-                                Spacer()
-                                if selectedComparisonGroup == group { Image(systemName: "checkmark") }
-                            }
-                            .padding(.horizontal, 14).frame(height: 48)
+                        Button(group.displayName) {
+                            selectedComparisonGroup = group
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
-            Button("비교할 내 옷 보기") {
+            PrimaryButton(title: "비교할 내 옷 보기", systemImage: "tshirt") {
                 guard let selectedComparisonGroup else { return }
                 invalidateForegroundComparison()
                 serverReferenceSelectionPlan = nil
@@ -453,7 +449,6 @@ private extension CompareFlowSheet {
                 viewModel.selectComparisonGroupForCurrentComparison(selectedComparisonGroup)
                 continueComparisonAfterProductInput()
             }
-            .buttonStyle(.borderedProminent)
             .disabled(selectedComparisonGroup == nil)
         }
     }
@@ -834,7 +829,7 @@ private extension CompareFlowSheet {
             } else {
                 CompareSheetSectionTitle(
                     title: comparisonSummarySectionTitle(itemCount: rows.count),
-                    subtitle: "저장된 실측으로 먼저 비교했어요. 옷을 누르면 서버에서 확인한 상세 결과를 보여드려요."
+                    subtitle: "저장된 실측으로 계산한 예상 결과예요. 옷을 선택하면 서버에서 확인한 실측으로 비교하며, 결과가 달라질 수 있어요."
                 )
 
                 LazyVStack(alignment: .leading, spacing: 12) {
@@ -850,10 +845,7 @@ private extension CompareFlowSheet {
                             )
                         }
                         .buttonStyle(.plain)
-                        .disabled(
-                            isProcessingReferenceSelection
-                                || row.summary.evidenceState != .comparable
-                        )
+                        .disabled(isProcessingReferenceSelection)
                     }
                 }
             }
@@ -1742,8 +1734,12 @@ private extension CompareFlowSheet {
     }
 
     func openComparisonDetail(_ row: ClosetComparisonSummaryRow) {
-        guard row.summary.evidenceState == .comparable,
-              !isProcessingReferenceSelection else { return }
+        // Preview coverage is not comparison authority. Every displayed row
+        // comes from the server plan and is reauthorized after explicit selection.
+        guard !isProcessingReferenceSelection,
+              serverReferenceSelectionPlan?.candidates.contains(where: {
+                  $0.clientItemID == row.id && $0.isSelectable
+              }) == true else { return }
         selectedReferenceItemID = row.id
         startForegroundComparisonTask(locksReferenceSelection: true) { requestID, userID in
             await calculateAndSaveTemporaryRecommendation(
@@ -2124,7 +2120,7 @@ private extension CompareFlowSheet {
                     setStep(.categoryConfirmation)
                 } else {
                     errorMessage = viewModel.errorMessage
-                        ?? "상품 분류 선택지를 확인하지 못했습니다. 네트워크 연결 후 다시 시도해 주세요."
+                        ?? FitMatchFailureCopy.productServiceInspection
                     setStep(.error)
                 }
                 return
@@ -2577,22 +2573,13 @@ private extension CompareFlowSheet {
 
     func logMissingReferenceDiagnostics(product: Product) {
         #if DEBUG
-        let sameCategory = userFits.filter { $0.category == product.category }
-        let sameDetail = sameCategory.filter { $0.detailCategory == viewModel.detailCategory }
-        let missingMeasurements = sameDetail.filter { !hasComparableMeasurements($0) }
-        print("[CompareFlowSheet] missing reference diagnostics")
-        print("[CompareFlowSheet] compare product category: \(product.category.rawValue)")
-        print("[CompareFlowSheet] compare product detailCategory: \(viewModel.detailCategory.rawValue)")
-        print("[CompareFlowSheet] total UserFit count: \(userFits.count)")
-        print("[CompareFlowSheet] same category count: \(sameCategory.count)")
-        print("[CompareFlowSheet] same category/detail count: \(sameDetail.count)")
-        print("[CompareFlowSheet] excluded missing measurements count: \(missingMeasurements.count)")
-        ComparisonProfileMatcher().candidateDiagnostics(
-            product: product,
-            productDetailCategory: viewModel.detailCategory,
-            userFits: userFits
-        ).forEach {
-            print("[CompareFlowSheet] reference candidate diagnostic: \($0.logDescription)")
+        print("[CompareFlowSheet] server candidate diagnostics; local sleeve/detail matching is not authority")
+        guard let plan = serverReferenceSelectionPlan else {
+            print("[CompareFlowSheet] server candidate plan unavailable")
+            return
+        }
+        for candidate in plan.allBlockedCandidates {
+            print("[CompareFlowSheet] blocked closet=\(candidate.closetItemID) reason_code=\(candidate.reasonCode ?? "unknown") reason=\(candidate.reason ?? "unknown") common=\(candidate.commonMeasurementCount.map(String.init) ?? "unknown")")
         }
         #endif
     }
@@ -2927,7 +2914,7 @@ private struct OtherClosetComparisonSheet: View {
                                     )
                                 }
                                 .buttonStyle(.plain)
-                                .disabled(row.summary.evidenceState != .comparable)
+                                // Parent selection revalidates this server-approved candidate.
                             }
                         }
                     }
@@ -3015,34 +3002,28 @@ private struct ClosetComparisonSummaryCard: View {
                             .multilineTextAlignment(.trailing)
 
                         if let sizeLabel = summary.recommendedSizeLabel {
-                            Text("추천 \(sizeLabel.displaySizeName)")
+                            Text("예상 \(sizeLabel.displaySizeName)")
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.secondary)
                         }
 
-                        if summary.evidenceState == .comparable {
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.secondary)
-                                .accessibilityHidden(true)
-                        }
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
                     }
                 }
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilitySummary)
-        .accessibilityHint(
-            summary.evidenceState == .comparable
-                ? "상세 비교 결과를 확인합니다."
-                : "비교 근거가 부족하여 상세 비교를 열 수 없습니다."
-        )
+        .accessibilityHint("선택하면 서버에서 비교 가능 여부를 확인하고 상세 비교를 진행합니다.")
     }
 
     private var rankTitle: String? {
         guard summary.evidenceState == .comparable,
               let rank = summary.rank else { return nil }
-        return rank == 1 ? "가장 유사" : "\(rank)위"
+        return rank == 1 ? "예상 1위" : "예상 \(rank)위"
     }
 
     private var rankForegroundStyle: Color {
@@ -3073,9 +3054,9 @@ private struct ClosetComparisonSummaryCard: View {
     }
 
     private var accessibilitySummary: String {
-        let size = summary.recommendedSizeLabel.map { ", 추천 사이즈 \($0.displaySizeName)" }
+        let size = summary.recommendedSizeLabel.map { ", 예상 사이즈 \($0.displaySizeName)" }
             ?? ""
-        return "\(item.displayName), \(similarityText)\(size), \(comparisonEvidenceText)"
+        return "\(item.displayName), 보유 사이즈 \(item.sizeName), 예상 유사도 \(similarityText)\(size), \(comparisonEvidenceText)"
     }
 }
 

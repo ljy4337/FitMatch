@@ -1096,6 +1096,7 @@ nonisolated struct VNextAuthorizedCandidateDTO: Decodable, Equatable, Sendable {
     let availability: VNextAvailabilityDTO
     let comparisonMeasurements: [VNextAuthorizedMeasurementDTO]
     let authorization: VNextComparisonAuthorizationDTO
+    var canonicalMeasurements: VNextCanonicalMeasurementsDTO? = nil
 
     enum CodingKeys: String, CodingKey {
         case productSizeID = "product_size_id"
@@ -1103,6 +1104,7 @@ nonisolated struct VNextAuthorizedCandidateDTO: Decodable, Equatable, Sendable {
         case availability
         case comparisonMeasurements = "comparison_measurements"
         case authorization
+        case canonicalMeasurements = "canonical_measurements"
     }
 }
 

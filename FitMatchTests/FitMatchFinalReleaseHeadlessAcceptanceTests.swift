@@ -824,6 +824,58 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(approvedURL.absoluteString == supported[0])
     }
 
+    @Test func failureCopySeparatesRetryableTransportFromServiceInspection() {
+        #expect(FitMatchFailureCopy.transientNetwork.contains("다시 시도"))
+        #expect(FitMatchFailureCopy.transientNetwork.contains("네트워크"))
+        #expect(FitMatchFailureCopy.serviceInspection.contains("문의"))
+        #expect(!FitMatchFailureCopy.serviceInspection.contains("잠시 후"))
+        #expect(
+            FitMatchFailureCopy.authorizationInspection
+                == "이 작업을 진행할 권한이 없어요. 문제가 계속되면 문의해 주세요."
+        )
+
+        #expect(
+            ProductURLParserError.automaticParsingUnavailable.errorDescription
+                == FitMatchFailureCopy.productServiceInspection
+        )
+        #expect(
+            FitMatchServerComparisonReadiness(
+                runtimeState: "unknown_state",
+                comparisonReady: false
+            ).userMessage == FitMatchFailureCopy.productServiceInspection
+        )
+        #expect(
+            FitMatchComparisonBlockReason.serverUnavailable.userMessage
+                == FitMatchFailureCopy.comparisonServiceInspection
+        )
+        #expect(
+            FitMatchServerAuthorityError.runtimeResponseMalformed("malformed")
+                .errorDescription == FitMatchFailureCopy.productServiceInspection
+        )
+        #expect(
+            FitMatchServerAuthorityError.comparisonBeginMalformed("malformed")
+                .errorDescription == FitMatchFailureCopy.comparisonServiceInspection
+        )
+        #expect(
+            FitMatchServerAuthorityError.comparisonNotAuthorized.errorDescription
+                == "이 비교는 현재 진행할 수 없어요. 상품과 내 옷 정보를 다시 확인한 뒤 비교해 주세요."
+        )
+        #expect(
+            FitMatchServerAuthorityError.localReferenceProjectionMissing(UUID())
+                .errorDescription == "내 옷장 정보를 새로고침한 뒤 다시 비교해 주세요."
+        )
+        #expect(
+            FitMatchSupabaseProductResolverError.invalidVNextResponse.errorDescription
+                == FitMatchFailureCopy.serviceInspection
+        )
+        #expect(
+            FitMatchVNextContractError.unknownState(
+                field: "status",
+                observed: "future"
+            ).errorDescription == FitMatchFailureCopy.serviceInspection
+        )
+    }
+
     @Test func shareRoutingSkipsAnUnsupportedAttachmentAndUsesTheFirstSupportedProductURL() throws {
         let unsupported = try #require(URL(string: "https://www.cos.com/ko-kr/product.example.1229297007.html"))
         let supportedUniqlo = try #require(URL(string:
@@ -1447,7 +1499,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             Issue.record("EN-004 storage read failure did not expose a recovery state")
             return
         }
-        #expect(unavailableMessage.contains("잠시 후"))
+        #expect(unavailableMessage.contains("문의"))
 
         writer.savePendingProductURL(url)
         guard case .open(let handoff) = FitMatchPendingShareEntryAction.outcome(for: writer) else {

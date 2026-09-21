@@ -106,8 +106,19 @@ struct TemporarySizeAnalysis {
     let recommendationScore: Int
     let comparisonSummary: String?
 
-    var calculationSnapshot: RecommendationCalculationSnapshot {
-        RecommendationCalculationSnapshot.make(comparison: comparisonResult)
+    let calculationSnapshot: RecommendationCalculationSnapshot
+
+    init(
+        productSize: ProductSize,
+        comparisonResult: MeasurementComparisonResult,
+        recommendationScore: Int,
+        comparisonSummary: String?
+    ) {
+        self.productSize = productSize
+        self.comparisonResult = comparisonResult
+        self.recommendationScore = recommendationScore
+        self.comparisonSummary = comparisonSummary
+        self.calculationSnapshot = RecommendationCalculationSnapshot.make(comparison: comparisonResult)
     }
 }
 

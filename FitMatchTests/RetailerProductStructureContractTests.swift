@@ -69,6 +69,38 @@ struct RetailerProductStructureContractTests {
         #expect(observed.productMetadata.structuredFacts["comparison_measurement_contract"] == "single_coherent")
     }
 
+    @Test func musinsaGoodsContentsCSSDoesNotSynthesizeMixedSet() throws {
+        let payload: [String: Any] = [
+            "data": [
+                "goodsNo": 7_079_949,
+                "goodsNm": "미니멀 컴포트 밴딩 팬츠 브라운",
+                "goodsContents": """
+                <div style="position:absolute; top:0; bottom:0">
+                  <iframe src="https://www.youtube.com/embed/sample?playlist=sample"></iframe>
+                </div>
+                """
+            ]
+        ]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        let metadata = try MusinsaProductMetadataParser().parseStoredProductDetail(
+            data: data,
+            productID: "7079949",
+            sourceURL: #require(URL(string: "https://www.musinsa.com/products/7079949"))
+        )
+
+        #expect(metadata.productMetadata.structuredFacts["product_structure"] == "unknown")
+        #expect(
+            metadata.productMetadata.structuredFacts["product_structure_evidence"]
+                == "goods_contents:markup_only_composite_tokens_ignored"
+        )
+        let observed = metadata.parsedProductInfo(sizes: [coherentSize("M")])
+            .normalizedSizes()
+        #expect(observed.productMetadata.structuredFacts["comparison_measurement_contract"] == "single_coherent")
+        let observation = try #require(observed.fitMatchProductObservationRequest())
+        #expect(observation.payload.structuredFacts["product_structure"] == "unknown")
+        #expect(observation.payload.structuredFacts["comparison_measurement_contract"] == "single_coherent")
+    }
+
     @Test(arguments: [
         "공식 반팔 티셔츠 2P",
         "공식 반팔 티셔츠 3P",

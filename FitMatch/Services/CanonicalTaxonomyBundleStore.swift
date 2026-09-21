@@ -74,7 +74,11 @@ final class CanonicalTaxonomyBundleStore {
 
     convenience init() {
         do {
+#if SWIFT_PACKAGE
+            try self.init(bundle: .module)
+#else
             try self.init(bundle: .main)
+#endif
         } catch {
             assertionFailure("Canonical taxonomy bundle load failed: \(error)")
             self.init(emptyPolicyVersion: "unavailable")

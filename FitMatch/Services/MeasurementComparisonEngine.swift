@@ -354,6 +354,10 @@ struct MeasurementComparisonEngine {
             return (.shoulderWidthSeamToSeam, .shoulder)
         case "sleeve_length":
             return (.sleeveShoulderSeamToCuff, .sleeveLength)
+        case "sleeve_center_back_length":
+            return (.sleeveCenterBackToCuff, .sleeveLength)
+        case "sleeve_raglan_length":
+            return (.sleeveRaglanNeckToCuff, .sleeveLength)
         case "front_rise":
             return (.riseCrotchToWaistFront, .rise)
         case "hem_width", "hem_circumference":

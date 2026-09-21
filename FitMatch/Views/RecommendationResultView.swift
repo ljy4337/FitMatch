@@ -15,6 +15,7 @@ struct RecommendationResultView: View {
     private let resultMeasurementExclusions: [MeasurementComparisonExclusion]
     private let resultProductSizes: [ProductSize]
     private let diagnosticsStartedAt: TimeInterval
+    @State private var supplementalComparisonCache = FitMatchResultSupplementalComparisonCache()
     @State private var isShowingReliabilityInfo = false
     @State private var isShowingMeasurementInfo = false
     @State private var isShowingAlternativeSizeComparison = false
@@ -760,7 +761,11 @@ struct RecommendationResultView: View {
             guard let item = analysis?.comparisonResult.comparedItems.first(where: { $0.kind == kind }) else {
                 return AlternativeSizeMeasurementSummary(
                     title: reportShortTitle(for: kind),
-                    message: "비교 정보 없음",
+                    message: analysis?.comparisonResult.exclusions
+                        .first(where: { $0.kind == kind }).map {
+                            $0.reason == .incompatibleMeasurementCode
+                                ? "측정 기준 다름" : $0.reason.userMessage
+                        } ?? "비교에 사용되지 않은 항목",
                     status: .unavailable
                 )
             }
@@ -914,7 +919,7 @@ struct RecommendationResultView: View {
             return []
         }
         let authorizedKinds = Set(comparedMeasurementKinds)
-        return MeasurementComparisonEngine().compare(
+        return supplementalComparisonCache.comparison(
             productSize: displayedProductSize,
             referenceItem: referenceItem,
             productCategory: currentResult.product.category,
@@ -1394,7 +1399,8 @@ struct RecommendationResultView: View {
     }
 
     private var comparisonReliability: ComparisonReliability {
-        if let serverApproved = currentResult.serverApprovedVNextReliability {
+        if currentResult.isServerBackedVNextHistory,
+           let serverApproved = resultCalculationSnapshot?.serverApprovedReliability {
             return ComparisonReliability(serverApprovedLevel: serverApproved)
         }
         return ComparisonReliability(
@@ -2860,7 +2866,7 @@ enum ResultReferenceComparisonPersistence {
                 analysis: analysis
             )
         } catch {
-            return .saveFailed("비교 결과를 완료하지 못했어요. 같은 비교를 다시 시도해 주세요.")
+            return .saveFailed(completionFailureMessage(for: error))
         }
         guard let history = service.makeCompletedVNextHistory(
             product: product,
@@ -2884,6 +2890,32 @@ enum ResultReferenceComparisonPersistence {
             modelContext.rollback()
             return .saveFailed("비교 결과를 저장하지 못했어요. 다시 시도해 주세요.")
         }
+    }
+
+    private static func completionFailureMessage(for error: Error) -> String {
+        if error is URLError {
+            return FitMatchFailureCopy.transientNetwork
+        }
+        let nsError = error as NSError
+        if nsError.code == 401 {
+            return FitMatchFailureCopy.loginRequired
+        }
+        if nsError.code == 403 {
+            return FitMatchFailureCopy.authorizationInspection
+        }
+        if let authorityError = error as? FitMatchServerAuthorityError {
+            return authorityError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        if let contractError = error as? FitMatchVNextContractError {
+            return contractError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        if let resolverError = error as? FitMatchSupabaseProductResolverError {
+            return resolverError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        return FitMatchFailureCopy.comparisonServiceInspection
     }
 
     private static func persistCompletedHistory(

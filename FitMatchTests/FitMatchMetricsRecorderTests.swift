@@ -52,6 +52,27 @@ struct FitMatchMetricsRecorderTests {
         #expect(!report.localizedCaseInsensitiveContains("measurement"))
     }
 
+    @Test func zaraHostAndLookalikesRemainDistinct() {
+        #expect(FitMatchMetricProvider.resolve(urlString: "https://www.zara.com/kr/ko/test.html?v1=123") == .zara)
+        #expect(FitMatchMetricProvider.resolve(urlString: "https://zara.com.example.org/test") == .unsupported)
+    }
+
+    @Test func recentDiagnosticsAreBoundedAndPersistWithoutRawData() {
+        let suite = "FitMatchTests.Recent.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let recorder = FitMatchMetricsRecorder(defaults: defaults)
+        for _ in 0..<25 { recorder.record(.parserFailure(provider: .zara, reason: .network)) }
+        let restored = FitMatchMetricsRecorder(defaults: defaults)
+        #expect(defaults.stringArray(forKey: FitMatchMetricsRecorder.recentEventsKey)?.count == 20)
+        #expect(restored.snapshot().counters["parser.failure|provider=zara|reason=network"] == 25)
+        let report = restored.diagnosticReport()
+        #expect(report.contains("app_build="))
+        #expect(report.contains("os_version="))
+        #expect(!report.contains("https://"))
+        #expect(!report.contains("v1=123"))
+    }
+
     @Test func productLoadRecordsFiniteParserDimensionsWithoutProductData() async {
         let metrics = MetricsRecorderSpy()
         let musinsa = MetricsProductParserStub(

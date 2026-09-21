@@ -1,6 +1,30 @@
 import Foundation
 import Supabase
 
+/// User-facing failure copy is intentionally split by whether a retry can
+/// reasonably change the result. Contract, identity, endpoint, and server
+/// policy failures are not presented as temporary network failures.
+nonisolated enum FitMatchFailureCopy {
+    static let transientNetwork =
+        "일시적인 연결 문제예요. 네트워크를 확인한 뒤 다시 시도해 주세요."
+    static let serviceInspection =
+        "서비스에 문제가 있어요. 지금은 진행할 수 없어요. 문제가 계속되면 문의해 주세요."
+    static let productServiceInspection =
+        "상품 정보를 서비스에서 확인하지 못했어요. 문제가 계속되면 문의해 주세요."
+    static let comparisonServiceInspection =
+        "비교 서비스에 문제가 있어요. 지금은 비교할 수 없어요. 문제가 계속되면 문의해 주세요."
+    static let authorizationInspection =
+        "이 작업을 진행할 권한이 없어요. 문제가 계속되면 문의해 주세요."
+    static let authenticationServiceInspection =
+        "로그인 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
+    static let refreshAndRetry =
+        "최신 정보를 확인하지 못했어요. 새로고침한 뒤 다시 시도해 주세요."
+    static let loginRequired =
+        "로그인이 필요한 기능입니다. 다시 로그인한 뒤 시도해 주세요."
+    static let appUpdateRequired =
+        "현재 앱과 서버가 맞지 않아 안전하게 처리할 수 없어요. 앱을 업데이트한 뒤 다시 확인해 주세요."
+}
+
 protocol FitMatchServerAuthorityRemoteServicing: Sendable {
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductResolutionResponse
@@ -174,7 +198,7 @@ nonisolated enum FitMatchServerComparisonReadiness: Equatable, Sendable {
         case .measurementsRequired:
             return "상품 실측 정보를 보완한 뒤 비교해 주세요."
         case .unavailable:
-            return "서버에서 이 상품의 비교 준비 상태를 확인하지 못했습니다."
+            return FitMatchFailureCopy.productServiceInspection
         }
     }
 }
@@ -324,7 +348,7 @@ nonisolated enum FitMatchComparisonBlockReason: String, Equatable, Sendable {
         case .noEligibleTargetSize:
             return "비교에 사용할 상품 사이즈 실측이 없어요."
         case .serverUnavailable:
-            return "서버 비교 가능 여부를 확인하지 못했습니다. 다시 시도해 주세요."
+            return FitMatchFailureCopy.comparisonServiceInspection
         case .incompatibleAudience:
             return "대상 사용자 범위가 달라 비교하기 어려워요."
         case .designAxisDifference:
@@ -450,59 +474,59 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
     var errorDescription: String? {
         switch self {
         case .unsupportedCatalogState:
-            return "상품 정보를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         case .missingObservationForPromotion:
-            return "서버 분류 승격에 필요한 상품 관측 정보가 없습니다."
+            return FitMatchFailureCopy.productServiceInspection
         case .observationIdentityMismatch:
-            return "상품 관측 정보가 분류 요청과 일치하지 않습니다."
+            return FitMatchFailureCopy.productServiceInspection
         case .promotionRejected:
-            return "상품 정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         case .promotionResponseMalformed:
-            return "서버 분류 승격 응답이 올바르지 않습니다."
+            return FitMatchFailureCopy.productServiceInspection
         case .promotedProductMismatch:
-            return "승격된 서버 상품 식별자가 요청과 일치하지 않습니다."
+            return FitMatchFailureCopy.productServiceInspection
         case .runtimeResponseMalformed, .unknownClassificationStatus,
              .inconsistentRuntimeState:
-            return "상품 정보를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         case .classificationRecoveryUnavailable:
-            return "서버 상품 분류 확인 기능을 사용할 수 없습니다."
+            return FitMatchFailureCopy.productServiceInspection
         case .invalidClassificationRecoveryContract:
-            return "상품 분류 선택지를 확인하지 못했어요. 다시 시도해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         case .classificationRecoveryRejected:
-            return "상품 분류 선택을 저장하지 못했어요. 다시 시도해 주세요."
+            return "상품 분류 선택을 저장하지 못했어요. 최신 상품 상태를 다시 확인해 주세요."
         case .closetRuntimeUnavailable:
-            return "내 옷장 정보를 확인하지 못했어요. 다시 시도해 주세요."
+            return "내 옷장 정보를 서비스에서 확인하지 못했어요. 문제가 계속되면 문의해 주세요."
         case .referenceItemNotFound:
-            return "서버 옷장에서 기준 의류를 찾지 못했습니다."
+            return "서버에서 비교 후보를 확인하지 못했어요. 문제가 계속되면 문의해 주세요."
         case .localReferenceProjectionMissing:
-            return "서버의 비교 후보와 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요."
+            return "내 옷장 정보를 새로고침한 뒤 다시 비교해 주세요."
         case .targetClassificationRequired:
-            return "대상 상품의 서버 분류 승격이 필요합니다."
+            return "상품 분류를 확인한 뒤 비교해 주세요."
         case .comparisonNotReady(let state):
             return FitMatchServerComparisonReadiness(
                 runtimeState: state,
                 comparisonReady: false
             ).userMessage
         case .unknownCandidateState, .inconsistentCandidateState:
-            return "비교할 내 옷 정보를 확인하지 못했어요. 다시 시도해 주세요."
+            return FitMatchFailureCopy.comparisonServiceInspection
         case .comparisonBeginUnavailable:
-            return "서버 비교 시작 API를 사용할 수 없습니다."
+            return FitMatchFailureCopy.comparisonServiceInspection
         case .comparisonNotAuthorized:
-            return "서버에서 승인되지 않은 비교입니다."
+            return "이 비교는 현재 진행할 수 없어요. 상품과 내 옷 정보를 다시 확인한 뒤 비교해 주세요."
         case .comparisonAuthorizationRejected(let reason):
             return reason.userMessage
         case .comparisonBeginRejected:
-            return "비교를 시작하지 못했어요. 같은 비교를 다시 시도해 주세요."
+            return "비교를 시작할 수 없는 상태예요. 상품과 내 옷 정보를 다시 확인해 주세요."
         case .comparisonAlreadyCompleted:
             return "이미 완료된 비교입니다. 비교 기록에서 확인해 주세요."
         case .comparisonBeginMalformed:
-            return "비교를 시작하지 못했어요. 같은 비교를 다시 시도해 주세요."
+            return FitMatchFailureCopy.comparisonServiceInspection
         case .comparisonContractViolation(let error):
             return error.errorDescription
         case .comparisonCompletionUnavailable:
-            return "서버 비교 완료 API를 사용할 수 없습니다."
+            return FitMatchFailureCopy.comparisonServiceInspection
         case .comparisonCompletionRejected:
-            return "비교 결과를 완료하지 못했어요. 같은 비교를 다시 시도해 주세요."
+            return FitMatchFailureCopy.comparisonServiceInspection
         }
     }
 }
@@ -732,28 +756,86 @@ actor FitMatchServerAuthorityCoordinator {
     /// for the subsequent authoritative runtime read.
     func resolveFreshRetailerProductAuthority(
         request: FitMatchProductResolutionRequest,
-        observation: FitMatchProductObservationRequest
+        observation: FitMatchProductObservationRequest,
+        diagnosticTraceID: UUID? = nil
     ) async throws -> FitMatchServerProductAuthority {
-        try Task.checkCancellation()
-        let productID = try await promote(
-            request: request,
-            observation: observation,
-            expectedProductID: nil
-        )
-        try Task.checkCancellation()
-        let runtime = try await remote.fetchProductRuntime(request)
-        try Task.checkCancellation()
-        guard runtime.runtimeState != "classification_promotion_required" else {
-            throw FitMatchServerAuthorityError.inconsistentRuntimeState(
-                state: runtime.runtimeState,
-                status: runtime.classification?.status ?? "missing"
+        do {
+            try Task.checkCancellation()
+            let productID = try await promote(
+                request: request,
+                observation: observation,
+                expectedProductID: nil,
+                diagnosticTraceID: diagnosticTraceID
             )
+#if DEBUG
+            FitMatchDebugLogger.flow(
+                traceID: diagnosticTraceID,
+                stage: "DB 상품 런타임 조회",
+                state: "요청",
+                fields: [
+                    "쇼핑몰코드": request.source,
+                    "상품ID": request.externalProductID,
+                    "DB상품UUID": productID.uuidString
+                ]
+            )
+#endif
+            try Task.checkCancellation()
+            let runtime = try await remote.fetchProductRuntime(request)
+            try Task.checkCancellation()
+#if DEBUG
+            let runtimeSizeCount = runtime.variants.reduce(0) { $0 + $1.sizes.count }
+            FitMatchDebugLogger.flow(
+                traceID: diagnosticTraceID,
+                stage: "DB 상품 런타임 조회",
+                state: "완료",
+                fields: [
+                    "DB상품UUID": runtime.product.productID.uuidString,
+                    "런타임상태": runtime.runtimeState,
+                    "비교준비": String(runtime.comparisonReady),
+                    "분류상태": runtime.classification?.status ?? "없음",
+                    "비교그룹": runtime.vnext?.comparisonGroup?.groupCode ?? "미매핑",
+                    "그룹출처": runtime.vnext?.comparisonGroup?.source ?? "없음",
+                    "변형수": String(runtime.variants.count),
+                    "사이즈수": String(runtimeSizeCount)
+                ]
+            )
+#endif
+            guard runtime.runtimeState != "classification_promotion_required" else {
+                throw FitMatchServerAuthorityError.inconsistentRuntimeState(
+                    state: runtime.runtimeState,
+                    status: runtime.classification?.status ?? "missing"
+                )
+            }
+            let authority = try validatedAuthority(
+                runtime,
+                request: request,
+                expectedProductID: productID
+            )
+#if DEBUG
+            FitMatchDebugLogger.flow(
+                traceID: diagnosticTraceID,
+                stage: "서버 상품 권한 검증",
+                state: "완료",
+                fields: [
+                    "판정": authority.status.rawValue,
+                    "비교준비": String(describing: authority.comparisonReadiness),
+                    "DB상품UUID": authority.productID.uuidString
+                ]
+            )
+#endif
+            return authority
+        } catch {
+#if DEBUG
+            FitMatchDebugLogger.failure(
+                traceID: diagnosticTraceID,
+                stage: "서버 상품 저장/권한 검증",
+                error: error,
+                nextAction: "observation 처리 상태, runtime 응답 필드, 그룹/준비상태 계약을 확인하세요.",
+                fields: ["상품ID": request.externalProductID]
+            )
+#endif
+            throw error
         }
-        return try validatedAuthority(
-            runtime,
-            request: request,
-            expectedProductID: productID
-        )
     }
 
     /// Reads current runtime after a user mutation without creating or
@@ -1102,6 +1184,18 @@ actor FitMatchServerAuthorityCoordinator {
         localClientItemIDs: Set<UUID>? = nil,
         requestedComparisonGroupCode: String? = nil
     ) async throws -> FitMatchServerReferenceSelectionPlan {
+        let diagnosticTraceID = UUID()
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: diagnosticTraceID,
+            stage: "내 옷 비교 후보 조회",
+            state: "시작",
+            fields: [
+                "상품ID": targetRequest.externalProductID,
+                "사용자선택그룹": requestedComparisonGroupCode ?? "없음"
+            ]
+        )
+#endif
         try Task.checkCancellation()
         let target = try await resolveProductAuthority(
             request: targetRequest,
@@ -1123,14 +1217,21 @@ actor FitMatchServerAuthorityCoordinator {
         try Task.checkCancellation()
         let closet = try await remote.listClosetItems()
         try Task.checkCancellation()
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: diagnosticTraceID,
+            stage: "내 옷장 데이터 조회",
+            state: "완료",
+            fields: ["응답상태": closet.state, "내옷수": String(closet.items.count)]
+        )
+#endif
         guard closet.state == "ready" else {
             throw FitMatchServerAuthorityError.closetRuntimeUnavailable(closet.state)
         }
-        let clientIDByClosetID = Dictionary(
-            uniqueKeysWithValues: closet.items.map {
-                ($0.closetItemID, $0.clientItemID)
-            }
-        )
+        _ = try FitMatchVNextContractValidator.uniqueIdentityIndex(closet.items, id: { $0.clientItemID })
+        let clientIDByClosetID = try FitMatchVNextContractValidator
+            .uniqueIdentityIndex(closet.items, id: { $0.closetItemID })
+            .mapValues(\.clientItemID)
         let targetVariantID = targetVariantID(
             for: target,
             observation: targetObservation
@@ -1142,6 +1243,20 @@ actor FitMatchServerAuthorityCoordinator {
             requestedComparisonGroupCode: requestedComparisonGroupCode
         )
         try Task.checkCancellation()
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: diagnosticTraceID,
+            stage: "내 옷 비교 후보 조회",
+            state: "서버응답",
+            fields: [
+                "응답상태": response.vnext?.status ?? response.state,
+                "서버확정그룹": response.vnext?.targetComparisonGroup?.groupCode ?? "없음",
+                "그룹출처": response.vnext?.targetComparisonGroup?.source ?? "없음",
+                "후보수": String(response.vnext?.candidates.count ?? response.candidates.count),
+                "차단후보수": String(response.vnext?.blocked.count ?? 0)
+            ]
+        )
+#endif
         guard response.state != "target_classification_required" else {
             throw FitMatchServerAuthorityError.targetClassificationRequired
         }
@@ -1356,6 +1471,19 @@ actor FitMatchServerAuthorityCoordinator {
         _ authorization: FitMatchServerReferenceAuthorization,
         clientHistoryID: UUID = UUID()
     ) async throws -> FitMatchServerComparisonPermit {
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: clientHistoryID,
+            stage: "비교 시작",
+            state: "요청",
+            fields: [
+                "DB상품UUID": authorization.target.productID.uuidString,
+                "내옷UUID": authorization.reference?.closetItemID.uuidString ?? "없음",
+                "비교그룹": authorization.requestedComparisonGroupCode ?? "자동",
+                "허용후보사이즈수": String(authorization.authorizedCandidateSizeIDs.count)
+            ]
+        )
+#endif
         try Task.checkCancellation()
         guard authorization.isAllowed,
               let reference = authorization.reference else {
@@ -1379,6 +1507,19 @@ actor FitMatchServerAuthorityCoordinator {
                 requestedComparisonGroupCode: authorization.requestedComparisonGroupCode
             )
             try Task.checkCancellation()
+#if DEBUG
+            FitMatchDebugLogger.flow(
+                traceID: clientHistoryID,
+                stage: "비교 가능 사이즈 검증",
+                state: "서버응답",
+                fields: [
+                    "허용": String(value.allowed),
+                    "사유코드": value.reasonCode ?? "없음",
+                    "비교그룹": authorization.requestedComparisonGroupCode ?? "자동",
+                    "후보사이즈수": String(value.authorizedCandidateProductSizeIDs.count)
+                ]
+            )
+#endif
             guard value.allowed,
                   !value.authorizedCandidateProductSizeIDs.isEmpty else {
                 if !value.allowed, let reasonCode = value.reasonCode {
@@ -1421,6 +1562,21 @@ actor FitMatchServerAuthorityCoordinator {
             )
         )
         try Task.checkCancellation()
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: clientHistoryID,
+            stage: "비교 시작",
+            state: "서버응답",
+            fields: [
+                "비교실행UUID": response.runID.uuidString,
+                "응답상태": response.status,
+                "허용": String(response.compatibility.allowed),
+                "호환수준": response.compatibility.level,
+                "차단사유": response.compatibility.reason ?? "없음",
+                "비교그룹": authorization.requestedComparisonGroupCode ?? "자동"
+            ]
+        )
+#endif
         guard response.status == "pending" || response.status == "completed" else {
             if response.status == "blocked" {
                 throw FitMatchServerAuthorityError.comparisonBeginRejected(
@@ -1512,6 +1668,17 @@ actor FitMatchServerAuthorityCoordinator {
         permit: FitMatchServerComparisonPermit,
         analysis: VNextComparisonBatchAnalysis
     ) async throws -> VNextCompleteComparisonDTO {
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: permit.runID,
+            stage: "비교 결과 저장",
+            state: "요청",
+            fields: [
+                "비교실행UUID": permit.runID.uuidString,
+                "추천사이즈UUID": analysis.recommended.productSizeID.uuidString
+            ]
+        )
+#endif
         try Task.checkCancellation()
         guard permit.isAllowed,
               let begin = permit.vnextBegin,
@@ -1528,6 +1695,18 @@ actor FitMatchServerAuthorityCoordinator {
             payload: analysis.completionPayload
         )
         try Task.checkCancellation()
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: permit.runID,
+            stage: "비교 결과 저장",
+            state: "서버응답",
+            fields: [
+                "완료": String(result.completed),
+                "비교실행UUID": result.comparisonID.uuidString,
+                "추천사이즈UUID": result.recommendedProductSizeID.uuidString
+            ]
+        )
+#endif
         guard result.completed,
               result.comparisonID == permit.runID,
               result.recommendedProductSizeID == analysis.recommended.productSizeID else {
@@ -1641,7 +1820,8 @@ actor FitMatchServerAuthorityCoordinator {
     private func promote(
         request: FitMatchProductResolutionRequest,
         observation: FitMatchProductObservationRequest?,
-        expectedProductID: UUID?
+        expectedProductID: UUID?,
+        diagnosticTraceID: UUID? = nil
     ) async throws -> UUID {
         try Task.checkCancellation()
         guard let observation else {
@@ -1664,9 +1844,24 @@ actor FitMatchServerAuthorityCoordinator {
         }
 
         let response = try await submitProductObservationWithTransientRetry(
-            observation
+            observation,
+            diagnosticTraceID: diagnosticTraceID
         )
         try Task.checkCancellation()
+#if DEBUG
+        FitMatchDebugLogger.flow(
+            traceID: diagnosticTraceID,
+            stage: "DB 상품 데이터 전송",
+            state: "완료",
+            fields: [
+                "관측UUID": response.observation.observationID.uuidString,
+                "관측상태": response.observation.status,
+                "원본실측수": String(response.observation.rawMeasurementCount),
+                "처리상태": response.processing.status,
+                "DB상품UUID": response.processing.productID?.uuidString ?? "없음"
+            ]
+        )
+#endif
         guard response.observation.observationID == response.processing.observationID else {
             throw FitMatchServerAuthorityError.promotionResponseMalformed
         }
@@ -1691,7 +1886,8 @@ actor FitMatchServerAuthorityCoordinator {
     /// `observed_at` remain unchanged. Contract/authentication failures are
     /// returned immediately instead of being hidden by a retry.
     private func submitProductObservationWithTransientRetry(
-        _ observation: FitMatchProductObservationRequest
+        _ observation: FitMatchProductObservationRequest,
+        diagnosticTraceID: UUID? = nil
     ) async throws -> FitMatchProductObservationResponse {
         do {
             return try await remote.submitProductObservation(observation)
@@ -1699,6 +1895,15 @@ actor FitMatchServerAuthorityCoordinator {
             guard Self.isTransientObservationSubmissionError(error) else {
                 throw error
             }
+#if DEBUG
+            FitMatchDebugLogger.failure(
+                traceID: diagnosticTraceID,
+                stage: "DB 상품 데이터 전송",
+                error: error,
+                nextAction: "일시적 통신/서버 오류로 동일 요청을 1회 재시도합니다.",
+                fields: ["재시도": "1/1"]
+            )
+#endif
             try Task.checkCancellation()
             await Task.yield()
             return try await remote.submitProductObservation(observation)

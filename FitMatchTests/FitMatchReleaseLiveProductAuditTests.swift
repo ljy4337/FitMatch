@@ -58,15 +58,47 @@ struct FitMatchReleaseLiveProductAuditTests {
 
     private func evidence(_ product: ParsedProductInfo) -> [String: Any] {
         let observation = product.fitMatchProductObservationRequest()
+        let payload = observation?.payload
         return [
             "productID": product.productID as Any? ?? NSNull(),
             "name": product.productName,
-            "source": observation?.payload.source as Any? ?? NSNull(),
-            "sourceCategoryPath": observation?.payload.sourceCategoryPath as Any? ?? NSNull(),
+            "source": payload?.source as Any? ?? NSNull(),
+            "sourceCategoryPath": payload?.sourceCategoryPath as Any? ?? NSNull(),
             "measurementAvailability": product.measurementAvailability.rawValue,
             "observationAvailable": observation != nil,
             "imageAvailable": product.imageURLString?.isEmpty == false,
             "notice": product.parserNotice as Any? ?? NSNull(),
+            "observation": payload.map { payload in
+                ["externalProductID": payload.externalProductID,
+                 "canonicalURL": payload.canonicalURL as Any? ?? NSNull(),
+                 "audience": payload.audience as Any? ?? NSNull(),
+                 "sourceCategoryCodes": payload.sourceCategoryCodes,
+                 "rawPayloadKeys": payload.rawPayload.keys.sorted(),
+                 "structuredFactKeys": payload.structuredFacts.keys.sorted(),
+                 "retailerAPIContract": payload.retailerAPIEvidence?.contractVersion as Any? ?? NSNull(),
+                 "retailerAPIProductKey": payload.retailerAPIEvidence?.sourceProductKey as Any? ?? NSNull(),
+                 "retailerAPISelectedVariantKey": payload.retailerAPIEvidence?.selectedVariantKey as Any? ?? NSNull(),
+                 "detailsJSONAvailable": payload.retailerAPIEvidence?.details.jsonObject != nil,
+                 "measurementsJSONAvailable": payload.retailerAPIEvidence?.measurements?.jsonObject != nil,
+                 "variants": payload.variants.map { variant in
+                     ["externalVariantID": variant.externalVariantID,
+                      "colorCode": variant.colorCode as Any? ?? NSNull(),
+                      "colorName": variant.colorName as Any? ?? NSNull(),
+                      "sizes": variant.sizes.map { size in
+                          ["sizeIdentity": size.sizeIdentity,
+                           "sizeLabel": size.sizeLabel,
+                           "stockStatus": size.stockStatus,
+                           "measurements": size.measurements.map { measurement in
+                               ["measurementIdentity": measurement.measurementIdentity,
+                                "parserCode": measurement.parserCode,
+                                "rawCode": measurement.rawCode as Any? ?? NSNull(),
+                                "rawLabel": measurement.rawLabel,
+                                "rawValue": measurement.rawValue,
+                                "rawUnit": measurement.rawUnit] as [String: Any]
+                           }] as [String: Any]
+                      }] as [String: Any]
+                 }] as [String: Any]
+            } as Any? ?? NSNull(),
             "sizes": product.sizes.map { size in
                 ["name": size.name,
                  "availability": size.availabilityStatus ?? "UNKNOWN",

@@ -126,7 +126,7 @@ struct FitMatchSupportView: View {
 
                 FitMatchReleaseSection(
                     title: "품질 진단 정보",
-                    content: "상품명·URL·상품 ID·실측값·사용자 식별자를 포함하지 않는 누적 성공·실패 횟수만 내보냅니다. 공유할 앱과 대상은 사용자가 직접 선택합니다."
+                    content: "앱·OS 버전, 누적 처리 횟수와 최근 20개 처리 단계·시각을 내보냅니다. 상품명·URL·실측값·사용자 식별자는 포함하지 않으며 자동 전송하지 않습니다. 공유할 앱과 대상은 직접 선택해 주세요."
                 )
 
                 ShareLink(
