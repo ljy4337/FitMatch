@@ -1,3 +1,85 @@
+## 2026-09-21 — 상품 불러오기·비교 경로 지연 축소와 요청 추적 (로컬 소스)
+
+- 범위는 P1~P3의 확인된 중복/직렬 구간과 DEBUG 성능 관측이다. 연결 Supabase 및 Edge Function에는 읽기·쓰기·배포를 수행하지 않았고 migration/정책/점수/비교 권한은 변경하지 않았다. commit/push 없음.
+- **P1 Closet sync:** `ContentView`의 timestamp 기반 task key를 의미 있는 로컬 mutation fingerprint로 교체했다. 같은 사용자·같은 fingerprint의 겹친 동기화는 한 pass를 공유하고, unchanged linked Closet row는 server-authoritative runtime/group/measurement 차이만으로 update하지 않는다. delete/upsert/reference mutation이 실제로 있었을 때만 추가 list receipt를 받는다. linked generic update는 creation과 같은 `use_server_measurements=true`, 빈 `measurements` snapshot contract를 사용한다. 이로써 `Linked Closet snapshot requires canonical measurements`의 반복 update 원인을 제거했고, 결정적 계약 오류는 로컬 입력을 보존한 채 내용 변경/명시 retry 전까지 반복 전송하지 않는다.
+- **P2 Compare:** target/reference authority와 current Closet list처럼 서로 독립인 read만 병렬 시작한다. candidate, eligible sizes, authorization, begin은 target identity·session context 확인 뒤의 기존 server-authoritative 순서를 유지한다. stale/cancel/user guards 및 fingerprint 검증을 우회하지 않았다.
+- **P3 Retailer:** ZARA는 검증 전 product page와 selected `v1` size guide, 그리고 검증 후 details와 required guide를 병렬 처리한다. `v1` guide는 page가 exact `catentryID`를 확인할 때만 소비한다. UNIQLO의 exact identity 뒤 product/stock 병렬은 기존 구현을 유지했다. MUSINSA는 metadata가 actual measurement semantic 해석에 필요하므로 안전한 독립 read가 아니어서 직렬 경로를 유지했다.
+- **P4:** Edge `product-observation`은 ingestion 후 authoritative runtime을 반환하지 않는 현재 계약이다. Production/Edge 배포 승인 없이 response contract를 바꾸지 않았다. 따라서 ingest→runtime roundtrip 제거는 **BLOCKED (server contract/deploy approval required)** 이며 로컬 Swift `resolveWithRuntime`의 현재-response 재사용 범위 이상으로 확장하지 않았다.
+- **UX:** `LinkClosetRegistrationView`는 retailer parser 완료 중간 카드를 만들지 않고, 최종 server registration context가 준비된 `.loaded` state에서만 카드를 표시하고 `다음`을 활성화한다. "서버에 상품 저장 중" 중간 문구는 제거했다.
+- **성능 로그:** `FitMatchRequestTrace`가 product load/comparison/Closet registration/background sync별 짧은 trace ID와 origin을 전달한다. `timedDatabaseCall`은 payload/상품/사용자/실측 없이 `edge.product-observation`, runtime, Closet list/upsert/update, candidates, eligible, begin/complete/history의 operation/state/duration을 기록한다. 추가 span은 `공유 링크 진입→후보 표시`, `상품 진입→후보 준비`, `선택 옷 서버 허가 준비`, `내 옷 선택→비교 시작`, `비교 결과 저장`, `상품 불러오기→다음 준비`, `백그라운드 옷장 동기화`다. live before/after 숫자는 아직 측정하지 않았다.
+- 회귀 테스트 추가: `FitMatchClosetSyncCoordinatorTests.unchangedClosetRowDoesNotIssueUpdateButMeaningfulLocalEditDoes`, linked update JSON의 `use_server_measurements`/empty canonical array contract test. 새 source `swiftc -parse` PASS. iOS app Debug build (`/tmp/FitMatchPerformanceAppBuild`) PASS (기존 warnings만). Focused XCTest command는 target 전체 컴파일 중 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111`의 `.zara`, `GarmentMeasurements()` 및 key-path inference 오류로 실행 전 중단(명령 exit 65); 신규 테스트 실행 PASS 아님. 앞서 이번 변경에서 발견한 coordinator/ZARA name collision은 즉시 수정 후 앱 build PASS로 확인했다.
+- NOT RUN: 실제 MUSINSA/UNIQLO/ZARA 네트워크 latency before/after, 실기기 Link Closet/Compare E2E, Production trace/Edge runtime contract 변경. `git diff --check` 및 protected scroll 검사는 최종 변경 후 다시 실행해야 한다.
+
+## 2026-09-21 — 비교 권한 확인의 연속 runtime 중복 조회 제거
+
+- `FitMatchSupabaseDomainClient.resolveWithRuntime`가 이번 요청에서 조회한 runtime과 resolution을 함께 반환한다. Coordinator는 promotion이 없을 때만 이 동일 응답을 사용하고, promotion 뒤에는 반드시 재조회한다. 장기/전역 캐시 없이 candidate 조회/eligible/begin/complete 및 Closet 저장 확인을 유지했다. 기존 다른 remote 구현은 기본 구현으로 기존 조회 동작을 유지한다.
+- 회귀 테스트 추가: current 응답 재사용 시 추가 runtime 조회 0회, changed/promotion 시 1회 재조회. 비교 정책·실측·사용자 선택·DB 변경 없음. Behavior Map 갱신.
+- PASS: 변경 Swift parse, iOS Simulator 대상 앱 build (`/tmp/fitmatch-runtime-reuse-app-build.log`), diff check/protected scroll. BLOCKED: XCTest 실행 — build-for-testing이 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111` 컴파일 오류로 실패 (`/tmp/fitmatch-runtime-reuse-build.log`). 신규 테스트 실행 PASS 아님. NOT RUN: 실기기 속도 재측정/E2E. 이전 로그의 연속 중복 요청 약 1.4~1.6초는 개선 가능 구간이며 실측 개선값이 아니다.
+- 이번 변경: Coordinator, SupabaseProductResolver, ServerAuthorityIntegrationTests, Behavior Map, 이 인계 문서. 기존 dirty 변경 보존, DB write/commit/push 없음.
+
+## 2026-09-21 — 내 옷장/등록 사이즈 한글 표시 보완
+
+- 원인: `MyClosetView`와 `ClosetItemDetailView`가 저장된 `item.sizeName`을 직접 표시했고, 등록의 `ProductSizeSelectionGrid`도 영문 size token을 그대로 표시했다. 저장값/식별값을 한글로 변환하면 source-size 매칭과 서버 payload가 바뀔 수 있어 화면 표기만 분리했다.
+- `SizeTokenNormalizer.koreanDisplayName(for:)`와 `String.fitMatchKoreanSizeDisplayName`을 추가했다. `S/M/L`, `XS~5XL`, `FREE/ONE`, full-word `Small/Medium/Large`만 한글 표기하며 숫자·미확인 원문은 그대로 표시한다. 목록 카드, grid 카드, 상세 요약, 내 옷장 추가의 grid/menu/선택 실측 안내가 이를 사용한다.
+- PASS: 변경 Swift parse, `git diff --check`, protected scroll check. NOT RUN: 앱 화면 E2E. iOS app build는 새 DerivedData에서 package DNS가 막혔고, 기존 캐시는 CoreSimulator/SwiftPM cache permission 오류로 FAIL했다. commit/push/DB write 없음.
+
+## 2026-09-21 — Terra 완료사항 제한 재확인
+
+- 독립 재확인: 최신 Swift diff에서 fresh observation ID → registration context → upsert source_observation_id 전달을 확인. 연결 Supabase READ ONLY에서 raw/manifest 두 테이블 존재, public upsert의 group-aware owner 유지, public list comparison_group 유지, private wrapper의 base 보존, native/context canonical 양수 필터를 확인했다.
+- snapshot manifest 현재 0건이므로 실제 연결 DB의 등록 성공/원본 read-back은 이번 확인으로 증명하지 않았다. Terra의 LocalRegression은 resolver 등 일부 대체 함수를 사용하는 격리 fixture이며 실제 앱 E2E와 구분한다. focused XCTest target 컴파일 차단 기록은 해소됐다고 판정하지 않는다.
+- PASS: 위 코드/배포 계약 정적 및 읽기 전용 확인, git diff --check, protected scroll. NOT RUN: 이번 재확인에서 build/XCTest/실앱 등록·비교. 코드/SQL/DB 변경 없이 인계 기록만 추가했다.
+
+## 2026-09-21 — 원본 Closet snapshot migration 호출경로 보완 및 격리 검증
+
+- `20260921110000_closet_raw_measurement_snapshots.sql`은 public upsert/list를 구형 private 함수로 바꾸지 않는다. 현재 public bridge가 호출하는 `upsert_closet_item_with_group_for_swift` 및 `list_closet_items`를 base로 보존하고, raw snapshot wrapper만 그 뒤에 원자적으로 연결한다. public list의 `comparison_group`은 그대로이고 `source_measurements`만 추가된다.
+- Swift는 fresh retailer promotion에서 받은 `observation_id`를 transient Closet registration context와 upsert JSON `source_observation_id`로 전달한다. linked save는 이 receipt와 exact product/variant/size를 DB에서 대조한다. 기존 snapshot manifest가 있으면 같은 receipt/identity만 idempotent retry로 허용하며, 이후 ingestion receipt의 새 raw row는 추가하지 않고 다른 receipt 재사용은 거절한다.
+- 0/음수 raw value는 exact observation receipt/source snapshot에는 보존하되 canonical native/context route에서 `raw_value > 0`으로 제외한다. semantic UNKNOWN code의 numeric raw는 원본으로 보존하며 comparison metric 승격은 하지 않는다.
+- Verify/Rollback과 `supabase/sql/tests/closet_raw_measurement_snapshots_LocalRegression.sql`을 갱신했다. rollback은 snapshot 또는 retained nonpositive raw가 있으면 거절하고, 데이터가 없는 경우 group-aware public routes를 복원한다.
+- PASS: 지정 바이너리 `/usr/local/opt/postgresql@17/bin/initdb`/`pg_ctl`로 격리 PostgreSQL 17 실행. migration apply → zero raw receipt 보존/canonical 제외 → public upsert(group B) → list(group+source rows) → same receipt retry → later receipt append 방지 → changed receipt fail-closed → other-user list block → rollback group bridge 복원 모두 PASS. `swiftc -parse` changed Swift/tests, iOS production `xcodebuild build -sdk iphonesimulator` PASS, `git diff --check`/protected scroll PASS.
+- FAIL(기존 test target): `FitMatchClosetTransportContractTests` focused XCTest는 target 전체 compile 중 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111`의 `.zara`, `GarmentMeasurements()` 및 key-path inference 오류로 시작하지 못했다. 이번 변경 파일 오류는 출력에 없음. 앱/연결 DB E2E NOT RUN.
+- 연결 Supabase `hnkplvyegonlhumlejst` 적용 전 READ ONLY 확인에서 deployed `canonical_measurements_for_size_with_context`의 WHERE가 한 줄 형식이라 기존 migration preimage와 달랐다. migration/rollback은 multiline·inline 두 형식을 모두 보존하는 최소 dynamic replacement로 보완했고, 지정 PostgreSQL 17 격리 regression을 재실행해 PASS했다.
+- **2026-09-21 적용 완료(사용자 명시 승인):** `20260921110000_closet_raw_measurement_snapshots.sql`을 연결 Supabase에 적용. Verify SQL의 nonpositive canonical count `0`, postflight에서 두 source snapshot table 존재, group-aware owner 보존, public list `comparison_group` 보존 및 `source_measurements` 추가, native/contextual canonical의 nonpositive 제외 모두 PASS. 해당 테이블은 private schema RLS enabled + public/anon/authenticated privilege revoke 상태다. 기존 전역 security advisor 항목 외에 새 table 정책 누락 INFO 2건은 private table에 service_role만 권한을 주는 의도된 설계다. commit/push 없음.
+
+## 2026-09-21 재확인 16:13 KST — 원본 snapshot 미적용 및 migration 호출경로 충돌
+
+- 사용자 재검토 요청으로 현재DB 재조회. closet_item_source_measurements 없음. 실제 public list→internal list는 source_measurements 키를 반환하지 않음. Swift는 해당 키를 소비하도록 구현됐으나 서버 저장·재조회 전체 완료는 아님.
+- 더 중요한 추가 확인: 현재 public upsert는 upsert_closet_item_with_group_for_swift를 호출하고, product-linked measurements 경로는 apply_linked_closet_snapshot_for_swift로 분기. 현재 public list는 comparison_group을 덧붙임.
+- 준비된 20260921110000 migration은 public upsert를 upsert_closet_item_for_swift로 직접 연결하고 public list의 comparison_group wrapper도 제거한다. 따라서 기존 group/linked-snapshot 계약을 우회할 위험이 있어 그대로 적용 권고 금지. 현재 active wrapper를 유지한 raw snapshot 통합 및 focused 검증이 먼저 필요.
+- 읽기 전용/정적 확인만 수행. DB/App 수정·추가 테스트 실행 없음. 이전 'migration 검증·적용 필요'를 구체화: 단순 적용이 아니라 호출경로 보완 필요.
+
+## 2026-09-21 사용자 적용 후 최소 확인 — 일부 완료
+
+- HEAD 4e1aedc. DB/App 수정 없이 읽기 전용 최소 점검. 실측 semantic repair 함수3개는 CRLF 정규화 후 준비본 hash와 일치; 기존 잘못된 alias 조건에 해당하는 행0. AIRism4상품 각8사이즈 모두 F context canonical4개 PASS.
+- 전달 Verify의 최초 exact hash 검사는 CRLF 차이로 실패. 실제 함수 내용 변경으로 판정하지 않음; 줄바꿈 정규화 후 일치 확인.
+- ZARA7 category key는 여전히 미등록(이전 보류 범위). 원본 표시 공통화/원본 우선 보존/Swift snapshot DTO·hydration 구현은 소스 확인.
+- 연결DB에 closet_item_source_measurements 테이블 없음: Terra의 20260921110000_closet_raw_measurement_snapshots.sql 미적용. 원본 전체 저장·재조회 완료 아님. Terra handoff에 0/비정상 ingestion receipt 거절 계약 및 migration 로컬검증 미완료도 명시돼 있어, 해당 migration만 적용하면 전체 해결된다고 보고하면 안 됨.
+- 새 build/tests/저장 mutation/앱 E2E NOT RUN(사용자 요청대로 최소 점검). diff/protected scroll PASS. 추가 코드/DB 수정 없음.
+
+## 2026-09-21 사용자 실행 DB SQL / Terra 원본 표시·저장 지시서
+
+- `Docs/QA/MeasurementRepairHandoff-20260921/`에 00-Preflight / 01-Apply / 02-Verify / 03-Rollback 및 Terra-Prompt.md 작성. 기존 semantic_context_separation migration을 재사용하고 현재 함수/alias preimage guard 추가. 연결 DB에는 적용하지 않음.
+- 범위: UNIQLO 오alias10 + resolver/context/readiness 함수3. category/weight/raw/Closet/History write 없음. native-first + 검증된 group-only recovery 보존이며 모든 그룹 의존 제거의 완전한 재설계가 아님.
+- PASS: PostgreSQL17 격리 실제 migration 회귀, 전달 SQL 적용/재적용/핵심검증/rollback/preflight. NOT RUN: 연결DB postflight·실제32사이즈/전체211행 replay·앱 E2E/RLS. Verify의 실상품 조회는 사용자 적용 후 실행 대상.
+- 보류: ZARA7 category group 지정, MUSINSA 아우터 밑단/상의허리/복부의 미확인 측정 기준, 벨트/슬릿 canonical. raw-only 표시는 Terra 원본 보존 작업에서 처리. 사용자에게 전체 사전 보완 완료로 안내하지 않음.
+- Terra 지시는 비교 엔진/점수 변경 없이 선택 사이즈 원본 수신=표시=저장=재조회 내용/개수 일치가 목표. 저장 contract 변경 필요 시 별도 migration 작성·로컬검증, 연결DB 적용은 사용자 담당.
+- 이번 작업에서 기존 앱 dirty 변경은 건드리지 않음. commit/push 없음.
+
+## 2026-09-21 관측 원본 대비 DB 사전 누락 감사
+
+- READ ONLY 완료. `Docs/QA/RetailerDictionaryGap-20260921/Report.md` 및 관측 실측703쌍/카테고리161개 CSV, 현재 DB snapshot/실제 resolver 결과 저장. HEAD ac08f64. DB/App 수정 없음.
+- 현재69상품/2,212 raw. AIRism F 어깨·등중심소매64행 및 무신사5543646 아우터 밑단50cm 연결 누락. 무신사 상의 허리·복부는 source/alias 있으나 mapping 없음. 보존 원문 UNIQLO E483340 belt-length/E482285 slit-length 미등록은 raw-only 우선 후보.
+- ZARA 앞밑위는 현재6상품45행 정상 연결, 뒷밑위도 별도 등록되어 있음. 표시 안 됨을 DB 미등록으로 단정 금지. 실제 UNMAPPED24상품 중 ZARA7개 exact category key 미등록, 나머지17개는 조회용 경로/codes 결측. UNMAPPED는 사용자 그룹 선택 정상 경로.
+- PASS: 현재 DB 읽기 전용 resolver/group 검증, 보존 원문 normalizer 재실행. NOT RUN: 신규 API 일괄수집/원본XLSX 재검사/앱 전체 등록·비교. 기존 원본 XLSX 경로 검색에서 파일을 찾지 못해 과거 추출 목록만 참고. 703쌍에는 비의류가 포함되어 있어 모든 미등록값을 의류 canonical로 추가하면 안 됨.
+
+## 2026-09-21 실측 표시·저장·비교 제품 정책 문서 확정
+
+- 후속 사용자 결정으로 비교 규칙을 정정했다. 아래 초기 2x2 표현 중 **다른 쇼핑몰의 동일 의미 원본끼리 직접 비교한다는 부분은 폐기**한다. 현행 정책은 동일 쇼핑몰·동일 실측표 구조에서만 동일 원본 항목을 직접 비교하며, 동일 쇼핑몰의 다른 구조와 모든 다른 쇼핑몰 조합은 FitMatch canonical 교집합만 비교한다.
+- 사용자 결정에 따라 `Docs/FitMatchMeasurementPolicy.md`를 신규 권위 문서로 추가하고 `AGENTS.md`의 Sources of Authority 및 Architecture 규칙에서 반드시 읽도록 연결했다.
+- 내 옷 등록은 선택한 상품·variant·size에서 받은 의류 실측 원본을 canonical 매핑 여부와 관계없이 모두 표시하고, 원본 identity/value/unit/basis/component 및 변환 상태를 DB에 보존하는 정책으로 확정했다. 원본 의류 실측과 신체 권장치·모델 정보·일반 가이드는 분리한다.
+- 비교는 동일 쇼핑몰·동일 실측 구조에서만 동일 원본 항목끼리 직접 비교한다. 동일 쇼핑몰이어도 구조가 다르거나 쇼핑몰이 다르면 원본 이름과 무관하게 양쪽에 공통으로 연결된 FitMatch canonical 항목만 비교한다. 이름만 같은 항목, 단면/둘레·길이 기준·구성품이 다른 항목은 동일 항목으로 취급하지 않는다.
+- 표시·저장 범위와 점수 범위를 분리했다. 원본은 모두 보존하지만 점수는 서버 begin snapshot이 승인한 공통 실측만 사용하며, 공통 승인 항목이 없거나 의미·단위·basis가 충돌하면 fail closed한다.
+- 이번 작업은 정책 문서와 AGENTS/인계 문서만 변경했다. Swift/SQL/migration/DB write/deployment/build/test/commit/push는 수행하지 않았다. 현재 앱과 배포 DB가 이 신규 정책을 완전히 구현하는지는 별도 코드·계약 감사가 필요하다.
+
 ## 2026-09-21 현재 로컬 소스 커밋·푸시 완료
 
 - 사용자 요청에 따라 검토한 현재 로컬 FitMatch 소스를 `connectDB` 브랜치에 커밋하고 `origin/connectDB`로 푸시했다.
@@ -182,6 +264,18 @@
 ## 2026-09-16 현재 최신 상태 — 로컬 소스·정책·검증 요약
 
 > 이 항목은 새 세션이 먼저 읽을 현재 상태 요약이다. 아래 날짜별 항목은 실제 실행 근거와 과거 결정을 보존하는 기록이며, 충돌하면 이 항목과 실제 소스를 우선한다.
+
+### 2026-09-21 다른 옷 비교·기록 필터 UX 정리
+
+- `OtherClosetComparisonSheet`의 가로 그룹 칩을 기존 `CompareSelectionMenu` 콤보박스로 교체했다. 후보는 2열 카드에서 먼저 고르고, 선택 표시 후 하단 검은 `선택한 옷과 비교하기` 버튼에서만 기존 server reauthorization 경로로 진행한다. 후보 자동 선택·권한·DB/RPC 계약은 변경하지 않았다.
+- 기록 화면의 `.searchable` 텍스트 필드를 제거했다. `ContentFilterBar`가 선택 제목의 intrinsic width에 따라 재배치되던 원인을 수정해, 고정 폭(148pt)·좌측 정렬·말줄임을 사용하고 그리드/목록 전환 버튼은 스크롤 영역 밖의 고정 위치로 분리했다. 메뉴를 열면 옵션의 전체 제목은 그대로 표시된다.
+- PASS: 변경 Swift `swiftc -parse`, `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -sdk iphonesimulator -derivedDataPath /tmp/FitMatchLatencyDiagnosticsBuild CODE_SIGNING_ALLOWED=NO build`, `git diff --check`, protected scroll 검사. NOT RUN: 앱 화면 E2E 및 실제 터치 검증. commit/push/Production DB write 없음.
+
+### 2026-09-21 DEBUG DB 통신 속도 로그
+
+- `FitMatchSupabaseDomainClient`의 실제 Edge/RPC 경계에 DEBUG 전용 `timedDatabaseCall`을 추가했다. 상품 관측/런타임, Closet upsert/update/list, 후보/eligible size, begin/complete, History 조회가 성공·실패와 소요 시간(ms)을 고정 작업명으로 남긴다.
+- 로그에는 요청·응답 원문, 상품명, 사용자 ID, Closet ID, 실측을 넣지 않는다. 서버 계약·DB 데이터·비교 정책은 변경하지 않았고, Production/연결 Supabase write도 하지 않았다.
+- PASS: 관련 Swift `swiftc -parse`, `git diff --check`. 앱 build·인증된 실제 서버 왕복 성능 측정은 NOT RUN이다. 변경 파일/현재 dirty 작업은 다음 커밋 전 별도 소유 범위를 확인한다.
 
 ### 현재 권위와 작업 경계
 

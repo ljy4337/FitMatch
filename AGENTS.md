@@ -32,6 +32,7 @@ Verification status must be PASS, FAIL, NOT RUN, or BLOCKED. Never describe skip
 - `AGENTS.md`: stable operating, architecture-boundary, safety, Git, and verification rules.
 - `FitMatch Behavior Map.md`: primary flow/RPC navigation. Start with the relevant Flow ID and its READ FIRST owners before broader searches.
 - `FitMatch Swift Feature Map.md`: supplementary detailed Swift ownership; read only relevant sections.
+- `Docs/FitMatchMeasurementPolicy.md`: authoritative product policy for retailer measurement display, persistence, measurement identity, and comparison selection.
 - `Docs/CodexSessionHandoff.md`: current implementation state, recent product decisions, Production changes, and unresolved issues.
 
 At the start of every new session, read the current-state portion of `Docs/CodexSessionHandoff.md` completely before changing code. Before finishing meaningful work, update it with actual changes, decisions, tests/builds run, unverified areas, and remaining issues. Preserve history and mark superseded policy explicitly. Never describe prepared SQL as applied or unexecuted work as passed.
@@ -39,6 +40,8 @@ At the start of every new session, read the current-state portion of `Docs/Codex
 ## Architecture and Product Authority
 
 Retailer parsers provide retailer facts, not a second FitMatch policy engine. For server-authoritative flows, server/database results are authoritative; Swift transports, validates, adapts, persists, and presents them. Required missing, null, empty, unknown, malformed, or mismatched values must fail closed or enter explicit recovery. Never use local inference, first-item selection, visible labels, or defaults to replace required server authority.
+
+For any Closet registration or product-comparison work involving measurements, read and preserve `Docs/FitMatchMeasurementPolicy.md`. Display and persist all received retailer garment measurement facts, while limiting comparison and scoring to the exact source-semantic or canonical-policy evidence allowed by that document and approved by the server.
 
 FitMatch comparison groups and active group policy are the current comparison authority. Detailed garment classification is not a primary Closet-registration or readiness gate. Do not reintroduce superseded detailed-category gating or fabricate a confirmed group.
 
@@ -96,4 +99,4 @@ For consequential product, UX, architecture, data, database, or release tradeoff
 
 ## Rule Maintenance
 
-Keep this file limited to stable operating rules and high-level navigation. Put temporary blockers, current DB state, incidents, one-off test results, and pending evidence in `Docs/CodexSessionHandoff.md`. Keep flow/RPC navigation in `FitMatch Behavior Map.md` and detailed Swift ownership in `FitMatch Swift Feature Map.md`. Update affected sections when owners or contracts change. Maps are navigation aids, not authority over actual source/deployed contracts; verify stale entries and expand searches narrowly when needed.
+Keep this file limited to stable operating rules and high-level navigation. Put measurement display, persistence, and comparison product policy in `Docs/FitMatchMeasurementPolicy.md`. Put temporary blockers, current DB state, incidents, one-off test results, and pending evidence in `Docs/CodexSessionHandoff.md`. Keep flow/RPC navigation in `FitMatch Behavior Map.md` and detailed Swift ownership in `FitMatch Swift Feature Map.md`. Update affected sections when owners or contracts change. Maps are navigation aids, not authority over actual source/deployed contracts; verify stale entries and expand searches narrowly when needed.

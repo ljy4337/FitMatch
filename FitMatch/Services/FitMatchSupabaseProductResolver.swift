@@ -503,6 +503,9 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
     let productSizeID: UUID?
     let override: FitMatchClosetClassificationOverride?
     let comparisonGroupCode: String?
+    /// The immutable receipt created from the retailer observation shown to
+    /// the user. Product/variant/size alone are not an observation identity.
+    let sourceObservationID: UUID?
 
     init(
         clientItemID: UUID,
@@ -511,7 +514,8 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
         productVariantID: UUID? = nil,
         productSizeID: UUID?,
         override: FitMatchClosetClassificationOverride?,
-        comparisonGroupCode: String? = nil
+        comparisonGroupCode: String? = nil,
+        sourceObservationID: UUID? = nil
     ) {
         self.clientItemID = clientItemID
         self.item = item
@@ -520,6 +524,7 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
         self.productSizeID = productSizeID
         self.override = override
         self.comparisonGroupCode = comparisonGroupCode
+        self.sourceObservationID = sourceObservationID
     }
 }
 
@@ -1590,6 +1595,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     /// personal Closet tuple atomically inside the mutation.
     let closetClassificationOverride: VNextClosetClassificationOverridePayload?
     let comparisonGroupCode: String?
+    let sourceObservationID: UUID?
     var useServerMeasurements: Bool? = nil
 
     enum CodingKeys: String, CodingKey {
@@ -1611,6 +1617,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         case notes, satisfaction, measurements
         case closetClassificationOverride = "closet_classification_override"
         case comparisonGroupCode = "comparison_group_code"
+        case sourceObservationID = "source_observation_id"
         case useServerMeasurements = "use_server_measurements"
     }
 
@@ -1643,6 +1650,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
             forKey: .closetClassificationOverride
         )
         try container.encodeIfPresent(comparisonGroupCode, forKey: .comparisonGroupCode)
+        try container.encodeIfPresent(sourceObservationID, forKey: .sourceObservationID)
     }
 }
 
@@ -1940,11 +1948,45 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         client = authenticatedClient
     }
 
+    /// Single timing boundary for FitMatch Behavior Map server calls. The
+    /// operation name is a fixed RPC/Edge identifier; no user data is logged.
+    private func timedDatabaseCall<T>(
+        _ operation: String,
+        perform work: () async throws -> T
+    ) async throws -> T {
+#if DEBUG
+        let startedAt = Date()
+        do {
+            let result = try await work()
+            FitMatchDebugLogger.databaseLatency(
+                operation: operation,
+                startedAt: startedAt,
+                state: "완료"
+            )
+            return result
+        } catch {
+            FitMatchDebugLogger.databaseLatency(
+                operation: operation,
+                startedAt: startedAt,
+                state: "실패"
+            )
+            throw error
+        }
+#else
+        return try await work()
+#endif
+    }
+
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductResolutionResponse {
+        try await resolveWithRuntime(request).resolution
+    }
+
+    func resolveWithRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> (resolution: FitMatchProductResolutionResponse, runtime: FitMatchProductRuntimeResponse?) {
         let exact = try await fetchVNextRuntime(request)
         guard exact.found, let product = exact.product else {
-            return FitMatchProductResolutionResponse(
+            return (FitMatchProductResolutionResponse(
                 productID: nil,
                 intakeRequestID: nil,
                 catalogState: "new",
@@ -1952,10 +1994,10 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 authorityPersisted: false,
                 classification: Self.unresolvedClassification,
                 comparisonReady: false
-            )
+            ), nil)
         }
         let runtime = try Self.mapRuntime(exact)
-        return FitMatchProductResolutionResponse(
+        return (FitMatchProductResolutionResponse(
             productID: product.id,
             intakeRequestID: nil,
             catalogState: "current",
@@ -1963,29 +2005,31 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             authorityPersisted: true,
             classification: runtime.classification ?? Self.unresolvedClassification,
             comparisonReady: runtime.comparisonReady
-        )
+        ), runtime)
     }
 
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
         -> FitMatchProductObservationResponse {
         let client = try await authenticatedClient()
-        do {
-            return try await client.functions.invoke(
-                "product-observation",
-                options: FunctionInvokeOptions(body: request)
-            )
-        } catch let error as FunctionsError {
-            if case .httpError(let status, let data) = error,
-               status == 422,
-               let rejection = try? JSONDecoder().decode(
-                   FitMatchObservationRejectionResponse.self, from: data
-               ),
-               rejection.error == "observation_rejected",
-               let detail = rejection.detail?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !detail.isEmpty {
-                throw FitMatchSupabaseProductResolverError.observationRejected(detail: detail)
+        return try await timedDatabaseCall("edge.product-observation") {
+            do {
+                return try await client.functions.invoke(
+                    "product-observation",
+                    options: FunctionInvokeOptions(body: request)
+                )
+            } catch let error as FunctionsError {
+                if case .httpError(let status, let data) = error,
+                   status == 422,
+                   let rejection = try? JSONDecoder().decode(
+                       FitMatchObservationRejectionResponse.self, from: data
+                   ),
+                   rejection.error == "observation_rejected",
+                   let detail = rejection.detail?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !detail.isEmpty {
+                    throw FitMatchSupabaseProductResolverError.observationRejected(detail: detail)
+                }
+                throw error
             }
-            throw error
         }
     }
 
@@ -1997,13 +2041,14 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         -> FitMatchUpsertClosetItemResponse {
         let payload = try Self.closetCreationPayload(request)
         let client = try await authenticatedClient()
-        let response: VNextClosetMutationResponse = try await client
-            .rpc(
+        let response: VNextClosetMutationResponse = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_upsert_closet_item"
+        ) {
+            try await client.rpc(
                 "fitmatch_vnext_upsert_closet_item",
                 params: VNextJSONRequestParameters(pRequest: payload)
-            )
-            .execute()
-            .value
+            ).execute().value
+        }
         guard let itemID = response.itemID else {
             throw FitMatchSupabaseProductResolverError.invalidVNextResponse
         }
@@ -2017,18 +2062,23 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         _ request: FitMatchUpsertClosetItemRequest,
         closetItemID: UUID
     ) async throws -> FitMatchUpsertClosetItemResponse {
-        let payload = try Self.closetPayload(request)
+        // Product-linked rows must keep the same exact server-size snapshot
+        // contract as linked creation. Sending local canonical projections
+        // here can reject an otherwise unchanged row when the local cache is
+        // older than the selected server size.
+        let payload = try Self.closetUpdatePayload(request)
         let client = try await authenticatedClient()
-        let response: VNextClosetMutationResponse = try await client
-            .rpc(
+        let response: VNextClosetMutationResponse = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_update_closet_item"
+        ) {
+            try await client.rpc(
                 "fitmatch_vnext_update_closet_item",
                 params: VNextClosetUpdateParameters(
                     pClosetItemID: closetItemID,
                     pRequest: payload
                 )
-            )
-            .execute()
-            .value
+            ).execute().value
+        }
         guard response.closetItemID == closetItemID else {
             throw FitMatchSupabaseProductResolverError.invalidVNextResponse
         }
@@ -2040,10 +2090,11 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
 
     func listClosetItems() async throws -> FitMatchClosetItemsResponse {
         let client = try await authenticatedClient()
-        let items: [VNextClosetItemDTO] = try await client
-            .rpc("fitmatch_vnext_list_closet_items")
-            .execute()
-            .value
+        let items: [VNextClosetItemDTO] = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_list_closet_items"
+        ) {
+            try await client.rpc("fitmatch_vnext_list_closet_items").execute().value
+        }
         return FitMatchClosetItemsResponse(
             state: "ready",
             items: items.map(Self.mapClosetItem)
@@ -2173,17 +2224,18 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
     func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID) async throws
         -> FitMatchReferenceCandidatesResponse {
         let client = try await authenticatedClient()
-        let exact: VNextReferenceCandidatesDTO = try await client
-            .rpc(
+        let exact: VNextReferenceCandidatesDTO = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_find_reference_candidates"
+        ) {
+            try await client.rpc(
                 "fitmatch_vnext_find_reference_candidates",
                 params: VNextReferenceCandidatesParameters(
                     pTargetProductID: targetProductID,
                     pTargetVariantID: targetVariantID,
                     pRequestedGroupCode: nil
                 )
-            )
-            .execute()
-            .value
+            ).execute().value
+        }
         try FitMatchVNextContractValidator.validateCandidateEnvelope(
             exact, targetProductID: targetProductID, targetVariantID: targetVariantID
         )
@@ -2197,12 +2249,18 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             return try await findReferenceCandidates(targetProductID: targetProductID, targetVariantID: targetVariantID)
         }
         let client = try await authenticatedClient()
-        let exact: VNextReferenceCandidatesDTO = try await client.rpc(
-            "fitmatch_vnext_find_reference_candidates",
-            params: VNextReferenceCandidatesParameters(pTargetProductID: targetProductID,
-                                                       pTargetVariantID: targetVariantID,
-                                                       pRequestedGroupCode: requestedComparisonGroupCode)
-        ).execute().value
+        let exact: VNextReferenceCandidatesDTO = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_find_reference_candidates"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_find_reference_candidates",
+                params: VNextReferenceCandidatesParameters(
+                    pTargetProductID: targetProductID,
+                    pTargetVariantID: targetVariantID,
+                    pRequestedGroupCode: requestedComparisonGroupCode
+                )
+            ).execute().value
+        }
         try FitMatchVNextContractValidator.validateCandidateEnvelope(
             exact, targetProductID: targetProductID, targetVariantID: targetVariantID
         )
@@ -2226,8 +2284,10 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         manualExplicit: Bool
     ) async throws -> VNextEligibleCandidateSizesDTO {
         let client = try await authenticatedClient()
-        return try await client
-            .rpc(
+        return try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_eligible_candidate_sizes"
+        ) {
+            try await client.rpc(
                 "fitmatch_vnext_eligible_candidate_sizes",
                 params: VNextEligibleCandidateParameters(
                     pReferenceClosetItemID: referenceClosetItemID,
@@ -2236,9 +2296,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     pManualExplicit: manualExplicit,
                     pRequestedGroupCode: nil
                 )
-            )
-            .execute()
-            .value
+            ).execute().value
+        }
     }
 
     func eligibleCandidateSizes(referenceClosetItemID: UUID, targetProductID: UUID,
@@ -2249,12 +2308,20 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             return try await eligibleCandidateSizes(referenceClosetItemID: referenceClosetItemID, targetProductID: targetProductID, targetVariantID: targetVariantID, manualExplicit: manualExplicit)
         }
         let client = try await authenticatedClient()
-        let exact: VNextEligibleCandidateSizesDTO = try await client.rpc("fitmatch_vnext_eligible_candidate_sizes",
-            params: VNextEligibleCandidateParameters(pReferenceClosetItemID: referenceClosetItemID,
-                                                     pTargetProductID: targetProductID,
-                                                     pTargetVariantID: targetVariantID,
-                                                     pManualExplicit: manualExplicit,
-                                                     pRequestedGroupCode: requestedComparisonGroupCode)).execute().value
+        let exact: VNextEligibleCandidateSizesDTO = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_eligible_candidate_sizes"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_eligible_candidate_sizes",
+                params: VNextEligibleCandidateParameters(
+                    pReferenceClosetItemID: referenceClosetItemID,
+                    pTargetProductID: targetProductID,
+                    pTargetVariantID: targetVariantID,
+                    pManualExplicit: manualExplicit,
+                    pRequestedGroupCode: requestedComparisonGroupCode
+                )
+            ).execute().value
+        }
         guard exact.targetProductID == targetProductID,
               exact.targetVariantID == targetVariantID,
               exact.targetComparisonGroup?.groupCode == requestedComparisonGroupCode,
@@ -2274,8 +2341,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
         }
         let client = try await authenticatedClient()
-        return try await client
-            .rpc(
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_begin_comparison") {
+            try await client.rpc(
                 "fitmatch_vnext_begin_comparison",
                 params: VNextJSONRequestParameters(pRequest: VNextBeginComparisonPayload(
                     clientComparisonID: request.clientHistoryID,
@@ -2292,9 +2359,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                     personalOverrideRevision: request.personalOverrideRevision,
                     requestedComparisonGroupCode: request.requestedComparisonGroupCode
                 ))
-            )
-            .execute()
-            .value
+            ).execute().value
+        }
     }
 
     func completeComparison(_ request: FitMatchCompleteComparisonRequest) async throws
@@ -2307,24 +2373,25 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         payload: VNextComparisonCompletionPayload
     ) async throws -> VNextCompleteComparisonDTO {
         let client = try await authenticatedClient()
-        return try await client
-            .rpc(
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_complete_comparison") {
+            try await client.rpc(
                 "fitmatch_vnext_complete_comparison",
                 params: VNextCompleteComparisonParameters(
                     pComparisonID: comparisonID,
                     pResult: payload
                 )
-            )
-            .execute()
-            .value
+            ).execute().value
+        }
     }
 
     func fetchVNextComparisonHistory() async throws -> [VNextComparisonHistoryDTO] {
         let client = try await authenticatedClient()
-        return try await client
-            .rpc("fitmatch_vnext_comparison_history")
-            .execute()
-            .value
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_comparison_history") {
+            try await client
+                .rpc("fitmatch_vnext_comparison_history")
+                .execute()
+                .value
+        }
     }
 
     func hideVNextComparisonHistories(
@@ -2359,16 +2426,15 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         _ request: FitMatchProductResolutionRequest
     ) async throws -> VNextProductRuntimeDTO {
         let client = try await authenticatedClient()
-        return try await client
-            .rpc(
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_get_product_runtime") {
+            try await client.rpc(
                 "fitmatch_vnext_get_product_runtime",
                 params: VNextRuntimeParameters(
                     pSourceCode: request.source,
                     pSourceProductKey: request.externalProductID
                 )
-            )
-            .execute()
-            .value
+            ).execute().value
+        }
     }
 
     nonisolated private static let unresolvedClassification = FitMatchDatabaseClassification(
@@ -2570,7 +2636,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             closetClassificationOverride: try request.override.map {
                 try Self.mutationOverridePayload($0)
             },
-            comparisonGroupCode: request.comparisonGroupCode
+            comparisonGroupCode: request.comparisonGroupCode,
+            sourceObservationID: request.sourceObservationID
         )
     }
 
@@ -2585,6 +2652,17 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         return payload
     }
 
+    nonisolated private static func closetUpdatePayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> VNextClosetMutationPayload {
+        var payload = try closetPayload(
+            request,
+            serverSnapshot: request.productID != nil
+        )
+        if request.productID != nil { payload.useServerMeasurements = true }
+        return payload
+    }
+
     nonisolated static func encodedVNextClosetCreationPayload(
         _ request: FitMatchUpsertClosetItemRequest
     ) throws -> Data {
@@ -2595,6 +2673,12 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         _ request: FitMatchUpsertClosetItemRequest
     ) throws -> Data {
         try JSONEncoder().encode(try closetPayload(request))
+    }
+
+    nonisolated static func encodedVNextClosetUpdatePayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> Data {
+        try JSONEncoder().encode(try closetUpdatePayload(request))
     }
 
     nonisolated private static func mutationOverridePayload(

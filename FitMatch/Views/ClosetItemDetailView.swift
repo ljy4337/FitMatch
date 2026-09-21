@@ -157,7 +157,7 @@ struct ClosetItemDetailView: View {
 
                     HStack(spacing: 8) {
                         ClosetDetailChip(title: comparisonGroupDisplayName)
-                        ClosetDetailChip(title: item.sizeName)
+                        ClosetDetailChip(title: item.sizeName.fitMatchKoreanSizeDisplayName)
                         ClosetDetailChip(title: item.fitPreference.rawValue)
                     }
                 }
@@ -168,7 +168,7 @@ struct ClosetItemDetailView: View {
     private var quickSummaryCard: some View {
         HStack(spacing: 10) {
             ClosetSummaryTile(title: "비교 그룹", value: comparisonGroupDisplayName)
-            ClosetSummaryTile(title: "사이즈", value: item.sizeName)
+            ClosetSummaryTile(title: "사이즈", value: item.sizeName.fitMatchKoreanSizeDisplayName)
             ClosetSummaryTile(title: "핏", value: item.fitPreference.rawValue)
         }
     }

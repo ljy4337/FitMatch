@@ -28,6 +28,58 @@ struct FitMatchClosetTransportContractTests {
         #expect(item.measurementRecords[0].rawLabel == "총장")
     }
 
+    @Test func linkedCreationTransportsExactObservationIdentityOnlyWhenProvided() throws {
+        let item = manualItem()
+        let observationID = UUID()
+        let request = FitMatchUpsertClosetItemRequest(
+            clientItemID: item.id,
+            item: FitMatchClosetSyncCoordinator().payload(for: item),
+            productID: UUID(),
+            productVariantID: UUID(),
+            productSizeID: UUID(),
+            override: nil,
+            sourceObservationID: observationID
+        )
+
+        let json = try decodedJSON(
+            FitMatchSupabaseDomainClient.encodedVNextClosetCreationPayload(request)
+        )
+        #expect(json["source_observation_id"] as? String == observationID.uuidString)
+    }
+
+    @Test func linkedUpdateUsesTheSameServerSnapshotMeasurementContractAsCreation() throws {
+        let item = manualItem()
+        item.measurementRecords = [GarmentMeasurementRecord(
+            value: 77,
+            measurementCode: .unknown,
+            measurementCodeRawValue: "retailer_only",
+            displayKind: .unknown,
+            methodSource: "zara",
+            inputSource: .importedSizeChart,
+            mappingVersion: "retailer_raw_v1",
+            rawCode: "zone-name-raw",
+            rawLabel: "원본 항목",
+            evidenceLevel: .officialText,
+            semanticStatus: .unknownDefinition,
+            userFit: item
+        )]
+        let request = FitMatchUpsertClosetItemRequest(
+            clientItemID: item.id,
+            item: FitMatchClosetSyncCoordinator().payload(for: item),
+            productID: UUID(),
+            productVariantID: UUID(),
+            productSizeID: UUID(),
+            override: nil
+        )
+
+        let json = try decodedJSON(
+            FitMatchSupabaseDomainClient.encodedVNextClosetUpdatePayload(request)
+        )
+        #expect(json["use_server_measurements"] as? Bool == true)
+        #expect((json["measurements"] as? [[String: Any]])?.isEmpty == true)
+        #expect(item.measurementRecords[0].value == 77)
+    }
+
     @Test func uniqloDetailsRequestPreservesRequestedPriceGroup() throws {
         let url = try UniqloURLResolver.productDetailsURL(productID: "E485575", priceGroupCode: "01")
         #expect(url.path == "/kr/api/commerce/v5/ko/products/E485575-000/price-groups/01/details")

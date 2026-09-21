@@ -10,7 +10,6 @@ struct RecommendationHistoryView: View {
     @State private var sortOption: FitMatchHistorySortOption = .latest
     @State private var selectedScope: FitMatchHistoryScope = .all
     @State private var selectedCategory: ClothingCategory?
-    @State private var searchText = ""
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var closetRegistrationPreparation: FitMatchResultClosetRegistrationPreparation?
     @State private var preparingHistoryClosetIDs = Set<UUID>()
@@ -43,7 +42,6 @@ struct RecommendationHistoryView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
-        .searchable(text: $searchText, prompt: "브랜드 또는 상품명 검색")
         .navigationDestination(isPresented: Binding(
             get: { selectedHistoryIDForDetail != nil },
             set: { if !$0 { selectedHistoryIDForDetail = nil } }
@@ -98,9 +96,6 @@ struct RecommendationHistoryView: View {
             refreshFilteredHistories()
         }
         .onChange(of: selectedCategory) {
-            refreshFilteredHistories()
-        }
-        .onChange(of: searchText) {
             refreshFilteredHistories()
         }
     }
@@ -397,7 +392,7 @@ struct RecommendationHistoryView: View {
     private func makeFilteredHistories() -> [RecommendationHistory] {
         FitMatchHistoryPresentation.displayedHistories(
             from: histories,
-            searchText: searchText,
+            searchText: "",
             scope: selectedScope,
             category: selectedCategory,
             favoriteURLs: favoriteURLs,

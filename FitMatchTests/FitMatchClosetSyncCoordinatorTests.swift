@@ -160,6 +160,39 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(item.isRepresentative == true)
     }
 
+    @Test func unchangedClosetRowDoesNotIssueUpdateButMeaningfulLocalEditDoes() async throws {
+        let userID = UUID()
+        let record = remoteRecord(
+            clientItemID: UUID(),
+            productID: UUID(),
+            classificationSource: "manual_override"
+        )
+        let remote = ClosetSyncRemoteStub(items: [record])
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+
+        await coordinator.synchronize(userID: userID, modelContext: context)
+        await coordinator.synchronize(userID: userID, modelContext: context)
+
+        #expect(await remote.updateCallCount() == 0)
+        #expect(await remote.runtimeFetchCount() == 0)
+
+        let local = try #require(
+            try context.fetch(FetchDescriptor<UserFit>()).first { $0.id == record.clientItemID }
+        )
+        local.fitMemo = "수정한 착용감"
+        try context.save()
+
+        await coordinator.synchronize(userID: userID, modelContext: context)
+
+        #expect(await remote.updateCallCount() == 1)
+        #expect(await remote.capturedUpsertRequest()?.item.fitMemo == "수정한 착용감")
+    }
+
     @Test func ownedReferencePreservesAbsentLengthDespiteSharedProductLength() async throws {
         let productID = UUID()
         let record = remoteRecord(
@@ -1275,25 +1308,24 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(try context.fetch(FetchDescriptor<UserFit>()).map(\.id) == [itemB.clientItemID])
     }
 
-    /// RX-015: two same-account sync triggers overlap at the real remote
-    /// boundary. The second request must cause one production follow-up pass
-    /// that hydrates the newer snapshot, rather than being silently dropped.
-    @Test func overlappingSameAccountSyncHydratesNewestFollowUpSnapshot() async throws {
+    /// RX-015: two same-account triggers for the identical local snapshot
+    /// share the active pass. A remote-only later response is not an excuse
+    /// for an immediate duplicate list/update pass.
+    @Test func overlappingSameAccountSyncSharesUnchangedPass() async throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
         let defaultsName = "FitMatchClosetSyncCoordinatorTests.OverlappingSameAccount.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: defaultsName))
         defer { defaults.removePersistentDomain(forName: defaultsName) }
         let userID = UUID()
-        let newest = remoteRecord(
-            clientItemID: UUID(),
-            productID: UUID(),
-            classificationSource: "manual_override"
-        )
         let firstListGate = JourneyAsyncGate()
         let remote = ClosetSyncRemoteStub(
             items: [],
-            listResponses: [[], [], [], [], [newest]],
+            listResponses: [[], [], [], [], [remoteRecord(
+                clientItemID: UUID(),
+                productID: UUID(),
+                classificationSource: "manual_override"
+            )]],
             listGates: [1: firstListGate]
         )
         let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
@@ -1308,8 +1340,8 @@ struct FitMatchClosetSyncCoordinatorTests {
         await first.value
 
         #expect(coordinator.state == .synced)
-        #expect(try context.fetch(FetchDescriptor<UserFit>()).map(\.id) == [newest.clientItemID])
-        #expect(await remote.listCallCount() >= 5)
+        #expect(try context.fetch(FetchDescriptor<UserFit>()).isEmpty)
+        #expect(await remote.listCallCount() == 1)
     }
 
     /// RX-006: an owned cold cache remains the current user's presentation
@@ -1898,6 +1930,7 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
     let failsRuntime: Bool
     private let referenceScopes: [UUID: String]
     private var upsertRequest: FitMatchUpsertClosetItemRequest?
+    private var updateRequestCount = 0
     private var submittedObservationCount = 0
     private var fetchedRuntimeCount = 0
     private var referenceMutationLog: [ReferenceMutation] = []
@@ -1980,6 +2013,7 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
         closetItemID: UUID
     ) async throws -> FitMatchUpsertClosetItemResponse {
         upsertRequest = request
+        updateRequestCount += 1
         return FitMatchUpsertClosetItemResponse(
             closetItemID: closetItemID,
             clientItemID: request.clientItemID,
@@ -2034,6 +2068,7 @@ private actor ClosetSyncRemoteStub: FitMatchClosetRemoteServicing {
     }
 
     func capturedUpsertRequest() -> FitMatchUpsertClosetItemRequest? { upsertRequest }
+    func updateCallCount() -> Int { updateRequestCount }
     func observationSubmissionCount() -> Int { submittedObservationCount }
     func runtimeFetchCount() -> Int { fetchedRuntimeCount }
     func referenceMutations() -> [ReferenceMutation] { referenceMutationLog }

@@ -28,6 +28,8 @@ nonisolated enum FitMatchFailureCopy {
 protocol FitMatchServerAuthorityRemoteServicing: Sendable {
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductResolutionResponse
+    func resolveWithRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> (resolution: FitMatchProductResolutionResponse, runtime: FitMatchProductRuntimeResponse?)
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
         -> FitMatchProductObservationResponse
     func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
@@ -69,6 +71,11 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
 extension FitMatchSupabaseDomainClient: FitMatchServerAuthorityRemoteServicing {}
 
 extension FitMatchServerAuthorityRemoteServicing {
+    func resolveWithRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> (resolution: FitMatchProductResolutionResponse, runtime: FitMatchProductRuntimeResponse?) {
+        (try await resolve(request), nil)
+    }
+
     func classificationRecoveryOptions(productID: UUID) async throws
         -> VNextClassificationRecoveryContractDTO {
         throw FitMatchServerAuthorityError.classificationRecoveryUnavailable
@@ -151,6 +158,23 @@ nonisolated struct FitMatchServerProductAuthority: Equatable, Sendable {
     let productID: UUID
     let classification: FitMatchDatabaseClassification
     let runtime: FitMatchProductRuntimeResponse
+    /// Present only when this authority was built from the exact retailer
+    /// observation submitted for the current load.
+    let sourceObservationID: UUID?
+
+    init(
+        status: FitMatchServerProductAuthorityStatus,
+        productID: UUID,
+        classification: FitMatchDatabaseClassification,
+        runtime: FitMatchProductRuntimeResponse,
+        sourceObservationID: UUID? = nil
+    ) {
+        self.status = status
+        self.productID = productID
+        self.classification = classification
+        self.runtime = runtime
+        self.sourceObservationID = sourceObservationID
+    }
 
     var comparisonReady: Bool {
         status == .confirmed && runtime.comparisonReady
@@ -532,6 +556,11 @@ nonisolated enum FitMatchServerAuthorityError: LocalizedError, Equatable, Sendab
 }
 
 actor FitMatchServerAuthorityCoordinator {
+    private struct PromotedObservation: Sendable {
+        let productID: UUID
+        let observationID: UUID
+    }
+
     private let remote: any FitMatchServerAuthorityRemoteServicing
     private var submittedObservationKeys = Set<String>()
 
@@ -668,7 +697,8 @@ actor FitMatchServerAuthorityCoordinator {
         observation: FitMatchProductObservationRequest?
     ) async throws -> FitMatchServerProductAuthority {
         try Task.checkCancellation()
-        let resolution = try await remote.resolve(request)
+        let resolved = try await remote.resolveWithRuntime(request)
+        let resolution = resolved.resolution
         try Task.checkCancellation()
         _ = try classificationStatus(resolution.classification.status)
 
@@ -700,7 +730,7 @@ actor FitMatchServerAuthorityCoordinator {
                 request: request,
                 observation: observation,
                 expectedProductID: resolution.productID
-            )
+            ).productID
             didPromote = true
         default:
             throw FitMatchServerAuthorityError.unsupportedCatalogState(
@@ -709,7 +739,14 @@ actor FitMatchServerAuthorityCoordinator {
         }
 
         try Task.checkCancellation()
-        var runtime = try await remote.fetchProductRuntime(request)
+        // Reuse only the response obtained in this call, never a cross-request cache.
+        // Any promotion changes server state and requires a new authoritative read.
+        var runtime: FitMatchProductRuntimeResponse
+        if !didPromote, let resolvedRuntime = resolved.runtime {
+            runtime = resolvedRuntime
+        } else {
+            runtime = try await remote.fetchProductRuntime(request)
+        }
         try Task.checkCancellation()
         if runtime.runtimeState == "classification_promotion_required" {
             guard !didPromote else {
@@ -761,12 +798,13 @@ actor FitMatchServerAuthorityCoordinator {
     ) async throws -> FitMatchServerProductAuthority {
         do {
             try Task.checkCancellation()
-            let productID = try await promote(
+            let promotion = try await promote(
                 request: request,
                 observation: observation,
                 expectedProductID: nil,
                 diagnosticTraceID: diagnosticTraceID
             )
+            let productID = promotion.productID
 #if DEBUG
             FitMatchDebugLogger.flow(
                 traceID: diagnosticTraceID,
@@ -809,7 +847,8 @@ actor FitMatchServerAuthorityCoordinator {
             let authority = try validatedAuthority(
                 runtime,
                 request: request,
-                expectedProductID: productID
+                expectedProductID: productID,
+                sourceObservationID: promotion.observationID
             )
 #if DEBUG
             FitMatchDebugLogger.flow(
@@ -864,11 +903,35 @@ actor FitMatchServerAuthorityCoordinator {
         referenceObservation: FitMatchProductObservationRequest? = nil,
         requestedComparisonGroupCode: String? = nil
     ) async throws -> FitMatchServerReferenceAuthorization {
+        let authorizationStartedAt = Date()
+        defer {
+#if DEBUG
+            FitMatchDebugLogger.duration(
+                stage: "선택 옷 서버 허가 준비",
+                startedAt: authorizationStartedAt,
+                state: "종료"
+            )
+#endif
+        }
         try Task.checkCancellation()
-        var target = try await resolveProductAuthority(
+        // The current Closet receipt is independent of target/reference
+        // authority resolution. Start the read now, but keep every identity
+        // and policy check below exactly where it was before candidates are
+        // requested.
+        async let targetAuthority = resolveProductAuthority(
             request: targetRequest,
             observation: targetObservation
         )
+        async let closetReceipt = remote.listClosetItems()
+        async let resolvedReferenceAuthorityTask: FitMatchServerProductAuthority? = {
+            guard let referenceRequest else { return nil }
+            return try await resolveProductAuthority(
+                request: referenceRequest,
+                observation: referenceObservation
+            )
+        }()
+
+        var target = try await targetAuthority
         try Task.checkCancellation()
 
         if target.status == .confirmed,
@@ -879,20 +942,10 @@ actor FitMatchServerAuthorityCoordinator {
             )
         }
 
-        let resolvedReference: FitMatchServerProductAuthority?
-        if let referenceRequest {
-            try Task.checkCancellation()
-            resolvedReference = try await resolveProductAuthority(
-                request: referenceRequest,
-                observation: referenceObservation
-            )
-            try Task.checkCancellation()
-        } else {
-            resolvedReference = nil
-        }
-
+        let resolvedReference = try await resolvedReferenceAuthorityTask
         try Task.checkCancellation()
-        let closet = try await remote.listClosetItems()
+
+        let closet = try await closetReceipt
         try Task.checkCancellation()
         guard closet.state == "ready" else {
             throw FitMatchServerAuthorityError.closetRuntimeUnavailable(closet.state)
@@ -1184,7 +1237,18 @@ actor FitMatchServerAuthorityCoordinator {
         localClientItemIDs: Set<UUID>? = nil,
         requestedComparisonGroupCode: String? = nil
     ) async throws -> FitMatchServerReferenceSelectionPlan {
-        let diagnosticTraceID = UUID()
+        let diagnosticTraceID = FitMatchRequestTrace.context?.id ?? UUID()
+        let candidateStartedAt = Date()
+        defer {
+#if DEBUG
+            FitMatchDebugLogger.duration(
+                traceID: diagnosticTraceID,
+                stage: "상품 진입→후보 준비",
+                startedAt: candidateStartedAt,
+                state: "종료"
+            )
+#endif
+        }
 #if DEBUG
         FitMatchDebugLogger.flow(
             traceID: diagnosticTraceID,
@@ -1197,10 +1261,12 @@ actor FitMatchServerAuthorityCoordinator {
         )
 #endif
         try Task.checkCancellation()
-        let target = try await resolveProductAuthority(
+        async let targetAuthority = resolveProductAuthority(
             request: targetRequest,
             observation: targetObservation
         )
+        async let closetReceipt = remote.listClosetItems()
+        let target = try await targetAuthority
         try Task.checkCancellation()
         guard target.status != .notComparable else {
             throw FitMatchServerAuthorityError.targetClassificationRequired
@@ -1214,8 +1280,7 @@ actor FitMatchServerAuthorityCoordinator {
             )
         }
 
-        try Task.checkCancellation()
-        let closet = try await remote.listClosetItems()
+        let closet = try await closetReceipt
         try Task.checkCancellation()
 #if DEBUG
         FitMatchDebugLogger.flow(
@@ -1471,9 +1536,21 @@ actor FitMatchServerAuthorityCoordinator {
         _ authorization: FitMatchServerReferenceAuthorization,
         clientHistoryID: UUID = UUID()
     ) async throws -> FitMatchServerComparisonPermit {
+        let diagnosticTraceID = FitMatchRequestTrace.context?.id ?? clientHistoryID
+        let beginStartedAt = Date()
+        defer {
+#if DEBUG
+            FitMatchDebugLogger.duration(
+                traceID: diagnosticTraceID,
+                stage: "내 옷 선택→비교 시작",
+                startedAt: beginStartedAt,
+                state: "종료"
+            )
+#endif
+        }
 #if DEBUG
         FitMatchDebugLogger.flow(
-            traceID: clientHistoryID,
+            traceID: diagnosticTraceID,
             stage: "비교 시작",
             state: "요청",
             fields: [
@@ -1509,7 +1586,7 @@ actor FitMatchServerAuthorityCoordinator {
             try Task.checkCancellation()
 #if DEBUG
             FitMatchDebugLogger.flow(
-                traceID: clientHistoryID,
+                traceID: diagnosticTraceID,
                 stage: "비교 가능 사이즈 검증",
                 state: "서버응답",
                 fields: [
@@ -1564,7 +1641,7 @@ actor FitMatchServerAuthorityCoordinator {
         try Task.checkCancellation()
 #if DEBUG
         FitMatchDebugLogger.flow(
-            traceID: clientHistoryID,
+            traceID: diagnosticTraceID,
             stage: "비교 시작",
             state: "서버응답",
             fields: [
@@ -1668,9 +1745,21 @@ actor FitMatchServerAuthorityCoordinator {
         permit: FitMatchServerComparisonPermit,
         analysis: VNextComparisonBatchAnalysis
     ) async throws -> VNextCompleteComparisonDTO {
+        let diagnosticTraceID = FitMatchRequestTrace.context?.id ?? permit.runID
+        let completionStartedAt = Date()
+        defer {
+#if DEBUG
+            FitMatchDebugLogger.duration(
+                traceID: diagnosticTraceID,
+                stage: "비교 결과 저장",
+                startedAt: completionStartedAt,
+                state: "종료"
+            )
+#endif
+        }
 #if DEBUG
         FitMatchDebugLogger.flow(
-            traceID: permit.runID,
+            traceID: diagnosticTraceID,
             stage: "비교 결과 저장",
             state: "요청",
             fields: [
@@ -1697,7 +1786,7 @@ actor FitMatchServerAuthorityCoordinator {
         try Task.checkCancellation()
 #if DEBUG
         FitMatchDebugLogger.flow(
-            traceID: permit.runID,
+            traceID: diagnosticTraceID,
             stage: "비교 결과 저장",
             state: "서버응답",
             fields: [
@@ -1822,7 +1911,7 @@ actor FitMatchServerAuthorityCoordinator {
         observation: FitMatchProductObservationRequest?,
         expectedProductID: UUID?,
         diagnosticTraceID: UUID? = nil
-    ) async throws -> UUID {
+    ) async throws -> PromotedObservation {
         try Task.checkCancellation()
         guard let observation else {
             throw FitMatchServerAuthorityError.missingObservationForPromotion
@@ -1877,7 +1966,10 @@ actor FitMatchServerAuthorityCoordinator {
             throw FitMatchServerAuthorityError.promotedProductMismatch
         }
         submittedObservationKeys.insert(observationKey(observation))
-        return productID
+        return PromotedObservation(
+            productID: productID,
+            observationID: response.observation.observationID
+        )
     }
 
     /// A lost Edge response can happen after the database has already accepted
@@ -1979,7 +2071,8 @@ actor FitMatchServerAuthorityCoordinator {
     private func validatedAuthority(
         _ runtime: FitMatchProductRuntimeResponse,
         request: FitMatchProductResolutionRequest,
-        expectedProductID: UUID?
+        expectedProductID: UUID?,
+        sourceObservationID: UUID? = nil
     ) throws -> FitMatchServerProductAuthority {
         if let expectedProductID, runtime.product.productID != expectedProductID {
             throw FitMatchServerAuthorityError.promotedProductMismatch
@@ -2047,7 +2140,8 @@ actor FitMatchServerAuthorityCoordinator {
             status: status,
             productID: runtime.product.productID,
             classification: classification,
-            runtime: runtime
+            runtime: runtime,
+            sourceObservationID: sourceObservationID
         )
     }
 

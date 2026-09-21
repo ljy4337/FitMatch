@@ -879,6 +879,7 @@ struct AddComparedProductToClosetSheet: View {
             comparisonGroupCode: didExplicitlyChangeComparisonGroup
                 ? selectedComparisonGroup?.rawValue
                 : nil,
+            sourceObservationID: serverRegistrationContext?.sourceObservationID,
             isRepresentative: false,
             didExplicitlyChangeClassification: didExplicitlyChangeClassification,
             didExplicitlyChangeAudience: didExplicitlyChangeAudience,
@@ -1453,6 +1454,6 @@ private extension String {
             .last
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             ?? value
-        return SizeTokenNormalizer.displayName(for: finalComponent)
+        return SizeTokenNormalizer.koreanDisplayName(for: finalComponent)
     }
 }

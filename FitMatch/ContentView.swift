@@ -273,12 +273,9 @@ struct ContentView: View {
     private var closetSyncTaskID: String {
         guard let userID = signedInUserID else { return "signed-out" }
         let preparedOwner = localCachePreparedForUserID?.uuidString ?? "unprepared"
-        let localRevision = activeUserFits
-            .sorted { $0.id.uuidString < $1.id.uuidString }
-            .map {
-                "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970):\($0.isRepresentative)"
-            }
-            .joined(separator: "|")
+        let localRevision = closetSync.synchronizationTaskFingerprint(
+            for: activeUserFits
+        )
         return "\(userID.uuidString)|\(hasFinishedSplash)|\(preparedOwner)|\(localRevision)"
     }
 

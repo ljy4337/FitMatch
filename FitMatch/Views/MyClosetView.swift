@@ -597,7 +597,7 @@ private struct ClosetItemCard: View {
                             .lineLimit(2)
                             .truncationMode(.tail)
 
-                        Text("\(item.comparisonGroup?.displayName ?? "미지정") / \(item.sizeName)")
+                        Text("\(item.comparisonGroup?.displayName ?? "미지정") / \(item.sizeName.fitMatchKoreanSizeDisplayName)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -843,7 +843,7 @@ private struct ClosetGridCard: View {
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("\(item.sizeName) · \(item.comparisonGroup?.displayName ?? "미지정")")
+                    Text("\(item.sizeName.fitMatchKoreanSizeDisplayName) · \(item.comparisonGroup?.displayName ?? "미지정")")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)

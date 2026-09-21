@@ -100,9 +100,17 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
     private var activeUserID: UUID?
     private var accountGeneration = UUID()
     private var isSynchronizing = false
+    private var activeSyncUserID: UUID?
+    private var activeSyncFingerprint: String?
     private var needsAnotherPass = false
     private var pendingSyncUserID: UUID?
     private var pendingSyncContext: ModelContext?
+    private var pendingSyncFingerprint: String?
+    /// A deterministic local payload rejection is not made transient merely
+    /// because ContentView re-renders. Keep the unsaved local row intact and
+    /// retry only after its meaningful content changes (or an explicit retry
+    /// clears this in-memory guard).
+    private var blockedMutationFingerprints: [UUID: String] = [:]
     private var remoteItemsByClientID: [UUID: FitMatchClosetItemRecord] = [:]
     /// A user-triggered linked edit has already reached the update RPC.  Keep
     /// its exact request in memory until the list receipt is projected so a
@@ -144,6 +152,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         acceptedLinkedEditReceipts.removeAll()
         pendingSyncUserID = nil
         pendingSyncContext = nil
+        pendingSyncFingerprint = nil
+        activeSyncUserID = nil
+        activeSyncFingerprint = nil
+        blockedMutationFingerprints.removeAll()
         needsAnotherPass = false
         if userID == nil {
             state = .idle
@@ -152,20 +164,53 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
     }
 
     func synchronize(userID: UUID, modelContext: ModelContext) async {
+        if FitMatchRequestTrace.context == nil {
+            let trace = FitMatchRequestTrace.Context(
+                id: UUID(),
+                origin: .backgroundClosetSync
+            )
+            await FitMatchRequestTrace.$context.withValue(trace) {
+                await synchronize(userID: userID, modelContext: modelContext)
+            }
+            return
+        }
         // ContentView cancels its old account-scoped task on session changes.
         // Do not let a cancellation that has already arrived reclaim cache
         // ownership for the outgoing account.
         guard !Task.isCancelled else { return }
         prepareForAuthenticatedUser(userID)
+        let requestedFingerprint = try? synchronizationFingerprint(
+            in: modelContext
+        )
         if isSynchronizing {
-            needsAnotherPass = true
-            pendingSyncUserID = userID
-            pendingSyncContext = modelContext
+            // A second task for the same semantic local state shares the
+            // in-flight pass. Only a changed snapshot or account transition
+            // asks for another pass after the current server receipt.
+            if userID != activeSyncUserID || requestedFingerprint != activeSyncFingerprint {
+                needsAnotherPass = true
+                pendingSyncUserID = userID
+                pendingSyncContext = modelContext
+                pendingSyncFingerprint = requestedFingerprint
+            }
             return
         }
 
         isSynchronizing = true
-        defer { isSynchronizing = false }
+        activeSyncUserID = userID
+        activeSyncFingerprint = requestedFingerprint
+        let syncStartedAt = Date()
+        defer {
+            isSynchronizing = false
+            activeSyncUserID = nil
+            activeSyncFingerprint = nil
+#if DEBUG
+            FitMatchDebugLogger.duration(
+                stage: "백그라운드 옷장 동기화",
+                startedAt: syncStartedAt,
+                state: String(describing: state)
+            )
+#endif
+        }
 
         var passUserID = userID
         while true {
@@ -180,13 +225,22 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             // has already made the new account presentable.
             if let pendingSyncUserID {
                 passUserID = pendingSyncUserID
+                activeSyncUserID = passUserID
+                activeSyncFingerprint = pendingSyncFingerprint
+                    ?? (try? synchronizationFingerprint(in: modelContext))
+                pendingSyncFingerprint = nil
                 continue
             }
             if let activeUserID, activeUserID != passUserID {
                 passUserID = activeUserID
+                activeSyncUserID = passUserID
+                activeSyncFingerprint = try? synchronizationFingerprint(in: modelContext)
                 continue
             }
             if needsAnotherPass {
+                activeSyncFingerprint = pendingSyncFingerprint
+                    ?? (try? synchronizationFingerprint(in: modelContext))
+                pendingSyncFingerprint = nil
                 continue
             }
             break
@@ -281,6 +335,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         needsAnotherPass = false
         pendingSyncUserID = nil
         pendingSyncContext = nil
+        pendingSyncFingerprint = nil
+        activeSyncUserID = nil
+        activeSyncFingerprint = nil
+        blockedMutationFingerprints.removeAll()
         state = .idle
         lastErrorMessage = nil
     }
@@ -930,15 +988,25 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             }
 
             remoteItemsByClientID = try validatedClosetIndex(remoteResponse)
-            try await flushPendingDeletes(userID: userID, modelContext: modelContext)
+            let deletedPendingRows = try await flushPendingDeletes(
+                userID: userID,
+                modelContext: modelContext
+            )
             guard isCurrentSyncUser(userID) else { return }
-            remoteResponse = try await remote.listClosetItems()
-            guard isCurrentSyncUser(userID) else { return }
-            remoteItemsByClientID = try validatedClosetIndex(remoteResponse)
+            if deletedPendingRows {
+                // Deletion is the one mutation that happened before local
+                // reconciliation. Its current receipt is required; otherwise
+                // retain the first list response for this pass.
+                remoteResponse = try await remote.listClosetItems()
+                guard isCurrentSyncUser(userID) else { return }
+                remoteItemsByClientID = try validatedClosetIndex(remoteResponse)
+            }
 
             let localItems = try modelContext.fetch(FetchDescriptor<UserFit>())
                 .filter(\.isActiveClosetItem)
             var failedUpsert = false
+            var blockedDeterministicMutation = false
+            var didMutateCloset = false
             var failedAutomaticAuthorityValidationIDs = Set<UUID>()
             for localItem in localItems {
                 guard isCurrentSyncUser(userID) else { return }
@@ -972,19 +1040,36 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                     }
                 }
 
+                guard shouldUpload(
+                    localItem,
+                    remoteItem: remoteItemsByClientID[localItem.id],
+                    userID: userID
+                ) else {
+                    if blockedMutationFingerprints[localItem.id]
+                        == mutationFingerprint(for: localItem) {
+                        failedUpsert = true
+                        blockedDeterministicMutation = true
+                    }
+                    continue
+                }
+
+                let fingerprint = mutationFingerprint(for: localItem)
                 do {
                     let request = try await makeUpsertRequest(for: localItem, userID: userID)
                     guard isCurrentSyncUser(userID) else { return }
                     if let existing = remoteItemsByClientID[localItem.id] {
+                        didMutateCloset = true
                         _ = try await remote.updateClosetItem(
                             request,
                             closetItemID: existing.closetItemID
                         )
                         guard isCurrentSyncUser(userID) else { return }
                     } else {
+                        didMutateCloset = true
                         _ = try await remote.upsertClosetItem(request)
                         guard isCurrentSyncUser(userID) else { return }
                     }
+                    blockedMutationFingerprints.removeValue(forKey: localItem.id)
                     // vNext upsert/update carries a nested
                     // `closet_classification_override` atomically. Generic
                     // sync must never issue a second override mutation or
@@ -994,6 +1079,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 } catch {
                     guard isCurrentSyncUser(userID) else { return }
                     failedUpsert = true
+                    if isDeterministicMutationContractError(error) {
+                        blockedMutationFingerprints[localItem.id] = fingerprint
+                        blockedDeterministicMutation = true
+                    }
                     if localItem.sourceProduct != nil,
                        localItem.classificationAuthorityProvenance == .serverUnavailable {
                         failedAutomaticAuthorityValidationIDs.insert(localItem.id)
@@ -1004,22 +1093,35 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 }
             }
 
-            // Refresh IDs after creates/updates, then reconcile exact item
-            // deltas. Server set(true) remains responsible for atomic
-            // same-tuple replacement.
-            let beforeReference = try await remote.listClosetItems()
-            guard isCurrentSyncUser(userID) else { return }
-            guard beforeReference.state == "ready" else {
-                throw FitMatchSupabaseProductResolverError.authenticationRequired
+            // Only mutations require an intervening authoritative receipt.
+            // On an unchanged pass the first list result is already the exact
+            // input for reference reconciliation and final hydration.
+            let beforeReference: FitMatchClosetItemsResponse
+            if didMutateCloset {
+                beforeReference = try await remote.listClosetItems()
+                guard isCurrentSyncUser(userID) else { return }
+                guard beforeReference.state == "ready" else {
+                    throw FitMatchSupabaseProductResolverError.authenticationRequired
+                }
+                remoteItemsByClientID = try validatedClosetIndex(beforeReference)
+            } else {
+                beforeReference = remoteResponse
             }
-            remoteItemsByClientID = try validatedClosetIndex(beforeReference)
-            try await synchronizeReferenceAuthority(localItems: localItems, userID: userID)
+            let didMutateReference = try await synchronizeReferenceAuthority(
+                localItems: localItems,
+                userID: userID
+            )
             guard isCurrentSyncUser(userID) else { return }
 
-            let authoritative = try await remote.listClosetItems()
-            guard isCurrentSyncUser(userID) else { return }
-            guard authoritative.state == "ready" else {
-                throw FitMatchSupabaseProductResolverError.authenticationRequired
+            let authoritative: FitMatchClosetItemsResponse
+            if didMutateCloset || didMutateReference {
+                authoritative = try await remote.listClosetItems()
+                guard isCurrentSyncUser(userID) else { return }
+                guard authoritative.state == "ready" else {
+                    throw FitMatchSupabaseProductResolverError.authenticationRequired
+                }
+            } else {
+                authoritative = beforeReference
             }
             remoteItemsByClientID = try validatedClosetIndex(authoritative)
 
@@ -1082,7 +1184,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
 
             if failedUpsert || hasUnacknowledgedSizeEdit {
                 state = .pendingRetry
-                lastErrorMessage = hasUnacknowledgedSizeEdit
+                lastErrorMessage = blockedDeterministicMutation
+                    ? "일부 옷장 변경사항이 서버 계약과 맞지 않아 저장하지 못했습니다. 입력은 유지됩니다. 내용을 수정한 뒤 다시 저장해 주세요."
+                    : hasUnacknowledgedSizeEdit
                     ? "변경한 사이즈의 서버 확인을 기다리고 있습니다. 자동으로 다시 시도합니다."
                     : "일부 옷장 변경사항을 서버에 저장하지 못했습니다. 자동으로 다시 시도합니다."
             } else {
@@ -1104,8 +1208,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
     private func synchronizeReferenceAuthority(
         localItems: [UserFit],
         userID: UUID
-    ) async throws {
-        guard isCurrentSyncUser(userID) else { return }
+    ) async throws -> Bool {
+        guard isCurrentSyncUser(userID) else { return false }
         let localByClientID = Dictionary(
             uniqueKeysWithValues: localItems.map { ($0.id, $0) }
         )
@@ -1113,20 +1217,22 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             item.isRepresentative
                 && remoteItemsByClientID[item.id]?.isReference == false
         }.sorted { $0.id.uuidString < $1.id.uuidString }
+        var didMutateReference = false
 
         for item in setCandidates {
-            guard isCurrentSyncUser(userID) else { return }
+            guard isCurrentSyncUser(userID) else { return false }
             guard let remoteItem = remoteItemsByClientID[item.id] else { continue }
             _ = try await remote.setClosetReference(
                 closetItemID: remoteItem.closetItemID,
                 isReference: true
             )
-            guard isCurrentSyncUser(userID) else { return }
+            didMutateReference = true
+            guard isCurrentSyncUser(userID) else { return false }
         }
 
         if !setCandidates.isEmpty {
             let refreshed = try await remote.listClosetItems()
-            guard isCurrentSyncUser(userID) else { return }
+            guard isCurrentSyncUser(userID) else { return false }
             guard refreshed.state == "ready" else {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
@@ -1144,15 +1250,17 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         }.sorted { $0.clientItemID.uuidString < $1.clientItemID.uuidString }
 
         for remoteItem in unsetCandidates {
-            guard isCurrentSyncUser(userID) else { return }
+            guard isCurrentSyncUser(userID) else { return false }
             // A remote-only row is absent from localByClientID and is therefore
             // hydration input, never an implicit first-login unset intent.
             _ = try await remote.setClosetReference(
                 closetItemID: remoteItem.closetItemID,
                 isReference: false
             )
-            guard isCurrentSyncUser(userID) else { return }
+            didMutateReference = true
+            guard isCurrentSyncUser(userID) else { return false }
         }
+        return didMutateReference
     }
 
     @discardableResult
@@ -1204,13 +1312,14 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         return try FitMatchVNextContractValidator.uniqueIdentityIndex(response.items, id: { $0.clientItemID })
     }
 
-    private func flushPendingDeletes(userID: UUID, modelContext: ModelContext) async throws {
-        guard isCurrentSyncUser(userID) else { return }
+    private func flushPendingDeletes(userID: UUID, modelContext: ModelContext) async throws -> Bool {
+        guard isCurrentSyncUser(userID) else { return false }
         var pending = pendingDeleteIDs(for: userID)
-        guard !pending.isEmpty else { return }
+        guard !pending.isEmpty else { return false }
+        var didDelete = false
 
         for clientItemID in pending {
-            guard isCurrentSyncUser(userID) else { return }
+            guard isCurrentSyncUser(userID) else { return false }
             try await FitMatchClosetDeletionTransaction.run(
                 isCurrent: { self.isCurrentSyncUser(userID) },
                 prepare: {},
@@ -1229,6 +1338,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                     try modelContext.save()
                 }
             )
+            didDelete = true
             pending.remove(clientItemID)
             remoteItemsByClientID.removeValue(forKey: clientItemID)
             acceptedLinkedEditReceipts.removeValue(forKey: clientItemID)
@@ -1238,8 +1348,154 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 defaults: defaults
             )
         }
-        guard isCurrentSyncUser(userID) else { return }
+        guard isCurrentSyncUser(userID) else { return false }
         storePendingDeleteIDs(pending, for: userID)
+        return didDelete
+    }
+
+    /// ContentView uses this value as a task identity. It deliberately
+    /// excludes timestamps: an authoritative read-back may update dates
+    /// without creating a user mutation, while a real local edit changes one
+    /// of the values below and schedules a single follow-up pass.
+    func synchronizationTaskFingerprint(for items: [UserFit]) -> String {
+        items
+            .filter(\.isActiveClosetItem)
+            .sorted { $0.id.uuidString < $1.id.uuidString }
+            .map { "\($0.id.uuidString):\(mutationFingerprint(for: $0))" }
+            .joined(separator: "|")
+    }
+
+    /// Clears the in-memory deterministic-rejection guard for a user-initiated
+    /// retry control. Normal ContentView refreshes do not call this, so an
+    /// unchanged contract failure cannot produce an endless update loop.
+    func retryBlockedMutations() {
+        blockedMutationFingerprints.removeAll()
+    }
+
+    private func synchronizationFingerprint(in modelContext: ModelContext) throws -> String {
+        synchronizationTaskFingerprint(
+            for: try modelContext.fetch(FetchDescriptor<UserFit>())
+        )
+    }
+
+    private func shouldUpload(
+        _ item: UserFit,
+        remoteItem: FitMatchClosetItemRecord?,
+        userID: UUID
+    ) -> Bool {
+        if validPendingSizeEdit(for: item, userID: userID) != nil {
+            return true
+        }
+        guard let remoteItem else { return true }
+        let fingerprint = mutationFingerprint(for: item)
+        guard blockedMutationFingerprints[item.id] != fingerprint else {
+            return false
+        }
+        return !matchesRemoteMutationContent(item, remoteItem: remoteItem)
+    }
+
+    /// This comparison intentionally models only client-owned mutation data.
+    /// Product-linked canonical values, server group authority and runtime
+    /// classification belong to the remote receipt and must not force a new
+    /// update merely because a local projection is older or uses a different
+    /// display representation.
+    private func matchesRemoteMutationContent(
+        _ item: UserFit,
+        remoteItem: FitMatchClosetItemRecord
+    ) -> Bool {
+        let payload = payload(for: item)
+        guard payload.productName == remoteItem.productName,
+              payload.brand == remoteItem.brand,
+              payload.sizeName == remoteItem.sizeName,
+              FitMatchCanonicalAudience.code(from: payload.genderCode)
+                == FitMatchCanonicalAudience.code(from: remoteItem.genderCode),
+              payload.source == remoteItem.source,
+              payload.sourceCategoryPath == remoteItem.sourceCategoryPath,
+              payload.productURL == remoteItem.productURL,
+              payload.imageURL == remoteItem.imageURL,
+              payload.fitMemo == remoteItem.fitMemo,
+              payload.fitPreferenceCode == remoteItem.fitPreferenceCode,
+              payload.satisfaction == remoteItem.satisfaction else {
+            return false
+        }
+
+        if item.classificationAuthorityProvenance == .userExplicit {
+            guard payload.categoryCode == remoteItem.categoryCode,
+                  payload.detailCode == remoteItem.detailCode,
+                  payload.familyCode == remoteItem.familyCode,
+                  payload.lengthCode == remoteItem.lengthCode,
+                  payload.bodyLengthCode == remoteItem.bodyLengthCode else {
+                return false
+            }
+        }
+
+        // A manually entered row owns its canonical records. Linked rows use
+        // the exact server product-size snapshot and therefore exclude local
+        // canonical/raw projections from this equality check.
+        guard remoteItem.productID == nil else { return true }
+        return payload.measurements == remoteItem.measurements
+            && measurementRecordFingerprint(payload.measurementRecords)
+                == measurementRecordFingerprint(remoteItem.measurementRecords)
+    }
+
+    private func mutationFingerprint(for item: UserFit) -> String {
+        let payload = payload(for: item)
+        let base = [
+            payload.productName,
+            payload.brand ?? "",
+            payload.sizeName ?? "",
+            payload.genderCode,
+            payload.source,
+            payload.sourceCategoryPath ?? "",
+            payload.productURL ?? "",
+            payload.imageURL ?? "",
+            payload.fitMemo,
+            payload.fitPreferenceCode,
+            String(payload.satisfaction),
+            item.classificationAuthorityProvenance == .userExplicit
+                ? [
+                    payload.categoryCode,
+                    payload.detailCode,
+                    payload.familyCode ?? "",
+                    payload.lengthCode ?? "",
+                    payload.bodyLengthCode ?? ""
+                ].joined(separator: "~")
+                : "server_authority"
+        ]
+        guard item.sourceProduct == nil else {
+            return base.joined(separator: "|")
+        }
+        let measurements = payload.measurements
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key)=\($0.value)" }
+            .joined(separator: "~")
+        return (base + [measurements, measurementRecordFingerprint(payload.measurementRecords)])
+            .joined(separator: "|")
+    }
+
+    private func measurementRecordFingerprint(
+        _ records: [FitMatchClosetMeasurementRecordPayload]
+    ) -> String {
+        records.map { record in
+            [
+                String(record.value), record.unit, record.measurementCode,
+                record.displayKind, record.methodSource, record.methodProfile ?? "",
+                record.inputSource, record.standardVersion ?? "", record.mappingVersion,
+                record.rawCode ?? "", record.rawLabel, record.rawInfo ?? "",
+                record.rawValueText ?? "", record.evidenceLevel, record.semanticStatus
+            ].joined(separator: "~")
+        }
+        .sorted()
+        .joined(separator: "|")
+    }
+
+    private func isDeterministicMutationContractError(_ error: Error) -> Bool {
+        if error is FitMatchClosetPayloadContractError {
+            return true
+        }
+        let message = error.localizedDescription.lowercased()
+        return message.contains("linked closet snapshot requires canonical measurements")
+            || message.contains("requires canonical measurements")
     }
 
     private func makeUpsertRequest(

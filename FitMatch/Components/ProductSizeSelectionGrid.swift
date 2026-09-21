@@ -31,7 +31,7 @@ struct ProductSizeSelectionGrid: View {
             ProductSizeSelectionOption(
                 id: size.id,
                 name: size.name,
-                displayName: size.name.fitMatchDisplaySizeName
+                displayName: size.name.fitMatchKoreanSizeDisplayName
             )
         }
     }
@@ -89,5 +89,9 @@ extension String {
             .last
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             ?? value
+    }
+
+    var fitMatchKoreanSizeDisplayName: String {
+        SizeTokenNormalizer.koreanDisplayName(for: fitMatchDisplaySizeName)
     }
 }

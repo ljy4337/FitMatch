@@ -323,7 +323,20 @@ final class ShoppingProductViewModel: ObservableObject {
     func loadProductInfoFromURL(
         onRetailerProductLoaded: ((ShoppingProductViewModel) -> Void)? = nil
     ) async -> Bool {
-        let loadID = UUID()
+        if FitMatchRequestTrace.context == nil {
+            let trace = FitMatchRequestTrace.Context(
+                id: UUID(),
+                origin: .productLoad
+            )
+            return await FitMatchRequestTrace.$context.withValue(trace) {
+                await loadProductInfoFromURL(
+                    onRetailerProductLoaded: onRetailerProductLoaded
+                )
+            }
+        }
+        let loadID = FitMatchRequestTrace.context?.id ?? UUID()
+        let startedAt = Date()
+        var completionState = "취소"
 #if DEBUG
         FitMatchDebugLogger.flow(
             traceID: loadID,
@@ -361,6 +374,14 @@ final class ShoppingProductViewModel: ObservableObject {
                 activeLoadID = nil
                 isLoadingProductInfo = false
             }
+#if DEBUG
+            FitMatchDebugLogger.duration(
+                traceID: loadID,
+                stage: "상품 링크 불러오기",
+                startedAt: startedAt,
+                state: completionState
+            )
+#endif
         }
 
         do {
@@ -405,6 +426,7 @@ final class ShoppingProductViewModel: ObservableObject {
             // signal: parser facts live in hasLoadedProductInfo, while runtime
             // comparison readiness lives in serverComparisonReadiness. Link
             // Closet registration consumes those explicit states directly.
+            completionState = "완료"
             return hasConfirmedComparisonAuthority
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
@@ -434,6 +456,7 @@ final class ShoppingProductViewModel: ObservableObject {
             } else {
                 errorMessage = partialError.productInfo.parserNotice ?? partialError.errorDescription
             }
+            completionState = "부분완료"
             return false
         } catch {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
@@ -456,6 +479,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 )
             )
             errorMessage = productLoadErrorMessage(for: error)
+            completionState = "실패"
             return false
         }
     }
@@ -1310,6 +1334,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 categoryCode: authority.classification.categoryCode,
                 detailCode: Self.closetDetailCode(for: authority.classification),
                 comparisonGroupCode: authority.runtime.vnext?.comparisonGroup?.groupCode,
+                sourceObservationID: authority.sourceObservationID,
                 identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
                 registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )
@@ -1317,6 +1342,7 @@ final class ShoppingProductViewModel: ObservableObject {
             return FitMatchClosetRegistrationServerContext(
                 classificationState: .reviewRequired,
                 comparisonGroupCode: authority.runtime.vnext?.comparisonGroup?.groupCode,
+                sourceObservationID: authority.sourceObservationID,
                 identitiesByDisplaySizeID: closetRegistrationIdentitiesByDisplaySizeID,
                 registerableDisplaySizeIDs: closetRegisterableDisplaySizeIDs
             )

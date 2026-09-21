@@ -4,6 +4,29 @@ import Testing
 
 @MainActor
 struct FitMatchServerAuthorityIntegrationTests {
+    @Test func currentResolutionReusesRuntimeButPromotionRefreshesIt() async throws {
+        for changed in [false, true] {
+            let fixture = AuthorityFixture.confirmed(
+                externalProductID: "E482514", detail: "short_sleeve",
+                family: "tshirt", length: "short_sleeve"
+            )
+            let remote = ServerAuthorityRemoteStub(
+                resolutions: [fixture.resolution(catalogState: changed ? "changed" : "current")],
+                observations: changed ? [fixture.observationResponse] : [],
+                runtimes: changed ? [fixture.runtime] : []
+            )
+            await remote.setResolvedRuntime(fixture.runtime)
+            let coordinator = FitMatchServerAuthorityCoordinator(remote: remote)
+            let authority = try await coordinator.resolveProductAuthority(
+                request: fixture.request, observation: fixture.observationRequest
+            )
+            #expect(authority.productID == fixture.productID)
+            #expect(authority.status == .confirmed)
+            #expect(await remote.runtimeCallCount == (changed ? 1 : 0))
+            #expect(await remote.observationCallCount == (changed ? 1 : 0))
+        }
+    }
+
     @Test func requestedComparisonGroupResponseRetainsServerAuthorityContext() throws {
         let productID = UUID()
         let variantID = UUID()
@@ -2111,6 +2134,15 @@ private struct AuthorityFixture {
 }
 
 private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing {
+    var resolvedRuntime: FitMatchProductRuntimeResponse?
+
+    func setResolvedRuntime(_ runtime: FitMatchProductRuntimeResponse) { resolvedRuntime = runtime }
+
+    func resolveWithRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> (resolution: FitMatchProductResolutionResponse, runtime: FitMatchProductRuntimeResponse?) {
+        (try await resolve(request), resolvedRuntime)
+    }
+
     private var resolutions: [FitMatchProductResolutionResponse]
     private var observations: [FitMatchProductObservationResponse]
     private var runtimes: [FitMatchProductRuntimeResponse]

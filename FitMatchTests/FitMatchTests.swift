@@ -6502,6 +6502,14 @@ struct FitMatchTests {
         #expect(SizeTokenNormalizer.normalizedKey(for: "85 / XS") == "85/XS")
     }
 
+    @Test func koreanSizePresentationDoesNotChangeStoredSizeTokens() {
+        #expect(SizeTokenNormalizer.displayName(for: "M") == "M")
+        #expect(SizeTokenNormalizer.koreanDisplayName(for: "M") == "미디움")
+        #expect(SizeTokenNormalizer.koreanDisplayName(for: "Large") == "라지")
+        #expect("85 / XS".fitMatchKoreanSizeDisplayName == "엑스스몰")
+        #expect("100".fitMatchKoreanSizeDisplayName == "100")
+    }
+
     @Test func musinsaPipelineFixturesParseDeterministically() throws {
         let transposed = MusinsaFallbackTableParser.parseHTML(
             MusinsaSizePipelineFixtures.product6219777HTML,

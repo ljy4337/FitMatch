@@ -1,6 +1,25 @@
 import Foundation
 import OSLog
 
+/// Request-scoped diagnostics only. The context carries no product, account,
+/// Closet, or measurement identity, and lets the existing remote boundary
+/// attach its fixed operation timing to one user-visible operation.
+nonisolated enum FitMatchRequestTrace {
+    nonisolated enum Origin: String, Sendable {
+        case productLoad = "상품불러오기"
+        case comparison = "상품비교"
+        case closetRegistration = "옷장등록"
+        case backgroundClosetSync = "백그라운드동기화"
+    }
+
+    nonisolated struct Context: Sendable {
+        let id: UUID
+        let origin: Origin
+    }
+
+    @TaskLocal static var context: Context?
+}
+
 #if DEBUG
 nonisolated enum FitMatchDebugLogger {
     private static let runtimeErrors = Logger(subsystem: "com.ljy4337.fitmatch", category: "RuntimeErrors")
@@ -10,7 +29,9 @@ nonisolated enum FitMatchDebugLogger {
         state: String,
         fields: [String: String] = [:]
     ) {
-        let trace = traceID.map { String($0.uuidString.prefix(8)) } ?? "없음"
+        let context = FitMatchRequestTrace.context
+        let trace = (traceID ?? context?.id)
+            .map { String($0.uuidString.prefix(8)) } ?? "없음"
         let details = fields
             .sorted { $0.key < $1.key }
             .map { "\($0.key)=\(sanitize($0.value))" }
@@ -52,6 +73,44 @@ nonisolated enum FitMatchDebugLogger {
         details: @autoclosure () -> String
     ) {
         print("[DEBUG][화면: \(screen)][동작: \(action)] \(details())")
+    }
+
+    /// Emits only operation metadata and elapsed time. Never pass request
+    /// payloads, product names, user IDs, or measurements here.
+    static func databaseLatency(
+        operation: String,
+        startedAt: Date,
+        state: String
+    ) {
+        let elapsedMilliseconds = Int(
+            (Date().timeIntervalSince(startedAt) * 1_000).rounded()
+        )
+        flow(
+            stage: "DB 통신",
+            state: state,
+            fields: [
+                "작업": operation,
+                "요청유형": FitMatchRequestTrace.context?.origin.rawValue ?? "미지정",
+                "소요ms": String(max(0, elapsedMilliseconds))
+            ]
+        )
+    }
+
+    static func duration(
+        traceID: UUID? = nil,
+        stage: String,
+        startedAt: Date,
+        state: String
+    ) {
+        let elapsedMilliseconds = Int(
+            (Date().timeIntervalSince(startedAt) * 1_000).rounded()
+        )
+        flow(
+            traceID: traceID,
+            stage: stage,
+            state: state,
+            fields: ["소요ms": String(max(0, elapsedMilliseconds))]
+        )
     }
 
     private static func errorFields(_ error: Error) -> [String: String] {

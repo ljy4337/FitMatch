@@ -36,6 +36,8 @@ struct CompareFlowSheet: View {
     @State private var serverReferenceSelectionPlan: FitMatchServerReferenceSelectionPlan?
     @State private var loadTask: Task<Void, Never>?
     @State private var activeLoadRequestID: UUID?
+    @State private var productEntryTraceID: UUID?
+    @State private var productEntryStartedAt: Date?
     @State private var comparisonTask: Task<Void, Never>?
     @State private var activeComparisonRequestID: UUID?
     @State private var activeComparisonUserID: UUID?
@@ -92,6 +94,8 @@ struct CompareFlowSheet: View {
         .onChange(of: authSession.authenticatedUserID) { _, _ in
             invalidateForegroundComparison()
             invalidateForegroundLoad()
+            productEntryTraceID = nil
+            productEntryStartedAt = nil
             selectedComparisonGroup = nil
             serverReferenceSelectionPlan = nil
             preparedComparison = nil
@@ -281,8 +285,16 @@ private struct PreparedComparison {
 }
 
 private extension CompareFlowSheet {
+    func beginProductEntryTrace() -> UUID {
+        let traceID = UUID()
+        productEntryTraceID = traceID
+        productEntryStartedAt = Date()
+        return traceID
+    }
+
     func startForegroundLoadTask(
         replacingCurrent: Bool = false,
+        traceID: UUID? = nil,
         _ operation: @escaping @MainActor (UUID) async -> Void
     ) {
         guard replacingCurrent || loadTask == nil else { return }
@@ -290,11 +302,17 @@ private extension CompareFlowSheet {
             invalidateForegroundLoad()
         }
 
-        let requestID = UUID()
+        let requestID = traceID ?? UUID()
         activeLoadRequestID = requestID
         loadTask = Task { @MainActor in
-            await operation(requestID)
-            finishForegroundLoadTask(requestID)
+            let trace = FitMatchRequestTrace.Context(
+                id: requestID,
+                origin: .productLoad
+            )
+            await FitMatchRequestTrace.$context.withValue(trace) {
+                await operation(requestID)
+                finishForegroundLoadTask(requestID)
+            }
         }
     }
 
@@ -1898,10 +1916,11 @@ private extension CompareFlowSheet {
 
     func startForegroundComparisonTask(
         locksReferenceSelection: Bool = false,
+        traceID: UUID? = nil,
         _ operation: @escaping @MainActor (UUID, UUID?) async -> Void
     ) {
         invalidateForegroundComparison()
-        let requestID = UUID()
+        let requestID = traceID ?? UUID()
         let userID = authSession.authenticatedUserID
         activeComparisonRequestID = requestID
         activeComparisonUserID = userID
@@ -1911,8 +1930,14 @@ private extension CompareFlowSheet {
         }
         viewModel.beginComparisonRequest(requestID)
         comparisonTask = Task { @MainActor in
-            await operation(requestID, userID)
-            finishForegroundComparisonTask(requestID: requestID, userID: userID)
+            let trace = FitMatchRequestTrace.Context(
+                id: requestID,
+                origin: .comparison
+            )
+            await FitMatchRequestTrace.$context.withValue(trace) {
+                await operation(requestID, userID)
+                finishForegroundComparisonTask(requestID: requestID, userID: userID)
+            }
         }
     }
 
@@ -1957,7 +1982,8 @@ private extension CompareFlowSheet {
 
     func startCompareTask(with urlString: String) {
         invalidateForegroundComparison()
-        startForegroundLoadTask(replacingCurrent: true) { requestID in
+        let traceID = beginProductEntryTrace()
+        startForegroundLoadTask(replacingCurrent: true, traceID: traceID) { requestID in
             await startCompare(with: urlString)
             guard isCurrentForegroundLoad(requestID) else { return }
         }
@@ -1965,7 +1991,8 @@ private extension CompareFlowSheet {
 
     func startCompareTask(fromHistoricalProduct product: Product) {
         invalidateForegroundComparison()
-        startForegroundLoadTask(replacingCurrent: true) { requestID in
+        let traceID = beginProductEntryTrace()
+        startForegroundLoadTask(replacingCurrent: true, traceID: traceID) { requestID in
             await startCompare(fromHistoricalProduct: product)
             guard isCurrentForegroundLoad(requestID) else { return }
         }
@@ -2216,7 +2243,7 @@ private extension CompareFlowSheet {
     }
 
     func proceedWithServerConfirmedCategory(product: Product) {
-        startForegroundComparisonTask { requestID, userID in
+        startForegroundComparisonTask(traceID: productEntryTraceID) { requestID, userID in
             await loadServerConfirmedReferenceSelection(
                 product: product,
                 requestID: requestID,
@@ -2298,6 +2325,16 @@ private extension CompareFlowSheet {
             using: effectiveProduct,
             manualReferences: manualReferences
         )
+
+        if let traceID = productEntryTraceID,
+           let startedAt = productEntryStartedAt {
+            FitMatchDebugLogger.duration(
+                traceID: traceID,
+                stage: "공유 링크 진입→후보 표시",
+                startedAt: startedAt,
+                state: viewModel.closetComparisonBatches.isEmpty ? "후보 없음" : "후보 표시"
+            )
+        }
 
         guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
             return
@@ -2838,18 +2875,17 @@ private enum OtherClosetComparisonRoute: String, Identifiable {
 private struct OtherClosetComparisonSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    let targetGroup: FitMatchComparisonGroup?
     let sections: [ClosetComparisonGroupSection]
     let onSelect: (ClosetComparisonSummaryRow) -> Void
 
     @State private var selectedGroup: FitMatchComparisonGroup?
+    @State private var selectedRowID: UUID?
 
     init(
         targetGroup: FitMatchComparisonGroup?,
         sections: [ClosetComparisonGroupSection],
         onSelect: @escaping (ClosetComparisonSummaryRow) -> Void
     ) {
-        self.targetGroup = targetGroup
         self.sections = sections
         self.onSelect = onSelect
         _selectedGroup = State(
@@ -2863,67 +2899,66 @@ private struct OtherClosetComparisonSheet: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 18) {
-                    Text("그룹을 고른 뒤 비교할 옷을 선택해 주세요. 서버가 비교 가능하다고 확인한 옷만 보여드려요.")
+                    Text("그룹을 고른 뒤 비교할 내 옷을 선택해 주세요. 서버가 비교 가능하다고 확인한 옷만 보여드려요.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(sections) { section in
-                                Button {
-                                    selectedGroup = section.group
-                                } label: {
-                                    Text(groupButtonTitle(section))
-                                        .font(.subheadline.weight(.bold))
-                                        .foregroundStyle(
-                                            selectedGroup == section.group
-                                                ? Color(.systemBackground)
-                                                : .primary
-                                        )
-                                        .padding(.horizontal, 14)
-                                        .frame(height: 42)
-                                        .background(
-                                            selectedGroup == section.group
-                                                ? Color.primary
-                                                : Color(.secondarySystemGroupedBackground),
-                                            in: Capsule()
-                                        )
-                                }
-                                .buttonStyle(.plain)
+                    CompareSelectionMenu(
+                        title: selectedSection?.group.displayName ?? "비교 그룹을 선택해 주세요"
+                    ) {
+                        ForEach(sections) { section in
+                            Button(groupMenuTitle(section)) {
+                                selectedGroup = section.group
+                                selectedRowID = nil
                             }
                         }
                     }
 
                     if let selectedSection {
                         CompareSheetSectionTitle(
-                            title: selectedSection.group.displayName,
-                            subtitle: "유사도는 저장된 실측으로 미리 계산한 값입니다."
+                            title: "비교할 내 옷",
+                            subtitle: "한 벌을 고른 뒤 비교를 시작해 주세요."
                         )
 
-                        LazyVStack(alignment: .leading, spacing: 12) {
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12)
+                            ],
+                            spacing: 12
+                        ) {
                             ForEach(selectedSection.rows) { row in
                                 Button {
-                                    dismiss()
-                                    onSelect(row)
+                                    selectedRowID = row.id
                                 } label: {
-                                    ClosetComparisonSummaryCard(
+                                    OtherClosetComparisonCandidateCard(
                                         item: row.item,
                                         summary: row.summary,
-                                        isProcessing: false
+                                        isSelected: selectedRowID == row.id
                                     )
                                 }
                                 .buttonStyle(.plain)
-                                // Parent selection revalidates this server-approved candidate.
                             }
                         }
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 18)
-                .padding(.bottom, 30)
+                .padding(.bottom, 16)
             }
             .background(Color(.systemGroupedBackground))
+            .safeAreaInset(edge: .bottom) {
+                PrimaryButton(title: "선택한 옷과 비교하기", systemImage: "sparkles") {
+                    guard let selectedRow else { return }
+                    dismiss()
+                    onSelect(selectedRow)
+                }
+                .disabled(selectedRow == nil)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(.regularMaterial)
+            }
             .navigationTitle("다른 옷과 비교")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -2938,11 +2973,70 @@ private struct OtherClosetComparisonSheet: View {
         sections.first { $0.group == selectedGroup }
     }
 
-    private func groupButtonTitle(_ section: ClosetComparisonGroupSection) -> String {
-        let title = section.group == targetGroup
-            ? "같은 그룹"
-            : section.group.displayName
-        return "\(title) \(section.rows.count)"
+    private var selectedRow: ClosetComparisonSummaryRow? {
+        selectedSection?.rows.first { $0.id == selectedRowID }
+    }
+
+    private func groupMenuTitle(_ section: ClosetComparisonGroupSection) -> String {
+        "\(section.group.displayName) · \(section.rows.count)벌"
+    }
+}
+
+private struct OtherClosetComparisonCandidateCard: View {
+    let item: UserFit
+    let summary: FitMatchClosetComparisonSummary
+    let isSelected: Bool
+
+    var body: some View {
+        FitMatchCard(shadowRadius: isSelected ? 10 : 6) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 10) {
+                    ProductThumbnailView(
+                        imageURLString: item.imageURLStringForDisplay,
+                        category: item.category,
+                        width: 48,
+                        height: 60,
+                        cornerRadius: 12
+                    )
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.sourceName)
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Text(item.displayName)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.primary)
+                            .accessibilityHidden(true)
+                    }
+                }
+
+                HStack(spacing: 6) {
+                    Text("보유 \(item.sizeName.displaySizeName)")
+                    if let similarityPercent = summary.similarityPercent {
+                        Text("유사도 \(similarityPercent)%")
+                    }
+                }
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            }
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(isSelected ? Color.primary : .clear, lineWidth: 2)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(item.displayName), 보유 사이즈 \(item.sizeName.displaySizeName)\(isSelected ? ", 선택됨" : "")")
+        .accessibilityHint("선택한 뒤 비교 시작 버튼을 누릅니다.")
     }
 }
 

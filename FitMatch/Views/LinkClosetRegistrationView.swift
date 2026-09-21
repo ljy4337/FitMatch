@@ -26,6 +26,7 @@ struct LinkClosetRegistrationView: View {
     @State private var isShowingEmptyPasteboardMessage = false
     @State private var emptyPasteboardShake = 0
     @State private var loadTask: Task<Void, Never>?
+    @State private var loadRequestID = UUID()
     @FocusState private var isURLFocused: Bool
 
     init(prefersRepresentativeByDefault: Bool = false, onSaved: (() -> Void)? = nil) {
@@ -157,6 +158,13 @@ struct LinkClosetRegistrationView: View {
             Text(saveErrorMessage ?? "")
         }
         .onChange(of: productURL) { _, _ in
+            // A new URL invalidates both the retailer parser and the pending
+            // server authority result. The old task may complete later, but
+            // it is no longer allowed to publish its card or enable Next.
+            loadRequestID = UUID()
+            loadTask?.cancel()
+            loadTask = nil
+            isLoading = false
             parsedProduct = nil
             partialProduct = nil
             registrationServerContext = nil
@@ -313,15 +321,7 @@ struct LinkClosetRegistrationView: View {
                         }
                     }
 
-                    if isLoading {
-                        Label(
-                            "상품·사이즈 저장 정보를 확인하고 있어요.",
-                            systemImage: "arrow.triangle.2.circlepath"
-                        )
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    } else if let registrationBlockMessage {
+                    if let registrationBlockMessage {
                         Label(
                             registrationBlockMessage,
                             systemImage: "ruler"
@@ -332,7 +332,7 @@ struct LinkClosetRegistrationView: View {
                     }
 
                     PrimaryButton(
-                        title: isLoading ? "서버에 상품 저장 중" : "다음",
+                        title: "다음",
                         systemImage: "chevron.right"
                     ) {
                         guard canOpenRegistration else { return }
@@ -415,8 +415,8 @@ struct LinkClosetRegistrationView: View {
         }
     }
 
-    private func loadProduct() async {
-        guard !isLoading else {
+    private func loadProduct(requestID: UUID) async {
+        guard !isLoading, requestID == loadRequestID else {
             return
         }
 
@@ -427,24 +427,18 @@ struct LinkClosetRegistrationView: View {
         registrationServerContext = nil
         productMeasurementPresence = .unknown
         isLoading = true
-        defer { isLoading = false }
+        defer {
+            if loadRequestID == requestID {
+                isLoading = false
+            }
+        }
 
         let outcome = await FitMatchLinkClosetRegistrationAction.load(
             urlString: normalizedURLString,
             makeViewModel: { ShoppingProductViewModel(initialURL: $0) },
-            existingBrand: existingBrand(named:),
-            onRetailerProductLoaded: { preparation in
-                // This is the retailer/API snapshot. It is intentionally
-                // visible before server authority finishes and is replaced
-                // only by the same source rows carrying exact server IDs.
-                parsedProduct = preparation.parsedProduct
-                partialProduct = preparation.partialProduct
-                parsedDetailCategory = preparation.detailCategory
-                productMeasurementPresence = preparation.productMeasurementPresence
-                recoveryViewModel = preparation.recoveryViewModel
-                errorMessage = preparation.errorMessage
-            }
+            existingBrand: existingBrand(named:)
         )
+        guard !Task.isCancelled, requestID == loadRequestID else { return }
         switch outcome {
         case .blocked(let validation):
             errorMessage = validation.userMessage
@@ -464,9 +458,13 @@ struct LinkClosetRegistrationView: View {
 
     private func startLoadingProduct() {
         guard loadTask == nil, !isLoading else { return }
+        let requestID = UUID()
+        loadRequestID = requestID
         loadTask = Task {
-            await loadProduct()
-            loadTask = nil
+            await loadProduct(requestID: requestID)
+            if loadRequestID == requestID {
+                loadTask = nil
+            }
         }
     }
 
