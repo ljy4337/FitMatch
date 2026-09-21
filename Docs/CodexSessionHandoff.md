@@ -1,3 +1,10 @@
+## 2026-09-22 현재 로컬 소스 커밋·푸시 완료
+
+- 사용자 요청에 따라 현재 로컬 변경 중 앱 소스/테스트, `AGENTS.md`, `FitMatch Behavior Map.md`, 신규 권위 문서 `Docs/FitMatchMeasurementPolicy.md`, 관련 Supabase migration/Verify/Rollback을 커밋했다.
+- 커밋: `f323aa5` (`perf: streamline FitMatch product and comparison flows`). `origin/connectDB` 푸시 성공.
+- `.build`, outputs, QA/감사 산출물, 준비만 된 별도 SQL 및 기타 untracked 자료는 스테이징하지 않고 보존했다. 이번 커밋은 DB에 migration을 적용한 것이 아니며, 코드·SQL 소스 변경을 게시한 것이다.
+- 검증: staged diff check PASS, 보호 스크롤 검사 PASS. 전체 XCTest/실제 앱 E2E는 이번 커밋 작업에서 실행하지 않음. 기존 테스트 컴파일 차단 및 미검증 범위는 아래 기록을 따른다.
+
 ## 2026-09-21 — 상품 불러오기·비교 경로 지연 축소와 요청 추적 (로컬 소스)
 
 - 범위는 P1~P3의 확인된 중복/직렬 구간과 DEBUG 성능 관측이다. 연결 Supabase 및 Edge Function에는 읽기·쓰기·배포를 수행하지 않았고 migration/정책/점수/비교 권한은 변경하지 않았다. commit/push 없음.
