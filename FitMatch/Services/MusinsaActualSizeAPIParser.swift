@@ -3,6 +3,17 @@ import Foundation
 struct MusinsaActualSizeAPIParser: ProductURLParsing {
     private let urlResolver = MusinsaURLResolver()
     private let metadataParser = MusinsaProductMetadataParser()
+    private let responseLoader: @MainActor (URL) async throws
+        -> FitMatchRetailerAPIResponseCapture
+
+    init(
+        responseLoader: @escaping @MainActor (URL) async throws
+            -> FitMatchRetailerAPIResponseCapture = { url in
+                try await Self.fetchLiveResponse(from: url)
+            }
+    ) {
+        self.responseLoader = responseLoader
+    }
 
     func canParse(_ url: URL) -> Bool {
         url.absoluteString.lowercased().contains("musinsa")
@@ -37,11 +48,31 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     }
 
     func parseActualSize(productID: String, isTopCategory: Bool = false) async throws -> MusinsaActualSizeResult {
+        let capture = try await fetchActualSizeResponse(productID: productID)
+        return try parseActualSize(
+            responseCapture: capture,
+            isTopCategory: isTopCategory
+        )
+    }
+
+    /// Receives the exact official actual-size response without assigning
+    /// clothing semantics. Callers that already know the product identity can
+    /// overlap this I/O with metadata loading, then decode it using the
+    /// metadata-derived category.
+    func fetchActualSizeResponse(
+        productID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
         guard let apiURL = URL(string: "https://goods-detail.musinsa.com/api2/goods/\(productID)/actual-size") else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
-        let capture = try await fetchResponse(from: apiURL)
+        return try await fetchResponse(from: apiURL)
+    }
+
+    func parseActualSize(
+        responseCapture capture: FitMatchRetailerAPIResponseCapture,
+        isTopCategory: Bool = false
+    ) throws -> MusinsaActualSizeResult {
         guard (200..<300).contains(capture.httpStatus) else {
             throw FitMatchRetailerAPIResponseError(
                 capture: capture,
@@ -132,6 +163,22 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     private func fetchResponse(
         from apiURL: URL
     ) async throws -> FitMatchRetailerAPIResponseCapture {
+        try await responseLoader(apiURL)
+    }
+
+    private static func fetchLiveResponse(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "MUSINSA 실측 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
         request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout

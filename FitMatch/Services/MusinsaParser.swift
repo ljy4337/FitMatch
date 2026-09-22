@@ -24,16 +24,38 @@ enum MusinsaSizeAvailabilityResolver {
     }
 }
 
+@MainActor
 struct MusinsaParser: ProductURLParsing {
     static let automaticSizeFailureNotice =
         "판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했어요. 사이즈표를 추가하면 바로 비교할 수 있어요."
     static let unsupportedTopBottomSetNotice =
         "상·하의가 함께 구성된 세트 상품은 아직 사이즈 비교를 지원하지 않아요."
 
-    private let urlResolver = MusinsaURLResolver()
-    private let metadataParser = MusinsaProductMetadataParser()
-    private let actualSizeParser = MusinsaActualSizeAPIParser()
-    private let fallbackSizeParser = MusinsaFallbackSizeParser()
+    private let urlResolver: MusinsaURLResolver
+    private let metadataParser: MusinsaProductMetadataParser
+    private let actualSizeParser: MusinsaActualSizeAPIParser
+    private let fallbackSizeParser: MusinsaFallbackSizeParser
+
+    init() {
+        self.init(
+            urlResolver: MusinsaURLResolver(),
+            metadataParser: MusinsaProductMetadataParser(),
+            actualSizeParser: MusinsaActualSizeAPIParser(),
+            fallbackSizeParser: MusinsaFallbackSizeParser()
+        )
+    }
+
+    init(
+        urlResolver: MusinsaURLResolver,
+        metadataParser: MusinsaProductMetadataParser,
+        actualSizeParser: MusinsaActualSizeAPIParser,
+        fallbackSizeParser: MusinsaFallbackSizeParser
+    ) {
+        self.urlResolver = urlResolver
+        self.metadataParser = metadataParser
+        self.actualSizeParser = actualSizeParser
+        self.fallbackSizeParser = fallbackSizeParser
+    }
 
     func canParse(_ url: URL) -> Bool {
         ProductURLSupport.isMusinsaURL(url)
@@ -48,7 +70,24 @@ struct MusinsaParser: ProductURLParsing {
         onProgress: @escaping (ProductAnalysisPhase) -> Void
     ) async throws -> ParsedProductInfo {
         let resolved = try await urlResolver.resolve(url)
-        var metadata = await metadataParser.parse(productID: resolved.productID, sourceURL: resolved.resolvedURL)
+        return try await parse(resolved: resolved, onProgress: onProgress)
+    }
+
+    func parse(
+        resolved: ResolvedMusinsaURL,
+        onProgress: @escaping (ProductAnalysisPhase) -> Void
+    ) async throws -> ParsedProductInfo {
+        // The exact product ID is resolved before these independent official
+        // requests begin. Keep the actual-size capture un-interpreted until
+        // metadata supplies its established category context.
+        async let metadataTask = metadataParser.parse(
+            productID: resolved.productID,
+            sourceURL: resolved.resolvedURL
+        )
+        async let actualSizeCaptureTask = actualSizeParser.fetchActualSizeResponse(
+            productID: resolved.productID
+        )
+        var metadata = await metadataTask
         // `상하의세트` is an official product-structure fact, not a parser
         // failure. Preserve it in the observation and continue through the
         // size APIs so the product-information UI can render every fact the
@@ -58,8 +97,10 @@ struct MusinsaParser: ProductURLParsing {
         let actualSize: MusinsaActualSizeResult?
         let failedActualSizeCapture: FitMatchRetailerAPIResponseCapture?
         do {
-            actualSize = try await actualSizeParser.parseActualSize(
-                productID: resolved.productID,
+            let capture = try await actualSizeCaptureTask
+            try Task.checkCancellation()
+            actualSize = try actualSizeParser.parseActualSize(
+                responseCapture: capture,
                 isTopCategory: metadata.category.isMusinsaUpperBodyCategory
             )
             failedActualSizeCapture = nil

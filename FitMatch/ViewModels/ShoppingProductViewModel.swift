@@ -384,6 +384,9 @@ final class ShoppingProductViewModel: ObservableObject {
 #endif
         }
 
+#if DEBUG
+        let parserStartedAt = Date()
+#endif
         do {
             let parsedProduct = try await parserService.parse(
                 urlString: productURL,
@@ -394,6 +397,12 @@ final class ShoppingProductViewModel: ObservableObject {
             )
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
 #if DEBUG
+            FitMatchDebugLogger.duration(
+                traceID: loadID,
+                stage: "쇼핑몰 수집·파싱",
+                startedAt: parserStartedAt,
+                state: "완료"
+            )
             FitMatchDebugLogger.flow(
                 traceID: loadID,
                 stage: "쇼핑몰 API 데이터 수신",
@@ -431,6 +440,12 @@ final class ShoppingProductViewModel: ObservableObject {
         } catch let partialError as ProductURLParserPartialError {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
 #if DEBUG
+            FitMatchDebugLogger.duration(
+                traceID: loadID,
+                stage: "쇼핑몰 수집·파싱",
+                startedAt: parserStartedAt,
+                state: "일부완료"
+            )
             FitMatchDebugLogger.flow(
                 traceID: loadID,
                 stage: "쇼핑몰 API 데이터 수신",
@@ -461,6 +476,12 @@ final class ShoppingProductViewModel: ObservableObject {
         } catch {
             guard !Task.isCancelled, activeLoadID == loadID else { return false }
 #if DEBUG
+            FitMatchDebugLogger.duration(
+                traceID: loadID,
+                stage: "쇼핑몰 수집·파싱",
+                startedAt: parserStartedAt,
+                state: "실패"
+            )
             FitMatchDebugLogger.failure(
                 traceID: loadID,
                 stage: "상품 링크/API 해석",
@@ -786,7 +807,17 @@ final class ShoppingProductViewModel: ObservableObject {
         if let frozenProductObservation {
             return frozenProductObservation
         }
+#if DEBUG
+        let payloadStartedAt = Date()
+#endif
         let observation = product.fitMatchProductObservationRequest()
+#if DEBUG
+        FitMatchDebugLogger.duration(
+            stage: "상품 관측 payload 생성",
+            startedAt: payloadStartedAt,
+            state: observation == nil ? "미생성" : "완료"
+        )
+#endif
         frozenProductObservation = observation
         return observation
     }

@@ -132,6 +132,25 @@ private extension ClosetDetailCategory {
 }
 
 struct MusinsaProductMetadataParser {
+    private let productDetailLoader: @MainActor (URL) async throws
+        -> FitMatchRetailerAPIResponseCapture
+    private let htmlLoader: @MainActor (URL) async throws
+        -> FitMatchRetailerAPIResponseCapture
+
+    init(
+        productDetailLoader: @escaping @MainActor (URL) async throws
+            -> FitMatchRetailerAPIResponseCapture = { url in
+                try await Self.fetchLiveProductDetail(from: url)
+            },
+        htmlLoader: @escaping @MainActor (URL) async throws
+            -> FitMatchRetailerAPIResponseCapture = { url in
+                try await Self.fetchLiveHTML(from: url)
+            }
+    ) {
+        self.productDetailLoader = productDetailLoader
+        self.htmlLoader = htmlLoader
+    }
+
     func parse(productID: String, sourceURL: URL) async -> MusinsaProductMetadata {
         do {
             let fetched = try await fetchProductDetail(productID: productID)
@@ -220,26 +239,8 @@ struct MusinsaProductMetadataParser {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
-        var request = URLRequest(url: apiURL)
-        request.httpMethod = "GET"
-        request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("https://www.musinsa.com", forHTTPHeaderField: "Referer")
-        request.setValue(
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-            forHTTPHeaderField: "User-Agent"
-        )
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw ProductURLParserError.automaticParsingUnavailable
-        }
-        let capture = FitMatchRetailerAPIResponseCapture(
-            requestURL: response.url ?? apiURL,
-            httpStatus: httpResponse.statusCode,
-            body: data
-        )
-        guard (200..<300).contains(httpResponse.statusCode) else {
+        let capture = try await productDetailLoader(apiURL)
+        guard (200..<300).contains(capture.httpStatus) else {
             throw FitMatchRetailerAPIResponseError(
                 capture: capture,
                 reason: "unexpected_http_status"
@@ -247,7 +248,7 @@ struct MusinsaProductMetadataParser {
         }
         do {
             return (
-                try JSONDecoder().decode(MusinsaProductDetailResponse.self, from: data),
+                try JSONDecoder().decode(MusinsaProductDetailResponse.self, from: capture.body),
                 capture
             )
         } catch {
@@ -284,6 +285,61 @@ struct MusinsaProductMetadataParser {
     }
 
     private func fetchHTML(from url: URL) async throws -> String {
+        let capture = try await htmlLoader(url)
+        guard (200..<300).contains(capture.httpStatus),
+              let html = String(data: capture.body, encoding: .utf8) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return html
+    }
+
+    private static func fetchLiveProductDetail(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "MUSINSA 상품 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
+        var request = URLRequest(url: apiURL)
+        request.httpMethod = "GET"
+        request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("https://www.musinsa.com", forHTTPHeaderField: "Referer")
+        request.setValue(
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+            forHTTPHeaderField: "User-Agent"
+        )
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? apiURL,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
+    }
+
+    private static func fetchLiveHTML(
+        from url: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "MUSINSA HTML 복구 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         var request = URLRequest(url: url)
         request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
         request.setValue(
@@ -291,12 +347,14 @@ struct MusinsaProductMetadataParser {
             forHTTPHeaderField: "User-Agent"
         )
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode),
-              let html = String(data: data, encoding: .utf8) else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
-        return html
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? url,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
     }
 
     private func metaContent(in html: String, key: String, value: String) -> String? {

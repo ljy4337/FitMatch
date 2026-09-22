@@ -123,10 +123,18 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
         async let prefetchedSizeGuide = prefetchSizeGuide(
             productID: requestedVariantID
         )
-        let ((page, identity), requestedSizeGuide) = try await (
-            verifiedPage,
-            prefetchedSizeGuide
+        let (page, identity) = try await verifiedPage
+
+        // The page has now independently verified the selected catalog entry.
+        // Start details immediately; a slow selected-v1 guide still cannot
+        // decide the identity and is only consumed below through the existing
+        // verified-guide path.
+        async let detailsCaptureTask = loadProductDetails(
+            sourceURL: page.url,
+            selectedVariantID: identity.catentryID
         )
+        let requestedSizeGuide = try await prefetchedSizeGuide
+        try Task.checkCancellation()
 
         var info = ZARAProductPageParser.parse(
             html: page.html,
@@ -140,10 +148,6 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
         // After identity verification the detail and (when v1 was absent or
         // mismatched) size-guide requests are independent. Both retain their
         // existing best-effort recovery behavior.
-        async let detailsCaptureTask = loadProductDetails(
-            sourceURL: page.url,
-            selectedVariantID: identity.catentryID
-        )
         async let resolvedSizeGuide = loadVerifiedSizeGuide(
             identity: identity,
             requestedVariantID: requestedVariantID,
@@ -213,6 +217,16 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
         productID: String?
     ) async throws -> FitMatchRetailerAPIResponseCapture? {
         guard let productID else { return nil }
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "ZARA v1 실측표 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         do {
             return try await sizeGuideLoader.loadResponse(productID: productID)
         } catch is CancellationError {
@@ -229,6 +243,16 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
         selectedVariantID: String
     ) async -> FitMatchRetailerAPIResponseCapture? {
         guard let productDetailsLoader else { return nil }
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "ZARA 상품 상세 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         return try? await productDetailsLoader.loadResponse(
             sourceURL: sourceURL,
             selectedVariantID: selectedVariantID
@@ -244,12 +268,32 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
            let prefetchedSizeGuide {
             return prefetchedSizeGuide
         }
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "ZARA 선택 색상 실측표 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         return try? await sizeGuideLoader.loadResponse(productID: identity.catentryID)
     }
 
     private func loadVerifiedProductPage(
         from requestedURL: URL
     ) async throws -> (ZARAProductPage, ZARAProductIdentity) {
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "ZARA 상품 페이지 HTTP/WebView",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         do {
             let page = try await pageLoader.load(url: requestedURL)
             if let identity = verifiedIdentity(for: page, requestedURL: requestedURL) {

@@ -1,3 +1,19 @@
+## 2026-09-22 상품 수집 병렬화·원본 JSON 재사용 — 로컬 미커밋
+
+- 시작 기준: local/origin `connectDB` 모두 `477791404ec2e12f37feb9c96978547a6004dda0`; 기본 status에는 tracked dirty가 없었다. 이후 명시적 untracked 확인에서 기존 자료가 다수 발견돼 그대로 보존했으며, 이번 regression test source도 아직 untracked다. 기존 commit/remote/DB 상태를 변경하지 않았고, 이번 변경은 아직 로컬 미커밋이다.
+- **UNIQLO:** `UniqloSizeAPIParser.parseWithGenericColorFallback()`가 서로 다른 preferred/generic chart를 동시에 시작하고, exact product/color/PLD가 이미 확보된 뒤 product/stock도 겹쳐 받는다. 같은 chart URL은 1회만 요청한다. 기존 larger-chart 우선·동률 preferred·한쪽 실패 fallback·stock UNKNOWN·raw response capture 및 cancellation 의미는 유지한다.
+- **MUSINSA:** exact product ID resolve 뒤 metadata와 raw `/actual-size` HTTP receipt를 동시에 시작한다. actual-size semantic parse는 metadata category 수신 뒤 기존 함수로 수행하므로 upper/lower 추측은 추가하지 않았다. detail 실패의 HTML recovery, actual-size 실패 capture 및 image/HTML size recovery를 유지한다.
+- **ZARA:** product page가 exact identity를 검증하면 selected `v1` guide 완료를 기다리지 않고 exact `catentryID` details를 시작한다. guide는 계속 병렬 수신되지만 기존 verified `catentryID` 대조를 통과할 때만 사용하며 internalProductID와 catentryID를 혼동하지 않는다.
+- **Evidence:** immutable `FitMatchRetailerAPIResponseCapture`가 생성 시 object projection을 1회 만들고 parser 확인·promotion guard·observation encoding이 이를 재사용한다. original `body`, request metadata/collected timestamp, unknown JSON fields와 final JSON envelope는 바꾸지 않는다. malformed/non-object body의 existing omission은 유지한다.
+- 추가 regression source: `UniqloParserConcurrencyTests`, `MusinsaParserConcurrencyTests`, `ZARAParserConcurrencyTests`, `FitMatchRetailerAPIEvidenceTests`. 각각 실제 request receipt 시작 겹침, 기존 fallback/실패, cancellation 또는 evidence 의미 보존을 대상으로 한다.
+- **5순위 DB READ ONLY:** Production `hnkplvyegonlhumlejst`의 applied migration 목록 및 함수 정의를 조회했다. `get_product_runtime_for_swift`가 base runtime의 native canonical/readiness를 만든 뒤 context canonical으로 size를 덮고 effective readiness에서 다시 계산하는 중복은 확인했다. 하지만 authenticated RPC `EXPLAIN ANALYZE`는 관리자 읽기 연결에 user JWT가 없어 `Authentication required`로 차단됐다. 현재 owner와 source/deployed preimage가 섞인 상태에서 migration을 추측으로 만들지 않았고, DB write·migration apply·data mutation은 하지 않았다. isolated schema fixture/contract snapshot으로 runtime JSON 동등성·계산 횟수를 검증한 뒤에만 후속 migration을 준비한다.
+- **6순위:** 5순위 isolated DB 검증 선행 조건이 충족되지 않아 Edge observation/runtime 계약 통합은 시작하지 않았다. 기존 two-step authority contract도 변경하지 않았다.
+- PASS: changed Swift/test source `swiftc -parse`; `git diff --check`; cached dependency 기준 iOS Debug app build (`xcodebuild ... -derivedDataPath /tmp/FitMatchZARAAppBuild ... build`). PASS는 parser/앱 컴파일 증거이며 device/network latency나 app E2E가 아니다.
+- BLOCKED: focused XCTest command는 target 전체 compile 중 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111`의 `.zara`, `GarmentMeasurements()` 및 key-path inference 오류로 test 실행 전 실패(exit 65). 새 test execution PASS 아님. 신규 DerivedData build는 package DNS failure도 발생했으나 기존 cache build로 app compile을 확인했다.
+- **DEBUG 성능 관측:** 기존 `FitMatchRequestTrace`/`FitMatchDebugLogger`에 같은 trace ID로 UNIQLO(실측표·상품·재고), MUSINSA(상품·실측·HTML 복구), ZARA(페이지/WebView·v1 guide·selected guide·details) HTTP span과 `쇼핑몰 수집·파싱`, `상품 관측 payload 생성` span을 추가했다. URL/product/user/measurement payload는 로그에 넣지 않는다. 기존 DB/Edge operation duration과 합쳐 foreground/background를 trace origin으로 분리해 병렬 요청의 합산값이 아닌 실제 wall-clock으로 점검할 수 있다.
+- NOT RUN: 실제 MUSINSA/UNIQLO/ZARA before/after latency, physical-device URL→`다음` timing, live retailer responses, authenticated Edge/runtime timing, Production/isolated DB runtime optimization, app E2E. 새 remote telemetry는 추가하지 않았다.
+- `FitMatch Behavior Map.md`를 변경된 provider receipt ordering과 authority gate로 갱신했다. protected scroll file/call sites는 변경하지 않았다. commit/push 없음.
+
 ## 2026-09-22 현재 로컬 소스 커밋·푸시 완료
 
 - 사용자 요청에 따라 현재 로컬 변경 중 앱 소스/테스트, `AGENTS.md`, `FitMatch Behavior Map.md`, 신규 권위 문서 `Docs/FitMatchMeasurementPolicy.md`, 관련 Supabase migration/Verify/Rollback을 커밋했다.

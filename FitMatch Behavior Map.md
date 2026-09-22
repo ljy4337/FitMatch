@@ -67,7 +67,7 @@ Read URL/plain text → App Group pending URL → active app consumes SharedURLS
 
 READ FIRST: `FitMatch/Services/ProductURLParserService.swift`, `FitMatch/ViewModels/ShoppingProductViewModel.swift`, `FitMatch/Services/FitMatchServerAuthorityCoordinator.swift`, `FitMatch/Services/FitMatchSupabaseProductResolver.swift`.
 
-Provider resolver → details/measurements → ParsedProductInfo → fitMatchProductObservationRequest() → resolveFreshRetailerProductAuthority() → product-observation Edge → public.fitmatch_vnext_ingest_product_observation → internal ingestion/v2 → public.fitmatch_vnext_get_product_runtime → get_product_runtime_for_swift → DTO/contract validation → validated UI state. ZARA overlaps only the independently verifiable product-page and selected `v1` size-guide reads; the guide is consumed only after page identity confirms its exact catalog entry. UNIQLO already overlaps independent product and stock fetches after exact identity resolution; MUSINSA metadata remains ahead of measurement parsing where it supplies semantic context.
+Provider resolver → details/measurements → ParsedProductInfo → fitMatchProductObservationRequest() → resolveFreshRetailerProductAuthority() → product-observation Edge → public.fitmatch_vnext_ingest_product_observation → internal ingestion/v2 → public.fitmatch_vnext_get_product_runtime → get_product_runtime_for_swift → DTO/contract validation → validated UI state. After exact identity resolution, UNIQLO starts distinct preferred/generic charts and product/stock reads together (identical chart URLs are requested once); its established chart-selection and UNKNOWN-stock rules apply only after receipts arrive. MUSINSA starts metadata and raw actual-size receipts together after the exact product ID resolves, then parses actual size only with the existing metadata category context. ZARA starts details as soon as the product page verifies the exact catalog entry; the concurrent selected `v1` guide is still consumed only when that identity matches. DEBUG spans retain the request trace/origin across provider HTTP, parser, observation payload, Edge/RPC boundaries without recording raw URL, product, user, or measurement payloads; use wall-clock spans, not summed parallel request durations.
 
 Downstream: `supabase/functions/product-observation/index.ts`, `FitMatch/Services/FitMatchVNextDTOs.swift`, `FitMatch/Services/FitMatchVNextContractValidator.swift`. Replay payload owner: `FitMatch/Services/FitMatchProductAuthorityPayloadBuilder.swift`; preserve retailer variant identity across persistence/replay. Storage: products, product_variants, product_sizes, product_size_measurements, product_ingestion_receipts, size_availability_observations in fitmatch_vnext.
 
@@ -189,6 +189,7 @@ READ FIRST: `FitMatch/Services/MusinsaURLResolver.swift`, `FitMatch/Services/Mus
 
 - Inputs: musinsa.com/products/{id}, musinsa.onelink.me/PvkC/{token}. Resolve redirect/body evidence to exact product ID; canonicalize direct URL.
 - Details: goods-detail.musinsa.com/api2/goods/{id}; measurements: same path /actual-size. Preserve official category paths/codes, goods identity, metadata and raw units/labels.
+- Once the exact product ID is resolved, start those two official HTTP receipts together. Retain the raw actual-size response until metadata supplies the existing upper/lower semantic context; metadata/actual failure capture and HTML/image recovery remain unchanged.
 - Recovery uses actual retailer table/image evidence (including CREMA chart selection/cropped OCR). Preserve unknown raw columns and arm-circumference evidence; do not convert product-name guesses into group authority.
 - `goodsContents` structure evidence must be extracted from visible HTML text. CSS, tags, and attributes are not garment-component declarations; a markup-only legacy composite match is emitted as explicit `UNKNOWN` so a fresh observation clears the stale `SET` fact without inventing `SINGLE`.
 - Check size labels and numeric cells against the actual source image, not merely successful parsing. Preserve externalVariantID through saved/replayed facts.
@@ -201,6 +202,7 @@ READ FIRST: `FitMatch/Services/UniqloParser.swift` (also defines UniqloSizeAPIPa
 - Preserve E###### core, input suffix, price-group path, colorDisplayCode, sizeDisplayCode and pldDisplayCode evidence.
 - Details use the URL-resolved price group through `UniqloURLResolver.productDetailsURL`, matching stock context, at commerce/v5/ko/products/{product}/price-groups/{group}/details; derive exact size-chart/stock requests from the parser, not an invented endpoint.
 - Compare official color-specific/generic charts when the specific chart is missing/incomplete; keep clothing measurements distinct from body-size recommendations.
+- For different official chart URLs, start preferred and generic receipts together, and start exact product/stock availability reads alongside them. Request a shared chart URL once. Apply the existing larger-chart/tie selection and stock annotations only after all required receipts settle.
 - Stock failure leaves UNKNOWN; never infer measurements or comparison eligibility from availability.
 - E491320 -000/-001/-002 semantic equivalence remains unverified. Do not assert equality solely because details requests normalize the core ID. Preserve official breadcrumb, audience, collection and length facts.
 
@@ -215,6 +217,7 @@ Server canonical mapping is separate from local parser mapping. For zone-name-ch
 - Parser success reports valid garment facts even with one metric or raw-only meanings. It does not impose a local two-metric/waist-plus-hip comparison gate. Canonical eligibility and missing-measurement recovery remain server-authoritative; body-only, invalid unit and empty garment guides still fail closed.
 - Unresolved local category/detail must not discard a valid garment guide. Verified chest/sleeve semantic zones remain mapped for `.other`; other unverified zones remain raw-only. Both Closet and Compare consume this shared parser/observation path, with server A–G selection and eligibility unchanged.
 - Measurement request must use the exact selected catentryID; distinguish garment measureGuideInfo from body sizeGuideInfo. Inspect parser-built official endpoints/parameters.
+- Start selected-variant details immediately after page identity verification; a concurrently running `v1` guide never delays details and remains unusable until its `catentryID` is verified.
 
 ### Retired provider
 

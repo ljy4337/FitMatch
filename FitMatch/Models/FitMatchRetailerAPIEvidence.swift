@@ -10,6 +10,10 @@ nonisolated struct FitMatchRetailerAPIResponseCapture: Equatable, Sendable {
     let httpStatus: Int
     let collectedAt: String
     let body: Data
+    /// The response body is immutable for the lifetime of one product load.
+    /// Keep its object projection alongside the exact bytes so parser checks,
+    /// promotion guards, and observation encoding do not decode it repeatedly.
+    private let decodedJSONObject: FitMatchJSONValue?
 
     init(
         requestURL: URL,
@@ -21,9 +25,14 @@ nonisolated struct FitMatchRetailerAPIResponseCapture: Equatable, Sendable {
         self.httpStatus = httpStatus
         self.collectedAt = Self.timestamp(from: collectedAt)
         self.body = body
+        self.decodedJSONObject = Self.decodeJSONObject(from: body)
     }
 
     var jsonObject: FitMatchJSONValue? {
+        decodedJSONObject
+    }
+
+    private static func decodeJSONObject(from body: Data) -> FitMatchJSONValue? {
         guard let value = try? JSONDecoder().decode(FitMatchJSONValue.self, from: body),
               case .object = value else {
             return nil
