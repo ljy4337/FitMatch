@@ -91,7 +91,7 @@ struct LiveProductGroupURLAuditTests {
         let url = try #require(ProductURLSupport.normalizedURL(from: urlString))
         if ProductURLSupport.isMusinsaURL(url) {
             let resolved = try await MusinsaURLResolver().resolve(url)
-            return await MusinsaProductMetadataParser()
+            return try await MusinsaProductMetadataParser()
                 .parse(productID: resolved.productID, sourceURL: resolved.resolvedURL)
                 .parsedProductInfo(sizes: [])
                 .recordingParserProvenance(parserCode: "musinsa")

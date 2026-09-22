@@ -151,7 +151,7 @@ struct MusinsaProductMetadataParser {
         self.htmlLoader = htmlLoader
     }
 
-    func parse(productID: String, sourceURL: URL) async -> MusinsaProductMetadata {
+    func parse(productID: String, sourceURL: URL) async throws -> MusinsaProductMetadata {
         do {
             let fetched = try await fetchProductDetail(productID: productID)
             var result = metadata(
@@ -162,6 +162,9 @@ struct MusinsaProductMetadataParser {
             result.retailerDetailsCapture = fetched.capture
             return result
         } catch {
+            if Task.isCancelled || Self.isCancellation(error) {
+                throw CancellationError()
+            }
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 상품 정보 조회", state: "실패", details: "오류=\(error.localizedDescription), HTML대체파싱=시작")
             #endif
@@ -173,6 +176,15 @@ struct MusinsaProductMetadataParser {
                 (error as? FitMatchRetailerAPIResponseError)?.capture
             return fallback
         }
+    }
+
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError {
+            return true
+        }
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain
+            && nsError.code == URLError.cancelled.rawValue
     }
 
     func parseStoredProductDetail(data: Data, productID: String, sourceURL: URL) throws -> MusinsaProductMetadata {

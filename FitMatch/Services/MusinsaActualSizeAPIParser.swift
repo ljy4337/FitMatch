@@ -21,7 +21,10 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
 
     func parse(from url: URL) async throws -> ParsedProductInfo {
         let resolvedProduct = try await urlResolver.resolve(url)
-        var metadata = await metadataParser.parse(productID: resolvedProduct.productID, sourceURL: resolvedProduct.resolvedURL)
+        var metadata = try await metadataParser.parse(
+            productID: resolvedProduct.productID,
+            sourceURL: resolvedProduct.resolvedURL
+        )
         let actualSize = try await parseActualSize(
             productID: resolvedProduct.productID,
             isTopCategory: metadata.category.isMusinsaUpperBodyCategory

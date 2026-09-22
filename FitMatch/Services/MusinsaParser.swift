@@ -87,7 +87,7 @@ struct MusinsaParser: ProductURLParsing {
         async let actualSizeCaptureTask = actualSizeParser.fetchActualSizeResponse(
             productID: resolved.productID
         )
-        var metadata = await metadataTask
+        var metadata = try await metadataTask
         // `상하의세트` is an official product-structure fact, not a parser
         // failure. Preserve it in the observation and continue through the
         // size APIs so the product-information UI can render every fact the

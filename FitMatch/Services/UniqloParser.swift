@@ -861,8 +861,18 @@ struct UniqloSizeAPIParser {
         return FitMatchRetailerAPIResponseCapture(
             requestURL: response.url ?? apiURL,
             httpStatus: httpResponse.statusCode,
-            body: data
+            body: data,
+            // Availability transport consumes only the original bytes through
+            // typed DTO decoding. Its capture does not leave this private
+            // path, so avoid a generic JSON tree that no caller can consume.
+            // Official size-chart captures keep their evidence projection.
+            precomputesJSONObject: !isAvailabilityEndpoint(apiURL)
         )
+    }
+
+    private static func isAvailabilityEndpoint(_ apiURL: URL) -> Bool {
+        apiURL.path.hasSuffix("/stock")
+            || apiURL.path.contains("/price-groups/")
     }
 
     private static func requestKind(for apiURL: URL) -> String {

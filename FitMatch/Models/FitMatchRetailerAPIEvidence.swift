@@ -19,13 +19,16 @@ nonisolated struct FitMatchRetailerAPIResponseCapture: Equatable, Sendable {
         requestURL: URL,
         httpStatus: Int,
         collectedAt: Date = Date(),
-        body: Data
+        body: Data,
+        precomputesJSONObject: Bool = true
     ) {
         self.requestURL = requestURL.absoluteString
         self.httpStatus = httpStatus
         self.collectedAt = Self.timestamp(from: collectedAt)
         self.body = body
-        self.decodedJSONObject = Self.decodeJSONObject(from: body)
+        self.decodedJSONObject = precomputesJSONObject
+            ? Self.decodeJSONObject(from: body)
+            : nil
     }
 
     var jsonObject: FitMatchJSONValue? {
