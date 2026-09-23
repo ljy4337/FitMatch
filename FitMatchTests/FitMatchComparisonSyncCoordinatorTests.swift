@@ -544,7 +544,7 @@ struct FitMatchComparisonSyncCoordinatorTests {
         )
         #expect(authOutcome == .authenticationRequired)
         #expect(authOutcome.userVisibleMessage
-            == "로그인 상태를 확인한 뒤 다시 시도해 주세요.")
+            == FitMatchFailureCopy.loginRequired)
         #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
         #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
     }

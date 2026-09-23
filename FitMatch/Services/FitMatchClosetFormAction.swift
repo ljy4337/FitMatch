@@ -14,16 +14,18 @@ enum FitMatchClosetFormValidation {
             return "성별을 선택해 주세요."
         }
 
-        if viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if viewModel.isEditingExistingItem,
+           viewModel.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return "브랜드명을 입력해 주세요."
         }
 
-        if viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if viewModel.isEditingExistingItem,
+           viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return "상품명을 입력해 주세요."
         }
 
         if !viewModel.hasValidTaxonomySelection {
-            return "선택한 카테고리와 세부 카테고리를 다시 확인해 주세요."
+            return "선택한 카테고리를 다시 확인해 주세요."
         }
 
         if !viewModel.measurementKinds.isEmpty, viewModel.measurementEntrySource == nil {

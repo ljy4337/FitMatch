@@ -253,6 +253,9 @@ nonisolated enum FitMatchServerReferenceSelectionStatus: Equatable, Sendable {
 nonisolated struct FitMatchServerReferenceSelectionCandidate: Equatable, Sendable {
     let clientItemID: UUID
     let closetItemID: UUID
+    /// The current Closet receipt's server-issued group. This is compared to
+    /// the target context before a selectable candidate reaches the UI.
+    let comparisonGroupCode: String?
     let decision: FitMatchServerReferenceDecision
     let allowed: Bool
     let reasonCode: String?
@@ -290,6 +293,8 @@ nonisolated struct FitMatchServerReferenceSelectionPlan: Equatable, Sendable {
     /// by the candidate RPC. It never changes product classification.
     let targetComparisonGroupCode: String?
     let targetComparisonGroup: VNextComparisonGroupDTO?
+    /// Nil means this plan was not accompanied by a verified Closet receipt.
+    let serverClosetItemCount: Int?
 
     init(
         target: FitMatchServerProductAuthority,
@@ -297,13 +302,15 @@ nonisolated struct FitMatchServerReferenceSelectionPlan: Equatable, Sendable {
         candidates: [FitMatchServerReferenceSelectionCandidate],
         blockedCandidates: [FitMatchServerReferenceSelectionCandidate],
         targetComparisonGroupCode: String? = nil,
-        targetComparisonGroup: VNextComparisonGroupDTO? = nil
+        targetComparisonGroup: VNextComparisonGroupDTO? = nil,
+        serverClosetItemCount: Int? = nil
     ) {
         self.target = target
         self.status = status
         self.candidates = candidates
         self.blockedCandidates = blockedCandidates
         self.targetComparisonGroup = targetComparisonGroup
+        self.serverClosetItemCount = serverClosetItemCount
         self.targetComparisonGroupCode = targetComparisonGroupCode
             ?? targetComparisonGroup?.groupCode
             ?? target.runtime.vnext?.comparisonGroup?.groupCode
@@ -318,7 +325,9 @@ nonisolated struct FitMatchServerReferenceSelectionPlan: Equatable, Sendable {
     }
 
     var measurementRequiredCandidates: [FitMatchServerReferenceSelectionCandidate] {
-        candidates.filter { $0.decision == .measurementsRequired }
+        (candidates + blockedCandidates).filter {
+            $0.decision == .measurementsRequired
+        }
     }
 
     var allBlockedCandidates: [FitMatchServerReferenceSelectionCandidate] {
@@ -341,6 +350,7 @@ nonisolated enum FitMatchComparisonBlockReason: String, Equatable, Sendable {
     case serverUnavailable = "SERVER_UNAVAILABLE"
     case incompatibleAudience = "INCOMPATIBLE_AUDIENCE"
     case designAxisDifference = "DESIGN_AXIS_DIFFERENCE"
+    case comparisonGroupRequired = "COMPARISON_GROUP_REQUIRED"
     case userSelectedReference = "USER_SELECTED_REFERENCE"
     case automaticMatch = "AUTOMATIC_MATCH"
     case unknown
@@ -377,6 +387,8 @@ nonisolated enum FitMatchComparisonBlockReason: String, Equatable, Sendable {
             return "대상 사용자 범위가 달라 비교하기 어려워요."
         case .designAxisDifference:
             return "디자인 축이 달라 이 조합은 비교할 수 없어요."
+        case .comparisonGroupRequired:
+            return "같은 비교 그룹의 내 옷만 선택할 수 있어요."
         case .userSelectedReference, .automaticMatch, .unknown:
             return "서버 비교 정책상 선택한 옷과 비교할 수 없습니다."
         }
@@ -1084,6 +1096,27 @@ actor FitMatchServerAuthorityCoordinator {
             try validateCandidateResponse(candidates)
         }
 
+        if let vnext = candidates.vnext {
+            guard let targetComparisonGroupCode = vnext.targetComparisonGroup?.groupCode,
+                  FitMatchComparisonGroup(rawValue: targetComparisonGroupCode) != nil else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: vnext.status,
+                    reason: "target_comparison_group_missing_or_invalid"
+                )
+            }
+            guard reference.comparisonGroupCode == targetComparisonGroupCode else {
+                return blockedAuthorization(
+                    reason: "reference_comparison_group_mismatch",
+                    reasonCode: FitMatchComparisonBlockReason
+                        .comparisonGroupRequired.rawValue,
+                    target: target,
+                    reference: reference,
+                    referenceAuthority: referenceAuthority,
+                    candidateState: candidates.state
+                )
+            }
+        }
+
         let vnextCandidate = candidates.vnext?.candidates.first(where: {
             $0.closetItemID == reference.closetItemID
         })
@@ -1294,9 +1327,9 @@ actor FitMatchServerAuthorityCoordinator {
             throw FitMatchServerAuthorityError.closetRuntimeUnavailable(closet.state)
         }
         _ = try FitMatchVNextContractValidator.uniqueIdentityIndex(closet.items, id: { $0.clientItemID })
-        let clientIDByClosetID = try FitMatchVNextContractValidator
+        let closetItemByID = try FitMatchVNextContractValidator
             .uniqueIdentityIndex(closet.items, id: { $0.closetItemID })
-            .mapValues(\.clientItemID)
+        let clientIDByClosetID = closetItemByID.mapValues(\.clientItemID)
         let targetVariantID = targetVariantID(
             for: target,
             observation: targetObservation
@@ -1345,13 +1378,28 @@ actor FitMatchServerAuthorityCoordinator {
             let candidates = try vnext.candidates.map {
                 try makeReferenceSelectionCandidate(
                     from: $0,
-                    clientIDByClosetID: clientIDByClosetID
+                    closetItemByID: closetItemByID
                 )
             }
             let blocked = try vnext.blocked.map {
                 try makeReferenceSelectionCandidate(
                     from: $0,
-                    clientIDByClosetID: clientIDByClosetID
+                    closetItemByID: closetItemByID
+                )
+            }
+            guard let targetComparisonGroupCode = responseGroup?.groupCode,
+                  FitMatchComparisonGroup(rawValue: targetComparisonGroupCode) != nil else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: vnext.status,
+                    reason: "target_comparison_group_missing_or_invalid"
+                )
+            }
+            guard candidates.filter(\.isSelectable).allSatisfy({
+                $0.comparisonGroupCode == targetComparisonGroupCode
+            }) else {
+                throw FitMatchServerAuthorityError.inconsistentCandidateState(
+                    state: vnext.status,
+                    reason: "selectable_candidate_comparison_group_mismatch"
                 )
             }
             plan = FitMatchServerReferenceSelectionPlan(
@@ -1359,8 +1407,9 @@ actor FitMatchServerAuthorityCoordinator {
                 status: try referenceSelectionStatus(vnext.status),
                 candidates: candidates,
                 blockedCandidates: blocked,
-                targetComparisonGroupCode: responseGroup?.groupCode,
-                targetComparisonGroup: responseGroup
+                targetComparisonGroupCode: targetComparisonGroupCode,
+                targetComparisonGroup: responseGroup,
+                serverClosetItemCount: closet.items.count
             )
         } else {
             guard requestedComparisonGroupCode == nil else {
@@ -1381,7 +1430,8 @@ actor FitMatchServerAuthorityCoordinator {
                 status: try referenceSelectionStatus(response.state),
                 candidates: candidates,
                 blockedCandidates: [],
-                targetComparisonGroupCode: requestedComparisonGroupCode
+                targetComparisonGroupCode: requestedComparisonGroupCode,
+                serverClosetItemCount: closet.items.count
             )
         }
 
@@ -1475,14 +1525,15 @@ actor FitMatchServerAuthorityCoordinator {
 
     private func makeReferenceSelectionCandidate(
         from candidate: VNextReferenceCandidateDTO,
-        clientIDByClosetID: [UUID: UUID]
+        closetItemByID: [UUID: FitMatchClosetItemRecord]
     ) throws -> FitMatchServerReferenceSelectionCandidate {
-        guard let clientItemID = clientIDByClosetID[candidate.closetItemID] else {
+        guard let closetItem = closetItemByID[candidate.closetItemID] else {
             throw FitMatchServerAuthorityError.referenceItemNotFound
         }
         return FitMatchServerReferenceSelectionCandidate(
-            clientItemID: clientItemID,
+            clientItemID: closetItem.clientItemID,
             closetItemID: candidate.closetItemID,
+            comparisonGroupCode: closetItem.comparisonGroupCode,
             decision: try referenceDecision(candidate.decision),
             allowed: candidate.allowed,
             reasonCode: candidate.reasonCode,
@@ -1524,6 +1575,7 @@ actor FitMatchServerAuthorityCoordinator {
         return FitMatchServerReferenceSelectionCandidate(
             clientItemID: clientItemID,
             closetItemID: candidate.closetItemID,
+            comparisonGroupCode: nil,
             decision: decision,
             allowed: allowed,
             reasonCode: nil,

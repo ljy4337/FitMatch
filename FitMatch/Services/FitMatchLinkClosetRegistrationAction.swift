@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 /// The non-visual production action behind link-based Closet registration.
 /// It deliberately owns only the parser/authority/preparation sequence; the
@@ -14,7 +15,8 @@ enum FitMatchLinkClosetRegistrationAction {
     static func load(
         urlString: String,
         makeViewModel: (String) -> ShoppingProductViewModel,
-        existingBrand: @escaping (String) -> Brand?
+        existingBrand: @escaping (String) -> Brand?,
+        onPhaseChange: @escaping (ProductAnalysisPhase) -> Void = { _ in }
     ) async -> Outcome {
         if FitMatchRequestTrace.context == nil {
             let trace = FitMatchRequestTrace.Context(
@@ -25,7 +27,8 @@ enum FitMatchLinkClosetRegistrationAction {
                 await load(
                     urlString: urlString,
                     makeViewModel: makeViewModel,
-                    existingBrand: existingBrand
+                    existingBrand: existingBrand,
+                    onPhaseChange: onPhaseChange
                 )
             }
         }
@@ -51,6 +54,10 @@ enum FitMatchLinkClosetRegistrationAction {
         }
 
         let viewModel = makeViewModel(url.absoluteString)
+        let phaseSubscription = viewModel.$analysisPhase
+            .removeDuplicates()
+            .sink(receiveValue: onPhaseChange)
+        defer { phaseSubscription.cancel() }
         _ = await viewModel.loadProductInfoFromURL()
         guard !Task.isCancelled else {
             completionState = "취소"

@@ -10,6 +10,7 @@ struct LinkClosetRegistrationView: View {
 
     @State private var productURL = ""
     @State private var isLoading = false
+    @State private var loadingPhase: ProductAnalysisPhase = .loadingProductInfo
     @State private var errorMessage: String?
     @State private var parsedProduct: Product?
     @State private var partialProduct: Product?
@@ -77,10 +78,8 @@ struct LinkClosetRegistrationView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                if isLoading && parsedProduct == nil && partialProduct == nil {
-                    loadingContent
-                } else {
-                    urlCard
+                urlCard
+                if !isLoading {
                     parsedProductPreview
                     errorCard
                 }
@@ -190,31 +189,6 @@ struct LinkClosetRegistrationView: View {
         dismiss()
     }
 
-    private var loadingContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 7) {
-                Text("상품 정보를 불러오고 있어요")
-                    .font(.title2.weight(.black))
-                Text("잠시만 기다려 주세요.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            FitMatchCard {
-                VStack(alignment: .leading, spacing: 16) {
-                    FitMatchLoadingRow(title: "상품 정보 불러오는 중", state: .done)
-                    FitMatchLoadingRow(title: "사이즈표 확인 중", state: .loading)
-                    FitMatchLoadingRow(title: "내 옷장 추가 준비 중", state: .waiting)
-
-                    Text("평균 10~20초 소요됩니다.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 6)
-                }
-            }
-        }
-    }
-
     private var urlCard: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 14) {
@@ -256,8 +230,10 @@ struct LinkClosetRegistrationView: View {
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .contentShape(Rectangle())
                 .onTapGesture {
+                    guard !isLoading else { return }
                     isURLFocused = true
                 }
+                .disabled(isLoading)
 
                 if isShowingEmptyPasteboardMessage {
                     Text("복사된 상품 링크가 없어요. 링크를 복사한 후 다시 눌러 주세요.")
@@ -274,7 +250,7 @@ struct LinkClosetRegistrationView: View {
                 }
 
                 PrimaryButton(
-                    title: isLoading ? "불러오는 중" : "상품 정보 불러오기",
+                    title: isLoading ? loadingPhase.productLoadingTitle : "상품 정보 불러오기",
                     systemImage: "sparkles",
                     isLoading: isLoading
                 ) {
@@ -426,6 +402,7 @@ struct LinkClosetRegistrationView: View {
         partialProduct = nil
         registrationServerContext = nil
         productMeasurementPresence = .unknown
+        loadingPhase = .loadingProductInfo
         isLoading = true
         defer {
             if loadRequestID == requestID {
@@ -436,7 +413,11 @@ struct LinkClosetRegistrationView: View {
         let outcome = await FitMatchLinkClosetRegistrationAction.load(
             urlString: normalizedURLString,
             makeViewModel: { ShoppingProductViewModel(initialURL: $0) },
-            existingBrand: existingBrand(named:)
+            existingBrand: existingBrand(named:),
+            onPhaseChange: { phase in
+                guard !Task.isCancelled, requestID == loadRequestID else { return }
+                loadingPhase = phase
+            }
         )
         guard !Task.isCancelled, requestID == loadRequestID else { return }
         switch outcome {

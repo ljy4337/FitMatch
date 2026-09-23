@@ -1142,19 +1142,7 @@ private struct MainTabView: View {
                 .presentationDragIndicator(.visible)
             case .manualClosetAdd:
                 NavigationStack {
-                    AddClosetItemView { item in
-                        modelContext.insert(item)
-                        do {
-                            try modelContext.save()
-                            return true
-                        } catch {
-                            modelContext.rollback()
-                            #if DEBUG
-                            print("[MainTabView] manual closet add failed: \(error.localizedDescription)")
-                            #endif
-                            return false
-                        }
-                    }
+                    AddClosetItemView()
                 }
                 .presentationDragIndicator(.visible)
             }

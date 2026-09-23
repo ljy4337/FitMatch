@@ -16,6 +16,15 @@ enum ProductAnalysisPhase: Int, Equatable {
     case loadingProductInfo
     case loadingSizeChart
     case preparingComparison
+
+    var productLoadingTitle: String {
+        switch self {
+        case .loadingProductInfo, .loadingSizeChart:
+            return "쇼핑몰 정보 불러오는 중"
+        case .preparingComparison:
+            return "상품 정보 확인 중"
+        }
+    }
 }
 
 /// A typed, user-recoverable parser state. This must never be inferred from

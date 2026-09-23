@@ -669,10 +669,7 @@ struct FitMatchHeadlessUserJourneyTests {
         #expect(displayedHistoricalProduct.canonicalSourceIdentity == oldSourceIdentity)
 
         let calls = await remote.calls()
-        #expect(calls == [
-            "resolve", "runtime", "list_closet", "reference_candidates",
-            "eligible_sizes", "begin_comparison", "complete_comparison"
-        ])
+        try requireComparisonCallDependencies(calls, scenario: "RS-004")
     }
 
     /// RS-005/RS-006/HI-005: a Global completed Result takes the automatic
@@ -773,10 +770,7 @@ struct FitMatchHeadlessUserJourneyTests {
         #expect(displayedHistoricalProduct.classificationAuthorityProvenance == oldAuthority)
         #expect(displayedHistoricalProduct.garmentTypeRawValue == oldGarment)
         #expect(displayedHistoricalProduct.canonicalSourceIdentity == oldIdentity)
-        #expect(await remote.calls() == [
-            "resolve", "runtime", "list_closet", "reference_candidates",
-            "eligible_sizes", "begin_comparison", "complete_comparison"
-        ])
+        try requireComparisonCallDependencies(await remote.calls(), scenario: "RS-005")
     }
 
     @Test func failedResultRecompareLeavesTheDisplayedHistoricalTargetUntouched() async throws {
@@ -874,10 +868,7 @@ struct FitMatchHeadlessUserJourneyTests {
         #expect(displayedHistoricalProduct.garmentTypeRawValue == oldGarment)
         #expect(displayedHistoricalProduct.canonicalSourceIdentity == oldSourceIdentity)
         let calls = await remote.calls()
-        #expect(calls == [
-            "resolve", "runtime", "list_closet", "reference_candidates",
-            "eligible_sizes", "begin_comparison", "complete_comparison"
-        ])
+        try requireComparisonCallDependencies(calls, scenario: "RS-006")
     }
 
     /// RS-013/RX-010: a server completion may fail after the real engine has
@@ -2598,11 +2589,7 @@ private enum HeadlessJourneyHarness {
         let history = await viewModel.calculateRecommendation(userFits: [reference])
         try require(history != nil, scenario: scenario.id, message: "authorized automatic comparison did not complete")
         let calls = await remote.calls()
-        try requireOrdered(
-            calls,
-            ["resolve", "runtime", "list_closet", "reference_candidates", "eligible_sizes", "begin_comparison", "complete_comparison"],
-            scenario: scenario.id
-        )
+        try requireComparisonCallDependencies(calls, scenario: scenario.id)
         return execution(
             calls,
             [.viewModelLoad, .authorityResolve, .referenceDecision, .eligibleSizes, .begin, .recommendationService, .engineAdapter, .complete, .historyModel],
@@ -2752,11 +2739,7 @@ private enum HeadlessJourneyHarness {
         let history = await viewModel.calculateTemporaryRecommendation(selectedReferenceItem: reference)
         let calls = await remote.calls()
         try require(history != nil, scenario: scenario.id, message: "manual reference path did not create history")
-        try requireOrdered(
-            calls,
-            ["resolve", "runtime", "list_closet", "reference_candidates", "eligible_sizes", "begin_comparison", "complete_comparison"],
-            scenario: scenario.id
-        )
+        try requireComparisonCallDependencies(calls, scenario: scenario.id)
         return execution(
             calls,
             [.viewModelLoad, .authorityResolve, .referenceDecision, .eligibleSizes, .begin, .recommendationService, .engineAdapter, .complete, .historyModel],
@@ -4593,6 +4576,40 @@ private func requireOrdered(
             throw HeadlessJourneyFailure(scenario, "missing ordered call \(expected): \(calls)")
         }
         cursor = calls.index(after: found)
+    }
+}
+
+/// Target authority, runtime and Closet receipts are independent and begin in
+/// parallel. The candidate lookup must still wait for all three; every later
+/// authorization side effect remains strictly ordered and exactly once.
+private func requireComparisonCallDependencies(
+    _ calls: [String],
+    scenario: String
+) throws {
+    let required = [
+        "resolve", "runtime", "list_closet", "reference_candidates",
+        "eligible_sizes", "begin_comparison", "complete_comparison"
+    ]
+    for call in required {
+        guard calls.contains(call) else {
+            throw HeadlessJourneyFailure(scenario, "missing \(call): \(calls)")
+        }
+    }
+    guard let candidates = calls.firstIndex(of: "reference_candidates"),
+          let eligible = calls.firstIndex(of: "eligible_sizes"),
+          let begin = calls.firstIndex(of: "begin_comparison"),
+          let complete = calls.firstIndex(of: "complete_comparison") else {
+        throw HeadlessJourneyFailure(scenario, "missing comparison dependency: \(calls)")
+    }
+    let prerequisites = ["resolve", "runtime", "list_closet"].compactMap { call in
+        calls[..<candidates].lastIndex(of: call)
+    }
+    guard prerequisites.count == 3,
+          prerequisites.allSatisfy({ $0 < candidates }),
+          candidates < eligible,
+          eligible < begin,
+          begin < complete else {
+        throw HeadlessJourneyFailure(scenario, "invalid comparison dependency order: \(calls)")
     }
 }
 

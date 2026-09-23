@@ -172,7 +172,9 @@ struct RecommendationService {
             let result = bestEvidence?.result
             let reason: String?
             if let result, result.status == .insufficientEvidence {
-                reason = "비교 가능한 실측 \(result.comparedItems.count)개 · 최소 \(result.minimumComparableCount)개 필요"
+                // Embedded preview coverage is not the server's eligibility
+                // policy. Do not present its minimum as a comparison blocker.
+                reason = "예상 결과를 계산하지 못했어요. 옷을 선택하면 서버에서 확인한 실측으로 비교해요."
             } else if result == nil {
                 reason = "비교할 상품 사이즈 정보가 없습니다."
             } else {

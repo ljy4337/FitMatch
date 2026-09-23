@@ -16,8 +16,13 @@ struct ZARAParserConcurrencyTests {
         let task = Task { @MainActor in
             try await parser.parse(from: ZARAConcurrencyFixture.url)
         }
-        await guideGate.waitUntilStarted()
-        await details.waitUntilStarted()
+        do {
+            try await guideGate.waitUntilStarted()
+            try await details.waitUntilStarted()
+        } catch {
+            await cancelAndDrain(task, guideGate: guideGate)
+            throw error
+        }
         #expect(await guideGate.isFinished() == false)
 
         await guideGate.succeed(with: ZARAConcurrencyFixture.guideJSON)
@@ -41,16 +46,58 @@ struct ZARAParserConcurrencyTests {
             try await parser.parse(from: ZARAConcurrencyFixture.url)
         }
 
-        await guideGate.waitUntilStarted()
-        await details.waitUntilStarted()
-        task.cancel()
-        await guideGate.waitUntilCancelled()
+        do {
+            try await guideGate.waitUntilStarted()
+            try await details.waitUntilStarted()
+            task.cancel()
+            try await guideGate.waitUntilCancelled()
+        } catch {
+            await cancelAndDrain(task, guideGate: guideGate)
+            throw error
+        }
 
         do {
             _ = try await task.value
             Issue.record("A cancelled ZARA load must not return a late product result.")
         } catch is CancellationError {
             // Expected: the caller cannot receive a result after cancellation.
+        }
+    }
+
+    @Test func cancellationWhilePageIsPendingCancelsSpeculativeGuideBeforePageCompletes() async throws {
+        let pageGate = ZARAPendingPageGate()
+        let guideGate = ZARAGuideGate()
+        let details = ZARADetailsRecorder()
+        let parser = ZARAParser(
+            pageLoader: ZARAPendingPageLoader(gate: pageGate),
+            sizeGuideLoader: ZARAConcurrencyGuideLoader(gate: guideGate),
+            productDetailsLoader: ZARAConcurrencyDetailsLoader(recorder: details)
+        )
+        let task = Task { @MainActor in
+            try await parser.parse(from: ZARAConcurrencyFixture.url)
+        }
+
+        do {
+            try await pageGate.waitUntilStarted()
+            try await guideGate.waitUntilStarted()
+            task.cancel()
+            try await guideGate.waitUntilCancelled()
+            #expect(await details.hasStarted() == false)
+
+            await pageGate.release(with: ZARAConcurrencyFixture.page)
+            do {
+                _ = try await task.value
+                Issue.record("A cancelled page wait must not start details or return a product.")
+            } catch is CancellationError {
+                // Expected: cancellation remains terminal after the pending page releases.
+            }
+            #expect(await details.hasStarted() == false)
+        } catch {
+            task.cancel()
+            await guideGate.forceCancel()
+            await pageGate.release(with: ZARAConcurrencyFixture.page)
+            _ = try? await task.value
+            throw error
         }
     }
 
@@ -78,18 +125,16 @@ struct ZARAParserConcurrencyTests {
             try await parser.parse(from: requestedURL)
         }
 
-        await guideGate.waitUntilStarted(
-            ZARAConcurrencyFixture.requestedVariantID
-        )
-        await Task.yield()
-        let startedResolvedGuide = await guideGate.startedProductIDs().contains(
-            ZARAConcurrencyFixture.redirectedVariantID
-        )
-        #expect(startedResolvedGuide)
-        guard startedResolvedGuide else {
-            task.cancel()
-            _ = try? await task.value
-            return
+        do {
+            try await guideGate.waitUntilStarted(
+                ZARAConcurrencyFixture.requestedVariantID
+            )
+            try await guideGate.waitUntilStarted(
+                ZARAConcurrencyFixture.redirectedVariantID
+            )
+        } catch {
+            await cancelAndDrain(task, guideGate: guideGate)
+            throw error
         }
 
         let product = try await task.value
@@ -99,6 +144,24 @@ struct ZARAParserConcurrencyTests {
             ZARAConcurrencyFixture.redirectedVariantID
         ])
     }
+
+    private func cancelAndDrain(
+        _ task: Task<ParsedProductInfo, Error>,
+        guideGate: ZARAGuideGate
+    ) async {
+        task.cancel()
+        await guideGate.forceCancel()
+        _ = try? await task.value
+    }
+
+    private func cancelAndDrain(
+        _ task: Task<ParsedProductInfo, Error>,
+        guideGate: ZARARedirectGuideGate
+    ) async {
+        task.cancel()
+        await guideGate.forceCancel()
+        _ = try? await task.value
+    }
 }
 
 private struct ZARAConcurrencyPageLoader: ZARAProductPageLoading {
@@ -106,6 +169,14 @@ private struct ZARAConcurrencyPageLoader: ZARAProductPageLoading {
 
     func load(url: URL) async throws -> ZARAProductPage {
         page
+    }
+}
+
+private struct ZARAPendingPageLoader: ZARAProductPageLoading {
+    let gate: ZARAPendingPageGate
+
+    func load(url: URL) async throws -> ZARAProductPage {
+        try await gate.waitForPage()
     }
 }
 
@@ -186,9 +257,11 @@ private actor ZARAGuideGate {
         }
     }
 
-    func waitUntilStarted() async {
-        while !started {
-            await Task.yield()
+    func waitUntilStarted() async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "ZARA speculative guide did not start"
+        ) {
+            await self.hasStarted()
         }
     }
 
@@ -196,9 +269,11 @@ private actor ZARAGuideGate {
         finished
     }
 
-    func waitUntilCancelled() async {
-        while !cancelled {
-            await Task.yield()
+    func waitUntilCancelled() async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "ZARA speculative guide did not receive cancellation"
+        ) {
+            await self.hasCancelled()
         }
     }
 
@@ -206,6 +281,18 @@ private actor ZARAGuideGate {
         finished = true
         continuation?.resume(returning: data)
         continuation = nil
+    }
+
+    func forceCancel() {
+        cancelGuide()
+    }
+
+    private func hasStarted() -> Bool {
+        started
+    }
+
+    private func hasCancelled() -> Bool {
+        cancelled
     }
 
     private func cancelGuide() {
@@ -233,9 +320,11 @@ private actor ZARARedirectGuideGate {
         return ZARAConcurrencyFixture.guideJSON
     }
 
-    func waitUntilStarted(_ productID: String) async {
-        while !started.contains(productID) {
-            await Task.yield()
+    func waitUntilStarted(_ productID: String) async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "ZARA expected guide did not start"
+        ) {
+            await self.hasStarted(productID)
         }
     }
 
@@ -243,9 +332,17 @@ private actor ZARARedirectGuideGate {
         started
     }
 
+    private func hasStarted(_ productID: String) -> Bool {
+        started.contains(productID)
+    }
+
     private func cancelRequestedGuide() {
         requestedContinuation?.resume(throwing: CancellationError())
         requestedContinuation = nil
+    }
+
+    func forceCancel() {
+        cancelRequestedGuide()
     }
 }
 
@@ -256,10 +353,48 @@ private actor ZARADetailsRecorder {
         started = true
     }
 
-    func waitUntilStarted() async {
-        while !started {
-            await Task.yield()
+    func waitUntilStarted() async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "ZARA details request did not start"
+        ) {
+            await self.hasStarted()
         }
+    }
+
+    func hasStarted() -> Bool {
+        started
+    }
+}
+
+/// Intentionally ignores cancellation until the fixture releases the page.
+/// This proves the speculative guide is tied to the parent parse lifetime,
+/// not merely to normal completion of the page request.
+private actor ZARAPendingPageGate {
+    private var continuation: CheckedContinuation<ZARAProductPage, Error>?
+    private var started = false
+
+    func waitForPage() async throws -> ZARAProductPage {
+        started = true
+        return try await withCheckedThrowingContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func waitUntilStarted() async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "ZARA verified page did not start"
+        ) {
+            await self.hasStarted()
+        }
+    }
+
+    func release(with page: ZARAProductPage) {
+        continuation?.resume(returning: page)
+        continuation = nil
+    }
+
+    private func hasStarted() -> Bool {
+        started
     }
 }
 

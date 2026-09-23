@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct RecommendationHistoryView: View {
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     @Environment(\.openURL) private var openURL
     @Environment(\.modelContext) private var modelContext
     @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
@@ -13,6 +14,8 @@ struct RecommendationHistoryView: View {
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var closetRegistrationPreparation: FitMatchResultClosetRegistrationPreparation?
     @State private var preparingHistoryClosetIDs = Set<UUID>()
+    @State private var preparationTask: Task<Void, Never>?
+    @State private var preparationRequestGate = FitMatchHistoryClosetPreparationRequestGate()
     @State private var selectedHistoryIDForDetail: UUID?
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
@@ -86,6 +89,13 @@ struct RecommendationHistoryView: View {
         .onAppear {
             refreshFilteredHistories()
         }
+        .onDisappear {
+            invalidateClosetPreparation()
+        }
+        .onChange(of: authSession.authenticatedUserID) {
+            invalidateClosetPreparation()
+            closetRegistrationPreparation = nil
+        }
         .onChange(of: histories.count) {
             refreshFilteredHistories()
         }
@@ -149,7 +159,8 @@ struct RecommendationHistoryView: View {
                     HistoryCard(
                         history: history,
                         isFavorite: isFavorite(history),
-                        isPreparingClosetRegistration: preparingHistoryClosetIDs.contains(history.id)
+                        isPreparingClosetRegistration: preparingHistoryClosetIDs.contains(history.id),
+                        isClosetRegistrationBusy: !preparingHistoryClosetIDs.isEmpty
                     ) {
                         toggleFavorite(history)
                     } onOpen: {
@@ -226,11 +237,18 @@ struct RecommendationHistoryView: View {
         selectedHistoryIDForDetail = history.id
     }
 
+    private func invalidateClosetPreparation() {
+        preparationRequestGate.invalidate()
+        preparationTask?.cancel()
+        preparationTask = nil
+        preparingHistoryClosetIDs.removeAll()
+    }
+
     private func prepareHistoryClosetRegistration(_ history: RecommendationHistory) {
-        guard !preparingHistoryClosetIDs.contains(history.id) else { return }
+        guard let requestID = preparationRequestGate.begin(historyID: history.id) else { return }
         preparingHistoryClosetIDs.insert(history.id)
-        Task { @MainActor in
-            defer { preparingHistoryClosetIDs.remove(history.id) }
+        let userID = authSession.authenticatedUserID
+        preparationTask = Task { @MainActor in
             let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
                 historicalProduct: history.product,
                 productDetailCategory: history.productDetailCategory,
@@ -243,6 +261,10 @@ struct RecommendationHistoryView: View {
                 requiresExplicitSizeSelectionWhenNoPreferred: true,
                 makeViewModel: { ShoppingProductViewModel() }
             )
+            guard preparationRequestGate.finish(requestID: requestID) else { return }
+            preparingHistoryClosetIDs.remove(history.id)
+            preparationTask = nil
+            guard !Task.isCancelled, authSession.authenticatedUserID == userID else { return }
             switch outcome {
             case .prepared(let preparation):
                 closetRegistrationPreparation = preparation
@@ -481,6 +503,7 @@ private struct HistoryCard: View {
     let history: RecommendationHistory
     let isFavorite: Bool
     let isPreparingClosetRegistration: Bool
+    let isClosetRegistrationBusy: Bool
     let onToggleFavorite: () -> Void
     let onOpen: () -> Void
     let onRecompare: () -> Void
@@ -517,7 +540,7 @@ private struct HistoryCard: View {
                     systemImage: "plus"
                 )
             }
-            .disabled(isPreparingClosetRegistration)
+            .disabled(isClosetRegistrationBusy)
         }
         .accessibilityAction(named: "보유한 옷으로 등록") {
             onAddToCloset()

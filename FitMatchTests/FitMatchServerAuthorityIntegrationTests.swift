@@ -4,6 +4,42 @@ import Testing
 
 @MainActor
 struct FitMatchServerAuthorityIntegrationTests {
+    @Test func emptyClosetNoticeRequiresVerifiedServerReceiptNotEmptyCandidates() async throws {
+        for serverCount in [0, 1] {
+            let fixture = AuthorityFixture.confirmed(
+                externalProductID: "EMPTY-CLOSET-AUTHORITY",
+                detail: "short_sleeve", family: "tshirt", length: "short_sleeve"
+            )
+            let items = serverCount == 0 ? [] : [Self.closetRecord(
+                clientItemID: UUID(), closetItemID: UUID(), productID: nil,
+                classificationSource: "manual_override"
+            )]
+            let remote = ServerAuthorityRemoteStub(
+                resolutions: [fixture.resolution(catalogState: "current")],
+                observations: [], runtimes: [fixture.runtime],
+                closetResponse: .init(state: "ready", items: items),
+                candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                    targetProductID: fixture.productID, candidates: [], blocked: [],
+                    status: "NO_REFERENCE_CANDIDATE"
+                )]
+            )
+            let plan = try await FitMatchServerAuthorityCoordinator(remote: remote)
+                .referenceSelectionPlan(
+                    targetRequest: fixture.request,
+                    targetObservation: fixture.observationRequest,
+                    localClientItemIDs: []
+                )
+            #expect(plan.serverClosetItemCount == serverCount)
+            #expect(CompareFlowRouting.shouldTerminateComparisonForEmptyCloset(
+                activeClosetItemCount: 0, serverClosetItemCount: plan.serverClosetItemCount
+            ) == (serverCount == 0))
+            // A pending local item is not an empty Closet even before upload.
+            #expect(!CompareFlowRouting.shouldTerminateComparisonForEmptyCloset(
+                activeClosetItemCount: 1, serverClosetItemCount: plan.serverClosetItemCount
+            ))
+        }
+    }
+
     @Test func currentResolutionReusesRuntimeButPromotionRefreshesIt() async throws {
         for changed in [false, true] {
             let fixture = AuthorityFixture.confirmed(
@@ -61,6 +97,48 @@ struct FitMatchServerAuthorityIntegrationTests {
         #expect(value.targetComparisonGroup?.groupCode == "C")
         #expect(value.targetComparisonGroup?.source == "SESSION_USER_SELECTED")
         #expect(value.targetComparisonGroup?.authorityFingerprint == "fingerprint-v1")
+    }
+
+    @Test func referencePlanRejectsSelectableCandidateFromAnotherComparisonGroup() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "CROSS-GROUP-CANDIDATE",
+            detail: "short_sleeve", family: "tshirt", length: "short_sleeve"
+        )
+        let clientItemID = UUID()
+        let closetItemID = UUID()
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [],
+            runtimes: [fixture.runtime],
+            closetResponse: .init(
+                state: "ready",
+                items: [Self.closetRecord(
+                    clientItemID: clientItemID,
+                    closetItemID: closetItemID,
+                    productID: nil,
+                    classificationSource: "manual_override",
+                    comparisonGroupCode: "B"
+                )]
+            ),
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID,
+                candidates: [(closetItemID, "MANUAL_EXTENDED", true)],
+                blocked: [],
+                targetComparisonGroupCode: "A"
+            )]
+        )
+
+        await #expect(throws: FitMatchServerAuthorityError.inconsistentCandidateState(
+            state: "READY",
+            reason: "selectable_candidate_comparison_group_mismatch"
+        )) {
+            try await FitMatchServerAuthorityCoordinator(remote: remote)
+                .referenceSelectionPlan(
+                    targetRequest: fixture.request,
+                    targetObservation: fixture.observationRequest,
+                    localClientItemIDs: [clientItemID]
+                )
+        }
     }
 
     @Test func cancellingProductContextClearsRequestedComparisonGroup() {
@@ -512,12 +590,17 @@ struct FitMatchServerAuthorityIntegrationTests {
         let clientItemID = UUID()
         let closetItemID = UUID()
         let remote = ServerAuthorityRemoteStub(
-            resolutions: [
-                fixture.resolution(catalogState: "current"),
-                referenceFixture.resolution(catalogState: "current")
-            ],
+            resolutions: [],
             observations: [],
-            runtimes: [fixture.runtime, referenceFixture.runtime],
+            runtimes: [],
+            keyedResolutions: [
+                fixture.request.externalProductID: fixture.resolution(catalogState: "current"),
+                referenceFixture.request.externalProductID: referenceFixture.resolution(catalogState: "current")
+            ],
+            keyedRuntimes: [
+                fixture.request.externalProductID: fixture.runtime,
+                referenceFixture.request.externalProductID: referenceFixture.runtime
+            ],
             closetResponse: .init(
                 state: "ready",
                 items: [Self.closetRecord(
@@ -1079,12 +1162,17 @@ struct FitMatchServerAuthorityIntegrationTests {
         )
         let clientItemID = UUID()
         let remote = ServerAuthorityRemoteStub(
-            resolutions: [
-                fixture.resolution(catalogState: "current"),
-                referenceFixture.resolution(catalogState: "current")
-            ],
+            resolutions: [],
             observations: [],
-            runtimes: [fixture.runtime, referenceFixture.runtime],
+            runtimes: [],
+            keyedResolutions: [
+                fixture.request.externalProductID: fixture.resolution(catalogState: "current"),
+                referenceFixture.request.externalProductID: referenceFixture.resolution(catalogState: "current")
+            ],
+            keyedRuntimes: [
+                fixture.request.externalProductID: fixture.runtime,
+                referenceFixture.request.externalProductID: referenceFixture.runtime
+            ],
             closetResponse: .init(
                 state: "ready",
                 items: [Self.closetRecord(
@@ -1273,10 +1361,19 @@ struct FitMatchServerAuthorityIntegrationTests {
         )
         #expect(await remote.observationCallCount == 1)
         #expect(await remote.candidateCallCount == 1)
-        #expect(await remote.eventLog == [
-            "resolve", "runtime", "resolve", "observation", "runtime", "list",
-            "candidates"
-        ])
+        let events = await remote.eventLog
+        #expect(events.filter { $0 == "resolve" }.count == 2)
+        #expect(events.filter { $0 == "runtime" }.count == 2)
+        #expect(events.filter { $0 == "observation" }.count == 1)
+        #expect(events.filter { $0 == "list" }.count == 1)
+        #expect(events.filter { $0 == "candidates" }.count == 1)
+        let candidateIndex = try #require(events.firstIndex(of: "candidates"))
+        let observationIndex = try #require(events.firstIndex(of: "observation"))
+        let lastRuntimeIndex = try #require(events.lastIndex(of: "runtime"))
+        #expect(observationIndex < lastRuntimeIndex)
+        #expect(events[..<candidateIndex].filter { $0 == "resolve" }.count == 2)
+        #expect(events[..<candidateIndex].filter { $0 == "runtime" }.count == 2)
+        #expect(events[..<candidateIndex].contains("list"))
     }
 
     @Test func candidateAggregateStateMismatchFailsClosed() async throws {
@@ -1576,7 +1673,8 @@ struct FitMatchServerAuthorityIntegrationTests {
         productName: String = "Reference Tee",
         categoryCode: String = "tops",
         detailCode: String = "short_sleeve",
-        familyCode: String = "tshirt"
+        familyCode: String = "tshirt",
+        comparisonGroupCode: String? = "A"
     ) -> FitMatchClosetItemRecord {
         FitMatchClosetItemRecord(
             closetItemID: closetItemID,
@@ -1610,6 +1708,7 @@ struct FitMatchServerAuthorityIntegrationTests {
             familyCode: familyCode,
             lengthCode: "short_sleeve",
             bodyLengthCode: nil,
+            comparisonGroupCode: comparisonGroupCode,
             classificationSnapshot: ["decision_version": "db-classifier-v4"],
             clientSnapshot: [:],
             clientCreatedAt: nil,
@@ -1769,7 +1868,8 @@ struct FitMatchServerAuthorityIntegrationTests {
         targetProductID: UUID,
         candidates: [(UUID, String, Bool)],
         blocked: [(UUID, String, Bool)],
-        status: String = "READY"
+        status: String = "READY",
+        targetComparisonGroupCode: String? = "A"
     ) throws -> FitMatchReferenceCandidatesResponse {
         func encodedCandidate(_ value: (UUID, String, Bool)) -> [String: Any] {
             [
@@ -1787,13 +1887,25 @@ struct FitMatchServerAuthorityIntegrationTests {
                 "eligible_product_size_ids": []
             ]
         }
-        let data = try JSONSerialization.data(withJSONObject: [
+        var response: [String: Any] = [
             "target_product_id": targetProductID.uuidString,
             "target_variant_id": UUID().uuidString,
             "candidates": candidates.map(encodedCandidate),
             "blocked": blocked.map(encodedCandidate),
             "status": status
-        ])
+        ]
+        if let targetComparisonGroupCode {
+            response["target_comparison_group"] = [
+                "status": "COMPARABLE",
+                "group_code": targetComparisonGroupCode,
+                "source": "RETAILER_CATEGORY",
+                "comparison_policy_code": "fixture-policy",
+                "policy_version": "fixture-v1",
+                "authority_version": "fixture-v1",
+                "authority_fingerprint": "fixture-fingerprint"
+            ]
+        }
+        let data = try JSONSerialization.data(withJSONObject: response)
         let decoded = try JSONDecoder().decode(
             VNextReferenceCandidatesDTO.self,
             from: data
@@ -2144,8 +2256,10 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
     }
 
     private var resolutions: [FitMatchProductResolutionResponse]
+    private var keyedResolutions: [String: FitMatchProductResolutionResponse]
     private var observations: [FitMatchProductObservationResponse]
     private var runtimes: [FitMatchProductRuntimeResponse]
+    private var keyedRuntimes: [String: FitMatchProductRuntimeResponse]
     private let closetResponse: FitMatchClosetItemsResponse
     private var candidateResponses: [FitMatchReferenceCandidatesResponse]
     private var eligibleResponses: [VNextEligibleCandidateSizesDTO]
@@ -2163,6 +2277,8 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         resolutions: [FitMatchProductResolutionResponse],
         observations: [FitMatchProductObservationResponse],
         runtimes: [FitMatchProductRuntimeResponse],
+        keyedResolutions: [String: FitMatchProductResolutionResponse] = [:],
+        keyedRuntimes: [String: FitMatchProductRuntimeResponse] = [:],
         closetResponse: FitMatchClosetItemsResponse = .init(state: "ready", items: []),
         candidateResponses: [FitMatchReferenceCandidatesResponse] = [],
         eligibleResponses: [VNextEligibleCandidateSizesDTO] = [],
@@ -2170,8 +2286,10 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         beginError: FitMatchServerAuthorityError? = nil
     ) {
         self.resolutions = resolutions
+        self.keyedResolutions = keyedResolutions
         self.observations = observations
         self.runtimes = runtimes
+        self.keyedRuntimes = keyedRuntimes
         self.closetResponse = closetResponse
         self.candidateResponses = candidateResponses
         self.eligibleResponses = eligibleResponses
@@ -2182,6 +2300,9 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductResolutionResponse {
         eventLog.append("resolve")
+        if let response = keyedResolutions.removeValue(forKey: request.externalProductID) {
+            return response
+        }
         guard !resolutions.isEmpty else { throw StubError.missingResolution }
         return resolutions.removeFirst()
     }
@@ -2198,6 +2319,9 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         -> FitMatchProductRuntimeResponse {
         eventLog.append("runtime")
         runtimeCallCount += 1
+        if let response = keyedRuntimes.removeValue(forKey: request.externalProductID) {
+            return response
+        }
         guard !runtimes.isEmpty else { throw StubError.missingRuntime }
         return runtimes.removeFirst()
     }

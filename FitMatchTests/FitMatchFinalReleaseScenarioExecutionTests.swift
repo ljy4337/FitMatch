@@ -415,10 +415,10 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         for provider in [HeadlessJourneyProvider.uniqlo, .musinsa, .zara] {
             let run = try await completeComparison(provider: provider, manual: false, personalGarment: nil)
             #expect(run.history != nil)
-            try requireCallOrder(run.calls, [
-                "resolve", "runtime", "list_closet", "reference_candidates",
-                "eligible_sizes", "begin_comparison", "complete_comparison"
-            ], scenario: "CP-\(provider.rawValue)")
+            try requireComparisonCallDependencies(
+                run.calls,
+                scenario: "CP-\(provider.rawValue)"
+            )
         }
 
         // CP-005: all bounded candidate counts are independently constructed;
@@ -606,16 +606,12 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
                 remote: remote,
                 defaults: isolatedDefaults()
             )
-            let closetSync = FitMatchClosetSyncCoordinator(
-                remote: FinalClosetRemote(),
-                defaults: isolatedDefaults()
-            )
             #expect(await FitMatchClosetDeletionAction.delete(
                 item: reference,
                 histories: [history],
                 in: context,
                 comparisonSync: comparisonSync,
-                closetSync: closetSync
+                closetSync: FinalConfirmedClosetDeletionStub()
             ) == .deleted)
             #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
             #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
@@ -634,7 +630,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
                 histories: [history],
                 in: context,
                 comparisonSync: comparisonSync,
-                closetSync: nil
+                closetSync: FinalConfirmedClosetDeletionStub()
             ) == .serverHistoryHideFailed)
             #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 1)
             #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
@@ -643,7 +639,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
                 histories: [history],
                 in: context,
                 comparisonSync: comparisonSync,
-                closetSync: nil
+                closetSync: FinalConfirmedClosetDeletionStub()
             ) == .deleted)
         }
 
@@ -1278,8 +1274,8 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         // restarts from the correct gate.
         try await retryComparisonAtEveryRemoteGate()
 
-        // RX-015: overlapping sync requests run a follow-up pass rather than
-        // lose a newer request. The coordinator, not the test, owns the loop.
+        // RX-015: identical overlapping sync requests share one pass. A
+        // changed snapshot is separately responsible for requesting a follow-up.
         let syncRemote = FinalClosetRemote()
         let sync = FitMatchClosetSyncCoordinator(remote: syncRemote, defaults: isolatedDefaults())
         let syncContainer = try inMemoryContainer()
@@ -1290,7 +1286,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             group.addTask { await sync.synchronize(userID: user, modelContext: syncContext) }
         }
         #expect(sync.state == .synced || sync.state == .pendingRetry)
-        #expect(await syncRemote.listCalls() >= 2)
+        #expect(await syncRemote.listCalls() == 1)
     }
 
     /// RX-009: authority/runtime and server-reference failure each occur at
@@ -1603,7 +1599,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             histories: [legacy],
             in: context,
             comparisonSync: sync,
-            closetSync: nil
+            closetSync: FinalConfirmedClosetDeletionStub()
         ) == .deleted)
         #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
         #expect(await remote.hideCalls() == 0)
@@ -1787,7 +1783,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             histories: [],
             in: context,
             comparisonSync: nil,
-            closetSync: nil
+            closetSync: FinalConfirmedClosetDeletionStub()
         ) == .deleted)
         #expect(try ModelContext(container).fetch(FetchDescriptor<UserFit>()).isEmpty)
 
@@ -1883,7 +1879,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             histories: [],
             in: context,
             comparisonSync: nil,
-            closetSync: nil
+            closetSync: FinalConfirmedClosetDeletionStub()
         ) == .deleted)
         FitMatchClosetReferenceMutation.setRepresentative(referenceA, among: [referenceA])
         let editedA = fixture.localReference(garment: "tshirt", sleeve: "short_sleeve")
@@ -1965,6 +1961,40 @@ private func requireCallOrder(
             throw FinalScenarioFailure(scenario, "missing ordered call \(expected): \(calls)")
         }
         cursor = calls.index(after: found)
+    }
+}
+
+/// Target authority, runtime and Closet reads deliberately begin together.
+/// Candidate lookup still requires all three receipts, and every later side
+/// effect must occur once in its server-authorized dependency order.
+private func requireComparisonCallDependencies(
+    _ calls: [String],
+    scenario: String
+) throws {
+    let required = [
+        "resolve", "runtime", "list_closet", "reference_candidates",
+        "eligible_sizes", "begin_comparison", "complete_comparison"
+    ]
+    for call in required {
+        guard calls.contains(call) else {
+            throw FinalScenarioFailure(scenario, "missing \(call): \(calls)")
+        }
+    }
+    guard let candidates = calls.firstIndex(of: "reference_candidates"),
+          let eligible = calls.firstIndex(of: "eligible_sizes"),
+          let begin = calls.firstIndex(of: "begin_comparison"),
+          let complete = calls.firstIndex(of: "complete_comparison") else {
+        throw FinalScenarioFailure(scenario, "missing comparison dependency: \(calls)")
+    }
+    let prerequisites = ["resolve", "runtime", "list_closet"].compactMap { call in
+        calls[..<candidates].lastIndex(of: call)
+    }
+    guard prerequisites.count == 3,
+          prerequisites.allSatisfy({ $0 < candidates }),
+          candidates < eligible,
+          eligible < begin,
+          begin < complete else {
+        throw FinalScenarioFailure(scenario, "invalid comparison dependency order: \(calls)")
     }
 }
 
@@ -2473,6 +2503,27 @@ private actor FinalHistoryRemote: FitMatchComparisonRemoteServicing {
     }
 
     func hideCalls() -> Int { calls }
+}
+
+/// These scenario tests exercise the production delete action after a
+/// successful server Closet receipt. Transport ownership and server-first
+/// transaction failure modes are covered by the coordinator's focused tests.
+@MainActor
+private final class FinalConfirmedClosetDeletionStub: FitMatchClosetDeleting {
+    func deleteServerFirst(
+        clientItemID: UUID,
+        prepare: () async throws -> Void,
+        commit: () throws -> Void
+    ) async throws {
+        try await FitMatchClosetDeletionTransaction.run(
+            isCurrent: { true },
+            prepare: prepare,
+            resolve: { clientItemID },
+            recordIntent: {},
+            delete: { id in (id, "2026-09-16T00:00:00Z") },
+            commit: commit
+        )
+    }
 }
 
 private actor FinalClosetRemote: FitMatchClosetRemoteServicing {

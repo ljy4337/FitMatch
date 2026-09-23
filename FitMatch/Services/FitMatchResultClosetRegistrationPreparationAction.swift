@@ -173,3 +173,26 @@ enum FitMatchResultClosetRegistrationPreparationAction {
         return SizeTokenNormalizer.displayName(for: finalComponent)
     }
 }
+
+/// Request ownership for the single History registration sheet.
+@MainActor
+final class FitMatchHistoryClosetPreparationRequestGate {
+    private var activeRequestID: UUID?
+
+    func begin(historyID _: UUID) -> UUID? {
+        guard activeRequestID == nil else { return nil }
+        let requestID = UUID()
+        activeRequestID = requestID
+        return requestID
+    }
+
+    func finish(requestID: UUID) -> Bool {
+        guard activeRequestID == requestID else { return false }
+        activeRequestID = nil
+        return true
+    }
+
+    func invalidate() {
+        activeRequestID = nil
+    }
+}

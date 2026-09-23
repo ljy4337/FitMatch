@@ -60,7 +60,7 @@ struct FitMatchSupabaseProductResolverTests {
         let sourceURL = try #require(URL(string: "https://www.zara.com/kr/ko/item-p00000001.html?v1=1"))
         let product = ParsedProductInfo(
             sourceURL: sourceURL,
-            sourceType: .zara,
+            sourceType: .officialStore,
             sourceName: "ZARA",
             brandName: "테스트",
             productName: "구성품별 원본 실측",
@@ -69,7 +69,12 @@ struct FitMatchSupabaseProductResolverTests {
             sizes: [
                 ParsedProductSize(
                     name: "M",
-                    measurements: GarmentMeasurements(),
+                    measurements: GarmentMeasurements(
+                        shoulder: 0,
+                        chest: 0,
+                        totalLength: 0,
+                        sleeveLength: 0
+                    ),
                     measurementRecords: [
                         ParsedMeasurement(
                             value: 28,
@@ -1982,11 +1987,13 @@ struct FitMatchSupabaseProductResolverTests {
         let product = try #require(preparation.parsedProduct)
         #expect(!preparation.canBeginRegistration)
         #expect(product.sizes.map(\.name) == ["S", "M", "L", "XL"])
+        // Received sizes stay selectable for inspection. The server-issued
+        // measurement gate, not a silently empty picker, blocks registration.
         #expect(
             AddComparedProductToClosetSheet.selectableSizes(
                 productSizes: product.sizes,
                 serverRegistrationContext: preparation.serverRegistrationContext
-            ).isEmpty
+            ).map(\.name) == ["S", "M", "L", "XL"]
         )
     }
 
@@ -3655,6 +3662,19 @@ struct FitMatchSupabaseProductResolverTests {
             classification: fixture.classification,
             variants: [],
             vnext: vnext
+        )
+    }
+
+    @Test func emptyLocalClosetDoesNotTerminateBeforeServerConfirmation() {
+        #expect(
+            !CompareFlowRouting.shouldTerminateComparisonForEmptyCloset(
+                activeClosetItemCount: 0
+            )
+        )
+        #expect(
+            !CompareFlowRouting.shouldTerminateComparisonForEmptyCloset(
+                activeClosetItemCount: 1
+            )
         )
     }
 

@@ -83,10 +83,17 @@ struct MusinsaParserConcurrencyTests {
             )
         }
 
-        await loader.waitUntilStarted([.metadata, .actualSize])
-        task.cancel()
-        await loader.respond(.metadata, body: MusinsaHTTPFixture.metadataJSON)
-        await loader.respond(.actualSize, body: MusinsaHTTPFixture.actualSizeJSON)
+        let expected: Set<MusinsaControlledResponseLoader.Endpoint> = [.metadata, .actualSize]
+        do {
+            try await loader.waitUntilStarted(expected)
+            task.cancel()
+            try await loader.waitUntilCancelled(expected)
+        } catch {
+            task.cancel()
+            await loader.cancelOutstanding()
+            _ = try? await task.value
+            throw error
+        }
 
         do {
             _ = try await task.value
@@ -129,7 +136,14 @@ struct MusinsaParserConcurrencyTests {
             )
         }
 
-        await loader.waitUntilStarted([.metadata, .actualSize])
+        do {
+            try await loader.waitUntilStarted([.metadata, .actualSize])
+        } catch {
+            task.cancel()
+            await loader.cancelOutstanding()
+            _ = try? await task.value
+            throw error
+        }
         let started = await loader.startedEndpoints()
         #expect(Set(started) == [.metadata, .actualSize])
         #expect(started.count == 2)
@@ -194,18 +208,33 @@ private actor MusinsaControlledResponseLoader {
 
     private var started: [Endpoint] = []
     private var continuations: [Endpoint: (URL, CheckedContinuation<FitMatchRetailerAPIResponseCapture, Error>)] = [:]
+    private var cancelled: Set<Endpoint> = []
 
     func response(for url: URL) async throws -> FitMatchRetailerAPIResponseCapture {
         let endpoint: Endpoint = url.path.hasSuffix("/actual-size") ? .actualSize : .metadata
         started.append(endpoint)
-        return try await withCheckedThrowingContinuation { continuation in
-            continuations[endpoint] = (url, continuation)
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                continuations[endpoint] = (url, continuation)
+            }
+        } onCancel: {
+            Task { await self.cancel(endpoint) }
         }
     }
 
-    func waitUntilStarted(_ expected: Set<Endpoint>) async {
-        while !expected.isSubset(of: Set(started)) {
-            await Task.yield()
+    func waitUntilStarted(_ expected: Set<Endpoint>) async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "MUSINSA metadata and actual-size requests did not both start"
+        ) {
+            await self.hasStarted(expected)
+        }
+    }
+
+    func waitUntilCancelled(_ expected: Set<Endpoint>) async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "MUSINSA metadata and actual-size requests did not both receive cancellation"
+        ) {
+            await self.hasCancelled(expected)
         }
     }
 
@@ -218,6 +247,28 @@ private actor MusinsaControlledResponseLoader {
             return
         }
         continuation.resume(returning: MusinsaHTTPFixture.capture(url: url, status: status, body: body))
+    }
+
+    func cancelOutstanding() {
+        for endpoint in Array(continuations.keys) {
+            cancel(endpoint)
+        }
+    }
+
+    private func hasStarted(_ expected: Set<Endpoint>) -> Bool {
+        expected.isSubset(of: Set(started))
+    }
+
+    private func hasCancelled(_ expected: Set<Endpoint>) -> Bool {
+        expected.isSubset(of: cancelled)
+    }
+
+    private func cancel(_ endpoint: Endpoint) {
+        cancelled.insert(endpoint)
+        guard let (_, continuation) = continuations.removeValue(forKey: endpoint) else {
+            return
+        }
+        continuation.resume(throwing: CancellationError())
     }
 }
 

@@ -8,15 +8,25 @@ enum AddClosetItemPresentationContext: Equatable {
 
 struct AddClosetItemView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     @Query(sort: \Brand.name) private var brands: [Brand]
-    @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @StateObject private var viewModel: AddClosetItemViewModel
     @State private var isShowingDeleteAlert = false
     @State private var isShowingSaveError = false
     @State private var selectedMeasurementGuide: MeasurementKind?
     @State private var isDeleting = false
 
-    let onSave: (UserFit) -> Bool
+    @State private var isSaving = false
+    @State private var saveTask: Task<Void, Never>?
+    @State private var pendingManualItem: UserFit?
+    @State private var pendingManualUserID: UUID?
+    @State private var saveErrorMessage = "내 옷장에 저장하지 못했습니다. 입력한 내용은 유지됩니다. 다시 시도해 주세요."
+
+    let onSave: ((UserFit) -> Bool)?
+    let onSaveAsync: ((UserFit) async -> FitMatchClosetSyncCoordinator.ManualClosetEditSaveOutcome)?
+    let onSaved: ((UserFit) -> Void)?
     let onDelete: (() async -> Bool)?
     private let hasComparisonHistory: Bool
     private let isEditing: Bool
@@ -36,7 +46,9 @@ struct AddClosetItemView: View {
         presentationContext: AddClosetItemPresentationContext = .standard,
         hasComparisonHistory: Bool = false,
         onDelete: (() async -> Bool)? = nil,
-        onSave: @escaping (UserFit) -> Bool
+        onSaved: ((UserFit) -> Void)? = nil,
+        onSaveAsync: ((UserFit) async -> FitMatchClosetSyncCoordinator.ManualClosetEditSaveOutcome)? = nil,
+        onSave: ((UserFit) -> Bool)? = nil
     ) {
         _viewModel = StateObject(
             wrappedValue: AddClosetItemViewModel(
@@ -56,22 +68,36 @@ struct AddClosetItemView: View {
         self.hasComparisonHistory = hasComparisonHistory
         self.onDelete = onDelete
         self.onSave = onSave
+        self.onSaveAsync = onSaveAsync
+        self.onSaved = onSaved
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 addHeader
-                sourceSection
+                if isEditing {
+                    sourceSection
+                }
                 categorySection
-                productInfoSection
+                if isEditing {
+                    productInfoSection
+                }
                 measurementSection
                 deleteSection
             }
+            .disabled(isSaving || pendingManualItem != nil)
             .padding(20)
             .padding(.bottom, 140)
         }
         .background(Color(.systemGroupedBackground))
+        .interactiveDismissDisabled(isSaving)
+        .onDisappear { saveTask?.cancel() }
+        .onChange(of: authSession.authenticatedUserID) { _, _ in
+            saveTask?.cancel()
+            pendingManualItem = nil
+            pendingManualUserID = nil
+        }
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle(isEditing ? "내 옷 정보 수정" : "")
         .navigationBarTitleDisplayMode(.inline)
@@ -92,7 +118,7 @@ struct AddClosetItemView: View {
         .alert("저장하지 못했어요", isPresented: $isShowingSaveError) {
             Button("확인", role: .cancel) {}
         } message: {
-            Text("내 옷장에 저장하지 못했습니다. 입력한 내용을 확인한 뒤 다시 시도해 주세요.")
+            Text(saveErrorMessage)
         }
         .sheet(item: $selectedMeasurementGuide) { kind in
             DirectMeasurementGuideSheet(kind: kind, category: viewModel.category)
@@ -170,7 +196,12 @@ struct AddClosetItemView: View {
     }
 
     private var categorySection: some View {
-        AddClosetSectionCard(index: 2, title: "분류", subtitle: "추천 비교에 사용할 카테고리입니다.", systemImage: "square.grid.2x2") {
+        AddClosetSectionCard(
+            index: isEditing ? 2 : 1,
+            title: "분류",
+            subtitle: "비교에 사용할 카테고리를 선택해 주세요.",
+            systemImage: "square.grid.2x2"
+        ) {
             VStack(alignment: .leading, spacing: 16) {
                 AddClosetSelectionMenu(
                     title: "성별",
@@ -188,35 +219,48 @@ struct AddClosetItemView: View {
                     normalizeCategorySelection()
                 }
 
-                AddClosetSelectionMenu(
-                    title: "카테고리",
-                    value: selectedCategoryOption?.displayName ?? viewModel.category.rawValue,
-                    options: serviceCategories,
-                    optionTitle: \.displayName,
-                    selection: Binding(
-                        get: { selectedCategoryOption ?? serviceCategories[0] },
-                        set: { option in
-                            viewModel.categoryCode = option.code
-                            viewModel.category = ClothingCategory.fromTaxonomyCode(option.code)
-                        }
-                    )
-                ) { _ in
-                    normalizeDetailCategorySelection()
-                }
+                if isEditing {
+                    AddClosetSelectionMenu(
+                        title: "카테고리",
+                        value: selectedCategoryOption?.displayName ?? viewModel.category.rawValue,
+                        options: serviceCategories,
+                        optionTitle: \.displayName,
+                        selection: Binding(
+                            get: { selectedCategoryOption ?? serviceCategories[0] },
+                            set: { option in
+                                viewModel.categoryCode = option.code
+                                viewModel.category = ClothingCategory.fromTaxonomyCode(option.code)
+                            }
+                        )
+                    ) { _ in
+                        normalizeDetailCategorySelection()
+                    }
 
-                AddClosetSelectionMenu(
-                    title: "세부 카테고리",
-                    value: selectedDetailOption?.displayName ?? "선택",
-                    options: detailCategories,
-                    optionTitle: \.displayName,
-                    selection: Binding(
-                        get: { selectedDetailOption ?? detailCategories[0] },
-                        set: { option in
-                            viewModel.detailCategoryCode = option.code
-                            viewModel.detailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
-                        }
+                    AddClosetSelectionMenu(
+                        title: "세부 카테고리",
+                        value: selectedDetailOption?.displayName ?? "선택",
+                        options: detailCategories,
+                        optionTitle: \.displayName,
+                        selection: Binding(
+                            get: { selectedDetailOption ?? detailCategories[0] },
+                            set: { option in
+                                viewModel.detailCategoryCode = option.code
+                                viewModel.detailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
+                            }
+                        )
                     )
-                )
+                } else {
+                    AddClosetSelectionMenu(
+                        title: "카테고리",
+                        value: viewModel.selectedManualCategory?.displayName ?? "선택 필요",
+                        options: FitMatchComparisonGroup.allCases,
+                        optionTitle: \.displayName,
+                        selection: Binding(
+                            get: { viewModel.selectedManualCategory ?? .tops },
+                            set: { viewModel.selectManualCategory($0) }
+                        )
+                    )
+                }
             }
         }
     }
@@ -230,7 +274,12 @@ struct AddClosetItemView: View {
     }
 
     private var measurementSection: some View {
-        AddClosetSectionCard(index: 4, title: "실측값", subtitle: "출처의 측정 기준과 원본값을 함께 저장합니다.", systemImage: "ruler") {
+        AddClosetSectionCard(
+            index: isEditing ? 4 : 2,
+            title: "실측값",
+            subtitle: "출처의 측정 기준과 원본값을 함께 저장합니다.",
+            systemImage: "ruler"
+        ) {
             VStack(alignment: .leading, spacing: 16) {
                 if measurementKinds.isEmpty {
                     Text("선택한 카테고리는 실측 입력 없이 저장할 수 있습니다.")
@@ -351,7 +400,7 @@ struct AddClosetItemView: View {
             Button {
                 saveItemAndDismiss()
             } label: {
-                Text(isEditing ? "수정 저장" : "내 옷장에 저장")
+                Text(isSaving ? "저장 확인 중" : (pendingManualItem != nil ? "등록 결과 다시 확인" : (isEditing ? "수정 저장" : "내 옷장에 저장")))
                     .font(.headline.weight(.bold))
                     .foregroundStyle(viewModel.canSave ? Color(.systemBackground) : .secondary)
                     .frame(maxWidth: .infinity)
@@ -363,7 +412,7 @@ struct AddClosetItemView: View {
             }
             .accessibilityIdentifier("closet.manualSave")
             .buttonStyle(.plain)
-            .disabled(!viewModel.canSave)
+            .disabled(isSaving || (!viewModel.canSave && pendingManualItem == nil))
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -372,35 +421,76 @@ struct AddClosetItemView: View {
     }
 
     private func saveItemAndDismiss() {
-        let outcome: FitMatchClosetFormAction.Outcome
+        guard !isSaving else { return }
         if isEditing {
-            outcome = FitMatchClosetFormAction.save(from: viewModel, persist: onSave)
-        } else {
-            outcome = FitMatchClosetManualRegistrationAction.save(
-                from: viewModel,
-                activeClosetItems: cachedUserFits.filter(\.isActiveClosetItem),
-                persist: onSave
-            )
+            if let onSaveAsync, let draft = viewModel.makeUserFit() {
+                isSaving = true
+                saveTask = Task { @MainActor in
+                    defer { isSaving = false }
+                    let outcome = await onSaveAsync(draft)
+                    guard !Task.isCancelled else { return }
+                    switch outcome {
+                    case .saved:
+                        finishSave(.saved(draft))
+                    case .failed(let message), .reconciliationRequired(let message):
+                        saveErrorMessage = message
+                        isShowingSaveError = true
+                    }
+                }
+                return
+            }
+            guard let onSave else { return }
+            finishSave(FitMatchClosetFormAction.save(from: viewModel, persist: onSave))
+            return
         }
+        guard let userID = authSession.authenticatedUserID, let closetSync else {
+            saveErrorMessage = "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+            isShowingSaveError = true
+            return
+        }
+        guard pendingManualUserID == nil || pendingManualUserID == userID else { return }
+        guard let draft = pendingManualItem ?? viewModel.makeUserFit() else { return }
+        pendingManualItem = draft
+        pendingManualUserID = userID
+        isSaving = true
+        saveTask = Task { @MainActor in
+            defer { isSaving = false }
+            do {
+                let saved = try await closetSync.registerManualServerFirst(
+                    draft, userID: userID, modelContext: modelContext
+                )
+                guard !Task.isCancelled, authSession.authenticatedUserID == userID else { return }
+                pendingManualItem = nil
+                pendingManualUserID = nil
+                finishSave(.saved(saved))
+            } catch {
+                guard !Task.isCancelled, authSession.authenticatedUserID == userID else { return }
+                if case FitMatchClosetSyncCoordinator.ManualRegistrationFailure.rejected = error {
+                    pendingManualItem = nil
+                    pendingManualUserID = nil
+                    saveErrorMessage = "입력한 옷 정보를 저장하지 못했어요. 내용을 확인한 뒤 다시 시도해 주세요."
+                } else {
+                    saveErrorMessage = "서버의 저장 결과를 확인하지 못했어요. 입력한 내용은 유지됩니다. ‘등록 결과 다시 확인’을 눌러 주세요."
+                }
+                isShowingSaveError = true
+            }
+        }
+    }
 
+    private func finishSave(_ outcome: FitMatchClosetFormAction.Outcome) {
         switch outcome {
         case .saved(let item):
             if !isEditing {
-                let origin: FitMatchMetricClosetOrigin = presentationContext == .linkedProduct
-                    ? .linkedProduct
-                    : .manual
                 FitMatchMetricsRecorder.shared.record(
                     .closetCreated(
-                        origin: origin,
+                        origin: presentationContext == .linkedProduct ? .linkedProduct : .manual,
                         category: FitMatchMetricMajorCategory(category: item.category)
                     )
                 )
             }
+            onSaved?(item)
             dismiss()
         case .blocked:
-            // The primary button is already disabled and shows the same
-            // reason below it. Keep an unexpected programmatic call
-            // fail-closed rather than presenting a misleading save error.
             return
         case .persistenceFailed:
             isShowingSaveError = true
@@ -453,7 +543,9 @@ struct AddClosetItemView: View {
             viewModel.genderCode = first.code
             viewModel.gender = UserGender.fromTaxonomyCode(first.code)
         }
-        normalizeCategorySelection()
+        if isEditing {
+            normalizeCategorySelection()
+        }
     }
 
     private var measurementKinds: [MeasurementKind] {

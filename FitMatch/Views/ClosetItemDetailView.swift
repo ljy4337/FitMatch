@@ -82,10 +82,23 @@ struct ClosetItemDetailView: View {
                         hasComparisonHistory: hasComparisonHistory,
                         onDelete: {
                             await deleteItemAndDismiss()
+                        },
+                        onSaveAsync: { editedItem in
+                            guard let userID = authSession.authenticatedUserID,
+                                  let closetSync else {
+                                return .failed(FitMatchFailureCopy.loginRequired)
+                            }
+                            return await closetSync.saveManualClosetEdit(
+                                item: item,
+                                editedItem: editedItem,
+                                userID: userID,
+                                modelContext: modelContext
+                            )
+                        },
+                        onSave: { editedItem in
+                            applyChanges(from: editedItem)
                         }
-                    ) { editedItem in
-                        applyChanges(from: editedItem)
-                    }
+                    )
                 }
             }
             .presentationDragIndicator(.visible)

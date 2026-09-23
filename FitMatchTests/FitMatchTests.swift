@@ -9808,3 +9808,62 @@ final class FitPairCorpusXCTests: XCTestCase {
         try FitMatchTests().storedUniqloCorpusBuildsActualMeasurementFitPairs()
     }
 }
+
+/// Focused XCTest bridge for manual-Closet form regressions. The project test
+/// runner does not execute filtered Swift Testing members directly.
+@MainActor
+final class ManualClosetCategoryXCTests: XCTestCase {
+    func testCategoryOnlyEntryUsesSelectedComparisonGroupWithoutBrandOrProductName() async throws {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.selectManualCategory(.pants)
+        viewModel.measurementEntrySource = .fitmatchMeasured
+        viewModel.totalLength = "100"
+        viewModel.waist = "38"
+
+        XCTAssertTrue(viewModel.canSave)
+        XCTAssertNil(FitMatchClosetFormValidation.message(for: viewModel))
+
+        let item = try XCTUnwrap(viewModel.makeUserFit())
+        XCTAssertTrue(item.brandName.isEmpty)
+        XCTAssertTrue(item.productName.isEmpty)
+        XCTAssertEqual(item.categoryCode, "bottoms")
+        XCTAssertEqual(item.detailCategoryCode, "short_pants")
+        await Task.yield()
+    }
+
+    func testCategoryMenuUsesTheSevenLinkedRegistrationGroups() async {
+        let viewModel = AddClosetItemViewModel()
+        let expectedCodes: [FitMatchComparisonGroup: String] = [
+            .tops: "tops",
+            .outerwear: "outerwear",
+            .pants: "bottoms",
+            .skirts: "skirts",
+            .onePiece: "dresses",
+            .innerwear: "underwear",
+            .homewear: "homewear"
+        ]
+
+        for group in FitMatchComparisonGroup.allCases {
+            viewModel.selectManualCategory(group)
+            XCTAssertEqual(viewModel.selectedManualCategory, group)
+            XCTAssertEqual(viewModel.categoryCode, expectedCodes[group])
+            XCTAssertTrue(viewModel.hasValidTaxonomySelection)
+        }
+        await Task.yield()
+    }
+
+    func testEntryStillRequiresMeasurementSource() async {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.brand = "테스트"
+        viewModel.productName = "반팔 티셔츠"
+        viewModel.shoulder = "48"
+        viewModel.measurementEntrySource = nil
+
+        XCTAssertFalse(viewModel.canSave)
+
+        viewModel.measurementEntrySource = .fitmatchMeasured
+
+        XCTAssertTrue(viewModel.canSave)
+        await Task.yield()
+    }
+}

@@ -63,17 +63,16 @@ enum MeasurementResolver {
         records: [GarmentMeasurementRecord],
         includeAllRecords: Bool = false
     ) -> [SourceDisplayRow] {
-        let displayRecords = includeAllRecords ? records : records.filter {
+        let eligibleRecords = includeAllRecords ? records : records.filter {
             $0.inputSourceRawValue == MeasurementInputSource.importedSizeChart.rawValue
                 || $0.inputSourceRawValue == MeasurementInputSource.transcribedSizeChart.rawValue
         }
+        // Canonical snapshots are a separate projection, not extra retailer
+        // measurements. Preserve legacy canonical-only presentation when no
+        // source facts exist, but never display both as retailer originals.
+        let sourceRecords = eligibleRecords.filter { $0.methodSource != "fitmatch_vnext_snapshot" }
+        let displayRecords = sourceRecords.isEmpty ? eligibleRecords : sourceRecords
         return displayRecords
-            .sorted {
-                let lhsOrder = displayOrder($0.displayKind)
-                let rhsOrder = displayOrder($1.displayKind)
-                if lhsOrder != rhsOrder { return lhsOrder < rhsOrder }
-                return ($0.rawLabel, $0.id.uuidString) < ($1.rawLabel, $1.id.uuidString)
-            }
             .map {
                 SourceDisplayRow(
                     id: $0.id.uuidString,
@@ -135,7 +134,8 @@ enum MeasurementResolver {
         fallbackCode: String
     ) -> String {
         let rawLabel = rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
-        let isProviderMachineCode = rawLabel.hasPrefix("musinsa.")
+        let isProviderMachineCode = rawLabel == rawCode
+            || rawLabel.hasPrefix("musinsa.")
             || rawLabel.hasPrefix("uniqlo.")
             || rawLabel.hasPrefix("zara.")
         if !rawLabel.isEmpty, !isProviderMachineCode {

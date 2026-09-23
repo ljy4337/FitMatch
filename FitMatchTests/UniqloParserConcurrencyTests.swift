@@ -2,6 +2,38 @@ import Foundation
 import Testing
 @testable import FitMatch
 
+enum RetailerParserConcurrencyTestWaitError: Error, Sendable {
+    case timedOut(String)
+}
+
+enum RetailerParserConcurrencyTestWait {
+    /// Waits for an actor-recorded event, with a watchdog only to turn a
+    /// missing event into a deterministic test failure instead of a hang.
+    static func until(
+        _ description: String,
+        timeout: Duration = .seconds(2),
+        condition: @escaping @Sendable () async -> Bool
+    ) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+                while !Task.isCancelled {
+                    if await condition() {
+                        return
+                    }
+                    await Task.yield()
+                }
+            }
+            group.addTask {
+                try? await Task.sleep(for: timeout)
+                guard !Task.isCancelled else { return }
+                throw RetailerParserConcurrencyTestWaitError.timedOut(description)
+            }
+            defer { group.cancelAll() }
+            _ = try await group.next()
+        }
+    }
+}
+
 @MainActor
 struct UniqloParserConcurrencyTests {
     @Test func chartsAndAvailabilityBeginBeforeAnyResponseAndKeepLargerChartChoice() async throws {
@@ -22,7 +54,12 @@ struct UniqloParserConcurrencyTests {
         let expected: Set<UniqloControlledResponseLoader.Endpoint> = [
             .chart("E123456-065"), .chart("E123456-000"), .product, .stock
         ]
-        await loader.waitUntilStarted(expected)
+        do {
+            try await loader.waitUntilStarted(expected)
+        } catch {
+            await cancelAndDrain(resultTask, loader: loader)
+            throw error
+        }
         let started = await loader.startedEndpoints()
         #expect(Set(started) == expected)
         #expect(started.count == expected.count)
@@ -153,7 +190,12 @@ struct UniqloParserConcurrencyTests {
             )
         }
 
-        await loader.waitUntilStarted([.chart("E123456-065"), .chart("E123456-000")])
+        do {
+            try await loader.waitUntilStarted([.chart("E123456-065"), .chart("E123456-000")])
+        } catch {
+            await cancelAndDrain(resultTask, loader: loader)
+            throw error
+        }
         resultTask.cancel()
         await loader.respond(
             .chart("E123456-065"),
@@ -189,9 +231,14 @@ struct UniqloParserConcurrencyTests {
         let expected: Set<UniqloControlledResponseLoader.Endpoint> = [
             .chart("E123456-065"), .chart("E123456-000"), .product, .stock
         ]
-        await loader.waitUntilStarted(expected)
-        resultTask.cancel()
-        await loader.waitUntilCancelled(expected)
+        do {
+            try await loader.waitUntilStarted(expected)
+            resultTask.cancel()
+            try await loader.waitUntilCancelled(expected)
+        } catch {
+            await cancelAndDrain(resultTask, loader: loader)
+            throw error
+        }
 
         do {
             _ = try await resultTask.value
@@ -200,6 +247,15 @@ struct UniqloParserConcurrencyTests {
             // Expected: every structured child receives the parent cancellation.
         }
         #expect(await loader.cancelledEndpoints() == expected)
+    }
+
+    private func cancelAndDrain(
+        _ task: Task<UniqloSizeAPIResult, Error>,
+        loader: UniqloControlledResponseLoader
+    ) async {
+        task.cancel()
+        await loader.cancelOutstanding()
+        _ = try? await task.value
     }
 }
 
@@ -226,9 +282,11 @@ private actor UniqloControlledResponseLoader {
         }
     }
 
-    func waitUntilStarted(_ expected: Set<Endpoint>) async {
-        while !expected.isSubset(of: Set(started)) {
-            await Task.yield()
+    func waitUntilStarted(_ expected: Set<Endpoint>) async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "UNIQLO requests did not all start"
+        ) {
+            await self.hasStarted(expected)
         }
     }
 
@@ -236,9 +294,11 @@ private actor UniqloControlledResponseLoader {
         started
     }
 
-    func waitUntilCancelled(_ expected: Set<Endpoint>) async {
-        while !expected.isSubset(of: cancelled) {
-            await Task.yield()
+    func waitUntilCancelled(_ expected: Set<Endpoint>) async throws {
+        try await RetailerParserConcurrencyTestWait.until(
+            "UNIQLO child requests did not all receive cancellation"
+        ) {
+            await self.hasCancelled(expected)
         }
     }
 
@@ -246,11 +306,25 @@ private actor UniqloControlledResponseLoader {
         cancelled
     }
 
+    private func hasStarted(_ expected: Set<Endpoint>) -> Bool {
+        expected.isSubset(of: Set(started))
+    }
+
+    private func hasCancelled(_ expected: Set<Endpoint>) -> Bool {
+        expected.isSubset(of: cancelled)
+    }
+
     func respond(_ endpoint: Endpoint, status: Int = 200, body: Data) {
         guard let (url, continuation) = continuations.removeValue(forKey: endpoint) else {
             return
         }
         continuation.resume(returning: UniqloHTTPFixture.capture(url: url, status: status, body: body))
+    }
+
+    func cancelOutstanding() {
+        for endpoint in Array(continuations.keys) {
+            cancel(endpoint)
+        }
     }
 
     private func cancel(_ endpoint: Endpoint) {
@@ -278,7 +352,7 @@ private enum UniqloHTTPFixture {
     static let productAvailability = Data(
         """
         {"status":"ok","result":{"l2s":[
-          {"l2Id":"m-65","color":{"displayCode":"65"},"size":{"displayCode":"004","name":"M"},"pld":{"displayCode":"000"}}
+          {"l2Id":"m-65","color":{"displayCode":"65"},"size":{"displayCode":"004","name":"M"},"pld":{"displayCode":"000"},"sales":true}
         ]}}
         """.utf8
     )

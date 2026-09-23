@@ -139,18 +139,9 @@ struct FitMatchOnboardingView: View {
                         prefillSourceOption: usesUITestFixtures ? .manual : nil,
                         prefillBrand: usesUITestFixtures ? "온보딩 직접등록 브랜드" : nil,
                         prefillProductName: usesUITestFixtures ? "온보딩 직접등록 내 옷" : nil,
-                        prefersRepresentativeByDefault: false
-                    ) { item in
-                        modelContext.insert(item)
-                        do {
-                            try modelContext.save()
-                            finishAfterRegistration()
-                            return true
-                        } catch {
-                            modelContext.rollback()
-                            return false
-                        }
-                    }
+                        prefersRepresentativeByDefault: false,
+                        onSaved: { _ in finishAfterRegistration() }
+                    )
                 }
                 .presentationDragIndicator(.visible)
             }

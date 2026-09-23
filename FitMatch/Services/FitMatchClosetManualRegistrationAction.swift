@@ -1,6 +1,7 @@
 import Foundation
 
-/// The production action behind a new manual Closet registration.
+/// Synchronous form action retained for local persistence consumers and tests.
+/// New registration screens use the coordinator server-first boundary.
 @MainActor
 enum FitMatchClosetManualRegistrationAction {
     static func save(

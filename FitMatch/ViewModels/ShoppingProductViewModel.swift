@@ -1774,7 +1774,7 @@ final class ShoppingProductViewModel: ObservableObject {
             .filter {
                 selectableIDs.contains($0.id)
                     && $0.isActiveClosetItem
-                    && $0.comparisonGroup != nil
+                    && $0.comparisonGroup == comparisonGroup
             }
             .sorted { $0.id.uuidString < $1.id.uuidString }
         let key = FitMatchClosetComparisonBatchCacheKey(
@@ -1790,24 +1790,13 @@ final class ShoppingProductViewModel: ObservableObject {
             return closetComparisonBatch
         }
 
-        let batches: [FitMatchClosetComparisonBatchSummary] =
-            FitMatchComparisonGroup.allCases.compactMap { group -> FitMatchClosetComparisonBatchSummary? in
-            let groupCandidates = candidates.filter { $0.comparisonGroup == group }
-            guard !groupCandidates.isEmpty else { return nil }
-            return recommendationService.makeClosetComparisonBatchSummary(
-                product: product,
-                productDetailCategory: detailCategory,
-                comparisonGroup: group,
-                candidates: groupCandidates
-            )
-        }
-        let batch = batches.first { $0.comparisonGroup == comparisonGroup }
-            ?? recommendationService.makeClosetComparisonBatchSummary(
-                product: product,
-                productDetailCategory: detailCategory,
-                comparisonGroup: comparisonGroup,
-                candidates: []
-            )
+        let batch = recommendationService.makeClosetComparisonBatchSummary(
+            product: product,
+            productDetailCategory: detailCategory,
+            comparisonGroup: comparisonGroup,
+            candidates: candidates
+        )
+        let batches = candidates.isEmpty ? [] : [batch]
         guard isCurrentComparison(comparisonRequestID) else { return nil }
         closetComparisonBatchCacheKey = key
         if closetComparisonBatches != batches {
@@ -1835,6 +1824,16 @@ final class ShoppingProductViewModel: ObservableObject {
               let product = parsedProductForServerAuthority,
               let request = product.fitMatchDatabaseResolutionRequest() else {
             errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
+            return nil
+        }
+        guard let targetComparisonGroupCode = validatedSessionComparisonGroup?.groupCode
+                ?? confirmedServerAuthority?.runtime.vnext?.comparisonGroup?.groupCode,
+              let targetComparisonGroup = FitMatchComparisonGroup(
+                rawValue: targetComparisonGroupCode
+              ),
+              item.comparisonGroup == targetComparisonGroup else {
+            errorMessage = FitMatchComparisonBlockReason
+                .comparisonGroupRequired.userMessage
             return nil
         }
         guard let localReferenceSnapshot = item.fitMatchServerReferenceSnapshot() else {

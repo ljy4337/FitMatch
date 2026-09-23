@@ -220,14 +220,43 @@ final class AddClosetItemViewModel: ObservableObject {
 
     var canSave: Bool {
         gender != .unknown
-            && !brand.trimmed.isEmpty
-            && !productName.trimmed.isEmpty
+            && (!isEditingExistingItem || (!brand.trimmed.isEmpty && !productName.trimmed.isEmpty))
             && hasValidTaxonomySelection
             && measurements != nil
             && (measurementKinds.isEmpty || measurementEntrySource != nil)
             && (measurementEntrySource != .otherSizeChart || !measurementSourceName.trimmed.isEmpty)
             && (measurementEntrySource != .otherSizeChart || hasAllRequiredSourceLabels)
             && directMeasurementValidationMessage == nil
+    }
+
+    /// The manual form presents the same seven category groups used by linked
+    /// registration. The existing taxonomy tuple stays internal so the
+    /// established measurement and persistence contracts remain unchanged.
+    func selectManualCategory(_ group: FitMatchComparisonGroup) {
+        let categoryCode = Self.taxonomyCategoryCode(for: group)
+        let details = FitMatchTaxonomyProvider.shared.activeDetails(categoryCode: categoryCode)
+        guard FitMatchTaxonomyProvider.shared.isActiveCategory(categoryCode),
+              let detail = details.first(where: { $0.code == detailCategoryCode }) ?? details.first else {
+            return
+        }
+
+        self.categoryCode = categoryCode
+        category = ClothingCategory.fromTaxonomyCode(categoryCode)
+        detailCategoryCode = detail.code
+        detailCategory = ClosetDetailCategory.fromTaxonomyCode(detail.code)
+    }
+
+    var selectedManualCategory: FitMatchComparisonGroup? {
+        switch categoryCode {
+        case "tops": return .tops
+        case "outerwear": return .outerwear
+        case "bottoms": return .pants
+        case "skirts": return .skirts
+        case "dresses": return .onePiece
+        case "underwear": return .innerwear
+        case "homewear": return .homewear
+        default: return nil
+        }
     }
 
     /// Picker-driven UI normally keeps this tuple valid, but linked recovery
@@ -269,17 +298,17 @@ final class AddClosetItemViewModel: ObservableObject {
         }
 
         return GarmentMeasurements(
-            shoulder: Double(shoulder) ?? 0,
-            chest: Double(chest) ?? 0,
-            totalLength: Double(totalLength) ?? 0,
-            sleeveLength: Double(sleeveLength) ?? 0,
-            waist: Double(waist) ?? 0,
-            hip: Double(hip) ?? 0,
-            thigh: Double(thigh) ?? 0,
-            rise: Double(rise) ?? 0,
-            hem: Double(hem) ?? 0,
-            footLength: Double(footLength) ?? 0,
-            underBust: Double(underBust) ?? 0
+            shoulder: Double(shoulder.trimmed) ?? 0,
+            chest: Double(chest.trimmed) ?? 0,
+            totalLength: Double(totalLength.trimmed) ?? 0,
+            sleeveLength: Double(sleeveLength.trimmed) ?? 0,
+            waist: Double(waist.trimmed) ?? 0,
+            hip: Double(hip.trimmed) ?? 0,
+            thigh: Double(thigh.trimmed) ?? 0,
+            rise: Double(rise.trimmed) ?? 0,
+            hem: Double(hem.trimmed) ?? 0,
+            footLength: Double(footLength.trimmed) ?? 0,
+            underBust: Double(underBust.trimmed) ?? 0
         )
     }
 
@@ -411,6 +440,18 @@ final class AddClosetItemViewModel: ObservableObject {
     private var hasAllRequiredSourceLabels: Bool {
         measurementKinds.allSatisfy { kind in
             value(for: kind).trimmed.isEmpty || !(measurementSourceLabels[kind]?.trimmed.isEmpty ?? true)
+        }
+    }
+
+    private static func taxonomyCategoryCode(for group: FitMatchComparisonGroup) -> String {
+        switch group {
+        case .tops: return "tops"
+        case .outerwear: return "outerwear"
+        case .pants: return "bottoms"
+        case .skirts: return "skirts"
+        case .onePiece: return "dresses"
+        case .innerwear: return "underwear"
+        case .homewear: return "homewear"
         }
     }
 

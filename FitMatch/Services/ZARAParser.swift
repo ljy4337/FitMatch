@@ -119,7 +119,6 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
         // table and the product page have no data dependency, so fetch them
         // together. The size guide is still discarded unless the verified
         // page independently confirms the same selected catalog entry.
-        async let verifiedPage = loadVerifiedProductPage(from: url)
         // A redirect can verify a different selected catalog entry. Keep the
         // speculative URL-v1 read independently cancellable so an obsolete
         // guide cannot hold the exact post-verification guide at this scope.
@@ -127,7 +126,14 @@ struct ZARAParser: ProductURLParsing, ZARACategoryResumableParsing {
             try await prefetchSizeGuide(productID: requestedVariantID)
         }
         defer { prefetchedSizeGuideTask.cancel() }
+        async let verifiedPage: (ZARAProductPage, ZARAProductIdentity) =
+            withTaskCancellationHandler {
+                try await loadVerifiedProductPage(from: url)
+            } onCancel: {
+                prefetchedSizeGuideTask.cancel()
+            }
         let (page, identity) = try await verifiedPage
+        try Task.checkCancellation()
 
         // The page has now independently verified the selected catalog entry.
         // Start details immediately; a slow selected-v1 guide still cannot

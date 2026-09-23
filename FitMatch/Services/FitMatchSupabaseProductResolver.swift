@@ -2835,7 +2835,10 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 semanticStatus: MeasurementSemanticStatus.unknownDefinition.rawValue
             )
         }
-        let records = sourceRecords.isEmpty ? canonicalRecords : sourceRecords
+        // Keep both projections: source rows own retailer presentation, while
+        // only the separately verified canonical rows can feed local previews.
+        // Raw-only records stay unknown and never acquire comparison authority.
+        let records = sourceRecords + canonicalRecords
         return FitMatchClosetItemRecord(
             closetItemID: item.id,
             clientItemID: item.clientItemID,

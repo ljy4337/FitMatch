@@ -2,6 +2,7 @@ import Combine
 import Foundation
 import SwiftData
 import SwiftUI
+import Supabase
 
 nonisolated protocol FitMatchClosetRemoteServicing: FitMatchServerAuthorityRemoteServicing {
     func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
@@ -112,6 +113,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
     /// clears this in-memory guard).
     private var blockedMutationFingerprints: [UUID: String] = [:]
     private var remoteItemsByClientID: [UUID: FitMatchClosetItemRecord] = [:]
+    /// Freeze manual retries after an ambiguous write, and resume accepted
+    /// writes at read-back without issuing a second mutation.
+    private var pendingManualRequests: [UUID: FitMatchUpsertClosetItemRequest] = [:]
+    private var acceptedManualReceipts: [UUID: UUID] = [:]
+    private var attemptedManualIDs: Set<UUID> = []
     /// A user-triggered linked edit has already reached the update RPC.  Keep
     /// its exact request in memory until the list receipt is projected so a
     /// local read-back failure cannot turn into a second update with guessed
@@ -150,6 +156,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         activeUserID = userID
         remoteItemsByClientID.removeAll()
         acceptedLinkedEditReceipts.removeAll()
+        pendingManualRequests.removeAll()
+        acceptedManualReceipts.removeAll()
+        attemptedManualIDs.removeAll()
         pendingSyncUserID = nil
         pendingSyncContext = nil
         pendingSyncFingerprint = nil
@@ -332,6 +341,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         activeUserID = nil
         remoteItemsByClientID.removeAll()
         acceptedLinkedEditReceipts.removeAll()
+        pendingManualRequests.removeAll()
+        acceptedManualReceipts.removeAll()
+        attemptedManualIDs.removeAll()
         needsAnotherPass = false
         pendingSyncUserID = nil
         pendingSyncContext = nil
@@ -341,6 +353,199 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         blockedMutationFingerprints.removeAll()
         state = .idle
         lastErrorMessage = nil
+    }
+
+    enum ManualRegistrationFailure: Error {
+        case rejected
+    }
+
+    enum ManualClosetEditSaveOutcome: Equatable {
+        case saved
+        case failed(String)
+        case reconciliationRequired(String)
+    }
+
+    /// Direct Closet edits use the same server-first boundary as linked edits.
+    /// `editedItem` is a detached form draft; the persisted row is untouched
+    /// until the update receipt and its authoritative list read-back agree.
+    func saveManualClosetEdit(
+        item: UserFit,
+        editedItem: UserFit,
+        userID: UUID,
+        modelContext: ModelContext
+    ) async -> ManualClosetEditSaveOutcome {
+        let generation = accountGeneration
+        guard isCurrentSyncUser(userID), item.sourceProduct == nil else {
+            return .failed(FitMatchFailureCopy.loginRequired)
+        }
+        do {
+            try await FitMatchClosetDeletionTransaction.waitForSynchronization(
+                isCurrent: { self.isCurrentSyncUser(userID) && self.accountGeneration == generation },
+                isBusy: { self.isSynchronizing }
+            )
+        } catch {
+            return .failed("서버의 저장 상태를 확인하지 못했어요. 다시 시도해 주세요.")
+        }
+        isSynchronizing = true
+        defer { isSynchronizing = false }
+        do {
+            try Task.checkCancellation()
+            guard isCurrentSyncUser(userID), accountGeneration == generation else {
+                throw FitMatchSupabaseProductResolverError.authenticationRequired
+            }
+            let before = try await remote.listClosetItems()
+            guard before.state == "ready",
+                  let current = try validatedClosetIndex(before)[item.id],
+                  current.productID == nil else {
+                return .failed("서버의 현재 옷장 정보를 확인하지 못했어요. 새로고침 후 다시 시도해 주세요.")
+            }
+            let request = FitMatchUpsertClosetItemRequest(
+                clientItemID: item.id,
+                item: payload(for: editedItem),
+                productID: nil,
+                productVariantID: nil,
+                productSizeID: nil,
+                override: nil
+            )
+            let updated = try await remote.updateClosetItem(request, closetItemID: current.closetItemID)
+            guard updated.clientItemID == item.id,
+                  updated.closetItemID == current.closetItemID else {
+                return .reconciliationRequired("서버 수정 결과를 확인하는 중입니다. 다시 저장해 주세요.")
+            }
+            let after = try await remote.listClosetItems()
+            guard isCurrentSyncUser(userID), accountGeneration == generation,
+                  after.state == "ready",
+                  let record = try validatedClosetIndex(after)[item.id],
+                  record.closetItemID == current.closetItemID,
+                  record.productID == nil else {
+                return .reconciliationRequired("서버 수정 결과를 확인하는 중입니다. 다시 저장해 주세요.")
+            }
+            guard matchesManualEditReadback(editedItem, record: record) else {
+                return .reconciliationRequired(
+                    "서버에 수정한 내용이 반영되지 않았어요. 입력한 내용은 유지됩니다. 다시 저장해 주세요."
+                )
+            }
+            try apply(record, to: item, modelContext: modelContext)
+            try modelContext.save()
+            remoteItemsByClientID[item.id] = record
+            return .saved
+        } catch is CancellationError {
+            return .failed("수정이 취소되었습니다. 입력한 내용은 유지됩니다.")
+        } catch {
+            return .failed(linkedEditErrorMessage(for: error))
+        }
+    }
+
+    /// Uses the existing manual payload and authoritative projection. A draft
+    /// is never inserted locally before a ready, identity-checked receipt.
+    func registerManualServerFirst(
+        _ item: UserFit,
+        userID: UUID,
+        modelContext: ModelContext
+    ) async throws -> UserFit {
+        let generation = accountGeneration
+        guard isCurrentSyncUser(userID), item.sourceProduct == nil else {
+            throw FitMatchSupabaseProductResolverError.authenticationRequired
+        }
+        do {
+            try await FitMatchClosetDeletionTransaction.waitForSynchronization(
+                isCurrent: { self.isCurrentSyncUser(userID) && self.accountGeneration == generation },
+                isBusy: { self.isSynchronizing }
+            )
+        } catch {
+            try Task.checkCancellation()
+            guard isCurrentSyncUser(userID), accountGeneration == generation else { throw error }
+            if !attemptedManualIDs.contains(item.id) { throw ManualRegistrationFailure.rejected }
+            throw error
+        }
+        isSynchronizing = true
+        defer {
+            isSynchronizing = false
+            if let queuedUser = pendingSyncUserID, let context = pendingSyncContext {
+                pendingSyncUserID = nil
+                pendingSyncContext = nil
+                Task { @MainActor [weak self] in
+                    guard let self, self.activeUserID == queuedUser else { return }
+                    await self.synchronize(userID: queuedUser, modelContext: context)
+                }
+            }
+        }
+        func requireCurrent() throws {
+            try Task.checkCancellation()
+            guard isCurrentSyncUser(userID), accountGeneration == generation else {
+                throw FitMatchSupabaseProductResolverError.authenticationRequired
+            }
+        }
+        let request: FitMatchUpsertClosetItemRequest
+        if let pending = pendingManualRequests[item.id] {
+            request = pending
+        } else {
+            do {
+                request = try await makeUpsertRequest(for: item, userID: userID)
+                try requireCurrent()
+            } catch {
+                try requireCurrent()
+                // No remote write exists to reconcile. Keep the form editable.
+                throw ManualRegistrationFailure.rejected
+            }
+            pendingManualRequests[item.id] = request
+        }
+        let hadUncertainAttempt = attemptedManualIDs.contains(item.id)
+        if acceptedManualReceipts[item.id] == nil, hadUncertainAttempt {
+            let response = try await remote.listClosetItems()
+            try requireCurrent()
+            guard response.state == "ready" else {
+                throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+            }
+            if let existing = try validatedClosetIndex(response)[item.id] {
+                acceptedManualReceipts[item.id] = existing.closetItemID
+            }
+        }
+        if acceptedManualReceipts[item.id] == nil {
+            attemptedManualIDs.insert(item.id)
+            do {
+                let response = try await remote.upsertClosetItem(request)
+                try requireCurrent()
+                guard response.clientItemID == item.id else {
+                    throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+                }
+                acceptedManualReceipts[item.id] = response.closetItemID
+            } catch {
+                try requireCurrent()
+                let code: String?
+                if case let FitMatchClosetRegistrationRPCError.rejected(sqlState, _) = error {
+                    code = sqlState.uppercased()
+                } else {
+                    code = (error as? PostgrestError)?.code?.uppercased()
+                }
+                let deterministic = error is FitMatchClosetPayloadContractError || (code.map {
+                    $0 == "P0001" || $0.hasPrefix("22") || $0.hasPrefix("23")
+                        || $0.hasPrefix("40") || $0 == "42501" || $0.hasPrefix("28")
+                } ?? false)
+                if !hadUncertainAttempt, deterministic {
+                    pendingManualRequests.removeValue(forKey: item.id)
+                    attemptedManualIDs.remove(item.id)
+                    throw ManualRegistrationFailure.rejected
+                }
+                throw error
+            }
+        }
+        let response = try await remote.listClosetItems()
+        try requireCurrent()
+        guard response.state == "ready",
+              let acceptedID = acceptedManualReceipts[item.id],
+              let record = try validatedClosetIndex(response)[item.id] else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        let saved = try projectAuthoritativeRegistration(
+            record, expected: request, acceptedClosetItemID: acceptedID,
+            modelContext: modelContext
+        )
+        remoteItemsByClientID[item.id] = record
+        pendingManualRequests.removeValue(forKey: item.id)
+        acceptedManualReceipts.removeValue(forKey: item.id)
+        attemptedManualIDs.remove(item.id)
+        return saved
     }
 
     enum AuthoritativeRegistrationProjectionError: LocalizedError {
@@ -1404,6 +1609,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         remoteItem: FitMatchClosetItemRecord
     ) -> Bool {
         let payload = payload(for: item)
+        // A retailer thumbnail fallback is presentation-only. When the server
+        // has no source image, do not turn that local fallback into a repeated
+        // Closet update on every background sync.
+        let sourceImageURL = item.imageURLStringSnapshot?.nilIfBlank
+            ?? item.sourceProduct?.imageURLString?.nilIfBlank
         guard payload.productName == remoteItem.productName,
               payload.brand == remoteItem.brand,
               payload.sizeName == remoteItem.sizeName,
@@ -1412,7 +1622,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
               payload.source == remoteItem.source,
               payload.sourceCategoryPath == remoteItem.sourceCategoryPath,
               payload.productURL == remoteItem.productURL,
-              payload.imageURL == remoteItem.imageURL,
+              sourceImageURL == remoteItem.imageURL?.nilIfBlank,
               payload.fitMemo == remoteItem.fitMemo,
               payload.fitPreferenceCode == remoteItem.fitPreferenceCode,
               payload.satisfaction == remoteItem.satisfaction else {
@@ -2168,6 +2378,51 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             for (key, value) in values where value.isFinite && value > 0 { result[key] = value }
         }
         return result
+    }
+
+    /// A mutation receipt proves only that the RPC accepted an item identity.
+    /// Manual edits are complete only after the list receipt contains the
+    /// editable server fields and canonical scalar values the user submitted.
+    /// Source snapshots and retailer raw rows are intentionally excluded:
+    /// their immutable/unsupported persistence contracts are separate.
+    private func matchesManualEditReadback(
+        _ editedItem: UserFit,
+        record: FitMatchClosetItemRecord
+    ) -> Bool {
+        guard record.productID == nil,
+              record.productName == editedItem.productName,
+              record.brand == editedItem.brandName.nilIfBlank,
+              record.sizeName == editedItem.sizeName,
+              FitMatchCanonicalAudience.code(from: record.genderCode)
+                == FitMatchCanonicalAudience.code(from: editedItem.resolvedGenderCode),
+              record.fitMemo == editedItem.fitMemo,
+              record.fitPreferenceCode == editedItem.fitPreference.databaseCode,
+              record.satisfaction == editedItem.satisfaction,
+              record.categoryCode
+                == (editedItem.resolvedCategoryCode ?? editedItem.category.taxonomyCode),
+              record.familyCode == resolvedFamilyCode(for: editedItem),
+              record.lengthCode == resolvedLengthCode(for: editedItem),
+              record.bodyLengthCode == resolvedBodyLengthCode(for: editedItem) else {
+            return false
+        }
+
+        let restored = restoredMeasurements(from: record)
+        let expected = editedItem.measurements
+        return [
+            (restored.shoulder, expected.shoulder),
+            (restored.chest, expected.chest),
+            (restored.totalLength, expected.totalLength),
+            (restored.sleeveLength, expected.sleeveLength),
+            (restored.waist, expected.waist),
+            (restored.hip, expected.hip),
+            (restored.thigh, expected.thigh),
+            (restored.rise, expected.rise),
+            (restored.hem, expected.hem),
+            (restored.footLength, expected.footLength),
+            (restored.underBust, expected.underBust)
+        ].allSatisfy { restoredValue, expectedValue in
+            abs(restoredValue - expectedValue) < 0.000_001
+        }
     }
 
     private func restoredMeasurements(from record: FitMatchClosetItemRecord) -> GarmentMeasurements {
