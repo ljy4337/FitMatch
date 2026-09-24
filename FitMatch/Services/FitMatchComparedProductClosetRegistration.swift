@@ -281,6 +281,9 @@ enum FitMatchComparedProductClosetRegistration {
                 productSizeID: identity.productSizeID,
                 override: override,
                 comparisonGroupCode: request.comparisonGroupCode,
+                closetDetailCodeSnapshot: request.didExplicitlySelectClosetClassification
+                    ? request.detailCategoryCode.nilIfBlank
+                    : nil,
                 sourceObservationID: request.sourceObservationID
             )
         )

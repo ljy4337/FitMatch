@@ -743,11 +743,11 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
     }
 
-    /// A user-facing linked edit must not make a local M look like L before
-    /// the server has acknowledged the exact L tuple and returned its canonical
-    /// Closet snapshot.  The display ProductSize UUID is deliberately distinct
-    /// from the server's `product_size_id` in this fixture.
-    @Test func linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess() async throws {
+    /// A size change needs the exact retailer observation that produced the
+    /// selected server size. Without it, the server cannot atomically replace
+    /// the canonical and source snapshots, so the editor must retain its M
+    /// draft and never issue an update.
+    @Test func linkedClosetSizeEditRejectsMissingExactObservationBeforeUpdate() async throws {
         let userID = UUID()
         let clientItemID = UUID()
         let productID = UUID()
@@ -765,12 +765,108 @@ struct FitMatchClosetSyncCoordinatorTests {
             ),
             isReference: false
         )
+        let remote = ClosetSyncRemoteStub(items: [remoteM])
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let coordinator = FitMatchClosetSyncCoordinator(
+            remote: remote,
+            defaults: try #require(UserDefaults(suiteName: UUID().uuidString))
+        )
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+
+        let item = localRetailerItem(
+            id: clientItemID,
+            productID: productID,
+            authority: .userExplicit
+        )
+        item.isRepresentative = false
+        context.insert(item)
+        try context.save()
+
+        let preparation = FitMatchLinkedClosetSizeEditPreparation(
+            userID: userID,
+            clientItemID: clientItemID,
+            currentServerIdentity: .init(
+                productID: productID,
+                productVariantID: variantID,
+                productSizeID: serverMSizeID
+            ),
+            options: [
+                .init(
+                    displaySizeID: displayLSizeID,
+                    productSize: ProductSize(
+                        id: displayLSizeID,
+                        name: "L",
+                        measurements: item.measurements,
+                        product: item.sourceProduct
+                    ),
+                    identity: .init(
+                        productID: productID,
+                        productVariantID: variantID,
+                        productSizeID: serverLSizeID
+                    )
+                )
+            ],
+            initialDisplaySizeID: displayLSizeID
+        )
+        let draft = FitMatchLinkedClosetEditDraft(
+            item: item,
+            preparation: preparation,
+            selectedDisplaySizeID: displayLSizeID,
+            category: .bottom,
+            detailCategory: .longPants,
+            categoryCode: "bottoms",
+            detailCode: "long_pants",
+            didExplicitlyChangeClassification: false,
+            comparisonGroupCode: "C"
+        )
+
+        let outcome = await coordinator.saveLinkedClosetEdit(
+            draft,
+            userID: userID,
+            modelContext: context,
+            confirmsReferenceReplacement: false
+        )
+
+        guard case .failed = outcome else {
+            Issue.record("A linked M-to-L edit without its exact observation must be blocked")
+            return
+        }
+        #expect(await remote.updateCallCount() == 0)
+        #expect(item.sizeName == "M")
+    }
+
+    /// A user-facing linked edit must not make a local M look like L before
+    /// the server has acknowledged the exact L tuple and returned its canonical
+    /// Closet snapshot.  The display ProductSize UUID is deliberately distinct
+    /// from the server's `product_size_id` in this fixture.
+    @Test func linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess() async throws {
+        let userID = UUID()
+        let clientItemID = UUID()
+        let productID = UUID()
+        let variantID = UUID()
+        let serverMSizeID = UUID()
+        let serverLSizeID = UUID()
+        let displayLSizeID = UUID()
+        let sourceObservationID = UUID()
+        let remoteM = withReference(
+            remoteRecord(
+                clientItemID: clientItemID,
+                productID: productID,
+                classificationSource: "manual_override",
+                variantID: variantID,
+                productSizeID: serverMSizeID
+            ),
+            isReference: false
+        )
         let remoteL = withLinkedSize(
             remoteM,
             productSizeID: serverLSizeID,
             sizeName: "L",
             measurements: ["waist_width": 44],
-            comparisonGroupCode: "C"
+            comparisonGroupCode: "C",
+            sourceObservationID: sourceObservationID,
+            duplicateSourceMeasurementKeyAcrossParsers: true
         )
         let remote = ClosetSyncRemoteStub(
             items: [remoteM],
@@ -813,6 +909,7 @@ struct FitMatchClosetSyncCoordinatorTests {
                 productVariantID: variantID,
                 productSizeID: serverMSizeID
             ),
+            sourceObservationID: sourceObservationID,
             options: [
                 .init(
                     displaySizeID: displayLSizeID,
@@ -853,12 +950,14 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(request.productID == productID)
         #expect(request.productVariantID == variantID)
         #expect(request.productSizeID == serverLSizeID)
+        #expect(request.sourceObservationID == sourceObservationID)
         #expect(request.item.measurements.isEmpty)
         #expect(request.item.measurementRecords.isEmpty)
         #expect(item.sizeName == "L")
         #expect(item.waist == 44)
         #expect(item.waist != displayL.measurements.waist)
         #expect(item.sourceProductSize?.id == serverLSizeID)
+        #expect(remoteL.sourceMeasurements?.count == 2)
     }
 
     /// Reference replacement consent is an editor-owned, read-only preflight:
@@ -870,6 +969,7 @@ struct FitMatchClosetSyncCoordinatorTests {
         let variantID = UUID()
         let serverMSizeID = UUID()
         let serverLSizeID = UUID()
+        let sourceObservationID = UUID()
         let current = remoteRecord(
             clientItemID: clientItemID,
             productID: productID,
@@ -884,7 +984,8 @@ struct FitMatchClosetSyncCoordinatorTests {
         )
         let updated = withLinkedSize(current, productSizeID: serverLSizeID,
                                      sizeName: "L", measurements: current.measurements,
-                                     comparisonGroupCode: "C")
+                                     comparisonGroupCode: "C",
+                                     sourceObservationID: sourceObservationID)
         let remote = ClosetSyncRemoteStub(items: [current, otherReference],
                                          listResponses: [[current, otherReference], [updated, otherReference]])
         let container = try inMemoryContainer()
@@ -925,6 +1026,7 @@ struct FitMatchClosetSyncCoordinatorTests {
                 productVariantID: variantID,
                 productSizeID: serverMSizeID
             ),
+            sourceObservationID: sourceObservationID,
             options: [option],
             initialDisplaySizeID: option.displaySizeID
         )
@@ -951,7 +1053,7 @@ struct FitMatchClosetSyncCoordinatorTests {
             Issue.record("Editing must save without the retired reference consent")
             return
         }
-        #expect(await remote.capturedUpsertRequest() != nil)
+        #expect(await remote.capturedUpsertRequest()?.sourceObservationID == sourceObservationID)
         #expect(await remote.referenceMutations().isEmpty)
         #expect(item.sizeName == "L")
     }
@@ -2061,7 +2163,7 @@ private func withReference(
     _ record: FitMatchClosetItemRecord,
     isReference: Bool
 ) -> FitMatchClosetItemRecord {
-    FitMatchClosetItemRecord(
+    return FitMatchClosetItemRecord(
         closetItemID: record.closetItemID,
         clientItemID: record.clientItemID,
         productID: record.productID,
@@ -2135,6 +2237,7 @@ private func withManualEdit(
         classificationSource: "manual_override",
         categoryCode: item.categoryCode,
         detailCode: item.detailCode,
+        closetDetailCodeSnapshot: request.closetDetailCodeSnapshot,
         canonicalCategoryCode: item.categoryCode,
         canonicalDetailCode: item.detailCode,
         familyCode: item.familyCode,
@@ -2155,9 +2258,51 @@ private func withLinkedSize(
     productSizeID: UUID,
     sizeName: String,
     measurements: [String: Double],
-    comparisonGroupCode: String? = nil
+    comparisonGroupCode: String? = nil,
+    sourceObservationID: UUID? = nil,
+    duplicateSourceMeasurementKeyAcrossParsers: Bool = false
 ) -> FitMatchClosetItemRecord {
-    FitMatchClosetItemRecord(
+    let copiedSourceMeasurements: [VNextClosetSourceMeasurementDTO]? = sourceObservationID.map { _ in
+        let primary = VNextClosetSourceMeasurementDTO(
+            rawMeasurementKey: "selected-size-waist",
+            sourceCode: record.source,
+            parserCode: "fixture",
+            rawCode: "waist-width",
+            rawLabel: "허리 너비",
+            rawValue: measurements["waist_width"],
+            rawValueText: measurements["waist_width"].map { String($0) },
+            rawUnitCode: "cm",
+            rawRepresentation: "width",
+            sourceMeasurementCode: "waist_width",
+            resolutionStatus: "MAPPED",
+            mappingVersion: "fixture-v1",
+            evidence: nil,
+            observedAt: "2026-09-24T00:00:00Z"
+        )
+        guard duplicateSourceMeasurementKeyAcrossParsers else {
+            return [primary]
+        }
+        return [
+            primary,
+            VNextClosetSourceMeasurementDTO(
+                rawMeasurementKey: primary.rawMeasurementKey,
+                sourceCode: primary.sourceCode,
+                parserCode: "fixture-secondary",
+                rawCode: primary.rawCode,
+                rawLabel: primary.rawLabel,
+                rawValue: primary.rawValue,
+                rawValueText: primary.rawValueText,
+                rawUnitCode: primary.rawUnitCode,
+                rawRepresentation: primary.rawRepresentation,
+                sourceMeasurementCode: primary.sourceMeasurementCode,
+                resolutionStatus: primary.resolutionStatus,
+                mappingVersion: primary.mappingVersion,
+                evidence: primary.evidence,
+                observedAt: primary.observedAt
+            )
+        ]
+    } ?? record.sourceMeasurements
+    return FitMatchClosetItemRecord(
         closetItemID: record.closetItemID,
         clientItemID: record.clientItemID,
         productID: record.productID,
@@ -2176,6 +2321,16 @@ private func withLinkedSize(
         imageURL: record.imageURL,
         measurements: measurements,
         measurementRecords: record.measurementRecords,
+        sourceMeasurements: copiedSourceMeasurements,
+        sourceMeasurementSnapshot: sourceObservationID.map {
+            VNextClosetSourceMeasurementSnapshotDTO(
+                sourceObservationID: $0,
+                productID: record.productID!,
+                productVariantID: record.variantID!,
+                productSizeID: productSizeID,
+                sourceMeasurementCount: copiedSourceMeasurements?.count ?? 0
+            )
+        } ?? record.sourceMeasurementSnapshot,
         fitMemo: record.fitMemo,
         fitPreferenceCode: record.fitPreferenceCode,
         satisfaction: record.satisfaction,

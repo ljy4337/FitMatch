@@ -4,6 +4,94 @@ import Testing
 
 @MainActor
 struct FitMatchSupabaseProductResolverTests {
+    @Test func closetDetailSnapshotPreservesBlouseInsteadOfLossyShirtFamilyProjection() throws {
+        let itemID = UUID()
+        let clientItemID = UUID()
+        let payload = Data(
+            """
+            {
+              "id":"\(itemID)","client_item_id":"\(clientItemID)",
+              "product_id":null,"product_variant_id":null,"product_size_id":null,
+              "item_name":"블라우스","brand_name":null,"image_url":null,"product_url":null,
+              "size_label":"M","audience_code":"WOMEN","category_code":"tops",
+              "garment_type_code":"shirt_blouse","sleeve_length_code":"long_sleeve",
+              "lower_length_code":null,"body_length_code":null,
+              "classification_source":"USER_EXPLICIT","classification_fingerprint":null,
+              "classification_resolver_version":"fixture","source_code":"manual",
+              "source_product_key":null,"source_category_path":null,"is_reference":false,
+              "fit_preference_code":"regular","notes":null,"satisfaction":null,
+              "created_at":"2026-09-24T00:00:00Z","updated_at":"2026-09-24T00:00:00Z",
+              "closet_detail_code_snapshot":"blouse","measurements":[]
+            }
+            """.utf8
+        )
+
+        let dto = try JSONDecoder().decode(VNextClosetItemDTO.self, from: payload)
+        let record = FitMatchSupabaseDomainClient.mapClosetItem(dto)
+
+        #expect(record.detailCode == "blouse")
+        #expect(record.closetDetailCodeSnapshot == "blouse")
+    }
+
+    @Test func closetDetailWithoutSnapshotRetainsLegacyTupleProjection() throws {
+        let itemID = UUID()
+        let clientItemID = UUID()
+        let payload = Data(
+            """
+            {
+              "id":"\(itemID)","client_item_id":"\(clientItemID)",
+              "product_id":null,"product_variant_id":null,"product_size_id":null,
+              "item_name":"기존 셔츠","brand_name":null,"image_url":null,"product_url":null,
+              "size_label":"M","audience_code":"WOMEN","category_code":"tops",
+              "garment_type_code":"shirt_blouse","sleeve_length_code":"long_sleeve",
+              "lower_length_code":null,"body_length_code":null,
+              "classification_source":"RETAILER_SNAPSHOT","classification_fingerprint":null,
+              "classification_resolver_version":"fixture","source_code":"manual",
+              "source_product_key":null,"source_category_path":null,"is_reference":false,
+              "fit_preference_code":"regular","notes":null,"satisfaction":null,
+              "created_at":"2026-09-24T00:00:00Z","updated_at":"2026-09-24T00:00:00Z",
+              "measurements":[]
+            }
+            """.utf8
+        )
+
+        let dto = try JSONDecoder().decode(VNextClosetItemDTO.self, from: payload)
+        let record = FitMatchSupabaseDomainClient.mapClosetItem(dto)
+
+        #expect(record.detailCode == "shirt")
+        #expect(record.closetDetailCodeSnapshot == nil)
+    }
+
+    @Test func unsupportedClosetDetailSnapshotIsPreservedWithoutFamilyReplacement() throws {
+        let itemID = UUID()
+        let clientItemID = UUID()
+        let payload = Data(
+            """
+            {
+              "id":"\(itemID)","client_item_id":"\(clientItemID)",
+              "product_id":null,"product_variant_id":null,"product_size_id":null,
+              "item_name":"향후 세부 종류","brand_name":null,"image_url":null,"product_url":null,
+              "size_label":"M","audience_code":"WOMEN","category_code":"tops",
+              "garment_type_code":"shirt_blouse","sleeve_length_code":"long_sleeve",
+              "lower_length_code":null,"body_length_code":null,
+              "classification_source":"USER_EXPLICIT","classification_fingerprint":null,
+              "classification_resolver_version":"fixture","source_code":"manual",
+              "source_product_key":null,"source_category_path":null,"is_reference":false,
+              "fit_preference_code":"regular","notes":null,"satisfaction":null,
+              "created_at":"2026-09-24T00:00:00Z","updated_at":"2026-09-24T00:00:00Z",
+              "closet_detail_code_snapshot":"future_blouse_variant","measurements":[]
+            }
+            """.utf8
+        )
+
+        let dto = try JSONDecoder().decode(VNextClosetItemDTO.self, from: payload)
+        let record = FitMatchSupabaseDomainClient.mapClosetItem(dto)
+
+        #expect(record.detailCode == "future_blouse_variant")
+        #expect(record.canonicalDetailCode == "shirt")
+        #expect(record.closetDetailCodeSnapshot == "future_blouse_variant")
+    }
+
     @Test func observationRetainsFiniteZeroAndRawCodeWhenProviderLabelIsEmpty() throws {
         let sourceURL = try #require(URL(string: "https://www.musinsa.com/products/raw-zero"))
         let product = ParsedProductInfo(
@@ -1478,6 +1566,7 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(confirmedJSON["product_id"] as? String == exactIdentity.productID.uuidString)
         #expect(confirmedJSON["product_variant_id"] as? String == exactIdentity.productVariantID.uuidString)
         #expect(confirmedJSON["product_size_id"] as? String == exactIdentity.productSizeID.uuidString)
+        #expect(confirmedJSON["closet_detail_code"] == nil)
         #expect(confirmedJSON["satisfaction"] == nil)
 
         product.markClassificationAuthority(.serverReviewRequired)
@@ -1517,6 +1606,7 @@ struct FitMatchSupabaseProductResolverTests {
         #expect(override["sleeve_length_code"] as? String == "short_sleeve")
         #expect(override["lower_length_code"] is NSNull)
         #expect(override["body_length_code"] is NSNull)
+        #expect(reviewJSON["closet_detail_code"] as? String == "short_sleeve")
     }
 
     @Test func closetComparisonGroupPayloadOmitsAutomaticGroupAndKeepsExplicitChoices() throws {

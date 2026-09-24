@@ -17,8 +17,28 @@ struct FitMatchLinkedClosetSizeEditPreparation {
     let userID: UUID
     let clientItemID: UUID
     let currentServerIdentity: FitMatchClosetRegistrationServerIdentity
+    /// The exact observation receipt that produced the fresh runtime options.
+    /// A linked size change must carry it to the server so the canonical and
+    /// raw Closet snapshots are replaced from the same retailer facts.
+    let sourceObservationID: UUID?
     let options: [FitMatchLinkedClosetSizeEditOption]
     let initialDisplaySizeID: UUID
+
+    init(
+        userID: UUID,
+        clientItemID: UUID,
+        currentServerIdentity: FitMatchClosetRegistrationServerIdentity,
+        sourceObservationID: UUID? = nil,
+        options: [FitMatchLinkedClosetSizeEditOption],
+        initialDisplaySizeID: UUID
+    ) {
+        self.userID = userID
+        self.clientItemID = clientItemID
+        self.currentServerIdentity = currentServerIdentity
+        self.sourceObservationID = sourceObservationID
+        self.options = options
+        self.initialDisplaySizeID = initialDisplaySizeID
+    }
 
     func option(displaySizeID: UUID) -> FitMatchLinkedClosetSizeEditOption? {
         options.first { $0.displaySizeID == displaySizeID }

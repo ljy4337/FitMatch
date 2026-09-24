@@ -3,6 +3,53 @@ import Testing
 @testable import FitMatch
 
 struct FitMatchVNextContractTests {
+    @Test func retailerExactV2ContractRequiresExactUnscoredSemanticIdentity() throws {
+        let evidence = VNextRetailerExactEvidenceV2DTO(
+            evidenceVersion: "retailer-exact-evidence-v2",
+            mode: .retailerExact,
+            referenceClosetItemID: UUID(),
+            targetProductSizeID: UUID(),
+            sourceCode: "uniqlo",
+            parserCode: "size_chart",
+            rawMeasurementKey: "body-width",
+            rawCode: "body-width",
+            referenceValue: 54,
+            targetValue: 56,
+            unitCode: "cm",
+            sourceSchemaVersion: "uniqlo-size-chart-v1",
+            basisCode: "pit_to_pit",
+            representationCode: "flat_width",
+            componentCode: "shell",
+            scoreIncluded: false
+        )
+
+        try FitMatchVNextContractValidator.validateRetailerExactEvidenceV2(evidence)
+
+        let invalidScore = VNextRetailerExactEvidenceV2DTO(
+            evidenceVersion: evidence.evidenceVersion,
+            mode: evidence.mode,
+            referenceClosetItemID: evidence.referenceClosetItemID,
+            targetProductSizeID: evidence.targetProductSizeID,
+            sourceCode: evidence.sourceCode,
+            parserCode: evidence.parserCode,
+            rawMeasurementKey: evidence.rawMeasurementKey,
+            rawCode: evidence.rawCode,
+            referenceValue: evidence.referenceValue,
+            targetValue: evidence.targetValue,
+            unitCode: evidence.unitCode,
+            sourceSchemaVersion: evidence.sourceSchemaVersion,
+            basisCode: evidence.basisCode,
+            representationCode: evidence.representationCode,
+            componentCode: evidence.componentCode,
+            scoreIncluded: true
+        )
+        #expect(throws: FitMatchVNextContractError.conflictingProof(
+            "retailer_exact_score_gate"
+        )) {
+            try FitMatchVNextContractValidator.validateRetailerExactEvidenceV2(invalidScore)
+        }
+    }
+
     @Test func runtimeDTOSeparatesGarmentAndAllLengthAxes() throws {
         let productID = UUID()
         let variantID = UUID()

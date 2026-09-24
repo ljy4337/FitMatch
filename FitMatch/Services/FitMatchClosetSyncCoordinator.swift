@@ -405,7 +405,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 productID: nil,
                 productVariantID: nil,
                 productSizeID: nil,
-                override: nil
+                override: nil,
+                closetDetailCodeSnapshot: explicitClosetDetailSnapshot(for: editedItem)
             )
             let updated = try await remote.updateClosetItem(request, closetItemID: current.closetItemID)
             guard updated.clientItemID == item.id,
@@ -738,6 +739,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             userID: userID,
             clientItemID: item.id,
             currentServerIdentity: currentIdentity,
+            sourceObservationID: context.sourceObservationID,
             options: options,
             initialDisplaySizeID: currentOptions[0].displaySizeID
         )
@@ -760,6 +762,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
               let selectedOption = draft.selectedOption else {
             return .failed("서버의 최신 사이즈 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요.")
         }
+        let changesProductSize = selectedOption.identity.productSizeID
+            != draft.preparation.currentServerIdentity.productSizeID
 
         if let accepted = acceptedLinkedEditReceipts[draft.item.id] {
             guard accepted.userID == userID,
@@ -775,6 +779,13 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 item: draft.item,
                 modelContext: modelContext
             )
+        }
+
+        // A product-size change replaces immutable retailer facts as well as
+        // the canonical projection. Never let the legacy update path choose
+        // a latest observation or infer an observation from a size label.
+        guard !changesProductSize || draft.preparation.sourceObservationID != nil else {
+            return .failed("선택한 사이즈의 쇼핑몰 실측 정보를 확인하지 못했어요. 새로고침 후 다시 시도해 주세요.")
         }
 
         let rows: FitMatchClosetItemsResponse
@@ -808,6 +819,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 detailCode: draft.detailCode,
                 didExplicitlyChangeClassification: draft.didExplicitlyChangeClassification,
                 comparisonGroupCode: draft.comparisonGroupCode,
+                sourceObservationID: changesProductSize
+                    ? draft.preparation.sourceObservationID
+                    : nil,
                 isReference: false
             )
         } catch {
@@ -920,6 +934,33 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             )
         }
 
+        // A linked size change is complete only when the list receipt proves
+        // that canonical data and retailer raw rows now belong to the exact
+        // observation supplied to the mutation. Legacy rows without a source
+        // manifest remain readable, but cannot confirm a new size edit.
+        if let requestedObservationID = receipt.request.sourceObservationID {
+            let sourceMeasurements = record.sourceMeasurements ?? []
+            guard let snapshot = record.sourceMeasurementSnapshot,
+                  snapshot.sourceObservationID == requestedObservationID,
+                  snapshot.productID == receipt.request.productID,
+                  snapshot.productVariantID == receipt.request.productVariantID,
+                  snapshot.productSizeID == receipt.request.productSizeID,
+                  snapshot.sourceMeasurementCount > 0,
+                  snapshot.sourceMeasurementCount == sourceMeasurements.count,
+                  Set(sourceMeasurements.map {
+                      // Source snapshot rows are uniquely identified by the
+                      // same `(parser_code, raw_measurement_key)` pair used
+                      // by the server table. A key may legitimately recur
+                      // across parser schemas, so key-only de-duplication
+                      // would reject a valid exact selected-size receipt.
+                      "\($0.parserCode)\u{1F}\($0.rawMeasurementKey)"
+                  }).count == sourceMeasurements.count else {
+                return .reconciliationRequired(
+                    "서버 수정 결과의 원본 실측을 확인하는 중입니다. 등록 결과를 다시 확인해 주세요."
+                )
+            }
+        }
+
         guard !receipt.wantsReference || record.isReference else {
             // Preserve the accepted update and retry only the reference
             // mutation after explicit consent; do not re-run update.
@@ -959,6 +1000,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         detailCode: String,
         didExplicitlyChangeClassification: Bool,
         comparisonGroupCode: String,
+        sourceObservationID: UUID?,
         isReference: Bool
     ) throws -> FitMatchUpsertClosetItemRequest {
         let resultingAuthority = FitMatchClosetClassificationEditPolicy.resultingAuthority(
@@ -1042,7 +1084,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             productVariantID: selectedOption.identity.productVariantID,
             productSizeID: selectedOption.identity.productSizeID,
             override: override,
-            comparisonGroupCode: comparisonGroupCode
+            comparisonGroupCode: comparisonGroupCode,
+            closetDetailCodeSnapshot: resultingAuthority == .userExplicit
+                ? detailCode.nilIfBlank
+                : nil,
+            sourceObservationID: sourceObservationID
         )
     }
 
@@ -1637,6 +1683,14 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                   payload.bodyLengthCode == remoteItem.bodyLengthCode else {
                 return false
             }
+            // A pre-migration row has no exact display snapshot. Its tuple
+            // still matched above, so a background sync must not manufacture a
+            // write just to backfill this optional display contract. Once the
+            // server returns a snapshot, it has to match the explicit choice.
+            if let remoteDetailSnapshot = remoteItem.closetDetailCodeSnapshot,
+               remoteDetailSnapshot != explicitClosetDetailSnapshot(for: item) {
+                return false
+            }
         }
 
         // A manually entered row owns its canonical records. Linked rows use
@@ -1867,8 +1921,19 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             productID: productID,
             productVariantID: productVariantID,
             productSizeID: productSizeID,
-            override: override
+            override: override,
+            closetDetailCodeSnapshot: explicitClosetDetailSnapshot(for: item)
         )
+    }
+
+    /// A display detail becomes durable only when it reflects existing
+    /// user-owned Closet authority. Server-confirmed tuples must not be
+    /// rewritten into an explicit display snapshot by a normal sync.
+    private func explicitClosetDetailSnapshot(for item: UserFit) -> String? {
+        guard item.classificationAuthorityProvenance == .userExplicit else {
+            return nil
+        }
+        return item.resolvedDetailCategoryCode?.nilIfBlank
     }
 
     private func isCurrentSyncUser(_ userID: UUID) -> Bool {
@@ -2400,9 +2465,17 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
               record.satisfaction == editedItem.satisfaction,
               record.categoryCode
                 == (editedItem.resolvedCategoryCode ?? editedItem.category.taxonomyCode),
+              record.detailCode == (editedItem.resolvedDetailCategoryCode
+                ?? editedItem.detailCategoryCode
+                ?? "other"),
               record.familyCode == resolvedFamilyCode(for: editedItem),
               record.lengthCode == resolvedLengthCode(for: editedItem),
               record.bodyLengthCode == resolvedBodyLengthCode(for: editedItem) else {
+            return false
+        }
+
+        if editedItem.classificationAuthorityProvenance == .userExplicit,
+           record.closetDetailCodeSnapshot != explicitClosetDetailSnapshot(for: editedItem) {
             return false
         }
 

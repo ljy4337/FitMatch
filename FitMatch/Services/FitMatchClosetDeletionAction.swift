@@ -64,6 +64,7 @@ enum FitMatchClosetDeletionAction {
             $0.referencesClosetItem(clientItemID: itemID)
         }
         let serverHistories = relatedHistories.filter(\.isServerBackedVNextHistory)
+        let serverHistoryIDs = serverHistories.map(\.id)
 
         guard let closetSync else { return .serverClosetUnavailable }
         do {
@@ -85,6 +86,10 @@ enum FitMatchClosetDeletionAction {
                     modelContext.delete(item)
                     do {
                         try modelContext.save()
+                        // The hide receipt is durable server state, but a
+                        // stale in-flight fetch must be suppressed locally
+                        // only after this cache transaction is committed.
+                        comparisonSync?.recordPersistedHistoryTombstones(serverHistoryIDs)
                     } catch {
                         modelContext.rollback()
                         throw Outcome.serverDeletedLocalPending

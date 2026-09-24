@@ -293,6 +293,106 @@ struct FitMatchComparisonSyncCoordinatorTests {
         #expect(try secondContext.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
     }
 
+    /// HI-021: a second device may already have a completed immutable cache
+    /// when another device hides it.  A missing active-list row is never
+    /// enough to delete that cache; the server's owned tombstone is.
+    @Test func explicitServerTombstoneRemovesOnlyTheMatchingStaleLocalHistory() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let unrelated = try ComparisonHistoryFixture()
+        let defaultsName = "FitMatchComparisonSyncCoordinatorTests.Tombstone.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+            [fixture.completed, unrelated.completed],
+            existingHistories: [],
+            existingProducts: [],
+            existingClosetItems: [],
+            modelContext: context
+        )
+        let remote = ComparisonHistoryRemoteStub(
+            pending: nil,
+            completed: nil,
+            historySyncResponses: [
+                VNextComparisonHistorySyncDTO(
+                    histories: [],
+                    tombstones: [
+                        .init(
+                            clientComparisonID: fixture.clientComparisonID,
+                            hiddenAt: "2026-09-24T00:00:00Z"
+                        )
+                    ]
+                )
+            ]
+        )
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote, defaults: defaults)
+
+        await coordinator.synchronize(
+            userID: fixture.userID,
+            histories: try context.fetch(FetchDescriptor<RecommendationHistory>()),
+            modelContext: context
+        )
+
+        #expect(
+            try context.fetch(FetchDescriptor<RecommendationHistory>()).map(\.id)
+                == [unrelated.clientComparisonID]
+        )
+    }
+
+    /// HI-022: a hide may complete locally while an older active-history
+    /// response is still in flight.  That stale response has no tombstone of
+    /// its own, so the production coordinator must consult the durable local
+    /// tombstone before it ever reaches the hydrator.
+    @Test func locallyPersistedHideBlocksAnAlreadyInFlightStaleHistoryResponse() async throws {
+        let fixture = try ComparisonHistoryFixture()
+        let defaultsName = "FitMatchComparisonSyncCoordinatorTests.InFlightTombstone.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+            [fixture.completed],
+            existingHistories: [],
+            existingProducts: [],
+            existingClosetItems: [],
+            modelContext: context
+        )
+        let firstFetchGate = JourneyAsyncGate()
+        let remote = ComparisonHistoryRemoteStub(
+            pending: nil,
+            completed: nil,
+            historySyncResponses: [
+                .init(histories: [fixture.completed], tombstones: [])
+            ],
+            historyGates: [1: firstFetchGate]
+        )
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote, defaults: defaults)
+        let localHistories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+
+        let staleSync = Task { @MainActor in
+            await coordinator.synchronize(
+                userID: fixture.userID,
+                histories: localHistories,
+                modelContext: context
+            )
+        }
+        await firstFetchGate.waitForArrival(atLeast: 1)
+
+        let localHistory = try #require(
+            context.fetch(FetchDescriptor<RecommendationHistory>()).first
+        )
+        context.delete(localHistory)
+        try context.save()
+        coordinator.recordPersistedHistoryTombstones([fixture.clientComparisonID])
+
+        await firstFetchGate.open()
+        await staleSync.value
+
+        #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+        #expect(coordinator.state == .synced)
+    }
+
     @Test func closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence() async throws {
         let fixture = try ComparisonHistoryFixture()
         let remote = ComparisonHistoryRemoteStub(pending: nil, completed: fixture.completed)
@@ -836,6 +936,7 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
     private var hideError: ComparisonHistoryRemoteError?
     private var visibilityError: FitMatchHistoryVisibilityRPCError?
     private let historyResponses: [[VNextComparisonHistoryDTO]]?
+    private let historySyncResponses: [VNextComparisonHistorySyncDTO]?
     private let historyGates: [Int: JourneyAsyncGate]
 
     init(
@@ -844,6 +945,7 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
         hideError: ComparisonHistoryRemoteError? = nil,
         visibilityError: FitMatchHistoryVisibilityRPCError? = nil,
         historyResponses: [[VNextComparisonHistoryDTO]]? = nil,
+        historySyncResponses: [VNextComparisonHistorySyncDTO]? = nil,
         historyGates: [Int: JourneyAsyncGate] = [:]
     ) {
         self.pending = pending
@@ -851,6 +953,7 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
         self.hideError = hideError
         self.visibilityError = visibilityError
         self.historyResponses = historyResponses
+        self.historySyncResponses = historySyncResponses
         self.historyGates = historyGates
     }
 
@@ -870,6 +973,21 @@ private actor ComparisonHistoryRemoteStub: FitMatchComparisonRemoteServicing {
         if let pending { return [pending] }
         if let completed { return [completed] }
         return []
+    }
+
+    func fetchVNextComparisonHistorySync() async throws -> VNextComparisonHistorySyncDTO {
+        if let historySyncResponses {
+            historyCalls += 1
+            if let gate = historyGates[historyCalls] {
+                await gate.wait()
+            }
+            let responseIndex = min(historyCalls - 1, historySyncResponses.count - 1)
+            return historySyncResponses[responseIndex]
+        }
+        return VNextComparisonHistorySyncDTO(
+            histories: try await fetchVNextComparisonHistory(),
+            tombstones: []
+        )
     }
 
     func hideVNextComparisonHistories(

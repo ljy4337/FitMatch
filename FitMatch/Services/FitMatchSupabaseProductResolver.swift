@@ -503,6 +503,9 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
     let productSizeID: UUID?
     let override: FitMatchClosetClassificationOverride?
     let comparisonGroupCode: String?
+    /// Explicit display detail selected by the user. Nil must stay omitted
+    /// for automatic server tuples.
+    let closetDetailCodeSnapshot: String?
     /// The immutable receipt created from the retailer observation shown to
     /// the user. Product/variant/size alone are not an observation identity.
     let sourceObservationID: UUID?
@@ -515,6 +518,7 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
         productSizeID: UUID?,
         override: FitMatchClosetClassificationOverride?,
         comparisonGroupCode: String? = nil,
+        closetDetailCodeSnapshot: String? = nil,
         sourceObservationID: UUID? = nil
     ) {
         self.clientItemID = clientItemID
@@ -524,6 +528,7 @@ nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendab
         self.productSizeID = productSizeID
         self.override = override
         self.comparisonGroupCode = comparisonGroupCode
+        self.closetDetailCodeSnapshot = closetDetailCodeSnapshot
         self.sourceObservationID = sourceObservationID
     }
 }
@@ -597,6 +602,13 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
     let imageURL: String?
     let measurements: [String: Double]
     let measurementRecords: [FitMatchClosetMeasurementRecordPayload]
+    /// Exact raw rows returned with the immutable source snapshot. Keep this
+    /// typed view beside the presentation records so linked-edit read-back can
+    /// verify that the manifest count reflects actual raw rows.
+    /// Optional for pre-snapshot list contracts. Linked-size reconciliation
+    /// requires a non-nil manifest and rows before it accepts a size change.
+    let sourceMeasurements: [VNextClosetSourceMeasurementDTO]?
+    let sourceMeasurementSnapshot: VNextClosetSourceMeasurementSnapshotDTO?
     let fitMemo: String
     let fitPreferenceCode: String
     let satisfaction: Int
@@ -605,6 +617,9 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
     let classificationSource: String?
     let categoryCode: String
     let detailCode: String
+    /// Optional exact user-selected display detail returned separately from
+    /// the legacy coalesced tuple projection.
+    let closetDetailCodeSnapshot: String?
     let canonicalCategoryCode: String?
     let canonicalDetailCode: String?
     let familyCode: String?
@@ -640,6 +655,8 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         imageURL: String?,
         measurements: [String: Double],
         measurementRecords: [FitMatchClosetMeasurementRecordPayload],
+        sourceMeasurements: [VNextClosetSourceMeasurementDTO]? = [],
+        sourceMeasurementSnapshot: VNextClosetSourceMeasurementSnapshotDTO? = nil,
         fitMemo: String,
         fitPreferenceCode: String,
         satisfaction: Int,
@@ -648,6 +665,7 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         classificationSource: String?,
         categoryCode: String,
         detailCode: String,
+        closetDetailCodeSnapshot: String? = nil,
         canonicalCategoryCode: String?,
         canonicalDetailCode: String?,
         familyCode: String?,
@@ -682,6 +700,8 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         self.imageURL = imageURL
         self.measurements = measurements
         self.measurementRecords = measurementRecords
+        self.sourceMeasurements = sourceMeasurements
+        self.sourceMeasurementSnapshot = sourceMeasurementSnapshot
         self.fitMemo = fitMemo
         self.fitPreferenceCode = fitPreferenceCode
         self.satisfaction = satisfaction
@@ -690,6 +710,7 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         self.classificationSource = classificationSource
         self.categoryCode = categoryCode
         self.detailCode = detailCode
+        self.closetDetailCodeSnapshot = closetDetailCodeSnapshot
         self.canonicalCategoryCode = canonicalCategoryCode
         self.canonicalDetailCode = canonicalDetailCode
         self.familyCode = familyCode
@@ -726,6 +747,8 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         case imageURL = "image_url"
         case measurements
         case measurementRecords = "measurement_records"
+        case sourceMeasurements = "source_measurements"
+        case sourceMeasurementSnapshot = "source_measurement_snapshot"
         case fitMemo = "fit_memo"
         case fitPreferenceCode = "fit_preference_code"
         case satisfaction
@@ -734,6 +757,7 @@ nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
         case classificationSource = "classification_source"
         case categoryCode = "category_code"
         case detailCode = "detail_code"
+        case closetDetailCodeSnapshot = "closet_detail_code_snapshot"
         case canonicalCategoryCode = "canonical_category_code"
         case canonicalDetailCode = "canonical_detail_code"
         case familyCode = "family_code"
@@ -1595,6 +1619,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
     /// personal Closet tuple atomically inside the mutation.
     let closetClassificationOverride: VNextClosetClassificationOverridePayload?
     let comparisonGroupCode: String?
+    let closetDetailCodeSnapshot: String?
     let sourceObservationID: UUID?
     var useServerMeasurements: Bool? = nil
 
@@ -1617,6 +1642,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
         case notes, satisfaction, measurements
         case closetClassificationOverride = "closet_classification_override"
         case comparisonGroupCode = "comparison_group_code"
+        case closetDetailCodeSnapshot = "closet_detail_code"
         case sourceObservationID = "source_observation_id"
         case useServerMeasurements = "use_server_measurements"
     }
@@ -1650,6 +1676,7 @@ nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
             forKey: .closetClassificationOverride
         )
         try container.encodeIfPresent(comparisonGroupCode, forKey: .comparisonGroupCode)
+        try container.encodeIfPresent(closetDetailCodeSnapshot, forKey: .closetDetailCodeSnapshot)
         try container.encodeIfPresent(sourceObservationID, forKey: .sourceObservationID)
     }
 }
@@ -2394,6 +2421,27 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         }
     }
 
+    /// Uses the additive tombstone envelope when the server has it. Until the
+    /// forward migration is deployed, only a missing-RPC response falls back
+    /// to the legacy active-list contract; no other error is treated as an
+    /// empty tombstone set.
+    func fetchVNextComparisonHistorySync() async throws -> VNextComparisonHistorySyncDTO {
+        let client = try await authenticatedClient()
+        do {
+            return try await timedDatabaseCall("rpc.fitmatch_vnext_comparison_history_sync") {
+                try await client
+                    .rpc("fitmatch_vnext_comparison_history_sync")
+                    .execute()
+                    .value
+            }
+        } catch let error as PostgrestError where error.code?.uppercased() == "PGRST202" {
+            return VNextComparisonHistorySyncDTO(
+                histories: try await fetchVNextComparisonHistory(),
+                tombstones: []
+            )
+        }
+    }
+
     func hideVNextComparisonHistories(
         clientComparisonIDs: [UUID]
     ) async throws -> VNextComparisonHistoryVisibilityDTO {
@@ -2637,6 +2685,7 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
                 try Self.mutationOverridePayload($0)
             },
             comparisonGroupCode: request.comparisonGroupCode,
+            closetDetailCodeSnapshot: request.closetDetailCodeSnapshot,
             sourceObservationID: request.sourceObservationID
         )
     }
@@ -2754,13 +2803,22 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         _ item: VNextClosetItemDTO
     ) -> FitMatchClosetItemRecord {
         let categoryCode = item.categoryCode ?? "other"
-        let detailCode = closetDetailCode(
+        let tupleDetailCode = closetDetailCode(
             categoryCode: categoryCode,
             garmentTypeCode: item.garmentTypeCode,
             sleeveLengthCode: item.sleeveLengthCode,
             lowerLengthCode: item.lowerLengthCode,
             bodyLengthCode: item.bodyLengthCode
         )
+        let trimmedDetailSnapshot = item.closetDetailCodeSnapshot?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let detailSnapshot = trimmedDetailSnapshot?.isEmpty == false
+            ? trimmedDetailSnapshot
+            : nil
+        // Keep an explicit display choice separate from its broader garment
+        // family. Unsupported future values remain the exact stored code;
+        // this adapter must not silently turn them into a neighbouring detail.
+        let detailCode = detailSnapshot ?? tupleDetailCode
         let measurements = item.measurements
             .reduce(into: [String: [Double]]()) { result, measurement in
                 result[measurement.measurementCode, default: []].append(measurement.value)
@@ -2858,6 +2916,8 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             imageURL: item.imageURL,
             measurements: measurements,
             measurementRecords: records,
+            sourceMeasurements: item.sourceMeasurements,
+            sourceMeasurementSnapshot: item.sourceMeasurementSnapshot,
             fitMemo: item.notes ?? "",
             fitPreferenceCode: item.fitPreferenceCode ?? "regular",
             satisfaction: item.satisfaction ?? 3,
@@ -2868,8 +2928,9 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             ),
             categoryCode: categoryCode,
             detailCode: detailCode,
+            closetDetailCodeSnapshot: detailSnapshot,
             canonicalCategoryCode: item.categoryCode,
-            canonicalDetailCode: detailCode,
+            canonicalDetailCode: tupleDetailCode,
             familyCode: item.garmentTypeCode,
             lengthCode: item.sleeveLengthCode ?? item.lowerLengthCode,
             bodyLengthCode: item.bodyLengthCode,

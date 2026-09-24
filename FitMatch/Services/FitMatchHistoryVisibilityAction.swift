@@ -95,11 +95,15 @@ enum FitMatchHistoryVisibilityAction {
             } catch {
                 return .serverHideFailed
             }
-            return deleteLocally(
+            let outcome = deleteLocally(
                 history,
                 in: modelContext,
                 afterServerHide: true
             )
+            if outcome == .deleted {
+                comparisonSync.recordPersistedHistoryTombstones([history.id])
+            }
+            return outcome
         }
 
         return deleteLocally(

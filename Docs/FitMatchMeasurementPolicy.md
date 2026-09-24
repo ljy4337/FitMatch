@@ -68,6 +68,8 @@
 - 최종 점수에는 서버 begin snapshot이 승인한 실측만 사용한다. 원본이 저장·표시되었다는 사실만으로 점수 항목에 자동 포함하지 않는다.
 - 단면과 둘레, 앞길이와 뒷길이, 일반 소매와 등 중심/래글런 소매, 본체와 부속 구성품처럼 기준이 다른 항목을 임의로 동일 취급하지 않는다.
 - 의미·단위·basis가 모호하거나 충돌하면 추정값이나 첫 번째 항목으로 대체하지 않고 fail closed 또는 명시적 보완 상태로 처리한다.
+- `RETAILER_EXACT`는 같은 쇼핑몰의 같은 검증 schema와 원본 semantic identity가 서버에서 모두 증명된 경우에만 가능한 evidence mode다. source/parser/schema, raw identity, unit, basis, representation, component가 모두 일치해야 하며 raw label/raw code만 같다는 사실은 충분하지 않다.
+- 20260924의 v2 helper 후보는 점수 미포함 proof만 만들며, candidate·authorization·begin·complete·History의 활성 비교 경로를 바꾸지 않는다. 실제 점수 mode 승인은 별도 서버 snapshot 계약과 end-to-end 검증 전까지 활성화하지 않는다.
 
 ## 5. 표시·저장과 비교의 분리
 

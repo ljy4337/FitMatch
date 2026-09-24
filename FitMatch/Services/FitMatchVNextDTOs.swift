@@ -859,6 +859,26 @@ nonisolated struct VNextClosetSourceMeasurementDTO: Decodable, Equatable, Sendab
     }
 }
 
+/// Immutable manifest for the selected retailer observation copied into a
+/// linked Closet item. It is separate from `source_measurements` so a client
+/// can verify the owning observation and UUID tuple without inferring either
+/// one from a raw label or a current product row.
+nonisolated struct VNextClosetSourceMeasurementSnapshotDTO: Decodable, Equatable, Sendable {
+    let sourceObservationID: UUID
+    let productID: UUID
+    let productVariantID: UUID
+    let productSizeID: UUID
+    let sourceMeasurementCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case sourceObservationID = "source_observation_id"
+        case productID = "product_id"
+        case productVariantID = "product_variant_id"
+        case productSizeID = "product_size_id"
+        case sourceMeasurementCount = "source_measurement_count"
+    }
+}
+
 nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
     let id: UUID
     let clientItemID: UUID
@@ -889,8 +909,14 @@ nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
     let createdAt: String
     let updatedAt: String
     let measurements: [VNextClosetMeasurementDTO]
+    /// Exact display detail selected by the user, when the server stored one.
+    /// It is distinct from `garment_type_code`, whose family can be broader
+    /// (for example `shirt_blouse`).
+    let closetDetailCodeSnapshot: String?
     /// Optional for pre-migration list responses.
     let sourceMeasurements: [VNextClosetSourceMeasurementDTO]?
+    /// Optional for pre-migration list responses.
+    let sourceMeasurementSnapshot: VNextClosetSourceMeasurementSnapshotDTO?
     let comparisonGroup: VNextComparisonGroupDTO?
 
     enum CodingKeys: String, CodingKey {
@@ -922,7 +948,9 @@ nonisolated struct VNextClosetItemDTO: Decodable, Equatable, Sendable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case measurements
+        case closetDetailCodeSnapshot = "closet_detail_code_snapshot"
         case sourceMeasurements = "source_measurements"
+        case sourceMeasurementSnapshot = "source_measurement_snapshot"
         case comparisonGroup = "comparison_group"
     }
 }
@@ -1127,6 +1155,56 @@ nonisolated struct VNextAuthorizedMeasurementDTO: Codable, Equatable, Sendable {
         case weight
         case requirementMode = "requirement_mode"
         case priority
+    }
+}
+
+/// Additive v2 contract for a future server-approved retailer-exact path.
+///
+/// This is deliberately separate from `VNextAuthorizedMeasurementDTO`: the
+/// live comparison flow remains canonical-only until candidate, begin,
+/// complete, and history all consume this immutable proof together.
+nonisolated enum VNextComparisonEvidenceMode: String, Codable, Equatable, Sendable {
+    case retailerExact = "RETAILER_EXACT"
+}
+
+nonisolated struct VNextRetailerExactEvidenceV2DTO: Codable, Equatable, Sendable {
+    let evidenceVersion: String
+    let mode: VNextComparisonEvidenceMode
+    let referenceClosetItemID: UUID
+    let targetProductSizeID: UUID
+    let sourceCode: String
+    let parserCode: String
+    let rawMeasurementKey: String
+    let rawCode: String
+    let referenceValue: Double
+    let targetValue: Double
+    let unitCode: String
+    let sourceSchemaVersion: String
+    let basisCode: String
+    let representationCode: String
+    let componentCode: String
+    /// v2 preflight evidence remains reference-only.  No client may invent a
+    /// weight or score from it before the server activates the end-to-end
+    /// snapshot contract.
+    let scoreIncluded: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case evidenceVersion = "evidence_version"
+        case mode
+        case referenceClosetItemID = "reference_closet_item_id"
+        case targetProductSizeID = "target_product_size_id"
+        case sourceCode = "source_code"
+        case parserCode = "parser_code"
+        case rawMeasurementKey = "raw_measurement_key"
+        case rawCode = "raw_code"
+        case referenceValue = "reference_value"
+        case targetValue = "target_value"
+        case unitCode = "unit_code"
+        case sourceSchemaVersion = "source_schema_version"
+        case basisCode = "basis_code"
+        case representationCode = "representation_code"
+        case componentCode = "component_code"
+        case scoreIncluded = "score_included"
     }
 }
 
@@ -1488,6 +1566,28 @@ nonisolated struct VNextComparisonHistoryVisibilityDTO: Decodable, Equatable, Se
         case clientComparisonIDs = "client_comparison_ids"
         case hidden, idempotent
     }
+}
+
+/// An owner-scoped visibility receipt returned alongside the active immutable
+/// history list.  An omitted active-list row is not a deletion signal: only
+/// this exact client ID plus server deletion timestamp may remove a local
+/// completed-history cache.
+nonisolated struct VNextComparisonHistoryTombstoneDTO: Decodable, Equatable, Sendable {
+    let clientComparisonID: UUID
+    let hiddenAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case clientComparisonID = "client_comparison_id"
+        case hiddenAt = "hidden_at"
+    }
+}
+
+/// Backward-compatible sync envelope. `comparison_history` remains available
+/// to existing clients; newer clients consume this additive endpoint so they
+/// can distinguish an empty list from an explicit user-owned hide.
+nonisolated struct VNextComparisonHistorySyncDTO: Decodable, Equatable, Sendable {
+    let histories: [VNextComparisonHistoryDTO]
+    let tombstones: [VNextComparisonHistoryTombstoneDTO]
 }
 
 nonisolated struct VNextComparisonHistoryDTO: Decodable, Equatable, Sendable {

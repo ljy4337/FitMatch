@@ -212,6 +212,50 @@ nonisolated enum FitMatchVNextContractValidator {
         try validateReplayBegin(begin)
     }
 
+    /// Validates the additive v2 retailer-exact proof without admitting it to
+    /// the live candidate/begin/complete path.  The server must provide every
+    /// source-semantic identity; Swift never fills these values from labels,
+    /// canonical projections, or local records.
+    static func validateRetailerExactEvidenceV2(
+        _ evidence: VNextRetailerExactEvidenceV2DTO
+    ) throws {
+        guard evidence.evidenceVersion == "retailer-exact-evidence-v2",
+              evidence.mode == .retailerExact else {
+            throw FitMatchVNextContractError.conflictingProof(
+                "retailer_exact_version"
+            )
+        }
+        guard evidence.referenceValue.isFinite,
+              evidence.referenceValue > 0,
+              evidence.targetValue.isFinite,
+              evidence.targetValue > 0 else {
+            throw FitMatchVNextContractError.conflictingProof(
+                "retailer_exact_value"
+            )
+        }
+        let required = [
+            evidence.sourceCode,
+            evidence.parserCode,
+            evidence.rawMeasurementKey,
+            evidence.rawCode,
+            evidence.unitCode,
+            evidence.sourceSchemaVersion,
+            evidence.basisCode,
+            evidence.representationCode,
+            evidence.componentCode
+        ]
+        guard required.allSatisfy({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) else {
+            throw FitMatchVNextContractError.missingRequiredField(
+                "retailer_exact_semantic_identity"
+            )
+        }
+        guard !evidence.scoreIncluded else {
+            throw FitMatchVNextContractError.conflictingProof(
+                "retailer_exact_score_gate"
+            )
+        }
+    }
+
     static func validateSupportedSnapshotVersion(_ version: Int) throws {
         guard supportedSnapshotSchemaVersions.contains(version) else {
             throw FitMatchVNextContractError.unsupportedSnapshotVersion(version)

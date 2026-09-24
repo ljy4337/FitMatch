@@ -5,12 +5,26 @@ import SwiftUI
 
 protocol FitMatchComparisonRemoteServicing: Sendable {
     func fetchVNextComparisonHistory() async throws -> [VNextComparisonHistoryDTO]
+    func fetchVNextComparisonHistorySync() async throws -> VNextComparisonHistorySyncDTO
     func hideVNextComparisonHistories(clientComparisonIDs: [UUID]) async throws
         -> VNextComparisonHistoryVisibilityDTO
     func completeVNextComparison(
         comparisonID: UUID,
         payload: VNextComparisonCompletionPayload
     ) async throws -> VNextCompleteComparisonDTO
+}
+
+extension FitMatchComparisonRemoteServicing {
+    /// Compatibility for existing remote test doubles and deployed servers
+    /// before the additive tombstone RPC is applied.  This path deliberately
+    /// returns no tombstones; absence from an active-list response never
+    /// authorizes a local deletion.
+    func fetchVNextComparisonHistorySync() async throws -> VNextComparisonHistorySyncDTO {
+        VNextComparisonHistorySyncDTO(
+            histories: try await fetchVNextComparisonHistory(),
+            tombstones: []
+        )
+    }
 }
 
 extension FitMatchSupabaseDomainClient: FitMatchComparisonRemoteServicing {}
@@ -46,6 +60,7 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
     private var pendingRequest: SynchronizationRequest?
 
     private static let processedPrefix = "FitMatch.comparisonProcessed.v2."
+    private static let tombstonePrefix = "FitMatch.comparisonTombstones.v1."
 
     private struct SynchronizationRequest {
         let userID: UUID
@@ -145,9 +160,18 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
         }
         guard !requestedIDs.isEmpty else { return }
 
+        // Legacy callers can perform a durable hide before their first cache
+        // sync. When a cache owner is known, retain the generation check so a
+        // late receipt cannot affect a newly authenticated account.
+        let userID = activeUserID
         let receipt = try await remote.hideVNextComparisonHistories(
             clientComparisonIDs: requestedIDs
         )
+        if let userID {
+            guard isCurrentSyncUser(userID) else {
+                throw FitMatchHistoryVisibilityRPCError.authenticationRequired
+            }
+        }
         guard receipt.hidden,
               Set(receipt.clientComparisonIDs) == Set(requestedIDs),
               receipt.clientComparisonIDs.count == requestedIDs.count else {
@@ -155,10 +179,27 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
         }
     }
 
+    /// Called only after the caller has successfully persisted the local
+    /// presentation removal.  Keeping this separate from the server hide
+    /// prevents an uncertain local save from consuming a tombstone cursor.
+    func recordPersistedHistoryTombstones(_ clientComparisonIDs: [UUID]) {
+        guard let userID = activeUserID else { return }
+        let ids = Set(clientComparisonIDs)
+        guard !ids.isEmpty else { return }
+        var known = tombstoneHistoryIDs(for: userID)
+        known.formUnion(ids)
+        storeTombstoneHistoryIDs(known, for: userID)
+        var processed = processedHistoryIDs(for: userID)
+        processed.subtract(ids)
+        storeProcessedHistoryIDs(processed, for: userID)
+        needsAnotherPass = true
+    }
+
     /// Clears only the local idempotency cache for an account which has just
     /// been deleted. Immutable remote comparisons are never touched here.
     func purgeProcessedHistoryIDs(for userID: UUID) {
         defaults.removeObject(forKey: Self.processedPrefix + userID.uuidString)
+        defaults.removeObject(forKey: Self.tombstonePrefix + userID.uuidString)
         if activeUserID == userID {
             activeUserID = nil
             pendingRequest = nil
@@ -184,7 +225,17 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
         missingLocalCompletedCount = 0
 
         do {
-            var rows = try await remote.fetchVNextComparisonHistory()
+            var response = try await remote.fetchVNextComparisonHistorySync()
+            guard isCurrentSyncUser(userID) else { return }
+            var rows = response.histories
+            var tombstoneIDs = tombstoneHistoryIDs(for: userID)
+            tombstoneIDs.formUnion(response.tombstones.map(\.clientComparisonID))
+            try persistServerTombstones(
+                response.tombstones,
+                knownIDs: tombstoneIDs,
+                userID: userID,
+                modelContext: modelContext
+            )
             guard isCurrentSyncUser(userID) else { return }
             var hasRetryableFailure = false
             var recoveredPending = false
@@ -244,12 +295,22 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
             // Re-read after recovery. A PENDING row is never treated as a
             // completed history merely because the completion call returned.
             if recoveredPending {
-                rows = try await remote.fetchVNextComparisonHistory()
+                response = try await remote.fetchVNextComparisonHistorySync()
+                guard isCurrentSyncUser(userID) else { return }
+                rows = response.histories
+                tombstoneIDs.formUnion(response.tombstones.map(\.clientComparisonID))
+                try persistServerTombstones(
+                    response.tombstones,
+                    knownIDs: tombstoneIDs,
+                    userID: userID,
+                    modelContext: modelContext
+                )
                 guard isCurrentSyncUser(userID) else { return }
             }
 
             var completedRows: [VNextComparisonHistoryDTO] = []
-            for row in rows where row.resultStatus == "COMPLETED" {
+            for row in rows where row.resultStatus == "COMPLETED"
+                && !tombstoneIDs.contains(row.clientComparisonID) {
                 do {
                     try FitMatchVNextContractValidator.validateCompletedReplay(row)
                     guard row.snapshotBegin != nil else {
@@ -274,14 +335,19 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
             }
             let completedClientIDs = Set(completedRows.map(\.clientComparisonID))
             var processed = processedHistoryIDs(for: userID)
-            let localIDs = Set(histories.map(\.id))
+            // Tombstones are applied even if the same identifier was marked
+            // processed in a prior session.  Their presence is never inferred
+            // from a missing active-history row.
+            processed.subtract(tombstoneIDs)
+            let visibleHistories = histories.filter { !tombstoneIDs.contains($0.id) }
+            let localIDs = Set(visibleHistories.map(\.id))
 
             if let modelContext {
                 do {
                     guard isCurrentSyncUser(userID) else { return }
                     let hydrated = try hydrator.hydrateCompleted(
                         completedRows,
-                        existingHistories: histories,
+                        existingHistories: visibleHistories,
                         existingProducts: products,
                         existingClosetItems: closetItems,
                         modelContext: modelContext
@@ -307,7 +373,7 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
                 parityWarningCount += missingLocalCompletedCount
             }
 
-            for history in histories where !processed.contains(history.id) {
+            for history in visibleHistories where !processed.contains(history.id) {
                 guard isCurrentSyncUser(userID) else { return }
                 if completedClientIDs.contains(history.id) {
                     processed.insert(history.id)
@@ -375,6 +441,45 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
             (defaults.stringArray(forKey: Self.processedPrefix + userID.uuidString) ?? [])
                 .compactMap(UUID.init(uuidString:))
         )
+    }
+
+    private func tombstoneHistoryIDs(for userID: UUID) -> Set<UUID> {
+        Set(
+            (defaults.stringArray(forKey: Self.tombstonePrefix + userID.uuidString) ?? [])
+                .compactMap(UUID.init(uuidString:))
+        )
+    }
+
+    private func storeTombstoneHistoryIDs(_ ids: Set<UUID>, for userID: UUID) {
+        defaults.set(
+            ids.map(\.uuidString).sorted(),
+            forKey: Self.tombstonePrefix + userID.uuidString
+        )
+    }
+
+    /// Deletes only exact server-backed History cache rows. The caller owns
+    /// the active account; Product, Closet, and legacy History projections
+    /// are intentionally untouched. Server tombstones become durable locally
+    /// only after this SwiftData save succeeds.
+    private func persistServerTombstones(
+        _ tombstones: [VNextComparisonHistoryTombstoneDTO],
+        knownIDs: Set<UUID>,
+        userID: UUID,
+        modelContext: ModelContext?
+    ) throws {
+        guard !tombstones.isEmpty else { return }
+        guard let modelContext else { return }
+        let serverIDs = Set(tombstones.map(\.clientComparisonID))
+        guard serverIDs.isSubset(of: knownIDs) else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        let matching = try modelContext.fetch(FetchDescriptor<RecommendationHistory>())
+            .filter { serverIDs.contains($0.id) && $0.isServerBackedVNextHistory }
+        matching.forEach(modelContext.delete)
+        try modelContext.save()
+        var stored = tombstoneHistoryIDs(for: userID)
+        stored.formUnion(serverIDs)
+        storeTombstoneHistoryIDs(stored, for: userID)
     }
 
     private func storeProcessedHistoryIDs(_ ids: Set<UUID>, for userID: UUID) {
