@@ -23,6 +23,12 @@
 - 포함: 관련 tracked source/test/docs와 `Package.swift`, 관련 untracked 회귀 테스트. QA 증거·생성물·기타 untracked 자료는 스테이징하지 않고 보존했다.
 - 검증: staged `git diff --check` PASS, 보호 스크롤 검사 PASS. 이번 커밋 직후 전체 XCTest/build/실기기 E2E는 실행하지 않았다.
 
+## 2026-09-24 현재 로컬 소스 커밋·푸시 완료
+
+- 사용자 요청에 따라 현재 Closet 삭제/동기화·비교 History·linked size·Supabase contract 및 관련 테스트 변경을 커밋했다.
+- 커밋: `0839126` (`fix: preserve closet and comparison contracts`). `origin/connectDB` 푸시 성공.
+- 검증: staged `git diff --check` PASS, 보호 스크롤 검사 PASS. 전체 XCTest/build 및 실기기 E2E는 이번 커밋 작업에서 실행하지 않았다.
+
 ## 2026-09-23 동일 그룹 제한 — 승인된 개발 DB 적용 완료
 
 - 사용자 `진행햐. 완료된기능에 영향없개하고` 승인에 따라 개발용으로 지정된 FitMatch hnkplvyegonlhumlejst(ap-northeast-2)에 migration `same_comparison_group_only_preserve_eligibility` 적용 성공. 이전 미적용 기록은 이 항목으로 대체한다. 테이블/user row write 없이 후보/승인 함수 4개 정의만 변경.
