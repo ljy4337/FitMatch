@@ -12,9 +12,16 @@ nonisolated protocol FitMatchClosetRegistrationRemoteServicing: Sendable {
     func setClosetReference(closetItemID: UUID, isReference: Bool) async throws
         -> FitMatchSetClosetReferenceResponse
     func listClosetItems() async throws -> FitMatchClosetItemsResponse
+    func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse
 }
 
 extension FitMatchClosetRegistrationRemoteServicing {
+    // Compatibility for existing injected remotes. The production client
+    // implements the owner-scoped single-item RPC; it never lists all items.
+    func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse {
+        try await listClosetItems()
+    }
+
     /// Existing test seams that only exercise the write boundary retain a
     /// compile-compatible default. The production client implements the real
     /// read-back method and the app supplies an authoritative projector.
@@ -274,12 +281,13 @@ final class FitMatchComparedProductClosetSubmissionAction {
 
         let receipt: FitMatchClosetItemRecord
         do {
-            let rows = try await remote.listClosetItems()
+            let rows = try await remote.getClosetItem(closetItemID: acceptedClosetItemID)
             guard rows.state == "ready" else {
                 throw FitMatchSupabaseProductResolverError.authenticationRequired
             }
             let matches = rows.items.filter {
                 $0.clientItemID == submission.remoteRequest.clientItemID
+                    && $0.closetItemID == acceptedClosetItemID
             }
             guard matches.count == 1 else {
                 throw FitMatchSupabaseProductResolverError.invalidVNextResponse

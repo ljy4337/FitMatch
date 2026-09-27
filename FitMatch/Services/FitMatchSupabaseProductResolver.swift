@@ -1834,6 +1834,13 @@ nonisolated private struct VNextReferenceCandidatesParameters: Encodable, Sendab
     }
 }
 
+nonisolated private struct VNextSelectedReferenceParameters: Encodable, Sendable {
+    let p_target_product_id: UUID
+    let p_target_variant_id: UUID
+    let p_reference_closet_item_id: UUID
+    let p_requested_group_code: String?
+}
+
 nonisolated private struct VNextEligibleCandidateParameters: Encodable, Sendable {
     let pReferenceClosetItemID: UUID
     let pTargetProductID: UUID
@@ -2128,6 +2135,22 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
         )
     }
 
+    func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse {
+        let client = try await authenticatedClient()
+        let items: [VNextClosetItemDTO] = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_get_closet_item"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_get_closet_item",
+                params: VNextClosetIDParameters(pClosetItemID: closetItemID)
+            ).execute().value
+        }
+        guard items.count <= 1 else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        return FitMatchClosetItemsResponse(state: "ready", items: items.map(Self.mapClosetItem))
+    }
+
     func setClosetReference(closetItemID: UUID, isReference: Bool) async throws
         -> FitMatchSetClosetReferenceResponse {
         let client = try await authenticatedClient()
@@ -2301,6 +2324,40 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
               exact.targetComparisonGroup?.authorityFingerprint?.isEmpty == false else {
             throw FitMatchSupabaseProductResolverError.invalidVNextResponse
         }
+        return FitMatchReferenceCandidatesResponse(vnext: exact)
+    }
+
+    func findSelectedReferenceCandidate(targetProductID: UUID, targetVariantID: UUID?,
+                                        referenceClosetItemID: UUID,
+                                        requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        guard let targetVariantID else {
+            throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+        }
+        let client = try await authenticatedClient()
+        let exact: VNextReferenceCandidatesDTO = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_find_selected_reference_candidate"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_find_selected_reference_candidate",
+                params: VNextSelectedReferenceParameters(
+                    p_target_product_id: targetProductID,
+                    p_target_variant_id: targetVariantID,
+                    p_reference_closet_item_id: referenceClosetItemID,
+                    p_requested_group_code: requestedComparisonGroupCode
+                )
+            ).execute().value
+        }
+        try FitMatchVNextContractValidator.validateCandidateEnvelope(
+            exact, targetProductID: targetProductID, targetVariantID: targetVariantID
+        )
+        guard (exact.candidates + exact.blocked).allSatisfy({
+            $0.closetItemID == referenceClosetItemID
+        }) else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        // Requested-group provenance is additionally validated by the same
+        // coordinator path as the full candidate response.
         return FitMatchReferenceCandidatesResponse(vnext: exact)
     }
 

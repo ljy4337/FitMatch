@@ -69,20 +69,19 @@ struct LinkClosetRegistrationView: View {
     }
 
     private var canOpenRegistration: Bool {
-        guard parsedProduct != nil, !isLoading else {
-            return false
-        }
-        return registrationBlockMessage == nil
+        LinkClosetRegistrationPreparation.canOpenRegistration(
+            product: parsedProduct,
+            serverContext: registrationServerContext,
+            isLoading: isLoading
+        )
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 urlCard
-                if !isLoading {
-                    parsedProductPreview
-                    errorCard
-                }
+                parsedProductPreview
+                if !isLoading { errorCard }
             }
             .padding(20)
         }
@@ -106,10 +105,7 @@ struct LinkClosetRegistrationView: View {
                     // here would make REVIEW_REQUIRED look user-confirmed.
                     preselectedClassification: nil,
                     isParsedProductReadOnly: true,
-                    serverRegistrationContext: registrationServerContext
-                        ?? FitMatchClosetRegistrationServerContext(
-                            classificationState: isLoading ? .preparing : .unavailable
-                        ),
+                    serverRegistrationContext: registrationServerContext,
                     startsAtRegistrationConfirmation: true,
                     prefersRepresentativeByDefault: prefersRepresentativeByDefault,
                     requiresExplicitSizeSelection: preferredRecoveredSize == nil
@@ -176,6 +172,8 @@ struct LinkClosetRegistrationView: View {
             }
         }
         .onDisappear {
+            // Presenting the draft must not cancel its pending authority.
+            guard !isShowingAddToClosetSheet else { return }
             loadTask?.cancel()
             loadTask = nil
         }
@@ -417,6 +415,13 @@ struct LinkClosetRegistrationView: View {
             onPhaseChange: { phase in
                 guard !Task.isCancelled, requestID == loadRequestID else { return }
                 loadingPhase = phase
+            },
+            onRetailerReady: { preparation in
+                guard !Task.isCancelled, requestID == loadRequestID else { return }
+                parsedProduct = preparation.parsedProduct
+                parsedDetailCategory = preparation.detailCategory
+                productMeasurementPresence = preparation.productMeasurementPresence
+                registrationServerContext = preparation.serverRegistrationContext
             }
         )
         guard !Task.isCancelled, requestID == loadRequestID else { return }
@@ -427,7 +432,9 @@ struct LinkClosetRegistrationView: View {
         case .cancelled:
             return
         case .loaded(let preparation):
-            parsedProduct = preparation.parsedProduct
+            // Keep the retailer draft visible if server preparation fails.
+            // Its unavailable context still prevents persistence.
+            parsedProduct = preparation.parsedProduct ?? parsedProduct
             partialProduct = preparation.partialProduct
             parsedDetailCategory = preparation.detailCategory
             productMeasurementPresence = preparation.productMeasurementPresence
@@ -562,6 +569,22 @@ struct LinkClosetRegistrationPreparation {
 
     var canBeginRegistration: Bool {
         registrationBlockMessage == nil
+    }
+
+    /// Draft navigation does not authorize persistence. Only a non-nil pending
+    /// server context may open early; failure never becomes manual registration.
+    static func canOpenRegistration(
+        product: Product?,
+        serverContext: FitMatchClosetRegistrationServerContext?,
+        isLoading: Bool
+    ) -> Bool {
+        guard let product, !product.sizes.isEmpty else { return false }
+        if isLoading, serverContext?.classificationState == .preparing { return true }
+        return !isLoading && registrationBlockMessage(
+            productMeasurementPresence: .unknown,
+            serverRegistrationContext: serverContext,
+            displaySizes: product.sizes
+        ) == nil
     }
 
     static func registrationBlockMessage(

@@ -1,3 +1,131 @@
+## 2026-09-27 Release Archive — FitMatchDebugLogger 심볼 보존 수정
+
+- 원인: `FitMatch/Services/FitMatchDebugLogger.swift`의 `FitMatchDebugLogger` 전체 정의가 `#if DEBUG` 안에 있었지만, `FitMatch/Views/CompareFlowSheet.swift:2197`의 `duration` 호출은 `#if DEBUG` 밖에 있었다. Release의 `SWIFT_ACTIVE_COMPILATION_CONDITIONS`에는 `DEBUG`가 없어 타입이 사라져 `Cannot find 'FitMatchDebugLogger' in scope`가 발생했다. `FitMatch` 폴더는 PBX synchronized root group으로 target에 포함되며 별도 Compile Sources 누락이나 Target Membership 문제는 확인되지 않았다.
+- 수정: logger 호출을 삭제하지 않고 Release용 동일 API no-op `FitMatchDebugLogger`를 추가했다. Debug에서는 기존 출력/OSLog 진단을 유지하고 Release에서는 실제 출력·side effect만 제거한다. Debug 전용 `ParsedProductInfo`/observation debug-field extension은 계속 Debug에서만 컴파일된다.
+- PASS: Debug simulator build (`/tmp/FitMatchReleaseLoggerDebug`), Release device build (`/tmp/FitMatchReleaseLoggerRelease`), Release Archive `generic/platform=iOS` / Any iOS Device arm64 (`/tmp/FitMatchReleaseLogger.xcarchive`, bundle `com.ljy4337.fitmatch`). `git diff --check` 및 protected-scroll 검사 PASS.
+- 기존 main-actor/isolation 및 기타 compiler warning은 요청 범위 밖이라 수정하지 않았다. 실제 서명/배포 업로드는 수행하지 않았다.
+
+## 2026-09-24 개발 DB 적용 완료 — 이전 승인 차단 해소
+
+- 사용자가 exact 개발 프로젝트 migration 적용 요청에 “승인한다”로 명시 승인하여 `hnkplvyegonlhumlejst`에 `selected_comparison_candidate`를 apply_migration으로 적용했다. 성공 응답 및 migration ledger 확인: remote version `20260924045025`; 로컬 파일 `supabase/migrations/20260924130000_selected_comparison_candidate.sql`과 대응한다. 과거 승인 차단 기록은 이 상태로 대체되며 이력은 보존한다.
+- READ ONLY postflight PASS: 신규 endpoint 존재, authenticated 실행 허용, anon 차단, mapped/session private helper 직접 실행 차단(5/5 true). eligible_candidate_sizes 2개, authorize_comparison_with_context 2개, begin_comparison, complete_comparison 총 6개 정의 hash 모두 적용 전과 동일.
+- 이번 승인 후 앱 코드 추가 변경/테스트 재실행 없음. 직전 동일 변경의 전체 Swift 결과는 870 PASS / 0 FAIL / 42 skipped, 격리 SQL parity/role/rollback PASS. 배포 후 실제 인증 사용자 비교 E2E 및 실기기 속도 측정은 NOT RUN.
+- 사용자 상품·옷장·비교 row 변경 없음. 함수/권한 및 migration ledger만 변경. 앱 성능 경로를 사용하려면 최신 로컬 소스로 빌드 필요. commit/push 없음.
+
+## 2026-09-24 비교 성능 3건 코드 완료 — 870 PASS / DB 적용 승인 차단
+
+- 사용자 “권장 개선순서대로 모두 개선, 핵심기능 유지” 범위. 기준 HEAD3243e980, 기존 dirty 변경 보존. 앱 production4파일: Coordinator selected exact candidate 경로 + 최초 fresh runtime 전달, DomainClient 신규 단건 후보 RPC/identity검증, VM 한 번만 authority handoff(실패 후 재시도/authority변경/취소 처리), CompareFlow 현재 결과 다른 옷 버튼을 기존 비교목록 callback으로 연결.
+- 그룹/원본/점수/eligible/begin/complete/다른사이즈 기능 변경 없음. 선택 후 전체 후보 실측 scan만 exact Closet row로 제한. 전체 Closet receipt 및 선택 후 target/reference freshness 검증은 유지. 최종 eligible→begin 경계는 stale/fingerprint 유지 때문에 합치지 않았다.
+- SQL 준비: `supabase/migrations/20260924130000_selected_comparison_candidate.sql`, rollback/verify, captured baseline + isolated regression. 기존 full-list 함수2개는 shared private filtered helper에 NULL 전달, 새 public selected RPC는 exactID필터. owner/deleted/group/variant/auth 의미 보존.
+- 격리 SQL PASS exit0 `/tmp/fitmatch-deploy-comparison-roles-0uyrr5nj/run.log`: 원본 full JSON/선택항목/blocked parity, 비선택 eligibility 미실행, 실제 authenticated/anon 역할, 삭제/타사용자/없는ID/null/invalid variant/group, rollback. 보조 eligibility/context는stub이므로 live E2E 아님.
+- Swift 단계별 RED→GREEN: authority42/42, result wiring5/5, handoff44/44. 전체 첫 실행866PASS/4FAIL/42skip은 첫 후보 resolve 순서를 강제한 구형 검사3개와 CP034 runtime queue1개. 최종 선택 재검증/NOT_APPLICABLE 차단/History 불변 assertion 유지하며 순서·fixture만 정렬.
+- **최종 전체 PASS exit0: 870PASS/0FAIL/42skip(총912)** `/tmp/FitMatchComparisonPerformanceVerified.xcresult`, `/tmp/fitmatch-comparison-performance-verified.log`. 앱/테스트compile 포함. VM 실패후재시도/취소 regression 포함. 실기기UI/E2E/실제속도측정 NOT RUN. 독립리뷰 Important/Critical 지적없음.
+- **DB migration 미적용/BLOCKED**: apply_migration 자동검토2회거절(과거DB/Edge금지·read-only/개발write승인불충분 사유). 두 번째에 기존 사용자 dev허용/현요청/검증근거 명시했으나 거절. 우회없음. 사용자 exact dev project migration 재승인 질문 pending. 새 앱 단건 RPC 호출은 DB 적용 이후 사용해야 함. 코드 PASS를 live 적용완료로 오해하지 말 것.
+- 상세/전체파일/명령: `Docs/QA/20260924-Comparison-Performance.md`, 계획/판단: `Docs/QA/20260924-Comparison-Performance-Plan.md`. 지도갱신. commit/push없음.
+
+## 2026-09-24 상품 비교 전체 흐름 성능 감사 — 구현 변경 없음
+
+- 기준 HEAD 3243e980bc0a304693d461e2e4279fc6f970c350, 현재 로컬 변경 포함. Swift active caller와 개발 DB hnkplvyegonlhumlejst의 pg_proc 정의를 READ ONLY로 대조. 이번에는 앱/SQL/DB 변경 및 테스트 실행 없음. 기존 테스트 결과를 이번 감사 PASS로 재사용하지 않음.
+- 최초: CompareFlow.startCompare → loadProductInfoFromURL → fresh observation/runtime → referenceSelectionPlan. 후보계획은 target resolveWithRuntime와 전체 Closet 조회를 이미 병렬 실행한 뒤 후보 RPC 호출. resolveWithRuntime 자체는 단일 runtime 조회이며 항상 resolve+runtime 두 RPC라고 계산하면 안 됨. 직전에 준비한 target authority를 다시 읽는 구간은 공유 후보이나 만료/계정/그룹/identity 검증 유지 필요.
+- 선택: authorizeReferenceCandidate는 target runtime/전체 Closet/조건부 reference runtime을 병렬 확인한 뒤 전체 findReferenceCandidates 재호출. beginAuthorizedComparison은 별도 eligibleCandidateSizes 후 beginComparison. 배포 find_reference_candidates는 Closet 루프 내부 eligible_candidate_sizes 호출, begin_comparison도 eligible_candidate_sizes 호출. 반복 작업 확인과 실제 latency 병목 입증은 별개. 선택한 exact pair만 서버에서 검증하고 begin과 공유하는 계약을 우선 검토; 검증 삭제 금지.
+- 다른 옷: 결과 화면 normal caller는 onShowOtherClosetComparison=nil, 새 CompareFlow(initialHistoricalProduct:) 진입. retailer API는 다시 호출하지 않지만 retained facts로 resolveServerAuthority/fresh observation/runtime 및 후보 조회를 반복. 현재 세션의 target 준비 상태/후보 표시 재사용을 권장하되 새 reference에는 새 authorization/begin/complete 필요. 오래된 History 재비교와 구분. 결과 이전의 다른 옷 버튼은 기존 closetSelection 복귀이므로 동일하게 취급하지 않음.
+- 다른 사이즈: 현재 VNextComparisonSessionStore batch의 승인된 analyses와 exact sizeID를 로컬 표시. 이 동작 자체에는 새 API/begin/complete/History 저장 없음. 재실행/오래된 History에 batch가 없으면 같은 기능 보장 안 됨; 승인 없는 재계산으로 대체하지 않음.
+- 후보 preview는 Closet수×size수 로컬 계산. CPU/UI 영향은 미측정으로 보류. runtime 중간projection 생략은 앞서 배포되어 있으므로 다시 미구현으로 제시하지 않음.
+- 권장순서: 선택 후 전체후보 재검사를 exact-pair begin으로 통합 검토 → 현재 결과의 다른 옷 비교 target 재수집 제거 → 최초 준비/후보 handoff authority 공유 및 가능한 Closet read overlap. 상품 observation 저장 자체 삭제는 현 DB identity/권한/재현계약과 충돌. 최종 complete 성공 이전 완료 UI 금지. 실기기 before/after/E2E 및 신규 tests NOT RUN, 속도 수치 주장 없음.
+
+## 2026-09-24 등록 성능 개선 2건 완료 — 개발 DB 적용 / 전체866 PASS
+
+- 사용자 “일단 그거부터 해” 승인 범위: 최종저장 readback 단건화 + Swift runtime에서덮어쓸중간canonical/readiness계산생략. 사용자 지정 개발DB hnkplvyegonlhumlejst/FitMatch(ap-northeast-2), 앱Info.plist참조동일확인. 사용자row변경없음.
+- production: FitMatchComparedProductClosetSubmissionAction.getClosetItem(acceptedClosetItemID) → FitMatchSupabaseDomainClient의신규public.fitmatch_vnext_get_closet_item. clientItemID/closetItemID둘다일치후기존authoritative projector. 전체sync목록조회는유지.
+- SQL: 기존list4단계owner를optional filter인uuid overload로공유, noarg기존목록계약유지. 새단건RPC는null거절/owner/active/exactID필터와raw/detail/receipt모두보존. get_product_runtime_base(text,text,boolean)는private; 기존get_product_runtime은true,Swift최종runtime은false후기존context/readiness덮어쓰기. 비교정책함수변경없음.
+- 적용: local20260924120000→remote20260924035231_closet_single_item_readback; local20260924121000→remote20260924035245_runtime_skip_discarded_projections. remote/localSQL MD5동일. postflight10/10 true,begin/complete/candidate/canonical/readiness핵심정의hash전후동일.
+- 격리SQL PASS exit0: `/tmp/fitmatch-deploy-performance-zdbirp9s/run.log`. 배포정의before/original과after JSON동일,raw unknown/detail/canonical/receipt유지,교차사용자/삭제/없는ID/로그인없음, GLOBAL_CONFIRMED/USER_OVERRIDE,기본runtime보존,롤백검사. 실제canonical/group은stub이므로fullDB/liveE2E아님. 2sizefixture에서discarded base0/context2/readiness1회확인.
+- Swift RED45PASS/1FAIL(listCallCount), GREEN 전체908 tests=866PASS/0FAIL/42skipped, exit0. `/tmp/FitMatchRegistrationPerformanceFinal.xcresult`, 로그 `/tmp/fitmatch-registration-performance-final.log`. 명령/한계/전체SQL파일은 `Docs/QA/20260924-Registration-Performance.md`.
+- NOT RUN: 실기기시간/E2E/인증실물저장. 앱·테스트compile는전체test에포함. 새로운앱단건조회는새build필요,DBruntime개선은배포완료. 기존dirty작업보존/commit/push없음. 이번두대상구현완료이며속도개선초수는미측정.
+
+## 2026-09-24 링크 상품 조기 표시·서버 준비 병행 — 로컬 변경
+
+- 사용자 승인: 기존 저장 데이터/서버 검증을 유지하면서 retailer API 완료 후 상품 표시와 다음 진입을 먼저 허용. 이전의 서버준비완료까지 카드숨김 정책은 링크옷장진입에 한해 이 요청으로 대체.
+- FitMatchLinkClosetRegistrationAction.load가 기존 ViewModel onRetailerProductLoaded를 재사용하여 raw draft와 non-nil preparing context를 전달. 서버 observation/runtime/조건부refresh는 그대로 이어서 수행하며 요청을 추가/삭제하지 않음.
+- LinkClosetRegistrationView의 draft navigation gate를 preparation helper로 분리. preparing+사이즈존재에서만 조기진입; context nil/unavailable은 우회불가. sheet표시로 발생하는 onDisappear는진행중authority를취소하지않음. 실패후draft유지, 최종context는fail-closed.
+- AddComparedProductToClosetSheet는preparing중사이즈선택허용/저장과그룹변경차단. 기존context변경반영과exact사이즈ID유지경로재사용. 기존upsert→authoritative list readback→local projection 유지. DB계산공유/단건readback계약은이번에변경하지않음.
+- 회귀 RED: EarlyLinkRed3 전체headlessacceptance 44PASS/1FAIL (earlyCount0). Green 중간109PASS/1FAIL은이전Next대기소스문자열검사. 새승인정책의draft gate 행동검사로교체; observation을gate로보류하는성공/취소검사추가. Red2는메서드selector발견미확인으로PASS근거제외. 최초sandbox빌드는캐시권한BLOCKED 후승인된실행으로진행.
+- 전체 중간검사 EarlyLinkFinal: 865PASS/1FAIL/42skipped. 새test가parser input UUID를화면ID로간주한오류; draft의실제선택displayID로조회하도록수정. raw draft→final displayID동일성검사는이전실행에서도PASS.
+- 최종 PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchSameGroupRetry -disableAutomaticPackageResolution -parallel-testing-enabled NO -only-testing:FitMatchTests -resultBundlePath /tmp/FitMatchEarlyLinkVerified.xcresult test` exit0. 908 tests=866PASS/0FAIL/42skipped. 로그 `/tmp/fitmatch-early-link-verified.log`, summary `/tmp/fitmatch-early-verified-summary.json`. 앱·테스트compile 포함; 별도build/실기기UI/E2E/실제속도측정 NOT RUN. diff/protected-scroll PASS.
+- 이번production3파일/기존test1파일/지도/인수인계변경. 기존dirty변경보존,DB write/commit/push없음. 실기기UI/E2E와before-after실측NOT RUN. 전체최종검사결과는아래에추가.
+
+## 2026-09-24 링크 등록 대기시간 READ-ONLY 점검
+
+- source HEAD3243e980 유지. 앱/DB 수정 없음. 연결 hnkplvyegonlhumlejst pg_proc 정의 SELECT만 실행; live latency/실기기/테스트 재실행 NOT RUN.
+- 필수: exact product/variant/size 및 observation 정합성, 계정/중복재시도, 그룹 출처, 저장 후 authoritative receipt 확인 유지. UI 표시/다음 진입이 그 모든 처리 완료까지 기다려야 하는 것은 별개다.
+- LinkClosetRegistrationAction.load는 loadProductInfoFromURL 완료 후 REVIEW_REQUIRED+retailer evidence이면 refreshLinkRegistrationAuthorityIfNeeded 추가 runtime 요청을 기다린다. 그룹미매핑에도 이refresh조건이 적용될 수 있음. 동일결과/무변경 보장 증명 전 일괄 삭제하지 않음.
+- 배포 get_product_runtime_for_swift는 get_product_runtime이 모든size에 생성한 canonical_measurements를 context판으로 다시 덮어쓰고 readiness도 effective판으로 교체한다. effective_product_readiness는 effective_target_classification을 재호출하며 GLOBAL_CONFIRMED면 product_readiness를 다시 호출한다. 덮어쓸 중간projection 생성은 최적화 대상; 서로 다른context 결과를 동일하다고 가정하지 않는다. 정확한 전체호출횟수/시간은 미측정.
+- 최종저장 FitMatchComparedProductClosetSubmissionAction.submitServerFirst는 upsert후 listClosetItems 전체목록에서 정확한저장receipt를 찾는다. receipt검증은필수, 전체목록전송은단건조회/동일mutation응답receipt로대체가능한설계후보. 현재응답만믿고readback삭제금지.
+- 권장: retailer-ready draft즉시표시+다음 허용, 동일수집데이터로기존서버준비즉시병행, 사용자선택을stable source identity로유지하고서버ID정확히결합. raw-only단계가현재manual/local fallback저장경로로들어가지않게명시적pending상태필요. 최종저장은서버준비후허용. 별도로runtime중간중복projection과최종저장전체list왕복을줄여실제시간단축. API수집자체와최종DBcommit대기는없앨수없으며즉시완료보장불가.
+
+## 2026-09-24 MUSINSA 7122627 실측 API 파서 입력 가공
+
+- 공식 상품 페이지에서 선택한 `7122627`(워셔블 크롭 헨리넥 니트_6color)의 `https://goods-detail.musinsa.com/api2/goods/7122627/actual-size`를 앱과 동일한 Accept/Referer/iOS Safari User-Agent로 호출해 HTTP 200, 2,120 bytes를 수신했다.
+- 공식 응답은 현재 `MusinsaActualSizeAPIParser.MusinsaActualSizeResponse` 계약에 이미 직접 디코딩 가능한 형태다. 요청 범위에 맞춰 원문을 `Docs/QA/MusinsaActualSize-7122627/parser-input.json` 파일 하나로 기록했다.
+- type 21 `긴소매티셔츠`, M/L/XL 각 4개 양수 실측은 총장→body_length_back_neck_to_hem, 어깨너비→shoulder_width_seam_to_seam, 가슴단면→chest_width_pit_to_pit, 소매길이→sleeve_shoulder_seam_to_cuff로 `musinsa_actual_size_mapping_v9`에 대응한다.
+- 현행 parser의 `value > 0` guard 때문에 각 size의 밑단단면/소매부리단면/암홀 0값 9행은 projection에서 제거된다. 원문 파일에는 모두 남겼으며, 신규 정책의 “원본 전체 저장·표시”를 앱 경로가 완전히 만족한다는 증거로 보고하지 않는다. 이번 작업은 parser 코드/DB를 변경하지 않았다.
+
+## 2026-09-24 잔여 작업의 출시 필요성 재판정
+
+- 사용자 요청에 따라 추가 개발 전에 필요성을 점검. HEAD 3243e980bc0a304693d461e2e4279fc6f970c350 유지. 현재 migration 첫 파일의 public.sources/app_categories 의존, migration manifest와 이전 실행 결과 원본(summary/log)을 확인했다. 이번에 전체 테스트·build·live API·연결 DB 조회를 재실행하지 않았다.
+- 최신 3-provider API 확인은 실제 상품 수집 신뢰도를 위한 필요한 검증이다. 기존 403/transport 실패만으로 앱 결함을 확정하거나 parser를 수정하지 않는다. 사용자 실기기 E2E에서 각 provider의 상품/사이즈/실측 수집 증거를 함께 확보하면 같은 목적의 별도 대량 live 검사를 중복할 필요는 없다. 실패 재현 시 해당 owner만 수정한다.
+- 빈 DB 재구성은 새 출시용 DB를 만들 계획에서 필수 선행 작업이다. 현재 연결 DB의 실행 결함 자체는 아니다. 초기 schema와 필요한 기준 데이터의 근거 있는 복원 및 새 DB 계약 검증이 필요하다. 가짜 public.sources 테이블을 추가해 첫 migration만 통과시키지 않는다. 기존 DB를 그대로 사용하는 경우에도 복구 가능성 검증은 운영 준비 과제로 남는다.
+- 이미 배포된 계약 SQL의 Git 미반영은 별도 재현성 공백이다. 로컬 파일 보존 상태를 유지하며 commit/push 승인은 별도로 필요하다.
+- 이번에는 앱/DB 변경 없음. 확인된 새 핵심 결함 없이 점수100을 위해 범위를 확대하지 않는다. 기술점수90은 이전 검사 범위의 평가로 유지하며 출시 보증이 아니다. 필요한 후속은 provider 실사용 검증과 새 출시 DB 구성/복원 검증이다.
+
+## 2026-09-24 자동검사 계약 보완 완료 — 전체865 PASS /0 FAIL, E2E 제외90점
+
+- 동일connectDB HEAD3243e980bc0a304693d461e2e4279fc6f970c350. Swift production/DB mutation 없음. 기존dirty문서/SQL보존. 테스트6개파일과 QA문서만추가보완; commit/push없음.
+- Sync: remoteRecord시각을주입가능하게하고2개기존검사에실제local edit조건을구성. runtime실패를실제로거치도록호출assert추가, 기존fail-closed/stale보존assert유지. 신규무변경test는list1/runtime0/mutation0및화면projection검증.
+- Comparison: HeadlessJourneyFixture의runtime/Closet/candidate에동일A그룹계약보완. 3-provider snapshot완주검사는실제화면의사용자선택calculateTemporaryRecommendation+MANUAL_EXTENDED사용. 독립resolve/runtime/list시작순서는강제하지않고candidate이전완료,eligible→begin→complete의존순서엄격검사.
+- 신규수동등록브랜드/이름생략허용과기존편집필수검증분리. 삭제버튼부재문자열검사는serverauthority없는실제삭제action이SwiftData옷을남기는행동검사로대체. 원래측정/권한/identityassert완화없음.
+- 최종PASS: xcodebuild전체FitMatchTests exit0,907 tests=865 PASS/0 FAIL/42 skipped(파라미터919 runs=877PASS/0FAIL/42skipped). `/tmp/FitMatchClosureFinal.xcresult`, `/tmp/fitmatch-closure-final.log`, 명령은Release-Technical-Score최상단. 중간step1=100PASS/29FAIL, step2=836PASS/29FAIL/42skip, step3=125PASS/1FAIL. 마지막1개는서버독립조회순차기대였고현행병렬의존관계로보완후0FAIL.
+- DB READ ONLY: remote129개migration metadata저장,배포3건SQL MD5가로컬과정확히동일. 전체Gitreplay는빈PG17첫migration public.sources미존재로FAIL exit3; baseline추측작성안함. fullschema/seed복원이필요함.
+- liveBLOCKED: MUSINSA403,ZARA403,UNIQLOHTTP2오류/HTTP1timeout. actualAPI검증성공으로보고하지않음. E2E는NOT RUN이며감점안함.
+- 별도 Debug 앱 build PASS exit0: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchClosureBuild -disableAutomaticPackageResolution -configuration Debug build`, 로그 `/tmp/fitmatch-closure-build.log`. diff/protected-scroll PASS.
+- 기술점수90/100: Closet/Comparison을각25점으로복구. provider15/20,DB재현5/10유지. 과거78/66점평가는이번기록으로대체. 최종보고서 `Docs/QA/20260924-Release-Technical-Score.md`.
+
+## 2026-09-24 E2E 제외100점 도달 범위·실패원인 분석
+
+- 분석보고서 `Docs/QA/20260924-NonE2E-Release-Closure-Plan.md`. 앱/DB/테스트 변경 없이 분석과 문서만 추가. 점수78 유지; 미래PASS를 미리 반영하지 않음.
+- sync 두 실패를 다른suite 없이 `test-without-building`, `-parallel-testing-enabled NO`, 두 exact method selector로 재실행: exit65,2 FAIL/0 PASS. `/tmp/FitMatchSyncRootCauseAudit.xcresult`, `/tmp/fitmatch-sync-root-cause-audit.log`. 과거 병렬fixture불안정 설명은 이 실패원인으로 채택하지 않음.
+- fixture remoteRecord의2099년 timestamp → 먼저remote apply → client-owned content 일치 → shouldUpload=false → runtime 미호출. 실패stub을 설정한 두 번째검사도 실제runtime실패를 유발하지 못함. 정상무변경동기화 검사와 실제runtime실패후stale보존 검사를 분리해야 함. 데이터손상 결함으로 단정하지 않음.
+- Headless shared referenceResponse의 필수group누락 및 실제화면caller와 다른calculateRecommendation 자동경로 호출을 확인. 최신동일그룹/사용자선택 fixture로 복구한 후 begin/complete까지 도달시키고 잔여실패를 다시판정해야 함. 전체41FAIL 모두가무해한구형테스트라는 결론은 아님.
+- 신규등록브랜드필수 기대는 현재간소화정책과 충돌. 삭제버튼부재 문자열검사는 실제삭제무결성 증거가 아님; 최종UX정책 확인후action검증 필요.
+- 100점완료조건: 관련실패/skip분류 및 실제caller자동검사PASS, 전체Git DB replay/배포대조, 접속가능환경의현행retailer API계약, 최종build/regression. 실기기E2E는별도제외. 설치/commit/push/새DB변경은미수행.
+
+## 2026-09-24 DB 적용 후 재검수 — 관련 87 PASS / 2 FAIL
+
+- 동일 HEAD `3243e980bc0a304693d461e2e4279fc6f970c350`, 코드·DB 추가 변경 없음. 배포 후 함수10개 definition hash가 직전 postflight와 동일. public update/list/history_sync의 anon execute=false, authenticated=true 확인.
+- 새 실행: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchSameGroupRetry -disableAutomaticPackageResolution -parallel-testing-enabled NO -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests -only-testing:FitMatchTests/FitMatchComparisonSyncCoordinatorTests -only-testing:FitMatchTests/FitMatchClosetTransportContractTests -only-testing:FitMatchTests/FitMatchVNextContractTests -resultBundlePath /tmp/FitMatchDBContractReaudit.xcresult test` exit65. 89 tests =87 PASS/2 FAIL/0 skipped (parameter 포함91 runs=89 PASS/2 FAIL). transport/history/DTO suites PASS.
+- FAIL은 기존 `existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime`(runtime fetch count), `finalStaleAutomaticHydrationCannotUndoFailedV4Resolve`(serverConfirmed vs serverUnavailable) 두 건. 이번 DB 배포 회귀라고 단정하지 않으며, 무해한 구형 테스트라고도 결론내리지 않음. 원인 판정 필요.
+- SQL 재실행 PASS: linked+detail `/tmp/fitmatch-deploy-reaudit-qe0dk88c/run.log`, History tombstone `/tmp/fitmatch-deploy-history-reaudit-x4pqq8kp/run.log`, 각각 exit0. 최소 fixture/owner 검증이며 전체 배포 DB clone/E2E 아님.
+- 실제 DB active Closet raw snapshot 0건. mismatch 0건은 데이터가 없어 나온 결과이므로 실제 저장 정합성 PASS 근거로 사용하지 않음. 인증 실물 mutation/read-back, 두 기기 삭제 전달은 NOT RUN.
+- 기존 E2E 제외 점수표의 계약 불일치 감점만 재평가: Closet 12.5→18.75(미해결 sync 검사 공백으로75% cap), History5→10(관련 Swift+SQL 및 배포계약 확인); 나머지 동일. 66.25→77.5, 반올림 **78/100**. E2E 미실행을 감점하지 않았으며 앱 출시 보증 점수 아님. 전체41실패/라이브API차단/Git replay 공백은 해결됐다고 보고하지 않음.
+
+## 2026-09-24 개발 DB 계약 3건 적용 완료 — 사용자 승인
+
+- 대상 `hnkplvyegonlhumlejst` (FitMatch, ap-northeast-2). 사용자가 개발 DB임을 명시하고 “적용먼저해”로 승인. 기준 connectDB HEAD `3243e980bc0a304693d461e2e4279fc6f970c350`. 아래의 “연결 DB 미적용” 기록은 이 3건에 한해 이 기록으로 대체된다.
+- 실제 remote migration: `20260924014952_linked_closet_size_snapshot_updates`, `20260924015007_closet_detail_snapshot_round_trip`, `20260924015014_comparison_history_tombstone_sync`. 로컬 파일 timestamp와 원격 version은 다르므로 QA manifest 대응표 참조. retailer-exact v2는 미적용이며 기존 비교 결과 경로 유지.
+- 적용 전 실제 배포 helper를 반영한 로컬 회귀에서 metadata-only linked edit가 creation-only helper로 들어가 실패(exit3). public update routing을 observation ID 또는 use_server_measurements=true이면 새 update owner로 보내도록 최소 보완. 수정 후 linked/raw/detail regression exit0 PASS (`/tmp/fitmatch-deploy-green-brwab0dm/run.log`); 이전 M→L exact observation/rollback/metadata 보존 검사 포함. 테스트 helper를 실제 배포 거절 계약과 맞췄으며 assertion 완화 없음.
+- READ-ONLY postflight PASS: 3개 migration 이력, 새 update 분기, list raw receipt 및 exact detail 응답, History tombstone ownership, anon 실행 차단/authenticated 실행 허용 확인. candidate 함수 2 overload 및 begin/complete 함수 definition hash가 적용 전과 동일. 전후 정의 `/tmp/fitmatch-three-contracts-{pre,post}.json`.
+- 사용자 row를 시험 생성/수정/삭제하거나 재작성하지 않았다. DB 함수 계약만 migration 적용. Swift 수정/commit/push 없음. 새 SQL/회귀/manifest는 여전히 untracked이므로 Git 재현성 완료로 보고하지 않음.
+- NOT RUN: 적용 후 인증된 실제 Closet mutation/read-back, 두 기기 History 삭제 전달, 실기기 E2E. 이번 SQL 수정으로 전체 Swift 41 실패가 해결됐다고 주장하지 않으며 기존 66점 평가도 자동 상향하지 않음.
+
+## 2026-09-24 출시 핵심 기술 검증 — E2E 제외 66/100
+
+- 기준 HEAD `3243e980bc0a304693d461e2e4279fc6f970c350`, connectDB. 보고서 `Docs/QA/20260924-Release-Technical-Score.md`. 점수는 현재 소스+연결 DB의 가중 기술평가이며 실기기 E2E를 분모/감점에서 제외했다. 사용자 성공률이나 App Store 합격확률이 아니다.
+- 이번 실행: 전체 FitMatchTests exit65, 906 tests = 823 PASS/41 FAIL/42 skipped (parameter 포함918 runs). xcresult `/tmp/FitMatchSameGroupRetry/Logs/Test/Test-FitMatch-2026.09.24_10-33-34-+0900.xcresult`. Debug build 별도 exit0. 41건 전부를 production bug/legacy로 단정하지 않음; 필수 group 누락 fixture 및 오래된 신규 brand-required 기대는 확인.
+- 일회용 로컬 PostgreSQL17에서 linked+detail / tombstone / inactive v2 SQL harness 각각 exit0 PASS. 로그 `/tmp/fitmatch-score-pg-60pfp29t/{0,1,2}/run.log`. 실제 전체 Git baseline replay 아님.
+- 연결 Supabase READ ONLY 재확인: linked helper의 creation-only 거절 남음; list에 별도 exact detail/source snapshot 응답 없음; 새 history_sync RPC 없음. 수정 migration은 local untracked이며 현재 서버에서 해결된 것으로 보고하지 않음.
+- 실제 API 접근: UNIQLO E484080 details transport error/timeout, MUSINSA7035474 actual-size403, ZARA564228855 guide403. live BLOCKED; 예정30상품 전체 검증 미완료. 파서 fixture PASS를 live PASS로 대체하지 않음.
+- 코드/테스트/원격DB 수정·commit/push 없음. 보고서/Handoff 기록만 추가. E2E는 사용자 담당이며 배포 계약 정렬 후 실행할 체크리스트를 보고서에 제공.
+
 ## 2026-09-24 Five Repairs 후속 보완 — 로컬 구현·격리 검증, 연결 DB 미적용
 
 - 기준 HEAD `8c6586d51b73f405b4d6e7b52c5b688b24c7f732`, branch `connectDB`. 기존 tracked/untracked 변경을 유지했고 commit/push/reset/stash/연결 Supabase write는 수행하지 않았다. 이번 범위에서 Task 1·2·3·5를 이어갔으며 Task 4는 **v2 evidence 구현 및 격리 검증만** 수행했다. 실제 candidate→authorize→begin→complete 사용자 비교 경로에는 v2를 연결하지 않았다.
@@ -4993,3 +5121,15 @@ git diff -- '*.swift' | grep -E \
 - 직접 등록 신규 추가는 `registerManualServerFirst`를 사용하지만, 기존 직접 등록 옷의 `ClosetItemDetailView → AddClosetItemView → FitMatchClosetItemEditAction.saveManual`은 SwiftData를 먼저 변경하고 화면을 닫는 경로였다. `FitMatchClosetSyncCoordinator.saveManualClosetEdit`를 추가해, 정확한 서버 row preflight → `update_closet_item` → authoritative list read-back → local apply/save 순서로만 직접 편집을 완료하도록 연결 중이다. 서버 거절 시 원본 local row를 유지하는 회귀 테스트를 추가했다.
 - 연결 Supabase READ ONLY 확인: `fitmatch_vnext.closet_items.closet_detail_code_snapshot` 컬럼은 존재한다. 그러나 현재 배포 `fitmatch_vnext.update_closet_item(uuid,jsonb)`와 `list_closet_items()`는 해당 컬럼을 읽거나 반환하지 않으며, Swift `VNextClosetMutationPayload`도 표시용 detail code를 전송하지 않는다. 따라서 블라우스 같은 사용자 표시 선택은 서버 재조회 뒤 보존할 수 없다. UI-local fallback으로 완료 처리하지 말고, 기존 snapshot 컬럼을 update/list public wrapper에 포함하는 최소 migration 및 DTO/encoder 보완이 필요하다. 연결 DB에는 변경하지 않았다.
 - 검증 진행 중: `swiftc -parse`(변경 Swift/test)와 `git diff --check`, protected-scroll check는 PASS. XCTest RED는 먼저 실행된 같은 DerivedData build와 겹쳐 build DB lock으로 중단됐고, 별도 DerivedData 재실행 결과는 아직 수집하지 못했다. 실제 DB/실기기 검증 NOT RUN.
+
+## 2026-09-24 무신사 실측 파서 입력 10개 수집기
+
+- `scripts/collect-musinsa-parser-inputs.py`를 추가했다. 무신사 공식 카테고리 페이지에서 현재 노출된 `goodsNo`를 중복 제거해 찾고, 앱과 같은 `goods-detail.musinsa.com/api2/goods/{id}/actual-size` 응답을 변형 없이 상품별 JSON으로 저장한다. 실측표가 없거나 HTTP/JSON 오류인 상품은 실패 목록에 남기고 최대 후보 범위 안에서 성공 개수를 채운다.
+- 기본 실행은 `python3 scripts/collect-musinsa-parser-inputs.py`이며 기본 출력은 `Docs/QA/MusinsaParserInputs`이다. `--source-url`, `--count`, `--max-candidates`, `--delay-ms`, `--output-dir`를 지원한다. 각 실행의 상품 URL, API URL, 상태, 해시, 사이즈/원본 실측 행 수와 실패 사유는 `manifest.json`에 기록한다. DB, Swift 파서, 비교 정책은 변경하지 않았다.
+- 실제 공식 페이지/API 검증은 `/tmp/fitmatch-musinsa-parser-inputs`에 실행했다. 서로 다른 상품 10개, HTTP 200 10개, 실측표 포함 10개, 실패 0개로 완료했다. 저장된 원문 JSON은 `MusinsaActualSizeResponse` 입력 계약 그대로이며 테스트 산출물은 저장소에 추가하지 않았다.
+
+## 2026-09-24 유니클로 Safari 탐색·실측 파서 입력 수집기
+
+- `scripts/collect-uniqlo-parser-inputs.py`를 추가했다. 기본 실행은 Safari 첫 창에서 유니클로 공식 상품 페이지의 렌더링된 상품 링크를 읽고, 두 번째 Safari 창에 선택된 공식 size-chart API를 표시한다. 같은 API 응답 원문은 상품별 JSON으로 저장하며 `manifest.json`에 상품/색상 ID, 시도한 색상별·공통 variant, 선택 결과, HTTP 상태, 해시, 사이즈/실측 행 수와 실패 사유를 기록한다.
+- 앱의 `UniqloSizeAPIParser`와 같이 URL 색상 코드 응답 및 `-000` 공통 실측표를 확인하고 더 많은 공식 사이즈를 가진 응답을 선택한다. `--product-url` 반복 입력은 특정 상품 재현, `--no-api-window`는 브라우저를 건드리지 않는 API 검증에 사용한다. Safari 탐색은 macOS 자동화 권한과 Safari의 `Apple 이벤트의 JavaScript 허용` 설정이 필요하며, 권한 대기에는 15초 제한을 둔다. DB, Swift 파서, 비교 정책은 변경하지 않았다.
+- PASS: `/tmp/fitmatch-uniqlo-parser-inputs`에 기존 제공 URL 10개를 실제 공식 size-chart API로 조회해 HTTP 200 10개, 실측표 포함 10개, 실패 0개로 저장했다. Python 문법 검사도 PASS. Safari 두 창 탐색 smoke는 현재 자동화 실행 환경에서 완료 신호를 받지 못해 NOT VERIFIED이며 API 성공으로 대체 표기하지 않는다.

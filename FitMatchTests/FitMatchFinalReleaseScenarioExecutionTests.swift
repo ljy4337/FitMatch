@@ -216,9 +216,9 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         #expect(saved[0].fitPreference == .semiOver)
         #expect(saved[2].isRepresentative == false)
 
-        // CR-004 / CR-006: distinct missing fields and invalid values never
+        // CR-004 (existing-item edit) / CR-006: missing fields and invalid values never
         // create a row and expose the production form message.
-        let missingBrand = configuredDirectItem(name: "브랜드 없음", gender: .men, category: .top, detail: .shortSleeve)
+        let missingBrand = AddClosetItemViewModel(item: saved[0])
         missingBrand.brand = ""
         missingBrand.chest = "50"
         if case .blocked(let message) = FitMatchClosetFormAction.save(from: missingBrand, persist: { _ in true }) {
@@ -1980,16 +1980,25 @@ private func requireComparisonCallDependencies(
             throw FinalScenarioFailure(scenario, "missing \(call): \(calls)")
         }
     }
-    guard let candidates = calls.firstIndex(of: "reference_candidates"),
+    guard let initialCandidates = calls.firstIndex(of: "reference_candidates"),
+          let candidates = calls.lastIndex(of: "reference_candidates"),
           let eligible = calls.firstIndex(of: "eligible_sizes"),
           let begin = calls.firstIndex(of: "begin_comparison"),
           let complete = calls.firstIndex(of: "complete_comparison") else {
         throw FinalScenarioFailure(scenario, "missing comparison dependency: \(calls)")
     }
-    let prerequisites = ["resolve", "runtime", "list_closet"].compactMap { call in
-        calls[..<candidates].lastIndex(of: call)
+    // Initial lookup uses the already completed observation/runtime. The
+    // chosen-pair lookup must still obtain fresh resolve/runtime/Closet reads.
+    let initialPrerequisites = ["runtime", "list_closet"].compactMap {
+        calls[..<initialCandidates].lastIndex(of: $0)
     }
-    guard prerequisites.count == 3,
+    let selectionStart = initialCandidates == candidates
+        ? calls.startIndex : calls.index(after: initialCandidates)
+    let prerequisites = ["resolve", "runtime", "list_closet"].compactMap { call in
+        calls[selectionStart..<candidates].lastIndex(of: call)
+    }
+    guard initialPrerequisites.count == 2,
+          prerequisites.count == 3,
           prerequisites.allSatisfy({ $0 < candidates }),
           candidates < eligible,
           eligible < begin,

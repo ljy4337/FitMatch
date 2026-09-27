@@ -40,6 +40,68 @@ struct FitMatchServerAuthorityIntegrationTests {
         }
     }
 
+    @Test func initialCandidatePlanReusesExactPreparedTargetAndStillQueriesServerCandidates() async throws {
+        for reuse in [false, true] {
+            let fixture = AuthorityFixture.confirmed(
+                externalProductID: "FRESH-CANDIDATE-HANDOFF", detail: "short_sleeve",
+                family: "tshirt", length: "short_sleeve"
+            )
+            let prepared = FitMatchServerProductAuthority(
+                status: .confirmed, productID: fixture.productID,
+                classification: fixture.classification, runtime: fixture.runtime,
+                sourceObservationID: fixture.observationID
+            )
+            let remote = ServerAuthorityRemoteStub(
+                resolutions: [fixture.resolution(catalogState: "current")],
+                observations: [], runtimes: [fixture.runtime],
+                candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                    targetProductID: fixture.productID, candidates: [], blocked: [],
+                    status: "NO_REFERENCE_CANDIDATE"
+                )]
+            )
+            let plan = try await FitMatchServerAuthorityCoordinator(remote: remote)
+                .referenceSelectionPlan(
+                    targetRequest: fixture.request,
+                    targetObservation: fixture.observationRequest,
+                    localClientItemIDs: [], preparedTarget: reuse ? prepared : nil
+                )
+            #expect(plan.target.productID == fixture.productID)
+            #expect(await remote.runtimeCallCount == (reuse ? 0 : 1))
+            #expect(await remote.candidateCallCount == 1)
+            #expect(await remote.observationCallCount == 0)
+        }
+    }
+
+    @Test func candidateHandoffRejectsAnotherProductsAuthority() async throws {
+        let fixture = AuthorityFixture.confirmed(
+            externalProductID: "HANDOFF-REQUEST", detail: "short_sleeve",
+            family: "tshirt", length: "short_sleeve"
+        )
+        let other = AuthorityFixture.confirmed(
+            externalProductID: "OTHER-PRODUCT", detail: "short_sleeve",
+            family: "tshirt", length: "short_sleeve"
+        )
+        let remote = ServerAuthorityRemoteStub(
+            resolutions: [fixture.resolution(catalogState: "current")],
+            observations: [], runtimes: [fixture.runtime],
+            candidateResponses: [try Self.vnextReferenceCandidateResponse(
+                targetProductID: fixture.productID, candidates: [], blocked: [],
+                status: "NO_REFERENCE_CANDIDATE"
+            )]
+        )
+        await #expect(throws: FitMatchServerAuthorityError.runtimeResponseMalformed("product_identity_mismatch")) {
+            try await FitMatchServerAuthorityCoordinator(remote: remote).referenceSelectionPlan(
+                targetRequest: fixture.request, targetObservation: fixture.observationRequest,
+                preparedTarget: FitMatchServerProductAuthority(
+                    status: .confirmed, productID: other.productID,
+                    classification: other.classification, runtime: other.runtime,
+                    sourceObservationID: other.observationID
+                )
+            )
+        }
+        #expect(await remote.candidateCallCount == 0)
+    }
+
     @Test func currentResolutionReusesRuntimeButPromotionRefreshesIt() async throws {
         for changed in [false, true] {
             let fixture = AuthorityFixture.confirmed(
@@ -641,6 +703,7 @@ struct FitMatchServerAuthorityIntegrationTests {
                 == FitMatchServerReferenceAuthority.serverConfirmed
         )
         #expect(authorization.isAllowed)
+        #expect(await remote.selectedCandidateIDs == [closetItemID])
     }
 
     @Test func referencePlanUsesDBAutomaticWhenLocalRepresentativeIsFalse() async throws {
@@ -2268,6 +2331,7 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
 
     private(set) var observationCallCount = 0
     private(set) var runtimeCallCount = 0
+    private(set) var selectedCandidateIDs: [UUID] = []
     private(set) var candidateCallCount = 0
     private(set) var beginCallCount = 0
     private(set) var beginRequests: [FitMatchBeginComparisonRequest] = []
@@ -2337,6 +2401,14 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         candidateCallCount += 1
         guard !candidateResponses.isEmpty else { throw StubError.missingCandidates }
         return candidateResponses.removeFirst()
+    }
+
+    func findSelectedReferenceCandidate(targetProductID: UUID, targetVariantID: UUID?,
+                                        referenceClosetItemID: UUID,
+                                        requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        selectedCandidateIDs.append(referenceClosetItemID)
+        return try await findReferenceCandidates(targetProductID: targetProductID)
     }
 
     func eligibleCandidateSizes(

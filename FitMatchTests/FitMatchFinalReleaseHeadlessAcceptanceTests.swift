@@ -106,7 +106,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(items.allSatisfy { !$0.measurementRecords.isEmpty })
     }
 
-    @Test func directClosetRegistrationRequiredAndInvalidValuesFailClosed() {
+    @Test func directClosetRegistrationRequiredAndInvalidValuesFailClosed() throws {
         let base = configuredDirectItem(
             gender: .men,
             category: .top,
@@ -116,40 +116,35 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         base.chest = "50"
         #expect(base.canSave)
 
-        let missingBrand = configuredDirectItem(
-            gender: .men,
-            category: .top,
-            detail: .shortSleeve,
-            productName: "검증용 티셔츠"
-        )
+        // New registration intentionally has no brand/name inputs. Editing
+        // an existing garment still validates those user-owned fields.
+        let unnamed = configuredDirectItem(gender: .men, category: .top,
+            detail: .shortSleeve, productName: "")
+        unnamed.brand = ""
+        unnamed.chest = "50"
+        #expect(unnamed.canSave)
+        #expect(unnamed.makeUserFit() != nil)
+
+        let existing = try #require(base.makeUserFit())
+        let missingBrand = AddClosetItemViewModel(item: existing)
         missingBrand.brand = ""
-        missingBrand.chest = "50"
         #expect(!missingBrand.canSave)
         if case .blocked(let reason) = FitMatchClosetFormAction.save(
             from: missingBrand,
-            persist: { _ in Issue.record("Blocked form must not persist"); return true }
+            persist: { _ in Issue.record("Blocked edit must not persist"); return true }
         ) {
             #expect(reason == "브랜드명을 입력해 주세요.")
-        } else {
-            Issue.record("Expected missing-brand form to remain blocked")
-        }
+        } else { Issue.record("Expected missing-brand edit to remain blocked") }
 
-        let missingName = configuredDirectItem(
-            gender: .men,
-            category: .top,
-            detail: .shortSleeve,
-            productName: ""
-        )
-        missingName.chest = "50"
+        let missingName = AddClosetItemViewModel(item: existing)
+        missingName.productName = ""
         #expect(!missingName.canSave)
         if case .blocked(let reason) = FitMatchClosetFormAction.save(
             from: missingName,
-            persist: { _ in Issue.record("Blocked form must not persist"); return true }
+            persist: { _ in Issue.record("Blocked edit must not persist"); return true }
         ) {
             #expect(reason == "상품명을 입력해 주세요.")
-        } else {
-            Issue.record("Expected missing-name form to remain blocked")
-        }
+        } else { Issue.record("Expected missing-name edit to remain blocked") }
 
         let missingMeasurementSource = configuredDirectItem(
             gender: .men,
@@ -249,7 +244,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(invalidTuple.makeUserFit() == nil)
         #expect(
             FitMatchClosetFormValidation.message(for: invalidTuple)
-                == "선택한 카테고리와 세부 카테고리를 다시 확인해 주세요."
+                == "선택한 카테고리를 다시 확인해 주세요."
         )
     }
 
@@ -1057,6 +1052,32 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         }
     }
 
+    @Test func candidateAuthorityHandoffIsOneUseEvenAfterFailureAndCancellation() async throws {
+        let fixture = AtomicEffectiveTupleFixture()
+        let remote = AtomicEffectiveTupleRemote(fixture: fixture)
+        let viewModel = ShoppingProductViewModel(
+            initialURL: fixture.url.absoluteString,
+            parserService: ProductURLParserService(
+                uniqloParser: AtomicEffectiveTupleParser(product: fixture.parsedProduct)
+            ),
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(remote: remote)
+        )
+        #expect(await viewModel.loadProductInfoFromURL())
+        #expect(await remote.runtimeReadCount == 1)
+        // This remote deliberately rejects the candidate request. A failed
+        // plan must not authorize a result or keep reusing its one-use handoff.
+        #expect(await viewModel.loadServerReferenceSelectionPlan(localClientItemIDs: []) == nil)
+        #expect(await remote.runtimeReadCount == 1)
+        #expect(await viewModel.loadServerReferenceSelectionPlan(localClientItemIDs: []) == nil)
+        #expect(await remote.runtimeReadCount == 2)
+        #expect(await remote.candidateReadCount == 2)
+        viewModel.cancelProductLoading()
+        #expect(await viewModel.loadServerReferenceSelectionPlan(localClientItemIDs: []) == nil)
+        #expect(await remote.runtimeReadCount == 2)
+        #expect(await remote.candidateReadCount == 2)
+        #expect(!viewModel.hasServerConfirmedAuthority)
+    }
+
     @Test func linkRegistrationActionRunsTheActualParserAuthorityAndPreparationPipeline() async throws {
         let fixture = AtomicEffectiveTupleFixture()
         let viewModel = ShoppingProductViewModel(
@@ -1069,10 +1090,19 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             )
         )
 
+        var earlyProduct: Product?
+        var earlyCount = 0
         let outcome = await FitMatchLinkClosetRegistrationAction.load(
             urlString: fixture.url.absoluteString,
             makeViewModel: { _ in viewModel },
-            existingBrand: { _ in nil }
+            existingBrand: { _ in nil },
+            onRetailerReady: { preparation in
+                earlyCount += 1
+                earlyProduct = preparation.parsedProduct
+                #expect(preparation.serverRegistrationContext.classificationState == .preparing)
+                #expect(!viewModel.hasServerConfirmedAuthority)
+                #expect(preparation.parsedProduct?.sizes.isEmpty == false)
+            }
         )
         guard case .loaded(let preparation) = outcome,
               let preparedProduct = preparation.parsedProduct else {
@@ -1080,11 +1110,56 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             return
         }
 
+        #expect(earlyCount == 1)
+        #expect(earlyProduct != nil)
+
         // CR-020 boundary: the preparation preserves the server-issued
         // shopping authority and does not fabricate a Global Closet authority.
         #expect(preparedProduct.classificationAuthorityProvenance == .userExplicit)
         #expect(preparation.partialProduct == nil)
         #expect(preparation.recoveryViewModel == nil)
+    }
+
+    @Test(arguments: [false, true])
+    func linkDraftPrecedesServerCompletionAndCancellationCannotPublishAuthority(cancel: Bool) async throws {
+        let fixture = AtomicEffectiveTupleFixture()
+        let gate = ComparedProductSubmissionGate()
+        let viewModel = ShoppingProductViewModel(
+            initialURL: fixture.url.absoluteString,
+            parserService: ProductURLParserService(
+                uniqloParser: AtomicEffectiveTupleParser(product: fixture.parsedProduct)),
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: AtomicEffectiveTupleRemote(fixture: fixture, observationGate: gate)))
+        var draft: LinkClosetRegistrationPreparation?
+        let load = Task { @MainActor in
+            await FitMatchLinkClosetRegistrationAction.load(
+                urlString: fixture.url.absoluteString,
+                makeViewModel: { _ in viewModel }, existingBrand: { _ in nil },
+                onRetailerReady: { draft = $0 })
+        }
+        await gate.waitForArrival()
+        // Observation is deliberately held: no elapsed-time threshold proves overlap.
+        #expect(draft?.parsedProduct != nil)
+        #expect(draft?.serverRegistrationContext.classificationState == .preparing)
+        #expect(draft?.serverRegistrationContext.identitiesByDisplaySizeID.isEmpty == true)
+        #expect(draft?.canBeginRegistration == false)
+        if cancel { load.cancel() }
+        await gate.open()
+        let outcome = await load.value
+        if cancel {
+            guard case .cancelled = outcome else {
+                Issue.record("Cancelled authority must not publish a loaded result")
+                return
+            }
+        } else {
+            guard case .loaded(let ready) = outcome else {
+                Issue.record("Expected final authority after releasing observation")
+                return
+            }
+            #expect(ready.parsedProduct?.sizes.map(\.id) == draft?.parsedProduct?.sizes.map(\.id))
+            let selectedDisplayID = try #require(draft?.parsedProduct?.sizes.first?.id)
+            #expect(ready.serverRegistrationContext.identity(for: selectedDisplayID)?.productSizeID == fixture.productSizeID)
+        }
     }
 
     @Test func shoppingPersonalClassificationNeedsSeparateClosetIntent() {
@@ -2076,7 +2151,8 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(item.chest == 54)
         #expect(item.sourceProductSize?.chest == 54)
         #expect(await remote.upsertCallCount() == 1)
-        #expect(await remote.listCallCount() == 1)
+        #expect(await remote.listCallCount() == 0)
+        #expect(await remote.singleItemRequestIDs() == [serverItemID])
     }
 
     @Test func lateResponseAfterAccountSwitchNeverProjectsIntoAnotherUsersCache() async throws {
@@ -2319,12 +2395,14 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         let linkSource = try sourceFile("FitMatch/Views/LinkClosetRegistrationView.swift")
         #expect(linkSource.contains("이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다."))
         #expect(linkSource.contains("guard viewModel.productMeasurementPresence != .none else {"))
-        // The View now asks the shared preparation gate for both measurement
-        // presence and exact server identity.  Keep asserting that the Next
-        // button is disabled by that combined gate rather than the removed
-        // direct `productMeasurementPresence` expression.
-        #expect(linkSource.contains("guard parsedProduct != nil, !isLoading"))
-        #expect(linkSource.contains("return registrationBlockMessage == nil"))
+        let product = Product(name: "Draft", category: .top,
+                              sizes: [ProductSize(name: "M", measurements: GarmentMeasurements(shoulder: 45, chest: 50, totalLength: 70, sleeveLength: 60))])
+        #expect(LinkClosetRegistrationPreparation.canOpenRegistration(
+            product: product, serverContext: .init(classificationState: .preparing), isLoading: true))
+        #expect(!LinkClosetRegistrationPreparation.canOpenRegistration(
+            product: product, serverContext: nil, isLoading: true))
+        #expect(!LinkClosetRegistrationPreparation.canOpenRegistration(
+            product: product, serverContext: .init(classificationState: .unavailable), isLoading: false))
         #expect(linkSource.contains(".disabled(!canOpenRegistration)"))
 
         let compareSource = try sourceFile("FitMatch/Views/CompareFlowSheet.swift")
@@ -2762,6 +2840,7 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
     private var submittedClientItemIDs: [UUID] = []
     private var submittedReferenceCount = 0
     private var submittedListCount = 0
+    private var requestedSingleItemIDs: [UUID] = []
 
     init(
         upsertResult: UpsertResult,
@@ -2835,6 +2914,12 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
             syncRevision: submittedReferenceCount
         )
     }
+
+    func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse {
+        requestedSingleItemIDs.append(closetItemID)
+        return FitMatchClosetItemsResponse(state: "ready", items: readBackItems)
+    }
+    func singleItemRequestIDs() -> [UUID] { requestedSingleItemIDs }
 
     func listClosetItems() async throws -> FitMatchClosetItemsResponse {
         submittedListCount += 1
@@ -2994,9 +3079,16 @@ private final class AtomicEffectiveTupleParser: ProductURLParsing {
 private enum AtomicEffectiveTupleError: Error { case unexpected }
 
 private actor AtomicEffectiveTupleRemote: FitMatchServerAuthorityRemoteServicing {
+    private(set) var runtimeReadCount = 0
+    private(set) var candidateReadCount = 0
     let fixture: AtomicEffectiveTupleFixture
 
-    init(fixture: AtomicEffectiveTupleFixture) { self.fixture = fixture }
+    let observationGate: ComparedProductSubmissionGate?
+
+    init(fixture: AtomicEffectiveTupleFixture, observationGate: ComparedProductSubmissionGate? = nil) {
+        self.fixture = fixture
+        self.observationGate = observationGate
+    }
 
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductResolutionResponse {
@@ -3013,12 +3105,15 @@ private actor AtomicEffectiveTupleRemote: FitMatchServerAuthorityRemoteServicing
 
     func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
         -> FitMatchProductObservationResponse {
+        if let observationGate { await observationGate.wait() }
+        try Task.checkCancellation()
         return promotedObservationFixture(productID: fixture.productID)
     }
 
     func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductRuntimeResponse {
-        try fixture.runtime
+        runtimeReadCount += 1
+        return try fixture.runtime
     }
 
     func listClosetItems() async throws -> FitMatchClosetItemsResponse {
@@ -3027,6 +3122,7 @@ private actor AtomicEffectiveTupleRemote: FitMatchServerAuthorityRemoteServicing
 
     func findReferenceCandidates(targetProductID: UUID) async throws
         -> FitMatchReferenceCandidatesResponse {
+        candidateReadCount += 1
         throw AtomicEffectiveTupleError.unexpected
     }
 }

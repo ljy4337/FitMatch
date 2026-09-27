@@ -66,10 +66,8 @@ struct CompareFlowSheet: View {
             if case .result(let history) = step {
                 RecommendationResultView(
                     result: history,
-                    onShowComparisonList: {
-                        setStep(.comparisonSummary)
-                    },
-                    onShowOtherClosetComparison: nil,
+                    onShowComparisonList: showCurrentComparisonCandidates,
+                    onShowOtherClosetComparison: showCurrentComparisonCandidates,
                     onReselectClassification:
                         viewModel.hasActiveUserExplicitClassification
                         ? { startReviewRecoveryReselection() } : nil,
@@ -2077,6 +2075,13 @@ private extension CompareFlowSheet {
             return
         }
         proceedWithServerConfirmedCategory(product: product)
+    }
+
+    func showCurrentComparisonCandidates() {
+        // Reuse this session's display plan, never a comparison permit. A new
+        // selection still runs current server authorization, begin and complete.
+        selectedReferenceItemID = nil
+        setStep(.comparisonSummary)
     }
 
     func proceedWithServerConfirmedCategory(product: Product) {

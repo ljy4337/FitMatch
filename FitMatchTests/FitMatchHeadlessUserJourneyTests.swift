@@ -1971,7 +1971,9 @@ struct FitMatchHeadlessUserJourneyTests {
                 fixture.resolution(globalStatus: .reviewRequired),
                 fixture.resolution(globalStatus: .notComparable)
             ],
-            runtimes: [personalRuntime, personalRuntime, personalRuntime, blockedRuntime],
+            // Load + selected-pair revalidation, then a new load sees NOT_APPLICABLE.
+            // Initial candidate handoff no longer consumes a third runtime.
+            runtimes: [personalRuntime, personalRuntime, blockedRuntime],
             closetResponses: [.init(state: "ready", items: [record])],
             candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
@@ -3677,6 +3679,7 @@ struct HeadlessJourneyFixture {
           "variants":[],
           "vnext":{
             "found":true,
+            "comparison_group":\(effectiveGarment == nil ? "null" : "{\"status\":\"COMPARABLE\",\"group_code\":\"A\",\"source\":\"RETAILER_CATEGORY\",\"comparison_policy_code\":\"tshirt\",\"policy_version\":\"fixture-v1\",\"authority_version\":\"fixture-v1\",\"authority_fingerprint\":\"fixture-group-a\"}"),
             "product":{
               "id":"\(productID)","source_code":"\(sourceCode)",
               "source_product_key":"\(productCode)",
@@ -3819,6 +3822,7 @@ struct HeadlessJourneyFixture {
             satisfaction: 4,
             isRepresentative: true
         )
+        reference.comparisonGroupCode = "A"
         reference.garmentTypeRawValue = garment
         reference.sleeveTypeRawValue = sleeve
         reference.markClassificationAuthority(.userExplicit, sourceIdentity: "headless-reference")
@@ -3859,6 +3863,9 @@ struct HeadlessJourneyFixture {
             familyCode: snapshot.familyCode,
             lengthCode: snapshot.lengthCode,
             bodyLengthCode: snapshot.bodyLengthCode,
+            comparisonGroupCode: "A",
+            comparisonGroupSource: "USER_SELECTED",
+            comparisonGroupPolicyVersion: "fixture-v1",
             classificationSnapshot: [:],
             clientSnapshot: [:],
             clientCreatedAt: "2026-08-31T00:00:00Z",
@@ -3883,6 +3890,7 @@ struct HeadlessJourneyFixture {
         let value: VNextReferenceCandidatesDTO = try decode("""
         {
           "target_product_id":"\(productID)","target_variant_id":"\(variantID)","status":"READY",
+          "target_comparison_group":{"status":"COMPARABLE","group_code":"A","source":"RETAILER_CATEGORY","comparison_policy_code":"tshirt","policy_version":"fixture-v1","authority_version":"fixture-v1","authority_fingerprint":"fixture-group-a"},
           "candidates":[{
             "closet_item_id":"\(closetItemID)",
             "item_name":"\(reference.productName)","size_label":"\(reference.sizeName)",
@@ -3924,6 +3932,7 @@ struct HeadlessJourneyFixture {
         let value: VNextReferenceCandidatesDTO = try decode("""
         {
           "target_product_id":"\(productID)","target_variant_id":"\(variantID)","status":"READY",
+          "target_comparison_group":{"status":"COMPARABLE","group_code":"A","source":"RETAILER_CATEGORY","comparison_policy_code":"tshirt","policy_version":"fixture-v1","authority_version":"fixture-v1","authority_fingerprint":"fixture-group-a"},
           "candidates":[\(rows)],"blocked":[]
         }
         """)
@@ -4595,16 +4604,25 @@ private func requireComparisonCallDependencies(
             throw HeadlessJourneyFailure(scenario, "missing \(call): \(calls)")
         }
     }
-    guard let candidates = calls.firstIndex(of: "reference_candidates"),
+    guard let initialCandidates = calls.firstIndex(of: "reference_candidates"),
+          let candidates = calls.lastIndex(of: "reference_candidates"),
           let eligible = calls.firstIndex(of: "eligible_sizes"),
           let begin = calls.firstIndex(of: "begin_comparison"),
           let complete = calls.firstIndex(of: "complete_comparison") else {
         throw HeadlessJourneyFailure(scenario, "missing comparison dependency: \(calls)")
     }
-    let prerequisites = ["resolve", "runtime", "list_closet"].compactMap { call in
-        calls[..<candidates].lastIndex(of: call)
+    // Initial lookup uses the already completed observation/runtime. The
+    // chosen-pair lookup must still obtain fresh resolve/runtime/Closet reads.
+    let initialPrerequisites = ["runtime", "list_closet"].compactMap {
+        calls[..<initialCandidates].lastIndex(of: $0)
     }
-    guard prerequisites.count == 3,
+    let selectionStart = initialCandidates == candidates
+        ? calls.startIndex : calls.index(after: initialCandidates)
+    let prerequisites = ["resolve", "runtime", "list_closet"].compactMap { call in
+        calls[selectionStart..<candidates].lastIndex(of: call)
+    }
+    guard initialPrerequisites.count == 2,
+          prerequisites.count == 3,
           prerequisites.allSatisfy({ $0 < candidates }),
           candidates < eligible,
           eligible < begin,

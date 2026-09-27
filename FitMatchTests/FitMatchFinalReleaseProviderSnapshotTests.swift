@@ -101,9 +101,17 @@ struct FitMatchFinalReleaseProviderSnapshotTests {
             #expect(request.productName == parsed.productName)
 
             let calls = await run.remote.calls()
+            // Authority and Closet reads are independent and start together.
+            // All must finish before candidate authorization; the dependent
+            // permit/begin/complete sequence must still be strictly ordered.
+            let candidateIndex = try #require(calls.firstIndex(of: "reference_candidates"))
+            for prerequisite in ["resolve", "runtime", "list_closet"] {
+                let index = try #require(calls.lastIndex(of: prerequisite))
+                #expect(index < candidateIndex)
+            }
             let expected = [
-                "resolve", "runtime", "list_closet", "reference_candidates",
-                "eligible_sizes", "begin_comparison", "complete_comparison"
+                "reference_candidates", "eligible_sizes",
+                "begin_comparison", "complete_comparison"
             ]
             var cursor = calls.startIndex
             for call in expected {
@@ -642,18 +650,18 @@ struct FitMatchFinalReleaseProviderSnapshotTests {
             candidateResponses: Array(repeating: try fixture.referenceResponse(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
-                decision: "AUTOMATIC"
+                decision: "MANUAL_EXTENDED"
             ), count: 2),
             eligibleResponses: [try fixture.eligible(
                 reference: reference,
                 closetItemID: remoteReference.closetItemID,
-                mode: "AUTOMATIC",
+                mode: "MANUAL_EXTENDED",
                 allowed: true,
                 effectiveSource: nil,
                 overrideRevision: nil
             )],
             beginResponses: [try fixture.begin(
-                mode: "AUTOMATIC",
+                mode: "MANUAL_EXTENDED",
                 personal: false,
                 referenceClosetItemID: remoteReference.closetItemID,
                 personalGarment: "tshirt",
@@ -677,7 +685,7 @@ struct FitMatchFinalReleaseProviderSnapshotTests {
             throw ProviderReleaseSnapshotError.comparisonLoadFailed(provider.rawValue)
         }
         return (
-            await viewModel.calculateRecommendation(userFits: [reference]),
+            await viewModel.calculateTemporaryRecommendation(selectedReferenceItem: reference),
             remote,
             viewModel.errorMessage
         )

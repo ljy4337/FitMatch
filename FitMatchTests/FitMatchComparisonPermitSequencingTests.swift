@@ -49,6 +49,15 @@ struct FitMatchComparisonPermitSequencingTests {
         #expect(!compareFlow.contains("MeasurementComparisonEngine"))
     }
 
+    @Test func currentResultOtherClothesReturnsToExistingCandidateFlow() throws {
+        // Wiring regression only: device presentation/gesture behavior is not
+        // asserted by this source check. History retains its fresh-entry path.
+        let flow = try sourceFile("FitMatch/Views/CompareFlowSheet.swift")
+        #expect(flow.contains("onShowOtherClosetComparison: showCurrentComparisonCandidates"))
+        let result = try sourceFile("FitMatch/Views/RecommendationResultView.swift")
+        #expect(result.contains("CompareFlowSheet(initialHistoricalProduct: currentResult.product)"))
+    }
+
     @Test func persistedServerApprovalGuardsAlternativeSizeScoring() throws {
         let resultView = strippingDebugOnlyCode(
             from: try sourceFile("FitMatch/Views/RecommendationResultView.swift")

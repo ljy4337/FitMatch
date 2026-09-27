@@ -637,7 +637,7 @@ struct AddComparedProductToClosetSheet: View {
 
             RegistrationMenuRow(
                 title: "비교 그룹",
-                value: selectedComparisonGroup?.displayName ?? "선택"
+                value: isPreparingServerRegistration ? "확인 중" : (selectedComparisonGroup?.displayName ?? "선택")
             ) {
                 ForEach(FitMatchComparisonGroup.allCases) { group in
                     Button(group.displayName) {
@@ -646,6 +646,7 @@ struct AddComparedProductToClosetSheet: View {
                     }
                 }
             }
+            .disabled(isPreparingServerRegistration)
         }
     }
 
@@ -682,6 +683,10 @@ struct AddComparedProductToClosetSheet: View {
                 }
             }
         }
+    }
+
+    private var isPreparingServerRegistration: Bool {
+        serverRegistrationContext?.classificationState == .preparing
     }
 
     private var bottomActionBar: some View {
@@ -728,7 +733,7 @@ struct AddComparedProductToClosetSheet: View {
             // Missing fields are deliberately handled by the ordered alert
             // validation above. A disabled button hides the reason and makes
             // a REVIEW_REQUIRED registration look like a load failure.
-            .disabled(isSaving)
+            .disabled(isSaving || (step == .confirm && isPreparingServerRegistration))
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -762,7 +767,10 @@ struct AddComparedProductToClosetSheet: View {
         case .size:
             return selectedSize == nil ? "등록할 사이즈를 선택해 주세요." : nil
         case .confirm:
-            return validationMessage ?? serverRegistrationContext?.registrationBlockMessage
+            if isPreparingServerRegistration {
+                return "사이즈를 선택해 주세요. 저장에 필요한 정보를 확인하고 있어요."
+            }
+            return serverRegistrationContext?.registrationBlockMessage ?? validationMessage
         }
     }
 
@@ -833,6 +841,10 @@ struct AddComparedProductToClosetSheet: View {
     }
 
     private func validateBeforeSave() -> Bool {
+        if isPreparingServerRegistration {
+            alertMessage = serverRegistrationContext?.registrationBlockMessage
+            return false
+        }
         if let validationMessage {
             alertMessage = validationMessage
             return false

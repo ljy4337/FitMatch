@@ -74,7 +74,10 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var analysisPhase: ProductAnalysisPhase = .loadingProductInfo
     @Published private(set) var productAnalysisRecoveryAction: ProductAnalysisRecoveryAction?
     @Published private(set) var databaseShadowState: FitMatchDatabaseShadowState = .idle
-    @Published private(set) var serverAuthorityState: FitMatchIOSServerAuthorityState = .idle
+    @Published private(set) var serverAuthorityState: FitMatchIOSServerAuthorityState = .idle {
+        didSet { consumedCandidateHandoffObservationID = nil }
+    }
+    private var consumedCandidateHandoffObservationID: UUID?
     @Published private(set) var reviewRecoveryState: FitMatchReviewRecoveryState = .idle
     @Published private(set) var classificationSafetyAudit: ParsedClosetClassificationSafetyAudit = .safe
     /// Retailer-fact presence only. This never implies that the server has
@@ -1714,12 +1717,23 @@ final class ShoppingProductViewModel: ObservableObject {
             errorMessage = FitMatchComparisonBlockReason.serverUnavailable.userMessage
             return nil
         }
+        // A one-use handoff, not a cross-request authority cache. A retry
+        // fetches current runtime again even when the first plan failed.
+        let preparedTarget: FitMatchServerProductAuthority?
+        if let observationID = authority.sourceObservationID,
+           observationID != consumedCandidateHandoffObservationID {
+            preparedTarget = authority
+            consumedCandidateHandoffObservationID = observationID
+        } else {
+            preparedTarget = nil
+        }
         do {
             let plan = try await coordinator.referenceSelectionPlan(
                 targetRequest: request,
                 targetObservation: frozenObservation(for: product),
                 localClientItemIDs: localClientItemIDs,
-                requestedComparisonGroupCode: requestedComparisonGroupCode
+                requestedComparisonGroupCode: requestedComparisonGroupCode,
+                preparedTarget: preparedTarget
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
             if let requestedComparisonGroupCode {

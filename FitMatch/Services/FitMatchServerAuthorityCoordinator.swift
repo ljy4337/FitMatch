@@ -50,6 +50,10 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
     func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID,
                                  requestedComparisonGroupCode: String?) async throws
         -> FitMatchReferenceCandidatesResponse
+    func findSelectedReferenceCandidate(targetProductID: UUID, targetVariantID: UUID?,
+                                        referenceClosetItemID: UUID,
+                                        requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse
     func eligibleCandidateSizes(
         referenceClosetItemID: UUID,
         targetProductID: UUID,
@@ -108,6 +112,24 @@ extension FitMatchServerAuthorityRemoteServicing {
             targetProductID: targetProductID,
             targetVariantID: targetVariantID
         )
+    }
+
+    // Legacy/injected remotes retain their existing full-list contract.
+    // The production DomainClient implements the exact-row RPC below.
+    func findSelectedReferenceCandidate(targetProductID: UUID, targetVariantID: UUID?,
+                                        referenceClosetItemID: UUID,
+                                        requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        if let targetVariantID {
+            return try await findReferenceCandidates(
+                targetProductID: targetProductID, targetVariantID: targetVariantID,
+                requestedComparisonGroupCode: requestedComparisonGroupCode
+            )
+        }
+        guard requestedComparisonGroupCode == nil else {
+            throw FitMatchServerAuthorityError.comparisonBeginUnavailable
+        }
+        return try await findReferenceCandidates(targetProductID: targetProductID)
     }
 
     func eligibleCandidateSizes(
@@ -1030,7 +1052,8 @@ actor FitMatchServerAuthorityCoordinator {
         var candidates = try await findReferenceCandidates(
             targetProductID: target.productID,
             targetVariantID: targetVariantID,
-            requestedComparisonGroupCode: requestedComparisonGroupCode
+            requestedComparisonGroupCode: requestedComparisonGroupCode,
+            referenceClosetItemID: reference.closetItemID
         )
         try Task.checkCancellation()
         if candidates.state == "target_classification_required" {
@@ -1054,7 +1077,8 @@ actor FitMatchServerAuthorityCoordinator {
             candidates = try await findReferenceCandidates(
                 targetProductID: target.productID,
                 targetVariantID: targetVariantID,
-                requestedComparisonGroupCode: requestedComparisonGroupCode
+                requestedComparisonGroupCode: requestedComparisonGroupCode,
+                referenceClosetItemID: reference.closetItemID
             )
             try Task.checkCancellation()
             if candidates.state == "target_classification_required" {
@@ -1260,6 +1284,27 @@ actor FitMatchServerAuthorityCoordinator {
         )
     }
 
+    private func authorityForCandidatePlan(
+        preparedTarget: FitMatchServerProductAuthority?,
+        request: FitMatchProductResolutionRequest,
+        observation: FitMatchProductObservationRequest?
+    ) async throws -> FitMatchServerProductAuthority {
+        try Task.checkCancellation()
+        guard let preparedTarget else {
+            return try await resolveProductAuthority(request: request, observation: observation)
+        }
+        guard preparedTarget.sourceObservationID != nil else {
+            throw FitMatchServerAuthorityError.runtimeResponseMalformed("fresh_observation_required")
+        }
+        // Only reuse the completed load's validated runtime. Candidate policy
+        // is still evaluated live; selection/begin never reuse this permit.
+        return try validatedAuthority(
+            preparedTarget.runtime, request: request,
+            expectedProductID: preparedTarget.productID,
+            sourceObservationID: preparedTarget.sourceObservationID
+        )
+    }
+
     /// Loads the complete server-issued reference decision. `localClientItemIDs`
     /// is an optional projection check: if a selectable server candidate is not
     /// present in the active local Closet cache, the flow fails closed instead
@@ -1268,7 +1313,8 @@ actor FitMatchServerAuthorityCoordinator {
         targetRequest: FitMatchProductResolutionRequest,
         targetObservation: FitMatchProductObservationRequest?,
         localClientItemIDs: Set<UUID>? = nil,
-        requestedComparisonGroupCode: String? = nil
+        requestedComparisonGroupCode: String? = nil,
+        preparedTarget: FitMatchServerProductAuthority? = nil
     ) async throws -> FitMatchServerReferenceSelectionPlan {
         let diagnosticTraceID = FitMatchRequestTrace.context?.id ?? UUID()
         let candidateStartedAt = Date()
@@ -1294,7 +1340,8 @@ actor FitMatchServerAuthorityCoordinator {
         )
 #endif
         try Task.checkCancellation()
-        async let targetAuthority = resolveProductAuthority(
+        async let targetAuthority = authorityForCandidatePlan(
+            preparedTarget: preparedTarget,
             request: targetRequest,
             observation: targetObservation
         )
@@ -1478,8 +1525,16 @@ actor FitMatchServerAuthorityCoordinator {
     private func findReferenceCandidates(
         targetProductID: UUID,
         targetVariantID: UUID?,
-        requestedComparisonGroupCode: String? = nil
+        requestedComparisonGroupCode: String? = nil,
+        referenceClosetItemID: UUID? = nil
     ) async throws -> FitMatchReferenceCandidatesResponse {
+        if let referenceClosetItemID {
+            return try await remote.findSelectedReferenceCandidate(
+                targetProductID: targetProductID, targetVariantID: targetVariantID,
+                referenceClosetItemID: referenceClosetItemID,
+                requestedComparisonGroupCode: requestedComparisonGroupCode
+            )
+        }
         if let targetVariantID {
             return try await remote.findReferenceCandidates(
                 targetProductID: targetProductID,

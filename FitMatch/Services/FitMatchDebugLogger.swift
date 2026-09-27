@@ -154,6 +154,54 @@ nonisolated enum FitMatchDebugLogger {
     }
 }
 
+#else
+/// Release builds keep the diagnostic API available for shared call sites,
+/// while omitting all diagnostic output and logging side effects.
+nonisolated enum FitMatchDebugLogger {
+    static func flow(
+        traceID: UUID? = nil,
+        stage: String,
+        state: String,
+        fields: [String: String] = [:]
+    ) {}
+
+    static func failure(
+        traceID: UUID? = nil,
+        stage: String,
+        error: Error,
+        nextAction: String,
+        fields: [String: String] = [:]
+    ) {}
+
+    static func event(
+        screen: String,
+        action: String,
+        state: String,
+        details: @autoclosure () -> String = ""
+    ) {}
+
+    static func detail(
+        screen: String,
+        action: String,
+        details: @autoclosure () -> String
+    ) {}
+
+    static func databaseLatency(
+        operation: String,
+        startedAt: Date,
+        state: String
+    ) {}
+
+    static func duration(
+        traceID: UUID? = nil,
+        stage: String,
+        startedAt: Date,
+        state: String
+    ) {}
+}
+#endif
+
+#if DEBUG
 extension ParsedProductInfo {
     var fitMatchDebugFields: [String: String] {
         let measurementCount = sizes.reduce(0) { $0 + $1.measurementRecords.count }

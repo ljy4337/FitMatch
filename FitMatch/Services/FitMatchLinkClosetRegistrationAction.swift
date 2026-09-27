@@ -16,7 +16,8 @@ enum FitMatchLinkClosetRegistrationAction {
         urlString: String,
         makeViewModel: (String) -> ShoppingProductViewModel,
         existingBrand: @escaping (String) -> Brand?,
-        onPhaseChange: @escaping (ProductAnalysisPhase) -> Void = { _ in }
+        onPhaseChange: @escaping (ProductAnalysisPhase) -> Void = { _ in },
+        onRetailerReady: @escaping (LinkClosetRegistrationPreparation) -> Void = { _ in }
     ) async -> Outcome {
         if FitMatchRequestTrace.context == nil {
             let trace = FitMatchRequestTrace.Context(
@@ -28,7 +29,8 @@ enum FitMatchLinkClosetRegistrationAction {
                     urlString: urlString,
                     makeViewModel: makeViewModel,
                     existingBrand: existingBrand,
-                    onPhaseChange: onPhaseChange
+                    onPhaseChange: onPhaseChange,
+                    onRetailerReady: onRetailerReady
                 )
             }
         }
@@ -58,7 +60,22 @@ enum FitMatchLinkClosetRegistrationAction {
             .removeDuplicates()
             .sink(receiveValue: onPhaseChange)
         defer { phaseSubscription.cancel() }
-        _ = await viewModel.loadProductInfoFromURL()
+        _ = await viewModel.loadProductInfoFromURL(onRetailerProductLoaded: { loaded in
+            guard !Task.isCancelled else { return }
+            let brand = existingBrand(loaded.brand) ?? Brand(name: loaded.brand)
+            guard let product = loaded.makeProductForClosetRegistration(brand: brand) else { return }
+            onRetailerReady(LinkClosetRegistrationPreparation(
+                parsedProduct: product,
+                partialProduct: nil,
+                detailCategory: loaded.detailCategory,
+                productMeasurementPresence: loaded.productMeasurementPresence,
+                serverRegistrationContext: FitMatchClosetRegistrationServerContext(
+                    classificationState: .preparing
+                ),
+                recoveryViewModel: nil,
+                errorMessage: nil
+            ))
+        })
         guard !Task.isCancelled else {
             completionState = "취소"
             return .cancelled

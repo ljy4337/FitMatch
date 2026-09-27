@@ -1065,6 +1065,48 @@ struct FitMatchClosetSyncCoordinatorTests {
         let record = remoteRecord(
             clientItemID: clientItemID,
             productID: productID,
+            classificationSource: "product_metadata",
+            updatedAt: "2020-08-18T12:30:00Z"
+        )
+        let remote = ClosetSyncRemoteStub(
+            items: [record],
+            resolution: resolution(productID: productID, classification: classification),
+            runtime: runtime(productID: productID, classification: classification)
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+        let item = localRetailerItem(
+            id: clientItemID,
+            productID: productID,
+            authority: .localHint
+        )
+        // A real local edit requires authority validation before upload.
+        item.fitMemo = "사용자가 변경한 메모"
+        context.insert(item)
+        try context.save()
+
+        await coordinator.synchronize(userID: userID, modelContext: context)
+
+        #expect(await remote.runtimeFetchCount() == 1)
+        let request = try #require(await remote.capturedUpsertRequest())
+        #expect(request.productID == productID)
+        #expect(request.item.categoryCode == "tops")
+        #expect(request.item.detailCode == "short_sleeve")
+        #expect(request.override == nil)
+        #expect(coordinator.state == .synced)
+    }
+
+    @Test func unchangedRemoteLinkedSnapshotHydratesWithoutRuntimeOrMutation() async throws {
+        let clientItemID = UUID()
+        let productID = UUID()
+        let classification = databaseClassification(status: "confirmed")
+        let record = remoteRecord(
+            clientItemID: clientItemID,
+            productID: productID,
             classificationSource: "product_metadata"
         )
         let remote = ClosetSyncRemoteStub(
@@ -1088,12 +1130,12 @@ struct FitMatchClosetSyncCoordinatorTests {
 
         await coordinator.synchronize(userID: userID, modelContext: context)
 
-        #expect(await remote.runtimeFetchCount() == 1)
-        let request = try #require(await remote.capturedUpsertRequest())
-        #expect(request.productID == productID)
-        #expect(request.item.categoryCode == "tops")
-        #expect(request.item.detailCode == "short_sleeve")
-        #expect(request.override == nil)
+        #expect(await remote.runtimeFetchCount() == 0)
+        #expect(await remote.capturedUpsertRequest() == nil)
+        #expect(await remote.listCallCount() == 1)
+        #expect(item.productName == "기존 원격 분류")
+        #expect(item.sizeName == "M")
+        #expect(item.classificationAuthorityProvenance == .serverConfirmed)
         #expect(coordinator.state == .synced)
     }
 
@@ -1231,7 +1273,8 @@ struct FitMatchClosetSyncCoordinatorTests {
         let staleAutomatic = remoteRecord(
             clientItemID: clientItemID,
             productID: productID,
-            classificationSource: "product_metadata"
+            classificationSource: "product_metadata",
+            updatedAt: "2020-08-18T12:30:00Z"
         )
         let remote = ClosetSyncRemoteStub(
             items: [staleAutomatic],
@@ -1250,11 +1293,14 @@ struct FitMatchClosetSyncCoordinatorTests {
             productID: productID,
             authority: .localHint
         )
+        // A real local edit requires authority validation before upload.
+        item.fitMemo = "사용자가 변경한 메모"
         context.insert(item)
         try context.save()
 
         await coordinator.synchronize(userID: userID, modelContext: context)
 
+        #expect(await remote.runtimeFetchCount() == 1)
         #expect(await remote.capturedUpsertRequest() == nil)
         #expect(item.classificationAuthorityProvenance == .serverUnavailable)
         #expect(item.canonicalEligibility == false)
@@ -1990,7 +2036,8 @@ struct FitMatchClosetSyncCoordinatorTests {
         classificationStatus: String = "confirmed",
         variantID: UUID = UUID(),
         productSizeID: UUID = UUID(),
-        lengthCode: String? = "long"
+        lengthCode: String? = "long",
+        updatedAt: String = "2099-08-18T12:30:00Z"
     ) -> FitMatchClosetItemRecord {
         FitMatchClosetItemRecord(
             closetItemID: UUID(),
@@ -2027,10 +2074,10 @@ struct FitMatchClosetSyncCoordinatorTests {
             classificationSnapshot: ["decision_version": "legacy-v3"],
             clientSnapshot: ["local_model": "UserFit"],
             clientCreatedAt: "2026-08-18T12:00:00Z",
-            clientUpdatedAt: "2099-08-18T12:30:00Z",
+            clientUpdatedAt: updatedAt,
             syncRevision: 3,
             createdAt: "2026-08-18T12:00:00Z",
-            updatedAt: "2099-08-18T12:30:00Z"
+            updatedAt: updatedAt
         )
     }
 
