@@ -1,3 +1,9 @@
+## 2026-09-28 현재 로컬 소스 커밋·푸시 완료
+
+- 현재 tracked 변경을 `release: prepare FitMatch 1.1 build 6`으로 커밋했다: `1ddbfcf`.
+- `origin/connectDB` 푸시 성공. Version/Build 설정은 `1.1 (6)`으로 반영됐다.
+- `git diff --check` 및 protected-scroll 검사 PASS. App Store Connect 업로드는 Xcode 인증정보 오류로 아직 완료되지 않았다.
+
 ## 2026-09-27 Release Archive — FitMatchDebugLogger 심볼 보존 수정
 
 - 원인: `FitMatch/Services/FitMatchDebugLogger.swift`의 `FitMatchDebugLogger` 전체 정의가 `#if DEBUG` 안에 있었지만, `FitMatch/Views/CompareFlowSheet.swift:2197`의 `duration` 호출은 `#if DEBUG` 밖에 있었다. Release의 `SWIFT_ACTIVE_COMPILATION_CONDITIONS`에는 `DEBUG`가 없어 타입이 사라져 `Cannot find 'FitMatchDebugLogger' in scope`가 발생했다. `FitMatch` 폴더는 PBX synchronized root group으로 target에 포함되며 별도 Compile Sources 누락이나 Target Membership 문제는 확인되지 않았다.
