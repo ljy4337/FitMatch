@@ -281,7 +281,28 @@ struct VNextHistoryCacheHydrator {
         )
         var hydrated = Set<UUID>()
 
-        for row in completedRows {
+        var currentHistoryIDByTarget: [UUID: UUID] = [:]
+        var currentRows: [VNextComparisonHistoryDTO] = []
+        for row in completedRows where currentHistoryIDByTarget[row.targetProductID] == nil {
+            currentHistoryIDByTarget[row.targetProductID] = row.clientComparisonID
+            currentRows.append(row)
+        }
+        for history in persistedHistories
+        where history.comparisonMethod.hasPrefix("서버 승인") {
+            guard let targetProductID = RecommendationHistoryStore.targetProductID(
+                for: history
+            ),
+            let currentHistoryID = currentHistoryIDByTarget[targetProductID],
+            history.id != currentHistoryID else {
+                continue
+            }
+            RecommendationHistoryStore.deleteImmutableProjection(
+                for: history,
+                modelContext: modelContext
+            )
+        }
+
+        for row in currentRows {
             guard !existingHistoryIDs.contains(row.clientComparisonID),
                   !hydrated.contains(row.clientComparisonID) else {
                 continue
@@ -366,7 +387,7 @@ struct VNextHistoryCacheHydrator {
             hydrated.insert(row.clientComparisonID)
         }
 
-        if !hydrated.isEmpty {
+        if !hydrated.isEmpty || !currentHistoryIDByTarget.isEmpty {
             try modelContext.save()
         }
         return hydrated

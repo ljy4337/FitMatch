@@ -87,7 +87,7 @@ struct FitMatchP0RemediationRegressionTests {
         }))
     }
 
-    @Test func completedVNextHistoriesRemainDistinctForDifferentReferences() throws {
+    @Test func completedVNextHistoryReplacesSameProductForDifferentReference() throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
         let productID = UUID()
@@ -110,9 +110,8 @@ struct FitMatchP0RemediationRegressionTests {
         )
         try saveCompletedVNextUnderTest(first, existing: [], modelContext: context)
 
-        // A second completed comparison of the same remote Product comes in
-        // with the same server identity, but it must receive a different
-        // local immutable projection.
+        // A second completed comparison of the same remote Product replaces
+        // the visible result after server completion.
         let secondProduct = makeProduct(
             id: productID,
             sizes: [makeSize(id: sizeID, name: "M", chest: 51)]
@@ -139,37 +138,27 @@ struct FitMatchP0RemediationRegressionTests {
         )
 
         let saved = try context.fetch(FetchDescriptor<RecommendationHistory>())
-        #expect(Set(saved.map(\.id)) == Set([firstHistoryID, secondHistoryID]))
-        #expect(Set(saved.map(\.userFit.id)) == Set([
-            VNextHistoryProjectionIdentity.referenceID(
-                comparisonID: firstHistoryID,
-                clientItemID: firstReference.id
-            ),
+        #expect(saved.map(\.id) == [secondHistoryID])
+        #expect(saved.map(\.userFit.id) == [
             VNextHistoryProjectionIdentity.referenceID(
                 comparisonID: secondHistoryID,
                 clientItemID: secondReference.id
             )
-        ]))
-        #expect(Set(saved.map(\.product.id)) == Set([
-            VNextHistoryProjectionIdentity.productID(comparisonID: firstHistoryID),
+        ])
+        #expect(saved.map(\.product.id) == [
             VNextHistoryProjectionIdentity.productID(comparisonID: secondHistoryID)
-        ]))
+        ])
         #expect(saved.allSatisfy {
             $0.product.canonicalSourceIdentity?.contains(
                 "target=\(productID.uuidString.lowercased())"
             ) == true
         })
-        #expect(Set(saved.map(\.recommendedSize.id)) == Set([
-            VNextHistoryProjectionIdentity.productSizeID(
-                comparisonID: firstHistoryID,
-                productSizeID: sizeID
-            ),
+        #expect(saved.map(\.recommendedSize.id) == [
             VNextHistoryProjectionIdentity.productSizeID(
                 comparisonID: secondHistoryID,
                 productSizeID: sizeID
             )
-        ]))
-        #expect(saved[0].product !== saved[1].product)
+        ])
     }
 
     @Test func exactHistoryAndDeletedReferenceLifecycleRemainIndependent() throws {
@@ -226,12 +215,7 @@ struct FitMatchP0RemediationRegressionTests {
         let histories = try context.fetch(FetchDescriptor<RecommendationHistory>())
         let activeCloset = try context.fetch(FetchDescriptor<UserFit>())
             .filter(\.isActiveClosetItem)
-        #expect(Set(histories.map(\.id)) == Set([firstHistoryID, secondHistoryID]))
-        #expect(histories.first { $0.id == firstHistoryID }?.userFit.id ==
-            VNextHistoryProjectionIdentity.referenceID(
-                comparisonID: firstHistoryID,
-                clientItemID: referenceA.id
-            ))
+        #expect(histories.map(\.id) == [secondHistoryID])
         #expect(histories.first { $0.id == secondHistoryID }?.userFit.id ==
             VNextHistoryProjectionIdentity.referenceID(
                 comparisonID: secondHistoryID,

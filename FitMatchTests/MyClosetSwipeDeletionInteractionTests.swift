@@ -4,13 +4,14 @@ import SwiftData
 @testable import FitMatch
 
 struct MyClosetSwipeDeletionInteractionTests {
-    @Test func closetAndHistorySwipesUseNativeActionsAndConfirmDeletion() throws {
+    @Test func closetShortSwipeConfirmsAndFullSwipeDeletesImmediately() throws {
         let source = try myClosetViewSource()
         let history = try sourceFile(named: "RecommendationHistoryView.swift")
 
-        #expect(!source.contains("MyClosetSwipeDeleteRow"))
-        #expect(source.contains(".swipeActions(edge: .trailing, allowsFullSwipe: true)"))
-        #expect(source.contains("pendingDeleteItem = item"))
+        #expect(source.contains("MyClosetSwipeDeleteRow"))
+        #expect(source.contains("onDeleteButtonTap: { pendingDeleteItem = item }"))
+        #expect(source.contains("onFullSwipeDelete: { deleteItem(item) }"))
+        #expect(source.contains("value.translation.width <= fullSwipeThreshold"))
         #expect(source.contains("guard let item = pendingDeleteItem else { return }"))
         #expect(history.contains(".swipeActions(edge: .trailing, allowsFullSwipe: true)"))
         #expect(history.contains("pendingDeleteHistory = history"))

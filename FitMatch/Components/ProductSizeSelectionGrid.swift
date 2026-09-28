@@ -1,8 +1,24 @@
 import SwiftUI
 
 struct ProductSizeSelectionGrid: View {
+    enum DisplayStyle: Equatable {
+        case korean
+        case original
+    }
+
     let sizes: [ProductSize]
     @Binding var selectedSizeID: UUID?
+    let displayStyle: DisplayStyle
+
+    init(
+        sizes: [ProductSize],
+        selectedSizeID: Binding<UUID?>,
+        displayStyle: DisplayStyle = .korean
+    ) {
+        self.sizes = sizes
+        _selectedSizeID = selectedSizeID
+        self.displayStyle = displayStyle
+    }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -31,7 +47,9 @@ struct ProductSizeSelectionGrid: View {
             ProductSizeSelectionOption(
                 id: size.id,
                 name: size.name,
-                displayName: size.name.fitMatchKoreanSizeDisplayName
+                displayName: displayStyle == .original
+                    ? size.name.fitMatchDisplaySizeName
+                    : size.name.fitMatchKoreanSizeDisplayName
             )
         }
     }

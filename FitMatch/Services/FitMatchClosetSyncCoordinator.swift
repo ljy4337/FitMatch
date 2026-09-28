@@ -670,7 +670,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             throw FitMatchLinkedClosetSizeEditPreparationError.missingRetailerFacts
         }
 
-        let response = try await remote.listClosetItems()
+        let response: FitMatchClosetItemsResponse
+        if let knownClosetID = remoteItemsByClientID[item.id]?.closetItemID {
+            response = try await remote.getClosetItem(closetItemID: knownClosetID)
+        } else {
+            response = try await remote.listClosetItems()
+        }
         guard isCurrentSyncUser(userID) else {
             throw FitMatchLinkedClosetSizeEditPreparationError.authenticationChanged
         }

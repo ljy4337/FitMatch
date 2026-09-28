@@ -1,3 +1,18 @@
+## 2026-09-28 내 옷장 스와이프·편집 사이즈 표시/조회
+
+- 앞서 확정한 옷장 스와이프 정책을 복구했다: 짧게 밀어 삭제 버튼 탭은 확인 alert, 끝까지 밀기는 바로 `FitMatchClosetDeletionAction`의 서버 우선 삭제를 실행한다. 기록 화면 스와이프는 변경하지 않았다.
+- 링크 등록 옷의 편집 화면은 저장된 사이즈를 화면 진입 즉시 표시한다. 최신 서버 상품·사이즈 확인 전에는 사이즈 선택과 저장을 잠그고, 확인된 UUID만 저장에 사용한다. 선택 버튼은 원본 영문 사이즈 표기로 표시하며 저장 값/실측 변환 계약은 변경하지 않았다.
+- 편집 준비 시 동기화 캐시에 exact 서버 Closet UUID가 있으면 `getClosetItem` 단건 RPC로 현재 행을 검증한다. UUID가 없는 최초 경로는 기존 list RPC를 사용한다. 이어지는 historical Product authority/observation 확인은 유지한다. 실제 지연 시간 측정은 NOT RUN이다.
+- PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchClosetEditSwipe20260928 -only-testing:FitMatchTests/MyClosetSwipeDeletionInteractionTests test` exit 0 (앱/테스트 컴파일 포함). 실기기 스와이프 UI와 인증 서버 편집 시간 측정은 NOT RUN. 기존 dirty 변경을 보존하고 DB write/commit/push는 수행하지 않았다.
+
+## 2026-09-28 동일 상품 비교 결과 1개 갱신 방식 준비
+
+- 사용자 확정 정책: 같은 계정에서 동일한 exact target Product를 다시 비교하면 기록 목록에 결과를 추가하지 않고 기존 표시 결과를 최신 완료 결과로 교체한다. 새 비교가 PENDING/FAILED인 동안에는 기존 완료 결과를 유지한다.
+- Swift `RecommendationHistoryStore`는 새 서버 완료 결과를 저장하기 전에 같은 target Product의 이전 서버 승인 History와 전용 immutable Product/reference projection을 제거한다. `VNextHistoryCacheHydrator`도 서버 응답 순서상 최신 행 1개만 복원하고 기존 로컬 중복 projection을 정리한다. 비교 증거 계산·authorization·begin·complete 자체는 변경하지 않았다.
+- 새 additive migration `20260928160000_latest_comparison_result_per_product.sql`을 준비했다. immutable `comparisons` 실행 행은 감사 증거로 유지하고, `(user_id, target_product_id)` PK의 `comparison_result_heads`만 completion trigger로 upsert한다. `comparison_history()`는 head가 가리키는 완료 행만 반환한다. 기존 중복은 migration backfill에서 상품별 최신 완료 결과로 축약된다. Verify/Rollback SQL도 준비했다.
+- **DB PREPARED / NOT APPLIED:** 연결 DB 또는 Production에는 migration을 적용하지 않았다. 현재 앱의 로컬 즉시 표시 중복은 Swift에서 방지되지만, 서버/다른 기기까지 완전한 단일 결과 정책은 migration 적용 후 활성화된다.
+- 검증: `FitMatchP0RemediationRegressionTests` 실제 Xcode test exit 0 PASS. 더 넓은 P0+Scenario 실행은 Xcode test-log finalization에서 장시간 정체돼 중단했으며 PASS로 계산하지 않는다. `git diff --check`와 protected-scroll 검사 PASS. `xcresulttool` 요약은 TestReport 권한 오류로 테스트 개수를 읽지 못했다. SQL isolated execution 및 인증 DB E2E는 NOT RUN.
+
 ## 2026-09-28 GitHub 푸시 BLOCKED — 수정 커밋 보존
 
 - 구현 커밋: `1e5bd09152a8ba497a86a2a915eff228e601f7bb` (`perf: reuse authorized comparison evidence and align requested flows`). 기준 원격 `connectDB`는 `4fa184252a3a13ae7597f2920f12acec15af5800`.
@@ -19,7 +34,7 @@
 
 ## 2026-09-28 삭제 스와이프·상품 로딩 화면 정렬
 
-- 사용자 요청에 따라 내 옷장 목록의 커스텀 드래그 삭제 행을 제거하고 기록 목록과 같은 기본 trailing `swipeActions` UI로 복원했다. 두 목록 모두 짧은 스와이프로 드러난 삭제 버튼과 끝까지 스와이프한 삭제 동작에 삭제 확인 alert를 연결했다. 취소하면 삭제하지 않는다. 기록 화면의 목록 카드·스와이프 디자인은 수정하지 않았다.
+- 당시 내 옷장 목록의 커스텀 드래그 삭제 행을 제거하고 기록 목록과 같은 기본 trailing `swipeActions` UI로 복원했다. 이로 인해 두 스와이프를 구별하지 못했다. 이 결정은 위 2026-09-28 내 옷장 스와이프 복구로 대체됐다. 기록 화면은 여전히 기본 스와이프/확인 alert를 사용한다.
 - 링크로 내 옷 등록하는 화면과 상품 비교 시작 로딩 화면에서 세 단계 문구를 시작부터 모두 보여주고, 기존 `ProductAnalysisPhase` 상태가 전진할 때 완료/로딩/대기 표시를 갱신한다. 파서나 서버 처리 순서를 인위적으로 지연시키지 않았다.
 - 내 옷장/기록 삭제 화면의 이전 소스 고정 테스트를 새 확인 흐름으로 갱신했다. `git diff --check` 및 관련 정적 참조 확인 완료. 현재 Linux 환경에서 iOS 빌드/XCTest/실기기 UI는 실행하지 못했다. 앱·DB 로직, 결과 계산, 저장 계약은 변경하지 않았다.
 
@@ -5179,3 +5194,8 @@ git diff -- '*.swift' | grep -E \
 - `scripts/collect-uniqlo-parser-inputs.py`를 추가했다. 기본 실행은 Safari 첫 창에서 유니클로 공식 상품 페이지의 렌더링된 상품 링크를 읽고, 두 번째 Safari 창에 선택된 공식 size-chart API를 표시한다. 같은 API 응답 원문은 상품별 JSON으로 저장하며 `manifest.json`에 상품/색상 ID, 시도한 색상별·공통 variant, 선택 결과, HTTP 상태, 해시, 사이즈/실측 행 수와 실패 사유를 기록한다.
 - 앱의 `UniqloSizeAPIParser`와 같이 URL 색상 코드 응답 및 `-000` 공통 실측표를 확인하고 더 많은 공식 사이즈를 가진 응답을 선택한다. `--product-url` 반복 입력은 특정 상품 재현, `--no-api-window`는 브라우저를 건드리지 않는 API 검증에 사용한다. Safari 탐색은 macOS 자동화 권한과 Safari의 `Apple 이벤트의 JavaScript 허용` 설정이 필요하며, 권한 대기에는 15초 제한을 둔다. DB, Swift 파서, 비교 정책은 변경하지 않았다.
 - PASS: `/tmp/fitmatch-uniqlo-parser-inputs`에 기존 제공 URL 10개를 실제 공식 size-chart API로 조회해 HTTP 200 10개, 실측표 포함 10개, 실패 0개로 저장했다. Python 문법 검사도 PASS. Safari 두 창 탐색 smoke는 현재 자동화 실행 환경에서 완료 신호를 받지 못해 NOT VERIFIED이며 API 성공으로 대체 표기하지 않는다.
+## 2026-09-28 TestFlight build 1.1 (7) 업로드
+
+- App Store Connect가 기존 `1.1 (6)`을 이미 보유해 재업로드를 거절했다. 앱과 Share Extension의 버전을 `1.1 (7)`로 맞춰 새 Release archive를 생성했다.
+- `xcodebuild archive`와 App Store Connect upload는 모두 성공했다. Apple 응답은 `Uploaded package is processing.`이며, TestFlight 목록에 표시되기 전 처리 시간은 별도로 남아 있다.
+- 이 작업의 Xcode 프로젝트 버전 변경은 아직 로컬 미커밋이다. 기존 작업 트리 변경은 보존했다.

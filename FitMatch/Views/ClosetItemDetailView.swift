@@ -471,14 +471,11 @@ private struct ImportedClosetItemEditView: View {
         self.prepareLinkedSizeOptions = prepareLinkedSizeOptions
         self.onSave = onSave
         let sizes = Self.availableSizes(for: item)
-        // A server-linked edit deliberately starts empty until the remote row
-        // and fresh runtime establish an exact current product_size_id. The
-        // legacy/local-only editor retains its historical presentation path.
-        let initialID: UUID? = prepareLinkedSizeOptions == nil
-            ? (item.sourceProductSize?.id
-                ?? sizes.first { $0.name.fitMatchDisplaySizeName == item.sizeName }?.id
-                ?? (sizes.count == 1 ? sizes.first?.id : nil))
-            : nil
+        // Show the stored size immediately. Saving remains disabled until
+        // the server confirms its exact current product/variant/size identity.
+        let initialID: UUID? = item.sourceProductSize?.id
+            ?? sizes.first { $0.name.fitMatchDisplaySizeName == item.sizeName }?.id
+            ?? (prepareLinkedSizeOptions == nil && sizes.count == 1 ? sizes.first?.id : nil)
         _selectedSizeID = State(initialValue: initialID)
         _selectedCategory = State(initialValue: item.category)
         _selectedDetailCategory = State(initialValue: item.detailCategory)
@@ -602,7 +599,8 @@ private struct ImportedClosetItemEditView: View {
                 if isPreparingLinkedSizeOptions {
                     ProgressView("서버 사이즈 확인 중")
                         .frame(maxWidth: .infinity, alignment: .leading)
-                } else if let linkedSizePreparationMessage {
+                }
+                if let linkedSizePreparationMessage {
                     VStack(alignment: .leading, spacing: 12) {
                         Text(linkedSizePreparationMessage)
                             .font(.subheadline)
@@ -616,12 +614,18 @@ private struct ImportedClosetItemEditView: View {
                         .font(.subheadline.weight(.bold))
                         .disabled(isSubmissionInputLocked)
                     }
-                } else if availableSizes.isEmpty {
+                }
+                if availableSizes.isEmpty {
                     Text("선택할 수 있는 원본 사이즈표가 없습니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ProductSizeSelectionGrid(sizes: availableSizes, selectedSizeID: $selectedSizeID)
+                    ProductSizeSelectionGrid(
+                        sizes: availableSizes,
+                        selectedSizeID: $selectedSizeID,
+                        displayStyle: .original
+                    )
+                    .disabled(prepareLinkedSizeOptions != nil && linkedSizePreparation == nil)
                 }
             }
         }
@@ -796,9 +800,6 @@ private struct ImportedClosetItemEditView: View {
     private var availableSizes: [ProductSize] {
         if let linkedSizePreparation {
             return linkedSizePreparation.options.map(\.productSize)
-        }
-        if prepareLinkedSizeOptions != nil {
-            return []
         }
         return Self.availableSizes(for: item)
     }

@@ -782,11 +782,9 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         #expect(await syncRemote.hideCalls() == 2)
     }
 
-    /// HI-002/HI-003: a v4 row is historical evidence, not a mutable current
-    /// catalog Product.  The same target compared under distinct personal
-    /// revisions/audiences must rebuild distinct immutable projections after
-    /// a fresh local container hydrate.
-    @Test func v4HistoryHydrationPreservesAudienceAndPersonalRevisionPerComparison() throws {
+    /// A legacy response containing duplicate completed rows for one target
+    /// keeps only its first (server-ordered latest) result.
+    @Test func v4HistoryHydrationKeepsLatestResultPerProduct() throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
         let target = UUID()
@@ -815,18 +813,14 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
             existingClosetItems: [],
             modelContext: context
         )
-        #expect(hydrated == Set([men.clientComparisonID, women.clientComparisonID]))
+        #expect(hydrated == Set([men.clientComparisonID]))
 
         let histories = try context.fetch(FetchDescriptor<RecommendationHistory>())
         let menHistory = try #require(histories.first { $0.id == men.clientComparisonID })
-        let womenHistory = try #require(histories.first { $0.id == women.clientComparisonID })
-        #expect(menHistory.product !== womenHistory.product)
+        #expect(histories.count == 1)
         #expect(menHistory.product.productTargetGender == .men)
-        #expect(womenHistory.product.productTargetGender == .women)
         #expect(menHistory.product.classificationAuthorityProvenance == .userExplicit)
-        #expect(womenHistory.product.classificationAuthorityProvenance == .userExplicit)
         #expect(menHistory.product.canonicalSourceIdentity?.contains("revision=1") == true)
-        #expect(womenHistory.product.canonicalSourceIdentity?.contains("revision=2") == true)
     }
 
     /// HI-001: a fresh global completed-comparison hydrate presents the exact
@@ -1005,12 +999,9 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         #expect(await remote.calls() == ["observation", "runtime"])
     }
 
-    /// HI-003 / HI-004 / HI-005 / HI-013: a later current authority or a
-    /// different reference must produce a second historical projection. The
-    /// existing completed row is never a mutable catalog Product reused by
-    /// that new comparison during either the first hydrate or a fresh local
-    /// container reconstruction.
-    @Test func historicalRowsRemainImmutableAcrossLaterAuthorityAndReferenceChanges() throws {
+    /// A later comparison replaces the visible projection without mutating
+    /// the earlier immutable server evidence row.
+    @Test func latestHistoricalRowReplacesPriorVisibleProjection() throws {
         let target = UUID()
         let originalReference = UUID()
         let replacementReference = UUID()
@@ -1033,45 +1024,31 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
 
         func hydrateFresh(in context: ModelContext) throws -> [RecommendationHistory] {
             let hydrated = try VNextHistoryCacheHydrator().hydrateCompleted(
-                [original, later],
+                [later, original],
                 existingHistories: [],
                 existingProducts: [],
                 existingClosetItems: [],
                 modelContext: context
             )
-            #expect(hydrated == Set([original.clientComparisonID, later.clientComparisonID]))
+            #expect(hydrated == Set([later.clientComparisonID]))
             return try context.fetch(FetchDescriptor<RecommendationHistory>())
         }
 
         let firstContainer = try inMemoryContainer()
         let first = try hydrateFresh(in: ModelContext(firstContainer))
-        let originalFirst = try #require(first.first { $0.id == original.clientComparisonID })
         let laterFirst = try #require(first.first { $0.id == later.clientComparisonID })
-        #expect(originalFirst.product !== laterFirst.product)
-        #expect(originalFirst.userFit !== laterFirst.userFit)
-        #expect(originalFirst.product.productTargetGender == .men)
-        #expect(originalFirst.product.classificationAuthorityProvenance == .userExplicit)
-        #expect(originalFirst.product.garmentTypeRawValue == "polo_shirt")
-        #expect(originalFirst.product.canonicalSourceIdentity?.contains("revision=7") == true)
+        #expect(first.count == 1)
         #expect(laterFirst.product.productTargetGender == .women)
         #expect(laterFirst.product.classificationAuthorityProvenance == .serverConfirmed)
         #expect(laterFirst.product.garmentTypeRawValue == "hoodie")
 
-        // A cold reconstruction is the actual sync/hydration boundary. It
-        // must reproduce the same separate historical meanings rather than
-        // coalescing the shared target ID through current Product state.
+        // A cold reconstruction reproduces the same current result.
         let reconstructedContainer = try inMemoryContainer()
         let reconstructed = try hydrateFresh(in: ModelContext(reconstructedContainer))
-        let originalReconstructed = try #require(reconstructed.first {
-            $0.id == original.clientComparisonID
-        })
         let laterReconstructed = try #require(reconstructed.first {
             $0.id == later.clientComparisonID
         })
-        #expect(originalReconstructed.product !== laterReconstructed.product)
-        #expect(originalReconstructed.product.productTargetGender == .men)
-        #expect(originalReconstructed.product.garmentTypeRawValue == "polo_shirt")
-        #expect(originalReconstructed.product.classificationAuthorityProvenance == .userExplicit)
+        #expect(reconstructed.count == 1)
         #expect(laterReconstructed.product.productTargetGender == .women)
         #expect(laterReconstructed.product.garmentTypeRawValue == "hoodie")
         #expect(laterReconstructed.product.classificationAuthorityProvenance == .serverConfirmed)

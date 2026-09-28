@@ -5,8 +5,9 @@ enum RecommendationHistoryStore {
     /// Persists a server-completed vNext comparison without invoking any of
     /// the legacy presentation-identity fallbacks. The remote snapshot keeps
     /// the server identities; the local cache gets a per-comparison immutable
-    /// Product/reference projection so later comparisons cannot mutate the
-    /// presentation or authority of an older completed row.
+    /// Product/reference projection. A later completed comparison for the
+    /// same server Product replaces the prior presentation cache while the
+    /// server retains the immutable comparison evidence.
     static func saveCompletedVNext(
         _ history: RecommendationHistory,
         existing histories: [RecommendationHistory],
@@ -34,6 +35,18 @@ enum RecommendationHistoryStore {
         let recommendedSizeID = history.recommendedSize.id
         guard incomingProduct.sizes.contains(where: { $0.id == recommendedSizeID }) else {
             throw RecommendationHistoryStoreError.vnextIdentityConflict
+        }
+
+        let persistedHistories = try modelContext.fetch(
+            FetchDescriptor<RecommendationHistory>()
+        )
+        let superseded = persistedHistories.filter {
+            $0.id != historyID
+                && targetProductID(for: $0) == incomingProduct.id
+                && $0.comparisonMethod.hasPrefix("서버 승인")
+        }
+        superseded.forEach {
+            deleteImmutableProjection(for: $0, modelContext: modelContext)
         }
 
         let localProductID = VNextHistoryProjectionIdentity.productID(
@@ -82,6 +95,36 @@ enum RecommendationHistoryStore {
         modelContext.insert(frozenReference)
         modelContext.insert(history)
         try modelContext.save()
+    }
+
+    static func targetProductID(for history: RecommendationHistory) -> UUID? {
+        let marker = "target="
+        guard let identity = history.product.canonicalSourceIdentity,
+              let markerRange = identity.range(of: marker) else {
+            return nil
+        }
+        let suffix = identity[markerRange.upperBound...]
+        let rawID = suffix.split(separator: ";", maxSplits: 1).first.map(String.init)
+        return rawID.flatMap(UUID.init(uuidString:))
+    }
+
+    static func deleteImmutableProjection(
+        for history: RecommendationHistory,
+        modelContext: ModelContext
+    ) {
+        let historyID = history.id
+        let product = history.product
+        let reference = history.userFit
+        modelContext.delete(history)
+
+        if product.id == VNextHistoryProjectionIdentity.productID(
+            comparisonID: historyID
+        ) {
+            modelContext.delete(product)
+        }
+        if reference.isHistoryOnlyReferenceSnapshot {
+            modelContext.delete(reference)
+        }
     }
 
     private static func makeHistoricalProductProjection(
