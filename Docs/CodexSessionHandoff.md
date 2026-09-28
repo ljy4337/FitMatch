@@ -1,3 +1,10 @@
+## 2026-09-28 GitHub 푸시 BLOCKED — 수정 커밋 보존
+
+- 구현 커밋: `1e5bd09152a8ba497a86a2a915eff228e601f7bb` (`perf: reuse authorized comparison evidence and align requested flows`). 기준 원격 `connectDB`는 `4fa184252a3a13ae7597f2920f12acec15af5800`.
+- 사용자 요청대로 push를 실행했으나 CLI `git push origin HEAD:connectDB`는 `could not read Username for https://github.com`으로 실패했다. 연결된 GitHub 앱도 `create_blob`에서 HTTP 403 `Resource not accessible by integration`으로 거절됐다. 저장소 metadata의 사용자 push 권한과 앱 integration의 실제 contents 쓰기 권한은 다르다. 원격 반영/푸시 완료 아님.
+- 코드·SQL·검증 기록은 로컬 커밋에 보존됐다. 기존 개발 DB의 additive preview migration `20260928075844`는 적용 완료이며 old client에 새 필드가 추가될 뿐 기존 필드를 제거하지 않는다.
+- GitHub 연결의 저장소 쓰기 권한/CLI 인증이 복구돼야 원격 push를 완료할 수 있다. 권한을 우회하거나 force push하지 않았다. 사용자 인계용 incremental Git bundle을 생성해 최종 응답에 제공한다.
+
 ## 2026-09-28 비교 중복 처리 축소·목록/상세 계산 근거 통일
 
 - 사용자 지시: 검토된 개선을 구현하고 `connectDB`에 commit/push. 기준 `4fa184252a3a13ae7597f2920f12acec15af5800`; 이번 작업에는 아래 두 로컬 UI 수정도 포함한다. 아래의 “로컬 미커밋”은 해당 기록 시점 상태다.

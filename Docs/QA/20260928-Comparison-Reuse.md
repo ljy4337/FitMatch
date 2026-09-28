@@ -50,3 +50,7 @@ node supabase/sql/tests/comparison_preview_20260928.mjs /tmp/fitmatch-sql-check/
 ### NOT RUN — iOS/Swift and live behavior
 
 Linux environment has no Swift/Xcode. Added Swift regressions cover exact-row transport, preview/detail values, arithmetic reuse, evidence/weight/minimum invalidation, malformed preview identity and mandatory begin rejection despite cached eligibility. These tests are committed but **not executed** here. Build, XCTest, real UI swipe/loading behavior, authenticated comparison/save E2E and before/after timings are NOT RUN. No latency reduction in seconds is claimed.
+
+## Git delivery — BLOCKED
+
+Implementation commit: `1e5bd09152a8ba497a86a2a915eff228e601f7bb`. CLI push failed because no GitHub credentials were available; the connected GitHub app create-blob endpoint returned HTTP 403 `Resource not accessible by integration`. No remote branch update succeeded. An incremental bundle preserves the local commits for handoff. GitHub write authorization/authentication must be restored before claiming push completion.
