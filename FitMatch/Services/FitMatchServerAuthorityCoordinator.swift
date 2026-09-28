@@ -43,6 +43,7 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
         _ request: FitMatchClearUserProductClassificationRequest
     ) async throws -> VNextUserClassificationMutationDTO
     func listClosetItems() async throws -> FitMatchClosetItemsResponse
+    func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse
     func findReferenceCandidates(targetProductID: UUID) async throws
         -> FitMatchReferenceCandidatesResponse
     func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID) async throws
@@ -75,6 +76,14 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
 extension FitMatchSupabaseDomainClient: FitMatchServerAuthorityRemoteServicing {}
 
 extension FitMatchServerAuthorityRemoteServicing {
+    func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse {
+        let receipt = try await listClosetItems()
+        return FitMatchClosetItemsResponse(
+            state: receipt.state,
+            items: receipt.items.filter { $0.closetItemID == closetItemID }
+        )
+    }
+
     func resolveWithRuntime(_ request: FitMatchProductResolutionRequest) async throws
         -> (resolution: FitMatchProductResolutionResponse, runtime: FitMatchProductRuntimeResponse?) {
         (try await resolve(request), nil)
@@ -273,6 +282,7 @@ nonisolated enum FitMatchServerReferenceSelectionStatus: Equatable, Sendable {
 }
 
 nonisolated struct FitMatchServerReferenceSelectionCandidate: Equatable, Sendable {
+    var comparisonPreview: VNextEligibleCandidateSizesDTO? = nil
     let clientItemID: UUID
     let closetItemID: UUID
     /// The current Closet receipt's server-issued group. This is compared to
@@ -429,6 +439,7 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
     let targetVariantID: UUID?
     let requestedComparisonGroupCode: String?
     let authorizedCandidateSizeIDs: [UUID]
+    let selectedEligibility: VNextEligibleCandidateSizesDTO?
 
     init(
         decision: FitMatchServerReferenceDecision,
@@ -441,7 +452,8 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
         candidateState: String?,
         targetVariantID: UUID? = nil,
         requestedComparisonGroupCode: String? = nil,
-        authorizedCandidateSizeIDs: [UUID] = []
+        authorizedCandidateSizeIDs: [UUID] = [],
+        selectedEligibility: VNextEligibleCandidateSizesDTO? = nil
     ) {
         self.decision = decision
         self.reasonCode = reasonCode
@@ -454,6 +466,7 @@ nonisolated struct FitMatchServerReferenceAuthorization: Equatable, Sendable {
         self.targetVariantID = targetVariantID
         self.requestedComparisonGroupCode = requestedComparisonGroupCode
         self.authorizedCandidateSizeIDs = authorizedCandidateSizeIDs
+        self.selectedEligibility = selectedEligibility
     }
 
     nonisolated var isAllowed: Bool {
@@ -930,6 +943,7 @@ actor FitMatchServerAuthorityCoordinator {
 
     func authorizeReferenceCandidate(
         referenceClientItemID: UUID,
+        referenceClosetItemID: UUID? = nil,
         localReferenceSnapshot: FitMatchLocalReferenceSnapshot,
         targetRequest: FitMatchProductResolutionRequest,
         targetObservation: FitMatchProductObservationRequest?,
@@ -956,7 +970,12 @@ actor FitMatchServerAuthorityCoordinator {
             request: targetRequest,
             observation: targetObservation
         )
-        async let closetReceipt = remote.listClosetItems()
+        async let closetReceipt: FitMatchClosetItemsResponse = {
+            if let referenceClosetItemID {
+                return try await remote.getClosetItem(closetItemID: referenceClosetItemID)
+            }
+            return try await remote.listClosetItems()
+        }()
         async let resolvedReferenceAuthorityTask: FitMatchServerProductAuthority? = {
             guard let referenceRequest else { return nil }
             return try await resolveProductAuthority(
@@ -987,6 +1006,9 @@ actor FitMatchServerAuthorityCoordinator {
         guard let reference = closet.items.first(where: {
             $0.clientItemID == referenceClientItemID
         }) else {
+            throw FitMatchServerAuthorityError.referenceItemNotFound
+        }
+        if let referenceClosetItemID, reference.closetItemID != referenceClosetItemID {
             throw FitMatchServerAuthorityError.referenceItemNotFound
         }
 
@@ -1185,7 +1207,8 @@ actor FitMatchServerAuthorityCoordinator {
                     candidateState: candidates.state,
                     targetVariantID: targetVariantID,
                     requestedComparisonGroupCode: requestedComparisonGroupCode,
-                    authorizedCandidateSizeIDs: vnextCandidate.eligibleProductSizeIDs
+                    authorizedCandidateSizeIDs: vnextCandidate.eligibleProductSizeIDs,
+                    selectedEligibility: vnextCandidate.comparisonPreview
                 )
             case "MANUAL_EXTENDED" where vnextCandidate.allowed:
                 return FitMatchServerReferenceAuthorization(
@@ -1199,7 +1222,8 @@ actor FitMatchServerAuthorityCoordinator {
                     candidateState: candidates.state,
                     targetVariantID: targetVariantID,
                     requestedComparisonGroupCode: requestedComparisonGroupCode,
-                    authorizedCandidateSizeIDs: vnextCandidate.eligibleProductSizeIDs
+                    authorizedCandidateSizeIDs: vnextCandidate.eligibleProductSizeIDs,
+                    selectedEligibility: vnextCandidate.comparisonPreview
                 )
             case "MEASUREMENTS_REQUIRED":
                 return FitMatchServerReferenceAuthorization(
@@ -1586,6 +1610,7 @@ actor FitMatchServerAuthorityCoordinator {
             throw FitMatchServerAuthorityError.referenceItemNotFound
         }
         return FitMatchServerReferenceSelectionCandidate(
+            comparisonPreview: candidate.comparisonPreview,
             clientItemID: closetItem.clientItemID,
             closetItemID: candidate.closetItemID,
             comparisonGroupCode: closetItem.comparisonGroupCode,
@@ -1683,13 +1708,32 @@ actor FitMatchServerAuthorityCoordinator {
         let exactCandidates: VNextEligibleCandidateSizesDTO?
         if let targetVariantID = authorization.targetVariantID {
             try Task.checkCancellation()
-            let value = try await remote.eligibleCandidateSizes(
-                referenceClosetItemID: reference.closetItemID,
-                targetProductID: authorization.target.productID,
-                targetVariantID: targetVariantID,
-                manualExplicit: allowExtended,
-                requestedComparisonGroupCode: authorization.requestedComparisonGroupCode
-            )
+            let value: VNextEligibleCandidateSizesDTO
+            if allowExtended, let selected = authorization.selectedEligibility {
+                // This evidence came from the just-completed selected-row RPC,
+                // not from the earlier list preview. Begin still checks its
+                // fingerprint and full candidate set atomically on the server.
+                guard selected.referenceClosetItemID == reference.closetItemID,
+                      selected.targetProductID == authorization.target.productID,
+                      selected.targetVariantID == targetVariantID,
+                      selected.candidateAuthorityFingerprint?.isEmpty == false,
+                      selected.manualExplicit == true else {
+                    throw FitMatchServerAuthorityError.comparisonBeginMalformed("selected_evidence_identity_mismatch")
+                }
+                if let group = authorization.requestedComparisonGroupCode,
+                   selected.targetComparisonGroup?.groupCode != group {
+                    throw FitMatchServerAuthorityError.comparisonBeginMalformed("selected_evidence_group_mismatch")
+                }
+                value = selected
+            } else {
+                value = try await remote.eligibleCandidateSizes(
+                    referenceClosetItemID: reference.closetItemID,
+                    targetProductID: authorization.target.productID,
+                    targetVariantID: targetVariantID,
+                    manualExplicit: allowExtended,
+                    requestedComparisonGroupCode: authorization.requestedComparisonGroupCode
+                )
+            }
             try Task.checkCancellation()
 #if DEBUG
             FitMatchDebugLogger.flow(

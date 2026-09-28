@@ -23,6 +23,7 @@ struct RecommendationHistoryView: View {
     @State private var cachedFilteredHistories: [RecommendationHistory] = []
     @State private var cachedAvailableCategories: [ClothingCategory] = []
     @State private var hidingHistoryIDs = Set<UUID>()
+    @State private var pendingDeleteHistory: RecommendationHistory?
     private let favoriteStore = FavoriteProductStore()
     var onRecompare: ((FitMatchHistoryRecompareAction.StartRequest) -> Void)?
     var onStartCompare: (() -> Void)?
@@ -78,6 +79,21 @@ struct RecommendationHistoryView: View {
             }
         } message: {
             Text(saveErrorMessage ?? "")
+        }
+        .alert("이 비교 기록을 삭제할까요?", isPresented: Binding(
+            get: { pendingDeleteHistory != nil },
+            set: { if !$0 { pendingDeleteHistory = nil } }
+        )) {
+            Button("취소", role: .cancel) {
+                pendingDeleteHistory = nil
+            }
+            Button("삭제", role: .destructive) {
+                guard let history = pendingDeleteHistory else { return }
+                pendingDeleteHistory = nil
+                deleteHistory(history)
+            }
+        } message: {
+            Text("이 비교 기록을 목록에서 삭제할까요?")
         }
         .overlay(alignment: .top) {
             if isShowingClosetSavedToast {
@@ -451,8 +467,9 @@ struct RecommendationHistoryView: View {
 
     @ViewBuilder
     private func deleteSwipeButton(for history: RecommendationHistory) -> some View {
-        Button(role: .destructive) {
-            deleteHistory(history)
+        // Keep the row visible while confirmation is pending.
+        Button {
+            pendingDeleteHistory = history
         } label: {
             Label("삭제", systemImage: "trash")
         }

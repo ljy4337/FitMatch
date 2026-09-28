@@ -79,9 +79,13 @@ struct LinkClosetRegistrationView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                urlCard
-                parsedProductPreview
-                if !isLoading { errorCard }
+                if isLoading {
+                    loadingContent
+                } else {
+                    urlCard
+                    parsedProductPreview
+                    errorCard
+                }
             }
             .padding(20)
         }
@@ -258,6 +262,39 @@ struct LinkClosetRegistrationView: View {
                 .disabled(!canLoadProduct)
             }
         }
+    }
+
+    private var loadingContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("상품을 불러오고 있어요")
+                    .font(.title2.weight(.black))
+                Text("잠시만 기다려 주세요.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            FitMatchCard {
+                VStack(alignment: .leading, spacing: 16) {
+                    FitMatchLoadingRow(
+                        title: "상품 정보 불러오는 중",
+                        state: loadingState(for: .loadingProductInfo)
+                    )
+                    FitMatchLoadingRow(
+                        title: "사이즈표 확인 중",
+                        state: loadingState(for: .loadingSizeChart)
+                    )
+                    FitMatchLoadingRow(
+                        title: "내 옷장 추가 준비 중",
+                        state: loadingState(for: .preparingComparison)
+                    )
+                }
+            }
+        }
+    }
+
+    private func loadingState(for phase: ProductAnalysisPhase) -> FitMatchLoadingState {
+        if loadingPhase == phase { return .loading }
+        return loadingPhase.rawValue > phase.rawValue ? .done : .waiting
     }
 
     @ViewBuilder

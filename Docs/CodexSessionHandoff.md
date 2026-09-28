@@ -1,3 +1,27 @@
+## 2026-09-28 비교 중복 처리 축소·목록/상세 계산 근거 통일
+
+- 사용자 지시: 검토된 개선을 구현하고 `connectDB`에 commit/push. 기준 `4fa184252a3a13ae7597f2920f12acec15af5800`; 이번 작업에는 아래 두 로컬 UI 수정도 포함한다. 아래의 “로컬 미커밋”은 해당 기록 시점 상태다.
+- 선택 단계: 최초 후보계획에서 확인한 `clientItemID → closetItemID`를 전달해 선택한 내 옷 한 벌만 `getClosetItem`으로 재확인한다. 최초 전체 목록 조회 및 해당 옷의 snapshot/권한 검증은 유지한다. ID가 없는 legacy caller/test remote는 기존 목록 경로를 유지한다.
+- 목록/상세: 서버 후보 조회가 이미 계산한 `eligible_candidate_sizes` 근거를 `comparison_preview`로 함께 반환한다. 목록은 그 실측·가중치로 계산하며 상세는 fresh begin 검증 뒤 동일한 입력이면 `VNextAuthorizedScoreCache`의 산술 결과를 재사용한다. 근거나 최소 항목 수가 바뀌면 재계산한다. 권한/저장 결과는 캐시하지 않는다. 캐시는 인스턴스별 최대 512개이며, 오래된 서버의 근거 없는 응답에서는 숫자를 만들지 않고 선택 경로만 유지한다.
+- 중복 왕복: 사용자가 고른 옷의 **새 단건 후보 응답**에 포함된 eligible 증거를 begin 요청에 전달해 별도 eligible RPC를 생략한다. 최초 목록의 오래된 응답을 begin 권한으로 사용하지 않는다. exact product/variant/Closet, manual-explicit, 요청 그룹과 fingerprint를 확인하고 begin의 서버 재검증 및 complete는 유지한다.
+- 개발 DB `hnkplvyegonlhumlejst`: `comparison_preview_evidence` migration 적용 성공, remote ledger `20260928075844`. 적용 SQL `supabase/sql/comparison_preview_evidence_20260928.sql`은 현재 helper MD5 preflight로 drift를 차단한다. 두 helper 응답만 additive 변경. read-only postflight에서 eligible 2개/begin/complete 4개 정의 hash와 검사한 6개 함수 ACL이 모두 적용 전과 같음을 확인했다. 사용자 상품/Closet/History row는 변경하지 않았다.
+- PASS: 격리 PGlite PostgreSQL 테스트 14개 mapped/session/full/selected/owner/deleted/blocked/multivariant 시나리오, 기존 JSON 동일성·추가 eligibility 호출 없음·exact evidence·인증/variant 차단·원복 동일성. eligibility/group helper는 stub이므로 live E2E가 아니다. SQL/PLpgSQL 구문 검사, 변경 Swift의 Tree-sitter 구문 비교(기존 parser 미지원 구문과 같은 오류만 존재), `git diff --check`, protected-scroll 검사 PASS.
+- NOT RUN: 새 Swift 회귀 테스트 실행, iOS 빌드/XCTest, 실기기 UI, 인증 사용자 candidate→begin→complete, 실제 before/after 속도. 현재 Linux에 Xcode/Swift가 없다. 과거 Handoff의 870/106 PASS를 이번 변경 검증으로 재사용하지 않는다.
+- **제외/잔여:** 상품번호가 같다는 가정만으로 쇼핑몰 수집·observation 저장을 영구 생략하는 변경은 하지 않았다. 가격/재고/variant 정보와 원본 receipt 저장 계약까지 영향을 주므로 수집 생략 정책의 확정 및 별도 검증이 필요하다. 이번 변경으로 그 API 시간이 제거됐다고 보고하지 않는다.
+- 검증 재현 및 범위: `Docs/QA/20260928-Comparison-Reuse.md`.
+
+## 2026-09-28 삭제 스와이프·상품 로딩 화면 정렬
+
+- 사용자 요청에 따라 내 옷장 목록의 커스텀 드래그 삭제 행을 제거하고 기록 목록과 같은 기본 trailing `swipeActions` UI로 복원했다. 두 목록 모두 짧은 스와이프로 드러난 삭제 버튼과 끝까지 스와이프한 삭제 동작에 삭제 확인 alert를 연결했다. 취소하면 삭제하지 않는다. 기록 화면의 목록 카드·스와이프 디자인은 수정하지 않았다.
+- 링크로 내 옷 등록하는 화면과 상품 비교 시작 로딩 화면에서 세 단계 문구를 시작부터 모두 보여주고, 기존 `ProductAnalysisPhase` 상태가 전진할 때 완료/로딩/대기 표시를 갱신한다. 파서나 서버 처리 순서를 인위적으로 지연시키지 않았다.
+- 내 옷장/기록 삭제 화면의 이전 소스 고정 테스트를 새 확인 흐름으로 갱신했다. `git diff --check` 및 관련 정적 참조 확인 완료. 현재 Linux 환경에서 iOS 빌드/XCTest/실기기 UI는 실행하지 못했다. 앱·DB 로직, 결과 계산, 저장 계약은 변경하지 않았다.
+
+## 2026-09-28 기존 내 옷 수정 분류 화면 정렬
+
+- 사용자 확정 정책: 기존 내 옷 수정 화면에서도 새 직접 등록과 동일하게 상위 A–G 비교 그룹만 선택한다. `AddClosetItemView`의 수정 전용 taxonomy 카테고리·세부 카테고리 picker를 제거하고 공통 `FitMatchComparisonGroup.allCases` picker를 사용한다.
+- 기존 `AddClosetItemViewModel.selectManualCategory`를 재사용한다. 현재 그룹이 그대로이면 유효한 내부 detail tuple을 유지하고, 그룹을 바꾸면 새 그룹에서 유효한 detail tuple을 내부적으로 선택한다. 서버 우선 수정 저장·읽기 검증 경로는 그대로 사용한다.
+- 검증: `git diff --check` 및 정적 소스 확인. 현재 Linux 작업 환경에 Xcode 도구가 없어 iOS 빌드, XCTest, 실기기 UI 확인은 실행하지 못했다. 이 변경은 로컬 작업 트리에만 있으며 commit/push하지 않았다.
+
 ## 2026-09-28 비교 그룹·후보 선택 정책 로컬 보완
 
 - 기준 branch `connectDB`, local HEAD `635017c7eb9c52ebba47f3e8a98fc9dfdddf9fda`. 시작 시 기존 22개 tracked 변경을 보존했고 commit/push/reset/stash/연결 DB read/write는 수행하지 않았다.

@@ -41,6 +41,7 @@ private struct FitMatchClosetComparisonBatchCacheKey: Equatable {
     let productSizeIDs: [UUID]
     let closetItemIDs: [UUID]
     let closetItemUpdatedAt: [Date]
+    let serverCandidates: [FitMatchServerReferenceSelectionCandidate]
 }
 
 @MainActor
@@ -78,6 +79,7 @@ final class ShoppingProductViewModel: ObservableObject {
         didSet { consumedCandidateHandoffObservationID = nil }
     }
     private var consumedCandidateHandoffObservationID: UUID?
+    private var serverClosetIDsByClientID: [UUID: UUID] = [:]
     @Published private(set) var reviewRecoveryState: FitMatchReviewRecoveryState = .idle
     @Published private(set) var classificationSafetyAudit: ParsedClosetClassificationSafetyAudit = .safe
     /// Retailer-fact presence only. This never implies that the server has
@@ -351,6 +353,7 @@ final class ShoppingProductViewModel: ObservableObject {
         let metricProvider = FitMatchMetricProvider.resolve(urlString: productURL)
         metricsRecorder.record(.parserAttempt(provider: metricProvider))
         activeLoadID = loadID
+        serverClosetIDsByClientID.removeAll()
         databaseShadowState = .idle
         serverAuthorityState = .idle
         reviewRecoveryState = .idle
@@ -1736,6 +1739,9 @@ final class ShoppingProductViewModel: ObservableObject {
                 preparedTarget: preparedTarget
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
+            serverClosetIDsByClientID = Dictionary(
+                uniqueKeysWithValues: plan.candidates.map { ($0.clientItemID, $0.closetItemID) }
+            )
             if let requestedComparisonGroupCode {
                 guard plan.targetComparisonGroupCode == requestedComparisonGroupCode,
                       plan.targetComparisonGroup?.source == "SESSION_USER_SELECTED" else {
@@ -1761,8 +1767,8 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
-    /// Calculates grouped list previews once from the already loaded retailer
-    /// sizes and the server-approved candidate IDs. It performs no extra RPC
+    /// Calculates grouped list previews from the exact evidence returned by
+    /// the server candidate query. It performs no extra RPC
     /// and does not persist comparison history.
     @discardableResult
     func prepareClosetComparisonBatch(
@@ -1798,17 +1804,18 @@ final class ShoppingProductViewModel: ObservableObject {
                 $0.uuidString < $1.uuidString
             },
             closetItemIDs: candidates.map(\.id),
-            closetItemUpdatedAt: candidates.map(\.updatedAt)
+            closetItemUpdatedAt: candidates.map(\.updatedAt),
+            serverCandidates: referenceSelectionPlan.candidates
         )
         if key == closetComparisonBatchCacheKey {
             return closetComparisonBatch
         }
 
-        let batch = recommendationService.makeClosetComparisonBatchSummary(
-            product: product,
-            productDetailCategory: detailCategory,
+        let visibleIDs = Set(candidates.map(\.id))
+        let batch = recommendationService.makeServerClosetComparisonBatchSummary(
+            targetProductID: product.id,
             comparisonGroup: comparisonGroup,
-            candidates: candidates
+            candidates: referenceSelectionPlan.candidates.filter { visibleIDs.contains($0.clientItemID) }
         )
         let batches = candidates.isEmpty ? [] : [batch]
         guard isCurrentComparison(comparisonRequestID) else { return nil }
@@ -1873,6 +1880,7 @@ final class ShoppingProductViewModel: ObservableObject {
                 == .userExplicit
             let authorization = try await coordinator.authorizeReferenceCandidate(
                 referenceClientItemID: item.id,
+                referenceClosetItemID: serverClosetIDsByClientID[item.id],
                 localReferenceSnapshot: localReferenceSnapshot,
                 targetRequest: request,
                 targetObservation: frozenObservation(for: product),

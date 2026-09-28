@@ -294,10 +294,16 @@ private extension CompareFlowSheet {
             FitMatchCard {
                 VStack(alignment: .leading, spacing: 16) {
                     FitMatchLoadingRow(
-                        title: isPreparingManualComparison
-                            ? "입력한 실측 정보 확인 중"
-                            : viewModel.analysisPhase.productLoadingTitle,
-                        state: .loading
+                        title: "상품 정보 불러오는 중",
+                        state: loadingState(for: .loadingProductInfo)
+                    )
+                    FitMatchLoadingRow(
+                        title: isPreparingManualComparison ? "입력한 사이즈 확인 완료" : "사이즈표 확인 중",
+                        state: loadingState(for: .loadingSizeChart)
+                    )
+                    FitMatchLoadingRow(
+                        title: "내 옷과 비교 준비 중",
+                        state: loadingState(for: .preparingComparison)
                     )
                 }
             }
@@ -499,7 +505,7 @@ private extension CompareFlowSheet {
             } else {
                 CompareSheetSectionTitle(
                     title: comparisonSummarySectionTitle(itemCount: rows.count),
-                    subtitle: "저장된 실측으로 계산한 예상 결과예요. 옷을 선택하면 서버에서 확인한 실측으로 비교하며, 결과가 달라질 수 있어요."
+                    subtitle: "서버에서 확인한 실측으로 계산한 결과예요. 옷을 선택하면 상세 비교를 볼 수 있어요."
                 )
 
                 LazyVStack(alignment: .leading, spacing: 12) {

@@ -27,6 +27,22 @@ struct FitMatchCandidateEnvelopeTests {
         #expect(response.candidates.allSatisfy { $0.isCurrentReference })
     }
 
+    @Test func previewCannotBelongToAnotherProductOrBypassExactCandidateMembership() throws {
+        let id = UUID()
+        let response = try envelope(candidates: [id], blocked: [], preview: [
+            "allowed": true, "decision": "MANUAL_EXTENDED", "mode": "MANUAL_EXTENDED",
+            "manual_explicit": true,
+            "reference_closet_item_id": id.uuidString,
+            "target_product_id": UUID().uuidString,
+            "target_variant_id": variantID.uuidString,
+            "authorized_candidate_product_size_ids": [] as [String],
+            "candidates": [] as [String]
+        ])
+        #expect(throws: FitMatchVNextContractError.conflictingProof("candidate_preview_identity")) {
+            try validate(response)
+        }
+    }
+
     @Test func emptyCandidateListRemainsValid() throws {
         try validate(envelope(candidates: [], blocked: []))
     }
@@ -79,12 +95,15 @@ struct FitMatchCandidateEnvelopeTests {
         )
     }
 
-    private func envelope(candidates: [UUID], blocked: [UUID]) throws -> VNextReferenceCandidatesDTO {
+    private func envelope(candidates: [UUID], blocked: [UUID],
+                          preview: [String: Any]? = nil) throws -> VNextReferenceCandidatesDTO {
         func row(_ id: UUID, allowed: Bool) -> [String: Any] {
-            ["closet_item_id": id.uuidString, "item_name": "계약 검사",
+            var value: [String: Any] = ["closet_item_id": id.uuidString, "item_name": "계약 검사",
              "is_current_reference": true, "decision": allowed ? "MANUAL_EXTENDED" : "BLOCKED",
              "allowed": allowed, "mode": allowed ? "MANUAL_EXTENDED" : "NONE",
              "manual_explicit_required": allowed, "eligible_product_size_ids": [] as [String]]
+            if allowed, let preview { value["comparison_preview"] = preview }
+            return value
         }
         let json: [String: Any] = [
             "target_product_id": productID.uuidString, "target_variant_id": variantID.uuidString,

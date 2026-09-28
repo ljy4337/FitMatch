@@ -4,12 +4,17 @@ import SwiftData
 @testable import FitMatch
 
 struct MyClosetSwipeDeletionInteractionTests {
-    @Test func shortSwipeRequiresConfirmationWhileFullSwipeDeletesImmediately() throws {
+    @Test func closetAndHistorySwipesUseNativeActionsAndConfirmDeletion() throws {
         let source = try myClosetViewSource()
+        let history = try sourceFile(named: "RecommendationHistoryView.swift")
 
-        #expect(source.contains("MyClosetSwipeDeleteRow"))
-        #expect(source.contains("onDeleteButtonTap: { pendingDeleteItem = item }"))
-        #expect(source.contains("onFullSwipeDelete: { deleteItem(item) }"))
+        #expect(!source.contains("MyClosetSwipeDeleteRow"))
+        #expect(source.contains(".swipeActions(edge: .trailing, allowsFullSwipe: true)"))
+        #expect(source.contains("pendingDeleteItem = item"))
+        #expect(source.contains("guard let item = pendingDeleteItem else { return }"))
+        #expect(history.contains(".swipeActions(edge: .trailing, allowsFullSwipe: true)"))
+        #expect(history.contains("pendingDeleteHistory = history"))
+        #expect(history.contains("guard let history = pendingDeleteHistory else { return }"))
     }
 
     @Test @MainActor func editDeletionCannotRemoveGarmentWithoutServerAuthority() async throws {
@@ -35,14 +40,14 @@ struct MyClosetSwipeDeletionInteractionTests {
     }
 
     private func myClosetViewSource() throws -> String {
-        try source(named: "MyClosetView.swift")
+        try sourceFile(named: "MyClosetView.swift")
     }
 
     private func closetItemDetailViewSource() throws -> String {
-        try source(named: "ClosetItemDetailView.swift")
+        try sourceFile(named: "ClosetItemDetailView.swift")
     }
 
-    private func source(named fileName: String) throws -> String {
+    private func sourceFile(named fileName: String) throws -> String {
         let repositoryRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()

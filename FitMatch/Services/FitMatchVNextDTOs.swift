@@ -1045,6 +1045,7 @@ nonisolated struct VNextMeasurementExclusionReasonDTO: Decodable, Equatable, Sen
 }
 
 nonisolated struct VNextReferenceCandidateDTO: Decodable, Equatable, Sendable {
+    var comparisonPreview: VNextEligibleCandidateSizesDTO? = nil
     let closetItemID: UUID
     let itemName: String
     let sizeLabel: String?
@@ -1067,6 +1068,7 @@ nonisolated struct VNextReferenceCandidateDTO: Decodable, Equatable, Sendable {
     let eligibleProductSizeIDs: [UUID]
 
     enum CodingKeys: String, CodingKey {
+        case comparisonPreview = "comparison_preview"
         case closetItemID = "closet_item_id"
         case itemName = "item_name"
         case sizeLabel = "size_label"
@@ -1227,6 +1229,7 @@ nonisolated struct VNextAuthorizedCandidateDTO: Decodable, Equatable, Sendable {
 }
 
 nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendable {
+    var manualExplicit: Bool? = nil
     let allowed: Bool
     let decision: String
     let mode: String
@@ -1245,6 +1248,7 @@ nonisolated struct VNextEligibleCandidateSizesDTO: Decodable, Equatable, Sendabl
     let targetComparisonGroup: VNextComparisonGroupDTO?
 
     enum CodingKeys: String, CodingKey {
+        case manualExplicit = "manual_explicit"
         case allowed, decision, mode, reason, candidates
         case reasonCode = "reason_code"
         case referenceClosetItemID = "reference_closet_item_id"

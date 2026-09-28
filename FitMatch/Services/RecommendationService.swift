@@ -122,7 +122,71 @@ struct TemporarySizeAnalysis {
 struct RecommendationService {
     private let comparisonMatcher = ComparisonProfileMatcher()
     private let measurementComparisonEngine = MeasurementComparisonEngine()
-    private let vnextComparisonAdapter = VNextComparisonEngineAdapter()
+    private let authorizedScoreCache = VNextAuthorizedScoreCache()
+    private var vnextComparisonAdapter: VNextComparisonEngineAdapter {
+        VNextComparisonEngineAdapter(scoreCache: authorizedScoreCache)
+    }
+
+    /// Scores only evidence returned by the server's candidate query. This
+    /// never opens a comparison or creates History. The same evidence cache
+    /// is used after begin validates the selected pair.
+    func makeServerClosetComparisonBatchSummary(
+        targetProductID: UUID,
+        comparisonGroup: FitMatchComparisonGroup,
+        candidates: [FitMatchServerReferenceSelectionCandidate]
+    ) -> FitMatchClosetComparisonBatchSummary {
+        var summaries = candidates.filter(\.isSelectable).map { item in
+            var ranked: [(candidate: VNextAuthorizedCandidateDTO, result: MeasurementComparisonResult)] = []
+            if let preview = item.comparisonPreview,
+               preview.allowed,
+               preview.referenceClosetItemID == item.closetItemID,
+               preview.targetProductID == targetProductID,
+               !preview.authorizedCandidateProductSizeIDs.isEmpty,
+               Set(preview.authorizedCandidateProductSizeIDs)
+                    == Set(preview.candidates.map(\.productSizeID)),
+               Set(preview.candidates.map(\.productSizeID)).count == preview.candidates.count {
+                for candidate in preview.candidates {
+                    guard candidate.authorization.allowed,
+                          let minimum = candidate.authorization.minimumCommon,
+                          minimum > 0,
+                          Set(candidate.authorization.excludedMeasurementCodes)
+                            .isDisjoint(with: candidate.comparisonMeasurements.map(\.measurementCode)),
+                          let result = authorizedScoreCache.compare(
+                            candidate.comparisonMeasurements, minimum: minimum
+                          ) else {
+                        ranked.removeAll()
+                        break
+                    }
+                    ranked.append((candidate, result))
+                }
+            }
+            ranked.sort {
+                if $0.result.score != $1.result.score { return $0.result.score > $1.result.score }
+                if $0.result.averageDifference != $1.result.averageDifference {
+                    return $0.result.averageDifference < $1.result.averageDifference
+                }
+                return $0.candidate.productSizeID.uuidString < $1.candidate.productSizeID.uuidString
+            }
+            let best = ranked.first
+            return FitMatchClosetComparisonSummary(
+                closetItemID: item.clientItemID,
+                comparisonGroup: comparisonGroup,
+                recommendedProductSizeID: best?.candidate.productSizeID,
+                recommendedSizeLabel: best?.candidate.sizeLabel,
+                comparisonResult: best?.result,
+                reason: best == nil ? "목록 결과를 확인하지 못했어요. 옷을 선택하면 서버에서 비교해요." : nil
+            )
+        }
+        summaries.sort(by: Self.preferredClosetComparisonSummary)
+        var nextRank = 1
+        for index in summaries.indices where summaries[index].evidenceState == .comparable {
+            summaries[index].rank = nextRank
+            nextRank += 1
+        }
+        return FitMatchClosetComparisonBatchSummary(
+            targetProductID: targetProductID, comparisonGroup: comparisonGroup, items: summaries
+        )
+    }
 
     /// Produces the read-only list preview for every server-approved Closet
     /// item in the target comparison group. This does not create comparison

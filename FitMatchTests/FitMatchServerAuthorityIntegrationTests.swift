@@ -686,6 +686,7 @@ struct FitMatchServerAuthorityIntegrationTests {
 
         let authorization = try await coordinator.authorizeReferenceCandidate(
             referenceClientItemID: clientItemID,
+            referenceClosetItemID: closetItemID,
             localReferenceSnapshot: Self.localSnapshot(
                 productName: referenceFixture.request.productName
             ),
@@ -704,6 +705,8 @@ struct FitMatchServerAuthorityIntegrationTests {
         )
         #expect(authorization.isAllowed)
         #expect(await remote.selectedCandidateIDs == [closetItemID])
+        #expect(await remote.singleClosetIDs == [closetItemID])
+        #expect(await remote.listCallCount == 0)
     }
 
     @Test func referencePlanUsesDBAutomaticWhenLocalRepresentativeIsFalse() async throws {
@@ -1046,6 +1049,48 @@ struct FitMatchServerAuthorityIntegrationTests {
                 #expect(error == .comparisonNotReady(state))
             }
             #expect(await remote.candidateCallCount == 0)
+        }
+    }
+
+    @Test func freshSelectedEvidenceSkipsEligibleRPCButCannotBypassBeginRejection() async throws {
+        let variantID = UUID()
+        let base = try Self.beginComparisonAuthorization(targetVariantID: variantID)
+        let referenceID = try #require(base.reference).closetItemID
+        let sizeID = UUID()
+        for mismatchedIdentity in [false, true] {
+            let json: [String: Any] = [
+                "allowed": true, "decision": "MANUAL_EXTENDED", "mode": "MANUAL_EXTENDED",
+                "manual_explicit": true,
+                "reference_closet_item_id": referenceID.uuidString,
+                "target_product_id": (mismatchedIdentity ? UUID() : base.target.productID).uuidString,
+                "target_variant_id": variantID.uuidString,
+                "authorized_candidate_product_size_ids": [sizeID.uuidString],
+                "candidates": [] as [String], "candidate_authority_fingerprint": "fresh-selected"
+            ]
+            let selected = try JSONDecoder().decode(VNextEligibleCandidateSizesDTO.self,
+                from: JSONSerialization.data(withJSONObject: json))
+            let authorization = FitMatchServerReferenceAuthorization(
+                decision: .manualSelection, reason: nil, target: base.target,
+                reference: base.reference, referenceAuthority: base.referenceAuthority,
+                candidate: base.candidate, candidateState: base.candidateState,
+                targetVariantID: variantID, authorizedCandidateSizeIDs: [sizeID],
+                selectedEligibility: selected
+            )
+            let remote = ServerAuthorityRemoteStub(resolutions: [], observations: [], runtimes: [],
+                beginError: .comparisonBeginRejected("stale_candidate_fingerprint"))
+            let expected: FitMatchServerAuthorityError = mismatchedIdentity
+                ? .comparisonBeginMalformed("selected_evidence_identity_mismatch")
+                : .comparisonBeginRejected("stale_candidate_fingerprint")
+            await #expect(throws: expected) {
+                try await FitMatchServerAuthorityCoordinator(remote: remote)
+                    .beginAuthorizedComparison(authorization)
+            }
+            #expect(await remote.eligibleCallCount == 0)
+            #expect(await remote.beginCallCount == (mismatchedIdentity ? 0 : 1))
+            if !mismatchedIdentity {
+                #expect(await remote.beginRequests.first?.candidateAuthorityFingerprint == "fresh-selected")
+                #expect(await remote.beginRequests.first?.candidateProductSizeIDs == [sizeID])
+            }
         }
     }
 
@@ -2332,6 +2377,9 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
     private(set) var observationCallCount = 0
     private(set) var runtimeCallCount = 0
     private(set) var selectedCandidateIDs: [UUID] = []
+    private(set) var singleClosetIDs: [UUID] = []
+    private(set) var listCallCount = 0
+    private(set) var eligibleCallCount = 0
     private(set) var candidateCallCount = 0
     private(set) var beginCallCount = 0
     private(set) var beginRequests: [FitMatchBeginComparisonRequest] = []
@@ -2392,7 +2440,14 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
 
     func listClosetItems() async throws -> FitMatchClosetItemsResponse {
         eventLog.append("list")
+        listCallCount += 1
         return closetResponse
+    }
+
+    func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse {
+        singleClosetIDs.append(closetItemID)
+        return .init(state: closetResponse.state,
+                     items: closetResponse.items.filter { $0.closetItemID == closetItemID })
     }
 
     func findReferenceCandidates(targetProductID: UUID) async throws
@@ -2417,6 +2472,7 @@ private actor ServerAuthorityRemoteStub: FitMatchServerAuthorityRemoteServicing 
         targetVariantID: UUID,
         manualExplicit: Bool
     ) async throws -> VNextEligibleCandidateSizesDTO {
+        eligibleCallCount += 1
         guard !eligibleResponses.isEmpty else {
             throw StubError.missingEligibleResponse
         }

@@ -219,48 +219,16 @@ struct AddClosetItemView: View {
                     normalizeCategorySelection()
                 }
 
-                if isEditing {
-                    AddClosetSelectionMenu(
-                        title: "카테고리",
-                        value: selectedCategoryOption?.displayName ?? viewModel.category.rawValue,
-                        options: serviceCategories,
-                        optionTitle: \.displayName,
-                        selection: Binding(
-                            get: { selectedCategoryOption ?? serviceCategories[0] },
-                            set: { option in
-                                viewModel.categoryCode = option.code
-                                viewModel.category = ClothingCategory.fromTaxonomyCode(option.code)
-                            }
-                        )
-                    ) { _ in
-                        normalizeDetailCategorySelection()
-                    }
-
-                    AddClosetSelectionMenu(
-                        title: "세부 카테고리",
-                        value: selectedDetailOption?.displayName ?? "선택",
-                        options: detailCategories,
-                        optionTitle: \.displayName,
-                        selection: Binding(
-                            get: { selectedDetailOption ?? detailCategories[0] },
-                            set: { option in
-                                viewModel.detailCategoryCode = option.code
-                                viewModel.detailCategory = ClosetDetailCategory.fromTaxonomyCode(option.code)
-                            }
-                        )
+                AddClosetSelectionMenu(
+                    title: "카테고리",
+                    value: viewModel.selectedManualCategory?.displayName ?? "선택 필요",
+                    options: FitMatchComparisonGroup.allCases,
+                    optionTitle: \.displayName,
+                    selection: Binding(
+                        get: { viewModel.selectedManualCategory ?? .tops },
+                        set: { viewModel.selectManualCategory($0) }
                     )
-                } else {
-                    AddClosetSelectionMenu(
-                        title: "카테고리",
-                        value: viewModel.selectedManualCategory?.displayName ?? "선택 필요",
-                        options: FitMatchComparisonGroup.allCases,
-                        optionTitle: \.displayName,
-                        selection: Binding(
-                            get: { viewModel.selectedManualCategory ?? .tops },
-                            set: { viewModel.selectManualCategory($0) }
-                        )
-                    )
-                }
+                )
             }
         }
     }

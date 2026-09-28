@@ -57,7 +57,7 @@ struct VNextComparisonBatchAnalysis: Equatable, @unchecked Sendable {
 struct VNextComparisonEngineAdapter {
     static let engineVersion = "fitmatch-ios-vnext-snapshot-v1"
 
-    private let engine: MeasurementComparisonEngine
+    private let scoreCache: VNextAuthorizedScoreCache
 
     /// These codes originate in the immutable DB begin snapshot. They are
     /// intentionally mapped only to presentation diagnostics after the engine
@@ -67,8 +67,8 @@ struct VNextComparisonEngineAdapter {
         case designAxisDifference = "DESIGN_AXIS_DIFFERENCE"
     }
 
-    init(engine: MeasurementComparisonEngine = MeasurementComparisonEngine()) {
-        self.engine = engine
+    init(scoreCache: VNextAuthorizedScoreCache = VNextAuthorizedScoreCache()) {
+        self.scoreCache = scoreCache
     }
 
     func analyze(_ begin: VNextBeginComparisonDTO) throws -> VNextComparisonBatchAnalysis {
@@ -129,9 +129,9 @@ struct VNextComparisonEngineAdapter {
                 .first(where: excluded.contains) {
                 throw VNextComparisonEngineAdapterError.excludedMetricUsed(excludedCode)
             }
-            guard let result = engine.compareAuthorizedEvidence(
+            guard let result = scoreCache.compare(
                 candidate.comparisonMeasurements,
-                minimumComparableCount: candidate.authorization.minimumCommon
+                minimum: candidate.authorization.minimumCommon
                     ?? begin.snapshot.authorization.minimumCommon
                     ?? 1
             ) else {

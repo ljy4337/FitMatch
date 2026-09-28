@@ -86,6 +86,23 @@ nonisolated enum FitMatchVNextContractValidator {
             guard closetIDs.insert(candidate.closetItemID).inserted else {
                 throw FitMatchVNextContractError.conflictingProof("candidate_closet_identity")
             }
+            if let preview = candidate.comparisonPreview {
+                guard candidate.allowed, preview.allowed, preview.manualExplicit == true,
+                      preview.referenceClosetItemID == candidate.closetItemID,
+                      preview.targetProductID == targetProductID,
+                      preview.targetVariantID == targetVariantID,
+                      !preview.authorizedCandidateProductSizeIDs.isEmpty,
+                      Set(preview.authorizedCandidateProductSizeIDs)
+                        == Set(candidate.eligibleProductSizeIDs),
+                      Set(preview.authorizedCandidateProductSizeIDs)
+                        == Set(preview.candidates.map(\.productSizeID)),
+                      Set(preview.authorizedCandidateProductSizeIDs).count
+                        == preview.authorizedCandidateProductSizeIDs.count,
+                      Set(preview.candidates.map(\.productSizeID)).count
+                        == preview.candidates.count else {
+                    throw FitMatchVNextContractError.conflictingProof("candidate_preview_identity")
+                }
+            }
         }
     }
 

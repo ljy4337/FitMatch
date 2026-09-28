@@ -134,6 +134,87 @@ struct FitMatchVNextContractTests {
             == Set([fixture.sizeA, fixture.sizeB]))
     }
 
+    @Test func serverListPreviewMatchesDetailAndNeverUsesWrongTargetEvidence() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let root = try #require(JSONSerialization.jsonObject(with: Data(fixture.json().utf8)) as? [String: Any])
+        let snapshot = try #require(root["snapshot"] as? [String: Any])
+        let target = try #require(snapshot["target_snapshot"] as? [String: Any])
+        let closetID = UUID()
+        let previewJSON: [String: Any] = [
+            "allowed": true, "decision": "MANUAL_EXTENDED", "mode": "MANUAL_EXTENDED",
+            "manual_explicit": true, "reference_closet_item_id": closetID.uuidString,
+            "target_product_id": fixture.productID.uuidString,
+            "target_variant_id": fixture.variantID.uuidString,
+            "authorized_candidate_product_size_ids": [fixture.sizeA.uuidString, fixture.sizeB.uuidString],
+            "candidates": try #require(target["candidates"])
+        ]
+        let preview = try JSONDecoder().decode(VNextEligibleCandidateSizesDTO.self,
+            from: JSONSerialization.data(withJSONObject: previewJSON))
+        let candidate = FitMatchServerReferenceSelectionCandidate(
+            comparisonPreview: preview, clientItemID: UUID(), closetItemID: closetID,
+            comparisonGroupCode: "A", decision: .manualSelection, allowed: true,
+            reasonCode: nil, reason: nil, commonMeasurementCount: 1
+        )
+        let service = RecommendationService()
+        let group = try #require(FitMatchComparisonGroup(rawValue: "A"))
+        let batch = service.makeServerClosetComparisonBatchSummary(
+            targetProductID: fixture.productID, comparisonGroup: group, candidates: [candidate])
+        let summary = try #require(batch.items.first)
+        let detail = try VNextComparisonEngineAdapter().analyze(begin)
+        #expect(summary.recommendedProductSizeID == detail.recommended.productSizeID)
+        #expect(summary.similarityPercent == detail.recommended.result.score)
+        #expect(summary.commonMeasurementCount == detail.recommended.result.comparedItems.count)
+        let mismatched = service.makeServerClosetComparisonBatchSummary(
+            targetProductID: UUID(), comparisonGroup: group, candidates: [candidate])
+        #expect(mismatched.items.first?.similarityPercent == nil)
+    }
+
+    @Test func detailReusesPreviewArithmeticButStillRejectsDeniedBegin() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let cache = VNextAuthorizedScoreCache()
+        for candidate in begin.snapshot.target.candidates {
+            _ = try #require(cache.compare(candidate.comparisonMeasurements, minimum: 1))
+        }
+        let computations = cache.computationCount
+        let adapter = VNextComparisonEngineAdapter(scoreCache: cache)
+        let result = try adapter.analyze(begin)
+        #expect(result.recommended.productSizeID == fixture.sizeA)
+        #expect(cache.computationCount == computations)
+        let denied: VNextBeginComparisonDTO = try decode(fixture.json(allowed: false))
+        #expect(throws: (any Error).self) { try adapter.analyze(denied) }
+        #expect(cache.computationCount == computations)
+    }
+
+    @Test func scoreCacheInvalidatesChangedEvidenceWeightsAndMinimum() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let measurements = try #require(begin.snapshot.target.candidates.first).comparisonMeasurements
+        let cache = VNextAuthorizedScoreCache()
+        let baseline = try #require(cache.compare(measurements, minimum: 1))
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        #expect(cache.computationCount == 1)
+        let data = try JSONEncoder().encode(measurements)
+        let original = try #require(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        var weighted = original
+        weighted[0]["weight"] = 2.0
+        let weightedInput = try JSONDecoder().decode([VNextAuthorizedMeasurementDTO].self,
+            from: JSONSerialization.data(withJSONObject: weighted))
+        _ = try #require(cache.compare(weightedInput, minimum: 1))
+        #expect(cache.computationCount == 2)
+        var changed = original
+        changed[0]["target_value"] = 54.0
+        changed[0]["difference"] = 4.0
+        changed[0]["absolute_difference"] = 4.0
+        let changedInput = try JSONDecoder().decode([VNextAuthorizedMeasurementDTO].self,
+            from: JSONSerialization.data(withJSONObject: changed))
+        let revised = try #require(cache.compare(changedInput, minimum: 1))
+        #expect(revised.score != baseline.score)
+        #expect(cache.computationCount == 3)
+        #expect(cache.compare(measurements, minimum: 2) == nil)
+    }
+
     @Test func engineUsesOneServerAuthorizedCanonicalMetricWithCountBasedReliability() throws {
         let fixture = ComparisonBeginFixture()
         let begin: VNextBeginComparisonDTO = try decode(fixture.json())
