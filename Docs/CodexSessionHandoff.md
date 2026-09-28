@@ -5,6 +5,7 @@
 - 기준 옷 legacy 데이터는 hydration 호환으로만 남기고 자동 선택·정렬·비교 시작에 사용하지 않는다. 후보 미리보기에서도 garment type 일치가 동률 정렬에 영향을 주지 않게 했다. 결과 화면은 별점/정사이즈 추천 표현 없이 서버 승인 점수와 사용 실측 수 기반 신뢰도를 분리해 표시한다.
 - 앱 fallback 상의 가중치는 가슴 2.0, 어깨 1.5, 총장 1.0, 소매 1.0 및 공통 실측 1개 최소로 정렬했다. 연결 DB `hnkplvyegonlhumlejst`에도 `align_top_comparison_policy` migration을 적용했다(remote ledger `20260928042404`). `tshirt`는 active / minimum 1 / required-any 0이며 canonical과 기존 source-native 가슴·어깨·소매 가중치도 각각 2.0·1.5·1.0으로 read-only postflight 확인했다. 상품·Closet·History·쇼핑몰 mapping 데이터는 수정하지 않았다. 기존 `20260923110000_same_comparison_group_only.sql`의 DB group gate는 Handoff의 2026-09-23 개발 DB 적용 기록을 재사용했다.
 - PASS: focused XCTest 106 tests / parameter 포함 108 runs, failed 0 (`/tmp/FitMatchPolicyCurrent3/Logs/Test/Test-FitMatch-2026.09.28_12-53-55-+0900.xcresult`). 마지막 “비교할 내 옷 변경” 문구 및 상세 type 정렬 제거 뒤 `FitMatchComparisonPermitSequencingTests` 6/6 PASS (`/tmp/FitMatchPolicyCurrent4/Logs/Test/Test-FitMatch-2026.09.28_13-01-10-+0900.xcresult`). 최종 Debug simulator build exit 0 (`/tmp/FitMatchPolicyBuildFinal`). 실제 인증 DB candidate→begin→complete 및 실기기 UI E2E는 NOT RUN.
+- 추가 PASS: DB 적용 뒤 동일 focused XCTest 106/106 PASS (`/tmp/FitMatchPolicyCommitVerify`, exit 0). `git diff --cached --check` 및 protected-scroll 검사 PASS. 구현과 SQL은 `dca8294` (`policy: align group comparison flow`)으로 커밋했고 `origin/connectDB`에 푸시했다. 실기기 UI E2E는 여전히 NOT RUN이다.
 
 ## 2026-09-28 현재 로컬 소스 커밋·푸시 완료
 
