@@ -770,7 +770,7 @@ struct ProductURLParserService {
             sourceType: isMusinsa ? .marketplace : .officialStore,
             sourceName: isMusinsa ? "무신사" : "유니클로 공식몰",
             brandName: isMusinsa ? "온보딩 무신사 브랜드" : "유니클로",
-            productName: isMusinsa ? "온보딩 무신사 기준옷" : "온보딩 유니클로 기준옷",
+            productName: isMusinsa ? "온보딩 무신사 상의" : "온보딩 유니클로 상의",
             category: .top,
             detailCategory: .shortSleeve,
             sizes: [size],

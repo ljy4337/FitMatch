@@ -1480,6 +1480,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         )
         original.fitMemo = "기존 메모"
         original.fitPreference = .regular
+        original.isRepresentative = true // Legacy data remains compatibility-only.
         context.insert(original)
         try context.save()
 
@@ -1506,6 +1507,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         #expect(reconstructed.fitPreference == .semiOver)
         #expect(reconstructed.measurements == originalMeasurements)
         #expect(reconstructed.classificationAuthorityProvenance == .userExplicit)
+        #expect(reconstructed.isRepresentative)
     }
 
     /// CM-007: top and bottom reference mutations share the real conflict

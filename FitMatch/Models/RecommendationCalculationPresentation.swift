@@ -16,8 +16,8 @@ struct RecommendationCalculationPresentation {
     private static func exclusionReason(_ reason: MeasurementExclusionReason) -> String {
         switch reason {
         case .missingProductValue: return "상품 치수 없음"
-        case .missingReferenceValue: return "기준 옷 치수 없음"
-        case .missingBothValues: return "상품과 기준 옷 모두 치수 없음"
+        case .missingReferenceValue: return "선택한 내 옷 치수 없음"
+        case .missingBothValues: return "상품과 선택한 내 옷 모두 치수 없음"
         case .incompatibleMeasurementCode,
              .unverifiedProductDefinition,
              .unverifiedReferenceDefinition:

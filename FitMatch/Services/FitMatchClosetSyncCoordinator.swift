@@ -131,9 +131,6 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         let userID: UUID
         let closetItemID: UUID
         let request: FitMatchUpsertClosetItemRequest
-        let wantsReference: Bool
-        let possibleReplacedReferenceClientIDs: Set<UUID>
-        var shouldRetryReferenceMutation: Bool
     }
 
     init(
@@ -828,8 +825,6 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             return .failed("선택한 분류를 서버에 안전하게 저장할 수 없습니다. 다시 확인해 주세요.")
         }
 
-        let possiblyReplacedReferenceClientIDs: Set<UUID> = []
-
         let updateResponse: FitMatchUpsertClosetItemResponse
         do {
             updateResponse = try await remote.updateClosetItem(
@@ -847,10 +842,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             let receipt = LinkedEditAcceptedReceipt(
                 userID: userID,
                 closetItemID: currentRow.closetItemID,
-                request: request,
-                wantsReference: false,
-                possibleReplacedReferenceClientIDs: possiblyReplacedReferenceClientIDs,
-                shouldRetryReferenceMutation: false
+                request: request
             )
             acceptedLinkedEditReceipts[draft.item.id] = receipt
             return .reconciliationRequired(
@@ -864,10 +856,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         let receipt = LinkedEditAcceptedReceipt(
             userID: userID,
             closetItemID: currentRow.closetItemID,
-            request: request,
-            wantsReference: false,
-            possibleReplacedReferenceClientIDs: possiblyReplacedReferenceClientIDs,
-            shouldRetryReferenceMutation: false
+            request: request
         )
         acceptedLinkedEditReceipts[draft.item.id] = receipt
         return await reconcileAcceptedLinkedEdit(
@@ -878,33 +867,16 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
     }
 
     /// Once `update_closet_item` has acknowledged an edit, this path never
-    /// sends that update again. It only completes a necessary reference
-    /// mutation and projects an authoritative list receipt into SwiftData.
+    /// sends that update again. It projects an authoritative list receipt
+    /// into SwiftData; legacy reference flags are never mutated here.
     private func reconcileAcceptedLinkedEdit(
         _ initialReceipt: LinkedEditAcceptedReceipt,
         item: UserFit,
         modelContext: ModelContext
     ) async -> FitMatchLinkedClosetEditSaveOutcome {
-        var receipt = initialReceipt
+        let receipt = initialReceipt
         guard isCurrentSyncUser(receipt.userID) else {
             return .failed("로그인 상태가 변경되어 수정 결과를 안전하게 확인할 수 없습니다.")
-        }
-
-        if receipt.wantsReference, receipt.shouldRetryReferenceMutation {
-            do {
-                _ = try await remote.setClosetReference(
-                    closetItemID: receipt.closetItemID,
-                    isReference: true
-                )
-                receipt.shouldRetryReferenceMutation = false
-                acceptedLinkedEditReceipts[item.id] = receipt
-            } catch {
-                // A lost response is ambiguous. The following list receipt is
-                // the authority; only retry set-reference if it says false.
-            }
-            guard isCurrentSyncUser(receipt.userID) else {
-                return .failed("로그인 상태가 변경되어 수정 결과를 안전하게 확인할 수 없습니다.")
-            }
         }
 
         let rows: FitMatchClosetItemsResponse
@@ -961,20 +933,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             }
         }
 
-        guard !receipt.wantsReference || record.isReference else {
-            // Preserve the accepted update and retry only the reference
-            // mutation after explicit consent; do not re-run update.
-            receipt.shouldRetryReferenceMutation = true
-            acceptedLinkedEditReceipts[item.id] = receipt
-            return .reconciliationRequired(
-                "사이즈는 수정됐지만 옷장 저장 상태를 서버에서 확인하지 못했습니다. 등록 결과를 다시 확인해 주세요."
-            )
-        }
-
         do {
             try projectAuthoritativeLinkedEdit(
                 record,
-                allRecords: rows.items,
                 receipt: receipt,
                 to: item,
                 modelContext: modelContext
@@ -1121,39 +1082,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         })
     }
 
-    /// Preserve the app's existing reference policy as an additional consent
-    /// signal. The subsequent list receipt remains the authority for which
-    /// rows the server actually changed; this local scan merely prevents a
-    /// visibly represented reference from being released without consent.
-    private func possibleLocalReferenceConflicts(
-        excluding clientItemID: UUID,
-        request: FitMatchUpsertClosetItemRequest,
-        modelContext: ModelContext
-    ) throws -> Set<UUID> {
-        let targetAudience = FitMatchCanonicalAudience.code(
-            from: request.item.genderCode
-        )
-        return Set(try modelContext.fetch(FetchDescriptor<UserFit>()).compactMap { local in
-            guard local.id != clientItemID,
-                  local.isActiveClosetItem,
-                  local.isRepresentative,
-                  FitMatchCanonicalAudience.code(from: local.resolvedGenderCode)
-                    == targetAudience else {
-                return nil
-            }
-            if let groupCode = request.comparisonGroupCode {
-                guard local.comparisonGroup?.rawValue == groupCode else { return nil }
-            } else {
-                guard local.resolvedCategoryCode == request.item.categoryCode,
-                      local.resolvedDetailCategoryCode == request.item.detailCode else { return nil }
-            }
-            return local.id
-        })
-    }
-
     private func projectAuthoritativeLinkedEdit(
         _ record: FitMatchClosetItemRecord,
-        allRecords: [FitMatchClosetItemRecord],
         receipt: LinkedEditAcceptedReceipt,
         to item: UserFit,
         modelContext: ModelContext
@@ -1168,25 +1098,6 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         }
 
         try apply(record, to: item, modelContext: modelContext)
-        // set_closet_reference may have atomically released another local
-        // reference. Apply only the candidate rows established in the
-        // preflight, not arbitrary unrelated unsaved Closet edits.
-        for clientItemID in receipt.possibleReplacedReferenceClientIDs {
-            guard let remoteRecord = allRecords.first(where: {
-                $0.clientItemID == clientItemID
-            }) else {
-                continue
-            }
-            let localMatches = try modelContext.fetch(
-                FetchDescriptor<UserFit>(predicate: #Predicate { $0.id == clientItemID })
-            )
-            guard localMatches.count <= 1 else {
-                throw AuthoritativeRegistrationProjectionError.duplicateLocalClientItemID
-            }
-            if let localReference = localMatches.first {
-                try apply(remoteRecord, to: localReference, modelContext: modelContext)
-            }
-        }
         // No broad rollback on failure: this ModelContext can carry pending
         // edits from other screens. A failed save leaves the exact accepted
         // receipt available for a read-back-only retry.
@@ -1344,35 +1255,19 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 }
             }
 
-            // Only mutations require an intervening authoritative receipt.
-            // On an unchanged pass the first list result is already the exact
-            // input for reference reconciliation and final hydration.
-            let beforeReference: FitMatchClosetItemsResponse
-            if didMutateCloset {
-                beforeReference = try await remote.listClosetItems()
-                guard isCurrentSyncUser(userID) else { return }
-                guard beforeReference.state == "ready" else {
-                    throw FitMatchSupabaseProductResolverError.authenticationRequired
-                }
-                remoteItemsByClientID = try validatedClosetIndex(beforeReference)
-            } else {
-                beforeReference = remoteResponse
-            }
-            let didMutateReference = try await synchronizeReferenceAuthority(
-                localItems: localItems,
-                userID: userID
-            )
-            guard isCurrentSyncUser(userID) else { return }
-
+            // Only Closet mutations require an intervening authoritative
+            // receipt. Legacy reference flags are compatibility data only;
+            // synchronization must never set or clear them.
             let authoritative: FitMatchClosetItemsResponse
-            if didMutateCloset || didMutateReference {
+            if didMutateCloset {
                 authoritative = try await remote.listClosetItems()
                 guard isCurrentSyncUser(userID) else { return }
                 guard authoritative.state == "ready" else {
                     throw FitMatchSupabaseProductResolverError.authenticationRequired
                 }
+                remoteItemsByClientID = try validatedClosetIndex(authoritative)
             } else {
-                authoritative = beforeReference
+                authoritative = remoteResponse
             }
             remoteItemsByClientID = try validatedClosetIndex(authoritative)
 
@@ -1454,64 +1349,6 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             print("[FitMatchClosetSync] sync failed: \(error.localizedDescription)")
             #endif
         }
-    }
-
-    private func synchronizeReferenceAuthority(
-        localItems: [UserFit],
-        userID: UUID
-    ) async throws -> Bool {
-        guard isCurrentSyncUser(userID) else { return false }
-        let localByClientID = Dictionary(
-            uniqueKeysWithValues: localItems.map { ($0.id, $0) }
-        )
-        let setCandidates = localItems.filter { item in
-            item.isRepresentative
-                && remoteItemsByClientID[item.id]?.isReference == false
-        }.sorted { $0.id.uuidString < $1.id.uuidString }
-        var didMutateReference = false
-
-        for item in setCandidates {
-            guard isCurrentSyncUser(userID) else { return false }
-            guard let remoteItem = remoteItemsByClientID[item.id] else { continue }
-            _ = try await remote.setClosetReference(
-                closetItemID: remoteItem.closetItemID,
-                isReference: true
-            )
-            didMutateReference = true
-            guard isCurrentSyncUser(userID) else { return false }
-        }
-
-        if !setCandidates.isEmpty {
-            let refreshed = try await remote.listClosetItems()
-            guard isCurrentSyncUser(userID) else { return false }
-            guard refreshed.state == "ready" else {
-                throw FitMatchSupabaseProductResolverError.authenticationRequired
-            }
-            remoteItemsByClientID = Dictionary(
-                uniqueKeysWithValues: refreshed.items.map { ($0.clientItemID, $0) }
-            )
-        }
-
-        let unsetCandidates = remoteItemsByClientID.values.filter { remoteItem in
-            guard remoteItem.isReference,
-                  let localItem = localByClientID[remoteItem.clientItemID] else {
-                return false
-            }
-            return !localItem.isRepresentative
-        }.sorted { $0.clientItemID.uuidString < $1.clientItemID.uuidString }
-
-        for remoteItem in unsetCandidates {
-            guard isCurrentSyncUser(userID) else { return false }
-            // A remote-only row is absent from localByClientID and is therefore
-            // hydration input, never an implicit first-login unset intent.
-            _ = try await remote.setClosetReference(
-                closetItemID: remoteItem.closetItemID,
-                isReference: false
-            )
-            didMutateReference = true
-            guard isCurrentSyncUser(userID) else { return false }
-        }
-        return didMutateReference
     }
 
     @discardableResult

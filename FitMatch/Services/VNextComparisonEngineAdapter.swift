@@ -194,10 +194,7 @@ struct VNextComparisonEngineAdapter {
             .comparisonMeasurements.count ?? 0
         let coverage = (Double(recommendedEvidenceCount) / Double(activePolicyMetricCount))
             .rounded(toPlaces: 5)
-        let reliability = Self.reliability(
-            evidenceCount: recommendedEvidenceCount,
-            coverage: coverage
-        )
+        let reliability = Self.reliability(evidenceCount: recommendedEvidenceCount)
         let completion = VNextComparisonCompletionPayload(
             recommendedProductSizeID: recommended.productSizeID,
             score: Double(recommended.result.score),
@@ -267,12 +264,10 @@ struct VNextComparisonEngineAdapter {
         )]
     }
 
-    private static func reliability(evidenceCount: Int, coverage: Double) -> Int {
-        if evidenceCount >= 4, coverage >= 0.75 { return 5 }
-        if evidenceCount >= 3, coverage >= 0.5 { return 4 }
-        if evidenceCount >= 2 { return 3 }
-        if evidenceCount == 1 { return 2 }
-        return 1
+    private static func reliability(evidenceCount: Int) -> Int {
+        // Coverage remains a separately persisted snapshot fact. Reliability
+        // reflects only the number of server-approved metrics actually used.
+        min(5, max(1, evidenceCount))
     }
 
     private static func presentationExclusions(

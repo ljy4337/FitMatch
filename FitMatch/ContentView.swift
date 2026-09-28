@@ -489,7 +489,7 @@ private struct ScreenshotHomeView: View {
                     GridRow {
                         SmallInfoCard(title: "내 옷장", value: "2개", systemImage: "tshirt") {
                             Divider()
-                            Text("기준 옷")
+                            Text("최근 추가")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                             Text("UNIQLO Daily Oxford Shirt")
@@ -535,10 +535,10 @@ private struct ScreenshotCompareView: View {
 
                         if showsMissingBasis {
                             VStack(alignment: .leading, spacing: 10) {
-                                Label("내 옷장에 이 상품과 같은 기준 옷이 없습니다. 어떤 옷과 비교할까요?", systemImage: "tshirt")
+                                Label("내 옷장에 같은 비교 그룹의 옷이 없습니다.", systemImage: "tshirt")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
-                                Label("비교할 옷 선택하기", systemImage: "list.bullet.rectangle")
+                                Label("확인", systemImage: "checkmark")
                                     .font(.subheadline.weight(.bold))
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 42)
@@ -590,8 +590,8 @@ private struct ScreenshotClosetEmptyView: View {
 private struct ScreenshotClosetListView: View {
     var body: some View {
         List {
-            ScreenshotClosetCard(title: "UNIQLO Daily Oxford Shirt", source: "유니클로 공식몰", meta: "남성 / 상의 / 셔츠 / L", isRepresentative: true)
-            ScreenshotClosetCard(title: "MUSINSA STANDARD Favorite Hoodie", source: "직접 입력", meta: "공용 / 상의 / 후드 / L", isRepresentative: false)
+            ScreenshotClosetCard(title: "UNIQLO Daily Oxford Shirt", source: "유니클로 공식몰", meta: "남성 / 상의 / 셔츠 / L")
+            ScreenshotClosetCard(title: "MUSINSA STANDARD Favorite Hoodie", source: "직접 입력", meta: "공용 / 상의 / 후드 / L")
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
@@ -612,7 +612,6 @@ private struct ScreenshotClosetCard: View {
     let title: String
     let source: String
     let meta: String
-    let isRepresentative: Bool
 
     var body: some View {
         FitMatchCard {
@@ -629,14 +628,6 @@ private struct ScreenshotClosetCard: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    VStack(alignment: .trailing, spacing: 6) {
-                        Label(isRepresentative ? "기준 옷" : "기준 옷 설정", systemImage: isRepresentative ? "heart.fill" : "heart")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(isRepresentative ? .red : .primary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(.primary.opacity(0.08), in: Capsule())
-                    }
                 }
                 Text("어깨 48cm · 가슴단면 57cm · 총장 75cm · 소매 62cm")
                     .font(.caption)
@@ -675,7 +666,6 @@ private struct ScreenshotAddClosetView: View {
                 ScreenshotFormCard(title: "분류") {
                     ScreenshotFormInfoRow(title: "성별", value: isFilled ? "남성" : "남성")
                     ScreenshotFormInfoRow(title: "카테고리", value: "상의")
-                    ScreenshotFormInfoRow(title: "세부 카테고리", value: isFilled ? "셔츠" : "민소매")
                 }
 
                 ScreenshotFormCard(title: "상품 정보") {
@@ -704,7 +694,7 @@ private struct ScreenshotAddClosetView: View {
             .padding(.bottom, 28)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("기준 옷")
+        .navigationTitle("내 옷 추가")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -955,13 +945,13 @@ private struct ScreenshotResultView: View {
 
                 FitMatchCard {
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader(title: "비교 기준", subtitle: "기준 옷과 추천 상품 실측 차이를 함께 확인합니다.")
-                        ScreenshotInfoRow(title: "기준 옷", value: "UNIQLO Daily Oxford Shirt")
-                        ScreenshotInfoRow(title: "기준 옷 출처", value: "유니클로 공식몰")
+                        SectionHeader(title: "비교 정보", subtitle: "선택한 내 옷과 상품 실측 차이를 함께 확인합니다.")
+                        ScreenshotInfoRow(title: "비교할 내 옷", value: "UNIQLO Daily Oxford Shirt")
+                        ScreenshotInfoRow(title: "내 옷 출처", value: "유니클로 공식몰")
                         ScreenshotInfoRow(title: "상품 출처", value: "무신사")
                         ScreenshotInfoRow(title: "비교 방식", value: "같은 대분류 기준 비교")
                         Divider()
-                        SectionHeader(title: "상품 실측(차이)", subtitle: "괄호 안 값은 기준 옷과의 차이입니다.")
+                        SectionHeader(title: "상품 실측(차이)", subtitle: "괄호 안 값은 선택한 내 옷과의 차이입니다.")
                         Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 14) {
                             GridRow {
                                 ScreenshotMeasure(title: "어깨", value: "52cm", diff: "+4cm")

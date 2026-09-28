@@ -96,8 +96,8 @@ final class FitMatchComparedProductClosetSubmissionAction {
     }
 
     /// The link path must be server-first: it allocates one stable
-    /// client_item_id, performs the atomic Closet upsert, optionally asks the
-    /// server to make that row a reference, and only then persists SwiftData.
+    /// client_item_id, performs the atomic Closet upsert, and only then
+    /// persists SwiftData.
     /// A remote success followed by a local failure deliberately keeps the
     /// same pending id for retry; it never deletes the accepted server row.
     func submitServerFirst(
@@ -227,20 +227,6 @@ final class FitMatchComparedProductClosetSubmissionAction {
             }
         }
 
-        var receiptReferenceState = false
-        if submission.localRequest.isRepresentative {
-            do {
-                let response = try await remote.setClosetReference(
-                    closetItemID: acceptedClosetItemID,
-                    isReference: true
-                )
-                receiptReferenceState = response.isReference
-            } catch {
-                // An absent reply is not evidence that the server left this
-                // row non-reference. The following list receipt is final.
-            }
-        }
-
         guard isCurrentSubmissionUser(submissionUserID, currentUserID) else {
             return .completed(.serverAcceptedLocalPersistenceFailed(
                 clientItemID: submission.remoteRequest.clientItemID
@@ -254,19 +240,12 @@ final class FitMatchComparedProductClosetSubmissionAction {
             // below, so production cannot construct a UserFit from the
             // pre-submit ProductSize.
             let fallback = FitMatchComparedProductClosetRegistration.save(
-                submission.localRequest.replacingRepresentative(receiptReferenceState),
+                submission.localRequest.replacingRepresentative(false),
                 in: modelContext,
                 persist: persist
             )
             switch fallback {
             case .saved(let item):
-                if submission.localRequest.isRepresentative,
-                   !receiptReferenceState {
-                    return .completed(.savedWithoutReference(
-                        item,
-                        "옷은 등록했지만 기준 옷으로 지정할 수 없습니다."
-                    ))
-                }
                 return .completed(.saved(item))
             case .persistenceFailed:
                 return .completed(.serverAcceptedLocalPersistenceFailed(
@@ -319,12 +298,6 @@ final class FitMatchComparedProductClosetSubmissionAction {
             ))
         }
 
-        if submission.localRequest.isRepresentative && !receipt.isReference {
-            return .completed(.savedWithoutReference(
-                item,
-                "옷은 등록했지만 기준 옷으로 지정할 수 없습니다."
-            ))
-        }
         return .completed(.saved(item))
     }
 

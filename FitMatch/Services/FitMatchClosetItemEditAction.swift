@@ -36,9 +36,9 @@ enum FitMatchClosetItemEditAction {
         // `category` / `detailCategory` setters intentionally clear cached
         // comparison attributes while a form is being edited. The form has
         // already resolved its own explicit Closet classification before this
-        // persistence action is called, so retain that exact form snapshot
-        // rather than leaving a formerly valid reference without a family or
-        // sleeve when only its measurements are saved.
+        // persistence action is called, so retain that exact form snapshot.
+        // Legacy `isRepresentative` is deliberately left untouched: editing
+        // an item must not silently rewrite deprecated reference data.
         item.garmentTypeRawValue = editedItem.garmentTypeRawValue
         item.sleeveTypeRawValue = editedItem.sleeveTypeRawValue
         item.constructionTypeRawValue = editedItem.constructionTypeRawValue
@@ -49,7 +49,6 @@ enum FitMatchClosetItemEditAction {
         item.fitMemo = editedItem.fitMemo
         item.fitPreference = editedItem.fitPreference
         item.satisfaction = editedItem.satisfaction
-        item.isRepresentative = false
         item.measurementRecords.forEach(modelContext.delete)
         item.replaceMeasurementRecords(with: editedItem.measurementRecords)
         _ = ComparisonProfileMatcher().profile(for: item)

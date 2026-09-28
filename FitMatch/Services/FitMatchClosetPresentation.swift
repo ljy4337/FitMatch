@@ -12,7 +12,7 @@ enum FitMatchClosetSortOption: String, CaseIterable {
     case basisFirst
 
     /// 기존 저장값과 테스트를 디코딩하기 위한 호환 case는 유지하되,
-    /// 제거된 기준 옷 정렬을 사용자 선택지에는 노출하지 않는다.
+    /// 폐기된 legacy priority 정렬을 사용자 선택지에는 노출하지 않는다.
     static let allCases: [FitMatchClosetSortOption] = [
         .recent, .oldest, .brand, .category
     ]
@@ -23,7 +23,7 @@ enum FitMatchClosetSortOption: String, CaseIterable {
         case .oldest: return "오래된순"
         case .brand: return "브랜드순"
         case .category: return "그룹순"
-        case .basisFirst: return "이전 기준 옷 우선"
+        case .basisFirst: return "최근 등록"
         }
     }
 }
@@ -87,12 +87,9 @@ enum FitMatchClosetPresentation {
                 return $0.createdAt > $1.createdAt
             }
         case .basisFirst:
-            return items.sorted {
-                if $0.isRepresentative != $1.isRepresentative {
-                    return $0.isRepresentative && !$1.isRepresentative
-                }
-                return $0.createdAt > $1.createdAt
-            }
+            // Compatibility for a persisted legacy sort value. Reference
+            // flags are retired policy data and must not affect ordering.
+            return items.sorted { $0.createdAt > $1.createdAt }
         }
     }
 }

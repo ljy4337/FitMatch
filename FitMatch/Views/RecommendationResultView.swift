@@ -315,9 +315,9 @@ struct RecommendationResultView: View {
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: 18)
-                            Text(reliability.stars)
+                            Text(reliability.displayValue)
                                 .font(.title3.weight(.bold))
-                                .foregroundStyle(.orange.opacity(0.85))
+                                .foregroundStyle(.primary)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -505,7 +505,7 @@ struct RecommendationResultView: View {
                             isShowingOtherClosetComparison = true
                         }
                     } label: {
-                        Text("다른 옷과 비교")
+                        Text("비교할 내 옷 변경")
                     }
                     .font(.subheadline.weight(.bold))
                     .buttonStyle(.plain)
@@ -545,19 +545,10 @@ struct RecommendationResultView: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
                 Text("사이즈 유사도는 선택한 상품 사이즈와 선택한 내 옷의 실측이 얼마나 비슷한지 나타냅니다.")
-                if currentResult.serverApprovedVNextReliability != nil {
-                    Text("이 결과의 신뢰도는 서버가 승인한 비교 근거 수와 coverage를 사용해 엔진이 계산한 값입니다.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("추천 신뢰도는 비교에 사용한 실측 항목 수, 측정 방식의 호환 여부, 누락·제외된 항목을 바탕으로 결과를 얼마나 참고할 수 있는지 보여줍니다.")
-                        .foregroundStyle(.secondary)
-                    if currentResult.comparisonMethod.contains("확장 비교") {
-                        Text("서로 다른 종류의 유사한 옷을 비교한 결과라 구조 차이를 반영해 추천 신뢰도를 한 단계 낮췄어요.")
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                Text("신뢰도는 이번 비교에 실제로 사용한 서버 승인 실측 항목 수를 보여줍니다. 사이즈 유사도 점수와는 별개예요.")
+                    .foregroundStyle(.secondary)
                 Divider()
-                InfoRow(title: "현재 신뢰도", value: "\(comparisonReliability.stars) \(comparisonReliability.title)")
+                InfoRow(title: "현재 신뢰도", value: comparisonReliability.displayValue)
                 Spacer()
             }
             .font(.subheadline)
@@ -1399,20 +1390,7 @@ struct RecommendationResultView: View {
     }
 
     private var comparisonReliability: ComparisonReliability {
-        if currentResult.isServerBackedVNextHistory,
-           let serverApproved = resultCalculationSnapshot?.serverApprovedReliability {
-            return ComparisonReliability(serverApprovedLevel: serverApproved)
-        }
-        return ComparisonReliability(
-            comparedCount: comparedMeasurementKinds.count,
-            compatibilityLevel: currentResult.comparisonMethod.contains("확장 비교")
-                ? .extended
-                : .direct
-        )
-    }
-
-    private var confidenceStatus: ConfidenceStatus {
-        ConfidenceStatus(score: displayedRecommendationScore)
+        ComparisonReliability(comparedCount: comparedMeasurementKinds.count)
     }
 
     private var v1MeasurementKinds: [MeasurementKind] {
@@ -1461,14 +1439,6 @@ struct RecommendationResultView: View {
 
     private var ignoredMeasurementKinds: [MeasurementKind] {
         v1MeasurementKinds.filter { !comparedMeasurementKinds.contains($0) }
-    }
-
-    private var referenceSelectionBadge: String {
-        currentResult.comparisonMethod.contains("사용자 선택") ? "직접 선택" : "자동 선택"
-    }
-
-    private var referenceSelectionTitle: String {
-        currentResult.comparisonMethod.contains("사용자 선택") ? "직접 선택한 내 옷" : "선택된 내 옷"
     }
 
     private var usedMeasurementSummary: String {
@@ -1812,75 +1782,15 @@ struct RecommendationResultView: View {
     #endif
 }
 
-private struct ConfidenceStatus {
-    let stars: String
-    let title: String
-
-    init(score: Int) {
-        switch score {
-        case 90...100:
-            stars = "★★★★★"
-            title = "매우 높은 신뢰도"
-        case 80..<90:
-            stars = "★★★★☆"
-            title = "높은 신뢰도"
-        case 70..<80:
-            stars = "★★★☆☆"
-            title = "보통"
-        case 60..<70:
-            stars = "★★☆☆☆"
-            title = "참고용"
-        case 1..<60:
-            stars = "★☆☆☆☆"
-            title = "참고만 권장"
-        default:
-            stars = "정보 부족"
-            title = "계산에 필요한 실측이 부족합니다"
-        }
-    }
-}
-
 private struct ComparisonReliability {
-    let stars: String
+    let comparedCount: Int
+    let displayValue: String
     let title: String
 
-    init(
-        comparedCount: Int,
-        compatibilityLevel: GarmentComparisonCompatibilityLevel
-    ) {
-        let baseStars: Int
-        switch comparedCount {
-        case 4...: baseStars = 5
-        case 3: baseStars = 4
-        case 2: baseStars = 3
-        case 1: baseStars = 2
-        default: baseStars = 1
-        }
-        let filledStars = max(1, baseStars - compatibilityLevel.reliabilityStarPenalty)
-        stars = String(repeating: "★", count: filledStars)
-            + String(repeating: "☆", count: 5 - filledStars)
-        let baseTitle: String
-        switch filledStars {
-        case 5: baseTitle = "매우 높음"
-        case 4: baseTitle = "높음"
-        case 3: baseTitle = "보통"
-        case 2: baseTitle = "낮음"
-        default: baseTitle = "매우 낮음"
-        }
-        title = compatibilityLevel == .extended ? "확장 비교 · \(baseTitle)" : baseTitle
-    }
-
-    init(serverApprovedLevel: Int) {
-        let filledStars = min(5, max(1, serverApprovedLevel))
-        stars = String(repeating: "★", count: filledStars)
-            + String(repeating: "☆", count: 5 - filledStars)
-        switch filledStars {
-        case 5: title = "매우 높음"
-        case 4: title = "높음"
-        case 3: title = "보통"
-        case 2: title = "낮음"
-        default: title = "매우 낮음"
-        }
+    init(comparedCount: Int) {
+        self.comparedCount = max(0, comparedCount)
+        self.displayValue = "실측 \(max(0, comparedCount))개"
+        self.title = "사용한 실측 항목"
     }
 }
 

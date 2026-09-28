@@ -129,7 +129,7 @@ struct FitMatchApp: App {
             sourceName: "직접 입력",
             brandName: "기존 브랜드",
             gender: .unisex,
-            productName: "기존 기준옷",
+            productName: "기존 상의",
             category: .top,
             detailCategory: .shortSleeve,
             sizeName: "M",

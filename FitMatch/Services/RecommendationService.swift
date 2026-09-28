@@ -31,7 +31,6 @@ struct FitMatchClosetComparisonSummary: Identifiable, Equatable {
     let evidenceState: FitMatchClosetComparisonEvidenceState
     let reason: String?
     var rank: Int?
-    let isSameGarmentType: Bool
 
     init(
         closetItemID: UUID,
@@ -40,8 +39,7 @@ struct FitMatchClosetComparisonSummary: Identifiable, Equatable {
         recommendedSizeLabel: String?,
         comparisonResult: MeasurementComparisonResult?,
         reason: String? = nil,
-        rank: Int? = nil,
-        isSameGarmentType: Bool = false
+        rank: Int? = nil
     ) {
         self.closetItemID = closetItemID
         self.comparisonGroup = comparisonGroup
@@ -52,7 +50,6 @@ struct FitMatchClosetComparisonSummary: Identifiable, Equatable {
         self.conversionCount = comparisonResult?.conversionCount ?? 0
         self.reason = reason
         self.rank = rank
-        self.isSameGarmentType = isSameGarmentType
         switch comparisonResult?.status {
         case .confirmed:
             self.similarityPercent = comparisonResult?.score
@@ -187,11 +184,7 @@ struct RecommendationService {
                 recommendedProductSizeID: confirmed?.size.id,
                 recommendedSizeLabel: confirmed?.size.name,
                 comparisonResult: result,
-                reason: reason,
-                isSameGarmentType: Self.hasSameGarmentType(
-                    product: product,
-                    item: item
-                )
+                reason: reason
             )
         }
 
@@ -249,28 +242,7 @@ struct RecommendationService {
         if lhs.commonMeasurementCount != rhs.commonMeasurementCount {
             return lhs.commonMeasurementCount > rhs.commonMeasurementCount
         }
-        if lhs.isSameGarmentType != rhs.isSameGarmentType {
-            return lhs.isSameGarmentType
-        }
         return lhs.closetItemID.uuidString < rhs.closetItemID.uuidString
-    }
-
-    private static func hasSameGarmentType(
-        product: Product,
-        item: UserFit
-    ) -> Bool {
-        guard let target = product.garmentTypeRawValue?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased(),
-              !target.isEmpty,
-              let reference = (item.garmentTypeRawValue
-                ?? item.sourceProduct?.garmentTypeRawValue)?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased(),
-              !reference.isEmpty else {
-            return false
-        }
-        return target == reference
     }
 
     func analyzeVNextComparison(
@@ -1410,7 +1382,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        userFits.contains { $0.detailCategory == productDetailCategory && $0.isRepresentative }
+        false
     }
 
     func temporaryComparisonCandidates(
@@ -1454,14 +1426,9 @@ struct RecommendationService {
     ) -> ReferenceSelectionPlan {
         if product.sizeType == StandardBodySizeChart.metadataMarker {
             let candidates = standardSizeCandidates(product: product, userFits: userFits)
-            let representatives = candidates.filter {
-                $0.userFit.isRepresentative && $0.compatibleMeasurementCount > 0
-            }
             return ReferenceSelectionPlan(
                 recommendedCandidates: candidates,
-                automaticallySelectedCandidate: representatives.count == 1
-                    ? representatives.first
-                    : nil
+                automaticallySelectedCandidate: nil
             )
         }
         let compatible = comparisonMatcher.match(
@@ -1469,41 +1436,19 @@ struct RecommendationService {
             productDetailCategory: productDetailCategory,
             userFits: userFits
         ).compatibleCandidates
-        let preferredRepresentativeIDs = Set(preferredRepresentatives(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).map(\.id))
         let candidates = Array(rankedReferenceCandidates(
             product: product,
             productDetailCategory: productDetailCategory,
             userFits: compatible
         ).prefix(3))
-        let automaticallySelected: FitMatchCandidate?
-        if preferredRepresentativeIDs.isEmpty {
-            automaticallySelected = nil
-        } else {
-            let preferredCandidates = candidates.filter {
-                preferredRepresentativeIDs.contains($0.id)
-            }
-            automaticallySelected = preferredCandidates.count == 1
-                ? preferredCandidates.first
-                : nil
-        }
-
         return ReferenceSelectionPlan(
             recommendedCandidates: candidates,
-            automaticallySelectedCandidate: automaticallySelected
+            automaticallySelectedCandidate: nil
         )
     }
 
     private func sortCandidates(_ userFits: [UserFit]) -> [UserFit] {
-        userFits.sorted { lhs, rhs in
-            if lhs.isRepresentative != rhs.isRepresentative {
-                return lhs.isRepresentative
-            }
-            return lhs.updatedAt > rhs.updatedAt
-        }
+        userFits.sorted { $0.updatedAt > $1.updatedAt }
     }
 
     private func bestRecommendation(
@@ -1737,49 +1682,6 @@ struct RecommendationService {
                 scorePenalty: 0
             )
         }
-        if product.sizeType == StandardBodySizeChart.metadataMarker {
-            let candidates = standardSizeCandidates(product: product, userFits: userFits)
-            let representatives = candidates.filter {
-                $0.userFit.isRepresentative && $0.compatibleMeasurementCount > 0
-            }
-            return RecommendationBasis(
-                userFits: representatives.count == 1
-                    ? representatives.map(\.userFit)
-                    : [],
-                methodText: "기준표 가슴둘레 비교",
-                scorePenalty: 18,
-                fallbackReason: "실측값이 아닌 한국 의류 기준표 기반 결과입니다."
-            )
-        }
-        let result = comparisonMatcher.match(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        )
-        let preferredRepresentativeIDs = Set(preferredRepresentatives(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).map(\.id))
-        let ranked = rankedReferenceCandidates(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: result.compatibleCandidates
-        )
-        let preferredCandidates = ranked.filter {
-            preferredRepresentativeIDs.contains($0.userFit.id)
-        }
-        let selected = preferredCandidates.count == 1
-            ? preferredCandidates.first?.userFit
-            : nil
-        if let selected {
-            return RecommendationBasis(
-                userFits: [selected],
-                methodText: "비교 프로필 호환 옷 비교",
-                scorePenalty: 0
-            )
-        }
-
         return RecommendationBasis(userFits: [], methodText: "사용자 선택 임시 비교", scorePenalty: 12)
     }
 
@@ -1788,30 +1690,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        guard product.canonicalEligibility != false else { return false }
-        if product.sizeType == StandardBodySizeChart.metadataMarker {
-            return standardSizeCandidates(product: product, userFits: userFits)
-                .filter { $0.userFit.isRepresentative && $0.compatibleMeasurementCount > 0 }
-                .count == 1
-        }
-        let profileCandidates = comparisonMatcher.match(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).compatibleCandidates
-        let ranked = rankedReferenceCandidates(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: profileCandidates
-        )
-        let preferredRepresentativeIDs = Set(preferredRepresentatives(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).map(\.id))
-        return ranked.filter {
-            preferredRepresentativeIDs.contains($0.userFit.id)
-        }.count == 1
+        false
     }
 
     private func standardSizeCandidates(product: Product, userFits: [UserFit]) -> [FitMatchCandidate] {
@@ -1821,10 +1700,7 @@ struct RecommendationService {
                 && $0.category.serviceGroup == product.category.serviceGroup
                 && StandardBodySizeChart.chestCircumferenceCm(for: $0.sizeName) != nil
         }
-        let sorted = sameCategory.sorted { lhs, rhs in
-            if lhs.isRepresentative != rhs.isRepresentative { return lhs.isRepresentative }
-            return lhs.updatedAt > rhs.updatedAt
-        }
+        let sorted = sameCategory.sorted { $0.updatedAt > $1.updatedAt }
         return sorted.map { item in
             return FitMatchCandidate(
                 userFit: item,
@@ -1841,11 +1717,6 @@ struct RecommendationService {
         userFits: [UserFit]
     ) -> [FitMatchCandidate] {
         let incomingProfile = comparisonMatcher.profile(for: product, detailCategory: productDetailCategory)
-        let preferredRepresentativeIDs = Set(preferredRepresentatives(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).map(\.id))
         return userFits
             .compactMap { item -> RankedReferenceCandidate? in
                 let compatibility = comparisonMatcher.comparisonCompatibility(
@@ -1899,9 +1770,6 @@ struct RecommendationService {
                 )
             }
             .sorted { lhs, rhs in
-                let lhsPreferred = preferredRepresentativeIDs.contains(lhs.candidate.userFit.id)
-                let rhsPreferred = preferredRepresentativeIDs.contains(rhs.candidate.userFit.id)
-                if lhsPreferred != rhsPreferred { return lhsPreferred }
                 if lhs.compatibilityRank != rhs.compatibilityRank {
                     return lhs.compatibilityRank > rhs.compatibilityRank
                 }
@@ -1928,22 +1796,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> [UserFit] {
-        let exactDetailRepresentatives = userFits.filter {
-            $0.isRepresentative
-                && $0.detailCategory == productDetailCategory
-                && comparisonMatcher.comparisonCompatibility(
-                    product: product,
-                    productDetailCategory: productDetailCategory,
-                    item: $0
-                ).level == .direct
-        }
-        guard let selected = exactDetailRepresentatives.sorted(by: {
-            if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
-            return $0.id.uuidString < $1.id.uuidString
-        }).first else {
-            return []
-        }
-        return [selected]
+        []
     }
 
     private func rankedCandidateScore(

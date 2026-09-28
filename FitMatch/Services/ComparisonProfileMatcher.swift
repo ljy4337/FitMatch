@@ -287,9 +287,6 @@ struct ComparisonProfileMatcher {
                 let lhsSameDetail = lhs.0.detailCategory == productDetailCategory
                 let rhsSameDetail = rhs.0.detailCategory == productDetailCategory
                 if lhsSameDetail != rhsSameDetail { return lhsSameDetail }
-                if lhs.0.isRepresentative != rhs.0.isRepresentative {
-                    return lhs.0.isRepresentative
-                }
                 let lhsCount = commonCoreMeasurementCount(incoming, lhs.1)
                 let rhsCount = commonCoreMeasurementCount(incoming, rhs.1)
                 if lhsCount != rhsCount { return lhsCount > rhsCount }
@@ -368,7 +365,6 @@ struct ComparisonProfileMatcher {
                     rhsProfile.garmentFamily, incoming.garmentFamily
                 )
                 if lhsFamily != rhsFamily { return lhsFamily }
-                if lhs.isRepresentative != rhs.isRepresentative { return lhs.isRepresentative }
                 return lhs.updatedAt > rhs.updatedAt
             }
             .map(\.0)

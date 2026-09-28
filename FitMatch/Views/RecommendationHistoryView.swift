@@ -664,12 +664,7 @@ private struct HistoryCard: View {
             Text("신뢰도")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(.secondary)
-            Text(reliabilityStars(comparedCount: comparedKinds.count))
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(.orange.opacity(0.85))
-                .lineLimit(1)
-                .minimumScaleFactor(0.65)
-            Text(reliabilityTitle(comparedCount: comparedKinds.count))
+            Text("사용한 실측 \(comparedKinds.count)개")
                 .font(.subheadline.weight(.bold))
                 .lineLimit(1)
             Text(measurementSummaryText(comparedKinds: comparedKinds))
@@ -746,42 +741,6 @@ private struct HistoryCard: View {
         case 40..<50: return "핏 차이가 큰 편이에요"
         default: return "추천하기 어려워요"
         }
-    }
-
-    private func reliabilityStars(comparedCount: Int) -> String {
-        let count = reliabilityStarCount(comparedCount: comparedCount)
-        return String(repeating: "★", count: count)
-            + String(repeating: "☆", count: 5 - count)
-    }
-
-    private func reliabilityTitle(comparedCount: Int) -> String {
-        let title: String
-        switch reliabilityStarCount(comparedCount: comparedCount) {
-        case 5: title = "매우 높음"
-        case 4: title = "높음"
-        case 3: title = "보통"
-        case 2: title = "낮음"
-        default: title = "매우 낮음"
-        }
-        if history.serverApprovedVNextReliability != nil {
-            return title
-        }
-        return history.comparisonMethod.contains("확장 비교") ? "확장 · \(title)" : title
-    }
-
-    private func reliabilityStarCount(comparedCount: Int) -> Int {
-        if let serverApproved = history.serverApprovedVNextReliability {
-            return min(5, max(1, serverApproved))
-        }
-        let base: Int
-        switch comparedCount {
-        case 4...: base = 5
-        case 3: base = 4
-        case 2: base = 3
-        case 1: base = 2
-        default: base = 1
-        }
-        return max(1, base - (history.comparisonMethod.contains("확장 비교") ? 1 : 0))
     }
 
     private var relativeDateText: String {

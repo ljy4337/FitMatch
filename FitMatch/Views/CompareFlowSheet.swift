@@ -29,7 +29,6 @@ struct CompareFlowSheet: View {
     @State private var isShowingEmptyClosetAlert = false
     @State private var usesLegacySizeFailureScreen = false
     @State private var showsAllReferenceCandidates = false
-    @State private var hasConfirmedComparisonCategory = false
     @State private var isSheetHeaderVisible = true
     @State private var preparedComparison: PreparedComparison?
     @State private var serverReferenceSelectionPlan: FitMatchServerReferenceSelectionPlan?
@@ -68,12 +67,8 @@ struct CompareFlowSheet: View {
                     result: history,
                     onShowComparisonList: showCurrentComparisonCandidates,
                     onShowOtherClosetComparison: showCurrentComparisonCandidates,
-                    onReselectClassification:
-                        viewModel.hasActiveUserExplicitClassification
-                        ? { startReviewRecoveryReselection() } : nil,
-                    onClearClassification:
-                        viewModel.hasActiveUserExplicitClassification
-                        ? { clearReviewRecoverySelection() } : nil
+                    onReselectClassification: nil,
+                    onClearClassification: nil
                 )
             } else {
                 comparisonInputContent
@@ -106,10 +101,6 @@ struct CompareFlowSheet: View {
     private var comparisonInputContent: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 20) {
-                if showsPersonalRecoveryActions {
-                    personalRecoveryActionsCard
-                }
-
                 switch step {
                 case .start:
                     startContent
@@ -284,63 +275,6 @@ private extension CompareFlowSheet {
         activeLoadRequestID = nil
     }
 
-    var showsPersonalRecoveryActions: Bool {
-        guard viewModel.hasActiveUserExplicitClassification else { return false }
-        switch step {
-        case .categoryConfirmation, .comparisonGroupSelection,
-             .missingReference, .closetSelection,
-             .insufficientEvidence:
-            return true
-        case .start, .loading, .comparisonSummary, .result, .error:
-            return false
-        }
-    }
-
-    var personalRecoveryActionsCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 12) {
-                CompareSheetSectionTitle(
-                    title: "내가 확인한 상품 종류",
-                    subtitle: "현재 선택을 다시 확인하거나 초기화할 수 있어요."
-                )
-
-                HStack(spacing: 10) {
-                    Button {
-                        startReviewRecoveryReselection()
-                    } label: {
-                        Label(
-                            "상품 종류 다시 확인",
-                            systemImage: "arrow.triangle.2.circlepath"
-                        )
-                        .font(.subheadline.weight(.bold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .background(
-                        Color(.secondarySystemGroupedBackground),
-                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    )
-
-                    Button(role: .destructive) {
-                        clearReviewRecoverySelection()
-                    } label: {
-                        Text("내 선택 초기화")
-                            .font(.subheadline.weight(.bold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.red)
-                    .background(
-                        Color(.secondarySystemGroupedBackground),
-                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    )
-                }
-            }
-        }
-    }
-
     var startContent: some View {
         VStack(alignment: .leading, spacing: 20) {
             sheetHeader(title: "상품 비교 시작", subtitle: "새 상품을 내 옷과 비교해 가장 비슷한 사이즈를 찾아보세요.")
@@ -440,239 +374,49 @@ private extension CompareFlowSheet {
 
     var categoryConfirmationContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            sheetHeader(
-                title: viewModel.reviewRecoveryContract == nil
-                    ? "상품 종류 확인" : "상품 종류를 확인해주세요",
-                subtitle: viewModel.reviewRecoveryContract == nil
-                    ? "이 상품의 종류를 선택해 주세요."
-                    : "FitMatch가 확인하지 못한 정보만 선택해 주세요."
-            )
+            if viewModel.reviewRecoveryContract != nil
+                || viewModel.productAnalysisRecoveryAction == .confirmCategoryBeforeMeasurements {
+                sheetHeader(
+                    title: "비교 그룹을 확인할 수 없어요",
+                    subtitle: "FitMatch는 상의·아우터·바지 등 상위 비교 그룹만 사용합니다. 세부 상품 종류를 선택해 비교를 진행하지 않아요."
+                )
+                if let product = currentProduct {
+                    productCompactCard(product)
+                }
+                FitMatchCard {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Label(
+                            "이 상품은 현재 비교 그룹만으로 안전하게 확인할 수 없어 비교를 진행할 수 없습니다.",
+                            systemImage: "exclamationmark.shield"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-            if let recovery = viewModel.reviewRecoveryContract {
-                reviewRecoveryContent(recovery)
-            } else {
-                if viewModel.productAnalysisRecoveryAction == .confirmCategoryBeforeMeasurements,
-                   let notice = viewModel.parserNotice {
-                    FitMatchCard {
-                        Label(notice, systemImage: "checklist")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        PrimaryButton(title: "확인") {
+                            dismissComparisonAfterMissingReference()
+                        }
                     }
                 }
+            } else {
+                sheetHeader(
+                    title: "실측 정보 확인",
+                    subtitle: "비교할 수 있도록 실측 정보를 확인해 주세요."
+                )
 
                 if let product = currentProduct {
                     productCompactCard(product)
                 }
 
                 FitMatchCard {
-                    VStack(alignment: .leading, spacing: 14) {
-                        if sourceCategoryHistoryMatches.count > 1 {
-                            CompareSheetSectionTitle(
-                                title: "어떤 분류로 비교할까요?",
-                                subtitle: "이 쇼핑몰 카테고리가 여러 종류의 옷으로 등록된 적이 있어요. 비교할 분류를 선택해 주세요."
-                            )
-
-                            VStack(spacing: 10) {
-                                ForEach(sourceCategoryHistoryMatches) { match in
-                                    Button {
-                                        applySourceCategoryHistoryMatch(match)
-                                        confirmComparisonCategoryAndContinue()
-                                    } label: {
-                                        HStack(spacing: 12) {
-                                            VStack(alignment: .leading, spacing: 3) {
-                                                Text(match.title)
-                                                    .font(.subheadline.weight(.bold))
-                                                    .foregroundStyle(.primary)
-                                                Text(match.subtitle)
-                                                    .font(.caption)
-                                                    .foregroundStyle(.secondary)
-                                            }
-
-                                            Spacer()
-
-                                            Image(systemName: "chevron.right")
-                                                .font(.caption.weight(.bold))
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        .padding(.horizontal, 14)
-                                        .frame(height: 54)
-                                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-
-                            Divider()
-                        }
-
-                        CompareSheetSectionTitle(
-                            title: "상품 분류",
-                            subtitle: "선택한 분류는 이 상품에 저장되며 다음부터 자동으로 적용돼요."
-                        )
-
-                        CompareSelectionMenu(title: comparisonCategoryTitle) {
-                            ForEach(comparisonCategoryOptions) { category in
-                                Button(category.rawValue) {
-                                    viewModel.category = category
-                                    viewModel.detailCategory = .other
-                                    hasConfirmedComparisonCategory = false
-                                    rebuildPreparedComparison()
-                                }
-                            }
-                        }
-
-                        CompareSelectionMenu(title: comparisonDetailCategoryTitle) {
-                            ForEach(comparisonDetailCategoryOptions) { detailCategory in
-                                Button(detailCategory.rawValue) {
-                                    viewModel.detailCategory = detailCategory
-                                    hasConfirmedComparisonCategory = false
-                                    rebuildPreparedComparison()
-                                }
-                            }
-                        }
-                        .disabled(viewModel.category == .other)
-                        .opacity(viewModel.category == .other ? 0.5 : 1)
-                    }
-                }
-
-                PrimaryButton(title: "비교하기", systemImage: "sparkles") {
-                    confirmComparisonCategoryAndContinue()
-                }
-                .disabled(!canConfirmComparisonCategory)
-            }
-        }
-    }
-
-    @ViewBuilder
-    func reviewRecoveryContent(
-        _ contract: VNextClassificationRecoveryContractDTO
-    ) -> some View {
-        if let product = currentProduct {
-            productCompactCard(product)
-        }
-
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 12) {
-                CompareSheetSectionTitle(
-                    title: "확인된 정보",
-                    subtitle: recoveryFixedFactsText(contract.fixedFacts)
-                )
-
-                if contract.isSafelyRecoverable {
-                    Divider()
-                    switch viewModel.reviewRecoveryState {
-                    case .choosingGarment:
-                        reviewRecoveryGarmentSelection(contract)
-                    case .choosingAxis(_, let group):
-                        reviewRecoveryAxisSelection(group)
-                    case .idle, .loading, .unrecoverable, .saving, .resuming,
-                         .failed:
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    }
-                } else {
                     Label(
-                        "이 상품은 아직 정확하게 분류하기 어려워요. 현재는 비교할 수 없습니다.",
-                        systemImage: "exclamationmark.shield"
+                        statusMessage ?? "필요한 실측 정보를 입력하면 비교를 계속할 수 있어요.",
+                        systemImage: "ruler"
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 }
-            }
-        }
-    }
-
-    @ViewBuilder
-    func reviewRecoveryGarmentSelection(
-        _ contract: VNextClassificationRecoveryContractDTO
-    ) -> some View {
-        CompareSheetSectionTitle(
-            title: contract.garmentGroups.count > 1
-                ? "어떤 상품 종류인가요?" : "상품 종류를 확인해주세요",
-            subtitle: "서버가 검증한 선택지만 표시합니다. 이 선택은 내 계정에만 적용돼요."
-        )
-
-        ForEach(contract.garmentGroups) { group in
-            Button {
-                guard !viewModel.isReviewRecoverySaving else { return }
-                if let candidate = viewModel.selectReviewRecoveryGarment(group) {
-                    saveReviewRecoveryCandidate(candidate)
-                }
-            } label: {
-                recoveryChoiceRow(title: group.displayName)
-            }
-            .buttonStyle(.plain)
-            .disabled(viewModel.isReviewRecoverySaving)
-        }
-    }
-
-    @ViewBuilder
-    func reviewRecoveryAxisSelection(
-        _ group: VNextClassificationRecoveryGarmentGroup
-    ) -> some View {
-        CompareSheetSectionTitle(
-            title: recoveryQuestionTitle(group.differingFields),
-            subtitle: "선택한 상품 종류에서 실제로 다른 정보만 확인합니다."
-        )
-
-        ForEach(group.candidates) { candidate in
-            Button {
-                guard !viewModel.isReviewRecoverySaving else { return }
-                saveReviewRecoveryCandidate(candidate)
-            } label: {
-                recoveryChoiceRow(
-                    title: recoveryCandidateFactsText(
-                        candidate,
-                        differingFields: group.differingFields
-                    )
-                )
-            }
-            .buttonStyle(.plain)
-            .disabled(viewModel.isReviewRecoverySaving)
-        }
-
-        SecondaryButton(
-            title: "상품 종류로 돌아가기",
-            systemImage: "chevron.backward"
-        ) {
-            viewModel.returnToReviewRecoveryGarmentSelection()
-        }
-        .disabled(viewModel.isReviewRecoverySaving)
-    }
-
-    func recoveryChoiceRow(title: String) -> some View {
-        HStack(spacing: 12) {
-            Text(title)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(.primary)
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 58)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
-    }
-
-    func saveReviewRecoveryCandidate(
-        _ candidate: VNextClassificationRecoveryCandidateDTO
-    ) {
-        setStep(.loading)
-        startForegroundLoadTask { requestID in
-            let saved = await viewModel.confirmReviewRecovery(candidate)
-            guard isCurrentForegroundLoad(requestID) else { return }
-            if saved {
-                statusMessage = "확인했어요. 비교할 옷을 찾고 있어요…"
-                continueComparisonAfterProductInput()
-            } else {
-                errorMessage = viewModel.errorMessage
-                setStep(.categoryConfirmation)
             }
         }
     }
@@ -707,7 +451,7 @@ private extension CompareFlowSheet {
                 if showsAllReferenceCandidates || recommendedReferenceCandidates.isEmpty {
                     closetCandidateSection(title: "추가 비교 가능 옷", items: additionalDirectSelectionCandidates)
                     closetCandidateSection(
-                        title: hasSleeveLengthExpansionCandidate ? "부분 비교 가능한 옷" : "유사한 종류의 옷",
+                        title: hasSleeveLengthExpansionCandidate ? "부분 비교 가능한 옷" : "같은 비교 그룹의 옷",
                         items: extendedSelectionCandidates
                     )
                 }
@@ -1329,127 +1073,7 @@ private extension CompareFlowSheet {
         preparedComparison?.referenceSelectionPlan
     }
 
-    var comparisonCategoryOptions: [ClothingCategory] {
-        ClothingCategory.closetCategories(for: comparisonTargetGender)
-            .filter { $0 != .other }
-    }
-
-    var comparisonDetailCategoryOptions: [ClosetDetailCategory] {
-        ClosetDetailCategory.options(for: viewModel.category, gender: comparisonTargetGender)
-            .filter { $0 != .other }
-    }
-
-    var comparisonTargetGender: UserGender {
-        UserGender.productTarget(from: viewModel.productMetadata.genderCodes)
-    }
-
-    var comparisonCategoryTitle: String {
-        viewModel.category == .other ? "대분류 선택" : viewModel.category.rawValue
-    }
-
-    var comparisonDetailCategoryTitle: String {
-        viewModel.detailCategory == .other ? "세부 카테고리 선택" : viewModel.detailCategory.rawValue
-    }
-
-    var canConfirmComparisonCategory: Bool {
-        guard let classification = currentParsedClassification else { return false }
-        return classification.isValid
-    }
-
-    func recoveryFixedFactsText(
-        _ facts: VNextKnownClassificationFactsDTO
-    ) -> String {
-        var values: [String] = []
-        if let audience = facts.audienceCode {
-            values.append(recoveryAudienceDisplayName(audience))
-        }
-        if let category = facts.categoryCode {
-            values.append(ClothingCategory.fromTaxonomyCode(category).rawValue)
-        }
-        if let garment = facts.garmentTypeCode {
-            values.append(ClosetDetailCategory.fromTaxonomyCode(garment).rawValue)
-        }
-        if let sleeve = facts.sleeveLengthCode {
-            values.append(recoveryAxisDisplayName(sleeve))
-        }
-        if let lower = facts.lowerLengthCode {
-            values.append(recoveryAxisDisplayName(lower))
-        }
-        if let body = facts.bodyLengthCode {
-            values.append(recoveryAxisDisplayName(body))
-        }
-        return values.isEmpty ? "검증된 상품 정보" : values.joined(separator: " · ")
-    }
-
-    func recoveryQuestionTitle(
-        _ unknownFields: [VNextUnknownClassificationField]
-    ) -> String {
-        let names = unknownFields.map { field in
-            switch field {
-            case .garmentType: "상품 종류"
-            case .sleeveLength: "소매 길이"
-            case .lowerLength: "하의 길이"
-            case .bodyLength: "기장"
-            }
-        }
-        return names.isEmpty ? "상품 종류 선택" : names.joined(separator: " · ") + " 확인"
-    }
-
-    func recoveryCandidateFactsText(
-        _ candidate: VNextClassificationRecoveryCandidateDTO,
-        differingFields: [VNextUnknownClassificationField]
-    ) -> String {
-        differingFields
-        .compactMap { candidate.value(for: $0) }
-        .map(recoveryAxisDisplayName)
-        .joined(separator: " · ")
-    }
-
-    func recoveryAxisDisplayName(_ code: String) -> String {
-        switch code {
-        case "short_sleeve": "반팔"
-        case "long_sleeve": "긴팔"
-        case "sleeveless": "민소매"
-        case "cropped": "크롭"
-        case "short": "숏"
-        case "regular": "기본"
-        case "long": "롱"
-        default: code.replacingOccurrences(of: "_", with: " ")
-        }
-    }
-
-    func recoveryAudienceDisplayName(_ code: String) -> String {
-        switch code {
-        case "MEN": "남성"
-        case "WOMEN": "여성"
-        case "UNISEX": "공용"
-        case "KIDS": "키즈"
-        case "BABY": "베이비"
-        default: "대상 미확정"
-        }
-    }
-
-    var currentParsedClassification: ParsedClosetClassification? {
-        if let product = currentProduct {
-            return ParsedClosetClassification.resolve(product: product, detailCategory: viewModel.detailCategory)
-        }
-        return ParsedClosetClassification.resolve(
-            category: viewModel.category,
-            detailCategory: viewModel.detailCategory,
-            sourceDepths: [viewModel.productMetadata.sourceCategoryDepth1,
-                           viewModel.productMetadata.sourceCategoryDepth2,
-                           viewModel.productMetadata.sourceCategoryDepth3,
-                           viewModel.productMetadata.sourceCategoryDepth4],
-            sourcePath: viewModel.productMetadata.sourceCategoryPath,
-            productName: viewModel.productName
-        )
-    }
-
     func productCompactCategoryText(for product: Product) -> String {
-        if hasConfirmedComparisonCategory, viewModel.detailCategory != .other {
-            return "비교 분류: \(viewModel.category.serviceGroup.rawValue) / \(viewModel.detailCategory.rawValue)"
-        }
-
         if let sourceCategoryText = strictSourceCategoryText(for: product) {
             return "쇼핑몰 카테고리: \(sourceCategoryText)"
         }
@@ -1562,12 +1186,12 @@ private extension CompareFlowSheet {
 
     var referenceSelectionSituationTitle: String {
         if hasMatchingStructureCandidate {
-            return "비교할 \(comparisonGarmentDisplayName)을 선택해 주세요"
+            return "비교할 내 옷을 선택해 주세요"
         }
         if hasSleeveLengthExpansionCandidate {
-            return "소매 길이가 다른 상의와 부분 비교할 수 있어요"
+            return "같은 비교 그룹의 옷과 부분 비교할 수 있어요"
         }
-        return "같은 종류의 옷이 없어 유사한 옷을 보여드려요"
+        return "같은 비교 그룹의 옷을 보여드려요"
     }
 
     var referenceSelectionSituationDescription: String {
@@ -1833,75 +1457,6 @@ private extension CompareFlowSheet {
         }
     }
 
-    func startReviewRecoveryReselection() {
-        guard loadTask == nil,
-              viewModel.hasActiveUserExplicitClassification else { return }
-        resetTransientComparisonForRecoveryMutation()
-        setStep(.loading)
-        startForegroundLoadTask { requestID in
-            let loaded = await viewModel.beginReviewRecoveryReselection()
-            guard isCurrentForegroundLoad(requestID) else { return }
-            if loaded || viewModel.reviewRecoveryContract != nil {
-                errorMessage = viewModel.errorMessage
-                setStep(.categoryConfirmation)
-            } else {
-                errorMessage = viewModel.errorMessage
-                    ?? "최신 상품 분류 선택지를 확인하지 못했습니다."
-                setStep(.error)
-            }
-        }
-    }
-
-    func clearReviewRecoverySelection() {
-        guard loadTask == nil,
-              viewModel.hasActiveUserExplicitClassification else { return }
-        resetTransientComparisonForRecoveryMutation()
-        setStep(.loading)
-        startForegroundLoadTask { requestID in
-            let cleared = await viewModel.clearReviewRecovery()
-            guard isCurrentForegroundLoad(requestID) else { return }
-            guard cleared else {
-                errorMessage = viewModel.errorMessage
-                    ?? "내 선택을 초기화하지 못했습니다."
-                setStep(.error)
-                return
-            }
-
-            switch viewModel.serverAuthorityState {
-            case .reviewRequired:
-                statusMessage = "내 선택을 초기화했어요. 상품 종류를 다시 확인해 주세요."
-                errorMessage = viewModel.errorMessage
-                if viewModel.reviewRecoveryContract != nil {
-                    setStep(.categoryConfirmation)
-                } else {
-                    setStep(.error)
-                }
-            case .confirmed:
-                statusMessage = "내 선택을 초기화하고 확인된 서버 분류를 적용했어요."
-                errorMessage = nil
-                continueComparisonAfterProductInput()
-            case .notComparable:
-                errorMessage = "이 상품은 현재 비교할 수 없는 상품으로 확인됐습니다."
-                setStep(.error)
-            case .idle, .resolving, .unavailable:
-                errorMessage = viewModel.errorMessage
-                    ?? "초기화 후 서버 분류를 확인하지 못했습니다."
-                setStep(.error)
-            }
-        }
-    }
-
-    func resetTransientComparisonForRecoveryMutation() {
-        serverReferenceSelectionPlan = nil
-        preparedComparison = nil
-        selectedReferenceItemID = nil
-        insufficientEvidence = nil
-        isProcessingReferenceSelection = false
-        processingReferenceRequestID = nil
-        statusMessage = nil
-        errorMessage = nil
-    }
-
     func startCompare(with urlString: String) async {
         guard !viewModel.isLoadingProductInfo else { return }
 
@@ -1937,7 +1492,6 @@ private extension CompareFlowSheet {
         usesLegacySizeFailureScreen = false
         insufficientEvidence = nil
         isShowingReferenceComparison = false
-        hasConfirmedComparisonCategory = false
         serverReferenceSelectionPlan = nil
         preparedComparison = nil
         setStep(.loading)
@@ -2056,27 +1610,6 @@ private extension CompareFlowSheet {
         proceedWithServerConfirmedCategory(product: product)
     }
 
-    func confirmComparisonCategoryAndContinue() {
-        guard canConfirmComparisonCategory else {
-            errorMessage = "내 옷장 분류를 선택해 주세요."
-            return
-        }
-
-        if viewModel.productAnalysisRecoveryAction == .confirmCategoryBeforeMeasurements {
-            resumeZARAComparisonAfterCategoryConfirmation()
-            return
-        }
-
-        guard viewModel.hasServerConfirmedAuthority,
-              let product = makeProduct(insertBrandIfNeeded: false),
-              product.classificationAuthorityProvenance?.isComparisonAuthority == true else {
-            errorMessage = "선택한 분류를 서버에서 확인하지 못했습니다."
-            setStep(.error)
-            return
-        }
-        proceedWithServerConfirmedCategory(product: product)
-    }
-
     func showCurrentComparisonCandidates() {
         // Reuse this session's display plan, never a comparison permit. A new
         // selection still runs current server authorization, begin and complete.
@@ -2102,7 +1635,6 @@ private extension CompareFlowSheet {
         guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
             return
         }
-        hasConfirmedComparisonCategory = false
         if viewModel.requestedComparisonGroupCode == nil,
            viewModel.serverComparisonReadiness?.isReady != true {
             presentServerReadinessRecovery(
@@ -2242,45 +1774,6 @@ private extension CompareFlowSheet {
             errorMessage = readiness.userMessage
             setStep(.error)
         }
-    }
-
-    func resumeZARAComparisonAfterCategoryConfirmation() {
-        guard loadTask == nil, !viewModel.isLoadingProductInfo else { return }
-        let confirmedCategory = viewModel.category
-        let confirmedDetailCategory = viewModel.detailCategory
-        errorMessage = nil
-        setStep(.loading)
-
-        startForegroundLoadTask { requestID in
-            let didLoad = await viewModel.resumeZARAParsingAfterCategoryConfirmation()
-            guard isCurrentForegroundLoad(requestID) else { return }
-
-            if didLoad {
-                rebuildPreparedComparison()
-                continueComparisonAfterProductInput()
-                return
-            }
-
-            viewModel.category = confirmedCategory
-            viewModel.detailCategory = confirmedDetailCategory
-
-            if viewModel.productAnalysisRecoveryAction == .enterMeasurementsManually {
-                statusMessage = "상품 종류를 적용했어요. 비교할 실측값을 확인해 주세요."
-                setStep(.categoryConfirmation)
-                isShowingManualProductEntry = true
-                return
-            }
-
-            errorMessage = viewModel.errorMessage ?? "ZARA 실측 정보를 불러오지 못했어요."
-            setStep(.error)
-        }
-    }
-
-    func applySourceCategoryHistoryMatch(_ match: SourceCategoryHistoryMatch) {
-        viewModel.category = match.category
-        viewModel.detailCategory = match.detailCategory
-        hasConfirmedComparisonCategory = false
-        rebuildPreparedComparison()
     }
 
     func rebuildPreparedComparison(
@@ -2426,7 +1919,7 @@ private extension CompareFlowSheet {
         }
         return viewModel.makeProductForClosetRegistration(
             brand: brand,
-            classificationWasUserConfirmed: hasConfirmedComparisonCategory
+            classificationWasUserConfirmed: false
         )
     }
 

@@ -444,7 +444,7 @@ struct FitMatchP0ProductionPathTests {
         #expect(item.canonicalProfileSnapshotJSON == nil)
     }
 
-    @Test func p0ReferencePlanAndRecommendationPreserveTrustedTShirtTuples() throws {
+    @Test func p0ReferencePlanRequiresExplicitCandidateSelectionAndPreservesTrustedTShirtTuples() throws {
         let measurements = GarmentMeasurements(
             shoulder: 48,
             chest: 54,
@@ -488,15 +488,15 @@ struct FitMatchP0ProductionPathTests {
             productDetailCategory: .shortSleeve,
             userFits: [item]
         )
-        let history = try #require(service.recommend(
+        let history = service.recommend(
             product: product,
             userFits: [item],
             productDetailCategory: .shortSleeve,
             allowsGlobalFallback: false
-        ))
+        )
 
-        #expect(plan.automaticallySelectedCandidate?.userFit.id == item.id)
-        #expect(history.userFit.id == item.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(history == nil)
         #expect(authoritativeProductTuple(product) == productBefore)
         #expect(authoritativeItemTuple(item) == itemBefore)
     }
@@ -764,8 +764,8 @@ struct FitMatchP0ProductionPathTests {
         #expect(compatibility.reason == "착용 부위가 달라 비교할 수 없어요.")
     }
 
-    // PATH-MANUAL-COMPARE-01 · Policy Truth: outerwear needs chest plus another field.
-    @Test func p0OuterWithoutChestDoesNotForceARecommendation() {
+    // PATH-MANUAL-COMPARE-01 · One server-policy metric is enough to compare.
+    @Test func p0OuterWithOneCommonCanonicalMetricCanCompare() {
         let product = comparisonProduct(
             name: "가슴 실측 없는 사파리 재킷",
             category: .outer,
@@ -784,12 +784,13 @@ struct FitMatchP0ProductionPathTests {
         )
         let service = RecommendationService()
 
-        #expect(service.recommend(product: product, selectedReferenceItem: item, productDetailCategory: .jacket) == nil)
-        #expect(service.insufficientEvidence(product: product, selectedReferenceItem: item, productDetailCategory: .jacket) != nil)
+        #expect(service.recommend(product: product, selectedReferenceItem: item, productDetailCategory: .jacket) != nil)
+        #expect(service.insufficientEvidence(product: product, selectedReferenceItem: item, productDetailCategory: .jacket) == nil)
     }
 
-    // PATH-AUTO-COMPARE-01 · One compatible representative is the automatic basis.
-    @Test func p0SingleCompatibleRepresentativeProducesAutomaticRecommendation() throws {
+    // PATH-COMPARE-SELECTION-01 · A candidate never becomes a comparison basis
+    // until the user has selected that exact Closet item.
+    @Test func p0SingleCompatibleRepresentativeStillRequiresExplicitSelection() throws {
         let product = comparisonProduct(
             name: "새 반팔 티셔츠",
             category: .top,
@@ -813,17 +814,15 @@ struct FitMatchP0ProductionPathTests {
             productDetailCategory: .shortSleeve,
             userFits: [item]
         )
-        let result = try #require(service.recommend(
+        let result = service.recommend(
             product: product,
             userFits: [item],
             productDetailCategory: .shortSleeve,
             allowsGlobalFallback: false
-        ))
+        )
 
-        #expect(plan.automaticallySelectedCandidate?.userFit.id == item.id)
-        #expect(result.userFit.id == item.id)
-        #expect(result.recommendedSize.name == "M")
-        #expect(result.calculationSnapshot != nil)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(result == nil)
     }
 
     // PATH-MANUAL-COMPARE-01 · Bottom length mismatch is manual-only.

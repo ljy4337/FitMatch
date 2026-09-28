@@ -56,6 +56,23 @@ struct FitMatchComparisonPermitSequencingTests {
         #expect(flow.contains("onShowOtherClosetComparison: showCurrentComparisonCandidates"))
         let result = try sourceFile("FitMatch/Views/RecommendationResultView.swift")
         #expect(result.contains("CompareFlowSheet(initialHistoricalProduct: currentResult.product)"))
+        #expect(result.contains("비교할 내 옷 변경"))
+    }
+
+    @Test func comparisonFlowUsesOnlyGroupPickerAndDoesNotExposeDetailedRecoveryChoices() throws {
+        let flow = try sourceFile("FitMatch/Views/CompareFlowSheet.swift")
+        let viewModel = try sourceFile("FitMatch/ViewModels/ShoppingProductViewModel.swift")
+        let recommendationService = try sourceFile("FitMatch/Services/RecommendationService.swift")
+
+        #expect(flow.contains("비교할 그룹을 선택해 주세요"))
+        #expect(!flow.contains("세부 카테고리 선택"))
+        #expect(!flow.contains("reviewRecoveryGarmentSelection"))
+        #expect(!flow.contains("reviewRecoveryAxisSelection"))
+        #expect(flow.contains("onReselectClassification: nil"))
+        #expect(flow.contains("onClearClassification: nil"))
+        #expect(viewModel.contains("item.comparisonGroup == targetComparisonGroup"))
+        #expect(!recommendationService.contains("hasSameGarmentType"))
+        #expect(!recommendationService.contains("isSameGarmentType"))
     }
 
     @Test func persistedServerApprovalGuardsAlternativeSizeScoring() throws {

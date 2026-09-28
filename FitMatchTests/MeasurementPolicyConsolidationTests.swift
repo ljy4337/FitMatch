@@ -134,11 +134,11 @@ struct MeasurementPolicyConsolidationTests {
 
         #expect(result.status == .confirmed)
         #expect(Set(result.comparedKinds) == Set([.shoulder, .chest, .sleeveLength]))
-        #expect(result.score == 95)
+        #expect(result.score == 96)
     }
 
     @Test
-    func embeddedFallbackPolicyKeepsProductionWeightsAndExposesVersion() {
+    func embeddedFallbackPolicyMatchesGroupOnlyComparisonPolicy() {
         let engine = MeasurementComparisonEngine()
         let snapshot = engine.policySnapshot
         let top = snapshot.policy(for: .top, detailCategory: .shortSleeve)
@@ -146,14 +146,14 @@ struct MeasurementPolicyConsolidationTests {
         let bottom = snapshot.policy(for: .bottom, detailCategory: .slacks)
 
         #expect(engine.activePolicySource == .embeddedFallback)
-        #expect(engine.activePolicyVersion == "fitmatch-production-measurement-policy-2026-08-24-v1")
-        #expect(top.weights == [.shoulder: 1.2, .chest: 1.4, .totalLength: 1.0, .sleeveLength: 0.2])
-        #expect(top.minimumComparableCount == 2)
-        #expect(top.requiredAnyKinds == [.shoulder, .chest])
+        #expect(engine.activePolicyVersion == "fitmatch-production-measurement-policy-2026-09-28-v2")
+        #expect(top.weights == [.shoulder: 1.5, .chest: 2.0, .totalLength: 1.0, .sleeveLength: 1.0])
+        #expect(top.minimumComparableCount == 1)
+        #expect(top.requiredAnyKinds.isEmpty)
         #expect(outer.weights == [.shoulder: 1.1, .chest: 1.5, .totalLength: 0.8, .sleeveLength: 1.0, .hem: 0.6])
-        #expect(outer.requiredAllKinds == [.chest])
+        #expect(outer.requiredAllKinds.isEmpty)
         #expect(bottom.weights == [.waist: 1.4, .hip: 1.2, .thigh: 0.9, .rise: 0.7, .hem: 0.6, .totalLength: 1.0])
-        #expect(bottom.minimumRequiredKindCount == 2)
+        #expect(bottom.minimumComparableCount == 1)
     }
 
     private func bottomFixture(

@@ -1746,7 +1746,7 @@ struct FitMatchClosetSyncCoordinatorTests {
         #expect(try context.fetch(FetchDescriptor<UserFit>()).map(\.id) == [clientItemID])
     }
 
-    @Test func multiTypeReferenceUnsetSendsOnlyExactChangedDelta() async throws {
+    @Test func legacyReferenceFlagsAreHydratedWithoutAnyReferenceMutation() async throws {
         let a = remoteRecord(
             clientItemID: UUID(),
             productID: UUID(),
@@ -1778,17 +1778,15 @@ struct FitMatchClosetSyncCoordinatorTests {
 
         await coordinator.synchronize(userID: userID, modelContext: context)
 
-        #expect(await remote.referenceMutations() == [
-            ReferenceMutation(closetItemID: a.closetItemID, isReference: false)
-        ])
-        #expect(localA.isRepresentative == false)
+        #expect(await remote.referenceMutations().isEmpty)
+        #expect(localA.isRepresentative == true)
         #expect(localB.isRepresentative == true)
 
         await coordinator.synchronize(userID: userID, modelContext: context)
-        #expect(await remote.referenceMutations().count == 1)
+        #expect(await remote.referenceMutations().isEmpty)
     }
 
-    @Test func multiTypeReferenceSetSendsOnlyExactChangedDelta() async throws {
+    @Test func legacyReferenceFlagsAreNeverWrittenFromLocalState() async throws {
         let a = withReference(
             remoteRecord(
                 clientItemID: UUID(),
@@ -1823,14 +1821,12 @@ struct FitMatchClosetSyncCoordinatorTests {
 
         await coordinator.synchronize(userID: userID, modelContext: context)
 
-        #expect(await remote.referenceMutations() == [
-            ReferenceMutation(closetItemID: a.closetItemID, isReference: true)
-        ])
-        #expect(localA.isRepresentative == true)
+        #expect(await remote.referenceMutations().isEmpty)
+        #expect(localA.isRepresentative == false)
         #expect(localB.isRepresentative == true)
     }
 
-    @Test func sameTupleReferenceReplacementUsesAtomicServerSetOnly() async throws {
+    @Test func legacyReferenceReplacementIsNotRestoredBySynchronization() async throws {
         let old = remoteRecord(
             clientItemID: UUID(),
             productID: UUID(),
@@ -1869,14 +1865,9 @@ struct FitMatchClosetSyncCoordinatorTests {
 
         await coordinator.synchronize(userID: userID, modelContext: context)
 
-        #expect(await remote.referenceMutations() == [
-            ReferenceMutation(
-                closetItemID: replacement.closetItemID,
-                isReference: true
-            )
-        ])
-        #expect(localOld.isRepresentative == false)
-        #expect(localReplacement.isRepresentative == true)
+        #expect(await remote.referenceMutations().isEmpty)
+        #expect(localOld.isRepresentative == true)
+        #expect(localReplacement.isRepresentative == false)
     }
 
     @Test func firstLoginEmptyCacheNeverClearsRemoteReferences() async throws {

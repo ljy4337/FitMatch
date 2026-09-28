@@ -70,6 +70,11 @@
 - 의미·단위·basis가 모호하거나 충돌하면 추정값이나 첫 번째 항목으로 대체하지 않고 fail closed 또는 명시적 보완 상태로 처리한다.
 - `RETAILER_EXACT`는 같은 쇼핑몰의 같은 검증 schema와 원본 semantic identity가 서버에서 모두 증명된 경우에만 가능한 evidence mode다. source/parser/schema, raw identity, unit, basis, representation, component가 모두 일치해야 하며 raw label/raw code만 같다는 사실은 충분하지 않다.
 - 20260924의 v2 helper 후보는 점수 미포함 proof만 만들며, candidate·authorization·begin·complete·History의 활성 비교 경로를 바꾸지 않는다. 실제 점수 mode 승인은 별도 서버 snapshot 계약과 end-to-end 검증 전까지 활성화하지 않는다.
+- 서버가 승인한 같은 그룹 후보는 목록으로만 표시한다. Swift는 첫 후보를 선택하거나 비교·History 생성을 시작하지 않으며, 사용자가 특정 Closet 항목을 누른 뒤에만 authorization·begin·complete를 실행한다.
+- 비교 화면에서 사용자가 고르는 분류는 A–G 상위 그룹뿐이다. 상세 의류 종류 선택·확인 UI는 비교 권한을 만들거나 복구하는 수단이 아니다. 서버가 상위 그룹만으로 안전한 문맥을 만들지 못하면 Swift가 세부 분류나 상품명으로 보완하지 않고 명시적으로 종료한다.
+- 공통 canonical 실측이 1개 이상인 경우에만 서버가 비교를 허용한다. 같은 그룹이거나 화면에 원본 실측이 있다는 사실만으로 비교를 허용하지 않는다.
+- 핏 매칭 점수와 신뢰도는 별도 표시한다. 신뢰도는 서버 snapshot에서 실제 점수에 사용한 승인 실측 항목 수로 계산하며 coverage 비율은 별도 정보일 뿐 신뢰도에 섞지 않는다.
+- 상의 정책의 승인 실측 가중치는 가슴 2.0, 어깨 1.5, 총장 1.0, 소매 1.0이다. 앱의 embedded fallback은 표시용 보조값일 뿐, 서버 snapshot과 다를 때 서버 값을 대체하지 않는다.
 
 ## 5. 표시·저장과 비교의 분리
 

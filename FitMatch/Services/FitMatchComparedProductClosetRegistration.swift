@@ -356,7 +356,9 @@ enum FitMatchComparedProductClosetRegistration {
             categoryCode: request.categoryCode,
             detailCategory: request.detailCategory,
             detailCategoryCode: request.detailCategoryCode,
-            isRepresentative: request.isRepresentative,
+            // New registrations never create a retired reference-garment
+            // designation. Existing persisted flags remain compatibility data.
+            isRepresentative: false,
             didExplicitlyChangeClassification: request.didExplicitlyChangeClassification,
             didExplicitlySelectClosetClassification: request.didExplicitlySelectClosetClassification,
             comparisonGroupCode: request.comparisonGroupCode,
@@ -364,14 +366,6 @@ enum FitMatchComparedProductClosetRegistration {
                 && !request.didExplicitlySelectClosetClassification,
             id: request.clientItemID
         )
-
-        if request.isRepresentative,
-           item.classificationAuthorityProvenance?.isComparisonAuthority == true {
-            FitMatchClosetReferenceMutation.setRepresentative(
-                item,
-                among: request.activeClosetItems
-            )
-        }
 
         modelContext.insert(item)
         do {
