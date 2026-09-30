@@ -1,0 +1,1 @@
+select fitmatch_vnext.comparison_domain_20260908('unclassified_outerwear') = 'UPPER_BODY' as outerwear_pass, fitmatch_vnext.comparison_domain_20260908('standard_pants') = 'LOWER_BODY' as pants_unchanged;

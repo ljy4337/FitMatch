@@ -1,0 +1,159 @@
+{
+  "source": "hnkplvyegonlhumlejst",
+  "target": "aqhrupgjpmrtnystottx",
+  "captured_at": "2026-09-30T05:55:59.591996+00:00",
+  "transport": "Supabase MCP execute_sql single read-only statement",
+  "exported_tables": 27,
+  "exported_rows": 7167,
+  "function_definitions_exported_and_hash_checked": 128,
+  "raw_row_transport": "JSON strings, not JavaScript numeric objects",
+  "source_counts_and_content_hashes": "PASS",
+  "local_pg17_typed_roundtrip": "PASS",
+  "local_roundtrip_tables": [
+    {
+      "table_name": "fitmatch_catalog.comparison_group_policies",
+      "content_md5": "5375a937a0e864feb3193e46c63be52b",
+      "selected_rows": 2
+    },
+    {
+      "table_name": "fitmatch_catalog.comparison_groups",
+      "content_md5": "499dbb21179edfb3336fad5d33d77049",
+      "selected_rows": 7
+    },
+    {
+      "table_name": "fitmatch_catalog.product_classification_history",
+      "content_md5": "d6d120fc2b91475df14300707aa0afc2",
+      "selected_rows": 27
+    },
+    {
+      "table_name": "fitmatch_catalog.product_comparison_group_overrides",
+      "content_md5": "7e26d3f6b7724389554f418f4d9f0c58",
+      "selected_rows": 2
+    },
+    {
+      "table_name": "fitmatch_catalog.products",
+      "content_md5": "bcba6250fab74b9e5ad81a046334da2f",
+      "selected_rows": 27
+    },
+    {
+      "table_name": "fitmatch_catalog.releases",
+      "content_md5": "5fbd585b7c9b4093ab026b46d388d0fe",
+      "selected_rows": 15
+    },
+    {
+      "table_name": "fitmatch_catalog.source_category_comparison_groups",
+      "content_md5": "00c5d7c015656a08fade96956ce7baf4",
+      "selected_rows": 1023
+    },
+    {
+      "table_name": "fitmatch_vnext.classification_axis_value_authority",
+      "content_md5": "51483fdd1799f24ab642a6f4a42eb1f9",
+      "selected_rows": 12
+    },
+    {
+      "table_name": "fitmatch_vnext.classification_signal_mappings",
+      "content_md5": "428cea6bd9bbbd959a0b1df88e393912",
+      "selected_rows": 2250
+    },
+    {
+      "table_name": "fitmatch_vnext.comparison_metrics",
+      "content_md5": "494e0f78bab29c0a4764f7f55fa6be82",
+      "selected_rows": 647
+    },
+    {
+      "table_name": "fitmatch_vnext.comparison_policies",
+      "content_md5": "5f3b7d84c4e8a49c31ea2da535d2ee22",
+      "selected_rows": 44
+    },
+    {
+      "table_name": "fitmatch_vnext.fitmatch_categories",
+      "content_md5": "10378ea269a54a56346e5248a25c5c49",
+      "selected_rows": 11
+    },
+    {
+      "table_name": "fitmatch_vnext.fitmatch_measurements",
+      "content_md5": "7e4ee3d4a32a1277fc3881c670844452",
+      "selected_rows": 42
+    },
+    {
+      "table_name": "fitmatch_vnext.garment_types",
+      "content_md5": "f8ca3744f585b1c55261435b453d11a7",
+      "selected_rows": 60
+    },
+    {
+      "table_name": "fitmatch_vnext.product_classification_signals",
+      "content_md5": "5c5fad35d0bfb4d09767eaf00c487bee",
+      "selected_rows": 8
+    },
+    {
+      "table_name": "fitmatch_vnext.product_ingestion_receipts",
+      "content_md5": "ad3f99e0db38405d0c86e9fb49509d50",
+      "selected_rows": 2
+    },
+    {
+      "table_name": "fitmatch_vnext.product_size_measurements",
+      "content_md5": "27a14acb87561df065120542e710ec81",
+      "selected_rows": 70
+    },
+    {
+      "table_name": "fitmatch_vnext.product_sizes",
+      "content_md5": "7a05daa0f02b449ee66b00f3f6865835",
+      "selected_rows": 14
+    },
+    {
+      "table_name": "fitmatch_vnext.product_variants",
+      "content_md5": "12cf17702a70630dd0b5af1325958fb8",
+      "selected_rows": 2
+    },
+    {
+      "table_name": "fitmatch_vnext.products",
+      "content_md5": "d3cd98560a11f631cadd822020e35b13",
+      "selected_rows": 2
+    },
+    {
+      "table_name": "fitmatch_vnext.size_availability_observations",
+      "content_md5": "f49fba39ae6a499e0528ca1e26917158",
+      "selected_rows": 14
+    },
+    {
+      "table_name": "fitmatch_vnext.source_classification_signals",
+      "content_md5": "ab26bbc83915c353746f508a527ced1f",
+      "selected_rows": 2555
+    },
+    {
+      "table_name": "fitmatch_vnext.source_identifiers",
+      "content_md5": "f562d357edd0336aaa4f27f737046194",
+      "selected_rows": 2
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurement_aliases",
+      "content_md5": "9a76f02ec57f55816574a40bd83f15f1",
+      "selected_rows": 227
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurement_mappings",
+      "content_md5": "d5693718caf12ae3a3c6bb4d4f06243b",
+      "selected_rows": 48
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurements",
+      "content_md5": "5fc3a0f67ec0a55be4abc32f6f0b3845",
+      "selected_rows": 51
+    },
+    {
+      "table_name": "fitmatch_vnext.sources",
+      "content_md5": "3471ed54b8c65818da83b947b5c2d50f",
+      "selected_rows": 3
+    }
+  ],
+  "full_schema_restore": "NOT RUN",
+  "production_write": "NOT RUN",
+  "auth_smoke": "NOT RUN",
+  "local_server_stopped": true,
+  "private_export_directory": "/tmp/fitmatch-mcp-transfer-proof-20260930",
+  "security_scan": "sensitive credential key regex: no matches; not a comprehensive privacy audit",
+  "limitations": [
+    "Local tables used original column types and NOT NULL; production constraints, functions, RLS, triggers were not installed in this roundtrip.",
+    "Target CREATE/schema/auth-trigger privileges were checked read-only; actual remote write transport was not exercised."
+  ]
+}

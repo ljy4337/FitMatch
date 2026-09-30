@@ -1,3 +1,128 @@
+## 2026-09-30 main/QA 선별 게시 준비
+
+- 사용자 일괄 반영 승인. 운영/QA 환경 분리 변경과 현재 production caller가 요구하는 미등록 VNextCompletedReplayPolicy.swift, 독립 회귀 테스트를 선별. .build 제외 규칙 추가. 기존 실제 비교기록 fixture 2개 및 이에 의존하는 FrozenReleaseHistoryAuditTests.swift는 개인 데이터 원문이므로 게시 제외/로컬 보존.
+- 과거 SQL/migration/검증과 운영 이관 메타데이터 및 준비 생성기 보관. 원격 DB 재적용 없음. 운영 bootstrap 원문 SQL/seed는 Git에 없으며 완전 복원 증명이 아님; ledger와 과거 migration 재실행 금지 안내 추가.
+- Git index만 추출한 별도 소스로 QA unsigned simulator build exit0 PASS, 실제 번들 QA identity/DB URL PASS. routing owner 6검사 PASS, dump safety 7 PASS, 비밀키 패턴/staged diff/보호스크롤 PASS. 원격 main/QA는 이 선별 변경을 동일 커밋으로 게시하는 대상으로 확정. 기존 미추적 조사자료/로그/임시파일 삭제 없음.
+
+## 2026-09-30 운영/QA 별도 앱 빌드 설정
+
+- 사용자 별도 앱 동시 설치 선택. main 7bc7dc3에서 로컬 변경. 운영 Scheme FitMatch-Production(Debug/Release), QA Scheme FitMatch-QA(Debug-QA/Release-QA). 기존 FitMatch 기본 Scheme은 운영. Live/Audit 전용 Scheme은 QA로 고정. 브랜치 이름에 따른 자동 DB 선택은 없음.
+- 공개 publishable key/URL을 프로젝트 build setting에서 Info.plist로 확장. 운영 aqhrupgjpmrtnystottx, QA hnkplvyegonlhumlejst. QA bundle com.ljy4337.fitmatch.qa 및 extension .qa.shareextension, App Group group.com.ljy4337.fitmatch.qa, URL scheme fitmatch-qa 분리. 운영 기존 identity 유지.
+- 실제 라우팅 owner를 swiftc로 두 조건에서 컴파일/실행: 각 own/other/unknown route 3개 precondition PASS(총6). 기존 테스트 입력은 환경 scheme을 사용하도록 변경, 신규 FitMatchEnvironmentRoutingTests 추가. XCTest 실행 NOT RUN.
+- QA unsigned simulator app build exit0 PASS. 빌드된 앱/extension plist의 DB URL/public key 형식/bundle/scheme 확인 PASS. 5개 configuration list 및 audit scheme 구조 검사 PASS. 운영 Release unsigned simulator build exit0 PASS. 빌드된 운영 app/extension plist의 운영 URL/bundle/key 형식/scheme 확인 PASS.
+- 최초 showBuildSettings sandbox cache 접근 차단 후 승격 성공. 최초 운영 build는 QA와 같은 derivedData 동시 접근으로 build.db locked 실패; QA 종료 후 순차 재시도. 앱 코드 결함으로 판정하지 않음.
+- 외부 작업 미완료: QA Apple App ID/extension/App Group provisioning, 개발 Supabase Apple Client IDs에 QA bundle 추가. 운영 Apple Client IDs 저장은 사용자 보고, 실제 로그인 미검증. DB write/외부 인증 설정 변경/기기 설치/commit/push 없음.
+- 기존 개발 설치는 운영과 같은 bundle ID였으므로 첫 운영 테스트는 필요한 기존 데이터 보존 후 깨끗한 설치 권장. 자동 로컬데이터 삭제 없음. Supabase SDK 인증 key는 project ref별 namespace 확인. 이전 사용자 미추적 소스 포함 로컬 빌드이며 Git만 checkout한 clean build 증명 아님.
+- 사용법 Docs/FitMatchBuildEnvironments.md. 변경은 로컬 main에만 존재; QA 원격 브랜치에 아직 반영 안 됨.
+
+## 2026-09-30 main/QA 로컬 브랜치 준비 — 환경 설정 대기
+
+- 원격 main/QA 모두 7bc7dc3 확인 및 fetch. connectDB HEAD와 소스 tree 동일. 로컬 main을 fast-forward하고 main으로 전환, QA 원격 추적 브랜치 생성. 기존 미커밋/미추적 자료 보존. commit/push 없음.
+- 사용자 Apple Client IDs 수정·Save 완료 보고. 실제 로그인 미검증.
+- 운영/QA 연결 설정은 아직 변경하지 않음. 동일 앱 교체 설치와 별도 앱 동시 설치 중 사용자 선택 대기: bundle/signing 및 캐시·세션 격리 범위에 영향. 현재 앱은 개발 DB 연결 유지.
+
+## 2026-09-30 운영 Edge 2개 배포 완료 / Apple 설정 로그인 대기
+
+- 사용자1·2번(Edge/Apple)진행,3·4번(앱연결전환/실사용검증)보류명시. 대상운영aqhrupgjpmrtnystottx.
+- 개발product-observation v5/delete-account v1의actual배포파일과로컬index.ts내용완전동일확인후운영두함수v1배포ACTIVE/verify_jwt=true. 운영get_edge_function다시조회하여개발과files완전동일PASS.
+- 운영두endpoint에JWT없는POST {}만실행→각HTTP401 PASS. 최초sandbox네트워크URLError→승격재시도성공. 사용자생성/상품mutation/계정삭제없음. 인증후정상실행/E2E NOT RUN.
+- Apple코드signInWithIdToken(.apple,nonce),bundle com.ljy4337.fitmatch,team Y344H87QC5확인. Supabase공식native가이드상provider Client IDs에AppID등록필요,네이티브전용은웹OAuth secret rotation대상아님.
+- 현재도구Auth설정변경API없음/CLI없음/CLI토큰설정없음. 대시보드브라우저Supabase로그아웃→기존GitHub로그인선택도로그인입력화면. 사용자로그인질문발송,브라우저handoff유지. Apple설정읽기/수정 BLOCKED;현재운영provider활성여부미확인. 비밀키/암호출력없음.
+- production-edge-auth-status.json증거기록. 앱소스/endpoint/로그인UX/DB데이터/commit/push변경없음. 다음은사용자대시보드로그인후Apple provider운영설정,3·4는보류유지.
+
+## 2026-09-30 FitMatch_PROD DB 이관 완료 — 57/57 PASS
+
+- 사용자마지막제약/RLS/트리거/권한구체승인후900/950실제적용성공. 총57원격migration. sql-bundle-manifest.json실제version/name/파일SHA256대응확정. 이전BLOCKED상태해소.
+- READ ONLY postflight:선정38테이블행수/MD5동일(27테이블7167행,개인·조사11테이블0).38table/550column/116index/275constraint/26policy/44trigger/view1/sequence1/원본128function권한·정의검증. 운영기본rls_auto_enable별도유지129총함수.
+- 28함수CRLF→LF정규화로rawMD5차이있음;128정규화정의모두동일. SQL단일인용문자열CRLF후보0. CHECK1개AND괄호평탄화(격리복원과동일),기본ACL도원본동일. security_invoker/시퀀스최댓값·1169counter확인. 플랫폼rls_auto_enable해시보존/ensure_rls유지/invalidindex·unvalidatedconstraint0.
+- 초안loading/기존validated보존. auth.users0,익명runtime실행불허/인증역할허용. 개발DB쓰기/앱endpoint/Edge/Auth설정변경/commit/push없음. 운영실기기로그인·등록·비교E2E NOT RUN.
+- PRODUCTION-COMPLETE.md,postflight원본metadata/counts/migration/function정규화/비교결과저장. DB이관은완료. 다음운영서비스전환은Edge배포·AppleAuth·앱endpoint설정및실사용검증별도. 원문SQL /tmpprivate이므로영구외부백업미실행.
+
+## 2026-09-30 운영 이관 55/57단계 완료 — 마지막 보안/제약 복원 승인차단
+
+- 사용자 무신사초안포함 모두진행명시승인후008~054까지실제적용. 총000~054=55/57. 운영FitMatch_PROD aqhrupgjpmrtnystottx. seed27테이블7167행전량삽입. 원본예상38테이블행수·내용MD5모두일치PASS,선정FK38개missing0PASS. 초안loading보존/상태승격없음.
+- 900_constraints_policies_triggers.sql: 자동검토가운영스키마/RLS/trigger구체범위승인부족으로거절. 실제운영데이터hash/FK검사+기존비superuser복원PASS근거확인후동일단계재시도했지만동일사유거절. 900및950_access둘다미적용. 우회/대체도구/SQL분할시도없음.
+- 필요한구체승인: 원본과동일한275제약/인덱스복원(전체116)/26RLS정책/44트리거(auth.users가입trigger포함)/시퀀스설정및950역할별접근·기본권한복원. 마지막권한까지적용전앱운영전환금지.
+- READ ONLY운영postflight:auth/profiles/closet/comparisons0,anon/authenticated runtimeEXECUTE=false. 실제migration55version매핑은sql-bundle-manifest및production-apply-journal에저장. 원본개발DB쓰기/앱endpoint/Edge/Auth설정/commit/push없음. 운영이관완료아님.
+
+## 2026-09-30 운영 이관 부분 적용 — 자동 승인 검토 BLOCKED
+
+- 사용자 최종검토 후 진행해 승인으로 FitMatch_PROD aqhrupgjpmrtnystottx에000~007 총8/57단계실제적용. 구조38테이블/128함수생성,seed80행. version20260930070930~20260930071155를sql-bundle-manifest/production-apply-journal에기록. 개발DBwrite없음.
+- 001처음자동리뷰는과거준비승인만있다고거절→최신이관승인·미삽입확인후동일단계재시도성공.
+- 008자동리뷰는무신사draft매핑대량삽입구체승인부족으로거절. 원본/대상policy validated/loading동일과원본1023행해시동일재확인후동일단계재시도했으나동일이유재거절. 우회/스킵/후속적용없음. 해당파일75매핑중74개draft,1개기존validated. draft상태승격없음. 사용자의구체적draft보존이관승인필요.
+- READ ONLY postflight:auth/profile/closet/comparison0,authenticated/anon runtimeEXECUTE=false,authenticated catalog/vnextUSAGE=false. 아직키·FK·trigger·RLS policy·최종권한단계미적용. 앱운영연결금지. 이미적용단계재실행금지;008부터동일hash자료로승인후재개. 운영완료아님.
+- commit/push/앱endpoint/Edge/Auth설정변경없음. 준비완료보고는실제운영완료로해석금지.
+
+## 2026-09-30 운영 이관 최종 재검토
+
+- READ ONLY 재조회: 운영aqhrupgjpmrtnystottx 앱테이블0/auth사용자0, 개발선정데이터38테이블행수·해시동일/함수128정의동일. SQL57파일SHA256·0600재확인. 양쪽PG17/서울/ACTIVE_HEALTHY.
+- 운영postgres는NOSUPERUSER/BYPASSRLS. 필요한CREATE/TRIGGER/REFERENCES/USAGE/EXECUTE및public소유권한확인. 실제플랫폼public기본ACL대조. 로컬새DB에같은비superuser속성+별도auth.users소유권한으로57단계전체재복원PASS,UTC데이터해시38/38PASS;로컬서버종료.
+- 추가차단결함확인없음,DB패키지적용진행가능. 원격실제요청크기805606bytes최대/플랫폼event trigger는원격실행전부미증명. 단계별transaction/실패시중단/권한최종단계전앱전환금지/원격version이력기록유지. /tmp원문삭제시재추출필요.
+- FINAL-REVIEW.md작성,DATA-SCOPE과거미완료상태구분,JWT없는authenticated거부를anon전체검사로오해하지않게검증문구정정. 원격DBwrite/앱수정/commit/push없음.
+
+## 2026-09-30 운영 DB SQL 이관 준비 완료 — 원격 적용 전
+
+- 앞선 전체복원 미완료 상태를 대체. scripts/build-production-sql-bundle.py로57단계 SQL생성, private /tmp/fitmatch-production-sql-ready-v3-20260930. 원문seed는Git미포함. manifest에SHA256/remote migration 예정이름 기록; 실제version은미적용이므로null.
+- 격리PG17 fitmatch_full_restore_v4에서 전체57단계복원PASS. 38테이블/550컬럼/128앱함수/116index/275constraint/44trigger/26RLS/view1/sequence1. 함수정의·실효ACL 및 데이터7167행UTC해시38/38일치. security_invoker 보존, bigint sequence max 문자열로정확보존. CHECK1개 AND괄호재파싱차이만존재. 플랫폼함수1별도보존.
+- 로컬가상사용자2명transaction에서가입trigger/profileRLS/runtime2상품PASS후rollback. 실제SupabaseAuth·Apple로그인·기기E2E NOT RUN. auth fixture최소모형, supabase_admin플랫폼defaults는로컬미생성. 운영preflight에서실제기본권한대조필수.
+- 생성초기public테이블명정규화/함수종료semicolon오류발견→생성기보완→새로컬DB전체재검증PASS. 로컬 fixture delimiter오류도수정; 원격영향없음.
+- 최종검사: 기존pg_dump용manifest ready플래그와MCP준비상태를분리(sql_bundle_ready_for_application=true). 기존19테이블추출기는여전히ready=false. 최초안전테스트1실패는이플래그혼용으로수정; assertion변경없음. py_compile기본cache권한실패는/tmp cache로재실행.
+- 원격DB쓰기/Edge배포/endpoint변경/commit/push없음. 다음은기존승인범위의운영preflight→57단계적용→read-only postflight. 개발ledger재실행금지. 준비완료는DBSQL패키지범위이며운영서비스전환완료아님.
+
+## 2026-09-30 .pgpass 없는 MCP 이관 경로 실증
+
+- 사용자맥없음→연결도구대안확인요청. 대상aqhrupgjpmrtnystottx의current_user postgres/schemaCREATE/publicCREATE/auth.usersTRIGGER true/app테이블0 READ ONLY확인. Productionwrite는미실행.
+- MCP단일SELECT로27테이블7167행+128함수정의+메타데이터추출성공(응답약7.1MB). 원본숫자손실방지를위해to_jsonb(row)::text 문자열사용. private /tmp/fitmatch-mcp-transfer-proof-20260930 저장, 원본내용해시27/27·함수해시128/128일치.
+- 격리PG17.11에동일컬럼타입/NOT NULL 테이블만생성하여7167행insert후행수/해시27/27일치PASS. 전체FK/RLS/trigger/function복원검증아님. 최초initdb sandbox공유메모리차단→승격후성공, TCP비활성/private socket사용,검증후서버종료. 원격DBwrite없음.
+- mcp-export-snapshot.sql/mcp-transfer-proof.json,manifest/README 갱신. .pgpass필수차단은MCP경로에적용안됨(로컬pg_dump대안만). 민감키regex일치0이나전체개인정보검사완료주장안함. 전체구조·권한·trigger복원/운영smoke NOT RUN. 운영이관승인은유지되나아직운영적용준비완료아님. commit/push없음.
+
+## 2026-09-30 운영 이관 데이터 범위 확정
+
+- 사용자 데이터대상확정 요청에 따라 신규운영seed 범위작성: 기준16테이블6984행 + catalog분류근거3테이블69행 + UNIQLO E486587/E486610 연결8테이블114행 =27테이블7167행. 개발계정/프로필/옷장/비교/개인override및조사자료는이관0행, 개발원본삭제없음. 테이블구조38유지.
+- 상품2/variant2/size14/실측70/classification signal8/receipt2/source identifiers2/availability14. receipt exactUUID고정, 원본actor_id_snapshot은과거출처로보존(계정복사아님). 데이터원문변조/UUID재작성없음. 원문내민감정보전수검사는미수행이며추출gate로분리.
+- READ ONLY선정행수·MD5조회, 선정FK38/38 missing0 PASS, 실제배포path SQL을선정관측으로한정한분류경로2/2보존PASS. 실제restore/E2E아님. `supabase/production-bootstrap/DATA-SCOPE.md`, data-selection.json 및counts/FK/path SQL·결과파일.
+- 이전19테이블reference후보/사용자데이터선택대기 기록은이번명세로대체. 기존exporter는최종27테이블row선택을아직지원하지않음; 구조/19테이블참고후보만. 실제snapshot export/인증설정/격리복원/운영적용남음. DBwrite/commit/push없음.
+
+## 2026-09-30 운영 덤프 준비 패키지 — 실제 추출은 인증설정 BLOCKED
+
+- 사용자 운영dump준비 요청. 원본hnkplvyegonlhumlejst/운영aqhrupgjpmrtnystottx 재확인, DB READ ONLY. `supabase/production-bootstrap/`에38테이블manifest/원본·대상실제메타데이터/함수hash·권한·column·RLS·trigger·constraint·index·sequence정의/원격ledger136/Edge목록/authtrigger정의/복원절차 작성. 미사용정리를 선행하지 않고 원본구조38/128 보존.
+- `scripts/prepare-production-dump.py`: 기본PLAN, 명시export도개발Direct/Sessionpooler5432만허용,pg17/읽기전용/0600passfile/새repo외출력/메타데이터전후대조/단일pg_dump/해시. 운영접속·restore·DROP·배포코드없음. optional19테이블reference후보는관측근거미포함이므로항상NOT_READY, 사용자9테이블및조사2/관측보류8데이터제외.
+- 추가READ ONLY집계: UNIQLOauto mapping1→target/peer signal2→상품후보2/complete최신receipt후보2, receipt2모두actor_id_snapshot존재. 정확한seed closure/provenance 결정남음. 사용자자료비이관여부질문은응답대기, 임의확정안함.
+- 안전검사7/7PASS, PLAN실행PASS, 실제DB inventorySQL 양쪽PASS. pg17.11존재확인(PATH기본18.4안씀). 실제export진입은 .pgpass/PGPASSFILE미설정으로exit1 BLOCKED; 연결/pg_dump실행전종료. 실제dump파일없음,복원/운영인증/E2E NOT RUN. DBwrite/endpoint변경/commit/push없음. 준비파일은로컬미추적.
+
+## 2026-09-30 덤프 대상 목록 재검토
+
+- READ ONLY source/target 재조회: source tables38/functions128/procedure0/view1/sequence1/index116/apptrigger44/RLSpolicy26 재확인. 조사2테이블 제외안은 index114이며 trigger/policy수는 동일. 함수2개 삭제검증은 운영이관의 필수선행작업이 아니므로 우선128유지.
+- PROD에는 public.rls_auto_enable() + ensure_rls event trigger가 이미 있음. public 테이블 RLS자동활성화, sourceprofiles도RLS=true. 대상기본객체 보존하고 앱객체별 대조; 전체함수128 강제금지(기본1+앱128 가능).
+- catalog 분류history27건 reviewed_by 전부NULL 확인: FK만으로 개발계정 이관필수라 하지 않음. receipt의actor_id_snapshot컬럼은 존재; 정책근거 seed는 여전히행단위선정 필요. 구조목록과 데이터전량복사승인 구분.
+- Docs/QA/DevelopmentDBCleanupAudit-20260930/Report.md §10 및 DumpScopeRecheck.json(로컬미추적) 기록. 구조조회PASS, 복원/인증smoke/앱테스트NOT RUN. DBwrite/삭제/dump/restore/배포/앱수정/commit/push없음.
+
+## 2026-09-30 개발 DB 정리 대상 전수 목록 감사
+
+- READ ONLY hnkplvyegonlhumlejst: 앱schema3개 tables38/functions128/procedures0/view1/sequence1/index116. 모든함수정의/호출이름그래프, trigger44(app+auth), FK, policy, 실제row count 조사. 관리schema는 삭제대상아님.
+- caller미발견 최우선함수2: product_readiness_with_context_v1(uuid,jsonb), update_closet_item_with_group_for_swift(uuid,jsonb). 전체함수본문/pg_depend/Swift/Edge 확인. 과거SQL와권한계약이남아있어 격리삭제회귀 전 삭제확정아님. track_functions=none이라사용횟수증거없음.
+- 조사2테이블 retailer_observed_categories161 / retailer_observed_category_measurements703은script에서사용하는관리자료. 개발보존/운영제외후보. reference setter4함수는공개호환확인필요하여폐기보류. legacy/base 함수는현재호출다수.
+- 중요: active UNIQLO auto-promoted mapping1건이products/receipt관측근거를조회. 앞선운영안의제품/receipt기본제외는의존성확인없이적용불가. catalog recovery근거도보존검토. 모든경로실행불가를입증한것은아님.
+- Docs/QA/DevelopmentDBCleanupAudit-20260930/Report.md(38테이블/128함수전체판정), FunctionInventory.json(definition해시/호출목록) 작성. 기존cleanup_retired_paths_Verify.sql live5/5PASS. DROP/복원/인증회귀 NOT RUN. DBwrite/앱수정/commit/push없음.
+
+## 2026-09-30 운영 이관안 최종 비판 검토
+
+- selective bootstrap과 full clone 구분. 새 baseline 선택시 과거136migration replay/전수대응을 무조건 전제하지 않음; 향후 재실행방지 전략은 필요. 공개 전 별도 운영검증빌드 연결 후 인증smoke, 그뒤 공개 전환으로 순서 명확화.
+- live catalog current_product_classifications view가 catalog.products/history를 읽고 recovery 함수2개가 참조. 일반cache로 일괄제외 금지, 필요seed/현재call도달 미확정. auth trigger→profiles INSERT/대상authusers0/sequence 확인.
+- 상세 기존 이관 검토문서 최종절. 운영 준비 완료 판정 아님. seed명세/export/복원/인증검증은 여전히 미수행. DBwrite/배포/앱코드변경 없음.
+
+## 2026-09-30 FitMatch_PROD 이관안 2차 반증 검토
+
+- 이전 이관안은 실행계획 완성으로 보지 않는다. live FK/정책함수/Edge 코드/ledger 대조로 보완. product_comparison_group은 validated 고정version 사용, loading draft 승격 금지. exact-product override 2건은 이관 필요 정책이며 일반 상품 cache와 분리.
+- remote136/local123/version불일치32는 SQL32개 누락 증명이 아님. baseline/대응manifest 필요. Edge2개 배포 source는 local과exact일치, JWT/Auth 설정호환 NOT RUN. Storage0/Realtime tables0 확인.
+- 사용자 데이터 제외 승인, 새URL+key 쌍, cache/session전환, 역할별권한, 일관snapshot, 복구/전환gate를 검토안에 추가. 상세 Docs/QA/FitMatchProductionMigrationReview-20260930.md. DBwrite/배포/앱변경/복원 없음.
+
+## 2026-09-30 FitMatch_PROD 이관 사전 검토
+
+- READ ONLY로 새 운영 project aqhrupgjpmrtnystottx(FitMatch_PROD) 확인. 원본 hnkplvyegonlhumlejst와 별도, 둘 다 healthy/서울/PG17. 대상 app schema/table/Edge 아직 없음.
+- 구조뿐 아니라 검증된 category/measurement/comparison policy 기준 데이터, 권한/trigger, Edge2개, Apple Auth 등 별도 설정 이관 필요. 사용자/테스트 데이터는 기본 제외 권고, 확정/적용 아님.
+- 상세 Docs/QA/FitMatchProductionMigrationReview-20260930.md. dump/restore/DBwrite/deploy/앱endpoint변경 없음. 운영 적용 전 범위확정과 별도 쓰기승인 필요. 전체 dependency/Git parity/Auth/E2E NOT RUN.
+
 ## 2026-09-30 TestFlight 업로드 시도 — Xcode 계정 토큰 누락
 
 - 현재 로컬 `connectDB`의 기존 미커밋 소스를 포함해 Archive `/tmp/FitMatchBuild9LocalConnectDB.xcarchive` 생성 성공. 앱/Share Extension Build Number를 8에서 9로 올렸고 Archive 내부에서 `1.1 (9)`, arm64, Team 서명을 확인했다.

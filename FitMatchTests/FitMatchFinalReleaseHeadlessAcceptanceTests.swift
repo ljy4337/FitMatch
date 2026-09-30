@@ -954,7 +954,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         )
         let handoff = try #require(store.pendingProductURLHandoff())
         #expect(handoff.urlString == uniqlo.absoluteString)
-        let compareRoute = try #require(URL(string: "fitmatch://compare"))
+        let compareRoute = try #require(URL(string: "\(FitMatchProductEntryRouting.appScheme)://compare"))
         #expect(FitMatchProductEntryRouting.action(for: compareRoute) == .openPendingProductCompare)
         #expect(store.clearPendingProductURL(ifMatching: handoff.urlString, token: handoff.token))
         #expect(store.pendingProductURLHandoff() == nil)
@@ -1668,8 +1668,8 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         let productURL = try #require(URL(string:
             "https://www.uniqlo.com/kr/ko/products/E450259-000/00"
         ))
-        let unknownRoute = try #require(URL(string: "fitmatch://unknown"))
-        let compareRoute = try #require(URL(string: "fitmatch://compare"))
+        let unknownRoute = try #require(URL(string: "\(FitMatchProductEntryRouting.appScheme)://unknown"))
+        let compareRoute = try #require(URL(string: "\(FitMatchProductEntryRouting.appScheme)://compare"))
 
         store.savePendingProductURL(productURL)
         let firstHandoff = try #require(store.pendingProductURLHandoff())

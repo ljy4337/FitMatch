@@ -1,0 +1,409 @@
+{
+  "source": "hnkplvyegonlhumlejst",
+  "target": "aqhrupgjpmrtnystottx",
+  "captured_at": "2026-09-30T05:55:59.591996+00:00",
+  "files": [
+    {
+      "file": "000_schema_private.sql",
+      "sha256": "5093fb839b96ea5a4cb61548190e2be301bfa5b58b2dcdd95a14867554aa0713",
+      "bytes": 805606,
+      "migration_name": "fitmatch_prod_bootstrap_000_schema_private",
+      "remote_version": "20260930070930"
+    },
+    {
+      "file": "001_seed.sql",
+      "sha256": "ae66a66ccfe8d5c7ce79182d153d490715f1c0fc9a61d0693a2229895c2f1149",
+      "bytes": 95920,
+      "migration_name": "fitmatch_prod_bootstrap_001_seed",
+      "remote_version": "20260930071052"
+    },
+    {
+      "file": "002_seed.sql",
+      "sha256": "866266bbbb205412e52cc19ea4a04fb4c1f85bac476ad991936134a0d086aa54",
+      "bytes": 93144,
+      "migration_name": "fitmatch_prod_bootstrap_002_seed",
+      "remote_version": "20260930071114"
+    },
+    {
+      "file": "003_seed.sql",
+      "sha256": "68c7cf11e11a0775f9541db868b19174961d7daba53e0b2bcae0cf9a9c0c189b",
+      "bytes": 1754,
+      "migration_name": "fitmatch_prod_bootstrap_003_seed",
+      "remote_version": "20260930071121"
+    },
+    {
+      "file": "004_seed.sql",
+      "sha256": "f40cf8917bdccdf7ca6144f89464579a034345a8668c2734661ad7072ef492fa",
+      "bytes": 44020,
+      "migration_name": "fitmatch_prod_bootstrap_004_seed",
+      "remote_version": "20260930071130"
+    },
+    {
+      "file": "005_seed.sql",
+      "sha256": "40285eb824afc6f0faf4d2f19542329f2139631d2342a7bfdce623385b3ec215",
+      "bytes": 1285,
+      "migration_name": "fitmatch_prod_bootstrap_005_seed",
+      "remote_version": "20260930071137"
+    },
+    {
+      "file": "006_seed.sql",
+      "sha256": "6c421a08b5a648ef1a224923cdca7b534d4742611880aa6ef85a8df39afc1697",
+      "bytes": 35553,
+      "migration_name": "fitmatch_prod_bootstrap_006_seed",
+      "remote_version": "20260930071147"
+    },
+    {
+      "file": "007_seed.sql",
+      "sha256": "87af9e28fce0d902416817cb6effed239c30ba014d1bc4ce3ddaea96774cfe11",
+      "bytes": 136390,
+      "migration_name": "fitmatch_prod_bootstrap_007_seed",
+      "remote_version": "20260930071155"
+    },
+    {
+      "file": "008_seed.sql",
+      "sha256": "5b3878bc7b0087d5182425772da2e6bf49e512df9f269c5dc7eaf4b930db0e93",
+      "bytes": 178248,
+      "migration_name": "fitmatch_prod_bootstrap_008_seed",
+      "remote_version": "20260930072716"
+    },
+    {
+      "file": "009_seed.sql",
+      "sha256": "5cfd7b421fafb7bea1d578fc2fbc237dfd44e5fd4173a79de9f35bb3a229126c",
+      "bytes": 179645,
+      "migration_name": "fitmatch_prod_bootstrap_009_seed",
+      "remote_version": "20260930072726"
+    },
+    {
+      "file": "010_seed.sql",
+      "sha256": "6888804e2fc768ecbe5d17fd0d0f0c605920f63a3d0e2070bf3376921463f661",
+      "bytes": 179842,
+      "migration_name": "fitmatch_prod_bootstrap_010_seed",
+      "remote_version": "20260930072734"
+    },
+    {
+      "file": "011_seed.sql",
+      "sha256": "932e6cac833f3c5de7cd7da391a0b6114d486002478459a6b2e0f48cb017cbca",
+      "bytes": 178485,
+      "migration_name": "fitmatch_prod_bootstrap_011_seed",
+      "remote_version": "20260930072754"
+    },
+    {
+      "file": "012_seed.sql",
+      "sha256": "c71f879cc7557c7605ab29add675ea975238e7f18b68f0d6a6752a793b6cb0a1",
+      "bytes": 178702,
+      "migration_name": "fitmatch_prod_bootstrap_012_seed",
+      "remote_version": "20260930072819"
+    },
+    {
+      "file": "013_seed.sql",
+      "sha256": "68c87646c174c442edd749be989c6e57fb90f035094398ef1ee693e37fd17d57",
+      "bytes": 179915,
+      "migration_name": "fitmatch_prod_bootstrap_013_seed",
+      "remote_version": "20260930072850"
+    },
+    {
+      "file": "014_seed.sql",
+      "sha256": "1a947f5a35327310631b8cef6be2ed700cca17ec23934548d229dbc4c462036f",
+      "bytes": 178870,
+      "migration_name": "fitmatch_prod_bootstrap_014_seed",
+      "remote_version": "20260930072901"
+    },
+    {
+      "file": "015_seed.sql",
+      "sha256": "6a8b7c75a7a900d784a2753d8b53b803773ea70f689cc7e653f1e49664c7c983",
+      "bytes": 179917,
+      "migration_name": "fitmatch_prod_bootstrap_015_seed",
+      "remote_version": "20260930072909"
+    },
+    {
+      "file": "016_seed.sql",
+      "sha256": "2985f935902d66989c9facd0c614be2bca4f3c49e0edce19bc23f56dcd4b3209",
+      "bytes": 179563,
+      "migration_name": "fitmatch_prod_bootstrap_016_seed",
+      "remote_version": "20260930072934"
+    },
+    {
+      "file": "017_seed.sql",
+      "sha256": "45cc427eaa9834cb2071ff783a60e225521b95ce9c6f1dc08aa2538f035e8715",
+      "bytes": 179843,
+      "migration_name": "fitmatch_prod_bootstrap_017_seed",
+      "remote_version": "20260930073002"
+    },
+    {
+      "file": "018_seed.sql",
+      "sha256": "5578bd33d8017888ba1b7acd48cff73c93d9c7c0b9a2f3e2b7c25b95bb6d200f",
+      "bytes": 179560,
+      "migration_name": "fitmatch_prod_bootstrap_018_seed",
+      "remote_version": "20260930073030"
+    },
+    {
+      "file": "019_seed.sql",
+      "sha256": "e2abc6eed116d8464a806eb10d045b3e3a80db2c61a48fc50e4c15430712fd5c",
+      "bytes": 14105,
+      "migration_name": "fitmatch_prod_bootstrap_019_seed",
+      "remote_version": "20260930073036"
+    },
+    {
+      "file": "020_seed.sql",
+      "sha256": "73edec34a816bf649796de57ee8c5bcc95d2992c74fac51b9c4b2c206e6629c5",
+      "bytes": 3989,
+      "migration_name": "fitmatch_prod_bootstrap_020_seed",
+      "remote_version": "20260930073046"
+    },
+    {
+      "file": "021_seed.sql",
+      "sha256": "8934e1094c7dc77dedbb13a3f53652b700026052042c6af36e01ca2633e4fc55",
+      "bytes": 180223,
+      "migration_name": "fitmatch_prod_bootstrap_021_seed",
+      "remote_version": "20260930073057"
+    },
+    {
+      "file": "022_seed.sql",
+      "sha256": "1f235bf5f9b0aa7280466b27509402103eadad7631f74456b5ee485cb2efca9f",
+      "bytes": 180380,
+      "migration_name": "fitmatch_prod_bootstrap_022_seed",
+      "remote_version": "20260930073118"
+    },
+    {
+      "file": "023_seed.sql",
+      "sha256": "2eb385f7be3f2acfa228af7db0e6691096d12b58866779df2e964d835d60fabf",
+      "bytes": 180360,
+      "migration_name": "fitmatch_prod_bootstrap_023_seed",
+      "remote_version": "20260930073140"
+    },
+    {
+      "file": "024_seed.sql",
+      "sha256": "34003efd8a1c03214e6c0d0cc749c1c1759052b9b5aa7799633d7f7ee1e88f83",
+      "bytes": 180264,
+      "migration_name": "fitmatch_prod_bootstrap_024_seed",
+      "remote_version": "20260930073205"
+    },
+    {
+      "file": "025_seed.sql",
+      "sha256": "5f271bc59ba15a707ff417bfd661e643463060f479d6c624118cf971b1565b29",
+      "bytes": 180490,
+      "migration_name": "fitmatch_prod_bootstrap_025_seed",
+      "remote_version": "20260930073213"
+    },
+    {
+      "file": "026_seed.sql",
+      "sha256": "55eda839d1aecf1189fa83a266fbec373266d9073010531ee627414685270ffa",
+      "bytes": 180271,
+      "migration_name": "fitmatch_prod_bootstrap_026_seed",
+      "remote_version": "20260930073239"
+    },
+    {
+      "file": "027_seed.sql",
+      "sha256": "9bd18c510a0177ee0175e45c644c6eb06fbd735c7f75a0c0015715177cea81d2",
+      "bytes": 180103,
+      "migration_name": "fitmatch_prod_bootstrap_027_seed",
+      "remote_version": "20260930073304"
+    },
+    {
+      "file": "028_seed.sql",
+      "sha256": "54c3f77c3a04802cfd03148c912e809260505e14484a667ba7dee882fe0a5b89",
+      "bytes": 13906,
+      "migration_name": "fitmatch_prod_bootstrap_028_seed",
+      "remote_version": "20260930073310"
+    },
+    {
+      "file": "029_seed.sql",
+      "sha256": "88f105ebf6c16549bc2f28f0ae79d7a3df409a5190bee72fd7493c3564fe32a1",
+      "bytes": 180412,
+      "migration_name": "fitmatch_prod_bootstrap_029_seed",
+      "remote_version": "20260930073335"
+    },
+    {
+      "file": "030_seed.sql",
+      "sha256": "ae8e57998e3ae60182b132636bbe0f71c62349d7f80c95451cd95c1587590593",
+      "bytes": 78874,
+      "migration_name": "fitmatch_prod_bootstrap_030_seed",
+      "remote_version": "20260930073342"
+    },
+    {
+      "file": "031_seed.sql",
+      "sha256": "5bd6337a98ec9991e1a58e7eaeadba2b5fe7c1151accd41372582e9f66970978",
+      "bytes": 32493,
+      "migration_name": "fitmatch_prod_bootstrap_031_seed",
+      "remote_version": "20260930073349"
+    },
+    {
+      "file": "032_seed.sql",
+      "sha256": "6b50b96b117bce102daa81bce468adc55af5542d20d8e712e52f484b9c16a027",
+      "bytes": 2444,
+      "migration_name": "fitmatch_prod_bootstrap_032_seed",
+      "remote_version": "20260930073358"
+    },
+    {
+      "file": "033_seed.sql",
+      "sha256": "4c034fc3b9ff2eee98ac3d99bb39f3ffc079f28081c3dcd2514552a65c7ca080",
+      "bytes": 17868,
+      "migration_name": "fitmatch_prod_bootstrap_033_seed",
+      "remote_version": "20260930073406"
+    },
+    {
+      "file": "034_seed.sql",
+      "sha256": "b0c91c5213dddc7172a974bc467e2e74bc0daa46192d678872446d94fd30fd5b",
+      "bytes": 22067,
+      "migration_name": "fitmatch_prod_bootstrap_034_seed",
+      "remote_version": "20260930073412"
+    },
+    {
+      "file": "035_seed.sql",
+      "sha256": "da51f19a07030334255fd6dc860f87d0aa5660a02a3471a7e4be7dc6a56ba961",
+      "bytes": 1976,
+      "migration_name": "fitmatch_prod_bootstrap_035_seed",
+      "remote_version": "20260930073421"
+    },
+    {
+      "file": "036_seed.sql",
+      "sha256": "41118d81e8d89d7a867446bd566feab92b42667efad3e30d1ed16f729d8f24de",
+      "bytes": 94675,
+      "migration_name": "fitmatch_prod_bootstrap_036_seed",
+      "remote_version": "20260930073429"
+    },
+    {
+      "file": "037_seed.sql",
+      "sha256": "39969646819f04eedb6649dee4d686c2eb8df66ae693d87c186016e575343b11",
+      "bytes": 65912,
+      "migration_name": "fitmatch_prod_bootstrap_037_seed",
+      "remote_version": "20260930073452"
+    },
+    {
+      "file": "038_seed.sql",
+      "sha256": "8d3cf2cf15f401d70f2546d3a0b49a5e7c0637e73807ab309d87626ccbca8f70",
+      "bytes": 5606,
+      "migration_name": "fitmatch_prod_bootstrap_038_seed",
+      "remote_version": "20260930073505"
+    },
+    {
+      "file": "039_seed.sql",
+      "sha256": "4581870188f112a103d6b694077055fc025923fdea919a3e37f978a80c5f176b",
+      "bytes": 1134,
+      "migration_name": "fitmatch_prod_bootstrap_039_seed",
+      "remote_version": "20260930073510"
+    },
+    {
+      "file": "040_seed.sql",
+      "sha256": "06afcfced4bd5b2134b2d6f193dc4e4286ac055a42b30ddd726405bc0ba04eff",
+      "bytes": 48327,
+      "migration_name": "fitmatch_prod_bootstrap_040_seed",
+      "remote_version": "20260930073520"
+    },
+    {
+      "file": "041_seed.sql",
+      "sha256": "9f4184af709613ca9c29364456784e879de2409205f4bab7e0949c540b1b4fc6",
+      "bytes": 9871,
+      "migration_name": "fitmatch_prod_bootstrap_041_seed",
+      "remote_version": "20260930073526"
+    },
+    {
+      "file": "042_seed.sql",
+      "sha256": "e97949623c7c8741c8024c6a3c9701e59d8ba5e94d576412405b1bc6cb4cf661",
+      "bytes": 180443,
+      "migration_name": "fitmatch_prod_bootstrap_042_seed",
+      "remote_version": "20260930073554"
+    },
+    {
+      "file": "043_seed.sql",
+      "sha256": "dda7030ae161c9cec9d6fe794d0726e7ce2392273debf82d8e5f3cbda7a02468",
+      "bytes": 180369,
+      "migration_name": "fitmatch_prod_bootstrap_043_seed",
+      "remote_version": "20260930073604"
+    },
+    {
+      "file": "044_seed.sql",
+      "sha256": "8defedd6a4925bfec8b0d4fc4a074683d55ae429bbb274678705237758b933a0",
+      "bytes": 180582,
+      "migration_name": "fitmatch_prod_bootstrap_044_seed",
+      "remote_version": "20260930073631"
+    },
+    {
+      "file": "045_seed.sql",
+      "sha256": "71b1623b63a4dfc1db414c3d4a37b6876c605c8b90b9555a447127a23ec5fc0b",
+      "bytes": 180563,
+      "migration_name": "fitmatch_prod_bootstrap_045_seed",
+      "remote_version": "20260930073702"
+    },
+    {
+      "file": "046_seed.sql",
+      "sha256": "6c25c86d760cd2d927bccf3e08831cde670b44e5711ed3780eb92c297fabaaf0",
+      "bytes": 180408,
+      "migration_name": "fitmatch_prod_bootstrap_046_seed",
+      "remote_version": "20260930073732"
+    },
+    {
+      "file": "047_seed.sql",
+      "sha256": "dd845d35975adc51cad8e39052346886d235bc8502c1af9607485a9e985565a1",
+      "bytes": 180113,
+      "migration_name": "fitmatch_prod_bootstrap_047_seed",
+      "remote_version": "20260930073746"
+    },
+    {
+      "file": "048_seed.sql",
+      "sha256": "aac4ce663b9af4dbd960c854486b732f9f55b1fcd962128a3f23066ae799fe35",
+      "bytes": 180308,
+      "migration_name": "fitmatch_prod_bootstrap_048_seed",
+      "remote_version": "20260930073813"
+    },
+    {
+      "file": "049_seed.sql",
+      "sha256": "0babe061c3bdaaa895f87f34e9eb2644d51849311858bb9410db616d209d7948",
+      "bytes": 146911,
+      "migration_name": "fitmatch_prod_bootstrap_049_seed",
+      "remote_version": "20260930073840"
+    },
+    {
+      "file": "050_seed.sql",
+      "sha256": "9119369fbe22e3dae3c343553354e4fba477ce98b748c2c8e4cd3f49eeaf175a",
+      "bytes": 967,
+      "migration_name": "fitmatch_prod_bootstrap_050_seed",
+      "remote_version": "20260930073850"
+    },
+    {
+      "file": "051_seed.sql",
+      "sha256": "91c4a5d28ae021442d71fbc26a0a9fb555ca9a388c4d40f6e22787b1f9ea6dad",
+      "bytes": 114793,
+      "migration_name": "fitmatch_prod_bootstrap_051_seed",
+      "remote_version": "20260930073918"
+    },
+    {
+      "file": "052_seed.sql",
+      "sha256": "ad53f0271f22e53f32215cedc7cbabee8edc75b7465aa4a5e48036a0b1419ef2",
+      "bytes": 15346,
+      "migration_name": "fitmatch_prod_bootstrap_052_seed",
+      "remote_version": "20260930073926"
+    },
+    {
+      "file": "053_seed.sql",
+      "sha256": "f5c1d29c466a8de09222826978bc99a40407598c7b2f3dfe3ce93086bbe525bb",
+      "bytes": 27677,
+      "migration_name": "fitmatch_prod_bootstrap_053_seed",
+      "remote_version": "20260930073936"
+    },
+    {
+      "file": "054_seed.sql",
+      "sha256": "ad1af26724038881970673514052b8867d56d9aa1298e17621a07772074a54a9",
+      "bytes": 941,
+      "migration_name": "fitmatch_prod_bootstrap_054_seed",
+      "remote_version": "20260930073943"
+    },
+    {
+      "file": "900_constraints_policies_triggers.sql",
+      "sha256": "29bbd0aa353fcfa05a126a9dc78ca20539b290834c23ffbd8ea73d346b1b901f",
+      "bytes": 78750,
+      "migration_name": "fitmatch_prod_bootstrap_900_constraints_policies_triggers",
+      "remote_version": "20260930082640"
+    },
+    {
+      "file": "950_access.sql",
+      "sha256": "b783a447b82ecbf5f1b342f9e77197d0fc85b9832098f4e89a95543e67bf3eb5",
+      "bytes": 130870,
+      "migration_name": "fitmatch_prod_bootstrap_950_access",
+      "remote_version": "20260930082651"
+    }
+  ],
+  "production_applied": true,
+  "production_complete": true,
+  "status": "PASS"
+}

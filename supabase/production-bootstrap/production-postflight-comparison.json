@@ -1,0 +1,176 @@
+{
+  "schemas": {
+    "source": 3,
+    "target": 3,
+    "equal": true
+  },
+  "relations": {
+    "source": 40,
+    "target": 40,
+    "equal": true
+  },
+  "columns": {
+    "source": 550,
+    "target": 550,
+    "equal": true
+  },
+  "indexes": {
+    "source": 116,
+    "target": 116,
+    "equal": true
+  },
+  "policies": {
+    "source": 26,
+    "target": 26,
+    "equal": true
+  },
+  "triggers": {
+    "source": 44,
+    "target": 44,
+    "equal": true
+  },
+  "views": {
+    "source": 1,
+    "target": 1,
+    "equal": true
+  },
+  "functions": {
+    "source": 128,
+    "target": 129,
+    "differences": [
+      [
+        "fitmatch_vnext.authorize_comparison_with_context",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.begin_comparison",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.canonical_measurements_for_session_group",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.canonical_measurements_for_size_with_context",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.comparison_target_context",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.eligible_candidate_sizes",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.enforce_uniqlo_generic_category_leaf_inactive",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.exact_product_authority_recovery_options",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.hide_comparison_history",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.product_measurement_readiness",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.protect_fitmatch_measurement_semantics",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.protect_source_measurement_semantics",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.resolve_measurement",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.set_closet_reference",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.set_updated_at",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.update_closet_item_snapshot_base",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.upsert_closet_item",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.validate_classification_mapping",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.validate_closet_measurement_mode",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.validate_closet_product_hierarchy",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.validate_comparison_ownership_and_target",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.validate_product_signal_source",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.validate_source_identifier_owner",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.validate_source_measurement_alias_source",
+        "definition_md5"
+      ],
+      [
+        "fitmatch_vnext.validate_source_signal_parent",
+        "definition_md5"
+      ],
+      [
+        "public.fitmatch_vnext_eligible_candidate_sizes",
+        "definition_md5"
+      ],
+      [
+        "public.fitmatch_vnext_find_reference_candidates",
+        "definition_md5"
+      ],
+      [
+        "public.fitmatch_vnext_hide_comparison_history",
+        "definition_md5"
+      ]
+    ],
+    "raw_hash_difference_explanation": "28 CRLF to LF formatting changes; 128/128 normalized definitions identical; no CRLF inside SQL single-quoted literals detected",
+    "normalized_definitions_equal": true
+  },
+  "constraints": {
+    "source": 275,
+    "target": 275,
+    "differences": [
+      {
+        "name": "closet_items_detail_snapshot_format_chk",
+        "source": "CHECK (((closet_detail_code_snapshot IS NULL) OR (((length(closet_detail_code_snapshot) >= 1) AND (length(closet_detail_code_snapshot) <= 80)) AND (closet_detail_code_snapshot ~ '^[a-z0-9_]+$'::text))))",
+        "target": "CHECK (((closet_detail_code_snapshot IS NULL) OR ((length(closet_detail_code_snapshot) >= 1) AND (length(closet_detail_code_snapshot) <= 80) AND (closet_detail_code_snapshot ~ '^[a-z0-9_]+$'::text))))"
+      }
+    ],
+    "difference_explanation": "One equivalent AND-parentheses flattening by PostgreSQL; matches isolated restore."
+  },
+  "data": {
+    "equal": true,
+    "tables": 38,
+    "rows": 7167
+  },
+  "default_acl_equal": true,
+  "status": "PASS"
+}

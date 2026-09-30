@@ -53,6 +53,8 @@ Tabs in `FitMatch/Views/AppTab.swift`: Home (`.home`), Compare (`.compare`), His
 
 ### FLOW-APP-BOOT — 앱 시작·인증·루트
 
+Build environment navigation: `Docs/FitMatchBuildEnvironments.md`. Production uses Debug/Release; QA uses Debug-QA/Release-QA with separate bundle/App Group/custom URL identities.
+
 READ FIRST: `FitMatch/FitMatchApp.swift`, `FitMatch/ContentView.swift`, `FitMatch/Services/FitMatchAuthSessionStore.swift`, `FitMatch/Services/FitMatchAuthenticatedRootPresentationAction.swift`. Onboarding presentation and skip/later actions: `FitMatch/Views/FitMatchOnboardingView.swift`.
 
 ModelContainer/environment → session observation/recovery → authenticated or unauthenticated root → tabs. Supabase Auth is the session authority; a UI mock login is not a real authenticated server session.

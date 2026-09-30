@@ -1,0 +1,30 @@
+{
+  "functions": [
+    {
+      "id": "6860688a-cf0f-425e-a2be-de2f9088841d",
+      "slug": "product-observation",
+      "name": "product-observation",
+      "status": "ACTIVE",
+      "version": 5,
+      "created_at": 1787110091901,
+      "updated_at": 1787978047959,
+      "verify_jwt": true,
+      "import_map": false,
+      "entrypoint_path": "file:///tmp/user_fn_hnkplvyegonlhumlejst_6860688a-cf0f-425e-a2be-de2f9088841d_5/source/index.ts",
+      "ezbr_sha256": "4d99d44634bd9bebd15a87e1fbdfb5ecea8a27eea972019c88d706c40280fce9"
+    },
+    {
+      "id": "8ce51490-2669-46ca-b4aa-44a9ec538bce",
+      "slug": "delete-account",
+      "name": "delete-account",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": 1787210822835,
+      "updated_at": 1787210822835,
+      "verify_jwt": true,
+      "import_map": false,
+      "entrypoint_path": "file:///tmp/user_fn_hnkplvyegonlhumlejst_8ce51490-2669-46ca-b4aa-44a9ec538bce_1/source/index.ts",
+      "ezbr_sha256": "d240f6fa16e810ff780187246a0842cdfd2f43eb68c16a2b559df026f45c8915"
+    }
+  ]
+}

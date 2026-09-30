@@ -1,0 +1,154 @@
+[
+  {
+    "fk_check": "fitmatch_catalog.product_classification_history -> fitmatch_catalog.products #10",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_catalog.product_classification_history -> fitmatch_catalog.releases #11",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_catalog.product_classification_history -> auth.users #12",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.classification_signal_mappings -> fitmatch_vnext.source_classification_signals #13",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.classification_signal_mappings -> fitmatch_vnext.garment_types #14",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.product_ingestion_receipts -> fitmatch_vnext.sources #16",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.garment_types -> fitmatch_vnext.fitmatch_categories #17",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.garment_types -> fitmatch_vnext.comparison_policies #18",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_classification_signals -> fitmatch_vnext.sources #19",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_classification_signals -> fitmatch_vnext.source_classification_signals #20",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.products -> fitmatch_vnext.sources #21",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.products -> fitmatch_vnext.garment_types #22",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.product_classification_signals -> fitmatch_vnext.products #23",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.product_classification_signals -> fitmatch_vnext.source_classification_signals #24",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.product_variants -> fitmatch_vnext.products #25",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.product_sizes -> fitmatch_vnext.product_variants #26",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_identifiers -> fitmatch_vnext.sources #27",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_identifiers -> fitmatch_vnext.products #28",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_identifiers -> fitmatch_vnext.product_variants #29",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_identifiers -> fitmatch_vnext.product_sizes #30",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_measurements -> fitmatch_vnext.sources #31",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_measurement_aliases -> fitmatch_vnext.sources #32",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_measurement_aliases -> fitmatch_vnext.fitmatch_categories #33",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_measurement_aliases -> fitmatch_vnext.garment_types #34",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_measurement_aliases -> fitmatch_vnext.source_measurements #35",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_measurement_mappings -> fitmatch_vnext.source_measurements #36",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.source_measurement_mappings -> fitmatch_vnext.fitmatch_measurements #37",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.product_size_measurements -> fitmatch_vnext.product_sizes #38",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.comparison_metrics -> fitmatch_vnext.comparison_policies #39",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.comparison_metrics -> fitmatch_vnext.fitmatch_measurements #40",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.comparison_metrics -> fitmatch_vnext.source_measurements #41",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.products -> fitmatch_vnext.source_classification_signals #55",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.products -> fitmatch_vnext.classification_signal_mappings #56",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.size_availability_observations -> fitmatch_vnext.product_sizes #57",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.size_availability_observations -> fitmatch_vnext.sources #58",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_vnext.product_ingestion_receipts -> fitmatch_vnext.products #60",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_catalog.source_category_comparison_groups -> fitmatch_catalog.comparison_group_policies #68",
+    "missing_parent_rows": 0
+  },
+  {
+    "fk_check": "fitmatch_catalog.product_comparison_group_overrides -> fitmatch_catalog.comparison_group_policies #69",
+    "missing_parent_rows": 0
+  }
+]

@@ -1,0 +1,255 @@
+{
+  "source_project": "hnkplvyegonlhumlejst",
+  "target_project": "aqhrupgjpmrtnystottx",
+  "postgres_major": 17,
+  "ready_for_production": false,
+  "user_data_decision": "EXCLUDE_FROM_NEW_PRODUCTION_SEED",
+  "structure_strategy": "Preserve all 38 tables and 128 functions in source baseline. Research table exclusion and unused function removal are not performed.",
+  "reference_candidate_is_complete": false,
+  "pending_evidence": "Data scope finalized in data-selection.json; actual consistent export and isolated restore remain unverified. The legacy 19-table candidate is incomplete and must not be restored as final seed.",
+  "tables": [
+    {
+      "table": "fitmatch_catalog.comparison_group_policies",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_catalog.comparison_groups",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_catalog.product_classification_history",
+      "schema_export": true,
+      "data_class": "catalog_evidence",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_catalog.product_comparison_group_overrides",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_catalog.products",
+      "schema_export": true,
+      "data_class": "catalog_evidence",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_catalog.releases",
+      "schema_export": true,
+      "data_class": "catalog_evidence",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_catalog.retailer_observed_categories",
+      "schema_export": true,
+      "data_class": "research",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_catalog.retailer_observed_category_measurements",
+      "schema_export": true,
+      "data_class": "research",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_catalog.source_category_comparison_groups",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.classification_axis_value_authority",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.classification_signal_mappings",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.closet_item_measurements",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.closet_item_source_measurement_snapshots",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.closet_item_source_measurements",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.closet_items",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.comparison_metrics",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.comparison_policies",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.comparison_result_heads",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.comparisons",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.fitmatch_categories",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.fitmatch_measurements",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.garment_types",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.product_classification_signals",
+      "schema_export": true,
+      "data_class": "selected_observation_evidence",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.product_ingestion_receipts",
+      "schema_export": true,
+      "data_class": "selected_observation_evidence",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.product_size_measurements",
+      "schema_export": true,
+      "data_class": "selected_observation_evidence",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.product_sizes",
+      "schema_export": true,
+      "data_class": "selected_observation_evidence",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.product_variants",
+      "schema_export": true,
+      "data_class": "selected_observation_evidence",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.products",
+      "schema_export": true,
+      "data_class": "selected_observation_evidence",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.size_availability_observations",
+      "schema_export": true,
+      "data_class": "selected_observation_evidence",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.source_classification_signals",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.source_identifiers",
+      "schema_export": true,
+      "data_class": "selected_observation_evidence",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.source_measurement_aliases",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.source_measurement_mappings",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.source_measurements",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.sources",
+      "schema_export": true,
+      "data_class": "reference",
+      "reference_candidate_export": true
+    },
+    {
+      "table": "fitmatch_vnext.user_classification_feedback_evidence",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "fitmatch_vnext.user_product_classification_overrides",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    },
+    {
+      "table": "public.profiles",
+      "schema_export": true,
+      "data_class": "user_data",
+      "reference_candidate_export": false
+    }
+  ],
+  "data_selection_file": "data-selection.json",
+  "data_scope_finalized": true,
+  "preferred_transport": "supabase_mcp_sql",
+  "pgpass_required_for_preferred_transport": false,
+  "data_exported_via_mcp": true,
+  "data_type_roundtrip_passed": true,
+  "full_schema_restore_verified": true,
+  "readiness_scope": "DB SQL bundle verified locally; fresh remote preflight required before application. Edge/Auth/app cutover excluded.",
+  "sql_bundle": "/tmp/fitmatch-production-sql-ready-v3-20260930",
+  "production_applied": true,
+  "sql_bundle_ready_for_application": true,
+  "legacy_exporter_readiness_note": "ready_for_production belongs to the original incomplete 19-table pg_dump route. MCP 27-table SQL readiness is tracked separately.",
+  "production_complete": true,
+  "application_status": "COMPLETE_57_OF_57",
+  "postflight": "PASS"
+}

@@ -1149,8 +1149,8 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
     @Test func entryAuthAndPendingShareDataContractsCoverENAndBHeadlessParts() async throws {
         // EN-001 / EN-005: only an explicit compare route consumes a pending
         // payload; an unknown route cannot erase it.
-        #expect(FitMatchProductEntryRouting.action(for: URL(string: "fitmatch://compare")!) == .openPendingProductCompare)
-        #expect(FitMatchProductEntryRouting.action(for: URL(string: "fitmatch://unknown")!) == .ignore)
+        #expect(FitMatchProductEntryRouting.action(for: URL(string: "\(FitMatchProductEntryRouting.appScheme)://compare")!) == .openPendingProductCompare)
+        #expect(FitMatchProductEntryRouting.action(for: URL(string: "\(FitMatchProductEntryRouting.appScheme)://unknown")!) == .ignore)
 
         // EN-002 / EN-012 data-level Share path: the production shared routing
         // helper selects the first supported attachment and writes exactly one

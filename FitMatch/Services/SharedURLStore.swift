@@ -1,7 +1,11 @@
 import Foundation
 
 enum AppGroupConfig {
+    #if FITMATCH_QA
+    static let identifier = "group.com.ljy4337.fitmatch.qa"
+    #else
     static let identifier = "group.com.ljy4337.fitmatch"
+    #endif
 }
 
 struct SharedURLStore {

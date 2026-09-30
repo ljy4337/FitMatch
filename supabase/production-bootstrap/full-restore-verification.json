@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "local_database": "fitmatch_full_restore_v4",
+  "sql_stages": 57,
+  "tables": 38,
+  "columns": 550,
+  "app_functions_definition_and_effective_acl": 128,
+  "indexes": 116,
+  "constraints": 275,
+  "constraint_note": "One CHECK has equivalent flattened AND parentheses after PostgreSQL reparse; other 274 identical. No source SQL altered.",
+  "triggers": 44,
+  "rls_policies": 26,
+  "views": 1,
+  "view_security_invoker_preserved": true,
+  "sequence_max": "9223372036854775807",
+  "tables_data_hashes_matched": 38,
+  "nonempty_seed_tables": 27,
+  "seed_rows": 7167,
+  "smoke": [
+    "local signup trigger creates profiles",
+    "authenticated RLS sees own profile only",
+    "runtime for both seed products",
+    "authenticated role without JWT rejected"
+  ],
+  "platform_fixture_limit": "Minimal local auth.users and actual target auth.uid/auth.jwt functions; not Supabase Auth login or device E2E. supabase_admin platform defaults not recreated.",
+  "production_write": false,
+  "production_apply": "NOT RUN",
+  "edge_deploy": "NOT RUN",
+  "device_e2e": "NOT RUN",
+  "restricted_role_restore": "PASS: 57 stages, NOSUPERUSER BYPASSRLS, separate auth.users owner, 38/38 data hashes"
+}

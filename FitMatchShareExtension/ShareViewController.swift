@@ -3,7 +3,11 @@ import UniformTypeIdentifiers
 
 final class ShareViewController: UIViewController {
     private enum AppGroup {
+        #if FITMATCH_QA
+        static let identifier = "group.com.ljy4337.fitmatch.qa"
+        #else
         static let identifier = "group.com.ljy4337.fitmatch"
+        #endif
     }
 
     private enum Key {
@@ -12,7 +16,11 @@ final class ShareViewController: UIViewController {
     }
 
     private enum DeepLink {
+        #if FITMATCH_QA
+        static let compareURLString = "fitmatch-qa://compare"
+        #else
         static let compareURLString = "fitmatch://compare"
+        #endif
     }
 
     private let titleLabel = UILabel()

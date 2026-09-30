@@ -21,3 +21,6 @@ Docs/FitMatch_LatestCumulativeSnapshots_*.sql.txt
 Docs/FitMatch_MusinsaCumulativeSnapshot_*.sql.txt
 Docs/FitMatch_UniqloCurrentSnapshot_*.sql.txt
 FitMatch_Hardcoded_Product_Classification_Ledger_20260828.jsonl
+
+# Local SwiftPM build products and dependency clones.
+.build/

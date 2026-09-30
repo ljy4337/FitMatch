@@ -1,0 +1,319 @@
+{
+  "source_project": "hnkplvyegonlhumlejst",
+  "target_project": "aqhrupgjpmrtnystottx",
+  "selection_date": "2026-09-30",
+  "selection_status": "FINALIZED_SCOPE_PENDING_EXPORT_AND_RESTORE_VERIFICATION",
+  "ready_for_production": false,
+  "selected_product_keys": [
+    "E486587",
+    "E486610"
+  ],
+  "preserve_source_rows_without_rewriting": true,
+  "historical_actor_provenance": "Two selected receipts retain actor_id_snapshot unchanged; auth accounts, sessions, profiles and user business data are excluded. This UUID is provenance only, not a migrated login.",
+  "tables": [
+    {
+      "table": "fitmatch_catalog.comparison_group_policies",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 2,
+      "expected_content_md5": "5375a937a0e864feb3193e46c63be52b"
+    },
+    {
+      "table": "fitmatch_catalog.comparison_groups",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 7,
+      "expected_content_md5": "499dbb21179edfb3336fad5d33d77049"
+    },
+    {
+      "table": "fitmatch_catalog.product_classification_history",
+      "data_class": "catalog_evidence",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 27,
+      "expected_content_md5": "d6d120fc2b91475df14300707aa0afc2"
+    },
+    {
+      "table": "fitmatch_catalog.product_comparison_group_overrides",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 2,
+      "expected_content_md5": "7e26d3f6b7724389554f418f4d9f0c58"
+    },
+    {
+      "table": "fitmatch_catalog.products",
+      "data_class": "catalog_evidence",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 27,
+      "expected_content_md5": "bcba6250fab74b9e5ad81a046334da2f"
+    },
+    {
+      "table": "fitmatch_catalog.releases",
+      "data_class": "catalog_evidence",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 15,
+      "expected_content_md5": "5fbd585b7c9b4093ab026b46d388d0fe"
+    },
+    {
+      "table": "fitmatch_catalog.retailer_observed_categories",
+      "data_class": "research",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_catalog.retailer_observed_category_measurements",
+      "data_class": "research",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_catalog.source_category_comparison_groups",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 1023,
+      "expected_content_md5": "00c5d7c015656a08fade96956ce7baf4"
+    },
+    {
+      "table": "fitmatch_vnext.classification_axis_value_authority",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 12,
+      "expected_content_md5": "51483fdd1799f24ab642a6f4a42eb1f9"
+    },
+    {
+      "table": "fitmatch_vnext.classification_signal_mappings",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 2250,
+      "expected_content_md5": "428cea6bd9bbbd959a0b1df88e393912"
+    },
+    {
+      "table": "fitmatch_vnext.closet_item_measurements",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_vnext.closet_item_source_measurement_snapshots",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_vnext.closet_item_source_measurements",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_vnext.closet_items",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_vnext.comparison_metrics",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 647,
+      "expected_content_md5": "494e0f78bab29c0a4764f7f55fa6be82"
+    },
+    {
+      "table": "fitmatch_vnext.comparison_policies",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 44,
+      "expected_content_md5": "5f3b7d84c4e8a49c31ea2da535d2ee22"
+    },
+    {
+      "table": "fitmatch_vnext.comparison_result_heads",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_vnext.comparisons",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_vnext.fitmatch_categories",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 11,
+      "expected_content_md5": "10378ea269a54a56346e5248a25c5c49"
+    },
+    {
+      "table": "fitmatch_vnext.fitmatch_measurements",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 42,
+      "expected_content_md5": "7e4ee3d4a32a1277fc3881c670844452"
+    },
+    {
+      "table": "fitmatch_vnext.garment_types",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 60,
+      "expected_content_md5": "f8ca3744f585b1c55261435b453d11a7"
+    },
+    {
+      "table": "fitmatch_vnext.product_classification_signals",
+      "data_class": "selected_observation_evidence",
+      "where_sql": "product_id IN (SELECT id FROM fitmatch_vnext.products WHERE id IN ('46b46806-b4c1-4507-889a-fdbf53b554a7'::uuid,'723d2723-9f7e-4407-bf72-d6e882ee6fb4'::uuid))",
+      "policy": "exact_two_product_evidence_closure",
+      "expected_rows": 8,
+      "expected_content_md5": "5c5fad35d0bfb4d09767eaf00c487bee"
+    },
+    {
+      "table": "fitmatch_vnext.product_ingestion_receipts",
+      "data_class": "selected_observation_evidence",
+      "where_sql": "id IN ('aa4dc0fe-2fea-42e0-b0ba-55b0ffd0ce1b'::uuid,'1e43c06b-eb04-442c-a310-393cdc0fb8d1'::uuid)",
+      "policy": "exact_two_product_evidence_closure",
+      "expected_rows": 2,
+      "expected_content_md5": "ad3f99e0db38405d0c86e9fb49509d50"
+    },
+    {
+      "table": "fitmatch_vnext.product_size_measurements",
+      "data_class": "selected_observation_evidence",
+      "where_sql": "product_size_id IN (SELECT id FROM fitmatch_vnext.product_sizes WHERE variant_id IN (SELECT id FROM fitmatch_vnext.product_variants WHERE product_id IN (SELECT id FROM fitmatch_vnext.products WHERE id IN ('46b46806-b4c1-4507-889a-fdbf53b554a7'::uuid,'723d2723-9f7e-4407-bf72-d6e882ee6fb4'::uuid))))",
+      "policy": "exact_two_product_evidence_closure",
+      "expected_rows": 70,
+      "expected_content_md5": "27a14acb87561df065120542e710ec81"
+    },
+    {
+      "table": "fitmatch_vnext.product_sizes",
+      "data_class": "selected_observation_evidence",
+      "where_sql": "variant_id IN (SELECT id FROM fitmatch_vnext.product_variants WHERE product_id IN (SELECT id FROM fitmatch_vnext.products WHERE id IN ('46b46806-b4c1-4507-889a-fdbf53b554a7'::uuid,'723d2723-9f7e-4407-bf72-d6e882ee6fb4'::uuid)))",
+      "policy": "exact_two_product_evidence_closure",
+      "expected_rows": 14,
+      "expected_content_md5": "7a05daa0f02b449ee66b00f3f6865835"
+    },
+    {
+      "table": "fitmatch_vnext.product_variants",
+      "data_class": "selected_observation_evidence",
+      "where_sql": "product_id IN (SELECT id FROM fitmatch_vnext.products WHERE id IN ('46b46806-b4c1-4507-889a-fdbf53b554a7'::uuid,'723d2723-9f7e-4407-bf72-d6e882ee6fb4'::uuid))",
+      "policy": "exact_two_product_evidence_closure",
+      "expected_rows": 2,
+      "expected_content_md5": "12cf17702a70630dd0b5af1325958fb8"
+    },
+    {
+      "table": "fitmatch_vnext.products",
+      "data_class": "selected_observation_evidence",
+      "where_sql": "id IN ('46b46806-b4c1-4507-889a-fdbf53b554a7'::uuid,'723d2723-9f7e-4407-bf72-d6e882ee6fb4'::uuid)",
+      "policy": "exact_two_product_evidence_closure",
+      "expected_rows": 2,
+      "expected_content_md5": "d3cd98560a11f631cadd822020e35b13"
+    },
+    {
+      "table": "fitmatch_vnext.size_availability_observations",
+      "data_class": "selected_observation_evidence",
+      "where_sql": "product_size_id IN (SELECT id FROM fitmatch_vnext.product_sizes WHERE variant_id IN (SELECT id FROM fitmatch_vnext.product_variants WHERE product_id IN (SELECT id FROM fitmatch_vnext.products WHERE id IN ('46b46806-b4c1-4507-889a-fdbf53b554a7'::uuid,'723d2723-9f7e-4407-bf72-d6e882ee6fb4'::uuid))))",
+      "policy": "exact_two_product_evidence_closure",
+      "expected_rows": 14,
+      "expected_content_md5": "f49fba39ae6a499e0528ca1e26917158"
+    },
+    {
+      "table": "fitmatch_vnext.source_classification_signals",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 2555,
+      "expected_content_md5": "ab26bbc83915c353746f508a527ced1f"
+    },
+    {
+      "table": "fitmatch_vnext.source_identifiers",
+      "data_class": "selected_observation_evidence",
+      "where_sql": "product_id IN (SELECT id FROM fitmatch_vnext.products WHERE id IN ('46b46806-b4c1-4507-889a-fdbf53b554a7'::uuid,'723d2723-9f7e-4407-bf72-d6e882ee6fb4'::uuid))",
+      "policy": "exact_two_product_evidence_closure",
+      "expected_rows": 2,
+      "expected_content_md5": "f562d357edd0336aaa4f27f737046194"
+    },
+    {
+      "table": "fitmatch_vnext.source_measurement_aliases",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 227,
+      "expected_content_md5": "9a76f02ec57f55816574a40bd83f15f1"
+    },
+    {
+      "table": "fitmatch_vnext.source_measurement_mappings",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 48,
+      "expected_content_md5": "d5693718caf12ae3a3c6bb4d4f06243b"
+    },
+    {
+      "table": "fitmatch_vnext.source_measurements",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 51,
+      "expected_content_md5": "5fc3a0f67ec0a55be4abc32f6f0b3845"
+    },
+    {
+      "table": "fitmatch_vnext.sources",
+      "data_class": "reference",
+      "where_sql": "TRUE",
+      "policy": "all_current_rows_preserve_status",
+      "expected_rows": 3,
+      "expected_content_md5": "3471ed54b8c65818da83b947b5c2d50f"
+    },
+    {
+      "table": "fitmatch_vnext.user_classification_feedback_evidence",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "fitmatch_vnext.user_product_classification_overrides",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "public.profiles",
+      "data_class": "user_data",
+      "where_sql": "FALSE",
+      "policy": "no_rows_structure_only",
+      "expected_rows": 0,
+      "expected_content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+  ]
+}

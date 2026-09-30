@@ -10,6 +10,8 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleDisplayName</key>
+	<string>$(FITMATCH_APP_NAME)</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
@@ -25,7 +27,7 @@
 			<string>com.ljy4337.fitmatch</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>fitmatch</string>
+				<string>$(FITMATCH_URL_SCHEME)</string>
 			</array>
 		</dict>
 	</array>
@@ -38,9 +40,9 @@
 	<key>FitMatchSupportURL</key>
 	<string></string>
 	<key>FitMatchSupabaseURL</key>
-	<string>https://hnkplvyegonlhumlejst.supabase.co</string>
+	<string>$(FITMATCH_SUPABASE_URL)</string>
 	<key>FitMatchSupabasePublishableKey</key>
-	<string>sb_publishable_CMZ8R9HL591tlWrOGbkj5g_TO64dNNP</string>
+	<string>$(FITMATCH_SUPABASE_PUBLISHABLE_KEY)</string>
 	<key>FitMatchDatabaseShadowEnabled</key>
 	<true/>
 	<key>LSApplicationQueriesSchemes</key>

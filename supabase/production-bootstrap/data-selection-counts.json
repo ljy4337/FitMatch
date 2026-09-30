@@ -1,0 +1,192 @@
+[
+  {
+    "table_name": "fitmatch_catalog.comparison_group_policies",
+    "selected_rows": 2,
+    "content_md5": "5375a937a0e864feb3193e46c63be52b"
+  },
+  {
+    "table_name": "fitmatch_catalog.comparison_groups",
+    "selected_rows": 7,
+    "content_md5": "499dbb21179edfb3336fad5d33d77049"
+  },
+  {
+    "table_name": "fitmatch_catalog.product_classification_history",
+    "selected_rows": 27,
+    "content_md5": "d6d120fc2b91475df14300707aa0afc2"
+  },
+  {
+    "table_name": "fitmatch_catalog.product_comparison_group_overrides",
+    "selected_rows": 2,
+    "content_md5": "7e26d3f6b7724389554f418f4d9f0c58"
+  },
+  {
+    "table_name": "fitmatch_catalog.products",
+    "selected_rows": 27,
+    "content_md5": "bcba6250fab74b9e5ad81a046334da2f"
+  },
+  {
+    "table_name": "fitmatch_catalog.releases",
+    "selected_rows": 15,
+    "content_md5": "5fbd585b7c9b4093ab026b46d388d0fe"
+  },
+  {
+    "table_name": "fitmatch_catalog.retailer_observed_categories",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_catalog.retailer_observed_category_measurements",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_catalog.source_category_comparison_groups",
+    "selected_rows": 1023,
+    "content_md5": "00c5d7c015656a08fade96956ce7baf4"
+  },
+  {
+    "table_name": "fitmatch_vnext.classification_axis_value_authority",
+    "selected_rows": 12,
+    "content_md5": "51483fdd1799f24ab642a6f4a42eb1f9"
+  },
+  {
+    "table_name": "fitmatch_vnext.classification_signal_mappings",
+    "selected_rows": 2250,
+    "content_md5": "428cea6bd9bbbd959a0b1df88e393912"
+  },
+  {
+    "table_name": "fitmatch_vnext.closet_item_measurements",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_vnext.closet_item_source_measurement_snapshots",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_vnext.closet_item_source_measurements",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_vnext.closet_items",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_vnext.comparison_metrics",
+    "selected_rows": 647,
+    "content_md5": "494e0f78bab29c0a4764f7f55fa6be82"
+  },
+  {
+    "table_name": "fitmatch_vnext.comparison_policies",
+    "selected_rows": 44,
+    "content_md5": "5f3b7d84c4e8a49c31ea2da535d2ee22"
+  },
+  {
+    "table_name": "fitmatch_vnext.comparison_result_heads",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_vnext.comparisons",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_vnext.fitmatch_categories",
+    "selected_rows": 11,
+    "content_md5": "10378ea269a54a56346e5248a25c5c49"
+  },
+  {
+    "table_name": "fitmatch_vnext.fitmatch_measurements",
+    "selected_rows": 42,
+    "content_md5": "7e4ee3d4a32a1277fc3881c670844452"
+  },
+  {
+    "table_name": "fitmatch_vnext.garment_types",
+    "selected_rows": 60,
+    "content_md5": "f8ca3744f585b1c55261435b453d11a7"
+  },
+  {
+    "table_name": "fitmatch_vnext.product_classification_signals",
+    "selected_rows": 8,
+    "content_md5": "5c5fad35d0bfb4d09767eaf00c487bee"
+  },
+  {
+    "table_name": "fitmatch_vnext.product_ingestion_receipts",
+    "selected_rows": 2,
+    "content_md5": "ad3f99e0db38405d0c86e9fb49509d50"
+  },
+  {
+    "table_name": "fitmatch_vnext.product_size_measurements",
+    "selected_rows": 70,
+    "content_md5": "27a14acb87561df065120542e710ec81"
+  },
+  {
+    "table_name": "fitmatch_vnext.product_sizes",
+    "selected_rows": 14,
+    "content_md5": "7a05daa0f02b449ee66b00f3f6865835"
+  },
+  {
+    "table_name": "fitmatch_vnext.product_variants",
+    "selected_rows": 2,
+    "content_md5": "12cf17702a70630dd0b5af1325958fb8"
+  },
+  {
+    "table_name": "fitmatch_vnext.products",
+    "selected_rows": 2,
+    "content_md5": "d3cd98560a11f631cadd822020e35b13"
+  },
+  {
+    "table_name": "fitmatch_vnext.size_availability_observations",
+    "selected_rows": 14,
+    "content_md5": "f49fba39ae6a499e0528ca1e26917158"
+  },
+  {
+    "table_name": "fitmatch_vnext.source_classification_signals",
+    "selected_rows": 2555,
+    "content_md5": "ab26bbc83915c353746f508a527ced1f"
+  },
+  {
+    "table_name": "fitmatch_vnext.source_identifiers",
+    "selected_rows": 2,
+    "content_md5": "f562d357edd0336aaa4f27f737046194"
+  },
+  {
+    "table_name": "fitmatch_vnext.source_measurement_aliases",
+    "selected_rows": 227,
+    "content_md5": "9a76f02ec57f55816574a40bd83f15f1"
+  },
+  {
+    "table_name": "fitmatch_vnext.source_measurement_mappings",
+    "selected_rows": 48,
+    "content_md5": "d5693718caf12ae3a3c6bb4d4f06243b"
+  },
+  {
+    "table_name": "fitmatch_vnext.source_measurements",
+    "selected_rows": 51,
+    "content_md5": "5fc3a0f67ec0a55be4abc32f6f0b3845"
+  },
+  {
+    "table_name": "fitmatch_vnext.sources",
+    "selected_rows": 3,
+    "content_md5": "3471ed54b8c65818da83b947b5c2d50f"
+  },
+  {
+    "table_name": "fitmatch_vnext.user_classification_feedback_evidence",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "fitmatch_vnext.user_product_classification_overrides",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "table_name": "public.profiles",
+    "selected_rows": 0,
+    "content_md5": "d41d8cd98f00b204e9800998ecf8427e"
+  }
+]

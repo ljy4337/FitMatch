@@ -1,0 +1,41 @@
+{
+  "project": "aqhrupgjpmrtnystottx",
+  "functions": [
+    {
+      "id": "4ee05525-072d-4104-b653-40fc454c1933",
+      "slug": "product-observation",
+      "name": "product-observation",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": 1790759138538,
+      "updated_at": 1790759138538,
+      "verify_jwt": true,
+      "import_map": false,
+      "entrypoint_path": "file:///tmp/user_fn_aqhrupgjpmrtnystottx_4ee05525-072d-4104-b653-40fc454c1933_1/source/index.ts",
+      "ezbr_sha256": "78ee72fae8c1899194d4b26b6c2c1aeb60486b8d91c6339ab85cd9f2d264d44a"
+    },
+    {
+      "id": "122e2c83-0255-46c4-8c42-797b6f58fd66",
+      "slug": "delete-account",
+      "name": "delete-account",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": 1790759146919,
+      "updated_at": 1790759146919,
+      "verify_jwt": true,
+      "import_map": false,
+      "entrypoint_path": "file:///tmp/user_fn_aqhrupgjpmrtnystottx_122e2c83-0255-46c4-8c42-797b6f58fd66_1/source/index.ts",
+      "ezbr_sha256": "7a8c8bac5a73b0e27608c5b77677e5b9dd88ef1cf18c38b2f338452263241511"
+    }
+  ],
+  "source_code_matches_development": true,
+  "unauthenticated_http_checks": {
+    "product-observation": 401,
+    "delete-account": 401
+  },
+  "authenticated_function_execution": "NOT RUN",
+  "apple_setup": "BLOCKED_DASHBOARD_LOGIN",
+  "apple_client_id_from_source": "com.ljy4337.fitmatch",
+  "app_endpoint_changed": false,
+  "device_e2e": "NOT RUN"
+}

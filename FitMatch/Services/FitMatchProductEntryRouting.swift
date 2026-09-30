@@ -8,6 +8,11 @@ import Foundation
 /// prevents an unknown app route from accidentally consuming an unrelated
 /// pending Share payload.
 enum FitMatchProductEntryRouting {
+    #if FITMATCH_QA
+    static let appScheme = "fitmatch-qa"
+    #else
+    static let appScheme = "fitmatch"
+    #endif
     enum DeepLinkAction: Equatable {
         case openPendingProductCompare
         case ignore
@@ -20,7 +25,7 @@ enum FitMatchProductEntryRouting {
 
     static func isSupportedAppLink(_ url: URL) -> Bool {
         switch url.scheme?.lowercased() {
-        case "fitmatch":
+        case appScheme:
             return true
         case "https":
             return url.host?.lowercased() == "fitmatch.app"
@@ -30,7 +35,7 @@ enum FitMatchProductEntryRouting {
     }
 
     static func route(from url: URL) -> String {
-        if url.scheme?.lowercased() == "fitmatch",
+        if url.scheme?.lowercased() == appScheme,
            let host = url.host,
            !host.isEmpty {
             return host.lowercased()

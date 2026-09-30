@@ -136,7 +136,7 @@ struct FitMatchFinalReleaseProviderSnapshotTests {
             .appendingPathComponent("FitMatch.EN001.\(UUID().uuidString).json")
         defer { try? FileManager.default.removeItem(at: handoffURL) }
         let handoffStore = SharedURLStore(fileURL: handoffURL)
-        let compareRoute = try #require(URL(string: "fitmatch://compare"))
+        let compareRoute = try #require(URL(string: "\(FitMatchProductEntryRouting.appScheme)://compare"))
         #expect(FitMatchProductEntryRouting.action(for: compareRoute) == .openPendingProductCompare)
 
         for (provider, parsed) in cases {

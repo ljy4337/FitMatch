@@ -1,0 +1,548 @@
+{
+  "migrations": [
+    {
+      "version": "20260801034325",
+      "name": "create_garment_length_classification_rules"
+    },
+    {
+      "version": "20260801034408",
+      "name": "index_garment_length_rule_result_categories"
+    },
+    {
+      "version": "20260801095317",
+      "name": "separate_garment_type_and_length_v2"
+    },
+    {
+      "version": "20260801095405",
+      "name": "fix_leggings_taxonomy_v2_and_length_index"
+    },
+    {
+      "version": "20260802061554",
+      "name": "add_data_driven_garment_comparison_policy_v1"
+    },
+    {
+      "version": "20260802061831",
+      "name": "index_source_category_mapping_length_fks"
+    },
+    {
+      "version": "20260802063045",
+      "name": "expose_client_category_mappings_and_classify_closet_items"
+    },
+    {
+      "version": "20260802063143",
+      "name": "index_closet_item_classification_fks"
+    },
+    {
+      "version": "20260802063645",
+      "name": "quarantine_unreviewed_category_mapping_v1"
+    },
+    {
+      "version": "20260802064654",
+      "name": "reconfirm_musinsa_explicit_leaf_mappings_v1"
+    },
+    {
+      "version": "20260802065652",
+      "name": "reconfirm_uniqlo_explicit_leaf_mappings_v1"
+    },
+    {
+      "version": "20260802070656",
+      "name": "add_client_category_mapping_lookup_keys_v1"
+    },
+    {
+      "version": "20260802070957",
+      "name": "index_client_mapping_garment_type_code_fk"
+    },
+    {
+      "version": "20260802083819",
+      "name": "full_review_1822_source_category_mappings_v1"
+    },
+    {
+      "version": "20260802084000",
+      "name": "add_primary_key_full_review_snapshot_20260802"
+    },
+    {
+      "version": "20260803021714",
+      "name": "create_taxonomy_staging_v1"
+    },
+    {
+      "version": "20260803095416",
+      "name": "canonical_taxonomy_v1"
+    },
+    {
+      "version": "20260806073238",
+      "name": "runtime_classifier_provider_priority_alignment"
+    },
+    {
+      "version": "20260806073426",
+      "name": "runtime_classifier_deepest_source_alignment"
+    },
+    {
+      "version": "20260806073603",
+      "name": "runtime_classifier_specific_depth_alignment"
+    },
+    {
+      "version": "20260814103841",
+      "name": "create_private_category_release_store"
+    },
+    {
+      "version": "20260814105132",
+      "name": "index_category_validation_release_fk"
+    },
+    {
+      "version": "20260814110411",
+      "name": "normalize_current_app_taxonomy"
+    },
+    {
+      "version": "20260814110512",
+      "name": "add_corrected_taxonomy_policy_20260814"
+    },
+    {
+      "version": "20260814110529",
+      "name": "add_source_to_fitmatch_mapping_view"
+    },
+    {
+      "version": "20260814133006",
+      "name": "correct_uniqlo_airism_cotton_crewneck_t"
+    },
+    {
+      "version": "20260814134818",
+      "name": "audit_uniqlo_airism_product_structure"
+    },
+    {
+      "version": "20260815003605",
+      "name": "create_corrected_mapping_release_20260815"
+    },
+    {
+      "version": "20260815013957",
+      "name": "create_source_product_snapshot_store"
+    },
+    {
+      "version": "20260818011818",
+      "name": "create_product_runtime_foundation_v1"
+    },
+    {
+      "version": "20260818012026",
+      "name": "create_product_runtime_procedures_v1"
+    },
+    {
+      "version": "20260818013019",
+      "name": "align_product_runtime_policy_v1"
+    },
+    {
+      "version": "20260818013251",
+      "name": "validate_product_runtime_v1"
+    },
+    {
+      "version": "20260818013611",
+      "name": "index_product_runtime_foreign_keys_v1"
+    },
+    {
+      "version": "20260818031914",
+      "name": "trusted_product_auto_classification_v2"
+    },
+    {
+      "version": "20260818032636",
+      "name": "comparison_candidate_policy_parity_v2"
+    },
+    {
+      "version": "20260818032914",
+      "name": "validate_product_runtime_v2"
+    },
+    {
+      "version": "20260818033043",
+      "name": "fix_product_exclusion_resolution_v3"
+    },
+    {
+      "version": "20260818033150",
+      "name": "backfill_product_runtime_v2_classifications"
+    },
+    {
+      "version": "20260818074455",
+      "name": "batch_product_ingest_api_v1"
+    },
+    {
+      "version": "20260818074841",
+      "name": "batch_measurement_scope_and_uniqlo_aliases_v1"
+    },
+    {
+      "version": "20260818075008",
+      "name": "grant_batch_taxonomy_read_v1"
+    },
+    {
+      "version": "20260818143518",
+      "name": "correct_uniqlo_e482202_family"
+    },
+    {
+      "version": "20260818154520",
+      "name": "add_scoped_product_runtime_read_contract"
+    },
+    {
+      "version": "20260818230837",
+      "name": "authenticated_closet_crud_contract_v1"
+    },
+    {
+      "version": "20260819002838",
+      "name": "closet_sync_hydration_contract_v1"
+    },
+    {
+      "version": "20260819005151",
+      "name": "comparison_sync_contract_v1"
+    },
+    {
+      "version": "20260819005822",
+      "name": "manual_closet_comparison_fallback"
+    },
+    {
+      "version": "20260819032505",
+      "name": "product_observation_pipeline"
+    },
+    {
+      "version": "20260820055653",
+      "name": "preserve_specific_uniqlo_category_evidence"
+    },
+    {
+      "version": "20260820141731",
+      "name": "comparison_quality_and_data_issue_contract"
+    },
+    {
+      "version": "20260820144326",
+      "name": "add_cos_observation_source"
+    },
+    {
+      "version": "20260821032148",
+      "name": "seed_zara_verified_categories"
+    },
+    {
+      "version": "20260821042246",
+      "name": "add_zara_observation_source"
+    },
+    {
+      "version": "20260821042251",
+      "name": "enable_zara_testing_categories"
+    },
+    {
+      "version": "20260821042258",
+      "name": "seed_zara_official_category_tree"
+    },
+    {
+      "version": "20260821042806",
+      "name": "publish_zara_client_category_mappings"
+    },
+    {
+      "version": "20260821080945",
+      "name": "extend_zara_production_sample_categories"
+    },
+    {
+      "version": "20260821090138",
+      "name": "seed_zara_verified_measurement_subset"
+    },
+    {
+      "version": "20260826090113",
+      "name": "p3_data_quality_observability"
+    },
+    {
+      "version": "20260826090114",
+      "name": "release_gate_and_quality_review_queue"
+    },
+    {
+      "version": "20260826090115",
+      "name": "authoritative_classification_foundation"
+    },
+    {
+      "version": "20260826090116",
+      "name": "classification_candidate_release"
+    },
+    {
+      "version": "20260826090117",
+      "name": "classification_candidate_revision_safe_data"
+    },
+    {
+      "version": "20260826090118",
+      "name": "classification_db_final_closure"
+    },
+    {
+      "version": "20260826131310",
+      "name": "classification_measurement_policy_checksum_correction"
+    },
+    {
+      "version": "20260827023702",
+      "name": "classification_audience_scope_correction"
+    },
+    {
+      "version": "20260828105337",
+      "name": "classification_review_zero_exact_authority"
+    },
+    {
+      "version": "20260828213614",
+      "name": "classification_camisole_mapping_correction_v3"
+    },
+    {
+      "version": "20260828221615",
+      "name": "bottom_other_reclassification_exact_length_policy"
+    },
+    {
+      "version": "20260828224247",
+      "name": "classifier_v5_category_subtype_length_pipeline_v3"
+    },
+    {
+      "version": "20260829011935",
+      "name": "vnext_classification_invariants"
+    },
+    {
+      "version": "20260829012001",
+      "name": "vnext_mapping_invariants"
+    },
+    {
+      "version": "20260829012017",
+      "name": "vnext_mapping_and_product_remediation"
+    },
+    {
+      "version": "20260829012117",
+      "name": "vnext_classifier_resolver"
+    },
+    {
+      "version": "20260829012214",
+      "name": "vnext_classifier_replay"
+    },
+    {
+      "version": "20260829012350",
+      "name": "vnext_measurement_resolver"
+    },
+    {
+      "version": "20260829012618",
+      "name": "vnext_availability_runtime_api"
+    },
+    {
+      "version": "20260829012836",
+      "name": "vnext_closet_reference_api"
+    },
+    {
+      "version": "20260829013132",
+      "name": "vnext_comparison_authorization"
+    },
+    {
+      "version": "20260829013409",
+      "name": "vnext_comparison_history"
+    },
+    {
+      "version": "20260829013456",
+      "name": "vnext_runtime_rls_grants"
+    },
+    {
+      "version": "20260829015113",
+      "name": "vnext_provider_golden_observations"
+    },
+    {
+      "version": "20260829020000",
+      "name": "vnext_function_search_path_hardening"
+    },
+    {
+      "version": "20260829031514",
+      "name": "vnext_ingestion_contract"
+    },
+    {
+      "version": "20260829031527",
+      "name": "vnext_readiness_policy_metrics"
+    },
+    {
+      "version": "20260829031549",
+      "name": "vnext_candidate_size_authority"
+    },
+    {
+      "version": "20260829031601",
+      "name": "vnext_comparison_begin_provenance"
+    },
+    {
+      "version": "20260829031612",
+      "name": "vnext_completion_validation"
+    },
+    {
+      "version": "20260829031622",
+      "name": "vnext_reference_candidate_discovery"
+    },
+    {
+      "version": "20260829031636",
+      "name": "vnext_final_security_regression"
+    },
+    {
+      "version": "20260829032944",
+      "name": "vnext_completion_ingestion_hardening"
+    },
+    {
+      "version": "20260829043247",
+      "name": "vnext_ingestion_postgrest_bridge"
+    },
+    {
+      "version": "20260829110853",
+      "name": "vnext_swift_user_contract"
+    },
+    {
+      "version": "20260830003812",
+      "name": "add_manual_cross_comparison_rules"
+    },
+    {
+      "version": "20260830003907",
+      "name": "constrain_manual_cross_comparisons_by_sleeve"
+    },
+    {
+      "version": "20260830090000",
+      "name": "vnext_leaf_specificity_correction"
+    },
+    {
+      "version": "20260830091000",
+      "name": "vnext_review_required_recovery"
+    },
+    {
+      "version": "20260902031749",
+      "name": "live_retailer_structure_and_adult_audience_policy"
+    },
+    {
+      "version": "20260903102500",
+      "name": "vnext_exact_product_bounded_recovery"
+    },
+    {
+      "version": "20260903105000",
+      "name": "vnext_unambiguous_measurement_parser_recovery"
+    },
+    {
+      "version": "20260903120903",
+      "name": "vnext_classification_measurement_decoupling_and_complete_recovery"
+    },
+    {
+      "version": "20260903123000",
+      "name": "vnext_classification_decision_v4_classification_only"
+    },
+    {
+      "version": "20260903123100",
+      "name": "vnext_generic_leaf_exact_authority_fail_closed"
+    },
+    {
+      "version": "20260908072203",
+      "name": "fix_linked_closet_canonical_measurement_insert"
+    },
+    {
+      "version": "20260908072512",
+      "name": "fix_vnext_closet_satisfaction_zero_semantics"
+    },
+    {
+      "version": "20260909005903",
+      "name": "simplefitmatch_linked_closet_round_trip"
+    },
+    {
+      "version": "20260911015534",
+      "name": "category_group_measurement_context"
+    },
+    {
+      "version": "20260911020436",
+      "name": "comparison_group_runtime_validation"
+    },
+    {
+      "version": "20260911020937",
+      "name": "zara_v1_category_group_compatibility"
+    },
+    {
+      "version": "20260911021126",
+      "name": "group_authority_precedence"
+    },
+    {
+      "version": "20260911142853",
+      "name": "closet_group_mutation_permissions"
+    },
+    {
+      "version": "20260911150350",
+      "name": "group_authority_policy_payload"
+    },
+    {
+      "version": "20260911150812",
+      "name": "zara_group_mapping_null_guard"
+    },
+    {
+      "version": "20260911151057",
+      "name": "group_policy_review_recovery"
+    },
+    {
+      "version": "20260911152814",
+      "name": "group_only_product_readiness"
+    },
+    {
+      "version": "20260914050759",
+      "name": "remove_legacy_group_decision_fallbacks"
+    },
+    {
+      "version": "20260915062651",
+      "name": "group_only_ingestion_axes_release_repair"
+    },
+    {
+      "version": "20260915064910",
+      "name": "cleanup_retired_paths_and_align_group_readiness"
+    },
+    {
+      "version": "20260915143149",
+      "name": "linked_creation_server_snapshot_and_verified_candidates"
+    },
+    {
+      "version": "20260916000904",
+      "name": "explicit_cross_group_comparison_common_measurements"
+    },
+    {
+      "version": "20260916113008",
+      "name": "retire_reference_candidate_authority"
+    },
+    {
+      "version": "20260916113033",
+      "name": "uniqlo_verified_path_compat_and_zara_skirt_aliases"
+    },
+    {
+      "version": "20260916231220",
+      "name": "zara_exact_category_identity_lookup"
+    },
+    {
+      "version": "20260921081527",
+      "name": "closet_raw_measurement_snapshots"
+    },
+    {
+      "version": "20260923032302",
+      "name": "same_comparison_group_only_preserve_eligibility"
+    },
+    {
+      "version": "20260924014952",
+      "name": "linked_closet_size_snapshot_updates"
+    },
+    {
+      "version": "20260924015007",
+      "name": "closet_detail_snapshot_round_trip"
+    },
+    {
+      "version": "20260924015014",
+      "name": "comparison_history_tombstone_sync"
+    },
+    {
+      "version": "20260924035231",
+      "name": "closet_single_item_readback"
+    },
+    {
+      "version": "20260924035245",
+      "name": "runtime_skip_discarded_projections"
+    },
+    {
+      "version": "20260924045025",
+      "name": "selected_comparison_candidate"
+    },
+    {
+      "version": "20260928042404",
+      "name": "align_top_comparison_policy"
+    },
+    {
+      "version": "20260928075844",
+      "name": "comparison_preview_evidence"
+    },
+    {
+      "version": "20260928135134",
+      "name": "latest_comparison_result_per_product"
+    },
+    {
+      "version": "20260929055658",
+      "name": "verified_native_canonical_fallback"
+    }
+  ]
+}
