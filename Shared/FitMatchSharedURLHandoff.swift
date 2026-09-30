@@ -8,21 +8,44 @@ enum FitMatchSharedURLHandoff {
     static let fileName = "FitMatchPendingProductURLHandoff-v1.json"
     static let timeToLive: TimeInterval = 15 * 60
 
+    enum Destination: String, Codable, Equatable, Sendable {
+        case compare
+        case closetRegistration
+    }
+
     struct Payload: Codable, Equatable, Sendable {
         let schemaVersion: Int
         let urlString: String
         let createdAt: Date
         let generation: String
+        let destination: Destination
+
+        private enum CodingKeys: String, CodingKey {
+            case schemaVersion, urlString, createdAt, generation, destination
+        }
 
         init(
             urlString: String,
             createdAt: Date,
-            generation: String = UUID().uuidString
+            generation: String = UUID().uuidString,
+            destination: Destination = .compare
         ) {
             self.schemaVersion = 1
             self.urlString = urlString
             self.createdAt = createdAt
             self.generation = generation
+            self.destination = destination
+        }
+
+        init(from decoder: Decoder) throws {
+            let values = try decoder.container(keyedBy: CodingKeys.self)
+            schemaVersion = try values.decode(Int.self, forKey: .schemaVersion)
+            urlString = try values.decode(String.self, forKey: .urlString)
+            createdAt = try values.decode(Date.self, forKey: .createdAt)
+            generation = try values.decode(String.self, forKey: .generation)
+            destination = try values.contains(.destination)
+                ? values.decode(Destination.self, forKey: .destination)
+                : .compare
         }
     }
 
@@ -54,6 +77,7 @@ struct FitMatchSharedURLHandoffStore {
     struct Handoff: Equatable, Sendable {
         let urlString: String
         let token: String
+        let destination: FitMatchSharedURLHandoff.Destination
     }
 
     enum PendingHandoffReadOutcome: Equatable, Sendable {
@@ -89,7 +113,10 @@ struct FitMatchSharedURLHandoffStore {
     }
 
     @discardableResult
-    func save(_ url: URL) -> Bool {
+    func save(
+        _ url: URL,
+        destination: FitMatchSharedURLHandoff.Destination = .compare
+    ) -> Bool {
         guard FitMatchProductURLRouting.provider(for: url) != nil else {
             return false
         }
@@ -98,9 +125,35 @@ struct FitMatchSharedURLHandoffStore {
             try ensureParentDirectory(for: coordinatedURL)
             let payload = FitMatchSharedURLHandoff.Payload(
                 urlString: url.absoluteString,
-                createdAt: now()
+                createdAt: now(),
+                destination: destination
             )
             let data = try FitMatchSharedURLHandoff.makeEncoder().encode(payload)
+            try data.write(to: coordinatedURL, options: .atomic)
+            return true
+        }) ?? false
+    }
+
+    @discardableResult
+    func setDestination(
+        _ destination: FitMatchSharedURLHandoff.Destination,
+        for url: URL,
+        generation: String
+    ) -> Bool {
+        (try? coordinateWrite { coordinatedURL in
+            guard case .payload(let payload) = loadPayloadOrClearMalformed(at: coordinatedURL),
+                  case .visible = visibility(of: payload),
+                  payload.urlString == url.absoluteString,
+                  payload.generation == generation else {
+                return false
+            }
+            let updated = FitMatchSharedURLHandoff.Payload(
+                urlString: payload.urlString,
+                createdAt: payload.createdAt,
+                generation: payload.generation,
+                destination: destination
+            )
+            let data = try FitMatchSharedURLHandoff.makeEncoder().encode(updated)
             try data.write(to: coordinatedURL, options: .atomic)
             return true
         }) ?? false
@@ -127,7 +180,11 @@ struct FitMatchSharedURLHandoffStore {
                     switch visibility(of: payload) {
                     case .visible:
                         return .available(
-                            Handoff(urlString: payload.urlString, token: payload.generation)
+                            Handoff(
+                                urlString: payload.urlString,
+                                token: payload.generation,
+                                destination: payload.destination
+                            )
                         )
                     case .expired:
                         try? removePayload(at: coordinatedURL)

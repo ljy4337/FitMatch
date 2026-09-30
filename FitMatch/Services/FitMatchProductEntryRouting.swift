@@ -15,12 +15,17 @@ enum FitMatchProductEntryRouting {
     #endif
     enum DeepLinkAction: Equatable {
         case openPendingProductCompare
+        case openPendingClosetRegistration
         case ignore
     }
 
     static func action(for url: URL) -> DeepLinkAction {
         guard isSupportedAppLink(url) else { return .ignore }
-        return route(from: url) == "compare" ? .openPendingProductCompare : .ignore
+        switch route(from: url) {
+        case "compare": return .openPendingProductCompare
+        case "closet-link": return .openPendingClosetRegistration
+        default: return .ignore
+        }
     }
 
     static func isSupportedAppLink(_ url: URL) -> Bool {

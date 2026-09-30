@@ -1,3 +1,9 @@
+## 2026-10-01 공유 화면에서 비교/내 옷 등록 선택
+
+- `sharebtnmodify`에서 Share Extension 성공 화면의 `보러가기`를 `상품 비교`로 바꾸고 `내 옷 추가` 버튼을 추가했다. 공유 URL은 기존 App Group 파일에 destination과 함께 보관하며, 이전 destination 없는 payload는 비교로 읽는다. 버튼 선택 시 같은 URL/generation에 대해서만 destination을 갱신한다.
+- 비교는 기존 CompareFlowSheet를 유지한다. 내 옷 추가는 앱 인증·온보딩 뒤 기존 LinkClosetRegistrationView에 공유 URL을 전달하고 상품 조회를 최초 1회 자동 시작한다. 사이즈 선택, 그룹 정책, 원본 실측, 서버 저장/read-back은 기존 등록 경로 그대로이며 DB/Edge 변경은 없다. 다른 시트가 열려 있으면 닫힌 후 새 목적의 시트를 연다. 운영/QA App Group과 URL scheme 분리는 기존 빌드 조건을 따른다.
+- PASS: 새 공유 목적/기존 payload 호환/라우트 XCTest 3/3, FitMatch-QA unsigned Simulator 앱+Share Extension build exit 0. 기존 headless 공유 단일 테스트의 `-only-testing` 시도는 exit 0이지만 xcresult 실행 0건이므로 PASS로 세지 않는다. 실제 iPhone Share Sheet, 로그인 후 등록·서버 저장 및 앱 전환 E2E는 NOT RUN. commit/push 및 DB write 없음.
+
 ## 2026-09-30 main/QA 선별 게시 준비
 
 - 사용자 일괄 반영 승인. 운영/QA 환경 분리 변경과 현재 production caller가 요구하는 미등록 VNextCompletedReplayPolicy.swift, 독립 회귀 테스트를 선별. .build 제외 규칙 추가. 기존 실제 비교기록 fixture 2개 및 이에 의존하는 FrozenReleaseHistoryAuditTests.swift는 개인 데이터 원문이므로 게시 제외/로컬 보존.

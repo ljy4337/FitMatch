@@ -28,6 +28,9 @@ struct ContentView: View {
     @State private var pendingCompareURL: String?
     @State private var pendingCompareToken: String?
     @State private var compareViewID: UUID?
+    @State private var pendingClosetURL: String?
+    @State private var pendingClosetToken: String?
+    @State private var closetViewID: UUID?
     @State private var lastCompareLaunchKey: String?
     @State private var lastCompareLaunchDate = Date.distantPast
     @State private var hasRecordedLaunch = false
@@ -238,15 +241,31 @@ struct ContentView: View {
                             compareViewID = nil
                         }
                     },
+                    closetURL: pendingClosetURL,
+                    onClosetURLPresented: { presentedURL in
+                        _ = sharedURLStore.clearPendingProductURL(
+                            ifMatching: presentedURL,
+                            token: pendingClosetToken
+                        )
+                        if pendingClosetURL == presentedURL {
+                            pendingClosetURL = nil
+                            pendingClosetToken = nil
+                            closetViewID = nil
+                        }
+                    },
                     onLogout: {
                         selectedTab = .home
                         pendingCompareURL = nil
                         pendingCompareToken = nil
+                        pendingClosetURL = nil
+                        pendingClosetToken = nil
+                        closetViewID = nil
                         Task {
                             await authSession.signOut()
                         }
                     },
-                    compareViewID: compareViewID
+                    compareViewID: compareViewID,
+                    closetViewID: closetViewID
                     )
                     .environment(\.fitMatchClosetSyncCoordinator, closetSync)
                     .environment(\.fitMatchComparisonSyncCoordinator, comparisonSync)
@@ -302,8 +321,8 @@ struct ContentView: View {
         }
 
         switch FitMatchProductEntryRouting.action(for: url) {
-        case .openPendingProductCompare:
-            openCompareFromDeepLink()
+        case .openPendingProductCompare, .openPendingClosetRegistration:
+            openSharedProductFromDeepLink()
         case .ignore:
             #if DEBUG
             print("[FitMatch] ignored unsupported or unknown deep-link route: \(url.absoluteString)")
@@ -311,10 +330,10 @@ struct ContentView: View {
         }
     }
 
-    private func openCompareFromDeepLink() {
+    private func openSharedProductFromDeepLink() {
         guard openPendingSharedURLIfNeeded() else {
             #if DEBUG
-            print("[FitMatch] ignored compare deep link without pending shared URL")
+            print("[FitMatch] ignored product deep link without pending shared URL")
             #endif
             return
         }
@@ -336,9 +355,14 @@ struct ContentView: View {
             return false
         }
 
-        if pendingCompareURL == handoff.urlString,
-           pendingCompareToken == handoff.token,
-           compareViewID != nil {
+        if (handoff.destination == .compare
+                && pendingCompareURL == handoff.urlString
+                && pendingCompareToken == handoff.token
+                && compareViewID != nil)
+            || (handoff.destination == .closetRegistration
+                && pendingClosetURL == handoff.urlString
+                && pendingClosetToken == handoff.token
+                && closetViewID != nil) {
             #if DEBUG
             print("[FitMatch] pending shared URL already queued: \(handoff.urlString)")
             #endif
@@ -349,8 +373,21 @@ struct ContentView: View {
         print("[FitMatch] queued pending shared URL: \(handoff.urlString)")
         #endif
         selectedTab = .home
-        pendingCompareToken = handoff.token
-        openCompare(with: handoff.urlString)
+        switch handoff.destination {
+        case .compare:
+            pendingClosetURL = nil
+            pendingClosetToken = nil
+            closetViewID = nil
+            pendingCompareToken = handoff.token
+            openCompare(with: handoff.urlString)
+        case .closetRegistration:
+            pendingCompareURL = nil
+            pendingCompareToken = nil
+            compareViewID = nil
+            pendingClosetURL = handoff.urlString
+            pendingClosetToken = handoff.token
+            closetViewID = UUID()
+        }
         return true
     }
 
@@ -1050,12 +1087,16 @@ private struct MainTabView: View {
     @Binding var selectedTab: AppTab
     let compareURL: String?
     let onCompareURLPresented: (String) -> Void
+    let closetURL: String?
+    let onClosetURLPresented: (String) -> Void
     let onLogout: () -> Void
     let compareViewID: UUID?
+    let closetViewID: UUID?
     @State private var activeSheet: MainActiveSheet?
-    @State private var pendingCompareRequest: CompareFlowRequest?
+    @State private var pendingEntryRequest: MainActiveSheet?
     @State private var isAwaitingSheetDismissal = false
     @State private var lastHandledCompareViewID: UUID?
+    @State private var lastHandledClosetViewID: UUID?
     @StateObject private var tabBarVisibilityController = TabBarVisibilityController()
 
     var body: some View {
@@ -1070,9 +1111,13 @@ private struct MainTabView: View {
         }
         .onAppear {
             handleCompareRequestIfNeeded(compareViewID)
+            handleClosetRequestIfNeeded(closetViewID)
         }
         .onChange(of: compareViewID) { _, newValue in
             handleCompareRequestIfNeeded(newValue)
+        }
+        .onChange(of: closetViewID) { _, newValue in
+            handleClosetRequestIfNeeded(newValue)
         }
         .sheet(item: $activeSheet, onDismiss: {
             #if DEBUG
@@ -1080,10 +1125,10 @@ private struct MainTabView: View {
             #endif
             if isAwaitingSheetDismissal {
                 isAwaitingSheetDismissal = false
-                if let request = pendingCompareRequest {
-                    pendingCompareRequest = nil
+                if let request = pendingEntryRequest {
+                    pendingEntryRequest = nil
                     DispatchQueue.main.async {
-                        presentCompareRequest(request)
+                        presentEntryRequest(request)
                     }
                     return
                 }
@@ -1124,9 +1169,10 @@ private struct MainTabView: View {
                 )
                 .presentationDetents([.height(290)])
                 .presentationDragIndicator(.visible)
-            case .closetLinkRegistration:
+            case .closetLinkRegistration(let request):
                 NavigationStack {
-                    LinkClosetRegistrationView()
+                    LinkClosetRegistrationView(initialURL: request?.initialURL)
+                        .id(request?.id)
                 }
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
@@ -1234,7 +1280,7 @@ private struct MainTabView: View {
             initialHistoricalProduct: initialHistoricalProduct
         )
         guard activeSheet == nil, !isAwaitingSheetDismissal else {
-            pendingCompareRequest = request
+            pendingEntryRequest = .compareFlow(request)
             if activeSheet != nil {
                 isAwaitingSheetDismissal = true
                 activeSheet = nil
@@ -1276,14 +1322,45 @@ private struct MainTabView: View {
         presentCompareFlow(initialURL: initialURL)
     }
 
+    private func handleClosetRequestIfNeeded(_ requestID: UUID?) {
+        guard let requestID, lastHandledClosetViewID != requestID,
+              let closetURL else { return }
+        lastHandledClosetViewID = requestID
+        let sheet = MainActiveSheet.closetLinkRegistration(
+            ClosetLinkRequest(initialURL: closetURL)
+        )
+        guard activeSheet == nil, !isAwaitingSheetDismissal else {
+            pendingEntryRequest = sheet
+            if activeSheet != nil {
+                isAwaitingSheetDismissal = true
+                activeSheet = nil
+            }
+            return
+        }
+        presentEntryRequest(sheet)
+    }
+
     private func presentCompareRequest(_ request: CompareFlowRequest) {
-        tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: "compareFlow")
-        activeSheet = .compareFlow(request)
-        if let initialURL = request.initialURL {
-            onCompareURLPresented(initialURL)
+        presentEntryRequest(.compareFlow(request))
+    }
+
+    private func presentEntryRequest(_ request: MainActiveSheet) {
+        tabBarVisibilityController.hide(tab: selectedTab, reason: .modalFlow, source: request.logName)
+        activeSheet = request
+        switch request {
+        case .compareFlow(let comparison):
+            if let initialURL = comparison.initialURL {
+                onCompareURLPresented(initialURL)
+            }
+        case .closetLinkRegistration(let registration):
+            if let initialURL = registration?.initialURL {
+                onClosetURLPresented(initialURL)
+            }
+        default:
+            break
         }
         #if DEBUG
-        print("[화면: 상품 비교][동작: 비교 시트 열기][상태: 완료] 탭바환경객체=전달됨, 요청ID=\(request.id)")
+        print("[MainTabView] presented \(request.logName)")
         #endif
     }
 
@@ -1297,7 +1374,7 @@ private struct MainTabView: View {
     private func presentClosetLinkRegistrationFromNewTask() {
         activeSheet = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            presentSheet(.closetLinkRegistration)
+            presentSheet(.closetLinkRegistration(nil))
         }
     }
 
@@ -1314,7 +1391,7 @@ private enum MainActiveSheet: Identifiable {
     case newTask
     case compareFlow(CompareFlowRequest)
     case closetAddMethod
-    case closetLinkRegistration
+    case closetLinkRegistration(ClosetLinkRequest?)
     case manualClosetAdd
 
     var id: String {
@@ -1325,8 +1402,9 @@ private enum MainActiveSheet: Identifiable {
             return "compareFlow-\(request.id)"
         case .closetAddMethod:
             return "closetAddMethod"
-        case .closetLinkRegistration:
-            return "closetLinkRegistration"
+        case .closetLinkRegistration(let request):
+            return request.map { "closetLinkRegistration-\($0.id)" }
+                ?? "closetLinkRegistration"
         case .manualClosetAdd:
             return "manualClosetAdd"
         }
@@ -1352,6 +1430,11 @@ private struct CompareFlowRequest: Identifiable {
     let id = UUID()
     let initialURL: String?
     let initialHistoricalProduct: Product?
+}
+
+private struct ClosetLinkRequest: Identifiable {
+    let id = UUID()
+    let initialURL: String
 }
 
 private struct NewTaskSheet: View {

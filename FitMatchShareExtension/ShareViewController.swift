@@ -17,18 +17,26 @@ final class ShareViewController: UIViewController {
 
     private enum DeepLink {
         #if FITMATCH_QA
-        static let compareURLString = "fitmatch-qa://compare"
+        static let scheme = "fitmatch-qa"
         #else
-        static let compareURLString = "fitmatch://compare"
+        static let scheme = "fitmatch"
         #endif
+
+        static func url(for destination: FitMatchSharedURLHandoff.Destination) -> URL? {
+            let route = destination == .compare ? "compare" : "closet-link"
+            return URL(string: "\(scheme)://\(route)")
+        }
     }
 
     private let titleLabel = UILabel()
     private let messageLabel = UILabel()
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let openButton = UIButton(type: .system)
+    private let closetButton = UIButton(type: .system)
     private let closeButton = UIButton(type: .system)
     private var isAttemptingOpen = false
+    private var savedURL: URL?
+    private var savedGeneration: String?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -44,6 +52,7 @@ final class ShareViewController: UIViewController {
             titleLabel,
             messageLabel,
             openButton,
+            closetButton,
             closeButton
         ])
         stackView.axis = .vertical
@@ -63,7 +72,7 @@ final class ShareViewController: UIViewController {
         messageLabel.textAlignment = .center
         messageLabel.numberOfLines = 0
 
-        openButton.setTitle("보러가기", for: .normal)
+        openButton.setTitle("상품 비교", for: .normal)
         openButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
         openButton.tintColor = .white
         openButton.backgroundColor = .label
@@ -71,6 +80,15 @@ final class ShareViewController: UIViewController {
         openButton.heightAnchor.constraint(equalToConstant: 48).isActive = true
         openButton.isHidden = true
         openButton.addTarget(self, action: #selector(openButtonTapped), for: .touchUpInside)
+
+        closetButton.setTitle("내 옷 추가", for: .normal)
+        closetButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
+        closetButton.tintColor = .label
+        closetButton.backgroundColor = .secondarySystemBackground
+        closetButton.layer.cornerRadius = 14
+        closetButton.heightAnchor.constraint(equalToConstant: 48).isActive = true
+        closetButton.isHidden = true
+        closetButton.addTarget(self, action: #selector(closetButtonTapped), for: .touchUpInside)
 
         closeButton.setTitle("닫기", for: .normal)
         closeButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
@@ -113,10 +131,16 @@ final class ShareViewController: UIViewController {
         ) else {
             return false
         }
-        let didSave = FitMatchSharedURLHandoffStore(fileURL: handoffURL).save(url)
-        guard didSave,
-              let defaults = UserDefaults(suiteName: AppGroup.identifier) else {
-            return didSave
+        let store = FitMatchSharedURLHandoffStore(fileURL: handoffURL)
+        guard store.save(url),
+              let handoff = store.pendingHandoff(),
+              handoff.urlString == url.absoluteString else {
+            return false
+        }
+        savedURL = url
+        savedGeneration = handoff.token
+        guard let defaults = UserDefaults(suiteName: AppGroup.identifier) else {
+            return true
         }
         recordShareReceived(url: url, defaults: defaults)
         #if DEBUG
@@ -148,10 +172,13 @@ final class ShareViewController: UIViewController {
         isAttemptingOpen = false
         activityIndicator.stopAnimating()
         titleLabel.text = "상품 링크를 FitMatch에 저장했어요"
-        messageLabel.text = "FitMatch 앱에서 내 옷과 사이즈 비교를 이어갈 수 있어요."
+        messageLabel.text = "FitMatch에서 상품을 비교하거나 내 옷장에 추가할 수 있어요."
         openButton.isEnabled = true
-        openButton.setTitle("보러가기", for: .normal)
+        openButton.setTitle("상품 비교", for: .normal)
         openButton.isHidden = false
+        closetButton.isEnabled = true
+        closetButton.setTitle("내 옷 추가", for: .normal)
+        closetButton.isHidden = false
         closeButton.isHidden = false
         closeButton.setTitle("닫기", for: .normal)
     }
@@ -161,17 +188,38 @@ final class ShareViewController: UIViewController {
         titleLabel.text = "상품 URL을 추가하지 못했어요"
         messageLabel.text = "상품 페이지 URL을 공유했는지 확인해 주세요."
         openButton.isHidden = true
+        closetButton.isHidden = true
         closeButton.isHidden = false
     }
 
     @objc
     private func openButtonTapped() {
+        startOpening(.compare)
+    }
+
+    @objc
+    private func closetButtonTapped() {
+        startOpening(.closetRegistration)
+    }
+
+    private func startOpening(_ destination: FitMatchSharedURLHandoff.Destination) {
         guard !isAttemptingOpen else { return }
+        guard let savedURL,
+              let savedGeneration,
+              let handoffURL = FitMatchSharedURLHandoff.appGroupFileURL(
+                identifier: AppGroup.identifier
+              ),
+              FitMatchSharedURLHandoffStore(fileURL: handoffURL).setDestination(
+                destination, for: savedURL, generation: savedGeneration
+              ) else {
+            showOpenRetryState()
+            return
+        }
         openButton.isEnabled = false
-        openButton.setTitle("FitMatch 여는 중", for: .normal)
+        closetButton.isEnabled = false
         messageLabel.text = "FitMatch 앱으로 이동하고 있습니다."
         isAttemptingOpen = true
-        openContainingApp()
+        openContainingApp(destination: destination)
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
             guard self?.isAttemptingOpen == true else { return }
             self?.showOpenRetryState()
@@ -183,8 +231,8 @@ final class ShareViewController: UIViewController {
         completeRequest()
     }
 
-    private func openContainingApp() {
-        guard let url = URL(string: DeepLink.compareURLString) else {
+    private func openContainingApp(destination: FitMatchSharedURLHandoff.Destination) {
+        guard let url = DeepLink.url(for: destination) else {
             showOpenRetryState()
             return
         }
@@ -265,8 +313,11 @@ final class ShareViewController: UIViewController {
         titleLabel.text = "상품 링크를 FitMatch에 저장했어요"
         messageLabel.text = "앱을 자동으로 열지 못했어요. 다시 시도해 주세요."
         openButton.isEnabled = true
-        openButton.setTitle("FitMatch 다시 열기", for: .normal)
+        openButton.setTitle("상품 비교", for: .normal)
         openButton.isHidden = false
+        closetButton.isEnabled = true
+        closetButton.setTitle("내 옷 추가", for: .normal)
+        closetButton.isHidden = false
         closeButton.setTitle("닫기", for: .normal)
         closeButton.isHidden = false
     }
