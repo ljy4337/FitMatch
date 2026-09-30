@@ -1,0 +1,179 @@
+import Foundation
+import SwiftData
+
+/// Typed transport boundary for the immutable History visibility RPC. The
+/// caller never treats any of these failures as a receipt, so local cache
+/// deletion remains impossible until a validated success returns.
+nonisolated enum FitMatchHistoryVisibilityRPCError: LocalizedError, Equatable, Sendable {
+    case authenticationRequired
+    case invalidRequest
+    case unavailable
+    case historyUnavailable
+    case transportUncertain
+    case rejected
+
+    var errorDescription: String? {
+        switch self {
+        case .authenticationRequired:
+            return FitMatchFailureCopy.loginRequired
+        case .invalidRequest:
+            return "비교 기록 삭제 요청에 문제가 있어요. 문제가 계속되면 문의해 주세요."
+        case .unavailable:
+            return "비교 기록 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
+        case .historyUnavailable:
+            return "이 비교 기록은 현재 처리할 수 없습니다. 목록을 새로 확인한 뒤 다시 시도해 주세요."
+        case .transportUncertain:
+            return "서버 반영 여부를 확인하지 못했어요. 기록 목록을 새로고침해 확인해 주세요."
+        case .rejected:
+            return "비교 기록 삭제 서비스에서 요청을 거절했어요. 문제가 계속되면 문의해 주세요."
+        }
+    }
+}
+
+/// Non-visual production actions behind History deletion.  A server-completed
+/// comparison is never deleted: the server visibility receipt must succeed
+/// before its local presentation cache is removed.  Legacy local History
+/// retains its existing local-only delete behavior.
+@MainActor
+enum FitMatchHistoryVisibilityAction {
+    enum Outcome: Equatable {
+        case deleted
+        case comparisonSyncUnavailable
+        case authenticationRequired
+        case serverHideUnavailable
+        case serverHistoryUnavailable
+        case invalidServerHideRequest
+        case serverHideUncertain
+        case serverHideFailed
+        case localPersistenceFailedAfterServerHide
+        case localPersistenceFailed
+
+        var userVisibleMessage: String? {
+            switch self {
+            case .deleted:
+                nil
+            case .comparisonSyncUnavailable:
+                "비교 기록 삭제 서비스를 준비하지 못했어요. 문제가 계속되면 문의해 주세요."
+            case .authenticationRequired:
+                FitMatchFailureCopy.loginRequired
+            case .serverHideUnavailable:
+                "비교 기록 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
+            case .serverHistoryUnavailable:
+                "이 비교 기록은 현재 처리할 수 없습니다. 목록을 새로 확인한 뒤 다시 시도해 주세요."
+            case .invalidServerHideRequest:
+                "비교 기록 삭제 요청에 문제가 있어요. 문제가 계속되면 문의해 주세요."
+            case .serverHideUncertain:
+                "서버 반영 여부를 확인하지 못했어요. 기록 목록을 새로고침해 확인해 주세요."
+            case .serverHideFailed:
+                "비교 기록 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요."
+            case .localPersistenceFailedAfterServerHide:
+                "비교 기록은 서버에서 삭제됐지만 이 기기에 반영하지 못했어요. 화면을 다시 열어 확인해 주세요."
+            case .localPersistenceFailed:
+                "비교 기록을 삭제하지 못했어요. 다시 시도해 주세요."
+            }
+        }
+    }
+
+    /// Handles one visible History delete request.  The caller continues to
+    /// own button progress and alert presentation; it cannot report success
+    /// until this action returns `.deleted`.
+    static func delete(
+        _ history: RecommendationHistory,
+        in modelContext: ModelContext,
+        comparisonSync: FitMatchComparisonSyncCoordinator?
+    ) async -> Outcome {
+        if history.isServerBackedVNextHistory {
+            guard let comparisonSync else {
+                return .comparisonSyncUnavailable
+            }
+            do {
+                try await comparisonSync.hideVNextComparisonHistories(
+                    clientComparisonIDs: [history.id]
+                )
+            } catch let error as FitMatchHistoryVisibilityRPCError {
+                return outcome(for: error)
+            } catch {
+                return .serverHideFailed
+            }
+            let outcome = deleteLocally(
+                history,
+                in: modelContext,
+                afterServerHide: true
+            )
+            if outcome == .deleted {
+                comparisonSync.recordPersistedHistoryTombstones([history.id])
+            }
+            return outcome
+        }
+
+        return deleteLocally(
+            history,
+            in: modelContext,
+            afterServerHide: false
+        )
+    }
+
+    /// Hides a batch before the owning Closet item can be deleted.  The
+    /// immutable comparison evidence remains untouched on the server.
+    static func hideCompletedServerHistories(
+        _ histories: [RecommendationHistory],
+        comparisonSync: FitMatchComparisonSyncCoordinator?
+    ) async -> Outcome {
+        let ids = Array(Set(histories.lazy
+            .filter(\.isServerBackedVNextHistory)
+            .map(\.id)))
+            .sorted { $0.uuidString < $1.uuidString }
+        guard !ids.isEmpty else { return .deleted }
+        guard let comparisonSync else {
+            return .comparisonSyncUnavailable
+        }
+        do {
+            try await comparisonSync.hideVNextComparisonHistories(
+                clientComparisonIDs: ids
+            )
+            return .deleted
+        } catch let error as FitMatchHistoryVisibilityRPCError {
+            return outcome(for: error)
+        } catch {
+            return .serverHideFailed
+        }
+    }
+
+    /// Removes only presentation-cache rows after a successful user-owned
+    /// server hide (or for a legacy local-only row).
+    static func deleteLocally(
+        _ history: RecommendationHistory,
+        in modelContext: ModelContext,
+        afterServerHide: Bool
+    ) -> Outcome {
+        modelContext.delete(history)
+        do {
+            try modelContext.save()
+            return .deleted
+        } catch {
+            modelContext.rollback()
+            return afterServerHide
+                ? .localPersistenceFailedAfterServerHide
+                : .localPersistenceFailed
+        }
+    }
+
+    private static func outcome(
+        for error: FitMatchHistoryVisibilityRPCError
+    ) -> Outcome {
+        switch error {
+        case .authenticationRequired:
+            return .authenticationRequired
+        case .unavailable:
+            return .serverHideUnavailable
+        case .historyUnavailable:
+            return .serverHistoryUnavailable
+        case .invalidRequest:
+            return .invalidServerHideRequest
+        case .transportUncertain:
+            return .serverHideUncertain
+        case .rejected:
+            return .serverHideFailed
+        }
+    }
+}

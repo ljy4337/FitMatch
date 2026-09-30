@@ -232,7 +232,10 @@ struct ComparisonProfileMatcher {
         let incoming = profile(for: product, detailCategory: productDetailCategory)
         guard product.canonicalEligibility != false else {
             return AutomaticComparisonMatchResult(
-                state: .noCompatibleGarment,
+                state: product.canonicalResolutionMethod
+                    == ParsedClosetClassificationSafetyAudit.conflictResolutionMethod
+                    ? .requiresConfirmation
+                    : .noCompatibleGarment,
                 incomingProfile: incoming,
                 compatibleCandidates: []
             )
@@ -276,21 +279,14 @@ struct ComparisonProfileMatcher {
                     && commonCoreMeasurementCount(incoming, $0.1)
                         >= minimumCommonMeasurementCount(for: incoming.garmentFamily)
             }
-        let confirmedCompatible = profileCompatible.filter {
-            hasConfirmedMeasurementComparison(
-                product: product,
-                detailCategory: productDetailCategory,
-                referenceItem: $0.0
-            )
-        }
-        let compatible = (confirmedCompatible.isEmpty ? profileCompatible : confirmedCompatible)
+        // Profile matching is a pre-evaluator UI hint only. Running the
+        // measurement scorer here would score target/reference pairs before
+        // evaluator v4 has created a comparison permit.
+        let compatible = profileCompatible
             .sorted { lhs, rhs in
                 let lhsSameDetail = lhs.0.detailCategory == productDetailCategory
                 let rhsSameDetail = rhs.0.detailCategory == productDetailCategory
                 if lhsSameDetail != rhsSameDetail { return lhsSameDetail }
-                if lhs.0.isRepresentative != rhs.0.isRepresentative {
-                    return lhs.0.isRepresentative
-                }
                 let lhsCount = commonCoreMeasurementCount(incoming, lhs.1)
                 let rhsCount = commonCoreMeasurementCount(incoming, rhs.1)
                 if lhsCount != rhsCount { return lhsCount > rhsCount }
@@ -369,7 +365,6 @@ struct ComparisonProfileMatcher {
                     rhsProfile.garmentFamily, incoming.garmentFamily
                 )
                 if lhsFamily != rhsFamily { return lhsFamily }
-                if lhs.isRepresentative != rhs.isRepresentative { return lhs.isRepresentative }
                 return lhs.updatedAt > rhs.updatedAt
             }
             .map(\.0)
@@ -806,7 +801,9 @@ struct ComparisonProfileMatcher {
     }
 
     func profile(for product: Product, detailCategory: ClosetDetailCategory) -> ComparisonProfile {
-        if product.canonicalProfileSnapshotJSON == nil {
+        let preservesAuthoritativeTuple = product.classificationAuthorityProvenance?
+            .isComparisonAuthority == true
+        if product.canonicalProfileSnapshotJSON == nil && !preservesAuthoritativeTuple {
             let resolver = CanonicalComparisonProfileResolver()
             let profile = resolver.resolve(
                 source: product.sourceName,
@@ -849,29 +846,45 @@ struct ComparisonProfileMatcher {
             gender: product.productTargetGender,
             measurements: product.sizes.map(\.measurements)
         )
-        let family = storedGarmentType(
-            product.garmentTypeRawValue,
-            fallback: inferredFamily,
-            productNameFamily: productNameFamily,
-            major: major,
-            allowsProductNameOverride: !product.sourceName.localizedCaseInsensitiveContains("무신사")
-                || sourceCategoryIsGeneric(source)
-        )
-        let length = storedSleeveType(product.sleeveTypeRawValue, fallback: inferredLength)
-        let construction = storedConstructionType(product.constructionTypeRawValue, fallback: inferredConstruction)
-        storeResolvedAttributes(
-            garmentType: family,
-            sleeveType: length,
-            constructionType: construction,
-            on: product
-        )
-        recoverProductLevelFallbackEligibility(
-            product,
-            major: major,
-            family: family,
-            length: length,
-            availableMeasurements: availableMeasurements(product.sizes.map(\.measurements))
-        )
+        let family = preservesAuthoritativeTuple
+            ? product.garmentType
+            : storedGarmentType(
+                product.garmentTypeRawValue,
+                fallback: inferredFamily,
+                productNameFamily: productNameFamily,
+                major: major,
+                allowsProductNameOverride: !product.sourceName.localizedCaseInsensitiveContains("무신사")
+                    || sourceCategoryIsGeneric(source)
+            )
+        let length: ComparisonLengthType
+        if preservesAuthoritativeTuple {
+            length = product.sleeveType
+        } else {
+            length = detailLength(detailCategory, major: major) == .sleeveless
+                ? .sleeveless
+                : storedSleeveType(product.sleeveTypeRawValue, fallback: inferredLength)
+        }
+        let construction = preservesAuthoritativeTuple
+            ? product.constructionType
+            : storedConstructionType(
+                product.constructionTypeRawValue,
+                fallback: inferredConstruction
+            )
+        if !preservesAuthoritativeTuple {
+            storeResolvedAttributes(
+                garmentType: family,
+                sleeveType: length,
+                constructionType: construction,
+                on: product
+            )
+            recoverProductLevelFallbackEligibility(
+                product,
+                major: major,
+                family: family,
+                length: length,
+                availableMeasurements: availableMeasurements(product.sizes.map(\.measurements))
+            )
+        }
         return ComparisonProfile(
             majorCategory: major,
             garmentFamily: family,
@@ -883,7 +896,9 @@ struct ComparisonProfileMatcher {
     }
 
     func profile(for item: UserFit) -> ComparisonProfile {
-        if item.canonicalProfileSnapshotJSON == nil {
+        let preservesAuthoritativeTuple = item.classificationAuthorityProvenance?
+            .isComparisonAuthority == true
+        if item.canonicalProfileSnapshotJSON == nil && !preservesAuthoritativeTuple {
             if let sourceProfile = item.sourceProduct?.canonicalProfileSnapshot {
                 CanonicalComparisonProfileResolver().apply(sourceProfile, to: item)
             } else {
@@ -928,29 +943,45 @@ struct ComparisonProfileMatcher {
             gender: item.gender,
             measurements: [item.measurements]
         )
-        let family = storedGarmentType(
-            item.garmentTypeRawValue,
-            fallback: inferredFamily,
-            productNameFamily: productNameFamily,
-            major: major,
-            allowsProductNameOverride: !item.sourceName.localizedCaseInsensitiveContains("무신사")
-                || sourceCategoryIsGeneric(source)
-        )
-        let length = storedSleeveType(item.sleeveTypeRawValue, fallback: inferredLength)
-        let construction = storedConstructionType(item.constructionTypeRawValue, fallback: inferredConstruction)
-        storeResolvedAttributes(
-            garmentType: family,
-            sleeveType: length,
-            constructionType: construction,
-            on: item
-        )
-        recoverProductLevelFallbackEligibility(
-            item,
-            major: major,
-            family: family,
-            length: length,
-            availableMeasurements: availableMeasurements([item.measurements])
-        )
+        let family = preservesAuthoritativeTuple
+            ? item.garmentType
+            : storedGarmentType(
+                item.garmentTypeRawValue,
+                fallback: inferredFamily,
+                productNameFamily: productNameFamily,
+                major: major,
+                allowsProductNameOverride: !item.sourceName.localizedCaseInsensitiveContains("무신사")
+                    || sourceCategoryIsGeneric(source)
+            )
+        let length: ComparisonLengthType
+        if preservesAuthoritativeTuple {
+            length = item.sleeveType
+        } else {
+            length = detailLength(item.detailCategory, major: major) == .sleeveless
+                ? .sleeveless
+                : storedSleeveType(item.sleeveTypeRawValue, fallback: inferredLength)
+        }
+        let construction = preservesAuthoritativeTuple
+            ? item.constructionType
+            : storedConstructionType(
+                item.constructionTypeRawValue,
+                fallback: inferredConstruction
+            )
+        if !preservesAuthoritativeTuple {
+            storeResolvedAttributes(
+                garmentType: family,
+                sleeveType: length,
+                constructionType: construction,
+                on: item
+            )
+            recoverProductLevelFallbackEligibility(
+                item,
+                major: major,
+                family: family,
+                length: length,
+                availableMeasurements: availableMeasurements([item.measurements])
+            )
+        }
         return ComparisonProfile(
             majorCategory: major,
             garmentFamily: family,
@@ -1019,6 +1050,11 @@ struct ComparisonProfileMatcher {
             return fallback
         }
         if major.serviceGroup == .top, stored == .shirt, fallback == .tshirt {
+            return fallback
+        }
+        if major.serviceGroup == .top, stored == .tshirt, fallback == .shirt {
+            // A resolved shirt/blouse detail is a typed structural fact. A
+            // broader cached `tops.tshirt` source mapping must not downgrade it.
             return fallback
         }
         if major.serviceGroup == .underwear, stored != .underwear {
@@ -1128,7 +1164,14 @@ struct ComparisonProfileMatcher {
         major: ClothingCategory,
         prefersProviderCategory: Bool
     ) -> ComparisonGarmentFamily {
-        if major.serviceGroup == .top, isPoloText("\(source) \(productName)") {
+        if major.serviceGroup == .top, isPoloText(productName) {
+            return .tshirt
+        }
+        if major.serviceGroup == .top,
+           detailCategory == .shirt || detailCategory == .blouse {
+            return .shirt
+        }
+        if major.serviceGroup == .top, isPoloText(source) {
             return .tshirt
         }
         let sourceFamily = normalizedProductTypeCode.flatMap(family(forNormalizedProductTypeCode:))
@@ -1282,6 +1325,12 @@ struct ComparisonProfileMatcher {
         if detailCategory == .skirt {
             if let value = skirtLength(productName) { return value }
             if let value = skirtLength(source) { return value }
+        }
+        // Sleeveless is a garment construction, not merely a tunable length.
+        // Keep an already resolved sleeveless detail from being reinterpreted
+        // as long sleeve by umbrella-path text such as `긴소매 티셔츠`.
+        if detailLength(detailCategory, major: major) == .sleeveless {
+            return .sleeveless
         }
         if let value = keywordLength(productName, major: major) { return value }
         if let value = keywordLength(source, major: major) { return value }
@@ -1439,21 +1488,6 @@ struct ComparisonProfileMatcher {
             .count
     }
 
-    private func hasConfirmedMeasurementComparison(
-        product: Product,
-        detailCategory: ClosetDetailCategory,
-        referenceItem: UserFit
-    ) -> Bool {
-        product.sizes.contains { size in
-            MeasurementComparisonEngine().compare(
-                productSize: size,
-                referenceItem: referenceItem,
-                productCategory: product.category,
-                productDetailCategory: detailCategory
-            ).status == .confirmed
-        }
-    }
-
     private func hasDirectSourceComparison(
         kind: MeasurementKind,
         product: Product,
@@ -1466,11 +1500,11 @@ struct ComparisonProfileMatcher {
             .filter { $0.displayKind == kind.displayKind && $0.isComparable }
 
         return productRecords.contains { productRecord in
-            guard let productPlatform = platform(for: productRecord.methodSource) else {
+            guard let productSource = productRecord.sourceIdentity else {
                 return false
             }
             return referenceRecords.contains { referenceRecord in
-                guard platform(for: referenceRecord.methodSource) == productPlatform else {
+                guard referenceRecord.sourceIdentity?.code == productSource.code else {
                     return false
                 }
                 if let productCode = normalizedSourceKey(productRecord.rawCode),
@@ -1481,14 +1515,6 @@ struct ComparisonProfileMatcher {
                     == normalizedSourceKey(referenceRecord.rawLabel)
             }
         }
-    }
-
-    private func platform(for methodSource: String) -> String? {
-        let normalized = methodSource.lowercased()
-        if normalized.contains("uniqlo") { return "uniqlo" }
-        if normalized.contains("musinsa") { return "musinsa" }
-        if normalized.contains("fitmatch") || normalized.contains("manual") { return "fitmatch" }
-        return nil
     }
 
     private func normalizedSourceKey(_ value: String?) -> String? {

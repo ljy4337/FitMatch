@@ -1,4 +1,2407 @@
+## 2026-09-30 TestFlight 업로드 시도 — Xcode 계정 토큰 누락
+
+- 현재 로컬 `connectDB`의 기존 미커밋 소스를 포함해 Archive `/tmp/FitMatchBuild9LocalConnectDB.xcarchive` 생성 성공. 앱/Share Extension Build Number를 8에서 9로 올렸고 Archive 내부에서 `1.1 (9)`, arm64, Team 서명을 확인했다.
+- App Store Connect 업로드는 `exportArchive Failed to Use Accounts` / keychain의 Xcode 계정 `Xcode-Token` 누락으로 실패했다. Apple 서버 접수나 TestFlight Processing은 확인되지 않았다.
+- 사용자 변경 파일은 커밋/푸시/정리하지 않았다. 현재 미커밋 변경과 Build Number 9 수정은 로컬에 유지된다. Xcode Settings → Accounts에서 Apple 계정을 다시 인증한 뒤 같은 Archive 업로드를 재시도할 수 있다.
+- Archive 생성은 PASS, App Store Connect upload는 BLOCKED. 이번 요청에서 별도 테스트는 실행하지 않았다.
+
+## 2026-09-30 내 옷장 기본 스와이프 전환 — 최신 사용자 결정
+
+- 사용자가 기본 UI 우선(1번)을 선택하여 이전의 긴 스와이프 즉시 삭제 정책을 대체했다. MyClosetView는 기록 화면과 동일한 native trailing swipeActions/빨간 Label 삭제 버튼을 사용한다. 긴 스와이프와 버튼 터치 모두 pendingDeleteItem 확인창으로 진입하고, 확인 후에만 기존 server-first 삭제를 실행한다.
+- 커스텀 row/좌표 helper 제거. 삭제 중 모든 목록 row 잠금과 해당 row 진행 표시 유지. History, 상세 편집 화면, DB, 삭제 service, 보호 스크롤은 이번 작업에서 수정하지 않음. Behavior Map과 기존 스와이프 회귀 테스트를 새 승인 정책에 맞춤.
+- 검증: xcodebuild test, scheme FitMatch, iPhone 17 Pro simulator 03BAF093-552E-4E53-ABFB-7DE0653BE676, MyClosetSwipeDeletionInteractionTests + FitMatchClosetDeletionTransactionTests **15 tests / 18 runs PASS, 0 FAIL, 0 skip**, exit 0. 결과 /tmp/FitMatchNativeDeleteRetry20260930.xcresult, 로그 /tmp/FitMatchNativeDeleteRetry20260930.log. Debug 앱/테스트 빌드 PASS, 기존 warning 잔존. 최초 sandbox 실행은 SwiftPM cache 권한으로 BLOCKED(exit74), 권한 허용 후 위 재실행 PASS.
+- UI 연결 검사는 소스 검사이며 실제 터치/애니메이션 E2E는 NOT RUN. 사용자 데이터 삭제/DB write/commit/push 없음. 기존 dirty 변경 보존.
+
+## 2026-09-30 내 옷장 삭제 UI 보완 완료
+
+- 아래삭제UI감사의busy무반응/진행표시/재스와이프위치문제수정. MyClosetView:삭제중모든row삭제진입점과탭잠금,현재row ProgressView,접근성/gesture guard,기존offset기준drag. 기존짧은확인/긴스와이프180pt즉시요청정책유지. 서버삭제/service/DB미변경.
+- ClosetItemDetailView의링크옷편집과AddClosetItemView의수동옷편집삭제버튼도삭제중표시. 기존dirty아이콘상하배치/systemRed보존. 기록은native swipeActions,옷장은customrow로모양/애니메이션차이확인. 디자인통일은하지않음.
+- RED sourcewiring검사2FAIL/기존2PASS /tmp/FitMatchDeleteUIRed20260930.xcresult. GREEN삭제2suite17tests20runs PASS0FAIL0skip exit0 /tmp/FitMatchDeleteUIGreen20260930.xcresult. 실제production좌표helper5경계검사포함. DebugbuildPASS,기존actor/테스트warning잔존. 실제터치/시각UI/VoiceOver E2E NOT RUN;source문자열검사를UI자동화로확대금지.
+- BehaviorMap 갱신,관련소스3파일/테스트1파일수정. 보호스크롤/diffcheckPASS. 사용자데이터삭제/DBwrite/commit/push없음. 서버저장/비교/점수로직미변경.
+
+## 2026-09-30 내 옷장 삭제 UI 소스 감사
+
+- MyClosetView/ClosetItemDetailView→FitMatchClosetDeletionAction→server-first transaction 확인. 실제 사용자옷 삭제/DBwrite/앱코드수정없음.
+- 확인한 UX문제: MyClosetView165는현재삭제row만disabled,340은전역삭제중요청을silent return. 따라서A삭제중B버튼/긴스와이프는활성이나B요청무시가능. 삭제진행표시도목록/상세에없음. 권장: 다른삭제진입점도동일busy기준으로막고현재row에진행표시.
+- 스와이프위치불연속: 이미열린offset-96에서다시drag하면417행은기존offset없이translation만대입(-12일때-12로점프). 위치계산은소스확인,실제제스처/스크롤충돌UI재현은NOT RUN. 드래그시작offset기준보완후UI확인필요.
+- 짧은스와이프삭제확인/긴스와이프즉시삭제는기존승인정책,오류로분류안함. 서버성공후local반영/실패안내유지. MyClosetSwipeDeletionInteractionTests+FitMatchClosetDeletionTransactionTests 14tests17runs PASS,0FAIL/skip,exit0 /tmp/FitMatchClosetDeleteUIAudit20260930.xcresult. 소스문자열연결검사를실제터치테스트로보고하지않음. protected-scroll/diffcheck PASS. 수정은별도요청전까지미진행.
+
+## 2026-09-30 사용자 제공 186링크 실제 파서 감사
+
+- 신규상품 API 읽기 + 기존raw/History 회귀. connectDB/db190a9+dirty보존, production/DB 수정없음. Superpowers systematic-debugging 적용.
+- URL중복제거186: UNIQLO148/MUSINSA31/ZARA7. 실측수집184, E486627부분결과1(공식details error25/내부404,sizeChart없음), 자라조각붙은무신사URL실패1. live suite는마지막입력으로FAIL/exit65, 이를PASS로변경하지않음.
+- 파서1138size/raw5360→전송5360; label/value/unit/선택색상/v1/중복identity 대조1329 PASS. API전체원문행대조나DB저장성공은아님. 기존유니클로113상품/정확숫자3388행 raw보존 신규검사+파서/등록/History 24tests34runs PASS exit0,DebugbuildPASS. 전체suite/물리기기/신규186개인증mutation NOT RUN.
+- DBread-only: 기존product23건group중4UNMAPPED(정상사용자선택정책), active verified aliases223/mapping대조. 무신사2상품가슴둘레/팔둘레alias없지만raw전송유지;최종비교승인미실행으로새결함단정안함. 무신사OCR복구2상품37.6/42.1초관측,해결아님.
+- 새로확정한crash/identity오염/파서후raw손실없음. Docs/QA/SuppliedLinksAudit-20260930/Report.md와원문/결과/명령참조. 신규 SuppliedLinkRawPreservationAuditTests.swift 로컬전용. commit/push/DBwrite없음.
+
+## 2026-09-30 사용자 선택 그룹 History 복원 수정 완료
+
+- 아래 추가감사의 SESSION_GROUP 미해결은 이번수정으로 대체. 기존실제 완료1건으로 incompleteSnapshot RED 재현 후수정. production owner는 VNextHistoryCacheHydrator.HistoricalTargetProjection. 세션에서만 effective_source를 읽고 그룹/요청그룹/fingerprint를 저장근거와 대조하며 serverSessionComparison출처유지.
+- 최종 offline **878tests/904runs PASS,0FAIL,10skip**, exit0 `/tmp/FitMatchSessionHistoryGreen.xcresult`. 기존 자동그룹3상품 및 개인/구형authority회귀 포함. 실제session복원+상태/source/group/fingerprint거절4case추가. 첫개별필터0tests는검증에서제외, RED2에서실패확인.
+- Debug buildPASS; Release/물리기기 재설치E2E NOT RUN. 기존 warning유지. 신규API/DBwrite/migration/commit/push없음. 기존dirty보존. 테스트/fixture/QA/지도/체크리스트갱신. diff/protected-scrollPASS.
+- 기존한계: 원본없는 복원History의 즉시옷장등록/재비교는 원본링크 재입력이필요. 이번에 이경로를 구현했다고 보고하지 않음.
+
+## 2026-09-30 추가 로직 감사 — 사용자 선택 그룹 History 복원 미해결
+
+- READ ONLY 배포 comparison_target_context/begin_comparison 정의 및 기존 COMPLETED row 확인. 신규API/DBwrite/production수정/테스트실행 없음.
+- CONFIRMED 계약 불일치: SESSION_GROUP_CONFIRMED는 effective_source=SESSION_USER_SELECTED를 저장하고 source키가 없음. HistoricalTargetProjection.init의 effective["source"] 필수guard가 거절하며, source를 읽더라도 session source switch분기 없음. 직전CATEGORY_GROUP수정은 자동그룹만해결했고 이분기를 놓침.
+- 기존무신사기록 c4c1b9c1-29e8-4942-bdae-f8263f4fa1f2: schema4/COMPLETED/v1/visible/current_head 확인. 빈캐시에 이기록복원 불가. 실제UI E2E재실행 또는 테스트재현 PASS/FAIL로 보고하지 않음; 배포정의+실제row+필수guard로정적확정.
+- 수정대상 VNextHistoryCacheHydrator.HistoricalTargetProjection: session권한을 영구USER_EXPLICIT/GLOBAL로꾸미지않고 정확히 소비. 자동그룹/개인override/구형GLOBAL 및 unknown failclosed 유지회귀필요. 앞선876PASS에 이실제session기록이 포함되지 않았음.
+- diff/protected-scroll PASS. 이번에는 감사와문서만, commit/push없음.
+
+## 2026-09-30 History 복원 수정 완료 — 기존 데이터 회귀 PASS
+
+- 아래 “History 복원 결함 미해결” 감사 결과는 이번 수정으로 대체. connectDB/db190a9 + 기존dirty 보존. VNextHistoryCacheHydrator: CATEGORY_GROUP_CONFIRMED 정확한 조합 지원, canonical code/value 보존, 전체 replacement 검증 후 local교체. 최초state실패→후속실측0실패→거절시기존삭제실패를 각각 재현후수정.
+- FitMatchProductAuthorityPayloadBuilder: restored History source marker의 canonical projection을 retailer원문으로 재전송 금지. 기록표시는 복원되지만 원본없는 기록의 옷장추가/재비교는 링크재입력 필요. exact원본/variant 재취득 경로 완성으로 보고하지 않음.
+- 최종 offline suite PASS exit0:876tests/899runs PASS,0FAIL,10skip. `/tmp/FitMatchHistoryRepairVerified.xcresult`. 신규4tests/10runs에 실제3상품점수/복원/실측값/disk reopen/실패보존/원문경계 포함. Debug buildPASS, Release/물리기기/두기기E2E NOT RUN. 기존 actor warning남음.
+- 신규 retailer API/DB write/migration 없음. git diff/protected-scroll PASS. commit/push없음. 상세 Docs/QA/HistoryRestoreRepair-20260930.md. 기존 테스트데이터 fixture는 변경없이 재사용.
+
+## 2026-09-30 자라 등록 crash·비교 false-stale 수정 및 실제 재검증
+
+## 2026-09-30 기존 데이터 핵심 로직 재감사 — History 복원 결함 미해결
+
+- 신규 retailer API 수집/DB write 없이 기존 fixture + 앞서 실제 저장한 MUSINSA5328103, UNIQLOE484080, ZARA564222870 완료기록3건을 read-only export해 production engine/hydrator 실행. connectDB/db190a9 + 기존dirty 기준.
+- 기존 offline 회귀872PASS/0FAIL/10skip(device889PASS), exit0. 신규 실제자료 감사는 최종2tests/6runs 중3PASS/3FAIL, exit65: 추천ID·점수3/3PASS, empty-cache History복원3/3FAIL.
+- 확정원인: VNextHistoryCacheHydrator.HistoricalTargetProjection이 현재 서버의 CATEGORY_GROUP / CATEGORY_GROUP_CONFIRMED를 거절. 실제3건 모두 visible/current head/schema4. 기존 local ID는 skip하므로 앞선 재실행 성공이 이 복원을 증명하지 않음.
+- 앱/DB 수정하지 않음. 신규 실패 회귀테스트를 숨기지 않고 로컬에 남김. 같은owner canonical code 변환 누락과 교체실패 rollback은 정적 추가 점검 지점, 사용자 데이터파손 재현으로 보고하지 않음.
+- 보고서 Docs/QA/FirstReleaseFrozenDataLogicAudit-20260930.md. 테스트 FitMatchTests/FrozenReleaseHistoryAuditTests.swift 및 Fixtures/ReleaseAuditPreviouslyCompleted20260930.json 신규. 최종 /tmp/FitMatchFrozenActualReplay20260930c.xcresult. Release/기기E2E NOT RUN. diff/protected-scroll PASS. commit/push 없음.
+
+
+- 최신 상태: 아래 최초 자라 실패는 해결됨. connectDB/db190a9 + 기존 dirty 유지, production 수정2파일: FitMatchComparedProductClosetRegistration.swift(중복/unknown scalar 요약 제외, raw전체유지), FitMatchClassificationAuthorityProvenance.swift(서버 snapshot의 정확한 canonical code를 freshness 대조에 보존). 점수/정책/DB 계약 변경 없음.
+- 신규 ClosetRegistrationDuplicateRawTests: 등록 crash RED→GREEN, 추가 실제 비교에서 발견된 false STALE_REFERENCE RED→GREEN. 최종5 suites 172tests/175runs PASS,0FAIL/0skip, exit0 `/tmp/FitMatchRawFinalGreen.xcresult`. Debug test build PASS, Release NOT RUN. 기존 actor-isolation warning은 남음.
+- 수정앱 실제 Simulator+live API+인증 Supabase: 자라M등록 raw5 보존 → M100% 비교(가슴/소매2항목) → 재실행 후 옷/결과/원본5표시 PASS. DB read-only로 동일product/variant/size snapshot 및 COMPLETED 확인. 승인총3옷 범위 충족, 기존 데이터 수정삭제 없음. 상세 Docs/QA/LiveReleaseProof-20260930/Report.md / ZaraFixUIEvidence.json.
+- 물리iPhone/공유확장/다른기기/전체상품 검증 아님. 무신사/유니클로는 아래 앞선 live 성공 기록이며 이번에 재실행하지 않음. DB migration/deploy/commit/push 없음. 신규 테스트/증거는 로컬 파일.
+
+## 2026-09-30 실제 사용자 경로 검증 — 자라 등록 crash 확인 (위 수정으로 해결)
+
+- 사용자 테스트데이터 최대3개 생성 승인 후 실제 로그인 Simulator UI로 수행. 무신사5328103 M등록(raw6)→M100%비교→L93%임시분석→재실행 PASS. 유니클로E484080/07 M등록(raw4)→M100%비교(소매포함)→재실행 PASS. DB bounded SELECT로 옷2개/COMPLETED2건 확인. 기존 데이터 수정/삭제 없음.
+- **출시 차단:** 자라 원래 공유URL p03443415/v1=564228855는4사이즈/20실측/관측저장까지 정상, M등록 시 Duplicate values for key: unknown crash. FitMatchComparedProductClosetRegistration.measurementValues line799에서 raw의 복수unknown을 Dictionary uniqueKeys로 변환. crash ips002043 및 runtime trace 확보. 실제 신체기기 crash 주장 아님; 앱 production 저장 코드에서 Simulator 실제 API 재현. production 수정 미진행.
+- 기존881PASS/ReleasePASS를 전체실사용 정상으로 확대 금지. 세쇼핑몰 전체 정상 판정 FAIL. 상세 Docs/QA/LiveReleaseProof-20260930/Report.md. 신규 live opt-in 테스트만 추가. DDL/commit/push 없음.
+
+## 2026-09-29 출시 체크리스트 완료 표시 정리
+
+- 사용자 요청으로 FirstReleaseChecklist 상단 완료 현황 11개 체크 및 C02/P08/D01/D02/D04/A02 하위 완료 범위를 표시. 전체 기능 E2E/출시 승인을 뜻하지 않으며 혼합 항목의 부모 체크는 미완료 유지.
+- 1~3단계 실제 기록만 반영. 새 테스트·build·DB 조회/수정 없이 문서만 변경. 서명없는 Release PASS와 제출gate4FAIL, 전체881PASS/42NOT RUN 경계 유지.
+
+## 2026-09-29 3단계 — 도구/초안 완료, 공개설정·서명 보류
+
+- scripts/audit-app-store-archive.sh의1.0(4)고정값 제거. archive/expected-version/expected-build 필수 입력, 앱/확장 모두 검사. 서명·manifest·dSYM·URL gate 유지. 신규 scripts/tests/test-audit-app-store-archive.sh RED exit1→GREEN6case exit0. 합성 archive를 성공 처리하지 않음.
+- 개인정보/Readiness/ReleaseNote 구형 안내 정렬. 수집없음 결론 철회, History 숨김과 영구삭제 구분, 기준옷 표현 제거. 실제 공개 운영자/연락처/URL/시행일/보관정책 미확정으로 초안 유지. Swift/Info.plist/DB 수정 없음. 앱 내 시행일·삭제안내는 정책 확정 후 정렬 필요.
+- unsigned Release archive PASS exit0: /tmp/FitMatchPhase3-20260929.xcarchive, 앱/확장1.1(8). 실제 제출검사 FAIL exit1: 공개URL2개·서명2개, 합4건. 그 외 script검사 PASS. 서명된archive·업로드·실기기 NOT RUN. 기존 업로드번호로 재업로드하지 않음.
+- 상세 명령/로그/남은항목 Docs/QA/Phase3ReleasePreparation-20260929.md. 독립 read-only review material defect 없음. shell syntax/diff/protected-scroll PASS. 기존dirty 보존; 신규test/report 로컬미추적. commit/push/DB write 없음. 3단계 전체 완료 또는 출시가능 판정 아님.
+
+## 2026-09-29 2단계 완료 — 전체 자동 회귀 PASS
+
+- connectDB/db190a9 + 1단계/사용자 dirty 보존. 앱 변경은 MusinsaActualSizeAPIParser.makeParsedSize의 유한0 raw행 보존만. 양수 scalar/comparison gate와 기존 병렬화/비교정책은 유지. 0-only 사이즈는 usable/비교 가능으로 승격하지 않음.
+- 구형 자동대표·최소2개·가중치·같은상품 복수History 기대를 현 정책으로 정렬. 동일target의 최신head 순차교체/디스크재실행 검증 유지. XCTest 동기 wrapper의 SwiftTesting 직접호출을 async production-owner 검사로 바꾸고, History 배열수량 require 후 접근. 본체 cache/actor 변경 없음. 테스트 삭제/skip추가 없음.
+- 최종 전체 FitMatchTests PASS, xcodebuild exit0: 923개 중881PASS/0FAIL/42skip(동적parameter device runs는897PASS/42skip). Debug 앱·테스트 컴파일/실행 PASS. `/tmp/FitMatchPhase2Final20260929.xcresult`. 과거 전체FAIL 기록은 위 최종결과로 대체하되 이력은 유지. 기존 actor-isolation warning 잔존.
+- 무신사 저장응답 corpus1037건의 eligible914/no-positive10/size없음113 기준 유지. 실시간API 검사가 아님. 격리 PostgreSQL17 raw snapshot Apply/Verify/Rollback 회귀 exit0 LOCAL_REGRESSION_PASS, 서버 종료. 일부 upstream은 fixture이므로 실제 연결DB E2E 증거가 아님. 연결Supabase 접근/write/migration 없음.
+- 상세 명령/실패분류/변경목록: `Docs/QA/Phase2RepairVerification-20260929.md`. 독립 정적리뷰 차단 지적 없음. commit/push 없음; 신규 QA문서 로컬 미추적. 실기기·인증mutation·Release archive NOT RUN. 3단계 제출설정은 미진행.
+
+## 2026-09-29 1단계 History replay 호환성 수정 완료
+
+- 기준 connectDB/db190a9 + 기존 dirty 보존. VNextCompletedReplayPolicy 신규, VNextComparisonEngineAdapter 신규 완료 engine v2, FitMatchVNextContractValidator v1/v2 계약, VNextHistoryCacheHydrator 버전별 reliability 검증. 과거 v1의 두 실제 공식만 허용하고 저장 reliability 유지. score/ranking/coverage/metric/identity 검증 불변. v2는 현재 count 공식만 허용하며 RETAILER_EXACT 활성화가 아님.
+- 배포 public complete wrapper와 내부 complete 정의 READ ONLY 확인: 버전 whitelist 없음(nonempty/128자 이하). 실제 v1 완료34건 count/coverage/reliability는 구/현재 공식으로 모두 설명됨. DB write/migration/사용자row 변경 없음. 이는 34건 전체 hydration/E2E 통과 증명이 아님.
+- RED: 직전 단독 History18건 중11FAIL. GREEN: 최종 3개 suite(Contract, ComparisonSync, FinalReleaseScenario) **73/73 PASS, skip0, xcodebuild exit0**. 신규 old/current-v1/new-v2 저장신뢰도 보존, 버전/identity/score/coverage/rank/weight/difference 변조거절, count/coverage 경계 회귀 포함. 기존 fixture reliability2 유지. 앱/테스트 Debug build 및 실행 PASS.
+- 첫 확대4 suite는117건112PASS/5FAIL. Headless의 기존 reference 정책1, Closet 테스트 crash2, 같은상품 복수기록 기대2가 남음. 기존 동일상품 fixture를 다른상품으로 바꾸는 편집은 자동 승인 검토에서 테스트 약화 위험으로 거절되어 적용하지 않음. 기존 Headless/Scenario 파일 수정 없음. 전체 suite PASS라고 주장하지 않으며 해당 계약 정비/크래시 원인분석은2단계로 유지.
+- 결과: /tmp/FitMatchPhase1Final20260929.xcresult, /tmp/fitmatch-phase1-final.log, /tmp/fitmatch-phase1-final-summary.json. 확대 실패: /tmp/FitMatchPhase1Repair20260929.xcresult. 상세 실행명령은 FirstReleaseAudit-20260929.md 추가절.
+- 독립 정적리뷰: 새 결함 지적 없음(실행 검증과 별도). diff/protected scroll PASS. 신규 policy/QA문서 로컬 미추적, commit/push 없음. 실기기 로그인·재실행·두기기 E2E 및 Release/archive NOT RUN. 이전 앱은 새v2 기록을 지원하지 않으므로 새 앱 설치 전후를 혼동하지 말 것.
+
+## 2026-09-29 출시 결함 수정 계획 확정 — 구현 전
+
+- 사용자 요청으로 `Docs/QA/FirstReleaseRepairPlan-20260929.md` 작성. 1 History replay 버전/호환성, 2 구형테스트/abort 정비 및 별도raw0 보존, 3 archive도구/출시설정 순서. production·test owner와 완료조건 명시.
+- v1 안의 여러 신뢰도 공식은 실제 Git/저장 evidence로 증명된 경우만 호환. 신규v2는 reliability 계약 구분이며 RETAILER_EXACT 활성화가 아님. 서버 허용계약 확인 전 단독 배포금지. 과거row 재작성/검증무시 금지.
+- 새 운영DB 전환·전체raw직접비교·실제공개URL은 별도 결정/환경 준비 대상으로 분리. 이번에는 문서만 작성, 앱/테스트/DB 수정·검증실행·commit/push 없음.
+
+## 2026-09-29 출시 순차 검수 — 전체 회귀 FAIL / History replay 결함 확인
+
+- 사용자 승인한 정책→배포 DB→자동검사 수행. HEAD db190a9+기존dirty 보존. 앱/테스트/SQL 수정, DB write, commit/push 없음. 상세 `Docs/QA/FirstReleaseAudit-20260929.md`, 체크리스트 결과 연결.
+- 현재 canonical+제한 native fallback과 전체 RETAILER_EXACT 보류 구분. MUSINSA actual-size value>0 필터가 정책의0값 raw행 보존과 불일치(원문 body 보존과 별개). 현재 연결 hnkplvyegonlhumlejst 공개 update의 실제 우회 경로, detail snapshot, tombstone, result_heads, preview/selected 계약과 migration 이력 확인. public RPC8개 authenticated 허용/anon 차단, 사용자 table6개 RLS 활성 확인. 이 범위는 전체 보안/E2E PASS가 아님.
+- 별도 ACTIVE FitMatch_PROD aqhrupgjpmrtnystottx에서 확인 대상 핵심 함수5종0개. 현재 앱 endpoint는 기존 hnk...이며 새DB 전환 준비 확인 필요.
+- 전체 xcodebuild test exit65: xcresult test 단위918=834PASS/42FAIL/42skip; parameter 포함device runs931=845PASS/44FAIL/42skip. `/tmp/FitMatchReleaseChecklist20260929.xcresult`. 앱/테스트compile 및 실행 완료, 별도 Release archive NOT RUN.
+- **확인된 HIGH 결함**: 신뢰도 count 공식 변경 후 engineVersion은 v1 그대로, VNextHistoryCacheHydrator.completionMatches가 과거 stored reliability를 새 공식과 비교해 completionMismatch. History suite 단독도18=7PASS/11FAIL exit65 `/tmp/FitMatchReleaseHistoryOnly20260929.xcresult`. DB 정규화UUID 집계: 완료34건 중 신뢰도 충돌18건, 삭제되지 않은 current head1건. 최초 UUID 대소문자 미정규화 집계34건충돌은 폐기. 과거불변 결과 replay 버전/호환 계약을 고쳐야 하며 과거row 일괄재계산이나 검증삭제 금지.
+- 다수 테스트는 폐기된 자동기준옷/최소2개/옛가중치 기대. 전체42개를 모두 구형이라 판단하지 않음. ReferenceClosetSetupXCTests.testComparisonClassificationBoundaryPolicy는 단독도abrt. XCTest에서 옛 Swift Testing 함수 직접호출; 앱사용자 크래시 증거 아님, 정확한abort stack 추가확인 필요.
+- 공개URL 공란, archive감사 script의1.0(4)고정값(현재1.1(8))도 준비항목. 실기기/실제API/인증mutation E2E 미실행. 최종diff/protected-scroll PASS.
+
+## 2026-09-29 출시 체크리스트 실행 담당 구분
+
+- `Docs/QA/FirstReleaseChecklist-20260929.md`에 AI 즉시 검증/환경·승인 조건부/사용자 결정·실기기 담당을 추가했다. 정책→DB 계약→기존 자동검사→출시 빌드 순서를 권장한다.
+- xcodebuild/swift 경로, 관련 테스트/SQL 자료 존재 확인만 수행. 테스트·build·DB 조회/변경·배포는 실행하지 않았다. 문서는 로컬 Git 미추적이며 commit/push하지 않았다. 기존 dirty 소스는 변경하지 않았다.
+
+## 2026-09-29 1차 출시 체크리스트 작성 — 검증 실행 아님
+
+- AGENTS/실측 정책/Behavior Map/Swift 소유자 지도/최신 인수인계 및 기존 출시·개인정보 문서를 대조해 `Docs/QA/FirstReleaseChecklist-20260929.md` 작성. 현재 HEAD db190a9 + dirty 상태 기준, 기존 변경 보존.
+- 정책 범위 결정, 핵심 옷장·비교·History, 계정/실기기, DB 계약/복구, 심사/무료 운영으로 분리. 원본 직접 비교 전체 미완료를 제한된 native canonical fallback과 구분하고, 구형 개인정보 ‘수집하지 않음’ 답변 및 기준옷 QA를 현재 증거로 재사용하지 않도록 명시.
+- Info.plist 개인정보/지원 URL 공란 확인(archive override는 미확인). Apple 공식 심사·계정 삭제·개인정보 안내 검색 확인. 앱/DB 변경·테스트 실행·실기기·배포·commit/push 없음. 체크리스트는 출시 검증 PASS 판정이 아니다.
+
+## 2026-09-29 내 옷장 삭제 스와이프 표시 정렬
+
+- 기록 화면과 다르게 보이던 내 옷장 커스텀 삭제 버튼을 시스템 스와이프 스타일에 가깝게 아이콘 위/문구 아래, systemRed로 조정했다. 짧게 밀어 버튼 탭은 확인 alert, 끝까지 밀기는 즉시 서버 우선 삭제라는 기존 두 동작은 유지했다. SwiftUI 기본 swipeActions는 두 제스처를 같은 callback으로 보내므로 실제 native UI와 픽셀 단위 동일함은 주장하지 않는다. 관련 `MyClosetSwipeDeletionInteractionTests` xcodebuild test exit 0 PASS. 실기기 시각 검증은 NOT RUN.
+
+## 2026-09-29 검증된 유니클로 소매 비교 근거 보완 — Production 적용
+
+- 사용자 승인에 따라 `hnkplvyegonlhumlejst` Production에 `verified_native_canonical_fallback` migration을 적용했다(원격 version `20260929055658`). 배포 `fitmatch_vnext.comparison_evidence_20260908` 정의 해시 `07ed0bf33f34ee2f6a0d2d8404bb7045`를 읽기 전용으로 확인했고, 함수 권한은 기존대로 유지됐다. 상품/Closet/과거 비교 결과 행은 변경하지 않았다.
+- 같은 쇼핑몰의 양쪽 실측이 동일한 검증된 원본 코드로 1:1 canonical 매핑되고 단위·기준·표현이 일치할 때만, 기존 canonical 정책의 해당 측정축에 증거가 없는 경우 보충한다. 서버의 candidate/eligible/authorization/begin 기존 호출 경로가 동일 근거 함수를 사용한다. 원본 전체 직접 비교(`RETAILER_EXACT`)가 구현됐다고 주장하지 않는다.
+- 격리 PostgreSQL 회귀: 유니클로 소매 추가 2→3항목 PASS, 다른 쇼핑몰/기준 불일치/원본 코드 불일치 차단 PASS, rollback 왕복 PASS. 인증 사용자 candidate→begin→complete 및 실기기 화면은 NOT RUN. 기존 완료 결과는 소급 재계산되지 않는다. 복구/읽기 전용 검증 SQL은 `supabase/sql/verified_native_canonical_fallback_Rollback.sql`, `supabase/sql/verified_native_canonical_fallback_Verify.sql`.
+
+## 2026-09-29 원본 직접 비교 활성화 — 구조 근거 수집 1단계
+
+- 사용자가 소스와 `hnkplvyegonlhumlejst` Production DB 수정을 요청하고 Production 적용을 명시 승인했다. 앱 observation에 신규 수집 실측표의 구조 fingerprint를 추가하고, ZARA guide ID를 parser method profile에 보존했다. 구조 fingerprint는 source/method profile/mapping version/전체 원본 항목 key로 계산하며, 빈 값·중복 key·ZARA guide ID 부재는 키를 내지 않는다. 이 키만으로 점수 권한을 만들지 않는다. 이 단계 이후의 Production 함수 변경은 위 항목 참조.
+- READ ONLY 확인: 배포 `comparison_evidence_20260908`은 CANONICAL metric만 선택한다. `eligible_candidate_sizes`와 `authorize_comparison_with_context_v1`이 이를 사용하며, `retailer_exact_evidence_v2` 및 `retailer_exact_semantic_contract_v2`는 연결 DB에 없다. 저장소의 v2 preflight는 `score_included=false`이고 활성 경로에 연결되지 않는다.
+- 현재 상품 원본 실측 421 MUSINSA / 1,653 UNIQLO / 454 ZARA행에서 v2가 요구하는 `source_schema_version` 보유 수는 모두 0이다. Closet 원본 snapshot은 MUSINSA 10 / UNIQLO 19행이며 역시 schema version이 없다. ZARA 원본의 `raw_representation`에는 zone 설명 문자열이 들어가므로 representation semantic으로 신뢰할 수 없다. 기존 행에 값을 추정해 채우거나 raw-label 일치만으로 승인하면 잘못된 점수 근거가 된다.
+- 남은 수정: 원본 semantics의 basis/representation/component를 서버가 검증한 계약으로 저장하고, 서버 승인 raw exact evidence를 candidate/eligible/authorization/begin/complete의 같은 snapshot에 연결한 뒤 Swift DTO/validator/engine/History와 UI를 정렬한다. 동일 측정축 중복 점수화 금지, 기존 canonical cross-retailer 경로 보존, 기존 결과 snapshot 소급 변경 금지. 변경 전 격리 SQL 및 인증 비교 E2E 검증 필요. PASS: Debug Simulator 앱 build exit 0, `ZARAParserPhase1_5Tests` focused xcodebuild test exit 0. 인증 DB/실기기 비교 E2E는 NOT RUN. 이 단락의 Production 미적용 상태는 위 항목의 제한된 fallback 적용으로 대체됨.
+
+## 2026-09-29 온보딩 종료 버튼·유니클로 소매 참고 표시 점검
+
+- 온보딩 4페이지의 우상단 중복 `나중에 등록하기`를 제거하고, 하단 글자를 기본 강조색(밝은 모드 검정)으로 바꿨다. 버튼 프레임/배경을 label 안으로 옮겨 넓은 영역 전체가 탭을 받도록 했다. 다른 페이지 우상단 `건너뛰기`는 유지한다. UI 회귀 테스트는 하단 버튼 왼쪽 가장자리 한 번 탭 후 홈 진입과 재시작 지속성을 검사하도록 변경했다.
+- 연결 DB `hnkplvyegonlhumlejst` READ ONLY: E484610/38 XXL과 E487688/31 XXL의 원본 `sleeve-length-cb`는 각각 92/91cm로 정상 저장. 해당 완료 comparison의 점수 81, reliability 2, 승인 metric은 총장 69/76과 가슴 72/70뿐. 소매는 target canonical `sleeve_center_back_length` 92와 reference snapshot 동일 code 91이 있으나 배포 `comparison_evidence_20260908`은 `metric_mode='CANONICAL'`만 선택하고 현재 outerwear 정책의 canonical sleeve metric은 일반 `sleeve_length`다. `SOURCE_NATIVE_OVERRIDE` policy 행은 존재하지만 현 활성 evidence 함수가 사용하지 않는다. Swift Result는 같은 쇼핑몰 소매를 read-only supplemental row로 더해 3행을 보여주고 신뢰도는 승인 2개만 센다. DB 데이터 오기보다 현재 비교 정책/구현 간 공백이다. 서버 policy/SQL, 점수, 과거 snapshot은 변경하지 않았다.
+- UI 테스트 첫 실행은 새 DerivedData의 GitHub package DNS 실패로 BLOCKED. 기존 패키지 캐시 재시도는 CoreSimulatorService 연결 실패로 151초 동안 진전이 없어 해당 xcodebuild만 종료했으며 테스트 PASS가 아니다. 변경 Swift 2개 `swiftc -parse`, `git diff --check`, protected-scroll 검사는 PASS. TestFlight 실기기 버튼 체감 및 같은 상품 새 비교 E2E는 NOT RUN.
+
+## 2026-09-28 동일 상품 비교 결과 migration 적용
+
+- 사용자 요청으로 Supabase 프로젝트 `hnkplvyegonlhumlejst`(FitMatch 연결 DB)에 `latest_comparison_result_per_product`를 적용했다. 원격 migration version은 `20260928135134`다. 비교 실행 원본 행은 삭제하지 않고 상품별 최신 완료 결과 포인터와 History 조회 투영만 변경했다.
+- 적용 전 배포 DB를 읽기 전용 확인한 결과 `user_comparison_history_visibility` 테이블이 없고, History 삭제는 `comparisons.deleted_at`을 사용했다. 준비된 migration/rollback의 잘못된 visibility 테이블 참조를 제거해 배포 계약에 맞춘 뒤 적용했다.
+- 적용 후 읽기 전용 점검: 완료된 user+target 상품 13개, head 13개, 잘못된 head 0개, 활성 completion trigger 1개. 배포 `comparison_history()`는 head 필터와 기존 `deleted_at is null` 필터를 모두 포함하고, 없는 visibility 테이블 참조는 0개다.
+- 인증 사용자로 비교를 새로 완료해 다른 기기의 기록 표시까지 확인하는 E2E는 NOT RUN. SQL 적용과 read-only postflight는 PASS. Git commit/push는 수행하지 않았다.
+
+## 2026-09-28 내 옷장 스와이프·편집 사이즈 표시/조회
+
+- 앞서 확정한 옷장 스와이프 정책을 복구했다: 짧게 밀어 삭제 버튼 탭은 확인 alert, 끝까지 밀기는 바로 `FitMatchClosetDeletionAction`의 서버 우선 삭제를 실행한다. 기록 화면 스와이프는 변경하지 않았다.
+- 링크 등록 옷의 편집 화면은 저장된 사이즈를 화면 진입 즉시 표시한다. 최신 서버 상품·사이즈 확인 전에는 사이즈 선택과 저장을 잠그고, 확인된 UUID만 저장에 사용한다. 선택 버튼은 원본 영문 사이즈 표기로 표시하며 저장 값/실측 변환 계약은 변경하지 않았다.
+- 편집 준비 시 동기화 캐시에 exact 서버 Closet UUID가 있으면 `getClosetItem` 단건 RPC로 현재 행을 검증한다. UUID가 없는 최초 경로는 기존 list RPC를 사용한다. 이어지는 historical Product authority/observation 확인은 유지한다. 실제 지연 시간 측정은 NOT RUN이다.
+- PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchClosetEditSwipe20260928 -only-testing:FitMatchTests/MyClosetSwipeDeletionInteractionTests test` exit 0 (앱/테스트 컴파일 포함). 실기기 스와이프 UI와 인증 서버 편집 시간 측정은 NOT RUN. 기존 dirty 변경을 보존하고 DB write/commit/push는 수행하지 않았다.
+
+## 2026-09-28 동일 상품 비교 결과 1개 갱신 방식 준비
+
+- 사용자 확정 정책: 같은 계정에서 동일한 exact target Product를 다시 비교하면 기록 목록에 결과를 추가하지 않고 기존 표시 결과를 최신 완료 결과로 교체한다. 새 비교가 PENDING/FAILED인 동안에는 기존 완료 결과를 유지한다.
+- Swift `RecommendationHistoryStore`는 새 서버 완료 결과를 저장하기 전에 같은 target Product의 이전 서버 승인 History와 전용 immutable Product/reference projection을 제거한다. `VNextHistoryCacheHydrator`도 서버 응답 순서상 최신 행 1개만 복원하고 기존 로컬 중복 projection을 정리한다. 비교 증거 계산·authorization·begin·complete 자체는 변경하지 않았다.
+- 새 additive migration `20260928160000_latest_comparison_result_per_product.sql`을 준비했다. immutable `comparisons` 실행 행은 감사 증거로 유지하고, `(user_id, target_product_id)` PK의 `comparison_result_heads`만 completion trigger로 upsert한다. `comparison_history()`는 head가 가리키는 완료 행만 반환한다. 기존 중복은 migration backfill에서 상품별 최신 완료 결과로 축약된다. Verify/Rollback SQL도 준비했다.
+- **DB PREPARED / NOT APPLIED:** 연결 DB 또는 Production에는 migration을 적용하지 않았다. 현재 앱의 로컬 즉시 표시 중복은 Swift에서 방지되지만, 서버/다른 기기까지 완전한 단일 결과 정책은 migration 적용 후 활성화된다.
+- 검증: `FitMatchP0RemediationRegressionTests` 실제 Xcode test exit 0 PASS. 더 넓은 P0+Scenario 실행은 Xcode test-log finalization에서 장시간 정체돼 중단했으며 PASS로 계산하지 않는다. `git diff --check`와 protected-scroll 검사 PASS. `xcresulttool` 요약은 TestReport 권한 오류로 테스트 개수를 읽지 못했다. SQL isolated execution 및 인증 DB E2E는 NOT RUN.
+
+## 2026-09-28 GitHub 푸시 BLOCKED — 수정 커밋 보존
+
+- 구현 커밋: `1e5bd09152a8ba497a86a2a915eff228e601f7bb` (`perf: reuse authorized comparison evidence and align requested flows`). 기준 원격 `connectDB`는 `4fa184252a3a13ae7597f2920f12acec15af5800`.
+- 사용자 요청대로 push를 실행했으나 CLI `git push origin HEAD:connectDB`는 `could not read Username for https://github.com`으로 실패했다. 연결된 GitHub 앱도 `create_blob`에서 HTTP 403 `Resource not accessible by integration`으로 거절됐다. 저장소 metadata의 사용자 push 권한과 앱 integration의 실제 contents 쓰기 권한은 다르다. 원격 반영/푸시 완료 아님.
+- 코드·SQL·검증 기록은 로컬 커밋에 보존됐다. 기존 개발 DB의 additive preview migration `20260928075844`는 적용 완료이며 old client에 새 필드가 추가될 뿐 기존 필드를 제거하지 않는다.
+- GitHub 연결의 저장소 쓰기 권한/CLI 인증이 복구돼야 원격 push를 완료할 수 있다. 권한을 우회하거나 force push하지 않았다. 사용자 인계용 incremental Git bundle을 생성해 최종 응답에 제공한다.
+
+## 2026-09-28 비교 중복 처리 축소·목록/상세 계산 근거 통일
+
+- 사용자 지시: 검토된 개선을 구현하고 `connectDB`에 commit/push. 기준 `4fa184252a3a13ae7597f2920f12acec15af5800`; 이번 작업에는 아래 두 로컬 UI 수정도 포함한다. 아래의 “로컬 미커밋”은 해당 기록 시점 상태다.
+- 선택 단계: 최초 후보계획에서 확인한 `clientItemID → closetItemID`를 전달해 선택한 내 옷 한 벌만 `getClosetItem`으로 재확인한다. 최초 전체 목록 조회 및 해당 옷의 snapshot/권한 검증은 유지한다. ID가 없는 legacy caller/test remote는 기존 목록 경로를 유지한다.
+- 목록/상세: 서버 후보 조회가 이미 계산한 `eligible_candidate_sizes` 근거를 `comparison_preview`로 함께 반환한다. 목록은 그 실측·가중치로 계산하며 상세는 fresh begin 검증 뒤 동일한 입력이면 `VNextAuthorizedScoreCache`의 산술 결과를 재사용한다. 근거나 최소 항목 수가 바뀌면 재계산한다. 권한/저장 결과는 캐시하지 않는다. 캐시는 인스턴스별 최대 512개이며, 오래된 서버의 근거 없는 응답에서는 숫자를 만들지 않고 선택 경로만 유지한다.
+- 중복 왕복: 사용자가 고른 옷의 **새 단건 후보 응답**에 포함된 eligible 증거를 begin 요청에 전달해 별도 eligible RPC를 생략한다. 최초 목록의 오래된 응답을 begin 권한으로 사용하지 않는다. exact product/variant/Closet, manual-explicit, 요청 그룹과 fingerprint를 확인하고 begin의 서버 재검증 및 complete는 유지한다.
+- 개발 DB `hnkplvyegonlhumlejst`: `comparison_preview_evidence` migration 적용 성공, remote ledger `20260928075844`. 적용 SQL `supabase/sql/comparison_preview_evidence_20260928.sql`은 현재 helper MD5 preflight로 drift를 차단한다. 두 helper 응답만 additive 변경. read-only postflight에서 eligible 2개/begin/complete 4개 정의 hash와 검사한 6개 함수 ACL이 모두 적용 전과 같음을 확인했다. 사용자 상품/Closet/History row는 변경하지 않았다.
+- PASS: 격리 PGlite PostgreSQL 테스트 14개 mapped/session/full/selected/owner/deleted/blocked/multivariant 시나리오, 기존 JSON 동일성·추가 eligibility 호출 없음·exact evidence·인증/variant 차단·원복 동일성. eligibility/group helper는 stub이므로 live E2E가 아니다. SQL/PLpgSQL 구문 검사, 변경 Swift의 Tree-sitter 구문 비교(기존 parser 미지원 구문과 같은 오류만 존재), `git diff --check`, protected-scroll 검사 PASS.
+- NOT RUN: 새 Swift 회귀 테스트 실행, iOS 빌드/XCTest, 실기기 UI, 인증 사용자 candidate→begin→complete, 실제 before/after 속도. 현재 Linux에 Xcode/Swift가 없다. 과거 Handoff의 870/106 PASS를 이번 변경 검증으로 재사용하지 않는다.
+- **제외/잔여:** 상품번호가 같다는 가정만으로 쇼핑몰 수집·observation 저장을 영구 생략하는 변경은 하지 않았다. 가격/재고/variant 정보와 원본 receipt 저장 계약까지 영향을 주므로 수집 생략 정책의 확정 및 별도 검증이 필요하다. 이번 변경으로 그 API 시간이 제거됐다고 보고하지 않는다.
+- 검증 재현 및 범위: `Docs/QA/20260928-Comparison-Reuse.md`.
+
+## 2026-09-28 삭제 스와이프·상품 로딩 화면 정렬
+
+- 당시 내 옷장 목록의 커스텀 드래그 삭제 행을 제거하고 기록 목록과 같은 기본 trailing `swipeActions` UI로 복원했다. 이로 인해 두 스와이프를 구별하지 못했다. 이 결정은 위 2026-09-28 내 옷장 스와이프 복구로 대체됐다. 기록 화면은 여전히 기본 스와이프/확인 alert를 사용한다.
+- 링크로 내 옷 등록하는 화면과 상품 비교 시작 로딩 화면에서 세 단계 문구를 시작부터 모두 보여주고, 기존 `ProductAnalysisPhase` 상태가 전진할 때 완료/로딩/대기 표시를 갱신한다. 파서나 서버 처리 순서를 인위적으로 지연시키지 않았다.
+- 내 옷장/기록 삭제 화면의 이전 소스 고정 테스트를 새 확인 흐름으로 갱신했다. `git diff --check` 및 관련 정적 참조 확인 완료. 현재 Linux 환경에서 iOS 빌드/XCTest/실기기 UI는 실행하지 못했다. 앱·DB 로직, 결과 계산, 저장 계약은 변경하지 않았다.
+
+## 2026-09-28 기존 내 옷 수정 분류 화면 정렬
+
+- 사용자 확정 정책: 기존 내 옷 수정 화면에서도 새 직접 등록과 동일하게 상위 A–G 비교 그룹만 선택한다. `AddClosetItemView`의 수정 전용 taxonomy 카테고리·세부 카테고리 picker를 제거하고 공통 `FitMatchComparisonGroup.allCases` picker를 사용한다.
+- 기존 `AddClosetItemViewModel.selectManualCategory`를 재사용한다. 현재 그룹이 그대로이면 유효한 내부 detail tuple을 유지하고, 그룹을 바꾸면 새 그룹에서 유효한 detail tuple을 내부적으로 선택한다. 서버 우선 수정 저장·읽기 검증 경로는 그대로 사용한다.
+- 검증: `git diff --check` 및 정적 소스 확인. 현재 Linux 작업 환경에 Xcode 도구가 없어 iOS 빌드, XCTest, 실기기 UI 확인은 실행하지 못했다. 이 변경은 로컬 작업 트리에만 있으며 commit/push하지 않았다.
+
+## 2026-09-28 비교 그룹·후보 선택 정책 로컬 보완
+
+- 기준 branch `connectDB`, local HEAD `635017c7eb9c52ebba47f3e8a98fc9dfdddf9fda`. 시작 시 기존 22개 tracked 변경을 보존했고 commit/push/reset/stash/연결 DB read/write는 수행하지 않았다.
+- CompareFlow는 서버가 확인한 같은 A–G 그룹 후보만 표시하고 사용자가 후보를 누른 뒤에만 authorization→begin→complete를 실행한다. 후보가 없을 때는 안내와 확인 후 종료만 유지한다. UNMAPPED 상품의 A–G session picker는 유지하며, 세부 의류 분류 picker/재선택 UI는 비교 화면에서 제거했다. 상위 그룹만으로 안전한 문맥을 만들 수 없는 runtime은 Swift 추론 없이 종료한다.
+- 기준 옷 legacy 데이터는 hydration 호환으로만 남기고 자동 선택·정렬·비교 시작에 사용하지 않는다. 후보 미리보기에서도 garment type 일치가 동률 정렬에 영향을 주지 않게 했다. 결과 화면은 별점/정사이즈 추천 표현 없이 서버 승인 점수와 사용 실측 수 기반 신뢰도를 분리해 표시한다.
+- 앱 fallback 상의 가중치는 가슴 2.0, 어깨 1.5, 총장 1.0, 소매 1.0 및 공통 실측 1개 최소로 정렬했다. 연결 DB `hnkplvyegonlhumlejst`에도 `align_top_comparison_policy` migration을 적용했다(remote ledger `20260928042404`). `tshirt`는 active / minimum 1 / required-any 0이며 canonical과 기존 source-native 가슴·어깨·소매 가중치도 각각 2.0·1.5·1.0으로 read-only postflight 확인했다. 상품·Closet·History·쇼핑몰 mapping 데이터는 수정하지 않았다. 기존 `20260923110000_same_comparison_group_only.sql`의 DB group gate는 Handoff의 2026-09-23 개발 DB 적용 기록을 재사용했다.
+- PASS: focused XCTest 106 tests / parameter 포함 108 runs, failed 0 (`/tmp/FitMatchPolicyCurrent3/Logs/Test/Test-FitMatch-2026.09.28_12-53-55-+0900.xcresult`). 마지막 “비교할 내 옷 변경” 문구 및 상세 type 정렬 제거 뒤 `FitMatchComparisonPermitSequencingTests` 6/6 PASS (`/tmp/FitMatchPolicyCurrent4/Logs/Test/Test-FitMatch-2026.09.28_13-01-10-+0900.xcresult`). 최종 Debug simulator build exit 0 (`/tmp/FitMatchPolicyBuildFinal`). 실제 인증 DB candidate→begin→complete 및 실기기 UI E2E는 NOT RUN.
+- 추가 PASS: DB 적용 뒤 동일 focused XCTest 106/106 PASS (`/tmp/FitMatchPolicyCommitVerify`, exit 0). `git diff --cached --check` 및 protected-scroll 검사 PASS. 구현과 SQL은 `dca8294` (`policy: align group comparison flow`)으로 커밋했고 `origin/connectDB`에 푸시했다. 실기기 UI E2E는 여전히 NOT RUN이다.
+
+## 2026-09-28 현재 로컬 소스 커밋·푸시 완료
+
+- 현재 tracked 변경을 `release: prepare FitMatch 1.1 build 6`으로 커밋했다: `1ddbfcf`.
+- `origin/connectDB` 푸시 성공. Version/Build 설정은 `1.1 (6)`으로 반영됐다.
+- `git diff --check` 및 protected-scroll 검사 PASS. App Store Connect 업로드는 Xcode 인증정보 오류로 아직 완료되지 않았다.
+
+## 2026-09-27 Release Archive — FitMatchDebugLogger 심볼 보존 수정
+
+- 원인: `FitMatch/Services/FitMatchDebugLogger.swift`의 `FitMatchDebugLogger` 전체 정의가 `#if DEBUG` 안에 있었지만, `FitMatch/Views/CompareFlowSheet.swift:2197`의 `duration` 호출은 `#if DEBUG` 밖에 있었다. Release의 `SWIFT_ACTIVE_COMPILATION_CONDITIONS`에는 `DEBUG`가 없어 타입이 사라져 `Cannot find 'FitMatchDebugLogger' in scope`가 발생했다. `FitMatch` 폴더는 PBX synchronized root group으로 target에 포함되며 별도 Compile Sources 누락이나 Target Membership 문제는 확인되지 않았다.
+- 수정: logger 호출을 삭제하지 않고 Release용 동일 API no-op `FitMatchDebugLogger`를 추가했다. Debug에서는 기존 출력/OSLog 진단을 유지하고 Release에서는 실제 출력·side effect만 제거한다. Debug 전용 `ParsedProductInfo`/observation debug-field extension은 계속 Debug에서만 컴파일된다.
+- PASS: Debug simulator build (`/tmp/FitMatchReleaseLoggerDebug`), Release device build (`/tmp/FitMatchReleaseLoggerRelease`), Release Archive `generic/platform=iOS` / Any iOS Device arm64 (`/tmp/FitMatchReleaseLogger.xcarchive`, bundle `com.ljy4337.fitmatch`). `git diff --check` 및 protected-scroll 검사 PASS.
+- 기존 main-actor/isolation 및 기타 compiler warning은 요청 범위 밖이라 수정하지 않았다. 실제 서명/배포 업로드는 수행하지 않았다.
+
+## 2026-09-24 개발 DB 적용 완료 — 이전 승인 차단 해소
+
+- 사용자가 exact 개발 프로젝트 migration 적용 요청에 “승인한다”로 명시 승인하여 `hnkplvyegonlhumlejst`에 `selected_comparison_candidate`를 apply_migration으로 적용했다. 성공 응답 및 migration ledger 확인: remote version `20260924045025`; 로컬 파일 `supabase/migrations/20260924130000_selected_comparison_candidate.sql`과 대응한다. 과거 승인 차단 기록은 이 상태로 대체되며 이력은 보존한다.
+- READ ONLY postflight PASS: 신규 endpoint 존재, authenticated 실행 허용, anon 차단, mapped/session private helper 직접 실행 차단(5/5 true). eligible_candidate_sizes 2개, authorize_comparison_with_context 2개, begin_comparison, complete_comparison 총 6개 정의 hash 모두 적용 전과 동일.
+- 이번 승인 후 앱 코드 추가 변경/테스트 재실행 없음. 직전 동일 변경의 전체 Swift 결과는 870 PASS / 0 FAIL / 42 skipped, 격리 SQL parity/role/rollback PASS. 배포 후 실제 인증 사용자 비교 E2E 및 실기기 속도 측정은 NOT RUN.
+- 사용자 상품·옷장·비교 row 변경 없음. 함수/권한 및 migration ledger만 변경. 앱 성능 경로를 사용하려면 최신 로컬 소스로 빌드 필요. commit/push 없음.
+
+## 2026-09-24 비교 성능 3건 코드 완료 — 870 PASS / DB 적용 승인 차단
+
+- 사용자 “권장 개선순서대로 모두 개선, 핵심기능 유지” 범위. 기준 HEAD3243e980, 기존 dirty 변경 보존. 앱 production4파일: Coordinator selected exact candidate 경로 + 최초 fresh runtime 전달, DomainClient 신규 단건 후보 RPC/identity검증, VM 한 번만 authority handoff(실패 후 재시도/authority변경/취소 처리), CompareFlow 현재 결과 다른 옷 버튼을 기존 비교목록 callback으로 연결.
+- 그룹/원본/점수/eligible/begin/complete/다른사이즈 기능 변경 없음. 선택 후 전체 후보 실측 scan만 exact Closet row로 제한. 전체 Closet receipt 및 선택 후 target/reference freshness 검증은 유지. 최종 eligible→begin 경계는 stale/fingerprint 유지 때문에 합치지 않았다.
+- SQL 준비: `supabase/migrations/20260924130000_selected_comparison_candidate.sql`, rollback/verify, captured baseline + isolated regression. 기존 full-list 함수2개는 shared private filtered helper에 NULL 전달, 새 public selected RPC는 exactID필터. owner/deleted/group/variant/auth 의미 보존.
+- 격리 SQL PASS exit0 `/tmp/fitmatch-deploy-comparison-roles-0uyrr5nj/run.log`: 원본 full JSON/선택항목/blocked parity, 비선택 eligibility 미실행, 실제 authenticated/anon 역할, 삭제/타사용자/없는ID/null/invalid variant/group, rollback. 보조 eligibility/context는stub이므로 live E2E 아님.
+- Swift 단계별 RED→GREEN: authority42/42, result wiring5/5, handoff44/44. 전체 첫 실행866PASS/4FAIL/42skip은 첫 후보 resolve 순서를 강제한 구형 검사3개와 CP034 runtime queue1개. 최종 선택 재검증/NOT_APPLICABLE 차단/History 불변 assertion 유지하며 순서·fixture만 정렬.
+- **최종 전체 PASS exit0: 870PASS/0FAIL/42skip(총912)** `/tmp/FitMatchComparisonPerformanceVerified.xcresult`, `/tmp/fitmatch-comparison-performance-verified.log`. 앱/테스트compile 포함. VM 실패후재시도/취소 regression 포함. 실기기UI/E2E/실제속도측정 NOT RUN. 독립리뷰 Important/Critical 지적없음.
+- **DB migration 미적용/BLOCKED**: apply_migration 자동검토2회거절(과거DB/Edge금지·read-only/개발write승인불충분 사유). 두 번째에 기존 사용자 dev허용/현요청/검증근거 명시했으나 거절. 우회없음. 사용자 exact dev project migration 재승인 질문 pending. 새 앱 단건 RPC 호출은 DB 적용 이후 사용해야 함. 코드 PASS를 live 적용완료로 오해하지 말 것.
+- 상세/전체파일/명령: `Docs/QA/20260924-Comparison-Performance.md`, 계획/판단: `Docs/QA/20260924-Comparison-Performance-Plan.md`. 지도갱신. commit/push없음.
+
+## 2026-09-24 상품 비교 전체 흐름 성능 감사 — 구현 변경 없음
+
+- 기준 HEAD 3243e980bc0a304693d461e2e4279fc6f970c350, 현재 로컬 변경 포함. Swift active caller와 개발 DB hnkplvyegonlhumlejst의 pg_proc 정의를 READ ONLY로 대조. 이번에는 앱/SQL/DB 변경 및 테스트 실행 없음. 기존 테스트 결과를 이번 감사 PASS로 재사용하지 않음.
+- 최초: CompareFlow.startCompare → loadProductInfoFromURL → fresh observation/runtime → referenceSelectionPlan. 후보계획은 target resolveWithRuntime와 전체 Closet 조회를 이미 병렬 실행한 뒤 후보 RPC 호출. resolveWithRuntime 자체는 단일 runtime 조회이며 항상 resolve+runtime 두 RPC라고 계산하면 안 됨. 직전에 준비한 target authority를 다시 읽는 구간은 공유 후보이나 만료/계정/그룹/identity 검증 유지 필요.
+- 선택: authorizeReferenceCandidate는 target runtime/전체 Closet/조건부 reference runtime을 병렬 확인한 뒤 전체 findReferenceCandidates 재호출. beginAuthorizedComparison은 별도 eligibleCandidateSizes 후 beginComparison. 배포 find_reference_candidates는 Closet 루프 내부 eligible_candidate_sizes 호출, begin_comparison도 eligible_candidate_sizes 호출. 반복 작업 확인과 실제 latency 병목 입증은 별개. 선택한 exact pair만 서버에서 검증하고 begin과 공유하는 계약을 우선 검토; 검증 삭제 금지.
+- 다른 옷: 결과 화면 normal caller는 onShowOtherClosetComparison=nil, 새 CompareFlow(initialHistoricalProduct:) 진입. retailer API는 다시 호출하지 않지만 retained facts로 resolveServerAuthority/fresh observation/runtime 및 후보 조회를 반복. 현재 세션의 target 준비 상태/후보 표시 재사용을 권장하되 새 reference에는 새 authorization/begin/complete 필요. 오래된 History 재비교와 구분. 결과 이전의 다른 옷 버튼은 기존 closetSelection 복귀이므로 동일하게 취급하지 않음.
+- 다른 사이즈: 현재 VNextComparisonSessionStore batch의 승인된 analyses와 exact sizeID를 로컬 표시. 이 동작 자체에는 새 API/begin/complete/History 저장 없음. 재실행/오래된 History에 batch가 없으면 같은 기능 보장 안 됨; 승인 없는 재계산으로 대체하지 않음.
+- 후보 preview는 Closet수×size수 로컬 계산. CPU/UI 영향은 미측정으로 보류. runtime 중간projection 생략은 앞서 배포되어 있으므로 다시 미구현으로 제시하지 않음.
+- 권장순서: 선택 후 전체후보 재검사를 exact-pair begin으로 통합 검토 → 현재 결과의 다른 옷 비교 target 재수집 제거 → 최초 준비/후보 handoff authority 공유 및 가능한 Closet read overlap. 상품 observation 저장 자체 삭제는 현 DB identity/권한/재현계약과 충돌. 최종 complete 성공 이전 완료 UI 금지. 실기기 before/after/E2E 및 신규 tests NOT RUN, 속도 수치 주장 없음.
+
+## 2026-09-24 등록 성능 개선 2건 완료 — 개발 DB 적용 / 전체866 PASS
+
+- 사용자 “일단 그거부터 해” 승인 범위: 최종저장 readback 단건화 + Swift runtime에서덮어쓸중간canonical/readiness계산생략. 사용자 지정 개발DB hnkplvyegonlhumlejst/FitMatch(ap-northeast-2), 앱Info.plist참조동일확인. 사용자row변경없음.
+- production: FitMatchComparedProductClosetSubmissionAction.getClosetItem(acceptedClosetItemID) → FitMatchSupabaseDomainClient의신규public.fitmatch_vnext_get_closet_item. clientItemID/closetItemID둘다일치후기존authoritative projector. 전체sync목록조회는유지.
+- SQL: 기존list4단계owner를optional filter인uuid overload로공유, noarg기존목록계약유지. 새단건RPC는null거절/owner/active/exactID필터와raw/detail/receipt모두보존. get_product_runtime_base(text,text,boolean)는private; 기존get_product_runtime은true,Swift최종runtime은false후기존context/readiness덮어쓰기. 비교정책함수변경없음.
+- 적용: local20260924120000→remote20260924035231_closet_single_item_readback; local20260924121000→remote20260924035245_runtime_skip_discarded_projections. remote/localSQL MD5동일. postflight10/10 true,begin/complete/candidate/canonical/readiness핵심정의hash전후동일.
+- 격리SQL PASS exit0: `/tmp/fitmatch-deploy-performance-zdbirp9s/run.log`. 배포정의before/original과after JSON동일,raw unknown/detail/canonical/receipt유지,교차사용자/삭제/없는ID/로그인없음, GLOBAL_CONFIRMED/USER_OVERRIDE,기본runtime보존,롤백검사. 실제canonical/group은stub이므로fullDB/liveE2E아님. 2sizefixture에서discarded base0/context2/readiness1회확인.
+- Swift RED45PASS/1FAIL(listCallCount), GREEN 전체908 tests=866PASS/0FAIL/42skipped, exit0. `/tmp/FitMatchRegistrationPerformanceFinal.xcresult`, 로그 `/tmp/fitmatch-registration-performance-final.log`. 명령/한계/전체SQL파일은 `Docs/QA/20260924-Registration-Performance.md`.
+- NOT RUN: 실기기시간/E2E/인증실물저장. 앱·테스트compile는전체test에포함. 새로운앱단건조회는새build필요,DBruntime개선은배포완료. 기존dirty작업보존/commit/push없음. 이번두대상구현완료이며속도개선초수는미측정.
+
+## 2026-09-24 링크 상품 조기 표시·서버 준비 병행 — 로컬 변경
+
+- 사용자 승인: 기존 저장 데이터/서버 검증을 유지하면서 retailer API 완료 후 상품 표시와 다음 진입을 먼저 허용. 이전의 서버준비완료까지 카드숨김 정책은 링크옷장진입에 한해 이 요청으로 대체.
+- FitMatchLinkClosetRegistrationAction.load가 기존 ViewModel onRetailerProductLoaded를 재사용하여 raw draft와 non-nil preparing context를 전달. 서버 observation/runtime/조건부refresh는 그대로 이어서 수행하며 요청을 추가/삭제하지 않음.
+- LinkClosetRegistrationView의 draft navigation gate를 preparation helper로 분리. preparing+사이즈존재에서만 조기진입; context nil/unavailable은 우회불가. sheet표시로 발생하는 onDisappear는진행중authority를취소하지않음. 실패후draft유지, 최종context는fail-closed.
+- AddComparedProductToClosetSheet는preparing중사이즈선택허용/저장과그룹변경차단. 기존context변경반영과exact사이즈ID유지경로재사용. 기존upsert→authoritative list readback→local projection 유지. DB계산공유/단건readback계약은이번에변경하지않음.
+- 회귀 RED: EarlyLinkRed3 전체headlessacceptance 44PASS/1FAIL (earlyCount0). Green 중간109PASS/1FAIL은이전Next대기소스문자열검사. 새승인정책의draft gate 행동검사로교체; observation을gate로보류하는성공/취소검사추가. Red2는메서드selector발견미확인으로PASS근거제외. 최초sandbox빌드는캐시권한BLOCKED 후승인된실행으로진행.
+- 전체 중간검사 EarlyLinkFinal: 865PASS/1FAIL/42skipped. 새test가parser input UUID를화면ID로간주한오류; draft의실제선택displayID로조회하도록수정. raw draft→final displayID동일성검사는이전실행에서도PASS.
+- 최종 PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchSameGroupRetry -disableAutomaticPackageResolution -parallel-testing-enabled NO -only-testing:FitMatchTests -resultBundlePath /tmp/FitMatchEarlyLinkVerified.xcresult test` exit0. 908 tests=866PASS/0FAIL/42skipped. 로그 `/tmp/fitmatch-early-link-verified.log`, summary `/tmp/fitmatch-early-verified-summary.json`. 앱·테스트compile 포함; 별도build/실기기UI/E2E/실제속도측정 NOT RUN. diff/protected-scroll PASS.
+- 이번production3파일/기존test1파일/지도/인수인계변경. 기존dirty변경보존,DB write/commit/push없음. 실기기UI/E2E와before-after실측NOT RUN. 전체최종검사결과는아래에추가.
+
+## 2026-09-24 링크 등록 대기시간 READ-ONLY 점검
+
+- source HEAD3243e980 유지. 앱/DB 수정 없음. 연결 hnkplvyegonlhumlejst pg_proc 정의 SELECT만 실행; live latency/실기기/테스트 재실행 NOT RUN.
+- 필수: exact product/variant/size 및 observation 정합성, 계정/중복재시도, 그룹 출처, 저장 후 authoritative receipt 확인 유지. UI 표시/다음 진입이 그 모든 처리 완료까지 기다려야 하는 것은 별개다.
+- LinkClosetRegistrationAction.load는 loadProductInfoFromURL 완료 후 REVIEW_REQUIRED+retailer evidence이면 refreshLinkRegistrationAuthorityIfNeeded 추가 runtime 요청을 기다린다. 그룹미매핑에도 이refresh조건이 적용될 수 있음. 동일결과/무변경 보장 증명 전 일괄 삭제하지 않음.
+- 배포 get_product_runtime_for_swift는 get_product_runtime이 모든size에 생성한 canonical_measurements를 context판으로 다시 덮어쓰고 readiness도 effective판으로 교체한다. effective_product_readiness는 effective_target_classification을 재호출하며 GLOBAL_CONFIRMED면 product_readiness를 다시 호출한다. 덮어쓸 중간projection 생성은 최적화 대상; 서로 다른context 결과를 동일하다고 가정하지 않는다. 정확한 전체호출횟수/시간은 미측정.
+- 최종저장 FitMatchComparedProductClosetSubmissionAction.submitServerFirst는 upsert후 listClosetItems 전체목록에서 정확한저장receipt를 찾는다. receipt검증은필수, 전체목록전송은단건조회/동일mutation응답receipt로대체가능한설계후보. 현재응답만믿고readback삭제금지.
+- 권장: retailer-ready draft즉시표시+다음 허용, 동일수집데이터로기존서버준비즉시병행, 사용자선택을stable source identity로유지하고서버ID정확히결합. raw-only단계가현재manual/local fallback저장경로로들어가지않게명시적pending상태필요. 최종저장은서버준비후허용. 별도로runtime중간중복projection과최종저장전체list왕복을줄여실제시간단축. API수집자체와최종DBcommit대기는없앨수없으며즉시완료보장불가.
+
+## 2026-09-24 MUSINSA 7122627 실측 API 파서 입력 가공
+
+- 공식 상품 페이지에서 선택한 `7122627`(워셔블 크롭 헨리넥 니트_6color)의 `https://goods-detail.musinsa.com/api2/goods/7122627/actual-size`를 앱과 동일한 Accept/Referer/iOS Safari User-Agent로 호출해 HTTP 200, 2,120 bytes를 수신했다.
+- 공식 응답은 현재 `MusinsaActualSizeAPIParser.MusinsaActualSizeResponse` 계약에 이미 직접 디코딩 가능한 형태다. 요청 범위에 맞춰 원문을 `Docs/QA/MusinsaActualSize-7122627/parser-input.json` 파일 하나로 기록했다.
+- type 21 `긴소매티셔츠`, M/L/XL 각 4개 양수 실측은 총장→body_length_back_neck_to_hem, 어깨너비→shoulder_width_seam_to_seam, 가슴단면→chest_width_pit_to_pit, 소매길이→sleeve_shoulder_seam_to_cuff로 `musinsa_actual_size_mapping_v9`에 대응한다.
+- 현행 parser의 `value > 0` guard 때문에 각 size의 밑단단면/소매부리단면/암홀 0값 9행은 projection에서 제거된다. 원문 파일에는 모두 남겼으며, 신규 정책의 “원본 전체 저장·표시”를 앱 경로가 완전히 만족한다는 증거로 보고하지 않는다. 이번 작업은 parser 코드/DB를 변경하지 않았다.
+
+## 2026-09-24 잔여 작업의 출시 필요성 재판정
+
+- 사용자 요청에 따라 추가 개발 전에 필요성을 점검. HEAD 3243e980bc0a304693d461e2e4279fc6f970c350 유지. 현재 migration 첫 파일의 public.sources/app_categories 의존, migration manifest와 이전 실행 결과 원본(summary/log)을 확인했다. 이번에 전체 테스트·build·live API·연결 DB 조회를 재실행하지 않았다.
+- 최신 3-provider API 확인은 실제 상품 수집 신뢰도를 위한 필요한 검증이다. 기존 403/transport 실패만으로 앱 결함을 확정하거나 parser를 수정하지 않는다. 사용자 실기기 E2E에서 각 provider의 상품/사이즈/실측 수집 증거를 함께 확보하면 같은 목적의 별도 대량 live 검사를 중복할 필요는 없다. 실패 재현 시 해당 owner만 수정한다.
+- 빈 DB 재구성은 새 출시용 DB를 만들 계획에서 필수 선행 작업이다. 현재 연결 DB의 실행 결함 자체는 아니다. 초기 schema와 필요한 기준 데이터의 근거 있는 복원 및 새 DB 계약 검증이 필요하다. 가짜 public.sources 테이블을 추가해 첫 migration만 통과시키지 않는다. 기존 DB를 그대로 사용하는 경우에도 복구 가능성 검증은 운영 준비 과제로 남는다.
+- 이미 배포된 계약 SQL의 Git 미반영은 별도 재현성 공백이다. 로컬 파일 보존 상태를 유지하며 commit/push 승인은 별도로 필요하다.
+- 이번에는 앱/DB 변경 없음. 확인된 새 핵심 결함 없이 점수100을 위해 범위를 확대하지 않는다. 기술점수90은 이전 검사 범위의 평가로 유지하며 출시 보증이 아니다. 필요한 후속은 provider 실사용 검증과 새 출시 DB 구성/복원 검증이다.
+
+## 2026-09-24 자동검사 계약 보완 완료 — 전체865 PASS /0 FAIL, E2E 제외90점
+
+- 동일connectDB HEAD3243e980bc0a304693d461e2e4279fc6f970c350. Swift production/DB mutation 없음. 기존dirty문서/SQL보존. 테스트6개파일과 QA문서만추가보완; commit/push없음.
+- Sync: remoteRecord시각을주입가능하게하고2개기존검사에실제local edit조건을구성. runtime실패를실제로거치도록호출assert추가, 기존fail-closed/stale보존assert유지. 신규무변경test는list1/runtime0/mutation0및화면projection검증.
+- Comparison: HeadlessJourneyFixture의runtime/Closet/candidate에동일A그룹계약보완. 3-provider snapshot완주검사는실제화면의사용자선택calculateTemporaryRecommendation+MANUAL_EXTENDED사용. 독립resolve/runtime/list시작순서는강제하지않고candidate이전완료,eligible→begin→complete의존순서엄격검사.
+- 신규수동등록브랜드/이름생략허용과기존편집필수검증분리. 삭제버튼부재문자열검사는serverauthority없는실제삭제action이SwiftData옷을남기는행동검사로대체. 원래측정/권한/identityassert완화없음.
+- 최종PASS: xcodebuild전체FitMatchTests exit0,907 tests=865 PASS/0 FAIL/42 skipped(파라미터919 runs=877PASS/0FAIL/42skipped). `/tmp/FitMatchClosureFinal.xcresult`, `/tmp/fitmatch-closure-final.log`, 명령은Release-Technical-Score최상단. 중간step1=100PASS/29FAIL, step2=836PASS/29FAIL/42skip, step3=125PASS/1FAIL. 마지막1개는서버독립조회순차기대였고현행병렬의존관계로보완후0FAIL.
+- DB READ ONLY: remote129개migration metadata저장,배포3건SQL MD5가로컬과정확히동일. 전체Gitreplay는빈PG17첫migration public.sources미존재로FAIL exit3; baseline추측작성안함. fullschema/seed복원이필요함.
+- liveBLOCKED: MUSINSA403,ZARA403,UNIQLOHTTP2오류/HTTP1timeout. actualAPI검증성공으로보고하지않음. E2E는NOT RUN이며감점안함.
+- 별도 Debug 앱 build PASS exit0: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchClosureBuild -disableAutomaticPackageResolution -configuration Debug build`, 로그 `/tmp/fitmatch-closure-build.log`. diff/protected-scroll PASS.
+- 기술점수90/100: Closet/Comparison을각25점으로복구. provider15/20,DB재현5/10유지. 과거78/66점평가는이번기록으로대체. 최종보고서 `Docs/QA/20260924-Release-Technical-Score.md`.
+
+## 2026-09-24 E2E 제외100점 도달 범위·실패원인 분석
+
+- 분석보고서 `Docs/QA/20260924-NonE2E-Release-Closure-Plan.md`. 앱/DB/테스트 변경 없이 분석과 문서만 추가. 점수78 유지; 미래PASS를 미리 반영하지 않음.
+- sync 두 실패를 다른suite 없이 `test-without-building`, `-parallel-testing-enabled NO`, 두 exact method selector로 재실행: exit65,2 FAIL/0 PASS. `/tmp/FitMatchSyncRootCauseAudit.xcresult`, `/tmp/fitmatch-sync-root-cause-audit.log`. 과거 병렬fixture불안정 설명은 이 실패원인으로 채택하지 않음.
+- fixture remoteRecord의2099년 timestamp → 먼저remote apply → client-owned content 일치 → shouldUpload=false → runtime 미호출. 실패stub을 설정한 두 번째검사도 실제runtime실패를 유발하지 못함. 정상무변경동기화 검사와 실제runtime실패후stale보존 검사를 분리해야 함. 데이터손상 결함으로 단정하지 않음.
+- Headless shared referenceResponse의 필수group누락 및 실제화면caller와 다른calculateRecommendation 자동경로 호출을 확인. 최신동일그룹/사용자선택 fixture로 복구한 후 begin/complete까지 도달시키고 잔여실패를 다시판정해야 함. 전체41FAIL 모두가무해한구형테스트라는 결론은 아님.
+- 신규등록브랜드필수 기대는 현재간소화정책과 충돌. 삭제버튼부재 문자열검사는 실제삭제무결성 증거가 아님; 최종UX정책 확인후action검증 필요.
+- 100점완료조건: 관련실패/skip분류 및 실제caller자동검사PASS, 전체Git DB replay/배포대조, 접속가능환경의현행retailer API계약, 최종build/regression. 실기기E2E는별도제외. 설치/commit/push/새DB변경은미수행.
+
+## 2026-09-24 DB 적용 후 재검수 — 관련 87 PASS / 2 FAIL
+
+- 동일 HEAD `3243e980bc0a304693d461e2e4279fc6f970c350`, 코드·DB 추가 변경 없음. 배포 후 함수10개 definition hash가 직전 postflight와 동일. public update/list/history_sync의 anon execute=false, authenticated=true 확인.
+- 새 실행: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchSameGroupRetry -disableAutomaticPackageResolution -parallel-testing-enabled NO -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests -only-testing:FitMatchTests/FitMatchComparisonSyncCoordinatorTests -only-testing:FitMatchTests/FitMatchClosetTransportContractTests -only-testing:FitMatchTests/FitMatchVNextContractTests -resultBundlePath /tmp/FitMatchDBContractReaudit.xcresult test` exit65. 89 tests =87 PASS/2 FAIL/0 skipped (parameter 포함91 runs=89 PASS/2 FAIL). transport/history/DTO suites PASS.
+- FAIL은 기존 `existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime`(runtime fetch count), `finalStaleAutomaticHydrationCannotUndoFailedV4Resolve`(serverConfirmed vs serverUnavailable) 두 건. 이번 DB 배포 회귀라고 단정하지 않으며, 무해한 구형 테스트라고도 결론내리지 않음. 원인 판정 필요.
+- SQL 재실행 PASS: linked+detail `/tmp/fitmatch-deploy-reaudit-qe0dk88c/run.log`, History tombstone `/tmp/fitmatch-deploy-history-reaudit-x4pqq8kp/run.log`, 각각 exit0. 최소 fixture/owner 검증이며 전체 배포 DB clone/E2E 아님.
+- 실제 DB active Closet raw snapshot 0건. mismatch 0건은 데이터가 없어 나온 결과이므로 실제 저장 정합성 PASS 근거로 사용하지 않음. 인증 실물 mutation/read-back, 두 기기 삭제 전달은 NOT RUN.
+- 기존 E2E 제외 점수표의 계약 불일치 감점만 재평가: Closet 12.5→18.75(미해결 sync 검사 공백으로75% cap), History5→10(관련 Swift+SQL 및 배포계약 확인); 나머지 동일. 66.25→77.5, 반올림 **78/100**. E2E 미실행을 감점하지 않았으며 앱 출시 보증 점수 아님. 전체41실패/라이브API차단/Git replay 공백은 해결됐다고 보고하지 않음.
+
+## 2026-09-24 개발 DB 계약 3건 적용 완료 — 사용자 승인
+
+- 대상 `hnkplvyegonlhumlejst` (FitMatch, ap-northeast-2). 사용자가 개발 DB임을 명시하고 “적용먼저해”로 승인. 기준 connectDB HEAD `3243e980bc0a304693d461e2e4279fc6f970c350`. 아래의 “연결 DB 미적용” 기록은 이 3건에 한해 이 기록으로 대체된다.
+- 실제 remote migration: `20260924014952_linked_closet_size_snapshot_updates`, `20260924015007_closet_detail_snapshot_round_trip`, `20260924015014_comparison_history_tombstone_sync`. 로컬 파일 timestamp와 원격 version은 다르므로 QA manifest 대응표 참조. retailer-exact v2는 미적용이며 기존 비교 결과 경로 유지.
+- 적용 전 실제 배포 helper를 반영한 로컬 회귀에서 metadata-only linked edit가 creation-only helper로 들어가 실패(exit3). public update routing을 observation ID 또는 use_server_measurements=true이면 새 update owner로 보내도록 최소 보완. 수정 후 linked/raw/detail regression exit0 PASS (`/tmp/fitmatch-deploy-green-brwab0dm/run.log`); 이전 M→L exact observation/rollback/metadata 보존 검사 포함. 테스트 helper를 실제 배포 거절 계약과 맞췄으며 assertion 완화 없음.
+- READ-ONLY postflight PASS: 3개 migration 이력, 새 update 분기, list raw receipt 및 exact detail 응답, History tombstone ownership, anon 실행 차단/authenticated 실행 허용 확인. candidate 함수 2 overload 및 begin/complete 함수 definition hash가 적용 전과 동일. 전후 정의 `/tmp/fitmatch-three-contracts-{pre,post}.json`.
+- 사용자 row를 시험 생성/수정/삭제하거나 재작성하지 않았다. DB 함수 계약만 migration 적용. Swift 수정/commit/push 없음. 새 SQL/회귀/manifest는 여전히 untracked이므로 Git 재현성 완료로 보고하지 않음.
+- NOT RUN: 적용 후 인증된 실제 Closet mutation/read-back, 두 기기 History 삭제 전달, 실기기 E2E. 이번 SQL 수정으로 전체 Swift 41 실패가 해결됐다고 주장하지 않으며 기존 66점 평가도 자동 상향하지 않음.
+
+## 2026-09-24 출시 핵심 기술 검증 — E2E 제외 66/100
+
+- 기준 HEAD `3243e980bc0a304693d461e2e4279fc6f970c350`, connectDB. 보고서 `Docs/QA/20260924-Release-Technical-Score.md`. 점수는 현재 소스+연결 DB의 가중 기술평가이며 실기기 E2E를 분모/감점에서 제외했다. 사용자 성공률이나 App Store 합격확률이 아니다.
+- 이번 실행: 전체 FitMatchTests exit65, 906 tests = 823 PASS/41 FAIL/42 skipped (parameter 포함918 runs). xcresult `/tmp/FitMatchSameGroupRetry/Logs/Test/Test-FitMatch-2026.09.24_10-33-34-+0900.xcresult`. Debug build 별도 exit0. 41건 전부를 production bug/legacy로 단정하지 않음; 필수 group 누락 fixture 및 오래된 신규 brand-required 기대는 확인.
+- 일회용 로컬 PostgreSQL17에서 linked+detail / tombstone / inactive v2 SQL harness 각각 exit0 PASS. 로그 `/tmp/fitmatch-score-pg-60pfp29t/{0,1,2}/run.log`. 실제 전체 Git baseline replay 아님.
+- 연결 Supabase READ ONLY 재확인: linked helper의 creation-only 거절 남음; list에 별도 exact detail/source snapshot 응답 없음; 새 history_sync RPC 없음. 수정 migration은 local untracked이며 현재 서버에서 해결된 것으로 보고하지 않음.
+- 실제 API 접근: UNIQLO E484080 details transport error/timeout, MUSINSA7035474 actual-size403, ZARA564228855 guide403. live BLOCKED; 예정30상품 전체 검증 미완료. 파서 fixture PASS를 live PASS로 대체하지 않음.
+- 코드/테스트/원격DB 수정·commit/push 없음. 보고서/Handoff 기록만 추가. E2E는 사용자 담당이며 배포 계약 정렬 후 실행할 체크리스트를 보고서에 제공.
+
+## 2026-09-24 Five Repairs 후속 보완 — 로컬 구현·격리 검증, 연결 DB 미적용
+
+- 기준 HEAD `8c6586d51b73f405b4d6e7b52c5b688b24c7f732`, branch `connectDB`. 기존 tracked/untracked 변경을 유지했고 commit/push/reset/stash/연결 Supabase write는 수행하지 않았다. 이번 범위에서 Task 1·2·3·5를 이어갔으며 Task 4는 **v2 evidence 구현 및 격리 검증만** 수행했다. 실제 candidate→authorize→begin→complete 사용자 비교 경로에는 v2를 연결하지 않았다.
+- **Task 1 linked size:** 정확한 `source_observation_id`가 없는 M→L은 Swift에서 실패한다. 신규 forward migration `20260924100000_linked_closet_size_snapshot_updates.sql`은 동일 transaction에서 Closet parent product/variant/size, canonical rows, raw snapshot rows를 exact product/variant/size observation으로 교체한다. metadata-only 편집은 raw를 교체하지 않으며 read-back은 exact receipt/raw row identity(`parser_code + raw_measurement_key`)를 검증한다. parser가 다른 정상 원본 row가 같은 raw key를 쓰는 fixture는 key-only check에서 RED였고, pair identity check 뒤 GREEN이다.
+- **Task 2 exact detail:** `closet_detail_code_snapshot`를 optional response field로 따로 전달한다. explicit supported snapshot은 `blouse` 등 UI detail로 보존하고, snapshot 없는 legacy row만 기존 tuple 복원을 사용한다. coalesced `closet_detail_code`가 있다는 이유만으로 user-selected detail이라고 주장하지 않는다. forward migration은 `20260924101000_closet_detail_snapshot_round_trip.sql`이다.
+- **Task 3 History:** active-list 누락을 local delete 근거로 사용하지 않는다. `fitmatch_vnext_comparison_history_sync`의 owner-scoped tombstone을 cache save 뒤에만 확정하고, hide 뒤 늦게 도착한 stale completed row는 hydration 전에 같은 exact ID로 제외한다. migration `20260924102000_comparison_history_tombstone_sync.sql`은 additive이며 연결 DB에는 미적용이다.
+- **Task 4 v2 preflight only:** `20260924103000_retailer_exact_evidence_v2_preflight.sql`은 source/parser/schema/raw identity/unit/basis/representation/component 전부 일치한 unscored `RETAILER_EXACT` proof만 만든다. 활성 후보/permit/begin/complete/History 함수를 변경하지 않았고, Swift validator도 `score_included=true`를 거절한다. 따라서 raw direct comparison의 실제 사용자 경로는 NOT RUN이다.
+- **Task 5:** `Docs/QA/20260924-FiveRepairsMigrationManifest.md`에 forward/verify/rollback 순서를 기록했다. disposable PostgreSQL 17 owner harness는 Task 1/2, Task 3, inactive Task 4 각각 PASS했다. 이 checkout에는 Supabase CLI/Docker bootstrap이 없어 빈 Git baseline full replay는 BLOCKED다. SQL 파일은 모두 local untracked 상태이며 apply 증거가 아니다.
+- **Swift tests:** current focused `xcodebuild test` (`FitMatchClosetSyncCoordinatorTests`의 linked exact-observation/read-back cases, detail snapshot 3 cases, `FitMatchComparisonSyncCoordinatorTests`, `FitMatchVNextContractTests`) exit 0, 30/30 PASS, result `/tmp/FitMatchFiveRepairsFocusedCurrent.xcresult`. The parser/raw-key TDD fixture added afterwards made `FitMatchClosetSyncCoordinatorTests` 45 PASS/3 FAIL (the two known failures plus the new expected read-back failure); after the pair-identity fix it returned to 46 PASS/2 known unrelated FAIL, result `/tmp/FitMatchLinkedParserIdentityGreen.xcresult`. Earlier full focused suite evidence: `FitMatchVNextContractTests` 12/12 PASS (`/tmp/FitMatchRetailerExactV2Green.xcresult`); `FitMatchComparisonSyncCoordinatorTests` 18/18 PASS (`/tmp/FitMatchHistoryTombstoneGreen4.xcresult`). current Debug simulator build exit 0 after the final identity repair. 앱 전체 suite/실기기/연결 DB RPC E2E는 이번 보완에서는 NOT RUN.
+
+## 2026-09-24 중단된 핵심 회귀 검증 재개 — PASS
+
+- 기준 HEAD `8c6586d51b73f405b4d6e7b52c5b688b24c7f732`, connectDB, 시작 tracked tree clean. 저장공간 28Gi 확보 확인 후 재개. 앱 코드/DB 수정 및 commit/push 없음; 이 기록만 추가.
+- PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchSameGroupRetry -disableAutomaticPackageResolution -parallel-testing-enabled NO -only-testing:FitMatchTests/FitMatchServerAuthorityIntegrationTests -only-testing:FitMatchTests/FitMatchClosetDeletionTransactionTests -only-testing:FitMatchTests/FitMatchClosetTransportContractTests -only-testing:FitMatchTests/FitMatchContractClosureRegressionTests -only-testing:FitMatchTests/FitMatchComparisonPermitSequencingTests test` exit0. xcresult summary 76 tests / parameter 포함79 runs PASS, FAIL0/SKIP0. 로그 `/tmp/fitmatch-core-resume-20260924.log`; result `/tmp/FitMatchSameGroupRetry/Logs/Test/Test-FitMatch-2026.09.24_07-17-33-+0900.xcresult`.
+- PASS: 동일 빌드 test-without-building으로 FitMatchClosetSyncCoordinatorTests의 manualEditDoesNotReportSavedWhenReadbackRetainsPreviousValues(), manualEditDoesNotMutateLocalItemWhenServerRejects(), manualEditAppliesVerifiedServerReadback(), manualRegistrationDoesNotPublishWithoutAuthoritativeReadback() 4개 실행, exit0/4 PASS. 로그 `/tmp/fitmatch-core-manual-resume-20260924.log`; result `Test-FitMatch-2026.09.24_07-18-26-+0900.xcresult`.
+- 합계 80 test methods /83 runs PASS. 실제 production owner + fixture/stub 계약 검증이며 live 쇼핑몰/API/인증 DB E2E가 아니다. 이번 실행은 관련 focused suite만이며 이전 전체 sync suite의 별도 실패 2건을 해결·통과했다고 의미하지 않는다.
+- PASS: git diff --check, protected-scroll. NOT RUN: 실기기 UI, live 신규상품 등록→비교 E2E, 기기 간 동기화. 인터넷 끊김 추가 검증은 사용자 요청으로 제외. 새로 확정된 핵심 결함 없음; 전체 앱 무결함 보장 아님.
+
+## 2026-09-24 현재 로컬 소스 커밋·푸시 완료
+
+- 사용자 요청에 따라 현재 핵심 Closet 등록/편집·비교·History·retailer parser 및 관련 회귀 테스트 변경을 커밋했다.
+- 커밋: `494a5d5` (`feat: harden core closet and comparison flows`). `origin/connectDB` 푸시 성공.
+- 포함: 관련 tracked source/test/docs와 `Package.swift`, 관련 untracked 회귀 테스트. QA 증거·생성물·기타 untracked 자료는 스테이징하지 않고 보존했다.
+- 검증: staged `git diff --check` PASS, 보호 스크롤 검사 PASS. 이번 커밋 직후 전체 XCTest/build/실기기 E2E는 실행하지 않았다.
+
+## 2026-09-24 현재 로컬 소스 커밋·푸시 완료
+
+- 사용자 요청에 따라 현재 Closet 삭제/동기화·비교 History·linked size·Supabase contract 및 관련 테스트 변경을 커밋했다.
+- 커밋: `0839126` (`fix: preserve closet and comparison contracts`). `origin/connectDB` 푸시 성공.
+- 검증: staged `git diff --check` PASS, 보호 스크롤 검사 PASS. 전체 XCTest/build 및 실기기 E2E는 이번 커밋 작업에서 실행하지 않았다.
+
+## 2026-09-23 동일 그룹 제한 — 승인된 개발 DB 적용 완료
+
+- 사용자 `진행햐. 완료된기능에 영향없개하고` 승인에 따라 개발용으로 지정된 FitMatch hnkplvyegonlhumlejst(ap-northeast-2)에 migration `same_comparison_group_only_preserve_eligibility` 적용 성공. 이전 미적용 기록은 이 항목으로 대체한다. 테이블/user row write 없이 후보/승인 함수 4개 정의만 변경.
+- 사전 조회: native find_reference_candidates(uuid,uuid)의 deployed MD5는 f41bff3567974479e72bc9f989aa7fbb로 기존 fixture preflight와 달랐다. 실제 정의 전체를 검토해 추가 eligible_candidate_sizes 검사·실측수·eligible size IDs를 보존하는 fragment patch임을 확인했다. migration은 기존 fixture hash 및 이 reviewed deployed hash만 허용하도록 보완. 나머지 3개 함수 preflight 일치.
+- PASS: 배포 후 Verify SQL 4/4에서 required_group_gate_present=true 및 cross_group_bypass_absent=true. 전후 함수 정의 diff 직접 확인: 의도한 4개 candidate/authorization 변경만 존재. 별도 확인 대상 10개 함수(begin/complete, eligible overloads, canonical context, Closet mutations)는 hash 동일. 원본 실측/사용자 저장 row/History snapshot rewrite 없음.
+- 증거: /tmp/fitmatch-same-group-pre.json, /tmp/fitmatch-same-group-post.json (함수 정의만 포함). rollback SQL은 미실행이며 준비 상태. NOT RUN: 인증 사용자 실제 candidate→begin→complete E2E, 실기기. 정책 배포 및 정의 검증 완료를 앱 전체 동작 검증과 구분한다.
+- commit/push 없음. 인터넷 끊김 검증 제외, 재실행·기기 간 확인은 사용자 담당 유지.
+
+## 2026-09-23 동일 그룹 DB 적용 확인 및 실측 안내 문구
+
+- 연결 프로젝트 hnkplvyegonlhumlejst에 READ ONLY pg_proc 조회 및 20260923_same_comparison_group_only_Verify.sql 실행. 4개 함수 모두 cross_group_bypass_absent=false; 동일 그룹 제한 후속 migration은 현재 배포 함수에 반영되지 않음. DB write 없음. 실제 인증 비교 실행은 NOT RUN.
+- CompareFlowSheet의 실측 부족 안내를 `비교에 필요한 실측 정보가 부족해요.` / `같은 그룹의 옷은 있지만, 두 옷을 비교하는 데 필요한 치수 정보가 충분하지 않아요.`로 변경. 기존 measurementsRequired를 공통항목 0개라고 단정하지 않음. 판정 로직 변경 없음.
+- 사용자 범위: 인터넷 끊김 추가 검증 제외, 재실행/기기 간 동기화는 사용자가 확인. 이 항목들을 새 확정 버그로 취급하지 않음.
+- PASS: swiftc -parse CompareFlowSheet.swift, git diff --check. 앱 build/테스트/실기기 이번 문구 변경에서는 NOT RUN. 남은 필수 작업은 동일 그룹 DB migration 적용 및 적용 후 확인(이번 요청은 조회만 수행).
+
+## 2026-09-23 상품 불러오기 실제 단계 안내 — 로컬 미커밋
+
+- 사용자 결정: 후보 카드 예상 비교 후 상세 최종 결과 유지, 짧은 스와이프 확인/긴 스와이프 즉시 삭제 유지. 이번 변경은 로딩 안내만 해당한다.
+- ProductAnalysisPhase의 기존 수집/authority 경계를 사용해 `쇼핑몰 정보 불러오는 중` → `상품 정보 확인 중`을 표시한다. Link action이 Combine 구독으로 실제 phase를 전달하고 종료 시 해제한다. View는 요청 ID/취소를 확인한다. 등록은 버튼 위치에 로딩 안내, 입력 잠금, 완료 전 상품 카드/다음 숨김을 유지한다. CompareFlowSheet의 로딩 문구도 공통화했고 고정 평균 시간/실제 상태와 무관한 완료 표시는 제거했다. 네트워크/서버 호출·비교 계산·저장은 변경하지 않았다.
+- PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -sdk iphonesimulator -derivedDataPath /tmp/FitMatchSameGroupRetry -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO build` exit 0. 로그 `/tmp/fitmatch-loading-phase-build-verified.log`. nil coalescing/actor isolation 등 경고가 있으며 무경고 빌드라는 의미는 아니다. 최초 sandbox 빌드는 DNS/캐시 접근으로 exit 74; 캐시 및 권한 확보 후 위 빌드 성공.
+- PASS: git diff --check, protected-scroll 검사. NOT RUN: 단위 테스트, 실기기 UI/E2E. 작은 표시 변경으로 별도 중복 테스트를 추가하지 않았다. 기존 dirty 변경 보존; DB write/배포/commit/push 없음.
+
+## 2026-09-23 비교 후보 동일 comparison group 전용 — 로컬 미커밋, 원격 DB 미적용
+
+- 기준 HEAD `cf24abdb3d4543855df9a4d9aa3e79beb8a7d42e`, branch `connectDB`. 기존 tracked/untracked 변경을 보존했고 commit/push/원격 Supabase write/Edge 배포는 하지 않았다.
+- **Swift:** `FitMatchServerAuthorityCoordinator`는 VNext selectable candidate의 현재 Closet receipt group이 target/session group과 일치하지 않으면 candidate plan을 fail-closed 처리한다. `ShoppingProductViewModel`은 server-approved target group 하나만 batch/authorization으로 통과시킨다. `CompareFlowSheet`는 다른 그룹 picker와 후보 없음 상태의 등록/다른 상품 비교 진입을 제거했고, 빈 옷장·같은 그룹 부재·같은 그룹 실측 부족을 구분 가능한 서버 근거가 있을 때만 각각 안내한 뒤 확인으로 dismiss한다. receipt/동기화/인증 오류는 기존 error/retry 경로로 남긴다. UNMAPPED의 A–G session 선택은 유지하며 전역 mapping을 바꾸지 않는다.
+- **서버 SQL 준비:** `supabase/migrations/20260923110000_same_comparison_group_only.sql`은 20260916000904의 explicit cross-group 완화를 후속 migration으로 되돌린다. mapped/session `find_reference_candidates` 및 두 `authorize_comparison_with_context_v1` overload에서 동일 group을 강제한다. existing `begin_comparison`은 이 eligible/authorization chain을 재사용하므로 이 follow-up은 begin contract/History snapshot을 바꾸지 않는다. 적용 전 현재 함수 MD5 preflight가 다르면 fail-closed 한다. Verify/Rollback과 local regression은 `supabase/sql/20260923_same_comparison_group_only_{Verify,Rollback}.sql`, `supabase/sql/tests/same_comparison_group_only_{Regression,RollbackRegression}.sql`이다.
+- **검증 PASS:** disposable PostgreSQL 17 fixture `fitmatch_all_groups_regression`에서 old cross migration → follow-up migration → same-group regression/Verify를 실행했다. F target에 A/B/C closet만 있을 때 native/session candidate와 authorization 모두 block, A target+A closet은 candidate/authorization 허용을 확인했다. 별도 rollback regression은 네 함수의 reviewed predecessor MD5를 모두 복원했다. `xcodebuild test`/`test-without-building` focused `FitMatchServerAuthorityIntegrationTests`는 iPhone 17 Pro simulator에서 42/42 PASS, Debug app build PASS. `git diff --check`와 protected-scroll 검사는 PASS다.
+- **NOT RUN:** 연결 Supabase `hnkplvyegonlhumlejst`의 현재 deployed MD5/실제 apply/read-back, authenticated RPC→begin/complete E2E, 실기기 UI. SQL 파일은 준비·격리 검증 상태이며 원격 DB 적용 증거가 아니다. 적용 순서가 승인되면 migration → Verify SQL → authenticated same/cross-group RPC→begin smoke 순서로 진행한다.
+
+## 2026-09-23 내 옷장 삭제 — 짧은 스와이프 확인, 긴 스와이프 즉시 삭제 (로컬 미커밋)
+
+- 기준 HEAD `cf24abdb3d4543855df9a4d9aa3e79beb8a7d42e`, `connectDB`. 기존 dirty/untracked 변경을 보존했다. DB/Edge/SQL/비교 정책·실측 mapping·보호 스크롤, commit/push는 변경하지 않았다.
+- **원인/처리:** 기존 SwiftUI `List.swipeActions`는 삭제 버튼 탭과 full swipe를 같은 action으로 호출한다. 따라서 비교 기록이 없는 옷은 짧은 스와이프의 `삭제` 버튼에서도 즉시 삭제됐다. `MyClosetView`의 목록 행에만 작은 swipe wrapper를 두어, 짧은 왼쪽 스와이프는 `삭제` 버튼을 보여 주고 항상 기존 확인 alert를 연다. 실제 왼쪽 이동이 180pt 이상인 긴 스와이프만 기존 `deleteItem` server-first 삭제 경로를 즉시 호출한다. 기존 confirmation 문구와 `FitMatchClosetDeletionAction`의 권한·동기화 삭제 경로는 유지했다.
+- **회귀:** 새 `MyClosetSwipeDeletionInteractionTests`는 수정 전 short/full action wiring 부재로 3 assertion RED였고, 수정 후 `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchManualEditTDD -only-testing:FitMatchTests/MyClosetSwipeDeletionInteractionTests test`가 exit 0, 1/1 PASS(`Test-FitMatch-2026.09.23_06-04-09-+0900.xcresult`)다. 이 test는 source action wiring regression이며 실제 swipe gesture UI E2E는 아니다.
+- **미검증:** 실제 Simulator/실기기에서 List gesture의 터치 우선순위와 180pt 임계값 UX, 실제 Supabase 삭제 E2E는 NOT RUN. 새 test file은 local untracked 상태이며 commit/push하지 않았다.
+
+## 2026-09-23 내 옷장 직접 수정 저장 실패 — 로컬 서버 read-back 보완
+
+- 기준 HEAD `cf24abdb3d4543855df9a4d9aa3e79beb8a7d42e`, `connectDB`. 기존 dirty 변경을 보존했다. DB/Edge/SQL 변경과 commit/push는 하지 않았다.
+- **기준 HEAD 경로:** 직접 등록 편집은 `ClosetItemDetailView → applyChanges(from:) → applyChangesImmediately → FitMatchClosetItemEditAction.saveManual → ModelContext.save`로 끝난다. `saveManualClosetEdit`는 HEAD에 없고 현재 로컬 dirty 변경에만 있다. 따라서 원격 HEAD/기존 설치 빌드는 서버 update RPC를 호출하지 않아 동기화 뒤 수정이 사라질 수 있다.
+- **이번 로컬 보완:** 이미 있던 local-only 서버 경로(list preflight → `fitmatch_vnext_update_closet_item` → list read-back → local apply)에, read-back의 `clientItemID`/manual-row뿐 아니라 수정한 이름·브랜드·사이즈·성별·카테고리 축·메모·선호·만족도·canonical scalar measurements까지 대조하는 gate를 추가했다. 서버가 기존 값을 돌려주면 `.reconciliationRequired`로 입력을 유지하고 성공 닫힘/로컬 반영을 하지 않는다. 원본 snapshot/retailer raw는 이 update RPC의 별도 계약이라 이번 gate에 포함하지 않았다.
+- **회귀:** 수정 전 새 stale read-back test는 잘못 `.saved`를 반환해 RED였다. 수정 후 `manualEditDoesNotReportSavedWhenReadbackRetainsPreviousValues`와 `manualEditAppliesVerifiedServerReadback`은 PASS다. 같은 `FitMatchClosetSyncCoordinatorTests` 실행은 총 47개 중 45 PASS/2 FAIL(exit 65): 기존 `existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime`, `finalStaleAutomaticHydrationCannotUndoFailedV4Resolve`만 실패했다. Debug simulator build는 PASS(exit 0). 실제 Supabase update/read-back 및 실기기 편집 E2E는 NOT RUN.
+
+## 2026-09-22 수동 내 옷장 등록 카테고리 UI 축소 — 로컬 미커밋
+
+- 기준 HEAD `cf24abdb3d4543855df9a4d9aa3e79beb8a7d42e`, `connectDB`. 기존 dirty/untracked 변경 보존. DB/Edge/SQL/비교 정책·점수·실측 mapping·보호 스크롤 변경 및 commit/push 없음.
+- 신규 수동 등록 UI는 성별과 실측값을 유지하고, 상품 출처·브랜드·상품명·세부 카테고리 입력을 숨긴다. 카테고리는 링크 등록과 같은 7개 비교 그룹(`상의`, `아우터`, `바지`, `스커트`, `원피스·한벌옷`, `이너웨어`, `홈웨어·파자마`)만 표시한다. 기존 편집 화면의 입력 구성은 바꾸지 않았다.
+- UI 선택은 기존 taxonomy category/detail tuple로만 안전하게 투영한다. 이 내부 tuple은 실측·기존 저장 계약 호환을 위해 유지하며, comparison-group/server payload/sync 경로는 변경하지 않았다. 신규 수동 등록은 브랜드·상품명·세부 카테고리의 사용자 입력 없이 검증되고, 성별·카테고리·필수 실측 검증은 그대로다.
+- XCTest runner가 filtering된 Swift Testing member를 0개 실행하는 기존 특성 때문에 `ManualClosetCategoryXCTests` XCTest bridge를 추가했다. `/tmp/FitMatchManualCategoryTestRun`에서 `xcodebuild test ... -only-testing:FitMatchTests/ManualClosetCategoryXCTests` 실행 결과 3/3 PASS, result `Test-FitMatch-2026.09.22_23-21-53-+0900.xcresult`. 앱과 test target 컴파일을 포함한 focused run이다. 실기기/수동 등록 서버 E2E는 NOT RUN.
+
+## 2026-09-22 후속 핵심 UX 정적 점검 — 코드 수정 없음
+
+- 추가 확인: 직접 입력한 옷의 수정은 ClosetItemDetailView.applyChangesImmediately → FitMatchClosetItemEditAction.saveManual → ModelContext.save만으로 완료한다. 신규 등록 server-first 수정과 별도인 경로이며, 서버 저장 실패 시 화면과 서버 비교 입력이 어긋날 수 있다.
+- 추가 확인: manual request는 productID=nil/override=nil이다. 등록 projection은 override가 있을 때만 사용자의 세부 종류를 보존한다. 서버 adapter는 shirt_blouse를 shirt로 복원하므로 블라우스 선택이 셔츠로 바뀌는 경로가 있다. clientSnapshot도 원래 detail 선택을 별도 보존하지 않는다. 그룹/실측/최종 점수 오류로 확대 해석하지 않는다.
+- 이전 동기화 테스트 2건은 shouldUpload의 동일 client content 재조회 생략과 충돌한다. 실패 개수만으로 사용자 버그 2건으로 세지 않는다. legacy authority 재검증 범위의 별도 계약 확인이 필요하다. 다른 기기 History 숨김 복구는 배포 계약 근거 부족으로 보류.
+- 현재 소스의 정적 caller 검토이며 이번 턴 새 테스트/빌드/실기기/DB/API 검증 NOT RUN. 신규 P0를 확정하지 못했지만 무결함 보장은 아니다. 코드/DB/commit/push 변경 없음. 기존 작업 보존, 문서만 기록.
+
+## 2026-09-22 핵심 UX 4건 수정 — 로컬 미커밋
+
+- 기준/종료 HEAD `cf24abdb3d4543855df9a4d9aa3e79beb8a7d42e`, `connectDB`. 기존 dirty/untracked 변경 보존. Superpowers systematic-debugging/TDD/verification 및 독립 리뷰 적용. DB/Edge/SQL/비교 정책·점수·보호 스크롤 변경 없음. commit/push 없음.
+- **직접 등록 완료 시점:** Compare/Onboarding/MyCloset/메인 추가 진입의 `AddClosetItemView` 신규 등록은 `FitMatchClosetSyncCoordinator.registerManualServerFirst`를 호출한다. 기존 payload와 projection을 재사용하고 서버 upsert → exact ready read-back → 로컬 저장 후에만 onSaved/닫기/성공 기록. detached draft는 먼저 로컬에 삽입하지 않는다. 기존 편집 onSave는 보존했다.
+- **실패/재시도:** 동일 사용자·clientItemID·요청을 보존하고 accepted write의 재시도는 read-back부터 재개한다. background sync와 lock 공유, 계정 변경/취소 후 projection·성공 안내 금지. 확정 거절 및 요청 전 준비 실패는 입력을 수정할 수 있게 한다. 독립 리뷰에서 발견한 preflight 실패 뒤 입력 잠금도 재현 후 수정했다. 불확실한 쓰기 이후에는 새 ID로 재등록하지 않고 동일 요청 결과를 재확인한다.
+- **빈 옷장:** 서버의 ready Closet receipt 개수를 candidate plan에 전달한다. `CompareFlowSheet`는 서버 확인 전에 로컬 0개만으로 종료하지 않는다. 로컬 active=0 + 서버 count=0일 때 기존 빈 옷장 안내/닫기 UX를 유지하며, receipt 미확인·로컬 projection 누락은 기존 재시도 오류로 처리한다. 서버 후보/eligible/begin 계약은 유지한다.
+- **실측 공백:** `AddClosetItemViewModel.measurements`의 11개 값은 validation과 동일한 trimmed 문자열로 변환한다. `" 50 \n"`의 실측이 0으로 사라지지 않는다.
+- **기록 등록 경쟁:** `FitMatchHistoryClosetPreparationRequestGate`는 단일 in-flight UUID를 관리한다. 다른 기록의 동시 준비를 차단하고 이전 완료가 새 요청을 해제/덮어쓰지 못한다. 화면 종료·계정 변경 시 취소/무효화; 실제 UI 결과 반영도 token/auth/cancellation 확인 뒤 수행한다.
+- RED 실행: `/tmp/fitmatch-core-ux-red.log` exit65, 5 methods 중 4 실패(공백 값 0, 로컬 빈 옷장 조기 종료, 서로 다른 기록 동시 준비, stale token 해제). `/tmp/fitmatch-manual-save-red.log` exit65(서버 확인 없는 성공). `/tmp/fitmatch-manual-preflight-red.log` exit65(수정 가능 거절 대신 unavailableClassification). 기존 사용자 코드를 reset하지 않았다. 최초 함수 selector에 괄호가 없어 0 tests였던 `/tmp/fitmatch-empty-closet-red.log` exit0은 PASS 증거에서 제외했다.
+- **대상 회귀 PASS:** `/tmp/fitmatch-core-ux-final.log` exit0, 81 methods / parameter 포함 85 runs. xcresult `Test-FitMatch-2026.09.22_22-18-13-+0900.xcresult`. ManualClosetUXRegressionTests, History request gate, ServerAuthorityIntegration, ClosetTransportContract, ClosetDeletionTransaction, ContractClosureRegression 및 직접 등록/readback/취소/계정/빈옷장 target을 실행했다. 앱·테스트 target 컴파일 포함. 이 실행에서 parameter로 바뀐 definiteRejection test는 선택되지 않았으며 별도 실행 결과를 아래에 기록한다.
+- **추가 보완 PASS:** `/tmp/fitmatch-manual-final.log` exit0, 2 methods / 3 runs. `manualRegistrationCancellationDuringReadbackDoesNotPublish()`와 `manualRegistrationDefiniteRejectionAllowsCorrectedInput(localPayloadError:)`(SQL 거절/로컬 payload 거절)을 실행했다. xcresult `Test-FitMatch-2026.09.22_22-20-50-+0900.xcresult`. cancellation test Task 반환값을 Void로 정리하여 새 Sendable 경고 제거. 마지막 좁은 실행 log의 warning/error 없음; 전체 target의 기존 경고가 모두 해결됐다는 뜻은 아니다.
+- 최종 `git diff --check` / protected-scroll 검사 PASS. 모든 변경은 로컬이며 기존 작업을 포함한 Git status에서 별도 stage/commit/push하지 않았다.
+- **인접 회귀 FAIL 유지:** `/tmp/fitmatch-core-ux-green.log` 117 methods / 121 runs 중 2 FAIL(119 runs PASS). `existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime`, `finalStaleAutomaticHydrationCannotUndoFailedV4Resolve`는 별도 `test-without-building`에서도 동일 실패(`/tmp/fitmatch-legacy-sync-isolated.log`). 과거 Handoff에도 두 실패가 기록돼 있다. 이번 수정에서 기존 automatic sync의 재검증/skip 조건이나 assertions를 바꾸지 않았다. 과거 기록의 ‘병렬 fixture 불안정’ 설명은 현재 단독 실행 실패로 충분한 원인 설명이 아님; 후속 기존 authority/fixture 계약 검토 필요. 이번 수정 전 동일 전체 suite 실행은 없으므로 전체 baseline 정상이라고 주장하지 않는다.
+- 신규 테스트(untracked): `FitMatchTests/ManualClosetUXRegressionTests.swift`, `FitMatchTests/FitMatchHistoryClosetPreparationRequestGateTests.swift`. 기존 `FitMatchClosetSyncCoordinatorTests`, `FitMatchServerAuthorityIntegrationTests`, `FitMatchSupabaseProductResolverTests`에 관련 회귀 추가/수정; 기존 dirty hunks 보존. Behavior Map의 manual/compare/history 경로 갱신.
+- NOT RUN: 실기기 UX/E2E, 실제 Supabase 쓰기/read-back, 라이브 쇼핑몰 입력, 전체 FitMatchTests suite. 시뮬레이터에서 실행한 것은 deterministic native tests이며 실사용 탭/등록 E2E가 아니다. 다른 기기에서 숨긴 History의 복구 문제와 수동 세부분류 hydration fidelity 의심은 이번 확정 4건 밖이고 배포 근거 미확인이므로 수정하지 않았다.
+
+## 2026-09-22 핵심 UX 읽기 전용 감사 — 수정 미진행
+
+- 기준 HEAD `cf24abdb3d4543855df9a4d9aa3e79beb8a7d42e`, `connectDB`. 기존 tracked/untracked 작업 보존. Superpowers 절차 및 독립적인 등록/결과·기록 검토를 사용했다. 이번 감사에서 production 코드·DB·테스트 파일은 변경하지 않았다.
+- 정적 경로로 확인한 수정 후보: (1) `CompareFlowSheet.loadServerConfirmedReferenceSelection`은 서버 후보 조회 전에 local active Closet count=0이면 종료한다. 초기 동기화가 끝나지 않은 경우 서버 옷장 유무와 다르게 빈 옷장 안내 가능. 실제 기기 race는 미재현. (2) Compare/Onboarding 직접 등록 caller는 `modelContext.save()`만 기다리고 완료 안내/화면 종료한다. 서버 sync 완료를 기다리지 않는다. (3) `AddClosetItemViewModel.measurements`는 trimmed 문자열로 검증하고 untrimmed 문자열로 Double 변환하여 공백 포함 값이 0이 된다. `swift -e`로 Double(" 50 ")=nil, Double("50")=50 확인. (4) History 등록 준비는 history ID별 중복만 막으며 서로 다른 요청이 공유 presentation 상태를 덮어쓸 수 있다. 마지막 사용자 선택 보존용 generation/단일 작업 보호가 없다. UI 경쟁 재현은 미실행.
+- 추가 확인 필요: History hydration은 기존 로컬 row를 유지하며 새 server row만 추가한다. 서버 숨김 후 다른 기기/로컬 저장 실패 복구 시 visibility reconciliation 누락 가능. 현재 배포 RPC의 숨김 반환 계약은 이번에 확인하지 않았으므로 확정된 서버 결함으로 보고하지 않는다. 서버 응답 누락을 곧바로 삭제로 처리하면 안 된다.
+- 검증 PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -derivedDataPath /tmp/FitMatchPerformanceAppBuild -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -only-testing:FitMatchTests/FitMatchContractClosureRegressionTests -only-testing:FitMatchTests/FitMatchClosetDeletionTransactionTests -only-testing:FitMatchTests/FitMatchAuthSessionStoreTests test`, exit 0. 25 test methods / parameter 포함 28 runs, 0 failures. xcresult `/tmp/FitMatchPerformanceAppBuild/Logs/Test/Test-FitMatch-2026.09.22_21-52-05-+0900.xcresult`, log `/tmp/fitmatch-core-ux-audit-tests.log`. 기존 테스트 PASS가 위 미포함 시나리오의 정상 증거는 아니다.
+- `git diff --check`, protected-scroll PASS. 실기기 UX 재현/retailer live E2E/DB 조회 NOT RUN. commit/push 없음. 다음 수정 우선순위: 서버 저장 완료 전 성공 안내 → local 빈 옷장 조기 종료 → 공백 실측 정규화 → History 비동기 선택 보존. 서버 권한·비교 정책·점수·보호 스크롤 변경 금지.
+
+## 2026-09-22 비교 목록 ‘근거 부족’ 복원 수정 (로컬 미커밋)
+
+- HEAD `cf24abd`, 기존 dirty 변경 보존. 아래 원인 감사의 canonical 복원 누락을 수정했다. `FitMatchSupabaseProductResolver.mapClosetItem`은 sourceRecords와 canonicalRecords를 함께 보존한다. 원본은 계속 unknown/unknownDefinition이며 서버 canonical projection만 비교 가능한 상태다. `MeasurementResolver.sourceDisplayRows`는 원본이 있으면 `fitmatch_vnext_snapshot` projection을 원본 화면에 중복 표시하지 않는다. 원본 없는 legacy canonical-only 화면은 유지한다.
+- `RecommendationService`는 로컬 preview 최소 개수를 서버의 비교 불가 조건처럼 안내하지 않으며, `CompareFlowSheet` 카드의 예상 점수 부재 문구를 ‘선택 후 확인’으로 바꿨다. embedded preview policy 자체·최종 begin 승인·점수·가중치·DB contract는 변경하지 않았다. 서버 후보 선택 및 최종 재검증 경로도 유지한다.
+- 신규 `FitMatchTests/ClosetPreviewMeasurementRegressionTests.swift`는 untracked 로컬 파일이다. UNIQLO/MUSINSA/ZARA별 DTO → production map → production authoritative registration SwiftData projection → local comparison을 검사한다. raw 값/개수/미승인 상태, canonical 복원/차이값, 원본 화면 중복 방지, legacy 표시, 단일 항목 preview가 ‘최소 2개 필요’로 서버 거절을 암시하지 않는 안내를 검증한다.
+- RED: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -derivedDataPath /tmp/FitMatchPerformanceAppBuild -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -only-testing:FitMatchTests/ClosetPreviewMeasurementRegressionTests test` exit 65. 두 test method(쇼핑몰 parameter 포함 4회)가 canonical mapped count 0 및 원본+projection 중복 표시로 실패. `/tmp/fitmatch-preview-red.log`, xcresult `Test-FitMatch-2026.09.22_21-32-15-+0900.xcresult`.
+- GREEN: 같은 명령에 `-only-testing:FitMatchTests/FitMatchClosetTransportContractTests -only-testing:FitMatchTests/MeasurementPolicyConsolidationTests` 추가, exit 0. 최종 19 test methods/parameter 포함 21회 PASS, 실패/skip 0. 실제 SwiftData 복원 검증까지 추가한 최종 로그 `/tmp/fitmatch-preview-hydration.log`, xcresult `Test-FitMatch-2026.09.22_21-39-55-+0900.xcresult`. 앱·test target 컴파일 포함. diff check/protected scroll PASS. 전체 suite·실기기·live retailer 최종 비교 E2E는 NOT RUN. 기존 전체 suite 실패를 해결했다고 주장하지 않는다.
+- DB read/write/migration/commit/push 없음(직전 감사의 DB 조회와 별개). 이 작업 production 변경은 resolver, measurement presentation, preview 문구, card 문구 네 파일이다. 이전 empty-local-Closet guard 등 기존 미커밋 변경은 이번에 수정하지 않았다. 기존 설치 앱에는 반영되지 않으므로 새 빌드 설치 후 서버 옷장 재조회가 필요하다.
+
+## 2026-09-22 비교 목록 ‘근거 부족’ 원인 감사 (수정 전)
+
+- 사용자 첨부 `9af295da-57e3-4feb-9ec5-76dc774abf2c/pasted-text.txt`: UNIQLO E488793 수집 7사이즈/35실측, observation accepted/promoted, runtime A/ready, Closet 2벌, 서버 후보 1/차단 1. 로그는 후보 표시에서 끝나며 eligible/begin/complete 또는 선택 후 실패 증거는 없다.
+- 현재 HEAD cf24abd + 기존 미커밋 변경을 읽기 전용으로 추적. 공통 `FitMatchSupabaseProductResolver` Closet adapter가 sourceMeasurements가 있으면 canonicalRecords 대신 모두 unknown/unknownDefinition인 sourceRecords만 measurementRecords에 전달한다. Closet sync가 이를 복원하고 목록 preview `RecommendationService.makeClosetComparisonBatchSummary`는 이 records만 `MeasurementComparisonEngine.compare`에 전달하므로 승인된 canonical 값이 별도 measurements에 존재해도 preview 사용 항목은 0개가 된다. MUSINSA/UNIQLO/ZARA 공통 경로이며 쇼핑몰별 현재 실상품 재현을 모두 실행한 것은 아니다.
+- 연결 Supabase READ ONLY SELECT 확인: 현재 active Closet 셔츠 XXL은 raw 5 + canonical 5(가슴/어깨/뒷기장/등중심소매/목둘레), 바지 XL은 raw 6 + canonical 6. 셔츠 raw resolution_status는 5개 모두 RESOLVED. DB 실측 부재나 이번 파서 병렬화가 직접 원인이라는 증거는 없다.
+- 별도 불일치: 목록 preview embedded policy는 상의 등 최소 2개 및 필수 부위 규칙을 적용한다. 최종 비교는 begin snapshot의 minimumCommon 및 서버 승인 evidence를 사용한다. 원본 전체 표시를 유지하면서 preview 입력을 검증된 canonical과 분리하고 서버 승인과 목록 안내의 불일치를 해소해야 한다. unknown 원본을 임의 mapped로 승격하면 안 된다.
+- 현재 카드 탭은 preview evidenceState가 아니라 서버 후보 isSelectable로 허용된다. 따라서 ‘근거 부족’ 표시 결함은 확인했으나 최종 비교 차단/결과 실패는 이번 로그로 확인 불가. 앱/DB 변경, DB mutation, 새 build/test/실기기 E2E는 NOT RUN. 소스 추적·DB bounded SELECT 및 보호 스크롤 검사 수행. 이 감사에서는 인계 기록만 추가했다.
+
+## 2026-09-22 현재 상태 — 상품 수집 병렬화 최종 안정화 (로컬 미커밋)
+
+- 기준 확인: local HEAD와 `origin/connectDB`는 모두 `cf24abdb3d4543855df9a4d9aa3e79beb8a7d42e`다. 이번 작업의 변경은 아직 로컬 미커밋이며 commit/push, DB/Edge/migration 변경은 하지 않았다. 아래의 이전 current-state 기록은 당시 HEAD/실행 상태를 보존한다.
+- **확정·수정된 ZARA 취소 결함:** page와 speculative `v1` guide가 모두 대기 중인 결정적 fixture에서 부모 parse를 취소하면, 수정 전 guide가 page 종료 전 취소되지 않아 RED(4개 중 3 PASS/1 FAIL, watchdog timeout)였다. `ZARAParser.parseResolved`의 page 대기를 cancellation handler로 감싸 guide task 수명을 부모 취소와 연결하고, page가 비협조적으로 늦게 끝나도 details/exact guide를 시작하지 않도록 `Task.checkCancellation()`을 추가했다. 이후 같은 ZARA suite는 4/4 PASS다. 정상 `v1` 선조회와 검증된 redirect의 A→B exact guide 병렬 경로는 유지했다.
+- **테스트 안정화:** tracked `UniqloParserConcurrencyTests`, `MusinsaParserConcurrencyTests`, `ZARAParserConcurrencyTests`, `FitMatchRetailerAPIEvidenceTests`의 actor-event 대기를 2초 watchdog이 있는 bounded wait로 바꿨다. `Task.yield()` 한 번이나 무한 polling을 성공·실패 판정으로 쓰지 않고, timeout 때 pending task/continuation을 취소·drain한다. 별도 untracked helper는 만들지 않고 helper를 tracked UNIQLO test 파일에 둔다. 현재 `UniqloParserConcurrencyTests` fixture의 `sales` 누락은 최신 availability DTO의 필수 field와 맞춰 test fixture만 보정했다. `FitMatchSupabaseProductResolverTests`의 `.zara`/zero-argument `GarmentMeasurements` compile drift도 현재 production model에 맞게 test-only 보정했다.
+- **실행 결과:** focused XCTest 4 suite는 `xcodebuild ... -only-testing:FitMatchTests/{UniqloParserConcurrencyTests,MusinsaParserConcurrencyTests,ZARAParserConcurrencyTests,FitMatchRetailerAPIEvidenceTests} test`로 17/17 PASS(exit 0; result `Test-FitMatch-2026.09.22_12-17-14-+0900.xcresult`). 현재 Debug app build PASS(exit 0). 전체 `FitMatchTests`는 876개 중 818 PASS/16 FAIL/42 skipped(exit 65; result `Test-FitMatch-2026.09.22_12-06-47-+0900.xcresult`)다. 실패에는 Closet deletion/sync, Headless journey call ordering, server authority integration 및 기존 ZARA category/raw-display expectation이 포함된다. 이번 변경 전 전체 baseline은 없으므로 이 16개를 모두 pre-existing이라고 단정하지 않았으며, 이번 수정 범위 밖이라 변경하지 않았다.
+- **미검증:** 실제 기기·live retailer URL→상품 카드/`다음` E2E 및 before/after wall-clock은 NOT RUN이다. OCR/WebView long-tail, DB canonical/runtime 중복 계산, Edge observation/runtime 통합은 이번 작업에서 미진행이다. 앱/서버 권한·identity/측정 정책은 변경하지 않았다.
+- **빈 내 옷장 비교 종료 (로컬 미커밋):** `CompareFlowSheet`는 서버 target authority 확인 뒤 active Closet projection이 0벌이면 후보 조회·eligible·begin으로 진행하지 않는다. “내 옷장에 옷이 없어요” 알림의 확인 동작이 비교 sheet를 닫는다. 옷은 있으나 서버 승인 후보가 0개인 기존 empty-candidate 화면은 바꾸지 않았다. `CompareFlowRouting.shouldTerminateComparisonForEmptyCloset` regression을 추가했다. 종료 조건을 임시로 `false`로 바꾼 RED에서는 owner suite가 62개 중 60 PASS/2 FAIL(exit 65)이며 새 test가 정확히 실패했다. 올바른 조건으로 원복한 GREEN은 62개 중 61 PASS/기존 `allZeroRetailerMeasurementsBlockLinkPreparationButKeepRuntimeSizes` 1 FAIL(exit 65)이다. Debug build PASS. 전체 `FitMatchTests` 재실행은 877개 중 819 PASS/16 FAIL/42 skipped(exit 65)로 직전 16개 실패 목록과 동일하며, 이번 변경 전 전체 baseline이 없어 전부 pre-existing이라고 단정하지 않았다. DB/Edge/commit/push/실기기 E2E는 수행하지 않았다.
+
+## 2026-09-22 현재 상태 — 상품 수집 병렬화 회귀 재검증 (로컬 후속 수정, 미커밋)
+
+- 기준 확인: local/origin `connectDB`는 모두 `94a5e491fc9108d82e4a81c7d47a124d393203db`다. 성능 구현 `1fcb720da4ce08c43f479597c614c79790c6e72c`는 이미 remote에 반영돼 있으며, 이 항목의 Swift/test 후속 수정은 로컬 미커밋이다. commit/push/DB·Edge 변경은 하지 않았다. 아래의 과거 `로컬 미커밋` 기록은 당시 상태이며 현재 remote 상태 증거가 아니다.
+- **MUSINSA 취소 수정:** `MusinsaProductMetadataParser.parse`는 `CancellationError`와 `URLError.cancelled`를 HTML metadata recovery가 아닌 취소로 다시 던진다. 일반 HTTP/JSON 실패의 기존 HTML recovery는 유지한다. 실제 caller 둘은 `try await`로 계약을 맞췄다.
+- **ZARA redirect/cancellation 수정:** 검증된 page가 최초 `v1=A`와 다른 `catentryID=B`를 확인하면, 사용하지 않을 A guide task를 취소하고 완료를 기다리지 않은 채 B guide를 시작한다. A와 일치할 때는 기존 A guide를 한 번만 소비한다. A guide 대기 중 부모 취소도 guide task에 전달한다. internalProductID/catentryID 검증, details 시작 시점, HTTP/WebView recovery는 변경하지 않았다.
+- **UNIQLO JSON projection 보정:** product/stock availability transport은 private typed-decode 경로만 사용하고 capture가 밖으로 나가지 않는다. 이 두 live response만 generic `FitMatchJSONValue` projection 생성을 생략한다. exact `body`/timestamp/HTTP status와 typed availability decode는 보존하며 size-chart/evidence capture의 projection은 그대로 한 번 재사용한다.
+- **회귀 test inventory:** `FitMatchTests/UniqloParserConcurrencyTests.swift`, `MusinsaParserConcurrencyTests.swift`, `ZARAParserConcurrencyTests.swift`, `FitMatchRetailerAPIEvidenceTests.swift`는 로컬 untracked이며 `.gitignore` 대상이 아니다. `FitMatchTests`는 Xcode `fileSystemSynchronizedGroups` target이어서 프로젝트 파일 수정 없이 target에 포함된다. controlled loader로 UNIQLO 요청 시작/횟수/선택/취소, MUSINSA arrival/fallback/cancellation, ZARA guide ordering/cancellation/합성 redirect identity, evidence byte/projection을 검사한다. 아직 Git/remote에는 없다.
+- **실행 결과:** 변경 Swift/test source `swiftc -parse` PASS, iOS Debug app target build (`xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -derivedDataPath /tmp/FitMatchProductLoadBuild -sdk iphonesimulator -configuration Debug build`) PASS, `git diff --check` PASS, protected-scroll 검사 PASS. Focused XCTest는 PASS 아님: 먼저 동일 target에서 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111` (`.zara`, `GarmentMeasurements()`, key-path inference) 때문에 test 실행 전 exit 65였고, 후속 재시도는 1.9 GiB 여유 공간이 result bundle 생성 전에 소진돼 실행 결과가 남지 않았다. SwiftPM release runner build도 manifest가 app View source 일부를 제외해 기존 type 오류로 FAIL이며 app target 결과를 대체하지 않는다. XCTest execution·실기기/라이브 retailer timing은 NOT RUN/BLOCKED다.
+- **고정 JSON microbenchmark (로컬, user load 아님):** 33,510-byte object body 1,000개를 두 번 projection할 때 기준 lazy decode는 read 23.89s/최대 RSS 6.0MB, 기존 eager 재사용은 construct 12.23s + reads 0.12s/최대 RSS 226.1MB였다. projection을 소비하지 않는 수정된 data-only capture는 0.339s, projection 0, 최대 RSS 3.6MB였다. 따라서 반복 evidence projection은 유지하고 UNIQLO product/stock 두 private path만 보정했다. 실제 URL→`다음` 개선 시간은 측정하지 않았다.
+- **남은 범위:** DB canonical/runtime 공유와 Edge observation/runtime 통합은 이번 범위 밖이며 미진행이다. OCR/WebView 자체 지연과 physical-device wall-clock은 별도 측정이 필요하다.
+
+## 2026-09-22 상품 수집 병렬화·원본 JSON 재사용 — 로컬 미커밋
+
+- 시작 기준: local/origin `connectDB` 모두 `477791404ec2e12f37feb9c96978547a6004dda0`; 기본 status에는 tracked dirty가 없었다. 이후 명시적 untracked 확인에서 기존 자료가 다수 발견돼 그대로 보존했으며, 이번 regression test source도 아직 untracked다. 기존 commit/remote/DB 상태를 변경하지 않았고, 이번 변경은 아직 로컬 미커밋이다.
+- **UNIQLO:** `UniqloSizeAPIParser.parseWithGenericColorFallback()`가 서로 다른 preferred/generic chart를 동시에 시작하고, exact product/color/PLD가 이미 확보된 뒤 product/stock도 겹쳐 받는다. 같은 chart URL은 1회만 요청한다. 기존 larger-chart 우선·동률 preferred·한쪽 실패 fallback·stock UNKNOWN·raw response capture 및 cancellation 의미는 유지한다.
+- **MUSINSA:** exact product ID resolve 뒤 metadata와 raw `/actual-size` HTTP receipt를 동시에 시작한다. actual-size semantic parse는 metadata category 수신 뒤 기존 함수로 수행하므로 upper/lower 추측은 추가하지 않았다. detail 실패의 HTML recovery, actual-size 실패 capture 및 image/HTML size recovery를 유지한다.
+- **ZARA:** product page가 exact identity를 검증하면 selected `v1` guide 완료를 기다리지 않고 exact `catentryID` details를 시작한다. guide는 계속 병렬 수신되지만 기존 verified `catentryID` 대조를 통과할 때만 사용하며 internalProductID와 catentryID를 혼동하지 않는다.
+- **Evidence:** immutable `FitMatchRetailerAPIResponseCapture`가 생성 시 object projection을 1회 만들고 parser 확인·promotion guard·observation encoding이 이를 재사용한다. original `body`, request metadata/collected timestamp, unknown JSON fields와 final JSON envelope는 바꾸지 않는다. malformed/non-object body의 existing omission은 유지한다.
+- 추가 regression source: `UniqloParserConcurrencyTests`, `MusinsaParserConcurrencyTests`, `ZARAParserConcurrencyTests`, `FitMatchRetailerAPIEvidenceTests`. 각각 실제 request receipt 시작 겹침, 기존 fallback/실패, cancellation 또는 evidence 의미 보존을 대상으로 한다.
+- **5순위 DB READ ONLY:** Production `hnkplvyegonlhumlejst`의 applied migration 목록 및 함수 정의를 조회했다. `get_product_runtime_for_swift`가 base runtime의 native canonical/readiness를 만든 뒤 context canonical으로 size를 덮고 effective readiness에서 다시 계산하는 중복은 확인했다. 하지만 authenticated RPC `EXPLAIN ANALYZE`는 관리자 읽기 연결에 user JWT가 없어 `Authentication required`로 차단됐다. 현재 owner와 source/deployed preimage가 섞인 상태에서 migration을 추측으로 만들지 않았고, DB write·migration apply·data mutation은 하지 않았다. isolated schema fixture/contract snapshot으로 runtime JSON 동등성·계산 횟수를 검증한 뒤에만 후속 migration을 준비한다.
+- **6순위:** 5순위 isolated DB 검증 선행 조건이 충족되지 않아 Edge observation/runtime 계약 통합은 시작하지 않았다. 기존 two-step authority contract도 변경하지 않았다.
+- PASS: changed Swift/test source `swiftc -parse`; `git diff --check`; cached dependency 기준 iOS Debug app build (`xcodebuild ... -derivedDataPath /tmp/FitMatchZARAAppBuild ... build`). PASS는 parser/앱 컴파일 증거이며 device/network latency나 app E2E가 아니다.
+- BLOCKED: focused XCTest command는 target 전체 compile 중 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111`의 `.zara`, `GarmentMeasurements()` 및 key-path inference 오류로 test 실행 전 실패(exit 65). 새 test execution PASS 아님. 신규 DerivedData build는 package DNS failure도 발생했으나 기존 cache build로 app compile을 확인했다.
+- **DEBUG 성능 관측:** 기존 `FitMatchRequestTrace`/`FitMatchDebugLogger`에 같은 trace ID로 UNIQLO(실측표·상품·재고), MUSINSA(상품·실측·HTML 복구), ZARA(페이지/WebView·v1 guide·selected guide·details) HTTP span과 `쇼핑몰 수집·파싱`, `상품 관측 payload 생성` span을 추가했다. URL/product/user/measurement payload는 로그에 넣지 않는다. 기존 DB/Edge operation duration과 합쳐 foreground/background를 trace origin으로 분리해 병렬 요청의 합산값이 아닌 실제 wall-clock으로 점검할 수 있다.
+- NOT RUN: 실제 MUSINSA/UNIQLO/ZARA before/after latency, physical-device URL→`다음` timing, live retailer responses, authenticated Edge/runtime timing, Production/isolated DB runtime optimization, app E2E. 새 remote telemetry는 추가하지 않았다.
+- `FitMatch Behavior Map.md`를 변경된 provider receipt ordering과 authority gate로 갱신했다. protected scroll file/call sites는 변경하지 않았다. commit/push 없음.
+
+## 2026-09-22 현재 로컬 소스 커밋·푸시 완료
+
+- 사용자 요청에 따라 현재 로컬 변경 중 앱 소스/테스트, `AGENTS.md`, `FitMatch Behavior Map.md`, 신규 권위 문서 `Docs/FitMatchMeasurementPolicy.md`, 관련 Supabase migration/Verify/Rollback을 커밋했다.
+- 커밋: `f323aa5` (`perf: streamline FitMatch product and comparison flows`). `origin/connectDB` 푸시 성공.
+- `.build`, outputs, QA/감사 산출물, 준비만 된 별도 SQL 및 기타 untracked 자료는 스테이징하지 않고 보존했다. 이번 커밋은 DB에 migration을 적용한 것이 아니며, 코드·SQL 소스 변경을 게시한 것이다.
+- 검증: staged diff check PASS, 보호 스크롤 검사 PASS. 전체 XCTest/실제 앱 E2E는 이번 커밋 작업에서 실행하지 않음. 기존 테스트 컴파일 차단 및 미검증 범위는 아래 기록을 따른다.
+
+## 2026-09-22 현재 로컬 소스 커밋·푸시 완료
+
+- 사용자 요청에 따라 현재 추적된 retailer parser/measurement identity, product flow, Behavior Map 및 handoff 변경을 커밋했다.
+- 커밋: `1fcb720` (`fix: preserve retailer measurement identities`). `origin/connectDB` 푸시 성공.
+- 검증: 커밋 전 `git diff --check` PASS, 보호 스크롤 검사 PASS. 전체 XCTest/build 및 실제 retailer UI E2E는 이번 커밋 작업에서 실행하지 않음.
+
+## 2026-09-21 — 상품 불러오기·비교 경로 지연 축소와 요청 추적 (로컬 소스)
+
+- 범위는 P1~P3의 확인된 중복/직렬 구간과 DEBUG 성능 관측이다. 연결 Supabase 및 Edge Function에는 읽기·쓰기·배포를 수행하지 않았고 migration/정책/점수/비교 권한은 변경하지 않았다. commit/push 없음.
+- **P1 Closet sync:** `ContentView`의 timestamp 기반 task key를 의미 있는 로컬 mutation fingerprint로 교체했다. 같은 사용자·같은 fingerprint의 겹친 동기화는 한 pass를 공유하고, unchanged linked Closet row는 server-authoritative runtime/group/measurement 차이만으로 update하지 않는다. delete/upsert/reference mutation이 실제로 있었을 때만 추가 list receipt를 받는다. linked generic update는 creation과 같은 `use_server_measurements=true`, 빈 `measurements` snapshot contract를 사용한다. 이로써 `Linked Closet snapshot requires canonical measurements`의 반복 update 원인을 제거했고, 결정적 계약 오류는 로컬 입력을 보존한 채 내용 변경/명시 retry 전까지 반복 전송하지 않는다.
+- **P2 Compare:** target/reference authority와 current Closet list처럼 서로 독립인 read만 병렬 시작한다. candidate, eligible sizes, authorization, begin은 target identity·session context 확인 뒤의 기존 server-authoritative 순서를 유지한다. stale/cancel/user guards 및 fingerprint 검증을 우회하지 않았다.
+- **P3 Retailer:** ZARA는 검증 전 product page와 selected `v1` size guide, 그리고 검증 후 details와 required guide를 병렬 처리한다. `v1` guide는 page가 exact `catentryID`를 확인할 때만 소비한다. UNIQLO의 exact identity 뒤 product/stock 병렬은 기존 구현을 유지했다. MUSINSA는 metadata가 actual measurement semantic 해석에 필요하므로 안전한 독립 read가 아니어서 직렬 경로를 유지했다.
+- **P4:** Edge `product-observation`은 ingestion 후 authoritative runtime을 반환하지 않는 현재 계약이다. Production/Edge 배포 승인 없이 response contract를 바꾸지 않았다. 따라서 ingest→runtime roundtrip 제거는 **BLOCKED (server contract/deploy approval required)** 이며 로컬 Swift `resolveWithRuntime`의 현재-response 재사용 범위 이상으로 확장하지 않았다.
+- **UX:** `LinkClosetRegistrationView`는 retailer parser 완료 중간 카드를 만들지 않고, 최종 server registration context가 준비된 `.loaded` state에서만 카드를 표시하고 `다음`을 활성화한다. "서버에 상품 저장 중" 중간 문구는 제거했다.
+- **성능 로그:** `FitMatchRequestTrace`가 product load/comparison/Closet registration/background sync별 짧은 trace ID와 origin을 전달한다. `timedDatabaseCall`은 payload/상품/사용자/실측 없이 `edge.product-observation`, runtime, Closet list/upsert/update, candidates, eligible, begin/complete/history의 operation/state/duration을 기록한다. 추가 span은 `공유 링크 진입→후보 표시`, `상품 진입→후보 준비`, `선택 옷 서버 허가 준비`, `내 옷 선택→비교 시작`, `비교 결과 저장`, `상품 불러오기→다음 준비`, `백그라운드 옷장 동기화`다. live before/after 숫자는 아직 측정하지 않았다.
+- 회귀 테스트 추가: `FitMatchClosetSyncCoordinatorTests.unchangedClosetRowDoesNotIssueUpdateButMeaningfulLocalEditDoes`, linked update JSON의 `use_server_measurements`/empty canonical array contract test. 새 source `swiftc -parse` PASS. iOS app Debug build (`/tmp/FitMatchPerformanceAppBuild`) PASS (기존 warnings만). Focused XCTest command는 target 전체 컴파일 중 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111`의 `.zara`, `GarmentMeasurements()` 및 key-path inference 오류로 실행 전 중단(명령 exit 65); 신규 테스트 실행 PASS 아님. 앞서 이번 변경에서 발견한 coordinator/ZARA name collision은 즉시 수정 후 앱 build PASS로 확인했다.
+- NOT RUN: 실제 MUSINSA/UNIQLO/ZARA 네트워크 latency before/after, 실기기 Link Closet/Compare E2E, Production trace/Edge runtime contract 변경. `git diff --check` 및 protected scroll 검사는 최종 변경 후 다시 실행해야 한다.
+
+## 2026-09-21 — 비교 권한 확인의 연속 runtime 중복 조회 제거
+
+- `FitMatchSupabaseDomainClient.resolveWithRuntime`가 이번 요청에서 조회한 runtime과 resolution을 함께 반환한다. Coordinator는 promotion이 없을 때만 이 동일 응답을 사용하고, promotion 뒤에는 반드시 재조회한다. 장기/전역 캐시 없이 candidate 조회/eligible/begin/complete 및 Closet 저장 확인을 유지했다. 기존 다른 remote 구현은 기본 구현으로 기존 조회 동작을 유지한다.
+- 회귀 테스트 추가: current 응답 재사용 시 추가 runtime 조회 0회, changed/promotion 시 1회 재조회. 비교 정책·실측·사용자 선택·DB 변경 없음. Behavior Map 갱신.
+- PASS: 변경 Swift parse, iOS Simulator 대상 앱 build (`/tmp/fitmatch-runtime-reuse-app-build.log`), diff check/protected scroll. BLOCKED: XCTest 실행 — build-for-testing이 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111` 컴파일 오류로 실패 (`/tmp/fitmatch-runtime-reuse-build.log`). 신규 테스트 실행 PASS 아님. NOT RUN: 실기기 속도 재측정/E2E. 이전 로그의 연속 중복 요청 약 1.4~1.6초는 개선 가능 구간이며 실측 개선값이 아니다.
+- 이번 변경: Coordinator, SupabaseProductResolver, ServerAuthorityIntegrationTests, Behavior Map, 이 인계 문서. 기존 dirty 변경 보존, DB write/commit/push 없음.
+
+## 2026-09-21 — 내 옷장/등록 사이즈 한글 표시 보완
+
+- 원인: `MyClosetView`와 `ClosetItemDetailView`가 저장된 `item.sizeName`을 직접 표시했고, 등록의 `ProductSizeSelectionGrid`도 영문 size token을 그대로 표시했다. 저장값/식별값을 한글로 변환하면 source-size 매칭과 서버 payload가 바뀔 수 있어 화면 표기만 분리했다.
+- `SizeTokenNormalizer.koreanDisplayName(for:)`와 `String.fitMatchKoreanSizeDisplayName`을 추가했다. `S/M/L`, `XS~5XL`, `FREE/ONE`, full-word `Small/Medium/Large`만 한글 표기하며 숫자·미확인 원문은 그대로 표시한다. 목록 카드, grid 카드, 상세 요약, 내 옷장 추가의 grid/menu/선택 실측 안내가 이를 사용한다.
+- PASS: 변경 Swift parse, `git diff --check`, protected scroll check. NOT RUN: 앱 화면 E2E. iOS app build는 새 DerivedData에서 package DNS가 막혔고, 기존 캐시는 CoreSimulator/SwiftPM cache permission 오류로 FAIL했다. commit/push/DB write 없음.
+
+## 2026-09-21 — Terra 완료사항 제한 재확인
+
+- 독립 재확인: 최신 Swift diff에서 fresh observation ID → registration context → upsert source_observation_id 전달을 확인. 연결 Supabase READ ONLY에서 raw/manifest 두 테이블 존재, public upsert의 group-aware owner 유지, public list comparison_group 유지, private wrapper의 base 보존, native/context canonical 양수 필터를 확인했다.
+- snapshot manifest 현재 0건이므로 실제 연결 DB의 등록 성공/원본 read-back은 이번 확인으로 증명하지 않았다. Terra의 LocalRegression은 resolver 등 일부 대체 함수를 사용하는 격리 fixture이며 실제 앱 E2E와 구분한다. focused XCTest target 컴파일 차단 기록은 해소됐다고 판정하지 않는다.
+- PASS: 위 코드/배포 계약 정적 및 읽기 전용 확인, git diff --check, protected scroll. NOT RUN: 이번 재확인에서 build/XCTest/실앱 등록·비교. 코드/SQL/DB 변경 없이 인계 기록만 추가했다.
+
+## 2026-09-21 — 원본 Closet snapshot migration 호출경로 보완 및 격리 검증
+
+- `20260921110000_closet_raw_measurement_snapshots.sql`은 public upsert/list를 구형 private 함수로 바꾸지 않는다. 현재 public bridge가 호출하는 `upsert_closet_item_with_group_for_swift` 및 `list_closet_items`를 base로 보존하고, raw snapshot wrapper만 그 뒤에 원자적으로 연결한다. public list의 `comparison_group`은 그대로이고 `source_measurements`만 추가된다.
+- Swift는 fresh retailer promotion에서 받은 `observation_id`를 transient Closet registration context와 upsert JSON `source_observation_id`로 전달한다. linked save는 이 receipt와 exact product/variant/size를 DB에서 대조한다. 기존 snapshot manifest가 있으면 같은 receipt/identity만 idempotent retry로 허용하며, 이후 ingestion receipt의 새 raw row는 추가하지 않고 다른 receipt 재사용은 거절한다.
+- 0/음수 raw value는 exact observation receipt/source snapshot에는 보존하되 canonical native/context route에서 `raw_value > 0`으로 제외한다. semantic UNKNOWN code의 numeric raw는 원본으로 보존하며 comparison metric 승격은 하지 않는다.
+- Verify/Rollback과 `supabase/sql/tests/closet_raw_measurement_snapshots_LocalRegression.sql`을 갱신했다. rollback은 snapshot 또는 retained nonpositive raw가 있으면 거절하고, 데이터가 없는 경우 group-aware public routes를 복원한다.
+- PASS: 지정 바이너리 `/usr/local/opt/postgresql@17/bin/initdb`/`pg_ctl`로 격리 PostgreSQL 17 실행. migration apply → zero raw receipt 보존/canonical 제외 → public upsert(group B) → list(group+source rows) → same receipt retry → later receipt append 방지 → changed receipt fail-closed → other-user list block → rollback group bridge 복원 모두 PASS. `swiftc -parse` changed Swift/tests, iOS production `xcodebuild build -sdk iphonesimulator` PASS, `git diff --check`/protected scroll PASS.
+- FAIL(기존 test target): `FitMatchClosetTransportContractTests` focused XCTest는 target 전체 compile 중 기존 `FitMatchSupabaseProductResolverTests.swift:63/72/109-111`의 `.zara`, `GarmentMeasurements()` 및 key-path inference 오류로 시작하지 못했다. 이번 변경 파일 오류는 출력에 없음. 앱/연결 DB E2E NOT RUN.
+- 연결 Supabase `hnkplvyegonlhumlejst` 적용 전 READ ONLY 확인에서 deployed `canonical_measurements_for_size_with_context`의 WHERE가 한 줄 형식이라 기존 migration preimage와 달랐다. migration/rollback은 multiline·inline 두 형식을 모두 보존하는 최소 dynamic replacement로 보완했고, 지정 PostgreSQL 17 격리 regression을 재실행해 PASS했다.
+- **2026-09-21 적용 완료(사용자 명시 승인):** `20260921110000_closet_raw_measurement_snapshots.sql`을 연결 Supabase에 적용. Verify SQL의 nonpositive canonical count `0`, postflight에서 두 source snapshot table 존재, group-aware owner 보존, public list `comparison_group` 보존 및 `source_measurements` 추가, native/contextual canonical의 nonpositive 제외 모두 PASS. 해당 테이블은 private schema RLS enabled + public/anon/authenticated privilege revoke 상태다. 기존 전역 security advisor 항목 외에 새 table 정책 누락 INFO 2건은 private table에 service_role만 권한을 주는 의도된 설계다. commit/push 없음.
+
+## 2026-09-21 재확인 16:13 KST — 원본 snapshot 미적용 및 migration 호출경로 충돌
+
+- 사용자 재검토 요청으로 현재DB 재조회. closet_item_source_measurements 없음. 실제 public list→internal list는 source_measurements 키를 반환하지 않음. Swift는 해당 키를 소비하도록 구현됐으나 서버 저장·재조회 전체 완료는 아님.
+- 더 중요한 추가 확인: 현재 public upsert는 upsert_closet_item_with_group_for_swift를 호출하고, product-linked measurements 경로는 apply_linked_closet_snapshot_for_swift로 분기. 현재 public list는 comparison_group을 덧붙임.
+- 준비된 20260921110000 migration은 public upsert를 upsert_closet_item_for_swift로 직접 연결하고 public list의 comparison_group wrapper도 제거한다. 따라서 기존 group/linked-snapshot 계약을 우회할 위험이 있어 그대로 적용 권고 금지. 현재 active wrapper를 유지한 raw snapshot 통합 및 focused 검증이 먼저 필요.
+- 읽기 전용/정적 확인만 수행. DB/App 수정·추가 테스트 실행 없음. 이전 'migration 검증·적용 필요'를 구체화: 단순 적용이 아니라 호출경로 보완 필요.
+
+## 2026-09-21 사용자 적용 후 최소 확인 — 일부 완료
+
+- HEAD 4e1aedc. DB/App 수정 없이 읽기 전용 최소 점검. 실측 semantic repair 함수3개는 CRLF 정규화 후 준비본 hash와 일치; 기존 잘못된 alias 조건에 해당하는 행0. AIRism4상품 각8사이즈 모두 F context canonical4개 PASS.
+- 전달 Verify의 최초 exact hash 검사는 CRLF 차이로 실패. 실제 함수 내용 변경으로 판정하지 않음; 줄바꿈 정규화 후 일치 확인.
+- ZARA7 category key는 여전히 미등록(이전 보류 범위). 원본 표시 공통화/원본 우선 보존/Swift snapshot DTO·hydration 구현은 소스 확인.
+- 연결DB에 closet_item_source_measurements 테이블 없음: Terra의 20260921110000_closet_raw_measurement_snapshots.sql 미적용. 원본 전체 저장·재조회 완료 아님. Terra handoff에 0/비정상 ingestion receipt 거절 계약 및 migration 로컬검증 미완료도 명시돼 있어, 해당 migration만 적용하면 전체 해결된다고 보고하면 안 됨.
+- 새 build/tests/저장 mutation/앱 E2E NOT RUN(사용자 요청대로 최소 점검). diff/protected scroll PASS. 추가 코드/DB 수정 없음.
+
+## 2026-09-21 사용자 실행 DB SQL / Terra 원본 표시·저장 지시서
+
+- `Docs/QA/MeasurementRepairHandoff-20260921/`에 00-Preflight / 01-Apply / 02-Verify / 03-Rollback 및 Terra-Prompt.md 작성. 기존 semantic_context_separation migration을 재사용하고 현재 함수/alias preimage guard 추가. 연결 DB에는 적용하지 않음.
+- 범위: UNIQLO 오alias10 + resolver/context/readiness 함수3. category/weight/raw/Closet/History write 없음. native-first + 검증된 group-only recovery 보존이며 모든 그룹 의존 제거의 완전한 재설계가 아님.
+- PASS: PostgreSQL17 격리 실제 migration 회귀, 전달 SQL 적용/재적용/핵심검증/rollback/preflight. NOT RUN: 연결DB postflight·실제32사이즈/전체211행 replay·앱 E2E/RLS. Verify의 실상품 조회는 사용자 적용 후 실행 대상.
+- 보류: ZARA7 category group 지정, MUSINSA 아우터 밑단/상의허리/복부의 미확인 측정 기준, 벨트/슬릿 canonical. raw-only 표시는 Terra 원본 보존 작업에서 처리. 사용자에게 전체 사전 보완 완료로 안내하지 않음.
+- Terra 지시는 비교 엔진/점수 변경 없이 선택 사이즈 원본 수신=표시=저장=재조회 내용/개수 일치가 목표. 저장 contract 변경 필요 시 별도 migration 작성·로컬검증, 연결DB 적용은 사용자 담당.
+- 이번 작업에서 기존 앱 dirty 변경은 건드리지 않음. commit/push 없음.
+
+## 2026-09-21 관측 원본 대비 DB 사전 누락 감사
+
+- READ ONLY 완료. `Docs/QA/RetailerDictionaryGap-20260921/Report.md` 및 관측 실측703쌍/카테고리161개 CSV, 현재 DB snapshot/실제 resolver 결과 저장. HEAD ac08f64. DB/App 수정 없음.
+- 현재69상품/2,212 raw. AIRism F 어깨·등중심소매64행 및 무신사5543646 아우터 밑단50cm 연결 누락. 무신사 상의 허리·복부는 source/alias 있으나 mapping 없음. 보존 원문 UNIQLO E483340 belt-length/E482285 slit-length 미등록은 raw-only 우선 후보.
+- ZARA 앞밑위는 현재6상품45행 정상 연결, 뒷밑위도 별도 등록되어 있음. 표시 안 됨을 DB 미등록으로 단정 금지. 실제 UNMAPPED24상품 중 ZARA7개 exact category key 미등록, 나머지17개는 조회용 경로/codes 결측. UNMAPPED는 사용자 그룹 선택 정상 경로.
+- PASS: 현재 DB 읽기 전용 resolver/group 검증, 보존 원문 normalizer 재실행. NOT RUN: 신규 API 일괄수집/원본XLSX 재검사/앱 전체 등록·비교. 기존 원본 XLSX 경로 검색에서 파일을 찾지 못해 과거 추출 목록만 참고. 703쌍에는 비의류가 포함되어 있어 모든 미등록값을 의류 canonical로 추가하면 안 됨.
+
+## 2026-09-21 실측 표시·저장·비교 제품 정책 문서 확정
+
+- 후속 사용자 결정으로 비교 규칙을 정정했다. 아래 초기 2x2 표현 중 **다른 쇼핑몰의 동일 의미 원본끼리 직접 비교한다는 부분은 폐기**한다. 현행 정책은 동일 쇼핑몰·동일 실측표 구조에서만 동일 원본 항목을 직접 비교하며, 동일 쇼핑몰의 다른 구조와 모든 다른 쇼핑몰 조합은 FitMatch canonical 교집합만 비교한다.
+- 사용자 결정에 따라 `Docs/FitMatchMeasurementPolicy.md`를 신규 권위 문서로 추가하고 `AGENTS.md`의 Sources of Authority 및 Architecture 규칙에서 반드시 읽도록 연결했다.
+- 내 옷 등록은 선택한 상품·variant·size에서 받은 의류 실측 원본을 canonical 매핑 여부와 관계없이 모두 표시하고, 원본 identity/value/unit/basis/component 및 변환 상태를 DB에 보존하는 정책으로 확정했다. 원본 의류 실측과 신체 권장치·모델 정보·일반 가이드는 분리한다.
+- 비교는 동일 쇼핑몰·동일 실측 구조에서만 동일 원본 항목끼리 직접 비교한다. 동일 쇼핑몰이어도 구조가 다르거나 쇼핑몰이 다르면 원본 이름과 무관하게 양쪽에 공통으로 연결된 FitMatch canonical 항목만 비교한다. 이름만 같은 항목, 단면/둘레·길이 기준·구성품이 다른 항목은 동일 항목으로 취급하지 않는다.
+- 표시·저장 범위와 점수 범위를 분리했다. 원본은 모두 보존하지만 점수는 서버 begin snapshot이 승인한 공통 실측만 사용하며, 공통 승인 항목이 없거나 의미·단위·basis가 충돌하면 fail closed한다.
+- 이번 작업은 정책 문서와 AGENTS/인계 문서만 변경했다. Swift/SQL/migration/DB write/deployment/build/test/commit/push는 수행하지 않았다. 현재 앱과 배포 DB가 이 신규 정책을 완전히 구현하는지는 별도 코드·계약 감사가 필요하다.
+
+## 2026-09-21 현재 로컬 소스 커밋·푸시 완료
+
+- 사용자 요청에 따라 검토한 현재 로컬 FitMatch 소스를 `connectDB` 브랜치에 커밋하고 `origin/connectDB`로 푸시했다.
+- 커밋: `af462d0` (`chore: sync current FitMatch source`). 원격 푸시 성공, 로컬 HEAD와 `origin/connectDB`가 동일하다.
+- 포함 범위: 추적 중인 앱 소스/테스트/안내 문서와 선택한 앱 소스·테스트·Feature/Behavior Map·`Package.resolved`. `.build`, `outputs`, QA 증거 산출물, 준비만 된 Supabase SQL/migration, 기타 untracked 감사 자료는 스테이징하지 않고 보존했다.
+- 검증: staged diff secret scan 무검출, `git diff --cached --check` PASS, 보호 스크롤 검사 PASS. 기존 handoff에 기록된 테스트 실패 및 live/API/UI E2E 미검증 상태는 변경하지 않았다. DB write/migration 없음.
+
+## 2026-09-21 실측 의미·그룹 결합 READ-ONLY 감사 완료
+
+- 보고서: `Docs/QA/MeasurementSemanticAudit-20260921.md`. 실행한 읽기 전용 검증: `Docs/QA/MeasurementSemanticAudit-20260921-Verify.sql`. 개별 alias UUID·현재 사전·배포 함수 증거는 같은 이름의 Evidence 디렉터리.
+- 현재 DB 69상품/2,212 current raw와 활성 verified alias 223개 검토. 확정된 잘못된 alias 10개: knit 앞기장 E/F/G 3개, 주름포함 몸판너비 HTML 5개, 페티코트 허리/길이 HTML 2개. 잘못된 규칙 존재와 현재 사용자 결과 오염은 구분: HTML 7개에 해당하는 current raw는 0개이며 앞기장 E/F/G 실제 오해석 상품은 이번 조회에서 확인되지 않음.
+- AIRism 4상품×8사이즈: native canonical 4 → F context 2 → F policy 사용 1(가슴). raw 128행은 보존되지만 64행의 canonical 해석이 그룹 문맥에서 누락. 연결 active Closet 0개; 과거 비교/삭제 데이터 전체 영향은 미검증.
+- 근본 원인: with_context/session_group이 원본 표준화 문맥을 비교 그룹으로 교체. 단순 native 경로 복원은 기존 group-only 해석 211행/7상품에 회귀 위험. 원본 의미 표준화와 이후 그룹별 metric 선택을 분리하는 수정안을 제시함. 이번 작업은 수정하지 않음.
+- PASS: 실제 DB 읽기 전용 함수/사전/영향 조회 및 Verify SQL 전체 실행(BEGIN READ ONLY/ROLLBACK). 앱 등록→비교→결과 E2E, build/test는 NOT RUN(감사 범위). DB write/migration/code change/commit/push 없음.
+- 아래 9/17 Apply SQL 승인 대기는 이번 READ-ONLY 요청으로 이 작업에서는 진행하지 않음. 준비된 SQL을 적용 완료 또는 구조 문제의 완전한 해결로 취급하지 말 것.
+
+## 2026-09-21 ZARA 원본 실측 등록 표시 보완 — 로컬 구현 완료
+
+- 대상: ZARA `p02893319.html?v1=555354850` M. `measureGuideInfo.measures`의 가슴 54.0, 앞면 길이 68.0, 소매 길이 65.0, 등 너비 44.0, 팔 너비 18.0은 이미 원본 `measurementRecords`에 보존되지만, 등록 화면이 canonical `MeasurementKind`만 렌더링해 raw-only 3개를 숨기던 것이 원인이다.
+- `AddComparedProductToClosetSheet.registrationMeasurementRows`를 추가했다. ZARA의 알려진 원본 코드에만 별도 표시명을 부여하고, canonical 레코드는 한 번만 표시하며 `unknownDefinition` raw-only 레코드를 별도 행으로 렌더링한다. `front-length`, `back-width`, `arm-width`의 `MeasurementCode`/`displayKind`/`semanticStatus`와 ZARA parser mappingVersion은 이 작업에서 변경하지 않았다.
+- source 관찰 payload와 `ShoppingProductViewModel.registrationPresentationMeasurementRecords`/`ClothingSizeForm.makeProductSize`의 원본 레코드 보존 경로는 변경하지 않았다. 비교 엔진은 계속 `GarmentMeasurementRecord.isComparable`만 사용하므로 raw-only 3개는 비교 입력·점수 계산에 들어가지 않는다. DB migration/DB write 없음.
+- 추가 테스트 `zaraKnitRegistrationDisplaysAllRawGarmentMeasurementsWithoutCanonicalPromotion`: 실제 URL 식별자와 제공된 M fixture로 source 5개, observation 5개, 등록 표시 5개, canonical 2개/원본전용 3개 및 중복 ID 0개를 검증한다.
+- PASS: `xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -only-testing:FitMatchTests/MeasurementPolicyConsolidationTests` — 6 tests. 전체 `ZARAParserPhase1_5Tests` 실행 중 새 회귀 테스트 PASS; 다만 기존 `cp032RealZARAParserCategoryConfirmationResumesTheSameProductFlow`가 이미 수정된 작업 트리의 ZARA category-recovery 동작과 오래된 기대값 충돌로 4 assertions FAIL(48 tests 중 해당 1 test). `FitMatchSupabaseProductResolverTests`는 59 tests 중 58 PASS, `allZeroRetailerMeasurementsBlockLinkPreparationButKeepRuntimeSizes` 1 FAIL — 현재 작업 트리의 '등록 불가 사이즈도 표시' 정책과 기존 empty-picker 기대값 충돌. `git diff --check` 및 보호 스크롤 검사 PASS.
+- NOT RUN: 실제 ZARA live API 재수신, 설치 앱/등록 화면 E2E, 실제 DB 등록. fixture는 사용자가 제공한 실제 M 수치를 고정한 회귀 입력이다.
+
+## 2026-09-17 앞기장·에어리즘 수정 준비 — DB 적용 BLOCKED
+
+- 사용자 요청: E/F/G 앞기장 오연결 수정, 남성 AIRism 상의→A, F여도 실측4개 유지. raw 보존과 comparison policy 분리 유지. 남성 하의 속옷은 A로 변경하지 않음.
+- 현재 DB 확인: size_chart/knit-body-length-front E/F/G 3행이 back_length; 어깨/소매 alias 부재. AIRism E471717/E482514/E482522/E454311 원본은 32사이즈×4=128행 보존, F에서는 64행만 해석됨. 실제 소매 raw는 sleeve-length-cb (등 중심 소매), 일반 sleeve와 혼합 금지.
+- 준비: supabase/sql/uniqlo_front_length_airism_Apply.sql (앞기장3 수정, 실측alias9 추가, 남성 상의 category4 F→A), Verify 및 LocalRegression. Swift/metric/policy/사용자 데이터 변경 없음. 상세 Docs/QA/UniqloFrontLengthAirism-20260917.md.
+- PASS: 격리 PG 실제 함수+사전 표본으로 수정전 재현, 수정후30 의미/값 검사, F 32사이즈4개씩, 다른 alias224개와 category526행 불변, idempotency. 로컬 fixture schema이며 실제 RLS/앱 E2E 아님. 실기기/최신API/앱빌드 NOT RUN.
+- BLOCKED: 실제 개발 DB 적용은 자동 승인 검토가 환경/정확한 DB write 승인 불충분으로 거절. 사용자에게 정확한 project/3+9+4 범위 승인 질문 발송, 대기. 아직 적용되지 않음; 적용후 Verify/정책hash 및 DataSupport Excel 갱신 필요. resolve_measurement 조회도 처음 자동거절됐으나 함수/의존성 정의 확인 후 READ ONLY 호출 성공.
+
+## 2026-09-17 보존 원문 기반 카테고리/실측 항목 정규화
+
+- 사용자 명시 승인("직접하고 기존 대비 몇개나 추가된건지")으로 연결 FitMatch Supabase `hnkplvyegonlhumlejst`에 `Docs/QA/RetailerCategoryMeasurements-20260917/upsert.sql`을 **적용했다**. 적용 직전 두 비공개 관측 테이블은 존재하지 않아 baseline 0/0. 적용 후 `fitmatch_catalog.retailer_observed_categories` 161건, `retailer_observed_category_measurements` 703건. 증가량 **+161/+703**. 쇼핑몰별 44/169, 101/456, 16/78. RLS true, anon/authenticated SELECT false. 기존 active group rows 1,023→1,023, source measurements 51→51, source measurement mappings 48→48. 이 snapshot은 앱 자동 그룹/실측 매핑을 활성화하지 않는다.
+- `scripts/build-retailer-normalization-upsert.py`로 SQL을 생성했다. 현재 연결 DB의 active `fitmatch_catalog.source_category_comparison_groups`에는 A-G group_code 등이 필수, `fitmatch_vnext.source_measurements`에는 semantic/basis/unit 필수다. 관측 원문만으로 runtime 테이블을 수정하면 정책을 꾸미게 되므로 별도 private observation table만 사용했다. 기존 user/Closet/History row는 수정하지 않았다.
+- 격리 PostgreSQL 17에서 SQL 전체를 2회 실행: 양쪽 모두 161/703 삽입 또는 upsert, postflight 무신사44/169 유니클로101/456 자라16/78, 중복 없는 idempotent 결과 PASS. local pg_ctl stop 완료. `api-403-check-10.txt`의 공식 API 10개(무신사5/자라5)를 이 환경에서 재호출해 모두 HTTP403 확인. 이는 사용자 다른 네트워크 403의 증거가 아니다.
+- 사용자 요청 범위를 상품 전체 필드가 아닌 `쇼핑몰별 고유 카테고리`와 `카테고리별 실제 관측된 의류 실측 항목` 두 목록으로 재설정했다. `scripts/normalize-retailer-category-measurements.py`가 기존 공식 raw capture를 읽어 Docs/QA/RetailerCategoryMeasurements-20260917/{categories.csv,category_measurements.csv,summary.json,README.md}를 생성했다. 이후 별도 승인으로 관측 snapshot만 연결 DB에 upsert했고, 새 그룹·canonical 실측 매핑/파서 변경은 없음.
+- 보존 원문 범위: MUSINSA 231상품/44카테고리/169 카테고리-실측쌍, UNIQLO 302상품/101카테고리/456쌍, ZARA 28상품(42 variant capture)/16카테고리/78쌍. 전체 161카테고리/703쌍; 서로 다른 원문 실측 항목은 각각 9/31/12종. 카테고리·실측 출처 경로를 분리 기록한다. MUSINSA 원문 단위 부재는 unknown, UNIQLO bodyMeasurements와 ZARA body guide는 의류 실측에서 제외, 양수 실측 관측만 포함.
+- 최신 API 접근 시도: UNIQLO details 20초 timeout(0 byte), MUSINSA actual-size HTTP403, ZARA size-measure-guide HTTP403. 브라우저 직접 API도 blocked by client. 따라서 8,996 URL 전체 최신 재수집은 BLOCKED이며, 이 결과는 보존된 8월 원문 subset 정규화일 뿐이다. 기존 185 parsed-only 감사 및 새 테스트 출력 확장은 이 API 차단을 해결하지 않는다.
+- PASS: normalizer 실행, CSV category join/중복·상품·source count 확인, `PYTHONPYCACHEPREFIX=/tmp/fitmatch-pycache python3 -m py_compile ...`. 보호 스크롤 및 diff 검사 완료 결과는 최종 보고 참조. 인증된 Closet/비교/DB 저장은 NOT RUN.
+
+## 2026-09-17 기존 상품 URL 기반 정규화 입력 감사 착수
+
+- 기존 주요 원장의 중복 없는 URL은 무신사 4,011, 유니클로 1,015, 자라 3,970개(합계 8,996)다. 무신사/유니클로는 `FitMatchTests/CategoryValidation5026Inputs.json`, 자라는 `Docs/Research/FitMatchCategoryMappingV2-20260824-shadow/zara_products.jsonl` 기준이다. 자라 공식 300개는 shadow 원장에 이미 포함된다. 이는 접근 가능한 주요 원장 기준이며 모든 외부 배치/DB를 합친 최종 총수라고 주장하지 않는다.
+- 기존 `FitMatchReleaseLiveProductAuditTests`를 확장해 실제 `ProductURLParserService`가 만든 `fitMatchProductObservationRequest()`의 source product/variant/size/measurement identity, category codes, audience, raw/structured fact field keys, retailer API evidence 계약/선택 variant key와 원문 JSON 존재 여부를 URL별 결과에 기록하도록 했다. 기존 파서와 payload builder를 그대로 사용하며 DB write는 하지 않는다. URL 목록만으로 없는 API 원문/실측을 추정하지 않는다.
+- 기존 `Docs/QA/20260915/product-results.json` 185개는 무신사30/유니클로150/자라5 모두 parsed with measurements 및 observation available로 기록돼 있다. 이 기록은 과거 실행의 파서/observation 생성 증거이며 이번 확장 필드, 실제 DB 저장/비교, 전체 8,996개에 대한 검증은 아니다.
+- PASS: `xcodebuild build-for-testing -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -destination 'generic/platform=iOS Simulator' -skipPackageUpdates CODE_SIGNING_ALLOWED=NO -quiet` (기존 Xcode 패키지 캐시 접근에 권한 상승 필요), `swiftc -parse FitMatchTests/FitMatchReleaseLiveProductAuditTests.swift`, `git diff --check`, protected-scroll 검사. 기존 Swift concurrency/테스트 경고가 남아 있다. 첫 빌드에서 신규 감사 출력의 괄호 오류를 발견해 수정 후 같은 Xcode 빌드를 재실행해 통과했다.
+- 최신 live API 재호출, 확장 감사 실행, DB ingestion/Closet/Compare는 NOT RUN. 이전 사용자 경계에 따라 시뮬레이터/화면 조작은 사용하지 않았다. `build-for-testing`은 Xcode 컴파일만 수행하며 시뮬레이터 실행이 아니다. 새 정규화 규칙이나 DB write는 하지 않았고, 관측된 미처리 API 필드/값이 없어 특정 parser 누락을 추정해 수정하지 않았다.
+
+## 2026-09-17 데이터 지원 명세 Excel 제공
+
+- outputs/01a0a364-09f9-7b50-b02d-393c729d457f/FitMatch_데이터지원관리_20260917.xlsx 생성. 지원현황/보완대장/카테고리/쇼핑몰별 실측/원본/공통/읽는방법 총 9시트. 영문 코드 우측 괄호에 한글 설명, 필터와 틀 고정 적용.
+- PASS: 원본 snapshot 대비 상세 행 수(530/54/142/31/51/42), 요약 수식 재계산, 수식 오류 검색 0건, 9시트 렌더 검토. 실제 Excel 앱 조작 NOT RUN. 정적 DB 등록 현황이며 실상품 전체 성공이나 자동 동기화를 의미하지 않음.
+- 앱 코드/DB 변경 없음. 기존 보완 및 실기기 검증 보류 상태 유지.
+
+## 2026-09-17 데이터 지원 명세 생성
+
+- 사용자 요청에 따라 Docs/DataSupport/FitMatch_데이터지원명세.md 및 카테고리/실측/source 목록, 보완대장 생성. 현재 DB 읽기 전용 snapshot: source51/alias227/mapping48/canonical42/policy44/metric647/category530. 미지원 원문 전체를 수집한 것은 아님.
+- DB 등록·정적 연결·정책 등록·실제 실행을 분리. script scripts/build-data-support-register.py는 snapshot으로 Markdown만 재생성하며 DB 갱신 아님. raw/code/context/unit/basis/identity 중심으로 지속관리하도록 구성.
+- 앱/DB 동작 변경 없음. 사용자 데이터/credential snapshot 제외. 기존 live검사 결과 재사용, 이번 신규 live/E2E NOT RUN.
+
+## 2026-09-17 오류보고 URL 10상품 회귀
+
+- 사용자 과거 오류 URL 기반 진행 요청. 보고서 Docs/QA/ReportedProductRegression-20260917.md.
+- live ZARA8개 정확한 catentry guide HTTP200 → 현재 parser 격리8개 PASS(4/4/4/5/3/7/4/6); fixture 신규와 runner audit_case_id/category 입력 지원. parent identity 추론 없음. 최소 value-model stand-in/fixture replay이며 UI/DTO ingest/E2E 아님.
+- UNIQLO E484080 상세200/색상007실측 없음/generic000 8size200; actual Swift fallback 실행 미검증. DB color07 8size/각4측정,A. MUSINSA ct27zw6f→5328103 redirect 확인/403; DB4size,C.
+- ZARA DB7개는 A/A/UNMAPPED/UNMAPPED/UNMAPPED/B/E, 저장 사이즈도 실제 원문 수와 동일. 미등록은 정상 선택 경로이며 임의 사전 추가하지 않음. v1=565606719 DB exact variant 조회 없음.
+- 새 application defect 확정 없음. 목록·상세 수치 대조 및 로그인한 옷장등록→비교→결과는 NOT RUN 유지. live API 수신/파서와 실제 앱 성공 구분. DB write/commit/push 없음.
+
+## 2026-09-17 2단계 착수 — 실기기 보류 승인 / 무료 로컬 진단 보강
+
+- 최신 사용자 “보류하고 다음 개발 진행”이 직전 1단계 완료 전 2단계 금지를 대체. 실기기/목록·상세 수치 일치/전체 E2E는 미검증 상태 유지, PASS 아님. 무료만 사용; DB/외부 서비스 설치·과금·commit/push 없음.
+- 기존 ReleaseInformationView의 FitMatchSupportView에 품질 진단 ShareLink가 이미 존재함을 확인. 앞선 “DEBUG 로거만 확인” 분석은 전체 진단 inventory가 아니었음. 기존 FitMatchMetricsRecorder를 재사용하며 새 중복 recorder를 만들지 않음.
+- 자라가 unsupported로 집계되는 실제 누락 수정(zara.com/하위 도메인 정확히 확인, 유사 도메인 거절). 기존 누적 counter 호환 유지; 과거 unsupported 집계를 근거 없이 재분류하지 않음.
+- 최근 typed event 최대20개를 App Group UserDefaults에 저장하고 report에 app/build/OS 및 발생시각 포함. raw 에러/URL/상품/실측/사용자 ID 수집 없음. 사용자 선택 공유만, 원격 자동수집/서버 trace correlation 미구현. support 문구를 실제 수집범위와 맞춤.
+- PASS: scripts/test-metrics-diagnostics.sh 5개. production recorder/resolver와 실제 test bodies 실행, unrelated domain initializer stand-ins 사용; ViewModel/UI/서버 실행 아님. /tmp/fitmatch-phase2-metrics.log.
+- 사용자 답변: Firebase 프로젝트 없음, 로컬 진단부터 완료. 원격 연동 보류.
+- PASS: generic iOS build-for-testing 앱/테스트 컴파일(/tmp/fitmatch-phase2-build.log), git diff --check, protected-scroll. 실기기 공유/앱 재실행 UI NOT RUN.
+- Firebase 프로젝트 준비 여부 비동기 질문. 무료 자동 원격수집 연결은 프로젝트 설정이 필요하며 미연결 상태; 2단계 전체 완료 아님. 신규 회귀 스크립트는 반복 검사 기반이지만 3단계 전체 운영체계 완료 아님.
+
+## 2026-09-17 순차 개선 1단계 — 코드 검증 수행, 전체 완료 아님
+
+- 사용자 승인: 1→2→3단계 순차 진행, 단계 완료 후 다음 단계. 유료 서비스 제외. 사용자 현재 실기기 빌드 불가로 이번에는 코드 검증까지 요청. 2/3단계 착수하지 않음; 외부 서비스 설치/계정/과금 설정 없음.
+- baseline/final connectDB/ae69b30ed37386f6361882d36bafbd972235ebd4, 기존 dirty 보존. DB 변경, commit/push 없음.
+- 정적 확인: 목록은 RecommendationService.makeClosetComparisonBatchSummary의 local compare, 상세는 server begin snapshot의 compareAuthorizedEvidence. 수치 일치/새 추천공식 검증은 아직 미완료. 예상값을 확정 추천처럼 표시하던 카드 문구를 예상 사이즈/예상 순위로 구분하고 결과 변경 가능성을 안내. 점수/계산/정렬/서버 권위 변경 없음. 이것은 수치 불일치 원인 해결이 아님.
+- 확인된 UI 계약 불일치 수정: openComparisonDetail은 서버 후보 membership으로 선택을 허용하지만 카드 hint/chevron은 local preview evidence로 불가 표시. CompareFlowSheet 카드에서 잘못된 불가 안내 제거, 상세 진입 화살표 표시; 선택 후 서버 재검증 유지. 보유 사이즈 접근성 설명 유지.
+- PASS: bash scripts/test-candidate-envelope.sh 20 tests/2 suites(실제 Foundation DTO/validator/deletion transaction, 앱 전체 아님). /tmp/fitmatch-phase1-contract.log. 초기 sandbox cache 접근 실패 뒤 승인된 재실행 통과.
+- PASS: 실제 ZARA parser/normalizer 코드 격리 replay 5상품, sizes4/4/5/3/7 및 exact labels/unique IDs/실측 records 보존. scripts/prepare-zara-size-replay.py, /tmp/fitmatch-phase1-zara-replay. domain stand-in 사용, 저장 응답 fixture이며 live/API/UI 성공 아님.
+- PASS: generic iOS build-for-testing 앱/테스트 컴파일, /tmp/fitmatch-phase1-build.log. 기존 actor isolation warning1 및 AppIntents metadata warnings 남음. XCTest 실행 아님. diff/protected-scroll PASS.
+- NOT RUN: 최신 iPhone의 등록→read-back→비교→결과→재실행, live retailer/DB E2E, 목록/상세 동일입력 수치 대조. 시뮬레이터 미사용. 1단계 전체 완료로 보고하거나 2단계 시작하지 말 것.
+- 다음 확인: 동일 상품 두 보유 사이즈를 구분해 목록/상세 입력·policy metrics 대조; 서버 승인 후보 중 preview 부족 카드 선택 가능 확인; 실제 새 상품 exact size 등록/비교/재실행 read-back. 무료 진단 서비스 선택/연결은 2단계에서 별도 진행.
+
+## 2026-09-17 등록 화면 전체 사이즈 표시 — 사용자 명시 요청 반영
+
+- 사용자 “API로 받아온 값 그냥 다 출력…하라고”에 따라 AddComparedProductToClosetSheet.selectableSizes의 linked registration isRegisterable 필터 제거. 전달받은 Product의 모든 사이즈를 원래 순서/exact UUID로 표시한다. 실제 parser에서 수신되지 않은 사이즈나 실측을 만들어내지는 않는다.
+- 등록 불가 사이즈도 선택해 확인 가능. 선택 아래 저장정보/실측 부족 이유를 표시하고, 저장될 것처럼 보이는 실측 카드 부제도 상태에 맞춤. 기존 저장시 eligibility/exact identity/server-first 검증은 유지. 기존 미등록 group 사용자 선택 흐름 유지. DB 변경 없음.
+- 회귀 assertion은 모든 사이즈 표시와 등록가능 부분집합 유지로 변경. 실제 selectableSizes 함수 격리 Swift 실행 PASS: 등록가능0/2/4개 모두4개 표시·eligibility 불변·같은label 다른ID 보존. 최소 domain stand-in 사용, UI E2E 아님. /tmp/fitmatch-all-sizes.swift.
+- PASS: generic iOS build-for-testing(앱/테스트 컴파일), diff/protected-scroll. 로그 /tmp/fitmatch-all-sizes-build.log. iOS 테스트 실행/실기기 UI NOT RUN. 새 빌드 설치 필요. 과거 '등록가능 사이즈만 표시' 정책은 이번 사용자 요청으로 superseded. parser/실측 변환/DB/비교계산 변경 없음, commit/push 없음.
+
+## 2026-09-17 추가 ZARA 재킷·원피스 수정 적용상태 확인
+
+- 사용자 추가2개에 대한 현재 read-only product_comparison_group 조회 PASS: 유틸리티 재킷 parent549829596/variant549838589 → B/COMPARABLE/key zara:2:78:12467; 콤비 미니원피스 parent553623366/variant553627099 → E/COMPARABLE/key zara:1:74:380. 기존 사전 MAN/WOMAN 경로와 앱 ZARA > 남성/여성 경로 불일치 유형이며, 방금 적용한 exact category ID 조회가 실제 등록표를 찾음. 추가 코드/DB 수정 불필요(분류 범위).
+- 원본 저장 measureGuideInfo와 DB sizes 각각 재킷4(S/M/L/XL), 원피스6(XS/S/M/L/XL/XXL) 동일. UI 표시/등록/최종 비교 성공까지 검증한 것은 아님. 분류 갱신은 앱에서 링크 재불러오기 필요; 새 앱 빌드 없이 서버수정 적용. 사이즈2개 표시는 기존 미해결 상태 유지. DB write 없음, 보호 스크롤 PASS.
+
+## 2026-09-17 ZARA 분류 수정 APPLIED / 사이즈 표시 미재현
+
+- 사용자 “모조리 수정해” 승인, user-confirmed development hnkplvyegonlhumlejst/get_project FitMatch ACTIVE_HEALTHY 재확인. migration zara_exact_category_identity_lookup 실제 적용 성공. 함수 drift guard 후 product_comparison_group만 변경, 사용자 데이터/사전행/실측/권한 변경 없음.
+- 공식 details product.id == source_product_key 검증 후 section/familyId/subfamilyId 정확한 전체 키로 active 사전 우선 조회. product override 및 기존 호환 경로 보존, 상품명/말단명 추론 없음. 564222870/564203652는 실제 postflight COMPARABLE/A, 남은3개 실제 미등록은 UNMAPPED 유지(사용자 그룹선택). 미등록 전체를 오류 취급하거나 임의 등록하지 않음.
+- SQL source supabase/sql/zara_exact_category_identity_Apply.sql, local test supabase/sql/tests/zara_exact_category_identity_LocalRegression.sql. PASS: 기존 snapshot1065 결과 불변, 실제5개 축약 evidence에서 수정전2개미등록 재현/수정후2개A/나머지3개미등록, 잘못된 parentID 미허용. 모든 local DML은 rollback, local PG 종료.
+- 사이즈: 저장된 실측원본5개를 현재 ZARASizeGuideParser와 실제 SizeTokenNormalizer/stableID 코드에 재생,4/4/5/3/7개 전부 양수실측/원문label/고유ID 보존 PASS. 최소 value-model stand-in 사용한 격리 parser 검사이며 SwiftData/ViewModel/UI/실제RPC 등록 테스트 아님. 원본 fixture FitMatchTests/Fixtures/zara_reported_size_tables_20260917.json; 재현 generator scripts/prepare-zara-size-replay.py → /tmp/zara-size-replay.swift → swiftc /tmp/zara-size-replay.swift -o /tmp/zara-size-replay → /tmp/zara-size-replay <fixture>.
+- 등록 경로 회귀 reportedZaraFourSizeLabelsSurviveUnmappedClosetPreparation 추가: 기존 injected transport helper로 실제 ViewModel→registration preparation→picker 정확한4개 label/size UUID 검사. iOS build-for-testing PASS(컴파일만), 이 테스트 실행 NOT RUN. 원천연동 E2E/실기기 NOT RUN. 로그 /tmp/fitmatch-zara-build.log /tmp/fitmatch-zara-category-tests.log.
+- 사용자 등록화면2개 누락은 현재 소스에서 아직 재현 못함. 선택 제한을 임의로 제거하지 않았고 사이즈 버그 수정완료라고 보고 금지. 보인 두 사이즈 이름 요청 대기. 실행 바이너리/화면 상태 확인 필요. DB 분류 개선은 즉시 적용, commit/push 없음; 기존 dirty와 보호 스크롤 보존.
+
+## 2026-09-17 ZARA 추가3개 포함5개 READ ONLY 확인
+
+- 실제 연결 DB에서 variant 564228855/564205305/551145185/545456321/547823527 모두 product_comparison_group REVIEW/UNMAPPED 확인. 저장 API measureGuideInfo 사이즈 수와 DB product_sizes 수는 각각4/4/5/3/7로 동일. 현재 live API 재수신/앱UI 재현은 아님.
+- 원인 구분: F. Sudadera 두 상품은 active 사전 MAN > 스웨트 셔츠 > F. Sudadera(A)가 존재하나 실제 경로 ZARA > 남성 > ...와 불일치. 추가3개 B. Sudadera/B. Jersey M/C/B. Pant Denim은 active 사전 category_path 전체 검색에서도 정확한 해당 명칭 연결을 찾지 못함. 사전에는 F. Jersey M/C/F. Pant Denim 등이 있으나 B/F를 같은 category로 추정하면 안 됨. 따라서5개 모두 동일한 등록된 경로 문제라고 단정하지 말 것. 상세 Swift classifier의 지원과 DB group 매핑 지원은 별개.
+- 사용자 ‘모두 마찬가지’ 추가 보고를 조사한 것. 코드/DB 변경 없음. 추가3개: 하이넥551145185 S/M/L/XL/XXL, 폴로545456321 M/L/XL, 데님547823527 EU34/36/38/40/42/44/46. 최초4개→화면2개 문제는 UI/설치버전 확인 필요 상태 유지. 미등록은 정책상 사용자 그룹선택 대상, 일괄등록 오류로 취급 금지.
+
+## 2026-09-17 ZARA 03443415 / 564228855 — 分류·사이즈 읽기 전용 진단
+
+- 상품 Fruit of the Loom 워싱 텍스트 스웨트셔츠, parent/source_product_key564222870, selected variant564228855, DB product e20d50a3-62dc-4635-b764-babdc9fe4072. 앱이 저장한 retailer API evidence의 2026-09-16T22:58Z details/measurements HTTP200에서 S(KR90), M(KR95-100), L(KR100-105), XL(KR105-110) 각5개 양수 cm 실측 확인. 현재 DB product_sizes도4개, product_size_measurements 각5개. 새 curl 실측 요청은403이므로 현재 live API 재수신 성공으로 보고하지 않는다.
+- 분류 연결 누락 CONFIRMED: product_comparison_group 실제 정의는 현재 active policy의 category_path 전체/첫 segment 제외 문자열 또는 legacy family_id/subfamily_id를 대조한다. 실제 product source_category_path='ZARA > 남성 > 스웨트 셔츠 > F. Sudadera'; 사전 key zara:2:2796:12475 경로=['MAN','스웨트 셔츠','F. Sudadera'], groupA. 실제 read-only 함수 결과 REVIEW/UNMAPPED. products.classification_status CONFIRMED와 comparison_group은 별도 권위. Swift ZARAParser 783/826 classification.path를 그대로 observation으로 보냄. 기존 등록 사전을 못 찾는 path contract mismatch이며 상품명 추론/임의 신규 카테고리 등록으로 덮지 말 것.
+- 사이즈2개 표시 root cause 미확정. 원본/DB4개 저장 성공과 최종 UI4개 표시를 구분. 사용자에게 보인 사이즈 이름 및 Closet/Compare 화면을 질문했다. 현재 local parser는 positive cm가 있는4개를 보존하는 경로이며 단순2개 prefix/중복 정규화 원인 증거 없음. 앱 빌드 버전 및 당시 화면 상태 미확인.
+- 분석만 수행. 코드/DB 수정 없음, 실제 앱 E2E NOT RUN, protected-scroll PASS. 후속: 서버의 검증된 전체 카테고리 경로 호환/정확한 ID 조합 연결 검토와 4size runtime→UI 추적. 원천 body guide로 대체/다른 variant 사용 금지.
+
+## 2026-09-17 비교 그룹 선택 UI — 콤보박스·PrimaryButton 통일
+
+- 사용자 첨부 화면의 미등록 비교 그룹 선택 단계만 변경했다. 7개 그룹을 화면에 펼쳐 놓던 `FitMatchCard` 목록을 기존 `CompareSelectionMenu` 콤보박스로 교체했다. 초기값은 `비교할 그룹을 선택해 주세요`이며 선택 뒤에는 A~G의 기존 표시명이 보인다.
+- `비교할 내 옷 보기`는 기존 파란 `.borderedProminent` 버튼 대신 FitMatch 공통 `PrimaryButton`(검은색, 전체폭, 50pt)으로 통일했다. 선택 전 disabled 상태와 선택 후 `selectComparisonGroupForCurrentComparison` → 기존 후보 조회/서버 검증 흐름은 그대로다. 비교 그룹 권위, DB/RPC, 후보 정책은 변경하지 않았다.
+- PASS: `swiftc -parse FitMatch/Views/CompareFlowSheet.swift`, `git diff --check`, protected-scroll 검사. BLOCKED: generic iOS `xcodebuild build`는 Xcode 임시 산출물 기록 환경 오류 `error: other(28)`로 종료(코드 컴파일 오류 아님); UI/XCTest는 실행하지 않았다.
+- DB/Production mutation, migration, commit, push 없음. 기존 dirty/untracked 변경 보존.
+
+## 2026-09-17 삭제 중 동기화 알림 — 대기 후 자동 진행으로 수정
+
+- 사용자 사진의 “옷장 목록을 동기화하고 있어요”는 특정 상품 실측/데이터 오류가 아니라 deleteServerFirst의 isSynchronizing 즉시 거절에서 발생. 스와이프/버튼 공통 삭제 경로. 사용자 “수정해” 승인으로 Swift만 수정, 데이터 정리/DB write 없음.
+- 기존 coordinator lock 유지. FitMatchClosetDeletionTransaction.waitForSynchronization에서 100ms 비차단 대기 최대300회 후 같은 MainActor에서 즉시 lock 획득. 정상 sync 완료 후 history 준비→fresh list/exact identity→서버 삭제 확인→local commit 순서 유지. 장시간 sync에는 구체적 재시도 안내, 무한대기/성공 가장 없음.
+- accountGeneration으로 대기/실제 삭제 중 다른 계정 전환 및 원래 계정 재로그인도 차단. 취소 시 진행 중단. 기존 삭제 journal/동기화 예약/서버 권위/보호된 스크롤 유지.
+- PASS: bash scripts/test-candidate-envelope.sh 실제 Foundation 계약 소스 20 tests/2 suites(신규5), generic iOS unsigned build, git diff --check, protected-scroll. 최초 sandbox cache 접근 실패 후 승인된 캐시 접근으로 재실행 성공. 로그 /tmp/fitmatch-delete-wait-{tests,build}.log.
+- NOT RUN: 실기기 스와이프/버튼 및 실제 서버 삭제 E2E, SwiftData coordinator runtime 통합. 시뮬레이터 사용 안함. 신규 검사는 대기 helper+삭제 transaction 계약이며 실제 네트워크 동기화 완료를 실행한 검사가 아님. 새 iPhone 빌드 필요. 기존 dirty 보존, commit/push 없음.
+
+## 2026-09-17 동일 상품 추천 차이 — 사진/실제 Closet 읽기 전용 확인
+
+- 사진의 원턱 와이드 슬랙스 두 행은 동일 product/variant이지만 서로 다른 size identity다. 연결 개발 DB SELECT 확인: M(client 표시 `1. M`) 허리단면41.5/엉덩이54/허벅지32/밑위30/밑단28.5/총장102cm; XL(`3. XL`) 47/60/35/31/30/106cm. 두 옷의 입력 실측이 다르므로 추천 S/L 차이만으로 버그를 확정할 수 없다. 사진 점수88/87 및 추천 S/L 수치 자체의 재계산 검증은 NOT RUN.
+- 현재 코드 확인: RecommendationService.makeClosetComparisonBatchSummary는 각 UserFit의 실측을 개별 비교(MeasurementComparisonEngine.compare)한다. 상세는 VNextComparisonEngineAdapter의 서버 begin snapshot/compareAuthorizedEvidence 경로여서 목록/상세가 같은 입력·정책이라고 단정할 수 없다. 기존 목록/상세 불일치 기록은 미해결로 유지; 이번 사진이 그 현상인지 사용자에게 확인 요청했다.
+- 코드/DB 변경 없음. DB 조회와 정적 경로 확인만 수행; 실제 앱/시뮬레이터/자동테스트 NOT RUN. protected-scroll PASS. 기존 dirty 보존, commit/push 없음. 상품명이 같다는 이유로 서로 다른 size의 실측이나 결과를 합치지 말 것.
+
+## 2026-09-16 최신 인계 — 승인된 개발 DB·안전 수정 APPLIED
+
+- 사용자가 hnkplvyegonlhumlejst를 **운영이 아닌 개발 DB**로 정정했고, 4단계 브리핑 후 “진행해”로 코드/DB 수정을 승인했다. 아래 READ ONLY/Production 분류는 이전 시점 기록이며 **이번 승인 범위에서는 superseded**. 앞으로도 무제한 DB 변경 권한으로 확대 해석하지 말 것.
+- 승인 범위 완료: 삭제 server-first/재시도 journal, legacy reference candidate authority 제거, UNIQLO 두 경로 호환/ZARA skirts 허리·엉덩이 alias, 잘못된/중복 응답 방어·삭제 상태 안내. 보고서: Docs/QA/ApprovedSafeRepair-20260916.md.
+- 개발 DB 실제 적용: migration retire_reference_candidate_authority (internal/public 2-arg candidate 함수), uniqlo_verified_path_compat_and_zara_skirt_aliases (product_comparison_group 호환 + alias2). MCP success 및 read-only 사후 hash/marker/resolver12조건 확인. 사용자 Closet/History/계정 row 직접 변경·삭제·시험 row 생성 없음. 새 canonical/metric/policy 추가 없음.
+- 삭제 흐름: FitMatchClosetDeletionAction → ClosetSyncCoordinator.deleteServerFirst → FitMatchClosetDeletionTransaction. history 준비 → fresh list/exactID → deletion intent → exact receipt → local commit. 이미 서버 목록에서 사라진 항목은 안전한 retry cleanup. transport/local 실패 intent를 보존하고 sync에서 잔여 local행을 정리해 재업로드 방지. 계정 변경/동시 sync 확인 및 예약된 sync 재개. 서비스 없음으로 성공 반환 금지.
+- candidate 2-arg는 모든 허용 후보 MANUAL_EXTENDED/explicit; reference flag는 historical fact만. Swift 결정 .manualSelection → eligible/begin manualExplicit=true. 기존 v1의 false automatic gate는 유지되지만 새 candidate 경로는 진입하지 않음. 사용자 선택/그룹·identity·측정 policy 권위 유지.
+- malformed duplicate closet IDs는 기존 validator.uniqueIdentityIndex에서 거절; Dictionary trap/first fallback 없음. 후보검사8 + 삭제검사7(파라미터 포함10사례), 한 스크립트에서 **15 tests/2 suites PASS**. 각 반복 실행을 별도 시나리오로 합산하지 말 것.
+- Local PostgreSQL candidate 실제 함수 회귀: 수정 전 reference flag에 따라 달라짐 FAIL 재현, 수정 후 7그룹×2flag/교차그룹/공통실측1/무실측/타사용자/삭제행/auth/variant 검사 PASS. 하위 eligibility는 통제 fixture. 경로1065·실측91 snapshot 회귀 PASS (의도4/2만 변경), 재적용 PASS. 앱 1156건 비교 성공이 아님.
+- PASS: generic iOS build 및 build-for-testing(테스트 target 컴파일), 최종 build, diff/protected-scroll. SwiftData/History iOS 테스트 **실행 NOT RUN**, 실제 앱 E2E/시뮬레이터 미실행. 사용자가 실제 아이폰 빌드/수동 검사를 담당하기로 합의. source-only/fixture 검증을 실제 상품 성공으로 표현하지 말 것.
+- 재현: bash scripts/test-candidate-envelope.sh. 로그 /tmp/fitmatch-approved-repair/. 기준 connectDB/ae69b30 유지, 기존 미커밋 보존, commit/push 없음. DB 개선은 즉시 반영, Swift 개선은 사용자 새 빌드 필요. 종료조건의 모든 외부 장애 무오류/전체 실기기 검증까지 보증하지 않는다.
+
+## 2026-09-16 최우선 인계 — Release Audit v2 / Production READ ONLY
+
+- **최신 사용자 정책이 이전 적용 요청을 대체한다:** Production 및 불명확 환경 write/migration/deploy 금지. 앞서 준비한 UNIQLO 경로/ZARA skirts SQL은 미적용 유지. 아래의 “승인 후 적용”은 과거 요청 상태이며 현재 적용 지시가 아니다.
+- 이번 v2 baseline: connectDB / ae69b30ed37386f6361882d36bafbd972235ebd4, 원격 ls-remote a68c8496628eb0bc1223b34708fb88e8fe945de1. 기존 tracked dirty43/staged0/untracked7405 보존. commit/push 없음.
+- 로컬 수정 RA-01: FitMatchVNextContractValidator.validateCandidateEnvelope를 추가하고 SupabaseProductResolver의 mapped/requested-group 후보 RPC 양쪽에 연결. exact product/variant 불일치 및 selectable/blocked 중복 Closet ID를 UI projection 전에 거절. 후보 순서·그룹·점수·user choice 변경 없음. 실제 잘못된 Production 응답 관측이 아니라 정적으로 확인된 계약 검증 누락의 수정이다.
+- PASS: 실제 DTO/validator 원문으로 simulator/DB 없는 Swift Testing7개; scripts/test-candidate-envelope.sh 재실행도7개 PASS(총14개 독립 test가 아님). generic iOS unsigned build 전후 성공. final build 기존 소스 위치 Swift warning3 및 AppIntents warning1; warning0이라고 보고하지 말 것. diff/protected scroll 검사 PASS.
+- 새 confirmed unresolved P1 RA-02: 배포 candidate 2-arg internal/public 함수가 is_reference/is_current_reference로 순서·AUTOMATIC decision 및 manual_explicit 입력을 바꿈. 앱 자동 선택은 아님. 새 policy reference-retired와 충돌. Production 변경 금지로 그대로 둠.
+- 새 confirmed unresolved P1 RA-03: ClosetDeletionAction은 local save + enqueueDeletion 후 deleted를 반환하며 remote delete는 후행 sync. 서버 완료 전 성공 문제. history hide/계정 변경/partial success/retry까지 검증 가능한 격리환경이 필요해 임의 한줄 수정하지 않음.
+- LIVE probe 각1회: MUSINSA4096130 HTTP403, UNIQLO E488182 timeout25초, ZARA551168852 HTTP403. Parser/등록/비교 성공을 뜻하지 않는다. auth→Closet→candidate→begin/complete→History E2E NOT RUN. simulator 미사용, iPhone 최신 설치 미확인 상태 유지.
+- Supabase get_project 및 definition/RLS metadata SELECT만 수행. Production write/migration/RPC mutation/user data 변경 없음. 동일 project FitMatch / ap-northeast-2 확인.
+- 보고서 Docs/QA/ReleaseAuditV2-20260916.md. score56.25→56.25, whole-release confidence LOW; 남은 P1과 material gaps 때문에 출시 승인 보류. 원문/빌드/test 로그 /tmp/fitmatch-release-audit-v2/.
+
+## 2026-09-16 이전 인계 — UNIQLO/ZARA 최소 수정 준비, Production 적용 BLOCKED
+
+- 사용자가 직전3개 감사의 확정 문제 직접 수정을 요청. P1 유니클로 두 경로명 호환, P2 자라 skirts 허리/엉덩이 alias2개를 준비. F/G·원피스소매·길이·비교policy 확대 제외.
+- **아직 DB에 적용되지 않음.** hnkplvyegonlhumlejst Production apply_migration 호출을 자동 승인 검토가 명시적 Production 승인 부족으로 거절. 다른 경로로 우회하지 않음. 승인 후 Apply 및 read-only postflight 필요.
+- 파일: supabase/sql/uniqlo_path_zara_skirt_20260916_{Apply,Verify}.sql, Docs/QA/UniqloPathZaraSkirtRepair-20260916.md.
+- PASS: 실제 함수/현재사전 기반 격리 PostgreSQL regression group1065건 중 의도한4개만변경, measurement91건 중 의도한2개만변경;재적용 중복없음. 이는 앱 등록/비교1065건 성공이 아님.
+- NOT RUN: Swift빌드/실기기/실제스커트원문/인증된등록→비교→결과. 이전 스커트API403 한계 유지. 기존미커밋 변경 보존, commit/push없음.
+
+## 2026-09-16 현재 최신 상태 — 로컬 소스·정책·검증 요약
+
+> 이 항목은 새 세션이 먼저 읽을 현재 상태 요약이다. 아래 날짜별 항목은 실제 실행 근거와 과거 결정을 보존하는 기록이며, 충돌하면 이 항목과 실제 소스를 우선한다.
+
+### 2026-09-21 다른 옷 비교·기록 필터 UX 정리
+
+- `OtherClosetComparisonSheet`의 가로 그룹 칩을 기존 `CompareSelectionMenu` 콤보박스로 교체했다. 후보는 2열 카드에서 먼저 고르고, 선택 표시 후 하단 검은 `선택한 옷과 비교하기` 버튼에서만 기존 server reauthorization 경로로 진행한다. 후보 자동 선택·권한·DB/RPC 계약은 변경하지 않았다.
+- 기록 화면의 `.searchable` 텍스트 필드를 제거했다. `ContentFilterBar`가 선택 제목의 intrinsic width에 따라 재배치되던 원인을 수정해, 고정 폭(148pt)·좌측 정렬·말줄임을 사용하고 그리드/목록 전환 버튼은 스크롤 영역 밖의 고정 위치로 분리했다. 메뉴를 열면 옵션의 전체 제목은 그대로 표시된다.
+- PASS: 변경 Swift `swiftc -parse`, `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -sdk iphonesimulator -derivedDataPath /tmp/FitMatchLatencyDiagnosticsBuild CODE_SIGNING_ALLOWED=NO build`, `git diff --check`, protected scroll 검사. NOT RUN: 앱 화면 E2E 및 실제 터치 검증. commit/push/Production DB write 없음.
+
+### 2026-09-21 DEBUG DB 통신 속도 로그
+
+- `FitMatchSupabaseDomainClient`의 실제 Edge/RPC 경계에 DEBUG 전용 `timedDatabaseCall`을 추가했다. 상품 관측/런타임, Closet upsert/update/list, 후보/eligible size, begin/complete, History 조회가 성공·실패와 소요 시간(ms)을 고정 작업명으로 남긴다.
+- 로그에는 요청·응답 원문, 상품명, 사용자 ID, Closet ID, 실측을 넣지 않는다. 서버 계약·DB 데이터·비교 정책은 변경하지 않았고, Production/연결 Supabase write도 하지 않았다.
+- PASS: 관련 Swift `swiftc -parse`, `git diff --check`. 앱 build·인증된 실제 서버 왕복 성능 측정은 NOT RUN이다. 변경 파일/현재 dirty 작업은 다음 커밋 전 별도 소유 범위를 확인한다.
+
+### 현재 권위와 작업 경계
+
+- 사용자는 `hnkplvyegonlhumlejst`를 자신이 관리하는 Production DB로 명시하고, 현행 런타임 정책의 승인 A~G 매핑 91개 영구 적용을 승인했다. `supabase/sql/retailer_category_group_approved_20260916_Apply.sql`을 연결 DB에 적용했으며, read-only 사후 조회에서 91개 모두 `COMPARABLE` A~G, 고유 키 91개, R/X 0개, 조건부 세트 `ZR-C140`·`ZR-C218` 및 복합 세트 `ZR-C154` 포함 0개를 확인했다. 검증/롤백 SQL은 같은 접두사 파일에 있다. 전체 앱 비교 E2E는 아직 검증하지 않았다.
+- `AGENTS.md`는 현재 FitMatch 운영·아키텍처·안전·검증 규칙이다. `FitMatch Behavior Map.md`와 `FitMatch Swift Feature Map.md`는 관련 Flow/Swift owner를 찾기 위한 navigation map이며 실제 소스·배포 계약을 대체하지 않는다.
+- 비교 권위는 서버의 comparison group과 active group policy다. Swift parser/ViewModel이 상세 garment 분류나 legacy Reference Garment 정책을 비교·등록·readiness 권위로 재구성하지 않는다.
+- 서버/DB 결과, 필수 응답, exact product/variant/size identity가 없거나 불일치하면 성공으로 보정하지 않고 fail-closed 또는 명시적 recovery로 보낸다. ZARA `internalProductID`와 `catentryID`는 계속 분리하고, 원본 retailer facts/measurements와 FitMatch canonical 값도 분리한다.
+- 현재 문구 정리에서는 Supabase/Production DB write를 하지 않았으나, 이번 카테고리 감사에서는 위에서 승인된 91개 런타임 매핑 INSERT를 수행했다. migration, RPC mutation, Auth impersonation, Edge deployment는 하지 않았다. `hnkplvyegonlhumlejst`의 과거 ZARA measurement dictionary 보강 적용 상태는 아래 날짜별 기록을 따른다.
+
+### 이번 세션까지 반영된 로컬 소스
+
+- `FitMatchFailureCopy`를 공통 문구 owner로 두고, 일시적 네트워크 전송 오류와 서비스 점검 대상 오류를 분리했다. HTTP 408/425/429/5xx 및 `URLError` 계열은 네트워크 확인 후 동일 요청 재시도, 필수 필드/unknown status/identity mismatch/권한/RPC·contract/server authority 오류는 진행 중단 및 문의 안내다.
+- 상품 파서, server authority, comparison begin/complete, Closet 저장·수정·동기화, history/account 처리와 Apple 인증의 사용자 문구에서 `잠시 후` 및 서버 원문 노출을 제거했다. 잘못된 URL·누락된 실측·사용자 입력 오류와 로컬 저장 실패의 구체적 재입력/재저장 안내는 유지했다.
+- 새 문구는 원래의 server authority, comparison-group 정책, exact identity, persistence ordering, protected scroll 동작을 바꾸지 않는다. 관련 회귀 assertion과 인증 상태 전환 assertion을 추가·갱신했다.
+
+### 실제 검증과 미검증
+
+- PASS: `swiftc -parse $(rg --files FitMatch FitMatchTests -g '*.swift')` 전체 Swift 구문 검사.
+- PASS: XcodeBuildMCP에서 iPhone 17 Pro / iOS 26.3 Simulator `build_run_sim` 성공. 최종 실행은 경고 0, 오류 0이며 bundle ID는 `com.ljy4337.fitmatch`다.
+- PASS: 원인별 문구 회귀와 Apple 인증 전환 focused test 2개 실행, 실패 0건. 결과 번들: `/Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-16T02-03-51-510Z_pid65287_b42b3201.xcresult`.
+- PASS: `git diff --check`, protected `TabBarScrollVisibilityModifier.swift` diff 및 modifier 키워드 검사. 보호된 스크롤 파일/호출부에 변경 없음. Swift source에는 `잠시 후`/`잠시후`가 남아 있지 않다.
+- NOT RUN: 이번 문구 변경에 대한 인증된 실제 MUSINSA/UNIQLO/ZARA 링크 → Closet 저장 → candidate 선택 → comparison begin/complete → History read-back 전체 회귀, physical iPhone UI/share sheet 검증. 현재 설치된 iPhone 바이너리에 최신 local source가 반영됐다고 가정하지 않는다.
+
+### Git 및 다음 세션 주의사항
+
+- 현재 branch는 `connectDB`, local HEAD는 `ae69b30`, tracking `origin/connectDB`는 `a68c849`이며 local이 1 commit 앞서 있다. 작업 트리는 AGENTS/map/Swift/테스트/문서와 기존 진단·기능 변경이 섞인 dirty 상태다. 기존 dirty/untracked 작업을 reset, clean, stash, discard하지 않는다.
+- 이 세션에서는 commit/push를 수행하지 않았다. 다음 커밋 전에는 관련 변경과 기존 변경의 소유 범위를 다시 확인하고, Production mutation 없이 현재 검증 범위를 정확히 기록한다.
+- 남은 주요 확인점은 설치 앱 반영 여부, 인증된 실제 3-provider 회귀, preview/detail recommendation 차이, 일부 retailer measurement basis/legacy raw evidence 보류 항목이다. 각 상세 근거와 DB 적용 여부는 아래 날짜별 항목에 있다.
+
+## 2026-09-16 최우선 인계 — 실측 사전 감사·보강 및 검증 범위 정리
+
+### 사용자에게 최종 설명한 결론
+
+**“실측 매핑 규칙 검사에서는 의도하지 않은 변화를 발견하지 못했다”가 정확한 결론이다. “내 옷 추가 → 상품 비교 → 결과 도출까지 모두 정상”이라고 보고하면 안 된다.** 사용자가 이 차이를 질문했고, 전체 과정은 미검증이라고 명확히 설명했다. 13,419건이라는 숫자를 실제 상품등록/비교 성공 건수로 표현하지 말 것.
+
+### 감사와 실제 적용
+
+- 원본 FitMatch_Retailer_Measurement_Master_20260916.xlsx, 현재 connectDB 작업 트리, 연결 DB를 직접 대조했다. raw → source_measurements → aliases → mappings/canonical → comparison policy 사용을 구분했다. 감사의 131행 판정표·상세 근거는 아래 경로에 보존했다.
+- 개발용으로 지정된 Supabase `hnkplvyegonlhumlejst`에 ZARA 3항목만 보강 완료: 소매(tops/outerwear)→sleeve_length, 원피스 밑단(dresses)→hem_width, 아우터 가슴(outerwear)→chest_width. source2 + mapping2 + alias4 = 신규8행. 기존 사전행/canonical/비교 policy·metric은 변경하지 않았다. Swift 수정·사용자 옷장/히스토리 변경도 이 보강에서는 없었다.
+- UNIQLO front-rise는 추가하지 않았다. 대표 E469682가 보정 속옷으로 확인돼 앞선 bottoms alias 제안을 그대로 적용하지 않았다. KR 측정방법/category 확인 필요. 무신사 상의 허리/총장/밑단 문맥 확대, 이너/끈 포함 길이 등 불명확 항목도 보류.
+- 등중심/래글런 소매는 canonical/최신 Swift 지원과 별개로 당시 활성 명시 비교 metric0이었다. 사전 등록과 실제 점수 사용을 혼동하지 말 것. 이번에는 정책을 확대하지 않았다.
+
+### 무엇을 실행했는가
+
+| 검사 | 실행 내용 | 상태와 한계 |
+|---|---|---|
+| 사전 보강 전후 | 실제 저장 실측1,917행·50상품을 로컬 PostgreSQL17의 실제 사전/실제 resolver 복제본에서 7category 문맥으로 교차 | PASS:13,419조합 중13,407동일, 의도한 ZARA12조합만 UNMAPPED→RESOLVED. 앱 테스트 아님 |
+| 새 충돌 | 같은 size/category/canonical에 다른 값이 새로 합쳐지는지 비교 | PASS:새 충돌0. 미래 상품 전체까지 보증하지 않음 |
+| 연결 DB resolver | 시험값17cm로 정상문맥4/잘못된문맥·parser·raw5 검사 | PASS:9/9. 실제 상품 저장·사용자 인증 비교 요청 아님 |
+| 보호장치 | 로컬 source의 소매 기준을 raglan으로 고의 변경한 거래에서 적용 SQL 실행 | PASS:거절/rollback. 실제 DB 오염 없음 |
+| 새 상품 링크 | 엑셀05행196 티셔츠,400 원피스,201 바지의 페이지·상세ajax·실측 API 요청 | BLOCKED:9/9 HTTP403. 정상 상품 응답 수신/파서 통과/DB observation 제출 못 함 |
+| 원피스 밑단 | 실제 저장 관측값이 없어 합성 값으로 resolver 검사 | 합성 검사 PASS; 새 실상품 검증 BLOCKED |
+| 앱 전체 흐름 | 로그인 → 내 옷장 저장/read-back → 내 옷 선택 → begin/complete → 결과 화면 | NOT RUN. 등록 성공·추천 결과 정확성·화면 정상 여부를 이번 검사로 확정 불가 |
+
+- 실제 API403은 요청이 DB 매핑까지 도달하지 못한 결과다. 보강이403을 발생시켰다는 근거는 없다. 반대로403 때문에 앱 전체의 무오류를 확인한 것도 아니다.
+- 새로 인정된 공통 실측이 기존 policy에 참여하면 향후 점수/추천이 바뀔 수 있다. 정책행 불변은 점수 불변을 의미하지 않는다. 기존 완료 비교 snapshot은 다시 쓰지 않았다.
+- 현재 설치된 아이폰 앱에 최신 로컬 수정이 반영됐다는 확인은 여전히 없다. 사용자가 새 빌드/설치 완료를 말하기 전까지 구버전 가능성을 유지하되, 모든 오류를 구버전 탓으로 단정하지 않는다. 시뮬레이터 금지 요청도 이어서 존중한다.
+
+### 다음 작업의 완료 기준과 근거 위치
+
+- 전체 정상 여부를 검증하려면 실제 정상 API 응답을 확보하고, 정상 사용자 세션으로 정확한 product/variant/size 옷장 저장 및 read-back, 선택한 옷으로 비교 begin/complete, 저장 결과·표시 결과까지 확인해야 한다. 인증 우회/사용자 impersonation/임의 성공값 금지. 이번 문서 요청 자체가 새 테스트나 추가 DB 변경 지시는 아니다.
+- 적용/검증 SQL: `supabase/sql/measurement_dictionary_verified_zara_Apply.sql`, `supabase/sql/measurement_dictionary_verified_zara_Verify.sql`.
+- 보고서: `Docs/QA/MeasurementDictionaryReinforcement-20260916.md`, `Docs/QA/ZaraMappingRegression-20260916.md`.
+- 원본 감사: `/Users/jinyoung/.codex/visualizations/2026/09/15/01a0a364-09f9-7b50-b02d-393c729d457f/measurement-master-audit-20260916/감사보고서.md` (전체131행 판정표/DB 원문/코드 근거 동봉).
+- 회귀·HTTP 응답: `/Users/jinyoung/.codex/visualizations/2026/09/15/01a0a364-09f9-7b50-b02d-393c729d457f/zara-mapping-regression-20260916/`.
+- 이번 인계 정리에서는 이 문서만 갱신했다. 기존 이력과 미커밋 작업 보존. 추가 테스트·빌드·DB 변경·commit/push 없음.
+
+## 2026-09-16 UNIQLO innerwear classification and retailer measurement master preliminary audit
+
+- Read the current official UNIQLO commerce API and connected development DB `hnkplvyegonlhumlejst` read-only for seven user-supplied products. `E482522` AIRism코튼크루넥T, `E454311` AIRism V넥T, `E466489` AIRism메쉬탱크탑, `E482514` AIRism크루넥T, `E482567` AIRism메쉬심리스복서브리프, `E482148` AIRism캐미솔, and `E464334` AIRism와이어리스브라 all have exact current UNIQLO category keys mapped to comparison group `F` / 이너웨어. The first four API requests and the later three each returned HTTP 200. At inspection time `E482522` and `E482514` had persisted CONFIRMED/READY product runtimes; the other five had exact category mappings but no vNext product row, so readiness was not claimed before ingestion.
+- Audited attached `FitMatch_Retailer_Measurement_Master_20260916.xlsx` without modifying it. Relevant sheets were `01`, `02`, `03`, `06`, `07`, `08`, `10`, and `11`. Initial read-only comparison distinguished retailer raw facts, source measurement definitions, aliases, canonical mappings, and comparison-policy use. The preliminary snapshot found 35 distinct UNIQLO clothing raw codes (25 with active verified alias/canonical resolution), 13 MUSINSA labels (9 complete, 3 context/meaning partial, 1 zero-only spacing variant), and 13 ZARA zones (11 then present in DB, 2 then missing). A managed canonical definition was not treated as automatic inclusion in comparison policy.
+- Preliminary gap conclusions requiring independent review: preserve component measurements separately; never merge flat width with circumference or unknown length bases. UNIQLO inner waist/hip/inseam must not map to main-garment axes, strap/vent/belt/slit and neckline-depth need raw-first treatment, unitless zero-evidence `neck-size` remains deferred, and strap-inclusive `body-length-back` must not silently use ordinary `back_length`. MUSINSA top `허리단면` had a source definition but no vNext canonical mapping; non-top/bottom `총장` and broader `밑단단면` contexts require basis/category verification. The workbook's `total-length` gap was stale at inspection time because the connected DB already resolved it to non-comparable `source_total_length`.
+- Important supersession: the preliminary proposal to map UNIQLO `front-rise` directly to bottoms `front_rise` is withdrawn; the later independent evidence recorded in `Measurement dictionary reinforcement / APPLIED` identifies representative `E469682` as shaping underwear and leaves the KR basis/context deferred. Likewise, the preliminary ZARA sleeve/hem gaps were subsequently reviewed and the verified subset was applied; the two sections immediately below are authoritative for current DB state and regression evidence.
+- Provided the user a copyable Astra audit prompt requiring independent CONFIRMED/PARTIALLY CONFIRMED/NOT CONFIRMED/INSUFFICIENT EVIDENCE verdicts against the workbook, current Swift and live DB, with no code/DB/workbook changes. This preliminary audit itself performed no repository source edit, DB write, migration, deployment, build, authenticated journey, commit, or push. Only this handoff update was added in the current turn.
+
+## 2026-09-16 ZARA dictionary regression / actual-link probes
+
+- User requested side-effect checks and fresh links from master. Selected sheet05 rows196 (sleeve tee),400 (dress hem),201 (pants negative control); actual page/details-ajax/measure-guide HTTP requests9/9 returned403. No source/API success claimed and no challenge bypass. Dedicated outerwear fresh-link success NOT RUN.
+- Read current stored raw1917measurements across50products. Local PostgreSQL17 uses real dictionary snapshot and captured deployed resolver, simplified table schema. Crossed7categories =>13419resolver scenarios, NOT13419real app comparisons.13407unchanged;12intended ZARA new resolutions only (4sleeve rows in tops/outerwear,4chest rows in outerwear); no newly introduced per-size/category/canonical conflicting values. All UNIQLO/MUSINSA cases unchanged. Hem lacks actual stored raw observations; synthetic-only verification remains.
+- Current live read-only Verify9/9 PASS. Local corrupted-source-basis test rejects atomically and rolls back. Source inspection confirms existing Swift adapter supports sleeve_length/hem_width/chest_width, ZARA positive-cm garment filter, latest linked useServerMeasurements=true. Old installed binary and authenticated begin/complete NOT RUN. New recognized evidence can legitimately change future scores even with unchanged policy rows.
+- Stored ZARA549678665 sleeve product is REVIEW_REQUIRED; local explicit category scenarios are not authentication/group approval. No DB writes or app fixes this turn. No simulator/commit/push. Report: Docs/QA/ZaraMappingRegression-20260916.md; evidence under visualization zara-mapping-regression-20260916. Existing unrelated edits retained.
+
+## 2026-09-16 Measurement dictionary reinforcement / APPLIED
+
+- User explicitly requested DB reinforcement after independent master audit. Target hnkplvyegonlhumlejst remains owner-designated development use. Applied data-only `supabase/sql/measurement_dictionary_verified_zara_Apply.sql` via execute_sql; no migration-ledger entry, schema/function/RLS changes, commit or push.
+- Added exactly 2 ZARA sources + 2 verified identity mappings + 4 category-scoped aliases: zone-name-sleeve-length in tops/outerwear → sleeve_length (shoulder seam to cuff); zone-name-hem-width in dresses → hem_width (flat edge-to-edge); zone-name-chest in outerwear → existing chest_width. Current parser only (zara_kr_size_measure_guide_v1), no wildcard category or unknown-parser fallback. Existing canonical and policy metrics unchanged.
+- Evidence: supplied master 08 rows7/17 and 05 rows196/400 identify sleeve definition and dress style01608613/commercial545465654; current Swift verified sleeve/chest semantics; live DB contains four positive-cm sleeve facts for ZARA549678665. Master method evidence used as supplied; official JS fresh access remained blocked in prior audit, not claimed revalidated. Hem limited to dresses, KID is audience not alias category.
+- Correction to earlier proposed UNIQLO front-rise/bottoms mapping: independent official UNIQLO JP product record for E469682 identifies shaping underwear (https://www.uniqlo.com/jp/ja/contents/kw/detail-E469682-000/93/). This does not establish the KR front-rise measurement basis or DB category. Do NOT add the previously proposed bottoms alias on that example alone. UNIQLO front-rise deferred pending exact official method/context. No UNIQLO or MUSINSA dictionary rows changed; uncertain upper waist/total-length/inner/design raw items remain pending.
+- PASS: disposable PostgreSQL17 loaded actual dictionary snapshot with simplified table schema and deployed resolve_measurement definition; repair executes and reruns idempotently. Local and live read-only Verify SQL each pass 9 cases: 4 intended contexts resolve exactly at unchanged value/unit and 5 wrong-context/unknown-parser/raw cases remain UNMAPPED. This is resolver-level verification, not an authenticated app test.
+- PASS: live before/after all dictionary snapshots: source49→51, aliases221→225, mappings46→48; every pre-existing row unchanged, canonical42/metrics647/policies44 entirely unchanged. Added SQL fails atomically on semantic conflicts or resolver postcondition failure. User Closet/history/raw product measurements not mutated by patch.
+- NOT RUN: authenticated registration/comparison, app/device build. No Swift change required for these dictionary additions; existing raw facts are resolved server-side when reloaded, but previously completed comparisons remain snapshots and are not retroactively updated. Unit/filter behavior and comparison policy are not broadened. Unmapped unknown fields still rely on existing raw evidence path.
+- Files/report: Docs/QA/MeasurementDictionaryReinforcement-20260916.md and corresponding Apply/Verify SQL. Behavior Map updated. Whitespace/protected-scroll PASS.
+
+## 2026-09-16 사용자 안내·알림 문구 사후 검증
+
+- 기존 원인별 안내 문구 변경의 실제 Compare/Closet/Auth 호출부를 다시 대조했다. 일시적 전송 실패는 네트워크 확인 후 재시도, 계약·서버 문제는 문의, 입력·실측 부족은 해당 입력 보완으로 남아 있으며 서버 원문이나 비교 그룹 추론을 추가하지 않았다.
+- 수정: HTTP 403 권한 거절을 `이 작업을 진행할 권한이 없어요. 문제가 계속되면 문의해 주세요.`로 명확히 했고, 승인되지 않은 비교는 상품·내 옷 정보 재확인, 기기 옷장 projection 불일치는 옷장 새로고침 후 재비교를 안내한다. 수동 Closet 수정 실패는 입력 유지와 다시 저장 행동을 표시하며 해당 alert 제목도 `저장하지 못했어요`로 통일했다.
+- 문구 전후:
+  - HTTP 403: `서비스 권한을 확인하지 못했어요. 문제가 계속되면 문의해 주세요.` → `이 작업을 진행할 권한이 없어요. 문제가 계속되면 문의해 주세요.`
+  - 서버 비교 미승인: `서버에서 승인되지 않은 비교입니다.` → `이 비교는 현재 진행할 수 없어요. 상품과 내 옷 정보를 다시 확인한 뒤 비교해 주세요.`
+  - 서버 후보/기기 옷장 불일치: `서버의 비교 후보와 기기 옷장 정보가 동기화되지 않았습니다. 동기화한 뒤 다시 시도해 주세요.` → `내 옷장 정보를 새로고침한 뒤 다시 비교해 주세요.`
+  - 수동 Closet 수정 영구 저장 실패: `수정 내용을 저장하지 못했습니다.` → `수정 내용을 저장하지 못했어요. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`
+  - 수정 실패 alert 제목: `저장하지 못했습니다` → `저장하지 못했어요`.
+- 유지 확인: 빈/형식 오류/미지원 상품 링크, 일시적 네트워크, 로그인 필요, 입력·실측 보완, 정상 미등록 비교 그룹 선택의 문구/동작은 변경하지 않았다. 미등록 그룹은 오류 alert가 아니라 비교 그룹 선택 화면으로 진행한다.
+- 테스트 계약: 위 권한·비교 승인·동기화 불일치 문구의 exact assertion을 추가했고, 이미 변경된 분류 저장 네트워크 문구와 일치하도록 기존 테스트 expectation을 갱신했다.
+- PASS: 변경 Swift/test 파일 `swiftc -parse`, `xcodebuild build -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath /tmp/FitMatchMessageAuditDerivedData CODE_SIGNING_ALLOWED=NO`, `git diff --check`, protected-scroll 검사.
+- BLOCKED: focused XCTest 및 화면별 Simulator 확인은 CoreSimulatorService 연결 거부로 실행하지 못했다. DB/Production mutation, migration, commit, push는 수행하지 않았다. 기존 미커밋 변경은 보존했다.
+
+## 2026-09-16 원인별 재시도/서비스 점검 안내 문구 분리
+
+- 사용자 안내 문구를 일시적 통신 실패와 서비스 점검이 필요한 실패로 분리했다. HTTP 408/425/429/5xx와 네트워크 전송 오류는 네트워크 확인 후 동일 요청 재시도, 필수 응답 누락·알 수 없는 상태·상품/variant/size 식별자 불일치·권한·RPC/계약 오류는 진행 중단과 문의 안내로 매핑했다.
+- 상품 파서/서버 권한·비교/옷장 저장·동기화·기록/계정 처리의 사용자 문구에서 `잠시 후` 및 서버 원문 노출을 제거했다. 로그인 원문 오류도 안전한 재시도/문의 문구로 매핑했다. 사용자 입력 오류와 로컬 저장 실패의 재시도 안내는 유지했다.
+- `FitMatchFailureCopy`를 공통 문구 소유자로 추가하고, 원래의 서버 권위·비교 그룹·정확한 상품/variant/size 식별자 흐름은 변경하지 않았다. DB/Production mutation, migration, commit, push는 수행하지 않았다.
+- PASS: `swiftc -parse` 전체 FitMatch/FitMatchTests Swift 소스, XcodeBuildMCP iPhone 17 Pro Simulator `build_run_sim` 성공(경고/오류 0), 원인별 문구 및 인증 전환 focused test 2개 성공(실패 0), `git diff --check`, protected-scroll 검사. 결과 번들: `/Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-16T02-03-51-510Z_pid65287_b42b3201.xcresult`.
+- 미검증: 인증된 실상품 링크→옷장→비교의 신규 실사용 회귀와 실기기 UI. 기존 작업 트리 변경은 보존했으며 commit/push는 별도 요청이 없어 수행하지 않았다.
+
+## 2026-09-16 UNIQLO E484080 color 07 comparison / read-only diagnosis
+
+- User reports comparison unavailable for E484080-000 with colorDisplayCode=07, sizeDisplayCode=004, pldDisplayCode=000. Failure step/message and selected Closet item remain pending; do not claim a confirmed root cause or assume the latest local app is installed.
+- Read-only dev DB hnkplvyegonlhumlejst: product 47c096fb-9dd3-4fc5-957d-312d6c528ed0 is 워시코튼크루넥T(긴팔), group A RETAILER_CATEGORY, effective classification CONFIRMED, readiness READY. Unit decision eligible=true (UNKNOWN_STRUCTURE_ONE_COHERENT_CONTRACT); UNKNOWN structure alone does not exclude it. Exact variant key 07 exists with 8 sizes. Never substitute the empty __default__ variant.
+- Actual stored Closet/evidence inspection for all 8 color-07 sizes: 스웨트셔츠 XXL, 워시코튼크루넥T XXL, SEMI CROP CHECK SHIRT M each have 3 common policy metrics; 해링턴재킷 3XL has 2. Three stored pants items have 0. Counts come from canonical_measurements_for_size_with_context and comparison_evidence_20260908, not authenticated candidate/begin execution.
+- Latest observed completed comparisons for this product are dated 2026-09-11; no fresh successful attempt was established. Stored data does not support a blanket no-comparable-Clothes diagnosis. Fresh retailer fetch failure, installed-app routing/identity handling, and authenticated RPC failure remain unconfirmed alternatives requiring the actual error boundary. Existing local preview-gating and sleeve-code repairs are not proven to explain this report.
+- No Swift/DB changes, simulator, build, or authenticated comparison executed. Only this diagnostic note added; maps unchanged because owners/contracts unchanged.
+
+## 2026-09-16 사용자 기기 빌드 미반영 / 다음 세션 우선 확인
+
+- 사용자는 현재 외부에 있어 새 빌드를 할 수 없으며, 2026-09-16 오늘 밤 퇴근 후 집에서 빌드할 예정이라고 명시했다. 현재 아이폰에 설치된 앱의 정확한 빌드/커밋은 확인되지 않았다. 최신 로컬 Swift 수정이 반영된 앱으로 테스트 중이라고 가정하지 말 것.
+- 이후 스크린샷·오류 제보는 이전 설치본의 증상일 수 있다. 먼저 최신 소스와 이 문서의 수정 내역, 서버 적용 여부를 대조한다. 같은 원인이 이미 수정돼 있으면 “최신 로컬 소스에서 수정됨, 현재 설치 앱 반영 전, 실기기 재확인 필요”라고 보고하면 된다. 중복 제보만으로 수정 실패를 단정하거나 이미 고친 코드를 다시 바꾸지 않는다. 반대로 실제 소스 근거 없이 모든 제보를 구버전 탓으로 처리하지 않는다.
+- 사용자가 새 빌드·설치 완료를 명시하기 전까지 위 상태를 유지한다. 오늘 밤이 지났다는 이유만으로 빌드 완료로 간주하지 않는다. 서버 수정 적용과 앱 바이너리 반영은 별도로 구분한다.
+- 소매 정보가 있는데 안 보였다는 관찰 자체는 기존 소스에서 가능한 증상이다. 이번 재확인에서 최신 소스의 canonical_measurements 보존, sleevePresentationExclusions 연결, 등 중심·래글런 코드 인식, 다른 사이즈 카드의 사유 표시 수정이 모두 존재함을 확인했다. 따라서 앞서 확인한 동일 사례는 로컬 수정 완료/기기 반영 전으로 분류한다. 다른 상품·비교 조합까지 동일 원인으로 확정한 것은 아니다.
+- 이번 작업은 소스 재확인과 인계 문서 기록만 수행. 추가 앱/DB 수정 없음. 실제 최신 빌드 실행·실기기 검증 NOT RUN.
+
+## 2026-09-16 Sleeve exclusion presentation and canonical code coverage / local repair
+
+- User screenshot corresponds to comparison 84046e29-ce7b-42da-9b4b-227386d3366a (후드립T vs SEMI CROP CHECK SHIRT). Prior read-only snapshot inspection: target XS sleeve_center_back_length 71 cm versus owned sleeve_length 59 cm with shoulder-seam basis; server correctly used only back/chest/shoulder. No sleeve subtraction or conversion is authorized by this repair.
+- Found candidate DTO discarded canonical_measurements; adapter retained only explicit DESIGN_AXIS_DIFFERENCE exclusions; alternative cards collapsed all omitted metrics into 비교 정보 없음. DTO now retains optional canonical evidence. Adapter adds presentation-only sleeve basis mismatch from the immutable target/reference snapshot, only when both positive cm definitions are uniquely known and sleeve is absent from authorized compared items. Missing/unknown/ambiguous evidence never guesses a mismatch. Existing exclusions win; completion payload, score and rank inputs unchanged.
+- Alternative cards show 측정 기준 다름 for this exclusion; detail card reuses reason and exact definition text. Unexplained omissions say 비교에 사용되지 않은 항목 instead of falsely claiming missing measurements. Old snapshots without canonical evidence remain readable; no retroactive diagnosis is invented.
+- Also added missing authorized code adapters for sleeve_center_back_length and sleeve_raglan_length. They retain distinct local measurement codes; only server-issued evidence reaches this path.
+- PASS: Swift frontend syntax on five changed production/test files, whitespace/protected-scroll checks; host Swift execution of extracted production diagnostic helper with model/projection stubs covered mismatch, compared item, duplicate exclusion, unknown basis, zero and missing values. Added full adapter regression asserting unchanged completion payload and ordering, plus code coverage cases; XCTest NOT RUN. Full app build/device UI NOT RUN. No simulator, DB mutation, commit or push.
+
+## 2026-09-16 Explicit cross-group policy / APPLIED after user confirmation
+
+- User explicitly approved any group pair with >=1 common canonical measurement (reply: 맞아. 허가한다). This supersedes the broader-policy-pending status below and the earlier same-group/A-B-only discovery restriction.
+- Applied migration 20260916000904_explicit_cross_group_comparison_common_measurements to user-designated dev project hnkplvyegonlhumlejst. Four existing functions changed: both find_reference_candidates overloads and both authorize_comparison_with_context_v1 overloads. Mapped and session-group candidates now evaluate all valid A-G Closet groups via existing eligible sizes. Explicit selection bypasses only group/domain mismatch; identity, ownership, unit/structure, audience, canonical semantic conflict and minimum-one-policy-evidence checks remain. same_comparison_group remains truthful; no global category/group or user-data mutation.
+- Final begin continues to regenerate eligible candidates and validate fingerprints. No automatic selection introduced. Prior CompareFlowSheet fix already permits server-approved rows independently of preview coverage. No additional Swift logic change in this follow-up.
+- PASS: isolated PostgreSQL 17 regression with captured actual candidate/eligible/authorization functions and synthetic auth/classification/evidence dependencies. Reproduced original F rejection, then verified A target with A+B Closet, F with no F Closet and A+B choices, session F with other groups, zero-common-metric exclusion, explicit-choice requirement, forged context, foreign ownership, structural exclusion. Regression is reusable at supabase/sql/tests/explicit_cross_group_comparison_Regression.sql. Initial persisted-fixture retry hit source CRLF hash mismatch; preserved original bytes and final full replay passed.
+- PASS: live postflight hashes equal the tested local definitions for all four functions; unchanged SECURITY DEFINER, empty search_path, ACLs; unauthenticated mapped/session discovery still rejects. Applied migration ledger confirmed. Verify SQL stores exact hashes. No impersonation or auth bypass on live DB.
+- NOT RUN: authenticated app candidate/begin/complete with the user's Airism URL, full app build/XCTest/device UI. No simulator used. Updated local app must be built for the prior preview-button correction; server restriction repair is already applied. Commit/push not performed; unrelated working-tree edits retained.
+
+## 2026-09-16 Other Closet comparison / A-B repair applied, broader policy pending
+
+- User reported same-group-only Other Clothes and no alternative for innerwear without same-group Closet entries. Read-only deployed inspection found candidates restricted to same group or A/B; requested-group candidates and authorization require exact same group. Separately, comparison_domain_20260908 omitted unclassified_outerwear, rejecting even the intended A/B pair. Actual Closet Harrington jacket uses this omitted policy.
+- Applied guarded cross_group_outerwear_domain_Apply.sql to user-designated development project hnkplvyegonlhumlejst via execute_sql: only adds unclassified_outerwear to UPPER_BODY. Postflight hash 25554b3d83a9983ba8a769b9fd7317f2; SECURITY INVOKER, empty search_path and postgres-only ACL unchanged. No user-data/group-mapping mutations or migration-ledger entry.
+- CompareFlowSheet no longer disables server-approved candidates solely because local preview requires two measurements. Selection checks current server plan membership and still runs normal authorization/begin. Scores/engine and protected scrolling unchanged.
+- PASS: disposable PostgreSQL 17 executed captured deployed authorization with synthetic fixtures: before fix INCOMPATIBLE_BODY_REGION, after fix manual A/B allowed; automatic cross, forged context, wrong owner and zero common metrics remain blocked. Regression source saved under supabase/sql/tests. Read-only real-data evidence: owned Harrington jacket shares canonical policy metrics with 3/8/8 sizes of three current A products. This is not authenticated candidate/begin/complete execution.
+- PASS: Swift frontend syntax, whitespace and protected-scroll checks. NOT RUN: app build/XCTest, authenticated end-to-end and device checks; no simulator used.
+- Broader innerwear/all-group repair is NOT complete: clarification is pending whether any group pair with >=1 common canonical metric is allowed, or same-body-region restrictions remain. Do not silently relax final authorization before this consequential policy answer. Existing F cross-group restrictions remain deployed. User was asked via async question.
+
+## 2026-09-16 MUSINSA 7079949 markup structure false-positive repair
+
+- User OneLink `n5k6kvyo` resolves to MUSINSA 7079949, `미니멀 컴포트 밴딩 팬츠 브라운`. Read-only connected-DB inspection confirmed details/actual-size HTTP 200, C group mapping, 3 sizes and 18 raw measurements. Candidate absence was not the failure boundary.
+- Root cause: `MusinsaProductMetadataParser` passed raw `goodsContents` HTML into the mixed-set detector. CSS declarations `top:` and `bottom:` directly satisfied the English component-label regular expressions, producing false `SET` / `MULTIPLE_COMPONENT`. The server correctly returned `NOT_APPLICABLE` for that false input, which surfaced as a missing/unavailable product path.
+- Parser now strips HTML with SwiftSoup and applies composite detection only to visible text. If only legacy raw-markup detection matches, it sends explicit `UNKNOWN` correction provenance; this lets a fresh observation replace the stale false `SET` while preserving fail-closed behavior and never inventing `SINGLE`. Product-name, official-label, visible-description, and official-category set evidence remain active.
+- Added a focused regression using the exact CSS/iframe pattern and verified the explicit `UNKNOWN` plus `SINGLE_COHERENT` values reach the final observation payload. iPhone 17 Pro Simulator focused suite PASS: 14 tests / 0 failures. No DB write, migration, Edge deployment, commit, or push was performed. The current connected product row remains stale until the updated app reloads the URL and submits a fresh observation.
+
+## 2026-09-16 ZARA unresolved-category garment preservation / source repair
+
+- Supersedes the no-fix status in the following diagnosis. Removed ZARAParser's category/detail .other early throw before official garment parsing. Verified semantic chest/sleeve mappings now also apply to unresolved local category (mapping version v6); front-length/back-width/arm-width remain raw-only. Category/group is not guessed. Shared ProductURLParserService normalization/observation serves Closet and Compare; existing server group picker, exact IDs, authorization and set exclusion retained. No DB writes.
+- Link Closet partial state displays actual ViewModel error instead of alleging an image-format failure; image recovery is hidden when garment measurements are already available. Existing unrelated dirty work preserved.
+- Added unclassified overshirt regression including raw record preservation, coherent measurement contract, explicit-set exclusion and observation rows. Updated empty-guide recovery and mapping-version expectations. Behavior Map provider contract updated.
+- PASS: host Swift execution of extracted production ZARASizeGuideParser and RetailerComparisonMeasurementContractFact with minimal model stubs: chest63/sleeve59.5, all five raw records, unclassified coherent contract, set exclusion, invalid-value exclusion, body-only rejection and incompatible-category nonmapping. This is bounded logic evidence, not full app integration. PASS: swiftc frontend syntax parse of changed Swift/test files, git diff --check and protected-scroll check.
+- NOT RUN: XCTest, app build, authenticated Closet insertion/comparison and fresh retailer end-to-end retry. User expressly prohibited simulator use; none used. Existing DB receipt is unchanged; updated app must reload URL to submit fresh observation. Preview/detail inconsistency and legacy measurement evidence issues remain outside this fix.
+
+## 2026-09-16 ZARA overshirt 01957601 / confirmed premature classification gate
+
+- Read-only diagnosis of user URL v1=565606719, parent 565594458, product ea0ac63e-e893-4a84-9007-82b0c7b7f9a5. Latest receipt observed 2026-09-15T22:44:29.221Z contains official measurement HTTP 200 at 22:44:26.786Z and four garment sizes S/M/L/XL, five raw measurements each. M chest63/front-length75.5/sleeve59.5/back-width56/arm-width24.5 cm. Emitted variants and persisted sizes are zero.
+- Receipt parser_notice explicitly reports unconfirmed product kind (ZARA > 남성 > 오버셔츠 > Sobrecamisa). ZARAParser.swift category/detail .other guard throws confirmCategoryBeforeMeasurements before parsing an already captured valid guide. LinkClosetRegistrationView.swift partialProduct UI instead always states size-table format/image issue and offers image analysis. Confirmed FitMatch gating + misleading recovery presentation, not missing retailer measurements for this recorded attempt.
+- Separate current shell probe returned HTTP403; this does not explain the user's recorded HTTP200 response. No code or DB fix applied. Next repair should preserve raw guide despite unresolved local detailed classification, delegate group/eligibility to server, and route classification recovery distinctly. End-to-end retest NOT RUN. Protected-scroll and whitespace PASS.
+
+## 2026-09-16 Closet-excluded clothing URL collection / PASS
+
+- User clarified 10 per retailer, 30 total across varied clothing categories. Collected from current official category pages and checked 30 product pages; final read-only DB Closet exclusion checked 29 distinct source products. Selected 30 unique product/style keys, zero overlaps. No app/DB writes or registration/comparison tests in this collection task.
+- Deliverables: Docs/QA/ClothingURLs-20260916/README.md, products.json, urls.txt. Zara style references compared with Closet canonical_url, not equated to internalProductID. UNIQLO color/size/suffix variations do not increase sample count. Categories are collection labels, not server A-G assignments. Previously tested-but-unregistered products are allowed by this scope.
+- MUSINSA 7119658 web retrieval error resolved via actual browser product page. Unverified Zara hooded jacket candidate replaced with verified biker jacket. Page existence is not measurement API/registration success. No flow-owner/contract changes, maps unchanged.
+
+## 2026-09-16 Single new MUSINSA registration / PASS
+
+- User requested minimal-token actual registration of one product absent from Closet. Preflight source key 6158959 absent from products/Closet; reused normal Apple session and existing UI harness with registration URL and registration-only environment options. No app logic changes.
+- Fresh https://www.musinsa.com/products/6158959 loaded through app, selected M, actual success toast PASS. UI 1 passed / 0 failed / 0 skipped; test case 72.651s, tool test duration 110.212s.
+- Read-only postflight: exactly one Closet bc4d8f3f-4a30-485b-ac7f-133f3d1aacaf; product 9ebb6b53-6af0-41b0-ba0d-c899c6cb3fa1, variant 2a59601b-f1fe-4d98-b959-c671fe123d10, size 7430553c-fc37-4323-b4de-f0257e89dd1d (M, matching variant), four persisted measurements. Created 2026-09-15T22:33:22.661485Z. Initial postflight query used wrong size FK column name; corrected read-back uses actual variant_id. No SQL mutations.
+- xcresult: /Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-15T22-31-34-281Z_pid62503_88bb7603.xcresult. Comparison/relaunch not run in this intentionally registration-only task. Existing preview/detail issue remains. Exact per-turn token telemetry unavailable; do not fabricate usage. Whitespace/protected-scroll PASS.
+
+## 2026-09-16 Authenticated app journey resumed after Apple login
+
+- Normal app session (no mock-auth flag) passed product observation/runtime and enabled Next. XL already exists as Closet 6cea440b-dfc9-41c5-a49f-12506081b188; duplicate registration alert correctly prevented another XL. Existing item retained.
+- Actual UI registration PASS for MUSINSA 5328103 M through ct27zw6f: success toast observed; read-back Closet 3e4f48d7-bed3-4a17-a42b-444fbd9dd9f2, client 7053b225-b5a2-475d-bf1e-85ff08673897, product cd77c9ce-5fe0-4c89-8f82-30ef608f3bb8, variant 11f34d73-3296-4e7d-a01c-e238b2ee57f9, size c5b6115b-5e06-43ac-9ade-2c529c1d493a (1. M), group C. Stored 6 cm metrics exactly match server snapshot (complete_snapshot/exact_values true): front_rise 30, hem_width 28.5, hip_width 54, outseam 102, thigh_width 32, waist_width 41.5.
+- Registration run xcresult test_sim_2026-09-15T22-11-41-140Z_pid62503_642b2f14.xcresult did not pass the whole journey: later broad candidate locator hit a hidden Home card. Earlier M menu tap failed AX hit-point calculation; test now uses that exact element's frame center. Resumed comparison-only mode avoids creating/deleting more Closet data.
+- Comparison preview displays both saved M and XL for UNIQLO E487214, but previous accessibility summary omitted owned size. Added owned size to its spoken label to distinguish the same product's two Closet entries without changing ranking, calculation, selection, or protected scrolling. Detailed comparison persistence verified below.
+
+- Authenticated comparison persistence PASS: actual app selected the newly saved M against UNIQLO E487214; comparison 1c487d59-895f-4d8c-b650-7386d9218f27 has reference_closet_item_id 3e4f48d7-bed3-4a17-a42b-444fbd9dd9f2, COMPLETED at 2026-09-15T22:18:39Z, recommended size 73 / ID 11571e52-7555-47d3-80f5-4e621d243e78, score 85, coverage 0.27273. Actual result screenshot agrees (73, 85%, selected option 1. M). This is one verified cross-provider journey, not proof of every provider/product or physical-device behavior.
+- Harness result title was outdated (expected 비교 결과; actual current detail is 개별 비교 결과), causing a UI assertion failure after successful server completion. Corrected the assertion; the resumed comparison + relaunch History test passed (details below). Preview displayed 79/89% while server detail displayed 73/85%; differing preview/detail metrics are an additional observation requiring separate policy/engine consistency review, not silently treated as equivalent.
+
+- Final UI PASS: testSlacksRegistrationThenExplicitClosetComparison with FITMATCH_RUN_AUTHENTICATED_JOURNEY=1 and FITMATCH_COMPARISON_ONLY=1 (uses the M successfully registered earlier in this run; does not reinsert it). 1 passed / 0 failed / 0 skipped, 77.4s. Exact M candidate selected, 개별 비교 결과 displayed, app terminated/relaunched, 기록 opened and 배럴치노팬츠 found. xcresult: /Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-15T22-20-28-249Z_pid62503_cbb1bdd4.xcresult.
+- Latest completed comparison 73a67ddd-d52c-4a3a-ae83-c8a1a485168a: 73 / 85%, exact new M Closet and exact target variant/product-size hierarchy true, history_visible true. Two completed comparison rows were produced by the two actual detail runs; one new M Closet row retained as authorized dev test data. No SQL data writes, migration, auth bypass, commit/push in this resumed task.
+- Final diff/whitespace and protected-scroll verification PASS. Remaining: preview/detail recommendation inconsistency, legacy six total-length evidence repair, other providers/products and physical-device journeys. This one successful journey does not close those items.
+
+## 2026-09-15 Linked creation / candidate authorization contract repair
+
+- User authorized fixes and previously classified `hnkplvyegonlhumlejst` as their development DB. Preserved existing dirty work on connectDB / ae69b30; no commit/push.
+- Swift: linked upsert uses `use_server_measurements=true` plus exact product/variant/size; server hydrates its selected canonical snapshot. Original retailer display/observation facts are retained. Manual and update measurement payloads are unchanged, group key stays omitted unless user-selected. Server auth/ownership/hierarchy/semantic/completeness checks and request-fingerprint retries retained.
+- Applied migration `linked_creation_server_snapshot_and_verified_candidates` to that DB: replaces apply_linked_closet_snapshot_for_swift(jsonb,uuid) and find_reference_candidates(uuid,uuid), guarded by preflight definition hashes. The mapped candidate path now calls eligible_candidate_sizes and excludes candidates with no authorized size; existing group/A-B allowance and explicit selection are unchanged. Internal AUTOMATIC naming is retained for wire compatibility, not automatic UI selection.
+- Postflight PASS: unchanged ACLs, SECURITY DEFINER, empty search_path; unauthenticated calls rejected. New definition hashes: helper c50585dae0fb8bcec2664500fd020f81; candidates 35eb381d953adca14bb192bb9187d7cc. Mapped 193 sizes: MUSINSA 16/16 usable, UNIQLO 134/134, ZARA 38/43; no invalid snapshot rows, duplicate canonical codes or semantic conflicts. This is not authenticated insertion/begin proof. Isolated PostgreSQL validation BLOCKED: installed libpq has initdb but no postgres server binary.
+- ZARA parser no longer owns the two-metric/waist+hip comparison gate. One valid metric and raw-only garment evidence reach server; body-guide/invalid-unit/empty-guide guards retained. UNIQLO details preserves resolved price group. E491320 suffix semantic equivalence remains unverified.
+- Focused regression PASS: 110 passed / 0 failed / 3 live-gated NOT RUN. xcresult: /Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-15T14-37-02-311Z_pid62503_18036211.xcresult. Initial new test initializer compile error fixed; two stale ZARA gate expectations updated to fact-preservation/server-authority assertions and rerun. Default-signing Simulator app build/install/launch PASS.
+- F02 legacy MUSINSA total length: existing six rows have no measurement-method evidence; two fresh official actual-size GETs returned Cloudflare HTTP 403. No guessed alias or raw-row deletion. New linked creation snapshots only server-confirmed canonical measurements and does not send these raw-only totals as arbitrary canonical facts.
+- Normal-session UI attempt: no `-fitmatchUITesting`, no fake session/fixtures/direct DB insert. Home and real link-load UI reached; snapshot shows parsed MUSINSA 5328103 and four sizes, but server authority unavailable and Next disabled. No new Closet/comparison was saved (counts 3/12 at check). Initial broad size-label query selected a background Closet card; added `closet.sizeSelector` accessibility ID and test wait for enabled buttons. The subsequent snapshot exposed the real authority block. Actual registered/compared journey is NOT PASS; tracing its underlying error.
+- Final normal-session UI attempt reached the Apple sign-in screen; authenticated Home precondition failed. Actual registration/comparison is BLOCKED on login, not PASS (xcresult: /Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-15T14-44-14-458Z_pid62503_6c327ae2.xcresult). Requested one Apple sign-in from the user; do not infer the prior authority failure's cause solely from this later sign-in screen. No user impersonation or auth bypass. UI test and latest app compiled successfully, but the journey stopped before persistence.
+- Added DEBUG RuntimeErrors OSLog for existing failure/safe-block messages, using existing sanitizer, because XCUITest output omitted app print diagnostics. No auth or launch-environment bypass added. Behavior Map updated with creation/candidate/provider contracts.
+- Final review PASS: git diff --check and protected-scroll command (PROTECTED_SCROLL_OK). Existing unrelated changes retained; new files are uncommitted. Actual app success requires normal-session registration, exact server Closet read-back, selected candidate comparison completion and History read-back; none is inferred from the 110 regression passes.
+
+
+## 2026-09-15 Core-flow read-only audit and new live API probes
+
+- Report: Docs/CoreFlowLiveAudit-20260915.md; HTTP manifest: Docs/CoreFlowLiveAudit-20260915-api.json. Current local uncommitted diagnostics preserved. No app/DB mutations, deployments, commit or push.
+- Connected DB snapshot: 36 products / 66 variants / 317 sizes / 1400 raw measurement rows / 3 active Closet items. All product groups and size canonical resolvers inspected; 17 mapped and 19 unmapped. A-G resolver contexts also inspected for unmapped products without assigning groups. UNMAPPED itself is not a failure.
+- Findings: retailer presentation records replace runtime canonical records before Closet transport; mapped candidates advertise all size IDs without eligible validation, unlike session-selected candidates; ZARA parser still sets unavailable using a two-metric/required-field gate; UNIQLO details request hardcodes price group 00 despite parsing the URL group. These are source/deployed-contract findings, not newly reproduced authenticated UI failures.
+- DB: MUSINSA 3346165 and 4818151 retain 6 legacy_unmapped total-length rows unresolved in C context. Prior 5328103 actual_size alias repair did not cover those historical rows. Do not map/delete them without evidence review.
+- New HTTP probes: MUSINSA 6158959 details/sizes 200, 4 sizes x 4 positive measurements; 6322076 details 200 but actual-size data=null; UNIQLO E485575 details/size-chart 200, 4 sizes x 6 fields. These IDs were absent from checked test/QA records and connected product table; no absolute claim about all inaccessible past tests. ZARA 04496307 local GET returned bm-verify HTML despite HTTP 200; internal/catentry identity and size API chain BLOCKED. No identifier guessing or challenge bypass.
+- PASS: read-only resolver/API inspection; FAIL: documented contract/data gaps; NOT RUN: fresh Swift parser execution, authenticated save/compare round-trip, app build/UI tests. No claim of entire repository/DB exhaustive validation. Scope and remediation priorities are in report.
+
+## 2026-09-15 connectDB — UNIQLO E487214 Closet registration diagnosis
+
+- Read-only inspection of connected Supabase project `hnkplvyegonlhumlejst` confirmed UNIQLO `E487214`, color variant `35`, and size `79` have exact product/variant/size UUIDs. The product resolves to comparison group `C`, readiness `READY`, ten ready sizes, and no semantic measurement conflicts. No Closet row currently references this product.
+- Therefore the persisted product, category-group mapping, exact requested size, and measurement readiness do not explain the reported registration failure. The remaining unverified boundary is the authenticated `fitmatch_vnext_upsert_closet_item` request, including session/RLS and any SQL rejection returned for the actual user.
+- Added DEBUG diagnostics at the server-first Closet write boundary. Logs now include the client trace ID, exact product/variant/size UUIDs, display size, explicit-group behavior, RPC retry state, server receipt IDs, and on failure the SQL state plus server rejection reason. No registration authority or persistence behavior changed.
+- The exact live parser test was not completed: the shell run was blocked by CoreSimulator/SPM cache permissions and the XcodeBuildMCP attempt timed out. Existing QA evidence confirms the base product parsed with 10 sizes, but is not claimed as a fresh exact-URL end-to-end run.
+- Generic iOS Simulator Debug build passed after the diagnostic change. No connected DB write, migration, Edge deployment, commit, or push occurred.
+
+## 2026-09-15 iOS Simulator build/run and UI capability check
+
+- XcodeBuildMCP UI automation is available for iOS Simulator. The current CUA surface exposes only Codex In-app Browser; Safari.app and physical share-sheet control are not available in this session.
+- FitMatch scheme built, installed and launched successfully on iPhone 17 Simulator (iOS 26.3), bundle `com.ljy4337.fitmatch`. Build/run artifact and logs are under `/Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2`.
+- Launch verification is partial: screenshot was captured but showed a black app screen; accessibility snapshot failed with no translation object. Runtime log only reported no pending shared URL; no immediate crash was observed. Authenticated journey, Safari handoff and physical share sheet remain NOT RUN.
+- `git diff --check` PASS and protected-scroll check PASS. No source behavior changes, commit or push.
+
+## 2026-09-15 MUSINSA 5328103 XL Closet registration / MAPPING REPAIR APPLIED
+
+- Reported OneLink ct27zw6f resolves to 5328103 (원턱 와이드 슬랙스). Exact XL size bc2ee2dd-0069-425a-913a-45161044138f belongs to variant 11f34d73-3296-4e7d-a01c-e238b2ee57f9 / product cd77c9ce-5fe0-4c89-8f82-30ef608f3bb8. Group C and group tuple validation were valid. Retailer supplied six measurements including total length 106 cm; server resolved only five, with one unresolved raw row.
+- Existing Swift bottom-type mapping transports 총장 as outseam. Deployed apply_linked_closet_snapshot_for_swift rejects a RETAILER_SNAPSHOT metric absent from the exact size canonical payload with 'Retailer snapshot does not match selected ProductSize'. This identifies a concrete server mapping mismatch consistent with the screenshot; the original authenticated RPC error was not captured.
+- User explicitly classified hnkplvyegonlhumlejst as development use and authorized repair. Applied guarded musinsa_bottom_total_length_Apply.sql via execute_sql: added one source definition, one 1:1 canonical mapping and one actual_size/bottoms/총장 alias. No function/schema/auth/identity/group-policy changes, no Swift edits in this repair. Never extend this label alias globally to tops/outerwear.
+- Read-only postflight PASS: all four sizes resolve six canonical measurements, unresolved/conflicts 0, runtime and save-context measurements equal, all six transported values match the server snapshot predicate. S/M/L/XL outseam = 101/102/104/106 cm. Hashes of other aliases, all raw measurements and Closet items unchanged. Saved reusable Verify SQL. This is resolver/snapshot-predicate verification, not an authenticated insert/read-back test.
+- Authenticated app registration/device retry NOT RUN; app build NOT RUN (server data/documents only). Reload this product link before retrying; no new app build needed for this mapping. Existing unrelated dirty changes preserved. No commit or push.
+
+## 2026-09-15 Result performance repair and ZARA TOPS chest alias / BUILD PASS, 14 TESTS PASS
+
+- User authorized narrow stutter improvements with existing logic preserved and explicitly identified hnkplvyegonlhumlejst as development-use containing their data. Reviewed attached physical-device DEBUG log: real long/severe frame intervals and delayed next-main-runloop; no Time Profiler attribution or before/after device measurement is claimed.
+- Added view-lifetime FitMatchResultSupplementalComparisonCache keyed by full measurement scalars, resolved source identity, exact item/size IDs and category. Existing engine calculation and authorized-kind filtering unchanged. TemporarySizeAnalysis stores its immutable snapshot once; result reliability uses already decoded snapshot. DEBUG scroll counters/summaries remain; verbose frame/geometry/phase output is opt-in FITMATCH_VERBOSE_SCROLL_DIAGNOSTICS=1. No protected scroll/layout/detent behavior changed.
+- Fixed misleading missing-candidate logging: CompareFlowSheet now prints actual server-plan reasons instead of legacy sleeve/detail candidate diagnostics. No candidate selection/authorization logic changed.
+- Actual ZARA 549678665 / selected variant from reported URL had chest facts but the verified zone-name-chest alias existed only for dresses. Added exactly one tops alias to existing zara.chest_width.chest_pit_to_pit via guarded supabase/sql/zara_top_chest_alias_Apply.sql using execute_sql (data repair, not a schema migration). No function, ACL/RLS, score, group policy, user or raw data edits by this repair. Existing dresses alias retained; no sleeve/length equivalence invented.
+- Read-only postflight PASS: TOPS alias unique/active/verified; all 4 ZARA sizes recover chest_width 50/53/56/59 cm with zero semantic conflict; 4 sizes × 2 owned long-sleeve/sweatshirt items now have 1 common policy metric each (before 0). Verification SQL saved. Authenticated candidate/begin/complete after repair NOT RUN; no impersonation/auth bypass used.
+- Verification: app/test build PASS; 14 tests / 3 suites PASS, including 4 new cache invalidation/equivalence/snapshot tests, existing MeasurementPolicyConsolidationTests and FitMatchComparisonPermitSequencingTests. MCP response timed out at 300s; actual build/test continued and final log/xcresult show TEST EXECUTE SUCCEEDED. Artifact: /Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-15T12-17-42-877Z_pid32595_7406dd7d.xcresult. Full UI/device performance rerun NOT RUN. Local shell Xcode discovery was sandbox-blocked; MCP build/test succeeded.
+- Updated Behavior Map, Swift Feature Map and Docs/ResultScreenPerformanceAudit.md. All 71 map paths resolve; git diff --check and protected-scroll PASS. Existing dirty diagnostic/source changes preserved; no commit/push. Install a new app build for performance changes; the server alias is already applied and available when reloading the link.
+
+## 2026-09-15 Result screen stutter / STATIC AUDIT ONLY
+
+- Traced both result titles and alternative-size sheet to RecommendationResultView. First measurement candidates: render-time supplemental MeasurementComparisonEngine.compare; sheet presentation followed by MainActor batch/cache preparation; repeated history-envelope decoding and broad Closet dependency. Actual frequency, frame impact and principal cause are unconfirmed.
+- Existing LazyVStack, alternative-analysis caching and thumbnail downsampling already present; no blanket replacement proposed. DEBUG scroll diagnostics have overhead and do not fully cover sheet/transition frame timing.
+- Added Docs/ResultScreenPerformanceAudit.md and updated FLOW-RESULT navigation. Static paths/whitespace/protected-scroll PASS; runtime profiling and device reproduction NOT RUN. No app/DB changes, build, commit or push. Preserve concurrent uncommitted diagnostic changes. User confirmed physical iPhone launched from app icon; installed build configuration remains unknown.
+
+## 2026-09-15 Essential-flow diagnostic logging / BUILD PASS
+
+- Added a DEBUG-only `[FitMatch진단]` log contract with an 8-character trace ID, Korean stage/state labels, stable sorted fields, single-line sanitization, NSError domain/code, DecodingError coding path, and an explicit next action on failures. Authorization/JWT/API keys and full raw payload bodies are not logged.
+- Product-link flows now log input URL, retailer/API parse output, original category, Swift display classification, canonical URL, size count, per-size canonical measurement values, official API evidence presence, and partial/parser failures. DB observation logs expose the exact identity/category/variant/size/measurement counts and submitted field names without dumping credentials or raw JSON bodies.
+- Server flow logs now cover observation submission/retry/result, promoted product UUID, runtime/classification/comparison-group/readiness response, authority validation, Closet item count, requested versus server-confirmed candidate group, candidate/blocked counts, eligible-size decision, begin authorization/result, and comparison completion/result.
+- Verification: generic iOS Simulator Debug build PASS with `CODE_SIGNING_ALLOWED=NO`; `git diff --check` and protected-scroll checks PASS. No DB/Edge/migration write, runtime authenticated journey, commit, or push occurred. Existing unrelated compiler warnings remain.
+
+## 2026-09-15 Behavior map / DOCUMENTATION ONLY
+
+- Saved the user-supplied flow map as root FitMatch Behavior Map.md, updated against code baseline ae69b30. AGENTS now routes tasks through the relevant Flow ID and uses the existing FitMatch Swift Feature Map.md for deeper ownership; replaced the nonexistent Docs/AgentArchitectureMap.md pointers.
+- Resolved ZARA/UNIQLO size-parser/sync owners, marked COS retired, distinguished documentation failure labels from runtime codes, and clarified that one common metric still requires other authorization checks. Preserved availability independence and persistence/identity boundaries. Replaced stale repair risks with dated handoff/deployment pointers; no fresh Production verification is claimed.
+- Verification: 17 unique flows with no unresolved Flow IDs, 67 distinct file references all present; whitespace and protected-scroll checks PASS. App tests/builds NOT RUN (documentation-only). No Swift, SQL or database behavior changed.
+- Files saved locally; this task did not commit or push. Earlier essential commit ae69b30 remains locally ahead of origin/connectDB pending explicit public-repository push approval after automatic review rejected the push. Authenticated account/device verification remains outstanding as recorded below.
+
+## 2026-09-15 Essential source publication scope
+
+- User requested committing/pushing only FitMatch essentials. Selected app changes, related unit/UI/live opt-in regression source, reviewed server apply/verify SQL and pending-migration retirement, navigation/handoff, plus deletion of already-tracked obsolete source/ZIP/empty files.
+- Excluded untracked Docs/ButtonExceptionCopyAudit.md and Docs/QA/20260915 reports, screenshots and raw product/server evidence. Paths to those artifacts in prior handoff entries are local evidence locations, not promised Git contents. Research corpora/backups were not newly staged.
+- Existing validation remains: post-cleanup app/unit/current UI 779 PASS / 0 FAIL / 42 SKIP; live 3-product regression 1 PASS; server postflight and read-only cleanup gate PASS. This publication does not add an actual authenticated account or physical-device test. No new app behavior change during selection.
+
+## 2026-09-15 Cleanup executed / APPLIED, 779 PASS, OLD-DETAIL INVARIANCE PASS
+
+- User authorized cleanup candidates and preventing old data/paths from disrupting current behavior. Removed 4 uncalled Swift files (BrandDatabaseView, ShoppingProductFormView, MusinsaWebViewParser, COSParser), 9 historical ZIPs, empty maxOffset, and ignored duplicate monolithic ledger. Retained all 46 tracked ledger parts byte-for-byte; same 149,475-row multiset. Final removal 15 files / 156,744,386 bytes (~149.5MiB). Archived removed code/ZIPs and old test source outside the repository at /Users/jinyoung/Developer/FitMatchLocal/CleanupArchive/20260915/. Existing dirty work preserved, no commit/push.
+- Removed only the 2 retired COS parser tests/unused spies, removed retired screen from the active-screen static audit, and updated Feature Map navigation. Post-removal full unit + current UI: 779 PASS / 0 FAIL / 42 SKIP; actual 3-link MUSINSA parser repair check separately 1 PASS. Exact artifacts in Docs/QA/20260915/cleanup-executed-evidence.json.
+- Applied 20260915064910_cleanup_retired_paths_and_align_group_readiness to Supabase hnkplvyegonlhumlejst. Removed 3 unreferenced functions with RESTRICT: effective_target_classification_detail_legacy(uuid), legacy_comparison_group(text), authorize_comparison(uuid,uuid,uuid,boolean). Removed 118 archived non-current legacy classification rows, retained 27 current rows. Guarded function definitions/callers and exact archive preimage hash before transaction. Export used byte-preserving base64 to avoid JSON numeric-scale drift; archived history hash verified before deletion.
+- product_readiness_with_context now delegates eligible products to existing product_measurement_readiness instead of old detailed tuple readiness; existing unit eligibility/recovery branches and ACL unchanged. Isolated exact SQL regression PASS, including unavailable policy/measurements and SET/multiple-component rejection. Actual effective_target_classification with isolated dependencies remains byte-equivalent after changing legacy garment/length/status/source fields: OLD_DETAIL_INVARIANCE_PASS.
+- Postflight PASS: retired signatures absent, past rows 0/current rows 27; product/Closet/comparison/group mapping/current history content hashes unchanged; all 30 stored products keep prior ready/status. Read-only cleanup_retired_paths_Verify.sql 5/5 PASS, including slacks mapping and reviewed axis validator. No inferred group/size/identity or user-row rewrite.
+- Confirmed 20260915093000_align_confirmed_group_readiness_contract was never deployed. Replaced this pending superseded proposal with read-only compatibility gate, preserving original outside repo; it can no longer overwrite current recovery branches/ACL. Gate passes against current Production. Full empty-DB migration replay is NOT RUN.
+- Historical Research/TestEvidence, currently used legacy-named wrappers, raw measurements, policy tables and user data remain required or archival-only; not blanket deleted. No auto-scheduled gate configured. Actual authenticated account round trip and physical-device verification remain BLOCKED/NOT RUN. Local temporary PostgreSQL stopped. git diff --check and protected-scroll PASS.
+- Result: Docs/QA/20260915/cleanup-executed/README.md. This supersedes removal-candidate/read-only status in the review below.
+
+## 2026-09-15 Second cleanup review / READ ONLY
+
+- Reviewed current dirty a68c849 source and live Supabase hnkplvyegonlhumlejst without removing app files, data, functions or schema. Report: Docs/QA/20260915/cleanup-review.md; structured metadata/counts/dependency evidence adjacent.
+- Candidates: 3 uncalled Swift UI/parser files, optional unsupported COS parser, empty maxOffset, historical ZIPs, and duplicate ledger representation (149,475 identical lines as a multiset, ~147MiB per representation). Research/evidence folders need archival/path handling, not blanket deletion.
+- Live 114 functions/33 tables/1 view and both deployed Edge functions inspected. Three function candidates have no discovered text callers or pg_depend references: effective_target_classification_detail_legacy(uuid), legacy_comparison_group(text), authorize_comparison(uuid,uuid,uuid,boolean). track_functions=none; no claim that zero stats proves unused. External clients/dynamic calls and removal regression remain unverified.
+- Current vNext products 30, unreferenced 0 using expanded user-data protection set. Receipts 104, orphan/null product 0. Legacy catalog non-current history 118/145 is archival candidate; 27 current records remain. Entire legacy catalog cluster requires coordinated retirement, not isolated DROP. Active mapping 931 and current policies/measurements/triggers/legacy wrapper paths remain protected.
+- Verification: read-only reference/dependency/count/duplicate audit PASS. No deletion, migration, commit or push. Removal build/runtime tests NOT RUN. Protected-scroll and whitespace checks PASS.
+
+## 2026-09-15 Slacks server repair / APPLIED, POSTFLIGHT PASS
+
+- User explicitly renewed the instruction to apply the slacks repair after the earlier approval rejection. Applied exact guarded supabase/sql/group_only_ingestion_axes_Apply.sql to existing FitMatch Supabase hnkplvyegonlhumlejst via apply_migration. This supersedes the server BLOCKED status below.
+- Migration 20260915062651_group_only_ingestion_axes_release_repair confirmed in server history. Removed legacy mandatory length-axis checks from shared product/Closet validator and inserted exact MUSINSA suit-pants/slacks path C / COMPARABLE mapping (1 row).
+- Read-only postflight PASS: function hash 4de8982f8bc4ed8d471e74a4c0561b14; existing invalid type/axis, audience and structure checks preserved; both triggers enabled; SECURITY INVOKER, empty search_path and existing ACL unchanged. No user product/Closet row mutation. Prior isolated DB regression PASS remains the execution evidence; authenticated account round trip is still BLOCKED, not claimed as tested.
+- Evidence: Docs/QA/20260915/repair/slacks-server-applied.md. Existing local app changes preserved; no new Swift changes, commit or push.
+
+## 2026-09-15 Release QA repairs / LOCAL PASS, SUPABASE APPLY BLOCKED
+
+- User requested all confirmed defects fixed, explicitly objecting to the slacks block. Preserved the a68c849 dirty connectDB checkout and existing unrelated work; no commit/push. This section supersedes the unresolved local defect/test status in the earlier analysis/QA entries below, without replacing their historical evidence.
+- Fixed MUSINSA unknown-column loss (including upper-arm circumference) via raw-only unknownDefinition records, prioritized embedded official CREMA charts before marketing images, retained bounded table OCR to avoid M(O95) identity corruption, and added cancellation checks. No guessed arm comparison meaning or size-name rewriting. Real 6372903 size names plus all 15 official measurement cells passed twice; all 30 supplied MUSINSA links loaded 122 size rows/673 records in final run. Final slow-link times 34.78s/39.14s vs original 157.33s/179.48s; Simulator CPU OCR, not physical latency.
+- Fixed explicit retailer variant ID loss both in fresh observation payloads and persisted Product replay by extending the existing optional versioned retailer-facts envelope. Old v1 payloads remain readable; no SwiftData schema change.
+- Repaired stale observation/read-back fixtures and current measurement/identity/copy assertions. Removed 7 obsolete detailed-classification UI lifecycle tests, while retaining coordinator contract tests and updating the 45-scenario harness to explicit group selection. Added current group lifecycle and raw/variant regression coverage. See Docs/QA/20260915/repair/README.md and retired-tests.json; do not equate historical scenario counts with the revised suite.
+- Verification PASS: final whole FitMatchTests 778 PASS / 0 FAIL / 41 SKIP (NOT RUN), including the 30-link live test. Final focused UI 9 PASS / 0 FAIL plus strict 3-link live test 1 PASS. Earlier current UI/main tests 9 PASS; intermediate obsolete-title failures were fixed and rerun. A 300s MCP timeout on the focused run did not end underlying Xcode; completed xcresult directly verified 10 PASS. Current final build package and exact result paths are in the repair report. Test doubles/DEBUG login do not prove real auth or server persistence.
+- Supabase target hnkplvyegonlhumlejst remains UNCHANGED. Prepared guarded group_only_ingestion_axes_Apply.sql removes legacy mandatory length-axis checks and adds exact MUSINSA suit-pants/slacks C mapping; isolated PostgreSQL 17 regression PASS for old rejection, repaired product/Closet acceptance and invalid-axis/type/audience/structure rejection. Local test cluster stopped. Actual apply_migration was rejected by automatic approval review for insufficient explicit authorization to change the possibly-production shared validator. Explicit project/scope approval requested asynchronously; no answer at this entry. No bypass. Read-only postflight confirmed old function hash 1eaf0cf9b69756335862218f770bb1f0 and slacks mapping count 0. Slacks server registration/comparison therefore still BLOCKED pending approved application and postflight.
+- Actual Apple sign-in, account registration/comparison/save/readback/relaunch and cross-account runtime checks remain BLOCKED; physical share sheet/gestures and iOS 17 runtime NOT RUN. git diff --check and protected-scroll checks PASS. Full repair evidence under Docs/QA/20260915/repair/.
+
+## 2026-09-15 QA root-cause follow-up / ANALYSIS ONLY
+
+- Added Docs/QA/20260915/root-cause-analysis.md with service/source/test/environment distinctions and three repair stages. No app/test source or DB changes in this follow-up.
+- Traced Musinsa arm-circumference loss to recognized-column-only compactMap and missing FallbackColumn mapping. OCR scans bounded regions even after a valid candidate; CPU fallback and concurrent QA prevent extrapolation to physical latency.
+- Traced two MeasurementPolicyConsolidationTests failures to waist-width 80 versus waist-circumference 78 fixture and the current explicitly allowed comparison-only conversion. Do not restore raw subtraction or mutate stored circumference. Other unresolved failures remain unadjudicated.
+- Server legacy length-axis validation and exact slacks mapping coverage are separate findings; authenticated reproduction and post-fix verification remain BLOCKED/NOT RUN. Existing prepared SQL remains unapplied. See report for repair acceptance criteria.
+
 # FitMatch 최신 누적 인수인계서
+
+## 2026-09-15 Pre-device release QA / CORE FAIL, LIVE 185 PASS, AUTH BLOCKED
+
+- User authorized the current local Xcode source including uncommitted changes, all currently exposed features, and test-data operations on the existing Supabase project. Personal iPhone: 14 Pro / iOS 26.6.1 (user-provided). No authenticated Simulator session was available, so all actual Supabase work in this run was read-only; no auth bypass, account impersonation, user-data mutation, schema change, deployment, commit, or push occurred.
+- Baseline: `connectDB`, HEAD and local `origin/connectDB` tracking ref `a68c8496628eb0bc1223b34708fb88e8fe945de1`, with 13 pre-existing dirty files. SHA-256 baseline confirmed all existing tracked files were unchanged by QA before this handoff addition. App build and normal launch PASS on iOS Simulator; actual xcresult OS is 26.3.1 (runtime list labels it 26.3). Minimum target is iOS 17; no iOS 17 runtime is installed.
+- Added opt-in `FitMatchReleaseLiveProductAuditTests.swift` and saved the exact unique supplied URL corpus under `Docs/QA/20260915/`. Fresh full production parser run: 1 PASS covering 185 URLs (UNIQLO 150, MUSINSA 30, ZARA 5), 1,144 size rows and 5,238 measurement records; all returned images and observation payload availability. This is retailer-load evidence, not authenticated ingestion/comparison or proof of all numeric values. MCP call timed out after 300s but underlying Xcode completed successfully; final xcresult and all 185 rows were read back.
+- Original image check on MUSINSA 6372903: 12 shoulder/chest-circumference/sleeve/length cells agree, but upper-arm circumference 28/29.5/30.5 cm is absent from the returned measurement records. Its live parse took 157.33s; 6372893 took 179.48s. Simulator OCR fell back to CPU; physical latency remains unverified. No parser changes were made.
+- Read-only current category-path/override matching: 157 mapped, 28 unmapped, zero ambiguous matches, preserving all three E491320 suffix URLs and explicit colour queries. Requested-group RPC overloads and active B/F/G policies are present despite migration-history lag. However `validate_garment_axis_values` still requires known legacy length axes and the exact MUSINSA slacks path mapping is absent. The 5746364/5328103 server ingestion blocker remains; prepared SQL was not applied. Current 30 stored product readiness states are recorded separately from fresh retailer evidence.
+- Initial whole suite encountered a stale JourneyRemote observation stub that always throws, then an unbounded wait in `recoveryDoubleSubmitThenClearUsesTheNewestProductionState`; this run was interrupted and is BLOCKED, not a full pass. Completed rerun excluding only `FitMatchHeadlessUserJourneyTests`: 658 PASS / 82 FAIL / 42 SKIPPED (reported as NOT RUN in that run). No overlapping initial-run counts were added. Failures include obsolete reference policy, old circumference conversions, stale response fixtures and source-string assertions; not all failures have been adjudicated and unresolved comparison expectations remain.
+- Current `FitMatchServerAuthorityIntegrationTests` 39 PASS; `FitMatchContractClosureRegressionTests` 7 PASS; auth unit tests 6 PASS; comparison sync 16 PASS; the exact supplied-unmapped route test PASS with 28 internal cases; availability/expiry-invariant authorized scoring test PASS. These use test boundaries, not a real authenticated account.
+- Existing UI suite: 3 PASS / 10 FAIL, including obsolete onboarding titles, old empty-state/privacy text and retired category/reference scenarios. Added separate `FitMatchReleaseCurrentUIAuditTests.swift`: 4 PASS / 0 FAIL for current onboarding Next/Later/relaunch, tabs/privacy/support, malformed comparison URL, and empty linked-Closet load gating. Eight screenshots retained in xcresult; three reviewed images copied to the report. Existing failing tests were not relaxed or removed.
+- Report: `Docs/QA/20260915/README.md`, per-product results, current server/category evidence, all completed unit-test statuses, failure ledger and current UI screenshots. Full xcresults/logs/raw measurement output remain in `/tmp/FitMatchReleaseQA-Evidence-20260915/`. `git diff --check` and protected-scroll checks PASS. App source and pre-existing changes preserved.
+- Release acceptance remains on hold: real Apple login, actual account registration/comparison/persistence/readback/relaunch, cross-account access, physical share sheet/keyboard/scroll gestures, iOS 17 runtime and physical iPhone smoke are BLOCKED or NOT RUN as specified in the report. The extra current-UI passes do not supersede unresolved older test failures or prove real-server success.
+
+## 2026-09-15 Button exception-copy remediation / BUILD PASS, 3 PASS
+
+- Separated shared product-link validation into empty, malformed, unsupported-retailer, and supported states. Home/Compare and linked Closet registration now use the same user copy; malformed input asks for a valid URL while unsupported retailers list MUSINSA, UNIQLO, and ZARA.
+- Removed server state/status/reason, DB/vNext terminology, raw Closet RPC rejection messages, and result-persistence `localizedDescription` values from user-facing copy. Internal diagnostics remain available through existing logging paths.
+- A valid retained product URL now offers `다시 시도` after any load/response failure; only malformed or unsupported input offers `다시 입력하기`. Save alert titles were normalized without changing their actions or navigation.
+- Verification: generic iOS Simulator app build PASS; focused Swift Testing URL contract suite 3 PASS / 0 FAIL; `git diff --check` PASS. Existing unrelated concurrency warnings remain. No Production DB/Edge write, migration, commit, or push occurred.
+
+## 2026-09-15 Button exception-copy audit / AUDIT ONLY
+
+- Audited user-visible exception copy triggered by URL submission, product loading, comparison, linked/manual Closet registration and editing, deletion, history actions, authentication/account deletion, and size-image recovery. General instructional and marketing copy were excluded. Findings are recorded in `Docs/ButtonExceptionCopyAudit.md`; no production behavior or copy was changed in this audit.
+- Highest-risk findings: raw `FitMatchServerAuthorityError` state/reason values can reach comparison UI; Supabase resolver copy can expose `DB/vNext/variant` and rejection detail; Closet registration can display an unfiltered server rejection message; Result re-comparison can display `error.localizedDescription` directly.
+- Additional consistency findings: malformed URLs and supported-format URLs from unsupported retailers share one validation state; linked Closet overwrites the common unsupported-provider message with a format-error message; non-network retryable failures show `다시 입력하기`; save/delete alert titles vary across screens.
+- Confirmed-good behaviors include explicit empty-link, login, duplicate registration, missing measurement, ambiguous persistence, no-reference, not-applicable, and unmapped-product handling. The unmapped path remains error-free and routes to A-G selection after the preceding repair.
+- This was static control-flow/copy inspection only. No Xcode test was required or run for the documentation-only audit; no Production DB/Edge write, migration apply, commit, or push occurred.
+
+## 2026-09-15 Unmapped product registration/comparison UX repair / 28 PASS
+
+- Replayed all 28 products found unmapped by the preceding live retailer-category audit against the current `observation promoted -> REVIEW_REQUIRED runtime` contract. The first focused run exposed a real defect: after receiving a valid unmapped result, `ShoppingProductViewModel` still requested legacy detailed-classification recovery options. A failure in that unnecessary request left the generic `서버 상품 응답을 처리하지 못했습니다` message even though comparison-group selection was the correct next state.
+- `ShoppingProductViewModel` now stops detailed recovery immediately when the server authority requires A-G comparison-group selection, clears stale error copy, and retains the REVIEW_REQUIRED exact product/variant/size context. No readiness, identity, measurement, or server-authority gate was relaxed.
+- Extracted only the existing comparison-group routing predicate into `CompareFlowRouting` so the production transition and focused regression assert the same condition. For every supplied unmapped product the regression verifies: linked Closet `다음` enabled, REVIEW_REQUIRED context retained, no automatic group, registration error/block message absent, comparison route selects the group picker, and network/server-response error copy absent.
+- Verification: exact iPhone 17 Pro Simulator test `suppliedUnmappedProductsRouteToExplicitGroupSelectionWithoutServerError()` **1 PASS / 0 FAIL**, covering 28 product cases in 0.338s. An earlier full resolver-suite run is not counted as pass because unrelated stale fixtures produced existing failures; the exact corrected test was isolated and passed. Production remained read only; no DB mapping, product row, migration, or Edge deployment changed.
+
+## 2026-09-15 Supplied retailer URL comparison-group audit / 185 PARSED, 28 UNMAPPED
+
+- Added a disabled-by-default live category-evidence audit in `LiveMusinsaValidationTests.swift`. It deduplicates an external URL list, resolves MUSINSA OneLinks, reads current official retailer metadata, records source product/category evidence, and deliberately skips MUSINSA measurement-image OCR because that work is unrelated to comparison-group lookup. It does not submit observations or write Supabase data.
+- The supplied list produced 185 unique URLs and 183 unique retailer products: MUSINSA 30, UNIQLO 150, ZARA 5. Simulator execution parsed all 185 with zero failures. The OneLink `tlrprnvi` resolved to MUSINSA 5746364.
+- Read-only Production matching used the exact currently deployed `product_comparison_group` path rules and policy `retailer-comparison-groups-v3-seven-20260911`. Results by URL: MUSINSA A=26/unmapped=4; UNIQLO A=62, B=31, C=26, D=7, F=3, unmapped=21; ZARA A=2/unmapped=3. Total mapped=157, unmapped=28.
+- Unmapped categories are 16 distinct paths: MUSINSA denim pants and suit pants/slacks; eleven UNIQLO paths covering current collaboration/renamed knit, shirt, sports, outerwear, warm-pants, fleece, and barrel-length categories; and three ZARA paths (`Camiseta M/L`, `F. Camiseta`, `B.PANTS`). These products must currently enter the A-G user-selection flow; no local parser category was promoted into server authority.
+- Verification: iPhone 17 Pro Simulator `LiveProductGroupURLAuditTests` 1 PASS / 0 FAIL in 246.248s. Production was read only; no mapping, product, migration, Edge, commit, or push was applied.
+
+## 2026-09-15 Product-load readiness/error contract repair / SWIFT COMPLETE, DB PREPARED NOT APPLIED
+
+- Fixed the confirmed runtime collision where deployed DB output `CONFIRMED` plus `CLASSIFICATION_REQUIRED / STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED` was treated as a category failure. Swift now preserves the confirmed comparison group and projects that exact legacy reason as `measurements_required`; comparison remains fail-closed until server measurement readiness succeeds. Genuine REVIEW_REQUIRED classification continues to map to `classification_required`.
+- Product-load presentation no longer labels every authority failure as a network outage. `URLError` retains the retry/network message, 401/403 receives a login message, typed authority/contract failures preserve their domain message, and unknown server-response failures receive a response-processing message.
+- `VNextComparisonGroupDTO` now accepts the deployed `mapping_source` key as well as the newer `source` key without inventing a default provenance value.
+- Prepared, but did not apply, `20260915093000_align_confirmed_group_readiness_contract.sql`. It makes both context and effective readiness delegate to the existing `product_measurement_readiness`, preserving explicit measurement/size/policy/not-applicable states instead of overloading classification. A read-only verification SQL was added. Supabase CLI/local PostgreSQL was unavailable, so migration execution is NOT RUN and Production is unchanged.
+- Verification: `swiftc -parse` PASS; iPhone 17 Pro Simulator app build PASS; `FitMatchContractClosureRegressionTests` 7 PASS / 0 FAIL, including the confirmed legacy readiness and `mapping_source` regressions; `git diff --check` and protected-scroll checks PASS. No commit or push.
+
+## 2026-09-15 Official category product-link collector / IMPLEMENTED, UNIQLO LIVE BLOCKED
+
+- Added a separate link-only automation to `/Users/jinyoung/Developer/RetailerCatalogCollectorLocal`: `collect_category_product_links.py`, `run_category_links.command`, and focused canonicalization tests. It opens the configured official MUSINSA/UNIQLO/ZARA category pages with the existing Playwright Chrome integration, discovers nested category links, and records up to ten canonical product URLs per product-bearing category without calling product-detail/measurement APIs or writing FitMatch/Supabase data.
+- Each run writes UTF-8 CSV, JSON, and summary files under `data/category_product_links/<timestamp>/`; category evidence is retained independently even when the same product appears in more than one category. Navigation-only parent pages are not counted as product categories, and short, blocked, or failed categories are explicitly reported rather than represented as complete.
+- Unit tests passed 4/4. A live bounded smoke (`--max-categories 1 --per-category 2`) collected 2/2 MUSINSA links and 2/2 ZARA links. UNIQLO's official women page returned a real Akamai `Access Denied` page with no links or captured listing payload, so UNIQLO live collection is correctly reported as failed in this network environment; no historical product list or sequential product-code scan was used as a substitute.
+- The external collector directory is not the FitMatch Git repository. No app source, Production DB, Edge Function, migration, commit, or push changed in this work.
+
+## 2026-09-15 Production unreferenced catalog cleanup / APPLIED
+
+- User explicitly requested deletion of all historical collected clothing data not required for FitMatch testing. Before deletion, Production `hnkplvyegonlhumlejst` contained 1,617 vNext products; an expanded protection set retained every product referenced by Closet product/variant/size, comparison target/variant/recommended size, user classification override, or user feedback evidence.
+- Executed one Production transaction deleting 1,587 unreferenced vNext products, 1,581 matching legacy catalog products, and 15 ingestion receipts. Product cascades removed 2,615 variants, 6,645 sizes, and 27,887 raw product measurements. No category mapping, comparison policy, measurement mapping, auth/user, Closet, comparison/history, override, or feedback row was targeted.
+- Read-only postflight: 30 vNext products, 27 legacy catalog products, 61 variants, 283 sizes, 1,232 product measurements, and 104 receipts remain. Closet product orphans = 0 and comparison target product orphans = 0. Category-group mappings remain 930, comparison policies 44, and source measurement mappings 45.
+- This was Production data cleanup, not a schema/function/Edge change. The unapplied group-only ingestion-axis and MUSINSA slacks group-C mapping fix remains required before the two supplied slacks can ingest successfully again.
+
+## 2026-09-15 External product-load audit verification / PARTIALLY CONFIRMED
+
+- Independently checked the supplied audit against HEAD `2895439c7e561f9acf387af2611b4b96fd7cce66` and read-only Production definitions/data. Its readiness-state collision is confirmed: Production can return effective CONFIRMED group A plus readiness `CLASSIFICATION_REQUIRED / STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED`, while Swift maps that to `classification_required` and rejects it for a confirmed authority. The generic network error presentation and loss of `unknownState(field, observed)` diagnostic detail are also confirmed.
+- The `mapping_source`/`source` mismatch is confirmed and optional decoding prevents it from being a direct decode crash. It still loses exact `RETAILER_CATEGORY` provenance and should be corrected without defaulting or merging it with user/session sources.
+- The user-case investigation in that audit is incomplete and its environment caveat is now superseded. The exact MUSINSA OneLinks were live-resolved here to 5328103 and 5746364; both official APIs and exact-link parser/observation tests pass. Production has neither product/receipt, still enforces a known lower-length axis for CONFIRMED `slacks_trousers`, and lacks the exact `musinsa-path:바지:슈트 팬츠/슬랙스` group-C mapping. The already prepared `group_only_ingestion_axes_Apply.sql` fixes those two direct blockers but is NOT APPLIED.
+- B/F/G activation and requested-session-group function availability are present in Production, but that does not mean every prior prepared change is applied: the group-only ingestion-axis change above remains absent. MUSINSA 6948481 is independently confirmed PROCESSED/READY/A with M/L/XL, so ingestion is not globally unavailable.
+- No source or Production behavior was changed during this verification beyond retaining the existing live regression tests and updating this handoff. Recommended order: isolated validation and approved apply of the direct ingestion-axis/category mapping fix; then readiness-state contract alignment across SQL/DTO/authority/UI; then provenance-key and stage-safe diagnostics.
+
+## 2026-09-15 MUSINSA 5328103 / 5746364 comparison-target diagnosis / PARSER PASS, REQUEST NOT OBSERVED
+
+- The two supplied OneLink URLs resolve to MUSINSA products 5328103 and 5746364. Live official detail and actual-size APIs returned HTTP 200; both are MEN / pants / suit pants-slacks, with four and nine measured sizes respectively.
+- Added a disabled-by-default live regression that starts from the exact shared links and verifies redirect resolution, product/category identity, measured sizes, and server observation payload generation. The real Simulator run passed 1/1.
+- Read-only Production inspection found neither product in `fitmatch_vnext.products` and no ingestion receipt for either source key. As with E469292, the failing device attempt did not complete the Edge `product-observation` ingestion transaction, so candidate/group procedures are not the first failure. No Production write or deployment was performed.
+- Supersedes the initial request-boundary uncertainty above: read-only Auth inspection found the FitMatch session refreshed successfully at 2026-09-15 06:47 KST and was not expired. Production `validate_garment_axis_values()` still requires a known `lower_length_code` for CONFIRMED `slacks_trousers`, and Production has no exact `musinsa-path:바지:슈트 팬츠/슬랙스` comparison-group row. These are the same two gaps already addressed by local `supabase/sql/group_only_ingestion_axes_Apply.sql`, which remains NOT APPLIED. The observations therefore fail with a domain 422 and roll back before a product/receipt remains; a device log is no longer required to identify these two products' root cause.
+
+## 2026-09-15 UNIQLO E469292 comparison-target ingestion diagnosis / PARSER PASS, REQUEST NOT OBSERVED
+
+- Preflight fetched `origin/connectDB`; local and remote HEAD both resolved to `2895439c7e561f9acf387af2611b4b96fd7cce66`. The starting worktree was clean.
+- The live UNIQLO APIs returned the current MEN / outerwear / parka-blouson / pocketable product and seven sizes. The color-specific size-chart key is empty, while the generic `E469292-000` size chart contains the seven measured sizes; the existing parser's generic fallback handled this correctly.
+- Added a disabled-by-default live regression for the supplied E469292 color 03 URL. Its real Simulator run passed: exact category path, seven sizes, nonempty measurements, coherent single-item measurement contract, and HTTP 200 retailer evidence. The existing server-authority integration test also passed and confirms a fresh retailer observation is submitted before the runtime read.
+- Read-only Production inspection found only the legacy E469292 catalog row, last updated 2026-08-18, with zero variants/sizes/measurements and no `fitmatch_vnext.product_ingestion_receipts` row. Therefore the reported attempt did not reach a successful database ingestion transaction. This rules out comparison-group lookup as the first failure; the remaining boundary is the running app build/session/Edge `product-observation` request. The active Edge Function is version 5 with JWT verification and the expected ingestion RPC call. No Production write or deployment was performed.
+- The current source path and live parser are working, but the exact device-side transport/authentication rejection cannot be identified without the failing run's `[화면: 상품 분석][동작: 서버 v4 분류][상태: 안전 차단] 오류=...` detail. No speculative auth, parser, or DB procedure change was made.
+
+## 2026-09-14 Session requested-group Production readiness audit / MIGRATIONS PREPARED, NOT APPLIED
+
+- Preflight fetched `origin connectDB`; local HEAD and `origin/connectDB` both resolved to `caf761097c6e65bbfa5e0bc9a8e692180fca75b1`. The starting worktree was clean. The existing Swift path was read back: `comparisonGroupSelection`, `requestedComparisonGroupCode`, `SESSION_USER_SELECTED`, server-issued target group and both authority fingerprints are present; `prepareClosetComparisonBatch()` consumes `referenceSelectionPlan.targetComparisonGroupCode`, not a locally re-inferred runtime group.
+- Read-only Production inspection of `hnkplvyegonlhumlejst` found migration history ending at `20260914050759_remove_legacy_group_decision_fallbacks`. It has only the legacy two/four-argument candidate and eligible RPC signatures and no requested-group overloads, so the already committed session authority migration is not applied there.
+- The seven actual group tuples resolve to `comparison_group_top`, `comparison_group_outerwear`, `comparison_group_bottom`, `comparison_group_skirt`, `comparison_group_onepiece`, `comparison_group_innerwear`, and `comparison_group_homewear`. A/C/D/E policies are active; B/F/G group garment types and their metric rows are active, but their linked policies are inactive. All three have stale `min_common_measurements=2`, `SAME_OR_UNISEX`, and `allow_manual_extended=false`; B also has `required_any_min=1`, while F/G have `0`. Their existing canonical metrics were retained. B/F/G are therefore `NEEDS_POLICY_REPAIR`, not safe raw activation.
+- Added prepared successor `20260914080000_group_policy_activation_bfg.sql`, with read-only verify and rollback SQL. It changes only the three existing policy rows to the approved group-session contract: active, common canonical measurement minimum 1, no particular required metric, `ADULT_ANY`, explicit-manual allowance, and a recomputed policy checksum. It neither changes retailer mappings, product overrides, permanent user classification, measurement rows, nor Closet groups. Apply it first, then `20260914090000_session_requested_comparison_group_authority.sql`.
+- `homewear_set` is only a policy name: the existing `product_comparison_unit_decision` still rejects `SET` and multiple-component contracts, so G remains limited to a single coherent item or homogeneous multipack. The session migration retains the server-side same-group and domain authorization checks; it does not use detailed classification as a picker gate or invent a cross-group candidate.
+- Re-ran `FitMatchServerAuthorityIntegrationTests` on iPhone 17 Pro simulator. The first run reproduced `38 PASS / 1 FAIL`: `resultReferencePickerUsesServerAuthorizationForEveryActiveLocalClosetItem` expected two candidate RPC calls, but the unchanged result picker makes one aggregate `referenceSelectionPlan` call and projects its returned candidates locally. Updated only that stale expectation to one; rerun result was `39 PASS / 0 FAIL / 0 SKIP`. A method-level Swift Testing filter was also attempted but Xcode selected zero tests, so the type-level run is the recorded evidence.
+- No local Supabase CLI is installed and local PostgreSQL is not accepting connections (`pg_isready` no response), so actual isolated migration execution, RPC integration, forged/stale fingerprint probes, and authenticated requested-group end-to-end remain BLOCKED. Production was read-only; no migration was applied, no commit/push occurred.
+
+## 2026-09-14 Session comparison-group authority audit / MIGRATION PREPARED, NOT APPLIED
+
+- Preflight fetched `origin/connectDB`; local and remote HEAD both resolved to `b5257d3a0076f178d1605882c28555551943d77c` (`Add session comparison group selection flow`). The starting worktree was clean.
+- Independent audit confirmed all four reported issues. The compiler exposed the missing `.comparisonGroupSelection` switch case and both missing protocol-extension returns. The comparison flow and view model still gated a session request on legacy readiness. Production function definitions still expose only the old candidate/eligible signatures and recompute the one-argument effective classification. Batch preparation read the runtime group instead of the server response plan.
+- Swift now separates mapped-product readiness from a server-validated `SESSION_USER_SELECTED` context. Candidate, eligible and begin responses must preserve the same group, policy/version and authority fingerprints; malformed, missing, changed or stale context fails closed. Group changes/reset, target changes, account changes and cancellation invalidate the previous plan, reference, candidate set and async request. `NOT_APPLICABLE` cannot use the picker bypass. The result/history path accepts only the exact begin snapshot context.
+- Added `supabase/migrations/20260914090000_session_requested_comparison_group_authority.sql` plus read-only verify and rollback SQL. The migration keeps null-request mapped calls on the existing functions, permits requested A-G only when the retailer mapping is absent, validates variant/structure/policy/reference ownership/audience/canonical measurements, rechecks forged context, and binds group plus effective/candidate fingerprints through begin. It writes only a normal comparison row at begin; it does not mutate retailer mappings, products, overrides, or permanent user classification. Production was inspected read-only and this migration was NOT APPLIED.
+- Production catalog inspection found active policies for A/C/D/E, but the generic group policies currently referenced by B/F/G are inactive. The prepared migration intentionally blocks those groups until valid active policies exist; it does not activate policy data speculatively.
+- Verification: Simulator Debug app build PASS. Added tests for required server group-context decoding and cancellation reset: 2 PASS. Full `FitMatchServerAuthorityIntegrationTests`: 38 PASS / 1 FAIL; the unchanged `resultReferencePickerUsesServerAuthorizationForEveryActiveLocalClosetItem` expects two candidate calls while the unchanged result picker implementation performs one aggregate server-plan call. Migration body/static whitespace checks PASS, but PostgreSQL execution is NOT RUN because no local DB/Supabase CLI is available and Production apply is forbidden. Authenticated requested-group end-to-end is therefore NOT VERIFIED. No commit or push.
+
+## 2026-09-14 Closet comparison-group source attribution / NOT APPLIED
+
+- `AddComparedProductToClosetSheet` now keeps the server-provided group in `selectedComparisonGroup` for display, but sends `comparison_group_code` only when `didExplicitlyChangeComparisonGroup` is true. This preserves the existing picker and group-decision UX.
+- The existing payload encoder omits a nil `comparison_group_code` key. The existing DB wrapper treats key presence as explicit, so an unchanged retailer-mapped group is re-evaluated and stored as `RETAILER_CATEGORY`; a user selection/change is stored as `USER_SELECTED`.
+- No database SQL or migration was changed or applied. `xcrun swiftc -parse` for the sheet, registration, resolver, and focused test passed; `git diff --check` and protected-scroll checks passed. The focused `xcodebuild test` was attempted but did not complete: its original result bundle remained incomplete and a retry failed because that build's DerivedData database was locked. No database round trip was run. No Production write, commit, or push.
+
+## 2026-09-12 UNIQLO collector 403 path correction / API LISTING INPUT STILL MISSING
+
+- The external collector at `/Users/jinyoung/Developer/RetailerCatalogCollectorLocal/collector.py` no longer invokes the separate `category_corpus` urllib audit path from `discover_uniqlo_verified`; normal UNIQLO discovery is explicitly routed through the collector's existing Playwright/listing-response capture path. Product detail and size-chart endpoints, local catalog schema, and MUSINSA/ZARA flows were not changed.
+- Syntax compilation passed with `PYTHONPYCACHEPREFIX` redirected to `/tmp`, CLI help passed, and installed-file readback matched the staged edit. A live one-page/ten-product UNIQLO smoke did not return the prior bare-urllib HTTP 403, but the Playwright page was an interstitial and discovery stopped with `Blocked listing response; discovery remains incomplete`; zero products were collected.
+- The current thread/session files contain UNIQLO product detail and size-chart URLs but not a complete category/listing API request (URL, query parameters, and required headers). Direct API listing integration and a successful ten-product smoke remain unverified; do not run a full UNIQLO batch until that captured request is supplied/recovered. No Production DB/app behavior, commit, or push changed.
+
+## 2026-09-12 UNIQLO blocked-listing API fallback / RUNNING
+
+- Supersedes the preceding stop recommendation. The official product details endpoint was live-checked for E487929 and returned HTTP 200 JSON. The local collector now treats a blocked UNIQLO listing as a discovery transport failure, places all 904 known UNIQLO product codes into the current verification cycle, and incrementally probes product-detail API codes after the persisted scan cursor. Configured incremental probe count is 5,000 per full batch.
+- A bounded live run encountered the expected listing interstitial, switched to API fallback, and completed 10/10 known product detail and size-chart collections with zero product failures. It probed ten new numeric codes and found zero products in that narrow range. The fallback report completion check now accepts a populated observation cycle with an intentionally empty page queue.
+- The prior all-brand process was interrupted because it had loaded the old code. A new all-brand batch is running from `/Users/jinyoung/Developer/RetailerCatalogCollectorLocal/run.command`; its UNIQLO scan cursor was observed advancing from 494347 to 494368. Full completion, the remaining 5,000-code result, and downstream MUSINSA/ZARA completion are pending. No Production DB/app behavior, commit, or push changed.
+
+## 2026-09-12 UNIQLO sequential-code scan / STOPPED AND DISABLED
+
+- Supersedes the running 5,000-code probe above. The user rejected sequential numeric probing because it does not represent current homepage inventory. PID 88847 was stopped with SIGINT and read-back confirmed no `collector.py --config config.json` process remains.
+- `/Users/jinyoung/Developer/RetailerCatalogCollectorLocal/config.json` now sets `api_scan_count` to 0, so future normal batches cannot restart the numeric probe. The API fallback code remains available but only revalidates the 904 already-known products when listing discovery is blocked; current-homepage discovery remains unresolved until the actual captured listing/category API request is recovered.
+
+## 2026-09-12 MUSINSA category-bounded incremental batch / IMPLEMENTED
+
+- Supersedes the initial three-category scope recorded here: the local collector's `run_musinsa.command` now runs seven configured MUSINSA apparel seeds independently with a 100-product incremental API cap per category. Seeds are tops `001`, outerwear `002`, pants `003`, dresses/skirts `100`, underwear/homewear `026`, sports/leisure `017`, and kids `106`, for at most 700 selected API refreshes per batch. Non-garment roots such as bags, shoes, beauty, and fashion accessories remain excluded.
+- Added `collector.py --category-url`, requiring `--brand` and rejecting `--resume`. A category-scoped run clears only that brand's pending discovery-page queue before establishing a new cycle, preventing stale pages or another top-level category from consuming the 100-product allowance. Existing raw records, product rows, and successful observation timestamps are preserved.
+- Shell syntax, Python compilation, and CLI exposure were checked locally. Live retailer collection is launched separately and is not described as complete until its process/output is verified. No FitMatch app or Production DB behavior changed.
+- First live background attempt failed before collecting products because browser discovery still tried to exhaust the full infinite-scroll listing and treated its 200-scroll safety cap as an incomplete crawl. MUSINSA category discovery now stops successfully once the configured per-category product target has been observed; the API collection cap remains independently enforced.
+- A follow-up live run exposed Musinsa `nextPageUrl` responses continuing after the first browser page had already yielded 122 products. Discovery now removes only the current brand's remaining category-page queue and ends that category cycle once the cumulative observed-product target is reached, so neither browser scrolling nor API pagination expands into a full catalog crawl.
+
+## 2026-09-12 Retailer collector local relocation / COMPLETE
+
+- Copied `/Users/jinyoung/Documents/RetailerCatalogCollector` to the non-iCloud path `/Users/jinyoung/Developer/RetailerCatalogCollectorLocal`. The source was preserved; no deletion or move-away was performed. The expanded local copy is 1.6 GB because iCloud-compressed/dataless files were hydrated during copy.
+- Verified the local SQLite database with `PRAGMA quick_check` (`ok`) and read current row counts: MUSINSA 8,191; UNIQLO 904; ZARA 14,524. The DB and WAL no longer carry the `dataless` flag, `run.command` remains executable, and `collector.py --help` succeeds from the local copy.
+- The failed run from the Documents copy was not restarted automatically. Future collection must use `/Users/jinyoung/Developer/RetailerCatalogCollectorLocal/run.command`; the old Documents copy remains vulnerable to iCloud eviction and should not be used for active collection.
+
+## 2026-09-12 Current-listing API collector refresh / IMPLEMENTED, LIVE COLLECTION NOT RUN
+
+- User requested collector changes for currently posted products using FitMatch's actual product/measurement API shape, not a category-only collector. Located the executable three-retailer collector at /Users/jinyoung/Documents/RetailerCatalogCollector; this is outside the Git repository. The three previously discussed FitMatch scripts are historical audit/sample tools and were not modified. The user was asked to confirm the executable folder; no reply arrived, so the real three-brand runner was used as the stated default.
+- Changed external collector.py, added catalog_refresh.py, changed config.json/run.command/README.md. Approved filesystem copies installed the staged changes. No catalog.sqlite3, existing raw data, Production DB, or app code was mutated by this collector task.
+- Default discovery uses current official category/listing seeds, captured listing JSON and current-cycle observations. Removed seed-CSV loading and numeric UNIQLO scanning from main. Added resumable discovery queues, broader visible ZARA category discovery including unknown clothing candidates, MUSINSA category-link traversal, and explicit failure on scroll-cap/blocking. Queue exhaustion is NOT proof of complete current-site coverage; reports retain full_site_coverage_verified=false.
+- Added first-baseline/full collection, periodic refresh (168h default), listing-change refresh, retry of failures, and --resume. run.command no longer forces --new-only. New local observation state preserves successful-fetch timestamps and prevents unseen historical seed records from being treated as current inventory. Local lock prevents overlapping new collector runs.
+- UNIQLO/MUSINSA raw records now include the app's v1 swift_retailer_api evidence envelope; UNIQLO detail query flags match Swift. ZARA's existing v2 selected-catentry identity and unmodified response capture remain. Normal records are atomically saved; latest attempts and prior changed records are retained separately. Export is scoped to current observed products with successful collection state.
+- Local reports include current inventory, category counts, category changes, API exceptions and optional comparison against a supplied single-active-policy DB mapping export. No mapping inferred/applied and no Closet user group overwritten. Missing mapping export is NOT_CHECKED; malformed/non-200/missing API contracts are reported, not counted as end-to-end registration success.
+- Verification performed: Python syntax compilation (cache redirected to /tmp after the system cache path was sandbox-blocked), shell syntax, CLI --help/import, installed-file hash readback and protected scroll checks. No automated tests, live retailer collection, full-site coverage verification, DB ingestion, commit or push. The preceding global garment-axis migration remains unapplied after automatic approval rejection; collector changes do not fix that server blocker.
+
+## 2026-09-12 MUSINSA 5746363 ingestion rejection and Next / SERVER APPLY BLOCKED
+
+- Confirmed Production validate_garment_axis_values still requires known sleeve/lower/body length on CONFIRMED products and Closet rows. The supplied slacks_trousers error occurs before group readiness. The active MUSINSA mapping catalog also lacks the exact pants/slacks path.
+- Prepared group_only_ingestion_axes_Apply.sql to remove mandatory legacy length presence while retaining garment validity, axis applicability, structure and audience checks, and to add the exact supplied pants/slacks path to C. Production apply_migration was rejected by automatic approval review because the global product/Closet impact requires explicit approval. Read-only postflight confirms the old lower-length requirement remains. SQL and mapping are NOT APPLIED; user approval remains required for this scope.
+- Link Closet Next now opens whenever a parsed product exists, independently of server failure. Missing context is explicitly preparing/unavailable, preserving server-first save guards. Unavailable context retains API size choices and does not misleadingly label them as missing measurements; users can select group/size while persistence remains unavailable.
+- No build or automated tests per user preference. Device registration and successful ingestion remain unverified. No commit/push; protected scroll file/call sites unchanged.
+
+## 2026-09-12 UNIQLO E487929 group selection repair / PRODUCTION APPLIED
+
+- The official API classifies E487929 under MEN / tops / t shirts / subcategory 125775 `(X)후리스`. The parser correctly retained that tops path, but the active comparison-group catalog had no exact row for category key `uniqlo:57893:57967:58039:125775`.
+- Because `fitmatch_vnext.product_comparison_group` returned `UNMAPPED` with a null group, the linked Closet registration context could not preselect a comparison group and readiness returned `CLASSIFICATION_REQUIRED`. This was a server mapping gap, not a picker-state bug.
+- Added and applied `supabase/sql/uniqlo_125775_group_mapping_Apply.sql`, mapping only that official tops breadcrumb to group A. No product-name inference, detailed subtype authority, client fallback, or unrelated category mapping was added.
+- Read-only postflight confirms E487929 resolves through `RETAILER_CATEGORY` to A / 상의. No app build or automated tests per user preference; no commit/push. Protected scroll file and modifier call sites unchanged.
+
+## 2026-09-12 Group-only readiness supersedes detailed REVIEW_REQUIRED gating / PRODUCTION APPLIED
+
+- Product decision supersedes the older detailed-category recovery contract for linked registration and comparison: A-G comparison group plus its active group policy is the authority. Sleeve/detail labels may remain as parser/display facts but cannot gate registration, readiness, scoring, or comparison.
+- Production product_readiness was still joining products.garment_type_code and requiring products.classification_status=CONFIRMED. Added product_measurement_readiness(uuid,jsonb) and replaced product_readiness(uuid) so a valid comparison_group_tuple supplies CONFIRMED/CATEGORY_GROUP and its active policy; group-less products remain group-selection-required. Source: supabase/sql/group_only_product_readiness_Apply.sql; migration group_only_product_readiness applied to hnkplvyegonlhumlejst.
+- Linked Closet UI already presents only the comparison-group selector for parsed products. Removed the remaining behavior that treated legacy reviewRequired as an implicit hidden detailed Closet override; selected comparisonGroupCode remains the explicit input.
+- Read-only Production postflight: UNIQLO E486117 resolves A/tshirt and READY=true despite its legacy product row status. ZARA 545482161 resolves A/tshirt without classification-required; it separately reports INSUFFICIENT_MEASUREMENTS because its canonical group-policy metrics are unresolved. No detailed subtype was inferred or written.
+- Security advisor shows no new finding for these functions. Existing unrelated findings remain: one public history-hide SECURITY DEFINER warning, leaked-password protection disabled, and nine RLS-without-policy INFO notices. No app build or automated tests per user preference; no commit/push. Protected scroll file/call sites unchanged.
+
+## 2026-09-12 ZARA server procedure inspection / PARSING CONFIRMED, AUTH RECOVERY BLOCKED
+
+- Per user request, executed read-only Production procedures for Zara source key 545482161 without app login. product_comparison_group resolves COMPARABLE group A (tops), and product_readiness reports five sizes with five raw measurements each (25 total).
+- Existing ingestion receipt is PROCESSED. Its classification result remains REVIEW_REQUIRED because product_structure is UNKNOWN and the retailer-fact resolver reports INVALID_CURRENT_RETAILER_FACTS with zero detailed candidates. This confirms parsing/ingestion succeeded; it is not the cause of the HTTP 422 currently emitted by a new app observation.
+- classification_recovery_options cannot be executed anonymously and correctly raised Authentication required. User-specific candidate selection and Closet registration still require an authenticated user; no JWT impersonation, data write, or authority bypass was attempted.
+- No source changes, build, automated tests, Production writes, commit or push in this inspection. Protected scroll file/call sites unchanged.
+
+## 2026-09-12 Requested ZARA registration smoke / BUILD PASS, LOGIN BLOCKED
+
+- User explicitly authorized a registration test for the Zara URL with v1=545485813, superseding the no-test instruction for this targeted scenario only.
+- Initial build exposed an exhaustive-switch omission caused by the newly added observationRejected error. ShoppingProductViewModel now classifies that domain rejection as non-retryable rather than malformed runtime. Rebuilt and launched successfully using XcodeBuildMCP on iPhone 17 Pro 03BAF093-552E-4E53-ABFB-7DE0653BE676, bundle com.ljy4337.fitmatch. Existing concurrency warnings remain.
+- Screenshot confirms the simulator is signed out at Continue with Apple. No registration attempt, ingestion request, or Closet write was performed; the 422 cause remains unverified. Asked user to sign in directly on simulator; no credential extraction or impersonation attempted. App remains available for login and continuation.
+- Build log: /Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/logs/build_run_sim_2026-09-11T15-14-58-567Z_pid13475_34efe286.log. No automated regression suite, Production change, commit or push. Protected scroll behavior unchanged.
+
+## 2026-09-12 Observation HTTP 422 diagnostic repair / ROOT CAUSE PENDING RESPONSE DETAIL
+
+- User now reports product-observation HTTP 422, distinct from runtime classification validation. Inspected deployed Edge function version 5: it returns observation_rejected with ingestionError.message in detail for PostgreSQL P0001/22*/23* ingestion failures. Domain rejections are not logged by the function. Available tools expose no server log retrieval, and the user supplied only the SDK status message; the exact rejected payload/constraint remains unknown.
+- FitMatchSupabaseDomainClient.submitProductObservation now decodes the known 422 observation_rejected response and preserves its detail in a localized typed error consumed by existing diagnostics. Other HTTP/auth/transient errors are rethrown unchanged; no ingestion bypass, speculative DB change, or extra retry was added.
+- Next evidence needed: user rebuild/retry and the detailed rejection log. The underlying ingestion failure is NOT claimed fixed. No build or automated tests per user request; no Production mutation, commit or push. Protected scroll file/call sites unchanged.
+
+## 2026-09-12 Missing group policy must preserve user-input recovery / PRODUCTION APPLIED
+
+- User reaffirmed that unmapped products proceed to explicit classification input. Supersedes the missing-policy exception introduced by group_authority_policy_payload: a missing group or active group policy now returns the existing detail authority/review tuple, never a fabricated confirmed group and never this transport-blocking exception.
+- Applied group_policy_review_recovery to Production hnkplvyegonlhumlejst; source supabase/sql/group_policy_review_recovery_Apply.sql. E486117 currently has REVIEW_REQUIRED and UNMAPPED metadata, and comparison_group_tuple returns NULL. The supplied error corresponds to the earlier missing-policy exception; no authenticated runtime reproduction was attempted.
+- Existing Swift registrationBlockMessage already accepts reviewRequired; exact server size identity remains required before Next, and user classification input remains on the registration sheet. No client validation relaxation or product-specific classification mapping was added.
+- Read-only deployed function inspection confirms removal of the blocking exception and recovery branch installation. No builds/automated tests, authenticated end-to-end verification, commit or push. Protected scroll file and call sites unchanged.
+
+## 2026-09-12 Result recompare entry and ZARA unmapped group / PRODUCTION APPLIED, UI NOT TESTED
+
+- RecommendationResultView hid the other-Closet comparison button when its optional callback was absent (Home, History, search and legacy form entry points). The button now preserves the active CompareFlow callback or opens the existing CompareFlowSheet(initialHistoricalProduct:) flow, which reacquires current server authority rather than reusing historical authorization.
+- ZARA product 29e428cd-07df-482c-9039-7cc979d7e2b1 (source key 545482161, slim-fit basic T-shirt /01) was UNMAPPED for its exact persisted official path ZARA > 남성 > 티셔츠 > B. Camiseta. Unlike E486117, it had no group; SQL NULL NOT IN did not reject the absent group, so comparison_group_tuple returned a non-null object with null category/garment. Before the policy fix this generated an invalid CONFIRMED response; afterward it raised the missing-policy error.
+- Applied migration zara_group_mapping_null_guard to Production hnkplvyegonlhumlejst. SQL source: supabase/sql/zara_group_mapping_null_guard_Apply.sql. Added an explicit NULL guard and the exact official category-path mapping to group A. No product-name inference, detailed classification rewrite, authentication impersonation, new grants, or Swift validation bypass.
+- Read-only postflight confirms the affected product now resolves to A / tops / comparison_group_top with active tshirt policy, and the function NULL guard is deployed. User-specific runtime and registration are not verified. No app builds or automated tests per user request. Existing dirty work preserved; no commit/push. Protected scroll file/call sites unchanged.
+
+## 2026-09-12 E486117 group authority policy payload / PRODUCTION APPLIED
+
+- Product E486117 has global REVIEW_REQUIRED with no garment type. The deployed effective_target_classification overrides group authority status/category/garment but omits comparison_policy_code, retaining the legacy detail value. Swift requires this field for CONFIRMED runtime validation. The group garment catalog has an active policy (comparison_group_top -> tshirt).
+- Prepared supabase/sql/group_authority_policy_payload_Apply.sql: resolve policy from the exact active group garment/category row and return it with the effective tuple, failing closed if missing. No client-side policy inference or weakened validation.
+- Authenticated runtime inspection was rejected by automatic approval review because setting another user's JWT subject impersonates that user. It was not retried or bypassed. Diagnosis used read-only function definitions and catalog/product rows; user-specific runtime output remains unverified.
+- Superseding the prepared-only state: after the user authorized immediate correction of confirmed causes, applied migration `group_authority_policy_payload` to Production project `hnkplvyegonlhumlejst`. Read-only function-definition inspection confirms the active catalog lookup and comparison_policy_code overlay are deployed. No product rows or client validation rules were changed.
+- No builds/tests, commit or push. Authenticated end-to-end registration remains unverified; the user will retry loading the product on device. This server-only correction requires no app rebuild.
+
+## 2026-09-11 Home Closet classification label / NOT TESTED
+
+- Home Closet cards now prioritize the stored comparisonGroup.displayName, matching Closet list/detail. Group A displays as 상의 instead of the legacy other_tops label 미분류 상의. Existing detail-label fallback remains for items without a comparison group. No DB or classification-authority changes.
+- Per user request, no build/tests run. Protected scroll file and modifier call sites unchanged. No commit/push.
+
+## 2026-09-11 Completed comparison presentation identity repair / NOT TESTED
+
+- Read-only Production inspection found the latest two comparisons COMPLETED with recommended size XXL. The UI failure occurs after completion: parsed display size IDs are preserved during runtime reconciliation, but makeCompletedVNextHistory requires exact authorized ProductSize IDs.
+- ShoppingProductViewModel.completeVNextRecommendation now uses the existing makeServerAuthorizedComparisonTarget converter before analysis/completion and passes its detached, exact-server-ID Product into history construction. Display-size selection identities remain unchanged; receipt and authority validation remain enforced.
+- User requested code-only work. No build or tests run. No Production mutation, commit or push.
+
+## 2026-09-11 Comparison reference null-axis preservation / NOT COMMITTED
+
+- User reported the stale-reference message after selecting a Closet item. The server Closet tuple has a null length axis while the shared Product has long_sleeve; fitMatchServerReferenceSnapshot filled the null via Product fallback, causing strict local/server comparison to reject it.
+- Authoritative UserFit snapshots now preserve their own family/length/profile fields, including absent axes, without coalescing a different Product tuple. Legacy non-authoritative fallback remains. Added a hydration regression test with conflicting shared Product length.
+- User requested code-only work and will run tests to save tokens. The already-started focused test was interrupted; no test PASS is claimed. Do not run further builds/tests unless requested. No Production changes or commit/push in this step.
+
+## 2026-09-11 Closet selected-colour thumbnail preservation / NOT COMMITTED
+
+- Read-only Production inspection found the saved E484080 Closet row has colour 73 in its image/product URL, while the shared Product image is colour 07. SwiftData reuses Product by product ID and Closet surfaces read that shared image, discarding the row-specific server image on hydration.
+- Added optional UserFit.imageURLStringSnapshot and an item-level display accessor with legacy Product fallback. Both new-row and existing-row server hydration consume record.imageURL. Closet list/detail, Home/search/comparison references and history image capture use the item accessor. Both Closet edit/sync payload paths preserve the item image instead of overwriting it with another colour's shared Product image. No global Product identity change or DB mutation in this step.
+- Added regression assertions for hydrated image preservation after the shared Product image changes, including outbound payload. Fixed two existing test draft initializer omissions with pants comparisonGroupCode C so the focused test target can compile.
+- App/test compilation PASS. The first method filter selected zero executed tests and is not counted as a pass. Reusing built test products with the Swift Testing method suffix `()` executed the regression: 1 PASS / 0 FAIL / 0 SKIP, result bundle `test_sim_2026-09-11T14-40-16-477Z_pid13475_fabda0b5.xcresult` under the XcodeBuildMCP FitMatch workspace. `git diff --check` and protected scroll checks pass. Device migration and UI retry remain unverified; no commit or push.
+
+## 2026-09-11 Closet RPC permission repair / PRODUCTION APPLIED
+
+- User authorized fixing the confirmed `permission denied for table closet_items` failure. Applied migration `closet_group_mutation_permissions` to FitMatch project `hnkplvyegonlhumlejst`.
+- The group-generated snapshot UPDATE was in a public SECURITY INVOKER bridge although authenticated has no direct table UPDATE permission. Moved both audited upsert/update bodies into private `fitmatch_vnext.*_closet_item_with_group_for_swift` SECURITY DEFINER functions, with an explicit auth.uid() guard and empty search_path. Existing helpers retain exact identity and ownership checks. Public bridges remain SECURITY INVOKER; anon/PUBLIC execution is revoked. No direct table write grants were added.
+- Source hashes guard deployment against overwriting changed RPC bodies. Apply SQL is intentionally one-shot, not a repeatable migration. Files: `supabase/sql/closet_group_mutation_permissions_Apply.sql` and `_Verify.sql`.
+- Production transaction test for UNIQLO E484080 under SET LOCAL ROLE authenticated passed save, identical-ID retry, update, exact receipt/readback, null satisfaction, cross-user rejection and missing-session rejection. Final ROLLBACK removed the fixture. Postflight confirms both public bridges are invoker, private helpers are definer, anon cannot execute and authenticated still cannot UPDATE the table directly.
+- No Swift changes or app build in this step. Device UI retry remains unverified. No commit or push.
+- Security advisor postflight returned no finding for the changed functions. It reported an unrelated public history-hide definer warning (https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), disabled leaked-password protection (https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), and nine RLS-without-policy INFO findings. These were not changed; no advisor baseline comparison was performed.
+
+## 2026-09-11 보유한 옷 등록 satisfaction 계약 복구 / NOT COMMITTED
+
+- 비교 상품의 보유한 옷 등록은 핏 기록 UI가 없는 상태를 로컬 sentinel `satisfaction=0`으로 유지하지만, vNext 서버 계약은 요청에 `satisfaction` 키가 있으면 `1...5`만 허용한다. 이 때문에 정상 등록이 `satisfaction must be between 1 and 5` 팝업으로 차단됐다.
+- vNext 전송 어댑터는 로컬 `0`을 미입력으로 해석해 `satisfaction` 키를 생략한다. 실제 `1...5` 평점은 기존처럼 전송하며, 임의의 기본 평점을 만들어 저장하지 않는다. 공유 로컬 모델과 UI는 변경하지 않았다.
+- 회귀 테스트는 비교 상품 서버 우선 등록 payload에 `satisfaction` 키가 없음을 검증한다. XcodeBuildMCP Simulator Debug 앱 빌드는 PASS했다. 해당 1건 테스트는 정상 발견됐지만 테스트 타깃의 기존 별도 컴파일 오류(`FitMatchClosetSyncCoordinatorTests.swift`의 `comparisonGroupCode` 누락 2건) 때문에 실행 전 중단되어 PASS로 표기하지 않는다. Production DB/RPC/SQL 적용, 실제 기기 재현, 커밋, 푸시는 하지 않았다.
+
+## 2026-09-11 서버 v4 분류 검증 차단 복구 — CATEGORY_GROUP effective authority 허용 / BUILD PASS / NOT COMMITTED
+
+- 런타임 로그에서 유니클로 `E484080` 파싱은 성공했지만 `서버 v4 분류` 단계가 `vNext 서버 응답을 검증할 수 없습니다.`로 안전 차단됐다. 원인은 `144_group_authority_precedence_Apply.sql`이 정상 서버 권한으로 `effective_source='CATEGORY_GROUP'`을 발급할 수 있는데, iOS runtime validator와 추천 서비스의 서버 권한 재검증이 아직 `GLOBAL_CONFIRMED`/`USER_EXPLICIT` 중심으로만 열려 있었던 계약 불일치다.
+- `FitMatchSupabaseProductResolver.mapRuntime`은 `CATEGORY_GROUP + CONFIRMED` effective tuple을 정상 서버 발급 분류로 허용한다. 기존 confirmed guard가 category/garment/policy 필수값을 계속 요구하므로, 로컬 분류·라벨·배열 순서 fallback은 추가하지 않았다.
+- `RecommendationService`는 `CATEGORY_GROUP`을 `serverConfirmed` provenance로 투영하고, comparison begin 재검증에서도 `GLOBAL_CONFIRMED`와 같은 서버 발급 권한으로 인정한다. `USER_EXPLICIT` 개인 권한 경로와 revision/fingerprint 검증은 그대로 분리했다.
+- `xcrun swiftc -parse FitMatch/Services/FitMatchSupabaseProductResolver.swift FitMatch/Services/RecommendationService.swift` PASS. `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build` PASS. XCTest, 실제 기기 실행, Production DB/RPC/SQL 적용, 커밋, 푸시는 하지 않았다.
+
+## 2026-09-11 로컬 사본 빌드 복구 — 그룹 목록 compactMap 타입 명시 / BUILD PASS / NOT COMMITTED
+
+- iCloud 밖의 로컬 작업 사본 `/Users/jinyoung/Developer/FitMatchLocal/FitMatch`에서 앱 타깃 Simulator Debug 빌드를 처음 수행했다. `CompareFlowSheet.closetComparisonGroupSections`의 바깥/안쪽 `compactMap`이 Swift 컴파일러에서 반환 타입을 추론하지 못해 실패하던 두 지점에 각각 `ClosetComparisonGroupSection?`, `ClosetComparisonSummaryRow?`를 명시했다.
+- 수정 뒤 `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build`는 `BUILD SUCCEEDED`다. 기존 iCloud 사본과 핵심 비교 UX 파일은 이동 직후 SHA-256 동일을 확인했고, 이번 보정은 새 로컬 사본에만 있다. XCTest, DB 적용, 커밋, 푸시는 하지 않았다.
+
+## 2026-09-11 Swift 컴파일 복구 — 옵셔널 콜백 escaping 중복 제거 / STATIC PASS / XCODEBUILD BLOCKED / NOT COMMITTED
+
+- `FitMatchLinkClosetRegistrationAction.load`의 `onRetailerProductLoaded`는 옵셔널 클로저 타입이라 이미 escaping이다. 이전 복구에서 붙인 중복 `@escaping`을 제거해 Xcode의 `Closure is already escaping in optional type argument` 오류를 해소했다. `existingBrand`는 실제 escaping closure에서 캡처되므로 `@escaping`을 유지했다.
+- 해당 파일의 `swiftc -parse`는 PASS다. Simulator Debug `xcodebuild`는 컴파일 출력 전 프로젝트 준비 단계에서 60초 이상 추가 로그 없이 멈춰 중단했다. 따라서 전체 Xcode build/XCTest PASS로 표기하지 않는다. DB 적용·커밋·푸시는 하지 않았다.
+
+## 2026-09-11 Swift 컴파일 복구 — 링크 등록 콜백 escaping 선언 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- `FitMatchLinkClosetRegistrationAction.load`가 retailer 로드 완료 콜백 안에서 `existingBrand`와 `onRetailerProductLoaded`를 캡처하므로 두 클로저 파라미터를 `@escaping`으로 명시했다. 동작·네트워크·DB 요청 순서는 바꾸지 않았다.
+- 해당 Swift 파일의 `swiftc -parse` 및 `git diff --check`는 PASS다. Xcode 전체 빌드와 XCTest는 사용자 요청에 따라 실행하지 않았다. 보호된 TabBar scroll 파일과 호출 modifier는 변경하지 않았다.
+
+## 2026-09-11 비교 UX Swift 7단계 — 구형 기준 옷 흐름 정리 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 새 목록형 비교 흐름에서 호출되지 않던 `CompareFlowSheet.calculateAndSaveRecommendation(automaticReferenceCandidates:)`와 `ShoppingProductViewModel.calculateRecommendation(automaticReferenceCandidates:)`를 제거했다. 서버 계획의 자동 후보를 로컬에서 다시 투영해야만 진행하던 불필요한 guard도 제거해, 실제로 사용하는 서버 승인 후보 목록만 동기화한다.
+- 결과 화면의 과거 기준 옷 picker 상태·시트·교체 저장 경로와 DEBUG 전용 구형 결과 화면 분기를 제거했다. 기록 화면 재비교는 기존 상품으로 새 비교 흐름을 시작하며, 상세 화면의 `비교 목록`과 `다른 옷과 비교` 연결은 6단계 구현을 유지한다.
+- 온보딩, 검색, 내 정보 가이드, 추천 안내, 개인정보 문구, 비교 오류·복구 안내에서 기준 옷 지정/우선선택 표현과 배지를 제거하고 비교 그룹·선택한 내 옷 표현으로 통일했다. 내 옷장 정렬 UI에서는 `기준 옷 우선`을 숨겼다.
+- 기존 로컬 저장값, 서버 DTO/RPC, 동기화 receipt 및 테스트 계약을 깨지 않도록 `isRepresentative` 필드, legacy sort raw value, `FitMatchClosetReferenceMutation`, 서버 승인/저장 호환 코드는 유지했다. 새 등록 요청은 앞 단계와 동일하게 항상 `false`이며 새 목록 계산·순위에는 이 값이 사용되지 않는다.
+- 관련 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS다. 보호된 TabBar scroll 파일 및 호출 modifier에는 새 변경이 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX 사용자 계획 6번 — 상세 비교 + 다른 옷 비교 시트 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 사용자 계획의 5번인 목록형 비교 결과는 현재 `comparisonSummaryContent`에 구현되어 있다. 같은 비교 그룹의 옷을 유사도순으로 나열하고, 각 행에 유사도·추천 구매 사이즈·비교 근거 또는 `근거 부족`을 표시하며, 비교 가능한 행만 상세 진입을 허용한다.
+- 목록의 옷을 누르면 기존 `RecommendationResultView`를 재사용해 `개별 비교 결과`를 연다. 상세에는 선택한 내 옷, 추천 구매 사이즈, 상품값·내 옷값·차이, 쇼핑몰 원본/FitMatch 공통/검증 환산 근거, 제외 항목과 사유가 표시된다.
+- 상세 화면의 상단 `비교 목록`은 목록으로 돌아가고, 카드의 `다른 옷과 비교`는 이제 목록을 한 번 거치지 않고 기존 그룹 선택 시트를 직접 연다. 시트 소유권을 비교 입력 하위 화면에서 전체 비교 흐름 root로 옮겨 상세 화면이 열린 상태에서도 정상 표시되게 했다.
+- 다른 옷 비교 시트는 서버가 허용한 후보만 그룹별로 표시하며, 행 선택 후 기존 서버 재승인→begin→complete→History 저장 흐름을 그대로 사용한다. 로컬 후보나 근거 부족 행이 서버 권한을 우회하지 않는다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS다. 보호된 TabBar scroll 파일 및 호출 modifier에는 새 변경이 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 5단계 — 개별 상세 비교 화면 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 비교 목록에서 진입한 결과 화면 제목을 `개별 비교 결과`로 구분하고, 기존 `비교 기준 옷`·`기준 옷 변경` 표현을 `선택한 내 옷`·`다른 옷과 비교`로 교체했다. 새 비교 흐름에서는 버튼이 서버 후보를 다시 불러오는 과거 picker 대신 이미 준비된 비교 목록으로 돌아간다.
+- 실측 비교 카드에 서버/엔진이 보존한 입력 근거를 표시한다. 전체 비교 방식은 `쇼핑몰 원본 항목 비교`, `FitMatch 공통 항목 비교`, `검증된 단면 환산 포함`, 혼합 비교 중 하나로 보이며, 각 실측 행에도 `쇼핑몰 원본`·`FitMatch`·`검증 환산`·`참고`를 표시한다. 검증 환산이 포함되면 항목 수도 함께 표시한다.
+- 비교 항목별 상품값·선택한 내 옷 값·차이와 기존 제외 사유 표시는 유지했다. `실측값 없음`·`측정 방식 미확인` 안내도 기준 옷 대신 선택한 내 옷으로 표현한다. 점수·추천 사이즈·신뢰도·서버 승인 및 History 저장 로직은 변경하지 않았다.
+- 새 비교 목록에서 상세 화면을 열 때는 과거 기준 옷 picker용 후보 조회를 선행하지 않아 불필요한 서버 요청을 줄였다. 과거 결과 진입점과 명시적으로 picker를 여는 호환 경로는 기존 서버 승인 절차를 유지한다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS이며 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 4단계 — 다른 옷과 비교 그룹 시트 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 3단계의 같은 그룹 비교 목록 아래에 `다른 옷과 비교` 버튼을 추가하고, 기존 디자인의 큰 시트 안에서 비교 가능한 그룹 칩과 해당 그룹의 옷 목록을 선택하도록 연결했다. 대상 상품과 같은 그룹은 `같은 그룹 N`, 그 외는 `아우터 N`처럼 표시한다.
+- 그룹별 행은 2단계와 같은 썸네일·추천 상품 사이즈·유사도·비교 근거·근거 부족 표시를 재사용한다. 안정적인 comparison-group code와 Closet UUID를 목록 식별자로 사용하며, 근거 부족 행은 상세 진입을 막는다.
+- 서버 후보 계획이 선택 가능하다고 반환한 활성 Closet item만 그룹별 미리보기 대상으로 삼는다. 행을 누르면 시트를 닫은 뒤 기존 서버 후보 재승인→begin→complete→History 저장 흐름으로 상세 결과를 연다. 차단된 그룹이나 로컬 추정 후보를 화면에서 우회 허용하지 않는다.
+- 같은 그룹 옷이 0벌이어도 서버가 허용한 다른 그룹 후보가 있으면 `기준 옷 없음` 오류로 보내지 않고 비교 목록을 유지해 선택 시트로 진입할 수 있게 했다. 현재 SQL 정책상 다른 그룹 허용 범위는 같은 그룹 외 `상의↔아우터`이며 프로시저·DB는 이 단계에서 수정하지 않았다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS이며 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 3단계 — 같은 그룹 목록 UI / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 상품 분석 뒤 첫 기준 옷으로 자동 비교·저장하던 전환을 중단하고 `내 옷과 비교` 목록 단계를 추가했다. 2단계에서 계산·정렬한 같은 그룹 배치 결과만 표시하므로 SwiftUI `body`에서 점수나 순위를 다시 계산하지 않는다.
+- 각 행은 안정적인 Closet UUID를 사용하며 옷 썸네일·상품명·쇼핑몰/보유 사이즈·순위·추천 상품 사이즈·유사도·사용한 비교 기준·실측 수·검증된 환산 수를 보여준다. 근거 부족 행은 사유를 표시하고 상세 진입을 막는다.
+- 비교 가능한 행을 누른 경우에만 기존 서버 후보 재승인→begin→complete→History 저장 흐름을 실행해 상세 `RecommendationResultView`를 연다. 목록 미리보기 자체는 추가 RPC나 비교 기록을 만들지 않는다.
+- 비교 흐름에서 연 상세 화면에만 `비교 목록` 뒤로가기 버튼을 추가했다. 홈·기록·검색 등 기존 진입점의 결과 화면은 콜백이 없어 UI가 바뀌지 않는다.
+- 다른 그룹을 고르는 `다른 옷과 비교` 시트는 이 단계에 섞지 않고 후속 작업으로 남겼다. 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS이며 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 2단계 — 같은 그룹 배치 미리보기 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 기존 서버 후보 계획 조회 1회 뒤, 서버가 허용한 후보 중 대상 상품과 비교 그룹이 정확히 같은 활성 내 옷만 배치 미리보기 대상으로 만든다. 로컬 카테고리 추정이나 다른 그룹 fallback은 사용하지 않는다.
+- 이미 불러온 상품의 모든 사이즈와 내 옷의 저장 실측을 기존 `MeasurementComparisonEngine`으로 한 번씩 비교해, 옷별 최적 상품 사이즈·유사도·공통 실측 수·비교 근거·환산 수·근거 부족 사유를 계산하고 안정적인 순서와 순위를 부여한다.
+- 배치 결과는 상품 ID, 그룹, 상품 사이즈 ID, Closet UUID와 수정 시각을 키로 메모리 캐시한다. 동일 입력은 다시 계산하거나 `@Published` 값을 다시 쓰지 않으며 새 URL 로딩·과거 상품 로딩·취소 시 캐시를 초기화한다.
+- 이 단계는 비교 기록을 생성하거나 후보마다 서버 RPC를 호출하지 않는다. 실제 상세 비교는 이후에도 기존 서버 승인 흐름을 사용한다. 화면 구성은 바꾸지 않았고 기존 단일 결과 자동 전환도 3단계 목록 UI 연결 전까지 그대로 유지한다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS다. 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 비교 UX Swift 1단계 — 최소 수정 / STATIC PASS / NOT TESTED / NOT COMMITTED
+
+- 사용자 지정 `기준 옷` 저장 기능의 새 쓰기를 중단했다. 링크 등록, 직접 등록, 수정 화면과 홈·내 옷장 카드에서 지정 토글·배지·확인창을 제거하고 저장 요청은 항상 `isRepresentative=false`로 만든다. 기존 DB/RPC 필드와 호출 시그니처는 다음 서버 정리 전까지 호환용으로 보존하며 대량 데이터 변경은 하지 않았다.
+- 기존 `MeasurementComparisonEngine` 안에 비교 입력 근거를 추가했다. 같은 쇼핑몰의 동일 원본 항목은 `retailer_exact`, 같은 canonical 항목은 `canonical_exact`, 명시적으로 허용한 가슴·허리 단면/둘레 조합만 `verified_conversion`으로 기록한다. 의미가 확정되지 않은 항목과 신체 기준 가슴둘레는 환산하지 않으며 파서가 정규화한 저장값을 수정하지 않는다.
+- 전체 옷장 비교 목록 2단계를 위해 안정적인 Closet UUID, 추천 사이즈, 유사도, 공통 실측 수, 비교 근거, 환산 수, 근거 부족 상태를 담는 요약 모델만 기존 `RecommendationService` 파일에 준비했다. 아직 화면·네트워크 호출에는 연결하지 않아 기존 결과 UI는 그대로다.
+- 변경 Swift 파일은 `swiftc -parse` PASS, `git diff --check` PASS다. 보호된 TabBar scroll 파일과 세 호출 modifier의 diff는 없다. 사용자 요청에 따라 XCTest/Xcode 빌드는 실행하지 않았고 DB 적용·커밋·푸시도 하지 않았다.
+
+## 2026-09-11 무신사 API 분류 신뢰도 보정 — SQL 후보 완료 / LOCAL PASS / NOT APPLIED / NOT COMMITTED
+
+- `supabase/sql/134_musinsa_provider_hardening_r1_{Apply,Verify,Rollback}.sql` 후보를 추가했다. 129 UNIQLO u904와 132 Zara v2가 적용된 정확한 classifier MD5 `c8cc257a2e2eaface85beae5cf593dd4`만 preimage로 허용하며, 공개 RPC·recovery 함수·기존 상품/사용자 row는 변경하지 않는다.
+- 실제 Swift가 export한 무신사 API payload 350건을 격리 PostgreSQL에 넣어 전후 비교했다. `CONFIRMED 207 → 233`, `REVIEW_REQUIRED 123 → 97`, `NOT_APPLICABLE 20 → 20`이었다. REVIEW 26건만 CONFIRMED로 바뀌었고 기존 CONFIRMED tuple 변경/퇴행, NOT_APPLICABLE→CONFIRMED, 처리 오류는 모두 0이었다.
+- 개선 범위는 정확한 무신사 leaf인 트레이닝 재킷·아노락 재킷·숏/롱 패딩, 명시적 후드 집업/카디건/코트가 일반 `자켓` 문자열 때문에 충돌하던 경우, 맨투맨·후드·collared T-shirt가 일반 T-shirt 규칙과 충돌하던 경우다. 사파리/헌팅 재킷은 실제 수집 데이터에 coat가 함께 있어 `jacket|coat` 후보로만 좁히고 자동 단일 확정하지 않았다. 레더/라이더스, 기타 아우터, 블루종/MA-1, 세트 등 의미가 갈리는 그룹은 REVIEW를 유지했다.
+- 현재 활성 evaluator가 이미 `provider IN ('any', source_code)`를 적용하고 있음을 재확인했으며 이 guard를 그대로 보존했다. 전역 `scope.jacket`은 세부 provider category를 잘못 배제하지 않는 상위 아우터 범위로 넓혔다. 유니클로 76건과 Zara 60건의 Swift payload 표본 전후 비교에서 CONFIRMED 상태/tuple 변경, 퇴행, NOT_APPLICABLE→CONFIRMED, 오류는 모두 0이었다.
+- 동일 무신사 payload 재시도는 350/350에서 동일 payload fingerprint를 유지했다. Apply→Verify→Rollback→원본 MD5 복귀→재적용을 실제 격리 PostgreSQL에서 통과했고 최종 candidate classifier MD5는 `10e98b939e3886bdabda5f48bbb3cdc6`, recovery MD5는 `d01db739db96a46d5725fbfb8d215e61`로 불변이다.
+- 1,787건을 한 트랜잭션으로 ingest하는 감사 방식은 UNIQLO audience-invariant category promotion의 누적 탐색 때문에 10분 이상 걸려 중단했다. Swift parser/encoder 전체 1,787건 PASS는 기존 같은 날 실행 결과를 유지하되, 이번 SQL 후보의 DB 회귀는 무신사 전수 350건과 유니클로/Zara 표본 136건으로 검증했다. Production DB 적용·Edge 배포·기존 데이터 수정·커밋·푸시는 하지 않았다.
+
+## 2026-09-10 신뢰도 우선 retailer 분류 재감사 — SQL 후보 검증 완료 / NOT APPLIED / NOT COMMITTED
+
+- Production은 SELECT-only로 재확인했다. 현재 `classification_decision(text,text)` body MD5는 `291bf9bdf95b37d234f344e7d4d80303`, recovery는 `d01db739db96a46d5725fbfb8d215e61`이다. 공개 RPC나 Production 데이터는 변경하지 않았다.
+- 최종 UNIQLO 후보는 `129_uniqlo_904_provider_classification_{Apply,Verify,Rollback}.sql`의 u904-r3이다. 올바른 현재 catalog를 넣은 격리 PostgreSQL에서 표본 51건을 전후 비교해 기존 CONFIRMED tuple 변경 0, CONFIRMED 퇴행 0, NOT_APPLICABLE→CONFIRMED 0을 유지하면서 REVIEW 6건을 CONFIRMED로, 룸슈즈 1건을 NOT_APPLICABLE로 바꿨다. 처음 후보가 `E487950 BN살로페트`를 bodysuit로 잘못 확정한 것을 발견해 해당 규칙을 삭제했고, 최종 r3에서는 REVIEW로 남는 것을 확인했다.
+- 현재 Production classifier는 Zara v1만 수용하므로 Swift v2 parent `internalProductID`와 selected `catentryID`를 구분한 정상 payload도 거부한다. `132_zara_v2_current_r3_{Apply,Verify,Rollback}.sql` 후보는 v1을 유지하면서 Zara에만 v2를 허용하고 API root product ID와 selected color/실측 request ID를 각각 검증한다. recovery 함수와 r3 출력 계약은 바꾸지 않는다.
+- Zara 544 payload는 parent API product ID와 selected color가 544/544 일치했다. 그러나 API `familyName` 자체가 일부 상품에서 신뢰할 수 없었다. 예: `유아용 셔츠`가 실제 버뮤다 팬츠이고 `유아용 니트조끼`가 실제 봄버 재킷이었다. 따라서 그런 카테고리 단독 확정 규칙은 후보에서 제거했다. 남은 정책은 name과 함께 후보를 좁히는 `유아용 티셔츠`/`유아용 스웨터` 범위, 상품명에 명시된 양말·스타킹·보닛 등 비의류, 명시적 상하의 세트 차단뿐이다.
+- Zara 표본 20건의 최종 전후 비교는 새 CONFIRMED 5, 새 NOT_APPLICABLE 6, REVIEW 유지 3이었다. 중복 parent 6건은 개별 재생으로 추가 확인했다. 정상 v2 control은 CONFIRMED였고 parent ID, selected variant, 중복 selected variant, details URL, measurement URL을 각각 변조한 5건은 전부 `REVIEW_REQUIRED / INVALID_CURRENT_RETAILER_FACTS`로 fail closed했다. 전 입력의 동일 payload 재시도 fingerprint가 일치했다.
+- 무신사 표본 20건은 현재 catalog 기준 15 CONFIRMED / 4 REVIEW / 1 NOT_APPLICABLE이고 SQL 적용 전후 결과가 동일했다. 기존 v1 입력과 retry도 유지됐으므로 이번 후보에는 무신사 규칙을 추가하지 않았다.
+- Swift `ZARAParser`가 API `sectionName=KID/BABY`를 UNKNOWN으로 보내던 transport mapping을 KIDS/BABY로 보정했다. 로컬 분류 결과를 DB 근거로 보내거나 first color/size를 선택하지 않는다.
+- 기존 격리 fixture는 활성 garment type 일부만 seed해 무신사 경량 패딩 등에 가짜 `TYPE_EVIDENCE_CONFLICT`를 만들었다. `fixtures/133_current_production_classification_catalog_local_fixture.sql`에 Production SELECT로 확인한 현재 활성 47개 garment type과 검증된 12개 axis value의 최소 로컬 스냅샷을 추가했다. 이 파일은 로컬 테스트 전용이며 Production migration이 아니다.
+- 일회용 PostgreSQL에서 129→132 Apply, Verify, rollback, 원본 semantic checksum 복귀, 재적용과 재검증을 완료했다. 최종 classifier MD5는 `c8cc257a2e2eaface85beae5cf593dd4`, 132 rollback 후 129-r3 MD5는 `07a0e672019501a2eb819de42da00b37`, 전체 rollback 후 baseline semantic MD5는 `a70ddfd0b3873486357d6f2022c2210a`였다. recovery MD5는 전 과정에서 `d01db739db96a46d5725fbfb8d215e61`로 불변이다.
+- Swift parser syntax는 PASS했다. 수집 JSON을 현재 Swift parser/encoder로 다시 돌리는 normalized-size XCTest와 전체 앱 빌드는 iCloud checkout stall 때문에 이번 재감사에서는 NOT RUN이다. 따라서 분류 SQL·identity·retry 검증은 완료했지만 링크 등록/상품 비교 전체 UI 여정 PASS를 이번 결과로 주장하지 않는다.
+
+## 2026-09-10 수집 JSON 기반 FitMatch 회귀 실행기 — 작성 완료 / LOCAL SMOKE PASS / NOT COMMITTED
+
+- `scripts/run-fitmatch-fixture-tests.sh`를 추가했다. `fixtures`는 수집기 fixture builder 단위 테스트 후 실제 FitMatch Swift의 UNIQLO/MUSINSA/ZARA parser와 observation encoder로 원문 JSON을 재생한다. `closet`과 `compare`는 기존 `FitMatchFinalReleaseProviderSnapshotTests` 12건 전체를 실행하며 링크 등록, 제시된 사이즈 저장, 서버-authorized 비교 흐름을 함께 검증한다. `all`은 세 단계를 한 번에 실행한다.
+- `FitMatchTests/FitMatchCollectedFixtureReplayTests.swift`는 normal/warning manifest의 raw 파일을 읽고 현재 Swift parser output, `structured_facts.retailer_api` object, 나머지 string facts, `catalog_decision` 미전송, frozen request 재인코딩 동일성, ZARA parent/selected variant 분리를 검사한다. 원본 JSON이나 fixture를 수정하지 않는다.
+- `supabase/sql/130_fixture_replay_local_transaction.sql`과 `database` 모드는 Swift가 실제 인코딩한 payload를 로컬 Supabase에 넣어 ingest → 동일 retry → runtime → recovery → recoverable일 때 첫 서버 후보 사용자 선택 → runtime → 동일 payload retry를 실행한 뒤 전부 rollback한다. `localhost/127.0.0.1` URL과 로컬 DB에 이미 seed된 사용자 UUID를 필수로 하며 Production URL은 거부한다.
+- 검증: fixture builder Python **5/5 PASS**. 임시 비-iCloud worktree의 iPhone 17 Pro Simulator에서 전체 active raw **1,787/1,787 payload PASS / failures 0**: UNIQLO 893건(실측 보유 886, classification-only 7, 5,267 sizes/22,929 measurements), MUSINSA 350건(실측 보유 290, classification-only 60, 722 sizes/3,226 measurements), ZARA 544건(첫 단계 전부 classification-only). 전체 Swift replay XCTest **1/1 PASS**, 기존 provider registration/comparison suite **12/12 PASS**. 원본 checkout 첫 컴파일을 막던 `FitMatch/Models/Product.swift` 첫 줄의 우발적 `ㅋㅋ...` 접두사만 제거했다.
+- ZARA 544건의 0 sizes는 수집 원문 부재를 뜻하지 않는다. normal 예시 `558188272`에는 실제 `measureGuideInfo` 4 sizes가 있다. 현재 앱 계약이 `raw 수집 → DB category 확정 → confirmed category로 실측 parser 재실행`이므로 DB 없는 첫 Swift 재생은 의도대로 `confirmCategoryBeforeMeasurements` partial에서 멈춘다. 별도 provider suite는 authority-confirmed ZARA 4-size 등록/비교를 통과했지만, 수집 544건 각각의 DB round-trip 뒤 Swift 2차 파싱은 아직 검증하지 않았다.
+- 로컬 Supabase URL/seed user가 제공되지 않아 `database` 모드는 **NOT RUN**이다. ZARA 수집 파일은 exact product-page HTML bytes가 아니라 저장된 analytics object를 보존하므로 Swift replay는 그 실제 analytics JSON으로 최소 script wrapper를 구성한다. Production DB/Edge/기존 사용자 데이터/커밋/푸시는 변경하지 않았다. 보호된 TabBar 파일과 호출부는 수정하지 않았다.
+
+## 2026-09-10 ZARA 의류 카테고리 탐색 보정 — 완료 / NOT COMMITTED
+
+- `/Users/jinyoung/Documents/RetailerCatalogCollector/collector.py`가 WOMAN/MAN/KIDS 시작 화면의 공식 `categories` 트리에서 현재 섹션에 속하고 화면에 노출된 명시적 의류 카테고리 URL만 큐에 넣도록 보정했다. 의류 목록 화면의 공식 `productGroups`에서 상품 URL과 선택 variant를 수집한다. HOME·신발·가방·액세서리는 목록 큐에서 제외하며, 이 로컬 판정은 수집 범위 필터일 뿐 `retailer_api`나 DB 분류 근거로 전송하지 않는다.
+- 실제 `woman-l1000.html` → `woman-blazers-l1055.html` 임시 탐색에서 여성 목록만 열고 선택 variant 121개를 발견했다. 그중 `593928619`을 실제 수집해 details/measurements HTTP 200, 5 sizes, `internalProductID=568676050`, `selected_variant_key=593928619`, 상세 colors 내 selected variant 정확히 1개 일치를 확인했다. Swift v2 payload는 두 ID를 구분해 보존했다.
+- Python compile PASS, ZARA 단위 테스트 16건 PASS, 임시 DB category discovery 및 실제 상품 1건 raw 수집 PASS. 기존 수집 DB·원본 JSON·기존 HOME raw 20건·Production DB·Edge·Swift 코드는 변경하지 않았고 커밋·푸시하지 않았다.
+
+## 2026-09-10 ZARA 수집기 Swift 동일 API 재현 — 완료 / NOT COMMITTED
+
+- `/Users/jinyoung/Documents/RetailerCatalogCollector/collector.py`를 수정했다. ZARA PDP identity는 재사용 가능한 일반 Chrome 프로필에서 공식 `window.zara.viewPayload`와 `zara.analyticsData` 원문으로 검증하되, FitMatch/DB 테스트용 `details`와 `measurements`는 현재 Swift `ZARAProductDetailsLoader`/`ZARASizeGuideLoader`와 동일한 URL, `FitMatch/1.0 (iPhone; iOS 18.0)` User-Agent, Accept/Accept-Language 헤더로 별도 호출한다. PDP 내장 JSON을 Swift API 응답으로 대체하지 않는다.
+- URL `v1`과 analytics `catentryId`가 함께 있으면 정확히 일치해야 하며, 사이트맵 URL에 `v1`이 없을 때만 analytics가 명시한 선택 catentry를 사용한다. internal product ID와 selected catentry ID를 분리하고 첫 색상/첫 사이즈 추정은 하지 않는다. `swift_retailer_api`에는 v2 identity와 실제 request URL/HTTP status/collected_at/body를 기록한다.
+- 실제 사용자 URL `p05584401?v1=545485813` live 검증에서 PDP identity `internalProductID=545482161`, `selected_variant_key=545485813`, 실측 HTTP 200/5 sizes를 확인했다. 같은 시점 Swift 동일 details 요청은 HTTP 278, body `{location, body:{}}`였다. 수집기는 이를 200이나 PDP product JSON으로 바꾸지 않고 그대로 저장하므로, 현재 Swift가 만드는 v2 details도 DB의 `details.product` 검증을 통과하지 못할 수 있다는 실제 회귀 증거가 확보됐다.
+- 실측이 없는 상품은 분류 원문 수집 실패가 아니라 `measurementAvailable=false` warning으로 분리했다. `--new-only`는 정상 raw만 건너뛰고 이전 실패를 다시 시도한다. Python 단위 테스트 12건 PASS, 실제 v1 없는 PDP 1건 PASS, 실제 기존 실패 사이트맵 상품 1건 raw 저장 PASS, 사용자 URL Swift 동일 envelope live PASS. Production DB/Edge/Swift 코드/기존 수집 DB는 변경하지 않았고 커밋·푸시하지 않았다.
+
+## 2026-09-10 UNIQLO 904건 기반 분류 프로시저 후보 — 작성 완료 / NOT APPLIED / NOT COMMITTED
+
+- `supabase/sql/129_uniqlo_904_provider_classification_{Apply,Verify,Rollback}.sql`을 추가했다. 904개 개별 API JSON의 의류/비의류/review 분리 결과를 사용하되, 해당 결과는 의류 존재 판정이지 FitMatch 세부 tuple 정답이 아니므로 모호한 항목을 자동 확정하지 않는다. 실제 review 제안에서 `룸슈즈`가 clothing으로 제안된 오분류를 발견해 `NOT_APPLICABLE` 명시 규칙으로 교정했다.
+- Apply는 현재 Production r3 preimage `0c0dabc...`, 128 호환 후보 postimage `291bf9bd...`, 자체 rollback semantic postimage `a70ddfd...`만 허용한다. 필요하면 128의 바깥 previous-version guard 제거를 함께 수행하고, UNIQLO `details.status=ok/result object` 검증, 전체 breadcrumb name/id path 보존, provider가 명확한 13개 UNIQLO 한정 규칙만 추가한다. 공개 RPC, raw resolver/recovery의 r3 계약, 기존 Product/User/measurement row, MUSINSA/ZARA 규칙은 변경하지 않는다.
+- Verify는 E465185/E484080 비교 회귀, 명확한 review 대표군, 룸슈즈 차단, `E487950 BN살로페트` REVIEW 유지, r3 Swift/recovery 계약 및 MUSINSA/ZARA 결과를 SELECT-only로 노출한다. Rollback은 u904 정책/13개 규칙/추가 fact reader만 제거해 semantic baseline으로 복귀한다.
+- SQL 파일 정적 검증과 dollar-quote 균형, `git diff --check`, 보호된 TabBar 파일/호출부 무변경을 확인했다. 이후 보강 catalog를 사용한 격리 PostgreSQL에서 Apply/Verify/fixture replay/rollback/reapply를 실행했고, 최종 결과는 문서 최상단 재감사 절에 기록했다. Production 적용·DB write·Edge 배포·커밋·푸시는 하지 않았다.
+
+## 2026-09-10 review 그룹 보고서 보강 — 완료 / NOT COMMITTED
+
+- `scripts/split-clothing-json.py`의 중복 `NON_CLOTHING_CODES` 선언을 하나로 합치고 기존 값을 모두 유지했다. review 58건은 상품 단위 manifest와 별도로 `data/reports/uniqlo-raw-904-review-groups.json`에 category_path 22개 그룹 + category 정보 없음 1개 그룹으로 기록했다. 각 그룹은 대표 상품 ID·상품명·건수와 `proposed_decision`·`proposed_rule`을 가진다. 실제 `decision`은 계속 `review_needed`이며 의류를 자동 확정하지 않는다.
+- 지정 원본 904개를 다시 읽어 결과 수는 clothing 752, non_clothing 94, review_needed 58이다. category 정보 없음 그룹은 8건이며, review group 합계 검증과 원본 SHA-256 불변 검증을 통과했다. 원본 수정·네트워크·커밋·푸시는 없었다.
+
+## 2026-09-10 로컬 MUSINSA/ZARA JSON 수집기 재구성 — live sample PASS / NOT COMMITTED
+
+- `/Users/jinyoung/Documents/RetailerCatalogCollector`의 무신사 카테고리 무한 증식을 제거했다. 무신사·자라는 설정된 seed 카테고리만 순회하며, 미수집 상품을 먼저 처리한다. `run_musinsa.command`, `run_zara.command`를 추가했고 기본 실행은 증분 수집이다.
+- urllib 403에는 제한된 curl fallback을 사용하고 실제 응답이 없는 ID는 raw JSON을 남기지 않는다. ZARA는 PDP용 catentryID와 실측용 내부 product ID를 분리한다. 숫자 전수 대입은 사용하지 않는다.
+- ZARA 탐색은 공식 `sitemap-product-kr-ko.xml.gz`를 우선하고 실패 시 제한된 seed 카테고리로 fallback한다. 현재 실행 네트워크에서는 공식 사이트맵 HTTP 403과 카테고리 `Access Denied`가 모두 확인돼 신규 ZARA ID 자동 발견은 환경 차단 상태다.
+- live 검증: MUSINSA 5746362의 detail/actual_size/options 및 ZARA catentry 549569317·internal 549551955의 product_details/size_guide JSON·JSONL 생성 PASS. 전체 장시간 수집은 실행하지 않았다.
+
+## 2026-09-10 로컬 쇼핑몰 JSON 의류 분리 dry-run 도구 — 완료 / NOT COMMITTED
+
+- `scripts/split-clothing-json.py`를 추가했다. 네트워크 호출 없이 JSON만 읽고, API breadcrumb/category code를 상품명보다 우선해 `clothing`, `non_clothing`, `review_needed` JSONL manifest를 생성한다. 애매하거나 API 관측이 충돌하면 `review_needed`로 보낸다.
+- 기본 입력은 `data/raw/**/*.json`이며 `--input`으로 파일/디렉터리를 지정할 수 있다. 결과는 `data/manifests/*.jsonl`, 카테고리별 판정 개수·대표 상품 ID·입력 SHA-256은 `data/reports/*.json`에 저장한다. 원본 JSON에는 쓰지 않는다.
+- 처음 사용한 194/880건 fixture 산출물은 제거했다. 지정 원본 `/Users/jinyoung/Documents/RetailerCatalogCollector/data/raw/uniqlo`의 개별 JSON 904개를 직접 읽어 `data/manifests/uniqlo-raw-904.*.jsonl`로 실행했다. 결과는 clothing 752, non_clothing 94, review_needed 58, 양말/삭스 47개는 전부 non_clothing이다. clothing 각 행의 matched rule/code/label, broad-context-only clothing 0건, 원본 SHA-256 불변 및 JSONL 검증을 확인했다. 커밋·푸시는 하지 않았다.
+
+## 2026-09-09 링크 내 옷 등록 자동 분류·전체 실측 표시 보정 — targeted PASS / NOT COMMITTED
+
+- 비교 결과의 `기준 옷 변경` 버튼은 기존에 로컬 후보마다 `상품 authority 확인 → 옷장 조회 → 후보 RPC`를 순차 반복해, 옷장 수에 비례해 느려졌다. 이미 존재하는 `referenceSelectionPlan` 전체 후보 조회를 연결해 상품 authority·옷장·후보 목록을 각각 한 번의 서버 흐름으로 가져오고, 서버가 승인한 client item ID만 로컬 Closet에 투영한다. 결과 화면 진입 직후 이 1회 조회를 미리 시작하므로 버튼은 준비된 목록을 즉시 열며, 사용자가 먼저 누른 경우에는 진행 중인 동일 요청의 완료만 이어서 사용한다. 같은 상품에서 다시 버튼을 누르면 결과 화면에 보관한 후보 목록을 즉시 재사용하며, SwiftData 옷장 조회도 별도 fetch 없이 기존 `@Query` 결과를 사용한다. 사용자가 최종 옷을 선택할 때의 최신 snapshot/서버 재승인과 begin-comparison 검증은 그대로 유지한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았고 `git diff --check`만 통과했다.
+- E465185 결과에서 네 번째 유니클로 원문 실측이 여전히 보이지 않은 원인은 완료 비교를 만들 때 대상 상품 사이즈와 기준 옷 모두 서버 canonical 3개짜리 이력 projection으로 바뀌어 retailer raw `화장` record가 결과 객체에 없었기 때문이다. `begin_comparison`의 exact size label과 파서 상품의 size label이 유일하게 일치할 때만 대상 결과 사이즈에 retailer measurement record를 복사하고, 결과 이력이 참조하는 active Closet item도 comparison-derived reference ID로 찾아 같은 쇼핑몰 원문 참고 실측 계산에 사용한다. 일치하지 않거나 active 원본이 없으면 기존 immutable snapshot만 사용한다. 복사된 원문은 표시 전용이며 점수·추천·서버 canonical 증거는 변경하지 않는다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 비교 결과 화면의 세 가지 표시 결함을 수정했다. 저장 직후 ProductSize가 이력 전용 UUID로 투영되는데 `다른 사이즈 비교`는 원본 서버 UUID만 검사해 전체 버튼이 비활성화되던 문제를 원본/이력 UUID 양쪽을 동일 서버 후보로 연결하도록 고쳤고, 실제 분석 cache 조회도 서버 원본 UUID로 역연결한다. 기준 옷은 이력 저장 전에 이미지 URL을 별도 snapshot으로 보존하고 서버 이력 복원 시에는 현재 Closet 원본 또는 reference snapshot의 이미지 URL을 사용한다. DB 승인 점수·순위·신뢰도는 기존 canonical 3개를 그대로 사용하며, 같은 쇼핑몰의 동일한 측정 정의로 로컬에 보존된 추가 원문 실측(현재 E465185의 화장)은 네 번째 참고 행으로 표시하되 추천 점수에는 포함하지 않는다. 사용자의 현재 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 새 r3 분류 프로시저 보정 후보 `128_retailer_r3_previous_version_compatibility_{Apply,Verify,Rollback}.sql`을 작성했다. 현재 설치 checksum `0c0dabc...`의 가장 바깥 r3 wrapper가 이전 r1/r2 `resolver_version`을 만나 API 원문 평가 전에 `base`로 반환하던 조기 종료만 제거한다. 내부 과거 버전 guard, 공개 RPC명/시그니처/ACL, recovery 함수와 기존 Product/User row는 변경하지 않는다. 예상 postimage MD5는 `291bf9bd...`이며 Verify는 E465185/E484080 회귀와 기존 무신사 v1 5746363의 r3 CONFIRMED 복구를 SELECT-only로 확인한다. Swift recovery enum에는 서버의 정확한 r3 문자열과 64개 상한/필수 audience/전체 후보 unknown-fields 규칙을 모두 추가했다. 처음 추가할 때 `serverUnknownFields` switch의 r3 case가 빠져 발생한 exhaustive-switch 컴파일 오류도 보정했다. 원격 적용과 SQL 실행은 하지 않았다.
+- Production SELECT-only 재확인에서 새 `classification_decision(text,text)` body MD5는 `0c0dabc519fa9d1f4ffb9b8ecf87ce95`, 새 recovery body MD5는 `d01db739db96a46d5725fbfb8d215e61`로 설계 당시와 저장소 `127_zara_retailer_api_v2_Apply.sql` 후보 어느 쪽과도 다르다. 새 분류 함수는 실제 호출되고 E465185는 retailer API r3로 `CONFIRMED(tshirt/short_sleeve)`를 반환한다. 반면 기존 DB row가 r2 `CONFIRMED(slacks_trousers/long_length)`인 무신사 5746363을 현재 함수로 다시 판정하면 `REVIEW_REQUIRED / Product-exact verified evidence is required`가 반환되어, 새 함수의 기존 v1 무신사 증거 수용 규칙에 별도 DB 회귀가 있다. 무신사 5746362는 Product row 자체가 없어 observation 미도달 문제도 별도로 남아 있다. DB write/apply는 하지 않았다.
+- 실제 E465185 비교 로그에서 상품 파싱/분류는 성공했지만 기준 옷 `B124FAC6-1EC4-460B-8BC2-203C2734108F` 동기화가 `CANONICAL closet item requires fitmatch_measurement_code only`로 반복 실패한 것을 확인했다. Production의 현재 linked-Closet helper는 정확한 ProductSize에 대응하는 비어 있지 않은 canonical `measurements` 배열을 요구하지만 Swift는 product-linked 요청에서 이 키를 생략하던 계약 불일치가 있었다. linked 요청도 명시적으로 매핑 가능한 canonical 실측만 코드별 1개씩 전송하도록 수정했고, 화면용 미분류 retailer raw 실측은 로컬에 그대로 보존한다. 같은 canonical 코드에 값/단위가 충돌하면 임의 선택하지 않고 RPC 전에 차단한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- `ShoppingProductViewModel.authorizeReferenceForComparison`의 DEBUG 진단 문자열에서 interpolation 내부 기본값 따옴표를 잘못 escape해 발생한 `Unterminated string literal` / `Cannot find ')'` 컴파일 오류를 수정했다. 진단값을 지역 상수로 먼저 계산한 뒤 동일 로그를 출력하며 실행 로직은 바꾸지 않았다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 무신사 공유 링크 `g8gv7iyp`와 `kk7c2n5l`은 모두 실제 상품 `5746362`(더스티 베이지)로 resolve되며 공식 detail/actual-size API에는 28, 29, 30, 31, 32, 33, 34, 36, 38의 9개 사이즈와 각 6개 실측이 정상 존재한다. Production SELECT-only 확인에서는 동일 계열 `5746363`(그레이)이 동일 category/audience/size shape의 v1 envelope/`__default__`/9개 사이즈로 정상 수집됐지만 `5746362` 상품·receipt는 없었다. 즉 해당 상품의 파서·API 형식 차이가 아니라 새 상품 observation 전송이 완료되지 않아 runtime UUID 연결이 비어 있던 상태다. coordinator는 URL transport, Functions relay, HTTP 408/429/5xx에 한해 frozen observation을 정확히 한 번 재전송하며 payload/`observed_at`을 재생성하지 않는다. 401/422 계약·인증 오류는 재시도하지 않는다. 링크 결과도 서버 authority가 unavailable/not-applicable이거나 context 자체가 없으면 이를 우선 표시하고 더 이상 `9개 사이즈를 찾았습니다`와 `등록 가능한 사이즈 정보를 찾지 못했습니다`를 모순되게 함께 표시하지 않는다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- E465185 비교 로그는 parser/DB 상품 분류/8개 사이즈/서버 후보 조회까지 성공한 뒤, 자동 선택된 기준 옷의 재승인 준비에서 generic `SERVER_UNAVAILABLE`로 끝났다. 로컬 `fitMatchServerReferenceSnapshot()`이 서버가 이미 승인 후보로 반환한 옷에도 로컬 provenance 표식을 별도로 요구해, 과거 캐시에 그 표식이 없으면 서버 검증 전에 차단한 것이 원인이다. 스냅샷 생성은 로컬에 저장된 exact category/detail/measurement를 유지하고 누락된 garment/length/profile만 동일 linked Product의 저장값에서 읽는다. 비교 권한은 부여하지 않으며 coordinator가 최신 Closet row, classification authority, exact snapshot, 서버 후보를 기존대로 전부 재검증한다. 스냅샷 생성 실패와 coordinator 오류는 DEBUG 로그에서 구분한다. 상품 authority가 이미 confirmed인 뒤의 오류 화면 제목은 `상품 정보를 불러오지 못했어요`가 아니라 `비교를 시작하지 못했어요`로 표시한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 상품 비교에서 서버가 `automatic` 후보를 주지 않고 `manual_selection` 후보만 준 경우, 앱이 사용자의 저장된 `기준 옷(isRepresentative)` 선택을 무시해 다시 후보 선택 화면을 열었다. 이제 서버가 승인한 manual 후보 중 기준 옷이 정확히 1개면 그 옷을 자동 선택해 기존 manual authorization 경로로 바로 비교한다. 서버 blocked 후보나 후보 밖의 로컬 옷은 승격하지 않고, 승인된 기준 옷이 없거나 여러 개면 기존 선택 화면을 유지한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 비교할 옷 선택 카드가 서버의 영문 `reason`(`User-selected comparison with at least one common canonical measurement`)을 그대로 표시하던 경로를 수정했다. 서버 원문은 진단/계약 데이터에 그대로 보존하고, 화면의 `FitMatchCandidate.selectionReason`에는 서버 `reason_code`와 `common_measurement_count`로 만든 한글 안내만 전달한다. 공통 실측 개수가 있으면 `공통 실측 항목 N개로 비교할 수 있습니다.`로 표시하며, 개수가 없을 때도 선택 방식에 맞는 한글 문구로 대체한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 저장된 무신사 항목이 옷장에서 `상의/기타`, `미분류`로 보이고 `musinsa.shoulder_width...` 같은 내부 키가 영어로 노출됐다. vNext Closet row의 분류는 `garment_type`, sleeve/lower/body axis, canonical audience로 분리돼 있는데 Swift read mapper가 garment type을 곧바로 앱 detail로 쓰고 `MEN`을 단순 소문자 `men`으로 바꾼 것이 원인이다. 공통 read mapper가 서버 tuple을 앱 detail code로 복원하고 canonical audience를 `male/female/unisex/kids_unisex`로 변환한다. 등록 직후에는 accepted request에 남아 있는 사용자의 exact category/detail/audience를 authoritative receipt projection에 다시 적용해 저장한 선택이 손실되지 않게 했다. sync된 provider machine raw label은 데이터에는 보존하면서 공통 `MeasurementResolver`에서 어깨너비/가슴단면/총장/소매길이 등 한글 표시명으로 렌더링한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 링크 등록 Sheet의 저장 실패/결과 재확인 상태에서 `.disabled(isSubmissionInputLocked)`가 `ScrollView` 자체에 적용돼 스크롤 pan까지 차단했고, 같은 상태를 `.interactiveDismissDisabled`에도 사용해 아래로 swipe-dismiss도 영구 차단했다. 입력 잠금은 ScrollView 내부 편집 content에만 적용하고, interactive dismiss는 실제 RPC가 진행 중인 `isSaving` 동안만 제한한다. 실패 alert 확인 후에는 결과 재확인 상태에서도 스크롤과 아래로 닫기가 가능하며 immutable retry 버튼 동작은 유지한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 무신사 공유 링크 `9n2zvom6`는 앞서 확인한 동일 상품 `5746363`으로 resolve된다. Production SELECT-only 결과 상품 분류가 `REVIEW_REQUIRED`이고 garment/length tuple이 비어 있어 자동 카테고리 세팅 대상은 아니다. 사용자가 하의 세부 분류를 직접 선택하면 Swift가 내부 비교용 `pants / long_sleeve`를 DB override에 그대로 보내 `garment type is unsupported`로 거절됐다. 이제 하의 picker를 DB 계약의 별도 garment/lower-length tuple로 변환한다(`shorts / short_length`, 그 외 명시 길이는 `other_standard_pants / *_length`). 상품명·판매 경로로 슬랙스 등 더 구체적인 subtype을 추정하지 않는다.
+- E465185 저장 실패 문구 `입력한 실측 항목을 서버에 저장할 수 없습니다`는 링크 상품 mutation이 exact `product_size_id`를 보내고 measurements를 최종적으로 nil 처리하면서도, 그 전에 표시용 UNIQLO 원문 record 전체를 canonical 변환하던 순서 오류였다. 이제 product-linked Closet 요청은 전송하지 않을 로컬 measurement conversion을 실행하지 않고 DB가 exact product-size canonical 값을 사용한다. 화면/local cache의 원문 실측 record는 유지하며, 직접 입력 상품은 기존 positive-measurement 검증을 계속 수행한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 후속 실제 기기 로그에서 E465185는 parser 8개 사이즈 수집과 Production observation 처리가 모두 성공했지만 등록 화면 분류 선택이 비는 현상이 재현됐다. Production SELECT-only 확인 결과 상품은 `CONFIRMED`, `tshirt / short_sleeve`, variant `65`, XS~4XL 8개로 정상이다. 등록 Sheet가 DB 분류를 직접 받지 않고 중간 Product 복사본만 다시 읽던 연결을 제거해, transient server registration context가 DB `categoryCode/detailCode`를 exact size UUID들과 함께 전달하고 Sheet가 이를 우선 사용한다. 직접 입력과 REVIEW_REQUIRED 사용자 선택 경로는 유지한다. 사용자 요청에 따라 이 후속 수정의 테스트·빌드는 실행하지 않았다.
+- 무신사 공유 링크 `ibaf8szx`는 실제 상품 `5746363`으로 확인했고 공식 actual-size API에는 28~38의 9개 사이즈와 각 6개 실측이 정상 존재했다. 앱은 retailer가 명시적 variant key를 주지 않을 때 observation용으로 넣은 `__default__`를 실제 서버 variant key처럼 비교해, 서버의 유일한 variant와 불일치하면 등록 가능 ID 집합을 비웠다. 이제 `__default__`는 명시적 identity가 없는 placeholder로만 취급하며 runtime variant가 정확히 하나일 때 그 유일한 관계를 사용한다. ZARA의 실제 catentryID 검증은 그대로 유지한다. 사용자 요청에 따라 테스트·빌드는 실행하지 않았다.
+- 후속 실제 화면 확인에서 E465185 사이즈가 4개만 노출되는 문제가 남아 있었다. 색상별 size-chart가 판매 중인 일부 사이즈만 반환해도 기존 코드는 결과가 비어 있지 않으면 즉시 채택했다. 이제 선택 색상 공식 응답과 provider의 공식 `-000` 전체 상품 chart를 각각 유지해 조회하고, 더 많은 distinct size를 가진 단일 원문 응답을 채택한다. 두 응답을 합쳐 가짜 원문을 만들지는 않으며 한쪽 실패 시 성공한 공식 응답을 사용한다.
+- DB의 confirmed tuple은 `garment_type=tshirt`, `sleeve_length=short_sleeve`처럼 의류 종류와 길이 축이 분리돼 있다. 기존 등록 화면은 `tshirt`를 Closet 세부 카테고리로 직접 검증해 무효 처리했다. 이제 동일 DB tuple 안에서 해당 대분류에 실제 유효한 detail code를 선택하므로 E465185는 `tops + short_sleeve`로 자동 세팅된다. parser/local 분류를 DB 근거로 승격하지 않는다. 이 후속 수정은 사용자 요청에 따라 테스트·빌드를 실행하지 않았다.
+- 사용자 제보 URL `UNIQLO E465185`를 Production Supabase에서 SELECT-only로 확인했다. 최신 상품은 `CONFIRMED / tops / tshirt / short_sleeve`, 선택 색상 `65`에는 XS~4XL 8개 사이즈와 사이즈별 raw 실측 4개가 저장돼 있었다. 화면에 3개만 보인 이유는 DB canonical runtime에는 `등 중심부터 소매까지 길이`의 canonical mapping이 없어 ViewModel이 parser 원문 4번째 실측을 runtime 3개로 덮어썼기 때문이다.
+- 링크 등록은 fresh retailer observation 직후 첫 runtime이 아직 `REVIEW_REQUIRED`인 경우 같은 payload를 재전송하지 않고 runtime만 한 번 다시 읽는다. 재조회 결과가 `CONFIRMED`이면 DB category/garment tuple을 등록 화면 초기값으로 적용한다. 여전히 review이면 기존 정책대로 사용자가 등록 화면에서 선택하며 링크 결과 화면에는 분류 오류문구를 만들지 않는다.
+- runtime size 배열 전체는 그대로 유지한다. 각 runtime `source_size_key`와 parser의 정확한 normalized size identity가 1:1일 때, canonical runtime에 이미 있는 축은 DB 값을 유지하고 canonical projection에서 빠진 공식 쇼핑몰 실측만 표시용 record로 추가한다. 비교 계산 권한이나 canonical 측정값은 바꾸지 않는다. 공통 ViewModel 경로이므로 UNIQLO·MUSINSA·ZARA 링크 등록과 상품 비교에 동일 적용되고 직접 입력 등록은 영향 없다. 사이즈 선택은 기존 결정대로 사용자 선택이다.
+- iPhone 17 Simulator의 비-iCloud focused mirror에서 앱/test target compile PASS. 신규 누락 실측 병합 테스트 **1/1 PASS**, DB confirmed category preselect + 실제 링크 action + UNIQLO/MUSINSA/ZARA 공통 등록 시나리오 **3/3 PASS**다. 공통 시나리오의 과거 `REVIEW_REQUIRED` 결과 오류문구 기대값은 현재 확정 정책(`errorMessage == nil`)으로 정정했다.
+- Production DB write, migration, Edge deploy, 기존 사용자 데이터 변경, commit, push는 모두 0이다. DB에는 `uniqlo.sleeve_length.sleeve_center_back_to_cuff`의 canonical mapping이 아직 없으므로 이번 Swift 보정은 이를 원문 표시용으로만 복원한다. 향후 그 축을 비교 계산에도 쓰려면 별도 DB mapping 검증·배포가 필요하다.
+
+## 2026-09-09 ZARA retailer API v2 DB correction candidate — isolated PASS / NOT DEPLOYED
+
+- 기준은 `connectDB` local/origin `cf621ba3d93677a5e4c620b76d5bcfd03ef650a2`와 그 위의 미커밋 Swift retailer-evidence 변경이다. 첨부 `Zara_DB_Handoff.zip`의 README, Identity Index, 100개 collected JSON, 200개 gzip raw body를 확인했다. raw SHA256은 **200/200 일치**했고, 100개 모두 API `product.id`와 지정된 `colors[].productId`가 각각 정확히 한 번 대응했다. ZIP의 `swift_analytics_correspondence`는 전부 `NOT_VERIFIED_IN_THIS_PACKAGE`이므로 별도 PDP HTML analytics `internalProductID`와 API root `product.id`의 동등성은 확정하지 않았다.
+- Swift ZARA details loader는 실제 캡처 계약에 맞춰 `/itxrest/.../product/{id}` 추정 요청을 제거하고, 검증된 PDP URL에 정확한 `v1={catentryID}&ajax=true`를 붙인다. source key는 기존 HTML analytics `internalProductID`, selected variant와 size-guide key는 `catentryID`로 계속 분리한다. Recovery Swift enum에는 exact r2 문자열을 추가했고 r1/r2 모두 1...64 후보 및 audience 검증을 공유한다.
+- 신규 `127_zara_retailer_api_v2_Apply.sql`은 현재 Production SELECT-only로 확인한 r1 checksum을 precondition으로 두고 두 기존 함수만 교체한다. v1 경로는 유지하며 ZARA v2만 `identity_scheme`, API root `product.id == source_product_key`, 선택 색상 `productId == selected_variant_key` 정확히 1개, PDP `v1`/`ajax`, optional measurement body/request 쌍과 exact size-guide key/status를 검증한다. 유효 v2 resolver/recovery는 각각 exact r2 버전을 발행하고 후보 상한 64를 유지한다. DML, ID 변경, 테이블/RPC 추가는 없다.
+- 실제 앱 소스에서 `FitMatchJSONValue`, `FitMatchRetailerAPIEvidence`, `FitMatchProductObservationPayload` 정의를 그대로 컴파일해 ZARA-001 raw bodies를 인코딩했다. payload SHA256은 `b9cd40751dfd597182dce850e1fa810ed52002efb32b1943a9c9f1bcb735c6a8`; parent `555069470`, selected `555528084`, `variants=[]`, 두 HTTP status 200이 확인됐다.
+- PostgreSQL 17 격리 DB에서 실제 Swift payload의 공개 ingest → r2 `REVIEW_REQUIRED` 분류 → runtime → r2 recovery 3개 → 공개 사용자 선택 저장(revision 1) → effective `PERSONAL_CONFIRMED` → 동일 payload 재시도를 검증했다. 재시도는 observation/processing 모두 idempotent, product/receipt 각 1개, observed_at 1개, 사용자 override revision 1 유지였다. wrong parent, wrong variant, duplicate selected variant는 `INVALID_CURRENT_RETAILER_FACTS`/후보 0으로 차단됐고 measurements body/request를 함께 생략한 분류-only v2는 허용됐다. UNIQLO/MUSINSA v1 envelope는 둘 다 r1 resolver로 유지됐다.
+- 신규 SELECT-only Verify와 exact-r1 Rollback 후보를 작성했다. 격리에서 Apply 함수 body checksum은 `5a81fa24b06a3aa43f7a9ffab553788a` / `dca1dda221090e661628ffb5811e13ef`, rollback 후에는 기존 `56e82046a4f6d0a279f16eb1f34da992` / `d8a1a17c94d33b1a9d5170ab4270e7f1`로 복원됐다. 로컬 synthetic fixture owner가 `postgres`가 아니어서 Verify의 두 Production privilege 항목만 예상대로 false였고 나머지 6개는 true였다.
+- iPhone 17 Simulator 비-iCloud 미러에서 app build PASS. `ZARAParserPhase1_5Tests` **43 PASS / 0 FAIL / 3 explicit live-network SKIP**, Recovery **23/23 PASS**. Resolver class는 **48 PASS / 5 FAIL**이며 실패 5개는 이전 인수인계와 동일한 Result→Closet preferred-size baseline이다. 첫 combined run의 ZARA fixture 누락 10건은 ZARAAudit/Research fixtures를 미러에 복사한 뒤 전부 통과했다. exact-method filter는 0 tests라 증거로 세지 않았다.
+- Production DB apply, Edge deploy, 기존 사용자 데이터 수정, commit, push는 모두 0이다. 출시 전 남은 사실 확인은 동일 실상품의 별도 PDP HTML analytics `internalProductID`와 API `product.id` 교차 검증이다. 현재 계약은 불일치 시 fail-closed하므로 이를 추정으로 통과시키지 않는다.
+
+## 2026-09-09 retailer API raw evidence Swift bridge — implementation PASS / ZARA DB v2 pending
+
+- 기준은 `connectDB`의 local/origin HEAD `cf621ba3d93677a5e4c620b76d5bcfd03ef650a2`이며 시작 worktree는 clean이었다. 공개 RPC 이름, SwiftData schema, 기존 사용자 데이터, Edge 함수, Production DB는 변경하지 않았고 commit/push도 수행하지 않았다.
+- Production Supabase는 SELECT-only로 재대조했다. 현재 함수 body MD5는 `fitmatch_vnext.classification_decision(text,text)` = `fed3832e4141ec24489c355a4b66e258`, `fitmatch_vnext.classification_recovery_options(uuid)` = `78907168af5768c73d30eb950b8b1104`로 전달 설계 시점 checksum과 달라졌지만 공개 수집/runtime/recovery RPC 이름은 유지됐다. 현재 recovery가 발행할 수 있는 retailer 계약 세 버전(`retailer-api ... r1`, `current-retailer-facts ... v1/v2`)을 Swift exact enum에 등록했다.
+- 신규 transport-only `FitMatchRetailerAPIEvidence`는 상세/실측 요청 URL, HTTP status, 수집 시각과 실제 response bytes를 보관한다. 기존 `ProductMetadata.structuredFacts`와 observation의 `[String:String]` 타입은 유지하며, observation custom encoding 경계에서만 `structured_facts.retailer_api`를 JSON object로 넣는다. bool/null/array/숫자/문자열을 typed DTO로 재구성하지 않고 raw JSON object에서 보존하며 Data/base64 또는 escaped JSON string으로 보내지 않는다.
+- UNIQLO는 기존 details 응답을 metadata hydration과 evidence에 함께 재사용하고 size-chart 응답도 원문/status와 함께 보존한다. MUSINSA는 detail DTO decode 전에 같은 응답을 capture하고 actual-size도 같은 요청 결과를 parser/evidence가 공유한다. HTTP 오류 또는 decode 실패 capture는 partial/fallback 경로에서도 transient evidence로 보존하며 HTML fallback을 API 성공으로 표시하지 않는다.
+- ZARA는 기존 `internalProductID`를 Product/source key로, URL/analytics `catentryID`를 selected variant 및 detail/size 요청 key로 계속 분리한다. 상세 JSON과 size-measure-guide 원문은 local category guard 전에 수집하며 `fitmatch-retailer-api-v2` + `provider_parent_with_selected_variant`로 전달한다. 상품 종류 미확정 상태에서도 원문은 DB 관측으로 갈 수 있고 sizes가 없으면 `variants=[]`; first color/size, dummy variant, 추정 단위, 임의 canonical 측정은 생성하지 않는다.
+- `ShoppingProductViewModel`은 링크 load context마다 observation을 한 번 고정해 등록·비교·동일 transport retry에서 같은 payload/`observed_at`을 재사용한다. fresh 공식 API evidence는 기존 current/CONFIRMED runtime에도 한 번 제출하며 성공한 같은 context는 coordinator에서 중복 제출하지 않는다. recovery 선택 저장 직후에는 observation을 다시 만들거나 보내지 않고 runtime-only refresh하여 선택 fingerprint/revision을 보존한다. 직접 입력 상품은 evidence가 nil인 기존 경로 그대로다.
+- Recovery는 v6/v7의 3개 상한을 유지하고 새 retailer 계약만 1...64개를 허용한다. 전체 후보 기준 unknown-fields, candidate count/ID/fingerprint/hash/fixed facts를 계속 검증하며 새 계약은 모든 후보의 `audience_code`가 fixed audience와 일치해야 한다. 후보를 절단하거나 새 tuple/fingerprint를 만들지 않는다.
+- 검증은 실제 iPhone 17 Simulator용 test build가 성공했다. focused XCTest는 Recovery/ServerAuthority/신규 raw transport `61/61 PASS`, ZARA `42 PASS / 0 FAIL / 3 explicit live-network SKIP`, UNIQLO/MUSINSA raw measurement 회귀 `4/4 PASS`다. 첫 최소-copy 묶음의 ZARA 10건 file-not-found는 누락 fixture를 복사한 뒤 전부 통과했다. 전체 resolver class의 기존 preferred-size 5건 실패는 `cf621ba` 이전 인수인계에 기록된 동일 baseline failure이며 이번 변경 기대값을 수정하지 않았다. 변경 Swift/test 15개 frontend parse와 `git diff --check`, 보호된 `TabBarScrollVisibilityModifier.swift` 무변경 확인도 통과했다.
+- 남은 DB 보정: 현재 Production `classification_decision`의 ZARA v1 검증은 `colors[].productId == source_product_key`를 요구해 parent/internal key와 catentry key가 다른 새 v2 envelope를 아직 수용하지 못한다. 실제 새 details API의 `product.id`↔analytics `internalProductID` 관계를 추가 실상품으로 교차 확인한 후, 현재 checksum precondition을 둔 v2 parent/selected-variant 검증 후보를 작성·격리 검증해야 한다. 이번 세션의 direct details probe는 HTTP 403이라 관계를 확정할 수 없었으므로 추측 SQL은 만들지 않았고 Production apply/Edge deploy는 0이다.
+
+## 2026-09-07 connectDB Xcode compile root-cause repair — app target PASS, related XCTest blocked
+
+- Started from fetched `origin/connectDB` and local `connectDB` HEAD `68da4938d4dbfba143d14e0f7a0eda58f17a7770` (`fix: confirm linked closet edits with server receipts`). The user worktree initially contained only the direct `displaySizeName` repair in `FitMatchResultClosetRegistrationPreparationAction.swift`; it was preserved and normalized without reset/stash/clean/restore, commit, or push.
+- A clean detached local worktree reproduced the first actual app-target blocker: `legacyPreferredSize?.name.displaySizeName` attempted to use `RecommendationResultView.swift`'s fileprivate String extension from a service file. The repair keeps the same presentation-only slash/whitespace handling and delegates to existing `SizeTokenNormalizer`; it does not infer or alter any Product/variant/product_size identity.
+- After that blocker, `ClosetItemDetailView` reproduced `ambiguous use of 'init'` at the outer `ScrollView`. The imported-edit initializer and its trailing async save closure match their new draft/outcome contract; an explicit closure annotation was removed again and the build still passed. The trigger was the inline optional `async throws` ternary passed to `prepareLinkedSizeOptions` inside the ViewBuilder. Moving it to a precisely typed `linkedSizeOptionsPreparation` property removed the overload-resolution failure. This then exposed the independently real `availableSizes` getter missing its final `return`; restoring that return completed the compile fix.
+- The exact parent `bb0188dd4e4b08400555a1440f6508cb7df01998` was also clean-built: it reproduced the same `ClosetItemDetailView` ambiguity before the new save contract existed, then built successfully after only the same typed preparation property and missing-return repair. The Closet problem therefore predates `68da4938`; the new commit added the separate `displaySizeName` blocker, not a save-callback contract mismatch.
+- Cacheless `FitMatch` Debug iOS Simulator app-target build in the clean worktree PASSed after `clean` (110.2s, iPhone 17 Pro / iOS 26.3). Existing unrelated warnings remain in `ProductSize.swift`, `FitMatchComparedProductClosetSubmissionAction.swift`, `FitMatchSupabaseProductResolver.swift`, and `UniqloParser.swift`; none were suppressed or changed.
+- Existing related XCTest classes (`FitMatchClosetSyncCoordinatorTests` and `FitMatchSupabaseProductResolverTests`) were requested together, but the test target failed before execution in unchanged `FitMatchFinalReleaseHeadlessAcceptanceTests.swift:2390`: `FitMatchClosetItemPayload` has no `brandName`. No test is recorded as passed. A direct build from the iCloud-managed user worktree also emitted no compiler output for four minutes and was interrupted; the local clean worktree is the actual successful source build, and both modified source files were byte-identical before this record update.
+- No Supabase/Production DB/RPC/SQL/migration/Auth/Engine/Comparison or protected TabBar source/call-site change occurred.
+
+## 2026-09-05 Phase 1E XCTest recovery final audit — CANDIDATE_READY_FULL_SUITE_UNPROVEN
+
+- Audit baseline was `connectDB` at `bf0a25f7a7077fb51635b9efa6934ba4518295b6`. No reset/stash/clean, commit/push, Production Supabase write, SQL, migration, RPC, Auth/Edge mutation, or protected comparison/TabBar implementation change occurred. The direct checkout remains iCloud File Provider-managed, so recursive repository status/diff operations can stall; simulator tests therefore used a temporary local code mirror. Every candidate Swift file was byte-compared against that mirror before validation.
+- The two production candidates remain semantic-neutral compile repairs only: `FitMatchComparedProductClosetRegistration` explicitly types the measured-record dictionary as `[String: Double]` and its compact-map element as `(String, Double)?`; `LinkClosetRegistrationView` uses concrete `Color.primary`/`Color.red` for the unchanged foreground-style predicate. No Phase 1E measurement gate, exact UUID, server-first, override, reference, or comparison authority condition changed.
+- The original P0 fixture now uses the current four-scalar `GarmentMeasurements` initializer. The server-authority picker test replaces the removed local `fullActiveReferences` API with the live server `discoverSelectableReferences` contract and still proves selectable/blocked server candidates plus no local representative fallback.
+- Final headless fixes are test transport/fixture corrections, not production policy changes: normal automatic compare fixtures now model `load → server reference plan → authorization` with three resolve/runtime envelopes and two candidate responses; Recovery fixtures use the v6 complete-tuple contract and `unknown_fields=[]` for a single candidate; local-update sync evidence is newer than its intentionally future-dated remote fixture; and SOLD_OUT completion fixtures return the exact server-authorized size UUID. The tests still throw on missing/unexpected RPC envelopes and still require the same server begin/completion authority.
+- Actual simulator evidence on iPhone 17 Pro from the exact mirror: `FitMatchSupabaseProductResolverTests` **32/32 PASS**; `FitMatchServerAuthorityIntegrationTests` + `FitMatchP0ProductionPathTests` **68/68 PASS**; `FitMatchHeadlessUserJourneyTests` **39/39 PASS**; `FitMatchFinalReleaseScenarioExecutionTests` **36/36 PASS**; `FitMatchFinalReleaseHeadlessAcceptanceTests` **37/37 PASS**; `FitMatchFinalReleaseProviderSnapshotTests` **12/12 PASS**; `FitMatchClosetSyncCoordinatorTests` **33/33 PASS**; `CategoryLive300ShadowAuditTests` **1/1 PASS**. The previously reported individual headless/provider/sync failures are all included in these class results.
+- Full-run ZARA failures were isolated as test-materialization failures, not assertion regressions: the first temporary code mirror omitted eight ZARA corpus/fixture files and produced `NSCocoaErrorDomain 260` file-not-found errors. On the complete current-candidate local mirror, `ZARAParserPhase1_5Tests` is **41 PASS / 0 FAIL / 3 SKIP**, and each of the eight previously reported methods passes individually. An exact detached `9d88807` worktree was also built after applying only the same four disposable compile/test compatibility repairs; its ZARA class is likewise **41 PASS / 0 FAIL / 3 SKIP**. No Phase 1E production policy was changed for this diagnosis.
+- A representative UI failure is pre-Phase 1E: `FitMatchOnboardingUITests/test01NewUserReachesGarmentRegistrationGuideWithoutBodySetup` fails at the initial onboarding-root wait in both the `9d88807` baseline worktree and the prior full run. It is outside the Phase 1E registration/comparison path and remains a UI test-runtime/setup issue, not a candidate production regression.
+- `xcrun swiftc -parse` passed for every candidate Swift file. Protected files (`VNextComparisonEngineAdapter`, `FitMatchServerAuthorityCoordinator`, `FitMatchClosetSyncCoordinator`, `RecommendationService`, and `TabBarScrollVisibilityModifier`) byte-match the baseline mirror; candidate source contains no protected scroll call-site. Scoped repository `git diff --check` was attempted but did not return a terminal result because of the same File Provider I/O stall, so it is not recorded as PASS.
+- Full `FitMatchTests` remains unproven and is **not green**: the five-minute tool response limit elapsed while the full command was running; its final Xcode log later recorded the missing-fixture ZARA failures above and existing UI-test setup failures. Do not call the suite green until it completes from a complete non-iCloud worktree (or is sharded) with those environment failures separately resolved. Current final status is **CANDIDATE_READY_FULL_SUITE_UNPROVEN**, with no unresolved production regression found in the audited paths.
+
+## 2026-09-04 XCTest execution recovery — targeted verification PASS
+
+- Started from `connectDB` HEAD `bf0a25f7a7077fb51635b9efa6934ba4518295b6` after the committed Phase 1E result report. No reset/stash/clean, commit/push, Production Supabase write/migration/RPC change, Auth/Edge mutation, or protected TabBar/scroll change occurred.
+- The direct repository Xcode path remains host-blocked, not source-blocked: this checkout is under iCloud File Provider-managed `~/Documents`; `xcodebuild` consistently waits in `NSFileCoordinator coordinateReadingItemAtURL` during recursive `FitMatch.xcodeproj` loading. `Docs/CodexSessionHandoff.md` itself was `compressed,dataless`, corroborating the hydration/coordinator cause. A non-iCloud local copy of the exact source tree under `/tmp` loaded the scheme and fixed `Package.resolved` package graph normally with the existing Supabase checkout cache.
+- Three actual Swift/XCTest compile blockers were corrected: explicit `[String: Double]` / `(String, Double)?` inference for measured-record dictionary construction; `Color.primary`/`Color.red` to give the Link Closet error label one concrete `foregroundStyle` type; current server-authority picker coverage instead of the obsolete removed `fullActiveReferences` API; and P0 Uniqlo fixture construction using the model's required four scalar measurement initializer arguments.
+- Actual iPhone 17 Pro Simulator XCTest evidence from the local copy: `FitMatchSupabaseProductResolverTests` **32 PASS / 0 FAIL / 0 SKIP**; `FitMatchServerAuthorityIntegrationTests` plus `FitMatchP0ProductionPathTests` **68 PASS / 0 FAIL / 0 SKIP**. `xcrun swiftc -parse` on all four changed Swift files and scoped `git diff --check` passed. The modified server-authority picker test and both modified Uniqlo inventory tests are included in the 68 passing tests.
+- A best-effort full `FitMatchTests` invocation reached real XCTest execution but exceeded the tool's five-minute response limit. Its live log recorded pre-existing-style `FitMatchHeadlessUserJourneyTests` contract failures (for example recovery contracts and completed automatic comparison evidence); it was interrupted after the timeout and is **NOT PASS**. Those failures were not changed or masked in this targeted XCTest recovery.
+- Remaining host action: move the working checkout out of iCloud-managed `~/Documents` (or consistently use a local non-file-provider worktree) before treating direct repository `xcodebuild` as reliable. Remaining product/test action: investigate the full-suite Headless Journey failures independently against a recorded baseline; do not conflate them with the now-fixed compiler/API mismatches.
+
+## 2026-09-03 live retailer cross-provider root-cause remediation — implementation complete, Xcode execution blocked
+
+- Work continued on `connectDB` at HEAD `4d8afc8166bd69b0239aa76f533f6e27877eeffd` with the pre-existing UNIQLO official-details fallback and regression edits preserved. No reset/stash/clean/revert, commit, or push was performed.
+- The undeployed live-retailer migration now propagates a UNIQLO `PRODUCT_REQUIRED` recovery envelope across MEN/WOMEN/UNISEX only when both signals have the same complete, immutable, current-valid official path and every non-automatic peer authority unanimously remains `PRODUCT_REQUIRED`. It creates no garment/sleeve/length tuple and no `ANY` mapping, so it cannot auto-confirm a product. Mixed DIRECT/PRODUCT_REQUIRED or semantic conflict prevents propagation, and later conflicting current evidence deactivates an automatically propagated envelope.
+- The production-shaped local SQL validation now proves the full path: a MEN `PRODUCT_REQUIRED` peer plus a complete UNISEX observation remains `REVIEW_REQUIRED`, receives no canonical garment tuple, and reaches bounded `classification_recovery_options`; incomplete/stale/wrong-audience/cyclic/conflicting evidence remains ineligible. It also proves a later DIRECT conflict withdraws the automatic recovery envelope. The actual candidate migration plus validation ran on the isolated `fitmatch_cross_provider` database and returned `LIVE_RETAILER_GENERAL_CONTRACT_PASS` with the probe transaction rolled back.
+- ZARA now reads only official PDP JSON-LD description or explicitly named composition/component properties as composite evidence. Explicit distinct components such as jacket+pants produce the existing typed `SET` fact; an ambiguous product title such as “라운지 세트” is deliberately ignored. Product name, style, category, or local classification never becomes structure authority.
+- MUSINSA production code already used its official detail response and one coherent imported size table. New provider-shaped regression coverage proves an official `2팩` name remains `MULTIPACK` while its separate coherent measurement contract is preserved. Generic goods metadata still cannot synthesize `SINGLE`.
+- Swift production/test files pass frontend syntax parsing and `git diff --check` passes. The first targeted XCTest invocation and two read-only Xcode project probes stalled before build/test workers emitted output; only this session’s own commands were interrupted. Targeted XCTest, full non-UI, and build-for-testing are therefore **NOT VERIFIED**, not PASS.
+- Production DB writes/migration deployment/Auth mutation/Edge deployment remained `0`. The live-retailer migration and History visibility migration remain **NOT DEPLOYED**. Protected TabBar/scroll source was not modified. The pre-existing Supabase advisory that `fitmatch_vnext.manual_cross_comparison_rules` has RLS disabled remains out of this retailer remediation scope and was not changed.
+
+## 2026-09-03 live retailer cross-provider follow-up — READ-ONLY findings
+
+- Production SELECT-only counts are UNIQLO `1,184` (258 CONFIRMED / 844 REVIEW_REQUIRED / 82 NOT_APPLICABLE), MUSINSA `395` (73 / 307 / 15), and ZARA `30` (14 / 16 / 0). These are mostly historical pre-contract rows: comparison-contract `ABSENT` is 1,183 / 395 / 30 respectively, so the totals cannot be treated as current-parser failures without a fresh observation.
+- Current v2 receipts are only UNIQLO 4 and MUSINSA 1; ZARA has no current-v2 receipt. E465185 is now correctly refreshed to official name, `UNISEX`, full category codes, 32 measurements, and `SINGLE_COHERENT`, proving the metadata fallback path can repair the malformed observation. It remains REVIEW_REQUIRED because its new UNISEX category signals have no mapping while the same MEN leaf is intentionally `PRODUCT_REQUIRED`.
+- Exactly five currently used UNIQLO audience-isolated category signals have an active mapped peer: `95357`, `95405`, `58039`, and `58390` are UNISEX with MEN PRODUCT_REQUIRED peers; `100315` is UNISEX with a MEN DIRECT peer. The candidate migration safely promotes only complete-path conflict-free DIRECT authority. It does not clone PRODUCT_REQUIRED, so products like E465185/E453754 can still lack the server mapping needed to generate bounded Recovery candidates. A DB contract change should copy the *PRODUCT_REQUIRED mode only* across a proven identical complete provider path without creating a DIRECT tuple.
+- MUSINSA live detail API returned stable name, MEN audience, and category codes for both normal 6976301 and multipack 6939618. The parser intentionally leaves generic structure absent, while fresh actual measurement records produce the separate coherent contract. The Production 6976301 receipt predates that field despite 12 measurements; the committed classification-required resubmission path is the intended refresh. Fresh 6939618 parsing should correct the historical false `SINGLE` to `MULTIPACK` from official `2팩` wording.
+- ZARA source has verified page/variant identity, bot-challenge rejection, WebKit fallback, analytics category/audience, and official garment-measure endpoint handling; normalized provider records now produce the coherent contract. However Production contains no v2 ZARA receipt, so current end-to-end behavior is unverified. Static review also found no ZARA provider-composition-to-SET fact path; a mixed-set ZARA product could remain UNKNOWN+coherent unless official component evidence is wired into the structure contract.
+- Production writes/migrations/Auth/Edge operations remained 0. This follow-up changed no Swift/SQL/test source beyond the already pending UNIQLO fallback candidate.
+
+## 2026-09-03 UNIQLO Access Denied metadata fallback — implementation complete, Xcode execution blocked
+
+- Production SELECT-only inspection proved E465185 was most recently ingested with 32 official measurements and `SINGLE_COHERENT`, but with fallback name `유니클로 상품 465185`, `audience=UNKNOWN`, `source_category_codes=[]`, and therefore `REVIEW_REQUIRED / No active verified mapping candidate`.
+- A direct read-only request reproduced the root cause: the KR PDP returned a 420-byte Akamai `Access Denied` HTML document. The official UNIQLO KR Commerce details endpoint remained available and returned product name `AIRism코튼오버사이즈크루넥T(5부)`, `UNISEX`, and the complete ordered breadcrumb IDs `57893/57967/58039/58390`.
+- `UniqloURLResolver` now appends a strictly product-ID-validated official details response as the existing hydration representation when available. `UniqloProductMetadataParser` accepts its retailer-owned product name as fallback; existing audience, breadcrumb, structure, and provenance parsing remains shared. No product-specific branch or local global-classification override was added.
+- Regression coverage proves that an Access Denied PDP plus official details hydration produces the real product name, `UNISEX`, and category codes `57967/58039/58390`. Swift frontend parse and `git diff --check` PASS. Targeted Xcode execution was retried but again stalled before test workers produced output, so execution is **NOT VERIFIED** rather than PASS.
+- Production writes/migrations/Auth/Edge operations are 0. E465185 category 58390 remains intentionally `PRODUCT_REQUIRED`; after a fresh observation it should reach bounded user classification Recovery rather than automatic DIRECT confirmation. Commit/push were not performed by this change.
+
+## 2026-09-03 REVIEW_REQUIRED Closet override + provider-observation refresh correction — implementation complete, execution blocked
+
+- Current authority is `connectDB` / local and `origin/connectDB` `3ab7aef51e6ced9fb46bfe756687af3b5079e3be`; the pre-task tree was clean. Production was inspected SELECT-only. E465185 remains `REVIEW_REQUIRED / PRODUCT_REQUIRED` with reason `SINGLE_CONTRACT_UNVERIFIED`, `comparison_measurement_contract=ABSENT`, and `comparison_unit_eligible=false`.
+- `FitMatchServerAuthorityCoordinator.observationCanImproveRuntime` now permits a current `classification_required` product to submit a new observation only when the retailer payload contains both actual measurement records and the typed `single_coherent` measurement contract. The server ingestion action still owns duplicate/stale handling and global classification; `not_comparable`, empty, absent, or unknown-contract observations remain fail-closed.
+- `ParsedProductInfo.normalizedSizes` now derives the same provider measurement-contract fact for ZARA in addition to UNIQLO/MUSINSA. It still requires imported provider measurement records and does not create product structure or global garment authority.
+- `FitMatchClosetClassificationEditPolicy.resultingAuthority` now treats a real, distinct Closet category picker edit on a sourced `serverReviewRequired` item as personal `userExplicit` authority. Merely saving/selecting size remains REVIEW_REQUIRED, while explicit SET, `serverNotComparable`, and `serverUnavailable` remain fail-closed. Production registration-boundary coverage asserts `user_explicit`, canonical eligibility, and representative retention.
+- Existing integration coverage was strengthened to prove: REVIEW_REQUIRED without improved provider evidence does not submit; coherent provider measurements execute `resolve → runtime → observation → runtime`; and NOT_APPLICABLE never promotes. No product ID special-case was added.
+- `git diff --check` passed before execution. Targeted Xcode tests and an incremental build-for-testing were attempted, including a final retry after the Closet policy correction, but Xcode stalled while waiting for test workers/project operations to materialize and produced no terminal test/build result. The invocations were interrupted without terminating user Xcode/Codex processes. They are **NOT VERIFIED**, not PASS.
+- Production writes, migration deployment, Auth mutation, Edge deployment, commit, and push are all `0`. The Production migration ledger still lacks `20260902031749`, although SELECT-only object inspection shows the v2 ingestion/unit-decision functions exist; this schema/ledger drift was not changed. Protected TabBar/scroll files were not modified.
+
+## 2026-08-31 HJ-P0-001 USER_EXPLICIT completed Result/History remediation — PASS
+
+- Work ran on `connectDB` at local/fetched `origin/connectDB` HEAD `8855874a7ff372ef9b0e6159740c6faee4750985`. The pre-existing dirty documentation, Headless matrix/results/defect ledger, simulator artifacts, and test source were preserved. No reset/restore/stash/clean, commit/push, Production access/write, migration, SQL/Edge edit, or test-expectation change occurred.
+- The Headless failure was reproduced before the change: J07 (USER_EXPLICIT polo↔tshirt same-sleeve manual), J09 (hoodie↔sweatshirt same-sleeve manual), J11 (knit_sweater↔sweatshirt same-sleeve manual), and J13 (REVIEW_REQUIRED → Recovery → USER_EXPLICIT automatic resume) each reached server `begin_comparison` → production engine → `complete_comparison`, then lost the local completed result/history.
+- Root cause was `RecommendationService.makeCompletedVNextHistory(...)`: it required local `product.classificationAuthorityProvenance == .serverConfirmed`, so it returned nil after an otherwise successful current server-backed USER_EXPLICIT run. `ShoppingProductViewModel.completeVNextRecommendation(...)` and the Result persistence path now pass the successful completion DTO into that history builder.
+- The replacement gate is deliberately narrower than `serverConfirmed || userExplicit`. It requires an allowed permit, exact run/comparison identity, successful matching completion/recommended size, PENDING vNext begin snapshot, exact target Product/variant/reference UUIDs, exact non-duplicated authorized candidate UUID set, authority fingerprints, and current runtime effective-tuple equality. USER_EXPLICIT additionally requires V4, a current active personal projection, exact revision, candidate fingerprint/set hash, input/evidence fingerprints, resolver version, and `USER_EXPLICIT` effective source. Snapshot reference UUID comparison parses UUIDs rather than depending on PostgreSQL/Foundation string case. A local/manual, stale, cleared, wrong-target, wrong-reference, wrong-run, stale candidate/hash/input/evidence/revision, or unauthorized-size USER_EXPLICIT path returns nil.
+- `RecommendationResultView` now reuses only the current already-calculated authorized batch for alternate-size presentation. It permits a completed server-backed USER_EXPLICIT result only with the exact server-history/current-batch evidence; absent/stale/local batches cannot invoke a fresh scorer.
+- Post-fix Headless suite PASS `5/5`, including all canonical `45/45` valid scenarios, `45` executed, `45 PASS`, `0 FAIL`, `0 unexecuted`. J07/J09/J11/J13 each now execute `effective authority → reference/eligible → begin → MeasurementComparisonEngine → complete → local Result/History` successfully. The direct server-proof regression also verifies valid USER_EXPLICIT alternate-size presentation and all required negative cases.
+- Critical regression suites PASS `64/64`, fail/skip `0/0`: Recovery, vNext contract, permit sequencing, comparison sync, server-authority integration, and Supabase resolver. App build PASS and test-target build-for-testing PASS on Xcode 26.3/iPhone 17 Pro Simulator iOS 26.3.1.
+- Full `FitMatchTests` completed at `513 PASS / 1 FAIL / 37 SKIP` (551 total). The one failing test remains the known legacy `DBLogicReliabilityAuditTests.testDBLogicAdjudicationMatchesProductionClassifier` corpus (64 assertions); no HJ-P0-001-related failure or expected-value edit was introduced.
+- Static gates PASS: `git diff --check`; TabBar modifier/protected scroll call-site diff `0`; DB/migration/Edge/Share/SwiftData/navigation source diff `0`. Production writes are `0`; P0 from HJ-P0-001 is `0` locally. Physical iPhone signed-in USER_EXPLICIT select/reselect/clear and real Production comparison E2E remain unverified.
+- Current verdict: `HJ-P0-001 REMEDIATION PASS`. Next step: independent Codex Ultra PRE-E2E re-audit, followed only by the already-scoped signed-in physical iPhone Recovery E2E if that audit remains P0-free.
+
+## 2026-08-31 Recovery Production Simulator E2E — PARTIAL (authenticated execution blocked)
+
+- Git authority is `connectDB` / local and fetched `origin/connectDB` `8855874a7ff372ef9b0e6159740c6faee4750985`. Tracked source was clean; the prior untracked postflight ZIP was preserved. No Swift, migration, SQL, test, Edge, project, or configuration source was modified.
+- Xcode 26.3 current-source app build PASS (268.5s), test-target build-for-testing PASS (218.7s), focused Recovery/vNext suites PASS `88/88`, fail/skip 0. Actual current Debug app was installed and launched on iPhone 17 Pro Simulator/iOS 26.3.
+- Real UI reached “Continue with Apple”. Tapping it produced the system “Apple 계정에 로그인 — 설정에서 Apple 계정에 로그인해야 합니다.” alert. It was closed without Settings/credentials. App termination and cold relaunch returned to the same real auth gate. Screenshots/logs are in `Docs/TestEvidence/RecoverySimulatorProductionE2E-20260831/`.
+- All checked local Simulator Supabase Keychains contained 0 FitMatch sessions; no approved QA credential/JWT exists in repo/docs/config, and the execution Simulator has no Apple account. Fake `-fitmatchUITesting` auth was not used because it disables Production Supabase, and no Auth user was created. Therefore USER_EXPLICIT select/relaunch/reselect/clear, negative UI, manual-cross, scorer timestamps, and multi-Simulator sync are NOT RUN rather than PASS.
+- Production SELECT-only target discovery selected primary UNIQLO E450259/옥스포드셔츠 (`bf835b1d-f245-4248-861d-3c97020f6fb7`), REVIEW_REQUIRED MEN/SINGLE, exactly 3 candidates: shirt_blouse long, shirt_blouse short, polo_shirt short; fixed MEN/tops/SINGLE and unknown garment+sleeve. Backups are E482514 (2 candidates) and E467574 (1); negatives E482868 (0), E422992 (UNKNOWN), E482652 (NOT_APPLICABLE).
+- All selected products have availability observations/current sizes `0/0`; after Recovery this may legitimately stop at temporal NO_AVAILABLE_SIZE. No availability refresh occurred. Post-attempt Production rows are override 0, feedback 0, comparisons 0, and primary remains global REVIEW_REQUIRED/null garment. Normal app writes 0; admin/global Production writes 0.
+- Final verdict is `SIMULATOR PRODUCTION E2E PARTIAL`, P0 found 0 but authenticated functional gates remain unverified. Exact unblocker is one approved existing QA Apple-authenticated Simulator session (credentials must not be put in chat and no new Production user should be invented), followed by autonomous select→cold relaunch→reselect→clear and negative/multi-Simulator execution. Full report: `Docs/FitMatchRecoverySimulatorProductionE2E-20260831.txt`.
+
+## 2026-08-31 REVIEW_REQUIRED Recovery Production postflight — PASS
+
+- Strict Production READ-ONLY postflight completed against `hnkplvyegonlhumlejst`; this audit performed Production writes 0. Branch/local HEAD/fetched `origin/connectDB` are `connectDB` / `2aa7c792f45384b08ca1f55f247c1c6fd0ed516a` / identical. Migration SHA-256 remains 90000 `aabce9afd186fdae6de1f7f52ef5ef2e33fcbcdf1d25b0ca1c94bf94745f3a21`, 91000 `2687da317e5ac7d51ca9942bb7441987179e36f4f6a8949a4470f6fc2d31dcd8`.
+- Production ledger contains exactly `20260830090000/vnext_leaf_specificity_correction` and `20260830091000/vnext_review_required_recovery`, once each, with no replacement/duplicate Recovery migration.
+- Current Production is Products 1,608; `CONFIRMED 346 / REVIEW_REQUIRED 1,165 / NOT_APPLICABLE 97`; invalid CONFIRMED, duplicate Product, variant/size/measurement orphan are all 0. Leaf-specificity remediation audit proves exactly 143 intended REVIEW_REQUIRED→CONFIRMED, unexpected transition 0, hierarchy evidence missing 0, selected mapping mismatch 0, and all 143 remain valid CONFIRMED.
+- Fresh resolver review reasons are non-SINGLE structure 424, product-exact verified evidence required 389, and no active verified mapping 352; the old false equal-top descendant/ancestor group is 0. The correction uses recursive `parent_signal_id`, not product name/path prefix/evidence_order specificity.
+- Recovery envelope for the 389 PRODUCT_REQUIRED cases is candidates `0=270 / 1=7 / 2=5 / 3=107 / >3=0`, recoverable 119, unrecoverable 270, invalid/inactive garment/inactive policy candidates 0, and 47-type fallback 0. UNKNOWN/non-SINGLE review remains blocked (424).
+- Both Recovery tables exist with RLS, owned SELECT, no authenticated direct writes, append-only feedback trigger, USER_EXPLICIT/revision/fingerprint/hash/cleared lifecycle constraints, and no Closet dependency. Current override/feedback rows are `0/0`. Recovery user RPCs have no PUBLIC/anon EXECUTE, SECURITY DEFINER search paths are fixed, raw tuple authority is impossible, and no BOLA/IDOR was found.
+- Effective authority is Global NOT_APPLICABLE block → Global CONFIRMED → valid active owned USER_EXPLICIT only while global REVIEW_REQUIRED → REVIEW_REQUIRED. `cleared_at is null` excludes cleared rows from current authority and superseded reconciliation. Set/reselect/clear are optimistic-concurrency and server-candidate based; Global Product auto-promotion path is 0.
+- Effective-context measurements feed readiness/reference/authorization/eligible sizes/begin. Manual-cross remains exact three active same-sleeve rules and explicit-only. Begin recomputes exact candidates/staleness and emits snapshot v4; Swift release flow reaches `MeasurementComparisonEngine` only from a valid begin permit and completes server-side before local History. Production comparisons/completed rows are `0/0`, so old-row mutation is 0 and physical mutation behavior remains unverified.
+- Readiness is `READY 0 / NO_AVAILABLE_SIZE 344 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,165 / NOT_APPLICABLE 97`. READY 0 is a temporal expired-availability state, not repaired or labeled PASS. Edge remains product-observation v5 with `verify_jwt=true`; Auth/Edge/Storage changes 0. Protected SwiftData/navigation/Share/TabBar diffs are 0.
+- Final verdict: `PRODUCTION POSTFLIGHT PASS`, remaining P0 0. P1 operational gates are physical signed-in USER_EXPLICIT Recovery, multi-device/restart/reselect/clear E2E, and fresh retailer availability before re-observing Golden readiness. Exact next step: physical signed-in iPhone Recovery E2E → targeted multi-device/restart E2E → final PRE-E2E/release audit. Full report: `Docs/FitMatchReviewRequiredRecoveryProductionPostflight-20260830.txt`.
+
+## 2026-08-30 REVIEW_REQUIRED Recovery Production deployment — Git/dry-run PASS, apply BLOCKED
+
+- This section supersedes the immediately following earlier Git-authority BLOCKED attempt. Fresh fetch confirmed local `connectDB`, local HEAD, and `origin/connectDB` are all `fb3dde5252c8f50733491d9e90a44d35c452c6f9`; the checkout was clean before report generation, conflict paths were 0, and all Recovery Swift/UX/tests/validation/handoff artifacts are now published.
+- Git-authoritative migration SHA-256 values exactly match the reviewed sources: 90000 `aabce9afd186fdae6de1f7f52ef5ef2e33fcbcdf1d25b0ca1c94bf94745f3a21`, 91000 `2687da317e5ac7d51ca9942bb7441987179e36f4f6a8949a4470f6fc2d31dcd8`. Existing Recovery UI reuse, no second Recovery screen, reselect/reset strings, and the `cleared_at is null` effective-authority filter are present in remote Git.
+- Production SELECT-only preflight at `2026-08-30T12:44:45.873710Z`: Products 1,608; classifications `203 CONFIRMED / 1,308 REVIEW_REQUIRED / 97 NOT_APPLICABLE`; invalid CONFIRMED/duplicate Product/variant-size-measurement orphans all 0; active garment/policy 47/39; readiness `READY 0 / NO_AVAILABLE_SIZE 201 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97`. READY 0 is natural expired availability and was not repaired.
+- Manual-cross remains exactly hoodie↔sweatshirt, knit_sweater↔sweatshirt, polo_shirt↔tshirt, all active and `require_same_sleeve=true`; authorization-v3 marker is present. Target migration ledger rows and Recovery tables/functions are all absent.
+- Production set-based SELECT-only 90000 dry-run PASS: exactly 143 REVIEW_REQUIRED→CONFIRMED, projected `346/1,165/97`; existing CONFIRMED status/tuple changes 0, NOT_APPLICABLE changes 0, invalid new tuple 0, unsafe hierarchy rows 0, unexpected transition 0. Exact 143-row evidence is `Docs/FitMatchReviewRequiredRecoveryProductionPreflight-20260830.jsonl`, 144 lines / 201,520 bytes, SHA-256 `c9ce23dcf75abb08c3d1bbcacd66941399cd390392f2b4a218d412adbb343b8f`.
+- Deployment stopped immediately before the first write. The available authenticated Supabase migration connector does not accept a caller-supplied version and has previously recorded an execution-time version on this project. The official Supabase CLI is not installed/linked/authenticated here. Applying through the connector would knowingly violate the owner-required exact ledger versions `20260830090000/20260830091000`; manual SQL/ledger insertion, repair, fake marking, and ad-hoc write were not used.
+- Stop-state SELECT-only postflight at `2026-08-30T12:51:48.474257Z` exactly matches preflight: products/classifications/counts and Product/variant/size/measurement/comparison hashes unchanged, target ledger 0, Recovery objects absent. 90000/91000 apply count `0/0`, every Production write class 0, partial deployment 0.
+- Current verdict is `BLOCKED`. Exact next step is an authenticated project-linked official Supabase CLI environment: run `supabase db push --dry-run`, require exactly 90000 and 91000 pending and nothing else, then `supabase db push` followed by the full postflight. Physical signed-in, multi-device, restart/reselect/clear E2E and fresh Golden availability remain unverified.
+
+## 2026-08-30 REVIEW_REQUIRED Recovery Production deployment — BLOCKED at Git authority gate
+
+- Controlled Production deployment preflight ran on branch `connectDB`. Local HEAD and freshly fetched `origin/connectDB` are both `b419f159962e1447ae2981be3747436117d7faef`; unresolved merge/conflict paths are 0 and the existing dirty working tree was preserved.
+- The mandatory Git-authority gate failed. `supabase/migrations/20260830090000_vnext_leaf_specificity_correction.sql` and `supabase/migrations/20260830091000_vnext_review_required_recovery.sql` exist only as local untracked files and are absent from `origin/connectDB`. Their local SHA-256 values are respectively `aabce9afd186fdae6de1f7f52ef5ef2e33fcbcdf1d25b0ca1c94bf94745f3a21` and `2687da317e5ac7d51ca9942bb7441987179e36f4f6a8949a4470f6fc2d31dcd8`.
+- The focused Recovery test is also untracked/absent remotely, and the final Recovery DTO/service/coordinator/ViewModel/CompareFlow/Result changes differ from the remote commit. Therefore the reviewed implementation and final reselect/reset/cleared-override patch are not yet published to Git authority.
+- Per the owner’s absolute safety rule, execution stopped before any Production connection. Production SELECT/introspection, 90000 dry-run, migration apply, ledger write, security postflight, and Recovery distribution checks were all NOT RUN. Migration 90000/91000 apply count is `0/0`; every Production write class is 0 and there is no partial deployment.
+- Local work for this stopped attempt is limited to `Docs/FitMatchReviewRequiredRecoveryProductionDeployment-20260830.txt`, this handoff entry, and the companion ZIP. Swift, migration, validation SQL, Edge, and Production source were not modified by this deployment attempt.
+- Final verdict is `BLOCKED`, not PARTIAL: no approved migration was applied. Exact next action is to publish the complete reviewed Recovery implementation, exact migrations/validation/tests, final UX patch, reports, and current handoff to `origin/connectDB`, then rerun the controlled deployment from an authoritative checkout. This task performed no commit or push.
+
+## 2026-08-26 Classification Authority Phase 1B-2 — Candidate Data + 1,608 Shadow PASS
+
+> 이 절이 아래 Phase 1B-1/1B-1V의 “다음 Phase” 상태를 대체한다. Phase 1B-2 repository/local artifact는 GO지만 Production activation은 NO-GO다.
+
+### 결론과 산출물
+
+- Branch/HEAD는 `connectDB` / `c251b2a824b9a99e2f99b809f2cb23cb1721c9ab`이며 commit/push는 하지 않았다.
+- Migration `supabase/migrations/116_classification_candidate_release.sql`, validation `supabase/sql/116_classification_candidate_release_validation.sql`, local fixture `supabase/sql/116_classification_candidate_release_local_fixture.sql`을 추가했다.
+- Exact machine input은 `supabase/sql/fixtures/116_classification_candidate_manifest.jsonl` 4,644 rows, SHA-256 `f542025c3cd84a4b785903e746b276f4f07ad1b9152d2c4c0301e4983d6d66ea`다.
+- Shadow는 `Docs/FitMatchClassificationPhase1B2Shadow-20260826.jsonl` 1,608 rows, SHA-256 `b1b49b767efe2ca6be1441703fa38bb9235135d1235a9b1f94f8d86ddbb10385`다.
+- 전체 보고서는 `Docs/FitMatchClassificationPhase1B2Candidate-20260826.md`다.
+
+### Candidate contract
+
+- Local candidate release ID/key는 `9f9c8155-61d9-41ce-9dd1-bf695ecc2140` / `fitmatch-classification-authority-candidate-2026-08-26-v1`, parent는 Production active `65d72393-4a40-4e99-b701-fdc1ff865774`다.
+- Active mapping 3,492 exact successor는 CATEGORY_DIRECT 34 / PRODUCT_REQUIRED 989 / INVALID_MAPPING 369 / OTHER_EXISTING 2,100이다. Identity loss/overlap 0, direct tuple invalid 0이다.
+- Decision manifest 114는 verified 113 + revoked ZARA 1이다. Production/non-transactional decision write는 0이다. Gold E482514/E454311/E456567은 3/3 exact, collision 0이다.
+- Review issue 1,037은 existing `data_quality_issues` contract로 적재한다. 일괄 product decision/history downgrade는 하지 않았다. Shadow에서 1,009 review, verified direct mapping 근거가 있는 28 confirmed이며 review issue는 유지한다.
+- BOTH_UNTRUSTED original 310 중 owner Gold E482514 1만 exact verified로 해소되고, 나머지 309는 review_required다. Untrusted authority path unsafe confirm은 0이다.
+- Phase 1A.5의 E450536/E486066 `knit_top`은 candidate validation 값이었으나 current taxonomy에서 inactive/missing detail이라 115 validator가 차단했다. Verified tuple은 validator-valid `knit_sweater/knit_sweater/knit_sweater/long_sleeve`로 고정했고 independent expected는 수정하지 않았다.
+
+### Runtime gate와 local validation
+
+- Runtime versions는 classifier `db-auto-classifier-2026-08-18-v2`, comparison `v1`, compatibility `db-comparison-2026-08-18-v2`, measurement `2026.07.1`로 분리 고정한다.
+- Policy row/checksum, `runtime_policy_contract_validated`, mapping/decision/review parity, shadow/Gold/fail-closed evidence를 114 gate에 additive로 확장했다. 기존 114 blocker는 제거하지 않았다.
+- Homebrew PostgreSQL 17.11, cluster `/tmp/FitMatchPostgres17-20260826-01`, port 55432에서 production-shaped non-user fixture→113→114→115→116 actual apply PASS(4.06s)다.
+- Validation transaction은 manifest/SQL parity, field/row/checksum/flag negative gates, negative trigger, exact decision upsert, positive gate/activation, recorder append/supersede를 실행하고 ROLLBACK했다.
+- 116 reapply는 insert 0/0/0, 0.33s PASS다. Reapply 후 validation output은 1차와 byte-identical이다.
+- Post-rollback local state는 products 1,608, decisions 5,056, history 0, parent active, candidate validated, candidate decision exact matches 0이다. Trigger/FK/service grant PASS, anon gate execute false다.
+- 검증 후 local server를 중지하고 cluster와 temporary support symlink를 삭제했다. `brew services start`, port 5432, 추가 설치, user/auth/closet/comparison-history copy는 0이다.
+
+### Shadow 결과와 다음 gate
+
+- Status는 confirmed 177 / review_required 1,431 / not_comparable 0 / unclassified 0이다. Method는 verified decision 113 / verified category mapping 64 / unknown 1,431이다.
+- Current transition은 confirmed→confirmed 172, confirmed→review 934, notComparable→review 169, review→confirmed 5, review→review 328이다.
+- Confirmed invalid tuple, product-required-alone confirm, invalid-mapping-alone confirm, BOTH_UNTRUSTED unsafe confirm, unknown arbitrary fallback, generic underwear leak, tshirt/base-layer leak은 모두 0이다.
+- Independent expected 207은 수정 0. Current overlap 137의 literal exact/mismatch/review는 16/121/27이다. 기존 31 failure corpus는 overlap 28 + current-missing 3이며 전부 Phase 2 대상이다. DB target 5는 confirmed verified지만 legacy/canonical vocabulary 때문에 literal exact 2, mismatch 3을 그대로 기록했다.
+- Production postflight는 products 1,608, decisions 5,056, history/current 1,860/1,608, active mapping 3,492, candidate release 0, latest ledger `20260821090138`다. Production write/apply/temp/RPC mutation/activation/history change 0, Swift production diff 0이다.
+- 다음 정확한 단계는 `Phase 1B-3 — Controlled Activation Transaction + Rollback Successor Dry Run (Local/Staging Only, Production Apply 0)`이다. Exact 114-row preimage, v2 gate rollback successor, v4/v2/evaluator call-site switch를 한 transaction의 cutover/rollback으로 검증한다. Production apply/activation, history backfill, Phase 2 Swift는 자동 시작하지 않는다.
+
+## 2026-08-26 Migration 115 Final Correction — Local Runtime PASS
+
+> 이 절이 아래 Phase 1B-1V 절의 policy-version contract를 대체하는 최신 권위 상태다.
+
+### 결론
+
+- **Phase 1B-2 candidate-data 작업은 GO, production migration/activation은 NO-GO**다. Phase 1B-2를 자동 시작하지 않았다.
+- 지정된 두 결함만 수정했다. Resolver v4의 raw `p_payload.classifier_policy_version` override는 완전히 제거됐고 classifier version은 selected release contract만 사용한다.
+- Evaluator v4는 `comparison_policy_version`, `compatibility_rule_version`, `measurement_policy_version`을 분리한다. 이전 단일 `compatibility_policy_version` shadow key/lookup은 제거했다.
+- Production SELECT-only vocabulary는 classifier `db-auto-classifier-2026-08-18-v2`, comparison policy `v1`, current compatibility rule `db-comparison-2026-08-18-v2`, measurement `2026.07.1`로 서로 다름을 재확인했다.
+- 보고서: `Docs/FitMatchClassificationPhase1B1Validation-20260825.md`.
+- Final SHA256: migration 115 `1d09dcde02a2d1728322b2bcb5b1eb567f4918ecbd9936f386a817f5d0a1e799`; validation `06a54982540da4b6ffa8f3ea05ffe1e662072bb3e8cf40e90b06c3ace230d0e4`; fixture `2830bea1fe32018b04b55a53a647707ac6677a3e9a82f461e5b62bd114d66980`.
+
+### Contract와 fixture
+
+- Runtime policy contract는 classifier/comparison-policy/compatibility-rule/measurement 네 field다.
+- Missing contract/row reason은 `runtime_policy_contract_missing`, `comparison_policy_version_missing`, `compatibility_rule_version_missing`, `measurement_policy_version_missing`으로 구분한다.
+- Fixture vocabulary는 classifier `classifier-v1`, comparison `comparison-policy-v1`, rule `compatibility-rule-v1`/wrong `compatibility-rule-wrong`, measurement `measure-v1`/wrong `measure-v2`다.
+- Payload spoof assertion: selected release `classifier-v2`에 raw payload `classifier-v1`을 넣어도 result는 review, returned version은 `classifier-v2`, source는 release contract였다. Spoof-confirmed 0이다.
+- Good comparison/rule version pair, missing comparison, missing rule, missing measurement, wrong-row non-use, multiple measurement-version non-mixing을 모두 runtime assertion으로 고정했다.
+
+### Local actual validation
+
+- PostgreSQL `17.11 (Homebrew)` formula binaries만 사용했다. Cluster `/tmp/FitMatchPostgres17-20260826-072435`, port `55432`, Unix socket only였다. `brew services start`, port 5432, cloud preview branch, 추가 설치는 사용하지 않았다.
+- Fixture `0.11s`, 113 `0.04s`, 114 `0.03s`, corrected 115 initial apply `0.04s` PASS.
+- Validation은 두 번 explicit `ROLLBACK` PASS(`0.10s`, `0.09s`), current exact-file 115 reapply `0.04s` PASS다.
+- 114 gate/trigger/view/grants 및 115 four functions/CHECK/FK/recorder/evaluator 실제 compile/runtime PASS다.
+- Post-rollback counts는 `1/1/1/1/1/0/0/0`, old internal/public eight-function hash는 pre/post `dc9e989eb233b066d6c7a973b57e9010`으로 동일했다.
+- service_role foundation grants 4/4, anon/authenticated grants 0/8, evaluator 16-arg overload 1, duplicate object 0, waiting lock 0이다.
+- 검증 후 local server를 stop하고 cluster root와 temporary formula support symlink를 삭제했다.
+
+### Production unchanged와 다음 gate
+
+- Final production SELECT-only counts: products 1,608, decisions 5,056, history/current 1,860/1,608, measurements 28,418, active release 1. Latest ledger는 `20260821090138`다.
+- Production 114/115 columns/functions는 계속 absent이고 existing eight-function combined hash는 `0551eee819d6ae2db5ccd40c0f66a275`다. Production DDL/DML/RPC write/apply/temp object 0이다.
+- Production activation 전에 gate가 네 runtime policy field 존재, 각 required row/checksum, `runtime_policy_contract_validated=true` 또는 동등 evidence를 검증해야 한다. Migration 114는 이번에 수정하지 않았다.
+- Candidate 작업에서도 BOTH_UNTRUSTED 310, manual review 1,037, invalid replacement 미확정, live network 71을 자동 confirmed로 올리지 않는다.
+- 다음 작업은 사용자 별도 명령이 있을 때만 Phase 1B-2 candidate release/data migration 작성 및 local-only validation이다. Production apply/activation, history backfill, public RPC/iOS 전환은 자동 시작하지 않는다.
+
+## 2026-08-26 Classification Authority Phase 1B-1V — Final Contract + Local Runtime PASS
+
+### 결론
+
+- **Phase 1B-2 candidate-data 작업은 GO, production migration/activation은 아직 NO-GO**다. Phase 1B-2를 자동 시작하지 않았다.
+- PostgreSQL 17.11 Homebrew formula 전용 binary로 `/tmp/FitMatchPostgres17-20260826-035209`, port `55432` disposable cluster를 사용했다. `brew services start`, port 5432, existing libpq 18 client는 사용하지 않았다.
+- Production DB는 SELECT/introspection only다. 종료 postflight는 products 1,608, decisions 5,056, history/current 1,860/1,608, measurements 28,418, active release 1이며 114/115 objects는 계속 absent다. Production write/apply/release/history 변경 0이다.
+- 보고서: `Docs/FitMatchClassificationPhase1B1Validation-20260825.md`.
+- Final SHA256: migration 115 `b4464bca6549c76f794a8d7eee522f68ada012fdf47070fefd53e30bed8f5bbd`; validation `2627dde9fdf29e38a6be838f4727ce7870654df14e9b07b31ea5ae2fb64b260d`; local fixture `7b82e5dfcb7492cb28c0e003247354dd0bd9d3704a3f5885690d5b3ec393068b`.
+
+### Contract correction
+
+- Resolver v4 classifier version은 trusted payload override -> selected release `validation_report.runtime_policy_contract.classifier_policy_version` 순서다. `release.policy_version` fallback을 제거했다. Missing version은 name/path/exclusion을 사용하지 않고 evidence에 남긴다.
+- Evaluator v4 최종 signature는 기존 15 arguments 뒤 `p_release_id uuid default null`을 추가한 16 arguments다. Compatibility/measurement versions는 selected release contract에 exact pin된다.
+- Hard-coded compatibility version과 multi-version measurement aggregation을 제거했다.
+- `allowed`, `fallback_allowed`, `length_match_required`, mismatch exclusions, minimum/required/required-any/weights, directional, policy version을 모두 사용한다. Tshirt/base-layer explicit block과 dresses/underwear/homewear fail-close는 유지한다.
+- Verified direct/profile과 conflicting legacy decision은 계속 review다.
+
+### Local actual validation
+
+- Synthetic production-shaped fixture: `supabase/sql/115_authoritative_classification_foundation_local_fixture.sql`. Production/user/auth/closet/comparison-history data copy 0이다.
+- 113 apply/compile PASS (`0.04s`), 114 PASS (`0.03s`), 115 PASS (`0.04s`).
+- 114 signature issue/triage/view, release gate trigger deny/allow, grants runtime PASS.
+- 115 tuple/resolver/recorder/evaluator, CHECK/FK RESTRICT, service-only grants runtime PASS.
+- Validation은 두 차례 `BEGIN ... ROLLBACK` PASS (`0.09s`), post-rollback counts/hash 불변.
+- Final 115 reapply PASS (`0.05s`), duplicate columns/constraints/functions/triggers 0. Evaluator v4 16-arg overload 1, old 15-arg overload 0.
+- Waiting locks 0. Synthetic one-row EXPLAIN만으로 garment FK child index 필요성이 입증되지 않아 index 추가 0이다.
+- Cluster와 temporary Homebrew share/lib support symlink는 검증 종료 후 제거했다.
+
+### 다음 작업 제한
+
+- 다음 명령은 Phase 1B-2 candidate release/data migration을 작성하고 동일 local 방식으로 검증하는 것이다.
+- Candidate release에 classifier/compatibility/measurement 세 runtime policy version을 명시한다.
+- Active release mutation/activation, production apply, history backfill, Swift production 변경은 별도 승인 전 금지다.
+- BOTH_UNTRUSTED 310, manual review 1,037, invalid replacement 미확정, live network 71은 자동 확정하지 않는다.
+- Foundation의 exact activation map을 그대로 사용하며 v5/parallel resolver/evaluator를 만들지 않는다.
+
+## 2026-08-25 Classification Authority Phase 1B-1 — DB Foundation & Shadow Contract
+
+### 결론과 산출물
+
+- **Repository-level Phase 1B-1 foundation은 구현 완료, Phase 1B-2 실행 gate는 현재 NO-GO**다. 안전한 local/staging DB에서 113 -> 114 -> 115 actual apply와 validation SQL을 실행하지 못한 것이 단일 foundation 검증 blocker다.
+- Migration: `supabase/migrations/115_authoritative_classification_foundation.sql`; SHA256 `d782e98d03320e99feb9ccfa6ac4125a988ea012093be3d2a5d4f9cafec8d072`.
+- Validation: `supabase/sql/115_authoritative_classification_foundation_validation.sql`; SHA256 `25da75261eb51592b1f76adff11403e30ee02bb6c5a85d7cd1e4f6133c8da19a`.
+- 보고서: `Docs/FitMatchClassificationPhase1B1Foundation-20260825.md`.
+- 시작/종료 branch/HEAD는 `connectDB` / `c251b2a824b9a99e2f99b809f2cb23cb1721c9ab`다.
+- Production DB에는 SELECT/introspection만 사용했다. DB write 0, migration apply 0, active release/history change 0, Swift production 수정 0이다. Phase 1B-2를 시작하지 않았다.
+
+### Migration 114와 production 상태
+
+- Repository의 `114_release_gate_and_quality_review_queue.sql`을 수정하거나 115에서 중복 정의하지 않았다.
+- Production ledger latest는 `20260821090138`이며 local 113/114/115는 미적용이다. 114 gate functions/view/columns도 production에 없다. 기존 single-active index만 pre-114 object로 존재한다.
+- Repository numeric migration과 production timestamp ledger version은 동일하지 않다. Numeric 113–115는 latest timestamp보다 정렬상 과거이므로 일반 `db push`가 자동으로 순서 적용한다고 가정하지 말고 preview에서 controlled apply와 ledger reconciliation을 검증해야 한다.
+- 115는 114 functions/view와 trusted grant boundary를 hard prerequisite로 검사한다. 114 view가 113 columns를 사용하므로 apply 순서는 113 -> 114 -> 115다.
+- Supabase CLI, container runtime, local PostgreSQL server, preview branch가 없고 repository migration이 080부터 시작해 pre-080 production baseline schema도 포함하지 않으므로 실제 fresh apply는 SKIP했다. PostgreSQL static parser에서는 113/114/115/validation top-level SQL과 115/validation PL/pgSQL이 PASS했다. 114 trigger function 보조 parse는 `NEW`/`OLD` record에 대한 parser JSON serializer 한계로 actual DB compile 검증에 남겼다.
+
+### 115 final candidate contract
+
+- `product_classification_decisions`: nullable `garment_type_code`, non-null default `authority_status='legacy'`, authority/verified-completeness checks, safe nullable FK를 추가한다. Existing 5,056 row update는 없다.
+- `product_classification_history`: nullable `garment_type_code`만 추가한다. Existing 1,860 row update/current supersede/append는 없다.
+- 신규 table 0, DROP/TRUNCATE/data DML 0이다.
+- 최종 후보 internal functions:
+  - `runtime_validate_classification_tuple_v1`
+  - `runtime_resolve_product_classification_v4`
+  - `runtime_record_product_classification_v2`
+  - `runtime_evaluate_comparison_profiles_v4`
+- 모두 PUBLIC/anon/authenticated execute를 revoke하고 service_role만 허용한다. Public preview RPC는 만들지 않았고, existing v2/v3/public RPC caller는 전환하지 않았다.
+- Resolver는 verified exact -> verified direct -> independently verified profile -> conflict-free legacy -> verified exclusion -> review 순서다. Current mapping은 새 authority contract가 없으므로 자동 trusted로 승격되지 않는다.
+- Evaluator는 tuple/garment/group/measurement policy를 검증하고 tshirt/base-layer를 차단한다. Dresses/underwear/homewear는 policy-ready 전 fail-close다.
+
+### Homewear owner 결정 반영
+
+- 이전 Phase 1A.5의 homewear owner 질문은 이번 사용자 결정으로 해소됐다.
+- Option A: display/canonical major `homewear` 유지, future `homewear_top`/`homewear_bottom`/`homewear_set`, Phase 1B auto=false다.
+- Tops/bottoms 강제 이동, generic homewear family 자동 비교, 이번 migration taxonomy/policy seed는 모두 하지 않았다.
+- Current `garment_types`/`comparison_groups` major CHECK는 dresses/underwear/homewear를 허용하지 않는다. Future seed 전 non-destructive constraint 확장 정책을 별도 승인해야 하며, 승인 전에는 v4가 fail-close한다.
+
+### 검증
+
+- Production validators v1/v2/v3는 SELECT-only PASS, 5,026/5,026 parity mismatch 0이다.
+- Local `CategoryValidation5026AuditTests`: 1/1 PASS, input/unique/output 5,026, invalid 0.
+- Local `CategoryLive300ShadowAuditTests`: 1/1 PASS, confirmed/review/unclassified 243/29/28, silent conflict 0, strict leak 0.
+- 5,026/Live300은 regression/self-consistency 증거이며 Phase 1A.5 semantic error가 해소됐다는 뜻이 아니다.
+- Validation SQL은 columns/count/hash, old/new role grant matrix, 114 security, tuple cases, resolver authority cases, recorder rollback, comparison fail-close를 전부 assertion하지만 safe DB가 없어 실제 실행은 SKIP했다.
+- 115 idempotency guard static check는 PASS했다: 3 columns `IF NOT EXISTS`, named constraint guards, 4 `CREATE OR REPLACE FUNCTION`, repeat-safe grants/comments. Actual reapply는 staging에서 아직 SKIP이다.
+- PostgreSQL best-practices audit에서 nullable garment FK supporting index를 검토했지만 exact columns/functions scope를 넘어 추가하지 않았다. Existing 5,056 garment 값은 모두 NULL이며, staging advisor/EXPLAIN 후 별도 additive index 승인 여부를 결정한다.
+
+### Activation과 다음 작업
+
+- Phase 1B-2는 active 3,492 mapping clone에 direct 34/product-required 989/invalid 369 authority metadata를 연결하고, targeted decision 114에 garment/verified|revoked authority를 채우는 candidate-only 작업이다. BOTH_UNTRUSTED 310과 manual review 1,037은 자동 확정하지 않는다.
+- Activation에서는 `runtime_resolve_and_promote_product`와 public resolve/runtime을 v4+recorder v2로, product compatibility/candidate/begin comparison을 evaluator v4로 연결한다. v5/parallel algorithm은 계획하지 않는다.
+- Phase 2 Swift는 `FitMatchSupabaseProductResolver`, closet/comparison sync, shopping/compare recommendation call sites가 additive garment/authority/release/tuple/policy fields와 server measurement gate를 소비한다. Local classifier/matcher는 server-confirmed authority가 아니라 offline/UI/manual 보조로 내린다.
+- 이번 네 object는 Phase 1B-1 production caller가 의도적으로 0이지만 activation consumer가 전부 지정되어 dead code가 아니다.
+- 다음 명령은 pre-080 production baseline schema가 있는 disposable clone/staging에서 113 -> 114 -> 115 apply와 `115_authoritative_classification_foundation_validation.sql` rollback fixture를 실행하는 검증이어야 한다. PASS 전 Phase 1B-2, production push, activation, history backfill은 금지다.
+
+## 2026-08-25 Classification Authority Phase 1A.5 — Root Cause Adjudication
+
+### 결론과 산출물
+
+- **Phase 1B gate는 NO-GO**다. Phase 1B를 시작하지 않았다.
+- 보고서: `Docs/FitMatchClassificationPhase1A5Adjudication-20260825.md`.
+- machine manifest: `Docs/FitMatchClassificationPhase1A5Adjudication-20260825.jsonl`; 5,700 JSONL rows; SHA256 `029ca5a036ad4884d7735672ad7a9b8ff23a91a0cd5fcd4613430a4a9a3ccecc`.
+- 기준은 `connectDB` / `c251b2a824b9a99e2f99b809f2cb23cb1721c9ab`, Supabase `hnkplvyegonlhumlejst`다.
+- Production DB에는 SELECT만 사용했다. DB write 0, migration apply 0, Swift production 수정 0이다.
+
+### 전수 root cause
+
+- invalid confirmed 952 = category/detail mismatch 167 + required length axis 109 + legacy taxonomy shape 640 + actual product misclassification 4 + conflict를 tuple invalidity에 합친 행 32. Structural tuple error는 920이다.
+- stale 1,472 = old mapping release only 201 + old decision only 35 + fingerprint changed 94 + current mapping changed 761 + metadata-only combined stale 381. Stale 원인 기준 metadata-only는 617, re-resolve는 855다.
+- conflict 573 = product decision correct 105 + source mapping correct 1 + product-required mixed 72 + source mapping wrong 85 + both untrusted 310.
+- risky mapping 1,358 = product-required 989 + structurally invalid 369. Phase 1A invalid semantic 238 외에 current `app_categories` detail/major mismatch 173을 찾았고 overlap 42라 union이 369다.
+- 전체 active confirmed mapping 1,392는 category direct 34 / product-required 989 / invalid 369다.
+- mixed 59/285 = safe with existing evidence 3/21 + product-required 46/202 + already rejected/excluded 10/62.
+
+### Verified product truth와 review
+
+- independently verified actual current product error는 8: Gold E482514/E454311/E456567, musinsa 6800912, UNIQLO E450536/E465193/E486066/E486103.
+- Phase 1A manual-review preview 1,147 중 conflict verified 105와 DB mismatch 5를 해소해 remaining manual-review product는 1,037이다.
+- 207 adjudicated expected는 모두 independent manual evidence다. Current DB overlap 137, exact 132, DB change target 5다.
+- 기존 31 products / 64 assertions는 local Swift logic regression이며 전부 iOS Phase 2 대상이다. Test expectation correction 0이다.
+
+### Current UNIQLO 880 / live 71
+
+- `CurrentUniqloCatalogAuditTests`를 실제 실행했다: 880/880 fixture·local·DB coverage, raw 5,193, parsed 5,181, A-test 2,246/2,246 PASS, test 1/1 PASS(135.907s).
+- Local operational proxy는 confirmed 439 / review 0 / notComparable 300 / unclassified 141. DB current는 670 / 100 / 110 / 0이다.
+- Local/DB exact 482, mismatch 398; conflict 431; mixed product 102; missing DB measurement policy 196.
+- Gold 3은 fixture에 모두 존재하며 local classification도 모두 충돌한다. 따라서 A-test PASS는 semantic accuracy가 아니라 self-consistency다.
+- Live fixture 71(M 40/U 31)은 DB coverage 33, historical detail match/mismatch 18/15, DB invalid 31, conflict 17이다. Runtime ready 21 / strict 18이며 E488204/E488364/E488738 3건이 silent propagation risk다.
+- 새 network/live parse/measurement/recommendation 71건은 전부 SKIP이며 PASS로 기록하지 않았다.
+
+### Dresses / underwear / homewear
+
+- Base-layer top은 `tops/base_layer_top/base_layer_top`, sleeve required, upper_core min 2다. Bra/panty underwear family와 합치지 않는다.
+- Dresses는 `dresses/dress/dress`, body-length required, Phase 1B auto=false로 fail-close한다.
+- Underwear는 bottom/bra/top subtype group으로 분리하고 Phase 1B auto=false다. Functional base layer는 product-level로 tops에 보낸다.
+- Owner 질문은 homewear의 display/canonical major 1건만 남긴다. 권장 A는 homewear major를 유지하되 non-auto top/bottom/set group을 두는 방식이다. B는 canonical tops/bottoms와 display metadata 분리, C는 전부 review/notComparable이다.
+- Current policy scope는 dresses 48 + underwear 142 + homewear 47 = 237 products; linked closet 0, comparison history 0이다.
+
+### Phase 1B blocker와 exact scope
+
+- Blocker: homewear owner 결정, BOTH_UNTRUSTED conflict 310, manual review 1,037, invalid mapping 369의 미확정 replacement 값.
+- Schema/RPC/mapping/history/release exact object와 rollback/acceptance는 Phase 1A.5 보고서 10–12절에 있다. Baseline 11–15절의 원칙을 유지했다.
+- Targeted product-decision plan은 114 rows(verified/corrected 113 + ZARA supersede-to-review 1)이며 JSONL에 전수 기록했다.
+- Mapping successor는 active 3,492를 clone한다. Active release in-place 수정, legacy decision bulk revoke, invalid confirmed bulk review, history delete는 금지다.
+- History expected append/supersede는 1,601–1,608; 기존 1,860을 보존하고 current는 항상 1,608이다. Closet linked migration 0, comparison history migration 0이다.
+- Swift `CanonicalComparisonProfile.appGarmentFamily`의 `base_layer_top -> underwear`와 adjudicated 31/64는 iOS Phase 2로 defer한다.
+
+## 2026-08-25 Classification Authority Phase 1A — Global Baseline Audit
+
+### 범위와 산출물
+
+- 기준 branch/HEAD는 `connectDB` / `c251b2a824b9a99e2f99b809f2cb23cb1721c9ab`로 exact match했다.
+- Supabase project `hnkplvyegonlhumlejst`를 SELECT-only로 감사했다. migration/seed/RPC/production DB write와 Swift production 변경은 0건이다.
+- 보고서: `Docs/FitMatchClassificationGlobalBaseline-20260825.md`
+- 1,608-product manifest: `Docs/FitMatchClassificationGlobalBaseline-20260825.jsonl`; 1,608 rows, unique source+external ID 1,608, required key 누락 0.
+- Phase 1B는 시작하지 않았다.
+
+### Production baseline
+
+- active release: `65d72393-4a40-4e99-b701-fdc1ff865774` / `fitmatch-active-with-zara-official-tree-2026-08-13-v1__zara-sample30-2026-08-21`.
+- active mappings expected/actual 3,492/3,492. release QA count는 0이고 `qa_full_validation_included=false`.
+- latest production migration ledger는 `20260821090138`. local numeric 114의 `data_quality_review_queue`/release gate는 production에 없다.
+- products 1,608, current history 1,608, decisions 5,056, snapshots 3,842, closet items 6(active 1, linked product 0), comparison history 0.
+- decision/history에 `garment_type_code`, decision에 `authority_status`가 없다.
+
+### 전수 결과
+
+- current status: confirmed 1,106, review_required 333, not_comparable 169.
+- confirmed 1,106 중 strict canonical tuple valid 154, invalid confirmed 952.
+- stale current history 1,472; source mapping/product decision conflict products 573.
+- active mapping: confirmed 1,392, review 608, rejected 1,452, unsupported 40.
+- category-only confirmed 위험 mapping 1,358; mapping/product-decision conflict rows 182.
+- mapping row target duplicate/mixed target은 0이지만 observed product decision tuple mixed bucket은 59개/285 products다. 실제 non-null family 2개 이상은 14 buckets/56 products.
+- decisions는 authority column이 없어 5,056건 모두 implicit legacy. active release 30, retired 5,026, independent evidence 237, strict auto-eligible 8, must-review 5,048.
+- comparison readiness: current runtime ready 622, strict policy ready 504; runtime가 118건 과대 허용.
+- 보수적 preview: confirmed 192, review_required 1,120, not_comparable 296.
+
+### Golden과 회귀
+
+- current Gold 3건은 모두 `underwear/underwear/underwear/unknown/confirmed`로 잘못됐다.
+- preview:
+  - E482514 → `tops/short_sleeve/tshirt/tshirt/short_sleeve/confirmed`, fingerprint `33119909d27567ab432c0b27c6f6aae8`.
+  - E454311 → `tops/base_layer_top/base_layer_top/base_layer_top/short_sleeve/confirmed`, fingerprint `670669aa2beb25167e781f721ed7d9ed`.
+  - E456567 → E454311과 동일, fingerprint `67852370ebdc165b23b66e497ac074fc`.
+- production DB validators v1/v2/v3 PASS, 5,026 parity 100%, profile cases 2,536/mismatch 0. 같은 QA corpus 계보의 self-consistency이므로 semantic correctness 증거로 해석하지 않는다.
+- local run: 5,026 PASS, live300 shadow PASS, adjudicated 207 FAIL(31 products/64 assertions), CurrentUniqlo 880 SKIP.
+- sync/DTO 14/14 PASS. 추가 category/Closet/Compare offline boundary run은 24 total, 13 PASS/11 live-only SKIP/0 FAIL.
+- 5,026 local/DB divergence는 92 products: category 1, detail 86, family 39, length 42, eligibility 0.
+
+### Phase 1B 전에 필요한 결론
+
+- dresses/underwear/homewear를 canonical garment/group row로 추가할지 review/not_comparable로 내릴지 owner taxonomy 결정이 필요하다.
+- 82144는 successor release에서 product-level resolution required로 바꿔야 하며 active release를 직접 수정하거나 gate를 우회하면 안 된다.
+- legacy 5,026 decisions를 일괄 revoke/차단하지 말고 authority_status=legacy로 보존한다.
+- Phase 1B exact DB object, backfill 순서, rollback, acceptance criteria는 baseline 보고서 11–15절에 고정했다.
+
+## 2026-08-24 Category Engine v2.3 ZIP — 신규 Shadow 데이터만 흡수
+
+### 쉽게 설명한 결론
+
+- **사용자 화면, 분류 규칙, 비교점수, 추천 순위는 바꾸지 않았다.** 이번 작업은 실제 판매 목록 표본 300개를 개발 검사용 문제지로 추가한 것이다.
+- 이 300개에는 사람이 확인한 정답이 0개다. 따라서 Gold 정답지가 아니라 Shadow 검사 자료이며, 운영 상품·분류 규칙·DB seed로 자동 승격할 수 없다.
+- 새 ZIP의 분류엔진, 비교엔진, `fm_*` DB schema, 자동 생성 `manual PASS`, “오분류 0건” 주장은 흡수하지 않았다.
+
+### 흡수한 데이터
+
+- `Docs/Research/FitMatchCategoryMappingV2-20260824-shadow/live300-v2_3/live_products_300.jsonl`
+  - Musinsa 100, Uniqlo 100, ZARA 100, 합계 300건.
+  - 기존 corpus와 비교하면 Musinsa 43건 중복/57건 신규, Uniqlo 100건 중복, ZARA 100건 중복이다.
+  - Uniqlo/ZARA sitemap 확인은 공식 목록 노출을 뜻할 뿐 현재 PDP category·재고 상태의 독립 증명은 아니다.
+- `official_source_evidence.json`은 ZIP이 기록한 수집 URL/status/checksum 출처 메타데이터다. 원격 응답 본문은 없으므로 provenance이지 독립 재현 증명은 아니다.
+- archive SHA256 `9bf813ae7d2dbd250fffe8ff8ea7fa634e994458540185b358cb826e5d7d4cfa`와 입력/evidence checksum을 기존 manifest에 고정했다.
+
+### 안전장치
+
+- manifest의 live sample 계약에 `independentLabelCount=0`, `productionImportAllowed=false`, `goldFixtureApprovalAllowed=false`를 고정했다.
+- `scripts/audit-category-mapping-shadow-corpus.mjs`가 300행/쇼핑몰별 100행, 중복, 상품명, HTTPS URL, URL↔상품 ID, Gold label 부재, 기존 corpus overlap/new count, checksum을 검사한다.
+- ZARA `ZARA_KR_*`는 계속 archive-local pseudo identity로만 허용한다. verified runtime `catentryId`로 취급하면 검사가 실패한다.
+- ZIP의 `build_live_manual_audit.mjs`는 모든 행에 `silent_misclassification_observed=false`를 자동 입력하므로 결과와 정확도 주장은 폐기했다.
+
+### 현재 FitMatch Shadow 실행 결과
+
+- 신규 `CategoryLive300ShadowAuditTests`가 현재 Musinsa/Uniqlo parser mapping과 `ParsedClosetClassification`을 사용해 source fact를 감사한다.
+- 300건 결과: provisional confirmed 243, `review_required` 29, `unclassified` 28, 사람 Gold 검토 후보 57건.
+  - Musinsa 94/6/0, Uniqlo 83/14/3, ZARA 66/9/25 순서로 confirmed/review/unclassified다.
+- explicit conflict silent confirmation 0, strict comparison conflict leak 0이다.
+- `current_fitmatch_gold_review_candidates.json`에 57건을 별도 저장했다. 이 목록도 정답이 아니라 사람이 정답을 붙일 후보 목록이다.
+- ZARA는 ZIP에 현재 PDP HTML과 verified `catentryId`가 없으므로 current runtime parser 검증 0건이다. archive source candidate로 fail-closed 안전성만 검사했고, ZARA 정확도라고 해석하지 않는다.
+
+### 테스트
+
+- `node scripts/audit-category-mapping-shadow-corpus.mjs` → base 5,723행 + live 300행 integrity/safety audit passed.
+- `xcodebuild build-for-testing -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchP3DerivedData` → `TEST BUILD SUCCEEDED`.
+- `xcodebuild test-without-building ... -resultBundlePath /tmp/FitMatch-Live300Shadow-20260824-v1.xcresult -only-testing:FitMatchTests/CategoryLive300ShadowAuditTests` → 1/1 passed.
+- `xcodebuild test-without-building ... -resultBundlePath /tmp/FitMatch-Live300-P1-ZARA-Regression-20260824-v1.xcresult -only-testing:FitMatchTests/FitMatchP0ProductionPathTests -only-testing:FitMatchTests/ZARAParserPhase1_5Tests` → 48/48 passed.
+- 최초 sandbox build는 CoreSimulator/SwiftPM cache 접근 권한으로 실패했고 동일 명령을 승인된 Xcode 권한으로 재실행해 성공했다. 코드 실패가 아니었다.
+
+### 남은 작업 — 사람이 해야 하는 것
+
+- 57개 후보에 실제 정답 category/detail을 사람이 붙여야 한다. 확인 전에는 Gold 테스트나 운영 규칙으로 승격하면 안 된다.
+- ZARA 후보는 공식 PDP를 현재 runtime parser로 다시 읽어 verified `catentryId`, family/subfamily, product name parity를 확인해야 한다.
+- Production DB write/migration/seed/commit/push는 0건이다.
+
+## 2026-08-24 외부 Category Mapping v2 유효 요소 4건 흡수
+
+### 결론 — 쉽게 설명
+
+- **사용자가 보는 화면·점수·추천 순위는 바뀌지 않았다.** 이번 변경은 잘못된 상품 데이터나 미검증 release가 사용자 추천으로 들어가기 전에 개발 단계에서 잡는 안전장치다.
+- 첨부 ZIP의 엔진·DB table·상태값은 현재 FitMatch보다 약하거나 중복돼 버렸다. 실제로 도움이 되는 상품 corpus, 출시 차단 기준, 검수 방식, parser 출처 기록만 현재 구조에 흡수했다.
+- Swift 변경은 build와 67개 회귀가 통과했다. DB 변경은 migration 파일만 작성했고 Production에는 적용하지 않았다.
+
+### 흡수 1 — 새 상품 shadow 검증 자료
+
+- `Docs/Research/FitMatchCategoryMappingV2-20260824-shadow`에 Musinsa 51건, Uniqlo 1,689건, ZARA 3,983건을 편입했다.
+- Musinsa 51건은 명시적 기대 garment label이 있어 신규 regression 후보로 쓸 수 있다.
+- Uniqlo와 ZARA는 독립적인 사람 정답이 0건이므로 자동 Gold 승격을 금지했다. ZARA의 `ZARA_KR_*` ID는 runtime `catentryId`가 아닌 pseudo ID이고 상품명 누락도 8건 있어 production identity import를 금지했다.
+- `node scripts/audit-category-mapping-shadow-corpus.mjs`가 5,723행의 checksum, row count, 중복 ID, label 등급, ZARA pseudo-ID 계약을 검사하며 통과했다.
+
+### 흡수 2 — 미검증 release 활성화 차단
+
+- `supabase/migrations/114_release_gate_and_quality_review_queue.sql`은 기존 `fitmatch_catalog.releases`를 확장한다. 새 release/master/status table은 만들지 않았다.
+- activation 전에 checksum, mapping count parity, QA fixture 수, 전체 회귀, 현재 동작 parity, product identity 검증, 독립 label 충분성, unsafe auto accept 0건, classification conflict leak 0건, measurement alias conflict 0건을 모두 확인한다.
+- 하나라도 빠지면 trigger와 `runtime_activate_validated_release`가 `active` 전환을 거부하고 blocker 목록을 남긴다. 현재 Production active release는 `expected_qa_count=0`, `qa_full_validation_included=false`라 새 gate 기준으로 재활성화할 수 없는 상태임을 read-only 감사에서 확인했다.
+- Production migration apply/write는 0건이다. 실행 검증용 `supabase/sql/114_release_gate_and_quality_review_queue_verification.sql`은 local/staging 전용이며 rollback한다.
+
+### 흡수 3 — 문제 상품 검수 큐
+
+- 새 `review_queue` table 대신 기존 `fitmatch_catalog.data_quality_issues`에 담당자, 우선순위, 검수 메모, 확인 시각을 추가했다.
+- `data_quality_review_queue` view는 open/acknowledged 이슈를 위험도와 우선순위 순으로 보여 준다. `runtime_triage_data_quality_issue`로 open/acknowledged/resolved/ignored를 관리하며 resolved/ignored는 이유 없이는 처리할 수 없다.
+- P3 fingerprint/occurrence_count 집계를 그대로 재사용하므로 동일 문제가 상품마다 무한히 새 행으로 쌓이지 않는다. app role은 release 활성화나 검수 mutation을 실행할 수 없고 service role만 사용한다.
+
+### 흡수 4 — parser 데이터 출처 기록
+
+- `ParsedProductInfo`에 optional `ProductParserProvenance`를 추가하고 Musinsa/Uniqlo/ZARA/COS parser route의 성공·partial 결과에 parser code를 기록한다.
+- source URL은 사용자 입력, 상품명/브랜드/source category는 retailer parser, category/detail은 iOS parser classification, measurement는 기존 `ParsedMeasurement.evidence`라는 구분을 observation payload에 보존한다.
+- 확인되지 않은 parser implementation version은 추측하지 않고 `not_declared`로 기록한다. parser service를 거치지 않은 과거/legacy record는 `legacy_unknown`으로 남겨 잘못된 출처 추정을 막는다.
+
+### 테스트 결과
+
+- `xcodebuild build-for-testing -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchP3DerivedData` → `TEST BUILD SUCCEEDED`.
+- 같은 prefix의 `test-without-building -resultBundlePath /tmp/FitMatchAbsorbFour-Resolver-Final-20260824.xcresult -only-testing:FitMatchTests/FitMatchSupabaseProductResolverTests` → 10/10 passed.
+- 같은 prefix의 `test-without-building -resultBundlePath /tmp/FitMatchAbsorbFour-P1P2Regression-Final-20260824.xcresult -only-testing:FitMatchTests/FitMatchP0ProductionPathTests -only-testing:FitMatchTests/ZARAParserPhase1_5Tests -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests -only-testing:FitMatchTests/MeasurementPolicyConsolidationTests -only-testing:FitMatchTests/FitMatchComparisonSyncCoordinatorTests` → 57/57 passed.
+- shadow corpus audit → 5,723/5,723 integrity/safety checks passed.
+
+### 아직 실제 서비스에서 안 켜진 것
+
+- migration 114는 Production에 적용하지 않았으므로 release gate와 검수 큐는 아직 운영 DB에서 작동하지 않는다.
+- 이 환경의 `psql/initdb`는 client-only 설치로 PostgreSQL server binary가 없어 migration 114와 rollback verification SQL을 실제 local DB에서 실행하지 못했다. staging/local Supabase에서 migration 113→114 적용, verification SQL, security/performance advisor 확인이 필요하다.
+- 첨부 corpus는 자동 분류 정답이나 production 상품으로 import하지 않았다. Musinsa 51건은 현재 FitMatch classifier와 대조해 사람이 불일치 이유를 확인한 뒤 regression으로 승격해야 하며, Uniqlo/ZARA는 독립 label 확보가 먼저다.
+- 사용자 착용 테스트나 UX 변경은 이번 네 가지 흡수 작업과 무관하다. production score와 화면 연결은 0건이다.
+
+## 2026-08-24 P3 Experimental Scoring & Data Quality Observability
+
+### 1. Executive Conclusion
+
+- Production `MeasurementComparisonEngine.compare()`와 추천 정렬에는 P3 변경이 없다. 사용자가 보는 점수·추천 1위·comparison eligibility는 그대로다.
+- test target에만 `ExperimentalMeasurementScoreV2`를 두어 production이 이미 선택·정규화한 comparable measurement와 weight를 재사용하고, 차이를 점수로 바꾸는 단계만 shadow 계산한다.
+- 실제 fixture에서는 Musinsa 4개 후보 중 중간 순위 2개가 바뀌고 1위는 유지됐다. Uniqlo 7개와 validated ZARA 5개는 순위가 모두 유지됐다. 사용자 정답 데이터가 없으므로 experimental verdict는 `NEEDS_USER_VALIDATION`이다.
+- 기존 `fitmatch_catalog.data_quality_issues`를 source+issue+raw signature로 집계하는 migration과 rollback verification SQL을 작성했다. Production DB에는 적용하지 않았다.
+
+### 2. Production Score Baseline
+
+- production item score는 계속 `round(clamp(100 - abs(candidate-reference) * 5, 0...100))`이고 기존 weight의 weighted average다.
+- 9개 measurement kind × `-3/-1/0/+1/+3cm`, 총 45개 대칭 case에서 parity configuration의 shadow score와 production score가 정확히 일치했다.
+- 기존 same/cross-source 비교 parity 16/16도 통과했다. production score 파일은 P3에서 수정하지 않았다.
+
+### 3. Experimental Algorithm
+
+- production result의 `comparedItems`만 입력으로 받는다. record 선택, canonical code, same/cross-source compatibility, width/circumference와 unit normalization, exclusion, required gating, coverage, weight는 다시 구현하지 않는다.
+- 각 item은 `effectiveDelta=max(0, abs(delta)-tolerance)`와 방향별 multiplier, 명시적으로 검증된 stretch multiplier만 적용한다. production 호출 경로와 연결되지 않는다.
+
+### 4. Experimental Parameters
+
+- version은 `EXPERIMENTAL-fixture-hypothesis-2026-08-24-v1`이다. production policy가 아니다.
+- 기본 tolerance 0.5cm/방향 multiplier 1.0, chest·waist `1.2/0.8`, hip `1.15/0.85`, thigh `1.1/0.9`, length·sleeve `1.0/1.0`을 오직 deterministic shadow fixture 가설로 사용했다.
+- 별도 production-parity config는 tolerance 0, 양 방향 1.0이다.
+
+### 5. Synthetic Test Results
+
+- 45개 measurement 방향/차이 case가 production parity를 통과했다.
+- tolerance 1cm에서 +1cm는 100점, -3cm×1.5는 85점, +3cm×0.5는 95점으로 경계와 방향이 분리됨을 확인했다.
+- 일반 상의, 셔츠, 니트, 아우터, 팬츠, 데님, 레깅스, 스커트, 원피스 9종은 production eligibility/weight를 그대로 재사용해 모두 confirmed/recommendable이었다.
+
+### 6. Real Fixture Results
+
+- Musinsa: `L 84→87`, `M 84→85`, `S 79→80`, `XL 83→86`.
+- Uniqlo E475941: `3XL 51→58`, `4XL 40→48`, `L 89→92`, `M 100→100`, `S 89→90`, `XL 74→79`, `XXL 62→68`.
+- validated ZARA pants `08372248/582770476`: `L 91→94`, `M 100→100`, `S 91→92`, `XL 81→86`, `XS 81→81`.
+
+### 7. Candidate Ranking Changes
+
+- 전체 16개 candidate 중 동일 rank 14, 변경 2, top recommendation 변경 0이다.
+- Musinsa는 `XL 3→2`, `M 2→3`; Uniqlo와 ZARA는 전부 동일하다. 전체 평균 score delta는 `+2.94`다.
+- pants fixture 기준 9개 중 2개 rank 변경, shirt fixture 7개 중 변경 0이다. rank 변화 자체를 개선으로 판정하지 않는다.
+
+### 8. Coverage / Eligibility Findings
+
+- 기존 `MeasurementComparisonResult.score`, `comparisonCoverage`, `status`를 그대로 사용한다. 새 production DTO/필드를 만들지 않았다.
+- similarity 100, coverage 0.25여도 production status가 `insufficientEvidence`면 experimental `recommendable=false`임을 회귀로 고정했다.
+
+### 9. Undersize vs Oversize Findings
+
+- measurement별 undersize/oversize multiplier를 독립 실험할 수 있다. 낮은 쪽이 항상 나쁘다고 production 전제하지 않았다.
+- 방향별 행동 차이는 확인했지만 사용자 fit 정답이 없어 어느 쪽이 더 적절한지는 검증되지 않았다.
+
+### 10. Stretch Findings
+
+- 현재 parser/product metadata에 scoring에 쓸 수 있는 검증된 stretch flag/composition contract가 없다. `KNIT == VERIFIED_STRETCH`로 추측하지 않는다.
+- shadow scorer도 호출자가 명시적 evidence와 multiplier를 전달할 때만 반영한다. synthetic test에서만 `85→93`을 확인했고 실제 fixture에는 stretch를 쓰지 않았다.
+
+### 11. Experimental Verdict
+
+- `NEEDS_USER_VALIDATION`. 행동 차이는 있으나 사용자 선호/착용 ground truth가 없어 `PROMISING`, `BETTER`, `MORE_ACCURATE`라고 결론 내리지 않는다.
+
+### 12. Data Quality Existing Architecture
+
+- 신규 `unmapped_observation` table을 만들지 않고 migration 105의 private/RLS-enabled `fitmatch_catalog.data_quality_issues`를 확장한다.
+- 기존 `occurrence_count`, `first_seen_at`, `last_seen_at`, `evidence`, `resolution`, `status`를 유지한다.
+
+### 13. Unknown Category Observation
+
+- source category path/code signature가 active source mapping에 없으면 `UNKNOWN_SOURCE_CATEGORY`를 기록하고, 같은 mapping이 생긴 뒤 재관측되면 resolved로 전환하는 경로를 migration에 추가했다.
+- unknown category를 억지 canonical category로 승격하지 않는다.
+
+### 14. Unknown Measurement Observation
+
+- 최신 `runtime_normalize_measurement_v2`를 raw code, raw label, unit, classification category scope와 함께 사용한다.
+- `measurement_alias_not_found`만 `UNKNOWN_MEASUREMENT_ALIAS`로 기록한다. unsupported unit/comparison basis/measurement kind는 `UNSUPPORTED_MEASUREMENT_BASIS`로 분리하고, intentional non-comparable alias와 섞지 않는다.
+- Swift observation payload가 unknown raw code/label/value/representation/evidence를 손실 없이 보존하는 test가 통과했다.
+
+### 15. Classification Conflict Observation
+
+- P1 `ParsedClosetClassification.auditExplicitContradictions` 결과를 observation `raw_payload`에 dimension, trusted→explicit evidence, safety policy version으로 보존한다.
+- backend processing migration은 이를 `CLASSIFICATION_CONFLICT` high-severity issue로 집계하고 최신 observation/product/classification history ID를 evidence에 남긴다.
+- `CATEGORY_NAME_CONTRADICTION`은 같은 사실을 중복 row로 만들지 않고 `CLASSIFICATION_CONFLICT` evidence로 표현한다.
+
+### 16. Aggregation / Fingerprint Behavior
+
+- fingerprint는 normalized `source + issue_code + raw_signature`의 MD5다. unique partial index와 upsert로 상품별 무한 row 생성을 막는다.
+- 재관측 시 같은 ID의 `occurrence_count`를 올리고 `last_seen_at`/latest evidence를 갱신한다. resolved issue 재관측은 이전 resolution을 evidence에 보존하고 active resolution을 비운 뒤 open으로 재개방한다.
+- rollback verification SQL에 1→2회 집계, resolve, 3회째 reopen 및 anon/authenticated execute 차단 검증을 포함했다.
+
+### 17. Semantic Feature Decision
+
+- FIT/MATERIAL/LEG_SHAPE/STRETCH/NECKLINE의 현재 typed consumer가 확인되지 않았고 stretch source도 검증되지 않았다. `product_classification_features` 같은 신규 schema를 만들지 않았다.
+- category/detail/comparison family/length/body length 핵심 계약은 그대로 typed 구조다.
+
+### 18. Evidence Storage Decision
+
+- 현재 `product_classification_history.evidence`와 `data_quality_issues.evidence` JSONB로 rule/conflict/source 분석 근거를 보존할 수 있다. 검증된 별도 analytics query 요구가 없어 normalized evidence table을 만들지 않았다.
+
+### 19. DB/Migration Files Created
+
+- `supabase/migrations/113_p3_data_quality_observability.sql`: 기존 issue ledger에 source/signature/fingerprint, service-role helper, observation issue 연결을 추가한다.
+- `supabase/sql/113_p3_data_quality_observability_verification.sql`: staging/local 전용이며 항상 rollback한다.
+- Supabase 공식 함수 보안 원칙에 맞춰 app role execute를 revoke하고 helper는 empty search path/security invoker로 작성했다. Production apply/write는 0건이다.
+
+### 20. Changed Files
+
+- `FitMatch/Services/FitMatchSupabaseProductResolver.swift`
+- `FitMatchTests/ExperimentalMeasurementScoreV2Tests.swift`
+- `supabase/migrations/113_p3_data_quality_observability.sql`
+- `supabase/sql/113_p3_data_quality_observability_verification.sql`
+- `Docs/CodexSessionHandoff.md`
+
+### 21. Exact Test Commands and Results
+
+- build: `xcodebuild build-for-testing -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchP3DerivedData` → `TEST BUILD SUCCEEDED`.
+- P3: 같은 prefix의 `test-without-building -resultBundlePath /tmp/FitMatchP3Shadow-20260824-v3.xcresult -only-testing:FitMatchTests/ExperimentalMeasurementScoreV2Tests` → 9/9 passed. 실제 fixture log에 candidate별 reference/product 값, signed/absolute delta, tolerance/effective delta, 방향/multiplier, old/new item score, weight, coverage, eligibility, old/new rank를 저장했다.
+- P1/P2/ZARA/sync: `-resultBundlePath /tmp/FitMatchP3-P1P2Regression-20260824.xcresult -only-testing:FitMatchTests/FitMatchP0ProductionPathTests -only-testing:FitMatchTests/ZARAParserPhase1_5Tests -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests -only-testing:FitMatchTests/MeasurementPolicyConsolidationTests -only-testing:FitMatchTests/FitMatchComparisonSyncCoordinatorTests` → 57/57 passed.
+- comparison parity: `/tmp/FitMatchP3-ComparisonParity-20260824.xcresult`에 P2 handoff의 16개 exact identifier를 `-only-testing`으로 실행 → 16/16 passed.
+- 5,026 corpus: `-resultBundlePath /tmp/FitMatchP3-Classification5026-20260824.xcresult -only-testing:'FitMatchTests/CategoryValidation5026AuditTests/testCurrentProductionClassifierReclassifiesAll5026Products()'` → 1/1 passed, `invalid_classification_count=0`, `user_confirmation_required_count=329`.
+- `git diff --check` → clean. SQL은 delimiter/static contract check만 통과했고 DB 실행은 하지 않았다.
+
+### 22. P1/P2 Regression Results
+
+- P1 fail-closed 분류, ZARA parser, closet/sync 경로 57건과 5,026 corpus가 모두 통과했다.
+- P2 source identity/policy 5건은 57건 묶음에 포함됐고, same/cross-source/width-circumference/required gating 16건도 전부 통과했다.
+- production score와 top recommendation을 바꾸는 P3 연결은 0건이다.
+
+### 23. NOT_VERIFIED Items
+
+- 사용자 착용 선호 ground truth가 없어 experimental accuracy는 검증하지 않았다.
+- 실제 source의 verified stretch/material contract가 없어 stretch 실데이터 평가는 하지 않았다.
+- COS/H&M 또는 미검증 ZARA measurement 의미를 추측하지 않았다.
+- `UNMAPPED_PRODUCT`, `UNKNOWN_ATTRIBUTE_VALUE`는 현재 확인된 별도 consumer/signature가 없어 신규 중복 issue를 만들지 않았다. 실제 운영 요구가 확인되면 기존 ledger code로 추가한다.
+
+### 24. Remaining Blockers
+
+- Supabase CLI와 local PostgreSQL server가 없어 migration 113 및 rollback verification SQL을 실제 DB에서 실행하지 못했다. Production apply는 요청상 금지다.
+- staging/local migration apply, verification SQL 실행, advisor 재확인 전에는 DB 관측 경로를 production-ready로 판정할 수 없다.
+- shadow score의 채택 여부는 실제 사용자 pairwise 선호/착용 결과로 검증해야 한다.
+
+### 25. P3 Verdict
+
+- `INCOMPLETE`: Swift shadow infrastructure와 회귀는 완료됐지만 DB migration의 실행 검증이 남아 있다. Production score/rank는 안전하게 그대로이며, migration을 적용하거나 실험 점수를 노출하지 않았다.
+
+### 사용자용 남은 작업 체크리스트 — 쉽게 설명
+
+#### 아직 실제 서비스에 구현되지 않은 기능
+
+- [ ] **새 실험 점수로 추천하기**
+  - 현재 상태: 새 계산법은 테스트 안에서만 결과를 비교할 수 있다. 사용자가 보는 점수와 추천에는 연결하지 않았다.
+  - 왜 안 켰나: Musinsa에서 중간 사이즈 순위가 바뀌었지만 어느 결과가 실제로 더 잘 맞는지 착용 정답이 없다.
+  - 완료 기준: 사용자가 여러 후보를 직접 입어 보고 선호 결과를 제공한 뒤, 기존 점수보다 안전하다는 근거와 별도 승인까지 있어야 한다.
+
+- [ ] **운영 DB에서 미등록 category·measurement·분류 충돌 자동 집계**
+  - 현재 상태: 구현 migration은 작성됐지만 Production DB에 적용하지 않았으므로 실제 운영에서는 아직 작동하지 않는다.
+  - 구현 예정 동작: 같은 미등록 문제가 상품마다 새 행으로 쌓이지 않고 한 건의 발생 횟수로 누적된다.
+  - 완료 기준: staging/local DB에서 migration과 rollback verification이 통과하고, 승인 후 별도 배포 절차로 Production에 적용해야 한다.
+
+- [ ] **stretch를 반영한 실제 추천 점수**
+  - 현재 상태: 테스트용 구조만 있고 실제 상품에는 사용하지 않는다.
+  - 왜 안 켰나: 현재 상품 데이터에 검증된 stretch 값이 없다. 상품명이 ‘니트’라는 이유만으로 잘 늘어난다고 추측하면 잘못된 추천이 될 수 있다.
+  - 완료 기준: 판매처 공식 stretch/material 속성과 그 의미가 검증돼야 한다.
+
+- [ ] **서버가 스스로 category와 상품명 충돌을 재검사하는 기능**
+  - 현재 상태: 최신 iOS 앱이 발견한 충돌 근거를 DB로 전달하는 경로는 구현했다. 하지만 구버전 앱이나 별도 backend batch가 충돌 표시를 보내지 않으면 서버가 독립적으로 다시 찾아내지는 않는다.
+  - 완료 기준: 기존 DB classifier 계약 안에서 동일한 P1 conflict 판정을 재현하고 iOS 결과와 parity test를 통과해야 한다.
+
+- [ ] **DB measurement policy를 앱 비교의 완전한 source of truth로 사용**
+  - 현재 상태: 앱은 검증된 embedded fallback을 사용하므로 offline 비교는 안전하다. DB policy와 Swift policy가 일부 다르고 richer DB metadata가 local record까지 완전히 hydration되지 않는다.
+  - 완료 기준: DB↔embedded policy의 필드별 parity, version 동기화, hydration 손실 없음이 확인돼야 한다.
+
+#### 개발환경에서 직접 실행해야 하는 테스트
+
+- [ ] **migration 113 실제 DB 실행 테스트 — 개발자/AI 작업**
+  - 할 일: local 또는 staging DB에 migration 113을 적용한 뒤 `supabase/sql/113_p3_data_quality_observability_verification.sql`을 실행한다.
+  - 확인할 것: 동일 issue 집계, occurrence 1→2→3 증가, resolve 후 재발 시 reopen, unknown category/measurement/conflict 3종 생성, app role 접근 차단.
+  - 현재 blocker: 이 환경에는 Supabase CLI와 실행 중인 local PostgreSQL server가 없다.
+
+- [ ] **Supabase advisor 재확인 — 개발자/AI 작업**
+  - 할 일: staging 적용 뒤 security/performance advisor를 확인한다.
+  - 확인할 것: RLS/권한 노출, 잘못된 index, function execute 권한 문제가 새로 생기지 않았는지 확인한다.
+
+- [ ] **전체 FitMatch test suite 실행 — 개발자/AI 작업**
+  - 현재 완료: P3 9건, P1/P2/ZARA/sync 57건, 비교 parity 16건, 5,026개 분류 corpus 1건은 통과했다.
+  - 아직 필요한 것: repository 전체 unit suite를 최종 코드로 완주하고 기존에 알려진 unrelated failure와 신규 failure를 구분한다.
+
+- [ ] **실제 관측 E2E — 실제 iPhone·로그인 필요**
+  - 할 일: 승인된 staging 환경에서 로그인한 실제 앱으로 unknown category 상품, unknown measurement 상품, category/name 충돌 상품을 각각 한 번 분석한다.
+  - 확인할 것: 앱은 계속 fail-closed이고, backend issue만 누적되며, 사용자 추천이 잘못 열리지 않는지 확인한다.
+
+#### 사용자가 직접 확인해야 하는 테스트
+
+- [ ] **사이즈 추천 착용 비교**
+  - 가장 필요한 데이터: 같은 기준 옷에 대해 한 단계 작은 후보, 비슷한 후보, 한 단계 큰 후보를 직접 입어 본 결과.
+  - 알려줄 내용: 어떤 사이즈가 가장 적절했는지, 작은 쪽과 큰 쪽 중 어느 불편이 더 컸는지, 가슴·허리·총장 중 무엇이 결정적이었는지.
+  - 이 결과가 있어야 undersize/oversize penalty와 tolerance가 실제로 도움이 되는지 판단할 수 있다.
+
+- [ ] **실제 iPhone 상품 분석 확인**
+  - 확인할 화면: Musinsa·Uniqlo·검증된 ZARA 상품 분석과 비교 화면.
+  - 확인할 내용: 기존 추천 점수와 1위가 바뀌지 않았는지, 분류 충돌 상품은 확인 요청으로 멈추는지, offline에서도 기존 비교가 되는지.
+
+#### 지금 당장 사용자에게 바뀌는 것
+
+- 현재 앱 화면과 추천 결과에는 의도적인 변화가 없다.
+- 잘못 검증된 새 점수를 사용자에게 보여 주지 않도록 막아 둔 상태다.
+- 이번에 완성된 것은 **안전하게 실험하고 문제를 추적하기 위한 개발 기반**이며, DB migration과 새 점수의 production 활성화는 아직 남은 작업이다.
+
+## 2026-08-24 P2 측정 출처·비교 정책 안전 통합
+
+- 실제 로컬 경로는 parser의 `ParsedMeasurement` → `GarmentMeasurementRecord`/SwiftData → `MeasurementComparisonEngine`이며, DB runtime DTO의 richer measurement metadata는 아직 이 로컬 비교 record로 hydration되지 않는다. 앱의 production score와 추천 순위 source of truth는 계속 로컬 엔진이다.
+- `MeasurementComparisonEngine`과 직접 비교 가능성 판정에 있던 `uniqlo`/`musinsa`/`fitmatch`/`manual` 문자열 분기를 제거했다. 먼저 `Product.sourcePlatformCode`, `UserFit.sourcePlatformCode`의 canonical source를 사용하고, 없는 과거 로컬 record만 `methodSource` 첫 machine token으로 해석한다. `html`, `actual-size`, `unknown` 같은 generic channel은 source로 인정하지 않으며 `manual_*`만 기존 동작을 위해 `fitmatch` legacy fallback으로 유지한다.
+- canonical source가 있는 검증된 신규 merchant는 공통 엔진에 이름을 추가하지 않아도 동일 source/profile/raw field 비교가 가능하다. canonical source도 없고 generic `methodSource`뿐인 record는 raw field 직접 비교를 열지 않아 fail-closed다. 기존 `methodSource`, `methodProfile`, `rawCode`, `rawLabel`, `rawValueText`는 삭제하거나 변경하지 않았다.
+- 기존 Swift policy 수치를 `MeasurementComparisonPolicySnapshot.embeddedProductionV1`으로 분리하고 버전 `fitmatch-production-measurement-policy-2026-08-24-v1`, source `embedded_fallback`을 엔진에서 조회할 수 있게 했다. 비교 때 Supabase를 조회하지 않으며 DB/offline 장애가 비교 기능을 막지 않는다. 점수식 `100 - abs(delta) * 5`, clamp/round, weight 합산과 순위 로직은 변경하지 않았다.
+- DB↔Swift policy 감사 결과는 다음과 같다.
+
+| 항목 | 판정 | 근거/처리 |
+|---|---|---|
+| measurement weight | `SWIFT_MORE_SPECIFIC` | Swift production 값은 category/detail별 수치가 완전하나 현재 local DB bundle의 garment policy와 완전 parity가 아니다. 값은 변경 없이 versioned embedded fallback으로 이동했다. |
+| required measurement | `CONFLICT` | bundle은 예: tshirt/shirt에 chest+total length를 요구하지만 Swift는 shoulder/chest 중 1개와 총 2개를 요구한다. production 결과 보존을 위해 DB 값을 활성화하지 않았다. |
+| required-any/minimum-required-any | `SWIFT_MORE_SPECIFIC` | 상의·하의의 any-gating이 Swift에 더 구체적이다. 그대로 유지했다. |
+| minimum common measurement | `SAME`/category별 `CONFLICT` | 공통적으로 2개인 범위가 많지만 outer/dress 등 필수 축 의미는 다르다. 숫자만 같다고 parity로 간주하지 않았다. |
+| short/sleeveless detail override | `SWIFT_MORE_SPECIFIC` | 소매 weight 0/0.2 override가 Swift에 있다. 유지했다. |
+| source alias/raw representation/comparison basis | `DB_MORE_SPECIFIC` | DB DTO는 richer metadata를 제공하지만 local hydration이 아직 없어 Swift가 raw label legacy 판정을 사용한다. 이번 변경에서 추측 매핑하지 않았다. |
+| policy version/source trace | `MISSING_IN_SWIFT` → 보완 | embedded fallback의 version/source를 명시했다. validated DB snapshot 연결은 parity 완료 전까지 비활성이다. |
+
+- 새 회귀 `MeasurementPolicyConsolidationTests` 5/5는 canonical source 우선, merchant-agnostic legacy fallback, generic unknown fail-closed, 신규 merchant raw direct comparison, embedded policy 값/버전을 검증한다. 기존 measurement/무신사/유니클로 회귀 16/16, P0+ZARA+closet hydration 50/50, build-for-testing이 모두 통과했다. 최종 코드 기준 xcresult는 `/tmp/FitMatchP2BaselineDerivedData/Logs/Test/Test-FitMatch-2026.08.24_12-08-58-+0900.xcresult`(새 회귀 5건), `/tmp/FitMatchP2BaselineDerivedData/Logs/Test/Test-FitMatch-2026.08.24_12-10-02-+0900.xcresult`(기존 측정 회귀 16건), `/tmp/FitMatchP2BaselineDerivedData/Logs/Test/Test-FitMatch-2026.08.24_12-04-06-+0900.xcresult`(P0+ZARA+closet 50건)다.
+- 정확한 공통 명령 prefix는 `xcodebuild test-without-building -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/FitMatchP2BaselineDerivedData`다. 여기에 새 회귀는 `-only-testing:FitMatchTests/MeasurementPolicyConsolidationTests`, 50건 회귀는 `-only-testing:FitMatchTests/FitMatchP0ProductionPathTests -only-testing:FitMatchTests/ZARAParserPhase1_5Tests -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests`를 사용했다. 16건 회귀 identifier는 `samePlatformAndFormatUsesMatchingSourceFieldsDirectly()`, `comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat()`, `differentPlatformFormatsRequireCanonicalMeasurementCodes()`, `measurementComparisonUsesOnlyIdenticalVerifiedCodes()`, `measurementComparisonExcludesDifferentSleeveDefinitions()`, `bottomComparisonRequiresTwoCoreWidthMeasurements()`, `bottomWidthAndLengthAloneDoNotConfirmRecommendation()`, `outerComparisonRequiresChestAndOneAdditionalMeasurement()`, `outerShoulderAndSleeveWithoutChestAreInsufficient()`, `musinsaAndUniqloCompareCommonUpperMeasurementsButExcludeSleeve()`, `crossPlatformBottomWidthsCompareWhileOutseamAndInseamStaySeparate()`, `uniqloBottomCircumferencesBecomeWidthsAndPreserveRawValues()`, `musinsaActualSizePreservesRawFieldsAndRaglanMeaning()`, `uniqloOfficialTopComparisonKeepsSleeveAndHasNoManualPenalty()`, `musinsaBottomWidthsAndExplicitLengthsUseCommonCodes()`, `migrationVersionSevenHalvesUniqloCircumferencesExactlyOnce()`이며 각각 `-only-testing:FitMatchTests/FitMatchTests/<identifier>`로 지정했다. 첫 변경 전 명령은 identifier에 `()`를 빠뜨려 0건 실행됐으므로 baseline 통과 근거에 포함하지 않았다.
+- 운영 Supabase write, migration apply/create, seed, UPDATE, DELETE, backfill, commit, push는 수행하지 않았다. DB policy와 embedded policy가 현재 내용상 충돌하므로 validated snapshot을 production provider로 연결하지 않았다.
+- 남은 P2 blocker는 (1) production DB policy export와 embedded fallback의 필드별 parity 확정, (2) DB runtime measurement의 `comparison_basis`/policy version을 local record로 손실 없이 hydration하는 backward-compatible 계약, (3) raw representation을 SwiftData schema 변경 없이 보존할 방법 또는 명시적 schema migration, (4) `GarmentLengthInferencePolicy`의 merchant별 길이 threshold를 검증된 policy data로 옮기는 작업이다. 외부 측정 의미를 추측하지 않고 `NOT_VERIFIED_EXTERNAL`로 유지한다. 따라서 전체 P2 verdict는 현재 `INCOMPLETE`이며, 이번 적용분 자체는 production score/rank를 바꾸지 않는 안전한 기반 보완이다.
+
+## 2026-08-24 P1 명시적 분류 충돌 fail-closed 보완
+
+- `ParsedClosetClassification`의 기존 상품명·source 해석기를 재사용해 공식 source category/detail과 상품명이 명시적으로 반대되는 category, garment family, length를 별도 safety audit로 기록한다. 새 generic engine이나 taxonomy table은 만들지 않았고, 기존 분류 결과 및 점수식은 변경하지 않았다.
+- 긴소매 source/반팔 상품명, 반소매 source/긴팔 니트 가디건, 상의/스커트, 속옷/그래픽 티셔츠는 자동 확정 대신 `classification_conflict`와 `canonicalEligibility=false`로 표시된다. 비교 화면은 기존 카테고리 확인 UI로 보내며, 사용자가 직접 확인한 뒤 제품을 다시 만들 때만 비교가 가능하다.
+- standard-size fallback을 포함한 모든 `RecommendationService` 진입점에서 product/reference의 canonical eligibility를 확인한다. 따라서 분류 충돌 상품이나 기준 옷은 실측 비교뿐 아니라 기준표 우회 경로로도 추천·strict comparison에 진입하지 않는다. canonical profile hydration도 이미 기록된 conflict 상태를 덮어쓰지 않는다.
+- 조거 팬츠/파라슈트 카고 팬츠, ZARA Sleeveless Tops/Fine Knit Top, 복합 셔츠재킷, UNIQLO Innerwear의 검증된 cotton T 예외, 민소매 T source의 bra-construction 예외는 오탐으로 차단하지 않는 regression fixture로 고정했다.
+- 검증 결과: `build-for-testing` 성공. `FitMatchP0ProductionPathTests` 28/28, `ZARAParserPhase1_5Tests` 20/20, `CategoryValidation5026AuditTests.testCurrentProductionClassifierReclassifiesAll5026Products` 1/1 통과했다. 결과 번들은 `/tmp/FitMatchP1P0Tests-20260824-v2.xcresult`, `/tmp/FitMatchP1ZARATests-20260824.xcresult`, `/tmp/FitMatchP1Corpus5026-20260824.xcresult`다.
+- Production Supabase write/migration/seed/backfill/commit/push는 수행하지 않았다. 현재 conflict는 앱 로컬 eligibility/debug trace까지 연결되며 `data_quality_issues` 영속 집계에는 아직 쓰지 않는다. 운영 DB runtime resolver 자체의 conflict 판정 동등화와 read-only production 재검증은 별도 승인·연결 환경이 필요하다.
+
+## 2026-08-21 ZARA 식별자 정정·사용자 가시 WKWebView PoC (현재 권위 상태)
+
+- 아래의 `ZARA KR 공식 실측·카테고리 연동 초안`에서 `analytics.productId`를 size API ID로 본 결론은 폐기됐다. 실제 endpoint는 URL `v1`과 일치하는 `analytics.catentryId`를 사용한다. style, v1/catentry, 내부 productId, productRef는 서로 별도로 보존한다.
+- DEBUG 전용 `ZARAWebViewMetadataAudit`를 추가했다. 일반 browser 동작의 ephemeral WKWebView를 사용자에게 보이게 렌더링하고, 사용자가 `비필수 쿠키 거부 후 읽기`를 명시적으로 선택한 뒤 analytics/JSON-LD를 읽는다. CAPTCHA/challenge 우회, custom fingerprint, private cookie는 사용하지 않는다.
+- iPhone 17 Pro Simulator(iOS 26.3)에서 티셔츠 `04087432/585646273`, 셔츠 `04166166/545490346`, 팬츠 `06861017/555813567` 3개가 identity 검증과 `catentryId` size API `garment_measure` 응답에 성공했다. 최초 쿠키 선택 전 자동 capture는 `identity_unresolved`였고, 선택 후 성공했다.
+- `ZARAParser`는 이제 size API에 catentry만 전달한다. targeted ZARA 15/15, URL dispatch·기존 ZARA·provider 선택 회귀 5/5가 통과했다. 전체 unit suite와 실제 iPhone은 미실행이다.
+- 일반 사용자 ZARA 지원은 `ZARAIntegrationAvailability` gate로 닫혀 있다. 공개 공식 metadata API/제휴 권한, 실제 iPhone 안정성, measurement basis, staging DB mapping이 검증되기 전에는 production 지원으로 표시하지 않는다. 운영 Supabase migration/seed/write는 수행하지 않았다.
+- 현재 증거 manifest는 `ZARAAudit/zara_webview_poc_samples.jsonl`, 상세 정정은 `FitMatch-ZARA-Phase1.5-Blocker-Resolution-20260821.md`에 있다. 과거 internal productId cache/body-only 결과는 잘못된 API ID의 역사적 증거로만 남긴다.
+
+## 2026-08-21 ZARA KR 공식 실측·카테고리 연동 초안
+
+> 후속 상태: 위 `ZARA 식별자 정정·사용자 가시 WKWebView PoC`로 식별자와 API coverage 결론이 대체됐다.
+
+- 공식 실측 endpoint `itxrest/4/catalog/store/11717/product/{productId}/size-measure-guide?locale=ko_KR`를 확인했다. 명시적 iPhone User-Agent, JSON Accept, 한국어 Accept-Language로 실제 `498702922` 응답은 200 JSON이었고, 헤더 없는 기본 요청은 403이었다. `measureGuideInfo`만 의류 실측으로 쓰고 `sizeGuideInfo` 단독 응답은 신체 권장치이므로 절대 비교 데이터로 대체하지 않는다.
+- `ZARAParser`는 명확한 chest/front-back length/sleeve/shoulder/하의 실측 코드만 매핑한다. `back-width`와 `arm-width` 같은 불명확 정의는 unknown record로 보존하며 다른 치수로 추정하지 않는다. measure guide가 없거나 body-size guide만 있으면 partial/자동 비교 불가로 fail-closed다.
+- 공식 상품 UI에는 `zara.analyticsData.productId`가 있지만, 앱과 같은 URLSession으로 상품 HTML을 직접 받으면 Akamai interstitial이 관찰됐다. 따라서 현재 URL parser는 challenge를 감지해 중단한다. URL에서 내부 productId를 안정적으로 resolver하는 공식 계약 또는 실기기 검증 전에는 ZARA URL 붙여넣기 성공을 보장할 수 없다.
+- 공식 KR GNB와 product metadata `MAN/WOMAN + family`를 기준으로 남성 11개·여성 15개 의미 기반 의류 category seed를 `fitmatch_supabase_seed_zara_categories.sql`에 만들었다. 혼합 landing category는 자동 매핑하지 않는다. `supabase/migrations/20260820223726_add_zara_observation_source.sql`은 observation source allowlist에 zara를 추가한다.
+- 운영 Supabase에는 migration/seed를 아직 적용하지 않았고, ZARA parser XCTest는 빌드가 진행 중인 derived data lock 때문에 완료 판정을 내리지 못했다. 상세 근거와 적용 순서는 `Docs/ZARAIntegrationAnalysis-20260821.md`에 있다.
+
+## 2026-08-21 COS KR 공식 실측·카테고리 연동 초안
+
+- COS KR 실제 상품 페이지 `1349394002`에서 article 번호와 색상 상품 코드가 다름을 확인했다. 페이지의 `slitmCd=40B1490048`와 `sectId=254652`로 공식 `getSizeGuide` 엔드포인트를 요청해야 하며, article 번호는 `styleNo`로만 보존한다.
+- 해당 상품의 공식 사이즈 가이드는 S–XXL 의류 실측이다. M 기준 어깨 43.0cm, 가슴단면 53.5cm, 등기장 64.0cm, 소매 25.25cm를 실제 COS UI에서 확인했다. `COSParser`는 공식 페이지에서 두 API 식별자를 추출하고, 공식 차트의 어깨·가슴단면·등기장·소매 등 정의가 명확한 값만 FitMatch comparison measurement로 매핑한다. 실패 시 추정하지 않고 partial/자동 비교 불가로 반환한다.
+- 서버 직접 요청은 COS Akamai 403이었으나 브라우저의 공식 상품 페이지/사이즈 가이드는 정상 확인됐다. 따라서 API 응답의 실제 JSON 원문 계약을 별도 실기기에서 재검증해야 한다. 현재 decoder는 HTML 표와 header/row 형식 JSON을 보수적으로 처리하며, 맞지 않으면 fail-closed다.
+- 공식 GNB는 여성·남성 합계 99개 노드였다. 캠페인/에디트/신상품/모두보기처럼 여러 구조를 혼합한 landing node를 제외하고 FitMatch 의류 분류에 쓸 60개 노드를 `fitmatch_supabase_seed_cos_categories.sql`로 생성했다. COS `sectId`를 external ID로 보존하고, leaf의 FitMatch 대·세부 카테고리를 모두 채운다. `public.sources(code='cos')` 선행이 필요하며 운영 DB에는 아직 실행하지 않았다.
+- COS 접근 URL, 식별자, 매핑 원칙과 실행 순서는 `Docs/COSIntegrationAnalysis-20260821.md`에 있다. `COSParser` size guide fixture 테스트 2건을 추가했다. 코드 컴파일은 진행됐으나 Simulator 서비스/SwiftPM cache 권한 오류로 테스트 실행 완료 판정을 내리지 못했다.
+
+## 2026-08-20 connectDB 회원 탈퇴 및 로그인 제공자 확장 경계
+
+- My 화면에 복구 불가능한 삭제 범위를 알리는 2차 확인형 `회원 탈퇴`를 추가했다. 성공 시 Supabase 계정과 사용자 소유 서버 row를 삭제하고, 로컬 `UserFit`·`RecommendationHistory`·동기화 owner/pending-delete 캐시를 제거한 뒤 로그인 화면으로 돌아간다. 공용 쇼핑몰 상품 카탈로그는 삭제하지 않는다.
+- 앱은 `FitMatchAccountDeletionServicing` 경계를 통해 인증된 `delete-account` Edge Function만 호출한다. 앱에는 publishable key만 유지하며 service-role key는 서버 함수 안에서만 사용한다. 함수는 confirmation token, gateway JWT, `auth.getUser()`를 모두 확인한 뒤 hard delete한다.
+- 운영 Supabase에 `delete-account` v1을 배포했다. 상태 `ACTIVE`, `verify_jwt=true`, 함수 ID `8ce51490-2669-46ca-b4aa-44a9ec538bce`, 인증 헤더 없는 실제 호출은 `401 UNAUTHORIZED_NO_AUTH_HEADER`로 차단됐다.
+- `auth.users` 참조를 재검증한 결과 사용자 소유 FK 18개는 `ON DELETE CASCADE`, 분류 감사의 `product_classification_history.reviewed_by` 1개만 의도적으로 `SET NULL`, Storage bucket은 0개다. 따라서 현재 DB에는 계정 hard delete를 막는 restrict/storage owner가 없다. 기존 advisor INFO/WARN 외 이번 함수 때문에 생긴 DB schema 문제는 없으며 DDL은 변경하지 않았다.
+- `FitMatchAuthSessionStoreTests`와 `FitMatchClosetSyncCoordinatorTests` 6개가 통과했다. 최초 실행은 새 테스트 파일의 Foundation import 누락으로 빌드 중단됐고 보완 후 최종 `/tmp/FitMatchAccountDeletion-20260820-3.xcresult`에서 6/6 통과했다.
+- Apple 공식 요구사항상 Sign in with Apple 계정은 가능하면 Apple REST API로 provider token도 revoke해야 한다. 현재 Supabase `signInWithIdToken`/admin user delete만으로 Apple token은 자동 revoke되지 않으며, 기존 로그인은 Apple authorization code/refresh token을 저장하지 않아 자동 revoke가 불가능하다. Apple 공식 fallback에 따라 탈퇴 확인창과 앱 개인정보처리방침에 `iPhone 설정 > Apple 계정 > Apple로 로그인 > FitMatch 제거` 안내를 추가했다. 완전 자동화를 하려면 후속 단계에서 authorization code를 서버로 보내 Apple token을 교환·암호화 보관하고 삭제 전에 revoke하는 별도 보안 작업이 필요하다.
+- 카카오·네이버는 지금 버튼/SDK를 추가하지 않았다. 추후 각 identity를 같은 Supabase user에 명시적으로 link하고, FitMatch 계정 삭제는 현재 provider-neutral 함수를 재사용하되 각 제공자의 원격 권한 revoke adapter를 삭제 전 단계에 추가한다. 이메일이 같다는 이유만으로 계정을 자동 병합하면 안 된다.
+- 앱 내 개인정보처리방침과 `Docs/AppStorePrivacyPolicyDraft-20260806.md`를 계정·Supabase 동기화·회원 탈퇴 기준으로 갱신했다. 실제 Apple 계정 가입→데이터 저장→탈퇴 destructive E2E, 공개 웹 개인정보처리방침 게시, App Store Connect App Privacy 답변 갱신은 아직 수행하지 않았다.
+
+## 2026-08-19 connectDB Apple 정식 로그인 1단계
+
+- 기존 `ContentView.LoginView`를 그대로 사용하면서 가짜 로컬 로그인 분기를 제거하고, `SignInWithAppleButton`의 native credential을 Supabase `signInWithIdToken(provider: .apple)`에 nonce와 함께 전달하도록 연결했다. Google·Kakao·Naver 버튼 호출부는 요청대로 주석 처리했다.
+- `FitMatchAuthSessionStore`가 Supabase 세션 복구/auth state 변화/로그아웃을 단일 관리한다. `ContentView`는 인증 전 로그인 화면, 인증 후 기존 메인 탭을 표시하며 My 화면의 로그아웃 메뉴도 실제 Supabase 로그아웃에 연결됐다.
+- 앱 entitlement에 `com.apple.developer.applesignin = Default`를 추가했다. 앱에는 기존 publishable key만 사용하고 secret/service-role key는 사용하지 않는다. DB 도메인 클라이언트의 자동 anonymous sign-in은 제거해 정식 사용자 세션만 사용자 전용 RPC에 전달되도록 했다.
+- generic iOS Simulator `build-for-testing`이 성공했고, Apple nonce 생성/해시 단위 테스트 2/2가 iPhone 17 Pro Simulator에서 통과했다. 결과는 `/tmp/FitMatchAuthTests-20260819-0728.xcresult`다.
+- 사용자가 Apple Developer App ID capability와 Supabase Apple provider/Client ID 설정을 완료했다고 확인했다. 이후 generic iOS 실기기용 자동 서명 빌드도 성공했으며, 서명 결과에 `application-identifier=Y344H87QC5.com.ljy4337.fitmatch`, `com.apple.developer.applesignin=[Default]`, 기존 App Group이 모두 포함됐다. 연결된 iPhone 14 Pro가 `unavailable` 상태여서 설치·실제 계정 로그인 검증은 아직 수행하지 못했다.
+- 실제 계정 E2E의 남은 작업은 iPhone 연결 복구 후 최초 로그인·앱 재실행 세션 복구·로그아웃 확인이다.
+- 옷장/비교 UI의 DB source-of-truth 전환은 사용자 지시대로 아직 시작하지 않았다. Apple 로그인 실기기 검증을 통과한 뒤 별도 단계로 진행한다.
+
+## 2026-08-19 connectDB 도메인 경계·상품 런타임 조회 계약
+
+- 2026-08-18의 `FitMatchSupabaseProductResolver` 단일 RPC 구현을 확장해 `FitMatchSupabaseDomainClient`와 `FitMatchDatabaseDomainServicing` 경계를 만들었다. 하나의 인증 세션으로 상품 resolve/runtime 조회, 옷장 등록, 기준 옷 후보 조회, 비교 시작, 비교 결과 저장 RPC를 호출한다. 기존 resolver 이름은 typealias로 유지했다.
+- 상품 runtime DTO에 공용 상품, 현재 canonical 분류, variant, DB `product_size_id`, raw/canonical 실측, 비교 가능 여부·정규화 정책 버전을 포함했다. 이 단계는 계약/클라이언트 구현이며 옷장·비교 화면의 source of truth는 아직 로컬 엔진에서 DB로 전환하지 않았다.
+- UUID만 알면 private catalog 전체를 읽는 초기 RPC 안은 보안 검토에서 폐기했다. 운영 Supabase에 `add_scoped_product_runtime_read_contract`(20260818154520)를 적용했다. 같은 retailer API payload의 source/product ID/name/path fingerprint와 제공된 audience/category codes가 DB current와 일치할 때만 `fitmatch_get_product_runtime(jsonb)`가 필요한 projection을 반환한다. anon 실행권은 없고 authenticated/service_role만 실행 가능하다.
+- 운영 인증 컨텍스트에서 `E492538`은 `ready`, comparison ready, variant 2, size 12, measurement 72를 반환했다. 이름·경로를 변조한 동일 ID 호출은 `product_evidence_mismatch`로 차단됐다. DB 테스트 transaction은 rollback됐고 운영 상품/사용자 데이터는 변경하지 않았다. 적용 후 `fitmatch_qa.validate_product_runtime_v3()`도 `passed=true`, Gold 5,026/5,026, 모순/공개 권한 누수 0을 유지했다.
+- 앱 전체 generic iOS Simulator `build-for-testing`이 성공했다. `FitMatchSupabaseProductResolverTests` 6건이 iPhone 17 Pro Simulator에서 모두 통과했다. 새 검증은 runtime JSON의 size UUID와 canonical measurement decoding을 포함한다. xcresult는 `/tmp/FitMatchConnectDBDomain/Logs/Test/Test-FitMatch-2026.08.19_00-49-26-+0900.xcresult`다.
+- Supabase advisor에 새 schema/index 오류는 없고, 새 공개 RPC는 기존 앱 RPC와 같은 `authenticated SECURITY DEFINER` WARN이 추가됐다. 고정 search path, auth 확인, strict payload evidence, anon revoke로 의도적으로 제한했다. private catalog의 RLS+무정책 INFO와 leaked-password protection WARN은 기존대로 남아 있다.
+- 남은 실제 전환 작업은 정식 로그인 또는 anonymous auth 선택, 옷장/비교 화면 orchestration 연결, DB 입력↔Swift 입력 및 결과 전 필드 shadow parity다. 인증과 parity 없이 DB 결과를 사용자-facing source of truth로 켜면 안 된다.
+
+## 2026-08-18 connectDB 1단계 shadow 연동
+
+> 후속 상태: 위 2026-08-19 도메인 경계·상품 런타임 조회 계약으로 확장됐다.
+
+- `connectDB` 브랜치에 공식 `supabase-swift` 2.53.0을 추가하고 `fitmatch_resolve_product` RPC용 DTO/클라이언트를 구현했다. 앱에는 publishable key만 포함하며 secret/service-role key는 포함하지 않는다.
+- 상품 API 파싱 완료 후 `ShoppingProductViewModel`이 DB를 shadow 조회한다. 현 단계에서는 로컬 분류/추천 결과를 사용자에게 그대로 제공하고, DB 결과는 `matched`, `mismatch`, `reviewRequired`, `unavailable` 상태와 Debug 로그로만 기록한다. DB 장애가 기존 앱 동작을 막지 않는다.
+- 알려진 상품의 DB current+confirmed 결과가 로컬과 완전 일치할 때만 matched다. 신규·변경·검토 필요·미분류·비교 불가 결과는 자동 채택하지 않고 reviewRequired로 남긴다.
+- DB 검증에서 `E482202 립브라탑(컬러블록)`이 `underwear/women_bra`인데 family만 `tshirt`인 모순 1건을 발견했다. migration 097을 운영 DB에 적용해 family를 `underwear`로 교정했고, 로컬 분류도 쇼핑몰 T셔츠 경로보다 확정된 속옷 major를 우선하도록 수정했다.
+- 적용 후 `fitmatch_qa.validate_product_runtime_v3()`는 `passed=true`, 상품 1,577, 스냅샷 3,842, Gold 5,026/5,026, category-family 모순 0이다.
+- 신규 테스트 3건은 iPhone 17 Pro Simulator에서 모두 통과했고 generic iOS `build-for-testing`과 서명 제외 Release iOS 빌드도 성공했다. 기존 DB 판정 207건과 현재 production 5,026건 분류 회귀도 각각 통과했다. 5,026건 결과는 output 5,026, invalid 0, 사용자 확인 필요 329다. 현재 유니클로 전체 카탈로그 감사는 첫 상품 처리 직후 simulator test host가 잘못된 포인터 free로 종료되어 통과로 계산하지 않는다. 실패 결과 번들은 `/tmp/FitMatchConnectDBSimulator/Logs/Test/Test-FitMatch-2026.08.18_23-45-57-+0900.xcresult`, 5,026 통과 번들은 `/tmp/FitMatchConnectDBSimulator/Logs/Test/Test-FitMatch-2026.08.18_23-48-27-+0900.xcresult`다.
+- 현재 Supabase 프로젝트는 anonymous sign-in이 비활성화되어 있다. `fitmatch_resolve_product`는 authenticated 전용이므로 실제 앱 shadow 호출을 사용하려면 Dashboard에서 anonymous sign-in을 활성화하거나 정식 로그인 세션을 먼저 도입해야 한다. 권한을 anon으로 낮추거나 secret key를 앱에 넣으면 안 된다.
+- 아직 DB 분류를 사용자 결과의 source of truth로 전환하지 않았고, 옷장 저장·비교 후보·실측 준비·결과 저장 RPC도 앱에 연결하지 않았다. 다음 단계는 shadow 로그 표본 검증 후 승인받아 진행한다.
 
 ## 2026-08-16 DB·앱 207건 판정 적용
 
@@ -1741,3 +4144,1224 @@ git diff -- '*.swift' | grep -E \
 - 최근 로컬 결과 124건을 adapter로 변환한 결과 유니클로 76상품/471사이즈/2,216 numeric 실측, 무신사 48상품/121사이즈/398실측, 빈 상품명·경로 0이다. 아직 Keychain에 secret key가 없어 실제 124건 backfill 배치는 실행하지 않았다. 최초 command 실행 때 키를 한 번 입력하면 현재 관측 범위를 backfill하고 이후 batch version 기준 증분 처리한다.
 - 유니클로 `E479751`처럼 base URL이 `/00` 404로 잘못 redirect되는 경우를 위해 상세 수집기가 base → `/01` → `/00` 후보를 순서대로 재시도하도록 보완했다.
 - 앱/Swift 연결 로직은 이번 작업에서 수정하지 않았다. Supabase advisor에 새 batch 관련 보안/성능 경고는 없고 기존 private RLS INFO, 인증 사용자용 definer WARN, leaked-password protection WARN만 유지된다.
+
+## 58. 2026-08-19 인증 사용자 옷장 CRUD 계약 적용
+
+- 운영 Supabase 프로젝트 `hnkplvyegonlhumlejst`에 `authenticated_closet_crud_contract_v1`을 적용했다. 로컬 재현 파일은 `supabase/migrations/099_authenticated_closet_crud_contract.sql`이다.
+- `closet_items`에 앱 UUID 기반 멱등 키 `client_item_id`, fit memo/preference/satisfaction, 원본 실측 record, client snapshot/timestamp, `sync_revision`을 추가했다. `(user_id, client_item_id)` 중복과 동일 사용자·성별·category/detail 내 복수 대표 옷을 DB constraint/index로 막는다.
+- 앱 공개 RPC는 `fitmatch_upsert_closet_item`, `fitmatch_list_closet_items`, `fitmatch_set_closet_reference`, `fitmatch_delete_closet_item` 네 개다. 모든 함수는 authenticated 전용, `auth.uid()`/소유권 검증, 빈 `search_path`를 적용했다. authenticated의 `closet_items` 직접 DML 권한은 회수했다.
+- catalog-linked 옷장은 current canonical classification을 snapshot으로 사용한다. 수동/unlinked 옷장은 안전하게 번역 가능한 broad family만 garment type으로 연결하며 지원하지 못하는 조합은 `review_required`로 저장해 자동 비교를 fail-closed한다.
+- Swift의 `FitMatchSupabaseDomainClient`에 네 RPC용 DTO와 호출 API를 추가했다. 기존 `MyClosetView`와 SwiftData CRUD는 사용자의 별도 앱 연결 지시 전까지 변경하지 않았다.
+- unauthenticated list 호출은 `authentication_required`를 반환했고 새 RPC 네 개의 anon execute=false/authenticated execute=true를 확인했다. generic iOS Simulator Debug build가 성공했고 `FitMatchSupabaseProductResolverTests` 7/7이 통과했다. 새 옷장 응답의 canonical snapshot, null 축, 원본 실측 record 디코딩도 회귀로 고정했다.
+- 다음 단계는 실제 Apple 로그인 세션으로 upsert→list→reference 전환→soft delete를 통합 검증한 뒤, SwiftData를 캐시/outbox로 두는 화면 sync 계층을 연결하는 것이다.
+
+## 59. 2026-08-19 SwiftData 옷장과 Supabase 동기화 연결
+
+- 운영 Supabase에 `closet_sync_hydration_contract_v1`을 적용했다. 로컬 재현 파일은 `supabase/migrations/100_closet_sync_hydration_contract.sql`이다. `fitmatch_list_closet_items`가 재설치 복원에 필요한 `external_product_id`, `product_audience`, `source_category_codes`를 사용자 소유 옷장 행을 통해 반환한다. anon execute=false/authenticated execute=true와 함수 본문을 재검증했다.
+- `FitMatchClosetSyncCoordinator`를 추가하고 `ContentView`의 로그인 세션·SwiftData 변경 감지에 연결했다. `UserFit.id`를 서버 `client_item_id`로 재사용해 SwiftData schema 변경 없이 멱등 upsert한다. 기존 화면은 로컬 SwiftData를 계속 읽고 서버는 장기 원본 역할을 한다.
+- 서버 최신 항목은 로컬에 적용하고, 로컬 최신/신규 항목은 catalog resolve 후 옷장 RPC로 저장한다. catalog가 없거나 안전한 family를 만들 수 없는 항목은 공용 상품을 오염시키지 않고 unlinked/manual snapshot으로 저장한다. 부분 실패는 `pendingRetry`로 남겨 다음 pass에서 재시도한다.
+- `MyClosetView`와 `ClosetItemDetailView`의 로컬 삭제 뒤 사용자별 tombstone을 기록하고 서버 soft-delete가 성공할 때 제거하도록 연결했다. 계정이 바뀌면 이전 계정의 옷장·비교 기록을 지운 뒤 새 계정 서버 데이터를 복원하며, 공용 상품 캐시는 유지한다.
+- 서버 단독 유니클로 옷장 행을 빈 SwiftData에 복원하는 회귀 테스트를 추가했다. stable item UUID, 공용 상품/사이즈 FK, `E492123`, 원본 category code, FitMatch tops/shirt, 실측값 복원을 검증했다.
+- generic iOS Simulator Debug 전체 build가 통과했고 Supabase DTO/옷장 동기화 targeted test는 8/8 통과했다. 결과 bundle은 `/tmp/FitMatchClosetSyncDerivedData/Logs/Test/Test-FitMatch-2026.08.19_09-39-19-+0900.xcresult`다.
+- 남은 작업은 (1) 현재 추천 화면에 reference-candidate/begin/complete comparison RPC를 연결하면서 수동 측정 옷의 overlap 판정을 보완하고, (2) 실제 Apple 로그인 계정으로 저장·재조회·삭제·계정 전환·오프라인 재시도를 실기기 검증하는 것이다.
+
+## 60. 2026-08-19 로컬 비교 결과와 Supabase 비교 이력 동기화 연결
+
+- 운영 Supabase에 `comparison_sync_contract_v1`, `manual_closet_comparison_fallback`을 순서대로 적용했다. 로컬 재현 파일은 `supabase/migrations/101_comparison_sync_contract.sql`, `102_manual_closet_comparison_fallback.sql`이다.
+- `comparison_runs.client_history_id`와 `(user_id, client_history_id)` unique partial index를 추가했다. 앱의 `RecommendationHistory.id`를 멱등 키로 보내므로 네트워크 재시도나 앱 재실행이 같은 비교 run을 중복 생성하지 않는다.
+- 수동 옷장은 catalog `product_size_id`가 없어도 정규화된 `measurement_records` 또는 숫자 `measurements`에서 canonical 실측 겹침을 계산한다. 수동 옷의 유효 분류는 사용자 override → canonical snapshot → `app_category/app_detail_category` 순으로 읽어 기존 수동 옷장도 후보/비교 시작에 사용할 수 있게 했다.
+- `FitMatchComparisonSyncCoordinator`를 추가하고 로그인 완료 및 옷장 동기화 성공 뒤 실행하도록 `ContentView`에 연결했다. 기존 로컬 비교 엔진과 화면 결과는 그대로 유지하고, DB에는 대상 상품 resolve/runtime UUID, reference closet UUID, 추천 size UUID, 점수·신뢰도·사용/제외 실측 근거를 저장한다.
+- 대상 상품은 retailer `source + external_product_id + 이름/카테고리 증거`로 다시 확인하며 current+confirmed runtime만 사용한다. 추천 로컬 size가 색상·표기까지 고려해 DB size 하나로 확정되지 않으면 저장을 재시도 상태로 남긴다.
+- 서버 안전 정책이 로컬 결과를 차단하면 결과를 억지로 완료하지 않고 `blocked` run과 parity warning으로 남긴다. 수동/지원 외 쇼핑몰처럼 DB 대상 상품 UUID를 만들 수 없는 비교는 로컬 UX를 유지하되 서버 비교 이력에는 넣지 않는다.
+- 운영 rollback probe에서 수동 반팔 상의가 유니클로 반팔 대상의 automatic 후보가 되고 공통 실측 3개로 평가되는 것을 확인했다. 같은 `client_history_id`로 비교 시작을 두 번 호출했을 때 동일 run UUID가 반환됐고, 테스트 run/closet row는 모두 삭제했다.
+- generic iOS Simulator Debug build가 통과했다. 인증 nonce, 옷장 hydration, 상품/RPC DTO, 비교 성공·차단 동기화 targeted test는 12/12 통과했다. 결과 bundle은 `/Users/jinyoung/Library/Developer/Xcode/DerivedData/FitMatch-gykzeotdbwpwwsdieiheccopizfu/Logs/Test/Test-FitMatch-2026.08.19_10-11-57-+0900.xcresult`다.
+- 남은 단계는 실제 Apple 로그인 계정으로 옷장 upsert/list/reference/delete, 비교 begin/complete, 재로그인·계정 전환·오프라인 재시도를 실기기에서 검증하는 것이다. 서버 comparison 이력을 재설치 후 로컬 `RecommendationHistory`로 복원하는 read/hydration API는 아직 구현하지 않았다.
+
+## 61. 다음 세션 즉시 인수 체크리스트
+
+- 현재 로컬 브랜치는 `connectDB`다. 2026-08-19 인증·옷장·비교 연동 변경은 아직 커밋하지 않았으므로 현재 dirty worktree를 보존하고 사용자가 요청하기 전 commit/push/merge하지 않는다.
+- 운영 Supabase 적용 완료 범위는 migration `097`~`102`다. 마지막 두 운영 migration 이름은 `comparison_sync_contract_v1`, `manual_closet_comparison_fallback`이며 migration history에서 확인됐다.
+- 앱에는 publishable key만 사용한다. secret/service-role key는 배치의 macOS Keychain 외에는 넣지 않으며 iOS bundle·Info.plist·소스에 절대 추가하지 않는다.
+- 다음 작업의 첫 순서는 실제 iPhone에서 Apple 로그인 성공 확인이다. 그 뒤 수동 옷 1개 등록 → 앱 재실행 후 유지 → 대표 옷 전환 → 유니클로/무신사 비교 1건씩 생성 → Supabase `closet_items`, `comparison_runs`, `comparison_results`, `comparison_measurement_results` 저장 확인 → 삭제/로그아웃/재로그인/다른 계정 전환 → 오프라인 생성 후 온라인 재시도를 검증한다.
+- 통과 기준은 사용자 간 row 혼합 0, 중복 `client_history_id` 0, 삭제 항목 재등장 0, 서버 차단 비교의 완료 결과 0, 네트워크 실패 시 로컬 UX 손실 0이다. 실패하면 UI를 먼저 바꾸지 말고 coordinator 상태와 RPC 응답을 추적한다.
+- 현재 자동화 증거는 Debug build 성공과 targeted test 12/12다. 실계정·실기기 통합 검증은 아직 수행하지 않았으므로 운영 완료라고 표현하지 않는다.
+- 재설치 후 옷장은 복원되지만 서버 비교 기록을 로컬 `RecommendationHistory` 화면으로 복원하는 read RPC/coordinator는 미구현이다. 이는 출시 필수 여부를 사용자와 결정한 뒤 별도 단계로 구현한다.
+- Supabase advisor의 비교 RPC `SECURITY DEFINER` WARN은 authenticated 진입을 의도한 것이다. 함수 내부 `auth.uid()`·소유권 검사, 빈 `search_path`, anon execute=false를 유지한다. 막 생성된 인덱스의 unused INFO는 삭제 근거로 사용하지 않는다.
+- 보호 대상 `FitMatch/Components/TabBarScrollVisibilityModifier.swift`와 `fitMatchHidesTabBarWhenScrolling` 호출부는 변경하지 않았다. 다음 수정 후에도 반드시 diff 0을 확인한다.
+
+## 62. Remaining issues / Next To Do
+
+### Remaining issues
+
+- 현재 3단계 DB 연결 목표의 필수 미완료는 실제 Apple 계정·실기기 end-to-end 검증 하나다. 자동 테스트가 통과했어도 실제 Auth token, 네트워크, 앱 lifecycle까지 검증하기 전에는 운영 완료로 판정하지 않는다.
+- 재설치 후 옷장 복원은 구현됐지만 서버의 과거 비교 결과를 로컬 `RecommendationHistory` 화면으로 복원하는 기능은 미구현이다. 현재 출시 필수 blocker가 아니라 후속 기능 후보다.
+
+### Next To Do
+
+1. 실제 iPhone에서 Apple 로그인하고 Supabase Auth 사용자 생성·세션 유지 여부를 확인한다.
+2. 수동 옷 1개와 쇼핑몰 연동 옷 1개를 등록하고 `closet_items` 저장·앱 재실행 복원을 확인한다.
+3. 대표 옷 변경과 삭제를 실행해 단일 대표 constraint, soft delete, 삭제 항목 미복원을 확인한다.
+4. 유니클로·무신사 비교를 각 1건 생성해 `comparison_runs` → `comparison_results` → `comparison_measurement_results` 저장을 확인한다.
+5. 동일 비교 재시도로 run 중복 0, 서버 차단 비교의 완료 result 0을 확인한다.
+6. 로그아웃·동일 계정 재로그인·다른 계정 전환으로 사용자 데이터 혼합 0을 확인한다.
+7. 오프라인에서 옷장/비교를 만든 뒤 온라인 복귀하여 outbox 재시도와 로컬 UX 보존을 확인한다.
+8. 위 검증이 모두 통과하면 현재 3단계를 완료 처리하고, 비교기록 hydration을 출시 전 포함할지 후속 버전으로 미룰지 결정한다.
+
+## 63. 2026-08-19 상품 원본 관측·정규화 백엔드 파이프라인
+
+- 운영 Supabase에 migration `product_observation_pipeline`을 적용했다. 로컬 재현 파일은 `supabase/migrations/103_product_observation_pipeline.sql`이며 마지막 운영 migration으로 확인됐다.
+- `product_observations`는 동일 payload를 fingerprint로 중복 제거하면서 최초/최종 관측 시각과 횟수를 보존한다. payload가 바뀌면 새 immutable 이력으로 남는다. 제출 사용자와 원본 실측 행은 각각 `product_observation_submissions`, `product_observation_measurements`에 분리했다.
+- 인증 사용자는 검증 RPC로 원본만 제출할 수 있고 private 관측 테이블을 직접 읽거나 공용 상품 current row를 승격할 수 없다. backend 전용 처리 RPC만 분류 후 category scope를 사용해 원본 실측을 canonical 실측으로 정규화한다.
+- JWT 검증이 켜진 Edge Function `product-observation` version 1을 배포했고 ACTIVE 상태를 확인했다. iOS에는 service-role key를 넣지 않고 사용자 세션으로 Edge Function만 호출한다.
+- `ShoppingProductViewModel`의 기존 로컬 분류·비교 결과를 바꾸지 않고 DB shadow 작업에서 파서가 얻은 상품/사이즈/`measurementRecords`를 먼저 제출하도록 연결했다. 관측 저장 실패는 로컬 사용자 흐름과 기존 DB 조회를 차단하지 않는다.
+- 운영 rollback probe에서 동일 payload 2회 제출은 observation UUID 1개/observation_count 2/raw row 2로 확인했다. 실제 등록상품 `E492123` probe는 raw 2행을 `chest_width`, `back_length` canonical 2행으로 변환했고 confirmed 분류를 유지했다. 두 probe의 QA 상품·관측은 rollback되어 운영 잔존 0이다.
+- generic iOS Simulator Debug build와 전체 `build-for-testing`이 성공했다. Supabase security advisor의 신규 WARN은 `fitmatch_submit_product_observation` SECURITY DEFINER authenticated 진입점 1개이며, `auth.uid()` 필수·입력 상한·private table no-grant·빈 search_path를 둔 의도된 경계다. 신규 unused-index INFO는 생성 직후라 삭제 근거가 아니다.
+- 아직 실기기 Apple 로그인 세션으로 Edge Function의 실제 HTTP 호출을 끝까지 실행하지 않았다. 또한 현재 payload는 파서가 추출한 모든 실측 원본을 보존하지만 쇼핑몰 HTTP 응답 body 전체를 보존하는 구조는 아니다.
+
+## 64. Remaining issues / Next To Do
+
+### Remaining issues
+
+- 필수: 실제 iPhone + Apple 로그인 계정으로 유니클로/무신사 링크 각 1개를 분석해 Edge Function 호출, observation 생성, canonical measurement 승격을 end-to-end 확인한다.
+- 필수: DB canonical runtime을 실제 추천 계산 입력으로 사용하고 기존 Swift 엔진 결과와 parity를 자동 검증하는 전환은 아직 남았다. 현재는 로컬 결과 유지 + DB 관측/정규화/shadow 단계다.
+- 후속 후보: 서버 비교 기록을 앱 재설치 후 `RecommendationHistory`로 복원하는 hydration API는 미구현이다.
+- 선택 사항: 쇼핑몰 HTTP 원문 body 전체 보관은 용량·개인정보·약관을 먼저 검토해야 한다. 비교에 필요한 파서 추출 실측 원본은 이번 단계에서 이미 보존한다.
+
+### Next To Do
+
+1. 실기기에서 Apple 로그인 후 유니클로 `E492123`과 무신사 실측 보유 상품 1개를 분석한다.
+2. `product_observations.processing_status=promoted`, 원본 실측 행 수, `product_measurements.is_comparable` 및 canonical code를 확인한다.
+3. 옷장 CRUD·대표 옷·비교 begin/complete·로그아웃/계정 전환·오프라인 재시도를 기존 체크리스트대로 검증한다.
+4. DB runtime DTO를 추천 입력 adapter에 연결하되 로컬 계산도 동시에 실행해 category/detail/family/length/실측/추천 size/score 전 필드 parity를 저장한다.
+5. 충분한 parity 표본에서 차이가 0이고 fail-closed가 유지될 때만 DB/backend 입력을 기본 경로로 승격한다.
+
+## 65. 2026-08-20 유니클로 E485454 분류·내 옷장 썸네일 보완
+
+- 상품 `E485454`(`바이컬러T`)의 공식 `__PRELOADED_STATE__`에는 `Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn`과 category ID `107543/107552/107621`이 있었지만, 기존 iOS 파서는 더 짧은 JSON-LD breadcrumb를 먼저 선택해 leaf와 ID를 버렸다. 그 결과 로컬은 `기타/기타`, DB는 검수 정답 fingerprint 불일치로 `review_required`가 됐다.
+- `UniqloProductMetadataParser`가 embedded product breadcrumb를 읽고, JSON-LD/HTML/product-group 후보 중 가장 구체적인 공식 경로를 사용하도록 수정했다. category ID도 `ProductMetadata.categoryDepth1Code...4Code`에 전달한다. E485454는 `상의/반팔/tshirt/short_sleeve`로 판정된다.
+- 운영 Supabase에 `preserve_specific_uniqlo_category_evidence` migration을 적용했다. `runtime_upsert_product`는 category ID가 호환되는 기존 상세 경로를 새 parent-only 관측으로 덮어쓰지 않으며 fingerprint도 실제 보존 경로로 계산한다. 로컬 재현 파일은 `supabase/migrations/104_preserve_specific_uniqlo_category_evidence.sql`이다.
+- 기존 검수 결정을 재사용해 운영 E485454 current를 `confirmed`, `tops/short_sleeve/tshirt/short_sleeve`, `canonical_product_decision`, 사용자 확인 불필요로 복구했다. 짧은 경로 재입력 rollback probe에서도 `Cut & Sewn` 경로와 fingerprint가 유지됐다.
+- 유니클로 이미지 CDN과 E485454 색상 65 이미지가 HTTP 200 JPEG임을 확인했다. 앱의 썸네일 문제는 CDN 부재가 아니라 (1) 같은 상품/사이즈의 과거 SwiftData 상품을 재사용할 때 새 이미지 URL을 버릴 수 있고, (2) 최초 다운로드 실패 후 같은 화면에서 재시도하지 않는 두 경로였다.
+- `Product.refreshExternalPresentation`을 추가하고 추천 기록 병합 및 비교상품→옷장 등록 시 새 retailer 이미지/URL을 기존 상품에 반영한다. 빈 후속 값은 정상 이미지를 지우지 않는다. `ProductThumbnailImageLoader`는 이미지 요청 헤더와 1회 짧은 재시도를 사용하고 화면 재진입 시 실패 URL도 다시 시도할 수 있게 했다.
+- iPhone 17 Pro Simulator에서 신규 회귀 테스트 2개(`embedded breadcrumb/category ID/E485454 image URL`, `persisted product thumbnail refresh`)가 2/2 통과했다. 기존 선택 색상 이미지 보존 테스트도 1/1 통과했다. Supabase `validate_product_runtime_v3()`은 `passed=true`, Gold 5,026/5,026, 자동 profile mismatch 0이다.
+- Supabase advisor에는 이번 migration으로 생긴 신규 치명/성능 경고가 없다. 기존 authenticated SECURITY DEFINER RPC WARN과 leaked-password protection WARN, 생성 직후/미사용 index INFO는 유지된다.
+- 보호 대상 `FitMatch/Components/TabBarScrollVisibilityModifier.swift`와 관련 호출부는 변경하지 않았다.
+
+## 66. Remaining issues / Next To Do
+
+### Remaining issues
+
+- 이번 증상의 코드·DB 원인은 수정됐고 자동 회귀 검사는 통과했다. 다만 실제 iPhone 네트워크에서 `E485454` 링크 등록 전 미리보기와 저장 후 내 옷장 썸네일까지 보는 수동 확인은 남아 있다.
+- 기존 전체 연결 작업의 필수 잔여 항목인 Apple 로그인 실기기 E2E와 DB canonical runtime↔Swift 추천 parity 전환은 그대로 남아 있다.
+
+### Next To Do
+
+1. 실제 iPhone에서 E485454 색상 65 링크를 입력해 불러오기 화면 썸네일, 저장 확인 화면, 내 옷장 목록/상세 썸네일을 확인한다.
+2. 같은 상품을 먼저 비교 기록에 저장한 뒤 내 옷장에 추가해 과거 SwiftData 상품 재사용 경로에서도 이미지가 유지되는지 확인한다.
+3. 이후 기존 체크리스트대로 Apple 로그인, observation 승격, 옷장/비교 동기화, DB↔Swift parity를 진행한다.
+
+## 67. 2026-08-20 회원 탈퇴 완료 및 현재 인수 상태
+
+> 이 절과 아래 68절이 현재 권위 상태다. 61~66절의 체크리스트는 작업 당시 이력이며, 완료 여부가 충돌하면 68절을 따른다.
+
+- `connectDB` 브랜치에 로그인 사용자용 회원 탈퇴를 구현했다. My 화면에서 2차 확인 후 인증된 `delete-account` Edge Function을 호출하고, 성공하면 Supabase 계정과 사용자 소유 서버 row, 로컬 `UserFit`·`RecommendationHistory`·동기화 캐시를 제거한다. 공용 쇼핑몰 상품 카탈로그는 보존한다.
+- 운영 프로젝트 `hnkplvyegonlhumlejst`에 `delete-account` version 1을 배포했다. 상태는 `ACTIVE`, `verify_jwt=true`, 함수 ID는 `8ce51490-2669-46ca-b4aa-44a9ec538bce`이며 인증 헤더 없는 호출은 HTTP 401로 차단된다.
+- 앱은 publishable key로 사용자 세션만 전달하고, 계정 hard delete에 필요한 service-role key는 Edge Function 환경에서만 사용한다. iOS 소스와 bundle에는 secret/service-role key를 넣지 않았다.
+- `auth.users` 참조 FK 19개를 재확인했다. 사용자 소유 FK 18개는 `ON DELETE CASCADE`, 분류 감사의 `product_classification_history.reviewed_by`만 `ON DELETE SET NULL`이고 Storage bucket은 0개다. 현재 DB에는 사용자 hard delete를 막는 참조가 없다.
+- `FitMatchAuthSessionStoreTests`와 `FitMatchClosetSyncCoordinatorTests`는 최종 6/6 통과했다. 결과 번들은 `/tmp/FitMatchAccountDeletion-20260820-3.xcresult`다. 실제 Apple 계정 destructive E2E는 아직 실행하지 않았다.
+- 카카오·네이버는 아직 로그인 버튼이나 SDK를 추가하지 않았다. 추후 동일 Supabase user에 identity를 명시적으로 연결하고, FitMatch 계정 삭제는 현재 provider-neutral 삭제 함수를 재사용한다. 동일 이메일만으로 자동 계정 병합하지 않는다.
+- Apple provider token 자동 revoke는 아직 미구현이다. 현재 로그인 경로가 authorization code/refresh token을 서버에 보존하지 않기 때문이다. 앱에는 Apple 설정에서 FitMatch 연결을 직접 제거하는 안내를 넣었지만, 로그인 포함 버전을 App Store에 제출하기 전에는 자동 revoke 구현 또는 심사 정책상 허용 가능한 최종 방식을 다시 확정해야 한다.
+- 앱 내 개인정보처리방침과 `Docs/AppStorePrivacyPolicyDraft-20260806.md`는 Supabase 저장·동기화·탈퇴 기준으로 갱신했다. 공개 HTTPS 문서 게시와 App Store Connect App Privacy 답변 갱신은 남아 있다.
+
+## 68. 현재 Remaining issues / Next To Do 체크리스트
+
+### 완료
+
+- [x] Apple 로그인용 Supabase 세션 관리와 기존 로그인 화면 연결
+- [x] SwiftData 옷장 ↔ Supabase `closet_items` 동기화 계약 및 coordinator 구현
+- [x] 로컬 비교 결과 → Supabase 비교 run/result/measurement 결과 저장 구현
+- [x] 상품 원본 실측 보존 → canonical 실측 정규화 backend 경계 구현
+- [x] 인증 사용자 회원 탈퇴 Edge Function, 앱 UI, 로컬 사용자 데이터 정리 구현
+- [x] 회원 탈퇴 DB FK 삭제 정책, 무인증 차단, targeted test 6/6 검증
+- [x] 향후 카카오·네이버를 추가해도 재사용 가능한 provider-neutral FitMatch 계정 삭제 경계 마련
+
+### 체크 규칙
+
+- `[x]`는 실행 증거까지 확인된 경우에만 표시한다. 코드가 있다는 이유만으로 실기기 검증을 완료 처리하지 않는다.
+- Developer가 실제 기기 흐름을 실행한 뒤 실행 시각과 화면 결과를 전달하면, AI가 같은 시각의 Supabase row와 로그를 대조해 완료 여부를 판정한다.
+- access token, refresh token, Supabase secret/service-role key, Apple private key는 채팅이나 저장소에 붙이지 않는다. 외부 Dashboard, Keychain 또는 Edge Function Secret에만 설정한다.
+
+### Developer To Do — 사용자가 직접 수행
+
+#### P0 — 로그인 포함 버전 출시 전에 필수
+
+- [ ] `DEV-P0-01` 실제 iPhone에서 Apple 신규 로그인 → 앱 완전 종료/재실행 → 세션 복구 → 로그아웃 → 동일 계정 재로그인을 실행한다.
+- [ ] `DEV-P0-02` 실제 계정으로 수동 옷 1개와 쇼핑몰 상품 1개를 등록하고, 대표 옷 변경·삭제·앱 재실행 복원을 실행한다.
+- [ ] `DEV-P0-03` 유니클로와 무신사 비교를 각각 1건 실행한다. AI가 DB를 대조할 수 있도록 실행 시각, 쇼핑몰, 상품 코드, 성공/실패 화면만 전달한다.
+- [ ] `DEV-P0-04` 테스트용 Apple 계정으로 회원 탈퇴를 실행한다. 탈퇴 전 필요한 테스트 데이터만 만들고, 실행 시각과 화면 결과를 전달한다.
+- [ ] `DEV-P0-05` Apple provider token 자동 revoke에 필요한 Apple Developer 설정과 서버 Secret 사용을 승인·준비한다. private key 자체는 AI에게 전달하지 않는다.
+- [ ] `DEV-P0-06` 공개 개인정보처리방침/고객지원 HTTPS URL을 게시하고 URL을 확정한다.
+- [ ] `DEV-P0-07` AI가 제공하는 최종 체크표에 따라 App Store Connect App Privacy 답변과 로그인 포함 빌드 설정을 반영한다.
+
+#### P1 — 제품 결정·수동 화면 확인
+
+- [ ] `DEV-P1-01` 실제 iPhone에서 `E485454` 링크의 미리보기·저장·옷장 목록/상세 썸네일과 기존 상품 재사용 경로를 확인한다.
+- [ ] `DEV-P1-02` 서버 비교 기록을 재설치 후 앱 기록 화면으로 복원하는 기능을 로그인 포함 첫 버전에 넣을지 후속 버전으로 미룰지 결정한다.
+- [ ] `DEV-P1-03` 카카오·네이버 로그인 도입 순서와 계정 연결 UX를 확정하고 각 제공자 개발자 콘솔을 설정한다.
+
+### AI To Do — Codex가 수행
+
+#### P0 — Developer 실기기 테스트 지원 및 출시 차단 해소
+
+- [x] `AI-P0-01` Developer가 그대로 따라 할 수 있는 실기기 E2E 체크표와 Supabase 확인 쿼리를 작성했다. `Docs/ConnectDBPhysicalE2EChecklist-20260820.md`, `supabase/sql/connectdb_e2e_readonly_verification.sql`을 사용한다.
+- [ ] `AI-P0-02` `DEV-P0-01~04` 실행 결과를 받아 Auth session, `product_observations`, `closet_items`, 비교 3개 테이블, 계정 삭제 cascade를 DB에서 대조한다.
+- [ ] `AI-P0-03` E2E에서 발견된 앱·RPC·동기화 결함을 수정하고 영향 범위 자동 회귀를 실행한다.
+- [ ] `AI-P0-04` `DEV-P0-05` 준비 후 Apple authorization code 교환·refresh token 보안 보관·탈퇴 전 provider token revoke를 서버에 구현하고 검증한다.
+- [ ] `AI-P0-05` 확정된 개인정보처리방침/고객지원 URL의 앱 연결 상태와 App Store Privacy 답변 체크표를 최종 감사한다.
+
+#### P1 — DB를 추천의 기본 경로로 전환
+
+- [ ] `AI-P1-01` DB runtime DTO와 Swift 추천 입력을 dual-run으로 실행해 category/detail/family/length/canonical measurement/추천 size/score 전 필드 parity를 기록한다.
+- [ ] `AI-P1-02` 충분한 실제 표본에서 parity 차이 0, 사용자 간 데이터 혼합 0, false-compatible 0을 확인한 뒤 사용자 승인 후 DB/backend 결과를 source of truth로 승격한다.
+- [ ] `AI-P1-03` 오프라인 옷장 등록·비교 후 온라인 복귀 시 outbox 재시도와 로컬 UX 보존을 자동화하고 실기기 결과와 대조한다.
+- [ ] `AI-P1-04` `DEV-P1-02` 결정이 출시 포함이면 비교 기록 hydration RPC/coordinator와 회귀 테스트를 구현한다.
+
+#### P2 — 후속 로그인 제공자
+
+- [ ] `AI-P2-01` `DEV-P1-03` 설정 후 카카오·네이버 OAuth/SDK callback과 명시적 Supabase identity link를 구현한다.
+- [ ] `AI-P2-02` 각 제공자의 원격 동의·토큰 해제가 필요하면 `delete-account` 실행 전 provider revoke adapter로 연결한다.
+- [ ] `AI-P2-03` Apple·카카오·네이버 조합의 계정 연결, 로그아웃, 탈퇴, 재가입, 동일 이메일 충돌 회귀를 추가한다.
+- [ ] `AI-P2-04` 이메일/비밀번호 로그인을 도입하는 경우 Supabase leaked-password protection과 관련 Auth 정책을 감사한다. OAuth-only 상태에서는 현재 출시 blocker가 아니다.
+
+## 69. 2026-08-20 실기기 E2E 실행서·읽기 전용 DB 스냅샷
+
+- 복잡했던 실기기 작업을 Apple 로그인, 내 옷장 저장, 유니클로·무신사 비교, 탈퇴 전 DB 기록, 회원 탈퇴의 5단계로 줄인 `Docs/ConnectDBPhysicalE2EChecklist-20260820.md`를 추가했다.
+- `supabase/sql/connectdb_e2e_readonly_verification.sql`은 테스트 사용자 UUID 하나로 Auth identity/session, 사용자 소유 옷장·비교·관측 제출, 최근 상세 행과 공용 catalog 총계를 JSON 하나로 반환한다. `SELECT`만 사용하며 운영 데이터를 변경하지 않는다.
+- 같은 SQL을 탈퇴 전후에 실행한다. 탈퇴 후 Auth와 모든 사용자 소유 count는 0, 최근 사용자 배열은 빈 배열이어야 하며 공용 상품·관측·실측 총계는 줄어들면 안 된다.
+- 운영 Supabase의 실제 `auth`, `public`, `fitmatch_catalog` 컬럼과 다시 대조해 쿼리를 작성했다. 사용자 UUID를 비운 안전한 상태로 운영 DB에서 실제 실행해 문법·테이블·컬럼 오류가 없음을 확인했다. 2026-08-20 22:49 KST 기준 공용 총계는 상품 1,578, 상품 관측 2, 원본 관측 실측 56, canonical 실측 27,548이다.
+- 다음 작업은 Developer가 체크표 1~5단계를 실제 iPhone에서 실행하고 결과를 전달하는 것이다. 그 전에는 P1 DB 기본 경로 전환이나 P2 로그인 제공자 확장을 시작하지 않는다.
+
+## 70. 2026-08-20 비교 품질 지표 분리·데이터 품질 이슈 원장
+
+> 이 절이 첨부 Master Package 검토 후 실제로 선별 반영한 최신 DB 상태다. 앱의 추천 source of truth는 아직 로컬 Swift 엔진이며, 이 변경은 결과를 바꾸지 않고 DB 감사 가능성을 높인다.
+
+- 패키지 제안 중 `원본 실측 → 정규화 실측`, 상품 분류의 method/confidence/version/evidence, 비교 불가 fail-closed, 실측별 포함·제외 근거는 기존 `product_observation_measurements` → `product_measurements`, `product_classification_history`, comparison RPC, `comparison_measurement_results`에 이미 구현되어 있어 중복 구조를 만들지 않았다.
+- 운영 Supabase에 migration `comparison_quality_and_data_issue_contract`(version `20260820141731`)를 적용했다. 로컬 재현 파일은 `supabase/migrations/105_comparison_quality_and_data_issue_contract.sql`이다.
+- `comparison_results.similarity_score`는 0~100의 핏 유사도 점수로 유지하고, `coverage_ratio`, `data_quality_score`, `confidence_score`, 사용/제외 실측 수, `quality_metrics_version`을 별도 컬럼으로 추가했다. 이제 “핏이 비슷한가”와 “근거를 얼마나 믿을 수 있는가”를 한 점수로 섞지 않는다.
+- `fitmatch_complete_comparison`은 새 지표가 없는 기존 앱 요청도 계속 허용한다. 새 앱 요청에서는 지표를 0~1 constraint로 검증하고, 사용/제외 실측 수는 클라이언트 숫자를 믿지 않고 `measurements[].included`에서 DB가 다시 계산한다.
+- Swift `FitMatchComparisonSyncCoordinator`는 coverage, 측정 정의 품질, 사용 실측 개수에 따른 evidence breadth를 분리 계산한다. 최종 confidence는 confirmed 결과만 `min(coverage, dataQuality) × evidenceBreadth`로 계산하고, 버전 `fitmatch-comparison-quality-2026-08-20-v1`과 함께 전송한다.
+- backend-only `fitmatch_catalog.data_quality_issues` 원장을 추가했다. observation/product/classification/measurement 중 정확히 하나만 대상이 되며, issue code별 발생 횟수·심각도·증거·해결 상태를 보존한다. authenticated/anon은 직접 접근할 수 없고 service role만 관리한다.
+- `fitmatch_process_product_observation` 실패는 `observation_processing_failed` 이슈를 중복 행 없이 누적하고, 동일 관측을 재처리해 성공하면 기존 이슈를 resolved로 전환한다.
+- 운영 rollback probe에서 이슈 2회 누적 → 발생 횟수 2 → 해결 상태 전환, 비교 지표 0.75/0.90/0.675 저장, 포함/제외 실측 수 1/1 DB 재계산을 확인했다. 테스트 행은 전부 rollback되어 운영 잔존 데이터는 없다.
+- iPhone 17 Pro Simulator에서 새 JSON key까지 확인하는 `FitMatchComparisonSyncCoordinatorTests` 2/2가 통과했다. 최종 결과 bundle은 `/tmp/FitMatchComparisonQuality-20260820-2.xcresult`다.
+- 현재 1,578상품/2,578 variant/6,559 size/27,548 measurement에서 실측 signature가 완전히 같은 중복 size chart는 0건이었다. 따라서 `measurement_set` 공용화는 현재 이득 없이 FK·ingest·조회 복잡도만 늘리므로 도입하지 않았다. 실제 중복률이 의미 있게 증가할 때 다시 측정한 뒤 결정한다.
+- Supabase advisor의 신규 대상 결과는 private 원장의 `RLS enabled/no policy` INFO와 생성 직후 `unused index` INFO뿐이다. no-policy는 authenticated 접근을 차단하려는 의도이며, 기존 authenticated SECURITY DEFINER RPC WARN은 함수 내부 `auth.uid()`·소유권 검사·빈 search path를 둔 의도된 API 경계다.
+
+## 71. 현재 Remaining issues / Next To Do
+
+### 완료
+
+- [x] 비교 결과의 핏 점수·coverage·데이터 품질·confidence 분리 저장
+- [x] 비교 근거 사용/제외 개수를 DB에서 재계산하는 하위 호환 RPC
+- [x] 상품 관측 처리 실패의 backend-only 품질 이슈 누적·해결 원장
+- [x] Swift 요청 계약, targeted test 2/2, 운영 rollback probe
+
+### Developer To Do
+
+- [ ] 68절 `DEV-P0-01~07` 실기기 로그인·옷장·비교·탈퇴·출시 설정 검증을 진행한다.
+- [ ] 유니클로와 무신사 비교 각 1건 후 실행 시각·상품 코드·화면 결과를 전달한다. AI가 새 quality 컬럼과 measurement 결과를 함께 대조한다.
+
+### AI To Do
+
+- [ ] 실기기 비교 결과에서 `similarity_score`, `coverage_ratio`, `data_quality_score`, `confidence_score`, 사용/제외 실측 수와 원본 상세 행의 일관성을 확인한다.
+- [ ] 68절 `AI-P1-01~02`의 DB runtime↔Swift dual-run parity를 구현하고 충분한 실제 표본을 검증한 뒤에만 사용자 승인으로 DB/backend를 기본 경로로 승격한다.
+- [ ] 상품 실측 signature 중복률을 운영 지표로 관찰한다. 현재 0건이므로 `measurement_set` 구조는 만들지 않는다.
+
+## 72. 2026-08-20 COS 1단계 링크·DB 수용 경계
+
+- COS는 유니클로·무신사와 달리 현재 확인된 공식 웹 계약에서 안정적인 상품별 사이즈/실측 API를 제공하지 않는다. 개발 환경의 일반 HTTP 요청은 COS CDN에서 `Access Denied`로 응답했다. 비공개 API를 추측해 사용하지 않는다.
+- 앱은 `cos.com` 공식 URL과 URL 안의 10자리 COS 상품번호를 인식한다. 공식 페이지가 허용될 때 JSON-LD/Open Graph의 상품명·이미지·가격과 URL 경로의 성별·카테고리 단서를 보존한다.
+- 완전한 **사이즈별 의류 실측표**가 없으면 `ProductURLParserPartialError`로 종료한다. 즉 상품 정보는 보일 수 있어도 자동 비교·억지 실측 변환은 하지 않는 fail-closed 정책이다.
+- `FitMatchSupabaseProductResolver`, 옷장 동기화, 비교 기록 동기화가 source `cos`를 기존 상품 resolve/runtime 경계로 전달한다. 기존 로컬 추천 엔진과 유니클로·무신사 처리에는 새 분기를 넣지 않았다.
+- 운영 Supabase에 migration `add_cos_observation_source`를 적용했다. `product_observations`와 authenticated observation RPC, service-role batch inquiry RPC가 `cos`를 명시적으로 허용한다. 다른 임의 source는 계속 거절한다. DB probe에서 source constraint에 COS 포함, `fitmatch_batch_products_needing_ingest('cos', ...)` 1건 반환, observation RPC 본문 COS 허용을 확인했다.
+- 새 COS fixture는 상품번호·공식 메타데이터·경로 분류 단서 보존 및 실측 부재 시 fail-closed를 검증한다. Swift 컴파일은 통과했으나 후속 Simulator service가 중단되어 실제 XCTest 실행은 아직 재시도 필요하다.
+
+## 73. 2026-08-21 유니클로 내 옷장 저장 후 썸네일 보존
+
+- 상품 정보 화면의 유니클로 썸네일 URL은 정상이나, 내 옷장 저장 경로가 `ProductSize.id`만으로 기존 행을 찾아 같은 사이즈명(M 등)의 다른 상품을 `UserFit.sourceProduct`로 연결할 수 있었다.
+- `AddComparedProductToClosetSheet`는 이제 상품 URL(우선)과 쇼핑몰·상품코드(대체)로 동일 상품을 먼저 찾는다. 저장된 동일 상품에는 새 썸네일 URL을 보충하고, 새 상품은 먼저 SwiftData context에 삽입한 뒤 선택한 사이즈를 그 상품에 연결한다.
+- 회귀 테스트는 같은 유니클로 상품 URL의 끝 슬래시는 동일 상품으로, 다른 상품코드는 다른 상품으로 판정하도록 추가했다. Simulator XCTest는 CoreSimulator/build database 동시 실행 상태가 해소된 뒤 재실행한다.
+
+## 74. 2026-08-21 ZARA 검증 표본 category DB staging
+
+- 사용자의 명시적 승인 후 운영 Supabase에 migration `seed_zara_verified_categories`(version `20260821032148`)를 적용했다. 로컬 재현 파일은 `supabase/migrations/107_seed_zara_verified_categories.sql`이다.
+- `public.sources`에 `zara`를 등록했지만 `is_active=false`로 유지했다. API 사용 허가, 실제 iPhone, staging E2E가 끝나기 전에는 production provider로 활성화하지 않는다.
+- 실제 ZARA structured analytics 표본에서 확인한 section/family/subfamily만 `public.source_categories`에 36건 저장했다: 남성 17, 여성 19. 전체 ZARA taxonomy라고 간주하지 않는다.
+- FitMatch canonical detail이 명확한 27건만 연결했다. 분류 상태는 `EXACT=26`, `RULE_BASED=1`, `AMBIGUOUS=7`, root `UNMAPPED=2`다. 티셔츠·일반 바지처럼 세부 유형이 갈리는 항목은 category까지만 저장하고 detail을 비웠다.
+- 사후 DB 검증에서 부모 누락 0, identity 중복 0, canonical FK 오류 0, production eligible 0을 확인했다. migration은 먼저 동일 SQL을 rollback probe로 실행한 뒤 적용했다.
+- active `fitmatch_catalog.source_category_mappings`의 ZARA row는 0, ZARA product observation은 0이다. observation source CHECK도 계속 `uniqlo`, `musinsa`, `cos`만 허용한다. 따라서 이 작업은 catalog staging이며 runtime 분류/수집 활성화가 아니다.
+- 다음 DB 작업은 실제 iPhone metadata/guide E2E, 공식 API 사용 권한, measurement basis 검증 뒤에만 진행한다: ZARA runtime release mapping, observation allowlist, raw measurement mapping 순서다.
+
+## 75. 2026-08-21 ZARA 테스트용 category·observation DB 연결 완료
+
+> 이 절이 74절보다 최신 권위 상태다. 74절의 비활성/source mapping 0/observation 미허용 상태는 이후 사용자 승인 작업으로 변경됐다.
+
+- 사용자가 제공한 `zara_fitmatch_collection_20260813.zip`을 별도 temp directory에서 검증했다. validator 전체 `PASS`, generator 재실행 `PASS_BYTE_IDENTICAL`, category 213행과 mapping 213행의 manifest SHA-256 일치를 확인했다.
+- 운영 Supabase `hnkplvyegonlhumlejst`에 다음 migration을 순서대로 적용했다.
+  - `add_zara_observation_source` version `20260821042246`
+  - `enable_zara_testing_categories` version `20260821042251`
+  - `seed_zara_official_category_tree` version `20260821042258`
+  - `publish_zara_client_category_mappings` version `20260821042806`
+- `public.sources.zara.is_active=true`다. category는 현재 parser가 보내는 analytics namespace 36건과 공식 숫자 ID namespace 213건, 총 249건이다. 두 namespace는 metadata로 구분하며 서로 덮어쓰지 않는다.
+- `public.source_category_mappings`와 `public.client_source_category_mappings`는 각각 confirmed 56, review_required 51, rejected 142로 일치한다. canonical 근거가 없는 원피스·점프수트·란제리, 혼합/집계 category는 confirmed로 올리지 않았다.
+- active runtime release는 `fitmatch-active-with-zara-official-tree-2026-08-13-v1`이다. expected/actual 3,483건이 일치하며 provider별 Musinsa 1,922, Uniqlo 1,505, ZARA 56이다. 기존 provider row는 복제 보존했다.
+- runtime source resolver probe는 analytics 셔츠와 숫자형 공식 셔츠를 confirmed로 찾았다. 원피스 review 표본과 unknown code는 `found=false`였다. batch ingest inquiry는 ZARA probe ID를 정상 반환했다.
+- observation CHECK와 submit/batch RPC allowlist에 `zara`가 포함됐다. authenticated submit의 실제 사용자 row 생성은 사용자가 실기기에서 로그인한 뒤 확인한다.
+- 공통 product classifier는 positive source mapping만으로 신규 상품을 자동 confirmed하지 않으므로 현재 ZARA product resolution은 `review_required`다. measurement basis도 미검증이어서 ZARA measurement mapping은 만들지 않았다. 따라서 category/observation DB 테스트는 가능하지만 추천 사이즈·매칭률 production 출시는 불가하다.
+- Supabase advisor에는 이번 작업으로 만든 신규 table/index가 없다. 표시된 private schema RLS-no-policy INFO와 authenticated SECURITY DEFINER RPC WARN은 기존 구조이며, 이번 migration은 기존 권한/RLS를 완화하지 않았다.
+- iPhone 17 Pro Simulator(iOS 26.3.1)에서 `ZARAParserPhase1_5Tests`와 `FitMatchSupabaseProductResolverTests`를 함께 재실행해 24/24 통과했다. 결과 bundle은 `/tmp/FitMatchZARADBReadyDerivedData/Logs/Test/Test-FitMatch-2026.08.21_13-31-37-+0900.xcresult`다.
+
+## 76. 2026-08-21 ZARA 운영 30상품 A-test 적재
+
+> 이 절이 ZARA DB 표본과 비교 가능 여부에 대한 최신 권위 상태다. 75절의 249 category/56 confirmed mapping은 이번 작업 후 262 category/65 confirmed mapping으로 증가했다.
+
+- 사용자의 명시적 승인에 따라 제공된 ZARA 수집 패키지에서 실제 상품 30건을 선정하고, 공개 size guide를 동시성 1/cache 우선/5xx 최대 1회 재시도로 수집했다.
+- 운영 canonical DB에는 ZARA product 30, 실제 source variant 45, size 188, raw measurement 870건이 존재한다. runtime 계약이 만든 빈 `__default__` placeholder variant 30건은 실제 색상 variant 수에 포함하지 않는다.
+- guide 결과는 42 variant garment-measure, 3 variant body-only다. body-only 값은 garment measurement로 변환하지 않았다. garment raw field도 공식 basis가 미검증이므로 870건 전부 `is_comparable=false`, `measurement_alias_not_found`로 보존했다.
+- product classification은 29건 confirmed, `자수 프린트 스커트 팬츠` 1건 review-required다. 신규 상품의 general classifier를 느슨하게 만들지 않고, bounded A-test의 실제 structured metadata를 근거로 product-specific decision을 사용했다.
+- 인증 사용자를 가장하지 않고 service-role 전용 `fitmatch_batch_ingest_product`를 사용했다. 따라서 ZARA `product_observations`는 0건이며, 이 30건은 사용자 observation이 아니라 관리자 canonical preload 표본이다.
+- 실제 앱 parser 경로 `ZARA > 남성/여성 > family > subfamily` 및 `SECTION:FAMILY:SUBFAMILY` code로 payload를 정렬했다. app-path source resolver와 product resolver probe가 confirmed category를 찾고 `comparison_ready=false`를 반환하는 것을 확인했다.
+- migration `extend_zara_production_sample_categories` version `20260821080945`를 운영 적용했다. 로컬 파일은 `supabase/migrations/111_extend_zara_production_sample_categories.sql`이다. 신규 leaf 13건 중 9 confirmed, 4 review-required이며, 최종 ZARA category 262, public/client mapping 각각 confirmed 65/review 55/rejected 142, active runtime ZARA mapping 65다.
+- ZARA structured category를 product-name heuristic으로 재분류하지 않게 했고, `지퍼 재킷`이 `퍼 재킷` substring 때문에 mouton이 되는 오류를 word-boundary 규칙으로 수정했다.
+- 테스트 결과는 ZARA Phase 1.5 targeted 17/17, `FitMatchP0ProductionPathTests` + `FitMatchSupabaseProductResolverTests` 32/32 통과다. 결과 bundle은 각각 `/tmp/FitMatchZARA30DerivedData/Logs/Test/Test-FitMatch-2026.08.21_16-56-31-+0900.xcresult`, `/tmp/FitMatchZARA30DerivedData/Logs/Test/Test-FitMatch-2026.08.21_17-13-04-+0900.xcresult`다.
+- 운영 advisor에는 ERROR가 없다. 기존 RLS-no-policy INFO, authenticated SECURITY DEFINER RPC WARN, leaked-password protection WARN, unused/unindexed index INFO는 유지되며 이번 ZARA category migration이 신규 table/RLS 경계를 만들지는 않았다. 일반 참고: https://supabase.com/docs/guides/database/database-linter
+
+### 현재 ZARA 판정
+
+- [x] 30상품 canonical 적재
+- [x] structured category와 FitMatch category 결정 29건 확정, 1건 fail-closed review
+- [x] variant/size/raw measurement 원형 보존
+- [x] ZARA category/client/runtime mapping 확장
+- [ ] canonical measurement alias 및 공식 basis 검증
+- [ ] ZARA↔무신사·유니클로 comparison-ready 전환
+- [ ] 공식 API 사용 권한, 실제 iPhone resolver, staging E2E, App Store build 검증
+
+산출물은 `ZARAAudit/zara_production_sample_30_manifest.jsonl`(variant 45행), `zara_production_sample_30_payloads.jsonl`(상품 30행), `zara_production_sample_30_decisions.jsonl`(결정 30행), `prepare_production_sample_30.mjs`다. 전체 결과는 `FitMatch-ZARA-Phase1.5-Blocker-Resolution-20260821.md` M절에 기록했다.
+
+## 77. 2026-08-21 ZARA category별 measurement mapping 승인 전 감사
+
+- 이번 절은 읽기 전용 조사다. 앱 코드, 운영 DB alias, 기존 870개 measurement row는 변경하지 않았다.
+- 30상품/45 variant 표본의 garment guide는 세 가지 schema로 수렴한다.
+  - 티셔츠·셔츠·가디건·아우터: `chest`, `front-length`, `sleeve-length`, `arm-width`, `back-width`
+  - 팬츠: `waist`, `hips`, `front-length-lower`, `front-rise`, `back-rise`
+  - 원피스: `chest`, `waist-full-body`, `hips`, `front-length-full-body`
+- 실제 ZARA KR 제품 사이즈 UI에서 상의·팬츠·원피스를 열어 모두 “옷을 평평하게 편 상태에서 측정”한다는 공식 문구와 cm 표를 확인했다. UI는 `가슴/허리/엉덩이 둘레`라고 표시하지만 값은 평평하게 놓은 한쪽 폭이다. 따라서 canonical width로 확정되는 경우 multiplier는 `1.0`이며 2로 나누거나 2를 곱하지 않는다. cm도 단위 변환이 없다.
+- 다만 공식 UI 본문만으로 가슴선의 정확한 양 끝점, 앞면/총 기장의 시작점, 소매의 set-in/raglan 시작점은 아직 확인되지 않았다. 따라서 `chest→pit-to-pit`, `front-length→HPS-to-hem`, `sleeve→shoulder-seam-to-cuff`, `front-length-lower→waist-to-hem`은 현재 PROBABLE이며 바로 comparable alias로 승격하지 않는다.
+- `back-width`는 shoulder가 아니고 `arm-width`는 현재 FitMatch canonical key가 없으므로 raw-only를 유지한다. `back-rise`도 front rise와 한 kind로 섞지 않고 raw-only가 안전하다. `sizeGuideInfo` body-only 3 variant는 계속 비교에서 제외한다.
+- 운영 DB의 ZARA raw row는 `raw_code=A/B/C/D/E`, `raw_label=zone-name-*`로 저장돼 있다. A~E는 category별 의미가 다르고 upper schema에서도 D/E 순서가 바뀌므로 위치 문자를 alias key로 사용하면 안 된다. 현재 normalization 함수는 raw_code가 존재하면 label fallback을 하지 않으므로, 구현 시 ZARA의 `raw_code`를 stable `tableTitleZone`으로 바꾸고 원래 `zoneId`는 evidence에 보존해야 한다. `category_scope`도 payload에 명시해야 한다.
+- 현재 parser candidate table은 실제 표본의 복수형 `zone-name-hips`, `waist-full-body`, `front-length-full-body`, `front-length-lower`를 처리하지 않는다. 검증된 항목만 typed mapping에 추가하고 mapping version을 올려야 한다.
+- FitMatch 비교 최소 조건은 상의/셔츠/가디건 2개(shoulder 또는 chest 중 1개 포함), 아우터 2개(chest 필수), 팬츠 2개(waist/hip/thigh 중 2개), 원피스 2개(chest/waist/hip 중 1개)다. 따라서 팬츠는 waist+hip, 원피스는 chest+waist/hip이 검증되면 비교 가능하다. 상의·아우터는 chest만으로 부족하므로 front-length 또는 다른 두 번째 항목의 측정 기준 검증이 필요하다.
+- 전체 검증 후 예상 최대치는 confirmed 29상품 중 garment guide가 있는 27상품이다. body-only 상품 2건과 review-required 상품 1건은 계속 제외한다. 수평 폭만 먼저 승인하고 상의 길이를 보류하면 팬츠 6상품+원피스 2상품, 총 8상품만 정책 최소 조건을 만족한다.
+- 승인 후 권장 순서는 (1) upper/pants/dress 공식 측정 도식·설명 근거 확보, (2) ZARA raw identity/category_scope 및 Swift typed mapping 수정, (3) category-scoped alias migration과 기존 30상품 재정규화, (4) ZARA↔Musinsa↔Uniqlo pair regression과 rollback probe다. comparison score/weight와 기존 provider 로직은 변경하지 않는다.
+
+## 78. 2026-08-21 ZARA 검증 measurement subset 운영 반영
+
+> 이 절이 77절의 승인 전 상태를 대체하는 최신 권위 상태다. 전체 ZARA가 아니라 공식 근거가 확인된 팬츠·원피스 subset만 활성화했다.
+
+- ZARA KR 공식 상품 사이즈 UI의 “옷을 평평하게 편 상태에서 측정” 문구와 category별 표를 대조했다. 활성 mapping은 전부 cm 단면→cm 단면 `×1.0`이며 나누기·곱하기 변환이 없다.
+- 팬츠는 `waist→waist_width`, `hips→hip_width`, `front-rise→front_rise`; 원피스는 `chest→chest_width`, `waist-full-body→waist_width`, `hips→hip_width`만 comparable이다.
+- 상의 length/sleeve/arm/back, 팬츠 total length/back rise, 원피스 full-body length는 측정 endpoint 또는 canonical 대응이 부족해 raw-only다. `sizeGuideInfo` body guidance도 계속 제외한다.
+- `ZARAParser`는 stable `tableTitleZone`을 raw code로 사용하고 기존 A~E `zoneId`를 `raw_zone_id` evidence로 보존한다. 팬츠 waist+hip, 원피스 chest/waist/hip 중 2개라는 최소 조건을 parser가 다시 검사한다.
+- 운영 migration `seed_zara_verified_measurement_subset` version `20260821090138`을 적용했다. 로컬 재현 파일은 `supabase/migrations/112_seed_zara_verified_measurement_subset.sql`이다. policy version은 `zara-measurement-2026-08-21-v1`, source alias는 category-scoped 5건이다.
+- 30상품을 service-role ingest로 재정규화한 현재 DB는 measurement 870, comparable 177, raw-only 693이다. `raw_zone_id`와 full `source_dimensions`는 870건 모두 보존됐고 A~E raw code는 0건이다. classification은 confirmed 29/review-required 1을 유지한다.
+- runtime DB probe는 ZARA↔ZARA 팬츠와 ZARA↔Uniqlo 팬츠를 comparison-ready로 판정했다. ZARA↔Musinsa 팬츠는 핵심 공통 폭이 waist 하나뿐이라 `required_any_measurements_missing`, ZARA 원피스끼리는 공식 length classification이 없어 `length_classification_missing`, review 상품은 `classification_not_confirmed`로 fail-closed다.
+- 기존 Uniqlo↔Musinsa 팬츠 probe는 comparison-ready다. 점수·reliability·comparison policy와 기존 provider 분기는 변경하지 않았다.
+- targeted ZARA suite 20/20, closet hydration suite 2/2가 iPhone 17 Pro Simulator(iOS 26.3.1)에서 통과했다. 전체 `FitMatchTests` struct는 260 passed, 기존 COS/category taxonomy expectation 9 failed, 장시간 Musinsa corpus 1 canceled다. ZARA 실패는 없었지만 전체 suite 통과로 표현하지 않는다. bundle은 `/tmp/FitMatchZARACommonFinalDerivedData/Logs/Test/Test-FitMatch-2026.08.21_18-16-04-+0900.xcresult`다.
+- Supabase advisor는 ZARA 관련 신규 항목 0건이다. 전체 security는 INFO 47/WARN 14, performance는 INFO 89이며 기존 RLS-no-policy, SECURITY DEFINER, leaked-password protection, unused/unindexed index 항목이다: https://supabase.com/docs/guides/database/database-linter
+- 남은 blocker는 (1) ZARA↔Musinsa의 두 번째 공통 핵심 팬츠 치수 부족, (2) 원피스 공식 length classification, (3) 상의 두 번째 verified 치수, (4) API 사용 허가, 실제 iPhone/App Store/staging E2E다. production release는 계속 NO다.
+## 2026-08-24 ZARA URL variant·카테고리 출시 준비 보완
+
+- ZARA URL `-p########.html` reference, URL `v1`, page `zara.analyticsData.catentryId`, 내부 `productId`, `productRef`의 기존 분리 계약을 유지했다. URL `v1`이 있으면 embedded analytics의 현재 `catentryId`와 정확히 일치할 때만 `url_variant_verified_by_embedded_analytics`로 확정하고, `v1`이 없으면 페이지가 명시한 현재 variant를 `embedded_analytics_selected_variant`로 기록한다. ID를 계산하거나 불일치 variant를 추측하지 않는다.
+- `ProductMetadata`에 `variantSelectionMethod`, `variantSelectionConfidence`, `categoryMappingPolicyVersion` provenance를 추가했다. URL variant 검증은 confidence 1.0, page-selected variant는 0.9로 구분한다. 기존 raw URL/reference/variant/internal product ID는 모두 보존한다.
+- ZARA category parser에 production sample DB migration 111에서 `confirmed`로 검토된 9개 exact `section|family|subfamily` mapping을 우선 적용하는 versioned embedded snapshot을 추가했다. exact mapping 다음에만 기존 broad structured-family fallback을 사용하며 unknown/mixed/excluded category는 계속 `.other`로 fail-closed다. 새 generic engine/table은 만들지 않았고 production DB write/migration apply는 하지 않았다.
+- `measureGuideInfo`만 의류 실측으로 사용하는 기존 계약, `sizeGuideInfo` 비교 금지, challenge/access failure 중단, 검증되지 않은 상의 실측 raw-only 처리는 변경하지 않았다. ZARA release gate도 아직 열지 않았다.
+- 검증: `xcodebuild build-for-testing ... -derivedDataPath /tmp/FitMatchZARAURLCategoryDerivedData` → `TEST BUILD SUCCEEDED`. `ZARAParserPhase1_5Tests` → 22/22 passed (`/tmp/FitMatchZARAURLCategory-20260824.xcresult`). `FitMatchP0ProductionPathTests` + `FitMatchSupabaseProductResolverTests` → 38/38 passed (`/tmp/FitMatchZARAURLCategoryRegression-20260824.xcresult`). `git diff --check` clean.
+- 남은 출시 blocker: (1) 확인된 공식 structured product/variant API 계약이 없어 현재는 페이지 embedded analytics가 권위 경로다. CSS DOM 텍스트 파싱은 사용하지 않는다. (2) 여러 variant 목록에서 URL color를 별도 선택하는 공식 payload는 아직 검증되지 않았다. 현재 URL/page가 선택한 variant만 처리한다. (3) DB의 ZARA 249개 source mapping 중 client snapshot 기준 confirmed 56, review_required 51, rejected 142이므로 전체 category 자동 확정 상태가 아니다. 앱 embedded exact snapshot은 실제 production sample로 검증된 9개만 포함한다. (4) 실제 iPhone에서 ZARA KR URL 공유→페이지 metadata→size guide→비교 E2E와 접근 안정성이 미검증이다. (5) 이 네 항목 검증 전 release `ZARAIntegrationAvailability`는 의도적으로 닫혀 있다.
+
+## 2026-08-24 ZARA 사용자 확정 4상품 카테고리 반영
+
+- 사용자 검토로 다음 네 상품의 분류를 확정했고 원본 링크와 근거를 `ZARAAudit/zara_user_adjudicated_category_decisions_20260824.jsonl`에 보존했다.
+  - [JEANS Z1975 로우라이즈 레귤러](https://www.zara.com/kr/ko/jeans-z1975-%E1%84%85%E1%85%A9%E1%84%8B%E1%85%AE%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%8C%E1%85%B3-%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5-p01934230.html?v1=585050955): 데님팬츠
+  - [봄바초 팬츠](https://www.zara.com/kr/ko/%E1%84%87%E1%85%A5%E1%86%AF%E1%84%85%E1%85%AE%E1%86%AB-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p05644812.html): 긴바지
+  - [자수 프린트 스커트 팬츠](https://www.zara.com/kr/ko/%E1%84%8C%E1%85%A1%E1%84%89%E1%85%AE-%E1%84%91%E1%85%A2%E1%84%90%E1%85%A5%E1%86%AB-%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p01377700.html): 긴바지
+  - [스트라이프 봄버 재킷](https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%87%E1%85%A9%E1%86%B7%E1%84%87%E1%85%A5-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p07782343.html): 재킷
+- `C.PTON-LEGGING`, `L. PANT. PIJAMA`는 검증된 source path 단위로 긴바지에 연결했다. 현재 production canonical taxonomy는 조거를 별도 비교 family로 나누지 않고 `bottoms/long_pants/pants`로 비교하므로 봄바초 팬츠도 긴바지로 저장한다. 앱의 `트레이닝 팬츠` 표시 enum을 새 taxonomy 계약으로 승격하지 않았다.
+- `B.FOLDER PANTS`와 `B.BLAZER`는 한 source subfamily 안에 다른 구조의 상품이 존재하므로 전체 subfamily를 데님/재킷으로 바꾸지 않았다. URL의 안정적인 8자리 style number `01934230`, `07782343`에만 사용자 확정 override를 적용한다. `02753522` 같은 실제 `B.BLAZER` 블레이저는 계속 블레이저다.
+- ZARA embedded category snapshot 버전은 `zara-kr-structured-category-2026-08-24-v3`이며 parser가 URL style number를 classifier에 전달한다. ID를 계산하거나 상품명만으로 확정하지 않는다.
+- 검증: `ZARAParserPhase1_5Tests` 25/25 통과(`/tmp/FitMatchZARAUserConfirmedV2-20260824.xcresult`), `FitMatchP0ProductionPathTests` + `FitMatchSupabaseProductResolverTests` 38/38 통과(`/tmp/FitMatchZARAUserConfirmedRegression-20260824.xcresult`), adjudication JSONL 전체 `jq` parse 통과, `git diff --check` clean.
+- 운영 Supabase write/migration apply는 하지 않았다. 따라서 앱 로컬 분류는 반영됐지만 운영 DB의 기존 `자수 프린트 스커트 팬츠=review_required`, `스트라이프 봄버 재킷=blazer` product decision은 아직 사용자 확정값으로 승격되지 않았다. 다음 DB 작업은 이 JSONL을 근거로 기존 history를 보존한 새 manual-review history/decision을 staging에서 먼저 검증한 뒤 별도 승인을 받아 적용해야 한다.
+- ZARA 전체 서비스 출시는 여전히 별도 문제다. 이번 작업은 사용자 확정 4건의 카테고리 ambiguity를 닫았고, 공식 API/접근 안정성·실제 iPhone 공유 E2E·나머지 review/rejected category·일부 measurement basis blocker는 그대로 남는다.
+
+## 2026-08-24 ZARA 쉐도우 3,983건 실제 분류기 안전성 흡수
+
+- 외부 파일의 ZARA 3,983건을 정답/Gold로 자동 승인하지 않고, 현재 앱의 실제 `ZARACategoryClassifier`에 통과시키는 회귀 테스트로 흡수했다. 3,983건 중 구조화된 일반상품 3,691건을 평가했고, 2,931건은 현재 계약으로 분류됐으며 760건은 안전하게 미분류로 남았다.
+- 최초 감사에서 외부 파일의 대분류 후보와 앱 분류가 다른 항목은 187건이었다. 이 수치는 곧 오류 187건이 아니다. 가디건·니트 베스트를 외부 파일은 상의로, FitMatch 기존 계약은 아우터로 보는 기준 차이와 외부 후보 자체의 모순이 포함돼 있어 자동으로 덮어쓰지 않았다.
+- 실제 안전 결함은 부분 문자열과 구조 충돌이었다. `WAISTCOAT`의 `coat`, `OVERSHIRT`의 `shirt`, `OVERALL|B.PANTS`의 `pants` 때문에 각각 아우터·상의·하의로 조용히 확정될 수 있었고, `SHIRT|F. Jacket`, `WIND-JACKET|ATH BSweatshirt`처럼 family와 subfamily가 다른 옷 구조를 말해도 한쪽 키워드가 이길 수 있었다.
+- 정책 v4에서는 `OVERALL/점프수트`, `TOPS AND OTHERS`, `WAISTCOAT`, `OVERSHIRT`를 검토 전용 family로 fail-closed 처리한다. 이 선택은 운영 DB의 공식 ZARA 메뉴 자료에서도 점프수트·오버셔츠가 `review_required/unresolved`인 상태와 일치한다. 새 taxonomy나 generic engine은 만들지 않았다.
+- exact source mapping이 없는 generic fallback에서는 family와 subfamily가 서로 다른 대분류를 명시하면 내부 `미확정` sentinel로 보류한다. 이 값은 사용자 카테고리 `기타/기타`로 확정하거나 표시하기 위한 값이 아니며 자동 비교 차단에만 사용한다. 사용자에게는 `분류 미확정` 또는 카테고리 선택 요청으로 표현해야 한다. 검토된 exact mapping과 사용자가 확정한 4상품 결과는 유지한다.
+- 최종 전체-corpus 결과는 `rows=3983`, `evaluated=3691`, `structured_paths=152`, `classified=2931`, `unclassified=760`, `source_domain_mismatches=0`, `ambiguous_family_leaks=0`, `shadow_candidate_differences=66`이다. 마지막 66건은 Gold 오류 수가 아니라 현재 FitMatch 계약과 독립 정답이 없는 외부 후보의 차이이므로 NOT_VERIFIED로 유지한다.
+- 검증: `node scripts/audit-category-mapping-shadow-corpus.mjs` 통과. `ZARAParserPhase1_5Tests` 27/27 통과(`/tmp/FitMatchZARAShadowAuditSuiteV3-20260824.xcresult`). `FitMatchP0ProductionPathTests` + `FitMatchSupabaseProductResolverTests` 38/38 통과(`/tmp/FitMatchZARAShadowRegression-20260824.xcresult`). `CategoryLive300ShadowAuditTests` 1/1 통과(`/tmp/FitMatchZARAShadowLive300-20260824.xcresult`), silent conflict 0, strict comparison conflict leak 0을 유지했다.
+- 운영 Supabase write, migration apply, seed, backfill, commit, push는 하지 않았다. 신규 migration도 만들지 않았다. 현재 작업은 앱의 embedded fail-closed fallback과 로컬 테스트/문서만 보완했다.
+- 남은 일: (1) 760 미분류 중 서비스할 source family를 현재 ZARA KR PDP/구조화 응답으로 재검증해 exact mapping 후보로 승격, (2) 66 계약 차이는 상품별 사람 검수 또는 독립 Gold로 판정, (3) 실제 iPhone에서 ZARA URL 공유→상품/variant→size guide→비교 E2E, (4) 공식 structured product/variant API 계약 및 다중 색상 선택 payload 확인, (5) 승인된 사용자 4상품의 운영 DB history/decision 반영은 별도 쓰기 승인 후 staging-first로 수행한다.
+
+## 2026-08-24 ZARA 미확정 분류 UX를 무신사·유니클로 흐름과 통일
+
+- 문제 근거: ZARA parser는 구조화 category가 미확정이면 size guide 조회 전에 `ProductURLParserPartialError`를 던졌고, `CompareFlowSheet`는 모든 partial error를 오류 화면으로 보냈다. 반면 무신사·유니클로는 실측 상품을 만든 뒤 기존 `categoryConfirmation` 화면으로 연결할 수 있었다. 결과적으로 같은 fail-closed 분류인데 ZARA만 사용자가 복구할 수 없었다.
+- `ProductAnalysisRecoveryAction`을 추가해 `confirmCategoryBeforeMeasurements`와 `enterMeasurementsManually`를 오류 문구와 분리했다. UI는 sourceName 또는 문자열 비교로 ZARA를 추론하지 않고 typed recovery state만 사용한다.
+- 미확정 ZARA는 이제 오류 화면 대신 기존 “상품 종류 확인” 화면으로 간다. category/detail 선택지에서 내부 `.other`는 계속 제외되므로 사용자에게 `기타/기타`가 표시·선택·저장되지 않는다. 디버그 로그도 내부 sentinel을 `분류 미확정`으로 표현한다.
+- 사용자가 category/detail을 선택하면 같은 URL을 ZARA parser capability로 다시 분석한다. 선택한 category는 재조회 중 유지한다. 팬츠·원피스의 검증된 measurement subset이 최소 조건을 충족하면 자동 비교를 계속하고, 상의·아우터처럼 canonical measurement basis가 부족하면 추측하지 않고 기존 직접 입력 sheet를 연다.
+- ZARA 초기 production release gate는 그대로 닫혀 있다. 이번 변경은 debug/staging에서의 복구 UX와 내부 경로를 완성한 것이며 실제 iPhone·접근 안정성·공식 사용 조건 확인 없이 production provider를 활성화하지 않는다.
+- DB/schema/migration 변경과 production DB write는 없었다. comparison score, ranking, Musinsa/Uniqlo parser 정책도 변경하지 않았다.
+- 검증:
+  - `ZARAParserPhase1_5Tests` 30/30 통과. 미확정 recovery state, 사용자 확정 팬츠의 waist/hip 자동 재개, 미검증 상의의 직접 입력 전환, ViewModel의 사용자 category 보존을 포함한다. 결과: `/tmp/FitMatchZARARecovery-Final2-20260824.xcresult`.
+  - 같은 suite의 3,983 shadow corpus 결과는 `source_domain_mismatches=0`, `ambiguous_family_leaks=0` 유지.
+  - `FitMatchP0ProductionPathTests` + `FitMatchReleaseConfigurationTests` + `FitMatchSupabaseProductResolverTests` 39/39 통과. 결과: `/tmp/FitMatchZARARecovery-P0-20260824.xcresult`.
+  - `git diff --check` clean.
+- 남은 출시 작업: (1) 실제 iPhone에서 ZARA URL 공유→미확정 category 선택→size guide→비교/직접 입력 전환을 눈으로 확인, (2) ZARA 상의·아우터의 두 번째 canonical measurement endpoint 검증, (3) 공식 structured product/variant API 계약과 다중 색상 payload 검증, (4) release gate 활성화는 위 조건 통과 후 별도 결정한다.
+
+## 2026-08-24 ZARA 상의·아우터 공식 측정 기준 반영
+
+- 사용자가 제공한 ZARA KR 공식 상품 화면 캡처 4장으로 상의·아우터 측정 endpoint를 확인했다. 화면의 공식 설명은 (1) 가슴 둘레=`암홀 높이에서 한쪽 끝부터 다른 쪽 끝`, (2) 등 너비=`한쪽 어깨 소매 심라인에서 반대쪽 어깨 소매 심라인`, (3) 소매 길이=`한쪽 어깨 소매 심라인에서 소매 하단`이다. 따라서 각각 기존 typed contract인 `chest_width_pit_to_pit`, `shoulder_width_seam_to_seam`, `sleeve_shoulder_seam_to_cuff`와 일치한다.
+- 같은 화면의 앞면 길이는 `어깨 심라인에서 밑단`으로 설명된다. 현재 FitMatch의 상의 앞길이 코드는 `어깨 최고점(HPS)에서 앞 밑단`이므로 동일하다고 보지 않았다. 팔 너비도 현재 typed canonical code가 없다. 두 항목은 값과 raw code/label/info를 그대로 보존하지만 비교·점수에서는 제외한다.
+- `ZARASizeGuideParser` mapping version을 `zara_kr_measure_guide_verified_subset_v4`로 올렸다. 상의는 verified field 2개 이상이며 shoulder/chest 중 하나가 있을 때, 아우터는 2개 이상이며 chest가 있을 때만 `actualMeasurements`로 통과한다. 한 항목만 있거나 단위/값이 불완전하면 기존처럼 manual/fail-closed다.
+- 실제 표본 링크:
+  - [숏 슬리브 티셔츠](https://www.zara.com/kr/ko/%E1%84%89%E1%85%AD%E1%86%BA-%E1%84%89%E1%85%B3%E1%86%AF%E1%84%85%E1%85%B5%E1%84%87%E1%85%B3-%E1%84%90%E1%85%B5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p03431633.html): 공식 표의 S/M 값 `가슴 43/46, 앞면 길이 55/56.5, 소매 16.5/17, 등 너비 39/40, 팔 너비 13.5/14`와 저장 fixture가 일치한다.
+  - [스트라이프 봄버 재킷](https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%87%E1%85%A9%E1%86%B7%E1%84%87%E1%85%A5-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p07782343.html): 공식 표의 S/M 값 `가슴 56/58, 앞면 길이 58/59, 소매 49/50, 등 너비 60.5/61.5, 팔 너비 25.5/26`과 저장 fixture가 일치한다.
+- 기존 공통 `MeasurementComparisonEngine`에는 `zara` 분기를 추가하지 않았다. ZARA가 만든 canonical code를 기존 cross-source 경로가 Musinsa와 비교하는 회귀를 추가했고 confirmed/score 95를 확인했다. production score 공식, weight, ranking은 변경하지 않았다.
+- 운영 Supabase는 read-only로 확인했다. 현재 `source_measurement_aliases`의 ZARA comparable row는 기존 policy `zara-measurement-2026-08-21-v1` 5개뿐이다. `measurement_definitions`에는 `chest_width`, `shoulder_width`, `sleeve_length`가 존재하고, runtime resolver도 새 basis를 각각 `chest`, `shoulder`, `sleeve_length`로 해석함을 SELECT로 검증했다.
+- 로컬 migration 후보 `20260824100350_extend_zara_verified_upper_measurements.sql`을 Supabase CLI로 생성했다. 새 policy `zara-measurement-2026-08-24-v2`에 기존 5개와 upper/outer `back-width`, `sleeve-length`, 확장된 `chest` scope를 합쳐 comparable alias 7개를 versioned insert한다. 새 table/EAV/engine은 없으며 migration apply, seed, backfill, UPDATE, DELETE, production write는 실행하지 않았다.
+- 검증:
+  - `ZARAParserPhase1_5Tests` 31/31 통과: `/tmp/FitMatchZARAUpperMeasurements-Final-20260824.xcresult`.
+  - `MeasurementPolicyConsolidationTests` 6/6 통과: `/tmp/FitMatchZARACrossSource-20260824.xcresult`.
+  - `FitMatchP0ProductionPathTests + FitMatchReleaseConfigurationTests + FitMatchSupabaseProductResolverTests + MeasurementPolicyConsolidationTests + ZARAParserPhase1_5Tests` 76/76 통과: `/tmp/FitMatchZARAUpperP0Regression-20260824.xcresult`.
+- 남은 출시 작업: (1) migration은 staging에서 parity/rollback 검증 후 별도 승인으로 production 적용, (2) 기존 ZARA 저장 measurement 재정규화는 별도 backfill 승인이 필요, (3) 실제 iPhone URL 공유→선택 variant→상의/아우터 자동 비교 E2E, (4) 앞면 길이의 HPS 대응 여부와 팔 너비 consumer는 추가 공식 근거/제품 요구가 생기기 전까지 raw-only, (5) 공식 structured product/variant API 계약·다중 색상 payload·release gate는 여전히 미완료다.
+
+## 2026-08-24 connectDB → main 조건부 머지·출시 점검
+
+- 사용자 지시는 현재 브랜치 테스트에 이상이 없을 때만 main에 머지하는 것이었다. 점검 시작 시 `connectDB`, `main`, `origin/connectDB`, `origin/main`은 모두 동일 HEAD `43add48bf083dd0e01036038ee34254e8579025f`였고, 이후 작업은 대규모 미커밋 변경으로 존재했다.
+- XcodeBuildMCP로 iPhone 17 Pro Simulator(iOS 26.3.1) Debug 앱을 새로 빌드·설치·실행했다. 빌드와 실행은 성공했고 최초 화면의 Apple 로그인 CTA까지 확인했다. 파서 actor-isolation 경고는 ZARA 1건, COS 7건이었다.
+- `xcodebuild build -project FitMatch.xcodeproj -scheme FitMatch -configuration Release -destination 'generic/platform=iOS' -derivedDataPath /tmp/FitMatchReleaseCandidateDevice-20260824 CODE_SIGNING_ALLOWED=NO`는 `BUILD SUCCEEDED`였다. 이는 무서명 Release 컴파일 성공 근거이며 배포 서명·archive·Validate App 통과 근거는 아니다.
+- 전체 `FitMatchTests` 실행은 green이 아니었다. XcodeBuildMCP 실행은 300초 도구 제한으로 결과 번들 없이 종료됐고, 결과 번들을 남기는 직접 재실행에서는 다음이 관찰됐다.
+  - `CategoryLive300ShadowAuditTests` 1/1 통과. silent conflict confirmation 0, strict comparison conflict leak 0.
+  - 5,026개 production 분류 XCTest 1/1 통과. invalid 0, 사용자 확인 329.
+  - `CurrentUniqloCatalogAuditTests` 중 test host가 `pointer being freed was not allocated`로 종료 후 재시작했다.
+  - 대형 Musinsa/Uniqlo corpus 실행에서도 test host가 반복 재시작됐다.
+  - `LiveReleaseQA1200Tests.testSelectedTenCaseBatchOnPhysicalDevice`는 일반 scheme에서 필수 batch 환경변수가 없어 `XCTUnwrap` 1건 실패했다. 실기기 전용 테스트를 일반 회귀에서 skip/격리하지 못한 하네스 문제다.
+  - 이어진 `testMusinsaDeepReferenceCandidateProbe`에서는 현재 parser 결과와 저장된 target taxonomy 사이의 다수 mismatch 로그가 발생했고 네트워크 장시간 실행이 이어져, 이미 확인된 실패·crash 뒤 수동 중단했다. 중단 실행을 전체 통과로 계산하지 않는다.
+- 운영 Supabase migration ledger를 read-only로 재확인했다. 최신 적용은 `20260821090138 seed_zara_verified_measurement_subset`이다. 로컬 `113_p3_data_quality_observability`, `114_release_gate_and_quality_review_queue`, `20260824100350_extend_zara_verified_upper_measurements`는 운영에 적용되지 않았다.
+- Release 앱의 `FitMatchPrivacyPolicyURL`, `FitMatchSupportURL`은 여전히 빈 문자열이고, `ZARAIntegrationAvailability`는 Release에서 항상 false다.
+- 결론: 사용자 조건인 “테스트 이상 없음”이 충족되지 않아 commit/merge/push를 실행하지 않았다. main은 `43add48`에 그대로 있고 working tree도 보존했다. 현재 코드는 Debug/Release 컴파일 가능하지만 출시 승인은 NO다.
+- 다음 순서: (1) 일반 회귀에서 실기기·환경 의존 테스트를 명시적으로 skip/전용 scheme으로 격리, (2) test host 메모리 종료를 단독 재현·원인 수정, (3) Musinsa deep-reference 기대 taxonomy의 현재 정책 적합성 검수, (4) 전체 offline unit/UI regression 실패 0 재실행, (5) 실제 iPhone Apple 로그인·옷장·비교·탈퇴·공유 E2E, (6) 공개 privacy/support URL, 배포 서명 archive, archive audit, Validate App, TestFlight 확인 후에만 출시 승인한다.
+
+## 2026-08-24 조건부 머지 재검수 결과와 남은 사용자 판정
+
+- 이전 전체 테스트의 메모리 종료는 앱 실행 중 메모리 누수로 확인된 것이 아니라, 수백~수천 개 상품을 한 프로세스에서 순차 분석하는 대형 감사 테스트와 실시간 네트워크 테스트가 일반 회귀에 함께 들어가 test host가 재시작한 문제였다. 장시간 corpus·Vision OCR·실기기/네트워크 감사에는 명시적 환경변수 gate를 추가해 기본 offline 회귀에서 격리했다. 해당 테스트 자체를 삭제하거나 기대값을 완화하지 않았다.
+- `ShoppingProductViewModel`은 deinit 시 진행 중인 `databaseResolutionTask`를 취소하도록 보완했다. Intel Simulator에서 관찰된 `ShoppingProductViewModel.__deallocating_deinit` invalid-free 재현 경로를 제거했고, 현재 Uniqlo catalog 감사의 단독 재실행이 정상 종료됐다.
+- 현재 Uniqlo 880상품 감사 결과는 `raw_size_rows=5193`, `parsed_size_rows=5181`, `eligible=439`, `scenarios=2237`, `pass=2237`, `fail=0`이다. Musinsa 1,037 corpus는 1/1 통과(428.059초), Uniqlo 243 corpus는 1/1 통과(57.7초), 장시간 이미지 OCR 감사도 1/1 통과(30.5초)했다.
+- 분류 안전성은 다음을 보완했다. 셔츠/블라우스 같은 typed detail이 broad `tops.tshirt` source family에 의해 티셔츠로 덮이지 않는다. 민소매 구조가 저장된 긴소매 추론에 밀리지 않는다. product name의 명시적 polo는 일반 셔츠보다 먼저 판정하되, broad source umbrella의 polo 문구는 typed 셔츠를 덮지 않는다. trusted 상의 taxonomy와 `코치재킷` 상품명이 충돌하는 경우 상품명만으로 아우터를 자동 확정하지 않는다. COS `/t-shirts/`도 generic `shirt` 부분 문자열에 오분류되지 않는다.
+- ZARA 상의 공식 화면에서 검증된 가슴·등 너비·소매만 canonical measurement로 사용하고, endpoint가 다른 앞면 길이와 typed code가 없는 팔 너비는 raw-only로 유지하는 regression을 고정했다. production score·weight·ranking 계산식은 변경하지 않았다.
+- 일반 offline 전체 suite에서 오래된 adjudication 1개만 제외한 결과는 441 tests, 407 passed, 34 skipped, 0 failed다. 결과 번들은 `/tmp/FitMatchFullOfflineSerialExceptStaleGold-r4-20260824.xcresult`이다. skipped 34건은 환경변수/실기기/네트워크가 필요한 명시적 감사 테스트다.
+- 제외한 `DBLogicReliabilityAuditTests.testDBLogicAdjudicationMatchesProductionClassifier`는 207개 판정 중 31상품에서 64개 assertion이 현재 안전 정책과 과거 fixture가 다르다. 주요 차이는 과거 fixture가 반팔/민소매 셔츠·블라우스를 `tshirt` family로 저장한 반면 현재 typed contract는 종류를 `shirt`/`blouse`로 유지하고 길이를 `short_sleeve`/`sleeveless`로 별도 저장한다는 점이다. 또 `uniqlo|E491320 KIDS PEANUTS코치재킷`은 과거 fixture가 outerwear/windbreaker지만 현재 authority 정책은 trusted top 분류를 상품명 하나로 덮지 않는다.
+- 영향 상품은 Musinsa `5049615, 5155214, 6405582`, Uniqlo `E474152, E482479, E482480, E482481, E482483, E482497, E482498, E482502, E483875, E483881, E483890, E484240, E484256, E484849, E484876, E485584, E486701, E486734, E486736, E486738, E486834, E487989, E489136, E489138, E489229, E489230, E490285, E491320`이다. 이 fixture는 과거 사람 판정이 포함된 Gold 성격이라 사용자 승인 없이 기대값을 바꾸지 않았다.
+- 권장 판정은 셔츠/블라우스의 garment type을 유지하고 반팔/민소매는 length로 분리하는 현재 정책을 승인해 fixture를 재판정하는 것이다. `E491320`은 공식 trusted category가 상의라면 자동 비교를 차단하고 review 대상으로 두는 현재 fail-closed 정책을 권장한다. 사용자가 이 의미를 승인해야 fixture 갱신 후 진짜 전체 suite 0 failure를 확인할 수 있다.
+- 정확한 주요 명령과 결과:
+  - `env TEST_RUNNER_FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT=1 xcodebuild ... -only-testing:FitMatchTests/FitMatchTests/fitPairRuleCorpusMusinsa1037` → 1 passed, 428.059s.
+  - `env TEST_RUNNER_FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT=1 xcodebuild ... -only-testing:FitMatchTests/FitMatchTests/fitPairRuleCorpusUniqlo243` → 1 passed, 57.7s.
+  - `env TEST_RUNNER_FITMATCH_RUN_LONG_IMAGE_AUDIT=1 xcodebuild ... -only-testing:FitMatchTests/FitMatchTests/longImageAudit` → 1 passed, 30.5s.
+  - `xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchCrashIsolation-20260824 -parallel-testing-enabled NO -collect-test-diagnostics never -only-testing:FitMatchTests -skip-testing:FitMatchTests/DBLogicReliabilityAuditTests/testDBLogicAdjudicationMatchesProductionClassifier -resultBundlePath /tmp/FitMatchFullOfflineSerialExceptStaleGold-r4-20260824.xcresult` → 441 total, 407 passed, 34 skipped, 0 failed.
+- 출시 blocker는 추가로 남아 있다. `FitMatchPrivacyPolicyURL`과 `FitMatchSupportURL`은 빈 문자열이고 Release의 `ZARAIntegrationAvailability.isEnabled`는 `false`다. 운영 DB 최신 migration은 `20260821090138`이며 로컬 `113`, `114`, `20260824100350`은 미적용이다. 실제 iPhone에서 ZARA 공유 URL·variant·size guide·카테고리 확인·자동 비교/직접 입력 전환 E2E도 아직 수행하지 않았다.
+- 결론: 현재 branch는 `connectDB`, HEAD는 `43add48bf083dd0e01036038ee34254e8579025f`다. Gold 판정 31상품 승인 전에는 전체 테스트 실패 0 조건이 아니므로 commit/merge/push와 출시를 하지 않는다.
+
+## 2026-08-24 ZARA 99% 신뢰성 추가 감사
+
+- ZARA KR 공식 상품 페이지 5개(티셔츠·셔츠·팬츠·재킷·원피스)를 실제 브라우저에서 열어 구조화 데이터 계약을 다시 확인했다. 각 페이지에서 JSON-LD `ProductGroup.productGroupID`, variant URL의 `v1`, embedded analytics의 `catentryId`, 내부 `productId`, `productRef`가 함께 제공됐다. 이는 CSS DOM 텍스트에 의존하지 않고 상품 reference와 선택 variant를 상호 검증할 수 있는 근거다.
+- `ZARAProductPageParser.identity()`는 JSON-LD가 제공될 경우 analytics style이 `productGroupID`와 일치하고, analytics `catentryId`가 JSON-LD variant URL 목록 안에 있을 때만 identity를 확정하도록 보강했다. 과거 저장 fixture처럼 richer JSON-LD 필드가 없는 자료는 계속 읽되, 서로 모순되는 최신 구조화 데이터는 fail-closed한다.
+- 정상 상품 페이지의 JavaScript bundle 안에 문자열 `triggerInterstitialChallenge`가 포함돼 있다는 이유만으로 CAPTCHA로 오판하던 실제 결함을 발견했다. challenge 판정은 이제 `bm-verify`, 화면의 Access Denied title/body 같은 강한 신호를 우선하고, 해당 bundle 문자열만 있을 때는 유효한 analytics와 Product JSON-LD가 모두 없는 경우에만 차단한다. 회귀 테스트를 추가했다.
+- iPhone 17 Pro Simulator에서 visible WebView 감사를 실행한 결과, 수정 전에는 정상 페이지가 `challenge_detected`로 실패했으나 수정 후에는 공식 티셔츠 URL에서 `style=04174325`, `v1/catentry=547793140`, `productId=545408873`, `productRef=04174325-I2026`과 `garment_measure` 응답까지 확인했다. 즉 공식 페이지를 사용자 브라우저와 같은 WebView로 읽는 경로 자체는 동작한다.
+- 다만 실제 기본 `ZARAProductPageLoader`는 여전히 background `URLSession` 경로다. opt-in live production-loader test를 추가해 같은 공식 URL을 호출한 결과 `automaticParsingUnavailable`로 실패했다. 별도 DEBUG WebView 감사만 성공하고 production/default import path는 실패하므로 현재 상태를 ZARA 서비스 준비 완료 또는 99% 신뢰성이라고 판정할 수 없다.
+- 검증 결과: 구조화 identity/challenge 회귀를 포함한 기본 `ZARAParserPhase1_5Tests`는 최종 35개 중 34 통과, 명시적 live 1개 skip으로 성공했다(`/tmp/FitMatchZARA99DefaultFinal-20260824.xcresult`). P0/release/resolver/measurement/ZARA focused regression은 79/79 통과했다(`/tmp/FitMatchZARA99FocusedRegression-20260824.xcresult`). opt-in live default-loader 감사는 35개 중 34 통과, live 1건 실패(`/tmp/FitMatchZARALiveDefaultLoader-r5-20260824.xcresult`)이며 이 실패가 현재 출시 blocker다.
+- 99% 수치도 아직 입증할 수 없다. 현재 ZARA shadow corpus 3,983건은 독립 정답이 아니라 후보 데이터이고, 사용자가 직접 확정한 Gold는 4상품뿐이다. 객관적인 99% precision 근거를 만들려면 분류군·성별·구조·미확정 사례가 섞인 대표 표본을 독립 검수해야 한다. 권장 최소 검증팩은 약 300상품이며, 오류 0건일 때도 이를 운영 전체에 대한 절대 보장으로 표현하지 않고 표본 기반 신뢰 근거로만 사용한다.
+- 아래 2026-08-25 작업으로 앞서 적은 WebView-first 제안은 폐기하고 `URL v1 실측 API 우선 + WebKit fallback`으로 구현했다. 남은 우선순위는 (1) 300상품 독립 Gold 검수팩과 오분류/보류율 집계, (2) 7일 반복 drift 감사, (3) 실제 iPhone 공유 확장 E2E다. production score, ranking, DB 데이터는 변경하지 않았고 commit/merge/push도 하지 않았다.
+
+## 2026-08-25 ZARA URL v1·실측 API 우선 경로와 WebKit fallback 구현
+
+- 사용자 승인에 따라 수집 순서를 `URL identity 우선 → v1 실측 API 선조회 → 일반 HTTP 상품 구조 확인 → 필요한 경우에만 WebKit 구조화 데이터 fallback`으로 변경했다. URL `p########`은 style reference, query `v1`은 선택 색상의 catalog-entry ID로 계속 분리하며 서로 계산하지 않는다.
+- `v1`이 있으면 `size-measure-guide`를 상품 페이지보다 먼저 호출한다. 다만 선조회 응답은 이후 공식 상품 페이지의 analytics와 JSON-LD가 같은 style/variant를 독립적으로 확인한 경우에만 소비한다. URL의 임의·오래된 `v1`을 그대로 신뢰하거나 다른 색상 ID로 바꾸지 않는다.
+- `v1`이 없으면 기존처럼 상품 구조화 데이터에서 현재 `catentryId`를 확인한 후 실측 API를 호출한다. 따라서 다중 색상 상품에서 reference만 보고 임의 variant를 고르는 동작은 없다.
+- 일반 `URLSession` 상품 페이지가 403/빈 구조/JavaScript 미실행 등으로 identity를 만들지 못할 때만 `ZARAWebViewProductPageLoader`를 사용한다. fallback은 비영구 WebKit data store, JavaScript 활성화, 공식 ZARA host 제한으로 동작하고 DOM 문구 전체가 아니라 `zara.analyticsData` script와 Product JSON-LD만 캡처한다. URL의 `bm-verify`, 화면 Access Denied, navigation 401/403/429는 실패로 종료하며 challenge 해결·쿠키 복제·우회 로직은 없다.
+- ZARA가 짧은 `/item-p...` URL을 localized canonical 상품명 URL로 교체할 때 WebKit이 이전 navigation을 `NSURLErrorCancelled(-999)`로 알리는 정상 동작을 실제 라이브 검사에서 발견했다. 이 취소만 계속 기다리고 실제 네트워크 오류는 실패시키도록 수정했다.
+- 신규 회귀 테스트는 (1) `v1`이 있으면 guide→page 순서, (2) `v1`이 없으면 page→guide 순서, (3) direct page가 유효하지 않을 때 fallback을 사용하면서 같은 variant를 유지하는지 검증한다. 기본 focused regression에서는 opt-in live test 2개만 skip되고 나머지가 모두 통과했다.
+- 이전에 `automaticParsingUnavailable`로 실패했던 공식 티셔츠 URL `https://www.zara.com/kr/ko/item-p04174325.html?v1=547793140`을 실제 기본 `ZARAParser()`로 재실행했다. 수정 후 상품명, style `04174325`, catentry `547793140`, internal product ID `545408873`, 상의/반팔, `actualMeasurements`와 비어 있지 않은 사이즈를 확인했다. 또한 `v1=547793140`을 `ZARASizeGuideLoader`에 직접 전달하는 별도 live test가 상품 페이지를 읽지 않고 공식 `measureGuideInfo`의 cm 실측 행을 받는 것도 확인했다. live ZARA suite 39/39 통과(`/tmp/FitMatchZARAURLFirstDirectAPILive-r2-20260825.xcresult`).
+- P0/release/resolver/measurement/ZARA final focused regression은 총 84건에서 실패 0건이었다(기본 실행에서 opt-in live 2건 skip, 나머지 통과, `/tmp/FitMatchZARAURLFirstFinalFocused-20260825.xcresult`). XcodeBuildMCP로 iPhone 17 Pro Simulator에 새 Debug 앱을 빌드·설치·실행했고 Apple 로그인 시작 화면을 확인했다. arm64 generic iOS Release 무서명 빌드도 `BUILD SUCCEEDED`였다(`/tmp/FitMatchZARAURLFirstRelease-20260825`).
+- 사용자 영향: `v1` 포함 링크는 실측 조회를 먼저 시작하므로 불필요한 WebKit 의존을 줄이고, 일반 HTTP 상품 페이지가 실패해도 공식 브라우저 구조화 데이터로 자동 복구할 수 있다. fallback은 내부 비표시 WebKit 세션이므로 추가 페이지 화면을 사용자에게 강제로 노출하지 않는다.
+- 변경하지 않은 것: production score·weight·ranking, category taxonomy, 운영 DB, migration, release gate. `ZARAIntegrationAvailability`는 Release에서 여전히 false이며 실제 iPhone 공유 확장 E2E, 300상품 독립 Gold, 반복 drift 검증, 운영 migration/release 승인 전에는 99% 또는 production 출시 완료로 판정하지 않는다. commit/merge/push도 실행하지 않았다.
+
+## 2026-08-25 UNIQLO 색상별 상품 이미지 복구
+
+- 사용자 캡처의 `크루넥T`, `E422992`, `XXL`은 현재 UNIQLO fixture의 실측값과 일치하며 저장된 `Product.imageURLString`이 비어 있어 홈·옷장 목록·상세 화면이 모두 같은 placeholder를 표시하는 문제였다. UI 세 곳의 개별 문제가 아니라 legacy 저장 상품의 이미지 복구 경로가 없던 공통 결함이었다.
+- 선택 색상 이미지가 있으면 계속 최우선으로 사용한다. 해당 URL 로딩이 실패하면 같은 goods ID의 공식 기본색 `_00_` URL을 두 번째 후보로 시도한다. 다른 판매처나 알 수 없는 URL을 UNIQLO로 추정하지 않는다.
+- 공유 URL이 generic color `00`이고 size API가 실제 대표 색상 이미지(이 상품은 `_11_`)를 제공하면, 같은 goods ID임을 확인한 뒤 그 공식 이미지를 채택한다. 명시적으로 선택된 색상(예: `03`)은 generic/다른 색상 이미지로 덮어쓰지 않는다.
+- 이미 저장된 legacy UNIQLO 상품의 이미지가 nil이어도 canonical source code, 공식 URL host 또는 제한된 legacy source name으로 UNIQLO임이 확인된 경우에만 `productCode`에서 같은 상품의 공식 `_00_` 표시 URL을 런타임에 파생한다. 6자리 코드만 같은 Musinsa/unknown 상품에는 적용하지 않는다. DB/local backfill 없이 앱 업데이트만으로 기존 옷장 카드가 복구된다. 원본 `methodSource`, 상품 데이터, 비교 점수·순위는 변경하지 않았다.
+- 공통 표시 경로(Home, My Closet 카드/목록, Closet 상세, 비교/추천/검색)를 `imageURLStringForDisplay`로 통일했다. 저장된 원본 URL은 그대로 보존하고 화면 표시에서만 복구 후보를 사용한다.
+- 실제 CDN 확인: `E422992` 기본색 `_00_`과 size API 대표색 `_11_` 모두 2026-08-25 기준 HTTP 200 `image/jpeg`였다.
+- 검증: iPhone 17 Pro Simulator Debug build/install/launch 성공. 최종 `FitMatchTests/FitMatchTests` 실행 결과 287 total, 284 passed, 3 explicit skips, 0 failed (`/tmp/FitMatchUniqloImageFallbackSuite-r2-20260825.xcresult`). 신규 회귀는 선택 색상 보존, generic 00의 공식 대표색 채택, 선택색→기본색 fallback 순서, nil legacy 상품의 기본 썸네일 파생, non-UNIQLO 6자리 코드 오탐 방지를 고정한다.
+- 남은 확인: 로그인된 실제 사용자 데이터가 있는 iPhone에서 앱 업데이트 후 동일 `E422992` 카드가 홈·옷장·상세에서 표시되는지 눈으로 확인해야 한다. Simulator는 Apple 로그인 화면까지만 접근 가능해 사용자 계정의 기존 저장 row를 직접 재현하지 못했다. 이 확인은 구현 blocker가 아니라 실제 계정 데이터/UI 최종 확인이다.
+
+## 2026-08-25 ZARA 공식 300상품 A 분류 테스트
+
+- `scripts/collect-zara-live-300.mjs`로 공식 ZARA KR sitemap과 현재 구조화 상품 자료가 교차 확인된 300개 고유 style reference를 수집했고, 원본은 `ZARAAudit/live_zara_300_20260825/zara_live_300.jsonl`, 사람이 링크를 열어 판정할 표는 `zara_live_300_review.csv`에 보존했다. 전부 `official_listed=true`, `PENDING_HUMAN_REVIEW`, `gold_approved=false`이며 자동 Gold 승격은 하지 않았다.
+- A 테스트는 300개 snapshot을 현재 실제 `ZARACategoryClassifier`와 `ParsedClosetClassification`의 conflict/atomic category 조건에 통과시켰다. 대분류 또는 세부분류가 `기타`이면 confirmed로 세지 않고 안전 미분류로 집계하도록 테스트 기준을 강화했다.
+- 최종 결과: 300건 중 `confirmed=147`(49.0%), `review_required=19`(6.3%), `unclassified=134`(44.7%). `source_domain_mismatches=0`, `silent_conflict_confirmations=0`, `strict_conflict_leaks=0`이다. 따라서 잘못된 대분류 확정/충돌 비교 유출은 발견되지 않았지만 자동 서비스 범위는 절반 수준이라 99% 준비 완료로 볼 수 없다.
+- 자동 확정 세부 분류: 스커트 26, 긴바지 23, 블레이저 21, 원피스 18, 재킷 16, 셔츠 15, 반팔 11, 데님 6, 스웨트 5, 코트 3, 가디건/반바지/폴로셔츠 각 1.
+- 미분류가 가장 많이 몰린 source family: `SWIMSUIT|Swimwear` 23, `PANTY/UNDERPANT|Underwear` 20, `SWIMSUIT|BIKINI` 13, `SWIMSUIT|SWIMSUIT BIKINI` 9, `BERMUDA|B.BERMUDAS` 5, `BODYSUIT|BODY` 4, `OVERSHIRT|Overshirt` 4, `WAISTCOAT|B.VEST` 3. 수영복/바디수트처럼 현재 FitMatch 비교 계약 밖인 항목은 억지 매핑하지 않고, 버뮤다·오버셔츠·베스트·속옷은 상품 링크 사람 검수 후 exact source rule 후보로 분리해야 한다.
+- `ZARAParserPhase1_5Tests` 최종 40 total, 38 passed, 2 explicit live-network skips, 0 failed(`/tmp/FitMatchZARALive300-A-final-20260825.xcresult`). 300건 A 분류 audit 자체는 실행·통과했다. production DB write/migration apply, score/ranking 변경, commit/push는 하지 않았다.
+- 다음 단계: review CSV의 링크를 보고 300건에 `human_category`, `human_detail`, `reviewer_notes`, `gold_approved`를 채우는 독립 사람 판정이 필요하다. 그 뒤 A 결과와 Gold를 비교해야 precision/오분류율을 말할 수 있다. 현재 결과는 안전성과 coverage 결과이지 accuracy 99% 근거가 아니다.
+
+## 2026-08-25 ZARA 공유 URL 버튼 비활성화 수정
+
+- 사용자 실제 기기에서 ZARA 공유 URL `p05372320.html?v1=549582583&utm_...`을 입력해도 “상품 정보 불러오기”가 비활성화되고 “복사된 상품 링크가 없어요”가 남는 문제를 재현 근거로 조사했다. URL 형식이나 tracking query 문제가 아니라 `ZARAIntegrationAvailability`가 Debug launch argument에서만 true이고 Release에서는 항상 false였기 때문에 정상 `zara.com` URL도 `ProductURLSupport`에서 unsupported로 판정한 것이 직접 원인이었다.
+- 사용자 승인으로 ZARA URL import를 공용 지원 provider로 활성화했다. gate만 제거했으며 parser 내부의 공식 host/style/variant 상호검증, category conflict 보류, verified measurement 부족 시 partial/manual 전환, 401/403/429/challenge fail-closed는 유지했다.
+- 붙여넣기 UX도 수정했다. 입력창에 이미 URL이 있으면 pasteboard가 비어 있어도 “복사된 링크 없음”을 표시하지 않는다. 비어 있지 않은 입력은 empty-pasteboard 경고를 즉시 지우며, 실제 unsupported host일 때는 별도의 “지원하지 않는 상품 링크” 안내를 표시한다.
+- 사용자가 제공한 전체 percent-encoded URL과 `v1`, `utm_campaign`, `utm_medium`, `utm_source`를 그대로 넣은 지원 판정 regression을 추가했다. ZARA 공식 URL은 `supportedProviderName == ZARA`, lookalike `zara.com.example.com`은 계속 거부한다.
+- iPhone 17 Pro Simulator Debug build/install/launch 성공. `FitMatchTests/FitMatchTests` 287 total, 284 passed, 3 explicit skips, 0 failed. arm64 generic iOS Release 무서명 build도 `BUILD SUCCEEDED`(`/tmp/FitMatchZARALinkRelease-20260825`).
+- 실제 사용자 URL을 `ProductURLParserService`에 전달하는 opt-in live regression도 추가했다. style `05372320`, selected variant `549582583`, source `ZARA 공식몰`을 확인했고 ZARA suite는 live network 포함 41/41 통과했다(`XcodeBuildMCP .../result-bundles/test_sim_2026-08-24T23-33-04-725Z_pid15783_affc597a.xcresult`).
+- UI-testing 인증 상태의 iPhone 17 Pro Simulator에서 링크 추가 sheet를 직접 열고 동일 style/variant/utm 형식 URL을 입력했다. `closet.linkLoad`가 enabled target으로 나타났고, 버튼을 누른 뒤 공식 상품명 `와플 텍스처 레귤러핏 스웨트셔츠`와 활성 `다음` 버튼까지 확인했다. production DB write/migration apply, score/ranking 변경, commit/push는 하지 않았다. 실제 사용자 iPhone에는 이 수정이 포함된 새 빌드를 설치해야 하며, 설치 후 같은 링크로 한 번 확인하면 된다.
+
+## 2026-08-25 세 쇼핑몰 내일 실기기 테스트 준비 감사
+
+- ZARA 앱 내부 URL 입력 경로는 활성화돼 있었지만 `FitMatchShareExtension/ShareViewController.swift`가 무신사와 유니클로 host만 허용해 Safari/ZARA 앱의 공유하기에서 공식 ZARA URL을 거부하는 누락을 발견했다. 공식 `zara.com`과 그 하위 host를 공유 확장 허용 목록 및 metric provider에 추가했다. lookalike host는 허용하지 않는다.
+- ZARA가 partial/manual recovery로 넘어갈 때 source가 `manual`로 바뀌는 문제도 수정했다. `ClosetProductSourceOption.zara`를 추가해 상품 출처·브랜드를 `ZARA 공식몰`/`ZARA`로 보존하고, 검증되지 않은 ZARA 자체 사이즈표를 주장하지 않도록 측정 방식은 FitMatch 직접 측정만 허용했다.
+- 운영 Supabase를 read-only로 확인했다. source는 musinsa/uniqlo/zara 모두 active다. 상품은 Musinsa 394, Uniqlo 1,184, ZARA 30개이며 현재 분류는 Musinsa confirmed 311/review 82/not-comparable 1, Uniqlo confirmed 766/review 250/not-comparable 168, ZARA confirmed 29/review 1이다. 측정 row는 Musinsa 2,229, Uniqlo 25,319, ZARA 870이다.
+- 운영 migration ledger 최신은 `20260821090138 seed_zara_verified_measurement_subset`이다. 로컬 `113_p3_data_quality_observability`, `114_release_gate_and_quality_review_queue`, `20260824100350_extend_zara_verified_upper_measurements`는 운영 미적용 상태다. 운영 `data_quality_issues`는 0건이라 unknown category/measurement/conflict 집계가 실제로 작동한다고 아직 입증할 수 없다. production DB write나 migration apply는 수행하지 않았다.
+- 변경 후 focused 회귀는 live ZARA parser를 포함해 88/88 통과했다. `FitMatchTests/FitMatchTests`는 288 total, 285 passed, 3 explicit skips, 0 failed다. 전체 offline `FitMatchTests`는 과거 Gold 판정 1개를 명시 제외하고 457 total, 420 passed, 37 explicit skips, 0 failed(`/tmp/FitMatchTomorrowReadiness-20260825.xcresult`)다. 제외된 Gold는 이전부터 남은 31상품/64 assertion 정책 재판정 항목이며 기대값을 임의 변경하지 않았다.
+- 첫 focused 빌드에서 `AddClosetItemView`의 새 ZARA enum case를 switch에 표시하지 않아 exhaustive-switch compile error가 발생했고 즉시 ZARA 안내 case를 추가했다. 같은 명령을 다시 실행해 88/88 통과로 확인했다.
+- 내일 실제 iPhone에서는 새 빌드를 설치한 뒤 무신사/유니클로/ZARA 공유하기와 직접 붙여넣기, 유니클로 선택 색상 이미지, ZARA style/v1 유지, 자동 실측 비교와 직접 입력 전환을 각각 확인해야 한다. 이를 `Docs/ConnectDBPhysicalE2EChecklist-20260820.md`에 쉬운 확인표로 추가했다.
+- arm64 generic iOS Release 무서명 빌드는 공유 확장을 앱에 포함하고 embedded binary validation까지 통과해 `BUILD SUCCEEDED`였다(`/tmp/FitMatchTomorrowRelease-20260825`). 수정 후 iPhone 17 Pro Simulator Debug build/install/launch도 성공했다.
+- 정확한 최종 명령과 결과:
+  - `xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch -configuration Debug -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchTomorrowReadiness-20260825 -parallel-testing-enabled NO -collect-test-diagnostics never -only-testing:FitMatchTests -skip-testing:FitMatchTests/DBLogicReliabilityAuditTests/testDBLogicAdjudicationMatchesProductionClassifier -resultBundlePath /tmp/FitMatchTomorrowReadiness-20260825.xcresult` → 457 total, 420 passed, 37 skipped, 0 failed.
+  - `xcodebuild build -project FitMatch.xcodeproj -scheme FitMatch -configuration Release -destination 'generic/platform=iOS' -derivedDataPath /tmp/FitMatchTomorrowRelease-20260825 CODE_SIGNING_ALLOWED=NO` → `BUILD SUCCEEDED`.
+- 남은 출시 blocker는 실제 iPhone 공유 확장 E2E, 빈 `FitMatchPrivacyPolicyURL`/`FitMatchSupportURL`, 과거 Gold fixture 31상품 사용자 판정, ZARA 300상품 독립 사람 Gold, 운영 미적용 migration의 승인·검증이다. production score/ranking은 변경하지 않았고 commit/merge/push도 수행하지 않았다.
+
+## 2026-08-25 자동 처리 가능한 잔여 작업 보완
+
+- ZARA 공식 300건의 `section|family|subfamily`와 상품명을 다시 대조했다. 동일 공식 경로 안의 관측 상품이 전부 같은 의류 구조인 경우만 category snapshot `zara-kr-structured-category-2026-08-25-v5`에 추가했다.
+  - 남성 버뮤다 10건: 쇼츠 8, 데님 2
+  - 남성 브리프 21건
+  - 여성 브라 4건, 팬티 2건
+  - 여성 버뮤다 4건
+- 여성 `BERMUDA|B.BERMUDAS` 5건은 일반 버뮤다와 스커트형 팬츠가 섞여 있어 계속 미분류다. `BERMUDA|W.FOLDER PANTS` 1건은 구조 경로가 긴바지 후보지만 상품명이 쇼츠라서 계속 `review_required`다. 둘 다 자동 비교로 넘어가지 않는 회귀 테스트를 추가했다.
+- ZARA 300건 분류 결과는 `confirmed 147 → 188`, `review_required 19`, `unclassified 134 → 93`이다. `source_domain_mismatch=0`, `silent_conflict_confirmation=0`, `strict_conflict_leak=0`을 정확한 fixture 기대값으로 고정했다. 즉 안전성을 낮추지 않고 자동 처리 가능 건만 41건 늘었다.
+- parser의 Swift concurrency 경고를 없애기 위해 상태를 읽지 않는 ZARA/COS JSON·문자열 helper만 `nonisolated`로 표시했다. 파싱 규칙이나 결과는 변경하지 않았다.
+- 미적용 migration `114_release_gate_and_quality_review_queue.sql`에 active release가 동시에 둘 생기지 못하는 partial unique index와 activation advisory lock을 추가했다. production에는 적용하지 않았다. migration 113/114 및 ZARA measurement migration과 verification SQL 총 5개는 PostgreSQL parser 문법 검사를 통과했다. 로컬 PostgreSQL server/Supabase CLI/Docker가 없어 실제 transaction 실행 검증은 아직 못 했다.
+- 개인정보 처리방침 초안의 쇼핑몰 외부 통신 설명에 현재 활성 provider인 ZARA를 추가했다. 운영자명, 지원 이메일, 시행일과 공개 HTTPS URL은 소유자가 확정해야 하므로 빈 값은 임의로 채우지 않았다.
+- 검증 결과:
+  - `ZARAParserPhase1_5Tests`: 41 tests, 38 passed, 3 explicit live-network skips, 0 failed. `/tmp/FitMatchZaraV5Retry.xcresult`
+  - 전체 `FitMatchTests`: 458 total, 420 passed, 37 skipped, 기존 Gold 판정 1 test failed. 실패 내용은 이전부터 남아 있던 31상품(무신사 3, 유니클로 28)의 과거 기대값과 현재 분류 차이이며 ZARA 변경 회귀가 아니다. `/tmp/FitMatchAllUnit-20260825.xcresult`
+  - 위 기존 Gold test 1개만 명시 제외한 전체 회귀: 457 total, 420 passed, 37 skipped, 0 failed. `/tmp/FitMatchAllUnitExceptKnownGold-20260825.xcresult`
+  - arm64 generic iOS Release 무서명 빌드와 공유 확장 embedded binary validation: `BUILD SUCCEEDED`. `/tmp/FitMatchTomorrowReleaseV5-20260825`
+- 사람 또는 외부 환경이 꼭 필요한 남은 작업:
+  1. 실제 iPhone에 새 빌드를 설치해 무신사·유니클로·ZARA 공유하기/붙여넣기와 유니클로 색상 이미지를 눈으로 확인한다.
+  2. ZARA 300건 review CSV의 링크를 열어 독립 Gold를 입력한다. 현재 188건은 분류 가능 coverage이지 99% 정확도 근거가 아니다.
+  3. 과거 Gold 불일치 31상품의 분류를 사람이 확정한 뒤에만 fixture를 갱신한다. 실패 기대값을 자동으로 바꾸지 않았다.
+  4. 운영자명·지원 이메일·시행일·공개 개인정보/지원 HTTPS URL을 확정하고 `Info.plist`와 App Store Connect에 입력한다.
+  5. migration 113/114/ZARA 상의 measurement 확장은 local/staging PostgreSQL에서 verification SQL을 통과시키고 별도 승인 후에만 production 적용한다.
+- production score, weight, ranking, production DB 데이터는 변경하지 않았고 production migration apply, seed, backfill, UPDATE, DELETE, commit, merge, push도 수행하지 않았다.
+
+## 2026-08-26 Classification Review-Required Evidence Audit
+
+- Phase 1B-2 shadow SHA-256 `b1b49b767efe2ca6be1441703fa38bb9235135d1235a9b1f94f8d86ddbb10385`가 지정 baseline과 일치했다. `review_required`는 정확히 1,431건이며 Musinsa 391 / UNIQLO 1,010 / ZARA 30이다.
+- `Docs/FitMatchClassificationReviewEvidenceAudit-20260826.jsonl`에 1 product = 1 row로 1,431행을 생성했다. unique `source+external_product_id` 1,431, primary root cause와 NO_NAME verdict는 각 product당 정확히 하나다. JSONL SHA-256은 `cbcfa931a01c152f6b8205cf26a3d2696af73ad5b3ec0f9585f52831eec81ddb`다.
+- Primary root cause는 authority conflict 718, unused stored typed evidence 160, unverified/incomplete path 153, incomplete legacy decision 112, product-required without authority 99, invalid mapping 86, no mapping 53, name-only candidate 49, revoked exact decision 1이다.
+- 엄격한 `SAFE_NO_NAME_RESOLVABLE`은 0이다. NO_NAME 상호배타 verdict는 structured-present-but-unverified 143, structured-missing 219, name-adds-only 47, manual 1,001, Phase 1A.5 exact evidence가 있지만 complete v4 tuple이 없어 blocked 21이다. Candidate manifest manual flag는 별도로 1,009이며 exact-blocked와 8건 겹친다.
+- 실제 stored typed evidence는 Musinsa `size_type` informative 165, UNIQLO `product_type_kr` informative 47, ZARA family/subfamily/official category 30이다. ZARA 30은 path/codes에 동일 taxonomy가 있어 additive raw-only signal은 Musinsa 165 + UNIQLO 47 = 212다. 이를 직접 소비하려면 backend contract change가 필요하지만 confirmed coverage로 계산하지 않았다.
+- 동일 deterministic tokenizer로 name signature와 structured-evidence signature를 비교했을 때 상품명이 추가 token을 제공한 상품은 246건(Musinsa 86 / UNIQLO 152 / ZARA 8)이다. Verified-complete name/path profile은 모두 0이므로 S4/S5 confirmed credit는 0이며 새 profile을 만들지 않았다.
+- 보수적 DB-data-only 후보는 105건이다: Resolver에서 적용되지 않은 related verified category-direct 84건과 Phase 1A.5 expected-confirmed지만 v4 garment tuple이 incomplete한 21건. 이는 자동 승격 허가가 아니다.
+- Production full-parity SELECT `2026-08-26T01:22:24.475019Z`, final postflight `2026-08-26T01:37:23.496830Z`: Phase 1B-2 product key/fingerprint 1,608/1,608 exact, mismatch 0; products 1,608, decisions 5,056, history/current 1,860/1,608, active release `65d72393-4a40-4e99-b701-fdc1ff865774`, active mappings 3,492, candidate release/review issue 0, latest migration `20260821090138`로 불변이다.
+- 생성 보고서는 `Docs/FitMatchClassificationReviewEvidenceAudit-20260826.md`다. Production write/apply/activation/history change, migration/Swift/Resolver/Evaluator 변경, live retailer API 호출, Phase 1B-3 시작은 모두 0이다. Owner는 name 금지, verified name 보조, structured API 확대 후 name 최후 보조 중 정책을 결정해야 한다.
+
+## 2026-08-26 Classification Authority Conflict Cohort Adjudication
+
+- 지정 baseline checksum 두 개가 exact match했다: Phase 1B-2 shadow `b1b49b767efe2ca6be1441703fa38bb9235135d1235a9b1f94f8d86ddbb10385`, Review Evidence Audit `cbcfa931a01c152f6b8205cf26a3d2696af73ad5b3ec0f9585f52831eec81ddb`. A conflict 718, B DB-only 105, C invalid products 171도 exact다.
+- A/B/C overlap은 A only 621, B only 91, C only 84, A∩B only 12, A∩C only 85, B∩C only 2, triple 0이며 unique union은 895다. Manual flag는 union 719 / conflict 599 / DB-only 37 / invalid 171이다.
+- Conflict 718은 source + mapping identity + decision version + conflict dimensions + Phase1A.5 class로 압축했다. Independent exact-but-incomplete winner를 unverified peer와 섞지 않도록 Phase1A.5 class를 우선 분리해 최종 279 cohorts(UNIQLO 267 / ZARA 12)다. Verdict는 cohort/product 기준 `BOTH_UNTRUSTED 137/394`, `PRODUCT_REQUIRED 67/165`, `NEEDS_PRODUCT_ADJUDICATION 64/147`, `VERIFIED_DECISION_WINS 11/12`다. Verified semantic winner 12 중 conflict에서 immediate safe v4 completion은 E482522 1건뿐이고 잔여 conflict는 717이다.
+- DB-only 105는 safe 86 / owner vocabulary 확인 7 / semantic adjudication 12로 재판정했다. Musinsa related `CATEGORY_DIRECT` 84는 6개 verified base mapping이 모두 `target=UNKNOWN`인데 Resolver v4가 이를 wildcard로 쓰지 않고 product audience와 exact-match하는 것이 공통 root cause다. Code가 빈 45건은 path exact, path 표기가 다른 2건은 leaf code exact라서, observed literal target별 17 candidate mapping clone이 84건을 안전하게 커버한다.
+- Phase1A.5 exact-but-incomplete 21은 `SAFE_TUPLE_COMPLETION_DB_ONLY 2`(UNIQLO E482522/E485454), `VOCABULARY_TRANSLATION_NEEDS_OWNER_CONFIRM 7`, `SEMANTIC_ADJUDICATION_REQUIRED 12`다. Expected 값을 active taxonomy로 자동 번역하지 않았다.
+- Invalid products 171은 64 unique mapping rows(Musinsa 6/50 products, UNIQLO 58/121)다. Verified replacement 0, `SHOULD_BE_PRODUCT_REQUIRED` 10 rows/25 products, `SHOULD_BE_REVOKED_NO_REPLACEMENT` 30/75, `TAXONOMY_VOCABULARY_REPAIR` 24/71이다. Invalid mapping verified-safe Top1/5/10/all coverage는 모두 0이다.
+- Proposal manifest는 concrete logical row 102개다: P0 17, P1 0, P2 33, P3 40, P4 12. Independently verified safe gain은 P0 84, P0+P1 84, P0+P1+P2 86, all verified-safe 86이다. 실제 적용을 가정한 projection만 `confirmed 177→263`, `review_required 1,431→1,345`이며 실제 승격은 0이다.
+- 산출물은 `Docs/FitMatchClassificationConflictCohortAdjudication-20260826.md`, `Docs/FitMatchClassificationConflictCohorts-20260826.jsonl` 279 rows, `Docs/FitMatchClassificationDBOnly105-20260826.jsonl` 105 rows, `Docs/FitMatchClassificationInvalidMappingRows-20260826.jsonl` 64 rows, `Docs/FitMatchClassificationRemediationPlan-20260826.jsonl` 102 rows다.
+- Production final SELECT postflight `2026-08-26T04:30:33.040547Z`: product key/fingerprint 1,608/1,608 exact, mismatch 0; products 1,608, decisions 5,056, history/current 1,860/1,608, active release `65d72393-4a40-4e99-b701-fdc1ff865774`, active mappings 3,492, candidate release/issues 0, latest migration `20260821090138`로 불변이다. Resolver v4와 decision authority/garment columns도 Production에 없다.
+- Structured typed signal 212, Musinsa `size_type` 165, UNIQLO `product_type_kr` 47, name-add 246, clean name-only 47은 safe gain에서 제외했다. Production write/DDL, migration create/apply, release/decision/mapping/profile/history write, Swift/Resolver/Evaluator 변경, live retailer API, Phase 1B-3는 모두 0이며 owner 승인 전 중지한다.
+
+## 2026-08-26 Classification Candidate Revision + Full Shadow Revalidation
+
+- 지정한 6개 baseline SHA-256이 모두 exact match했다. Additive revision manifest는 84 records(meta 1, clone 17, decision 2, product-required 10, revoke 30, untouched invalid-vocabulary parity 24), SHA-256 `997f8fca3726ef38b728e5bc0c2e2dcd4cb72e578a70d3a26d3d3fda6aee3f16`이다.
+- Approved delta는 exact하다: Musinsa observed-target clone 17 rows/84 products, UNIQLO E482522/E485454 exact decisions 2, PRODUCT_REQUIRED 10 rows/25 products, revoke/no-replacement 30 rows/75 products. Baseline mapping identities 3,492/3,492 retained, revision mappings 3,509, unintended identity/base-row mismatch와 clone semantic diff는 0이다.
+- Full resolver v4 shadow는 1,608/1,608 unique, fingerprint mismatch 0이다. 실제 결과는 confirmed 256 / review_required 1,352이며 source별 Musinsa 80/314, UNIQLO 176/1,008, ZARA 0/30이다. Shadow SHA-256은 `bb580926f819e9f144e6fdee8dc4a4dbf869fab81783c07b9a20d892ee522916`이다.
+- 예상 263/1,345가 재현되지 않아 최종 판정은 `NO-GO (PARTIAL)`이다. Clone mapping은 84/84 exact selected됐지만 77만 confirmed됐다. `musinsa:5982920`, `6515855`, `6534177`, `6781113`, `6797265`, `6797266`, `6797271`은 existing incomplete `swift-production-2026-08-16-v3` decision과 새 verified mapping의 `product_decision_source_mapping_conflict`로 fail-closed한다. Exact decisions 2/2는 confirmed여서 approved safe gain은 79/86이다.
+- Transition은 confirmed→confirmed 177, review→confirmed 79, review→review 1,352다. Approved 86 밖 unexpected transition 0, 기존 177의 status/tuple/method/authority/comparison allowed-reason regression 0이다. Gold 3/3, confirmed invalid tuple/product-required mapping-alone/revoked mapping/BOTH_UNTRUSTED/unknown fallback/generic underwear/tshirt-base-layer leak는 모두 0이다. Original conflict 718 중 E482522만 approved exact decision으로 confirmed, 717은 review다.
+- Unapproved parity는 vocabulary 7 review, invalid vocabulary 24 rows/71 products review, name-add 246 review, clean name-only 47 review다. Structured typed 212의 authority는 추가하지 않았다. 이 cohort 중 33은 category clone으로 confirmed됐고 typed signal을 사용하지 않은 것이며, unresolved typed subset은 179다.
+- PostgreSQL 17.11 fresh DB에서 fixture→113→114→115→116→117→validation ROLLBACK→117 reapply→validation ROLLBACK을 exact 실행했다. First/reapply mapping count 3,509, persistent decisions 5,056, history 0, mapping checksum `bb968aa7b7acb23a4d48693b4596aeff09a57dd7fe26b3d04b22658bf05c0dd0`, 두 shadow output은 byte-identical이다. PRODUCT_REQUIRED reasonCodes 재적용 중복 가능성을 발견해 order-preserving dedup으로 고쳤고 clean first/reapply checksum parity를 확인했다.
+- Local release row는 `validated`지만 revision gate는 exact-decision validation transaction 안에서도 blocker `approved_transition_shortfall` 하나로 `eligible=false`다. Production postflight `2026-08-26T05:41:28.451116Z`: products 1,608, decisions 5,056, history/current 1,860/1,608, releases 5, active release `65d72393-4a40-4e99-b701-fdc1ff865774`, mappings 3,492, candidate v1/v2 release/mapping 0, migration 117 absent, latest migration `20260821090138`로 불변이다.
+- Production write/DDL/apply/activation, decision/mapping/profile/history write, Swift/Resolver/Evaluator/Recorder diff, structured/name authority, retailer live API, Phase 1B-3는 모두 0이다. Owner가 7 legacy decisions의 exact disposition 또는 실제 256/1,352 baseline 수용을 새로 승인하기 전까지 중지한다. Structured Typed Evidence 212 read-only validation도 자동 시작하지 않았다.
+
+## 2026-08-26 DB Classification Final Closure
+
+- 117 shadow checksum `bb580926f819e9f144e6fdee8dc4a4dbf869fab81783c07b9a20d892ee522916`과 1,608 product key/fingerprint checksum `c1ed8a45c6548149b1b434c3551a4a674b41e627a642f6ed72db7ea55bee061a`가 exact parity다. 이전 Phase 1B-2/audit/conflict/DB-only/invalid/remediation checksum도 모두 지정값과 일치했다.
+- `118_classification_db_final_closure.sql`은 local validated/inactive release만 만든다. generic structured discriminator table 1개, resolver v4 in-place precedence, legacy incomplete non-authority, exhaustive mapping scope, verified path/exclusion data, taxonomy/comparison/measurement completion을 구현했다. resolver v5/DSL/ML/source-specific resolver branch/name keyword authority는 만들지 않았다.
+- 최종 mappings 3,509는 `CATEGORY_DIRECT 55 / PRODUCT_REQUIRED 1,019 / REVOKED 2,435`로 other/invalid/legacy runtime scope 0이다. Musinsa mixed sleeveless `001011/017016003` 7 rows는 PRODUCT_REQUIRED로 safety downgrade했다. Structured rules 21은 Musinsa canonical 5 rules(현 상품 7 confirmations), UNIQLO accessory exclusion 14 values(47 products), generic set/non-apparel 2다.
+- set validation은 기존 `ParsedClosetClassification.isExplicitCompositeGarmentSet`와 `MusinsaUnsupportedProductPolicy.isTopBottomSet` 의미를 adapter fact `structured_facts.product_structure=set`으로 전달하는 contract다. 알려진 set 7개는 모두 `not_comparable`; set garment-confirmed/comparison-allowed 0이다. Swift behavior는 수정하지 않았다.
+- taxonomy active comparison groups 44/auto 39, explicit unordered comparison matrix 990(allow 40/block 950, generic fallback 0), active measurement policy rows 63이고 active comparable family의 comparison/measurement policy gap은 모두 0이다. base-layer top은 tops이며 tshirt/underwear cross는 explicit block, homewear set은 non-auto/excluded다. MeasurementComparisonEngine score/weight algorithm diff 0이다.
+- full final shadow는 1,608/1,608, fingerprint drift 0, `confirmed 348 / review_required 1,113 / not_comparable 147`; source는 Musinsa `121/266/7`, UNIQLO `227/817/140`, ZARA `0/30/0`이다. confirmed authority는 exact 120/category 156/structured 7/path 65, exclusions는 path 93/structured 54다. comparison possible 179, insufficient measurements 169다. Shadow SHA-256 `fa836a5d45c73da135e4c2b5f064b7291b4babbe20f5571ad66eff31cc77c93e`.
+- 117 transition은 confirmed→confirmed 248, intentional mixed-sleeveless confirmed→review 8, review→confirmed 100, review→not-comparable 147, review→review 1,105다. Existing valid confirmed unintended regression 0, unexpected confirmed gain 0. Gold E482514/E454311/E456567 exact 3/3다.
+- future/synthetic fixtures 29/29 PASS. confirmed invalid/arbitrary fallback/set leak/revoked-invalid leak/PRODUCT_REQUIRED-alone/BOTH_UNTRUSTED/unverified name-path/base-layer-tshirt/generic underwear leak는 전부 0이다. Real name profile은 0이고 verified-name-last-resort contract만 synthetic으로 검증했다.
+- PostgreSQL 17.11 fresh disposable DB에서 fixture→113→114→115→116→117→118→validation ROLLBACK→118 reapply→validation ROLLBACK을 PASS했고 manifest 보완 후 118 reapply/full validation도 동일 결과로 PASS했다. Closure gate eligible true/blockers empty. Manifest 442 rows SHA-256 `f21e61545f194347aec02f620daefc9ea5dd56645fd1b9a77b0bc56f897163be`.
+- Production SELECT-only pre/post는 products 1,608, decisions 5,056, history/current 1,860/1,608, releases 5, active release `65d72393-4a40-4e99-b701-fdc1ff865774`, active mappings 3,492, latest ledger `20260821090138`로 exact 불변이다. Production write/DDL/migration/apply/activation/history write 0, live retailer network 0, Swift/public RPC call-site switch 0이다.
+- Closure 판정은 owner stop condition B를 만족하는 `DB CLASSIFICATION CLOSURE = GO`다. 남은 1,113은 DB 설계 gap이 아니라 independent product truth 부족으로 명시 review다. 산출물은 final migration/validation/manifest/shadow, `FitMatchClassificationDBClosure-20260826.md`, `FitMatchClassificationProductionDeploymentReady-20260826.md`다. 다음은 별도 승인된 controlled Production deployment, iOS server-authority integration, 실제 사용자 검증뿐이며 추가 DB audit Phase는 제안하지 않는다.
+
+## 2026-08-26 Controlled Production Deployment — 118 FK Gate Rollback
+
+- Owner가 승인한 SHA-256 `ac4f20b37b543f25e9557e7bf41f7a4fe96bba4247651991d976816fbdb770fc`의 118을 controlled transaction으로 시도했으나, `comparison_compatibility_rules.to_family_code=unclassified_outerwear`가 Production `fitmatch_taxonomy.comparison_families`에 없다는 FK gate에서 실패했다. 같은 transaction의 ledger insert 전 오류여서 118 전체가 자동 ROLLBACK됐다.
+- Rollback 확인값은 ledger 118 = 0, final candidate = 0, rollback successor = 0, active release 정확히 1(`65d72393-4a40-4e99-b701-fdc1ff865774`), active mappings 3,492, decisions 5,056, history/current 1,860/1,608이다. candidate gate·successor·activation은 Production에서 시작하지 않았다.
+- 원인은 `public.comparison_groups`와 legacy FK registry `fitmatch_taxonomy.comparison_families` 간 active-code parity를 118이 보장하지 않은 migration defect다. source/garment 분기 없이 active comparison group을 legacy family registry에 보완하고 parity를 assert하는 generic data sync를 118에 추가했다. validation에도 같은 conditional parity gate를 추가했다.
+- 수정된 118 SHA-256은 `8934f427523c736f4e506ad65e4540625c36ce64904b6a05eee46091b8b2ddd3`, validation SHA-256은 `4d0a9b28fc3e830552f8789d12150d0a6da95ee00a998841a3218986fd99e376`이다. 승인 checksum과 달라 Production에는 재시도하지 않았다.
+- PostgreSQL 17.11에서 legacy policy-version/comparison-family FK를 재현한 fresh production-shaped copy로 113→118, 118 reapply/idempotency, full 1,608 validation을 통과했다. 결과는 348/1,113/147, Gold 3/3, synthetic 29/29, matrix 990, family registry gap 0, safety leaks 0이다. Local xmin/role만 local 값으로 치환한 atomic activation dry-run도 candidate 단일 active/mappings 3,509/decisions 5,056/history write 0으로 PASS했다.
+- 암호화 preimage cipher는 mode 0600, SHA-256 `844fec409490a04c4a14ea0ccdb22da6c130facf806ff27b8be8bd288522e22b`; decrypt read-back plain SHA-256 `22d34b6889f14dcf4de66eeed649be85e981dfcd6290ca10b3954da169c3314d`가 재확인됐다. history bulk backfill, history DELETE, Swift/iOS 변경, commit/push는 수행하지 않았다.
+- SHA `8934f427523c736f4e506ad65e4540625c36ce64904b6a05eee46091b8b2ddd3`는 owner가 재승인했지만 두 번째 controlled transaction이 `classification_path_profiles_policy_version_fkey`에서 실패했다. `db-classifier-2026-08-26-final`이 Production `fitmatch_taxonomy.policy_versions`에 먼저 등록되지 않은 순서 결함이며, ledger insert 전 오류라 118 전체가 다시 자동 ROLLBACK됐다.
+- 두 번째 rollback 뒤에도 ledger 118/candidate/successor는 0/0/0, 기존 active release 1, active mappings 3,492, decisions 5,056, history/current 1,860/1,608이다. Production candidate gate·successor·activation은 여전히 시작하지 않았다.
+- 118 registry block이 exact classifier checksum `0b7d91f4726c413bb169659cda749de44992070d4ba31bcbf3b6731c5f8712f4`와 comparison checksum을 모두 FK-dependent row보다 먼저 등록하고 기존 row drift를 fail하도록 보강했다. 새 migration SHA-256은 `b1f2e35a584e05a64e31e53886aad04dd6cad6d619f8f8c69d50683dfdf03e30`이다.
+- 모든 relevant Production policy-version/family FK를 재현한 새 PostgreSQL 17.11 copy에서 113→118, 118 reapply/idempotency, full validation 2회, candidate gate, rollback-successor gate, local atomic activation과 post-activation full validation이 PASS했다. 1,608 = 348/1,113/147, Gold 3/3, synthetic 29/29, profile 12/0/15, matrix 990, policy/family registry gap 0, safety leak/history write 0이다.
+- legacy taxonomy supplemental preimage를 평문 파일 없이 `/private/tmp/FitMatchClassificationProductionPreimage-20260826/classification-preimage-legacy-taxonomy-v1.json.enc`에 AES-256-CBC/PBKDF2로 저장했다. mode 0600, plaintext/read-back SHA-256 `64c248aeb55692adb362e5db8735c6c22c796b1bb77bdf07eaeaab92fe1dcd39`, cipher SHA-256 `253a088456b9a34e58bc9a53b55dd38c23fe860dfb1f45e860e08f5a5a00a6f2`다.
+- 다음 Production write는 최신 118 exact SHA `b1f2e35a584e05a64e31e53886aad04dd6cad6d619f8f8c69d50683dfdf03e30`에 대한 owner 재승인 후에만 가능하다.
+- SHA `b1f2e35a584e05a64e31e53886aad04dd6cad6d619f8f8c69d50683dfdf03e30`도 owner가 재승인했지만 세 번째 controlled transaction이 Production `classification_exclusion_profiles_sample_check(sample_count >= 2)`에서 실패했다. Final manifest의 independently verified UNIQLO singleton accessory path 4개가 sample_count 1이기 때문이다. ledger insert 전 오류로 118 전체가 다시 자동 ROLLBACK됐고 Production state는 ledger/candidate/successor 0/0/0, old active 1, mappings 3,492, decisions 5,056, history/current 1,860/1,608로 불변이다.
+- 기존 two-sample 품질 기준을 일반적으로 제거하지 않고, sample_count=1이면서 auto-eligible, non-apparel/accessory, evidence authority verified, complete-profile인 경우에만 허용하도록 check를 좁게 확장했다. Validation은 singleton exact 4와 해당 authority 조건을 별도 gate로 고정한다.
+- Production sample/FK constraints를 모두 재현한 fresh PostgreSQL 17.11 copy에서 113→118, full validation, 118 reapply/idempotency, 두 번째 full validation이 348/1,113/147, Gold 3/3, synthetic 29/29, exclusions 15(singleton 4), safety leak 0으로 PASS했다.
+- 최신 migration SHA-256은 `0eb9bfe801fd26bc33c084f5b9921aaf32aa5dc9b9c44a7ebfa17b7a3ccf5fb6`, validation SHA-256은 `5920e74cdfa6cead8e18557e4d11c76c7d3235bf7f7905a24900955ae0c36b5b`다. 다음 Production write는 이 최신 migration SHA에 대한 owner 재승인 후에만 가능하다.
+
+## 2026-08-26 Controlled Production Deployment — 118 Applied, Candidate Gate NO-GO
+
+- Owner가 재승인한 `118_classification_db_final_closure.sql` SHA-256 `0eb9bfe801fd26bc33c084f5b9921aaf32aa5dc9b9c44a7ebfa17b7a3ccf5fb6`을 exact 확인하고 Production에 controlled transaction으로 적용했다. Ledger `20260826090118 / classification_db_final_closure`가 같은 source/idempotency SHA와 함께 기록됐다.
+- 118 apply 뒤에도 기존 release `65d72393-4a40-4e99-b701-fdc1ff865774`가 유일한 active release이고 active mappings는 3,492다. Final candidate `11800000-0000-4000-8000-000000000118`은 validated/inactive, mappings 3,509 상태다.
+- Mandatory candidate gate 두 개가 모두 `eligible=false`로 실패했다. 유일한 blocker는 `measurement_policy_checksum_mismatch`이며 Production actual은 `6ad654049b08f6d19bd6a59c2a50482f550ee9edf6a0b9faad5d6f74b31a18a2`, candidate expected는 `d2a98b24f29ddfb57c0e2afa3215a7d9920a2a5f110fe50e301267c443ec4713`이다. Row count 63과 classifier/comparison/compatibility/structured/mapping contract는 일치한다.
+- Owner stop rule에 따라 rollback successor 생성, atomic activation, Gold/set/structured/comparison/RPC Production smoke를 시작하지 않았다. 따라서 activation commit 0, half-active 0이며 기존 runtime은 v4 resolver/evaluator로 전환되지 않았다.
+- Final read-only postflight `2026-08-26T12:17:13.873069Z`: active releases 1, active mappings 3,492, decisions 5,056, history/current 1,860/1,608, history write/delete 0, rollback successor 0이다. Swift/iOS 변경, history bulk backfill, Git commit/push는 수행하지 않았다.
+- 최종 판정은 `PRODUCTION CLASSIFICATION AUTHORITY DEPLOYMENT = NO-GO`다. 118 additive migration/ledger는 적용됐지만 runtime은 기존 safe authority 그대로다. Measurement policy checksum 불일치를 우회하거나 자동 rebaseline하지 않고 중단했다.
+
+## 2026-08-26 Measurement Policy Checksum Blocker — Targeted Resolution
+
+- Production `2026.07.1` measurement policies 63행과 candidate 63행을 `(category_code,measurement_key,dimension_code)` logical key로 전수 비교했다. Missing/extra/duplicate 0, runtime-semantic diff 0, metadata/evidence_note diff 0이다. 63행 모두 유일한 차이는 `weight` text scale이며 Production `numeric(6,3)`의 `0.700/1.200/1.000`과 unconstrained-numeric fixture의 `0.7/1.2/1 또는 1.0` 표현 차이다.
+- Raw checksums는 Production `6ad654049b08f6d19bd6a59c2a50482f550ee9edf6a0b9faad5d6f74b31a18a2`, candidate `d2a98b24f29ddfb57c0e2afa3215a7d9920a2a5f110fe50e301267c443ec4713`이지만 `trim_scale(weight)`와 explicit C collation을 적용한 semantic checksum은 양쪽 모두 `42d5aa308b2138e0aa844ae12268125a0f5ef47ce35f9f187e082be7511c13f0`이다. Production policy data가 맞고 candidate raw checksum contract가 fixture typmod에 종속된 것이 root cause다.
+- 신규 `supabase/migrations/119_classification_measurement_policy_checksum_correction.sql`은 적용된 118을 건드리지 않고 `runtime_policy_contract_report_v1(uuid)`의 measurement checksum만 scale/collation canonicalization하도록 동일 signature로 `CREATE OR REPLACE`한다. Measurement row write는 0이며 candidate validation report의 checksum만 canonical value로 교정한다. SHA-256은 `0c873e441eed10e68b01fbaaed24b420e84395140fe8eff495f879e87b417df5`다.
+- Validation SQL SHA-256은 `20ec007f925099e82b82742769a554616fc1b84dcfd72d5c9d921d09df686860`. Exact 63-row diff JSONL은 63/63 unique, SHA-256 `4074f8389d0ba19f3e50bce35115019684f1a9fec2f1f74be6db58f31f9f3756`이다.
+- PostgreSQL 17 production-shaped copies에서 119 apply/reapply, candidate policy/final/release gates, rollback-successor gate, atomic activation, post-activation full validation, atomic rollback을 모두 PASS했다. Full result는 1,608 = confirmed 348 / review 1,113 / not-comparable 147, Gold 3/3, synthetic 29/29, mappings 55/1,019/2,435, structured 21, path/name/exclusion 12/0/15, comparison 990, safety leaks 0, history write/delete 0으로 불변이다.
+- Production final SELECT-only postflight `2026-08-26T12:56:35.010754Z`: ledger 118/119 `1/0`, active release exactly 1 (`65d72393-4a40-4e99-b701-fdc1ff865774`), active mappings 3,492, candidate validated/inactive 3,509 mappings, successor absent, products/decisions 1,608/5,056, history/current 1,860/1,608다. Sole gate blocker도 기존 checksum mismatch 그대로다.
+- 이번 turn Production write/DDL/migration apply/activation/history write/delete 0, Swift/iOS diff 0, Git commit/push 0이다. 다음 action은 owner가 119 exact SHA를 승인한 뒤 기존 controlled deployment를 119 apply부터 재개하는 것뿐이다.
+
+## 2026-08-26 Controlled Production Deployment — 119 + Atomic v4 Activation GO
+
+- Owner-approved 119 SHA-256 `0c873e441eed10e68b01fbaaed24b420e84395140fe8eff495f879e87b417df5`를 exact 확인했다. Immutable 118은 SHA `0eb9bfe801fd26bc33c084f5b9921aaf32aa5dc9b9c44a7ebfa17b7a3ccf5fb6` 그대로이며 수정/재적용하지 않았다.
+- 첫 write 전 encrypted preimage 두 개를 AES-256-CBC/PBKDF2 read-back했다. Main cipher/plain SHA는 `844fec409490a04c4a14ea0ccdb22da6c130facf806ff27b8be8bd288522e22b` / `22d34b6889f14dcf4de66eeed649be85e981dfcd6290ca10b3954da169c3314d`; legacy taxonomy는 `253a088456b9a34e58bc9a53b55dd38c23fe860dfb1f45e860e08f5a5a00a6f2` / `64c248aeb55692adb362e5db8735c6c22c796b1bb77bdf07eaeaab92fe1dcd39`다. Files/key mode는 0600이고 mappings 3,492, decisions 121, functions 19 logical-key recovery scope를 확인했다.
+- 119는 Production ledger `20260826131310 / classification_measurement_policy_checksum_correction`으로 controlled apply됐다. Measurement rows는 63 그대로이고 raw checksum은 `6ad654...` 불변, semantic checksum은 `42d5aa...`로 gate와 일치했다. Policy/final/release gates가 eligible true/blockers empty다.
+- Rollback successor `11800000-0000-4000-8000-00000000b001`은 old active bundle 3,492 mappings를 exact clone했다. Source/successor checksum `28a7700805e95d9e643b0cb860770fde8e12acd86057cace879082ff82a307f2`, status validated/inactive, gate PASS다.
+- SHA `177b57b242d65a7f5817b0cdf060cec6d99acf9b9539cadd2d3401a7173b13a9` atomic activation artifact가 내부 advisory lock/preimage/gate/full-shadow/Gold/set/comparison/security/history smoke를 통과해 COMMIT했다. Final candidate `11800000-0000-4000-8000-000000000118`이 sole active, old parent는 retired, active mappings 3,509다. Targeted decisions 121/121 null-safe exact, total decisions 5,056 불변이다.
+- Production SELECT-only full shadow는 1,608 unique/fingerprint exact, `348 confirmed / 1,113 review_required / 147 not_comparable`; source는 Musinsa `121/266/7`, UNIQLO `227/817/140`, ZARA `0/30/0`이다. Gold 3/3, set 7/7 excluded, structured confirmed/excluded 7/54, UNIQLO typed accessory exclusion 47, invalid/conflict/arbitrary/unverified leaks 0이다. Comparison tshirt↔base-layer BLOCK, sweatshirt↔hoodie ALLOW, homewear cross BLOCK이다.
+- RPC/security smoke PASS: isolated non-customer authenticated claim에서 get-runtime은 active 118/E482514 confirmed exact, find-reference는 history backfill이 없어서 expected `target_classification_required`, list-closet은 0 rows였다. Public/internal resolver/promoter/evaluator call chains가 v4/v4/recorder v2를 사용하며 owner/search_path/grants/anon boundary가 contract와 일치한다. Dummy customer write는 만들지 않았다.
+- Final stability postflight `2026-08-26T13:28:36.784812Z`: active release count 1, active ID final candidate, mappings 3,509, decisions 5,056, history/current 1,860/1,608, successor validated/gated, all candidate gates PASS다. Product intake/closet/comparison rows는 3/6/0으로 smoke 전후 불변이다. History bulk backfill/delete, Swift/iOS change, Git commit/push는 0이고 rollback은 필요하지 않았다.
+- 최종 판정은 `PRODUCTION CLASSIFICATION AUTHORITY DEPLOYMENT = GO`. 남은 것은 별도 iOS Closet/Compare server-authority integration과 app/device validation뿐이다.
+
+## 2026-08-27 iOS Closet/Compare Server-Authority Integration
+
+- Production classification authority v4를 iOS 실제 sourced Closet 등록과 Compare 경로에 연결했다. Parser/adapter raw facts는 `structured_facts`로 전달되고, 앱은 resolve → 필요한 경우 기존 product-observation Edge promoter → runtime 재조회 결과를 최종 authority로 사용한다.
+- Authority provenance를 `server_confirmed / user_explicit / local_hint / server_review_required / server_not_comparable / server_unavailable`로 분리했다. Server confirmed tuple이 local hint를 덮고, review/not-comparable/network·promotion failure는 comparison/reference 불가로 fail-closed한다. 실제 사용자 picker/manual 입력만 override가 되며 sourced stale v3와 remote-only automatic row는 active-v4 lazy resolve 전 authority가 아니다.
+- 기존 set semantics를 재사용해 `structured_facts.product_structure=set`을 전달한다. sourced/manual/legacy explicit set은 canonical comparison authority와 representative/reference 후보가 될 수 없다.
+- Musinsa literal `size_type`, UNIQLO selected hydration product의 verbatim `productTypeKr`, ZARA structured taxonomy facts를 generic payload로 보존·재전달한다. Numeric Musinsa size type을 typed discriminator로 대체하는 경로는 제거했다.
+- Compare는 target/reference active-v4 authority와 local/remote tuple·measurement parity를 확인하고 evaluator v4 candidate/begin permit가 ALLOW한 뒤에만 기존 `MeasurementComparisonEngine` scorer를 실행한다. tshirt↔base-layer 및 homewear cross는 block, sweatshirt↔hoodie는 allow로 검증했다. `MeasurementComparisonEngine.swift` scoring/weight diff는 0이다.
+- Gold E482514/E454311/E456567 3/3, promotion, set, malformed/network failure, stale authority, manual override, Musinsa/UNIQLO/ZARA, comparison sequencing 및 measurement regression focused suite는 147 total / 144 PASS / 3 explicit live-opt-in SKIP / 0 failure다. Full offline `FitMatchTests`는 517 total / 480 PASS / 37 explicit live-opt-in SKIP / 0 failure다. Debug build-for-testing PASS이며 Release unsigned generic iOS build를 별도로 검증했다.
+- 이번 작업의 Production DB migration/schema/data write, classification history bulk write/delete, SwiftData schema migration, Git commit/push는 모두 0이다. 남은 단계는 실제 iPhone에서 Musinsa/UNIQLO/manual/set/network-error Closet 등록과 Compare 사용자 흐름을 검증하는 것뿐이다.
+
+## 2026-08-29 FitMatch vNext Production Database Final Remediation — 82 → 100
+
+### Scope / repository
+
+- Production project/schema: `hnkplvyegonlhumlejst / fitmatch_vnext`.
+- Branch was and remains `connectDB`. Start HEAD and end HEAD are both `6246aede16d22ae8b08189a7ef9dd22a68bfbaf6`; commit/push was not performed.
+- Existing user files and untracked vNext migrations were preserved. No reset, revert, stash, guessed classification, UNKNOWN availability promotion, legacy schema copy, history rewrite, or unrelated Swift/UI change was performed.
+- Production and local vNext migration ledgers now have exact `version_name` parity: 21 local / 21 remote, local-only 0, remote-only 0.
+
+### Applied additive migrations
+
+- `20260829031514_vnext_ingestion_contract.sql`: service-only, idempotent new-product vNext ingestion; immutable receipt provenance; current raw-evidence versioning; raw measurement resolution; verified classification replay; observed availability; readiness/runtime response. It does not call or write legacy FitMatch business authorities.
+- `20260829031527_vnext_readiness_policy_metrics.sql`: readiness v2 counts only active CANONICAL metrics in the current active policy, requires explicit unexpired AVAILABLE evidence, and excludes semantic-conflict sizes.
+- `20260829031549_vnext_candidate_size_authority.sql`: owner-checked DB-generated eligible size set. UNKNOWN, no-observation, SOLD_OUT, expired/unbounded AVAILABLE, semantic-conflict, insufficient, or unauthorized sizes are excluded.
+- `20260829031601_vnext_comparison_begin_provenance.sql`: begin v3 derives the candidate set in DB; a retained client array must exactly equal it. It snapshots candidate measurements/availability fingerprints, product-linked reference identity, classifier/mapping/taxonomy authority, and versioned policy metrics/weights/exclusions.
+- `20260829031612_vnext_completion_validation.sql`: completion requires exact authorized ranking/evidence sets and validates size, metric, exclusions, reference/target snapshot values, signed/absolute difference, weight, coverage, recommendation, and retry fingerprint before immutable completion.
+- `20260829031622_vnext_reference_candidate_discovery.sql`: target-based DB discovery returns `AUTOMATIC`, `MANUAL_EXTENDED`, `MEASUREMENTS_REQUIRED`, or blocked diagnostics with eligible size IDs and deterministic exclusions/policy provenance.
+- `20260829031636_vnext_final_security_regression.sql`: fixed-search-path and least-privilege gate; global ingestion/classification apply is service-only; authenticated users have no direct domain-table write grants.
+- `20260829032944_vnext_completion_ingestion_hardening.sql`: explicit `PRODUCT_EXACT`/`PRODUCT_STRUCTURE` input must agree with observed identity/structured facts; fractional rank/reliability values are rejected instead of being rounded by PostgreSQL casts.
+
+### Edge Function cutover
+
+- `supabase/functions/product-observation/index.ts` now verifies the signed-in user, creates the service client only server-side, and calls only `fitmatch_vnext.ingest_product_observation`. Legacy `fitmatch_submit_product_observation` / `fitmatch_process_product_observation` occurrences are 0.
+- Production `product-observation` is ACTIVE version 4, `verify_jwt=true`, hash `5cd94356fdd35fef7762416414a57b569834454c7cda73a37a0ff98dcacf8502`. Remote and local `index.ts` are byte-for-byte equal.
+- The established iOS DTO is preserved with `processing.status=promoted`; the actual additive vNext state is returned as `processing.vnext_status=processed|ignored_stale`.
+- Domain input/constraint errors return 422. Unexpected database errors return a generic 500 and do not expose internal error text. Unauthenticated live POST returned HTTP 401 `UNAUTHORIZED_NO_AUTH_HEADER` on version 4.
+
+### Data status before / after
+
+- Products remain 1,608. Identity duplicates, baseline identity loss, vNext-only extras, orphan variants/sizes/measurements: all 0.
+- Classification remains evidence-conservative: `CONFIRMED 203 / REVIEW_REQUIRED 1,308 / NOT_APPLICABLE 97`. Invalid CONFIRMED, missing sleeve/lower/body axis, non-SINGLE CONFIRMED, inactive garment, missing provenance, inactive/unverified mapping use, invalid DIRECT mapping, top-priority conflict, 1,608 replay mismatch, stored-result mismatch: all 0.
+- Readiness remains `READY 3 / NO_AVAILABLE_SIZE 198 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97`; `MAPPING_REQUIRED 0 / INSUFFICIENT_MEASUREMENTS 0`. False READY and false non-READY are both 0. Current expired/unbounded AVAILABLE rows are 0.
+- Golden READY stayed unchanged: Musinsa `6805433 / XS`, UNIQLO `E482856 / 28`, ZARA `561264931 / EU 38 (KR 30)`.
+- Source coverage after remediation:
+  - Musinsa: total 394, confirmed/potential-ready 68, review 311, not-applicable 15, evidence-ready 1, no-size 236, no-measurement 237, no-available-size 67, mapping-required 0.
+  - UNIQLO: total 1,184, confirmed/potential-ready 121, review 981, not-applicable 82, evidence-ready 1, no-size 190, no-measurement 271, no-available-size 120, mapping-required 0.
+  - ZARA: total 30, confirmed/potential-ready 14, review 16, not-applicable 0, evidence-ready 1, no-size 0, no-measurement 2, no-available-size 11, mapping-required 0.
+- No broad coverage backfill was performed. The isolated ingestion, Golden comparison, failure, and concurrency fixtures were rolled back or deleted by exact generated IDs. Final test pollution: product 0, receipt 0, comparison 0, concurrency closet item/measurement 0.
+
+### Verification results
+
+- PASS — `supabase/sql/121_vnext_final_remediation_tests.sql` executed unchanged in Production. One transaction covered not-present→vNext ingest→identity/variant/size/raw measurement/signal/availability→CONFIRMED→READY→runtime, identical retry idempotency, legacy observation count unchanged, and spoofed exact/structure rejection; the transaction rolled back.
+- PASS — the same regression executed the full Musinsa/UNIQLO/ZARA path: READY→product-linked closet→atomic reference→reference discovery→DB candidate set→begin v3→validated completion→idempotent retry→immutable history. Fixture/provider count 3/3.
+- PASS — candidate negatives: no observation, UNKNOWN, SOLD_OUT, expired AVAILABLE, client set mismatch, wrong hierarchy, unauthorized recommendation, and unavailable size recommendation are blocked.
+- PASS — completion negatives: `[{}]`, duplicate rank, duplicate metric evidence, wrong policy weight, reference/target snapshot mismatch, excluded metric, unauthorized size, fractional rank/reliability, and conflicting retry are blocked. Valid completion requires recommendation/label/score/reliability/coverage/engine/ranking/evidence/completed_at.
+- PASS — automatic long/short mismatch blocks; manual without explicit selection blocks; explicit permitted mismatch returns `MANUAL_EXTENDED`; `total_length`/`hem_width` exclusions are deterministic and excluded evidence is rejected.
+- PASS — current raw measurement resolver replay 28,514/28,514 with mismatch 0; usable semantic conflict 0; active alias top-priority conflict 0; width/circumference representation errors 0.
+- PASS — policy boundary matrix 19/19: TOP, OUTER, and BOTTOM minimum/required-any cases match the contract.
+- PASS — anonymous runtime/comparison and authenticated global ingestion are blocked; cross-user closet/candidate/completion access is blocked; broad authenticated table writes 0; selected user-facing SECURITY DEFINER functions all use fixed `search_path`; sensitive RLS disabled count 0.
+- PASS — actual two-session concurrent `set_closet_reference` race. Session A held the scope advisory lock while session B attempted replacement; both calls completed, exactly one of two same-scope rows was reference, and all exact fixture rows were removed afterward.
+- PASS — completed immutability trigger, completion payload trigger, immutable ingestion receipt trigger, ingestion fact trigger, atomic reference partial unique index, and client idempotency unique constraints are present.
+- PASS — selected vNext core function definitions contain zero `fitmatch_catalog.` or `public.fitmatch_*` business references. Edge source contains zero legacy observation RPC references.
+- PASS — Supabase advisors after DDL: `fitmatch_vnext` security WARN/ERROR 0 and performance WARN/ERROR 0. Security INFO has four intentional RLS-no-policy service-only/internal tables; performance INFO has 18 unindexed-FK and 11 unused-index observations, retained until representative workload evidence exists.
+- PASS — post-verification PostgreSQL log sample from `2026-08-29T03:42:14Z` onward contained ERROR/FATAL/PANIC 0. Earlier ERROR entries were intentional negative fixtures or corrected audit-development probes.
+- NOT RUN — authenticated positive HTTP invocation of the Edge Function, because no signed fixture-user JWT was available and creating a Production Auth user would violate the no-pollution boundary. The exact underlying service RPC positive path passed, deployed source equals local, JWT enforcement and unauthenticated transport passed. Exercise the authenticated transport in the next signed-in Swift/iPhone E2E.
+- NOT RUN — Swift build/unit tests and physical iPhone E2E; no Swift source was changed in this DB remediation.
+- FAIL — 0.
+
+### Final READ-ONLY audit
+
+- `supabase/sql/122_vnext_final_read_only_audit.sql` ran against actual Production rows and returned `score=100/100`, `p0_count=0`, `verdict=VNext PRE-E2E READY`.
+- All 20 independent 5-point contract gates were true: identity; hierarchy; classification tuple/axis/provenance/mapping/replay; measurement determinism/semantic separation; strict readiness; Golden readiness; 19/19 policy matrix; runtime capabilities; service-only ingestion; RLS/grants/search path; legacy independence; immutable completion; ingestion protection; atomic reference; migration parity; fixture cleanliness.
+
+### Remaining work / Swift Production Integration
+
+- These are not remaining DB P0s. Coverage stays intentionally low until verified retailer evidence is ingested; never convert REVIEW/UNKNOWN by heuristic merely to raise counts.
+- Swift should call the authenticated `product-observation` Edge boundary for new/changed retailer facts, then consume the vNext runtime response. It must accept the compatibility `promoted` status and may record `vnext_status` as provenance.
+- Swift must use DB `find_reference_candidates`, DB-generated eligible candidate IDs from begin, and DB authorization mode/exclusions. It must not reconstruct garment/axis/availability compatibility or silently filter candidate sizes locally.
+- Completion must submit every authorized candidate exactly once and the exact per-candidate comparison measurements captured by begin, with policy snapshot weights and derived coverage. A stale or locally altered snapshot must surface as a conflict and restart, not be forced through.
+- Next gate: signed-in Swift Production Integration followed by real iPhone E2E for each provider plus new-product observation. The database is ready for that phase; the physical E2E itself has not been claimed here.
+
+## 2026-08-29 vNext ingress PostgREST transport correction — superseding closeout verdict
+
+- A live anonymous PostgREST schema probe after Edge v4 deployment returned HTTP 406 / `PGRST106`: Production exposes only `public` and `graphql_public`, not `fitmatch_vnext`. Therefore `adminClient.schema("fitmatch_vnext").rpc("ingest_product_observation", ...)` cannot reach the internal function even with a service-role client. The preceding DB-only `100/100` audit remains valid, but the overall ingress closeout verdict above is superseded.
+- Production preflight confirmed the internal function exists, service-role EXECUTE is true, anon/authenticated EXECUTE are false, and no public vNext ingestion bridge currently exists. Edge Function v4 remains ACTIVE with `verify_jwt=true`, but its positive authenticated path is not operationally proven and is expected to fail at PostgREST schema selection.
+- Prepared but did not apply `supabase/migrations/20260829040000_vnext_ingestion_postgrest_bridge.sql`. It adds one fixed-search-path SECURITY DEFINER function in the already exposed `public` schema, revokes public/anon/authenticated EXECUTE, grants only service_role, checks `auth.jwt().role=service_role`, and delegates directly to `fitmatch_vnext.ingest_product_observation`. It contains no classifier, mapping, or ingestion logic of its own.
+- Updated the repository Edge source to call `public.fitmatch_vnext_ingest_product_observation` through the default public RPC boundary. This local source is intentionally not deployed until the bridge migration is approved and applied; Production remains on v4.
+- Disposable local PostgreSQL `17.11 (Homebrew)`, socket directory `/tmp/FitMatchVNextBridgePG17-20260829-1259`, port `55439`: migration compile PASS, service_role execute true, anon/authenticated execute false, actual wrapper delegation PASS, reapply PASS with exactly one overload. The cluster was stopped and deleted.
+- The Production migration attempt was rejected before execution because this exact persistent SECURITY DEFINER/grant change needs explicit owner approval. Production bridge DDL/data write count for this correction is 0. No migration-ledger row, product, receipt, history, closet, or comparison row changed.
+- Current overall verdict: `VNext PRE-E2E NOT READY`; mandatory P0 = 1 (`product-observation` cannot yet traverse PostgREST to the internal vNext ingestion authority). The DB read-only contract sub-audit remains `100/100, P0=0`, but it is not the final ingress score.
+- Exact next action: owner explicitly approves applying `20260829040000_vnext_ingestion_postgrest_bridge.sql` to Production and then deploying the prepared `product-observation` source. Afterward run the no-auth/invalid-JWT checks, an authenticated positive ingress probe, idempotency/fail-closed verification, and rerun `122_vnext_final_read_only_audit.sql`.
+
+## 2026-08-29 vNext ingress bridge activated — current final closeout state
+
+- This section supersedes the preceding transport-correction deployment state. The additive bridge was applied to Production as ledger row `20260829043247 / vnext_ingestion_postgrest_bridge`; the repository file was renamed to the exact ledger identity `supabase/migrations/20260829043247_vnext_ingestion_postgrest_bridge.sql`. SQL SHA-256 is `4302072e83423bca71fc6fa091860cab803c22f6c6ada8bee45cd75d1200e769`.
+- `public.fitmatch_vnext_ingest_product_observation(jsonb,uuid)` is owned by `postgres`, SECURITY DEFINER with `search_path=""`, delegates only to `fitmatch_vnext.ingest_product_observation`, and contains no legacy observation reference. EXECUTE is service_role=true and anon/authenticated=false. An actual anon PostgREST call reached the exposed public RPC and returned HTTP 401 / PostgreSQL `42501 permission denied`, proving that the former `PGRST106` schema-transport gap is closed without exposing ingestion to clients.
+- Production `product-observation` is ACTIVE version 5 with `verify_jwt=true`, bundle SHA-256 `4d99d44634bd9bebd15a87e1fbdfb5ecea8a27eea972019c88d706c40280fce9`. Remote `index.ts` is byte-for-byte equal to repository source SHA-256 `93ea79a8cffc064d1886d2f0d7be723af594cf5ba0097e432adba8a56afffeb3`. It calls the public service-only bridge exactly once, custom-schema calls are 0, and legacy submit/process RPC calls are 0.
+- Live transport negatives on version 5 PASS: missing Authorization returned HTTP 401 `UNAUTHORIZED_NO_AUTH_HEADER`; malformed JWT returned HTTP 401 `UNAUTHORIZED_INVALID_JWT_FORMAT`. Service-role secret is neither returned nor logged; the handler logs only unexpected database error codes. Actor provenance is still derived exclusively from `auth.getUser().user.id`, never from request payload.
+- The final Production READ-ONLY audit reran at `2026-08-29T04:39:03.284593Z` and returned DB score `100/100`, `p0_count=0`, verdict `VNext PRE-E2E READY`, policy gates 19/19, products 1,608, classifications 203/1,308/97, deterministic replay mismatches 0, invalid confirmed 0, false READY/non-READY 0/0, Golden READY 3/3, identity/orphan issues 0, and selected legacy business references 0. Postflight still has products 1,608, ingestion receipts 0, classifications 203/1,308/97, synthetic anonymous users 0.
+- Production and repository vNext migration order are now exact 22/22, local-only 0, remote-only 0. Local and remote `connectDB` both remain at HEAD `6246aede16d22ae8b08189a7ef9dd22a68bfbaf6`; the required source is preserved only in the local working tree until the owner commits/pushes it.
+- Supabase advisors after the bridge: bridge-specific security/performance findings 0; security has no ERROR and 14 pre-existing WARNs outside the bridge, performance has INFO-only findings. The bridge did not add a table, RLS policy, index, classifier, or business authority.
+- NOT RUN — a valid-user positive HTTP call through Edge v5. No reusable signed fixture JWT exists in the repository. A proposed ephemeral Production Auth identity plus stale-receipt-only Golden probe and exact cleanup was rejected before execution because that account lifecycle and Production receipt write/delete require explicit owner authorization. It created no user, receipt, product, history, closet, or comparison row. Do not describe authenticated positive ingress, Edge-level idempotency, or Edge-level Golden success as PASS until that exact probe or a user-supplied existing valid JWT is used.
+- Current overall closeout verdict is therefore `VNext PRE-E2E NOT READY` despite the DB contract sub-audit being `100/100, P0=0`: one mandatory verification gate remains, not a known schema/data correctness defect. Exact safe next action is either (a) owner supplies a short-lived existing-user JWT for read/write-safe stale-observation probes, or (b) owner explicitly authorizes creation of one anonymous audit user, three `IGNORED_STALE` Golden receipts, repeated Edge calls, exact receipt deletion, and immediate account deletion. After cleanup, rerun the READ-ONLY audit and only then issue the final 100/100 closeout.
+
+## 2026-08-29 authenticated Edge v5 probe — Auth provider blocker
+
+- Owner explicitly authorized one Production anonymous audit user, three Golden `IGNORED_STALE` receipts, two identical Edge calls per Golden, exact receipt-ID deletion, immediate audit-user deletion, and final READ-ONLY pollution verification.
+- Preflight fixed the complete relevant state: products 1,608; variants 2,656; sizes 6,771; raw measurements 28,514; availability rows 15; product/source signals 4,393/2,434; receipts 0; anonymous Auth users 0; closet/closet measurements/comparisons 6/24/0; classifications 203/1,308/97; Golden READY 3/3. Stable full-row hashes were recorded for all product, variant, size, measurement, availability, and classification-signal tables.
+- The approved probe stopped at its first operation. `POST /auth/v1/signup` with an anonymous signup payload returned HTTP 422 `anonymous_provider_disabled`. No audit user or token was created, so Edge v5 and vNext ingestion were not called, and no receipt existed to delete. The sole failure cause is the Production Auth configuration: Anonymous Sign-Ins are disabled.
+- No workaround or broader Auth change was made. In particular, no real-user credential was accessed, no email user was substituted, no manual `auth.users` row/session/JWT was created, and Anonymous Sign-Ins were not enabled without authorization.
+- Immediate READ-ONLY postflight proved receipts 0, anonymous Auth users 0, all seven preflight table hashes unchanged, products/variants/sizes/measurements/availability/signals unchanged, legacy observations/submissions 6/6, closets/measurements/comparisons unchanged, classifications 203/1,308/97, and Golden READY 3/3.
+- The full final READ-ONLY audit reran at `2026-08-29T05:07:00.191889Z`: score 100/100, DB `p0_count=0`, 19/19 policy boundaries, confirmed invalid 0, deterministic replay/store mismatch 0, duplicate/orphan/parity errors 0, false readiness 0, fixture pollution 0, selected legacy business references 0.
+- Overall closeout remains `VNext PRE-E2E NOT READY` solely because the mandatory authenticated positive transport probe is still unexecuted. The one minimal required user action is to temporarily enable **Allow anonymous sign-ins** for project `hnkplvyegonlhumlejst` and report that it is enabled. Then rerun the already-approved exact probe immediately, delete its exact receipts/user, complete postflight, and stop; do not start another DB phase.
+
+## 2026-08-29 authenticated Edge v5 probe — admin-user execution boundary
+
+- Owner rejected enabling Anonymous Sign-Ins and instead authorized exactly one temporary email/password audit user created through the Supabase server-side Admin API, email-confirmed, followed by ordinary password sign-in, the already-scoped Golden stale/idempotency probe, exact receipt deletion, and exact Auth-user deletion.
+- The current execution environment exposes database migration/SQL/Edge deployment/read tools but no Auth Admin create-user tool or secret-key retrieval. No service-role credential exists in the local process environment, no matching server credential is stored in project Vault, no Supabase CLI authentication context is present, and no signed-in Dashboard browser is connected. The deployed `delete-account` boundary can delete a signed-in user but cannot bootstrap one.
+- No unsafe substitute was used: Anonymous Sign-Ins remained disabled; public signup was not used; `auth.users`/`auth.identities`/sessions were not inserted directly; no JWT was minted; no service-role token was used as a user token; no temporary public bootstrap Edge endpoint was deployed; no existing user credential was accessed.
+- Therefore the approved Admin API creation step could not start and no audit user, receipt, Edge call, or database change occurred. This is an execution-environment credential boundary, not a newly observed vNext DB or Edge correctness failure. The most limited safe next action is for the owner to connect a signed-in Supabase Dashboard browser session for project `hnkplvyegonlhumlejst`; the audit password can then be generated and retained only in the in-memory browser/test session while Dashboard invokes the Admin API.
+
+## 2026-08-29 Swift ↔ vNext production integration implementation
+
+- Branch and HEAD remained `connectDB / 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6`; commit, push, reset, revert, and stash were not performed. Existing vNext migrations, reports, Edge source, and user worktree changes were preserved.
+- Phase 0 was implemented as the additive repository migration `20260829050000_vnext_swift_user_contract.sql`. It adds only nullable user-owned `closet_items.satisfaction` plus its 1...5 CHECK; no new table, global Product mutation, classification/mapping/release write, history rewrite, or SwiftData schema change exists. The final CHECK creation is idempotent and avoids drop/re-add locking on migration reapply.
+- The Phase 0 internal contracts are vNext-only edit, soft-delete, reference unset, personal classification override/clear, enriched list, Swift runtime projection, and immutable history projection. Public Data API bridges are thin `SECURITY INVOKER` delegates. All mutating internal functions use fixed `search_path`, `auth.uid()`, exact row ownership checks, and least-privilege grants. Product-linked personal edits cannot rewrite global Product classification.
+- Swift now has exact vNext DTOs for runtime, closet, reference candidates, authorization, eligible size set, begin snapshot, completion, and immutable history. Sourced observation uses Edge v5; release code contains zero `fitmatch_submit_product_observation` or `fitmatch_process_product_observation` calls. Garment type and sleeve/lower/body axes remain separate and unknown enum/state values fail closed.
+- Sourced comparison now follows candidate discovery → authorization → exact eligible size set → begin snapshot → vNext adapter → full candidate completion → local immutable-cache hydration. The adapter scores exactly the AVAILABLE, server-authorized candidate IDs using begin-snapshot metric inclusion/exclusion and DB weights. `REVIEW_REQUIRED`, `NOT_APPLICABLE`, blocked compatibility, a missing begin snapshot, unauthorized size, or base-layer/tshirt mismatch invokes no sourced scorer.
+- A final local `RecommendationHistory` is created only after successful server completion. Sync no longer begins/uploads a locally scored history; it recovers only server PENDING rows and hydrates COMPLETED immutable history without current-state recomputation. Legacy local history remains offline-readable but is never promoted to vNext authority.
+- “다른 옷과 비교” preserves the current target and creates/completes a new server comparison for the selected reference without reparsing. “다른 사이즈와 비교” is presentation-only over the stored authorized batch, creates no comparison/history, and cannot score a Product size outside that batch.
+- Product-linked closet save resolves an exact Product/variant/size identity, calls vNext upsert, then hydrates from vNext list. Reference set/unset refreshes the authoritative list atomically. Manual closet remains a personal tuple path. The first-sync cache cannot unset a remote reference merely because the local cache began empty.
+- Per-size observation evidence is transient and provider-fact-only. Explicit size evidence is preserved; absent evidence remains `UNKNOWN`, and product-level verified status is applied only to the explicitly checked size rather than every parsed size.
+- PostgreSQL 17.11 disposable validation after the final constraint cleanup PASS: fixture → migration first apply → transaction ownership/runtime tests → ROLLBACK → migration reapply → the same tests → ROLLBACK. Cross-user edit/unset/override/delete were denied; global Product hash was unchanged; post-rollback counts were closet/measurements/comparisons `0/0/0`, public bridges 15, new internal functions 7. Cluster `/tmp/FitMatchVNextSwiftPG17.HQlAod`, port 55441, was stopped and deleted.
+- Swift simulator validation earlier in this implementation PASSed app and test-target builds plus five focused suites (`FitMatchVNextContractTests`, comparison sync, permit sequencing, closet sync, server-authority integration): 54 tests, 0 failures. After the last exact-variant and Swift isolation annotations, all 18 changed/new Swift files PASSed `swiftc -frontend -parse`; however repeated `xcodebuild`/XcodeBuildMCP compile attempts stopped producing output and were terminated, so a final post-tweak type-check/test rerun is explicitly NOT RUN rather than PASS.
+- Final static gates PASS: `git diff --check`; protected TabBar modifier diff 0; protected tab/scroll symbol diff 0; SwiftData schema diff 0; Share Extension diff 0; release Swift/Edge legacy observation RPC references 0. No UI/navigation redesign was made.
+- Production remained SELECT-only for this implementation. Postflight is unchanged at products 1,608, classifications `CONFIRMED 203 / REVIEW_REQUIRED 1,308 / NOT_APPLICABLE 97`, confirmed invalid/required-axis-missing/non-SINGLE `0/0/0`, duplicate Product/variant orphan/size orphan/measurement orphan `0/0/0/0`, readiness `READY 3 / NO_AVAILABLE_SIZE 198 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97`, Golden READY 3/3. Edge `product-observation` is still ACTIVE v5, `verify_jwt=true`, its repository and deployed `index.ts` are exact byte matches, bridge reference is present, and legacy submit/process references are 0.
+- Migration `20260829050000_vnext_swift_user_contract` is deliberately absent from the Production ledger. Production `closet_items.satisfaction` and `public.fitmatch_vnext_update_closet_item(uuid,jsonb)` are absent. An attempted persistent migration call was rejected before execution by the production safety approval boundary; no DDL or data write occurred and it was not retried or bypassed.
+- Current verdict: `SWIFT VNEXT PRE-E2E NOT READY`. The one known functional P0 is that the new Swift release path depends on the repository-only vNext user bridges, which are not deployed in Production. Additional mandatory verification gates are the post-tweak simulator build/test rerun and signed-in real iPhone MUSINSA/UNIQLO/ZARA/manual/offline UX E2E; neither is claimed as PASS.
+- Exact next action: obtain explicit owner approval for applying only `20260829050000_vnext_swift_user_contract.sql`, run its production structural/security postflight, then rerun the focused Swift suites when Xcode responds and proceed to signed-in iPhone E2E. Do not start a new DB authority phase or reintroduce legacy fallback.
+
+## 2026-08-29 Swift vNext final Xcode verification — superseding validation state
+
+- Validation-only work ran on `connectDB` at the exact expected HEAD `6246aede16d22ae8b08189a7ef9dd22a68bfbaf6`. All existing tracked/untracked user changes were preserved; no reset, restore, stash, clean, commit, push, formatting, Swift/SQL/Edge production-source edit, Production DB operation, migration apply, or Edge deployment occurred.
+- The first XcodeBuildMCP build request stopped returning output. Process inspection showed no active `xcodebuild`, `XCBBuildService`, or Swift compiler, so that one request was terminated and not retried indefinitely. The permitted alternate direct-Xcode path then completed; this supersedes the prior post-tweak `NOT RUN` state.
+- Xcode 26.3 (`17C529`), project `FitMatch.xcodeproj`, scheme `FitMatch`, Debug, existing iPhone 17 Pro simulator `03BAF093-552E-4E53-ABFB-7DE0653BE676`, iOS 26.3.1 (`23D8133`), x86_64: app `build` PASS (`** BUILD SUCCEEDED **`) and `build-for-testing` PASS (`** TEST BUILD SUCCEEDED **`). Build products include `FitMatch.app`, embedded `FitMatchTests.xctest`, and `FitMatchUITests-Runner.app`.
+- Actual simulator focused tests PASS 76 / FAIL 0 / SKIP 0. Suites: `FitMatchVNextContractTests` 5/5, `FitMatchComparisonSyncCoordinatorTests` 3/3, `FitMatchComparisonPermitSequencingTests` 4/4, `FitMatchClosetSyncCoordinatorTests` 19/19, `FitMatchServerAuthorityIntegrationTests` 23/23, and `FitMatchSupabaseProductResolverTests` 22/22. xcresult summaries independently report 54/54 and 22/22 passed.
+- Authority invariants PASS: scorer-before-authorization 0; scorer-before-begin 0; unauthorized candidate/size scoring 0; excluded metric use 0; BLOCKED/REVIEW_REQUIRED/NOT_APPLICABLE scorer calls 0. Alternate-item flow reuses the target and performs server candidate authorization → eligible set → begin → scorer → complete → new local cache. Alternate-size flow is presentation-only over the stored authorized batch, with parser/authorization/comparison/history creation 0. Pending history recovery starts only from immutable server begin snapshots and local history is never promoted to authority.
+- Release Swift/Edge references to `fitmatch_submit_product_observation`, `fitmatch_process_product_observation`, `fitmatch_resolve_product`, and `fitmatch_get_product_runtime` are all 0. Local classification/matcher symbols remain only as parser/manual/presentation/DEBUG support and do not override sourced server authority; the focused release-call-site tests passed.
+- Final protected checks PASS: `git diff --check`; protected TabBar modifier diff 0; protected tab/scroll symbol diff 0; SwiftData schema/entity/container diff 0; navigation-structure addition diff 0; Share Extension diff 0.
+- Current verdict for this task: `FINAL XCODE VALIDATION PASS`. No new compile/test blocker exists. The known functional P0 remains unchanged: `20260829050000_vnext_swift_user_contract.sql` is repository-only and deliberately not applied to Production. Signed-in physical iPhone E2E remains unexecuted and is not claimed as PASS.
+- Exact next action: explicit owner approval and Production application of only `supabase/migrations/20260829050000_vnext_swift_user_contract.sql`, followed by security/data postflight; then proceed to signed-in real iPhone E2E. Do not start another DB authority phase.
+- Detailed evidence is preserved in `Docs/FitMatchSwiftVNextFinalXcodeVerification-20260829.txt` and its companion ZIP.
+
+## 2026-08-29 Production vNext Swift user contract activation — current state
+
+- Owner approved applying only repository SQL `supabase/migrations/20260829050000_vnext_swift_user_contract.sql`. Preflight ran on `connectDB` at HEAD `6246aede16d22ae8b08189a7ef9dd22a68bfbaf6`; the existing dirty worktree was preserved. The source was reread in full, destructive/global-authority DML was absent, prerequisites were complete, file length was 32,195 bytes, and SHA-256 was `ad23bad212999c882b114c50b95ad7df7b95f275e0aadf8b0a7a7f37daa0dbd6`.
+- Production preflight at `2026-08-29T11:08:18.191303Z`: target migration rows 0; `satisfaction`/check/15 target public bridges absent; missing prerequisite tables/functions 0; Products 1,608; classifications `CONFIRMED 203 / REVIEW_REQUIRED 1,308 / NOT_APPLICABLE 97`; invalid CONFIRMED 0; readiness `READY 3 / NO_AVAILABLE_SIZE 198 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97`; Golden READY 3/3; duplicate Product and variant/size/measurement orphans 0. Counts were variants 2,656, sizes 6,771, raw measurements 28,514, closet/closet measurements/comparisons 6/24/0. Stable hashes were products `82c444272cba8f273ea7d14077f1b55e`, variants `b9cc1a677fa6b49dc58ac22f8f21b6af`, sizes `e8744393f6a28260b7726ad3137f626a`, measurements `a6762986ee86739f1ff022203f4ba4ba`, classification `29510033fad4e32d2350959d00f68ead`.
+- The exact approved SQL applied atomically and no other SQL/migration was applied. However, the Supabase MCP migration API accepts name + SQL but no caller-supplied version, so it recorded the row as `20260829110853 / vnext_swift_user_contract`, not repository version `20260829050000`. The name exists exactly once, the exact requested version exists zero times, and it is the sole ledger row after prior tail `20260829043247`. No ledger repair, manual fake marking, duplicate apply, migration edit/rename, or additional migration was attempted.
+- Structural/security postflight PASS: nullable `satisfaction smallint` and validated 1...5 CHECK; existing non-null values 0; internal functions 9/9; public Swift bridges 15/15; JSONB signatures; all 24 fixed `search_path`; internal SECURITY DEFINER/public SECURITY INVOKER split; anon EXECUTE 0; authenticated/service_role intended EXECUTE 24/24; authenticated protected-table write grants 0; `closet_items` RLS and own-row SELECT policy unchanged; target mutation functions contain global Product DML references 0.
+- The first runtime validation statement was rejected by the PostgreSQL parser before transaction execution because the probe used reserved local variable name `authorization`; it performed no writes. The exact same probe with only the test variable renamed to `authorization_value` PASSed and ended in ROLLBACK.
+- Successful Production rollback test PASS: manual and product-linked closet upsert, repeated-call idempotency, edit, satisfaction, personal override set/clear, reference set/unset, soft delete, list/hydration, exact Product/variant/size plus category/garment/axis fields, and global Product non-mutation. Cross-user edit/delete/reference-unset/override were blocked 4/4 and anon bridge execution was blocked. Golden Musinsa rollback comparison passed public find → authorize → eligible sizes → begin immutable snapshot → complete → immutable history projection.
+- Final postflight at `2026-08-29T11:16:10.447991Z`: Products 1,608; classifications 203/1,308/97; invalid CONFIRMED 0; required axes missing 0; deterministic replay mismatch 0; readiness unchanged; Golden READY 3/3; duplicates/orphans 0; counts 2,656/6,771/28,514 and closet/measurements/comparisons 6/24/0. All five hashes match preflight exactly. Named closet fixture, comparison-engine fixture, and non-null satisfaction pollution are 0.
+- Supabase advisors found migration-target-related security/performance findings 0. Project-wide security remains INFO 51/WARN 14 unrelated to this migration; performance remains INFO-only 115, target-related 0. No advisor-driven remediation was made.
+- Current strict verdict: `SWIFT VNEXT IMPLEMENTATION DB CONTRACT NOT READY`. The deployed functional/security/data contract itself passed; the sole failed user-mandated gate is repository/Production ledger version parity (`20260829050000` vs `20260829110853`). Resolving it requires a new explicit owner decision because every possible ledger repair/rename/reapply/additional migration action was prohibited in this task. Do not advance to the independent PRE-E2E audit while claiming exact ledger parity.
+- Full evidence is in `Docs/FitMatchVNextProductionUserContractActivation-20260829.txt` and its companion ZIP.
+
+## 2026-08-29 Codex Ultra independent PRE-E2E audit — current verdict
+
+- This section supersedes the preceding activation handoff's instruction not to begin the independent audit: the owner explicitly requested and this turn completed that audit. Branch/HEAD remained `connectDB / 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6`; the existing dirty tree was preserved. Production writes, migrations, Edge deploys, Swift fixes, expectation changes, commits, and pushes were all 0.
+- Final overall verdict is `FITMATCH PRE-E2E NO-GO`, readiness `82/100`, with `P0 3 / P1 8 / P2 3`. The Production DB sub-audit itself remains `100/100, DB P0=0`; the NO-GO is caused by three independently confirmed Swift release-path contracts, not by reopened DB remediation.
+- P0-1: `RecommendationHistoryStore.saveUnique` applies legacy URL/code/name and size-label dedupe after a successful vNext completion. It can replace exact server Product/ProductSize UUIDs, remove distinct same-target server comparison caches, and break Other Size's authorized-ID intersection. Fix only the server-vNext persistence branch: exact UUID reuse, exact comparison-ID dedupe, no label fallback, no deletion of other immutable comparisons.
+- P0-2: a soft-deleted reference retained in immutable server comparison history is rebuilt by `VNextHistoryCacheHydrator.makeReference` as an ordinary active `UserFit`. `MyClosetView` queries all UserFit rows with no history-only/deleted marker, so the deleted item deterministically reappears in the active Closet. Preserve historical evidence using a history-only representation/tombstone excluded from Closet, picker, and sync.
+- P0-3: `FitMatchClosetSyncCoordinator.synchronizeReferenceAuthority` sends `set(true)` only for the first local reference and sends `unset(false)` only when no local references remain. With different-type A/B references, local A=false/B=true never sends A's unset and the authoritative refresh restores A=true. Diff exact clientItemID reference state and send every changed set/unset while retaining first-login empty-cache protection.
+- Production READ-ONLY audit at `2026-08-29T12:19:56.872017Z`: products 1,608; classifications `CONFIRMED 203 / REVIEW_REQUIRED 1,308 / NOT_APPLICABLE 97`; confirmed invalid/axis missing/non-SINGLE 0; deterministic replay/store mismatch 0; duplicate Product and variant/size/measurement orphans 0; readiness `READY 3 / NO_AVAILABLE_SIZE 198 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97`; Golden READY 3/3; 19/19 policy boundaries PASS; fixture pollution 0.
+- Deployed `product-observation` is ACTIVE v5 with `verify_jwt=true`; deployed/local `index.ts` are byte-exact. Missing and malformed JWT HTTP probes returned 401, actor identity is derived from `auth.getUser()`, service key exposure was not found, legacy submit/process calls are 0, and the vNext bridge is used. A valid ordinary-user positive transport call was NOT RUN because no audit-user JWT was available; do not claim it PASS before physical E2E.
+- Production user-contract structure independently matches the repository SQL: satisfaction CHECK, public bridges 15/15, internal functions 9/9, fixed search paths, intended grants/RLS, and no broad protected-table user writes. Fresh Production mutation/negative fixtures were NOT RUN in this read-only audit; ownership denial was verified structurally.
+- Fresh Xcode 26.3 validation on iPhone 17 Pro simulator iOS 26.3.1: app build PASS, test-target build PASS, critical focused tests 76 PASS / 0 FAIL / 0 SKIP. Full FitMatchTests was `492 PASS / 1 FAIL / 37 SKIP`; the sole test is the known legacy/local adjudication corpus with 64 assertion mismatches, not sourced vNext authority. Scheme-wide was `496 PASS / 11 FAIL / 43 SKIP`; the ten UI failures were independently traced to eight stale copy assertions, one obsolete pre-vNext authority expectation, and one random test-user/cache-owner harness defect. They are not hidden as PASS and later UI steps remain NOT VERIFIED.
+- Migration ledger mismatch is P1, not P0: Production stores `20260829110853 / vnext_swift_user_contract`, while the repo filename is `20260829050000`; stored SQL and repo SQL are exact 32,195-byte/SHA-256 `ad23bad212999c882b114c50b95ad7df7b95f275e0aadf8b0a7a7f37daa0dbd6` matches and applied once. Future CLI tooling can still treat the repo version as pending. No ledger repair/fake marking/reapply was performed.
+- Repository reproducibility is P1: `origin/connectDB` equals the current commit, but the current vNext migrations are untracked/absent remotely and the remote Edge source is legacy while the local/deployed source is v5. Publishing is operationally required after review but is not current Production correctness.
+- Protected checks remain PASS: `git diff --check`; TabBar modifier and protected call-site diffs 0; SwiftData schema/container destructive diff 0; navigation structure diff 0; Share Extension diff 0.
+- Detailed evidence is `Docs/FitMatchCodexUltraIndependentPreE2EAudit-20260829.txt` and its companion ZIP. Do not reopen old DB phases. The exact next work is limited to the three P0 roots and their stated targeted regressions, then rerun the critical 76 suites and this audit. Only after overall P0=0 proceed to physical signed-in iPhone E2E.
+
+## 2026-08-29 Swift final three-P0 remediation — ready for independent re-audit
+
+- Branch/HEAD remained `connectDB / 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6`; the dirty worktree was preserved. Reset/restore/stash/clean, commit/push, Production DB write/migration, DB/Edge edit/deploy, scorer/policy change, and protected navigation/TabBar/Share work were all 0.
+- P0-1 was reproduced before the fix: the two new exact-history regressions failed 0/2 because legacy URL/code/name and size-label dedupe replaced server UUIDs and collapsed two same-target comparisons. `RecommendationHistoryStore.saveCompletedVNext` now provides an explicit schema-v2 server-completed branch using exact Product UUID, ProductSize UUID, and immutable comparison/history UUID only. URL/code/name/label fallback and same-product history deletion remain confined to unchanged legacy/manual `saveUnique`. Release vNext call sites use the exact branch only after successful server completion.
+- P0-2 was reproduced before the fix: a history-created reference entered Closet upsert and USER_EXPLICIT/USER_EDITED/RETAILER_SNAPSHOT snapshots remained ordinary active UserFit rows. Missing immutable-history references now use reserved existing-field identity `fitmatch_vnext_history_reference_snapshot`; computed `isActiveClosetItem` excludes them from every active Closet/picker surface, authority snapshots, task revisions, and closet mutations while History still retains the reference. No SwiftData stored property/entity/version or migration was added. If the exact UUID is genuinely active remotely, final authoritative hydration may reactivate it; a soft-deleted/absent remote row remains history-only.
+- P0-3 was reproduced before the fix: exact A unset and inverse A set failed. Reference synchronization now computes exact clientItemID deltas: false→true set, true→false unset, unchanged no mutation. It refreshes after sets so DB same-tuple atomic replacement remains authoritative, and ignores remote-only rows as unset intent so first-login empty-cache hydration cannot clear remote references.
+- Cross-P0 regression retains two exact A/B histories and authorized ProductSize UUIDs, keeps deleted A history-readable but inactive, keeps B active, sends no A upsert/reference mutation on repeated sync, and preserves the remote tombstone in the lifecycle stub. Exact history-ID replay is idempotent.
+- Xcode 26.3 on the existing iPhone 17 Pro simulator iOS 26.3.1: app build PASS and test-target build-for-testing PASS. Final critical suites are 86 PASS / 0 FAIL / 0 SKIP: P0 regression 4, vNext contract 5, comparison sync 4, permit sequencing 4, closet sync 24, server-authority integration 23, Supabase resolver 22.
+- Full `FitMatchTests` is 502 PASS / 1 FAIL / 37 SKIP (540 total). The only failure remains the unchanged legacy `DBLogicReliabilityAuditTests/testDBLogicAdjudicationMatchesProductionClassifier` mismatch for MUSINSA 5049615 (`sleeveless` vs expected `blouse`); no expected values were changed and no new failure was added.
+- Best-effort UI run is 4 PASS / 10 FAIL / 6 SKIP, exactly the prior Ultra baseline count. The ten failures remain the recorded stale onboarding/copy/pre-vNext/cache-owner harness debt; they were not fixed or hidden, and stopped downstream UI steps remain NOT VERIFIED.
+- Final invariant audit: scorer-before-authorization/begin, unauthorized/excluded/BLOCKED/REVIEW_REQUIRED/NOT_APPLICABLE scoring, complete-before-history violation, vNext size-label fallback, history-only Closet mutation, first-login reference clearing, and release legacy submit/process/resolve/runtime RPC references are all 0. `git diff --check` PASS; protected TabBar modifier/call-site, navigation, Share Extension, task DB/Edge, and SwiftData stored-schema diffs are 0.
+- Current remediation verdict is `SWIFT P0 REMEDIATION READY FOR ULTRA RE-AUDIT`; remaining P0 from the three audited findings is 0, subject to the required independent audit rerun. Ultra P1/P2 findings remain unchanged and were not remediated. Full evidence is `Docs/FitMatchFinal3P0Remediation-20260829.txt` and its companion ZIP. Next step is the same Codex Ultra independent PRE-E2E audit; only an independent overall P0=0 verdict advances to physical signed-in iPhone E2E.
+
+## 2026-08-30 Codex Ultra independent PRE-E2E re-audit — current verdict
+
+- This section supersedes the preceding re-audit request. The independent audit completed on `connectDB` at HEAD `6246aede16d22ae8b08189a7ef9dd22a68bfbaf6`; the dirty working tree was preserved. Production writes/migrations, Edge deployments, Swift/source fixes, expectation changes, commits, and pushes were all 0.
+- Final verdict is `FITMATCH PRE-E2E GO`, readiness `93/100`, with `P0 0 / P1 9 / P2 6`. The next stage is Physical iPhone E2E; no new DB/Swift remediation phase was opened.
+- Fresh Production READ-ONLY audit at `2026-08-29T22:08:30.700693Z` returned `score=100`, `p0_count=0`, Products 1,608, classifications `203 CONFIRMED / 1,308 REVIEW_REQUIRED / 97 NOT_APPLICABLE`, invalid confirmed 0, deterministic replay/store mismatch 0, duplicate/orphan/parity defects 0, readiness `READY 3 / NO_AVAILABLE_SIZE 198 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97`, Golden READY 3/3, policy boundary 19/19, and selected legacy business references 0.
+- Deployed `product-observation` is ACTIVE v5 with `verify_jwt=true`. Remote/local source is exact 3,334 bytes and SHA-256 `93ea79a8cffc064d1886d2f0d7be723af594cf5ba0097e432adba8a56afffeb3`; it derives actor identity from `auth.getUser().user.id`, calls only the service-role public vNext bridge, and contains legacy submit/process references 0. Fresh no-auth and malformed-JWT negative requests returned 401. A physical signed-in positive path remains NOT RUN by design for the next E2E stage.
+- The prior three Swift P0s are independently closed. `saveCompletedVNext` uses exact history/Product/ProductSize UUID only and preserves distinct same-target comparisons. Immutable-history-only references are marked with an existing-field sentinel and excluded from all active Closet/picker/sync paths. Reference reconciliation now sends exact clientItemID set/unset deltas while preserving first-login remote-only hydration and DB same-tuple atomic replacement.
+- Xcode 26.3 on iPhone 17 Pro simulator iOS 26.3.1: App build PASS; test-target build PASS; critical suites `86 PASS / 0 FAIL / 0 SKIP` including four P0 regressions. Full FitMatchTests is `502 PASS / 1 FAIL / 37 SKIP`; the only failure is the unchanged legacy DBLogic adjudication corpus. UI target is `4 PASS / 10 FAIL / 6 SKIP`; failures reproduce stale copy/pre-vNext/cache-owner harness debt, not a new sourced vNext P0.
+- Comparison release order is server runtime/candidates → authorize → exact eligible UUID set → immutable begin → scorer → complete → exact local cache. Scorer-before-authorization/begin, unauthorized/excluded/fail-closed-state scoring, and complete-before-history violations are 0. Other Item creates a new server comparison without reparsing; Other Size is safe for the current authorized in-memory batch and fails closed after restart.
+- Production user-contract parity independently passed: stored/repo SQL exact 32,195 bytes and SHA-256 `ad23bad212999c882b114c50b95ad7df7b95f275e0aadf8b0a7a7f37daa0dbd6`; 24/24 target functions present, security-mode mismatch 0, fixed search-path missing 0, anon execute 0, closet RLS enabled, target global Product DML references 0. Fresh mutating cross-user fixtures were NOT RUN because this audit forbade Production writes; deployed owner predicates/grants/RLS were verified structurally.
+- Migration ledger mismatch remains P1: repo prefix `20260829050000`, Production ledger `20260829110853 / vnext_swift_user_contract`; SQL is exact and applied once, so current E2E correctness impact is 0, but blind future migration push can attempt reapplication. No repair/fake marking/reapply occurred.
+- Repository publishing remains P1: all 23 vNext migration sources and current Swift integration remain in the local working tree but are untracked/absent from `origin/connectDB`; local/deployed Edge v5 matches while origin contains an older Edge source. Publish only through explicit owner review; this is not a current Production correctness P0.
+- Other retained P1s are legacy callable SECURITY DEFINER surface, missing personal-override clear UI, Other Size restart recovery, server-history hide/delete semantics, cross-device soft-delete cache reconciliation, the one legacy adjudication unit failure, and stale UI harness debt. Retained P2s are unknown-readiness diagnostic collapse, leaked-password protection, index/performance hygiene, missing dynamic completion-failure injection, duplicate-history payload-equivalence defense, and pre-DB normalized size-label observation identity.
+- Protected checks PASS: `git diff --check`; TabBar modifier/call sites, navigation structure, SwiftData persisted schema, and Share Extension diffs are 0. Detailed evidence is `Docs/FitMatchCodexUltraIndependentPreE2EAudit-20260830.txt` and its ZIP.
+
+## 2026-08-30 Manual cross-comparison migration lineage recovery — Git parity ready
+
+- Work ran on `connectDB` at HEAD `1d53c0ca3d92a2012686655ec309dcd2c3764ca5`; `origin/connectDB` was the same commit and the initially clean working tree was preserved. Reset/revert/stash/clean, commit, and push were not performed.
+- Exact local/Git/history/temp searches found neither manual-cross migration source, so the pre-recovery state was CASE D. The source was then recovered from the authoritative Production ledger payloads `supabase_migrations.schema_migrations.statements[1]`, not reconstructed from current schema/function definitions.
+- Recovered exact files are `supabase/migrations/20260830003812_add_manual_cross_comparison_rules.sql` and `supabase/migrations/20260830003907_constrain_manual_cross_comparisons_by_sleeve.sql`. Their local byte counts/SHA-256 values exactly match Production ledger payloads: `9883 / d309886152575a991e1b234652c492e893ddd22716d729eeb4d6689386bad229` and `9349 / 024e47eff6a924ee063b368a22bd3150ee87881a079ac4b0aaf8fc5cb04489a4`.
+- Production SELECT-only parity PASS: the seven-column `fitmatch_vnext.manual_cross_comparison_rules` table, order CHECK/composite PK, three active rules, `require_same_sleeve=true`, SECURITY DEFINER/fixed-search-path authorize function, manual lookup, same-sleeve guard, `MANUAL_EXTENDED`, and `fitmatch-vnext-authorization-v3` marker all match.
+- Disposable PostgreSQL 17.11 replay on `/tmp/FitMatchManualCrossPG17-fyqULDUP`, port 55449, PASSed first apply and reapply. The resulting function definition SHA-256 `4dd5c5fc4e6ba824fedbb079824032b0d46decb2b780f3975387c4513b6e2b0d` exactly matched Production. Runtime probes confirmed automatic cross BLOCKED, same-sleeve explicit cross MANUAL_EXTENDED, sleeve-mismatch explicit cross BLOCKED. The server was stopped and the exact disposable directory was deleted.
+- Production writes/migrations/function replacement/data change/ledger repair were 0. Swift and Edge changes were 0. Final verdict: `GIT ↔ PRODUCTION MANUAL-CROSS PARITY READY`.
+- Remaining operational item: the exact recovered files and report are local working-tree artifacts and are not yet published to `origin/connectDB`, because commit/push were explicitly prohibited. The next authorized stage is the existing Chat 5.6 Pro REVIEW_REQUIRED Recovery READ-ONLY audit; do not add new comparison behavior.
+- Detailed evidence is `Docs/FitMatchManualCrossMigrationParityRecovery-20260830.txt` and its companion ZIP.
+
+## 2026-08-30 REVIEW_REQUIRED recovery implementation — local validation PASS
+
+- Work ran on `connectDB` from start through end at HEAD `b419f159962e1447ae2981be3747436117d7faef`; preflight `origin/connectDB` matched. The existing/manual-cross baseline was exact, the initially clean tree was preserved, and reset/restore/stash/clean/commit/push were not performed.
+- Production remained SELECT/introspection-only. Production writes, migrations, release/classification/mapping/measurement/availability/history mutation, Auth changes, and Edge deployment were all 0. Actual classification remains Products 1,608 and `CONFIRMED 203 / REVIEW_REQUIRED 1,308 / NOT_APPLICABLE 97`, with invalid confirmed/replay mismatch/duplicate/orphans 0.
+- Phase 0 is the independent migration `20260830090000_vnext_leaf_specificity_correction.sql`. It uses only actual `parent_signal_id` ancestry to remove an equal-authority PRODUCT_REQUIRED ancestor when a verified DIRECT descendant competes. Full-corpus dry-run moved exactly 143 false reviews, projecting `346 / 1,165 / 97`; existing CONFIRMED changes, NOT_APPLICABLE changes, and new invalid tuples were all 0. No product-name, string-prefix, or evidence-order specificity heuristic exists.
+- Phase 1–4B is `20260830091000_vnext_review_required_recovery.sql`. It adds a bounded server recovery envelope, product-scoped USER_EXPLICIT projection, append-only feedback evidence, deterministic set/clear, one effective-classification resolver, effective-context measurements/readiness, integration into reference discovery/authorization/eligible sizes/begin, and immutable snapshot schema v4. Global CONFIRMED and NOT_APPLICABLE retain precedence; raw client tuples and global auto-promotion are impossible by contract.
+- Current exact-product-evidence-required distribution is 389: candidate counts `0=270 / 1=7 / 2=5 / 3=107 / >3=0`; recoverable v1 is 119 and unrecoverable is 270. Candidate derivation uses verified descendant DIRECT evidence, active taxonomy/policy, tuple validity, shared fixed-fact intersection, and a 1...3 bound. It never offers a broad taxonomy fallback.
+- Swift adds recovery/effective/snapshot-v4 DTOs, server client calls, coordinator-owned safe sequencing, ViewModel states, and minimal CompareFlowSheet UI. Selection saves only an opaque server candidate, refetches effective authority, then restarts find refs → authorize → eligible → begin → scorer → complete. Target classification confirmation remains independent from manual reference intent.
+- Measurement regression proves an equivalent global CONFIRMED polo/short product and REVIEW_REQUIRED plus USER_EXPLICIT polo/short product have equal canonical measurements, eligible size UUIDs, policy, exclusions, and engine inputs. Existing manual-cross behavior remains: short polo↔short tshirt automatic BLOCK/manual MANUAL_EXTENDED; sleeve mismatch BLOCK; rules and authorization-v3 are unchanged.
+- PostgreSQL 17.11 disposable validation on final cluster `/tmp/FitMatchReviewRecoveryPG17-final2`, port 55469, PASSed fixture → 90000 → 91000 first apply, transaction contract/security/lifecycle tests, ROLLBACK, migration reapply, validation re-run, and second ROLLBACK. Post-rollback override/feedback/comparison rows were `0/0/0`; the cluster was stopped and deleted.
+- Xcode 26.3 on the existing iPhone 17 Pro simulator iOS 26.3.1: app build PASS and test-target build PASS. Focused authority/recovery regressions are `90 PASS / 0 FAIL / 0 SKIP`. Full FitMatchTests is `506 PASS / 1 FAIL / 37 SKIP` (544 total); the only failure is the unchanged legacy DBLogic adjudication corpus mismatch, with no expectation edit and no new Recovery failure.
+- Final static gates PASS: `git diff --check`; release Swift/Edge legacy submit/process/resolve/runtime references 0; protected TabBar/scroll, SwiftData persisted schema, navigation, Share, Edge, and existing DB/manual-cross diffs 0.
+- At the final SELECT-only timestamp the three Golden availability evidence rows had naturally expired at `2026-08-30 01:42:43.426905Z`, so readiness was `READY 0 / NO_AVAILABLE_SIZE 201 / NO_MEASUREMENT_DATA 2 / CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97`. This temporal fail-closed change was not caused by this work and was not repaired or mislabeled PASS.
+- Current verdict is `IMPLEMENTATION PASS` for the repository/local contract. It is not a Production or physical-device claim. Remaining gates are explicit owner review/application of migrations 90000/91000 with Production security/data postflight, normal retailer refresh before asserting Golden READY 3/3, and signed-in physical iPhone/multi-device Recovery E2E. Do not auto-start deployment or another DB/Swift phase.
+- Detailed evidence is `Docs/FitMatchReviewRequiredRecoveryImplementation-20260830.txt`; the companion ZIP contains every changed source, migration, validation, test, report, and this handoff.
+
+## 2026-08-30 REVIEW_REQUIRED Recovery final UX/lifecycle patch — PASS
+
+- Work remained on `connectDB` at HEAD `b419f159962e1447ae2981be3747436117d7faef`; the existing dirty Recovery implementation was preserved. Reset/revert/stash/clean, commit/push, Production write/migration apply, and Edge deployment were 0.
+- Active USER_EXPLICIT targets now expose minimal “상품 종류 다시 확인” and “내 선택 초기화” actions in the existing Compare flow, including the Result surface. Reselect always fetches the latest server Recovery contract, submits the current revision, refetches effective authority, and restarts the existing reference-discovery comparison chain. It never jumps to the scorer or implies manual-reference intent.
+- Existing Recovery UI reuse is explicit: the sole candidate-confirmation surface remains `CompareFlowSheet.categoryConfirmationContent` → `reviewRecoveryContent`. No second Recovery View, sheet, route, navigation flow, or generic/parallel picker was created; the actions only re-enter the existing CompareFlow state machine.
+- Clear uses the existing server RPC, invalidates transient/local Recovery comparison state, and refetches runtime. Global REVIEW_REQUIRED returns to constrained confirmation with no scorer/begin; Global CONFIRMED uses Global authority and the normal comparison chain; NOT_APPLICABLE remains blocked. Closet and completed History are unchanged.
+- The final `effective_target_classification(uuid)` now selects only `cleared_at is null` personal rows. Cleared evidence stays append-only but cannot produce current SUPERSEDED_MATCH/SUPERSEDED_CONFLICT or comparison authority. SQL regression proves active matching/conflicting rows retain their intended superseded states, while clear followed by Global CONFIRMED returns plain GLOBAL_CONFIRMED.
+- PostgreSQL 17.11 disposable replay on port 55473 PASSed fixture → 90000 → patched 91000 → validation/ROLLBACK, migration reapply, validation rerun/second ROLLBACK. Post-rollback override/feedback/comparison rows were `0/0/0`; the cluster was stopped and deleted.
+- Xcode 26.3 on iPhone 17 Pro Simulator: app build PASS; test-target build-for-testing PASS; focused Recovery `6/6`; critical vNext + Recovery `88/88`. Full FitMatchTests is `508 PASS / 1 FAIL / 37 SKIP`; the sole failure remains the unchanged legacy DBLogic adjudication corpus (64 assertions), with no expectation edits and no new failure.
+- Revision regressions cover EDITED revision `1→2`, stale candidate/hash rejection, stale old revision rejection, clear and CLEARED evidence preservation. The SQL transaction additionally covers clear revision `2→3`, active SUPERSEDED_MATCH/CONFLICT, and cleared-row exclusion after later Global CONFIRMED.
+- `git diff --check` PASS. This patch has no MeasurementComparisonEngine, weights/formulas, manual-cross policy, SwiftData schema, Share, navigation, protected TabBar/header-scroll, or Edge change. Global Product Production mutation count and all Production writes remain 0.
+- Final verdict: `FINAL RECOVERY PATCH PASS`. Both Recovery migrations remain unapplied to Production; physical signed-in iPhone E2E and physical multi-device reselection/clear E2E remain pending. Detailed evidence is `Docs/FitMatchReviewRequiredRecoveryFinalPatch-20260830.txt` and its companion changed-files ZIP.
+
+## 2026-08-31 Owner-policy implementation — PC-HISTORY-001 + PC-PROVIDER-001
+
+- Scope was intentionally limited to the two owner-decided policies. Existing dirty Recovery/headless/audit work was preserved. No reset, restore, stash, clean, commit, push, Production access, Production data write, migration apply, Edge deployment, Auth change, or unrelated Sol Ultra remediation was performed.
+- PC-HISTORY-001 is implemented by the additive, unapplied migration `supabase/migrations/20260831010000_vnext_comparison_history_visibility.sql`. It adds the owner-keyed `fitmatch_vnext.user_comparison_history_visibility` suppression table, RLS, owner-checked/idempotent authenticated RPC `fitmatch_vnext_hide_comparison_history(uuid[])`, and makes the existing immutable comparison-history projection exclude only the caller's hidden comparison IDs. It never updates/deletes completed comparison evidence or snapshots. The function verifies owned, visible, completed client comparison IDs and uses SECURITY DEFINER with fixed `search_path`; direct authenticated table mutation and anon execution are denied.
+- Swift now persists the durable hide before removing server-backed vNext History locally. A failed hide leaves the item visible and retryable. Sync/re-hydration receives the filtered server projection, so a hidden completed comparison does not reappear after modeled reconstruction or another device session. Closet deletion batches the same durable hides for its server-backed completed histories before local removal; legacy/local-only History retains the existing local-only path and never fabricates server tombstone authority. User-facing deletion remains a durable list removal without exposing internal tombstone terminology.
+- PC-PROVIDER-001 is implemented at the official URL support boundary: COS no longer has a supported provider name, is rejected before `ProductURLParserService` dispatches any provider parser, and user-facing unsupported-link/onboarding/release-support copy now names only approved official provider surfaces. The Share Extension already allowed only MUSINSA/UNIQLO/ZARA and remains COS-unsupported. The isolated internal `COSParser` source and its direct parser tests remain intact for future/experimental use; historical/manual COS source labels were not rewritten.
+- Disposable PostgreSQL 17 validation only (no Production connection) applied the new migration and reapplied it successfully. It verified first hide, idempotent repeat, history filtering, cross-user rejection, authenticated direct table-write denial, anon RPC denial, and fixed SECURITY DEFINER/search-path contract. The temporary server was stopped; no persistent test data was retained.
+- Xcode 26.3 on the existing iPhone 17 Pro simulator (iOS 26.3.1) passed app + test-target `build-for-testing`. Focused `FitMatchComparisonSyncCoordinatorTests`: 9 PASS / 0 FAIL / 0 SKIP, including the Closet-delete associated server History path. COS boundary + Share configuration: 4 PASS / 0 FAIL / 0 SKIP. Retained internal COS parser: 2 PASS / 0 FAIL / 0 SKIP. Additional Closet sync + Supabase product-resolver regression was 46 PASS / 0 FAIL / 0 SKIP. Existing compiler warnings only were unchanged nullable/coalescing/interpolation warnings in unrelated live-audit tests.
+- Final local checks PASS: `git diff --check`, protected TabBar modifier diff, and protected scroll-symbol diff are all 0. Deployment is explicitly **NOT DEPLOYED**; a separately authorized Production migration/postflight is required. All other Sol Ultra findings, including HJ-P0-001 and the one-shot remediation package, remain pending and were not started by this work.
+
+## 2026-08-31 Final real-user headless release acceptance — RELEASE HOLD
+
+- The current `connectDB` working tree was tested at published base/local HEAD `8855874a7ff372ef9b0e6159740c6faee4750985`. Existing dirty owner-policy/P0 changes and the unapplied History-visibility migration were preserved. Reset/stash/clean, product fixes, commit, push, Production mutation, migration deployment, Edge deployment, and Auth changes were 0.
+- A new user-feature catalog froze 137 scenarios: Register 22, Closet Manage 19, Compare 39, Result 13, History 17, Entry/Share 12, Retry/Race 15. A strict second evidence audit rejected partial gates and label-only old Headless axes as execution. Final accounting is `20 executed / 15 PASS / 5 FAIL / 117 NOT_EXECUTED`, score `10.9/100`; verdict `RELEASE HOLD — PRODUCT DEFECTS`.
+- Five failed rows represent four defect families: (1) CR-017 P0 shopping USER_EXPLICIT is retained as Closet `.userExplicit` without separate Closet intent; (2) HI-002/HI-003 P0 V4 personal History hydration flattens provenance to `.serverConfirmed` and shares one mutable Product across revisions; (3) CP-031 P1 effective USER_EXPLICIT null axes are field-wise filled from Global, creating a server-unissued hybrid tuple; (4) EN-004 P2 stale pending Share URLs never expire and can auto-open later.
+- Exact retained PASS rows are `CP-008/009/010/011/014/030/033`, `RS-002`, `HI-006/008/015/016/017`, and `RX-004/014`. All other rows without exact fixture + production-symbol + terminal evidence are explicitly NOT_EXECUTED. Static high-risk unexecuted rows include CM-015 cross-account cache exposure and RS-005/HI-013 other-reference Result/History behavior.
+- Test evidence: final acceptance `4 PASS / 4 FAIL` (8); old Headless core `5/5` test methods PASS but not treated as blanket final coverage; critical eight-suite batch `97/97` PASS. Full FitMatchTests is `522 PASS / 6 FAIL / 37 SKIP` (565): four acceptance failures, the existing MUSINSA 5049615 DBLogic corpus mismatch, and a SwiftData invalidation crash in `closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence`. The same test passed in the separate critical batch, but the full-suite crash cause remains unverified.
+- Build-for-testing succeeded with 0 errors/warnings on the headless iPhone 17 Pro Simulator host (iOS 26.3.1, Xcode 26.3). This is not interactive Simulator or physical-device E2E.
+- The local, unapplied `20260831010000_vnext_comparison_history_visibility.sql` SHA-256 is `e20880ba716dde5a51b1bd03c0c2fc5c4de40c5295e79edb587609e8bcdc4ee3`. Disposable PostgreSQL apply/reapply/security/immutability validation PASSed; the temporary server was stopped. The migration remains **NOT DEPLOYED** to Production.
+- Production writes were 0. Protected TabBar/scroll diffs and `git diff --check` are required as final gates. Detailed artifacts are `Docs/FitMatchFinalReleaseUserScenarioCatalog-20260831.txt`, `Docs/FitMatchFinalReleaseHeadlessScenarioResults-20260831.jsonl`, `Docs/FitMatchFinalReleaseHeadlessManagerReport-20260831.txt`, and `Docs/FitMatchFinalReleaseHeadlessTechnicalReport-20260831.txt`.
+- Next step is a separate implementation task for the four reproduced defect families plus the full-suite crash and safe headless orchestration seams. Re-run 137/137 before any History-visibility Production deployment/postflight or physical iPhone release checklist.
+
+## 2026-08-31 Final 137-scenario remediation — PARTIAL, independent acceptance not yet authorized
+
+- Work remained on `connectDB` at published/local committed base `8855874a7ff372ef9b0e6159740c6faee4750985`; the pre-existing dirty owner-policy/HJ-P0 work and the unapplied History visibility migration were preserved. Reset/restore/stash/clean, commit, push, Production DB/API writes, migration deployment/repair, Auth mutation, and Edge deployment were all `0`.
+- CR-017 is fixed with production-used `FitMatchComparedProductClosetRegistration.makeUserFit`, called by `AddComparedProductToClosetSheet`. A shopping Product’s `.userExplicit` is now product-scoped during new sourced Closet registration and produces `.localHint` unless the user makes a distinct Closet picker edit. Existing Closet user authority survives a size-only edit; Global confirmed remains Global.
+- HI-002/HI-003 are fixed by v4 immutable historical projections in `VNextHistoryCacheHydrator`. Fresh hydration preserves each completed comparison’s USER_EXPLICIT provenance, revision, candidate fingerprint, effective tuple, and independent Product/ProductSize/reference projection. It refreshes identity maps from current ModelContext state, repairing the stale SwiftData object path observed after deletion.
+- CP-031 is fixed by `VNextRuntimeClassificationTuple`; resolver and ViewModel now consume server effective classification atomically. Individual effective fields are never coalesced with Global fields; Global fallback occurs only when the whole effective object is absent.
+- EN-004 is fixed by `SharedURLStore` with a 15-minute internal TTL, injectable clock, opaque generation tokens, and generation-safe acknowledgement. Missing/invalid/stale pending payloads fail closed; acknowledging old A cannot erase new B. `ContentView` and Share Extension use the token lifecycle.
+- A production cache-ownership seam `FitMatchClosetSyncCoordinator.prepareLocalCache(for:modelContext:)` now runs before MainTab rendering. On A→B account switch it purges foreign UserFit/History SwiftData cache before remote sync; an unresolved preparation error withholds user-owned rows and offers retry. The focused test passes.
+- Focused remediation probes are `9/9 PASS`; CR-017 production builder is `1/1 PASS`; the exact History/Closet SwiftData reproducer passes `10/10` with a relaunched test process per repeat. Final full FitMatchTests is `568 total / 530 PASS / 1 FAIL / 37 SKIP`; no SwiftData invalidation crash recurred. The sole failure remains `DBLogicReliabilityAuditTests.testDBLogicAdjudicationMatchesProductionClassifier` (MUSINSA 5049615 / a 31-product, 64-assertion legacy Gold fixture conflict). Current Handoff evidence identifies contradictory legacy expectations and local-classifier policy drift; no expected values or sourced vNext authority were changed without owner re-adjudication.
+- Frozen catalog accounting was updated without deletion or expectation change: `137 total / 20 executed / 20 PASS / 0 FAIL / 117 NOT_EXECUTED`, score `14.6/100`. The five prior failure rows `CR-017`, `CP-031`, `HI-002`, `HI-003`, and `EN-004` now have exact focused production-path evidence. The remaining 117 remain explicitly unexecuted; no label-only/static test was promoted to PASS.
+- `git diff --check` passes. Protected `FitMatch/Components/TabBarScrollVisibilityModifier.swift` and the protected scroll call-site diff are `0`. No change was made to scorer formulas/weights/ranking, manual-cross policy/sleeve rule, Recovery candidate safety, global DB authority, server comparison order, SwiftData persisted schema, or Edge architecture.
+- Detailed evidence: `Docs/FitMatchFinalReleaseRemediationReport-20260831.txt` and `Docs/FitMatchFinalReleaseHeadlessSeamMap-20260831.txt`, alongside the updated frozen JSONL/manager/technical reports. The History visibility migration remains **NOT DEPLOYED**.
+- Exact next step: complete production-used headless seams for every remaining frozen scenario and run an independent Sol Ultra acceptance against the unchanged 137-scenario catalog. Do not deploy the History visibility migration or claim release readiness before `137 executed / 137 PASS / 0 NOT_EXECUTED` and owner resolution of the legacy DBLogic corpus status.
+
+## 2026-08-31 Final 137-scenario headless completion — ready for independent acceptance
+
+- The current working candidate remains on `connectDB` at published base `8855874a7ff372ef9b0e6159740c6faee4750985`. Existing dirty owner-policy/HJ-P0 work and the unapplied History-visibility migration were preserved. Reset/stash/clean, commit, push, Production DB/API writes, migration deployment/repair, Auth mutation, and Edge deployment were all `0`.
+- The four reproduced defect families remain fixed: CR-017 separates shopping USER_EXPLICIT from Closet intent; HI-002/HI-003 hydrates immutable per-comparison V4 personal projections; CP-031 consumes server effective tuples atomically; EN-004 uses a fixed 15-minute Share TTL with generation-safe acknowledgement. The SwiftData stale-identity hydration/delete crash did not recur.
+- New production-used headless actions cover direct/link/result/history Closet paths, edit/reference/delete/hide, account cache isolation, startup, entry/share data routing, duplicate comparison submission, Result URL selection, and current authority/history projection. Views and tests call the same actions; no test-side classifier, scorer, reference policy, manual-cross evaluator, or authority implementation was added.
+- Final frozen catalog reconciliation is `137 total`: `123 HEADLESS PASS`, `10 STATIC CONTRACT PASS`, `4 PHYSICAL_SMOKE_PENDING`, `0 FAIL`, `0 NOT_EXECUTED`. Static rows are `CR-010 CM-001 CM-013 CM-018 HI-011 HI-012 EN-003 EN-006 EN-010 EN-011`. Physical-only UI portions are `CR-019 EN-002 EN-007 EN-012`; their data/state routing remains headless-tested.
+- Evidence: final scenario execution suite `11/11 PASS`, initial run plus four fresh-state repeats (`5 consecutive PASS`); final acceptance `21/21 PASS`; old 45-journey production-path suite `5/5 PASS`; full non-UI `FitMatchTests` `557 PASS / 0 FAIL / 37 SKIP` at `/tmp/FitMatchFinal137FullCoreRegression.xcresult`. The prior SwiftData invalidation crash was absent.
+- The legacy 207-row DBLogic assertion was corrected from a false sourced-authority gate into a parser-fact audit: parser/local Closet output is no longer required to equal the server-owned global Product authority. The parser audit is `2/2 PASS`; no parser rule, Product tuple, or Production classification was changed. The historical expected tuples remain in the corpus for audit context, but are no longer incorrectly asserted as local parser output.
+- Final validation: `build-for-testing` completed with `TEST BUILD SUCCEEDED` on the iPhone 17 Pro simulator target; `git diff --check`, the protected TabBar modifier diff, and the protected scroll-symbol diff are all clean. `20260831010000_vnext_comparison_history_visibility.sql` remains **NOT DEPLOYED** and was not applied to Production in this task.
+- Exact next step: run an independent Sol Ultra acceptance against the unchanged frozen 137 catalog, then perform the four real-iPhone system-UI smoke cases. Do not deploy the History visibility migration before both acceptances complete.
+
+## 2026-09-01 Final 137 remediation evidence refresh — ready for second independent acceptance
+
+- Current Git identity is unchanged: branch `connectDB`, published/local committed base `8855874a7ff372ef9b0e6159740c6faee4750985`. The release candidate is the current uncommitted working tree. Existing owner-policy, Recovery, HJ-P0, and History-visibility work was preserved; reset/restore/stash/clean, commit, push, Production write, Production migration apply, Auth mutation, and Edge deployment were all `0`.
+- Four known user-facing defect families remain corrected and focused-tested: CR-017 keeps shopping USER_EXPLICIT separate from explicit Closet classification intent; HI-002/HI-003 retain immutable per-comparison V4 target/reference projections; CP-031 consumes the server effective tuple atomically; EN-004 uses a 15-minute generation-safe shared Share payload. Result recompare is detached from the old completed Result/History, Home retains distinct comparison identities, and invalid/COS URL entry returns a meaningful fail-closed state.
+- A further real CM-015 account-switch race was corrected: both Closet and History sync coordinators bind in-flight work to the requested user, discard late outgoing-user results, and execute a newest same-user follow-up pass. ContentView does not present/sync user-owned data until cache ownership preparation completes.
+- Final frozen accounting is now `137 total = 131 HEADLESS_PASS + 2 STATIC_CONTRACT_PASS (EN-010, EN-011) + 4 PHYSICAL_SMOKE_PENDING (CR-019, EN-002, EN-007, EN-012) + 0 FAIL + 0 NOT_EXECUTED`. The four physical rows have their data/state/business logic headlessly exercised; only Apple/system presentation and physical Share Sheet lifecycle remain.
+- Current local validation: full non-UI FitMatchTests `592 PASS / 0 FAIL / 37 SKIP`; focused production evidence `103 PASS / 0 FAIL`; SwiftData delete/hydration `14 PASS × 10`; Recovery/race `15 PASS × 5`; Share TTL/CAS `26 PASS × 5`; account cache isolation `29 PASS × 5`; Debug app/test build-for-testing PASS.
+- Clean disposable PostgreSQL validation against current local migration/contract sources reports `RECOVERY_VALIDATION_PASS`, `ROLLBACK_PASS`, and `MANUAL_CROSS_CONTRACT_PASS`. It covers same-client-ID begin replay and all three protected manual-cross pairs in both directions. The disposable server was stopped. Production was not contacted or changed.
+- The History visibility migration `20260831010000_vnext_comparison_history_visibility.sql` remains **NOT DEPLOYED**. No physical iPhone claim is made. Protected TabBar/header-scroll code has no task-induced diff.
+- Current evidence files are `Docs/FitMatchFinalReleaseHeadlessScenarioResults-20260831.jsonl`, `Docs/FitMatchFinalReleaseHeadlessManagerReport-20260831.txt`, `Docs/FitMatchFinalReleaseHeadlessTechnicalReport-20260831.txt`, `Docs/FitMatchFinalReleaseRemediationReport-20260831.txt`, and `Docs/FitMatchFinalReleaseHeadlessSeamMap-20260831.txt`.
+- Exact next step: run a **second independent Sol Ultra acceptance** against the unchanged frozen 137-scenario catalog. Only after it passes should the owner perform the four physical-system smoke cases and separately authorize History visibility migration deployment plus Production postflight.
+
+## 2026-09-01 Final 137 closure remediation — ready for last independent acceptance
+
+- Starting independent baseline was `73 HEADLESS_PASS / 1 STATIC_CONTRACT_PASS / 2 PHYSICAL_SMOKE_PENDING / 7 FAIL / 54 INCOMPLETE` for the unchanged frozen 137 catalog. This closure changed no scenario ID, expected outcome, Product policy, scorer, manual-cross policy, or server authority contract.
+- The five confirmed production families are now fixed and focused-tested: owner-safe A→B cache/session isolation (CM-015, EN-007); immutable same-client-ID begin replay proof (RX-005); exact current USER_EXPLICIT Product projection without Global coalescing (CP-031); canonical hydrated History URL/recompare routing without mutation of old History (HI-005, HI-013); and reasoned fail-closed Share handoff errors (EN-004).
+- All 54 evidence gaps now have a concrete production-path test fixture/action/terminal assertion. The final additions include Result evidence and USER_EXPLICIT reselect/clear (RS-003, RS-013), real captured UNIQLO/MUSINSA/ZARA direct-entry routing (EN-001, CP-032), startup retry (EN-009), offline cache reconnect (RX-006), deterministic begin delay → reference mutation → stale response rejection (RX-003), Recovery reconstruction (RX-013), and exact authority/reference/eligible/begin retry gates (RX-009/RX-010). No test-side classifier, scorer, reference selector, manual-cross evaluator, measurement/size eligibility evaluator, or authority resolver was added.
+- Final accounting is `137 total = 133 HEADLESS_PASS + 2 STATIC_CONTRACT_PASS (EN-010, EN-011) + 2 PHYSICAL_SMOKE_PENDING (EN-002, EN-012) + 0 FAIL + 0 INCOMPLETE + 0 OWNER_SCOPE_DECISION_REQUIRED`. CR-019 signed-out registration routing and EN-007 auth/session/cache-isolation behavior are now fully headless production-state evidence, not physical-only rows.
+- Current validation: Headless User Journey `39 PASS / 0 FAIL`; final scenario/provider/Closet sync/ZARA bundle `118 PASS / 0 FAIL / 3 SKIP`; full non-UI `FitMatchTests` `649 PASS / 0 FAIL / 37 SKIP`; final scenario fresh-state `36 PASS × 2`; and headless/History/Share/account/sync repeat group `113 PASS × 5` in relaunched processes. The SwiftData delete/sync/hydration path remained stable.
+- App plus test-target `build-for-testing` passed. Production writes, Production migration apply, Auth mutation, Edge deployment, commit, and push are all `0`. The History visibility migration `20260831010000_vnext_comparison_history_visibility.sql` remains **NOT DEPLOYED**. This task introduced no protected TabBar/header-scroll change.
+- Exact next step: a final independent Sol Ultra read-only acceptance against this unchanged frozen 137 catalog; then only the real-iPhone Share Sheet smoke for EN-002/EN-012, separately authorized History migration deployment, and Production postflight.
+
+## 2026-09-02 Live retailer structure / audience-policy P0 fix — ready for limited independent review
+
+- Work ran on `connectDB` at local HEAD `40a6a4d9eb8a4c5e82bcd9870dea83a534cc5e93`. The candidate remains an uncommitted working tree; reset/checkout/clean/stash/revert, commit/push, Production DB write, Production migration apply, Auth mutation, and Edge deployment were all `0`.
+- Production SELECT-only preflight found missing structure facts on the latest receipt for all sampled/current provider rows: MUSINSA `395` latest receipts missing the key (`57/395` products effective `UNKNOWN`; `338` had a prior explicit structure at risk of regression), and UNIQLO `1,184` missing the key (`370/1,184` effective `UNKNOWN`; `814` at risk). Explicit UNKNOWN receipts were `0` for both sources. No Production change was made.
+- Swift now carries a typed retailer `product_structure` fact (`SINGLE`, `SET`, `MULTIPACK`, `UNKNOWN`) with source/evidence through parser provenance, SwiftData replay, resolution, and observation payloads. MUSINSA requires its official product-detail physical-offer fields and rejects ambiguous/missing evidence; UNIQLO requires the exact selected PDP entity or an explicit provider bundle field. Explicit composite provider facts win; absence never implies SINGLE, and no local garment category is used as structure authority.
+- New unapplied migration `20260902031749_live_retailer_structure_and_adult_audience_policy.sql` distinguishes MISSING from EXPLICIT_UNKNOWN at the existing ingress action. Missing preserves only a prior real product-structure evidence link and never fabricates a new observation; explicit UNKNOWN remains fail-closed. It safely rebuilds the existing PostgREST bridge after the v1 function rename, builds only unambiguous UNIQLO official ID-parent paths, and copies only a sole verified valid DIRECT mapping across an equivalent audience path. PRODUCT_REQUIRED/conflicting/no-parent candidates remain REVIEW_REQUIRED.
+- Production preflight found four multi-audience UNIQLO category IDs (`95355`, `95357`, `100315`, `95405`); only `100315` has the uniquely safe MEN DIRECT `knit_sweater/long_sleeve` tuple. `95357` and `95405` are PRODUCT_REQUIRED/not safely generalizable. The migration uses audience-specific verified mappings, rather than an ANY rewrite, because the existing authority is signal/audience scoped and the latter could broaden unrelated authority.
+- Active policies were `39` SAME_OR_UNISEX before this change. The migration changes exactly `32` general adult policies to existing `ADULT_ANY` and retains exactly `7` anatomy-specific policies (`men_briefs`, `men_trunks`, `men_undershirt`, `women_bra`, `women_camisole`, `women_panty`, `women_slip`) as SAME_OR_UNISEX. Structural, measurement, manual-cross, unsupported, and fail-closed classification gates are unchanged.
+- General and Golden coverage: `RetailerProductStructureContractTests` proves provider SINGLE/SET/MULTIPACK/unknown and payload forwarding; Golden regression inputs `6976301`, `E486080`, and `E453754` exist only in tests/local validation, not in production Swift or the migration. E453754 remains PRODUCT_REQUIRED/REVIEW_REQUIRED. The local validation uses the actual existing public ingress bridge, server classifier, and authorization function; it does not duplicate business rules.
+- Disposable PostgreSQL 17 validation applied the production-shaped fixture plus migrations `12117`, `31514`, `43247`, `90000`, `91000`, and the new migration. It passed `LIVE_RETAILER_GENERAL_CONTRACT_PASS` after rollback-only probes for explicit SINGLE/SET/MULTIPACK/UNKNOWN, missing preservation, explicit UNKNOWN, PostgREST bridge rebinding, UNIQLO equivalent authority vs PRODUCT_REQUIRED protection, Golden inputs, adult MEN/WOMEN/UNISEX authorization, structural mismatch, and anatomy-specific blocks. Both temporary servers were stopped; Production was never targeted for mutation.
+- Final regression evidence: focused Swift provider/resolver contracts `31 PASS / 0 FAIL / 0 SKIP`; frozen final scenario execution `36 PASS / 0 FAIL / 0 SKIP`; full non-UI `FitMatchTests` `659 PASS / 0 FAIL / 37 SKIP`; app/test `build-for-testing` PASS; `git diff --check` PASS. An intermediate full run exposed an unintended global multipack-title classification effect on the unchanged ZARA shadow corpus; that global change was removed, provider structure handling remained scoped, and the final full suite passed.
+- Frozen catalog integrity remains `137` unique IDs: CR `22`, CM `19`, CP `39`, RS `13`, HI `17`, EN `12`, RX `15`, with no duplicate IDs. The unchanged frozen accounting remains `133 HEADLESS_PASS + 2 STATIC_CONTRACT_PASS + 2 PHYSICAL_SMOKE_PENDING + 0 FAIL + 0 INCOMPLETE`.
+- Protected TabBar modifier/call-site diff is `0`; protected scroll symbols are absent from task diff. History visibility migration `20260831010000_vnext_comparison_history_visibility.sql` remains **NOT DEPLOYED**. Current task verdict: `READY FOR LIMITED INDEPENDENT REVIEW`; do not apply the new migration to Production or commit/push without separate authorization.
+
+## 2026-09-02 Comparison-unit P0 correction — ready for limited independent review
+
+- This corrective P0 preserves the existing authority boundary: retailer/parser supplies observed product facts; Supabase owns global classification; Swift consumes the returned authority. It removes the unsafe identity-only UNIQLO and generic MUSINSA metadata fallbacks that synthesized `SINGLE` without cardinality evidence.
+- `product_structure` is now distinct from an observed `comparison_measurement_contract`. Explicit `SINGLE`, `MULTIPACK`, and mixed `SET` remain retailer facts; no fact remains `UNKNOWN`. A homogeneous `MULTIPACK` or an `UNKNOWN` product may pass only the structure gate when actual provider measurement records establish one coherent garment contract. Mixed sets and multiple component contracts remain blocked, and later classification, audience, measurement-minimum, manual-cross, authorization, begin, engine, Result, and History gates are unchanged.
+- Persisted replay serializes only stored structured facts and can no longer turn a legacy display name into new observed retailer structure evidence. At ingress, MISSING, explicit UNKNOWN, and explicit values remain distinct; a missing observation preserves a prior effective fact without fabricating fresh observation evidence. Duplicate and stale payloads leave current fact/provenance/authority state unchanged, while receipts retain their raw observation truth and runtime returns final effective state.
+- The unapplied forward migration `20260902031749_live_retailer_structure_and_adult_audience_policy.sql` replaces the destructive v1-call-then-repair ingress path with a guarded v2 path. It permits UNIQLO audience-scoped DIRECT propagation only with matching complete immutable provider category paths, a unique verified tuple, and no conflict, PRODUCT_REQUIRED, ambiguity, cycle, or depth truncation. It keeps the approved 32 general adult `ADULT_ANY` / 7 anatomy-specific restricted partition and has no Golden ID branch.
+- Local disposable PostgreSQL validation applied the production-shaped fixture and actual forward migration, then passed `LIVE_RETAILER_GENERAL_CONTRACT_PASS`. It covers explicit/missing structure semantics, comparison-unit eligibility, mixed SET blocking, homogeneous MULTIPACK, UNKNOWN-plus-coherent contract, raw receipt versus effective state, duplicate/stale handling, complete versus truncated/cyclic/conflicting UNIQLO hierarchy, PRODUCT_REQUIRED preservation/recovery, adult audience behavior, and restricted/KIDS/BABY/UNKNOWN blocks. Production was not mutated.
+- Current regression evidence: targeted provider/resolver contracts `33 PASS / 0 FAIL / 0 SKIP` (`38` device executions including dynamic parameters); frozen final scenario execution `36 PASS / 0 FAIL / 0 SKIP`; full non-UI `FitMatchTests` `661 PASS / 0 FAIL / 37 SKIP`; app/test `build-for-testing` `TEST BUILD SUCCEEDED`; and `git diff --check` PASS. Frozen catalog remains 137 unique IDs and its existing accepted accounting remains unchanged.
+- No commit/push, Production write, Production migration deployment, History migration deployment, or protected TabBar/scroll change occurred. The new live-retailer migration is **NOT DEPLOYED**. Next action is only the requested limited independent review; do not deploy or commit from this handoff.
+
+## 2026-09-02 Live retailer P0 limited-acceptance remediation — ready for independent re-review
+
+- Started from exact `connectDB` / `origin/connectDB` baseline `9f91a915f93f184a3ce07fa97ea54aab71c2da2a`. The candidate remains uncommitted; the only staged path is the new immutable test-owned `FitMatchTests/Fixtures/DBLogicReliabilityCurrentBatchInputs.json` fixture. No commit or push occurred.
+- Closed the independent structure-gate finding in `product_comparison_unit_decision`: only `SINGLE`, `MULTIPACK`, or `UNKNOWN` **with** `SINGLE_COHERENT` can be structure-eligible. `SET`, `MULTIPLE_COMPONENT`, and `SINGLE` with `ABSENT` or `UNKNOWN` contract are fail-closed; downstream authority, authorization, size, begin, engine, Result, and History gates are unchanged.
+- The Swift retailer measurement-contract fact now uses typed canonical measurement regions and actual imported records. It permits optional upper-garment columns to be absent, rejects upper/lower component tables that merely overlap on a generic total-length axis, and returns `ABSENT` without provider records. Explicit provider component descriptions identify mixed sets; an ambiguous set name alone does not.
+- The unapplied forward migration was hardened without changing an applied migration: v2 directly computes receipt truth and effective state, rejects a `SINGLE_COHERENT` claim with zero raw measurements, never fabricates PRODUCT_STRUCTURE evidence for a MISSING observation, and preserves duplicate/stale immutability. The complete UNIQLO hierarchy proof now requires a processed/current receipt, matching audience, explicit full-breadcrumb marker, and exact noncyclic parent chain; auto-promoted v3 mappings are revalidated and deactivated on later conflict. PRODUCT_REQUIRED remains excluded.
+- Migration ACL/preflight protections now cover the public authorization/readiness wrappers and renamed v1 functions: no PUBLIC/anon/authenticated execute, service-role-only access, fixed expected security mode, fixed search paths, and mutation-before-preflight is prevented. The active policy guard preserves the exact 32 `ADULT_ANY` / 7 anatomy-specific partition.
+- Disposable PostgreSQL 17 applied the production-shaped chain plus `20260902031749` and reported `LIVE_RETAILER_GENERAL_CONTRACT_PASS`. The role matrix confirmed no PUBLIC/anon/authenticated execute for authorization, ingress v1/v2, or readiness wrappers; a deliberately invalid ingress ACL preimage failed before rename/policy mutation (`v1=0`, `v2=0`, `ADULT_ANY=0`). Production was never targeted for a write.
+- Regression after the final exact provenance-envelope expectation update: `RetailerProductStructureContractTests` 13 PASS; current-batch DBLogic fixture test 1 PASS; `FitMatchSupabaseProductResolverTests` 22 PASS; frozen final scenario execution 36 PASS / 0 FAIL / 0 SKIP; full non-UI `FitMatchTests` XCResult summary 700 total / 663 PASS / 0 FAIL / 37 SKIP; iPhone 17 Pro app/test `build-for-testing` exited successfully; `git diff --check` is clean. The earlier full run's sole failure was the exact old structured-fact envelope; it was strengthened to expect the two new complete-breadcrumb provenance facts and the final full run passed.
+- Production writes, migration deployment, Auth mutation, Edge deployment, commit, push, and protected TabBar/scroll changes are all `0`. The History visibility migration remains **NOT DEPLOYED**. Next action is only the requested limited independent re-review; do not deploy or commit from this handoff.
+
+## 2026-09-03 Live retailer runtime measurement transport correction
+
+- Production READ-ONLY inspection of MUSINSA `6193735` proved URL resolution, ingestion, DIRECT classification, four sizes, and sixteen canonical measurements were correct, while the app still showed the size/measurement failure screen. The shared cause was `ShoppingProductViewModel.applyServerRuntime`: the server returns provider-independent codes such as `back_length`, `chest_width`, `shoulder_width`, and `sleeve_length`, but Swift attempted to decode them only as method-specific `MeasurementCode` raw values and silently discarded every record.
+- Added a server-vocabulary transport adapter used by both Closet registration and product comparison construction. It preserves the server semantic/basis decision while mapping all currently observed MUSINSA/UNIQLO/ZARA canonical codes to the existing typed measurement records. A regression asserts the complete vocabulary and proves a four-metric top produces a valid `ProductSize`.
+- UNIQLO observations now explicitly encode the measurement parser contract (`size_chart`); MUSINSA uses `actual_size` and ZARA uses `zara_kr_size_measure_guide_v1`. This prevents a multi-parser provider from falling back to `ingestion_unmapped`. The undeployed migration preflight now requires the corresponding verified UNIQLO alias/mapping contract, and local SQL validation checks an actual `body-width` resolution.
+- Swift frontend parsing and scoped `git diff --check -- FitMatch FitMatchTests supabase` passed. The targeted Xcode run was attempted once but remained blocked at the existing project-coordination stage and was interrupted without terminating user processes. A fresh disposable PostgreSQL cluster could not start because the host exhausted shared-memory IDs; the previously passing disposable migration chain was not claimed as rerun after this small addition.
+- No Production write/deployment, commit/push, Auth/Edge mutation, or protected TabBar/scroll change occurred. The live-retailer and History migrations remain **NOT DEPLOYED**.
+
+## 2026-09-03 Thirty-product Closet registration UI regression
+
+- Ran the production `내 옷장에 추가` → `상품 링크로 불러오기` → `다음` → `보유한 옷으로 등록` UI path for 30 live product URLs in a newly created, unauthenticated iPhone 17 Pro simulator with an in-memory SwiftData store. The corpus was 10 MUSINSA, 10 UNIQLO, and 10 ZARA products; no existing simulator session or Production-authenticated account was reused.
+- Results were `21 registered / 9 did not reach the registration button`. All 10 MUSINSA, all 10 UNIQLO, and ZARA `06861011` displayed the exact success toast `내 옷장에 추가했어요.` after the registration action. ZARA `07545140`, `07953524`, `05644812`, `04470325`, `00264141`, `09081018`, `00264140`, `01608240`, and `05644820` stopped at the exact UI message `상품 정보를 불러오지 못했어요. 잠시 후 다시 시도하거나 지원하는 쇼핑몰의 상품 URL인지 확인해 주세요.`
+- The final XCResult is `/tmp/FitMatchUI30Copy3.xcresult`: one parameter-loop XCTest executed to completion with nine recorded product failures. The original project path remained blocked by an NSFileCoordinator recursive-read claim, so the exact working-tree source was copied to `/tmp/FitMatchUI30.H5Bb5Y` and tested there. Two preliminary runs exposed only test-harness toast-query timing issues; the final run completed all 30 rows.
+- The temporary UI collector was removed from the repository after execution; `FitMatchUITests/FitMatchLiveUserJourneyUITests.swift` has no diff. Production writes, migration deployment, commit/push, and protected TabBar/scroll changes were all `0`.
+
+## 2026-09-03 Classification / measurement decoupling and complete-tuple Recovery
+
+- Work started from exact `origin/connectDB` HEAD `176abe52b08a0839f81310461a9048bde648a077` in an isolated worktree, leaving the user's dirty primary worktree untouched. The remote branch still matched that audit HEAD at start.
+- Added the unapplied forward migration `20260903120903_vnext_classification_measurement_decoupling_and_complete_recovery.sql`. `validate_garment_axis_values()` now validates only canonical classification structure/axes/audience; it no longer reads or requires `comparison_measurement_contract`. Existing readiness and authorization functions are unchanged.
+- Recovery is versioned `fitmatch-vnext-recovery-v6-complete-tuple-garment-first`. Existing exact-product recovery remains first; known axes narrow rather than broaden candidates. Every returned candidate is revalidated by `classification_tuple_validation`, includes the complete canonical tuple required by its garment, is fingerprinted with the full tuple/version, and fails closed at more than three candidates rather than truncating or expanding a taxonomy Cartesian product.
+- Swift projects immutable server candidates into garment groups for presentation only. The ViewModel now has garment and differing-axis stages; intermediate choices never write. The final exact server candidate/fingerprint goes through the existing coordinator/RPC, freshness/hash/revision checks, and post-save `PERSONAL_CONFIRMED` tuple verification. No client garment/axis inference was added.
+- A clean PostgreSQL 17 local application plus rollback-only regression reported `CLASSIFICATION_MEASUREMENT_DECOUPLING_V6_PASS`. It covers ABSENT/INCOHERENT trigger acceptance, unchanged downstream blocking, required NULL/UNKNOWN axes, unused axes, unknown/inactive garments, SET rejection, exact precedence, complete candidates, bounded failure, and fresh/stale legacy override behavior.
+- Recovery-focused iOS validation on iPhone 17 Pro Simulator passed `11/11`. The exact audit HEAD has unrelated pre-existing compile mismatches in `UniqloParser.swift`, `FitMatchServerAuthorityIntegrationTests.swift`, `FitMatchVNextContractTests.swift`, and `FitMatchP0ProductionPathTests.swift`; the targeted build used a temporary parser workaround and excluded the three stale test files. The workaround was reverted and none of those baseline files is part of this change.
+- Production project `hnkplvyegonlhumlejst` was inspected with SELECT-only queries. The six requested UNIQLO products project to `RECOVERABLE` with 1–3 canonical-valid complete candidates; E450536 retains known `long_sleeve`. Their measurement units remain ineligible/ABSENT, so readiness/authorization stay blocked. The current pre-migration effective function reports all three active overrides as `STALE_RECONFIRM_REQUIRED`. E450543 and E453754 are canonical but stale on input/evidence/resolver and remain stale under v6; E465185 is fresh/canonical and the v6 legacy-exact compatibility projects it back to `PERSONAL_CONFIRMED` instead of invalidating it solely for its older contract version.
+- `supabase/sql/126_vnext_classification_measurement_decoupling_production_read_only_audit.sql` contains only SELECT statements for reproducing the Production checks. Production migration apply, DB write/backfill/reclassification, Edge/Auth mutation, and deployment were all `0`. Comparison engine, Closet matching, Result/History, audience/gender, parser heuristics, Supabase remote response shape, and protected TabBar/scroll behavior were not changed.
+
+## 2026-09-04 vNext comparison authority consumption alignment
+
+- Work began on `connectDB` at the requested audit revision `606390c31f968fe599af21b11c648b354ed403ff`; the local branch and `origin/connectDB` matched at inspection. No Production Supabase RPC/SQL/data write, migration, Edge/Auth change, commit, or push was made.
+- `VNextComparisonEngineAdapter` no longer treats `AVAILABLE` as an eligibility gate. Every DB-authorized begin-snapshot candidate is scored irrespective of `AVAILABLE`, `SOLD_OUT`, `UNKNOWN`, expired observation, or no observation. Availability remains on the candidate analysis only as presentation/diagnostic data. The adapter also preserves the snapshot's typed `DESIGN_AXIS_DIFFERENCE` exclusion as diagnostic UI evidence without changing score, ranking, coverage, weights, or completion payload evidence.
+- `FitMatchServerAuthorityCoordinator` now exposes an ordered typed `FitMatchServerReferenceSelectionPlan` sourced from `fitmatch_vnext_find_reference_candidates`, with automatic, manual-extended, measurement-required, and blocked projections. It enforces DB runtime readiness before discovery/begin, preserves server order, and fails closed if any selectable server `client_item_id` is absent from the local SwiftData projection.
+- `CompareFlowSheet` consumes that complete server plan: it never uses `UserFit.isRepresentative` to choose automatic comparison, renders only DB manual candidates, and routes DB `MEASUREMENTS_REQUIRED` to measurement recovery and DB blocked/no-candidate states to no-reference UI. Runtime `sizes_required` and `measurements_required` recovery is separated from `CONFIRMED`; discovery is not started while not ready.
+- Completed vNext histories retain `analysis.completionPayload.reliability` after successful `complete_comparison`; Result and History UI use that stored authority first, leaving the legacy local count/extended presentation fallback only for non-vNext histories.
+- Added/updated contract coverage for availability invariance, DB automatic/manual/blocked/measurements-required decisions, server-order preservation, missing local mapping failure, readiness short-circuiting, and reliability persistence. Swift parse checks passed; full app-source SwiftData typecheck passed with only pre-existing Sendable/`let` warnings; a testable API compile probe passed. XcodeBuildMCP and direct `xcodebuild` test/build invocation remained host-blocked before scheme/test execution, so no XCTest result is claimed for this session.
+
+## 2026-09-04 Phase 1D — link Closet server-first / exact identity alignment
+
+- Started from the requested clean `connectDB` / `origin/connectDB` revision `d5faf1ff242f30cbc4e71ec9b41bc45adad50656`. No reset/stash/checkout, commit, push, Production Supabase write/DDL/migration/RPC definition change, Auth/Edge mutation, or schema migration was made.
+- Link loading now keeps parser facts (`hasLoadedProductInfo`), server classification, and comparison readiness distinct. `LinkClosetRegistrationPreparation` carries a transient server context whose per-display-size map contains the exact runtime `product_id`, `product_variant_id`, and `product_size_id`; no SwiftData schema field was added. REVIEW_REQUIRED and NOT_APPLICABLE/temporary server-unavailable products remain displayable, while the latter two block saving rather than falling back to a local row.
+- `AddComparedProductToClosetSheet` consumes the existing sheet surface. CONFIRMED auto-selects the server tuple without emitting a Closet override; REVIEW_REQUIRED begins with both Closet category fields unselected. Audience intent is separate from category/detail intent, category/detail reset after an audience change, and ordered alert validation runs before any RPC or local persistence. Server-linked duplicate display labels remain distinct instead of being collapsed by a presentation-label normalizer.
+- The link path constructs one immutable `client_item_id` submission, calls the atomic upsert with exact IDs and, when needed, nested `closet_classification_override`, calls `set_closet_reference` only after upsert success, and persists SwiftData only afterwards. A local persistence failure retains the same id for retry; a reference rejection retains the item but hydrates it locally as non-reference. The old linked direct-manual/local persistence escape path was removed.
+- `VNextClosetMutationPayload` now emits the nested `closet_classification_override` key (omitted for no-override CONFIRMED saves), with canonical audience/category/garment/axis keys. Both upsert and update use the same payload adapter. Generic sync retains remote exact IDs by `client_item_id`, confines label/color identity matching to legacy local-only recovery, and no longer makes post-upsert override/clear calls. The list adapter recognizes actual `USER_EXPLICIT` and `USER_EDITED` sources as the same local personal authority.
+- MUSINSA `상하의세트` no longer aborts before the size APIs; it forwards structured facts for the server structural gate. SET save/comparison policy was not relaxed. No comparison engine, server reference-plan, availability, readiness, reliability, Result/History, or protected TabBar/scroll implementation was changed.
+- New focused tests cover REVIEW_REQUIRED exact IDs, NOT_APPLICABLE/unavailable display-with-save-block context, nested override JSON and axis nulls, duplicate display labels, both personal source strings, exact remote sync IDs/no post-override call, server-first failure/retry, server-confirmed local authority, and reference partial success. `xcrun swiftc -parse` across all modified production/test files: PASS. Scoped `git diff --check`: PASS. Protected TabBar modifier and protected scroll-symbol diffs: empty.
+- XCTest/build is **NOT RUN**: direct simulator and iPhoneOS `xcodebuild` invocations both stalled before build output and were interrupted; `xcrun simctl list devices available` reported CoreSimulatorService connection refusal. An isolated temporary-copy attempt also entered host I/O wait and was interrupted without touching the working tree. Re-run the focused resolver/sync/headless suites and d5faf1f comparison regressions after the host Xcode/CoreSimulator/project-coordination service recovers.
+
+## 2026-09-07 Contract Closure — Swift ↔ DB 5 GAP minimum implementation
+
+- Started and ended on `connectDB` at `43b10e2b88b4ebdaeefe51ab9a06a33cb7f245a4`; `origin/connectDB` was rechecked at start and matched. No branch switch, reset/clean/stash, commit, push, Production DB/RPC write, migration apply, Edge deploy, or account mutation occurred.
+- F01: prepared only the manual operator artifact `supabase/sql/FitMatchContractClosureHistoryHide.sql`. It carries fixed auth/invalid/unavailable codes, exact locked `client_comparison_id` set handling, all-or-none COMPLETED ownership checking, idempotent `deleted_at` visibility, a different-implementation install guard, and post-install privilege checks. Swift now maps typed PostgREST/transport outcomes and never removes local History without a `hidden == true` exact-ID receipt. Production is **NOT APPLIED** and isolated H01–H08/H12 SQL execution is **NOT RUN** because no local DB was supplied.
+- F02: `CompareFlowSheet` now owns load and compare Tasks separately, captures request UUID plus auth user, conditionally clears handles/progress, and cancels on the persistent sheet lifetime rather than the disappearing input subtree. `ShoppingProductViewModel`, `FitMatchComparisonSubmissionAction`, and the authority coordinator now gate post-await foreground publication/persistence and preserve quiet cancellation. Existing server PENDING sync remains independent of a foreground cancellation.
+- F03: `RecommendationHistory.referencesClosetItem(clientItemID:)` handles legacy direct IDs and deterministic frozen vNext projection IDs. Closet deletion and both warning surfaces use it; no DB/SwiftData field was added and frozen snapshots remain immutable.
+- F04/F05: added `FitMatchVNextContractValidator` with closed eight-state readiness mapping, required begin lifecycle status, exact schema `{3,4}`, personal schema-4 rule, exact completed/pending engine rules, duplicate-proof/version mismatch rejection, decoder/engine/replay/hydrator/sync boundaries, and contract-vs-network sync classification. Unsupported/broken rows do not hydrate, recompute, or become pending retry work.
+- An actual simulator app build passed in the temporary non-iCloud source copy. Final focused XCTest run: **33 PASS / 0 FAIL / 0 SKIP** (`FitMatchContractClosureRegressionTests`, comparison sync including schema-4 hydrate/reference relation, vNext contract, permit sequencing), XCResult `test_sim_2026-09-07T22-58-31-210Z_pid11758_6f81a395.xcresult`. Required eight existing classes then ran current source: **187 PASS / 5 FAIL / 0 SKIP**, XCResult `test_sim_2026-09-07T23-00-34-387Z_pid11758_59347cfa.xcresult`. The five failures are all existing `FitMatchSupabaseProductResolverTests` variant/preferred-size tests and reproduce as **41 PASS / 5 FAIL** on an exact `43b10e2` archive after only the current `brand` test-field compatibility repair; they are not marked fixed or newly introduced.
+- No comparison score/weight/required-measurement/tie rule, retailer parser extraction/classification, canonical mapping/unit conversion, recommendation/stock policy, completed snapshot evidence, or protected TabBar/scroll behavior changed. Full suite and isolated SQL semantics remain unproven; see `Docs/FitMatchContractClosure5GapResult-20260907.md` for the precise result and rerun conditions.
+
+## 2026-09-08 REVIEW_REQUIRED recovery v6/v7 contract compatibility
+
+- Started and ended on `connectDB` at `43b10e2b88b4ebdaeefe51ab9a06a33cb7f245a4`; `git fetch origin` and `origin/connectDB` matched the requested SHA. The existing dirty worktree, including the prior Contract Closure changes, was preserved. No branch switch, reset/clean/stash, commit, push, Production DB/RPC write, migration apply, Edge deployment, or Auth/data mutation occurred.
+- `VNextClassificationRecoveryContractDTO` now has an explicit supported recovery-version enum: the retained v6 `fitmatch-vnext-recovery-v6-complete-tuple-garment-first` and deployed v7 `fitmatch-vnext-recovery-v7-explicit-authority`. Unknown strings fail closed; no prefix-family acceptance was added. The coordinator reports an unknown version as `invalidClassificationRecoveryContract("unsupported_candidate_contract_version")` before any classification-save RPC.
+- v6 retains its garment-first `unknown_fields` validation. v7 validates `garment_type`, then sleeve/lower/body differences across the whole server-issued candidate set, with `nil` distinct from a value and all-`nil` axes known. `presentationUnknownFields` and `garmentGroups` remain the garment-first UI projection, so a cross-garment v7 axis difference does not add a redundant post-garment question. No candidate tuple, fingerprint, hash, order, policy, or local classification synthesis is changed.
+- REVIEW_REQUIRED option-fetch and save paths now distinguish typed contract/DTO failures from `URLError` transport failures without inspecting error strings. Contract failures say the choices cannot currently be processed; transport failures request a connection retry; `CancellationError` is quiet. Existing stale/rejection refresh-and-reselect behavior and post-save USER_EXPLICIT/PERSONAL_CONFIRMED verification remain in place.
+- The retained `FitMatchFinalReleaseHeadlessAcceptanceTests.serverFirstReceipt` helper uses `request.item.brand`, matching `FitMatchClosetItemPayload`; no production DTO field or database payload was changed.
+- Actual Simulator build/run on iPhone 17 succeeded (`FitMatch`, Debug; XcodeBuildMCP log `build_run_sim_2026-09-08T03-09-24-043Z_pid20096_f423a0a9.log`). Final focused Recovery execution is **21 PASS / 0 FAIL / 0 SKIP**, XCResult `test_sim_2026-09-08T03-20-30-543Z_pid20096_3c4dbcdf.xcresult`. Final existing authority/contract/permit batch is **48 PASS / 0 FAIL / 0 SKIP**, XCResult `test_sim_2026-09-08T03-21-19-418Z_pid20096_c110b4d0.xcresult`.
+- The combined requested Headless/authority/contract/permit run compiled the corrected helper and executed **90 PASS / 2 FAIL / 0 SKIP**. The two unmodified Headless failures are `authoritativeClosetReceiptOverridesPreSubmitMeasurementsAndRetainsUnknownCode` (unknown measurement record projection) and `measurementPresenceGatesPrecedeClosetSheetAndReviewRecovery` (stale source-string expectation); they were not reclassified as baseline and were not changed because they are outside this recovery-v6/v7 request. Full-suite execution is not claimed.
+- Final static checks: `git diff --check` passed; no protected `TabBarScrollVisibilityModifier.swift` diff and no protected scroll-modifier call-site diff. No comparison engine formula/weight/order, minimum-measurement policy, manual-cross rule, automatic-reference priority, Supabase SQL, migration, or deployment changed.
+
+## 2026-09-08 Closet/runtime measurement transport + hide-error alignment (six scoped Swift fixes)
+
+- Started and ended on `connectDB` at `4781a5a09b0ea3086804b35552b91340b8d02ada`; a read-only `git fetch origin` confirmed `origin/connectDB` at the same SHA. The existing dirty worktree and three pre-existing untracked user files (`MeasurementResolverDisplayTests.swift` and two 20260903 Supabase migrations) were preserved. No branch switch, reset/restore/clean/stash, commit, push, Production DB/RPC write, migration apply, Edge deployment, or Auth/data mutation occurred.
+- Manual Closet transport now uses the explicit `FitMatchCanonicalMeasurementCode` table rather than forwarding local `MeasurementCode.rawValue`: verified `chest_width_pit_to_pit → chest_width`, front-HPS length → `total_length`, and back-neck length → `back_length`. A positive local measurement with no verified mapping throws `FitMatchClosetPayloadContractError.unmappablePositiveMeasurement` before either upsert/update RPC payload is encoded; it does not remove the user’s draft or silently omit the fact.
+- Closet list hydration, runtime projection, Product replay, UserFit replacement, and frozen-history copying retain the original canonical code **and raw unit** in existing `measurementCodeRawValue` / `unitRawValue` fields. The active 18-code adapter separates width from circumference, retains unrepresented circumference/future facts as non-comparable opaque records, and gives `total_length`, `back_length`, and `outseam` an explicit scalar-display priority without discarding either source record or choosing by response order. No SwiftData schema field was added and a shared retailer `ProductSize` is not overwritten by Closet values.
+- `hideVNextComparisonHistories` now recognizes only exact typed server codes: `FM_HISTORY_AUTH_REQUIRED` is authentication-required, `FM_HISTORY_UNAVAILABLE` is an unavailable-history outcome, and an unknown `42501` is generic rejection. `FitMatchHistoryVisibilityAction` and Closet deletion preserve local History/Closet state on every failed/malformed/cancelled receipt and show the matching safe message rather than treating all `42501` responses as login failure.
+- All three Closet classification adapters (`closetPayload`, nested mutation override, and standalone override) share `VNextClosetClassificationAxes`. It preserves verified jacket sleeves and coat sleeve/body axes using the existing garment-axis definitions, retains top/bottom behavior, does not invent a sleeve for outer vests, and rejects a genuinely required missing axis before a mutation. Linked server-confirmed Closet registration also carries the independently verified coat body axis rather than conflating it with the sleeve value.
+- The normal local/legacy two-measurement `ClothingSizeForm` gate remains unchanged. Only the CONFIRMED server-comparison presentation path may construct a size from one positive current canonical runtime fact; server readiness, candidate/permit, begin snapshot, authorized-evidence engine, and complete remain mandatory. Runtime mapping now preserves all 18 active canonical facts, including the formerly lost circumference codes and `outseam`, through DTO → ViewModel → `ProductSize` without width conversion.
+- New production-path regression file `FitMatchTests/FitMatchClosetTransportContractTests.swift` covers actual JSON encoding for manual upsert/update, raw code/unit hydration/replacement/re-serialization, active 18 code preservation, total/back order invariance, future-code non-comparability, outerwear/override axes, and typed hide errors. Additional existing suites cover runtime’s seven formerly dropped codes, linked coat axes, authoritative one-metric `authorize → begin → engine → complete`, receipt projection, sync behavior, and the fixed `request.item.brand` test helper.
+- Current iPhone 17 Simulator verification: test-target build-for-testing **PASS** (log `~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-e60223af795a/logs/build_sim_2026-09-08T05-50-01-848Z_pid22784_9ea108ef.log`, test product `.../build_sim_2026-09-08T05-50-01-848Z_pid22784_ddb9a404.xctestproducts`); scoped 157-test batch **157 PASS / 0 FAIL / 0 SKIP** (XCResult `~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-e60223af795a/result-bundles/test_sim_2026-09-08T05-52-48-265Z_pid22784_e9faf1cb.xcresult`); Debug app build **PASS** (log `.../build_sim_2026-09-08T05-55-20-768Z_pid22784_178b77dd.log`). No isolated database was supplied, so Swift-payload → isolated-DB → list/update SQL validation is **NOT RUN**; Production was not used as a substitute.
+- Full `FitMatchSupabaseProductResolverTests` currently reports **44 PASS / 5 FAIL / 0 SKIP** (XCResult `.../test_sim_2026-09-08T05-53-18-035Z_pid22784_1ec26471.xcresult`). The failures are confined to unchanged Result→Closet variant/preferred-size selection tests (`resultClosetPreparation…` four cases and `sourceVariantKeyStillWins…`); their fixtures have empty canonical runtime measurements and `comparisonReady=false`, so they do not exercise the new one-metric route. They were not relabeled as baseline, their assertions were not weakened, and no out-of-scope selection-policy change was made.
+- Final local checks: `git diff --check` passed; the protected TabBar file diff was empty; protected scroll-symbol grep produced no matches (expected exit `1`). No score/weight/ranking/reliability formula, minimum common-metric policy, manual cross-category rule, automatic reference selection, DB classification/recovery policy, parser extraction, Supabase SQL/migration, or protected scroll code changed. Full suite and isolated DB integration remain unproven.
+
+## 2026-09-09 connectDB — Closet/comparison Swift authority audit
+
+- Audited the clean `connectDB` checkout at `82b6c8e161f2f5b2062a5513c110aa48d330b3bc`; no production source was changed during the audit.
+- The server/DB is the final authority for sourced-product classification status and tuple, comparison readiness, reference-candidate decisions (`AUTOMATIC`, `MANUAL_EXTENDED`, `MEASUREMENTS_REQUIRED`, `BLOCKED`), reference authorization, begin snapshot, and completion acceptance. Swift does not promote an unapproved product or Closet item into comparison authority.
+- Swift still owns parser/result transport, exact-identity and taxonomy/input validation, UI/state transitions, auth/session/stale-response guards, projection of server-issued candidate IDs into local SwiftData, and numerical analysis over the server-authorized comparison snapshot before requesting server completion.
+- Classification responsibility is intentionally split: automatic product-policy decisions belong to the server; unresolved personal facts are selected by the user and become comparison authority only after server persistence/revalidation; Closet-local user classification is distinct from shared Product classification.
+- For linked Closet registration, a server-confirmed tuple is preselected and saved without a Closet override when unchanged. `REVIEW_REQUIRED` begins with an explicit Closet category/detail choice and sends a Closet-local override. Direct/manual Closet category defaults or comparison-prefills remain user-editable and are not server classification evidence.
+- For product comparison, target classification must be server-confirmed (including a revalidated personal `USER_EXPLICIT` result) and runtime-ready. Reference selection is not a Swift category-only heuristic: Swift consumes the server-ordered reference plan, automatically tries the first approved automatic candidate, or presents only server-approved manual candidates and reauthorizes the user's selection.
+- Current `connectDB` nuance: link loading still invokes classification-recovery for `REVIEW_REQUIRED` before returning preparation. `NOT_COMPARABLE`, server-unavailable, missing exact identity, or missing readiness cannot be bypassed by a free-form client category choice.
+
+## 2026-09-09 connectDB — Link Closet result-screen simplification
+
+- The link-based Closet result screen now decides only whether product facts loaded and whether at least one exact, measurement-eligible server size identity is available. Server classification status no longer supplies a result-screen message or a separate UI branch; category review remains in the following registration sheet.
+- A loaded `REVIEW_REQUIRED` product no longer renders the comparison-only message `이 상품은 아직 정확하게 분류하기 어려워요. 현재는 비교할 수 없습니다.` in `LinkClosetRegistrationView`. Products loaded without a usable size retain a product preview and receive only the existing size-table recovery presentation.
+- `LinkClosetRegistrationPreparation` preserves classification provenance and transient server identity internally. No Supabase SQL, migration, RPC, DB data, Auth/Edge code, comparison engine, or protected TabBar/scroll implementation changed.
+- The focused resolver suite compiled and ran 50 tests: all changed link-registration tests passed, including the new classification-neutral result gate. The suite retained the same five pre-existing Result→Closet variant/preferred-size failures documented on 2026-09-08; no assertion in those tests was changed. A second exact-method filter completed successfully but Xcode selected zero Swift Testing cases, so it is not counted as test evidence.
+
+## 2026-09-09 connectDB — Link registration category/measurement step
+
+- Continued from committed `connectDB` HEAD `1663104` with an otherwise clean worktree. This step remains uncommitted; no push, Production DB/RPC write, migration, Auth mutation, or Edge deployment occurred.
+- The linked registration sheet now treats only a valid database-confirmed category/detail tuple as an automatic selection. A missing, review-required, or invalid tuple starts with both Closet category levels visibly unselected so the user chooses them; local parser inference is not presented as a database selection.
+- Selecting a size continues to reveal the `선택한 사이즈 실측` card immediately below the registration fields. Its rows now keep category-relevant values first and then include every other resolvable positive numeric measurement carried by that exact size, preventing available measurements from disappearing under a pending/different category selection.
+- Removed section 5 `핏 기록` from the direct/manual Closet form. The persisted model/service defaults remain unchanged; this step removes the manual UI inputs only.
+- Added focused tests for confirmed-only database preselection and category-independent numeric measurement visibility. In a complete temporary checkout, app/test `build-for-testing` passed. `FitMatchSupabaseProductResolverTests` executed 52 tests: the two new tests passed, 47 total passed, and the same five pre-existing Result→Closet variant/preferred-size tests failed. The attempted exact-method filter selected zero Swift Testing cases and is not counted as evidence.
+- `git diff --check` passed before the handoff update. No protected TabBar/header-scroll implementation or call site was changed.
+
+## 2026-09-09 connectDB — Link registration immediate completion
+
+- After a successful linked Closet registration, `LinkClosetRegistrationView` now sets the existing `내 옷장에 추가했어요.` toast state, invokes its completion callback, and dismisses the link-registration screen immediately in the same main-actor action.
+- Removed only the previous 1.2-second post-success sleep. Registration validation, server-first persistence, failure/retry handling, partial reference-success acknowledgement, toast copy, and other navigation flows remain unchanged.
+- `xcrun swiftc -parse` for the changed Swift file and `git diff --check` passed. The simulator app build started but produced no build progress for about one minute and was interrupted, so no Xcode build pass is claimed. Protected TabBar/header-scroll diffs remained empty.
+
+## 2026-09-09 connectDB — Product comparison ZARA shortcut
+
+- The product-comparison start screen now presents ZARA as an active `상품추가` shopping shortcut, aligned with the already-enabled ZARA parser/runtime support.
+- Tapping the shortcut opens the official Korean ZARA storefront at `https://www.zara.com/kr/ko/`. Direct URL input, parsing, comparison authority, and all other provider behavior remain unchanged.
+
+## 2026-09-09 connectDB — DB response → Swift branch handoff
+
+- This is a source-level control-flow record for the completed Closet-link work and the product-comparison entry work. It does not claim a new live Supabase query or Production verification. Swift does not bind raw DB strings directly to views: response DTOs are decoded, validated, and projected into typed state; `switch` selects state transitions, `guard` fails closed on missing/invalid authority, and narrow `if` conditions handle booleans such as explicit override or reference selection.
+- Product resolution/runtime consumes DB identity and presentation facts including `product.id`, `source_code`, `source_product_key`, product name/URL/image, `variant.id`, `source_variant_key`, `size.id`, `source_size_key`, `size_label`, availability, and each canonical measurement's code/value/unit/basis. Each linked Closet display size retains the exact DB tuple `product_id + product_variant_id + product_size_id`; a visible label such as `M` is never used as remote identity.
+- DB classification is consumed as one complete effective tuple. `classification_status` maps `CONFIRMED → confirmed`, `REVIEW_REQUIRED → reviewRequired`, and `NOT_APPLICABLE → notComparable/notApplicable`; unknown combinations fail closed. The tuple carries `category_code`, `garment_type_code` (the Closet detail selection), `audience_code`, `comparison_policy_code`, and applicable sleeve/lower/body axes. When an `effective_classification` exists, Swift uses that whole tuple instead of mixing it field-by-field with the global Product tuple.
+- Runtime readiness remains separate from classification and Closet measurement presence. DB readiness is projected into `ready`, `classification_required`, `not_comparable`, `sizes_required`, `measurements_required`, or unavailable/policy states. Product comparison may continue only with a complete `CONFIRMED` tuple and `runtimeState == ready`/`comparisonReady == true`; REVIEW_REQUIRED routes to server-issued recovery choices, missing sizes/measurements route to their recovery states, and malformed or unavailable authority is blocked.
+- The linked Closet result screen intentionally ignores classification-specific customer messaging. It requires loaded product facts, non-empty display sizes, and at least one display size that has both an exact DB identity tuple and registration measurement eligibility. Eligibility is based on a positive retailer garment measurement retained by the parser, or—for a CONFIRMED runtime only—a positive, conflict-free canonical DB measurement. REVIEW_REQUIRED does not gain registration eligibility solely from an unconfirmed canonical runtime value.
+- On the linked Closet confirmation screen, a valid DB-confirmed category/detail tuple is preselected. REVIEW_REQUIRED, missing, invalid, or non-confirmed tuples start with both category levels unselected. Selecting a size displays every resolvable positive numeric measurement attached to that exact runtime size, with category-relevant measurements ordered first. This is presentation of DB/runtime facts, not a new client-side classification decision.
+- Before saving, Swift guards gender, category, detail, selected size, positive measurement proof, product name, authentication, and the exact three-UUID identity. REVIEW_REQUIRED always sends the user's explicit Closet classification as `closet_classification_override`; CONFIRMED sends no override when unchanged and sends one only when the user changes audience/category/detail. NOT_APPLICABLE or unavailable authority is blocked rather than stored through a local-only fallback.
+- Linked Closet persistence is server-first. Swift allocates one stable `client_item_id`, sends the exact product/variant/size IDs, optionally calls reference selection, then reads the Closet list back. The receipt must have `state == ready` and exactly one matching `client_item_id`; its DB-owned measurements, classification, `is_reference`, and revision are projected into SwiftData. A requested reference that returns `is_reference == false` becomes partial success with the existing warning; ambiguous transport/receipt failures retain the same client ID for safe result recheck rather than creating a duplicate.
+- Successful registration sets the existing `내 옷장에 추가했어요.` state, invokes the completion callback, and dismisses immediately; the former 1.2-second wait was removed. Manual-add section 5 `핏 기록` was removed only from the UI; existing `fit_memo`, `fit_preference_code`, and `satisfaction` persistence fields/defaults were not removed or migrated.
+- The newly enabled ZARA shopping shortcut has no DB branch. It uses the existing local `ZARAIntegrationAvailability.isEnabled == true` flag and opens the official Korean storefront. Parser and DB resolution begin only after a supported product URL is submitted through the comparison flow; the underlying comparison authority/readiness logic was not changed by the shortcut activation.
+
+## 2026-09-09 connectDB — comparison reference snapshot canonicalization
+
+- Investigated the reported comparison failure for target UNIQLO `E465185` with the saved `E484080` XXL Closet item. Read-only server inspection showed the target and reference were both confirmed/ready, and the reference-candidate contract approved `E484080` as `MANUAL_EXTENDED` with three common canonical measurements. No comparison row was created for the failed attempt, locating the rejection before the begin-comparison RPC.
+- The local authorization snapshot previously copied every positive `GarmentMeasurementRecord` key, including a fourth retained UNIQLO raw measurement that the server had not mapped into its canonical comparison vocabulary. `referenceMatchesLocalSnapshot` intentionally requires exact canonical key equality, so the local four-key snapshot was rejected against the server's three-key Closet snapshot as `local_reference_snapshot_mismatch`.
+- `UserFit.fitMatchServerReferenceSnapshot()` now converts only explicitly supported transport/canonical measurement codes through `FitMatchCanonicalMeasurementCode.canonicalCode(forTransportRawCode:)`. Unmapped retailer raw measurements remain stored and visible in the UI; they are excluded only from the server comparison-authorization snapshot. Existing legacy scalar fallback remains unchanged when no canonical measurement record exists.
+- Per user instruction, no Swift tests or Xcode build were run. No commit, push, Production DB/RPC mutation, migration apply, or Edge deployment occurred.
+
+## 2026-09-09 connectDB — vNext reference tuple axis alignment
+
+- Rechecked the latest failed UNIQLO `E465185` comparison from the supplied device log. Product parsing, eight sizes, target classification, and reference-plan presentation all completed; the failure remained at manual-reference authorization. The earlier linked-Closet `CANONICAL ... fitmatch_measurement_code only` error no longer appeared.
+- Production was inspected read-only only. Both current Closet rows are present with exact linked product/variant/size IDs and three canonical measurements. `fitmatch_vnext_find_reference_candidates` returns both `E484080` and `E465185` as allowed `MANUAL_EXTENDED` candidates with three common measurements, and `fitmatch_vnext_eligible_candidate_sizes` returns all eight target sizes as allowed. No Production write, comparison begin, migration, or Edge deployment was performed.
+- Found a second Swift-side authority mismatch: `referenceTupleMatches` compared the Closet app projection `detailCode` (for example `long_sleeve`) to `FitMatchDatabaseClassification.detailCode`, which the vNext runtime adapter currently fills with the garment identity (`tshirt`). It also compared the Closet garment identity to the runtime comparison-policy field. This rejected a DB-approved reference before `fitmatch_vnext_begin_comparison`.
+- `FitMatchServerAuthorityCoordinator.referenceTupleMatches` now compares like-for-like server axes only: category to category, Closet garment identity to runtime `garmentTypeCode`, length to length, and body length to body length. The app-facing detail picker projection is still checked separately by the local-versus-remote Closet snapshot and is no longer confused with garment identity.
+- Per user instruction, no Swift tests or Xcode build were run. `git diff --check` passed. No commit or push occurred.
+
+## 2026-09-11 connectDB — three-retailer measurement-basis completion
+
+- Continued on `connectDB` at `039ec76c126e870452b5a1398a35f3a9bcf7cb0e` and preserved the pre-existing dirty worktree. No commit, push, migration apply, Edge deployment, or persistent Supabase mutation occurred.
+- Product decision confirmed with the user: raw facts are always preserved; circumference is not silently halved into flat width; shoulder/back width and set-in/centre-back/raglan sleeve lengths remain distinct; non-core, lining, petticoat, and unresolved armhole measurements may be stored/displayed but are excluded from default scoring.
+- Added `Docs/MeasurementBasisPolicy-20260911.md` as the authoritative collected-field basis table for UNIQLO, MUSINSA, and ZARA. It includes the observed clothing fields, non-clothing exclusions, score eligibility, and six explicit wrong-mapping prohibitions.
+- Swift mapping corrections: UNIQLO knit front length is no longer back length; UNIQLO waist circumference remains circumference with multiplier 1 and hip circumference remains raw/server-resolved rather than becoming width; MUSINSA set-in/raglan sleeve mapping now requires exact labels and `소매부리단면`/`암홀` are intercepted as distinct raw fields; ZARA back width is no longer projected as shoulder width. Canonical transport now preserves distinct centre-back/raglan sleeve codes plus back rise and inseam.
+- Added non-applied SQL `supabase/sql/145_measurement_basis_completion_Apply.sql` and read-only verification query. It extends existing vNext canonical/source identities, corrects circumference mappings, adds scoped aliases for current and legacy parser rows, and aborts if the three known lossy mappings survive. The Apply SQL was executed only inside a transaction whose final statement was replaced with `rollback`; syntax, constraints, and embedded guards passed with no persisted state.
+- `xcrun swiftc -parse` passed for all changed Swift and test files; `git diff --check` passed. Focused Xcode tests were started but emitted no build progress for about three minutes in the current checkout and were interrupted, so no XCTest pass is claimed. Protected TabBar file and protected scroll-modifier call-site diffs remained empty.
+
+## 2026-09-11 connectDB — immediate API Closet preview and frozen size snapshot
+
+- Link-based Closet entry now publishes the parsed retailer/API product immediately, before product ingestion and server authority resolution finish. The user can open the registration sheet, inspect the API sizes and measurements, and select a size/comparison group while the server prepares the exact product/variant/size UUID tuple.
+- Added an explicit `preparing` registration state. Saving remains server-authoritative and is blocked with a visible preparation message until the server context arrives; no local-only fallback or optimistic local persistence was introduced.
+- Runtime reconciliation preserves each uniquely matched API display-size ID so an in-progress user selection survives the server response. For a captured retailer row, its exact positive measurement records, raw labels, values, and units remain the registration presentation/submission snapshot; runtime canonical records are used only when no matching API measurement row exists.
+- When the server context arrives, the hidden canonical category tuple and automatic comparison group are synchronized into the open sheet. A comparison group explicitly changed by the user is not overwritten.
+- Added focused regression coverage for API-record precedence and runtime-only fallback. `swiftc -parse` and `git diff --check` passed. A generic Simulator build emitted no progress after project setup for about 90 seconds and was interrupted, so no Xcode build or XCTest pass is claimed. Protected TabBar/scroll files were unchanged.
+
+## 2026-09-14 connectDB — link Closet Next waits for server ingestion
+
+- Supersedes the earlier behavior that opened linked Closet registration whenever retailer/API parsing produced a product. The preview still appears immediately from the retailer API, but `다음` now remains disabled until shared-product ingestion returns an exact server product/variant/size identity and the common registration preparation gate passes.
+- Server `REVIEW_REQUIRED` with an exact registerable size remains allowed so an unmapped product can continue to explicit comparison-group selection. `preparing`, `unavailable`, non-applicable, missing-size, and missing-identity states remain on the current screen instead of opening a registration sheet that cannot save.
+- `xcrun swiftc -parse FitMatch/Views/LinkClosetRegistrationView.swift` and `git diff --check` passed. Per user instruction, no Xcode build or automated tests were run. No Production DB/RPC/Edge mutation, commit, or push occurred.
+
+## 2026-09-14 connectDB — legacy category decision fallbacks removed / PRODUCTION APPLIED
+
+- Fresh retailer API loads now submit the frozen `product-observation` before any existing runtime read, then fetch the exact persisted runtime. A separate coordinator entry point scopes this ordering to fresh parser/API snapshots; Closet sync and history recovery paths without fresh observations retain their existing lookup behavior.
+- Applied Production migration `remove_legacy_group_decision_fallbacks` (`20260914050759`). `effective_target_classification` now returns only category-group authority, explicit category exclusion, or `REVIEW_REQUIRED`; it no longer calls the legacy detailed-classification resolver. `product_readiness` consumes that result directly, and `apply_closet_comparison_group` no longer derives a group from stored legacy `garment_type_code`.
+- Read-only postflight confirmed all three legacy references are absent. A mapped UNIQLO sample returned `CATEGORY_GROUP_CONFIRMED/A`; an unmapped sample with a previously stored `NOT_APPLICABLE` product classification now returned `REVIEW_REQUIRED` and `CLASSIFICATION_REQUIRED`, proving stored legacy classification no longer decides its group. Explicitly excluded category mappings still return `NOT_APPLICABLE`.
+- Added focused coordinator coverage for `observation -> runtime` ordering. Swift parse and `git diff --check` passed; per the user's standing instruction, no Xcode build or XCTest execution was run. E486610 was not yet present in Production at postflight, so its authenticated end-to-end ingestion remains for device verification. No Edge deployment, commit, or push occurred.
+# 2026-09-15 Simulator control / BUILD RUN PASS, UI SNAPSHOT BLOCKED
+
+- XcodeBuildMCP Simulator control is available. Booted `iPhone 17 Pro` (iOS 26.3, `03BAF093-552E-4E53-ABFB-7DE0653BE676`) was discovered.
+- FitMatch Debug build/install/launch PASS. Bundle ID `com.ljy4337.fitmatch`; runtime process 47128. Existing 9 compiler warnings remain; no build errors.
+- Screenshot PASS: FitMatch home screen visibly launched. UI accessibility snapshot and wait-for-UI both failed with `No translation object returned for simulator` / `Failed to poll runtime UI snapshot`, so element-based UI interaction was not run.
+- Verification: `git diff --check` PASS; protected-scroll check PASS. No source behavior changed, no commit/push.
+
+
+## 2026-09-16 실측 엑셀 출시 활용 검토
+
+- 원본12시트 재확인: 조사545행(UNIQLO150/MUSINSA41/ZARA354), 상품페이지URL198개(150/41/7). ZARA 실측166/신체가이드만61/둘다없음127; HOME66 및 비의류 포함. 전체를 의류 성공 테스트로 쓰지 말 것.
+- Docs/QA/MeasurementMasterLaunch-20260916에 전체/페이지URL CSV와 검토보고서 생성. 원본 엑셀 변경 없음. 모든 현재API/의류/옷장중복 검사는 미실행으로 표시.
+- 권고: 공식API 새조회 + 실제앱 parser 재사용 + 정상세션 등록/read-back→candidate→begin→engine→complete→History 검증 실행기. 기존 live audit는 parser-only, headless journey는 fixture 기반이므로 실제 전체여정 증거 아님. 스크립트가 반복작업, AI는 새로운 실패 유형 분석으로 토큰 절감.
+- 카테고리 master로 직접 사용 불가: 공식category key/path 추가확인 필요. 사전등록/alias/canonical/policy 사용 분리, 최신 상단91개 category 및 ZARA 보강 적용 기록과 중복 확인. 이번 새 live API/DB 조회·mutation·빌드·테스트·commit/push 없음.
+## 2026-09-21 실측 의미·그룹 결합 수정 준비 — 격리 DB PASS / 연결 DB 미적용
+
+- Production/연결 Supabase `hnkplvyegonlhumlejst`는 이번 작업에서 READ ONLY로 재확인했다. 확정 alias UUID 10개가 모두 여전히 활성·verified 상태로 잘못된 source에 연결되어 있었고, 배포 `canonical_measurements_for_size_with_context`/`canonical_measurements_for_session_group`도 그룹 category를 resolver에 주입하고 있었다. DB write, migration 적용, 사용자 데이터 변경, commit/push 없음.
+- 새 migration `supabase/migrations/20260921090000_measurement_semantic_context_separation.sql`은 (1) UNIQLO 앞기장 E/F/G 3개를 `front_length`, 주름·박음질 포함 몸너비 5개를 비교 제외 `gathered_body_width`, 페티코트 허리/길이 2개를 각각 전용 source로 연결하고, (2) exact-code/alias 경로 모두 source의 `is_comparable`과 무관하게 표준화·보존하며 score 포함은 기존 policy metric으로 한정하고, (3) context resolver가 product-native 결과를 먼저 사용하고 native가 `UNMAPPED`일 때만 검증된 context fallback을 사용하도록 한다. group-only 211행/7상품의 기존 복구 경로는 이 제한적 fallback으로 보존 대상이다.
+- `product_measurement_readiness`는 기존 최소 policy metric 1개 gate와 `resolved_measurement_count` 호환 의미를 유지하고, `canonical_measurement_count`와 `policy_measurement_count`를 분리해 전체 표준화 수와 점수 정책 사용 수를 혼동하지 않게 한다. 비교 metric/policy, group mapping, user override, identity/fingerprint, History snapshot, Swift 코드는 변경하지 않았다.
+- PASS: `/tmp`의 PostgreSQL 17 격리 DB에서 `supabase/sql/tests/measurement_semantic_context_separation_LocalRegression.sql` 실행. 실제 새 resolver/context/readiness 함수 본문과 10개 UUID fixture로 alias의 canonical code/unit/basis/representation·exact non-comparable source 보존·unknown UNMAPPED·native 4개(F/A group 불변)·group-only fallback·readiness canonical 4/policy 1을 검증했다. 같은 migration을 즉시 두 번째 실행해 `UPDATE 0` 및 함수 replace 성공으로 idempotency도 PASS. 이는 실제 Production snapshot/RLS/authorization/begin/score E2E가 아닌 격리 semantic fixture다.
+- NOT RUN: 실제 연결 DB에 migration 적용 후 `supabase/sql/measurement_semantic_context_separation_Verify.sql` 실행, 211 raw 행 전체 post-apply 대조, 실제 앱 등록→candidate→authorization→begin→score E2E, Swift build/test(이번 수정은 Swift 미변경). apply 전에는 현 배포 함수의 `pg_get_functiondef`와 alias 10행을 보관하고 Verify를 실행한다. migration 자체는 단일 transaction으로 실패 시 자동 rollback하며, 이미 확정된 10개 의미 교정을 무검토로 되돌리는 SQL은 제공하지 않는다; 배포 후 문제 시 보관한 함수 preimage를 새 후속 migration으로 복원하고 raw/history는 재작성하지 않는다.
+## 2026-09-21 원본 실측 등록·Closet snapshot 보완 — Swift 표시·transport 보완 / DB 미적용
+
+- 기준 소스: `connectDB` / `ac08f64a413b37cc15a1acbcf5670f496b0ca18f`. 기존 `AGENTS.md`와 이 handoff 변경은 보존한 채 작업했다. commit/push/reset/branch 변경 및 연결 DB write는 수행하지 않았다.
+- 실제 누락: `AddComparedProductToClosetSheet.registrationMeasurementRows`가 ZARA의 일부 알려진 코드와 canonical `MeasurementKind`만 표시하고 canonical 값을 원본 행 값 대신 사용했다. `ShoppingProductViewModel`도 exact retailer rows에서 0/unknown 상태를 제거했고, observation payload는 빈 label/raw code와 0값을 버렸다. linked Closet DB upsert/list는 canonical snapshot만 다뤄 원본 행을 immutable Closet snapshot으로 재조회하지 못했다.
+- Swift 변경: `MeasurementResolver.sourceDisplayRows`는 등록에서 input source와 무관하게 선택 size의 원본 행 전체를 표시한다. 등록 화면은 이 raw 행만 렌더링하며 canonical 축/값으로 병합하지 않는다. ZARA 전용 읽기 label은 presentation helper에만 남아 canonical mapping을 변경하지 않는다. exact retailer rows는 0을 포함해 유지하고, observation은 finite 0 및 rawCode만 있는 행을 전송한다. 같은 raw code의 서로 다른 구성품 행은 observation identity에 index suffix를 써서 서로 덮어쓰지 않는다. read-back도 empty raw label/raw code를 canonical 값으로 위조하지 않으며, source representation/evidence/observed-at은 `rawInfo` provenance envelope으로 보존한다. 새 source snapshot 행은 raw-display 전용(`unknownDefinition`)으로 hydrate해 local comparison 입력으로 승격하지 않는다.
+- 준비 migration: `supabase/migrations/20260921110000_closet_raw_measurement_snapshots.sql`. 기존 upsert/list를 versioned delegate로 감싸, linked Closet의 exact product/variant/size와 일치하는 `product_ingestion_receipts.retailer_facts` 원문을 별도 `closet_item_source_measurements`에 고정하고 list에 additive `source_measurements`를 반환한다. receipt가 없거나 행이 비면 전체 upsert를 fail-closed 한다. canonical `closet_item_measurements`, 기존 history, comparison authorization을 변경하지 않는다. 동일 client retry는 `ON CONFLICT DO NOTHING`으로 과거 Closet 원본을 최신 retailer 재수집값으로 바꾸지 않는다. 적용 후 읽기 전용 확인은 `supabase/sql/20260921110000_closet_raw_measurement_snapshots_Verify.sql`; source row가 있으면 삭제를 거절하는 rollback은 `_Rollback.sql`이다. **단, 현재 ingestion v2는 0/비정상 raw 행을 receipt 전에 거절하므로 이 migration만으로 그 상태까지 DB 보존되지는 않는다.** Swift payload는 새 `raw_value_text`와 explicit empty unit을 보존하지만, 해당 ingress contract 보완 및 격리 DB 검증이 남아 있다.
+- 연결 DB READ ONLY 확인: 현재 `comparison_evidence_20260908`은 `RETAILER_EXACT` 및 raw Closet snapshot을 읽지 않고, `closet_item_source_measurements`도 존재하지 않는다. 따라서 동일 쇼핑몰·동일 구조 raw-direct 비교는 이 migration 적용 뒤 별도 server evidence/begin contract 확장이 필요하며 이번 Swift 변경만으로 구현 또는 승인된 것으로 취급하면 안 된다. cross-retailer raw direct는 추가하지 않았다.
+- PASS: `swiftc -parse` 관련 Swift/회귀 test source, 권한 상승 후 `xcodebuild test -quiet -project FitMatch.xcodeproj -scheme FitMatch -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -only-testing:FitMatchTests/ZARAParserPhase1_5Tests -only-testing:FitMatchTests/FitMatchSupabaseProductResolverTests -only-testing:FitMatchTests/FitMatchClosetSyncCoordinatorTests`, `git diff --check`, 보호 스크롤 검사. 새 ZARA regression은 5개 원본 행과 canonical 2개/raw-only 3개를 계속 검증하며, 새 cases는 non-import input row도 등록 표시하고 동일 raw code의 두 구성품 행이 observation에서 분리됨을 검증한다. 첫 sandbox test 시도는 SwiftPM cache 권한 때문에 BLOCKED였고, 권한 상승 재실행은 PASS였다.
+- BLOCKED: isolated PostgreSQL 실행은 local `initdb`가 PostgreSQL server binary를 찾지 못해 시작하지 못했다 (`libpq` client만 설치됨). migration 실행/rollback 및 실제 DB source snapshot write-read 검증은 하지 못했다. 연결 Supabase `hnkplvyegonlhumlejst`에는 migration/데이터/RPC write를 전혀 수행하지 않았다. 앱 등록→서버 저장→재조회 및 raw-direct comparison/begin/complete E2E도 NOT RUN이다.
+- 이후 사용자 명시 요청으로 원본 실측 관련 14개 파일만 `048d632` (`fix: preserve linked closet source measurements`)로 커밋해 `origin/connectDB`에 푸시했다. 기존 policy/QA 산출물, 다른 migration, `.build`는 포함하지 않았다.
+## 2026-09-22 테스트 실패 재분류·최소 수정 (로컬 미커밋)
+
+- 이전 전체 XCTest의 16개 실패를 전부 무의미하거나 기존 문제로 처리하지 않고 owner별로 재현했다. 실제 회귀 2건을 수정했다: ZARA 원본 실측의 `rawLabel == rawCode`(`zone-name-*`)가 provider 표시명 사전을 우회해 코드가 그대로 화면에 노출되던 문제를 `MeasurementResolver`에서 고쳤고, 원본 source 순서를 유지했다. 또한 서버 image가 비었을 때 UI용 thumbnail fallback을 원본 이미지로 오인해 Closet background sync가 불필요한 update를 보내던 문제를 `FitMatchClosetSyncCoordinator.matchesRemoteMutationContent`에서 고쳤다.
+- 테스트 계약 보정: all-zero 실측은 picker를 숨기지 않고 server measurement gate로 등록을 막는 현재 UX를 검사하도록 갱신했다. 병렬 시작되는 target authority/runtime/Closet list는 고정 시작 순서 대신 candidate 이전의 모든 선행 영수증과 eligible→begin→complete 의존 순서를 검사한다. server-first Closet delete 없이 `.deleted`를 기대하던 scenario는 explicit successful server-delete receipt stub을 사용한다. 서버 확인 category가 있으면 ZARA local recovery를 띄우지 않는 현재 authority를 검사한다.
+- `ServerAuthorityRemoteStub`에 request external-product-ID keyed response를 추가했다. 병렬 target/reference authority가 FIFO fixture response를 뒤바꿔 `product_identity_mismatch`를 만드는 테스트 harness 오류를 제거했다. `FitMatchServerAuthorityIntegrationTests`는 40/40 PASS (`Test-FitMatch-2026.09.22_16-05-21-+0900.xcresult`). ZARA/authority/headless/final-release/resolver/comparison-sync 묶음은 193 PASS/0 FAIL/3 skipped (`Test-FitMatch-2026.09.22_15-49-33-+0900.xcresult`).
+- **남은 검증:** `FitMatchClosetSyncCoordinatorTests`는 38개 중 36 PASS/2 FAIL이며, `existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime`, `finalStaleAutomaticHydrationCannotUndoFailedV4Resolve`의 shared runtime fixture가 병렬 실행에서 불안정하다. 단일 test selector는 XCTest가 0개로 해석해 isolated 실행 증거로 사용할 수 없었다. 이 두 fixture를 request identity/keyed response로 보완한 뒤 전체 FitMatchTests 재실행이 필요하다. DB/Edge write, commit/push, 실기기 E2E는 하지 않았다.
+## 2026-09-22 직접 등록 편집 server-first / 세부 종류 보존 조사 (로컬 미커밋)
+
+- 직접 등록 신규 추가는 `registerManualServerFirst`를 사용하지만, 기존 직접 등록 옷의 `ClosetItemDetailView → AddClosetItemView → FitMatchClosetItemEditAction.saveManual`은 SwiftData를 먼저 변경하고 화면을 닫는 경로였다. `FitMatchClosetSyncCoordinator.saveManualClosetEdit`를 추가해, 정확한 서버 row preflight → `update_closet_item` → authoritative list read-back → local apply/save 순서로만 직접 편집을 완료하도록 연결 중이다. 서버 거절 시 원본 local row를 유지하는 회귀 테스트를 추가했다.
+- 연결 Supabase READ ONLY 확인: `fitmatch_vnext.closet_items.closet_detail_code_snapshot` 컬럼은 존재한다. 그러나 현재 배포 `fitmatch_vnext.update_closet_item(uuid,jsonb)`와 `list_closet_items()`는 해당 컬럼을 읽거나 반환하지 않으며, Swift `VNextClosetMutationPayload`도 표시용 detail code를 전송하지 않는다. 따라서 블라우스 같은 사용자 표시 선택은 서버 재조회 뒤 보존할 수 없다. UI-local fallback으로 완료 처리하지 말고, 기존 snapshot 컬럼을 update/list public wrapper에 포함하는 최소 migration 및 DTO/encoder 보완이 필요하다. 연결 DB에는 변경하지 않았다.
+- 검증 진행 중: `swiftc -parse`(변경 Swift/test)와 `git diff --check`, protected-scroll check는 PASS. XCTest RED는 먼저 실행된 같은 DerivedData build와 겹쳐 build DB lock으로 중단됐고, 별도 DerivedData 재실행 결과는 아직 수집하지 못했다. 실제 DB/실기기 검증 NOT RUN.
+
+## 2026-09-24 무신사 실측 파서 입력 10개 수집기
+
+- `scripts/collect-musinsa-parser-inputs.py`를 추가했다. 무신사 공식 카테고리 페이지에서 현재 노출된 `goodsNo`를 중복 제거해 찾고, 앱과 같은 `goods-detail.musinsa.com/api2/goods/{id}/actual-size` 응답을 변형 없이 상품별 JSON으로 저장한다. 실측표가 없거나 HTTP/JSON 오류인 상품은 실패 목록에 남기고 최대 후보 범위 안에서 성공 개수를 채운다.
+- 기본 실행은 `python3 scripts/collect-musinsa-parser-inputs.py`이며 기본 출력은 `Docs/QA/MusinsaParserInputs`이다. `--source-url`, `--count`, `--max-candidates`, `--delay-ms`, `--output-dir`를 지원한다. 각 실행의 상품 URL, API URL, 상태, 해시, 사이즈/원본 실측 행 수와 실패 사유는 `manifest.json`에 기록한다. DB, Swift 파서, 비교 정책은 변경하지 않았다.
+- 실제 공식 페이지/API 검증은 `/tmp/fitmatch-musinsa-parser-inputs`에 실행했다. 서로 다른 상품 10개, HTTP 200 10개, 실측표 포함 10개, 실패 0개로 완료했다. 저장된 원문 JSON은 `MusinsaActualSizeResponse` 입력 계약 그대로이며 테스트 산출물은 저장소에 추가하지 않았다.
+
+## 2026-09-24 유니클로 Safari 탐색·실측 파서 입력 수집기
+
+- `scripts/collect-uniqlo-parser-inputs.py`를 추가했다. 기본 실행은 Safari 첫 창에서 유니클로 공식 상품 페이지의 렌더링된 상품 링크를 읽고, 두 번째 Safari 창에 선택된 공식 size-chart API를 표시한다. 같은 API 응답 원문은 상품별 JSON으로 저장하며 `manifest.json`에 상품/색상 ID, 시도한 색상별·공통 variant, 선택 결과, HTTP 상태, 해시, 사이즈/실측 행 수와 실패 사유를 기록한다.
+- 앱의 `UniqloSizeAPIParser`와 같이 URL 색상 코드 응답 및 `-000` 공통 실측표를 확인하고 더 많은 공식 사이즈를 가진 응답을 선택한다. `--product-url` 반복 입력은 특정 상품 재현, `--no-api-window`는 브라우저를 건드리지 않는 API 검증에 사용한다. Safari 탐색은 macOS 자동화 권한과 Safari의 `Apple 이벤트의 JavaScript 허용` 설정이 필요하며, 권한 대기에는 15초 제한을 둔다. DB, Swift 파서, 비교 정책은 변경하지 않았다.
+- PASS: `/tmp/fitmatch-uniqlo-parser-inputs`에 기존 제공 URL 10개를 실제 공식 size-chart API로 조회해 HTTP 200 10개, 실측표 포함 10개, 실패 0개로 저장했다. Python 문법 검사도 PASS. Safari 두 창 탐색 smoke는 현재 자동화 실행 환경에서 완료 신호를 받지 못해 NOT VERIFIED이며 API 성공으로 대체 표기하지 않는다.
+## 2026-09-28 TestFlight build 1.1 (7) 업로드
+
+- App Store Connect가 기존 `1.1 (6)`을 이미 보유해 재업로드를 거절했다. 앱과 Share Extension의 버전을 `1.1 (7)`로 맞춰 새 Release archive를 생성했다.
+- `xcodebuild archive`와 App Store Connect upload는 모두 성공했다. Apple 응답은 `Uploaded package is processing.`이며, TestFlight 목록에 표시되기 전 처리 시간은 별도로 남아 있다.
+- 이 작업의 Xcode 프로젝트 버전 변경은 아직 로컬 미커밋이다. 기존 작업 트리 변경은 보존했다.

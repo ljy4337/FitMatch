@@ -52,6 +52,27 @@ struct FitMatchMetricsRecorderTests {
         #expect(!report.localizedCaseInsensitiveContains("measurement"))
     }
 
+    @Test func zaraHostAndLookalikesRemainDistinct() {
+        #expect(FitMatchMetricProvider.resolve(urlString: "https://www.zara.com/kr/ko/test.html?v1=123") == .zara)
+        #expect(FitMatchMetricProvider.resolve(urlString: "https://zara.com.example.org/test") == .unsupported)
+    }
+
+    @Test func recentDiagnosticsAreBoundedAndPersistWithoutRawData() {
+        let suite = "FitMatchTests.Recent.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let recorder = FitMatchMetricsRecorder(defaults: defaults)
+        for _ in 0..<25 { recorder.record(.parserFailure(provider: .zara, reason: .network)) }
+        let restored = FitMatchMetricsRecorder(defaults: defaults)
+        #expect(defaults.stringArray(forKey: FitMatchMetricsRecorder.recentEventsKey)?.count == 20)
+        #expect(restored.snapshot().counters["parser.failure|provider=zara|reason=network"] == 25)
+        let report = restored.diagnosticReport()
+        #expect(report.contains("app_build="))
+        #expect(report.contains("os_version="))
+        #expect(!report.contains("https://"))
+        #expect(!report.contains("v1=123"))
+    }
+
     @Test func productLoadRecordsFiniteParserDimensionsWithoutProductData() async {
         let metrics = MetricsRecorderSpy()
         let musinsa = MetricsProductParserStub(
@@ -65,6 +86,7 @@ struct FitMatchMetricsRecorderTests {
                 category: .top,
                 detailCategory: .shortSleeve,
                 sizes: [],
+                productID: "123",
                 measurementAvailability: .actualMeasurements
             )
         )
@@ -75,7 +97,10 @@ struct FitMatchMetricsRecorderTests {
         let viewModel = ShoppingProductViewModel(
             initialURL: "https://www.musinsa.com/products/123",
             parserService: service,
-            metricsRecorder: metrics
+            metricsRecorder: metrics,
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: FitMatchEchoServerAuthorityRemote()
+            )
         )
 
         #expect(await viewModel.loadProductInfoFromURL())
@@ -92,11 +117,11 @@ struct FitMatchMetricsRecorderTests {
         #expect(metrics.events.allSatisfy { !$0.counterKey.contains("기록되면") })
     }
 
-    @Test func blockedComparisonRecordsFunnelExit() {
+    @Test func blockedComparisonRecordsFunnelExit() async {
         let metrics = MetricsRecorderSpy()
         let viewModel = ShoppingProductViewModel(metricsRecorder: metrics)
 
-        #expect(viewModel.calculateRecommendation(userFits: []) == nil)
+        #expect(await viewModel.calculateRecommendation(userFits: []) == nil)
         #expect(metrics.events == [
             .comparisonAttempt(mode: .automatic),
             .comparisonBlocked(mode: .automatic, reason: .missingReference)

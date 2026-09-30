@@ -1,0 +1,3661 @@
+import Foundation
+import CryptoKit
+import Supabase
+
+nonisolated struct FitMatchProductResolutionRequest: Codable, Equatable, Sendable {
+    let source: String
+    let externalProductID: String
+    let productName: String
+    let sourceCategoryPath: String?
+    let audience: String?
+    let sourceCategoryCodes: [String]?
+    let structuredFacts: [String: String]
+
+    init(
+        source: String,
+        externalProductID: String,
+        productName: String,
+        sourceCategoryPath: String?,
+        audience: String?,
+        sourceCategoryCodes: [String]?,
+        structuredFacts: [String: String] = [:]
+    ) {
+        self.source = source
+        self.externalProductID = externalProductID
+        self.productName = productName
+        self.sourceCategoryPath = sourceCategoryPath
+        self.audience = FitMatchCanonicalAudience.code(from: audience)
+        self.sourceCategoryCodes = sourceCategoryCodes
+        self.structuredFacts = structuredFacts
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        source = try container.decode(String.self, forKey: .source)
+        externalProductID = try container.decode(String.self, forKey: .externalProductID)
+        productName = try container.decode(String.self, forKey: .productName)
+        sourceCategoryPath = try container.decodeIfPresent(String.self, forKey: .sourceCategoryPath)
+        audience = FitMatchCanonicalAudience.code(
+            from: try container.decodeIfPresent(String.self, forKey: .audience)
+        )
+        sourceCategoryCodes = try container.decodeIfPresent([String].self, forKey: .sourceCategoryCodes)
+        structuredFacts = try container.decodeIfPresent(
+            [String: String].self,
+            forKey: .structuredFacts
+        ) ?? [:]
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case source
+        case externalProductID = "external_product_id"
+        case productName = "product_name"
+        case sourceCategoryPath = "source_category_path"
+        case audience
+        case sourceCategoryCodes = "source_category_codes"
+        case structuredFacts = "structured_facts"
+    }
+}
+
+nonisolated struct FitMatchDatabaseClassification: Decodable, Equatable, Sendable {
+    let classificationID: UUID?
+    let categoryCode: String?
+    let detailCode: String?
+    let garmentTypeCode: String?
+    let familyCode: String?
+    let lengthCode: String?
+    let bodyLengthCode: String?
+    let status: String
+    let method: String?
+    let authorityStatus: String?
+    let confidence: Double?
+    let requiresUserConfirmation: Bool
+    let taxonomyPolicyVersion: String?
+    let decisionVersion: String?
+
+    init(
+        classificationID: UUID?,
+        categoryCode: String?,
+        detailCode: String?,
+        garmentTypeCode: String? = nil,
+        familyCode: String?,
+        lengthCode: String?,
+        bodyLengthCode: String?,
+        status: String,
+        method: String?,
+        authorityStatus: String? = nil,
+        confidence: Double?,
+        requiresUserConfirmation: Bool,
+        taxonomyPolicyVersion: String?,
+        decisionVersion: String?
+    ) {
+        self.classificationID = classificationID
+        self.categoryCode = categoryCode
+        self.detailCode = detailCode
+        self.garmentTypeCode = garmentTypeCode
+        self.familyCode = familyCode
+        self.lengthCode = lengthCode
+        self.bodyLengthCode = bodyLengthCode
+        self.status = status
+        self.method = method
+        self.authorityStatus = authorityStatus
+        self.confidence = confidence
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.taxonomyPolicyVersion = taxonomyPolicyVersion
+        self.decisionVersion = decisionVersion
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case classificationID = "classification_id"
+        case categoryCode = "category_code"
+        case detailCode = "detail_code"
+        case garmentTypeCode = "garment_type_code"
+        case familyCode = "family_code"
+        case lengthCode = "length_code"
+        case bodyLengthCode = "body_length_code"
+        case status
+        case method
+        case authorityStatus = "authority_status"
+        case confidence
+        case requiresUserConfirmation = "requires_user_confirmation"
+        case taxonomyPolicyVersion = "taxonomy_policy_version"
+        case decisionVersion = "decision_version"
+    }
+}
+
+nonisolated struct FitMatchProductResolutionResponse: Decodable, Equatable, Sendable {
+    let productID: UUID?
+    let intakeRequestID: UUID?
+    let catalogState: String
+    let categoryEvidenceMatches: Bool?
+    let authorityPersisted: Bool?
+    let classification: FitMatchDatabaseClassification
+    let comparisonReady: Bool
+
+    init(
+        productID: UUID?,
+        intakeRequestID: UUID?,
+        catalogState: String,
+        categoryEvidenceMatches: Bool?,
+        authorityPersisted: Bool? = nil,
+        classification: FitMatchDatabaseClassification,
+        comparisonReady: Bool
+    ) {
+        self.productID = productID
+        self.intakeRequestID = intakeRequestID
+        self.catalogState = catalogState
+        self.categoryEvidenceMatches = categoryEvidenceMatches
+        self.authorityPersisted = authorityPersisted
+        self.classification = classification
+        self.comparisonReady = comparisonReady
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case productID = "product_id"
+        case intakeRequestID = "intake_request_id"
+        case catalogState = "catalog_state"
+        case categoryEvidenceMatches = "category_evidence_matches"
+        case authorityPersisted = "authority_persisted"
+        case classification
+        case comparisonReady = "comparison_ready"
+    }
+}
+
+nonisolated struct FitMatchProductObservationMeasurement: Encodable, Equatable, Sendable {
+    let measurementIdentity: String
+    let parserCode: String
+    let rawCode: String?
+    let rawLabel: String
+    let rawValue: Double
+    let rawValueText: String?
+    let rawUnit: String
+    let rawRepresentation: String?
+    let evidence: [String: String]
+
+    enum CodingKeys: String, CodingKey {
+        case measurementIdentity = "measurement_identity"
+        case parserCode = "parser_code"
+        case rawCode = "raw_code"
+        case rawLabel = "raw_label"
+        case rawValue = "raw_value"
+        case rawValueText = "raw_value_text"
+        case rawUnit = "raw_unit"
+        case rawRepresentation = "raw_representation"
+        case evidence
+    }
+}
+
+nonisolated struct FitMatchProductObservationSize: Encodable, Equatable, Sendable {
+    let sizeIdentity: String
+    let sizeLabel: String
+    let normalizedSizeLabel: String
+    let displayOrder: Int
+    let stockStatus: String
+    let availabilityObservedAt: String?
+    let availabilityValidUntil: String?
+    let availabilityEvidence: [String: String]
+    let measurements: [FitMatchProductObservationMeasurement]
+
+    init(
+        sizeIdentity: String,
+        sizeLabel: String,
+        normalizedSizeLabel: String,
+        displayOrder: Int,
+        stockStatus: String,
+        availabilityObservedAt: String? = nil,
+        availabilityValidUntil: String? = nil,
+        availabilityEvidence: [String: String] = [:],
+        measurements: [FitMatchProductObservationMeasurement]
+    ) {
+        self.sizeIdentity = sizeIdentity
+        self.sizeLabel = sizeLabel
+        self.normalizedSizeLabel = normalizedSizeLabel
+        self.displayOrder = displayOrder
+        self.stockStatus = stockStatus
+        self.availabilityObservedAt = availabilityObservedAt
+        self.availabilityValidUntil = availabilityValidUntil
+        self.availabilityEvidence = availabilityEvidence
+        self.measurements = measurements
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case sizeIdentity = "size_identity"
+        case sizeLabel = "size_label"
+        case normalizedSizeLabel = "normalized_size_label"
+        case displayOrder = "display_order"
+        case stockStatus = "stock_status"
+        case availabilityObservedAt = "observed_at"
+        case availabilityValidUntil = "valid_until"
+        case availabilityEvidence = "availability_evidence"
+        case measurements
+    }
+}
+
+nonisolated struct FitMatchProductObservationVariant: Encodable, Equatable, Sendable {
+    let externalVariantID: String
+    let variantName: String?
+    let colorCode: String?
+    let colorName: String?
+    let sizes: [FitMatchProductObservationSize]
+
+    enum CodingKeys: String, CodingKey {
+        case externalVariantID = "external_variant_id"
+        case variantName = "variant_name"
+        case colorCode = "color_code"
+        case colorName = "color_name"
+        case sizes
+    }
+}
+
+nonisolated struct FitMatchProductObservationPayload: Encodable, Equatable, Sendable {
+    let source: String
+    let externalProductID: String
+    let productName: String
+    let canonicalURL: String?
+    let audience: String?
+    let sourceCategoryPath: String?
+    let sourceCategoryCodes: [String]
+    let imageURL: String?
+    let observedAt: String
+    let rawPayload: [String: String]
+    let structuredFacts: [String: String]
+    let retailerAPIEvidence: FitMatchRetailerAPIEvidence?
+    let variants: [FitMatchProductObservationVariant]
+
+    init(
+        source: String,
+        externalProductID: String,
+        productName: String,
+        canonicalURL: String?,
+        audience: String?,
+        sourceCategoryPath: String?,
+        sourceCategoryCodes: [String],
+        imageURL: String?,
+        observedAt: String,
+        rawPayload: [String: String],
+        structuredFacts: [String: String],
+        retailerAPIEvidence: FitMatchRetailerAPIEvidence? = nil,
+        variants: [FitMatchProductObservationVariant]
+    ) {
+        self.source = source
+        self.externalProductID = externalProductID
+        self.productName = productName
+        self.canonicalURL = canonicalURL
+        self.audience = audience
+        self.sourceCategoryPath = sourceCategoryPath
+        self.sourceCategoryCodes = sourceCategoryCodes
+        self.imageURL = imageURL
+        self.observedAt = observedAt
+        self.rawPayload = rawPayload
+        self.structuredFacts = structuredFacts
+        self.retailerAPIEvidence = retailerAPIEvidence
+        self.variants = variants
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(source, forKey: .source)
+        try container.encode(externalProductID, forKey: .externalProductID)
+        try container.encode(productName, forKey: .productName)
+        try container.encodeIfPresent(canonicalURL, forKey: .canonicalURL)
+        try container.encodeIfPresent(audience, forKey: .audience)
+        try container.encodeIfPresent(sourceCategoryPath, forKey: .sourceCategoryPath)
+        try container.encode(sourceCategoryCodes, forKey: .sourceCategoryCodes)
+        try container.encodeIfPresent(imageURL, forKey: .imageURL)
+        try container.encode(observedAt, forKey: .observedAt)
+        try container.encode(rawPayload, forKey: .rawPayload)
+        var encodedFacts = structuredFacts.mapValues(FitMatchJSONValue.string)
+        if let retailerAPI = retailerAPIEvidence?.jsonValue {
+            encodedFacts["retailer_api"] = retailerAPI
+        }
+        try container.encode(encodedFacts, forKey: .structuredFacts)
+        try container.encode(variants, forKey: .variants)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case source
+        case externalProductID = "external_product_id"
+        case productName = "product_name"
+        case canonicalURL = "canonical_url"
+        case audience
+        case sourceCategoryPath = "source_category_path"
+        case sourceCategoryCodes = "source_category_codes"
+        case imageURL = "image_url"
+        case observedAt = "observed_at"
+        case rawPayload = "raw_payload"
+        case structuredFacts = "structured_facts"
+        case variants
+    }
+}
+
+nonisolated struct FitMatchProductObservationRequest: Encodable, Equatable, Sendable {
+    let payload: FitMatchProductObservationPayload
+}
+
+nonisolated struct FitMatchProductObservationResponse: Decodable, Equatable, Sendable {
+    struct Observation: Decodable, Equatable, Sendable {
+        let observationID: UUID
+        let status: String
+        let rawMeasurementCount: Int
+
+        enum CodingKeys: String, CodingKey {
+            case observationID = "observation_id"
+            case status
+            case rawMeasurementCount = "raw_measurement_count"
+        }
+    }
+
+    struct Processing: Decodable, Equatable, Sendable {
+        let observationID: UUID
+        let status: String
+        let productID: UUID?
+
+        enum CodingKeys: String, CodingKey {
+            case observationID = "observation_id"
+            case status
+            case productID = "product_id"
+        }
+    }
+
+    let observation: Observation
+    let processing: Processing
+}
+
+nonisolated struct FitMatchClosetClassificationOverride: Encodable, Equatable, Sendable {
+    let audienceCode: String?
+    let categoryCode: String
+    let detailCode: String
+    let familyCode: String
+    let lengthCode: String?
+    let bodyLengthCode: String?
+    let reason: String?
+    let evidence: [String: String]
+
+    init(
+        audienceCode: String? = nil,
+        categoryCode: String,
+        detailCode: String,
+        familyCode: String,
+        lengthCode: String?,
+        bodyLengthCode: String? = nil,
+        reason: String?,
+        evidence: [String: String]
+    ) {
+        self.audienceCode = audienceCode
+        self.categoryCode = categoryCode
+        self.detailCode = detailCode
+        self.familyCode = familyCode
+        self.lengthCode = lengthCode
+        self.bodyLengthCode = bodyLengthCode
+        self.reason = reason
+        self.evidence = evidence
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case audienceCode = "audience_code"
+        case categoryCode = "category_code"
+        case detailCode = "detail_code"
+        case familyCode = "family_code"
+        case lengthCode = "length_code"
+        case bodyLengthCode = "body_length_code"
+        case reason
+        case evidence
+    }
+}
+
+nonisolated struct FitMatchRegisterClosetItemRequest: Encodable, Equatable, Sendable {
+    let productID: UUID
+    let productSizeID: UUID?
+    let isReference: Bool
+    let override: FitMatchClosetClassificationOverride?
+}
+
+nonisolated struct FitMatchClosetMeasurementRecordPayload: Codable, Equatable, Sendable {
+    let value: Double
+    let unit: String
+    let measurementCode: String
+    let displayKind: String
+    let methodSource: String
+    let methodProfile: String?
+    let inputSource: String
+    let standardVersion: String?
+    let mappingVersion: String
+    let rawCode: String?
+    let rawLabel: String
+    let rawInfo: String?
+    let rawValueText: String?
+    let evidenceLevel: String
+    let semanticStatus: String
+
+    enum CodingKeys: String, CodingKey {
+        case value, unit
+        case measurementCode = "measurement_code"
+        case displayKind = "display_kind"
+        case methodSource = "method_source"
+        case methodProfile = "method_profile"
+        case inputSource = "input_source"
+        case standardVersion = "standard_version"
+        case mappingVersion = "mapping_version"
+        case rawCode = "raw_code"
+        case rawLabel = "raw_label"
+        case rawInfo = "raw_info"
+        case rawValueText = "raw_value_text"
+        case evidenceLevel = "evidence_level"
+        case semanticStatus = "semantic_status"
+    }
+}
+
+nonisolated struct FitMatchClosetItemPayload: Encodable, Equatable, Sendable {
+    let productName: String
+    let brand: String?
+    let sizeName: String?
+    let genderCode: String
+    let source: String
+    let categoryCode: String
+    let detailCode: String
+    let familyCode: String?
+    let lengthCode: String?
+    let bodyLengthCode: String?
+    let sourceCategoryPath: String?
+    let productURL: String?
+    let imageURL: String?
+    let measurements: [String: Double]
+    let measurementRecords: [FitMatchClosetMeasurementRecordPayload]
+    let fitMemo: String
+    let fitPreferenceCode: String
+    let satisfaction: Int
+    let isReference: Bool
+    let classificationVersion: String?
+    let clientSnapshot: [String: String]
+    let clientCreatedAt: String
+    let clientUpdatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case productName = "product_name"
+        case brand
+        case sizeName = "size_name"
+        case genderCode = "gender_code"
+        case source
+        case categoryCode = "category_code"
+        case detailCode = "detail_code"
+        case familyCode = "family_code"
+        case lengthCode = "length_code"
+        case bodyLengthCode = "body_length_code"
+        case sourceCategoryPath = "source_category_path"
+        case productURL = "product_url"
+        case imageURL = "image_url"
+        case measurements
+        case measurementRecords = "measurement_records"
+        case fitMemo = "fit_memo"
+        case fitPreferenceCode = "fit_preference_code"
+        case satisfaction
+        case isReference = "is_reference"
+        case classificationVersion = "classification_version"
+        case clientSnapshot = "client_snapshot"
+        case clientCreatedAt = "client_created_at"
+        case clientUpdatedAt = "client_updated_at"
+    }
+}
+
+nonisolated struct FitMatchUpsertClosetItemRequest: Encodable, Equatable, Sendable {
+    let clientItemID: UUID
+    let item: FitMatchClosetItemPayload
+    let productID: UUID?
+    let productVariantID: UUID?
+    let productSizeID: UUID?
+    let override: FitMatchClosetClassificationOverride?
+    let comparisonGroupCode: String?
+    /// Explicit display detail selected by the user. Nil must stay omitted
+    /// for automatic server tuples.
+    let closetDetailCodeSnapshot: String?
+    /// The immutable receipt created from the retailer observation shown to
+    /// the user. Product/variant/size alone are not an observation identity.
+    let sourceObservationID: UUID?
+
+    init(
+        clientItemID: UUID,
+        item: FitMatchClosetItemPayload,
+        productID: UUID?,
+        productVariantID: UUID? = nil,
+        productSizeID: UUID?,
+        override: FitMatchClosetClassificationOverride?,
+        comparisonGroupCode: String? = nil,
+        closetDetailCodeSnapshot: String? = nil,
+        sourceObservationID: UUID? = nil
+    ) {
+        self.clientItemID = clientItemID
+        self.item = item
+        self.productID = productID
+        self.productVariantID = productVariantID
+        self.productSizeID = productSizeID
+        self.override = override
+        self.comparisonGroupCode = comparisonGroupCode
+        self.closetDetailCodeSnapshot = closetDetailCodeSnapshot
+        self.sourceObservationID = sourceObservationID
+    }
+}
+
+nonisolated struct FitMatchUpsertClosetItemResponse: Decodable, Equatable, Sendable {
+    let closetItemID: UUID
+    let clientItemID: UUID
+    let syncRevision: Int
+    let classificationStatus: String
+    let categoryCode: String
+    let detailCode: String
+    let familyCode: String?
+    let lengthCode: String?
+    let bodyLengthCode: String?
+    let isReference: Bool
+
+    init(
+        closetItemID: UUID,
+        clientItemID: UUID,
+        syncRevision: Int,
+        classificationStatus: String,
+        categoryCode: String,
+        detailCode: String,
+        familyCode: String?,
+        lengthCode: String?,
+        bodyLengthCode: String?,
+        isReference: Bool
+    ) {
+        self.closetItemID = closetItemID
+        self.clientItemID = clientItemID
+        self.syncRevision = syncRevision
+        self.classificationStatus = classificationStatus
+        self.categoryCode = categoryCode
+        self.detailCode = detailCode
+        self.familyCode = familyCode
+        self.lengthCode = lengthCode
+        self.bodyLengthCode = bodyLengthCode
+        self.isReference = isReference
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case closetItemID = "closet_item_id"
+        case clientItemID = "client_item_id"
+        case syncRevision = "sync_revision"
+        case classificationStatus = "classification_status"
+        case categoryCode = "category_code"
+        case detailCode = "detail_code"
+        case familyCode = "family_code"
+        case lengthCode = "length_code"
+        case bodyLengthCode = "body_length_code"
+        case isReference = "is_reference"
+    }
+}
+
+nonisolated struct FitMatchClosetItemRecord: Decodable, Equatable, Sendable {
+    let closetItemID: UUID
+    let clientItemID: UUID
+    let productID: UUID?
+    let externalProductID: String?
+    let productAudience: String?
+    let sourceCategoryCodes: [String]
+    let variantID: UUID?
+    let productSizeID: UUID?
+    let brand: String?
+    let productName: String
+    let sizeName: String?
+    let genderCode: String?
+    let source: String
+    let sourceCategoryPath: String?
+    let productURL: String?
+    let imageURL: String?
+    let measurements: [String: Double]
+    let measurementRecords: [FitMatchClosetMeasurementRecordPayload]
+    /// Exact raw rows returned with the immutable source snapshot. Keep this
+    /// typed view beside the presentation records so linked-edit read-back can
+    /// verify that the manifest count reflects actual raw rows.
+    /// Optional for pre-snapshot list contracts. Linked-size reconciliation
+    /// requires a non-nil manifest and rows before it accepts a size change.
+    let sourceMeasurements: [VNextClosetSourceMeasurementDTO]?
+    let sourceMeasurementSnapshot: VNextClosetSourceMeasurementSnapshotDTO?
+    let fitMemo: String
+    let fitPreferenceCode: String
+    let satisfaction: Int
+    let isReference: Bool
+    let classificationStatus: String
+    let classificationSource: String?
+    let categoryCode: String
+    let detailCode: String
+    /// Optional exact user-selected display detail returned separately from
+    /// the legacy coalesced tuple projection.
+    let closetDetailCodeSnapshot: String?
+    let canonicalCategoryCode: String?
+    let canonicalDetailCode: String?
+    let familyCode: String?
+    let lengthCode: String?
+    let bodyLengthCode: String?
+    let comparisonGroupCode: String?
+    let comparisonGroupSource: String?
+    let comparisonGroupPolicyVersion: String?
+    let classificationSnapshot: [String: String?]
+    let clientSnapshot: [String: String]
+    let clientCreatedAt: String?
+    let clientUpdatedAt: String?
+    let syncRevision: Int
+    let createdAt: String
+    let updatedAt: String
+
+    init(
+        closetItemID: UUID,
+        clientItemID: UUID,
+        productID: UUID?,
+        externalProductID: String?,
+        productAudience: String?,
+        sourceCategoryCodes: [String],
+        variantID: UUID?,
+        productSizeID: UUID?,
+        brand: String?,
+        productName: String,
+        sizeName: String?,
+        genderCode: String?,
+        source: String,
+        sourceCategoryPath: String?,
+        productURL: String?,
+        imageURL: String?,
+        measurements: [String: Double],
+        measurementRecords: [FitMatchClosetMeasurementRecordPayload],
+        sourceMeasurements: [VNextClosetSourceMeasurementDTO]? = [],
+        sourceMeasurementSnapshot: VNextClosetSourceMeasurementSnapshotDTO? = nil,
+        fitMemo: String,
+        fitPreferenceCode: String,
+        satisfaction: Int,
+        isReference: Bool,
+        classificationStatus: String,
+        classificationSource: String?,
+        categoryCode: String,
+        detailCode: String,
+        closetDetailCodeSnapshot: String? = nil,
+        canonicalCategoryCode: String?,
+        canonicalDetailCode: String?,
+        familyCode: String?,
+        lengthCode: String?,
+        bodyLengthCode: String?,
+        comparisonGroupCode: String? = nil,
+        comparisonGroupSource: String? = nil,
+        comparisonGroupPolicyVersion: String? = nil,
+        classificationSnapshot: [String: String?],
+        clientSnapshot: [String: String],
+        clientCreatedAt: String?,
+        clientUpdatedAt: String?,
+        syncRevision: Int,
+        createdAt: String,
+        updatedAt: String
+    ) {
+        self.closetItemID = closetItemID
+        self.clientItemID = clientItemID
+        self.productID = productID
+        self.externalProductID = externalProductID
+        self.productAudience = productAudience
+        self.sourceCategoryCodes = sourceCategoryCodes
+        self.variantID = variantID
+        self.productSizeID = productSizeID
+        self.brand = brand
+        self.productName = productName
+        self.sizeName = sizeName
+        self.genderCode = genderCode
+        self.source = source
+        self.sourceCategoryPath = sourceCategoryPath
+        self.productURL = productURL
+        self.imageURL = imageURL
+        self.measurements = measurements
+        self.measurementRecords = measurementRecords
+        self.sourceMeasurements = sourceMeasurements
+        self.sourceMeasurementSnapshot = sourceMeasurementSnapshot
+        self.fitMemo = fitMemo
+        self.fitPreferenceCode = fitPreferenceCode
+        self.satisfaction = satisfaction
+        self.isReference = isReference
+        self.classificationStatus = classificationStatus
+        self.classificationSource = classificationSource
+        self.categoryCode = categoryCode
+        self.detailCode = detailCode
+        self.closetDetailCodeSnapshot = closetDetailCodeSnapshot
+        self.canonicalCategoryCode = canonicalCategoryCode
+        self.canonicalDetailCode = canonicalDetailCode
+        self.familyCode = familyCode
+        self.lengthCode = lengthCode
+        self.bodyLengthCode = bodyLengthCode
+        self.comparisonGroupCode = comparisonGroupCode
+        self.comparisonGroupSource = comparisonGroupSource
+        self.comparisonGroupPolicyVersion = comparisonGroupPolicyVersion
+        self.classificationSnapshot = classificationSnapshot
+        self.clientSnapshot = clientSnapshot
+        self.clientCreatedAt = clientCreatedAt
+        self.clientUpdatedAt = clientUpdatedAt
+        self.syncRevision = syncRevision
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case closetItemID = "closet_item_id"
+        case clientItemID = "client_item_id"
+        case productID = "product_id"
+        case externalProductID = "external_product_id"
+        case productAudience = "product_audience"
+        case sourceCategoryCodes = "source_category_codes"
+        case variantID = "variant_id"
+        case productSizeID = "product_size_id"
+        case brand
+        case productName = "product_name"
+        case sizeName = "size_name"
+        case genderCode = "gender_code"
+        case source
+        case sourceCategoryPath = "source_category_path"
+        case productURL = "product_url"
+        case imageURL = "image_url"
+        case measurements
+        case measurementRecords = "measurement_records"
+        case sourceMeasurements = "source_measurements"
+        case sourceMeasurementSnapshot = "source_measurement_snapshot"
+        case fitMemo = "fit_memo"
+        case fitPreferenceCode = "fit_preference_code"
+        case satisfaction
+        case isReference = "is_reference"
+        case classificationStatus = "classification_status"
+        case classificationSource = "classification_source"
+        case categoryCode = "category_code"
+        case detailCode = "detail_code"
+        case closetDetailCodeSnapshot = "closet_detail_code_snapshot"
+        case canonicalCategoryCode = "canonical_category_code"
+        case canonicalDetailCode = "canonical_detail_code"
+        case familyCode = "family_code"
+        case lengthCode = "length_code"
+        case bodyLengthCode = "body_length_code"
+        case comparisonGroupCode = "comparison_group_code"
+        case comparisonGroupSource = "comparison_group_source"
+        case comparisonGroupPolicyVersion = "comparison_group_policy_version"
+        case classificationSnapshot = "classification_snapshot"
+        case clientSnapshot = "client_snapshot"
+        case clientCreatedAt = "client_created_at"
+        case clientUpdatedAt = "client_updated_at"
+        case syncRevision = "sync_revision"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+nonisolated struct FitMatchClosetItemsResponse: Decodable, Equatable, Sendable {
+    let state: String
+    let items: [FitMatchClosetItemRecord]
+
+    init(state: String, items: [FitMatchClosetItemRecord]) {
+        self.state = state
+        self.items = items
+    }
+}
+
+nonisolated struct FitMatchSetClosetReferenceResponse: Decodable, Equatable, Sendable {
+    let closetItemID: UUID
+    let isReference: Bool
+    let syncRevision: Int
+
+    init(closetItemID: UUID, isReference: Bool, syncRevision: Int = 0) {
+        self.closetItemID = closetItemID
+        self.isReference = isReference
+        self.syncRevision = syncRevision
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case closetItemID = "closet_item_id"
+        case isReference = "is_reference"
+        case syncRevision = "sync_revision"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        closetItemID = try container.decode(UUID.self, forKey: .closetItemID)
+        isReference = try container.decode(Bool.self, forKey: .isReference)
+        syncRevision = try container.decodeIfPresent(Int.self, forKey: .syncRevision) ?? 0
+    }
+}
+
+nonisolated struct FitMatchDeleteClosetItemResponse: Decodable, Equatable, Sendable {
+    let closetItemID: UUID
+    let deletedAt: String
+
+    init(closetItemID: UUID, deletedAt: String) {
+        self.closetItemID = closetItemID
+        self.deletedAt = deletedAt
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case closetItemID = "closet_item_id"
+        case deletedAt = "deleted_at"
+    }
+}
+
+nonisolated struct FitMatchRuntimeProduct: Decodable, Equatable, Sendable {
+    let productID: UUID
+    let source: String
+    let externalProductID: String
+    let productName: String
+    let canonicalURL: String?
+    let audience: String?
+    let sourceCategoryPath: String?
+    let sourceCategoryCodes: [String]
+    let imageURL: String?
+    let lifecycleStatus: String
+    let inputFingerprint: String
+
+    enum CodingKeys: String, CodingKey {
+        case productID = "product_id"
+        case source
+        case externalProductID = "external_product_id"
+        case productName = "product_name"
+        case canonicalURL = "canonical_url"
+        case audience
+        case sourceCategoryPath = "source_category_path"
+        case sourceCategoryCodes = "source_category_codes"
+        case imageURL = "image_url"
+        case lifecycleStatus = "lifecycle_status"
+        case inputFingerprint = "input_fingerprint"
+    }
+}
+
+nonisolated struct FitMatchRuntimeMeasurement: Decodable, Equatable, Sendable {
+    let measurementCode: String?
+    let rawLabel: String
+    let rawValue: Double
+    let rawUnit: String
+    let normalizedValue: Double?
+    let normalizedUnit: String?
+    let comparisonBasis: String?
+    let isComparable: Bool
+    let exclusionReason: String?
+    let policyVersion: String?
+
+    enum CodingKeys: String, CodingKey {
+        case measurementCode = "measurement_code"
+        case rawLabel = "raw_label"
+        case rawValue = "raw_value"
+        case rawUnit = "raw_unit"
+        case normalizedValue = "normalized_value"
+        case normalizedUnit = "normalized_unit"
+        case comparisonBasis = "comparison_basis"
+        case isComparable = "is_comparable"
+        case exclusionReason = "exclusion_reason"
+        case policyVersion = "policy_version"
+    }
+}
+
+nonisolated struct FitMatchRuntimeSize: Decodable, Equatable, Sendable {
+    let productSizeID: UUID
+    let externalSizeID: String?
+    let sizeLabel: String
+    let normalizedSizeLabel: String
+    let displayOrder: Int
+    let stockStatus: String?
+    let measurements: [FitMatchRuntimeMeasurement]
+
+    enum CodingKeys: String, CodingKey {
+        case productSizeID = "product_size_id"
+        case externalSizeID = "external_size_id"
+        case sizeLabel = "size_label"
+        case normalizedSizeLabel = "normalized_size_label"
+        case displayOrder = "display_order"
+        case stockStatus = "stock_status"
+        case measurements
+    }
+}
+
+nonisolated struct FitMatchRuntimeVariant: Decodable, Equatable, Sendable {
+    let variantID: UUID
+    let externalVariantID: String?
+    let variantName: String?
+    let colorCode: String?
+    let colorName: String?
+    let sizes: [FitMatchRuntimeSize]
+
+    enum CodingKeys: String, CodingKey {
+        case variantID = "variant_id"
+        case externalVariantID = "external_variant_id"
+        case variantName = "variant_name"
+        case colorCode = "color_code"
+        case colorName = "color_name"
+        case sizes
+    }
+}
+
+nonisolated struct FitMatchProductRuntimeResponse: Decodable, Equatable, Sendable {
+    let runtimeState: String
+    let comparisonReady: Bool
+    let product: FitMatchRuntimeProduct
+    let classification: FitMatchDatabaseClassification?
+    let variants: [FitMatchRuntimeVariant]
+    let vnext: VNextProductRuntimeDTO?
+
+    init(
+        runtimeState: String,
+        comparisonReady: Bool,
+        product: FitMatchRuntimeProduct,
+        classification: FitMatchDatabaseClassification?,
+        variants: [FitMatchRuntimeVariant],
+        vnext: VNextProductRuntimeDTO? = nil
+    ) {
+        self.runtimeState = runtimeState
+        self.comparisonReady = comparisonReady
+        self.product = product
+        self.classification = classification
+        self.variants = variants
+        self.vnext = vnext
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case runtimeState = "runtime_state"
+        case comparisonReady = "comparison_ready"
+        case product
+        case classification
+        case variants
+        case vnext
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        runtimeState = try container.decode(String.self, forKey: .runtimeState)
+        comparisonReady = try container.decode(Bool.self, forKey: .comparisonReady)
+        product = try container.decode(FitMatchRuntimeProduct.self, forKey: .product)
+        classification = try container.decodeIfPresent(
+            FitMatchDatabaseClassification.self,
+            forKey: .classification
+        )
+        variants = try container.decodeIfPresent(
+            [FitMatchRuntimeVariant].self,
+            forKey: .variants
+        ) ?? []
+        vnext = try container.decodeIfPresent(VNextProductRuntimeDTO.self, forKey: .vnext)
+    }
+}
+
+nonisolated struct FitMatchDatabaseCompatibility: Decodable, Equatable, Sendable {
+    let allowed: Bool
+    let level: String
+    let reason: String?
+    let excludedMeasurements: [String]
+    let minimumCommonMeasurements: Int?
+
+    init(
+        allowed: Bool,
+        level: String,
+        reason: String?,
+        excludedMeasurements: [String],
+        minimumCommonMeasurements: Int?
+    ) {
+        self.allowed = allowed
+        self.level = level
+        self.reason = reason
+        self.excludedMeasurements = excludedMeasurements
+        self.minimumCommonMeasurements = minimumCommonMeasurements
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case allowed
+        case level
+        case reason
+        case excludedMeasurements = "excluded_measurements"
+        case excludedMeasurementCodes = "excluded_measurement_codes"
+        case minimumCommonMeasurements = "minimum_common_measurements"
+        case minimumCommon = "minimum_common"
+        case mode
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        allowed = try container.decodeIfPresent(Bool.self, forKey: .allowed) ?? false
+        let mode = try container.decodeIfPresent(String.self, forKey: .mode)
+        level = try container.decodeIfPresent(String.self, forKey: .level)
+            ?? (mode == "AUTOMATIC" ? "direct" : mode == "MANUAL_EXTENDED" ? "extended" : "incompatible")
+        reason = try container.decodeIfPresent(String.self, forKey: .reason)
+        excludedMeasurements = try container.decodeIfPresent(
+            [String].self,
+            forKey: .excludedMeasurements
+        ) ?? (try container.decodeIfPresent(
+            [String].self,
+            forKey: .excludedMeasurementCodes
+        ) ?? [])
+        minimumCommonMeasurements = try container.decodeIfPresent(
+            Int.self,
+            forKey: .minimumCommonMeasurements
+        ) ?? (try container.decodeIfPresent(Int.self, forKey: .minimumCommon))
+    }
+}
+
+nonisolated struct FitMatchReferenceCandidate: Decodable, Equatable, Sendable {
+    let closetItemID: UUID
+    let productName: String
+    let sizeName: String?
+    let isReference: Bool
+    let automaticReady: Bool
+    let manualReady: Bool
+    let measurementOverlapCount: Int
+    let automaticCompatibility: FitMatchDatabaseCompatibility
+    let manualCompatibility: FitMatchDatabaseCompatibility
+
+    enum CodingKeys: String, CodingKey {
+        case closetItemID = "closet_item_id"
+        case productName = "product_name"
+        case sizeName = "size_name"
+        case isReference = "is_reference"
+        case automaticReady = "automatic_ready"
+        case manualReady = "manual_ready"
+        case measurementOverlapCount = "measurement_overlap_count"
+        case automaticCompatibility = "automatic_compatibility"
+        case manualCompatibility = "manual_compatibility"
+    }
+}
+
+nonisolated struct FitMatchReferenceCandidatesResponse: Decodable, Equatable, Sendable {
+    let state: String
+    let automaticCount: Int
+    let manualCount: Int
+    let structuralCount: Int
+    let candidates: [FitMatchReferenceCandidate]
+    let policyVersion: String?
+    let vnext: VNextReferenceCandidatesDTO?
+
+    enum CodingKeys: String, CodingKey {
+        case state
+        case automaticCount = "automatic_count"
+        case manualCount = "manual_count"
+        case structuralCount = "structural_count"
+        case candidates
+        case policyVersion = "policy_version"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        state = try container.decode(String.self, forKey: .state)
+        automaticCount = try container.decodeIfPresent(Int.self, forKey: .automaticCount) ?? 0
+        manualCount = try container.decodeIfPresent(Int.self, forKey: .manualCount) ?? 0
+        structuralCount = try container.decodeIfPresent(Int.self, forKey: .structuralCount) ?? 0
+        candidates = try container.decodeIfPresent([FitMatchReferenceCandidate].self, forKey: .candidates) ?? []
+        policyVersion = try container.decodeIfPresent(String.self, forKey: .policyVersion)
+        vnext = nil
+    }
+
+    init(vnext value: VNextReferenceCandidatesDTO) {
+        vnext = value
+        let source = value.candidates
+        automaticCount = source.filter { $0.decision == "AUTOMATIC" && $0.allowed }.count
+        manualCount = source.filter { $0.decision == "MANUAL_EXTENDED" && $0.allowed }.count
+        structuralCount = automaticCount + manualCount
+        if automaticCount > 0 { state = "automatic" }
+        else if manualCount > 0 { state = "manual_selection" }
+        else if source.contains(where: { $0.decision == "MEASUREMENTS_REQUIRED" }) {
+            state = "measurements_required"
+        } else { state = "no_compatible_garment" }
+        candidates = source.map { candidate in
+            let automatic = FitMatchDatabaseCompatibility(
+                allowed: candidate.allowed && candidate.decision == "AUTOMATIC",
+                level: candidate.decision == "AUTOMATIC" ? "direct" : "incompatible",
+                reason: candidate.reason,
+                excludedMeasurements: [],
+                minimumCommonMeasurements: nil
+            )
+            let manual = FitMatchDatabaseCompatibility(
+                allowed: candidate.allowed && candidate.decision == "MANUAL_EXTENDED",
+                level: candidate.decision == "MANUAL_EXTENDED" ? "extended" : "incompatible",
+                reason: candidate.reason,
+                excludedMeasurements: [],
+                minimumCommonMeasurements: nil
+            )
+            return FitMatchReferenceCandidate(
+                closetItemID: candidate.closetItemID,
+                productName: candidate.itemName,
+                sizeName: candidate.sizeLabel,
+                isReference: candidate.isCurrentReference,
+                automaticReady: automatic.allowed,
+                manualReady: manual.allowed,
+                measurementOverlapCount: 0,
+                automaticCompatibility: automatic,
+                manualCompatibility: manual
+            )
+        }
+        policyVersion = "fitmatch-vnext-reference-candidates-v1"
+    }
+}
+
+nonisolated struct FitMatchBeginComparisonRequest: Encodable, Equatable, Sendable {
+    let referenceItemID: UUID
+    let targetProductID: UUID
+    let allowExtended: Bool
+    let clientHistoryID: UUID
+    let targetVariantID: UUID?
+    let authorizationProductSizeID: UUID?
+    let candidateProductSizeIDs: [UUID]?
+    let candidateAuthorityFingerprint: String?
+    let effectiveAuthorityFingerprint: String?
+    let personalOverrideRevision: Int?
+    let requestedComparisonGroupCode: String?
+
+    init(
+        referenceItemID: UUID,
+        targetProductID: UUID,
+        allowExtended: Bool,
+        clientHistoryID: UUID,
+        targetVariantID: UUID? = nil,
+        authorizationProductSizeID: UUID? = nil,
+        candidateProductSizeIDs: [UUID]? = nil,
+        candidateAuthorityFingerprint: String? = nil,
+        effectiveAuthorityFingerprint: String? = nil,
+        personalOverrideRevision: Int? = nil,
+        requestedComparisonGroupCode: String? = nil
+    ) {
+        self.referenceItemID = referenceItemID
+        self.targetProductID = targetProductID
+        self.allowExtended = allowExtended
+        self.clientHistoryID = clientHistoryID
+        self.targetVariantID = targetVariantID
+        self.authorizationProductSizeID = authorizationProductSizeID
+        self.candidateProductSizeIDs = candidateProductSizeIDs
+        self.candidateAuthorityFingerprint = candidateAuthorityFingerprint
+        self.effectiveAuthorityFingerprint = effectiveAuthorityFingerprint
+        self.personalOverrideRevision = personalOverrideRevision
+        self.requestedComparisonGroupCode = requestedComparisonGroupCode
+    }
+}
+
+nonisolated struct FitMatchSetUserProductClassificationRequest:
+    Equatable, Sendable {
+    let productID: UUID
+    let selectedCandidateFingerprint: String
+    let expectedCandidateSetHash: String
+    let expectedProductInputFingerprint: String
+    let expectedProductEvidenceFingerprint: String
+    let mutationID: UUID
+    let expectedRevision: Int
+}
+
+nonisolated struct FitMatchClearUserProductClassificationRequest:
+    Equatable, Sendable {
+    let productID: UUID
+    let mutationID: UUID
+    let expectedRevision: Int
+}
+
+nonisolated struct FitMatchBeginComparisonResponse: Decodable, Equatable, Sendable {
+    let runID: UUID
+    let status: String
+    let compatibility: FitMatchDatabaseCompatibility
+    let vnext: VNextBeginComparisonDTO?
+
+    enum CodingKeys: String, CodingKey {
+        case runID = "run_id"
+        case status
+        case compatibility
+        case snapshot
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if container.contains(.snapshot) {
+            let exact = try VNextBeginComparisonDTO(from: decoder)
+            try FitMatchVNextContractValidator.validateLiveBegin(exact)
+            runID = exact.comparisonID
+            status = exact.resultStatus.lowercased()
+            compatibility = FitMatchDatabaseCompatibility(
+                allowed: exact.snapshot.authorization.allowed,
+                level: exact.snapshot.authorization.mode == "AUTOMATIC"
+                    ? "direct" : "extended",
+                reason: exact.snapshot.authorization.reason,
+                excludedMeasurements: exact.snapshot.authorization.excludedMeasurementCodes,
+                minimumCommonMeasurements: exact.snapshot.authorization.minimumCommon
+            )
+            vnext = exact
+            return
+        }
+        runID = try container.decode(UUID.self, forKey: .runID)
+        status = try container.decode(String.self, forKey: .status)
+        compatibility = try container.decode(
+            FitMatchDatabaseCompatibility.self,
+            forKey: .compatibility
+        )
+        vnext = nil
+    }
+}
+
+nonisolated struct FitMatchComparisonMeasurementSubmission: Encodable, Equatable, Sendable {
+    let measurementCode: String
+    let referenceValue: Double?
+    let targetValue: Double?
+    let signedDifference: Double?
+    let absoluteDifference: Double?
+    let weight: Double?
+    let included: Bool
+    let exclusionReason: String?
+    let evidence: [String: String]
+
+    enum CodingKeys: String, CodingKey {
+        case measurementCode = "measurement_code"
+        case referenceValue = "reference_value"
+        case targetValue = "target_value"
+        case signedDifference = "signed_difference"
+        case absoluteDifference = "absolute_difference"
+        case weight
+        case included
+        case exclusionReason = "exclusion_reason"
+        case evidence
+    }
+}
+
+nonisolated struct FitMatchComparisonResultSubmission: Encodable, Equatable, Sendable {
+    let targetSizeID: UUID
+    let similarityScore: Double?
+    let rank: Int?
+    let confidenceCode: String?
+    let coverageRatio: Double
+    let dataQualityScore: Double
+    let confidenceScore: Double
+    let qualityMetricsVersion: String
+    let isRecommended: Bool
+    let isComparable: Bool
+    let exclusionReason: String?
+    let snapshot: [String: String]
+    let measurements: [FitMatchComparisonMeasurementSubmission]
+
+    enum CodingKeys: String, CodingKey {
+        case targetSizeID = "target_size_id"
+        case similarityScore = "similarity_score"
+        case rank
+        case confidenceCode = "confidence_code"
+        case coverageRatio = "coverage_ratio"
+        case dataQualityScore = "data_quality_score"
+        case confidenceScore = "confidence_score"
+        case qualityMetricsVersion = "quality_metrics_version"
+        case isRecommended = "is_recommended"
+        case isComparable = "is_comparable"
+        case exclusionReason = "exclusion_reason"
+        case snapshot
+        case measurements
+    }
+}
+
+nonisolated struct FitMatchCompleteComparisonRequest: Encodable, Equatable, Sendable {
+    let runID: UUID
+    let results: [FitMatchComparisonResultSubmission]
+    let summary: [String: String]
+}
+
+nonisolated struct FitMatchCompleteComparisonResponse: Decodable, Equatable, Sendable {
+    let runID: UUID
+    let status: String
+    let resultCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case runID = "run_id"
+        case status
+        case resultCount = "result_count"
+    }
+}
+
+struct FitMatchLocalClassificationSnapshot: Equatable {
+    let categoryCode: String?
+    let detailCode: String?
+    let familyCode: String?
+    let lengthCode: String?
+    let requiresUserConfirmation: Bool
+
+    init(_ classification: ParsedClosetClassification?) {
+        categoryCode = classification?.categoryCode
+        detailCode = classification?.detailCode
+        familyCode = classification?.garmentFamily.rawValue
+        lengthCode = classification?.lengthType.rawValue
+        requiresUserConfirmation = classification?.isValid != true
+    }
+
+    func matches(_ database: FitMatchDatabaseClassification) -> Bool {
+        categoryCode == database.categoryCode
+            && detailCode == database.detailCode
+            && familyCode == database.familyCode
+            && lengthCode == database.lengthCode
+            && requiresUserConfirmation == database.requiresUserConfirmation
+    }
+}
+
+enum FitMatchDatabaseShadowState: Equatable {
+    case idle
+    case checking
+    case skipped
+    case matched(FitMatchProductResolutionResponse)
+    case mismatch(FitMatchProductResolutionResponse, FitMatchLocalClassificationSnapshot)
+    case reviewRequired(FitMatchProductResolutionResponse)
+    case unavailable
+}
+
+protocol FitMatchProductResolving {
+    func resolve(_ request: FitMatchProductResolutionRequest) async throws
+        -> FitMatchProductResolutionResponse
+}
+
+protocol FitMatchProductObservationSubmitting {
+    func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
+        -> FitMatchProductObservationResponse
+}
+
+protocol FitMatchDatabaseDomainServicing:
+    FitMatchProductResolving,
+    FitMatchProductObservationSubmitting {
+    func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> FitMatchProductRuntimeResponse
+    func classificationRecoveryOptions(productID: UUID) async throws
+        -> VNextClassificationRecoveryContractDTO
+    func setUserProductClassification(
+        _ request: FitMatchSetUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO
+    func clearUserProductClassification(
+        _ request: FitMatchClearUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO
+    func registerClosetItem(_ request: FitMatchRegisterClosetItemRequest) async throws -> UUID
+    func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
+        -> FitMatchUpsertClosetItemResponse
+    func listClosetItems() async throws -> FitMatchClosetItemsResponse
+    func setClosetReference(closetItemID: UUID, isReference: Bool) async throws
+        -> FitMatchSetClosetReferenceResponse
+    func updateClosetItem(_ request: FitMatchUpsertClosetItemRequest, closetItemID: UUID) async throws
+        -> FitMatchUpsertClosetItemResponse
+    func setClosetClassificationOverride(
+        closetItemID: UUID,
+        override: FitMatchClosetClassificationOverride
+    ) async throws
+    func clearClosetClassificationOverride(closetItemID: UUID) async throws
+    func deleteClosetItem(closetItemID: UUID) async throws
+        -> FitMatchDeleteClosetItemResponse
+    func findReferenceCandidates(targetProductID: UUID) async throws
+        -> FitMatchReferenceCandidatesResponse
+    func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID) async throws
+        -> FitMatchReferenceCandidatesResponse
+    func eligibleCandidateSizes(
+        referenceClosetItemID: UUID,
+        targetProductID: UUID,
+        targetVariantID: UUID,
+        manualExplicit: Bool
+    ) async throws -> VNextEligibleCandidateSizesDTO
+    func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
+        -> FitMatchBeginComparisonResponse
+    func completeComparison(_ request: FitMatchCompleteComparisonRequest) async throws
+        -> FitMatchCompleteComparisonResponse
+    func completeVNextComparison(
+        comparisonID: UUID,
+        payload: VNextComparisonCompletionPayload
+    ) async throws -> VNextCompleteComparisonDTO
+    func fetchVNextComparisonHistory() async throws -> [VNextComparisonHistoryDTO]
+    func hideVNextComparisonHistories(clientComparisonIDs: [UUID]) async throws
+        -> VNextComparisonHistoryVisibilityDTO
+}
+
+enum FitMatchSupabaseProductResolverError: LocalizedError {
+    case notConfigured
+    case authenticationRequired
+    case vnextIdentityRequired
+    case vnextCompletionRequired
+    case invalidVNextResponse
+    case observationRejected(detail: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .notConfigured:
+            return FitMatchFailureCopy.serviceInspection
+        case .authenticationRequired:
+            return FitMatchFailureCopy.loginRequired
+        case .vnextIdentityRequired:
+            return FitMatchFailureCopy.productServiceInspection
+        case .vnextCompletionRequired:
+            return FitMatchFailureCopy.comparisonServiceInspection
+        case .invalidVNextResponse:
+            return FitMatchFailureCopy.serviceInspection
+        case .observationRejected:
+            return FitMatchFailureCopy.productServiceInspection
+        }
+    }
+}
+
+nonisolated private struct FitMatchObservationRejectionResponse: Decodable {
+    let error: String
+    let detail: String?
+}
+
+/// Rejects a mutation before its RPC is issued when the local transport would
+/// otherwise erase a positive measurement or a required classification axis.
+/// This is a client payload contract error, not a server comparison-policy
+/// decision.
+nonisolated enum FitMatchClosetPayloadContractError: LocalizedError, Equatable, Sendable {
+    case unmappablePositiveMeasurement(code: String)
+    case conflictingCanonicalMeasurement(code: String)
+    case missingRequiredClassificationAxis(garmentTypeCode: String, axis: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .unmappablePositiveMeasurement:
+            return "입력한 실측 항목을 서버에 저장할 수 없습니다. 항목을 확인한 뒤 다시 시도해 주세요."
+        case .conflictingCanonicalMeasurement:
+            return "같은 실측 항목에 서로 다른 값이 있어 서버에 저장할 수 없습니다."
+        case .missingRequiredClassificationAxis:
+            return "선택한 의류 분류에 필요한 길이 정보를 입력해 주세요."
+        }
+    }
+}
+
+nonisolated private struct FitMatchResolveProductParameters: Encodable, Sendable {
+    let pPayload: FitMatchProductResolutionRequest
+
+    enum CodingKeys: String, CodingKey {
+        case pPayload = "p_payload"
+    }
+}
+
+nonisolated private struct FitMatchRegisterClosetItemParameters: Encodable, Sendable {
+    let pProductID: UUID
+    let pProductSizeID: UUID?
+    let pIsReference: Bool
+    let pOverride: FitMatchClosetClassificationOverride?
+
+    enum CodingKeys: String, CodingKey {
+        case pProductID = "p_product_id"
+        case pProductSizeID = "p_product_size_id"
+        case pIsReference = "p_is_reference"
+        case pOverride = "p_override"
+    }
+}
+
+nonisolated private struct FitMatchUpsertClosetItemParameters: Encodable, Sendable {
+    let pClientItemID: UUID
+    let pItem: FitMatchClosetItemPayload
+    let pProductID: UUID?
+    let pProductSizeID: UUID?
+    let pOverride: FitMatchClosetClassificationOverride?
+
+    enum CodingKeys: String, CodingKey {
+        case pClientItemID = "p_client_item_id"
+        case pItem = "p_item"
+        case pProductID = "p_product_id"
+        case pProductSizeID = "p_product_size_id"
+        case pOverride = "p_override"
+    }
+}
+
+nonisolated private struct FitMatchSetClosetReferenceParameters: Encodable, Sendable {
+    let pClosetItemID: UUID
+    let pIsReference: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case pClosetItemID = "p_closet_item_id"
+        case pIsReference = "p_is_reference"
+    }
+}
+
+nonisolated private struct FitMatchDeleteClosetItemParameters: Encodable, Sendable {
+    let pClosetItemID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case pClosetItemID = "p_closet_item_id"
+    }
+}
+
+nonisolated private struct FitMatchGetProductRuntimeParameters: Encodable, Sendable {
+    let pPayload: FitMatchProductResolutionRequest
+
+    enum CodingKeys: String, CodingKey {
+        case pPayload = "p_payload"
+    }
+}
+
+nonisolated private struct FitMatchFindReferenceCandidatesParameters: Encodable, Sendable {
+    let pTargetProductID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case pTargetProductID = "p_target_product_id"
+    }
+}
+
+nonisolated private struct FitMatchBeginComparisonParameters: Encodable, Sendable {
+    let pReferenceItemID: UUID
+    let pTargetProductID: UUID
+    let pAllowExtended: Bool
+    let pClientHistoryID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case pReferenceItemID = "p_reference_item_id"
+        case pTargetProductID = "p_target_product_id"
+        case pAllowExtended = "p_allow_extended"
+        case pClientHistoryID = "p_client_history_id"
+    }
+}
+
+nonisolated private struct FitMatchComparisonResultPayload: Encodable, Sendable {
+    let results: [FitMatchComparisonResultSubmission]
+    let summary: [String: String]
+}
+
+nonisolated private struct FitMatchCompleteComparisonParameters: Encodable, Sendable {
+    let pRunID: UUID
+    let pResultPayload: FitMatchComparisonResultPayload
+
+    enum CodingKeys: String, CodingKey {
+        case pRunID = "p_run_id"
+        case pResultPayload = "p_result_payload"
+    }
+}
+
+nonisolated private struct VNextRuntimeParameters: Encodable, Sendable {
+    let pSourceCode: String
+    let pSourceProductKey: String
+
+    enum CodingKeys: String, CodingKey {
+        case pSourceCode = "p_source_code"
+        case pSourceProductKey = "p_source_product_key"
+    }
+}
+
+nonisolated private struct VNextJSONRequestParameters<Payload: Encodable & Sendable>:
+    Encodable, Sendable {
+    let pRequest: Payload
+
+    enum CodingKeys: String, CodingKey { case pRequest = "p_request" }
+}
+
+nonisolated private struct VNextClosetIDParameters: Encodable, Sendable {
+    let pClosetItemID: UUID
+    enum CodingKeys: String, CodingKey { case pClosetItemID = "p_closet_item_id" }
+}
+
+nonisolated private struct VNextClosetUpdateParameters<Payload: Encodable & Sendable>:
+    Encodable, Sendable {
+    let pClosetItemID: UUID
+    let pRequest: Payload
+
+    enum CodingKeys: String, CodingKey {
+        case pClosetItemID = "p_closet_item_id"
+        case pRequest = "p_request"
+    }
+}
+
+nonisolated private struct VNextClosetOverrideParameters: Encodable, Sendable {
+    let pClosetItemID: UUID
+    let pOverride: VNextClosetOverridePayload
+
+    enum CodingKeys: String, CodingKey {
+        case pClosetItemID = "p_closet_item_id"
+        case pOverride = "p_override"
+    }
+}
+
+nonisolated private struct VNextClosetMeasurementPayload: Encodable, Sendable {
+    let fitmatchMeasurementCode: String
+    let value: Double
+    let unitCode: String
+    let rawLabel: String?
+
+    enum CodingKeys: String, CodingKey {
+        case fitmatchMeasurementCode = "fitmatch_measurement_code"
+        case value
+        case unitCode = "unit_code"
+        case rawLabel = "raw_label"
+    }
+}
+
+nonisolated private struct VNextClosetMutationPayload: Encodable, Sendable {
+    let clientItemID: UUID
+    let productID: UUID?
+    let productVariantID: UUID?
+    let productSizeID: UUID?
+    let itemName: String
+    let brandName: String?
+    let imageURL: String?
+    let productURL: String?
+    let sizeLabel: String?
+    let audienceCode: String
+    let garmentTypeCode: String?
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+    let fitPreferenceCode: String
+    let notes: String
+    let satisfaction: Int?
+    let measurements: [VNextClosetMeasurementPayload]?
+    /// The vNext upsert/update contract consumes a Closet-local override as
+    /// one nested value. Do not flatten it into the product snapshot fields:
+    /// the database must distinguish a global product tuple from a user's
+    /// personal Closet tuple atomically inside the mutation.
+    let closetClassificationOverride: VNextClosetClassificationOverridePayload?
+    let comparisonGroupCode: String?
+    let closetDetailCodeSnapshot: String?
+    let sourceObservationID: UUID?
+    var useServerMeasurements: Bool? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case clientItemID = "client_item_id"
+        case productID = "product_id"
+        case productVariantID = "product_variant_id"
+        case productSizeID = "product_size_id"
+        case itemName = "item_name"
+        case brandName = "brand_name"
+        case imageURL = "image_url"
+        case productURL = "product_url"
+        case sizeLabel = "size_label"
+        case audienceCode = "audience_code"
+        case garmentTypeCode = "garment_type_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+        case fitPreferenceCode = "fit_preference_code"
+        case notes, satisfaction, measurements
+        case closetClassificationOverride = "closet_classification_override"
+        case comparisonGroupCode = "comparison_group_code"
+        case closetDetailCodeSnapshot = "closet_detail_code"
+        case sourceObservationID = "source_observation_id"
+        case useServerMeasurements = "use_server_measurements"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(clientItemID, forKey: .clientItemID)
+        try container.encodeIfPresent(useServerMeasurements, forKey: .useServerMeasurements)
+        try container.encodeIfPresent(productID, forKey: .productID)
+        try container.encodeIfPresent(productVariantID, forKey: .productVariantID)
+        try container.encodeIfPresent(productSizeID, forKey: .productSizeID)
+        try container.encode(itemName, forKey: .itemName)
+        try container.encodeIfPresent(brandName, forKey: .brandName)
+        try container.encodeIfPresent(imageURL, forKey: .imageURL)
+        try container.encodeIfPresent(productURL, forKey: .productURL)
+        try container.encodeIfPresent(sizeLabel, forKey: .sizeLabel)
+        try container.encode(audienceCode, forKey: .audienceCode)
+        try container.encodeIfPresent(garmentTypeCode, forKey: .garmentTypeCode)
+        try container.encodeIfPresent(sleeveLengthCode, forKey: .sleeveLengthCode)
+        try container.encodeIfPresent(lowerLengthCode, forKey: .lowerLengthCode)
+        try container.encodeIfPresent(bodyLengthCode, forKey: .bodyLengthCode)
+        try container.encode(fitPreferenceCode, forKey: .fitPreferenceCode)
+        try container.encode(notes, forKey: .notes)
+        try container.encodeIfPresent(satisfaction, forKey: .satisfaction)
+        try container.encodeIfPresent(measurements, forKey: .measurements)
+        // `encodeIfPresent` is intentional. A CONFIRMED registration with no
+        // personal edit must omit this key completely, not send null or a
+        // flattened empty override.
+        try container.encodeIfPresent(
+            closetClassificationOverride,
+            forKey: .closetClassificationOverride
+        )
+        try container.encodeIfPresent(comparisonGroupCode, forKey: .comparisonGroupCode)
+        try container.encodeIfPresent(closetDetailCodeSnapshot, forKey: .closetDetailCodeSnapshot)
+        try container.encodeIfPresent(sourceObservationID, forKey: .sourceObservationID)
+    }
+}
+
+/// A checked projection of one effective Closet tuple into the three SQL
+/// length-axis keys.  The server stays authoritative for tuple validity; this
+/// only prevents the transport layer from deleting an already selected axis
+/// because its category happens not to be `tops` or `bottoms`.
+nonisolated private struct VNextClosetClassificationAxes: Sendable {
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+
+    init(
+        categoryCode: String,
+        garmentTypeCode: String?,
+        lengthCode: String?,
+        bodyLengthCode: String?
+    ) throws {
+        let category = categoryCode.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let garment = garmentTypeCode?.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let length = Self.knownAxisValue(lengthCode)
+        let body = Self.knownAxisValue(bodyLengthCode)
+
+        let usesSleeve = Self.sleeveGarmentTypes.contains(garment ?? "")
+            || (garment == nil && category == "tops")
+        let usesLower = Self.lowerGarmentTypes.contains(garment ?? "")
+            || (garment == nil && ["bottoms", "leggings"].contains(category))
+        let usesBody = Self.bodyGarmentTypes.contains(garment ?? "")
+            || (garment == nil && ["dresses", "skirts"].contains(category))
+        let effectiveBody = body ?? (category == "dresses" ? length : nil)
+
+        if usesSleeve, length == nil {
+            throw FitMatchClosetPayloadContractError.missingRequiredClassificationAxis(
+                garmentTypeCode: garmentTypeCode ?? categoryCode,
+                axis: "sleeve_length_code"
+            )
+        }
+        if usesLower, length == nil {
+            throw FitMatchClosetPayloadContractError.missingRequiredClassificationAxis(
+                garmentTypeCode: garmentTypeCode ?? categoryCode,
+                axis: "lower_length_code"
+            )
+        }
+        if usesBody, effectiveBody == nil {
+            throw FitMatchClosetPayloadContractError.missingRequiredClassificationAxis(
+                garmentTypeCode: garmentTypeCode ?? categoryCode,
+                axis: "body_length_code"
+            )
+        }
+
+        sleeveLengthCode = usesSleeve ? length : nil
+        lowerLengthCode = usesLower ? length : nil
+        // A dress historically stores its body axis in `lengthCode`; retain
+        // that established form while requiring a separate body value for
+        // garments such as coats that use both axes.
+        self.bodyLengthCode = usesBody ? effectiveBody : nil
+    }
+
+    private static func knownAxisValue(_ value: String?) -> String? {
+        guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !value.isEmpty,
+              value.uppercased() != "UNKNOWN",
+              value.lowercased() != "not_applicable" else {
+            return nil
+        }
+        return value
+    }
+
+    // This mirrors the established data-driven garment-axis tuples used by
+    // the app.  It is intentionally a whitelist: outerwear is not assumed to
+    // have sleeves merely because of its broad category (for example vests).
+    private static let sleeveGarmentTypes: Set<String> = [
+        "anorak", "base_layer_top", "blazer", "blouson", "bodysuit_top",
+        "cardigan", "coat", "fleece_jacket", "generic_jacket",
+        "generic_jumper", "hoodie", "jacket", "knit_sweater", "knit_vest",
+        "leather_jacket", "ma1", "mouton", "polo_shirt", "puffer_jacket",
+        "shirt", "shirt_blouse", "sleeveless_tshirt", "sports_top",
+        "sweatshirt", "tank_top", "trench_coat", "tshirt", "windbreaker",
+        "zip_hoodie"
+    ]
+    private static let lowerGarmentTypes: Set<String> = [
+        "cargo_pants", "casual_pants", "chino_cotton_pants", "denim_pants",
+        "homewear_bottom", "leggings", "other_standard_pants", "pants",
+        "slacks_trousers", "sports_bottom", "standard_pants",
+        "sweat_jogger_pants"
+    ]
+    private static let bodyGarmentTypes: Set<String> = [
+        "coat", "coverall_romper", "dress", "outer_vest", "puffer_jacket",
+        "puffer_vest", "skirt", "trench_coat"
+    ]
+}
+
+/// Transport-only representation of `closet_classification_override` for the
+/// upsert/update RPC. Its keys mirror the public production SQL contract.
+nonisolated private struct VNextClosetClassificationOverridePayload: Encodable, Sendable {
+    let audienceCode: String
+    let categoryCode: String
+    let garmentTypeCode: String
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case audienceCode = "audience_code"
+        case categoryCode = "category_code"
+        case garmentTypeCode = "garment_type_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(audienceCode, forKey: .audienceCode)
+        try container.encode(categoryCode, forKey: .categoryCode)
+        try container.encode(garmentTypeCode, forKey: .garmentTypeCode)
+        // These canonical axis keys are part of the public nested contract.
+        // Encode null deliberately when an axis is not applicable; omission
+        // would turn a client payload shape difference into a server-side
+        // compatibility decision.
+        try container.encode(sleeveLengthCode, forKey: .sleeveLengthCode)
+        try container.encode(lowerLengthCode, forKey: .lowerLengthCode)
+        try container.encode(bodyLengthCode, forKey: .bodyLengthCode)
+    }
+}
+
+nonisolated private struct VNextClosetOverridePayload: Encodable, Sendable {
+    let audienceCode: String
+    let garmentTypeCode: String
+    let sleeveLengthCode: String?
+    let lowerLengthCode: String?
+    let bodyLengthCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case audienceCode = "audience_code"
+        case garmentTypeCode = "garment_type_code"
+        case sleeveLengthCode = "sleeve_length_code"
+        case lowerLengthCode = "lower_length_code"
+        case bodyLengthCode = "body_length_code"
+    }
+}
+
+nonisolated private struct VNextReferenceCandidatesParameters: Encodable, Sendable {
+    let pTargetProductID: UUID
+    let pTargetVariantID: UUID
+    let pRequestedGroupCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case pTargetProductID = "p_target_product_id"
+        case pTargetVariantID = "p_target_variant_id"
+        case pRequestedGroupCode = "p_requested_group_code"
+    }
+}
+
+nonisolated private struct VNextSelectedReferenceParameters: Encodable, Sendable {
+    let p_target_product_id: UUID
+    let p_target_variant_id: UUID
+    let p_reference_closet_item_id: UUID
+    let p_requested_group_code: String?
+}
+
+nonisolated private struct VNextEligibleCandidateParameters: Encodable, Sendable {
+    let pReferenceClosetItemID: UUID
+    let pTargetProductID: UUID
+    let pTargetVariantID: UUID
+    let pManualExplicit: Bool
+    let pRequestedGroupCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case pReferenceClosetItemID = "p_reference_closet_item_id"
+        case pTargetProductID = "p_target_product_id"
+        case pTargetVariantID = "p_target_variant_id"
+        case pManualExplicit = "p_manual_explicit"
+        case pRequestedGroupCode = "p_requested_group_code"
+    }
+}
+
+nonisolated private struct VNextRecoveryOptionsParameters: Encodable, Sendable {
+    let pProductID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case pProductID = "p_product_id"
+    }
+}
+
+nonisolated private struct VNextSetUserProductClassificationParameters:
+    Encodable, Sendable {
+    let pProductID: UUID
+    let pSelectedCandidateFingerprint: String
+    let pExpectedCandidateSetHash: String
+    let pExpectedProductInputFingerprint: String
+    let pExpectedProductEvidenceFingerprint: String
+    let pMutationID: UUID
+    let pExpectedRevision: Int
+
+    enum CodingKeys: String, CodingKey {
+        case pProductID = "p_product_id"
+        case pSelectedCandidateFingerprint = "p_selected_candidate_fingerprint"
+        case pExpectedCandidateSetHash = "p_expected_candidate_set_hash"
+        case pExpectedProductInputFingerprint = "p_expected_product_input_fingerprint"
+        case pExpectedProductEvidenceFingerprint = "p_expected_product_evidence_fingerprint"
+        case pMutationID = "p_mutation_id"
+        case pExpectedRevision = "p_expected_revision"
+    }
+}
+
+nonisolated private struct VNextClearUserProductClassificationParameters:
+    Encodable, Sendable {
+    let pProductID: UUID
+    let pMutationID: UUID
+    let pExpectedRevision: Int
+
+    enum CodingKeys: String, CodingKey {
+        case pProductID = "p_product_id"
+        case pMutationID = "p_mutation_id"
+        case pExpectedRevision = "p_expected_revision"
+    }
+}
+
+nonisolated private struct VNextBeginComparisonPayload: Encodable, Sendable {
+    let clientComparisonID: UUID
+    let referenceClosetItemID: UUID
+    let targetProductID: UUID
+    let targetVariantID: UUID
+    let authorizationProductSizeID: UUID?
+    let manualExplicit: Bool
+    let candidateProductSizeIDs: [UUID]?
+    let candidateAuthorityFingerprint: String?
+    let effectiveAuthorityFingerprint: String?
+    let personalOverrideRevision: Int?
+    let requestedComparisonGroupCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case clientComparisonID = "client_comparison_id"
+        case referenceClosetItemID = "reference_closet_item_id"
+        case targetProductID = "target_product_id"
+        case targetVariantID = "target_variant_id"
+        case authorizationProductSizeID = "authorization_product_size_id"
+        case manualExplicit = "manual_explicit"
+        case candidateProductSizeIDs = "candidate_product_size_ids"
+        case candidateAuthorityFingerprint = "candidate_authority_fingerprint"
+        case effectiveAuthorityFingerprint = "effective_authority_fingerprint"
+        case personalOverrideRevision = "personal_override_revision"
+        case requestedComparisonGroupCode = "requested_comparison_group_code"
+    }
+}
+
+nonisolated private struct VNextCompleteComparisonParameters: Encodable, Sendable {
+    let pComparisonID: UUID
+    let pResult: VNextComparisonCompletionPayload
+
+    enum CodingKeys: String, CodingKey {
+        case pComparisonID = "p_comparison_id"
+        case pResult = "p_result"
+    }
+}
+
+nonisolated private struct VNextHideComparisonHistoryParameters: Encodable, Sendable {
+    let pClientComparisonIDs: [UUID]
+
+    enum CodingKeys: String, CodingKey {
+        case pClientComparisonIDs = "p_client_comparison_ids"
+    }
+}
+
+nonisolated private struct VNextClosetMutationResponse: Decodable, Sendable {
+    let itemID: UUID?
+    let closetItemID: UUID?
+    let deletedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case itemID = "item_id"
+        case closetItemID = "closet_item_id"
+        case deletedAt = "deleted_at"
+    }
+}
+
+actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
+    static let shared = FitMatchSupabaseDomainClient()
+
+    private let client: SupabaseClient?
+
+    init(configuration: (url: URL, publishableKey: String)? = nil) {
+        if let configuration {
+            client = SupabaseClient(
+                supabaseURL: configuration.url,
+                supabaseKey: configuration.publishableKey
+            )
+        } else if FitMatchSupabaseConfiguration.live(requiresDatabaseShadow: true) != nil {
+            client = FitMatchSupabaseClientProvider.shared
+        } else {
+            client = nil
+        }
+    }
+
+    /// Keeps command-line release validation on the same authenticated
+    /// domain/RPC implementation as the app without exposing credentials or
+    /// replacing server authority with a test remote.
+    init(authenticatedClient: SupabaseClient) {
+        client = authenticatedClient
+    }
+
+    /// Single timing boundary for FitMatch Behavior Map server calls. The
+    /// operation name is a fixed RPC/Edge identifier; no user data is logged.
+    private func timedDatabaseCall<T>(
+        _ operation: String,
+        perform work: () async throws -> T
+    ) async throws -> T {
+#if DEBUG
+        let startedAt = Date()
+        do {
+            let result = try await work()
+            FitMatchDebugLogger.databaseLatency(
+                operation: operation,
+                startedAt: startedAt,
+                state: "완료"
+            )
+            return result
+        } catch {
+            FitMatchDebugLogger.databaseLatency(
+                operation: operation,
+                startedAt: startedAt,
+                state: "실패"
+            )
+            throw error
+        }
+#else
+        return try await work()
+#endif
+    }
+
+    func resolve(_ request: FitMatchProductResolutionRequest) async throws
+        -> FitMatchProductResolutionResponse {
+        try await resolveWithRuntime(request).resolution
+    }
+
+    func resolveWithRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> (resolution: FitMatchProductResolutionResponse, runtime: FitMatchProductRuntimeResponse?) {
+        let exact = try await fetchVNextRuntime(request)
+        guard exact.found, let product = exact.product else {
+            return (FitMatchProductResolutionResponse(
+                productID: nil,
+                intakeRequestID: nil,
+                catalogState: "new",
+                categoryEvidenceMatches: nil,
+                authorityPersisted: false,
+                classification: Self.unresolvedClassification,
+                comparisonReady: false
+            ), nil)
+        }
+        let runtime = try Self.mapRuntime(exact)
+        return (FitMatchProductResolutionResponse(
+            productID: product.id,
+            intakeRequestID: nil,
+            catalogState: "current",
+            categoryEvidenceMatches: true,
+            authorityPersisted: true,
+            classification: runtime.classification ?? Self.unresolvedClassification,
+            comparisonReady: runtime.comparisonReady
+        ), runtime)
+    }
+
+    func submitProductObservation(_ request: FitMatchProductObservationRequest) async throws
+        -> FitMatchProductObservationResponse {
+        let client = try await authenticatedClient()
+        return try await timedDatabaseCall("edge.product-observation") {
+            do {
+                return try await client.functions.invoke(
+                    "product-observation",
+                    options: FunctionInvokeOptions(body: request)
+                )
+            } catch let error as FunctionsError {
+                if case .httpError(let status, let data) = error,
+                   status == 422,
+                   let rejection = try? JSONDecoder().decode(
+                       FitMatchObservationRejectionResponse.self, from: data
+                   ),
+                   rejection.error == "observation_rejected",
+                   let detail = rejection.detail?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !detail.isEmpty {
+                    throw FitMatchSupabaseProductResolverError.observationRejected(detail: detail)
+                }
+                throw error
+            }
+        }
+    }
+
+    func registerClosetItem(_ request: FitMatchRegisterClosetItemRequest) async throws -> UUID {
+        throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+    }
+
+    func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
+        -> FitMatchUpsertClosetItemResponse {
+        let payload = try Self.closetCreationPayload(request)
+        let client = try await authenticatedClient()
+        let response: VNextClosetMutationResponse = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_upsert_closet_item"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_upsert_closet_item",
+                params: VNextJSONRequestParameters(pRequest: payload)
+            ).execute().value
+        }
+        guard let itemID = response.itemID else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        return Self.closetMutationCompatibilityResponse(
+            itemID: itemID,
+            request: request
+        )
+    }
+
+    func updateClosetItem(
+        _ request: FitMatchUpsertClosetItemRequest,
+        closetItemID: UUID
+    ) async throws -> FitMatchUpsertClosetItemResponse {
+        // Product-linked rows must keep the same exact server-size snapshot
+        // contract as linked creation. Sending local canonical projections
+        // here can reject an otherwise unchanged row when the local cache is
+        // older than the selected server size.
+        let payload = try Self.closetUpdatePayload(request)
+        let client = try await authenticatedClient()
+        let response: VNextClosetMutationResponse = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_update_closet_item"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_update_closet_item",
+                params: VNextClosetUpdateParameters(
+                    pClosetItemID: closetItemID,
+                    pRequest: payload
+                )
+            ).execute().value
+        }
+        guard response.closetItemID == closetItemID else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        return Self.closetMutationCompatibilityResponse(
+            itemID: closetItemID,
+            request: request
+        )
+    }
+
+    func listClosetItems() async throws -> FitMatchClosetItemsResponse {
+        let client = try await authenticatedClient()
+        let items: [VNextClosetItemDTO] = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_list_closet_items"
+        ) {
+            try await client.rpc("fitmatch_vnext_list_closet_items").execute().value
+        }
+        return FitMatchClosetItemsResponse(
+            state: "ready",
+            items: items.map(Self.mapClosetItem)
+        )
+    }
+
+    func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse {
+        let client = try await authenticatedClient()
+        let items: [VNextClosetItemDTO] = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_get_closet_item"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_get_closet_item",
+                params: VNextClosetIDParameters(pClosetItemID: closetItemID)
+            ).execute().value
+        }
+        guard items.count <= 1 else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        return FitMatchClosetItemsResponse(state: "ready", items: items.map(Self.mapClosetItem))
+    }
+
+    func setClosetReference(closetItemID: UUID, isReference: Bool) async throws
+        -> FitMatchSetClosetReferenceResponse {
+        let client = try await authenticatedClient()
+        let function = isReference
+            ? "fitmatch_vnext_set_closet_reference"
+            : "fitmatch_vnext_unset_closet_reference"
+        let response: FitMatchSetClosetReferenceResponse = try await client
+            .rpc(
+                function,
+                params: VNextClosetIDParameters(pClosetItemID: closetItemID)
+            )
+            .execute()
+            .value
+        return response
+    }
+
+    func setClosetClassificationOverride(
+        closetItemID: UUID,
+        override: FitMatchClosetClassificationOverride
+    ) async throws {
+        let payload = try Self.overridePayload(override)
+        let client = try await authenticatedClient()
+        let _: VNextClosetMutationResponse = try await client
+            .rpc(
+                "fitmatch_vnext_set_closet_classification_override",
+                params: VNextClosetOverrideParameters(
+                    pClosetItemID: closetItemID,
+                    pOverride: payload
+                )
+            )
+            .execute()
+            .value
+    }
+
+    func clearClosetClassificationOverride(closetItemID: UUID) async throws {
+        let client = try await authenticatedClient()
+        let _: VNextClosetMutationResponse = try await client
+            .rpc(
+                "fitmatch_vnext_clear_closet_classification_override",
+                params: VNextClosetIDParameters(pClosetItemID: closetItemID)
+            )
+            .execute()
+            .value
+    }
+
+    func deleteClosetItem(closetItemID: UUID) async throws
+        -> FitMatchDeleteClosetItemResponse {
+        let client = try await authenticatedClient()
+        return try await client
+            .rpc(
+                "fitmatch_vnext_delete_closet_item",
+                params: VNextClosetIDParameters(pClosetItemID: closetItemID)
+            )
+            .execute()
+            .value
+    }
+
+    func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
+        -> FitMatchProductRuntimeResponse {
+        try Self.mapRuntime(try await fetchVNextRuntime(request))
+    }
+
+    func classificationRecoveryOptions(productID: UUID) async throws
+        -> VNextClassificationRecoveryContractDTO {
+        let client = try await authenticatedClient()
+        return try await client
+            .rpc(
+                "fitmatch_vnext_get_classification_recovery_options",
+                params: VNextRecoveryOptionsParameters(pProductID: productID)
+            )
+            .execute()
+            .value
+    }
+
+    func setUserProductClassification(
+        _ request: FitMatchSetUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO {
+        let client = try await authenticatedClient()
+        return try await client
+            .rpc(
+                "fitmatch_vnext_set_user_product_classification",
+                params: VNextSetUserProductClassificationParameters(
+                    pProductID: request.productID,
+                    pSelectedCandidateFingerprint:
+                        request.selectedCandidateFingerprint,
+                    pExpectedCandidateSetHash: request.expectedCandidateSetHash,
+                    pExpectedProductInputFingerprint:
+                        request.expectedProductInputFingerprint,
+                    pExpectedProductEvidenceFingerprint:
+                        request.expectedProductEvidenceFingerprint,
+                    pMutationID: request.mutationID,
+                    pExpectedRevision: request.expectedRevision
+                )
+            )
+            .execute()
+            .value
+    }
+
+    func clearUserProductClassification(
+        _ request: FitMatchClearUserProductClassificationRequest
+    ) async throws -> VNextUserClassificationMutationDTO {
+        let client = try await authenticatedClient()
+        return try await client
+            .rpc(
+                "fitmatch_vnext_clear_user_product_classification",
+                params: VNextClearUserProductClassificationParameters(
+                    pProductID: request.productID,
+                    pMutationID: request.mutationID,
+                    pExpectedRevision: request.expectedRevision
+                )
+            )
+            .execute()
+            .value
+    }
+
+    func findReferenceCandidates(targetProductID: UUID) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+    }
+
+    func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        let client = try await authenticatedClient()
+        let exact: VNextReferenceCandidatesDTO = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_find_reference_candidates"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_find_reference_candidates",
+                params: VNextReferenceCandidatesParameters(
+                    pTargetProductID: targetProductID,
+                    pTargetVariantID: targetVariantID,
+                    pRequestedGroupCode: nil
+                )
+            ).execute().value
+        }
+        try FitMatchVNextContractValidator.validateCandidateEnvelope(
+            exact, targetProductID: targetProductID, targetVariantID: targetVariantID
+        )
+        return FitMatchReferenceCandidatesResponse(vnext: exact)
+    }
+
+    func findReferenceCandidates(targetProductID: UUID, targetVariantID: UUID,
+                                 requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        guard let requestedComparisonGroupCode else {
+            return try await findReferenceCandidates(targetProductID: targetProductID, targetVariantID: targetVariantID)
+        }
+        let client = try await authenticatedClient()
+        let exact: VNextReferenceCandidatesDTO = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_find_reference_candidates"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_find_reference_candidates",
+                params: VNextReferenceCandidatesParameters(
+                    pTargetProductID: targetProductID,
+                    pTargetVariantID: targetVariantID,
+                    pRequestedGroupCode: requestedComparisonGroupCode
+                )
+            ).execute().value
+        }
+        try FitMatchVNextContractValidator.validateCandidateEnvelope(
+            exact, targetProductID: targetProductID, targetVariantID: targetVariantID
+        )
+        guard exact.targetProductID == targetProductID,
+              exact.targetVariantID == targetVariantID,
+              exact.targetComparisonGroup?.groupCode == requestedComparisonGroupCode,
+              exact.targetComparisonGroup?.source == "SESSION_USER_SELECTED",
+              exact.targetComparisonGroup?.comparisonPolicyCode?.isEmpty == false,
+              exact.targetComparisonGroup?.policyVersion?.isEmpty == false,
+              exact.targetComparisonGroup?.authorityVersion?.isEmpty == false,
+              exact.targetComparisonGroup?.authorityFingerprint?.isEmpty == false else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        return FitMatchReferenceCandidatesResponse(vnext: exact)
+    }
+
+    func findSelectedReferenceCandidate(targetProductID: UUID, targetVariantID: UUID?,
+                                        referenceClosetItemID: UUID,
+                                        requestedComparisonGroupCode: String?) async throws
+        -> FitMatchReferenceCandidatesResponse {
+        guard let targetVariantID else {
+            throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+        }
+        let client = try await authenticatedClient()
+        let exact: VNextReferenceCandidatesDTO = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_find_selected_reference_candidate"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_find_selected_reference_candidate",
+                params: VNextSelectedReferenceParameters(
+                    p_target_product_id: targetProductID,
+                    p_target_variant_id: targetVariantID,
+                    p_reference_closet_item_id: referenceClosetItemID,
+                    p_requested_group_code: requestedComparisonGroupCode
+                )
+            ).execute().value
+        }
+        try FitMatchVNextContractValidator.validateCandidateEnvelope(
+            exact, targetProductID: targetProductID, targetVariantID: targetVariantID
+        )
+        guard (exact.candidates + exact.blocked).allSatisfy({
+            $0.closetItemID == referenceClosetItemID
+        }) else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        // Requested-group provenance is additionally validated by the same
+        // coordinator path as the full candidate response.
+        return FitMatchReferenceCandidatesResponse(vnext: exact)
+    }
+
+    func eligibleCandidateSizes(
+        referenceClosetItemID: UUID,
+        targetProductID: UUID,
+        targetVariantID: UUID,
+        manualExplicit: Bool
+    ) async throws -> VNextEligibleCandidateSizesDTO {
+        let client = try await authenticatedClient()
+        return try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_eligible_candidate_sizes"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_eligible_candidate_sizes",
+                params: VNextEligibleCandidateParameters(
+                    pReferenceClosetItemID: referenceClosetItemID,
+                    pTargetProductID: targetProductID,
+                    pTargetVariantID: targetVariantID,
+                    pManualExplicit: manualExplicit,
+                    pRequestedGroupCode: nil
+                )
+            ).execute().value
+        }
+    }
+
+    func eligibleCandidateSizes(referenceClosetItemID: UUID, targetProductID: UUID,
+                                targetVariantID: UUID, manualExplicit: Bool,
+                                requestedComparisonGroupCode: String?) async throws
+        -> VNextEligibleCandidateSizesDTO {
+        guard let requestedComparisonGroupCode else {
+            return try await eligibleCandidateSizes(referenceClosetItemID: referenceClosetItemID, targetProductID: targetProductID, targetVariantID: targetVariantID, manualExplicit: manualExplicit)
+        }
+        let client = try await authenticatedClient()
+        let exact: VNextEligibleCandidateSizesDTO = try await timedDatabaseCall(
+            "rpc.fitmatch_vnext_eligible_candidate_sizes"
+        ) {
+            try await client.rpc(
+                "fitmatch_vnext_eligible_candidate_sizes",
+                params: VNextEligibleCandidateParameters(
+                    pReferenceClosetItemID: referenceClosetItemID,
+                    pTargetProductID: targetProductID,
+                    pTargetVariantID: targetVariantID,
+                    pManualExplicit: manualExplicit,
+                    pRequestedGroupCode: requestedComparisonGroupCode
+                )
+            ).execute().value
+        }
+        guard exact.targetProductID == targetProductID,
+              exact.targetVariantID == targetVariantID,
+              exact.targetComparisonGroup?.groupCode == requestedComparisonGroupCode,
+              exact.targetComparisonGroup?.source == "SESSION_USER_SELECTED",
+              exact.targetComparisonGroup?.authorityFingerprint
+                == exact.effectiveAuthorityFingerprint,
+              exact.candidateAuthorityFingerprint?.isEmpty == false,
+              exact.candidateAuthorityVersion?.isEmpty == false else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        return exact
+    }
+
+    func beginComparison(_ request: FitMatchBeginComparisonRequest) async throws
+        -> FitMatchBeginComparisonResponse {
+        guard let targetVariantID = request.targetVariantID else {
+            throw FitMatchSupabaseProductResolverError.vnextIdentityRequired
+        }
+        let client = try await authenticatedClient()
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_begin_comparison") {
+            try await client.rpc(
+                "fitmatch_vnext_begin_comparison",
+                params: VNextJSONRequestParameters(pRequest: VNextBeginComparisonPayload(
+                    clientComparisonID: request.clientHistoryID,
+                    referenceClosetItemID: request.referenceItemID,
+                    targetProductID: request.targetProductID,
+                    targetVariantID: targetVariantID,
+                    authorizationProductSizeID: request.authorizationProductSizeID,
+                    manualExplicit: request.allowExtended,
+                    candidateProductSizeIDs: request.candidateProductSizeIDs,
+                    candidateAuthorityFingerprint:
+                        request.candidateAuthorityFingerprint,
+                    effectiveAuthorityFingerprint:
+                        request.effectiveAuthorityFingerprint,
+                    personalOverrideRevision: request.personalOverrideRevision,
+                    requestedComparisonGroupCode: request.requestedComparisonGroupCode
+                ))
+            ).execute().value
+        }
+    }
+
+    func completeComparison(_ request: FitMatchCompleteComparisonRequest) async throws
+        -> FitMatchCompleteComparisonResponse {
+        throw FitMatchSupabaseProductResolverError.vnextCompletionRequired
+    }
+
+    func completeVNextComparison(
+        comparisonID: UUID,
+        payload: VNextComparisonCompletionPayload
+    ) async throws -> VNextCompleteComparisonDTO {
+        let client = try await authenticatedClient()
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_complete_comparison") {
+            try await client.rpc(
+                "fitmatch_vnext_complete_comparison",
+                params: VNextCompleteComparisonParameters(
+                    pComparisonID: comparisonID,
+                    pResult: payload
+                )
+            ).execute().value
+        }
+    }
+
+    func fetchVNextComparisonHistory() async throws -> [VNextComparisonHistoryDTO] {
+        let client = try await authenticatedClient()
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_comparison_history") {
+            try await client
+                .rpc("fitmatch_vnext_comparison_history")
+                .execute()
+                .value
+        }
+    }
+
+    /// Uses the additive tombstone envelope when the server has it. Until the
+    /// forward migration is deployed, only a missing-RPC response falls back
+    /// to the legacy active-list contract; no other error is treated as an
+    /// empty tombstone set.
+    func fetchVNextComparisonHistorySync() async throws -> VNextComparisonHistorySyncDTO {
+        let client = try await authenticatedClient()
+        do {
+            return try await timedDatabaseCall("rpc.fitmatch_vnext_comparison_history_sync") {
+                try await client
+                    .rpc("fitmatch_vnext_comparison_history_sync")
+                    .execute()
+                    .value
+            }
+        } catch let error as PostgrestError where error.code?.uppercased() == "PGRST202" {
+            return VNextComparisonHistorySyncDTO(
+                histories: try await fetchVNextComparisonHistory(),
+                tombstones: []
+            )
+        }
+    }
+
+    func hideVNextComparisonHistories(
+        clientComparisonIDs: [UUID]
+    ) async throws -> VNextComparisonHistoryVisibilityDTO {
+        let client = try await authenticatedClient()
+        do {
+            return try await client
+                .rpc(
+                    "fitmatch_vnext_hide_comparison_history",
+                    params: VNextHideComparisonHistoryParameters(
+                        pClientComparisonIDs: clientComparisonIDs
+                    )
+                )
+                .execute()
+                .value
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as PostgrestError {
+            throw Self.historyVisibilityError(
+                code: error.code,
+                message: error.message
+            )
+        } catch is URLError {
+            throw FitMatchHistoryVisibilityRPCError.transportUncertain
+        } catch {
+            throw error
+        }
+    }
+
+    private func fetchVNextRuntime(
+        _ request: FitMatchProductResolutionRequest
+    ) async throws -> VNextProductRuntimeDTO {
+        let client = try await authenticatedClient()
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_get_product_runtime") {
+            try await client.rpc(
+                "fitmatch_vnext_get_product_runtime",
+                params: VNextRuntimeParameters(
+                    pSourceCode: request.source,
+                    pSourceProductKey: request.externalProductID
+                )
+            ).execute().value
+        }
+    }
+
+    nonisolated private static let unresolvedClassification = FitMatchDatabaseClassification(
+        classificationID: nil,
+        categoryCode: nil,
+        detailCode: nil,
+        garmentTypeCode: nil,
+        familyCode: nil,
+        lengthCode: nil,
+        bodyLengthCode: nil,
+        status: "review_required",
+        method: "fitmatch_vnext",
+        authorityStatus: "server",
+        confidence: nil,
+        requiresUserConfirmation: true,
+        taxonomyPolicyVersion: nil,
+        decisionVersion: nil
+    )
+
+    nonisolated private static func mapRuntime(
+        _ exact: VNextProductRuntimeDTO
+    ) throws -> FitMatchProductRuntimeResponse {
+        guard exact.found,
+              let product = exact.product,
+              let readiness = exact.readiness else {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        let effective = exact.effectiveClassification
+        if let effective, effective.productID != product.id {
+            throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        let effectiveTuple = VNextRuntimeClassificationTuple(
+            product: product,
+            effective: effective
+        )
+        let serverStatus = effectiveTuple.classificationStatus
+        let normalizedStatus: String
+        switch serverStatus {
+        case "CONFIRMED": normalizedStatus = "confirmed"
+        case "REVIEW_REQUIRED": normalizedStatus = "review_required"
+        case "NOT_APPLICABLE": normalizedStatus = "not_comparable"
+        default: throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+        }
+        if let effective {
+            let validState: Bool
+            switch (effective.state, effective.classificationStatus, effective.effectiveSource) {
+            case ("GLOBAL_CONFIRMED", "CONFIRMED", "GLOBAL_CONFIRMED"),
+                 ("SUPERSEDED_MATCH", "CONFIRMED", "GLOBAL_CONFIRMED"),
+                 ("SUPERSEDED_CONFLICT", "CONFIRMED", "GLOBAL_CONFIRMED"),
+                 (_, "CONFIRMED", "CATEGORY_GROUP"),
+                 ("PERSONAL_CONFIRMED", "CONFIRMED", "USER_EXPLICIT"),
+                 ("REVIEW_REQUIRED", "REVIEW_REQUIRED", "NONE"),
+                 ("STALE_RECONFIRM_REQUIRED", "REVIEW_REQUIRED", "NONE"),
+                 ("GLOBAL_NOT_APPLICABLE", "NOT_APPLICABLE", "GLOBAL_NOT_APPLICABLE"):
+                validState = true
+            default:
+                validState = false
+            }
+            guard validState else {
+                throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+            }
+        }
+        let effectiveCategory = effectiveTuple.categoryCode
+        let effectiveGarment = effectiveTuple.garmentTypeCode
+        let effectivePolicy = effectiveTuple.comparisonPolicyCode
+        let effectiveSleeve = effectiveTuple.sleeveLengthCode
+        let effectiveLower = effectiveTuple.lowerLengthCode
+        let effectiveBody = effectiveTuple.bodyLengthCode
+        if normalizedStatus == "confirmed" {
+            guard effectiveCategory?.isEmpty == false,
+                  effectiveGarment?.isEmpty == false,
+                  effectivePolicy?.isEmpty == false else {
+                throw FitMatchSupabaseProductResolverError.invalidVNextResponse
+            }
+        }
+        let classification = FitMatchDatabaseClassification(
+            classificationID: product.id,
+            categoryCode: effectiveCategory,
+            detailCode: effectiveGarment,
+            garmentTypeCode: effectiveGarment,
+            familyCode: effectivePolicy,
+            lengthCode: effectiveSleeve ?? effectiveLower,
+            bodyLengthCode: effectiveBody,
+            status: normalizedStatus,
+            method: effectiveTuple.contractVersion,
+            authorityStatus: effectiveTuple.effectiveSource == "USER_EXPLICIT"
+                ? "user_explicit" : "server",
+            confidence: nil,
+            requiresUserConfirmation: normalizedStatus != "confirmed",
+            taxonomyPolicyVersion: effectiveTuple.contractVersion,
+            decisionVersion: nil
+        )
+        let variants = exact.variants.enumerated().map { variantIndex, variant in
+            FitMatchRuntimeVariant(
+                variantID: variant.id,
+                externalVariantID: variant.sourceVariantKey,
+                variantName: variant.variantLabel,
+                colorCode: nil,
+                colorName: variant.colorName,
+                sizes: variant.sizes.enumerated().map { sizeIndex, size in
+                    FitMatchRuntimeSize(
+                        productSizeID: size.id,
+                        externalSizeID: size.sourceSizeKey,
+                        sizeLabel: size.sizeLabel,
+                        normalizedSizeLabel: SizeTokenNormalizer.displayName(
+                            for: size.sizeLabel
+                        ),
+                        displayOrder: sizeIndex,
+                        stockStatus: size.availability.status,
+                        measurements: size.canonicalMeasurements.measurements.map { metric in
+                            FitMatchRuntimeMeasurement(
+                                measurementCode: metric.measurementCode,
+                                rawLabel: metric.sourceMeasurementCode
+                                    ?? metric.measurementCode,
+                                rawValue: metric.value,
+                                rawUnit: metric.unitCode,
+                                normalizedValue: metric.value,
+                                normalizedUnit: metric.unitCode,
+                                comparisonBasis: metric.basisCode,
+                                isComparable: true,
+                                exclusionReason: nil,
+                                policyVersion: product.resolverVersion
+                            )
+                        }
+                    )
+                }
+            )
+        }
+        let readinessState = try FitMatchVNextContractValidator.readinessState(readiness)
+        let runtimeState = try FitMatchVNextContractValidator.runtimeState(
+            readiness: readiness,
+            classificationStatus: normalizedStatus
+        )
+        return FitMatchProductRuntimeResponse(
+            runtimeState: runtimeState,
+            comparisonReady: readinessState == .ready,
+            product: FitMatchRuntimeProduct(
+                productID: product.id,
+                source: product.sourceCode,
+                externalProductID: product.sourceProductKey,
+                productName: product.productName,
+                canonicalURL: product.canonicalURL,
+                audience: effectiveTuple.audienceCode,
+                sourceCategoryPath: nil,
+                sourceCategoryCodes: [],
+                imageURL: product.imageURL,
+                lifecycleStatus: "active",
+                inputFingerprint: product.inputFingerprint ?? ""
+            ),
+            classification: classification,
+            variants: variants,
+            vnext: exact
+        )
+    }
+
+    nonisolated private static func closetPayload(
+        _ request: FitMatchUpsertClosetItemRequest,
+        serverSnapshot: Bool = false
+    ) throws -> VNextClosetMutationPayload {
+        let axes = try VNextClosetClassificationAxes(
+            categoryCode: request.item.categoryCode,
+            garmentTypeCode: request.item.familyCode,
+            lengthCode: request.item.lengthCode,
+            bodyLengthCode: request.item.bodyLengthCode
+        )
+        // The current linked-Closet contract verifies a complete canonical
+        // snapshot against the exact server ProductSize. Keep retailer-only
+        // raw facts on the local item, but do not put them in this canonical
+        // mutation payload.
+        let measurements: [VNextClosetMeasurementPayload] = serverSnapshot
+            ? []
+            : request.productID == nil
+                ? try canonicalMeasurements(for: request.item)
+                : try linkedCanonicalMeasurements(for: request.item)
+        return VNextClosetMutationPayload(
+            clientItemID: request.clientItemID,
+            productID: request.productID,
+            productVariantID: request.productVariantID,
+            productSizeID: request.productSizeID,
+            itemName: request.item.productName,
+            brandName: request.item.brand,
+            imageURL: request.item.imageURL,
+            productURL: request.item.productURL,
+            sizeLabel: request.item.sizeName,
+            audienceCode: vnextAudience(request.item.genderCode),
+            garmentTypeCode: request.item.familyCode,
+            sleeveLengthCode: axes.sleeveLengthCode,
+            lowerLengthCode: axes.lowerLengthCode,
+            bodyLengthCode: axes.bodyLengthCode,
+            fitPreferenceCode: request.item.fitPreferenceCode,
+            notes: request.item.fitMemo,
+            satisfaction: request.item.satisfaction == 0
+                ? nil
+                : request.item.satisfaction,
+            // Product-linked items always hydrate canonical measurements from
+            // the selected vNext size. Local cache values are never allowed to
+            // overwrite sourced measurement authority during an edit.
+            measurements: measurements,
+            closetClassificationOverride: try request.override.map {
+                try Self.mutationOverridePayload($0)
+            },
+            comparisonGroupCode: request.comparisonGroupCode,
+            closetDetailCodeSnapshot: request.closetDetailCodeSnapshot,
+            sourceObservationID: request.sourceObservationID
+        )
+    }
+
+    /// Linked creation asks the server to snapshot its exact selected size.
+    /// Retailer display facts stay in the observation; manual/edit payloads retain
+    /// their explicit measurement contract. No client mapping authorizes a value.
+    nonisolated private static func closetCreationPayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> VNextClosetMutationPayload {
+        var payload = try closetPayload(request, serverSnapshot: request.productID != nil)
+        if request.productID != nil { payload.useServerMeasurements = true }
+        return payload
+    }
+
+    nonisolated private static func closetUpdatePayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> VNextClosetMutationPayload {
+        var payload = try closetPayload(
+            request,
+            serverSnapshot: request.productID != nil
+        )
+        if request.productID != nil { payload.useServerMeasurements = true }
+        return payload
+    }
+
+    nonisolated static func encodedVNextClosetCreationPayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> Data {
+        try JSONEncoder().encode(try closetCreationPayload(request))
+    }
+
+    nonisolated static func encodedVNextClosetPayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> Data {
+        try JSONEncoder().encode(try closetPayload(request))
+    }
+
+    nonisolated static func encodedVNextClosetUpdatePayload(
+        _ request: FitMatchUpsertClosetItemRequest
+    ) throws -> Data {
+        try JSONEncoder().encode(try closetUpdatePayload(request))
+    }
+
+    nonisolated private static func mutationOverridePayload(
+        _ value: FitMatchClosetClassificationOverride
+    ) throws -> VNextClosetClassificationOverridePayload {
+        let audience = vnextAudience(value.audienceCode ?? "unknown")
+        let axes = try VNextClosetClassificationAxes(
+            categoryCode: value.categoryCode,
+            garmentTypeCode: value.familyCode,
+            lengthCode: value.lengthCode,
+            bodyLengthCode: value.bodyLengthCode
+        )
+        return VNextClosetClassificationOverridePayload(
+            audienceCode: audience,
+            categoryCode: value.categoryCode,
+            // `familyCode` is the established domain field containing the
+            // canonical vNext garment type code (see resolvedFamilyCode and
+            // ParsedClosetClassification); no display-label inference occurs
+            // at this transport boundary.
+            garmentTypeCode: value.familyCode,
+            sleeveLengthCode: axes.sleeveLengthCode,
+            lowerLengthCode: axes.lowerLengthCode,
+            bodyLengthCode: axes.bodyLengthCode
+        )
+    }
+
+    nonisolated private static func overridePayload(
+        _ value: FitMatchClosetClassificationOverride
+    ) throws -> VNextClosetOverridePayload {
+        let axes = try VNextClosetClassificationAxes(
+            categoryCode: value.categoryCode,
+            garmentTypeCode: value.familyCode,
+            lengthCode: value.lengthCode,
+            bodyLengthCode: value.bodyLengthCode
+        )
+        return VNextClosetOverridePayload(
+            audienceCode: vnextAudience(value.audienceCode ?? "unknown"),
+            garmentTypeCode: value.familyCode,
+            sleeveLengthCode: axes.sleeveLengthCode,
+            lowerLengthCode: axes.lowerLengthCode,
+            bodyLengthCode: axes.bodyLengthCode
+        )
+    }
+
+    /// Testable encoding seam for the standalone override RPC.  It uses the
+    /// exact production adapter and `JSONEncoder`; no test-side JSON shape is
+    /// constructed by hand.
+    nonisolated static func encodedVNextClosetOverridePayload(
+        _ value: FitMatchClosetClassificationOverride
+    ) throws -> Data {
+        try JSONEncoder().encode(try overridePayload(value))
+    }
+
+    nonisolated private static func closetMutationCompatibilityResponse(
+        itemID: UUID,
+        request: FitMatchUpsertClosetItemRequest
+    ) -> FitMatchUpsertClosetItemResponse {
+        FitMatchUpsertClosetItemResponse(
+            closetItemID: itemID,
+            clientItemID: request.clientItemID,
+            syncRevision: 0,
+            classificationStatus: "confirmed",
+            categoryCode: request.override?.categoryCode ?? request.item.categoryCode,
+            detailCode: request.override?.detailCode ?? request.item.detailCode,
+            familyCode: request.override?.familyCode ?? request.item.familyCode,
+            lengthCode: request.override?.lengthCode ?? request.item.lengthCode,
+            bodyLengthCode: request.item.bodyLengthCode,
+            isReference: request.item.isReference
+        )
+    }
+
+    nonisolated static func mapClosetItem(
+        _ item: VNextClosetItemDTO
+    ) -> FitMatchClosetItemRecord {
+        let categoryCode = item.categoryCode ?? "other"
+        let tupleDetailCode = closetDetailCode(
+            categoryCode: categoryCode,
+            garmentTypeCode: item.garmentTypeCode,
+            sleeveLengthCode: item.sleeveLengthCode,
+            lowerLengthCode: item.lowerLengthCode,
+            bodyLengthCode: item.bodyLengthCode
+        )
+        let trimmedDetailSnapshot = item.closetDetailCodeSnapshot?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let detailSnapshot = trimmedDetailSnapshot?.isEmpty == false
+            ? trimmedDetailSnapshot
+            : nil
+        // Keep an explicit display choice separate from its broader garment
+        // family. Unsupported future values remain the exact stored code;
+        // this adapter must not silently turn them into a neighbouring detail.
+        let detailCode = detailSnapshot ?? tupleDetailCode
+        let measurements = item.measurements
+            .reduce(into: [String: [Double]]()) { result, measurement in
+                result[measurement.measurementCode, default: []].append(measurement.value)
+            }
+            .reduce(into: [String: Double]()) { result, entry in
+                // A legacy scalar dictionary cannot represent conflicting
+                // duplicate codes. Keep the full records below and omit only
+                // this convenience projection instead of choosing by array
+                // order.
+                if Set(entry.value).count == 1, let value = entry.value.first {
+                    result[entry.key] = value
+                }
+            }
+        let canonicalRecords = item.measurements.map { measurement in
+            let projection = FitMatchCanonicalMeasurementCode.projection(
+                for: measurement.measurementCode
+            )
+            let isKnownLocalCode = MeasurementCode(rawValue: measurement.measurementCode)
+                != nil
+            return FitMatchClosetMeasurementRecordPayload(
+                value: measurement.value,
+                unit: measurement.unitCode,
+                measurementCode: measurement.measurementCode,
+                displayKind: projection?.displayKind.rawValue
+                    ?? displayKind(for: measurement.measurementCode),
+                methodSource: "fitmatch_vnext_snapshot",
+                methodProfile: item.classificationResolverVersion,
+                inputSource: item.productID == nil
+                    ? MeasurementInputSource.userMeasured.rawValue
+                    : MeasurementInputSource.importedSizeChart.rawValue,
+                standardVersion: nil,
+                mappingVersion: item.classificationResolverVersion
+                    ?? "fitmatch-vnext-closet-v1",
+                rawCode: measurement.measurementCode,
+                rawLabel: measurement.rawLabelSnapshot ?? measurement.measurementCode,
+                rawInfo: nil,
+                rawValueText: String(measurement.value),
+                evidenceLevel: item.productID == nil
+                    ? MeasurementEvidenceLevel.fitmatchDefined.rawValue
+                    : MeasurementEvidenceLevel.officialText.rawValue,
+                semanticStatus: projection != nil || isKnownLocalCode
+                    ? MeasurementSemanticStatus.mapped.rawValue
+                    : MeasurementSemanticStatus.unknownDefinition.rawValue
+            )
+        }
+        let sourceRecords = (item.sourceMeasurements ?? []).map { measurement in
+            // These are the immutable retailer-fact snapshots for display.
+            // Canonical values remain in `measurements`; never make raw rows
+            // locally comparable merely because the server once resolved one.
+            let code = MeasurementCode.unknown
+            return FitMatchClosetMeasurementRecordPayload(
+                value: measurement.rawValue ?? 0,
+                unit: measurement.rawUnitCode ?? "",
+                measurementCode: code.rawValue,
+                displayKind: code.presentationDisplayKind?.rawValue
+                    ?? MeasurementDisplayKind.unknown.rawValue,
+                methodSource: "\(measurement.sourceCode)_\(measurement.parserCode)",
+                methodProfile: measurement.mappingVersion,
+                inputSource: MeasurementInputSource.importedSizeChart.rawValue,
+                standardVersion: nil,
+                mappingVersion: measurement.mappingVersion
+                    ?? "fitmatch-vnext-source-snapshot-v1",
+                rawCode: measurement.rawCode,
+                rawLabel: measurement.rawLabel ?? "",
+                rawInfo: Self.sourceSnapshotProvenance(
+                    rawRepresentation: measurement.rawRepresentation,
+                    evidence: measurement.evidence,
+                    observedAt: measurement.observedAt
+                ),
+                rawValueText: measurement.rawValueText,
+                evidenceLevel: MeasurementEvidenceLevel.officialText.rawValue,
+                semanticStatus: MeasurementSemanticStatus.unknownDefinition.rawValue
+            )
+        }
+        // Keep both projections: source rows own retailer presentation, while
+        // only the separately verified canonical rows can feed local previews.
+        // Raw-only records stay unknown and never acquire comparison authority.
+        let records = sourceRecords + canonicalRecords
+        return FitMatchClosetItemRecord(
+            closetItemID: item.id,
+            clientItemID: item.clientItemID,
+            productID: item.productID,
+            externalProductID: item.sourceProductKey,
+            productAudience: item.audienceCode,
+            sourceCategoryCodes: [],
+            variantID: item.productVariantID,
+            productSizeID: item.productSizeID,
+            brand: item.brandName,
+            productName: item.itemName,
+            sizeName: item.sizeLabel,
+            genderCode: appTaxonomyAudienceCode(item.audienceCode),
+            source: item.sourceCode,
+            sourceCategoryPath: item.sourceCategoryPath,
+            productURL: item.productURL,
+            imageURL: item.imageURL,
+            measurements: measurements,
+            measurementRecords: records,
+            sourceMeasurements: item.sourceMeasurements,
+            sourceMeasurementSnapshot: item.sourceMeasurementSnapshot,
+            fitMemo: item.notes ?? "",
+            fitPreferenceCode: item.fitPreferenceCode ?? "regular",
+            satisfaction: item.satisfaction ?? 3,
+            isReference: item.isReference,
+            classificationStatus: "confirmed",
+            classificationSource: closetClassificationSource(
+                from: item.classificationSource
+            ),
+            categoryCode: categoryCode,
+            detailCode: detailCode,
+            closetDetailCodeSnapshot: detailSnapshot,
+            canonicalCategoryCode: item.categoryCode,
+            canonicalDetailCode: tupleDetailCode,
+            familyCode: item.garmentTypeCode,
+            lengthCode: item.sleeveLengthCode ?? item.lowerLengthCode,
+            bodyLengthCode: item.bodyLengthCode,
+            comparisonGroupCode: item.comparisonGroup?.groupCode,
+            comparisonGroupSource: item.comparisonGroup?.source,
+            comparisonGroupPolicyVersion: item.comparisonGroup?.policyVersion,
+            classificationSnapshot: [
+                "classification_fingerprint": item.classificationFingerprint,
+                "decision_version": item.classificationResolverVersion
+            ],
+            clientSnapshot: [:],
+            clientCreatedAt: item.createdAt,
+            clientUpdatedAt: item.updatedAt,
+            syncRevision: 0,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt
+        )
+    }
+
+    nonisolated private static func sourceSnapshotProvenance(
+        rawRepresentation: String?,
+        evidence: FitMatchJSONValue?,
+        observedAt: String?
+    ) -> String? {
+        var fields: [String: FitMatchJSONValue] = [:]
+        if let rawRepresentation, !rawRepresentation.isEmpty {
+            fields["raw_representation"] = .string(rawRepresentation)
+        }
+        if let evidence {
+            fields["evidence"] = evidence
+        }
+        if let observedAt, !observedAt.isEmpty {
+            fields["observed_at"] = .string(observedAt)
+        }
+        guard !fields.isEmpty,
+              let data = try? JSONEncoder().encode(FitMatchJSONValue.object(fields)) else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// The vNext row stores garment identity and length axes separately,
+    /// while the Closet UI uses one detail picker code. Rebuild only from the
+    /// server-issued tuple; retailer names and paths are not classification
+    /// inputs here.
+    nonisolated private static func closetDetailCode(
+        categoryCode: String,
+        garmentTypeCode: String,
+        sleeveLengthCode: String?,
+        lowerLengthCode: String?,
+        bodyLengthCode: String?
+    ) -> String {
+        switch categoryCode {
+        case "tops":
+            switch garmentTypeCode {
+            case "sleeveless_tshirt", "tank_top": return "sleeveless"
+            case "tshirt":
+                if let sleeveLengthCode,
+                   ["sleeveless", "short_sleeve", "three_quarter_sleeve", "long_sleeve"]
+                    .contains(sleeveLengthCode) {
+                    return sleeveLengthCode
+                }
+                return "other_tops"
+            case "polo_shirt": return "polo_shirt"
+            case "shirt_blouse", "shirt": return "shirt"
+            case "knit_sweater", "cardigan", "knit_vest": return "knit_top"
+            case "sweatshirt": return "sweatshirt"
+            case "hoodie", "zip_hoodie": return "hoodie"
+            default: return "other_tops"
+            }
+        case "bottoms":
+            switch lowerLengthCode {
+            case "short_length", "short_sleeve": return "shorts"
+            case "cropped_length", "cropped": return "cropped_pants"
+            case "three_quarter_length", "three_quarter": return "three_quarter_pants"
+            case "nine_tenths_length", "nine_tenths": return "nine_tenths_pants"
+            case "long_length", "long_sleeve": return "long_pants"
+            default: return garmentTypeCode == "shorts" ? "shorts" : "other_bottoms"
+            }
+        case "leggings":
+            switch lowerLengthCode {
+            case "short_length": return "short_leggings"
+            case "three_quarter_length": return "three_quarter_leggings"
+            case "nine_tenths_length": return "nine_tenths_leggings"
+            case "long_length": return "long_leggings"
+            default: return "other_leggings"
+            }
+        case "outerwear":
+            switch garmentTypeCode {
+            case "cardigan": return "cardigan"
+            case "windbreaker": return "windbreaker"
+            case "anorak": return "anorak"
+            case "blazer": return "blazer"
+            case "blouson", "ma1": return "blouson"
+            case "fleece_jacket": return "fleece"
+            case "puffer_vest": return "padded_vest"
+            case "outer_vest": return "vest"
+            case "puffer_jacket": return bodyLengthCode == "long_length" ? "long_padding" : "padding"
+            case "coat": return "coat"
+            case "trench_coat": return "trench_coat"
+            case "mouton": return "mouton"
+            case "jacket": return "jacket"
+            default: return "other_outerwear"
+            }
+        case "skirts": return "skirt"
+        case "dresses": return "one_piece"
+        case "underwear":
+            return ClosetDetailCategory.fromTaxonomyCode(garmentTypeCode) == .other
+                ? "underwear" : garmentTypeCode
+        default: return "other"
+        }
+    }
+
+    nonisolated private static func appTaxonomyAudienceCode(_ audienceCode: String) -> String {
+        switch FitMatchCanonicalAudience.code(from: audienceCode) {
+        case FitMatchCanonicalAudience.men.rawValue: return "male"
+        case FitMatchCanonicalAudience.women.rawValue: return "female"
+        case FitMatchCanonicalAudience.unisex.rawValue: return "unisex"
+        case FitMatchCanonicalAudience.kids.rawValue,
+             FitMatchCanonicalAudience.baby.rawValue: return "kids_unisex"
+        default: return "unknown"
+        }
+    }
+
+    /// Public Closet list rows use USER_EXPLICIT for an initial personal
+    /// selection and USER_EDITED after an actual tuple change. Both are one
+    /// local personal-authority state; retain that fact before the sync layer
+    /// interprets the row.
+    nonisolated static func closetClassificationSource(from rawValue: String) -> String {
+        switch rawValue {
+        case "USER_EXPLICIT", "USER_EDITED":
+            return "manual_override"
+        default:
+            return "product_metadata"
+        }
+    }
+
+    nonisolated private static func vnextAudience(_ value: String) -> String {
+        switch value.lowercased() {
+        case "men", "male": return "MEN"
+        case "women", "female": return "WOMEN"
+        case "kids", "child": return "KIDS"
+        default: return "UNISEX"
+        }
+    }
+
+    nonisolated private static func displayKind(for code: String) -> String {
+        if let projection = FitMatchCanonicalMeasurementCode.projection(for: code) {
+            return projection.displayKind.rawValue
+        }
+        if let canonical = FitMatchCanonicalMeasurementCode
+            .canonicalCode(forTransportRawCode: code),
+           let projection = FitMatchCanonicalMeasurementCode.projection(for: canonical) {
+            return projection.displayKind.rawValue
+        }
+        if let localCode = MeasurementCode(rawValue: code),
+           let displayKind = localCode.presentationDisplayKind {
+            return displayKind.rawValue
+        }
+        // These historical public-row labels pre-date method-specific local
+        // codes. Keep their known display meaning without applying a partial
+        // string match to an otherwise unknown future server code.
+        switch code {
+        case "inseam": return MeasurementDisplayKind.totalLength.rawValue
+        case "foot_length": return MeasurementDisplayKind.footLength.rawValue
+        case "upper_abdomen": return MeasurementDisplayKind.upperAbdomen.rawValue
+        case "upper_waist": return MeasurementDisplayKind.upperWaist.rawValue
+        case "under_bust": return MeasurementDisplayKind.underBust.rawValue
+        default: break
+        }
+        return MeasurementDisplayKind.unknown.rawValue
+    }
+
+    /// Classifies only the fixed SQLSTATE/message pairs emitted by the
+    /// visibility RPC.  A generic 42501 is deliberately not guessed to be an
+    /// authentication failure.
+    nonisolated static func historyVisibilityError(
+        code: String?,
+        message: String
+    ) -> FitMatchHistoryVisibilityRPCError {
+        switch (code?.uppercased(), message) {
+        case ("PGRST202", _):
+            return .unavailable
+        case ("42501", "FM_HISTORY_AUTH_REQUIRED"):
+            return .authenticationRequired
+        case ("42501", "FM_HISTORY_UNAVAILABLE"):
+            return .historyUnavailable
+        case ("22023", _), ("22P02", _):
+            return .invalidRequest
+        default:
+            return .rejected
+        }
+    }
+
+    nonisolated private static func canonicalMeasurements(
+        for item: FitMatchClosetItemPayload
+    ) throws -> [VNextClosetMeasurementPayload] {
+        if item.measurementRecords.isEmpty {
+            return try item.measurements
+                .sorted { $0.key < $1.key }
+                .compactMap { code, value in
+                    guard value.isFinite, value > 0 else { return nil }
+                    guard let canonicalCode = FitMatchCanonicalMeasurementCode
+                        .canonicalCode(forTransportRawCode: code) else {
+                        throw FitMatchClosetPayloadContractError
+                            .unmappablePositiveMeasurement(code: code)
+                    }
+                    return VNextClosetMeasurementPayload(
+                        fitmatchMeasurementCode: canonicalCode,
+                        value: value,
+                        unitCode: "cm",
+                        rawLabel: code
+                    )
+                }
+        }
+
+        return try item.measurementRecords.compactMap { record in
+            guard record.value.isFinite, record.value > 0 else { return nil }
+            let canonicalCode = try canonicalMeasurementCode(for: record)
+            return VNextClosetMeasurementPayload(
+                fitmatchMeasurementCode: canonicalCode,
+                value: record.value,
+                unitCode: record.unit,
+                rawLabel: record.rawLabel
+            )
+        }
+    }
+
+    /// Product-linked items carry the exact canonical subset for the selected
+    /// server size. An official retailer may retain additional raw axes for
+    /// display; those are not silently promoted into FitMatch measurements.
+    nonisolated private static func linkedCanonicalMeasurements(
+        for item: FitMatchClosetItemPayload
+    ) throws -> [VNextClosetMeasurementPayload] {
+        var byCode: [String: VNextClosetMeasurementPayload] = [:]
+
+        func insert(
+            code: String,
+            value: Double,
+            unit: String,
+            rawLabel: String?
+        ) throws {
+            guard value.isFinite, value > 0 else { return }
+            guard let canonicalCode = FitMatchCanonicalMeasurementCode
+                .canonicalCode(forTransportRawCode: code) else {
+                return
+            }
+            if let existing = byCode[canonicalCode] {
+                guard abs(existing.value - value) < 0.000_001,
+                      existing.unitCode == unit else {
+                    throw FitMatchClosetPayloadContractError
+                        .conflictingCanonicalMeasurement(code: canonicalCode)
+                }
+                return
+            }
+            byCode[canonicalCode] = VNextClosetMeasurementPayload(
+                fitmatchMeasurementCode: canonicalCode,
+                value: value,
+                unitCode: unit,
+                rawLabel: rawLabel
+            )
+        }
+
+        if item.measurementRecords.isEmpty {
+            for (code, value) in item.measurements {
+                try insert(code: code, value: value, unit: "cm", rawLabel: code)
+            }
+        } else {
+            for record in item.measurementRecords {
+                try insert(
+                    code: record.measurementCode,
+                    value: record.value,
+                    unit: record.unit,
+                    rawLabel: record.rawLabel
+                )
+            }
+        }
+
+        return byCode.keys.sorted().compactMap { byCode[$0] }
+    }
+
+    nonisolated private static func canonicalMeasurementCode(
+        for record: FitMatchClosetMeasurementRecordPayload
+    ) throws -> String {
+        if let canonical = FitMatchCanonicalMeasurementCode
+            .canonicalCode(forTransportRawCode: record.measurementCode) {
+            return canonical
+        }
+
+        // A future canonical server fact has no local enum yet. Preserve it
+        // only when this exact raw ID was hydrated from a non-manual source;
+        // a new user-entered unknown code must fail before an RPC rather than
+        // being presented as a successful partial save.
+        let code = record.measurementCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isHydratedServerFact = record.methodSource == "fitmatch_vnext_snapshot"
+            && record.rawCode == code
+        if !code.isEmpty,
+           code != MeasurementCode.unknown.rawValue,
+           code != MeasurementCode.legacyUnknown.rawValue,
+           record.rawCode == code,
+           (record.inputSource != MeasurementInputSource.userMeasured.rawValue
+                || isHydratedServerFact) {
+            return code
+        }
+        throw FitMatchClosetPayloadContractError.unmappablePositiveMeasurement(
+            code: record.measurementCode
+        )
+    }
+
+    private func authenticatedClient() async throws -> SupabaseClient {
+        guard let client else {
+            throw FitMatchSupabaseProductResolverError.notConfigured
+        }
+        do {
+            _ = try await client.auth.session
+        } catch {
+            throw FitMatchSupabaseProductResolverError.authenticationRequired
+        }
+        return client
+    }
+}
+
+typealias FitMatchSupabaseProductResolver = FitMatchSupabaseDomainClient
+
+extension ParsedProductInfo {
+    var usesStructuredCategoryAsCanonicalSource: Bool {
+        sourceName.localizedCaseInsensitiveContains("zara")
+    }
+
+    func fitMatchDatabaseResolutionRequest() -> FitMatchProductResolutionRequest? {
+        guard let productID = productID?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !productID.isEmpty,
+              !productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        let source: String
+        if sourceName.localizedCaseInsensitiveContains("유니클로") {
+            source = "uniqlo"
+        } else if sourceName.localizedCaseInsensitiveContains("무신사") {
+            source = "musinsa"
+        } else if sourceName.localizedCaseInsensitiveContains("zara") || sourceName.localizedCaseInsensitiveContains("자라") {
+            source = "zara"
+        } else if sourceName.localizedCaseInsensitiveContains("cos") {
+            source = "cos"
+        } else {
+            return nil
+        }
+        let metadata = productMetadata
+        let path = sourceCategoryPath
+            ?? metadata.sourceCategoryPath
+            ?? metadata.baseCategoryFullPath
+        let codes = [
+            metadata.categoryDepth1Code,
+            metadata.categoryDepth2Code,
+            metadata.categoryDepth3Code,
+            metadata.categoryDepth4Code
+        ].compactMap { value -> String? in
+            guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !value.isEmpty else { return nil }
+            return value
+        }
+        let audience = FitMatchCanonicalAudience.code(from: metadata.genderCodes)
+        var structuredFacts = metadata.structuredFacts.reduce(into: [String: String]()) {
+            facts,
+            entry in
+            let key = entry.key.trimmingCharacters(in: .whitespacesAndNewlines)
+            let value = entry.value.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !key.isEmpty, !value.isEmpty else { return }
+            facts[key] = value
+        }
+        // A replay only serializes retailer facts captured with its original
+        // observation. It must never turn a persisted display name into new
+        // observed retailer evidence.
+        return FitMatchProductResolutionRequest(
+            source: source,
+            externalProductID: productID,
+            productName: productName.trimmingCharacters(in: .whitespacesAndNewlines),
+            sourceCategoryPath: path?.trimmingCharacters(in: .whitespacesAndNewlines),
+            audience: audience,
+            sourceCategoryCodes: codes.isEmpty ? nil : codes,
+            structuredFacts: structuredFacts
+        )
+    }
+
+    func fitMatchLocalClassificationSnapshot() -> FitMatchLocalClassificationSnapshot {
+        let metadata = productMetadata
+        let classification = ParsedClosetClassification.resolve(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [
+                sourceCategoryDepth1 ?? metadata.sourceCategoryDepth1,
+                sourceCategoryDepth2 ?? metadata.sourceCategoryDepth2,
+                sourceCategoryDepth3 ?? metadata.sourceCategoryDepth3,
+                sourceCategoryDepth4 ?? metadata.sourceCategoryDepth4
+            ],
+            sourcePath: sourceCategoryPath ?? metadata.sourceCategoryPath ?? metadata.baseCategoryFullPath,
+            productName: usesStructuredCategoryAsCanonicalSource ? "" : productName
+        )
+        return FitMatchLocalClassificationSnapshot(classification)
+    }
+
+    func fitMatchProductObservationRequest(
+        observedAt: Date = Date()
+    ) -> FitMatchProductObservationRequest? {
+        guard let resolution = fitMatchDatabaseResolutionRequest() else { return nil }
+        let metadata = productMetadata
+        let classificationSafetyAudit = ParsedClosetClassification.auditExplicitContradictions(
+            category: category,
+            detailCategory: detailCategory,
+            sourceDepths: [
+                sourceCategoryDepth1 ?? metadata.sourceCategoryDepth1,
+                sourceCategoryDepth2 ?? metadata.sourceCategoryDepth2,
+                sourceCategoryDepth3 ?? metadata.sourceCategoryDepth3,
+                sourceCategoryDepth4 ?? metadata.sourceCategoryDepth4
+            ],
+            sourcePath: sourceCategoryPath
+                ?? metadata.sourceCategoryPath
+                ?? metadata.baseCategoryFullPath,
+            productName: productName
+        )
+        let color = metadata.checkedColorName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let providerVariantID = metadata.externalVariantID?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let variantID: String
+        if providerVariantID?.isEmpty == false {
+            variantID = providerVariantID!
+        } else {
+            variantID = color?.isEmpty == false ? color! : "__default__"
+        }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        let observationSizes = sizes.enumerated().compactMap { index, size -> FitMatchProductObservationSize? in
+            let label = size.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !label.isEmpty else { return nil }
+            let sourceSchemaVersion = Self.observedMeasurementTableVersion(
+                sourceCode: resolution.source,
+                records: size.measurementRecords
+            )
+            let measurements = size.measurementRecords.enumerated().compactMap {
+                measurementIndex,
+                measurement -> FitMatchProductObservationMeasurement? in
+                // Observation preserves raw retailer facts.  Comparison
+                // eligibility is evaluated by the server separately, so a
+                // finite zero is retained rather than silently dropped.
+                guard measurement.value.isFinite else { return nil }
+                let rawLabel = measurement.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedRawCode = measurement.rawCode?
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let rawCode = trimmedRawCode?.isEmpty == false ? trimmedRawCode! : nil
+                // A provider may publish different component measurements
+                // under the same raw code. Keep the legacy code identity for
+                // unique rows, but make repeated codes distinct so one row
+                // cannot overwrite another during observation persistence.
+                let duplicateRawCodeCount = rawCode.map { code in
+                    size.measurementRecords.lazy.filter {
+                        $0.rawCode?.trimmingCharacters(in: .whitespacesAndNewlines) == code
+                    }.count
+                } ?? 0
+                let identity: String
+                if let rawCode {
+                    identity = duplicateRawCodeCount > 1
+                        ? "\(rawCode)#\(measurementIndex)"
+                        : rawCode
+                } else {
+                    identity = "\(measurement.measurementCode.rawValue):\(measurementIndex)"
+                }
+                return FitMatchProductObservationMeasurement(
+                    measurementIdentity: identity,
+                    parserCode: Self.observationMeasurementParserCode(
+                        sourceCode: resolution.source,
+                        methodSource: measurement.methodSource
+                    ),
+                    rawCode: rawCode,
+                    rawLabel: rawLabel,
+                    rawValue: measurement.value,
+                    rawValueText: measurement.rawValueText,
+                    // `nil` means an older parser supplied the typed cm fact;
+                    // an explicit empty/raw unknown unit must remain unknown.
+                    rawUnit: measurement.unitRawValue
+                        ?? measurement.unit.rawValue,
+                    rawRepresentation: measurement.rawInfo.flatMap {
+                        let value = $0.trimmingCharacters(in: .whitespacesAndNewlines)
+                        return value.isEmpty ? nil : value
+                    },
+                    evidence: [
+                        "method_source": measurement.methodSource,
+                        "method_profile": measurement.methodProfile ?? "",
+                        "input_source": measurement.inputSource.rawValue,
+                        "mapping_version": measurement.mappingVersion,
+                        "evidence_level": measurement.evidenceLevel.rawValue,
+                        "semantic_status": measurement.semanticStatus.rawValue,
+                        "raw_value_text": measurement.rawValueText ?? ""
+                    ].merging(sourceSchemaVersion.map { ["source_schema_version": $0] } ?? [:]) {
+                        current, _ in current
+                    }
+                )
+            }
+            let normalizedStatus: String = {
+                if let explicit = size.availabilityStatus?
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .uppercased(),
+                   ["AVAILABLE", "SOLD_OUT", "UNKNOWN"].contains(explicit) {
+                    return explicit
+                }
+                guard let checkedSize = metadata.checkedSizeName?
+                    .trimmingCharacters(in: .whitespacesAndNewlines),
+                      !checkedSize.isEmpty,
+                      SizeTokenNormalizer.displayName(for: checkedSize)
+                        .localizedCaseInsensitiveCompare(
+                            SizeTokenNormalizer.displayName(for: label)
+                        ) == .orderedSame else {
+                    return "UNKNOWN"
+                }
+                if metadata.isOutOfStock
+                    || metadata.stockStatusRawValue == ProductStockStatus.outOfStock.rawValue {
+                    return "SOLD_OUT"
+                }
+                if metadata.stockStatusRawValue == ProductStockStatus.inStock.rawValue {
+                    return "AVAILABLE"
+                }
+                return "UNKNOWN"
+            }()
+            let availabilityObservedAt = size.availabilityObservedAt ?? (
+                normalizedStatus == "UNKNOWN" ? nil : observedAt
+            )
+            return FitMatchProductObservationSize(
+                sizeIdentity: ParsedProductSizeNormalizer.normalizedSizeKey(for: label),
+                sizeLabel: label,
+                normalizedSizeLabel: SizeTokenNormalizer.displayName(for: label),
+                displayOrder: index,
+                stockStatus: normalizedStatus,
+                availabilityObservedAt: availabilityObservedAt.map(formatter.string(from:)),
+                availabilityValidUntil: size.availabilityValidUntil.map(formatter.string(from:)),
+                availabilityEvidence: size.availabilityEvidence,
+                measurements: measurements
+            )
+        }
+
+        let conflictEvidence = classificationSafetyAudit.conflicts.map {
+            "\($0.dimension.rawValue)=\($0.trustedValue)->\($0.explicitValue)"
+        }.joined(separator: ";")
+        let parserFieldSourcesJSON: String = {
+            guard let fieldSources = parserProvenance?.fieldSources,
+                  JSONSerialization.isValidJSONObject(fieldSources),
+                  let data = try? JSONSerialization.data(
+                    withJSONObject: fieldSources,
+                    options: [.sortedKeys]
+                  ),
+                  let value = String(data: data, encoding: .utf8) else {
+                return "{}"
+            }
+            return value
+        }()
+        let rawPayload: [String: String] = [
+            "observation_contract": "ios-parser-observation-v1",
+            "parser_provenance_available": parserProvenance == nil ? "false" : "true",
+            "parser_provenance_contract": parserProvenance.map { _ in
+                ProductParserProvenance.contractVersion
+            } ?? "legacy_unavailable",
+            "parser_code": parserProvenance?.parserCode ?? "legacy_unknown",
+            "parser_version": parserProvenance?.parserVersion ?? "not_declared",
+            "parser_field_sources": parserFieldSourcesJSON,
+            "source_name": sourceName,
+            "brand_name": brandName,
+            "measurement_availability": measurementAvailability.rawValue,
+            "parser_notice": parserNotice ?? "",
+            "style_number": metadata.styleNo ?? "",
+            "external_variant_id": metadata.externalVariantID ?? "",
+            "external_product_reference": metadata.externalProductReference ?? "",
+            "internal_product_id": resolution.source == "zara" ? resolution.externalProductID : "",
+            "checked_size_name": metadata.checkedSizeName ?? "",
+            "price": price.map(String.init) ?? "",
+            "local_classification_conflict": classificationSafetyAudit.requiresReview ? "true" : "false",
+            "local_classification_conflict_dimensions": classificationSafetyAudit.conflicts
+                .map(\.dimension.rawValue)
+                .joined(separator: ","),
+            "local_classification_conflict_evidence": conflictEvidence,
+            "local_classification_safety_policy_version": ParsedClosetClassificationSafetyAudit.policyVersion
+        ]
+        let observationVariants: [FitMatchProductObservationVariant]
+        if retailerAPIEvidence != nil, observationSizes.isEmpty {
+            // Raw retailer facts can establish classification before a
+            // verified size hierarchy exists. Do not invent a dummy variant
+            // or size merely to carry that evidence.
+            observationVariants = []
+        } else {
+            observationVariants = [
+                FitMatchProductObservationVariant(
+                    externalVariantID: variantID,
+                    variantName: color,
+                    colorCode: color,
+                    colorName: color,
+                    sizes: observationSizes
+                )
+            ]
+        }
+        return FitMatchProductObservationRequest(
+            payload: FitMatchProductObservationPayload(
+                source: resolution.source,
+                externalProductID: resolution.externalProductID,
+                productName: resolution.productName,
+                canonicalURL: canonicalURLString ?? sourceURL.absoluteString,
+                audience: resolution.audience,
+                sourceCategoryPath: resolution.sourceCategoryPath,
+                sourceCategoryCodes: resolution.sourceCategoryCodes ?? [],
+                imageURL: imageURLString,
+                observedAt: formatter.string(from: observedAt),
+                rawPayload: rawPayload,
+                structuredFacts: resolution.structuredFacts,
+                retailerAPIEvidence: retailerAPIEvidence,
+                variants: observationVariants
+            )
+        )
+    }
+
+    /// The database resolves retailer-native measurement codes within the
+    /// provider parser contract. Keep this explicit in every observation;
+    /// relying on a provider-wide default is ambiguous as soon as a retailer
+    /// has more than one supported parser generation.
+    nonisolated private static func observationMeasurementParserCode(
+        sourceCode: String,
+        methodSource: String
+    ) -> String {
+        switch sourceCode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "musinsa": return "actual_size"
+        case "uniqlo": return "size_chart"
+        case "zara": return "zara_kr_size_measure_guide_v1"
+        default:
+            let value = methodSource.trimmingCharacters(in: .whitespacesAndNewlines)
+            return value.isEmpty ? "legacy_unknown" : value
+        }
+    }
+
+    nonisolated private static func observedMeasurementTableVersion(
+        sourceCode: String,
+        records: [ParsedMeasurement]
+    ) -> String? {
+        guard !records.isEmpty else { return nil }
+        let profiles = Set(records.compactMap { record -> String? in
+            guard let profile = record.methodProfile?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+                !profile.isEmpty else { return nil }
+            return profile
+        })
+        let mappingVersions = Set(records.map(\.mappingVersion))
+        guard profiles.count == 1,
+              let profile = profiles.first,
+              records.allSatisfy({ $0.methodProfile == profile }),
+              mappingVersions.count == 1,
+              let mappingVersion = mappingVersions.first,
+              !mappingVersion.isEmpty else { return nil }
+        if sourceCode.lowercased() == "zara",
+           !profile.hasPrefix("zara_kr_measure_guide:") {
+            return nil
+        }
+        let keys = records.map { record in
+            let rawCode = record.rawCode?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let label = record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+            return (rawCode?.isEmpty == false ? rawCode! : label).lowercased()
+        }
+        guard keys.allSatisfy({ !$0.isEmpty }),
+              Set(keys).count == keys.count else { return nil }
+        let source = ([sourceCode.lowercased(), profile, mappingVersion] + keys.sorted())
+            .joined(separator: "|")
+        let digest = SHA256.hash(data: Data(source.utf8))
+            .map { String(format: "%02x", $0) }.joined()
+        return "fitmatch-observed-table-v1:\(digest)"
+    }
+}

@@ -1,0 +1,371 @@
+{
+  "captured_at": "2026-08-21T07:56:47.463Z",
+  "request_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/561619028/size-measure-guide?locale=ko_KR",
+  "http_status": 200,
+  "challenge_detected": false,
+  "response_hash": "3de35f613a3670843d1b095e4f9da423607035d705df3327853f3721496b1915",
+  "response": {
+    "sizeGuideInfo": null,
+    "measureGuideInfo": {
+      "id": "ca34c724-9e87-4d06-bdaa-4566ece2eab6",
+      "name": "봄바초 팬츠",
+      "sizes": [
+        {
+          "id": "2",
+          "name": "S (KR 26)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "S (KR 26)"
+            },
+            {
+              "units": "in",
+              "value": "S (KR 26)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "29.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "11.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist",
+              "descriptionZone": "zone-name-waist-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "53.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "20.9"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "94.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "37.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-lower",
+              "descriptionZone": "zone-name-front-length-lower-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "36.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "14.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-rise",
+              "descriptionZone": "zone-name-front-rise-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "37.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "14.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-rise",
+              "descriptionZone": "zone-name-back-rise-description"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "name": "M (KR 28)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "M (KR 28)"
+            },
+            {
+              "units": "in",
+              "value": "M (KR 28)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "31.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "12.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist",
+              "descriptionZone": "zone-name-waist-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "55.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "21.7"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "95.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "37.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-lower",
+              "descriptionZone": "zone-name-front-length-lower-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "38.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "15.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-rise",
+              "descriptionZone": "zone-name-front-rise-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "39.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "15.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-rise",
+              "descriptionZone": "zone-name-back-rise-description"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "name": "L (KR 30)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "L (KR 30)"
+            },
+            {
+              "units": "in",
+              "value": "L (KR 30)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "34.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "13.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist",
+              "descriptionZone": "zone-name-waist-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "57.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "22.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "96.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "38.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-lower",
+              "descriptionZone": "zone-name-front-length-lower-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "40.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "15.9"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-rise",
+              "descriptionZone": "zone-name-front-rise-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "41.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "16.1"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-rise",
+              "descriptionZone": "zone-name-back-rise-description"
+            }
+          ]
+        }
+      ],
+      "image": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "image",
+            "path": "../../../assets/public/9874/f7ef/faa446e6bb7b/202b711d24d2/",
+            "name": "../../1db20d6ed82f",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": null
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "cm",
+          "type": "measure",
+          "name": "cm",
+          "default": true
+        },
+        {
+          "id": "in",
+          "type": "measure",
+          "name": "in",
+          "default": false
+        }
+      ],
+      "comments": [],
+      "defaultSize": "S (KR 26)",
+      "cleanImage": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "image",
+            "path": "../../assets/public/ed3d/215a/51da46cc889e/ede77864d0f7",
+            "name": "../../SraPantalon",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": null
+          }
+        ]
+      },
+      "section": {
+        "id": "1",
+        "name": "WOMAN"
+      },
+      "productImages": [
+        {
+          "xmedia": [
+            {
+              "datatype": "xmedia",
+              "set": 2,
+              "type": "image",
+              "kind": "image",
+              "path": "../../../assets/public/9872/2cd2/52e943a9a0fe/3551db92b78d/05644812722-e1/",
+              "name": "../../05644812722-e1",
+              "width": 2048,
+              "height": 3072,
+              "timestamp": "1585094400000",
+              "allowedScreens": [
+                "small",
+                "large"
+              ],
+              "isArrowsImage": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

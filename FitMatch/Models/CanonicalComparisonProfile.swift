@@ -44,7 +44,10 @@ struct CanonicalComparisonProfile: Codable, Equatable {
         case "knit_sweater": transformed = "knit_cardigan"
         case "shirt_blouse": transformed = "shirt"
         case "polo_shirt": transformed = "tshirt"
-        case "base_layer_top": transformed = "underwear"
+        // vNext owns base-layer compatibility. The legacy app family model has
+        // no distinct base_layer_top case, so fail closed instead of collapsing
+        // it into generic underwear (or a T-shirt family).
+        case "base_layer_top": transformed = "unknown"
         case "short_leggings", "three_quarter_leggings", "nine_tenths_leggings", "long_leggings": transformed = "leggings"
         default: transformed = comparisonFamily
         }

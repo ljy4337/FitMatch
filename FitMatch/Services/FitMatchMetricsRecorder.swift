@@ -3,6 +3,7 @@ import Foundation
 enum FitMatchMetricProvider: String, Equatable {
     case musinsa
     case uniqlo
+    case zara
     case unsupported
 
     static func resolve(urlString: String) -> Self {
@@ -14,6 +15,9 @@ enum FitMatchMetricProvider: String, Equatable {
         }
         if host == "uniqlo.com" || host.hasSuffix(".uniqlo.com") {
             return .uniqlo
+        }
+        if host == "zara.com" || host.hasSuffix(".zara.com") {
+            return .zara
         }
         return .unsupported
     }
@@ -173,6 +177,8 @@ final class FitMatchMetricsRecorder: FitMatchMetricsRecording {
     static let shared = FitMatchMetricsRecorder()
     static let schemaVersion = 1
     static let countersKey = "FitMatch.metrics.aggregate.v1"
+    static let recentEventsKey = "FitMatch.metrics.recent.v1"
+    static let recentEventLimit = 20
     static let lastUpdatedAtKey = "FitMatch.metrics.lastUpdatedAt.v1"
 
     private let defaults: UserDefaults
@@ -192,7 +198,12 @@ final class FitMatchMetricsRecorder: FitMatchMetricsRecording {
         let current = counters[event.counterKey, default: 0]
         counters[event.counterKey] = current == Int.max ? Int.max : current + 1
         defaults.set(counters, forKey: Self.countersKey)
-        defaults.set(Date(), forKey: Self.lastUpdatedAtKey)
+        let now = Date()
+        defaults.set(now, forKey: Self.lastUpdatedAtKey)
+        // Only finite, typed event keys; never accept error text or retailer payloads.
+        var recent = defaults.stringArray(forKey: Self.recentEventsKey) ?? []
+        recent.append("\(ISO8601DateFormatter().string(from: now)) \(event.counterKey)")
+        defaults.set(Array(recent.suffix(Self.recentEventLimit)), forKey: Self.recentEventsKey)
     }
 
     func snapshot() -> FitMatchMetricsSnapshot {
@@ -208,9 +219,17 @@ final class FitMatchMetricsRecorder: FitMatchMetricsRecording {
     func diagnosticReport(generatedAt: Date = Date()) -> String {
         let snapshot = snapshot()
         let formatter = ISO8601DateFormatter()
+        lock.lock()
+        let recent = defaults.stringArray(forKey: Self.recentEventsKey) ?? []
+        lock.unlock()
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
         var lines = [
             "FitMatch 품질 진단",
             "schema_version=\(snapshot.schemaVersion)",
+            "app_version=\(version)",
+            "app_build=\(build)",
+            "os_version=\(ProcessInfo.processInfo.operatingSystemVersionString)",
             "generated_at=\(formatter.string(from: generatedAt))",
             "last_updated_at=\(snapshot.lastUpdatedAt.map(formatter.string(from:)) ?? "none")",
         ]
@@ -221,6 +240,8 @@ final class FitMatchMetricsRecorder: FitMatchMetricsRecording {
                 "\($0)=\(snapshot.counters[$0, default: 0])"
             })
         }
+        lines.append("recent_events_limit=\(Self.recentEventLimit)")
+        lines.append(contentsOf: recent.suffix(Self.recentEventLimit))
         return lines.joined(separator: "\n") + "\n"
     }
 

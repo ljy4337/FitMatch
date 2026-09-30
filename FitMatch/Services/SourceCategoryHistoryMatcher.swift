@@ -75,6 +75,12 @@ enum SourceCategoryHistoryMatcher {
         UserDefaults.standard.set(data, forKey: mappingStoreKey)
     }
 
+    /// Explicit parser-category choices are personal state. They cannot be
+    /// carried into a later account after account deletion.
+    static func clearStoredMappings(defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: mappingStoreKey)
+    }
+
     private static func matchesByDepth(for product: Product, userFits: [UserFit]) -> [UserFit] {
         guard let productKey = sourceDepthKey(
             sourceTypeRawValue: product.sourceTypeRawValue,

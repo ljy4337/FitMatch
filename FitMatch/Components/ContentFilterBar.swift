@@ -22,52 +22,62 @@ struct ContentFilterBar: View {
     let filters: [ContentFilterItem]
     @Binding var layout: ContentListLayout
 
+    private let filterControlWidth: CGFloat = 148
+
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(filters) { item in
-                    Menu {
-                        ForEach(item.options) { option in
-                            Button {
-                                item.onSelect(option.id)
-                            } label: {
-                                if option.id == item.selectedID {
-                                    Label(option.title, systemImage: "checkmark")
-                                } else {
-                                    Text(option.title)
+        HStack(spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(filters) { item in
+                        Menu {
+                            ForEach(item.options) { option in
+                                Button {
+                                    item.onSelect(option.id)
+                                } label: {
+                                    if option.id == item.selectedID {
+                                        Label(option.title, systemImage: "checkmark")
+                                    } else {
+                                        Text(option.title)
+                                    }
                                 }
                             }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text(item.selectedTitle)
+                                    .font(.caption.weight(.bold))
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2.weight(.bold))
+                                    .accessibilityHidden(true)
+                            }
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 12)
+                            .frame(width: filterControlWidth, height: 34)
+                            .background(Color(.secondarySystemGroupedBackground), in: Capsule())
                         }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text(item.selectedTitle)
-                                .font(.caption.weight(.bold))
-                                .lineLimit(1)
-                            Image(systemName: "chevron.down")
-                                .font(.caption2.weight(.bold))
-                        }
-                        .foregroundStyle(.primary)
-                        .frame(height: 34)
-                        .padding(.horizontal, 12)
-                        .background(Color(.secondarySystemGroupedBackground), in: Capsule())
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(item.selectedTitle)
                     }
-                    .buttonStyle(.plain)
                 }
-
-                Button {
-                    layout.toggle()
-                } label: {
-                    Image(systemName: layout.systemImage)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 38, height: 34)
-                        .background(Color(.secondarySystemGroupedBackground), in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("보기 방식 변경")
+                .padding(.vertical, 1)
             }
-            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                layout.toggle()
+            } label: {
+                Image(systemName: layout.systemImage)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 38, height: 34)
+                    .background(Color(.secondarySystemGroupedBackground), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("보기 방식 변경")
         }
+        .padding(.horizontal, 20)
         .padding(.top, 10)
         .padding(.bottom, 8)
         .background(Color(.systemBackground))

@@ -1,0 +1,341 @@
+import Foundation
+
+enum VNextComparisonEngineAdapterError: LocalizedError, Equatable {
+    case comparisonNotPending(String)
+    case authorizationDenied(String)
+    case classificationNotConfirmed
+    case emptyAuthorizedSet
+    case candidateSetMismatch
+    case duplicateCandidate
+    case excludedMetricUsed(String)
+    case invalidEvidence(UUID)
+    case policySnapshotInvalid
+
+    var errorDescription: String? {
+        switch self {
+        case .comparisonNotPending(let status):
+            return "비교 실행 상태가 계산 대기 상태가 아닙니다: \(status)"
+        case .authorizationDenied(let reason):
+            return "서버 비교 승인이 거부되었습니다: \(reason)"
+        case .classificationNotConfirmed:
+            return "서버에서 확정한 상품만 비교할 수 있습니다."
+        case .emptyAuthorizedSet:
+            return "서버가 승인한 비교 사이즈가 없습니다."
+        case .candidateSetMismatch, .duplicateCandidate:
+            return "서버 비교 후보 스냅샷이 일관되지 않습니다."
+        case .excludedMetricUsed(let code):
+            return "제외된 실측 항목이 비교에 포함됐습니다: \(code)"
+        case .invalidEvidence:
+            return "서버 실측 스냅샷을 검증할 수 없습니다."
+        case .policySnapshotInvalid:
+            return "서버 비교 정책 스냅샷이 올바르지 않습니다."
+        }
+    }
+}
+
+struct VNextComparisonCandidateAnalysis: Equatable, @unchecked Sendable {
+    let productSizeID: UUID
+    let sizeLabel: String
+    /// Retained for result diagnostics/presentation only. It never participates
+    /// in candidate authorization, scoring, ranking, or recommendation.
+    let availability: VNextAvailabilityDTO
+    let result: MeasurementComparisonResult
+    let rank: Int
+}
+
+struct VNextComparisonBatchAnalysis: Equatable, @unchecked Sendable {
+    let comparisonID: UUID
+    let analyses: [VNextComparisonCandidateAnalysis]
+    let recommended: VNextComparisonCandidateAnalysis
+    let completionPayload: VNextComparisonCompletionPayload
+
+    var authorizedCandidateProductSizeIDs: [UUID] {
+        analyses.map(\.productSizeID)
+    }
+}
+
+struct VNextComparisonEngineAdapter {
+    static let engineVersion = VNextCompletedReplayPolicy.currentVersion
+
+    private let scoreCache: VNextAuthorizedScoreCache
+
+    /// These codes originate in the immutable DB begin snapshot. They are
+    /// intentionally mapped only to presentation diagnostics after the engine
+    /// has calculated its DB-authorized evidence; they neither add evidence nor
+    /// affect score, ranking, coverage, or completion payloads.
+    private enum SnapshotExclusionReasonCode: String {
+        case designAxisDifference = "DESIGN_AXIS_DIFFERENCE"
+    }
+
+    init(scoreCache: VNextAuthorizedScoreCache = VNextAuthorizedScoreCache()) {
+        self.scoreCache = scoreCache
+    }
+
+    func analyze(_ begin: VNextBeginComparisonDTO) throws -> VNextComparisonBatchAnalysis {
+        // Decoder callers are not the only callers: a test seam or a future
+        // in-memory recovery path can construct this DTO directly. Validate
+        // the immutable replay contract here before any engine calculation.
+        try FitMatchVNextContractValidator.validateEngineInput(begin)
+        guard begin.resultStatus == "PENDING" else {
+            throw VNextComparisonEngineAdapterError.comparisonNotPending(begin.resultStatus)
+        }
+        guard begin.snapshot.authorization.allowed else {
+            throw VNextComparisonEngineAdapterError.authorizationDenied(
+                begin.snapshot.authorization.reason ?? "blocked"
+            )
+        }
+        guard begin.snapshot.target.classificationStatus == "CONFIRMED" else {
+            throw VNextComparisonEngineAdapterError.classificationNotConfirmed
+        }
+
+        let authorizedIDs = begin.authorizedCandidateProductSizeIDs
+        guard !authorizedIDs.isEmpty else {
+            throw VNextComparisonEngineAdapterError.emptyAuthorizedSet
+        }
+        guard Set(authorizedIDs).count == authorizedIDs.count else {
+            throw VNextComparisonEngineAdapterError.duplicateCandidate
+        }
+        let snapshotIDs = begin.snapshot.target.authorizedCandidateProductSizeIDs
+        let candidateIDs = begin.snapshot.target.candidates.map(\.productSizeID)
+        guard Set(snapshotIDs) == Set(authorizedIDs),
+              Set(candidateIDs) == Set(authorizedIDs),
+              candidateIDs.count == authorizedIDs.count else {
+            throw VNextComparisonEngineAdapterError.candidateSetMismatch
+        }
+
+        let excluded = Set(begin.snapshot.excludedMeasurementCodes)
+        let snapshotPresentationExclusions = Self.presentationExclusions(
+            from: begin.snapshot.authorization.excludedMeasurementReasons,
+            excludedMeasurementCodes: excluded
+        )
+        let activePolicyMetricCount = begin.snapshot.policy.metrics.filter {
+            $0.metricMode == "CANONICAL"
+                && $0.isActive
+                && $0.measurementCode.map { !excluded.contains($0) } == true
+        }.count
+        guard activePolicyMetricCount > 0 else {
+            throw VNextComparisonEngineAdapterError.policySnapshotInvalid
+        }
+
+        var unranked: [(candidate: VNextAuthorizedCandidateDTO, result: MeasurementComparisonResult)] = []
+        for candidate in begin.snapshot.target.candidates {
+            guard candidate.authorization.allowed else {
+                throw VNextComparisonEngineAdapterError.authorizationDenied(
+                    candidate.authorization.reason ?? "candidate_blocked"
+                )
+            }
+            if let excludedCode = candidate.comparisonMeasurements
+                .map(\.measurementCode)
+                .first(where: excluded.contains) {
+                throw VNextComparisonEngineAdapterError.excludedMetricUsed(excludedCode)
+            }
+            guard let result = scoreCache.compare(
+                candidate.comparisonMeasurements,
+                minimum: candidate.authorization.minimumCommon
+                    ?? begin.snapshot.authorization.minimumCommon
+                    ?? 1
+            ) else {
+                throw VNextComparisonEngineAdapterError.invalidEvidence(
+                    candidate.productSizeID
+                )
+            }
+            unranked.append((
+                candidate,
+                Self.applyingPresentationExclusions(
+                    snapshotPresentationExclusions + Self.sleevePresentationExclusions(
+                        candidate: candidate,
+                        referenceSnapshot: begin.snapshot.referenceSnapshot,
+                        alreadyExplained: snapshotPresentationExclusions,
+                        comparedKinds: Set(result.comparedItems.map(\.kind))
+                    ),
+                    to: result
+                )
+            ))
+        }
+
+        let ranked = unranked.sorted {
+            if $0.result.score != $1.result.score {
+                return $0.result.score > $1.result.score
+            }
+            if $0.result.averageDifference != $1.result.averageDifference {
+                return $0.result.averageDifference < $1.result.averageDifference
+            }
+            return $0.candidate.productSizeID.uuidString
+                < $1.candidate.productSizeID.uuidString
+        }
+        let analyses = ranked.enumerated().map { index, entry in
+            VNextComparisonCandidateAnalysis(
+                productSizeID: entry.candidate.productSizeID,
+                sizeLabel: entry.candidate.sizeLabel,
+                availability: entry.candidate.availability,
+                result: entry.result,
+                rank: index + 1
+            )
+        }
+        guard let recommended = analyses.first else {
+            throw VNextComparisonEngineAdapterError.emptyAuthorizedSet
+        }
+
+        let evidence = begin.snapshot.target.candidates.flatMap { candidate in
+            candidate.comparisonMeasurements.map { metric in
+                VNextMetricEvidenceDTO(
+                    productSizeID: candidate.productSizeID,
+                    measurementCode: metric.measurementCode,
+                    referenceValue: metric.referenceValue,
+                    targetValue: metric.targetValue,
+                    difference: metric.difference,
+                    absoluteDifference: metric.absoluteDifference,
+                    weight: metric.weight
+                )
+            }
+        }
+        let recommendedEvidenceCount = begin.snapshot.target.candidates
+            .first(where: { $0.productSizeID == recommended.productSizeID })?
+            .comparisonMeasurements.count ?? 0
+        let coverage = (Double(recommendedEvidenceCount) / Double(activePolicyMetricCount))
+            .rounded(toPlaces: 5)
+        let reliability = Self.reliability(evidenceCount: recommendedEvidenceCount)
+        let completion = VNextComparisonCompletionPayload(
+            recommendedProductSizeID: recommended.productSizeID,
+            score: Double(recommended.result.score),
+            reliability: reliability,
+            coverage: coverage,
+            engineVersion: Self.engineVersion,
+            candidateSizeRanking: analyses.map {
+                VNextCandidateRankingDTO(
+                    productSizeID: $0.productSizeID,
+                    rank: $0.rank,
+                    score: Double($0.result.score)
+                )
+            },
+            metricEvidence: evidence
+        )
+        return VNextComparisonBatchAnalysis(
+            comparisonID: begin.comparisonID,
+            analyses: analyses,
+            recommended: recommended,
+            completionPayload: completion
+        )
+    }
+
+    /// Presentation only: never adds metrics or changes authorized scoring.
+    static func sleevePresentationExclusions(
+        candidate: VNextAuthorizedCandidateDTO,
+        referenceSnapshot: FitMatchJSONValue,
+        alreadyExplained: [MeasurementComparisonExclusion],
+        comparedKinds: Set<MeasurementKind>
+    ) -> [MeasurementComparisonExclusion] {
+        guard !comparedKinds.contains(.sleeveLength),
+              !alreadyExplained.contains(where: { $0.kind == .sleeveLength }),
+              let measurements = candidate.canonicalMeasurements?.measurements,
+              let referenceRows = referenceSnapshot.objectValue?["measurements"]?.arrayValue else {
+            return []
+        }
+        let sleeveCodes: Set<MeasurementCode> = [
+            .sleeveShoulderSeamToCuff, .sleeveCenterBackToCuff, .sleeveRaglanNeckToCuff
+        ]
+        let targetCodes = Set(measurements.compactMap { measurement -> MeasurementCode? in
+            guard measurement.value.isFinite, measurement.value > 0,
+                  measurement.unitCode.lowercased() == "cm",
+                  let projection = FitMatchCanonicalMeasurementCode.projection(
+                    for: measurement.measurementCode, basisCode: measurement.basisCode
+                  ), sleeveCodes.contains(projection.localCode) else { return nil }
+            return projection.localCode
+        })
+        let referenceCodes = Set(referenceRows.compactMap { row -> MeasurementCode? in
+            guard let fields = row.objectValue,
+                  let value = fields["value"]?.numberValue, value.isFinite, value > 0,
+                  fields["unit_code"]?.stringValue?.lowercased() == "cm",
+                  let code = fields["fitmatch_measurement_code"]?.stringValue else { return nil }
+            let basis = fields["raw_label_snapshot"]?.stringValue?
+                .split(separator: ".").last.map(String.init)
+            guard let projection = FitMatchCanonicalMeasurementCode.projection(
+                for: code, basisCode: basis
+            ), sleeveCodes.contains(projection.localCode) else { return nil }
+            return projection.localCode
+        })
+        // Do not pick the first of multiple definitions or infer an unknown basis.
+        guard targetCodes.count == 1, referenceCodes.count == 1,
+              let productCode = targetCodes.first, let referenceCode = referenceCodes.first,
+              productCode != referenceCode else { return [] }
+        return [MeasurementComparisonExclusion(
+            kind: .sleeveLength, reason: .incompatibleMeasurementCode,
+            productCode: productCode, referenceCode: referenceCode
+        )]
+    }
+
+    private static func reliability(evidenceCount: Int) -> Int {
+        // Coverage remains a separately persisted snapshot fact. Reliability
+        // reflects only the number of server-approved metrics actually used.
+        min(5, max(1, evidenceCount))
+    }
+
+    private static func presentationExclusions(
+        from reasons: [VNextMeasurementExclusionReasonDTO],
+        excludedMeasurementCodes: Set<String>
+    ) -> [MeasurementComparisonExclusion] {
+        var seen = Set<String>()
+        return reasons.compactMap { reason in
+            guard excludedMeasurementCodes.contains(reason.measurementCode),
+                  seen.insert("\(reason.measurementCode)|\(reason.reasonCode)").inserted,
+                  SnapshotExclusionReasonCode(rawValue: reason.reasonCode) == .designAxisDifference,
+                  let identity = MeasurementComparisonEngine.authorizedMeasurementIdentity(
+                    for: reason.measurementCode
+                  ) else {
+                return nil
+            }
+            return MeasurementComparisonExclusion(
+                kind: identity.kind,
+                reason: .designAxisDifference,
+                productCode: identity.localCode,
+                referenceCode: identity.localCode
+            )
+        }
+    }
+
+    private static func applyingPresentationExclusions(
+        _ exclusions: [MeasurementComparisonExclusion],
+        to result: MeasurementComparisonResult
+    ) -> MeasurementComparisonResult {
+        guard !exclusions.isEmpty else { return result }
+        return MeasurementComparisonResult(
+            status: result.status,
+            score: result.score,
+            comparedItems: result.comparedItems,
+            exclusions: result.exclusions + exclusions,
+            averageDifference: result.averageDifference,
+            minimumComparableCount: result.minimumComparableCount,
+            requiredKinds: result.requiredKinds,
+            minimumRequiredKindCount: result.minimumRequiredKindCount,
+            requiredAllKinds: result.requiredAllKinds,
+            expectedWeightSum: result.expectedWeightSum,
+            usedWeightSum: result.usedWeightSum
+        )
+    }
+}
+
+@MainActor
+final class VNextComparisonSessionStore {
+    static let shared = VNextComparisonSessionStore()
+
+    private var sessions: [UUID: VNextComparisonBatchAnalysis] = [:]
+
+    func store(_ analysis: VNextComparisonBatchAnalysis, historyID: UUID) {
+        sessions[historyID] = analysis
+    }
+
+    func analysis(for historyID: UUID) -> VNextComparisonBatchAnalysis? {
+        sessions[historyID]
+    }
+
+    func remove(historyID: UUID) {
+        sessions.removeValue(forKey: historyID)
+    }
+}
+
+private extension Double {
+    func rounded(toPlaces places: Int) -> Double {
+        let divisor = pow(10, Double(places))
+        return (self * divisor).rounded() / divisor
+    }
+}

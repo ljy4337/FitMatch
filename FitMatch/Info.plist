@@ -37,6 +37,12 @@
 	<string></string>
 	<key>FitMatchSupportURL</key>
 	<string></string>
+	<key>FitMatchSupabaseURL</key>
+	<string>https://hnkplvyegonlhumlejst.supabase.co</string>
+	<key>FitMatchSupabasePublishableKey</key>
+	<string>sb_publishable_CMZ8R9HL591tlWrOGbkj5g_TO64dNNP</string>
+	<key>FitMatchDatabaseShadowEnabled</key>
+	<true/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>musinsa</string>

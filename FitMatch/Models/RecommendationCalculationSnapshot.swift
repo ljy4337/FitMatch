@@ -41,6 +41,9 @@ struct RecommendationCalculationSnapshot: Codable, Equatable {
     let usedMeasurements: [UsedMeasurementCalculationSnapshot]
     let excludedMeasurements: [MeasurementComparisonExclusion]
     let comparisonCoverage: Double
+    /// Present only for a completed vNext comparison after the server has
+    /// accepted the engine payload. Legacy snapshots intentionally omit it.
+    let serverApprovedReliability: Int?
 
     var usages: [MeasurementComparisonUsage] {
         usedMeasurements.map {
@@ -52,7 +55,10 @@ struct RecommendationCalculationSnapshot: Codable, Equatable {
         }
     }
 
-    static func make(comparison: MeasurementComparisonResult) -> RecommendationCalculationSnapshot {
+    static func make(
+        comparison: MeasurementComparisonResult,
+        serverApprovedReliability: Int? = nil
+    ) -> RecommendationCalculationSnapshot {
         RecommendationCalculationSnapshot(
             version: currentVersion,
             usedMeasurements: comparison.comparedItems.map {
@@ -69,7 +75,8 @@ struct RecommendationCalculationSnapshot: Codable, Equatable {
                 )
             },
             excludedMeasurements: comparison.exclusions,
-            comparisonCoverage: comparison.comparisonCoverage
+            comparisonCoverage: comparison.comparisonCoverage,
+            serverApprovedReliability: serverApprovedReliability
         )
     }
 }

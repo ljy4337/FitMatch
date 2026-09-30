@@ -1,0 +1,296 @@
+product_id,product_code,product_url,failure_stage,failure_type,error_message,retry_count,final_status
+E460406-000,460406,https://www.uniqlo.com/kr/ko/products/E460406-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E451538-000,451538,https://www.uniqlo.com/kr/ko/products/E451538-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E461010-000,461010,https://www.uniqlo.com/kr/ko/products/E461010-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E462734-000,462734,https://www.uniqlo.com/kr/ko/products/E462734-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E466487-000,466487,https://www.uniqlo.com/kr/ko/products/E466487-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E467854-000,467854,https://www.uniqlo.com/kr/ko/products/E467854-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E464926-000,464926,https://www.uniqlo.com/kr/ko/products/E464926-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E470253-000,470253,https://www.uniqlo.com/kr/ko/products/E470253-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E470255-000,470255,https://www.uniqlo.com/kr/ko/products/E470255-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E475127-000,475127,https://www.uniqlo.com/kr/ko/products/E475127-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E472951-000,472951,https://www.uniqlo.com/kr/ko/products/E472951-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E476119-000,476119,https://www.uniqlo.com/kr/ko/products/E476119-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E471195-000,471195,https://www.uniqlo.com/kr/ko/products/E471195-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E470040-000,470040,https://www.uniqlo.com/kr/ko/products/E470040-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469756-000,469756,https://www.uniqlo.com/kr/ko/products/E469756-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E470126-000,470126,https://www.uniqlo.com/kr/ko/products/E470126-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469426-000,469426,https://www.uniqlo.com/kr/ko/products/E469426-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469841-000,469841,https://www.uniqlo.com/kr/ko/products/E469841-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474833-000,474833,https://www.uniqlo.com/kr/ko/products/E474833-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474053-000,474053,https://www.uniqlo.com/kr/ko/products/E474053-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E475769-000,475769,https://www.uniqlo.com/kr/ko/products/E475769-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474559-000,474559,https://www.uniqlo.com/kr/ko/products/E474559-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E475564-000,475564,https://www.uniqlo.com/kr/ko/products/E475564-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E473612-000,473612,https://www.uniqlo.com/kr/ko/products/E473612-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474408-000,474408,https://www.uniqlo.com/kr/ko/products/E474408-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E475629-000,475629,https://www.uniqlo.com/kr/ko/products/E475629-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E473586-000,473586,https://www.uniqlo.com/kr/ko/products/E473586-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E473586-001,473586,https://www.uniqlo.com/kr/ko/products/E473586-001/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E473630-000,473630,https://www.uniqlo.com/kr/ko/products/E473630-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479597-000,479597,https://www.uniqlo.com/kr/ko/products/E479597-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479598-000,479598,https://www.uniqlo.com/kr/ko/products/E479598-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478577-000,478577,https://www.uniqlo.com/kr/ko/products/E478577-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E480184-000,480184,https://www.uniqlo.com/kr/ko/products/E480184-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478141-000,478141,https://www.uniqlo.com/kr/ko/products/E478141-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479703-000,479703,https://www.uniqlo.com/kr/ko/products/E479703-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478427-000,478427,https://www.uniqlo.com/kr/ko/products/E478427-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479616-000,479616,https://www.uniqlo.com/kr/ko/products/E479616-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478314-000,478314,https://www.uniqlo.com/kr/ko/products/E478314-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478277-000,478277,https://www.uniqlo.com/kr/ko/products/E478277-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478434-000,478434,https://www.uniqlo.com/kr/ko/products/E478434-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E449406-000,449406,https://www.uniqlo.com/kr/ko/products/E449406-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E462445-000,462445,https://www.uniqlo.com/kr/ko/products/E462445-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E460112-000,460112,https://www.uniqlo.com/kr/ko/products/E460112-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E460113-000,460113,https://www.uniqlo.com/kr/ko/products/E460113-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E461550-000,461550,https://www.uniqlo.com/kr/ko/products/E461550-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E464907-000,464907,https://www.uniqlo.com/kr/ko/products/E464907-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E464908-000,464908,https://www.uniqlo.com/kr/ko/products/E464908-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E464155-000,464155,https://www.uniqlo.com/kr/ko/products/E464155-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E464159-000,464159,https://www.uniqlo.com/kr/ko/products/E464159-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E464158-000,464158,https://www.uniqlo.com/kr/ko/products/E464158-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E464160-000,464160,https://www.uniqlo.com/kr/ko/products/E464160-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E467194-000,467194,https://www.uniqlo.com/kr/ko/products/E467194-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469069-000,469069,https://www.uniqlo.com/kr/ko/products/E469069-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469070-000,469070,https://www.uniqlo.com/kr/ko/products/E469070-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469071-000,469071,https://www.uniqlo.com/kr/ko/products/E469071-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469072-000,469072,https://www.uniqlo.com/kr/ko/products/E469072-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469073-000,469073,https://www.uniqlo.com/kr/ko/products/E469073-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469074-000,469074,https://www.uniqlo.com/kr/ko/products/E469074-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E469485-000,469485,https://www.uniqlo.com/kr/ko/products/E469485-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E476105-000,476105,https://www.uniqlo.com/kr/ko/products/E476105-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474561-000,474561,https://www.uniqlo.com/kr/ko/products/E474561-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E476513-000,476513,https://www.uniqlo.com/kr/ko/products/E476513-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E477837-000,477837,https://www.uniqlo.com/kr/ko/products/E477837-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474562-000,474562,https://www.uniqlo.com/kr/ko/products/E474562-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E476515-000,476515,https://www.uniqlo.com/kr/ko/products/E476515-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E477095-000,477095,https://www.uniqlo.com/kr/ko/products/E477095-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E477096-000,477096,https://www.uniqlo.com/kr/ko/products/E477096-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E477097-000,477097,https://www.uniqlo.com/kr/ko/products/E477097-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E477098-000,477098,https://www.uniqlo.com/kr/ko/products/E477098-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E477099-000,477099,https://www.uniqlo.com/kr/ko/products/E477099-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E477105-000,477105,https://www.uniqlo.com/kr/ko/products/E477105-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E480952-000,480952,https://www.uniqlo.com/kr/ko/products/E480952-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E480953-000,480953,https://www.uniqlo.com/kr/ko/products/E480953-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479310-000,479310,https://www.uniqlo.com/kr/ko/products/E479310-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474983-000,474983,https://www.uniqlo.com/kr/ko/products/E474983-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E476548-000,476548,https://www.uniqlo.com/kr/ko/products/E476548-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E476973-000,476973,https://www.uniqlo.com/kr/ko/products/E476973-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E476596-000,476596,https://www.uniqlo.com/kr/ko/products/E476596-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E480019-000,480019,https://www.uniqlo.com/kr/ko/products/E480019-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474411-000,474411,https://www.uniqlo.com/kr/ko/products/E474411-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E477868-000,477868,https://www.uniqlo.com/kr/ko/products/E477868-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478986-000,478986,https://www.uniqlo.com/kr/ko/products/E478986-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E475676-000,475676,https://www.uniqlo.com/kr/ko/products/E475676-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478507-000,478507,https://www.uniqlo.com/kr/ko/products/E478507-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481001-000,481001,https://www.uniqlo.com/kr/ko/products/E481001-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481466-000,481466,https://www.uniqlo.com/kr/ko/products/E481466-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E483072-000,483072,https://www.uniqlo.com/kr/ko/products/E483072-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481236-000,481236,https://www.uniqlo.com/kr/ko/products/E481236-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E480886-000,480886,https://www.uniqlo.com/kr/ko/products/E480886-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E473792-000,473792,https://www.uniqlo.com/kr/ko/products/E473792-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478428-000,478428,https://www.uniqlo.com/kr/ko/products/E478428-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478560-000,478560,https://www.uniqlo.com/kr/ko/products/E478560-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478561-000,478561,https://www.uniqlo.com/kr/ko/products/E478561-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478562-000,478562,https://www.uniqlo.com/kr/ko/products/E478562-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478563-000,478563,https://www.uniqlo.com/kr/ko/products/E478563-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478564-000,478564,https://www.uniqlo.com/kr/ko/products/E478564-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478565-000,478565,https://www.uniqlo.com/kr/ko/products/E478565-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E478566-000,478566,https://www.uniqlo.com/kr/ko/products/E478566-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481453-000,481453,https://www.uniqlo.com/kr/ko/products/E481453-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481022-000,481022,https://www.uniqlo.com/kr/ko/products/E481022-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481452-000,481452,https://www.uniqlo.com/kr/ko/products/E481452-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479300-000,479300,https://www.uniqlo.com/kr/ko/products/E479300-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479195-000,479195,https://www.uniqlo.com/kr/ko/products/E479195-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479664-000,479664,https://www.uniqlo.com/kr/ko/products/E479664-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481491-000,481491,https://www.uniqlo.com/kr/ko/products/E481491-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484800-000,484800,https://www.uniqlo.com/kr/ko/products/E484800-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484801-000,484801,https://www.uniqlo.com/kr/ko/products/E484801-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481619-000,481619,https://www.uniqlo.com/kr/ko/products/E481619-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481620-000,481620,https://www.uniqlo.com/kr/ko/products/E481620-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479076-000,479076,https://www.uniqlo.com/kr/ko/products/E479076-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481109-000,481109,https://www.uniqlo.com/kr/ko/products/E481109-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482994-000,482994,https://www.uniqlo.com/kr/ko/products/E482994-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481892-000,481892,https://www.uniqlo.com/kr/ko/products/E481892-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E481891-000,481891,https://www.uniqlo.com/kr/ko/products/E481891-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482253-000,482253,https://www.uniqlo.com/kr/ko/products/E482253-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482244-000,482244,https://www.uniqlo.com/kr/ko/products/E482244-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482714-000,482714,https://www.uniqlo.com/kr/ko/products/E482714-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E487983-000,487983,https://www.uniqlo.com/kr/ko/products/E487983-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E487982-000,487982,https://www.uniqlo.com/kr/ko/products/E487982-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484912-000,484912,https://www.uniqlo.com/kr/ko/products/E484912-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482159-000,482159,https://www.uniqlo.com/kr/ko/products/E482159-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E448036-001,448036,https://www.uniqlo.com/kr/ko/products/E448036-001/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482168-000,482168,https://www.uniqlo.com/kr/ko/products/E482168-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482169-000,482169,https://www.uniqlo.com/kr/ko/products/E482169-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484135-000,484135,https://www.uniqlo.com/kr/ko/products/E484135-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484519-000,484519,https://www.uniqlo.com/kr/ko/products/E484519-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E486329-000,486329,https://www.uniqlo.com/kr/ko/products/E486329-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484101-000,484101,https://www.uniqlo.com/kr/ko/products/E484101-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482177-000,482177,https://www.uniqlo.com/kr/ko/products/E482177-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482178-000,482178,https://www.uniqlo.com/kr/ko/products/E482178-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484102-000,484102,https://www.uniqlo.com/kr/ko/products/E484102-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484103-000,484103,https://www.uniqlo.com/kr/ko/products/E484103-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484104-000,484104,https://www.uniqlo.com/kr/ko/products/E484104-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484105-000,484105,https://www.uniqlo.com/kr/ko/products/E484105-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484106-000,484106,https://www.uniqlo.com/kr/ko/products/E484106-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484107-000,484107,https://www.uniqlo.com/kr/ko/products/E484107-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484108-000,484108,https://www.uniqlo.com/kr/ko/products/E484108-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E487490-000,487490,https://www.uniqlo.com/kr/ko/products/E487490-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E483286-000,483286,https://www.uniqlo.com/kr/ko/products/E483286-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E487955-000,487955,https://www.uniqlo.com/kr/ko/products/E487955-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E485223-000,485223,https://www.uniqlo.com/kr/ko/products/E485223-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489243-000,489243,https://www.uniqlo.com/kr/ko/products/E489243-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489243-001,489243,https://www.uniqlo.com/kr/ko/products/E489243-001/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E474011-000,474011,https://www.uniqlo.com/kr/ko/products/E474011-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484631-000,484631,https://www.uniqlo.com/kr/ko/products/E484631-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E487436-000,487436,https://www.uniqlo.com/kr/ko/products/E487436-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484629-000,484629,https://www.uniqlo.com/kr/ko/products/E484629-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E486328-000,486328,https://www.uniqlo.com/kr/ko/products/E486328-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E487854-000,487854,https://www.uniqlo.com/kr/ko/products/E487854-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489671-000,489671,https://www.uniqlo.com/kr/ko/products/E489671-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489672-000,489672,https://www.uniqlo.com/kr/ko/products/E489672-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489557-000,489557,https://www.uniqlo.com/kr/ko/products/E489557-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E488850-000,488850,https://www.uniqlo.com/kr/ko/products/E488850-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489416-000,489416,https://www.uniqlo.com/kr/ko/products/E489416-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489686-000,489686,https://www.uniqlo.com/kr/ko/products/E489686-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489687-000,489687,https://www.uniqlo.com/kr/ko/products/E489687-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E482246-000,482246,https://www.uniqlo.com/kr/ko/products/E482246-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E491154-000,491154,https://www.uniqlo.com/kr/ko/products/E491154-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E491155-000,491155,https://www.uniqlo.com/kr/ko/products/E491155-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E479751-000,479751,https://www.uniqlo.com/kr/ko/products/E479751-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E484855-000,484855,https://www.uniqlo.com/kr/ko/products/E484855-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E486816-000,486816,https://www.uniqlo.com/kr/ko/products/E486816-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E487270-000,487270,https://www.uniqlo.com/kr/ko/products/E487270-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E489108-000,489108,https://www.uniqlo.com/kr/ko/products/E489108-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E487257-000,487257,https://www.uniqlo.com/kr/ko/products/E487257-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E491303-000,491303,https://www.uniqlo.com/kr/ko/products/E491303-000/00,product_detail,DETAIL_UNAVAILABLE,HTTP 404; HTML fallback: no PDP product entity,0,FAILED
+E433776-000,433776,https://www.uniqlo.com/kr/ko/products/E433776-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E441897-000,441897,https://www.uniqlo.com/kr/ko/products/E441897-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E444181-000,444181,https://www.uniqlo.com/kr/ko/products/E444181-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E452029-000,452029,https://www.uniqlo.com/kr/ko/products/E452029-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E457267-000,457267,https://www.uniqlo.com/kr/ko/products/E457267-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E457288-000,457288,https://www.uniqlo.com/kr/ko/products/E457288-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E460431-000,460431,https://www.uniqlo.com/kr/ko/products/E460431-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E461025-000,461025,https://www.uniqlo.com/kr/ko/products/E461025-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E461053-000,461053,https://www.uniqlo.com/kr/ko/products/E461053-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E462216-000,462216,https://www.uniqlo.com/kr/ko/products/E462216-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E462220-000,462220,https://www.uniqlo.com/kr/ko/products/E462220-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E462233-000,462233,https://www.uniqlo.com/kr/ko/products/E462233-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E462237-000,462237,https://www.uniqlo.com/kr/ko/products/E462237-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E462244-000,462244,https://www.uniqlo.com/kr/ko/products/E462244-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E464284-000,464284,https://www.uniqlo.com/kr/ko/products/E464284-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E464334-000,464334,https://www.uniqlo.com/kr/ko/products/E464334-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E464384-000,464384,https://www.uniqlo.com/kr/ko/products/E464384-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E464386-000,464386,https://www.uniqlo.com/kr/ko/products/E464386-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E464390-000,464390,https://www.uniqlo.com/kr/ko/products/E464390-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E464392-000,464392,https://www.uniqlo.com/kr/ko/products/E464392-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E467322-000,467322,https://www.uniqlo.com/kr/ko/products/E467322-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E467421-000,467421,https://www.uniqlo.com/kr/ko/products/E467421-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E469700-000,469700,https://www.uniqlo.com/kr/ko/products/E469700-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E469996-000,469996,https://www.uniqlo.com/kr/ko/products/E469996-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E470015-000,470015,https://www.uniqlo.com/kr/ko/products/E470015-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E470836-000,470836,https://www.uniqlo.com/kr/ko/products/E470836-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E470960-000,470960,https://www.uniqlo.com/kr/ko/products/E470960-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E471947-000,471947,https://www.uniqlo.com/kr/ko/products/E471947-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E471951-000,471951,https://www.uniqlo.com/kr/ko/products/E471951-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E471958-000,471958,https://www.uniqlo.com/kr/ko/products/E471958-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E471968-000,471968,https://www.uniqlo.com/kr/ko/products/E471968-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E471972-000,471972,https://www.uniqlo.com/kr/ko/products/E471972-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E472785-000,472785,https://www.uniqlo.com/kr/ko/products/E472785-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E472901-000,472901,https://www.uniqlo.com/kr/ko/products/E472901-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E473474-000,473474,https://www.uniqlo.com/kr/ko/products/E473474-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E473953-000,473953,https://www.uniqlo.com/kr/ko/products/E473953-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E473968-000,473968,https://www.uniqlo.com/kr/ko/products/E473968-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E473970-000,473970,https://www.uniqlo.com/kr/ko/products/E473970-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E474155-000,474155,https://www.uniqlo.com/kr/ko/products/E474155-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E475461-000,475461,https://www.uniqlo.com/kr/ko/products/E475461-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E475638-000,475638,https://www.uniqlo.com/kr/ko/products/E475638-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E476379-000,476379,https://www.uniqlo.com/kr/ko/products/E476379-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E476641-000,476641,https://www.uniqlo.com/kr/ko/products/E476641-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E476764-000,476764,https://www.uniqlo.com/kr/ko/products/E476764-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E477074-000,477074,https://www.uniqlo.com/kr/ko/products/E477074-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E478303-000,478303,https://www.uniqlo.com/kr/ko/products/E478303-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E478312-000,478312,https://www.uniqlo.com/kr/ko/products/E478312-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E479193-000,479193,https://www.uniqlo.com/kr/ko/products/E479193-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E479194-000,479194,https://www.uniqlo.com/kr/ko/products/E479194-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E479546-000,479546,https://www.uniqlo.com/kr/ko/products/E479546-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E479741-000,479741,https://www.uniqlo.com/kr/ko/products/E479741-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E480716-000,480716,https://www.uniqlo.com/kr/ko/products/E480716-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E480721-000,480721,https://www.uniqlo.com/kr/ko/products/E480721-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E480726-000,480726,https://www.uniqlo.com/kr/ko/products/E480726-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E480727-000,480727,https://www.uniqlo.com/kr/ko/products/E480727-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E481091-000,481091,https://www.uniqlo.com/kr/ko/products/E481091-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E481104-000,481104,https://www.uniqlo.com/kr/ko/products/E481104-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E481898-000,481898,https://www.uniqlo.com/kr/ko/products/E481898-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E481972-000,481972,https://www.uniqlo.com/kr/ko/products/E481972-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E481973-000,481973,https://www.uniqlo.com/kr/ko/products/E481973-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E481978-000,481978,https://www.uniqlo.com/kr/ko/products/E481978-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482006-000,482006,https://www.uniqlo.com/kr/ko/products/E482006-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482606-000,482606,https://www.uniqlo.com/kr/ko/products/E482606-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482638-000,482638,https://www.uniqlo.com/kr/ko/products/E482638-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482664-000,482664,https://www.uniqlo.com/kr/ko/products/E482664-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482722-000,482722,https://www.uniqlo.com/kr/ko/products/E482722-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482727-000,482727,https://www.uniqlo.com/kr/ko/products/E482727-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482729-000,482729,https://www.uniqlo.com/kr/ko/products/E482729-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482730-000,482730,https://www.uniqlo.com/kr/ko/products/E482730-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E482732-000,482732,https://www.uniqlo.com/kr/ko/products/E482732-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E484897-000,484897,https://www.uniqlo.com/kr/ko/products/E484897-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E484958-000,484958,https://www.uniqlo.com/kr/ko/products/E484958-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485005-000,485005,https://www.uniqlo.com/kr/ko/products/E485005-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485207-000,485207,https://www.uniqlo.com/kr/ko/products/E485207-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485394-000,485394,https://www.uniqlo.com/kr/ko/products/E485394-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485396-000,485396,https://www.uniqlo.com/kr/ko/products/E485396-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485397-000,485397,https://www.uniqlo.com/kr/ko/products/E485397-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485398-000,485398,https://www.uniqlo.com/kr/ko/products/E485398-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485400-000,485400,https://www.uniqlo.com/kr/ko/products/E485400-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485403-000,485403,https://www.uniqlo.com/kr/ko/products/E485403-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485408-000,485408,https://www.uniqlo.com/kr/ko/products/E485408-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485411-000,485411,https://www.uniqlo.com/kr/ko/products/E485411-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485416-000,485416,https://www.uniqlo.com/kr/ko/products/E485416-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E485493-000,485493,https://www.uniqlo.com/kr/ko/products/E485493-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment sizeChart rows returned,0,MISSING
+E486423-000,486423,https://www.uniqlo.com/kr/ko/products/E486423-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486423-001,486423,https://www.uniqlo.com/kr/ko/products/E486423-001/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486424-000,486424,https://www.uniqlo.com/kr/ko/products/E486424-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486424-003,486424,https://www.uniqlo.com/kr/ko/products/E486424-003/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486897-000,486897,https://www.uniqlo.com/kr/ko/products/E486897-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486910-000,486910,https://www.uniqlo.com/kr/ko/products/E486910-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486916-000,486916,https://www.uniqlo.com/kr/ko/products/E486916-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486945-000,486945,https://www.uniqlo.com/kr/ko/products/E486945-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486948-000,486948,https://www.uniqlo.com/kr/ko/products/E486948-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486955-000,486955,https://www.uniqlo.com/kr/ko/products/E486955-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E486957-000,486957,https://www.uniqlo.com/kr/ko/products/E486957-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487093-000,487093,https://www.uniqlo.com/kr/ko/products/E487093-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487096-000,487096,https://www.uniqlo.com/kr/ko/products/E487096-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487133-000,487133,https://www.uniqlo.com/kr/ko/products/E487133-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487136-000,487136,https://www.uniqlo.com/kr/ko/products/E487136-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487141-000,487141,https://www.uniqlo.com/kr/ko/products/E487141-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487144-000,487144,https://www.uniqlo.com/kr/ko/products/E487144-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487149-000,487149,https://www.uniqlo.com/kr/ko/products/E487149-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487152-000,487152,https://www.uniqlo.com/kr/ko/products/E487152-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E487153-000,487153,https://www.uniqlo.com/kr/ko/products/E487153-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488091-000,488091,https://www.uniqlo.com/kr/ko/products/E488091-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488093-000,488093,https://www.uniqlo.com/kr/ko/products/E488093-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488094-000,488094,https://www.uniqlo.com/kr/ko/products/E488094-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488096-000,488096,https://www.uniqlo.com/kr/ko/products/E488096-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488105-000,488105,https://www.uniqlo.com/kr/ko/products/E488105-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488106-000,488106,https://www.uniqlo.com/kr/ko/products/E488106-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488109-000,488109,https://www.uniqlo.com/kr/ko/products/E488109-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488145-000,488145,https://www.uniqlo.com/kr/ko/products/E488145-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488148-000,488148,https://www.uniqlo.com/kr/ko/products/E488148-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488149-000,488149,https://www.uniqlo.com/kr/ko/products/E488149-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488359-000,488359,https://www.uniqlo.com/kr/ko/products/E488359-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488947-000,488947,https://www.uniqlo.com/kr/ko/products/E488947-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488957-000,488957,https://www.uniqlo.com/kr/ko/products/E488957-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488958-000,488958,https://www.uniqlo.com/kr/ko/products/E488958-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488960-000,488960,https://www.uniqlo.com/kr/ko/products/E488960-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488961-000,488961,https://www.uniqlo.com/kr/ko/products/E488961-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E488962-000,488962,https://www.uniqlo.com/kr/ko/products/E488962-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E489045-000,489045,https://www.uniqlo.com/kr/ko/products/E489045-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E489163-000,489163,https://www.uniqlo.com/kr/ko/products/E489163-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E489455-000,489455,https://www.uniqlo.com/kr/ko/products/E489455-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E491888-000,491888,https://www.uniqlo.com/kr/ko/products/E491888-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E491889-000,491889,https://www.uniqlo.com/kr/ko/products/E491889-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E492199-000,492199,https://www.uniqlo.com/kr/ko/products/E492199-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E492200-000,492200,https://www.uniqlo.com/kr/ko/products/E492200-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING
+E492318-000,492318,https://www.uniqlo.com/kr/ko/products/E492318-000/00,garment_size_chart,NO_CONFIRMED_GARMENT_MEASUREMENTS,No garment measurement rows remained after body/recommended-size fields were separated,0,MISSING

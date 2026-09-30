@@ -1,0 +1,298 @@
+FitMatch — Codex Max Final 3-P0 Remediation
+Date: 2026-08-29 KST
+
+FINAL VERDICT
+
+SWIFT P0 REMEDIATION READY FOR ULTRA RE-AUDIT
+
+The three Swift release-path P0s identified by the independent Ultra audit are
+fixed with schema-free, vNext-specific changes. The final critical regression is
+86 PASS / 0 FAIL / 0 SKIP. App build and test-target build pass. Production DB,
+Edge, migrations, scorer formulas, navigation, TabBar, Share Extension, and
+SwiftData stored schema were not changed.
+
+Repository state
+
+- Branch: connectDB
+- Start HEAD: 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+- End HEAD: 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+- Existing dirty working tree: preserved; no reset/restore/stash/clean
+- Commit/push: 0
+- Production DB writes/migrations: 0
+- Edge edits/deploys in this remediation: 0
+
+CHANGED FILES — THIS REMEDIATION
+
+Production Swift
+
+- FitMatch/Services/RecommendationHistoryStore.swift
+- FitMatch/Services/VNextHistoryCacheHydrator.swift
+- FitMatch/Services/FitMatchClosetSyncCoordinator.swift
+- FitMatch/Models/UserFit.swift
+- FitMatch/Models/FitMatchClassificationAuthorityProvenance.swift
+- FitMatch/ContentView.swift
+- FitMatch/Views/AddComparedProductToClosetSheet.swift
+- FitMatch/Views/ClosetItemDetailView.swift
+- FitMatch/Views/CompareFlowSheet.swift
+- FitMatch/Views/GlobalSearchView.swift
+- FitMatch/Views/HomeView.swift
+- FitMatch/Views/MyClosetView.swift
+- FitMatch/Views/MyPageView.swift
+- FitMatch/Views/RecommendationResultView.swift
+- FitMatch/Views/ShoppingProductFormView.swift
+
+Tests
+
+- FitMatchTests/FitMatchP0RemediationRegressionTests.swift
+- FitMatchTests/FitMatchClosetSyncCoordinatorTests.swift
+- FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift
+- FitMatchTests/FitMatchComparisonPermitSequencingTests.swift
+
+Documentation/artifacts
+
+- Docs/CodexSessionHandoff.md
+- Docs/FitMatchFinal3P0Remediation-20260829.txt
+- FitMatchFinal3P0RemediationChangedFiles-20260829.zip
+
+P0-1 HISTORY EXACT IDENTITY
+
+Root cause
+
+The vNext completed path called the legacy RecommendationHistoryStore.saveUnique
+policy. That policy matches Product by URL/code/name, falls back from a missing
+ProductSize UUID to a size label, and removes same-product histories. Those rules
+are valid only for the legacy/manual cache and violate immutable server UUID
+identity.
+
+Pre-fix regression evidence
+
+- P0 history suite: 0 PASS / 2 FAIL.
+- A same-URL/code/name legacy Product replaced the incoming server Product UUID.
+- A same-label legacy size replaced the exact server ProductSize UUID.
+- The authorized ProductSize UUID intersection became empty.
+- Two completed comparisons for one target and different references collapsed to
+  one history.
+
+Minimal fix
+
+- Added RecommendationHistoryStore.saveCompletedVNext as an explicit vNext-only
+  persistence contract.
+- It accepts only schema-v2 server-completed histories with a calculation snapshot.
+- Product reuse is exact Product UUID only.
+- ProductSize reuse is exact ProductSize UUID only.
+- URL, product code, product name, and size label are never vNext identity
+  fallbacks.
+- History replay is idempotent only by exact immutable comparison/history UUID.
+- Other histories for the same Product are retained.
+- The legacy/manual saveUnique behavior remains separate and unchanged.
+- CompareFlowSheet, ShoppingProductFormView, and the release Result path route
+  server-approved history through saveCompletedVNext.
+- Server completion remains before history creation/cache persistence. A rejected
+  completion returns before saveCompletedVNext or session-cache store.
+
+Post-fix assertions
+
+- Exact server Product UUID preserved: PASS.
+- Exact server ProductSize UUID preserved: PASS.
+- Same URL/code/name with different Product UUID: PASS.
+- Same size label with different ProductSize UUID: PASS.
+- Same target with reference A/B retains two histories: PASS.
+- Exact history-ID replay creates no duplicate: PASS.
+- Authorized alternate-size UUID set survives disk persistence/reload: PASS.
+- Completion-before-cache/rejection ordering: PASS.
+
+P0-2 DELETED REFERENCE LIFECYCLE
+
+Root cause
+
+Immutable history hydration represented a missing historical reference as a normal
+active UserFit. Every active Closet/picker surface queried all UserFit rows, and
+closet sync treated the hydrated row as a mutation candidate. A soft-deleted
+reference could therefore reappear locally and be re-upserted.
+
+Pre-fix regression evidence
+
+- Closet/hydration combined run exposed four failures, including a history-only
+  snapshot entering the upsert pipeline.
+- The dedicated hydration run failed because USER_EXPLICIT remained an ordinary
+  source identity instead of a history-only representation. Equivalent runs also
+  covered USER_EDITED and RETAILER_SNAPSHOT.
+
+Minimal schema-free fix
+
+- Reused the existing canonicalSourceIdentity field with reserved value
+  fitmatch_vnext_history_reference_snapshot.
+- Added computed isHistoryOnlyReferenceSnapshot/isActiveClosetItem state and a
+  helper that makes a history snapshot non-reference and noneligible.
+- A missing reference synthesized from immutable history is marked history-only
+  only after its historical authority evidence is decoded.
+- No new persisted field, SwiftData entity, model version, or migration was added.
+- All active Closet and reference-picker surfaces filter to isActiveClosetItem.
+- Closet mutation/reference sync filters history-only snapshots.
+- History hydration still receives cached snapshots, so immutable past results
+  remain readable.
+- Final authoritative closet hydration still sees the cache row; if the same UUID
+  is genuinely active remotely, the server row can safely reactivate it. A
+  soft-deleted remote row remains absent and the history-only snapshot stays
+  inactive.
+
+Post-fix assertions
+
+- USER_EXPLICIT / USER_EDITED / RETAILER_SNAPSHOT hydration coverage: PASS.
+- Active Closet resurrection: 0.
+- Active reference-picker resurrection: 0.
+- Hydration-triggered upsert/reference mutation across two repeat syncs: 0.
+- Exact remote tombstone/deleted authority remains intact in the lifecycle stub:
+  PASS.
+- Immutable history remains readable through the history-only reference: PASS.
+- SwiftData stored schema change: 0.
+
+P0-3 EXACT MULTI-REFERENCE DELTA
+
+Root cause
+
+Reference synchronization reduced local reference state to a single first item.
+It did not compare exact local and remote states per clientItemID, so local
+A=false/B=true left remote A=true whenever B remained selected.
+
+Minimal fix
+
+- Reconciles local and remote reference state by exact clientItemID.
+- Local true / remote false sends set(true) for that exact item.
+- Local false / remote true sends unset(false) for that exact item.
+- Equal states send no mutation.
+- Sets execute first and refresh authoritative state before unsets, preserving the
+  DB atomic same-garment-tuple replacement contract.
+- Remote-only rows are hydration input, never implicit unset intent. This preserves
+  first-login empty-cache safety.
+- No Swift global one-reference rule was introduced.
+
+Post-fix assertions
+
+- Remote A=true/B=true, local A=false/B=true: A unset exactly once; B mutations 0;
+  refreshed A=false/B=true: PASS.
+- Inverse A set: exactly one mutation: PASS.
+- Same-tuple replacement: one server set, DB atomic replacement retained: PASS.
+- First login with remote A/B and empty local cache: unset 0, then A/B hydrated:
+  PASS.
+- Converged repeat sync: mutation 0: PASS.
+
+CROSS-P0 REGRESSION
+
+The integrated local persistence scenario retains two immutable histories for
+reference A/B, converts deleted A to history-only state, keeps B active, prevents
+A from becoming comparison authority, and retains the exact authorized target
+size UUID set. The repeat closet-sync lifecycle confirms no A upsert/reference
+mutation and no tombstone loss.
+
+BUILD / TEST RESULTS
+
+Environment
+
+- Xcode: 26.3 (17C529)
+- Project/scheme: FitMatch.xcodeproj / FitMatch
+- Destination: iPhone 17 Pro simulator, iOS 26.3.1 (23D8133), x86_64
+- Simulator UDID: 03BAF093-552E-4E53-ABFB-7DE0653BE676
+
+Builds
+
+- App target build: PASS.
+- Test target build-for-testing: PASS.
+
+Critical regression
+
+- FitMatchP0RemediationRegressionTests: 4 tests.
+- FitMatchVNextContractTests: 5 tests.
+- FitMatchComparisonSyncCoordinatorTests: 4 tests.
+- FitMatchComparisonPermitSequencingTests: 4 tests.
+- FitMatchClosetSyncCoordinatorTests: 24 tests.
+- FitMatchServerAuthorityIntegrationTests: 23 tests.
+- FitMatchSupabaseProductResolverTests: 22 tests.
+- Total: 86 PASS / 0 FAIL / 0 SKIP.
+- Result bundle: /tmp/FitMatchP0CriticalFinal2-20260829.xcresult
+
+Full FitMatchTests
+
+- Total: 540.
+- PASS: 502.
+- FAIL: 1.
+- SKIP: 37.
+- The sole failure is the unchanged baseline
+  DBLogicReliabilityAuditTests/testDBLogicAdjudicationMatchesProductionClassifier,
+  at MUSINSA 5049615: actual sleeveless vs legacy expected blouse.
+- No expected value was changed; no new failure was added by this remediation.
+- Result bundle: /tmp/FitMatchP0FullUnitFinal2-20260829.xcresult
+
+UI tests (best-effort)
+
+- Total: 20.
+- PASS: 4.
+- FAIL: 10.
+- SKIP: 6.
+- This exactly reproduces the prior Ultra baseline count. The failures are the
+  already-recorded stale onboarding/copy/pre-vNext/cache-owner harness debt; no
+  assertion was edited and later stopped UI steps remain NOT VERIFIED.
+- Result bundle: /tmp/FitMatchP0UIFinal-20260829.xcresult
+
+INVARIANT SELF-AUDIT
+
+The critical suites and release call-site inspection confirm:
+
+- scorer-before-authorization: 0.
+- scorer-before-begin: 0.
+- unauthorized candidate/size scoring: 0.
+- excluded metric scoring/evidence: 0.
+- BLOCKED scoring: 0.
+- REVIEW_REQUIRED scoring: 0.
+- NOT_APPLICABLE scoring: 0.
+- complete-before-history violation: 0.
+- same-target distinct completed-history deletion on vNext branch: 0.
+- history-only reference mutation authority: 0.
+- first-login remote-reference clearing: 0.
+- release Swift/Edge legacy submit/process/resolve/runtime RPC references: 0.
+
+PROTECTED / DB / EDGE DIFF
+
+- git diff --check: PASS.
+- FitMatch/Components/TabBarScrollVisibilityModifier.swift diff: 0.
+- hidesBottomTabBarOnScroll / tracksTabBarVisibilityOnScroll /
+  hidesTopChromeOnScroll diff: 0.
+- Navigation redesign: 0.
+- Share Extension diff: 0.
+- SwiftData stored schema/entity change from this remediation: 0. UserFit additions
+  are static/computed/helper members over an existing stored field.
+- DB migration/SQL modification from this remediation: 0.
+- Edge Function modification/deploy from this remediation: 0.
+- Production write/migration/apply: 0.
+- The repository still contains pre-existing dirty/untracked DB/Edge work from
+  earlier approved work; it was preserved and is not attributed to this task.
+
+REMAINING ISSUES
+
+P0
+
+- Remaining P0 from the three-item Ultra finding set: 0.
+- This is not a new independent Ultra verdict; that audit must be rerun.
+
+Unchanged P1
+
+- Migration ledger version mismatch.
+- Repository publishing/reproducibility drift.
+- Personal override clear has no release UI action.
+- Other Size recovery after app restart.
+- Presentation/cache hide UX gaps.
+- Legacy callable security surface.
+- Full unit target remains non-green because of one legacy adjudication mismatch.
+- UI test harness remains non-green with the same ten baseline failures.
+
+Unchanged P2
+
+- Unknown readiness vocabulary handling.
+- Supabase Auth leaked-password protection warning.
+- Performance/index advisor hygiene.
+
+NEXT STEP
+
+Rerun the same Codex Ultra independent PRE-E2E audit. Do not start a new DB or
+Swift phase. If the independent audit confirms overall P0=0, proceed to physical
+signed-in iPhone E2E.

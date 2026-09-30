@@ -1,0 +1,239 @@
+# FitMatch One-Shot Remediation Plan — 2026-08-31
+
+## Preconditions
+
+- This plan is based on committed `8855874` plus identified local-only HJ-P0-001
+  hardening.  The implementation owner must re-read current Git and preserve unrelated
+  dirty work.
+- No implementation is authorized by this audit.  No Production change is implied.
+- `PC-HISTORY-001` is deliberately excluded until the owner decides its product policy.
+- Every change below is minimal-diff.  Do not alter the scoring engine, formulae,
+  taxonomy, Recovery envelope, manual-cross rows/explicit-only/same-sleeve rules,
+  SwiftData schema, navigation architecture, Share Extension except its named entry
+  handling, Edge Function, or protected TabBar/header code.
+
+## Dependency graph
+
+```text
+A1 strict current server-comparison proof
+  ├─ A2 Result other-item effective target mapper
+  ├─ A3 V4 immutable history snapshot hydration
+  └─ D1 Result alternate-size current-session gate
+
+A4 shopping-vs-Closet authority separation
+  └─ C1 linked/full/partial Closet registration regressions
+
+B1 server candidate discovery as presentation authority
+  └─ B2 Compare Flow + Result picker integration
+
+B3 manual measurement reason ─┐
+B4 exact begin replay envelope ├─ F1 SQL/contract safety suite
+B5 effective tuple verbatim ───┘
+
+C2 onboarding authentication route; C3 duplicate save state
+E1 provider / share / deep-link support clarity
+  └─ F2 generated scenario harness + J01–J45 + NEW-GAP acceptance
+```
+
+## PHASE A — authority / provenance correctness
+
+### A1 — preserve and publish strict HJ-P0-001 proof
+
+- **Files / symbols:** `RecommendationService.makeCompletedVNextHistory`,
+  `completedVNextHistoryIsServerBacked` / current equivalent;
+  `ShoppingProductViewModel.completeVNextRecommendation`; current-session alternate
+  size helper in `RecommendationResultView`.
+- **Problem:** published `.serverConfirmed`-only local History guard discards a
+  completed, server-authorized current USER_EXPLICIT comparison.
+- **Strategy:** accept only exact matching current server permit/begin/complete V4
+  proof.  Validate comparison/run ID, target/variant/reference, eligible/recommended
+  size, authorization and candidate fingerprints, effective authority, personal
+  projection revision/hash/input/evidence/resolver fingerprints.  Complete first.
+- **Must not change:** no generic `.userExplicit` admission; no fresh scorer;
+  no server contract relaxation.
+- **Tests:** J07/J09/J11/J13 completion, global confirmed unchanged, stale/cleared/local
+  UE / mismatched identity / candidate rejection, current session alternate-size view.
+
+### A2 — map Result other-item target from server effective authority without mutation
+
+- **Files / symbols:** `RecommendationResultView.compare(with:)`,
+  `applyServerAuthority`, `ResultReferenceComparisonPersistence`; optionally a shared
+  internal product mapper used by Shopping and Result.
+- **Problem:** target becomes globally confirmed and may use policy code as garment;
+  successful server completion can have no local result/history.
+- **Strategy:** build a comparison-local immutable target from current runtime effective
+  classification.  Keep global/personal provenance exact and never mutate the existing
+  Result Product.  Pass it through A1 proof after successful completion.
+- **Tests:** UE other-item automatic/direct and explicit-manual; old Result unchanged;
+  global target unchanged; no local-only/stale UE history.
+
+### A3 — hydrate V4 history from its immutable effective snapshot
+
+- **Files / symbols:** `VNextHistoryCacheHydrator`, `RecommendationHistory` model
+  snapshot construction/current adapter.
+- **Problem:** V4 recovered history uses live global fields and global provenance.
+- **Strategy:** decode `effective_classification_at_begin` and relevant personal
+  projection from V4 authority snapshot; construct a per-history immutable display
+  snapshot.  Legacy V3 remains clearly legacy/fail-safe.
+- **Tests:** fresh hydration of two different UE revisions of same target; global V4/V3
+  unchanged; missing/inconsistent snapshot does not invent global authority.
+
+### A4 — separate shopping Recovery authority from Closet override authority
+
+- **Files / symbols:** `AddComparedProductToClosetSheet`,
+  `LinkClosetRegistrationView`, classification provenance policy,
+  `FitMatchClosetSyncCoordinator`, misleading effective-confirmed helper.
+- **Problem:** personal shopping target selection is implicitly reclassified and synced
+  as a personal Closet manual override.
+- **Strategy:** require a separate explicit Closet classification intent before a Closet
+  override; otherwise retain sourced data non-authoritatively or stop with an intentional
+  user explanation.  Do not use parser inference to transfer authority.  Full/partial
+  link handling must not mark personal authority global or treat policy code as garment.
+- **Tests:** UE → full/partial Add to Closet produces no manual override; global confirmed
+  linked add unchanged; direct manual Closet edit still creates only its intended override.
+
+## PHASE B — reference / comparability correctness
+
+### B1 — make server reference discovery the candidate authority
+
+- **Files / symbols:** `FitMatchServerAuthorityCoordinator` discovery DTO/client,
+  `ShoppingProductViewModel`, `CompareFlowSheet` local plan.
+- **Strategy:** after fresh effective authority, request `find_reference_candidates`; map
+  returned IDs to current active local Closet rows only for presentation.  Server direct
+  candidate controls automatic progression; server manual candidates need explicit user
+  action.  Revalidate later authorization/begin as today.
+- **Tests:** server-valid/local-stale, server-blocked/local-looking-valid, automatic
+  manual-cross rejected, explicit same-sleeve retained, no scorer before begin.
+
+### B2 — use the same server candidate presentation contract in Result other-item flow
+
+- **Files / symbols:** `RecommendationResultView.ResultReferencePickerView` and
+  `compare(with:)` integration.
+- **Strategy:** do not create a second local policy.  Reuse B1 data/presentation
+  mapping; preserve A2 target provenance.
+- **Tests:** wrong-category rows never shown as selectable; explicit/manual distinction;
+  Result recompare uses fresh candidate list.
+
+### B3 — retain manual intent when deriving no-size explanation
+
+- **Files / symbols:** new reviewed SQL migration modifying the live function rather
+  than editing `20260830091000`; SQL contract tests.
+- **Strategy:** when an explicitly selected structural manual-cross has insufficient
+  measurements, use manual intent to derive MEASUREMENTS_REQUIRED.  It must not expand
+  automatic cross reference discovery.
+- **Tests:** all three pairs × same/mismatched sleeves × sufficient/insufficient
+  measurements; engine count zero in insufficient cases.
+
+### B4 — return a full begin envelope on idempotent replay
+
+- **Files / symbols:** reviewed follow-up migration for `begin_comparison` and bridge;
+  coordinator parsing tests.
+- **Strategy:** reconstruct top-level authorization / candidate / authority fingerprint
+  values from immutable snapshot and return exactly the first-call contract for an exact
+  same-client-id replay.  No comparison duplication.
+- **Tests:** same client ID first/replay, interrupted completion/retry, UE/global paths,
+  no duplicate History.
+
+### B5 — consume the effective classification object verbatim
+
+- **Files / symbols:** resolver runtime mapping and `ShoppingProductViewModel.makeProduct`.
+- **Strategy:** object-level selection, not per-field fallback: effective tuple if present,
+  global tuple only if it is absent.
+- **Tests:** null irrelevant personal axes with partial global evidence; stale/cleared;
+  global confirmed.
+
+## PHASE C — registration / provider correctness
+
+### C1 — registration authority regressions
+
+- Implements A4 test coverage across full/partial link and direct/manual registration.
+
+### C2 — intentional signed-out onboarding link route
+
+- **Files / symbols:** onboarding/link entry and ContentView login continuation.
+- **Strategy:** minimal retained pending action + sign-in handoff, or an explicit
+  non-authoritative draft with no server-sourced save before sign-in.  Select one only if
+  current product owner policy already specifies it; otherwise expose concise choice.
+- **Tests:** fresh signed-out link/manual/skip/retry behavior.
+
+### C3 — duplicate linked-save recovery
+
+- **Files / symbols:** `AddComparedProductToClosetSheet.saveSelectedSize`.
+- **Strategy:** ensure all early returns reset the saving task state without masking error.
+- **Tests:** duplicate alert then retry; no accidental double sync.
+
+### C4 — COS support decision implementation (only after PC-PROVIDER-001)
+
+- Align actual core support, Share whitelist, partial fallback provenance, and literal
+  user copy.  Add COS fixtures only for owner-approved surfaces.
+
+## PHASE D — Result / History correctness
+
+- A1–A3 are the required Result/History fixes.
+- **Do not implement history deletion semantics** until PC-HISTORY-001 is decided.
+- If owner chooses immutable-visible, remove misleading delete UI/copy and retain completed
+  server evidence.  If durable hide is chosen, design its user-owned durable contract as
+  a separately reviewed feature.
+
+## PHASE E — UX explanation / state-machine corrections
+
+### E1 — no-current-batch other-size state
+
+- **Files / symbols:** `RecommendationResultView`, `VNextComparisonEngineAdapter` session
+  batch adapter.
+- **Strategy:** expose alternative-size UI only with exact current server-authorized batch;
+  otherwise show a meaningful existing state/copy and never invoke a fresh engine.
+- **Tests:** current result vs cold-rehydrated history/restart-like reconstruction.
+
+### E2 — share/deep-link deterministic handling
+
+- **Files / symbols:** `SharedURLStore`, Share extension controller, ContentView URL routing.
+- **Strategy:** expire stale pending shares, choose a valid supported attachment rather
+  than first only, give an intentional no-payload outcome, and reject unknown routes
+  without consuming valid pending share.
+- **Tests:** old URL, multiple attachments, missing app-group payload, unknown host.
+
+### E3 — provider support copy and residual provenance display
+
+- **Files / symbols:** parser/onboarding copy, history raw provenance decoding.
+- **Strategy:** literal support lists match approved capability; display historical raw
+  `USER_EDITED`/`USER_EXPLICIT` accurately without promoting it.
+
+## PHASE F — regression authority, not green-test theater
+
+### F1 — repair the Headless scenario harness
+
+- Do not create a test-only classifier/scorer/reference policy.  Use current DTOs and a
+  deterministic transport/auth boundary only.
+- Make C/P/G/R/M/A/U fields drive fixture/state construction; machine-execute V01–V17;
+  generate/reconcile valid canonical corridors; record actual remote call sequence and
+  independently specified expected/actual user outcome across all 12 UX classes.
+- Correct manual-cross DTO policy values, provider ingestion seams, two-direction pairs,
+  same-client replay, delayed A→B/race schedules, recompare/history hydration, and every
+  `NEW-GAP-*` that is not held by policy.
+
+### F2 — focused production-symbol regressions
+
+- Recovery/authority, permit sequencing, sync/hydration, resolver, registration,
+  reference/discovery, Result persistence, Share/deep-link, and provider tests.
+- A passing unit test must name the production symbols it reaches and the safety invariant
+  it would catch.
+
+## PHASE G — final acceptance execution
+
+1. SQL syntax/disposable replay and RLS/grant tests for B3/B4 only.
+2. All focused authority/Recovery/reference/history/registration/provider suites.
+3. Canonical J01–J45 plus all non-policy NEW-GAP corridors: every valid declared state
+   actually constructed; executed count equals valid count.
+4. App and test-target build; full test suite when practical; `git diff --check`.
+5. Read-only Production postflight only after an approved deployment task; physical E2E
+   remains a separate phase.
+
+## Acceptance bar
+
+- P0 = 0; no manual-cross automatic route; no scorer before valid begin; no raw/local
+  USER_EXPLICIT promotion; no shared historical Product mutation.
+- All announced journey state fields must drive actual fixtures; no “45/45” claim from
+  labels alone.
+- No implementation for PC-HISTORY-001 before an owner decision.
+- No automatic commit, push, migration apply, or Production write.

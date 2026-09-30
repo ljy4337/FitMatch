@@ -1,4 +1,5 @@
 import Foundation
+import SwiftSoup
 
 struct MusinsaProductMetadata {
     var sourceURL: URL
@@ -15,6 +16,23 @@ struct MusinsaProductMetadata {
     var isUseSize: Bool = false
     var goodsContents: String = ""
     var productMetadata: ProductMetadata = ProductMetadata()
+    var retailerDetailsCapture: FitMatchRetailerAPIResponseCapture? = nil
+
+    func retailerAPIEvidence(
+        measurements: FitMatchRetailerAPIResponseCapture?
+    ) -> FitMatchRetailerAPIEvidence? {
+        guard let details = retailerDetailsCapture,
+              details.jsonObject != nil else { return nil }
+        return FitMatchRetailerAPIEvidence(
+            contractVersion: FitMatchRetailerAPIEvidence.v1Contract,
+            sourceCode: "musinsa",
+            sourceProductKey: productID,
+            identityScheme: nil,
+            selectedVariantKey: nil,
+            details: details,
+            measurements: measurements
+        )
+    }
 
     func parsedProductInfo(sizes: [ParsedProductSize], parserNotice: String? = nil) -> ParsedProductInfo {
         let canonical = ParsedClosetClassification.resolve(
@@ -99,6 +117,10 @@ struct MusinsaProductMetadata {
         if let typeNumber {
             productMetadata.sizeType = String(typeNumber)
         }
+        if let typeName = typeName?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !typeName.isEmpty {
+            productMetadata.structuredFacts["size_type"] = typeName
+        }
         applyActualSizeTypeName(typeName)
     }
 }
@@ -110,16 +132,59 @@ private extension ClosetDetailCategory {
 }
 
 struct MusinsaProductMetadataParser {
-    func parse(productID: String, sourceURL: URL) async -> MusinsaProductMetadata {
+    private let productDetailLoader: @MainActor (URL) async throws
+        -> FitMatchRetailerAPIResponseCapture
+    private let htmlLoader: @MainActor (URL) async throws
+        -> FitMatchRetailerAPIResponseCapture
+
+    init(
+        productDetailLoader: @escaping @MainActor (URL) async throws
+            -> FitMatchRetailerAPIResponseCapture = { url in
+                try await Self.fetchLiveProductDetail(from: url)
+            },
+        htmlLoader: @escaping @MainActor (URL) async throws
+            -> FitMatchRetailerAPIResponseCapture = { url in
+                try await Self.fetchLiveHTML(from: url)
+            }
+    ) {
+        self.productDetailLoader = productDetailLoader
+        self.htmlLoader = htmlLoader
+    }
+
+    func parse(productID: String, sourceURL: URL) async throws -> MusinsaProductMetadata {
         do {
-            let response = try await fetchProductDetail(productID: productID)
-            return metadata(from: response, productID: productID, sourceURL: sourceURL)
+            let fetched = try await fetchProductDetail(productID: productID)
+            var result = metadata(
+                from: fetched.response,
+                productID: productID,
+                sourceURL: sourceURL
+            )
+            result.retailerDetailsCapture = fetched.capture
+            return result
         } catch {
+            if Task.isCancelled || Self.isCancellation(error) {
+                throw CancellationError()
+            }
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 상품 정보 조회", state: "실패", details: "오류=\(error.localizedDescription), HTML대체파싱=시작")
             #endif
-            return await parseHTMLFallback(productID: productID, sourceURL: sourceURL)
+            var fallback = await parseHTMLFallback(
+                productID: productID,
+                sourceURL: sourceURL
+            )
+            fallback.retailerDetailsCapture =
+                (error as? FitMatchRetailerAPIResponseError)?.capture
+            return fallback
         }
+    }
+
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError {
+            return true
+        }
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain
+            && nsError.code == URLError.cancelled.rawValue
     }
 
     func parseStoredProductDetail(data: Data, productID: String, sourceURL: URL) throws -> MusinsaProductMetadata {
@@ -176,28 +241,34 @@ struct MusinsaProductMetadataParser {
             )
     }
 
-    private func fetchProductDetail(productID: String) async throws -> MusinsaProductDetailResponse {
+    private func fetchProductDetail(
+        productID: String
+    ) async throws -> (
+        response: MusinsaProductDetailResponse,
+        capture: FitMatchRetailerAPIResponseCapture
+    ) {
         guard let apiURL = URL(string: "https://goods-detail.musinsa.com/api2/goods/\(productID)") else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
-        var request = URLRequest(url: apiURL)
-        request.httpMethod = "GET"
-        request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("https://www.musinsa.com", forHTTPHeaderField: "Referer")
-        request.setValue(
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-            forHTTPHeaderField: "User-Agent"
-        )
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode) else {
-            throw ProductURLParserError.automaticParsingUnavailable
+        let capture = try await productDetailLoader(apiURL)
+        guard (200..<300).contains(capture.httpStatus) else {
+            throw FitMatchRetailerAPIResponseError(
+                capture: capture,
+                reason: "unexpected_http_status"
+            )
         }
-
-        return try JSONDecoder().decode(MusinsaProductDetailResponse.self, from: data)
+        do {
+            return (
+                try JSONDecoder().decode(MusinsaProductDetailResponse.self, from: capture.body),
+                capture
+            )
+        } catch {
+            throw FitMatchRetailerAPIResponseError(
+                capture: capture,
+                reason: "invalid_response_body"
+            )
+        }
     }
 
     private func parseHTMLFallback(productID: String, sourceURL: URL) async -> MusinsaProductMetadata {
@@ -226,6 +297,61 @@ struct MusinsaProductMetadataParser {
     }
 
     private func fetchHTML(from url: URL) async throws -> String {
+        let capture = try await htmlLoader(url)
+        guard (200..<300).contains(capture.httpStatus),
+              let html = String(data: capture.body, encoding: .utf8) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return html
+    }
+
+    private static func fetchLiveProductDetail(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "MUSINSA 상품 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
+        var request = URLRequest(url: apiURL)
+        request.httpMethod = "GET"
+        request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("https://www.musinsa.com", forHTTPHeaderField: "Referer")
+        request.setValue(
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+            forHTTPHeaderField: "User-Agent"
+        )
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? apiURL,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
+    }
+
+    private static func fetchLiveHTML(
+        from url: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "MUSINSA HTML 복구 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         var request = URLRequest(url: url)
         request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
         request.setValue(
@@ -233,12 +359,14 @@ struct MusinsaProductMetadataParser {
             forHTTPHeaderField: "User-Agent"
         )
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode),
-              let html = String(data: data, encoding: .utf8) else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
-        return html
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? url,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
     }
 
     private func metaContent(in html: String, key: String, value: String) -> String? {
@@ -414,6 +542,7 @@ struct MusinsaProductMetadataParser {
         let stockStatusRawValue = data.isOutOfStock == true
             ? ProductStockStatus.outOfStock.rawValue
             : ProductStockStatus.unknown.rawValue
+        let structureFact = retailerProductStructureFact(from: data, sourcePath: sourcePath)
 
         return ProductMetadata(
             styleNo: data.styleNo,
@@ -436,6 +565,7 @@ struct MusinsaProductMetadataParser {
             categoryDepth3Name: sourcePath.depth3,
             categoryDepth4Code: data.category?.categoryDepth4Code,
             categoryDepth4Name: sourcePath.depth4,
+            structuredFacts: structureFact?.structuredFacts ?? [:],
             sizeType: data.sizeType,
             genderCodes: data.genders ?? data.sex ?? [],
             labelNames: data.labels?.map(\.name) ?? [],
@@ -456,6 +586,75 @@ struct MusinsaProductMetadataParser {
             seasonYear: data.seasonYear,
             season: data.season
         )
+    }
+
+    /// MUSINSA's detail response is the retailer contract for a concrete
+    /// clothing offer. It forwards only positive composite evidence; listing
+    /// identity, generic goods metadata, and a category never infer SINGLE.
+    private static func retailerProductStructureFact(
+        from data: MusinsaProductDetailResponse.DataBody,
+        sourcePath: SourceCategoryPath
+    ) -> RetailerProductStructureFact? {
+        let nameSource = "musinsa_product_detail"
+        if let composite = RetailerProductStructureFact.explicitCompositeRetailerText(
+            data.goodsNm,
+            source: nameSource,
+            evidenceField: "goods_name"
+        ) {
+            return composite
+        }
+
+        let labels = data.labels?.map(\.name).joined(separator: " ") ?? ""
+        if let composite = RetailerProductStructureFact.explicitCompositeRetailerText(
+            labels,
+            source: "musinsa_product_labels",
+            evidenceField: "official_labels"
+        ) {
+            return composite
+        }
+
+        var ignoredMarkupOnlyComposite = false
+        if let contents = data.goodsContents,
+           let visibleContents = try? SwiftSoup.parseBodyFragment(contents).text() {
+            if let composite = RetailerProductStructureFact.explicitCompositeRetailerText(
+                visibleContents,
+                source: "musinsa_product_detail",
+                evidenceField: "goods_contents_visible_text"
+            ) {
+                return composite
+            }
+            ignoredMarkupOnlyComposite = RetailerProductStructureFact.explicitCompositeRetailerText(
+                contents,
+                source: "musinsa_product_detail",
+                evidenceField: "goods_contents"
+            ) != nil
+        }
+
+        let officialCategory = sourcePath.depths
+            .joined(separator: " ")
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
+        if officialCategory.contains("상하의세트") {
+            return RetailerProductStructureFact(
+                structure: .set,
+                source: "musinsa_official_category",
+                evidence: "official_category:top_bottom_set"
+            )
+        }
+
+        if ignoredMarkupOnlyComposite {
+            return RetailerProductStructureFact(
+                structure: .unknown,
+                source: "musinsa_product_detail",
+                evidence: "goods_contents:markup_only_composite_tokens_ignored"
+            )
+        }
+
+        // `goodsNo`, `goodsType`, option kind, and the existence of a size
+        // selector identify a purchasable listing only. They do not prove that
+        // the listing contains exactly one garment, so they intentionally
+        // leave product_structure absent/UNKNOWN.
+        return nil
     }
 
     private static func preferredProductName(localized: String, english: String?) -> String {
@@ -552,6 +751,7 @@ private struct MusinsaProductDetailResponse: Decodable {
         let goodsNo: Int?
         let goodsNm: String
         let goodsNmEng: String?
+        let goodsType: String?
         let styleNo: String?
         let sex: [String]?
         let brand: String?
@@ -574,6 +774,7 @@ private struct MusinsaProductDetailResponse: Decodable {
         let goodsReview: GoodsReview?
         let sizeType: String?
         let isUseSize: Bool?
+        let optKindCd: String?
         let labels: [Label]?
         let genders: [String]?
         let isOutOfStock: Bool?

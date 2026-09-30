@@ -2,9 +2,19 @@ import SwiftUI
 import SwiftData
 
 struct MyPageView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
+    @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     let onLogout: () -> Void
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
+    @State private var isShowingAccountDeletionConfirmation = false
+    @State private var accountDeletionErrorMessage: String?
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     private let menuItems: [MyMenuItem] = [
         // MyMenuItem(title: "내 정보", systemImage: "person.circle", destination: .comingSoon),
@@ -12,8 +22,8 @@ struct MyPageView: View {
         MyMenuItem(title: "문의 및 지원", systemImage: "envelope", destination: .support),
         MyMenuItem(title: "개인정보처리방침", systemImage: "lock.shield", destination: .privacy),
         // MyMenuItem(title: "앱 설정", systemImage: "gearshape", destination: .comingSoon)
-        // 로그인 기능을 다시 사용할 때 함께 복구합니다.
-        // MyMenuItem(title: "로그아웃", systemImage: "rectangle.portrait.and.arrow.right", destination: .logout)
+        MyMenuItem(title: "로그아웃", systemImage: "rectangle.portrait.and.arrow.right", destination: .logout),
+        MyMenuItem(title: "회원 탈퇴", systemImage: "person.crop.circle.badge.minus", destination: .deleteAccount)
     ]
 
     var body: some View {
@@ -38,7 +48,7 @@ struct MyPageView: View {
                 //
                 //         HStack(spacing: 10) {
                 //             MyStatPill(title: "내 옷", value: "\(userFits.count)")
-                //             MyStatPill(title: "기준 옷", value: "\(representativeFitCount)")
+                //             MyStatPill(title: "비교 그룹", value: "\(userFits.compactMap(\.comparisonGroup).count)")
                 //             MyStatPill(title: "비교 기록", value: "\(histories.count)")
                 //         }
                 //     }
@@ -90,6 +100,15 @@ struct MyPageView: View {
                                     menuRow(item)
                                 }
                                 .buttonStyle(.plain)
+                            case .deleteAccount:
+                                Button {
+                                    isShowingAccountDeletionConfirmation = true
+                                } label: {
+                                    menuRow(item)
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(authSession.isDeletingAccount)
+                                .accessibilityIdentifier("account.delete")
                             case .comingSoon:
                                 menuRow(item)
                                     .foregroundStyle(.secondary)
@@ -108,10 +127,29 @@ struct MyPageView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("My")
-    }
-
-    private var representativeFitCount: Int {
-        userFits.filter(\.isRepresentative).count
+        .alert(
+            "FitMatch 계정을 삭제할까요?",
+            isPresented: $isShowingAccountDeletionConfirmation
+        ) {
+            Button("취소", role: .cancel) {}
+            Button("계정 및 데이터 삭제", role: .destructive) {
+                deleteAccount()
+            }
+        } message: {
+            Text("내 옷장, 비교 기록, 설정이 서버와 이 기기에서 영구 삭제되며 복구할 수 없습니다. Apple 로그인 권한도 해제하려면 삭제 후 iPhone 설정 > Apple 계정 > Apple로 로그인에서 FitMatch를 제거해 주세요.")
+        }
+        .alert(
+            "계정 삭제 실패",
+            isPresented: Binding(
+                get: { accountDeletionErrorMessage != nil },
+                set: { if !$0 { accountDeletionErrorMessage = nil } }
+            )
+        ) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text(accountDeletionErrorMessage
+                ?? "계정 삭제 서비스에 문제가 있어요. 문제가 계속되면 문의해 주세요.")
+        }
     }
 
     private func menuRow(_ item: MyMenuItem) -> some View {
@@ -128,11 +166,44 @@ struct MyPageView: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
             }
+            if item.destination == .deleteAccount, authSession.isDeletingAccount {
+                ProgressView()
+                    .controlSize(.small)
+            }
         }
-        .foregroundStyle(.primary)
+        .foregroundStyle(item.destination == .deleteAccount ? Color.red : Color.primary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 14)
         .contentShape(Rectangle())
+    }
+
+    private func deleteAccount() {
+        Task { @MainActor in
+            let deletedUserID: UUID?
+            if case .signedIn(let userID) = authSession.state {
+                deletedUserID = userID
+            } else {
+                deletedUserID = nil
+            }
+            let outcome = await FitMatchAccountDeletionAction.delete(
+                authSession: authSession,
+                deletedUserID: deletedUserID,
+                purgeLocalData: {
+                    do {
+                        try closetSync?.purgeLocalAccountData(modelContext: modelContext)
+                    } catch {
+                        modelContext.rollback()
+                        throw error
+                    }
+                },
+                purgeProcessedHistoryIDs: { userID in
+                    comparisonSync?.purgeProcessedHistoryIDs(for: userID)
+                }
+            )
+            if let message = outcome.userVisibleMessage {
+                accountDeletionErrorMessage = message
+            }
+        }
     }
 }
 
@@ -194,13 +265,14 @@ private enum MyMenuDestination: Equatable {
     case support
     case privacy
     case logout
+    case deleteAccount
     case comingSoon
 
     var isNavigable: Bool {
         switch self {
         case .closet, .guide, .support, .privacy:
             return true
-        case .logout, .comingSoon:
+        case .logout, .deleteAccount, .comingSoon:
             return false
         }
     }
@@ -220,8 +292,8 @@ private struct FitMatchUsageGuideView: View {
             description: "MY 탭의 내 옷장에서 링크로 상품을 불러오거나 직접 실측을 입력해 옷을 등록할 수 있습니다. 분류와 보유 사이즈를 정확히 선택해 주세요."
         ),
         FitMatchGuideItem(
-            title: "기준 옷이란?",
-            description: "평소 핏을 잘 아는 옷을 기준 옷으로 지정하면 호환되는 후보 중 우선 비교합니다. 기준 옷이 없어도 같은 종류의 호환되는 옷이 있으면 비교할 수 있습니다."
+            title: "비교 그룹이란?",
+            description: "비슷한 부위의 실측을 비교할 수 있도록 옷을 묶은 그룹입니다. 상품을 불러오면 같은 그룹의 내 옷들을 가까운 순서로 보여줍니다."
         ),
         FitMatchGuideItem(
             title: "쇼핑 상품 비교하기",
@@ -233,7 +305,7 @@ private struct FitMatchUsageGuideView: View {
         ),
         FitMatchGuideItem(
             title: "비교할 옷이 없을 때",
-            description: "호환되는 옷이 없으면 필요한 종류의 기준 옷을 등록하거나, 호환 가능한 내 옷을 직접 선택할 수 있습니다. 비교한 쇼핑 상품은 실제로 보유한 경우에만 내 옷장에 등록해 주세요."
+            description: "같은 그룹에 옷이 없으면 다른 그룹이나 내 옷장 전체에서 비교할 옷을 직접 선택할 수 있습니다. 비교한 쇼핑 상품은 실제로 보유한 경우에만 내 옷장에 등록해 주세요."
         ),
         FitMatchGuideItem(
             title: "결과 화면 보는 방법",

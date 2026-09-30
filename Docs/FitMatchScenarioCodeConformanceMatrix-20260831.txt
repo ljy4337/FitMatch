@@ -1,0 +1,234 @@
+# FitMatch Scenario ↔ Code Conformance Matrix — 2026-08-31
+
+## Audit identity and limits
+
+- Mode: strict read-only product/code audit. No application source, migration, Edge Function, Production data, or Git history was changed.
+- Committed Git authority: `connectDB` / `8855874a7ff372ef9b0e6159740c6faee4750985`; `origin/connectDB` was identical at audit start.
+- Working-tree qualification: three pre-existing uncommitted Swift files contain the local HJ-P0-001 remediation, and the Headless suite/documents are untracked. They are evidence for the **current working tree**, not published Git authority. This matrix identifies them as `LOCAL-ONLY` where relevant.
+- Evidence tags: `STATIC_CONFIRMED`, `RUNTIME_PRIOR`, `PRODUCTION_READONLY_PRIOR`, `INFERENCE`, and `POLICY_CONFLICT` have their literal meanings. No static trace is represented as a physical-device or live-mutation result.
+- “Conformance” below means policy → current code → evidence were reconciled. A passing pre-existing test is not treated as full journey proof.
+
+## Policy source map
+
+| Source | Date / version | Scope | Status / precedence | Material policy used in this audit | Conflict handling |
+|---|---:|---|---|---|---|
+| `Docs/CodexSessionHandoff.md` | cumulative through 2026-08-31 | current cumulative owner handoff | 1 | server-owned vNext comparison, Recovery lifecycle, strict no-scorer-before-begin, locally remediated HJ-P0-001 | highest local handoff; old entries are historical only |
+| `Docs/FitMatchReviewRequiredRecoveryProductionPostflight-20260830.txt` | 2026-08-30 | deployed Production Recovery contract | 2 | effective authority, snapshot v4, manual cross, immutable server comparison rows, Recovery envelope | static/deployed contract used over old UI docs |
+| `Docs/FitMatchReviewRequiredRecoveryImplementation-20260830.txt` | 2026-08-30 | reviewed design | 2–3 | `effective authority → find_reference_candidates → reference decision → authorize → eligible → begin → engine → complete` | current code is judged against this order |
+| `Docs/FitMatchCompleteUserJourneyScenarioMatrix-20260831.txt` | 2026-08-31 | independent scenario authority | 3 | C/P/G/R/M/A/U axes, V01–V17, J01–J45, UX oracle | exact declared values must not silently disappear |
+| `FitMatchTests/*` including Headless suite | current working tree | regression intent/evidence | 4 | focused security/Recovery/sequence behavior | only strong where actual data/action drives production symbols |
+| current production Swift / migrations | current tree | implementation | 5 | actual behavior and reverse branches | never chosen as policy merely because it matches itself |
+| `Docs/flows/*`, early `Docs/Decisions.md` | historical | early UX/local-engine descriptions | 6 | useful context only | superseded where they conflict with vNext authority |
+
+## Coverage reconciliation
+
+The declared state codes were all read and assigned a current-code or test-adequacy disposition; this does **not** mean the existing Headless test actually instantiates every declared value.
+
+| Declared authority | Expected | Audited | Missing from audit | Current Headless values that do not drive fixtures |
+|---|---:|---:|---:|---|
+| Closet C0…C24 | 25 | 25 | 0 | `closet` is never consumed; C21 absent from J catalog |
+| Provider P1…P3 | 3 | 3 | 0 | provider metadata changes only; parser/ingestion branches are not driven |
+| Classification G0…G15 | 16 | 16 | 0 | only G5 is read by the generic executor; G1/G3/G8/G12 lack a declared J construction |
+| Reference R0…R17 | 18 | 18 | 0 | `relation` is never consumed; R4/R13 absent from J catalog |
+| Measurement M0…M13 | 14 | 14 | 0 | `measurement` is never consumed; eight values absent from J catalog |
+| Availability A0…A11 | 12 | 12 | 0 | `availability` is never consumed; five values absent from J catalog |
+| User actions U0…U23 | 24 | 24 | 0 | `actions` is never consumed; U5/U16/U21 absent from J catalog |
+| Canonical journeys J01…J45 | 45 | 45 | 0 | rows below reconcile exactly to 45 |
+
+Reverse scan inspected the user-facing production files listed in the audit request plus `ContentView`, Share/deep-link handoff, parser routing, sync/hydration, and the vNext DTO/authority layer. Every material branch is mapped either to a J row or to `NEW-GAP-*` in `Docs/FitMatchUnmappedUserScenarioLedger-20260831.txt`; therefore no branch is silently left unclassified.
+
+## Production-path legend
+
+- `L` — `ShoppingProductViewModel.loadProductInfoFromURL` (115–190) → `resolveServerAuthority` (263–335).
+- `X` — Recovery fetch/select/reselect/clear in `ShoppingProductViewModel` (495–624) and `FitMatchServerAuthorityCoordinator` (274–367).
+- `Q` — automatic/manual selection entry in `ShoppingProductViewModel` (719–829).
+- `R` — server reference authorization: coordinator (449–655), including `findReferenceCandidates` (529–599).
+- `E/B` — eligible sizes and begin: coordinator (657–754).
+- `S` — actual scorer only through `RecommendationService.analyzeVNextComparison` (50–59) → `VNextComparisonEngineAdapter`.
+- `D/H` — complete then local History eligibility: coordinator (757–783) → `RecommendationService.makeCompletedVNextHistory` (63–265 in current tree).
+
+## J01…J45 scenario → code matrix
+
+| ID | User intent / declared corridor | Expected terminal user result | Current production path and guard | Existing evidence | Classification | Exact mismatch / required regression |
+|---|---|---|---|---|---|---|
+| J01 | Empty Closet; open confirmed UNIQLO target | reasoned missing-reference block; no begin/scorer | `L → Q`; `calculateRecommendation` rejects empty list (728–746) | Headless `emptyCloset`; `M` | CONFORMS | Add UI state assertion for the displayed reason only. |
+| J02 | One/multiple non-reference Closet items | reasoned no-usable-reference block | catalog calls `noReference`, which aliases empty Closet | Headless only | PARTIAL_CONFORMANCE | C1/C2 are not constructed. Add non-empty invalid Closet fixtures and no-begin assertions. |
+| J03 | Confirmed target and direct automatic reference | complete/history through vNext | `L → Q → R → E/B → S → D/H` | Headless full chain, sequencing suites | PARTIAL_CONFORMANCE | Runtime chain conforms; CompareFlow derives the automatic candidate locally before server discovery (`NEW-GAP-REF-001`). |
+| J04 | MUSINSA valid optional-evidence / one-size corridor | completion if server permits | generic automatic fixture, not Musinsa parser/size facts | Headless metadata only | PARTIAL_CONFORMANCE | provider, C6/M10/A1 do not alter fixture. |
+| J05 | ZARA same garment / different sleeve | explicit block with explanation | generic local blocked fixture | Headless only | PARTIAL_CONFORMANCE | Fixture is actually two short-sleeve tshirts. Add true sleeve mismatch via server DTO. |
+| J06 | USER_EXPLICIT polo ↔ tshirt; automatic intent | automatic cross must block | `Q` calls R with manual disabled (657–663) | Headless manual-cross | CONFORMS | Server block is strong; candidate UI remains local (`NEW-GAP-REF-001`). |
+| J07 | USER_EXPLICIT polo ↔ tshirt; explicit same-sleeve | MANUAL_EXTENDED can complete | `Q(manual) → R → E/B → S → D/H` | Headless; local HJ-P0 proof | PARTIAL_CONFORMANCE | Published Git still has HJ-P0-001 serverConfirmed-only History guard; current local tree fixes it. Keep exact V4 proof regression. |
+| J08 | same pair, sleeve mismatch, explicit | block/no scorer | R manual policy/server begin rejects mismatch | Headless manual-cross | CONFORMS | Add UI explanation assertion rather than local compatibility inference. |
+| J09 | USER_EXPLICIT sweatshirt ↔ hoodie same sleeve | MANUAL_EXTENDED can complete | same as J07 | Headless manual-cross | PARTIAL_CONFORMANCE | Fixture direction differs from results report and hard-codes tshirt policy payload; test both directions. |
+| J10 | sweatshirt ↔ hoodie sleeve mismatch | block/no scorer | server authorization/begin | Headless manual-cross | CONFORMS | Directional wording/test fixture must be made exact. |
+| J11 | USER_EXPLICIT sweatshirt ↔ knit_sweater same sleeve | MANUAL_EXTENDED can complete | same as J07 | Headless manual-cross | PARTIAL_CONFORMANCE | Fixture direction and policy payload are inaccurate; add exact server DTO. |
+| J12 | sleeve mismatch / upper↔bottom incompatible | block with reason | generic manual-cross sleeve block | Headless only | PARTIAL_CONFORMANCE | Upper↔bottom and C19/C20 are not built. |
+| J13 | REVIEW_REQUIRED, two candidates, select one, resume automatic flow | fresh authority; reference discovery; begin; result/history | `L → X → Q → R → E/B → S → D/H` | Headless/RR/local HJ-P0 proof | CODE_NONCONFORMANCE | Test says G2 but supplies one candidate. UI uses local reference plan before server discovery; published History path discards USER_EXPLICIT. |
+| J14 | reselect candidate A→B | fresh contract, revision update, restart correctly | `X` uses fresh contract (495–525), mutation (529–590) | RR/local lifecycle | PARTIAL_CONFORMANCE | Test combines select/reselect/clear; lacks an independently recorded A→B authority/result journey. |
+| J15 | clear USER_EXPLICIT | return to REVIEW_REQUIRED; no automatic begin | clear (594–624), CompareFlow (1624–1664) | RR/local lifecycle | CONFORMS | Add fresh-picker/no-silent-resume UI assertion. |
+| J16 | active personal then Global CONFIRMED | Global controls future work; old evidence immutable | server resolver static contract | static/Postflight prior | PARTIAL_CONFORMANCE | Headless simulates CONFIRMED→REVIEW_REQUIRED without active personal state. |
+| J17 | delete/stale active reference | stale ref cannot begin | R checks latest server Closet row / local snapshot | Headless/SI | PARTIAL_CONFORMANCE | Modeled only as missing record; destructive local History behavior is a separate policy gap. |
+| J18 | reference A→B then compare current target | future request uses B, not A | local reference selection plus R snapshot check | Headless aliases stale reference | PARTIAL_CONFORMANCE | No actual A→B mutation. USER_EXPLICIT Result “other item” is a new P0 (`NEW-GAP-RESULT-001`). |
+| J19 | change reference measurements then compare again | fresh values / no stale snapshot | R exact snapshot check | generic automatic fixture | PARTIAL_CONFORMANCE | no measurement edit constructed. |
+| J20 | old completed history after authority/reference change | old meaning stays immutable | hydrator rebuilds from history snapshot | CS delegates | CODE_NONCONFORMANCE | `VNextHistoryCacheHydrator` marks all product histories serverConfirmed and category derives from live global Product; USER_EXPLICIT v4 history loses provenance (`NEW-GAP-HISTORY-003`). |
+| J21 | sequential provider ingestion/reopen | each supported provider uses its parser and server runtime | parser → L intended | generic automatic fixture | PARTIAL_CONFORMANCE | Headless fake rejects `submitProductObservation`; no parser/ingestion run. |
+| J22 | target sufficient/reference insufficient | MEASUREMENTS_REQUIRED, no engine | R decision guard then no B/S | SI/generic blocked | PARTIAL_CONFORMANCE | M8 proof is not constructed. |
+| J23 | reference sufficient/target insufficient | MEASUREMENTS_REQUIRED, no engine | same | SI/generic blocked | PARTIAL_CONFORMANCE | M9 is identical fixture to J22. |
+| J24 | availability expired | temporal block / no begin | eligible/begin reject | generic no-available-size | PARTIAL_CONFORMANCE | no expiry timestamp/evidence path. |
+| J25 | zero available sizes | no recommendation | eligible/begin reject | generic no-available-size | PARTIAL_CONFORMANCE | indistinguishable from J24 fixture. |
+| J26 | UNKNOWN structure | no picker/mutation/scorer | L → recovery unrecoverable (296–314) | Headless/RR | CONFORMS | Preserve fail-closed server contract. |
+| J27 | NOT_APPLICABLE | terminal no Recovery/scorer | L (315–319) | Headless/SI | CONFORMS | Add user-visible copy test. |
+| J28 | PRODUCT_REQUIRED zero candidate | fail closed, no broad picker | X validates empty unrecoverable contract | Headless/RR | CONFORMS | Preserve 47-type fallback = 0. |
+| J29 | delete/mutate reference then rediscover | stale ref blocked; current candidates reloaded | R checks remote item | Headless stale-only | PARTIAL_CONFORMANCE | no rediscovery candidate-set path; CompareFlow does local list first. |
+| J30 | Global target; explicit manual reference | server manual path/completion | Q manual → R/E/B/S/D/H | Headless full chain | PARTIAL_CONFORMANCE | concrete C4/C22/R14 states only labels; result picker also uses local candidates. |
+| J31 | duplicate same target comparison | idempotent no duplicate history | server idempotency intended | test uses two distinct client IDs | PARTIAL_CONFORMANCE | Does not prove same-id/idempotent response. |
+| J32 | recompare after completed History | new current run; old history unchanged | Result picker → R/E/B/S/D/H intended | historyLifecycle is one run | CODE_NONCONFORMANCE | no real recompare coverage; Result target provenance and hydration P0s apply. |
+| J33 | active USER_EXPLICIT then modeled reconstruction | latest server projection restored | X / runtime refresh | lifecycle test | PARTIAL_CONFORMANCE | action labels are not driven; no real history hydration test. |
+| J34 | A→B reselect; stale old revision rejected | new revision wins | X mutation contract | stale-revision fixture | PARTIAL_CONFORMANCE | only one stale error, no competing A/B response. |
+| J35 | clear then reconstruction | cleared authority stays inactive | X clear/runtime | lifecycle test | PARTIAL_CONFORMANCE | current code is safe statically; no full modeled reconstruction proof. |
+| J36 | duplicate start/double tap | one valid run/no duplicate result | UI task guards / server idempotency intended | test invokes distinct IDs | PARTIAL_CONFORMANCE | no same-action concurrent task proof. |
+| J37 | stale/forged candidate | reject before mutation | X contract membership/hash | Headless/RR | CONFORMS | Keep server recomputation assertion. |
+| J38 | select then immediate clear | cleared no silent resume | X and CompareFlow reset transient flow | lifecycle composite | PARTIAL_CONFORMANCE | no exact cancellation/order schedule. |
+| J39 | delayed old reselect response | stale rejected | X expected revision | stale revision fixture | PARTIAL_CONFORMANCE | no out-of-order fresh-vs-old response. |
+| J40 | reference changes post-eligible/before begin | stale candidate set blocks | begin candidate exactness intended | aliases stale ref | PARTIAL_CONFORMANCE | no post-eligible A9 race. |
+| J41 | target authority/fingerprint changes mid-flow | stale blocks | E/B fingerprint/revision checks | early status swap | PARTIAL_CONFORMANCE | no fingerprint or post-eligible race. |
+| J42 | provider resolution failure then retry | retry resolves same target | L retry path | scripted remote failure/retry | PARTIAL_CONFORMANCE | does not exercise provider parser or observation. |
+| J43 | no manual-cross rule | block with explanation | R server decision intended | generic same-type fixture | PARTIAL_CONFORMANCE | R11 is not constructed. |
+| J44 | begin failure/retry without duplicate history | retry once/no completed duplicate | B/D/H intended | availability denial fixture | PARTIAL_CONFORMANCE | no begin failure, retry, or out-of-order response. |
+| J45 | cross-provider same type, optional missing, unusual size order | valid completion/current history | generic automatic fixture | Headless metadata only | PARTIAL_CONFORMANCE | C17/C18/M4/A10 not instantiated; parser variants absent. |
+
+## Declared validity / UX authority audit
+
+- V01–V17 were audited against production guards. Server `authorize`/eligible/begin protect V03–V10 and V14–V15 at execution; no static scorer-before-begin path was found in the release vNext chain.
+- The current Headless matrix does **not** encode V01–V17 as machine-executed constraints. Its `execute` switch uses only a hand-written `program`; `closet`, `relation`, `measurement`, `availability`, `actions`, and `provenance` are not inputs. Therefore its “45/45” is useful corridor evidence but not finite-state proof.
+- The declared UX oracle has 12 outcomes. The current `HeadlessUXOutcome` represents only `EXPECTED`, `BLOCKED_WITH_REASON`, `PRODUCT_SUPPORT_GAP`, and `TEST_DATA_LIMITATION`; it cannot record CONFUSING / WRONG_FACT / WRONG_REFERENCE / WRONG_COMPARABILITY / UNEXPECTED_AUTO_ADVANCE / UNEXPECTED_STALL / BLOCKED_WITHOUT_REASON / WRONG_RESULT.
+
+## State-machine conformance summary
+
+| Current state / transition | Static state ownership | Result |
+|---|---|---|
+| start → loading → REVIEW_REQUIRED Recovery | `CompareFlowSheet.startCompare`, `ShoppingProductViewModel.resolveServerAuthority` | CONFORMS; Recovery candidate surface is server contract only. |
+| Recovery reselect/clear | CompareFlow actions + ViewModel X methods | CONFORMS; clear returns to server-driven REVIEW_REQUIRED/Global/NOT_APPLICABLE state. |
+| confirmed → reference decision | `CompareFlowSheet.rebuildPreparedComparison` | NONCONFORMING: local candidate/ranking/auto-selection happens before server discovery. |
+| selected reference → authorization → eligible → begin | ViewModel Q + coordinator R/E/B | CONFORMS for fail-closed execution and scorer order. |
+| begin → engine → complete → Result/History | service/coordinator | LOCAL-ONLY conforming for primary USER_EXPLICIT path after HJ-P0-001; published Git fails it. Result “other item” still fails on current tree for USER_EXPLICIT. |
+| completed history → hydration | comparison sync/hydrator | NONCONFORMING for v4 personal authority/provenance. |
+| history deletion / closet deletion | SwiftData UI + immutable server sync | POLICY_CONFLICT_REQUIRES_ADJUDICATION plus current rehydration inconsistency. |
+
+## Conformance totals
+
+| Metric | Count |
+|---|---:|
+| Declared scenarios | 45 |
+| Declared scenarios audited | 45 |
+| Missing declared scenario rows | 0 |
+| New behaviorally distinct code-discovered scenarios | 17 |
+| CONFORMS | 9 |
+| PARTIAL_CONFORMANCE | 33 |
+| CODE_NONCONFORMANCE | 3 |
+| POLICY_CONFLICT_REQUIRES_ADJUDICATION | 2 code-discovered history-delete surfaces (one owner decision; not a declared J row) |
+| LIVE_CONTRACT_NOT_VERIFIED | mutation-dependent paths only; listed per finding |
+| Confirmed current-tree P0 | 3 |
+| Published-Git/local-only P0 retained for implementation | 1 (HJ-P0-001) |
+| Confirmed P1 issue groups | 10 (REF-001/002, MC-001, BEGIN-REPLAY-001, EFFECTIVE-TUPLE-001, REG-001, CLOSET-001, NAV-001, PROVIDER-001, TEST-001) |
+| Confirmed P2 issue groups | 2 unmapped behavior groups (PROVIDER-SUPPORT-001, ENTRY-001) plus 3 static hardening observations in D-C03 |
+
+The totals deliberately do not equate partial Headless coverage with a product failure in every row. They identify the exact corridors requiring one integrated remediation/test pass.
+
+## Reverse-scan addendum — findings discovered after the first matrix pass
+
+The reverse scan found additional behavioral branches that are not represented by a
+declared J row.  They are fully enumerated in
+`Docs/FitMatchUnmappedUserScenarioLedger-20260831.txt` and grouped by implementation
+location in `Docs/FitMatchScenarioCodeDefectMap-20260831.txt`.
+
+| ID | Static evidence | Scenario relationship | Classification / severity |
+|---|---|---|---|
+| NEW-GAP-RESULT-001 | `RecommendationResultView.compare(with:)` mutates a USER_EXPLICIT target to `.serverConfirmed` before local history construction; `familyCode` is also used where the runtime distinguishes garment type from policy code. | Recovery J13/J14/J33 + Result other-item/recompare J20/J32 composite was absent. | CODE_NONCONFORMANCE / P0 |
+| NEW-GAP-HISTORY-003 | `VNextHistoryCacheHydrator` uses live product category and marks a V4 recovered target `.serverConfirmed`, ignoring `effective_classification_at_begin`. | J20/J32 name immutability but do not hydrate a V4 USER_EXPLICIT result. | CODE_NONCONFORMANCE / P0 |
+| NEW-GAP-CLOSET-UE-001 | Add-to-Closet and partial link registration can turn a shopping USER_EXPLICIT selection into a Closet `manual_override` using local inference. | Recovery-to-Closet domain crossing absent. | CODE_NONCONFORMANCE / P0 |
+| NEW-GAP-REF-001 / REF-002 | Compare Flow and Result other-item picker build, rank, label, and sometimes route candidate references locally before server candidate discovery. Final authorization remains fail-closed. | Broadly adjacent to J03/J13/J30 and J20/J32; exact surfaces absent. | PARTIAL_CONFORMANCE / P1 |
+| NEW-GAP-MC-001 | Eligible-size fallback asks authorization with `p_manual_explicit=false`, turning structurally valid, measurement-insufficient manual cross into BLOCKED rather than MEASUREMENTS_REQUIRED. | Cross J07/J09/J11 × M8/M9 corridor absent. | CODE_NONCONFORMANCE / P1 (static Git SQL; live behavior not re-run) |
+| NEW-GAP-BEGIN-REPLAY-001 | Exact same-client-id begin replay omits fingerprints/authorization fields required by the Swift coordinator and history proof. | J31/J36 use distinct client IDs. | CODE_NONCONFORMANCE / P1 (static Git SQL; live behavior not re-run) |
+| NEW-GAP-EFFECTIVE-TUPLE-001 | Resolver and ViewModel field-wise coalesce an effective tuple with global fields, allowing a hybrid tuple not issued by the server. | Null-axis / partial-global Recovery corridor absent. | PARTIAL_CONFORMANCE / P1 |
+| NEW-GAP-REG-001 / CLOSET-001 | Signed-out onboarding link registration requires authenticated server authority; duplicate linked Closet save leaves `isSaving` true. | Onboarding and Closet save retry absent. | MISSING_IMPLEMENTATION / P1 |
+| NEW-GAP-HISTORY-001 / HISTORY-002 | Closet/history delete deletes only local cache while immutable server rows rehydrate. | Explicit user delete policy is unresolved. | POLICY_CONFLICT_REQUIRES_ADJUDICATION / P1 UX risk |
+| NEW-GAP-PROVIDER-001 / NAV-001 / TEST-001 | COS is core-supported but absent from the canonical provider matrix; memory-only alternate-size batch is exposed after cold history hydration; the finite test authority is label-driven. | New provider / restart / test-authority corridors. | PARTIAL_CONFORMANCE / P1 |
+| NEW-GAP-PROVIDER-SUPPORT-001 / ENTRY-001 | COS surface/provenance/copy drift; stale/first-only share handling; custom URL no-op/unknown-route behavior. | New support / entry corridors. | PARTIAL_CONFORMANCE / P2 |
+| NEW-GAP-TEST-001 | Headless test uses a hand-written program switch; most declared state fields and eight UX outcomes do not drive fixture behavior. | Applies to every J claim. | TEST_ADEQUACY_GAP / P1 |
+
+### Required status distinction
+
+`HJ-P0-001` is **published-Git nonconformance** at this committed revision:
+the original `RecommendationService.makeCompletedVNextHistory` accepts only
+`.serverConfirmed`.  The dirty working tree contains a strict completion-proof
+remediation, but it is uncommitted and therefore cannot be treated as released
+authority.  The remediation package requires that proof to be retained rather
+than replacing it with a broad `.userExplicit` enum allowance.
+
+## Reverse code → scenario branch map
+
+The table defines the finite reverse-scan unit: a *behavioral branch family* is a
+production branch that changes user action, visible state, authority, side effect,
+or terminal outcome.  Pure layout/style branches are excluded.  Thirty-four branch
+families were inspected: seventeen map to one or more declared J corridors and
+seventeen are the `NEW-GAP-*` entries in the unmapped ledger.  Unmapped remaining:
+zero.
+
+| Production file / symbol family | User-observable branch family | Maps to declared corridor(s) | Reverse classification |
+|---|---|---|---|
+| `ContentView`, onboarding/login route | onboarding, sign-in, pending URL, custom scheme | NEW-GAP-REG-001, NEW-GAP-ENTRY-001 | new gap |
+| `MyClosetView`, `ClosetItemDetailView` | view/edit/reference replacement/delete and related History side effect | J17–J19/J29/J40; NEW-GAP-HISTORY-001 | policy conflict for delete |
+| `AddClosetMethodSheet`, `AddClosetItemView`, `AddClosetItemViewModel` | manual/link entry, field validation, source selection | J01/J02/J45; NEW-GAP-PROVIDER-SUPPORT-001 | partial/new gap |
+| `LinkClosetRegistrationView` | parsed linked registration, partial fallback, signed-out loading | J04/J21/J42; NEW-GAP-REG-001, CLOSET-UE-001 | nonconforming/new gap |
+| `AddComparedProductToClosetSheet` | selected-size save, duplicate, authority conversion | J36 adjacent; NEW-GAP-CLOSET-UE-001/CLOSET-001 | nonconforming/new gap |
+| `ShoppingProductViewModel` | URL resolve, authority state, Recovery, automatic/manual entry, completion | J01–J45 as applicable; HJ-P0-001, EFFECTIVE-TUPLE-001 | mixed; table above controls exact J grade |
+| `CompareFlowSheet` | loading/recovery/category confirmation/reference states and transitions | J01–J15/J17–J19/J22–J30/J40–J45; REF-001 | partial/new gap |
+| `FitMatchServerAuthorityCoordinator` | recovery mutation, discovery, authorization, eligible, begin, complete | J03/J06–J15/J22–J45; BEGIN-REPLAY-001 | core sequence conforms; replay gap |
+| `FitMatchSupabaseProductResolver` / payload builder / DTOs | runtime/effective tuple and source DTO mapping | J04/J13–J16/J21/J42; EFFECTIVE-TUPLE-001 | partial/new gap |
+| `RecommendationService` / engine adapter | permitted engine execution, score/result construction, session batch | J03/J07/J09/J11/J13/J20/J31/J36; HJ-P0-001/NAV-001 | local-only remediation + new gap |
+| `RecommendationResultView` | current Result, alternative sizes, other-item picker/recompare | J20/J30/J32; RESULT-001/REF-002/NAV-001 | nonconforming/new gap |
+| `RecommendationHistoryStore`, sync coordinator, history hydrator | persistence, server hydration, history-only reference, deletion reappearance | J20/J32; HISTORY-001/002/003 | P0 + policy conflict |
+| `ReferenceGarmentPolicy` | local reference tuple replacement only | J17/J18/J29/J40 | conforms as local Closet UX layer |
+| `ComparisonProfileMatcher`, `CanonicalComparisonProfileResolver` | local presentation/profile fallback | J03/J04/J05/J12/J22/J23; REF-001/EFFECTIVE-TUPLE-001 | drift risk; must not route sourced comparison |
+| `FitMatchClosetSyncCoordinator` | server Closet sync/manual override/reference state | J17–J19/J29; CLOSET-UE-001 | P0 domain crossing at named entry |
+| `ProductURLParserService`, MUSINSA/UNIQLO/ZARA/COS parsers | supported URL, facts, retry/fallback/provider failures | J04/J05/J21/J42/J45; PROVIDER-001/SUPPORT-001 | partial/new gap |
+| Share extension / `SharedURLStore` | share URL extraction, app-group handoff, stale/multiple payload | NEW-GAP-ENTRY-001, PROVIDER-SUPPORT-001 | new gap |
+| DB `authorize` / manual cross / eligible/begin / snapshot SQL | server comparison states, manual policy, idempotency | J06–J11/J22–J25/J31/J36; MC-001/BEGIN-REPLAY-001 | core safety conforms; two P1 gaps |
+
+## Repo-wide authority-gate classification
+
+All source occurrences of `.serverConfirmed`, `.userExplicit`,
+`isComparisonAuthority`, `authorityStatus`, `classificationAuthorityProvenance`, and
+`comparisonMethod.hasPrefix("서버 승인")` were grouped by behavioral call-site below.
+This is an occurrence audit, not a claim that a type-level enum alone is authority.
+
+| Group / current symbols | Classification | Reason |
+|---|---|---|
+| `FitMatchClassificationAuthorityProvenance.isComparisonAuthority`; local model canonical eligibility | SAFE_LAYER | represents local capability only; release comparison must still traverse server R/E/B. |
+| `ShoppingProductViewModel` entry guards and reference filtering | CORRECT_COMPARISON_AUTHORITY_GATE with REF-001 caveat | blocks obvious local non-authority before server; it must not choose semantic reference authority itself. |
+| `FitMatchServerAuthorityCoordinator` effective source mapping / permit / begin checks | CORRECT_COMPARISON_AUTHORITY_GATE | server DTO/permit/begin remain the release authority and raw tuple is not trusted. |
+| `RecommendationService.analyzeVNextComparison` | CORRECT_COMPARISON_AUTHORITY_GATE | requires permitted begin before engine. |
+| `RecommendationService.makeCompletedVNextHistory` current local strict proof | CORRECT_COMPARISON_AUTHORITY_GATE in dirty tree; OVERLY_NARROW_GATE in published `8855874` | strict V4 proof is required; released global-only guard is HJ-P0-001. |
+| `RecommendationService.authorizedRecommendation` / `recommendAfterServerAuthorization` | DEBUG / LEGACY_ONLY | guarded by `#if DEBUG`; global-only local path is not a sourced release comparison route. |
+| `RecommendationHistoryStore`, sync/history method prefix checks | LEGACY_ONLY / presentation gate | identifies server-completed cache/sync rows; not a source of new comparison authority. |
+| `CanonicalComparisonProfileResolver` | SAFE_LAYER | explicitly avoids overwriting authoritative tuples; local resolver is allowed only for non-authoritative/manual contexts. |
+| `ComparisonProfileMatcher` / local compatibility UI | DRIFT_RISK / CURRENT_DRIFT when used to route Compare or Result candidate decisions | it may decorate or aid manual Closet UX, but is a competing sourced-reference authority in REF-001/002. |
+| `AddComparedProductToClosetSheet`, `LinkClosetRegistrationView`, Closet sync | OVERLY_BROAD / CURRENT_DRIFT | shopping USER_EXPLICIT is conflated with a separate Closet user override. |
+| `RecommendationResultView.applyServerAuthority` | OVERLY_BROAD / CURRENT_DRIFT | writes global provenance for a personal target and mutates an old Result. |
+| `VNextHistoryCacheHydrator` source mapping | OVERLY_BROAD / CURRENT_DRIFT | V4 personal historical snapshot is flattened to global presentation. |
+
+## Manual-cross and duplicate-policy audit
+
+| Symbol / layer | Authority and behavior | Automatic/manual / sleeve | Scenario coverage / conformance |
+|---|---|---|---|
+| DB `manual_cross_comparison_rules`, `authorize_comparison` | server policy | explicit manual only; same sleeve enforced | J06–J11: core static contract conforms. |
+| DB `find_reference_candidates` / `eligible_candidate_sizes` | server discovery / measurements | automatic cross remains closed; `eligible` fallback drops manual intent | MC-001 P1. |
+| `ShoppingProductViewModel.authorizeReferenceForComparison` / coordinator begin | server result is required | manual candidate cannot be automatic; begin revalidates | conforms; no scorer bypass. |
+| `CompareFlowSheet` local plan and `ComparisonProfileMatcher` | local candidate display/ranking | local wording/heuristic can precede server | REF-001 current drift. |
+| Result picker / `RecommendationService.comparisonCompatibility` | local Result candidate display | server authorization later | REF-002 current drift. |
+| `ReferenceGarmentPolicy` | local Closet representative replacement | exact local tuple scope, not server comparison authorization | safe local UX layer. |
+
+No second production scorer, global classifier, or raw-tuple server comparison
+authority was found.  The main duplicate-policy risk is the two local reference
+presentation/routing implementations preceding the one server discovery contract.

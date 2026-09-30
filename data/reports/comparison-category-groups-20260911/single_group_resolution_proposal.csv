@@ -1,0 +1,51 @@
+﻿provider,source_category_key,category_path,current_group_codes,proposed_single_group_code,decision_status,confidence,reason,product_count,sample_product_names
+musinsa,musinsa:017018016,스포츠/레저 > 아우터 > 후드 집업,B|A,B,PROPOSED,HIGH,무신사 원본 categoryDepth가 아우터이며 사용자 정책도 아우터로 확정,2,남성 아틱 크레스트 II 후드 풀집 자켓|NBNAG4A013 / UNI NB 데님 후드 포켓 자켓 (L/INDIGO)
+musinsa,musinsa:002021,아우터 > 베스트,B|A,B,PROPOSED,HIGH,무신사 원본 categoryDepth가 아우터이며 사용자 정책도 아우터로 확정,3,스트라이프 니트 베스트 _블랙_9106152100|SALT VEST|SHADOW VEST
+musinsa,musinsa:002020,아우터 > 카디건,B|A,B,PROPOSED,HIGH,무신사 원본 categoryDepth가 아우터이며 사용자 정책도 아우터로 확정,35,캐시미어 블렌드 에센셜 라운드넥 가디건 그레이|캐시미어 블렌드 에센셜 라운드넥 가디건 블루|에스티 크롭가디건 (3color)|울캐시아가일브이넥가디건 J1KT621E|LUNALITE 16GG 가디건 DARK NAVY
+musinsa,musinsa:002022,아우터 > 후드 집업,B|A,B,PROPOSED,HIGH,무신사 원본 categoryDepth가 아우터이며 사용자 정책도 아우터로 확정,26,타이다이 워싱 코튼 하이넥 멀티 지퍼 디테일 후드집업 자켓 [베이지]|Tiered Zip Hoodie [Gray]|에센셜 골지 후드 집업(FS263FT01F002234)|8.8oz 페이드 워시 후드 집업|라인 워크 자수 후드집업 블랙
+uniqlo,uniqlo:57894:81621:82095:82486,KIDS > 에어리즘 > 주니어브라 & 브라탑 > 브라탑,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,GIRLS AIRism퍼스트브라
+uniqlo,uniqlo:57894:57978:58091:58636,KIDS > 이너웨어 > 에어리즘 > 캐미솔,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,GIRLS AIRism코튼블렌드캐미솔(프린트)
+uniqlo,uniqlo:57894:57978:58091:58635,KIDS > 이너웨어 > 에어리즘 > 탱크탑,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,KIDS AIRism마이크로메쉬탱크탑
+uniqlo,uniqlo:57894:57978:58093:58646,KIDS > 이너웨어 > 주니어브라 & 브라탑 > 브라탑,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,GIRLS AIRism코튼블렌드브라캐미솔
+uniqlo,uniqlo:57894:57975:58084:58608,KIDS > 청바지 & 팬츠 > 반바지 > 스커트 팬츠,C|D,C,PROPOSED,MEDIUM,스코츠/스커트 팬츠는 내부 구조와 실측 축이 쇼츠·팬츠에 가까움,8,GIRLS유틸리티미니스코츠|GIRLS셔링스코츠(무지)|GIRLS저지미니스코츠(엠브로이더리)|GIRLS저지미니스코츠(플라워)|GIRLS저지미니스코츠(벌룬)
+uniqlo,uniqlo:57894:57974:58077:58581,KIDS > 티셔츠 & 스웨트셔츠 & 후리스 > 스웨트셔츠 & 후드티 > 스웨트파카,A|B,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,1,KIDS드라이스웨트풀집파카(컬러블록)
+uniqlo,uniqlo:57894:57974:58077:96145,KIDS > 티셔츠 & 스웨트셔츠 & 후리스 > 스웨트셔츠 & 후드티 > 스웨트풀집,A|B,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,1,KIDS드라이스웨트풀집파카(무지)
+uniqlo,uniqlo:57894:57974:58078:58587,KIDS > 티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 에어리즘 코튼,F|A,A,PROPOSED,HIGH,AIRism은 소재·기능이며 원본 의류 카테고리는 일반 티셔츠/폴로,2,KIDS AIRism코튼크루넥T|KIDS AIRism코튼크루넥T(긴팔)
+uniqlo,uniqlo:57894:103078:103082:103092,KIDS > 히트텍 > 히트텍 엑스트라 웜 > 레깅스,C|F,F,PROPOSED,HIGH,보온 이너 레깅스/속바지는 이너웨어,1,KIDS히트텍엑스트라웜코튼레깅스
+uniqlo,uniqlo:57893:95355:128424:128427,MEN > 니트 & 가디건 > 가디건 > 수플레 얀,B|A,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,1,수플레얀스탠드칼라가디건
+uniqlo,uniqlo:57893:57971:58067:98376,MEN > 라운지 팬츠 > 라운지 팬츠 > 롱 팬츠,C|F,C,PROPOSED,HIGH,라운지/이지/조거 팬츠도 비교 실측 축은 팬츠,2,리넨블렌드이지앵클팬츠|리넨블렌드이지앵클팬츠(스트라이프)
+uniqlo,uniqlo:57893:57971:58067:58545,MEN > 라운지 팬츠 > 라운지 팬츠 > 쇼트 팬츠,C|F,C,PROPOSED,HIGH,라운지/이지/조거 팬츠도 비교 실측 축은 팬츠,2,스트레치이지쇼트팬츠(데님)|리넨블렌드이지쇼트팬츠
+uniqlo,uniqlo:57893:95356:95360:95439,MEN > 셔츠 > 폴로셔츠 (카라티) > 에어리즘 코튼,F|A,A,PROPOSED,HIGH,AIRism은 소재·기능이며 원본 의류 카테고리는 일반 티셔츠/폴로,4,AIRism코튼피케폴로셔츠(반팔)|AIRism코튼피케폴로셔츠|AIRism코튼피케폴로셔츠|AIRism코튼피케풀오픈폴로셔츠
+uniqlo,uniqlo:57893:81620:82089:82144,MEN > 에어리즘 > 이너웨어 상의 > 크루넥,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,AIRism크루넥T
+uniqlo,uniqlo:57893:57967:58039:58390,MEN > 티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 에어리즘 코튼,F|A,A,PROPOSED,HIGH,AIRism은 소재·기능이며 원본 의류 카테고리는 일반 티셔츠/폴로,5,AIRism코튼슬리브리스T|AIRism코튼오버사이즈크루넥T(5부)|AIRism코튼크루넥T(긴팔)|AIRism코튼오버사이즈스트라이프T|AIRism코튼스트라이프T(긴팔)
+uniqlo,uniqlo:57892:95353:128380:135281,WOMEN > 니트 & 가디건 > 가디건 > UV Protection,B|A,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,1,UV PROTECTION크루넥가디건(긴팔)
+uniqlo,uniqlo:57892:95353:128380:128388,WOMEN > 니트 & 가디건 > 가디건 > 그 외,B|A,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,5,포인텔가디건|수플레얀릴랙스가디건|포인텔가디건(프린트)|라운드넥가디건(반팔)|케이블크루넥가디건
+uniqlo,uniqlo:57892:95353:128380:128382,WOMEN > 니트 & 가디건 > 가디건 > 메리노,B|A,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,1,메리노크루넥가디건
+uniqlo,uniqlo:57892:95353:128380:136609,WOMEN > 니트 & 가디건 > 가디건 > 브이넥,B|A,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,3,라이트V넥가디건|립V넥가디건(스트라이프)|립V넥가디건(플라워)
+uniqlo,uniqlo:57892:95353:128380:135282,WOMEN > 니트 & 가디건 > 가디건 > 스무드 코튼,B|A,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,3,스무드코튼풀집가디건|포인텔가디건(긴팔)|포인텔가디건(긴팔)하트
+uniqlo,uniqlo:57892:95353:128380:128384,WOMEN > 니트 & 가디건 > 가디건 > 캐시미어,B|A,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,1,캐시미어크루넥가디건
+uniqlo,uniqlo:57892:57961:58012:96141,WOMEN > 스커트 & 원피스 > 스커트 > 스코츠,C|D,C,PROPOSED,MEDIUM,스코츠/스커트 팬츠는 내부 구조와 실측 축이 쇼츠·팬츠에 가까움,2,플리츠스코츠|플리츠스코츠(스트라이프)
+uniqlo,uniqlo:57892:57962:58013:105468,WOMEN > 스포츠 유틸리티 웨어 > 아우터 > 풀집 후디,B|A,B,PROPOSED,HIGH,가디건·풀집·파카·후디는 착용 구조상 아우터 우선,1,울트라스트레치AIRism UV PROTECTION풀집후디
+uniqlo,uniqlo:57892:57962:58016:58266,WOMEN > 스포츠 유틸리티 웨어 > 이너웨어 > 브라탑,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,AIRism브라캐미솔
+uniqlo,uniqlo:57892:81619:82085:82136,WOMEN > 에어리즘 > 팬츠 > 조거,C|F,C,PROPOSED,HIGH,라운지/이지/조거 팬츠도 비교 실측 축은 팬츠,2,울트라스트레치액티브조거팬츠(다리길이66~68cm)|울트라스트레치액티브조거팬츠(다리길이71~73cm·긴기장)
+uniqlo,uniqlo:57892:57963:58021:58304,WOMEN > 이너웨어 > 브라탑 > 에어리즘,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,2,AIRism브라탱크탑|AIRism코튼브라탱크탑
+uniqlo,uniqlo:57892:57963:58021:58306,WOMEN > 이너웨어 > 브라탑 > 코튼,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,6,립브라탑|립브라탑(링거)|립크롭브라탑(링거)|레이서백브라탑|레이서백브라탑(스트라이프)
+uniqlo,uniqlo:57892:57963:58018:58280,WOMEN > 이너웨어 > 에어리즘 > 브라탑,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,AIRism브라캐미솔
+uniqlo,uniqlo:57892:57963:58018:58278,WOMEN > 이너웨어 > 에어리즘 > 속바지,C|F,F,PROPOSED,HIGH,보온 이너 레깅스/속바지는 이너웨어,1,AIRism속바지
+uniqlo,uniqlo:57892:57963:58018:58275,WOMEN > 이너웨어 > 에어리즘 > 캐미솔,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,AIRism캐미솔
+uniqlo,uniqlo:57892:57963:58018:58274,WOMEN > 이너웨어 > 에어리즘 > 탱크탑,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,AIRism탱크탑
+uniqlo,uniqlo:57892:57963:141497:141498,WOMEN > 이너웨어 > 코튼 이너탑 > 캐미솔,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,5,소프트모달캐미솔(스트라이프)|소프트모달캐미솔(플라워)|소프트모달캐미솔(하트)|포인텔캐미솔|립레이스V넥캐미솔
+uniqlo,uniqlo:57892:57963:141497:141499,WOMEN > 이너웨어 > 코튼 이너탑 > 탱크탑,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,6,포인텔탱크탑(프린트)|소프트모달탱크탑(레이스포인텔)|립탱크탑(플라워)|크롭스퀘어넥탱크탑|헨리넥탱크탑
+uniqlo,uniqlo:57892:57959:57996:117295,WOMEN > 티셔츠 & 스웨트셔츠 & 후리스 > 브라탑 > 디자인,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,워셔블니트브라탑
+uniqlo,uniqlo:57892:57959:57996:117300,WOMEN > 티셔츠 & 스웨트셔츠 & 후리스 > 브라탑 > 코튼,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,립브라탑(컬러블록)
+uniqlo,uniqlo:57892:57964:58026:112811,WOMEN > 파자마 & 홈웨어 > 라운지 팬츠 > 리넨 블렌드,C|F,C,PROPOSED,HIGH,라운지/이지/조거 팬츠도 비교 실측 축은 팬츠,1,리넨블렌드이지팬츠(스트라이프)
+uniqlo,uniqlo:57892:57964:58026:58336,WOMEN > 파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠,C|F,C,PROPOSED,HIGH,라운지/이지/조거 팬츠도 비교 실측 축은 팬츠,5,코튼이지쇼트팬츠(데님)|코튼이지쇼트팬츠(스트라이프)|코튼복서이지쇼트팬츠(프린트)|코튼복서이지쇼트팬츠(체크)|코튼복서이지쇼트팬츠(깅엄)
+uniqlo,uniqlo:57892:57964:58026:94359,WOMEN > 파자마 & 홈웨어 > 라운지 팬츠 > 앵클 팬츠,C|F,C,PROPOSED,HIGH,라운지/이지/조거 팬츠도 비교 실측 축은 팬츠,2,코튼릴랙스앵클팬츠|코튼릴랙스앵클팬츠(데님)
+uniqlo,uniqlo:57892:57964:58026:94358,WOMEN > 파자마 & 홈웨어 > 라운지 팬츠 > 워셔블 니트 립 팬츠,C|F,C,PROPOSED,HIGH,라운지/이지/조거 팬츠도 비교 실측 축은 팬츠,1,워셔블니트팬츠(스무드)
+uniqlo,uniqlo:57892:57964:58026:58335,WOMEN > 파자마 & 홈웨어 > 라운지 팬츠 > 이지 팬츠,C|F,C,PROPOSED,HIGH,라운지/이지/조거 팬츠도 비교 실측 축은 팬츠,4,립와이드이지팬츠|코튼볼륨이지팬츠|립와이드이지팬츠(스트라이프)|립와이드이지팬츠(플라워)
+uniqlo,uniqlo:57892:57964:58025:141118,WOMEN > 파자마 & 홈웨어 > 파자마 & 홈웨어 상의 > GU,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,GU코튼컬러라운지세트
+uniqlo,uniqlo:57892:57964:58025:58332,WOMEN > 파자마 & 홈웨어 > 파자마 & 홈웨어 상의 > 긴팔 파자마,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,3,새틴파자마(프린트)|코튼파자마(깅엄체크)|코튼파자마(플라워)
+uniqlo,uniqlo:57892:57964:58025:74427,WOMEN > 파자마 & 홈웨어 > 파자마 & 홈웨어 상의 > 반팔 파자마,F|A,F,PROPOSED,HIGH,원본 API 계층이 이너웨어·브라탑·파자마/홈웨어,1,AIRism코튼파자마
+zara,zara:3:131:606,KID > 유아용 가디건 > KDA KNITWEAR,A|B,B,PROPOSED,HIGH,자라 family가 가디건이고 표본도 니트 재킷,1,프루트오브더룸™ 배색 니트 재킷
+zara,zara:3:131:564,KID > 유아용 가디건 > MINI KNITWEAR,A|B,B,PROPOSED,HIGH,자라 family가 가디건이고 표본도 니트 재킷,2,링크 크로스오버 니트 재킷|링크 크로스 니트 재킷
+uniqlo,uniqlo:57892:57964:58025:58334,WOMEN > 파자마 & 홈웨어 > 파자마 & 홈웨어 상의 > 그 외,F|A,,PENDING_USER,CONFLICT,동일 API 카테고리에 룸슈즈(X)와 립V넥가디건(B)이 혼재,2,룸슈즈|립V넥가디건

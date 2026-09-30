@@ -1,0 +1,155 @@
+{
+  "generated_from": "/Users/jinyoung/Documents/RetailerCatalogCollector/data/raw",
+  "generated_on": "2026-09-11",
+  "group_counts": {
+    "musinsa": {
+      "A": {
+        "category_node_count": 17,
+        "product_count": 192
+      },
+      "B": {
+        "category_node_count": 23,
+        "product_count": 224
+      },
+      "C": {
+        "category_node_count": 0,
+        "product_count": 0
+      },
+      "D": {
+        "category_node_count": 0,
+        "product_count": 0
+      },
+      "E": {
+        "category_node_count": 0,
+        "product_count": 0
+      },
+      "F": {
+        "category_node_count": 0,
+        "product_count": 0
+      },
+      "R": {
+        "category_node_count": 0,
+        "product_count": 0
+      },
+      "X": {
+        "category_node_count": 0,
+        "product_count": 0
+      }
+    },
+    "uniqlo": {
+      "A": {
+        "category_node_count": 123,
+        "product_count": 411
+      },
+      "B": {
+        "category_node_count": 43,
+        "product_count": 88
+      },
+      "C": {
+        "category_node_count": 71,
+        "product_count": 155
+      },
+      "D": {
+        "category_node_count": 7,
+        "product_count": 20
+      },
+      "E": {
+        "category_node_count": 17,
+        "product_count": 39
+      },
+      "F": {
+        "category_node_count": 78,
+        "product_count": 177
+      },
+      "R": {
+        "category_node_count": 2,
+        "product_count": 2
+      },
+      "X": {
+        "category_node_count": 37,
+        "product_count": 101
+      }
+    },
+    "zara": {
+      "A": {
+        "category_node_count": 14,
+        "product_count": 173
+      },
+      "B": {
+        "category_node_count": 8,
+        "product_count": 127
+      },
+      "C": {
+        "category_node_count": 9,
+        "product_count": 51
+      },
+      "D": {
+        "category_node_count": 0,
+        "product_count": 0
+      },
+      "E": {
+        "category_node_count": 2,
+        "product_count": 5
+      },
+      "F": {
+        "category_node_count": 8,
+        "product_count": 76
+      },
+      "R": {
+        "category_node_count": 5,
+        "product_count": 88
+      },
+      "X": {
+        "category_node_count": 4,
+        "product_count": 27
+      }
+    }
+  },
+  "group_definitions": {
+    "A": "일반 상의",
+    "B": "아우터",
+    "C": "팬츠·쇼츠·레깅스",
+    "D": "스커트",
+    "E": "원피스·점프수트·커버올",
+    "F": "이너웨어·홈웨어",
+    "R": "혼합·검토",
+    "X": "비교 제외"
+  },
+  "provider_counts": {
+    "musinsa": {
+      "category_node_count": 36,
+      "dispositions": {
+        "COMPARABLE": 36
+      },
+      "valid_product_count": 350
+    },
+    "uniqlo": {
+      "category_node_count": 334,
+      "dispositions": {
+        "COMPARABLE": 295,
+        "EXCLUDED": 37,
+        "REVIEW": 2
+      },
+      "valid_product_count": 896
+    },
+    "zara": {
+      "category_node_count": 48,
+      "dispositions": {
+        "COMPARABLE": 39,
+        "EXCLUDED": 4,
+        "REVIEW": 5
+      },
+      "valid_product_count": 544
+    }
+  },
+  "schema_version": "fitmatch-comparison-category-groups-v1-proposal",
+  "total_category_node_count": 418,
+  "warnings": [
+    "이 파일은 비교 후보 그룹 제안이며 FitMatch canonical 분류 확정값이 아니다.",
+    "다중 그룹은 정상이며 배열 순서나 표시명만으로 DB 확정을 만들면 안 된다.",
+    "R은 모호하거나 혼합된 API 노드이며 자동 비교·자동 확정 전에 검토해야 한다.",
+    "X는 의류 비교 대상에서 제외한다.",
+    "AIRism/HEATTECH 등 기능·소재 태그만으로 F 그룹을 결정하지 않는다.",
+    "Zara product.id와 selected catentryID는 별도 필드로 유지해야 한다."
+  ]
+}

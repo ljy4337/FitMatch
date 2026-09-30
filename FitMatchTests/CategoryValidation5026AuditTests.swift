@@ -231,6 +231,13 @@ final class CategoryValidation5026AuditTests: XCTestCase {
     }
 
     func testLiveProductionParserRevalidatesOfflineAmbiguousAndOtherProducts() async throws {
+        let process = ProcessInfo.processInfo
+        guard process.arguments.contains("-fitmatchRunCategory5026LiveAudit")
+                || process.environment["FITMATCH_RUN_CATEGORY_5026_LIVE_AUDIT"] == "1" else {
+            throw XCTSkip(
+                "329개 실사이트 재검증은 FITMATCH_RUN_CATEGORY_5026_LIVE_AUDIT=1로 명시 실행하세요."
+            )
+        }
         let bundle = Bundle(for: CategoryValidation5026AuditTests.self)
         let inputURL = try XCTUnwrap(
             bundle.url(forResource: "CategoryValidation5026Inputs", withExtension: "json")

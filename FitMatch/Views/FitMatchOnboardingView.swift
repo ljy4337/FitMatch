@@ -27,8 +27,8 @@ struct FitMatchOnboardingView: View {
 
     private let pages = [
         FitMatchOnboardingPage(
-            title: "내 옷이 비교 기준이 돼요",
-            description: "체형을 재는 대신, 내가 실제로 잘 입는 옷의 실측을 사이즈 선택 기준으로 사용해요.",
+            title: "내 옷으로 비교해요",
+            description: "체형을 재는 대신, 내가 실제로 입는 옷의 실측을 쇼핑 상품과 비교해요.",
             kind: .referenceGarment
         ),
         FitMatchOnboardingPage(
@@ -37,8 +37,8 @@ struct FitMatchOnboardingView: View {
             kind: .howItWorks
         ),
         FitMatchOnboardingPage(
-            title: "가장 비슷한 사이즈를 찾아요",
-            description: "기준옷이 있으면 우선 자동 비교하고, 없다면 같은 카테고리의 내 옷을 직접 선택해요.",
+            title: "비슷한 옷을 한눈에 봐요",
+            description: "같은 비교 그룹의 내 옷들을 가까운 순서로 보고, 원하는 옷을 눌러 상세 차이를 확인해요.",
             kind: .referenceSelection
         )
     ]
@@ -50,12 +50,14 @@ struct FitMatchOnboardingView: View {
         VStack(spacing: 0) {
             HStack {
                 Spacer()
-                Button(isRegistrationPage ? "나중에 등록하기" : "건너뛰기") {
-                    onFinish()
+                if !isRegistrationPage {
+                    Button("건너뛰기") {
+                        onFinish()
+                    }
+                    .accessibilityIdentifier("onboarding.skip")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
                 }
-                .accessibilityIdentifier(isRegistrationPage ? "onboarding.later.top" : "onboarding.skip")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 24)
             .padding(.top, 18)
@@ -86,15 +88,18 @@ struct FitMatchOnboardingView: View {
             .layoutPriority(1)
 
             if isRegistrationPage {
-                Button("나중에 등록하기") {
+                Button {
                     onFinish()
+                } label: {
+                    Text("나중에 등록하기")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
                 .accessibilityIdentifier("onboarding.later")
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .buttonStyle(.plain)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 18)
@@ -124,7 +129,7 @@ struct FitMatchOnboardingView: View {
             switch route {
             case .shoppingLink:
                 NavigationStack {
-                    LinkClosetRegistrationView(prefersRepresentativeByDefault: true) {
+                    LinkClosetRegistrationView(prefersRepresentativeByDefault: false) {
                         finishAfterRegistration()
                     }
                 }
@@ -138,19 +143,10 @@ struct FitMatchOnboardingView: View {
                         prefillGender: usesUITestFixtures ? .unisex : nil,
                         prefillSourceOption: usesUITestFixtures ? .manual : nil,
                         prefillBrand: usesUITestFixtures ? "온보딩 직접등록 브랜드" : nil,
-                        prefillProductName: usesUITestFixtures ? "온보딩 직접등록 기준옷" : nil,
-                        prefersRepresentativeByDefault: true
-                    ) { item in
-                        modelContext.insert(item)
-                        do {
-                            try modelContext.save()
-                            finishAfterRegistration()
-                            return true
-                        } catch {
-                            modelContext.rollback()
-                            return false
-                        }
-                    }
+                        prefillProductName: usesUITestFixtures ? "온보딩 직접등록 내 옷" : nil,
+                        prefersRepresentativeByDefault: false,
+                        onSaved: { _ in finishAfterRegistration() }
+                    )
                 }
                 .presentationDragIndicator(.visible)
             }
@@ -208,7 +204,7 @@ struct FitMatchOnboardingView: View {
         .frame(maxWidth: .infinity)
         .frame(height: 290)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("기준옷 실측 예시, 어깨 53, 가슴 64, 총장 76센티미터")
+        .accessibilityLabel("내 옷 실측 예시, 어깨 53, 가슴 64, 총장 76센티미터")
     }
 
     private func measurementChip(_ title: String, alignment: Alignment) -> some View {
@@ -233,7 +229,7 @@ struct FitMatchOnboardingView: View {
             onboardingStep(
                 number: 2,
                 title: "사고 싶은 상품 불러오기",
-                description: "무신사·유니클로 링크를 공유하거나 입력",
+                description: "무신사·유니클로·ZARA 링크를 공유하거나 입력",
                 systemImage: "link"
             )
             onboardingStep(
@@ -282,17 +278,17 @@ struct FitMatchOnboardingView: View {
     private var referenceSelectionVisual: some View {
         VStack(spacing: 12) {
             comparisonRouteCard(
-                badge: "기준옷이 있을 때",
-                title: "기준옷과 우선 자동 비교",
-                description: "사고 싶은 상품과 같은 카테고리의 기준옷을 찾아 바로 비교해요.",
+                badge: "같은 그룹",
+                title: "비슷한 내 옷을 목록으로 확인",
+                description: "같은 비교 그룹의 내 옷을 가까운 순서로 보여드려요.",
                 systemImage: "bolt.fill",
                 emphasized: true
             )
 
             comparisonRouteCard(
-                badge: "기준옷이 없을 때",
-                title: "내가 비교할 옷을 직접 선택",
-                description: "같은 카테고리의 내 옷 목록을 보여드리고, 원하는 비교 대상을 선택할 수 있어요.",
+                badge: "다른 그룹",
+                title: "원하는 내 옷을 직접 선택",
+                description: "다른 그룹이나 내 옷장 전체에서 원하는 비교 대상을 선택할 수 있어요.",
                 systemImage: "hand.tap.fill",
                 emphasized: false
             )
@@ -359,8 +355,8 @@ struct FitMatchOnboardingView: View {
 
                 registrationCard(
                     title: "상품 링크로 등록",
-                    description: "무신사·유니클로에서 가지고 있는 상품의 링크를 복사해 등록할 수 있어요.",
-                    supportText: "지원 쇼핑몰  MUSINSA · UNIQLO",
+                    description: "무신사·유니클로·ZARA에서 가지고 있는 상품의 링크를 복사해 등록할 수 있어요.",
+                    supportText: "지원 쇼핑몰  MUSINSA · UNIQLO · ZARA",
                     buttonTitle: "상품 링크로 등록",
                     systemImage: "link"
                 ) {

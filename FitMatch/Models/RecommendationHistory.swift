@@ -48,6 +48,7 @@ final class RecommendationHistory {
     var productBrandNameSnapshot: String?
     var productNameSnapshot: String?
     var productImageURLStringSnapshot: String?
+    var referenceImageURLStringSnapshot: String? = nil
     var productURLStringSnapshot: String?
     var productCodeSnapshot: String?
     var productTargetGenderRawValueSnapshot: String?
@@ -76,6 +77,7 @@ final class RecommendationHistory {
         fallbackReason: String = "",
         productDetailCategory: ClosetDetailCategory = .other,
         comparisonResult: MeasurementComparisonResult? = nil,
+        serverApprovedReliability: Int? = nil,
         reason: String? = nil,
         createdAt: Date = Date()
     ) {
@@ -105,7 +107,8 @@ final class RecommendationHistory {
             self.comparisonSchemaVersion = 2
             self.comparisonStatusRawValue = comparisonResult.status.rawValue
             let snapshot = RecommendationCalculationSnapshot.make(
-                comparison: comparisonResult
+                comparison: comparisonResult,
+                serverApprovedReliability: serverApprovedReliability
             )
             self.comparedMeasurementUsagesJSON = Self.encode(
                 RecommendationComparisonEnvelope(snapshot: snapshot)
@@ -126,7 +129,8 @@ final class RecommendationHistory {
         self.productSourceNameSnapshot = product.sourceDisplayName
         self.productBrandNameSnapshot = product.brand?.name
         self.productNameSnapshot = product.name
-        self.productImageURLStringSnapshot = product.imageURLString
+        self.productImageURLStringSnapshot = product.imageURLStringForDisplay
+        self.referenceImageURLStringSnapshot = userFit.imageURLStringForDisplay
         self.productURLStringSnapshot = product.sourceURLString
         self.productCodeSnapshot = product.productCode
         self.productTargetGenderRawValueSnapshot = product.productTargetGender.rawValue
@@ -184,6 +188,14 @@ final class RecommendationHistory {
         calculationSnapshot?.comparisonCoverage ?? 0
     }
 
+    /// The vNext engine's evidence/coverage reliability after successful
+    /// `complete_comparison`. Older local histories keep their legacy UI
+    /// fallback because they have no server-approved payload to preserve.
+    var serverApprovedVNextReliability: Int? {
+        guard isServerBackedVNextHistory else { return nil }
+        return calculationSnapshot?.serverApprovedReliability
+    }
+
     var measurementExclusions: [MeasurementComparisonExclusion] {
         Self.decode([MeasurementComparisonExclusion].self, from: measurementExclusionsJSON) ?? []
     }
@@ -224,6 +236,36 @@ final class RecommendationHistory {
         }
     }
 
+    /// A vNext completed history is locally cached from an immutable,
+    /// server-authorized comparison. Its `id` is the server comparison's
+    /// `client_comparison_id`, which is the only client-side identity accepted
+    /// by the user-owned visibility RPC.
+    var isServerBackedVNextHistory: Bool {
+        comparisonSchemaVersion >= 2
+            && comparisonMethod.hasPrefix("서버 승인")
+    }
+
+    /// Determines whether this immutable History references one active Closet
+    /// item. vNext persistence deliberately gives the frozen reference a
+    /// comparison-derived ID, so direct `userFit.id == clientItemID` checks
+    /// only work for legacy rows and silently miss the production projection.
+    /// This is a relationship test only; it never grants server visibility or
+    /// deletion authority.
+    func referencesClosetItem(clientItemID: UUID) -> Bool {
+        if userFit.id == clientItemID {
+            // Legacy History and older restores retained the active item's ID.
+            return true
+        }
+        guard isServerBackedVNextHistory,
+              userFit.isHistoryOnlyReferenceSnapshot else {
+            return false
+        }
+        return userFit.id == VNextHistoryProjectionIdentity.referenceID(
+            comparisonID: id,
+            clientItemID: clientItemID
+        )
+    }
+
     var stockStatus: ProductStockStatus {
         ProductStockStatus(rawValue: stockStatusRawValue ?? "") ?? .unknown
     }
@@ -241,7 +283,12 @@ final class RecommendationHistory {
     }
 
     var productImageURLStringForDisplay: String? {
-        productImageURLStringSnapshot ?? product.imageURLString
+        productImageURLStringSnapshot ?? product.imageURLStringForDisplay
+    }
+
+    var referenceImageURLStringForDisplay: String? {
+        referenceImageURLStringSnapshot
+            ?? userFit.imageURLStringForDisplay
     }
 
     var sourceCategoryPathForDisplay: String {

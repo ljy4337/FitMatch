@@ -12,6 +12,7 @@ struct FitMatchSuccessToast: View {
             .background(Color.black.opacity(0.88), in: Capsule())
             .shadow(color: .black.opacity(0.18), radius: 12, y: 5)
             .accessibilityElement(children: .combine)
+            .accessibilityLabel(message)
             .accessibilityAddTraits(.isStaticText)
     }
 }

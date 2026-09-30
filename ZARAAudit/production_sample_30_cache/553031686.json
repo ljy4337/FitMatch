@@ -1,0 +1,260 @@
+{
+  "captured_at": "2026-08-21T07:56:47.463Z",
+  "request_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/553031686/size-measure-guide?locale=ko_KR",
+  "http_status": 200,
+  "challenge_detected": false,
+  "response_hash": "28d11a13a91001e63f02411c38972980697eb896b17f9c63bc2b32828779ac7a",
+  "response": {
+    "sizeGuideInfo": {
+      "id": "397a1e4e-9085-4329-8dd3-d74cdc140c2e",
+      "name": "아론 레빈 X ZARA 포켓 티셔츠",
+      "sizes": [
+        {
+          "id": "102",
+          "name": "S (KR 90)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "S (KR 90)"
+            },
+            {
+              "units": "in",
+              "value": "S (KR 90)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "79ccb9af56083b0943da78bb84ac53e1",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "94"
+                },
+                {
+                  "unitId": "in",
+                  "value": "37.0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "103",
+          "name": "M (KR 95-100)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "M (KR 95-100)"
+            },
+            {
+              "units": "in",
+              "value": "M (KR 95-100)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "79ccb9af56083b0943da78bb84ac53e1",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "98"
+                },
+                {
+                  "unitId": "in",
+                  "value": "38.6"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "104",
+          "name": "L (KR 100-105)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "L (KR 100-105)"
+            },
+            {
+              "units": "in",
+              "value": "L (KR 100-105)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "79ccb9af56083b0943da78bb84ac53e1",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "104"
+                },
+                {
+                  "unitId": "in",
+                  "value": "40.9"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "105",
+          "name": "XL (KR 105-110)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "XL (KR 105-110)"
+            },
+            {
+              "units": "in",
+              "value": "XL (KR 105-110)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "79ccb9af56083b0943da78bb84ac53e1",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "110"
+                },
+                {
+                  "unitId": "in",
+                  "value": "43.3"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "shape": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "other",
+            "path": "../../../assets/public/13a7/5490/af4544149ef1/450df12cd26a/",
+            "name": "../../CRO-superior-pecho",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": true
+          }
+        ],
+        "zones": [
+          {
+            "id": "79ccb9af56083b0943da78bb84ac53e1",
+            "line": {
+              "startPoint": {
+                "top": 52,
+                "left": 33
+              },
+              "endPoint": {
+                "top": 52,
+                "left": 67
+              },
+              "color": "#fff"
+            },
+            "textPoint": {
+              "top": 55,
+              "left": 10
+            }
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "cm",
+          "type": "measure_cm",
+          "name": "cm",
+          "default": true
+        },
+        {
+          "id": "in",
+          "type": "measure_im",
+          "name": "in",
+          "default": false
+        }
+      ],
+      "equivalences": {
+        "type": "markets",
+        "headers": [
+          {
+            "id": "KR",
+            "name": "KR"
+          },
+          {
+            "id": "EUR",
+            "name": "EU"
+          }
+        ],
+        "rows": [
+          {
+            "sizeId": "102",
+            "values": [
+              {
+                "headerId": "KR",
+                "name": "90~95"
+              },
+              {
+                "headerId": "EUR",
+                "name": "S"
+              }
+            ]
+          },
+          {
+            "sizeId": "103",
+            "values": [
+              {
+                "headerId": "KR",
+                "name": "95~100"
+              },
+              {
+                "headerId": "EUR",
+                "name": "M"
+              }
+            ]
+          },
+          {
+            "sizeId": "104",
+            "values": [
+              {
+                "headerId": "KR",
+                "name": "100~105"
+              },
+              {
+                "headerId": "EUR",
+                "name": "L"
+              }
+            ]
+          },
+          {
+            "sizeId": "105",
+            "values": [
+              {
+                "headerId": "KR",
+                "name": "105~110"
+              },
+              {
+                "headerId": "EUR",
+                "name": "XL"
+              }
+            ]
+          }
+        ]
+      },
+      "comments": [],
+      "defaultSize": "S (KR 90)",
+      "kidsEquivalences": [],
+      "section": {
+        "id": "2",
+        "name": "MAN"
+      }
+    },
+    "measureGuideInfo": null
+  }
+}

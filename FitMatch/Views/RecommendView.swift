@@ -45,7 +45,7 @@ struct RecommendView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             SectionHeader(title: "추천 기준", subtitle: "지금은 추천 데이터 수집 단계입니다.")
                             Divider()
-                            RecommendPreviewRow(title: "내 기준 옷", subtitle: "카테고리별 기준 옷을 우선 반영", systemImage: "tshirt")
+                            RecommendPreviewRow(title: "내 옷장 실측", subtitle: "같은 비교 그룹의 등록 옷을 반영", systemImage: "tshirt")
                             RecommendPreviewRow(title: "비교 기록", subtitle: "최근 본 상품과 핏 매칭률 활용", systemImage: "clock")
                             RecommendPreviewRow(title: "선호 브랜드", subtitle: "브랜드별 실측 차이를 누적 분석", systemImage: "tag")
                         }

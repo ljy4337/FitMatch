@@ -1,0 +1,331 @@
+import Foundation
+
+/// Contract failures are intentionally distinct from a temporary transport
+/// failure or an ordinary lack of measurements.  The associated values are
+/// for diagnostics and tests; presentation remains at the feature boundary.
+nonisolated enum FitMatchVNextContractError: Error, LocalizedError, Equatable, Sendable {
+    case missingRequiredField(String)
+    case unknownState(field: String, observed: String)
+    case unsupportedSnapshotVersion(Int)
+    case unsupportedEngineVersion(String)
+    case snapshotVersionMismatch(topLevel: Int, nested: Int)
+    case conflictingProof(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingRequiredField:
+            return FitMatchFailureCopy.serviceInspection
+        case .unknownState:
+            return FitMatchFailureCopy.serviceInspection
+        case .unsupportedSnapshotVersion, .unsupportedEngineVersion,
+             .snapshotVersionMismatch, .conflictingProof:
+            return FitMatchFailureCopy.appUpdateRequired
+        }
+    }
+}
+
+/// The server string remains in its DTO for transport compatibility. This
+/// enum is only the closed mapping used by the runtime domain boundary.
+nonisolated enum VNextReadinessState: String, CaseIterable, Sendable {
+    case ready = "READY"
+    case classificationRequired = "CLASSIFICATION_REQUIRED"
+    case notApplicable = "NOT_APPLICABLE"
+    case policyUnavailable = "POLICY_UNAVAILABLE"
+    case noAvailableSize = "NO_AVAILABLE_SIZE"
+    case noMeasurementData = "NO_MEASUREMENT_DATA"
+    case mappingRequired = "MAPPING_REQUIRED"
+    case insufficientMeasurements = "INSUFFICIENT_MEASUREMENTS"
+
+    init(status: String) throws {
+        guard let value = Self(rawValue: status) else {
+            throw FitMatchVNextContractError.unknownState(
+                field: "readiness.status",
+                observed: status
+            )
+        }
+        self = value
+    }
+}
+
+/// Owns the intentionally narrow vNext compatibility policy. Classification,
+/// recovery, comparison snapshot, and engine versions are separate concepts
+/// and are never coalesced here.
+nonisolated enum FitMatchVNextContractValidator {
+    static let supportedSnapshotSchemaVersions: Set<Int> = [3, 4]
+    static let pendingEngineVersion = "pending"
+
+    /// Do not let duplicate server identities trap in Dictionary construction
+    /// or silently choose one of conflicting rows.
+    static func uniqueIdentityIndex<Value, ID: Hashable>(
+        _ values: [Value], id: (Value) -> ID
+    ) throws -> [ID: Value] {
+        var result: [ID: Value] = [:]
+        for value in values {
+            let key = id(value)
+            guard result.updateValue(value, forKey: key) == nil else {
+                throw FitMatchVNextContractError.conflictingProof("duplicate_server_identity")
+            }
+        }
+        return result
+    }
+
+    /// Candidate lists belong to the exact requested product/variant. Reject
+    /// malformed envelopes before they reach identity-keyed UI projections.
+    static func validateCandidateEnvelope(
+        _ response: VNextReferenceCandidatesDTO,
+        targetProductID: UUID,
+        targetVariantID: UUID
+    ) throws {
+        guard response.targetProductID == targetProductID,
+              response.targetVariantID == targetVariantID else {
+            throw FitMatchVNextContractError.conflictingProof("candidate_target_identity")
+        }
+        var closetIDs = Set<UUID>()
+        for candidate in response.candidates + response.blocked {
+            guard closetIDs.insert(candidate.closetItemID).inserted else {
+                throw FitMatchVNextContractError.conflictingProof("candidate_closet_identity")
+            }
+            if let preview = candidate.comparisonPreview {
+                guard candidate.allowed, preview.allowed, preview.manualExplicit == true,
+                      preview.referenceClosetItemID == candidate.closetItemID,
+                      preview.targetProductID == targetProductID,
+                      preview.targetVariantID == targetVariantID,
+                      !preview.authorizedCandidateProductSizeIDs.isEmpty,
+                      Set(preview.authorizedCandidateProductSizeIDs)
+                        == Set(candidate.eligibleProductSizeIDs),
+                      Set(preview.authorizedCandidateProductSizeIDs)
+                        == Set(preview.candidates.map(\.productSizeID)),
+                      Set(preview.authorizedCandidateProductSizeIDs).count
+                        == preview.authorizedCandidateProductSizeIDs.count,
+                      Set(preview.candidates.map(\.productSizeID)).count
+                        == preview.candidates.count else {
+                    throw FitMatchVNextContractError.conflictingProof("candidate_preview_identity")
+                }
+            }
+        }
+    }
+
+    static func readinessState(
+        _ readiness: VNextProductReadinessDTO
+    ) throws -> VNextReadinessState {
+        try VNextReadinessState(status: readiness.status)
+    }
+
+    static func runtimeState(
+        readiness: VNextProductReadinessDTO,
+        classificationStatus: String
+    ) throws -> String {
+        let state = try readinessState(readiness)
+        switch state {
+        case .ready:
+            return "ready"
+        case .classificationRequired:
+            // Older deployed readiness functions used CLASSIFICATION_REQUIRED
+            // for a confirmed group whose structure/measurement contract was
+            // not ready. Preserve fail-closed comparison behavior while keeping
+            // that condition distinct from a genuinely unmapped product.
+            if classificationStatus == "confirmed",
+               readiness.reason == "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED" {
+                return "measurements_required"
+            }
+            return "classification_required"
+        case .notApplicable:
+            return "not_comparable"
+        case .noAvailableSize:
+            return "sizes_required"
+        case .noMeasurementData, .mappingRequired, .insufficientMeasurements:
+            return "measurements_required"
+        case .policyUnavailable:
+            return "policy_unavailable"
+        }
+    }
+
+    /// Live RPC responses must carry an explicit lifecycle status and an
+    /// explicit top-level schema when the nested snapshot is present.
+    static func validateLiveBegin(_ begin: VNextBeginComparisonDTO) throws {
+        try validateBeginLifecycle(begin)
+        let isOwnedSameIDReplay = !begin.created && begin.idempotent
+        guard begin.declaredSnapshotSchemaVersion != nil || isOwnedSameIDReplay else {
+            throw FitMatchVNextContractError.missingRequiredField(
+                "snapshot_schema_version"
+            )
+        }
+        try validateBeginSnapshot(
+            begin,
+            allowsMissingTopLevelVersion: isOwnedSameIDReplay
+        )
+    }
+
+    /// A history replay is read-only. Older owned rows may omit a duplicated
+    /// begin-envelope field, in which case their nested immutable snapshot is
+    /// the only version source. This never makes a new live request valid.
+    static func validateReplayBegin(_ begin: VNextBeginComparisonDTO) throws {
+        guard begin.resultStatus == "PENDING" else {
+            throw FitMatchVNextContractError.unknownState(
+                field: "result_status",
+                observed: begin.resultStatus
+            )
+        }
+        try validateBeginSnapshot(begin, allowsMissingTopLevelVersion: true)
+    }
+
+    static func validateCompletedReplay(
+        _ row: VNextComparisonHistoryDTO
+    ) throws {
+        guard row.resultStatus == "COMPLETED" else {
+            throw FitMatchVNextContractError.unknownState(
+                field: "comparison_history.result_status",
+                observed: row.resultStatus
+            )
+        }
+        try validateSupportedSnapshotVersion(row.snapshotSchemaVersion)
+        guard VNextCompletedReplayPolicy.supportedVersions.contains(row.engineVersion) else {
+            throw FitMatchVNextContractError.unsupportedEngineVersion(
+                row.engineVersion
+            )
+        }
+        guard let evidence = row.resultEvidence else {
+            throw FitMatchVNextContractError.missingRequiredField(
+                "result_evidence"
+            )
+        }
+        guard VNextCompletedReplayPolicy.supportedVersions.contains(evidence.engineVersion) else {
+            throw FitMatchVNextContractError.unsupportedEngineVersion(
+                evidence.engineVersion
+            )
+        }
+        guard row.engineVersion == evidence.engineVersion else {
+            throw FitMatchVNextContractError.conflictingProof(
+                "engine_version"
+            )
+        }
+    }
+
+    static func validatePendingReplay(
+        _ row: VNextComparisonHistoryDTO
+    ) throws {
+        guard row.resultStatus == "PENDING" else {
+            throw FitMatchVNextContractError.unknownState(
+                field: "comparison_history.result_status",
+                observed: row.resultStatus
+            )
+        }
+        try validateSupportedSnapshotVersion(row.snapshotSchemaVersion)
+        guard row.engineVersion == pendingEngineVersion else {
+            throw FitMatchVNextContractError.unsupportedEngineVersion(
+                row.engineVersion
+            )
+        }
+        guard let begin = row.snapshotBegin else {
+            throw FitMatchVNextContractError.missingRequiredField(
+                "comparison_history.begin_snapshot"
+            )
+        }
+        try validateReplayBegin(begin)
+    }
+
+    static func validateEngineInput(_ begin: VNextBeginComparisonDTO) throws {
+        try validateReplayBegin(begin)
+    }
+
+    /// Validates the additive v2 retailer-exact proof without admitting it to
+    /// the live candidate/begin/complete path.  The server must provide every
+    /// source-semantic identity; Swift never fills these values from labels,
+    /// canonical projections, or local records.
+    static func validateRetailerExactEvidenceV2(
+        _ evidence: VNextRetailerExactEvidenceV2DTO
+    ) throws {
+        guard evidence.evidenceVersion == "retailer-exact-evidence-v2",
+              evidence.mode == .retailerExact else {
+            throw FitMatchVNextContractError.conflictingProof(
+                "retailer_exact_version"
+            )
+        }
+        guard evidence.referenceValue.isFinite,
+              evidence.referenceValue > 0,
+              evidence.targetValue.isFinite,
+              evidence.targetValue > 0 else {
+            throw FitMatchVNextContractError.conflictingProof(
+                "retailer_exact_value"
+            )
+        }
+        let required = [
+            evidence.sourceCode,
+            evidence.parserCode,
+            evidence.rawMeasurementKey,
+            evidence.rawCode,
+            evidence.unitCode,
+            evidence.sourceSchemaVersion,
+            evidence.basisCode,
+            evidence.representationCode,
+            evidence.componentCode
+        ]
+        guard required.allSatisfy({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) else {
+            throw FitMatchVNextContractError.missingRequiredField(
+                "retailer_exact_semantic_identity"
+            )
+        }
+        guard !evidence.scoreIncluded else {
+            throw FitMatchVNextContractError.conflictingProof(
+                "retailer_exact_score_gate"
+            )
+        }
+    }
+
+    static func validateSupportedSnapshotVersion(_ version: Int) throws {
+        guard supportedSnapshotSchemaVersions.contains(version) else {
+            throw FitMatchVNextContractError.unsupportedSnapshotVersion(version)
+        }
+    }
+
+    private static func validateBeginLifecycle(
+        _ begin: VNextBeginComparisonDTO
+    ) throws {
+        switch begin.resultStatus {
+        case "PENDING", "COMPLETED":
+            return
+        default:
+            throw FitMatchVNextContractError.unknownState(
+                field: "result_status",
+                observed: begin.resultStatus
+            )
+        }
+    }
+
+    private static func validateBeginSnapshot(
+        _ begin: VNextBeginComparisonDTO,
+        allowsMissingTopLevelVersion: Bool
+    ) throws {
+        let nested = begin.snapshot.snapshotSchemaVersion
+        try validateSupportedSnapshotVersion(nested)
+
+        if let topLevel = begin.declaredSnapshotSchemaVersion {
+            try validateSupportedSnapshotVersion(topLevel)
+            guard topLevel == nested else {
+                throw FitMatchVNextContractError.snapshotVersionMismatch(
+                    topLevel: topLevel,
+                    nested: nested
+                )
+            }
+        } else if !allowsMissingTopLevelVersion {
+            throw FitMatchVNextContractError.missingRequiredField(
+                "snapshot_schema_version"
+            )
+        }
+
+        if usesPersonalAuthority(begin.snapshot.authoritySnapshot) {
+            guard nested == 4 else {
+                throw FitMatchVNextContractError.unsupportedSnapshotVersion(nested)
+            }
+        }
+    }
+
+    private static func usesPersonalAuthority(_ authority: FitMatchJSONValue) -> Bool {
+        guard let root = authority.objectValue,
+              let effective = root["effective_classification_at_begin"]?.objectValue,
+              let source = effective["source"]?.stringValue else {
+            return false
+        }
+        return source.uppercased() == "USER_EXPLICIT"
+    }
+}

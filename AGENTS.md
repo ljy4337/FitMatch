@@ -1,112 +1,109 @@
 # FitMatch Agent Rules
 
 ## Goal
-Maintain and improve FitMatch without changing existing UX or architecture unless explicitly requested.
+
+Maintain and improve FitMatch while preserving current product behavior, architecture boundaries, server contracts, and existing UX unless the user explicitly requests a change.
 
 ## Response
+
 - Keep responses concise.
-- Do not explain unless asked.
-- Implement first.
-- Plans must be under 3 bullets.
+- Do not explain implementation details unless asked.
+- Implement first when sufficiently specified.
+- Plans must be no more than 3 bullets.
 - Never restate the request.
+- Never report work that was not actually performed.
 
-After implementation output only:
-- Changed files
-- Summary
-- Remaining issues
+For implementation tasks, finish with only: Changed files, Summary, Verification, Remaining issues.
 
-## Coding
-- Preserve architecture.
-- Modify only related files.
-- Avoid unnecessary refactoring.
-- Reuse existing components.
-- Keep diffs small.
+Verification status must be PASS, FAIL, NOT RUN, or BLOCKED. Never describe skipped, interrupted, environment-blocked, or unexecuted tests/builds as passed.
 
-## Git
-- Never force push.
-- Never rewrite history.
-- Never commit or push unless explicitly requested.
+## Coding and Work Style
 
-## Work Style
-- Think before editing.
-- Search existing implementation first.
-- Prefer fixing over rewriting.
-- Stop if requirements are ambiguous.
+- Preserve the existing architecture unless explicitly changed.
+- Modify only related files; keep diffs small and coherent.
+- Avoid opportunistic refactoring; reuse existing components, services, actions, coordinators, resolvers, DTOs, and domain models.
+- Search existing implementation first. Fix the existing owner instead of duplicating logic or moving responsibilities between layers.
+- Do not hide contract violations with fallback values or silently change UX.
+- Preserve unrelated dirty working-tree changes.
+- Think before editing. Stop only when ambiguity materially affects correctness, data integrity, architecture, authorization, irreversible behavior, or a consequential product decision.
 
-## Cumulative Handoff
+## UI Changes Require Explicit User Request
 
-- At the start of every new session, read `Docs/CodexSessionHandoff.md` completely before changing code.
-- `Docs/CodexSessionHandoff.md` is the single current cumulative handoff; dated handoff files are historical detail only.
-- Before finishing meaningful work, update the cumulative handoff with production changes, product/UX decisions, tests actually run, unverified areas, and remaining issues.
-- Preserve prior history. When a policy changes, mark the old state as superseded and record the new current state instead of silently deleting context.
-- Never describe skipped, interrupted, environment-blocked, or unexecuted tests as passed.
+- Never change UI unless the user explicitly requests that UI change. Limit changes to the requested scope.
+- This includes layout, colors, typography, icons, visible text, loading/progress presentation, navigation, gestures, and user interactions.
+- General debugging, bug-fix, performance, or review requests do not authorize UI changes. Inspect and report UI issues; if a fix requires a UI change, obtain explicit user approval before changing it. Continue independent non-UI work when possible.
+- Editing a View file is allowed when necessary for an authorized non-UI fix only if the existing UI and interactions remain unchanged.
 
-## Decision Collaboration
-- Do not agree with the user reflexively or mirror the user's latest opinion.
-- For product, UX, architecture, and testing decisions, present both the strongest supporting case and the strongest opposing case when a real tradeoff exists.
-- Clearly say no when a proposal would worsen UX, correctness, safety, maintainability, or FitMatch's product principles, and explain the concrete reason.
-- Distinguish verified facts, inference, and preference instead of presenting them as equally certain.
-- Recommend the best synthesized option after evaluating tradeoffs; optimize for the product outcome, not agreement.
-- If the user's revised idea is better, say why it is better. If it is not, defend the stronger alternative with evidence.
+## Sources of Authority
 
-## Budgeted Work Proposals
+- `AGENTS.md`: stable operating, architecture-boundary, safety, Git, and verification rules.
+- `FitMatch Behavior Map.md`: primary flow/RPC navigation. Start with the relevant Flow ID and its READ FIRST owners before broader searches.
+- `FitMatch Swift Feature Map.md`: supplementary detailed Swift ownership; read only relevant sections.
+- `Docs/FitMatchMeasurementPolicy.md`: authoritative product policy for retailer measurement display, persistence, measurement identity, and comparison selection.
+- `Docs/CodexSessionHandoff.md`: current implementation state, recent product decisions, Production changes, and unresolved issues.
 
-- When a request has a usage, time, cost, or test-scope constraint, do not start with the cheapest compromise.
-- Present estimates in this mandatory order before recommending a plan:
-  1. **Sufficient budget**: the expected usage/time needed to complete the user's stated goal with the required verification scope.
-  2. **Safe budget**: sufficient budget plus realistic retry, collection failure, and regression margin.
-  3. **User-budget option**: what can be completed within the user's proposed cap.
-  4. **Explicit tradeoff**: the exact coverage, evidence, or risk that the lower-budget option gives up.
-- State whether each estimate is measured evidence, an inference from prior runs, or a planning assumption.
-- For budgeted testing, give expected output and product-quality effect separately from execution cost. Do not imply that a partial sample validates the complete stated goal.
-- If the user asks for a compromise, first state the full-goal estimate; only then offer the compromise and recommend one.
+At the start of every new session, read the current-state portion of `Docs/CodexSessionHandoff.md` completely before changing code. Before finishing meaningful work, update it with actual changes, decisions, tests/builds run, unverified areas, and remaining issues. Preserve history and mark superseded policy explicitly. Never describe prepared SQL as applied or unexecuted work as passed.
 
-## FitMatch Rules
-- Preserve Reference Garment concept.
-- Respect category/detailCategory structure.
-- Preserve existing UX.
+## Architecture and Product Authority
 
-`FitMatch/Components/TabBarScrollVisibilityModifier.swift` is a protected file.
+Retailer parsers provide retailer facts, not a second FitMatch policy engine. For server-authoritative flows, server/database results are authoritative; Swift transports, validates, adapts, persists, and presents them. Required missing, null, empty, unknown, malformed, or mismatched values must fail closed or enter explicit recovery. Never use local inference, first-item selection, visible labels, or defaults to replace required server authority.
 
-Do not modify, refactor, rename, move, simplify, format, or replace this file unless the user explicitly requests a change to the bottom-tab or top-header scroll visibility behavior and explicitly names this file.
+For any Closet registration or product-comparison work involving measurements, read and preserve `Docs/FitMatchMeasurementPolicy.md`. Display and persist all received retailer garment measurement facts, while limiting comparison and scoring to the exact source-semantic or canonical-policy evidence allowed by that document and approved by the server.
 
-This restriction includes:
+FitMatch comparison groups and active group policy are the current comparison authority. Detailed garment classification is not a primary Closet-registration or readiness gate. Do not reintroduce superseded detailed-category gating or fabricate a confirmed group.
 
-- UI cleanup
-- navigation changes
-- tab-bar changes
-- home/history/closet/recommend screen changes
-- performance refactoring
-- animation changes
-- safe-area or padding changes
-- general bug fixes
-- code formatting
-- dead-code cleanup
+The old Reference Garment concept is deprecated as product/UX policy. Do not create automatic reference selection, require a permanent reference, restore its UX, or treat legacy `reference*` names as current policy. The current flow uses comparison groups and user-selectable Closet candidates.
 
-Do not modify any call site of the following modifiers unless explicitly requested:
+Preserve original retailer facts and measurements separately from FitMatch canonical/group data. Never substitute product, variant, size, local, historical, or another Closet identity for the exact server/user-selected identity.
 
-- `hidesBottomTabBarOnScroll`
-- `hidesBottomTabBarOnScroll(tab:topChrome:)`
-- `tracksTabBarVisibilityOnScroll`
-- `hidesTopChromeOnScroll`
+- ZARA: keep `internalProductID` and `catentryID` separate; never assume they are equal.
+- UNIQLO: preserve official category/breadcrumb and all meaningful collection/category/length facts.
+- MUSINSA: preserve official source category paths/codes and actual measurements; do not use product-name heuristics as canonical group authority without explicit approval.
 
-Required behavior that must not regress:
+## Persistence and Database Safety
 
-- Scrolling down hides the top header and bottom tab bar.
-- Bottom bounce must never be interpreted as an upward user scroll.
-- Reaching the bottom keeps the header and tab bar hidden.
-- Deceleration and bounce keep them hidden.
-- They may reappear only after bounce has ended and the user starts a new upward drag.
-- Reaching the top shows them.
-- Navigation-detail and modal hidden reasons remain independent.
+Do not report user-visible success before authoritative persistence succeeds. Local cache mutation is not server success; retries must preserve identity and idempotency.
+
+Before any Supabase/database write, migration, destructive SQL, RPC mutation, or schema operation, identify the target environment, classify it, and confirm authorization. Production mutation is opt-in. Read-only inspection, SQL analysis, migration proposals, verification-query preparation, and positively identified local/dev validation are allowed by default. Never delete/truncate, alter schema, impersonate users, bypass RLS/authentication, or write Production without explicit authorization. After authorized Production mutations, perform read-only postflight and report exactly what was applied.
+
+Never commit credentials, tokens, keys, passwords, or secrets. Redact them from output and use existing environment/secret mechanisms.
+
+## Git and Working Tree Safety
+
+At the start of editing, inspect `git status --short --branch`. Never force-push, rewrite history, commit, push, merge, switch branches, pull/rebase, reset, or stash unless required and authorized. Inspect overlapping diffs before editing and preserve unrelated changes.
+
+## Protected Scroll Visibility Behavior
+
+`FitMatch/Components/TabBarScrollVisibilityModifier.swift` and its modifier call sites are protected unless the user explicitly requests a change to bottom-tab/top-header scroll visibility and names the protected behavior/file. Do not modify, refactor, rename, move, format, or incidentally change them for unrelated work.
+
+Protected modifiers: `hidesBottomTabBarOnScroll`, `hidesBottomTabBarOnScroll(tab:topChrome:)`, `tracksTabBarVisibilityOnScroll`, `hidesTopChromeOnScroll`.
+
+Required behavior: scrolling down hides header and tab bar; bottom bounce, deceleration, and reaching the bottom keep them hidden; they reappear only after bounce ends and a new upward drag; reaching the top shows them; navigation-detail and modal hidden reasons remain independent.
+
 Before completing any task, run:
 
-`git diff -- FitMatch/Components/TabBarScrollVisibilityModifier.swift`
+```bash
+git diff -- FitMatch/Components/TabBarScrollVisibilityModifier.swift
+if git diff | grep -qE 'hidesBottomTabBarOnScroll|tracksTabBarVisibilityOnScroll|hidesTopChromeOnScroll'; then
+  echo 'PROTECTED_SCROLL_DIFF_FOUND'
+  exit 1
+else
+  echo 'PROTECTED_SCROLL_OK'
+fi
+```
 
-Also verify protected modifier call sites were not changed:
+If unauthorized protected behavior changes are required, stop and report the conflict.
 
-`git diff | grep -E "hidesBottomTabBarOnScroll|tracksTabBarVisibilityOnScroll|hidesTopChromeOnScroll"`
+## Verification and Review
 
-If the user did not explicitly authorize these changes, both checks must return no relevant diff.
+Use the narrowest meaningful verification. For Swift changes, run focused tests/builds and `git diff --check` when practical. For server changes, validate DTO/contract assumptions and use read-only Production postflight. Do not invent schemes, destinations, environments, or test targets. Report PASS, FAIL, NOT RUN, or BLOCKED accurately.
 
-If a requested task appears to require modifying this protected behavior, stop and report the conflict instead of changing it.
+Before completion, inspect the final diff; confirm only related files changed, no hidden fallback was introduced, server authority and exact identities remain intact, comparison-group policy was not replaced by legacy behavior, and protected-scroll checks pass.
+
+## Decision Collaboration
+
+For consequential product, UX, architecture, data, database, or release tradeoffs, evaluate the strongest supporting and opposing cases, distinguish fact from inference and recommendation, and choose the option best serving correctness, UX, maintainability, and release quality. Do not invent product or architecture decisions.
+
+## Rule Maintenance
+
+Keep this file limited to stable operating rules and high-level navigation. Put measurement display, persistence, and comparison product policy in `Docs/FitMatchMeasurementPolicy.md`. Put temporary blockers, current DB state, incidents, one-off test results, and pending evidence in `Docs/CodexSessionHandoff.md`. Keep flow/RPC navigation in `FitMatch Behavior Map.md` and detailed Swift ownership in `FitMatch Swift Feature Map.md`. Update affected sections when owners or contracts change. Maps are navigation aids, not authority over actual source/deployed contracts; verify stale entries and expand searches narrowly when needed.

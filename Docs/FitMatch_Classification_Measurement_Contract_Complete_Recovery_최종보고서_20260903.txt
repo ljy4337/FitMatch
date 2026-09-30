@@ -1,0 +1,202 @@
+요청 범위 구현을 완료하고 connectDB에 push했습니다. Production 변경은 없습니다.
+
+1. 실제 작업 시작 HEAD
+
+- origin/connectDB: 176abe52b08a0839f81310461a9048bde648a077
+- 해당 HEAD에서 격리 worktree로 작업해 기존 로컬 변경은 건드리지 않았습니다.
+
+2. 변경 파일
+
+- FitMatch/Services/FitMatchVNextDTOs.swift
+- FitMatch/ViewModels/ShoppingProductViewModel.swift
+- FitMatch/Views/CompareFlowSheet.swift
+- FitMatch/Services/FitMatchServerAuthorityCoordinator.swift
+- FitMatchTests/FitMatchReviewRequiredRecoveryTests.swift
+- supabase/migrations/20260903120903_vnext_classification_measurement_decoupling_and_complete_recovery.sql
+- supabase/sql/125_vnext_classification_measurement_decoupling_local_preimage.sql
+- supabase/sql/125_vnext_classification_measurement_decoupling_validation.sql
+- supabase/sql/126_vnext_classification_measurement_decoupling_production_read_only_audit.sql
+- Docs/CodexSessionHandoff.md
+
+3. 새 migration
+
+20260903120903_vnext_classification_measurement_decoupling_and_complete_recovery.sql
+
+기존 applied migration은 수정하지 않았습니다.
+
+4. GAP-A 수정
+
+validate_garment_axis_values()에서 다음을 완전히 제거했습니다.
+
+- comparison_measurement_contract 조회
+- SINGLE_COHERENT 강제
+- measurement/size 존재 여부 검사
+
+대신 canonical classification 검증은 유지했습니다.
+
+- CONFIRMED garment 필수
+- active garment 검증
+- required axis의 NULL/UNKNOWN 거부
+- 사용하지 않는 axis 거부
+- audience/structure 검증
+- Closet validation 유지
+
+따라서 complete classification은 measurement가 ABSENT/INCOHERENT여도 저장되지만, readiness와 authorization에서는 계속 차단됩니다.
+
+5. GAP-B 수정
+
+Recovery contract를 다음으로 올렸습니다.
+
+fitmatch-vnext-recovery-v6-complete-tuple-garment-first
+
+변경 내용:
+
+- exact-product candidate 최우선 유지
+- known axis를 모든 관련 candidate에 유지
+- 모든 candidate를 classification_tuple_validation()으로 재검증
+- complete canonical tuple만 반환
+- full tuple + v6 version으로 fingerprint/hash 계산
+- 최대 3개 초과 시 잘라내지 않고 COMPLETE_TUPLE_CANDIDATE_SET_NOT_BOUNDED
+- taxonomy Cartesian product나 sibling subtree 확장 없음
+- 상품명 하드코딩 없음
+
+6. 전체 흐름
+
+CompareFlowSheet
+→ garment group 선택
+→ 필요할 때만 differing-axis 선택
+→ ShoppingProductViewModel이 최종 server candidate 결정
+→ Coordinator가 ID/fingerprint/hash/freshness 검증
+→ 기존 RPC set_user_product_classification()
+→ DB complete-tuple validation
+→ effective_target_classification() 재확인
+→ measurement readiness
+→ authorization
+→ Comparison Engine
+→ Result / History
+
+중간 garment/axis 선택에서는 DB write가 발생하지 않습니다.
+
+7. 의도적으로 유지한 동작
+
+- exact-product precedence
+- USER_EXPLICIT complete-tuple validation
+- candidate-set hash, evidence/input fingerprint, revision 검사
+- Closet matching 및 snapshot
+- Comparison Engine와 점수 계산
+- Result/History
+- audience/gender 정책
+- parser heuristic
+- Supabase RPC response shape
+- TabBar/scroll modifier
+
+Supabase/Postgres 지침에 따라 forward-only migration, 고정 search_path, 기존 ACL과 fail-closed 검증을 유지했습니다. SwiftUI 패턴은 enum 기반 단계 상태와 presentation-only grouping에 반영했습니다.
+
+8. 테스트 결과
+
+- PostgreSQL 17.11 clean apply: PASS
+- DB 회귀: CLASSIFICATION_MEASUREMENT_DECOUPLING_V6_PASS
+- 필수 DB TEST 1–8: PASS
+- Closet incomplete tuple: PASS
+- exact-product precedence: PASS
+- 3개 초과 fail-closed: PASS
+- legacy override fresh/stale 호환성: PASS
+- iOS Recovery 전용: 11 passed / 0 failed / 0 skipped
+- 변경 Swift 파일 구문 검사: PASS
+- git diff --check: PASS
+- 금지 파일 및 TabBar/scroll diff: 0
+
+전체 Xcode 타깃은 감사 HEAD에 이미 존재하던 무관한 컴파일 불일치 때문에 그대로는 실행되지 않습니다.
+
+- UniqloParser.swift: optional size name 불일치
+- FitMatchServerAuthorityIntegrationTests.swift: 누락된 기존 Result API
+- FitMatchVNextContractTests.swift: 오래된 availability/exclusion API
+- FitMatchP0ProductionPathTests.swift: 오래된 measurement initializer
+
+Recovery 검증에서는 임시 파서 우회 후 기존 오류 테스트 3개만 제외했으며, 임시 변경은 커밋 전에 완전히 되돌렸습니다.
+
+9. 대표 6개 READ-ONLY 검증
+
+새 v6 로직을 Production 데이터에 SELECT-only로 투영한 결과입니다.
+
+E450259
+- complete candidate: shirt_blouse long/short
+- 결과: RECOVERABLE, 2개 모두 valid
+- measurement: ABSENT, 차단
+
+E450260
+- complete candidate: shirt_blouse long/short
+- 결과: RECOVERABLE, 2개 모두 valid
+- measurement: ABSENT, 차단
+
+E450535
+- complete candidate: knit_sweater long/short
+- 결과: RECOVERABLE, 2개 모두 valid
+- measurement: ABSENT, 차단
+
+E450536
+- complete candidate: knit_sweater long
+- 결과: RECOVERABLE, 1개 valid
+- measurement: ABSENT, 차단
+
+E450540
+- complete candidate: knit_sweater long/short/sleeveless
+- 결과: RECOVERABLE, 3개 모두 valid
+- measurement: ABSENT, 차단
+
+E450544
+- complete candidate: knit_sweater long/short
+- 결과: RECOVERABLE, 2개 모두 valid
+- measurement: ABSENT, 차단
+
+특히 E450536은 기존 known long_sleeve를 버리지 않습니다.
+
+10. Active override 3건 READ-ONLY 검증
+
+E450543
+- contract version: fitmatch-vnext-recovery-candidates-v1
+- selected candidate fingerprint: 7f5bb007745ea3d219f94e1f47d3bf22e65061c1223d722c186e7f1ecc40fe53
+- tuple: knit_sweater / long_sleeve, canonical-valid
+- freshness: input/evidence/resolver 모두 stale
+- 현재 및 v6 예상: STALE_RECONFIRM_REQUIRED
+
+E453754
+- contract version: fitmatch-vnext-recovery-candidates-v1
+- selected candidate fingerprint: a8a0f3798adec904d9e9b044e77cf47066b4de6ae8d55a455bbc6254af88b873
+- tuple: knit_sweater / long_sleeve, canonical-valid
+- freshness: input/evidence/resolver 모두 stale
+- 현재 및 v6 예상: STALE_RECONFIRM_REQUIRED
+
+E465185
+- contract version: fitmatch-vnext-recovery-candidates-v3-exact-product
+- selected candidate fingerprint: 1638da458a1fbd7ecee844c043365e0ae9cd95115f430768d8ffddfe4324f79b
+- tuple: tshirt / short_sleeve, canonical-valid
+- freshness: input/evidence/resolver 모두 fresh
+- 현재 Production: STALE_RECONFIRM_REQUIRED
+- v6 예상: PERSONAL_CONFIRMED / CONFIRMED / USER_EXPLICIT
+
+11. 미해결 사항
+
+- 감사 HEAD의 기존 Xcode 컴파일 불일치 4건은 이번 범위 밖이라 수정하지 않았습니다.
+- Production에는 v6가 아직 적용되지 않았으므로 대표 상품 결과는 실제 RPC 실행 결과가 아니라 동일 데이터 기반 SELECT-only 투영 결과입니다.
+- complete tuple을 안전하게 만들 근거가 없는 상품은 계속 UNRECOVERABLE입니다.
+
+12. Production 적용 전 필요한 작업
+
+- 별도 환경에서 forward migration 적용 및 회귀 SQL 실행
+- 로그인 사용자 기준 garment/axis 선택과 재선택/clear E2E
+- DB migration 선적용 후 v6-only Swift 클라이언트 배포
+- 별도 Production 적용 승인 후 migration과 postflight 실행
+
+Migration과 함수 보안 방식은 아래 Supabase 공식 문서를 기준으로 구성했습니다.
+
+- Migration: https://supabase.com/docs/guides/local-development/database-migrations
+- Database Functions: https://supabase.com/docs/guides/database/functions
+
+Production DB write, migration apply, backfill, reclassification, deploy는 모두 0건입니다.
+
+13. 최종 commit SHA
+
+b916023bcd2eae1a5dbce8d7f944ee143f57f066
+
+origin/connectDB push 완료: 176abe5 → b916023

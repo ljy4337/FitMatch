@@ -51,6 +51,11 @@ final class CurrentUniqloCatalogAuditTests: XCTestCase {
     }
 
     func testCurrentOfficialCatalogProductionClassificationAndATest() throws {
+        try XCTSkipUnless(
+            ProcessInfo.processInfo.arguments.contains("-fitmatchRunCurrentUniqloCatalogAudit")
+                || ProcessInfo.processInfo.environment["FITMATCH_RUN_CURRENT_UNIQLO_CATALOG_AUDIT"] == "1",
+            "880건 Uniqlo 카탈로그 검증은 FITMATCH_RUN_CURRENT_UNIQLO_CATALOG_AUDIT=1로 독립 실행합니다."
+        )
         executionTimeAllowance = 1_200
         let bundle = Bundle(for: CurrentUniqloCatalogAuditTests.self)
         let inputURL = try XCTUnwrap(
@@ -344,6 +349,54 @@ final class CurrentUniqloCatalogAuditTests: XCTestCase {
                     actual: actual
                 ))
             }
+        }
+
+        // P1 conflict detection intentionally removes explicit category/name
+        // contradictions from the eligible set. Keep those products in this
+        // production-path audit and prove that even a structurally related,
+        // otherwise eligible reference cannot move them into comparison.
+        let reviewRequired = loaded.filter {
+            !$0.product.sizes.isEmpty
+                && $0.classification?.isValid == true
+                && $0.product.canonicalEligibility == false
+        }
+        for target in reviewRequired {
+            guard let referenceProduct = eligible.first(where: {
+                $0.id != target.id
+                    && $0.product.category.serviceGroup == target.product.category.serviceGroup
+            }) else { continue }
+
+            caseNumber += 1
+            let reference = makeUserFit(referenceProduct, representative: true)
+            let plan = service.referenceSelectionPlan(
+                product: target.product,
+                productDetailCategory: target.detail,
+                userFits: [reference]
+            )
+            let manual = service.temporaryComparisonCandidates(
+                product: target.product,
+                productDetailCategory: target.detail,
+                userFits: [reference]
+            )
+            let recommendation = service.recommend(
+                product: target.product,
+                userFits: [reference],
+                productDetailCategory: target.detail,
+                allowsGlobalFallback: false
+            )
+            let actual = plan.automaticallySelectedCandidate == nil
+                && plan.recommendedCandidates.isEmpty
+                && manual.isEmpty
+                && recommendation == nil
+                ? "review_required" : "unexpected_comparison_available"
+            scenarioRecords.append(makeScenario(
+                number: caseNumber,
+                name: "classification_conflict_block",
+                target: target,
+                reference: referenceProduct,
+                expected: "review_required",
+                actual: actual
+            ))
         }
 
         let failed = scenarioRecords.filter { !$0.passed }

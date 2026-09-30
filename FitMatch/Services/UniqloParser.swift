@@ -25,10 +25,20 @@ struct UniqloParser: ProductURLParsing {
         do {
             sizeAPIResult = try await sizeParser.parseWithGenericColorFallback(
                 productID: resolved.productID,
-                preferredProductIDWithColorCode: resolved.productIDWithColorCode
+                preferredProductIDWithColorCode: resolved.productIDWithColorCode,
+                selectedColorDisplayCode: resolved.imageColorCode,
+                selectedPLDDisplayCode: resolved.pldDisplayCode,
+                priceGroupCode: resolved.priceGroupCode
             )
         } catch {
             if Task.isCancelled { throw CancellationError() }
+            if let retailerError = error as? FitMatchRetailerAPIResponseError,
+               retailerError.isTransient {
+                throw error
+            }
+            if error is URLError {
+                throw error
+            }
             #if DEBUG
             FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 실측 조회", state: "실패", details: "오류=\(error.localizedDescription)")
             #endif
@@ -36,6 +46,11 @@ struct UniqloParser: ProductURLParsing {
                 productInfo: metadata.parsedProductInfo(
                     sizes: [],
                     parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했어요. 상품 URL을 다시 확인해 주세요."
+                ).withRetailerAPIEvidence(
+                    retailerAPIEvidence(
+                        resolved: resolved,
+                        measurements: (error as? FitMatchRetailerAPIResponseError)?.capture
+                    )
                 )
             )
         }
@@ -61,11 +76,39 @@ struct UniqloParser: ProductURLParsing {
                 productInfo: resolvedMetadata.parsedProductInfo(
                     sizes: [],
                     parserNotice: "상품 정보는 불러왔지만 유니클로 사이즈표를 찾지 못했어요. 상품 URL을 다시 확인해 주세요."
+                ).withRetailerAPIEvidence(
+                    retailerAPIEvidence(
+                        resolved: resolved,
+                        measurements: sizeAPIResult.responseCapture
+                    )
                 )
             )
         }
 
         return resolvedMetadata.parsedProductInfo(sizes: sizes)
+            .withRetailerAPIEvidence(
+                retailerAPIEvidence(
+                    resolved: resolved,
+                    measurements: sizeAPIResult.responseCapture
+                )
+            )
+    }
+
+    private func retailerAPIEvidence(
+        resolved: ResolvedUniqloURL,
+        measurements: FitMatchRetailerAPIResponseCapture?
+    ) -> FitMatchRetailerAPIEvidence? {
+        guard let details = resolved.detailsAPICapture,
+              details.jsonObject != nil else { return nil }
+        return FitMatchRetailerAPIEvidence(
+            contractVersion: FitMatchRetailerAPIEvidence.v1Contract,
+            sourceCode: "uniqlo",
+            sourceProductKey: resolved.productID,
+            identityScheme: nil,
+            selectedVariantKey: nil,
+            details: details,
+            measurements: measurements
+        )
     }
 }
 
@@ -78,6 +121,9 @@ struct ResolvedUniqloURL {
     let imageColorCode: String
     let productIDWithColorCode: String
     let html: String
+    var pldDisplayCode: String? = nil
+    var priceGroupCode: String = "00"
+    var detailsAPICapture: FitMatchRetailerAPIResponseCapture? = nil
 }
 
 struct UniqloURLResolver {
@@ -104,7 +150,41 @@ struct UniqloURLResolver {
         let apiColorCode = normalizeAPIColorCode(rawColorCode)
         let imageColorCode = normalizeImageColorCode(rawColorCode)
         let productIDWithColorCode = "\(productID)-\(apiColorCode)"
+        let pldDisplayCode = URLComponents(
+            url: url,
+            resolvingAgainstBaseURL: false
+        )?.queryItems?.first(where: { $0.name == "pldDisplayCode" })?.value
+        let productPathIndex = finalURL.pathComponents.firstIndex(where: {
+            $0.localizedCaseInsensitiveCompare(productID) == .orderedSame
+                || $0.uppercased().hasPrefix("\(productID.uppercased())-")
+        })
+        let priceGroupCode = productPathIndex.flatMap { index -> String? in
+            let nextIndex = finalURL.pathComponents.index(after: index)
+            guard finalURL.pathComponents.indices.contains(nextIndex) else { return nil }
+            let value = finalURL.pathComponents[nextIndex]
+            return value.isEmpty ? nil : value
+        } ?? "00"
         let resolvedURL = canonicalURL(productID: productID, colorCode: imageColorCode, fallback: finalURL)
+        let metadataHTML: String
+        var detailsAPICapture: FitMatchRetailerAPIResponseCapture?
+        if let detailsResponse = try? await fetchProductDetailsResponse(productID: productID, priceGroupCode: priceGroupCode) {
+            detailsAPICapture = detailsResponse
+            if let detailsHydration = try? productDetailsHydration(
+                from: detailsResponse,
+                productID: productID
+            ) {
+            // The KR PDP is sometimes an Akamai Access Denied document while
+            // the official Commerce API remains available. Append only the
+            // selected provider product as hydration data so the existing
+            // metadata parser can still consume retailer-owned name,
+            // audience, and complete ordered breadcrumbs.
+                metadataHTML = response.body + detailsHydration
+            } else {
+                metadataHTML = response.body
+            }
+        } else {
+            metadataHTML = response.body
+        }
 
         #if DEBUG
         FitMatchDebugLogger.detail(screen: "상품 분석", action: "유니클로 URL 해석", details: "상품ID=\(productID), goodsID=\(goodsID), API색상=\(apiColorCode), 이미지색상=\(imageColorCode)")
@@ -118,7 +198,10 @@ struct UniqloURLResolver {
             apiColorCode: apiColorCode,
             imageColorCode: imageColorCode,
             productIDWithColorCode: productIDWithColorCode,
-            html: response.body
+            html: metadataHTML,
+            pldDisplayCode: pldDisplayCode,
+            priceGroupCode: priceGroupCode,
+            detailsAPICapture: detailsAPICapture
         )
     }
 
@@ -206,6 +289,84 @@ struct UniqloURLResolver {
         return UniqloHTMLResponse(url: response.url ?? url, body: html)
     }
 
+    static func productDetailsURL(productID: String, priceGroupCode: String) throws -> URL {
+        let coreID = productID.uppercased().hasSuffix("-000")
+            ? productID.uppercased()
+            : "\(productID.uppercased())-000"
+        guard var components = URLComponents(
+            string: "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/\(coreID)/price-groups/\(priceGroupCode)/details"
+        ) else {
+            throw ProductURLParserError.unsupportedURL
+        }
+        components.queryItems = [
+            URLQueryItem(name: "includeModelSize", value: "true"),
+            URLQueryItem(name: "imageRatio", value: "3x4"),
+            URLQueryItem(name: "httpFailure", value: "true")
+        ]
+        guard let url = components.url else {
+            throw ProductURLParserError.unsupportedURL
+        }
+
+        return url
+    }
+
+    private func fetchProductDetailsResponse(
+        productID: String,
+        priceGroupCode: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+        let url = try Self.productDetailsURL(productID: productID, priceGroupCode: priceGroupCode)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 12
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("https://www.uniqlo.com/kr/ko/", forHTTPHeaderField: "Referer")
+        request.setValue(
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+            forHTTPHeaderField: "User-Agent"
+        )
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? url,
+            httpStatus: http.statusCode,
+            body: data
+        )
+    }
+
+    private func productDetailsHydration(
+        from response: FitMatchRetailerAPIResponseCapture,
+        productID: String
+    ) throws -> String {
+        let coreID = productID.uppercased().hasSuffix("-000")
+            ? productID.uppercased()
+            : "\(productID.uppercased())-000"
+        guard (200..<300).contains(response.httpStatus),
+              let root = try JSONSerialization.jsonObject(with: response.body) as? [String: Any],
+              (root["status"] as? String)?.lowercased() == "ok",
+              let product = root["result"] as? [String: Any],
+              let returnedID = product["productId"] as? String,
+              returnedID.uppercased().hasPrefix(productID.uppercased()) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+
+        let hydration: [String: Any] = [
+            "entity": [
+                "pdpEntity": [
+                    coreID: ["product": product]
+                ]
+            ]
+        ]
+        let hydrationData = try JSONSerialization.data(withJSONObject: hydration)
+        guard let json = String(data: hydrationData, encoding: .utf8) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return "<script>window.__PRELOADED_STATE__ = \(json);</script>"
+    }
+
     private func canonicalURL(productID: String, colorCode: String, fallback: URL) -> URL {
         URL(string: "https://www.uniqlo.com/kr/ko/products/\(productID)?colorDisplayCode=\(colorCode)") ?? fallback
     }
@@ -258,9 +419,86 @@ private struct UniqloHTMLResponse {
 struct UniqloSizeAPIResult {
     var sizes: [ParsedProductSize]
     var imageURLString: String?
+    var responseCapture: FitMatchRetailerAPIResponseCapture? = nil
+}
+
+enum UniqloImageURLPolicy {
+    static func defaultImageURLString(productCode: String?) -> String? {
+        guard let goodsID = goodsID(productCode: productCode) else { return nil }
+        return "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/\(goodsID)/item/krgoods_00_\(goodsID)_3x4.jpg?width=400"
+    }
+
+    static func candidateURLs(primaryURL: URL?) -> [URL] {
+        var candidates: [URL] = []
+        if let primaryURL {
+            candidates.append(primaryURL)
+        }
+        if let primaryURL,
+           let fallback = defaultImageURL(from: primaryURL),
+           fallback != primaryURL {
+            candidates.append(fallback)
+        }
+        return candidates
+    }
+
+    static func containsGoodsID(_ imageURLString: String, goodsID: String) -> Bool {
+        imageURLString.localizedCaseInsensitiveContains("_\(goodsID)_")
+            || imageURLString.localizedCaseInsensitiveContains("/imagesgoods/\(goodsID)/")
+    }
+
+    private static func defaultImageURL(from primaryURL: URL) -> URL? {
+        guard primaryURL.host?.localizedCaseInsensitiveContains("uniqlo.com") == true,
+              let goodsID = firstMatch(
+                in: primaryURL.path,
+                pattern: #"/imagesgoods/(\d{6})/"#
+              ) else {
+            return nil
+        }
+        return defaultImageURLString(productCode: "E\(goodsID)").flatMap(URL.init(string:))
+    }
+
+    private static func goodsID(productCode: String?) -> String? {
+        guard let normalized = productCode?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased(),
+              let goodsID = firstMatch(in: normalized, pattern: #"^E?(\d{6})$"#) else {
+            return nil
+        }
+        return goodsID
+    }
+
+    private static func firstMatch(in text: String, pattern: String) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(
+                in: text,
+                range: NSRange(text.startIndex..<text.endIndex, in: text)
+              ),
+              match.numberOfRanges > 1,
+              let range = Range(match.range(at: 1), in: text) else {
+            return nil
+        }
+        return String(text[range])
+    }
 }
 
 struct UniqloSizeAPIParser {
+    private struct LiveAvailabilityPayload {
+        let productData: Data
+        let stockData: Data
+    }
+
+    private let responseLoader: @MainActor (URL) async throws
+        -> FitMatchRetailerAPIResponseCapture
+
+    init(
+        responseLoader: @escaping @MainActor (URL) async throws
+            -> FitMatchRetailerAPIResponseCapture = { url in
+                try await Self.fetchLiveResponse(from: url)
+            }
+    ) {
+        self.responseLoader = responseLoader
+    }
+
     static func genericProductIDWithColorCode(for productID: String) -> String {
         "\(productID)-000"
     }
@@ -276,28 +514,246 @@ struct UniqloSizeAPIParser {
 
     func parseWithGenericColorFallback(
         productID: String,
-        preferredProductIDWithColorCode: String
+        preferredProductIDWithColorCode: String,
+        selectedColorDisplayCode: String? = nil,
+        selectedPLDDisplayCode: String? = nil,
+        priceGroupCode: String = "00"
     ) async throws -> UniqloSizeAPIResult {
         let genericProductIDWithColorCode = Self.genericProductIDWithColorCode(for: productID)
-        do {
-            let preferredResult = try await parse(
-                productIDWithColorCode: preferredProductIDWithColorCode
+        guard preferredProductIDWithColorCode != genericProductIDWithColorCode else {
+            async let chartResult = parse(productIDWithColorCode: genericProductIDWithColorCode)
+            async let availabilityPayload = fetchLiveAvailabilityIfAvailable(
+                productID: productID,
+                colorDisplayCode: selectedColorDisplayCode,
+                priceGroupCode: priceGroupCode
             )
-            guard Self.shouldRetryWithGenericColor(
-                preferredProductIDWithColorCode: preferredProductIDWithColorCode,
-                genericProductIDWithColorCode: genericProductIDWithColorCode,
-                result: preferredResult
-            ) else {
-                return preferredResult
-            }
-        } catch {
-            if Task.isCancelled { throw CancellationError() }
-            guard preferredProductIDWithColorCode != genericProductIDWithColorCode else {
-                throw error
-            }
+            let result = try await chartResult
+            let availability = await availabilityPayload
+            try Task.checkCancellation()
+            return await applyingLiveAvailabilityIfAvailable(
+                to: result,
+                colorDisplayCode: selectedColorDisplayCode,
+                pldDisplayCode: selectedPLDDisplayCode,
+                availabilityPayload: availability
+            )
         }
 
-        return try await parse(productIDWithColorCode: genericProductIDWithColorCode)
+        // The selected-colour and -000 charts are independent official
+        // responses. Start both before choosing the existing larger-chart
+        // winner; neither response is allowed to decide the other request.
+        async let preferredResult = officialChartResult(
+            productIDWithColorCode: preferredProductIDWithColorCode
+        )
+        async let genericResult = officialChartResult(
+            productIDWithColorCode: genericProductIDWithColorCode
+        )
+        // Exact product/color/PLD have already been resolved by the URL
+        // resolver. Inventory can therefore travel while the charts arrive,
+        // but it remains an availability annotation applied only afterwards.
+        async let availabilityPayload = fetchLiveAvailabilityIfAvailable(
+            productID: productID,
+            colorDisplayCode: selectedColorDisplayCode,
+            priceGroupCode: priceGroupCode
+        )
+        let (preferred, generic) = try await (preferredResult, genericResult)
+
+        // A colour-specific UNIQLO chart can expose only the currently sold
+        // size subset. The provider's official -000 chart is the complete
+        // product chart. Keep one untouched API response as evidence and use
+        // whichever official response contains more distinct sizes.
+        let baseResult: UniqloSizeAPIResult
+        switch (preferred, generic) {
+        case let (preferred?, generic?):
+            baseResult = generic.sizes.count > preferred.sizes.count
+                ? generic
+                : preferred
+        case let (preferred?, nil):
+            baseResult = preferred
+        case let (nil, generic?):
+            baseResult = generic
+        case (nil, nil):
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+
+        let availability = await availabilityPayload
+        try Task.checkCancellation()
+        return await applyingLiveAvailabilityIfAvailable(
+            to: baseResult,
+            colorDisplayCode: selectedColorDisplayCode,
+            pldDisplayCode: selectedPLDDisplayCode,
+            availabilityPayload: availability
+        )
+    }
+
+    /// Joins the official size-chart records with UNIQLO's official L2 SKU
+    /// inventory facts. A failed product lookup intentionally leaves stock
+    /// UNKNOWN rather than guessing from the existence of a size chart.
+    private func applyingLiveAvailabilityIfAvailable(
+        to result: UniqloSizeAPIResult,
+        colorDisplayCode: String?,
+        pldDisplayCode: String?,
+        availabilityPayload: LiveAvailabilityPayload?
+    ) async -> UniqloSizeAPIResult {
+        guard let colorDisplayCode,
+              let availabilityPayload else { return result }
+        do {
+            return UniqloSizeAPIResult(
+                sizes: try applyingAvailability(
+                    productData: availabilityPayload.productData,
+                    stockData: availabilityPayload.stockData,
+                    to: result.sizes,
+                    colorDisplayCode: colorDisplayCode,
+                    pldDisplayCode: pldDisplayCode
+                ),
+                imageURLString: result.imageURLString,
+                responseCapture: result.responseCapture
+            )
+        } catch {
+            return result
+        }
+    }
+
+    private func officialChartResult(
+        productIDWithColorCode: String
+    ) async throws -> UniqloSizeAPIResult? {
+        do {
+            return try await parse(productIDWithColorCode: productIDWithColorCode)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            if Task.isCancelled { throw CancellationError() }
+            return nil
+        }
+    }
+
+    private func fetchLiveAvailabilityIfAvailable(
+        productID: String,
+        colorDisplayCode: String?,
+        priceGroupCode: String
+    ) async -> LiveAvailabilityPayload? {
+        guard colorDisplayCode != nil else { return nil }
+        do {
+            async let productData = fetchProductData(
+                productID: productID,
+                priceGroupCode: priceGroupCode
+            )
+            async let stockData = fetchStockData(
+                productID: productID,
+                priceGroupCode: priceGroupCode
+            )
+            let (productPayload, stockPayload) = try await (productData, stockData)
+            return LiveAvailabilityPayload(
+                productData: productPayload,
+                stockData: stockPayload
+            )
+        } catch is CancellationError {
+            return nil
+        } catch {
+            return nil
+        }
+    }
+
+    func applyingAvailability(
+        productData: Data,
+        stockData: Data,
+        to sizes: [ParsedProductSize],
+        colorDisplayCode: String,
+        pldDisplayCode: String? = nil,
+        observedAt: Date = Date()
+    ) throws -> [ParsedProductSize] {
+        let productResponse = try JSONDecoder().decode(
+            UniqloProductAvailabilityResponse.self,
+            from: productData
+        )
+        let stockResponse = try JSONDecoder().decode(
+            UniqloProductStockResponse.self,
+            from: stockData
+        )
+        let normalizedColor = Self.normalizedDisplayCode(colorDisplayCode)
+        let normalizedPLD = pldDisplayCode.map(Self.normalizedDisplayCode)
+        let matching = productResponse.result.l2s.filter { item in
+            Self.normalizedDisplayCode(item.color.displayCode) == normalizedColor
+                && (normalizedPLD == nil
+                    || Self.normalizedDisplayCode(item.pld.displayCode) == normalizedPLD)
+        }
+        let bySize = matching.reduce(
+            into: [String: [UniqloProductAvailabilityResponse.L2]]()
+        ) { grouped, item in
+            guard let sizeName = item.size.name else { return }
+            let sizeKey = ParsedProductSizeNormalizer.normalizedSizeKey(for: sizeName)
+            guard !sizeKey.isEmpty else { return }
+            grouped[sizeKey, default: []].append(item)
+        }
+
+        return sizes.map { size in
+            var copy = size
+            let sizeKey = ParsedProductSizeNormalizer.normalizedSizeKey(for: size.name)
+            guard let items = bySize[sizeKey], !items.isEmpty else { return copy }
+
+            // Multiple provider rows can exist for one displayed size when a
+            // length/PLD was not selected. Mark AVAILABLE only when every
+            // matched row agrees; otherwise retain a fail-closed UNKNOWN.
+            let stockFacts = items.compactMap { item in
+                stockResponse.result[item.l2Id].map { (item, $0) }
+            }
+            guard stockFacts.count == items.count else { return copy }
+            let statuses = Set(stockFacts.map { Self.normalizedStockStatus($0.1.statusCode) })
+            guard statuses.count == 1,
+                  let status = statuses.first,
+                  status != "UNKNOWN" else { return copy }
+            copy.availabilityStatus = status
+            copy.availabilityObservedAt = observedAt
+            copy.availabilityValidUntil = observedAt.addingTimeInterval(15 * 60)
+            copy.availabilityEvidence = [
+                "provider": "uniqlo_kr",
+                "provider_entity": "l2_stock",
+                "stock_status_code": stockFacts[0].1.statusCode,
+                "stock_quantity": stockFacts[0].1.quantity.map(String.init) ?? "",
+                "color_display_code": items[0].color.displayCode,
+                "size_display_code": items[0].size.displayCode,
+                "pld_display_code": items[0].pld.displayCode,
+                "l2_id": items[0].l2Id
+            ]
+            return copy
+        }
+    }
+
+    private func fetchProductData(
+        productID: String,
+        priceGroupCode: String
+    ) async throws -> Data {
+        guard let url = URL(string:
+            "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/\(productID)-000/price-groups/\(priceGroupCode)?httpFailure=true"
+        ) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return try await fetchData(from: url)
+    }
+
+    private func fetchStockData(
+        productID: String,
+        priceGroupCode: String
+    ) async throws -> Data {
+        guard let url = URL(string:
+            "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/\(productID)-000/price-groups/\(priceGroupCode)/stock?httpFailure=true"
+        ) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return try await fetchData(from: url)
+    }
+
+    private static func normalizedStockStatus(_ value: String) -> String {
+        switch value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
+        case "IN_STOCK", "LOW_STOCK": return "AVAILABLE"
+        case "STOCK_OUT", "OUT_OF_STOCK", "SOLD_OUT": return "SOLD_OUT"
+        default: return "UNKNOWN"
+        }
+    }
+
+    private static func normalizedDisplayCode(_ value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count == 3, trimmed.hasPrefix("0") else { return trimmed }
+        return String(trimmed.dropFirst())
     }
 
     func parse(productIDWithColorCode: String) async throws -> UniqloSizeAPIResult {
@@ -315,8 +771,25 @@ struct UniqloSizeAPIParser {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
-        let data = try await fetchData(from: apiURL)
-        return try parseResult(from: data)
+        let response = try await fetchResponse(from: apiURL)
+        guard (200..<300).contains(response.httpStatus) else {
+            throw FitMatchRetailerAPIResponseError(
+                capture: response,
+                reason: "unexpected_http_status"
+            )
+        }
+        let parsed: UniqloSizeAPIResult
+        do {
+            parsed = try parseResult(from: response.body)
+        } catch {
+            throw FitMatchRetailerAPIResponseError(
+                capture: response,
+                reason: "invalid_response_body"
+            )
+        }
+        var result = parsed
+        result.responseCapture = response
+        return result
     }
 
     func parseSizes(productIDWithColorCode: String) async throws -> [ParsedProductSize] {
@@ -345,6 +818,32 @@ struct UniqloSizeAPIParser {
     }
 
     private func fetchData(from apiURL: URL) async throws -> Data {
+        let response = try await fetchResponse(from: apiURL)
+        guard (200..<300).contains(response.httpStatus) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return response.body
+    }
+
+    private func fetchResponse(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+        try await responseLoader(apiURL)
+    }
+
+    private static func fetchLiveResponse(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "UNIQLO \(requestKind(for: apiURL)) HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
         request.timeoutInterval = 12
@@ -356,12 +855,34 @@ struct UniqloSizeAPIParser {
         )
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode) else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? apiURL,
+            httpStatus: httpResponse.statusCode,
+            body: data,
+            // Availability transport consumes only the original bytes through
+            // typed DTO decoding. Its capture does not leave this private
+            // path, so avoid a generic JSON tree that no caller can consume.
+            // Official size-chart captures keep their evidence projection.
+            precomputesJSONObject: !isAvailabilityEndpoint(apiURL)
+        )
+    }
 
-        return data
+    private static func isAvailabilityEndpoint(_ apiURL: URL) -> Bool {
+        apiURL.path.hasSuffix("/stock")
+            || apiURL.path.contains("/price-groups/")
+    }
+
+    private static func requestKind(for apiURL: URL) -> String {
+        if apiURL.path.hasSuffix("/stock") {
+            return "재고"
+        }
+        if apiURL.path.contains("/price-groups/") {
+            return "상품"
+        }
+        return "실측표"
     }
 
     private func makeParsedSize(
@@ -515,7 +1036,14 @@ struct UniqloProductMetadata {
         // The size-chart API can fall back to the generic `000` color. Do not
         // let that response replace the thumbnail selected from the shared URL.
         let expectedToken = "_\(selectedColorCode)_\(goodsID)_"
-        guard preferredImageURLString.localizedCaseInsensitiveContains(expectedToken) else {
+        let isSelectedColorImage = preferredImageURLString
+            .localizedCaseInsensitiveContains(expectedToken)
+        let mayUseOfficialDefault = selectedColorCode == "00"
+            && UniqloImageURLPolicy.containsGoodsID(
+                preferredImageURLString,
+                goodsID: goodsID
+            )
+        guard isSelectedColorImage || mayUseOfficialDefault else {
             return self
         }
 
@@ -560,9 +1088,15 @@ struct UniqloProductMetadataParser {
         let productGroupObject = jsonLDObjects.first(where: { isType("ProductGroup", in: $0) })
         let productObject = jsonLDObjects.first(where: { isType("Product", in: $0) })
         let breadcrumbObject = jsonLDObjects.first(where: { isType("BreadcrumbList", in: $0) })
+        let hydrationProduct = selectedHydrationProduct(
+            from: resolved.html,
+            productID: resolved.productID,
+            productIDWithColorCode: resolved.productIDWithColorCode
+        )
 
         let rawProductName = stringValue(productGroupObject?["name"])
             ?? stringValue(productObject?["name"])
+            ?? stringValue(hydrationProduct?["name"])
             ?? titleFallback(from: resolved.html)
             ?? "유니클로 상품 \(resolved.goodsID)"
         let productName = sanitizedProductName(rawProductName, fallback: "유니클로 상품 \(resolved.goodsID)")
@@ -575,7 +1109,27 @@ struct UniqloProductMetadataParser {
         let priceInfo = priceInfo(productGroupObject: productGroupObject, productObject: productObject, resolved: resolved)
         let breadcrumb = breadcrumbItems(from: breadcrumbObject, productName: productName)
         let htmlBreadcrumb = htmlBreadcrumbItems(from: resolved.html, productName: productName)
-        let sourcePath = categoryPath(productGroupObject: productGroupObject, breadcrumb: breadcrumb, htmlBreadcrumb: htmlBreadcrumb)
+        let embeddedBreadcrumb = embeddedProductBreadcrumb(
+            from: resolved.html,
+            productID: resolved.productID
+        )
+        let productTypeKr = embeddedProductTypeKr(
+            from: resolved.html,
+            productID: resolved.productID,
+            productIDWithColorCode: resolved.productIDWithColorCode
+        )
+        let productStructureFact = embeddedProductStructureFact(
+            from: resolved.html,
+            productID: resolved.productID,
+            productIDWithColorCode: resolved.productIDWithColorCode,
+            productName: productName
+        )
+        let sourcePath = categoryPath(
+            productGroupObject: productGroupObject,
+            breadcrumb: breadcrumb,
+            htmlBreadcrumb: htmlBreadcrumb,
+            embeddedBreadcrumb: embeddedBreadcrumb
+        )
         let rawSourceCategory = !breadcrumb.isEmpty
             ? breadcrumb.joined(separator: " / ")
             : (!htmlBreadcrumb.isEmpty
@@ -616,6 +1170,18 @@ struct UniqloProductMetadataParser {
             ?? sourcePath.gender.map { [$0] }
             ?? genderCodes(from: breadcrumb + htmlBreadcrumb)
 
+        var structuredFacts = productTypeKr.map { ["product_type_kr": $0] } ?? [:]
+        if let productStructureFact {
+            structuredFacts.merge(productStructureFact.structuredFacts) { current, _ in current }
+        }
+        // This marker is retailer-observation provenance, not a path-length
+        // guess. It is emitted only when the selected PDP exposes each
+        // ordered UNIQLO breadcrumb node with an ID.
+        if sourcePath.isCompleteObservedProviderHierarchy {
+            structuredFacts["source_category_path_completeness"] = "complete"
+            structuredFacts["source_category_path_source"] = "uniqlo_pdp_breadcrumbs"
+        }
+
         let metadata = ProductMetadata(
             brandEnglishName: "UNIQLO",
             sourceCategoryPath: sourcePath.fullPath,
@@ -624,10 +1190,15 @@ struct UniqloProductMetadataParser {
             sourceCategoryDepth3: sourcePath.depth3,
             sourceCategoryDepth4: sourcePath.depth4,
             baseCategoryFullPath: sourcePath.fullPath,
+            categoryDepth1Code: sourcePath.code1,
             categoryDepth1Name: sourcePath.depth1,
+            categoryDepth2Code: sourcePath.code2,
             categoryDepth2Name: sourcePath.depth2,
+            categoryDepth3Code: sourcePath.code3,
             categoryDepth3Name: sourcePath.depth3,
+            categoryDepth4Code: sourcePath.code4,
             categoryDepth4Name: sourcePath.depth4,
+            structuredFacts: structuredFacts,
             genderCodes: genderCodes,
             imageURLStrings: [imageURLString].compactMap { $0 },
             normalPrice: priceInfo.normalPrice,
@@ -829,25 +1400,242 @@ struct UniqloProductMetadataParser {
     private func categoryPath(
         productGroupObject: [String: Any]?,
         breadcrumb: [String],
-        htmlBreadcrumb: [String]
+        htmlBreadcrumb: [String],
+        embeddedBreadcrumb: SourceCategoryPath?
     ) -> SourceCategoryPath {
-        let breadcrumbPath = sourceCategoryPath(from: breadcrumb)
-        if !breadcrumbPath.depths.isEmpty {
-            return breadcrumbPath
-        }
-
-        let htmlBreadcrumbPath = sourceCategoryPath(from: htmlBreadcrumb)
-        if !htmlBreadcrumbPath.depths.isEmpty {
-            return htmlBreadcrumbPath
-        }
-
         let productGroupCategory = stringValue(productGroupObject?["category"])
         let productGroupPath = sourceCategoryPath(from: splitCategoryPath(productGroupCategory))
-        if !productGroupPath.depths.isEmpty {
-            return productGroupPath
+        let candidates = [
+            embeddedBreadcrumb,
+            sourceCategoryPath(from: breadcrumb),
+            sourceCategoryPath(from: htmlBreadcrumb),
+            productGroupPath
+        ].compactMap { $0 }.filter { !$0.depths.isEmpty }
+
+        // UNIQLO's visible/JSON-LD breadcrumb can stop at a collaboration page,
+        // while __PRELOADED_STATE__ still contains the official leaf and IDs.
+        // Keep source order for ties, but never discard the deeper evidence.
+        return candidates.max { lhs, rhs in
+            lhs.depths.count < rhs.depths.count
+        } ?? sourceCategoryPath(from: [])
+    }
+
+    private func embeddedProductBreadcrumb(
+        from html: String,
+        productID: String
+    ) -> SourceCategoryPath? {
+        guard let json = firstMatch(
+            in: html,
+            pattern: #"window\.__PRELOADED_STATE__\s*=\s*(\{.*?\})\s*;?\s*</script>"#
+        ),
+        let data = json.data(using: .utf8),
+        let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        let entity = root["entity"] as? [String: Any],
+        let pdpEntity = entity["pdpEntity"] as? [String: Any] else {
+            return nil
         }
 
-        return sourceCategoryPath(from: [])
+        let normalizedProductID = productID.uppercased()
+        guard let entry = pdpEntity.first(where: { key, _ in
+            key.uppercased().hasPrefix(normalizedProductID + "-")
+        })?.value as? [String: Any],
+        let product = entry["product"] as? [String: Any],
+        let breadcrumbs = product["breadcrumbs"] as? [String: Any] else {
+            return nil
+        }
+
+        let orderedKeys = ["gender", "class", "category", "subcategory"]
+        let nodes: [(name: String, code: String?)] = orderedKeys.compactMap { key in
+            guard let node = breadcrumbs[key] as? [String: Any],
+                  let name = stringValue(node["locale"] ?? node["name"])?.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                  ),
+                  !name.isEmpty else {
+                return nil
+            }
+            return (name, stringValue(node["id"]))
+        }
+        guard !nodes.isEmpty else { return nil }
+
+        let gender = audienceCode(from: nodes[0].name)
+        let categoryNodes = gender == nil ? nodes : Array(nodes.dropFirst())
+        let isCompleteObservedProviderHierarchy = nodes.count == orderedKeys.count
+            && gender != nil
+            && nodes.allSatisfy { node in
+                guard let code = node.code?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                    return false
+                }
+                return !code.isEmpty
+            }
+        return SourceCategoryPath(
+            gender: gender,
+            depths: categoryNodes.map(\.name),
+            codes: categoryNodes.map(\.code),
+            isCompleteObservedProviderHierarchy: isCompleteObservedProviderHierarchy
+        )
+    }
+
+    /// Returns UNIQLO's retailer-owned Korean product type verbatim from the
+    /// selected hydration product. A unique exact variant match wins; when no
+    /// exact variant is present, there must be exactly one matching core
+    /// product. Ambiguous or missing evidence is deliberately omitted.
+    private func embeddedProductTypeKr(
+        from html: String,
+        productID: String,
+        productIDWithColorCode: String
+    ) -> String? {
+        guard let selectedProduct = selectedHydrationProduct(
+            from: html,
+            productID: productID,
+            productIDWithColorCode: productIDWithColorCode
+        ), let rawValue = selectedProduct["productTypeKr"] as? String,
+              !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return rawValue
+    }
+
+    /// Captures only a provider-declared structure or explicit composite text
+    /// in the selected retailer PDP. PDP identity selects the record, but it
+    /// is not cardinality evidence.
+    private func embeddedProductStructureFact(
+        from html: String,
+        productID: String,
+        productIDWithColorCode: String,
+        productName: String
+    ) -> RetailerProductStructureFact? {
+        let product = selectedHydrationProduct(
+            from: html,
+            productID: productID,
+            productIDWithColorCode: productIDWithColorCode
+        )
+
+        if let product,
+           let declared = declaredProductStructure(from: product) {
+            return declared
+        }
+
+        let textFields: [(String, String?)] = [
+            ("pdp_entity_name", product.flatMap { stringValue($0["name"]) }),
+            ("pdp_composition", product.flatMap { stringValue($0["composition"]) }),
+            ("pdp_product_composition", product.flatMap { stringValue($0["productComposition"]) }),
+            ("pdp_component_description", product.flatMap { stringValue($0["componentDescription"]) }),
+            ("pdp_long_description", product.flatMap { stringValue($0["longDescription"]) }),
+            ("pdp_description", product.flatMap { stringValue($0["description"]) }),
+            ("pdp_short_description", product.flatMap { stringValue($0["shortDescription"]) }),
+            ("pdp_product_name", productName)
+        ]
+        for (field, value) in textFields {
+            guard let value,
+                  let fact = RetailerProductStructureFact.explicitCompositeRetailerText(
+                    value,
+                    source: "uniqlo_pdp_entity",
+                    evidenceField: field
+                  ) else {
+                continue
+            }
+            return fact
+        }
+        return nil
+    }
+
+    private func declaredProductStructure(
+        from product: [String: Any]
+    ) -> RetailerProductStructureFact? {
+        let textFields = [
+            "productStructure", "product_structure", "bundleType", "bundle_type"
+        ]
+        for field in textFields {
+            guard let raw = stringValue(product[field])?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased(), !raw.isEmpty else {
+                continue
+            }
+            let structure: RetailerProductStructure?
+            switch raw {
+            case "single", "single_item", "single-item", "one":
+                structure = .single
+            case "set", "bundle", "kit":
+                structure = .set
+            case "multipack", "multi_pack", "multi-pack", "pack":
+                structure = .multipack
+            case "unknown":
+                structure = .unknown
+            default:
+                structure = nil
+            }
+            if let structure {
+                return RetailerProductStructureFact(
+                    structure: structure,
+                    source: "uniqlo_pdp_entity",
+                    evidence: "\(field):provider_declared"
+                )
+            }
+        }
+
+        if let isSet = product["isSet"] as? Bool, isSet {
+            return RetailerProductStructureFact(
+                structure: .set,
+                source: "uniqlo_pdp_entity",
+                evidence: "isSet:true"
+            )
+        }
+        if let packCount = intValue(product["packCount"]), packCount > 1 {
+            return RetailerProductStructureFact(
+                structure: .multipack,
+                source: "uniqlo_pdp_entity",
+                evidence: "packCount:provider_gt_1"
+            )
+        }
+        return nil
+    }
+
+    private func selectedHydrationProduct(
+        from html: String,
+        productID: String,
+        productIDWithColorCode: String
+    ) -> [String: Any]? {
+        guard let json = firstMatch(
+            in: html,
+            pattern: #"window\.__PRELOADED_STATE__\s*=\s*(\{.*?\})\s*;?\s*</script>"#
+        ),
+        let data = json.data(using: .utf8),
+        let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        let entity = root["entity"] as? [String: Any],
+        let pdpEntity = entity["pdpEntity"] as? [String: Any] else {
+            return nil
+        }
+
+        let normalizedProductID = productID.uppercased()
+        let normalizedVariantID = productIDWithColorCode.uppercased()
+        let candidates: [(key: String, productID: String?, product: [String: Any])] =
+            pdpEntity.compactMap { key, rawEntry in
+                guard let entry = rawEntry as? [String: Any],
+                      let product = entry["product"] as? [String: Any] else {
+                    return nil
+                }
+                let normalizedKey = key.uppercased()
+                let embeddedProductID = stringValue(product["productId"])?.uppercased()
+                let matchesCore = normalizedKey == normalizedProductID
+                    || normalizedKey.hasPrefix(normalizedProductID + "-")
+                    || embeddedProductID == normalizedProductID
+                    || embeddedProductID?.hasPrefix(normalizedProductID + "-") == true
+                guard matchesCore else { return nil }
+                return (normalizedKey, embeddedProductID, product)
+            }
+
+        let exactMatches = candidates.filter { candidate in
+            candidate.key == normalizedVariantID
+                || candidate.key.hasPrefix(normalizedVariantID + "-")
+                || candidate.productID == normalizedVariantID
+        }
+        if exactMatches.count == 1 {
+            return exactMatches[0].product
+        } else if exactMatches.isEmpty, candidates.count == 1 {
+            return candidates[0].product
+        } else {
+            return nil
+        }
     }
 
     private func htmlBreadcrumbItems(from html: String, productName: String) -> [String] {
@@ -936,12 +1724,10 @@ struct UniqloProductMetadataParser {
     }
 
     private func normalizedAudienceCodes(from value: String) -> [String]? {
-        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        if ["UNISEX", "COMMON", "U", "공용", "젠더리스"].contains(normalized) { return ["UNISEX"] }
-        if ["MEN", "MAN", "MALE", "남성"].contains(normalized) { return ["MEN"] }
-        if ["WOMEN", "WOMAN", "FEMALE", "여성"].contains(normalized) { return ["WOMEN"] }
-        if ["KIDS", "BABY"].contains(normalized) { return [normalized] }
-        return nil
+        let canonical = FitMatchCanonicalAudience.code(from: value)
+        return canonical == FitMatchCanonicalAudience.unknown.rawValue
+            ? nil
+            : [canonical]
     }
 
     private func splitCategoryPath(_ path: String?) -> [String] {
@@ -958,12 +1744,14 @@ struct UniqloProductMetadataParser {
         if gender != nil {
             parts.removeFirst()
         }
-        return SourceCategoryPath(gender: gender, depths: parts)
+        return SourceCategoryPath(gender: gender, depths: parts, codes: [])
     }
 
     private func audienceCode(from value: String) -> String? {
-        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        return ["MEN", "WOMEN", "KIDS", "BABY"].contains(normalized) ? normalized : nil
+        let canonical = FitMatchCanonicalAudience.code(from: value)
+        return canonical == FitMatchCanonicalAudience.unknown.rawValue
+            ? nil
+            : canonical
     }
 
     private func titleFallback(from html: String) -> String? {
@@ -1243,6 +2031,20 @@ struct UniqloProductMetadataParser {
 private struct SourceCategoryPath {
     let gender: String?
     let depths: [String]
+    let codes: [String?]
+    let isCompleteObservedProviderHierarchy: Bool
+
+    init(
+        gender: String?,
+        depths: [String],
+        codes: [String?],
+        isCompleteObservedProviderHierarchy: Bool = false
+    ) {
+        self.gender = gender
+        self.depths = depths
+        self.codes = codes
+        self.isCompleteObservedProviderHierarchy = isCompleteObservedProviderHierarchy
+    }
 
     var fullPath: String? {
         depths.isEmpty ? nil : depths.joined(separator: " > ")
@@ -1252,10 +2054,19 @@ private struct SourceCategoryPath {
     var depth2: String? { depth(at: 1) }
     var depth3: String? { depth(at: 2) }
     var depth4: String? { depth(at: 3) }
+    var code1: String? { code(at: 0) }
+    var code2: String? { code(at: 1) }
+    var code3: String? { code(at: 2) }
+    var code4: String? { code(at: 3) }
 
     private func depth(at index: Int) -> String? {
         guard depths.indices.contains(index) else { return nil }
         return depths[index]
+    }
+
+    private func code(at index: Int) -> String? {
+        guard codes.indices.contains(index) else { return nil }
+        return codes[index]
     }
 }
 
@@ -1264,6 +2075,38 @@ private struct UniqloPriceInfo {
     let salePrice: Int?
     let finalPrice: Int?
     let stockStatus: ProductStockStatus
+}
+
+private struct UniqloProductAvailabilityResponse: Decodable {
+    let status: String?
+    let result: Result
+
+    struct Result: Decodable {
+        let l2s: [L2]
+    }
+
+    struct L2: Decodable {
+        let l2Id: String
+        let color: DisplayValue
+        let size: DisplayValue
+        let pld: DisplayValue
+        let sales: Bool
+    }
+
+    struct DisplayValue: Decodable {
+        let displayCode: String
+        let name: String?
+    }
+}
+
+private struct UniqloProductStockResponse: Decodable {
+    let status: String?
+    let result: [String: Stock]
+
+    struct Stock: Decodable {
+        let statusCode: String
+        let quantity: Int?
+    }
 }
 
 private struct UniqloSizeChartResponse: Decodable {

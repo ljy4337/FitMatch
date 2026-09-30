@@ -3,6 +3,9 @@ import SwiftData
 
 @Model
 final class UserFit {
+    static let historyReferenceSnapshotSourceIdentity =
+        "fitmatch_vnext_history_reference_snapshot"
+
     @Attribute(.unique)
     var id: UUID
     var sourceTypeRawValue: String = ProductSourceType.manual.rawValue
@@ -21,6 +24,9 @@ final class UserFit {
     var detailCategoryRawValue: String = ClosetDetailCategory.other.rawValue
     var categoryCode: String?
     var detailCategoryCode: String?
+    var comparisonGroupCode: String?
+    var comparisonGroupSource: String?
+    var comparisonGroupPolicyVersion: String?
     var normalizedProductTypeCode: String?
     var garmentTypeRawValue: String?
     var sleeveTypeRawValue: String?
@@ -57,6 +63,15 @@ final class UserFit {
 
     var sourceProduct: Product?
     var sourceProductSize: ProductSize?
+    var imageURLStringSnapshot: String?
+
+    var imageURLStringForDisplay: String? {
+        if let image = imageURLStringSnapshot?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !image.isEmpty {
+            return image
+        }
+        return sourceProduct?.imageURLStringForDisplay
+    }
 
     @Relationship(deleteRule: .cascade, inverse: \GarmentMeasurementRecord.userFit)
     var measurementRecords: [GarmentMeasurementRecord] = []
@@ -150,6 +165,17 @@ final class UserFit {
             categoryCode = newValue.taxonomyCode
             clearStoredComparisonAttributes()
         }
+    }
+
+    var comparisonGroup: FitMatchComparisonGroup? {
+        get {
+            comparisonGroupCode.flatMap(FitMatchComparisonGroup.init(rawValue:))
+                ?? FitMatchComparisonGroup.legacyFallback(
+                    category: category,
+                    detailCategory: detailCategory
+                )
+        }
+        set { comparisonGroupCode = newValue?.rawValue }
     }
 
     var sourceType: ProductSourceType {
@@ -282,13 +308,39 @@ final class UserFit {
         "\(brandName) \(productName)"
     }
 
+    /// An immutable comparison may outlive the active Closet row it used as
+    /// its reference. Such a snapshot remains available to History, but must
+    /// never re-enter active Closet, reference picking, or mutation sync.
+    var isHistoryOnlyReferenceSnapshot: Bool {
+        canonicalSourceIdentity?.hasPrefix(Self.historyReferenceSnapshotSourceIdentity) == true
+    }
+
+    var isActiveClosetItem: Bool {
+        !isHistoryOnlyReferenceSnapshot
+    }
+
+    func markAsHistoryOnlyReferenceSnapshot(
+        sourceIdentity: String? = nil
+    ) {
+        isRepresentative = false
+        canonicalEligibility = false
+        if let sourceIdentity,
+           !sourceIdentity.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            canonicalSourceIdentity = "\(Self.historyReferenceSnapshotSourceIdentity)|\(sourceIdentity)"
+        } else {
+            canonicalSourceIdentity = Self.historyReferenceSnapshotSourceIdentity
+        }
+    }
+
     func replaceMeasurementRecords(with sourceRecords: [GarmentMeasurementRecord]) {
         constructionTypeRawValue = nil
         measurementRecords = sourceRecords.map { source in
             GarmentMeasurementRecord(
                 value: source.value,
                 unit: MeasurementUnit(rawValue: source.unitRawValue) ?? .centimeter,
+                unitRawValue: source.unitRawValue,
                 measurementCode: source.measurementCode,
+                measurementCodeRawValue: source.measurementCodeRawValue,
                 displayKind: source.displayKind ?? .unknown,
                 methodSource: source.methodSource,
                 methodProfile: source.methodProfile,

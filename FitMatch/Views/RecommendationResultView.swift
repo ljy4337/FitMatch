@@ -3,47 +3,60 @@ import SwiftData
 
 struct RecommendationResultView: View {
     @Environment(\.openURL) private var openURL
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
+    @Query private var closetItems: [UserFit]
     let result: RecommendationHistory
-    private let opensReferencePickerOnAppear: Bool
-    private let onResultPersisted: ((RecommendationHistory) -> Void)?
+    private let onShowComparisonList: (() -> Void)?
+    private let onShowOtherClosetComparison: (() -> Void)?
+    private let onReselectClassification: (() -> Void)?
+    private let onClearClassification: (() -> Void)?
     private let resultCalculationSnapshot: RecommendationCalculationSnapshot?
     private let resultComparedMeasurementUsages: [MeasurementComparisonUsage]
     private let resultMeasurementExclusions: [MeasurementComparisonExclusion]
     private let resultProductSizes: [ProductSize]
     private let diagnosticsStartedAt: TimeInterval
-    @State private var comparisonResult: RecommendationHistory?
-    @State private var activeSheet: RecommendationResultActiveSheet?
-    @State private var isShowingComparisonDetails = false
+    @State private var supplementalComparisonCache = FitMatchResultSupplementalComparisonCache()
     @State private var isShowingReliabilityInfo = false
     @State private var isShowingMeasurementInfo = false
     @State private var isShowingAlternativeSizeComparison = false
+    @State private var isShowingOtherClosetComparison = false
     @State private var selectedAlternativeSizeID: UUID?
     @State private var temporarySizeAnalysis: TemporarySizeAnalysis?
     @State private var temporaryAnalysisCache: [TemporarySizeAnalysisCacheKey: TemporarySizeAnalysis] = [:]
+    /// This is populated directly from the completed vNext batch.  It is
+    /// deliberately separate from `ProductSize.id`, which can be a historical
+    /// SwiftData projection outside a current server-runtime context.
+    @State private var exactProductSizeIDByTemporaryAnalysisKey:
+        [TemporarySizeAnalysisCacheKey: UUID] = [:]
+    @State private var temporaryDisplayedProductSizeID: UUID?
     @State private var activeAlternativeAnalysisKeys: [UUID: TemporarySizeAnalysisCacheKey] = [:]
     @State private var unavailableAlternativeSizeKeys: Set<TemporarySizeAnalysisCacheKey> = []
     @State private var isAnalyzingAlternativeSize = false
     @State private var isPreparingAlternativeSizes = false
     @State private var alternativePreparationGeneration = UUID()
     @State private var alternativeSizeErrorMessage: String?
-    @State private var isComparisonCoverageExpanded = false
-    @State private var didOpenInitialReferencePicker = false
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var isShowingClosetSavedToast = false
+    @State private var closetRegistrationPreparation:
+        FitMatchResultClosetRegistrationPreparation?
+    @State private var isPreparingClosetRegistration = false
+    @State private var closetRegistrationPreparationErrorMessage: String?
     private let favoriteStore = FavoriteProductStore()
 
     init(
         result: RecommendationHistory,
-        opensReferencePickerOnAppear: Bool = false,
-        onResultPersisted: ((RecommendationHistory) -> Void)? = nil
+        onShowComparisonList: (() -> Void)? = nil,
+        onShowOtherClosetComparison: (() -> Void)? = nil,
+        onReselectClassification: (() -> Void)? = nil,
+        onClearClassification: (() -> Void)? = nil
     ) {
         let comparisonData = result.comparisonData
         self.diagnosticsStartedAt = DetailPerformanceDiagnostics.now()
         self.result = result
-        self.opensReferencePickerOnAppear = opensReferencePickerOnAppear
-        self.onResultPersisted = onResultPersisted
+        self.onShowComparisonList = onShowComparisonList
+        self.onShowOtherClosetComparison = onShowOtherClosetComparison
+        self.onReselectClassification = onReselectClassification
+        self.onClearClassification = onClearClassification
         self.resultCalculationSnapshot = comparisonData.calculationSnapshot
         self.resultComparedMeasurementUsages = comparisonData.comparedMeasurementUsages
         self.resultMeasurementExclusions = comparisonData.measurementExclusions
@@ -53,7 +66,7 @@ struct RecommendationResultView: View {
     }
 
     private var currentResult: RecommendationHistory {
-        comparisonResult ?? result
+        result
     }
 
     var body: some View {
@@ -76,43 +89,35 @@ struct RecommendationResultView: View {
             .diagnosesScrollPerformance(screen: "recommendation_result")
             .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             .background(Color(.systemBackground))
-            .navigationTitle("비교 결과")
+            .navigationTitle(onShowComparisonList == nil ? "비교 결과" : "개별 비교 결과")
+            .toolbar {
+                if let onShowComparisonList {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(action: onShowComparisonList) {
+                            Label("비교 목록", systemImage: "chevron.left")
+                        }
+                        .font(.subheadline.weight(.bold))
+                    }
+                }
+            }
             .safeAreaInset(edge: .bottom) {
                 resultBottomActionBar
             }
-            .sheet(item: $activeSheet) { sheet in
-                switch sheet {
-                case .referencePicker:
-                NavigationStack {
-                    ResultReferencePickerView(
-                        currentUserFit: currentResult.userFit,
-                        product: currentResult.product,
-                        productDetailCategory: currentResult.productDetailCategory
-                    ) { item in
-                        let outcome = compare(with: item)
-                        if outcome.shouldDismissPicker {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                withAnimation(.easeInOut(duration: 0.25)) {
-                                    proxy.scrollTo("resultTop", anchor: .top)
-                                }
-                            }
-                        }
-                        return outcome
-                    }
-                }
-                .presentationDragIndicator(.visible)
-                case .addToCloset:
+            .sheet(item: $closetRegistrationPreparation) { preparation in
                 AddComparedProductToClosetSheet(
-                    product: currentResult.product,
-                    productDetailCategory: currentResult.productDetailCategory,
-                    recommendedSize: currentResult.recommendedSize,
-                    startsAtRegistrationConfirmation: true
+                    product: preparation.product,
+                    productDetailCategory: preparation.productDetailCategory,
+                    recommendedSize: preparation.preferredSize,
+                    isParsedProductReadOnly: preparation.serverRegistrationContext != nil,
+                    serverRegistrationContext: preparation.serverRegistrationContext,
+                    startsAtRegistrationConfirmation: true,
+                    requiresExplicitSizeSelection: preparation.requiresExplicitSizeSelection,
+                    initialSizeSelectionMessage: preparation.initialSizeSelectionMessage
                 ) { _ in
                     showClosetSavedToast()
                 }
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
-                }
             }
             .overlay(alignment: .top) {
                 if isShowingClosetSavedToast {
@@ -136,21 +141,31 @@ struct RecommendationResultView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $isShowingOtherClosetComparison) {
+                NavigationStack {
+                    CompareFlowSheet(initialHistoricalProduct: currentResult.product)
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+            .alert(
+                "옷장 등록을 준비할 수 없어요",
+                isPresented: Binding(
+                    get: { closetRegistrationPreparationErrorMessage != nil },
+                    set: { if !$0 { closetRegistrationPreparationErrorMessage = nil } }
+                )
+            ) {
+                Button("확인", role: .cancel) {}
+            } message: {
+                Text(closetRegistrationPreparationErrorMessage ?? "")
+            }
             .onAppear {
                 DetailPerformanceDiagnostics.logHistoryResultNavigation(event: "result_on_appear")
                 logInitialPerformance()
                 #if DEBUG
-                print("[화면: 비교 결과][동작: 결과 화면 진입][상태: 성공] 상품=\(currentResult.product.name), 추천사이즈=\(currentResult.recommendedSize.name), 기준옷=\(currentResult.userFit.displayName)")
+                print("[화면: 비교 결과][동작: 결과 화면 진입][상태: 성공] 상품=\(currentResult.product.name), 추천사이즈=\(currentResult.recommendedSize.name), 선택한옷=\(currentResult.userFit.displayName)")
                 #endif
                 tabBarVisibilityController.hide(reason: .navigationDetail, source: "recommendation result")
-                guard opensReferencePickerOnAppear, !didOpenInitialReferencePicker else {
-                    return
-                }
-
-                didOpenInitialReferencePicker = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                    presentActiveSheet(.referencePicker)
-                }
             }
             .onDisappear {
                 #if DEBUG
@@ -158,30 +173,6 @@ struct RecommendationResultView: View {
                 #endif
                 tabBarVisibilityController.release(reason: .navigationDetail, source: "recommendation result disappear")
             }
-            .onChange(of: comparisonResult?.id) {
-                resetTemporarySizeComparison()
-            }
-        }
-    }
-
-    // TODO: Legacy UI, 삭제 금지.
-    // 원복 시 body의 report* 카드 묶음을 이 콘텐츠로 교체합니다.
-    @ViewBuilder
-    private var comparisonResultScreenLegacy: some View {
-        heroCard
-        comparisonTargetsCard
-        comparisonBasisSummaryCard
-        if currentResult.comparisonMode != .actualMeasurements {
-            standardSizeFallbackCard
-        }
-        fitRecommendationCard
-        comparisonDetailToggleCard
-        if isShowingComparisonDetails {
-            measurementDifferenceCard
-            comparisonCoverageCard
-            reasonCard
-            comparisonConditionCard
-            fitMatchRankingCard
         }
     }
 
@@ -253,7 +244,7 @@ struct RecommendationResultView: View {
     }
 
     private var reportRecommendationCard: some View {
-        let measurementKinds = comparedMeasurementKinds
+        let measurements = reportMeasurementPresentations
         let reliability = comparisonReliability
 
         return CardView(radius: 20, padding: 12, shadowRadius: 10) {
@@ -272,10 +263,11 @@ struct RecommendationResultView: View {
                             Button {
                                 presentAlternativeSizeComparison()
                             } label: {
-                                Text("다른 사이즈 비교")
+                                Label("다른 사이즈 비교", systemImage: "arrow.left.arrow.right")
+                                    .labelStyle(.titleAndIcon)
                                     .lineLimit(1)
-                                    .minimumScaleFactor(0.7)
-                                    .font(.subheadline.weight(.bold))
+                                    .minimumScaleFactor(0.65)
+                                    .font(.caption.weight(.bold))
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 30)
                                     .background(
@@ -285,6 +277,7 @@ struct RecommendationResultView: View {
                                     .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
                             }
                             .buttonStyle(.plain)
+                            .disabled(availableProductSizes.count < 2)
                             .padding(.horizontal, 6)
                             .accessibilityHint("상품의 다른 사이즈를 임시로 비교합니다.")
                         }
@@ -322,9 +315,9 @@ struct RecommendationResultView: View {
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: 18)
-                            Text(reliability.stars)
+                            Text(reliability.displayValue)
                                 .font(.title3.weight(.bold))
-                                .foregroundStyle(.orange.opacity(0.85))
+                                .foregroundStyle(.primary)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -336,7 +329,7 @@ struct RecommendationResultView: View {
                                 .frame(height: 18)
                             Divider()
                             HStack(spacing: 3) {
-                                Text("\(measurementKinds.count)개 실측항목 비교")
+                                Text("\(measurements.count)개 실측항목 표시")
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
@@ -348,11 +341,11 @@ struct RecommendationResultView: View {
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("비교 실측 항목")
                             }
-                            HStack(spacing: measurementKinds.count > 4 ? 2 : 5) {
-                                ForEach(measurementKinds) { kind in
+                            HStack(spacing: measurements.count > 4 ? 2 : 5) {
+                                ForEach(measurements) { measurement in
                                     VStack(spacing: 2) {
-                                        reportMeasurementIcon(for: kind)
-                                        Text(reportShortTitle(for: kind))
+                                        reportMeasurementIcon(for: measurement.kind)
+                                        Text(reportShortTitle(for: measurement.kind))
                                             .font(.system(size: 8, weight: .medium))
                                             .lineLimit(1)
                                     }
@@ -378,9 +371,13 @@ struct RecommendationResultView: View {
     }
 
     private var reportMeasurementCard: some View {
-        let measurementKinds = comparedMeasurementKinds
-        let measurementExclusions = displayedMeasurementExclusions
-        let measurementDifferences = displayedMeasurementDifferences
+        let measurements = reportMeasurementPresentations
+        let supplementalKinds = Set(
+            measurements.filter(\.isSupplemental).map(\.kind)
+        )
+        let measurementExclusions = displayedMeasurementExclusions.filter {
+            !supplementalKinds.contains($0.kind)
+        }
 
         return CardView(radius: 20, padding: 12, shadowRadius: 10) {
             VStack(alignment: .leading, spacing: 7) {
@@ -399,7 +396,7 @@ struct RecommendationResultView: View {
 
                 if currentResult.comparisonMode == .standardSizeFallback {
                     InfoRow(title: "가슴", value: displayedTrueToSizeRecommendation)
-                } else if measurementKinds.isEmpty {
+                } else if measurements.isEmpty {
                     ContentUnavailableView(
                         "비교 가능한 항목이 없어요",
                         systemImage: "ruler",
@@ -407,15 +404,38 @@ struct RecommendationResultView: View {
                     )
                 } else {
                     VStack(spacing: 4) {
-                        ForEach(measurementKinds) { kind in
-                            let values = displayedMeasurementValues(for: kind)
+                        HStack(spacing: 6) {
+                            Image(systemName: "ruler")
+                            Text(displayedComparisonBasisTitle)
+                            if displayedVerifiedConversionCount > 0 {
+                                Text("환산 \(displayedVerifiedConversionCount)개")
+                                    .font(.caption2.weight(.bold))
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background(Color.secondary.opacity(0.12), in: Capsule())
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        ForEach(measurements) { measurement in
                             ReportMeasurementRow(
-                                kind: kind,
-                                title: reportMeasurementTitle(for: kind),
-                                productValue: values.product,
-                                referenceValue: values.reference,
-                                difference: measurementDifferences.value(for: kind)
+                                kind: measurement.kind,
+                                title: measurement.title,
+                                productValue: measurement.productValue,
+                                referenceValue: measurement.referenceValue,
+                                difference: measurement.difference,
+                                inputMode: measurement.inputMode,
+                                isSupplemental: measurement.isSupplemental
                             )
+                        }
+                        if measurements.contains(where: \.isSupplemental) {
+                            Text("같은 쇼핑몰의 동일한 측정 기준 항목은 참고값으로 함께 표시하며, 추천 점수에는 반영하지 않습니다.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
@@ -455,10 +475,10 @@ struct RecommendationResultView: View {
     private var reportReferenceCard: some View {
         CardView(radius: 20, padding: 12, shadowRadius: 10) {
             VStack(alignment: .leading, spacing: 6) {
-                SectionHeader(title: "비교 기준 옷")
+                SectionHeader(title: "선택한 내 옷")
                 HStack(spacing: 14) {
                     ProductThumbnailView(
-                        imageURLString: currentResult.userFit.sourceProduct?.imageURLString,
+                        imageURLString: referenceImageURLStringForDisplay,
                         category: currentResult.userFit.category,
                         width: 48,
                         height: 54,
@@ -478,14 +498,22 @@ struct RecommendationResultView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
-                    Button("기준 옷 변경") { presentActiveSheet(.referencePicker) }
-                        .font(.subheadline.weight(.bold))
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.primary)
-                        .padding(.horizontal, 14)
-                        .frame(height: 38)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
+                    Button {
+                        if let onShowOtherClosetComparison {
+                            onShowOtherClosetComparison()
+                        } else {
+                            isShowingOtherClosetComparison = true
+                        }
+                    } label: {
+                        Text("비교할 내 옷 변경")
+                    }
+                    .font(.subheadline.weight(.bold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 14)
+                    .frame(height: 38)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
                 }
             }
         }
@@ -516,15 +544,11 @@ struct RecommendationResultView: View {
     private var reliabilityInfoSheet: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
-                Text("사이즈 유사도는 선택한 상품 사이즈와 기준 옷의 실측이 얼마나 비슷한지 나타냅니다.")
-                Text("추천 신뢰도는 비교에 사용한 실측 항목 수, 측정 방식의 호환 여부, 누락·제외된 항목을 바탕으로 결과를 얼마나 참고할 수 있는지 보여줍니다.")
+                Text("사이즈 유사도는 선택한 상품 사이즈와 선택한 내 옷의 실측이 얼마나 비슷한지 나타냅니다.")
+                Text("신뢰도는 이번 비교에 실제로 사용한 서버 승인 실측 항목 수를 보여줍니다. 사이즈 유사도 점수와는 별개예요.")
                     .foregroundStyle(.secondary)
-                if currentResult.comparisonMethod.contains("확장 비교") {
-                    Text("서로 다른 종류의 유사한 옷을 비교한 결과라 구조 차이를 반영해 추천 신뢰도를 한 단계 낮췄어요.")
-                        .foregroundStyle(.secondary)
-                }
                 Divider()
-                InfoRow(title: "현재 신뢰도", value: "\(comparisonReliability.stars) \(comparisonReliability.title)")
+                InfoRow(title: "현재 신뢰도", value: comparisonReliability.displayValue)
                 Spacer()
             }
             .font(.subheadline)
@@ -612,7 +636,9 @@ struct RecommendationResultView: View {
                         ForEach(v1MeasurementKinds, id: \.id) { kind in
                             ComparisonCoverageRow(
                                 title: kind.title,
-                                isCompared: comparedMeasurementKinds.contains(kind),
+                                isCompared: reportMeasurementPresentations.contains {
+                                    $0.kind == kind
+                                },
                                 detail: comparisonCoverageDetail(for: kind)
                             )
                         }
@@ -630,11 +656,65 @@ struct RecommendationResultView: View {
     }
 
     private var availableProductSizes: [ProductSize] {
-        resultProductSizes
+        guard let batch = VNextComparisonSessionStore.shared.analysis(
+            for: currentResult.id
+        ) else { return [] }
+        let authorized = Set(batch.authorizedCandidateProductSizeIDs.flatMap { sizeID in
+            [
+                sizeID,
+                VNextHistoryProjectionIdentity.productSizeID(
+                    comparisonID: currentResult.id,
+                    productSizeID: sizeID
+                )
+            ]
+        })
+        return resultProductSizes.filter { authorized.contains($0.id) }
     }
 
     private var displayedProductSize: ProductSize {
         temporarySizeAnalysis?.productSize ?? currentResult.recommendedSize
+    }
+
+    private var referenceImageURLStringForDisplay: String? {
+        if let snapshot = currentResult.referenceImageURLStringForDisplay {
+            return snapshot
+        }
+        return closetItems.first { item in
+            item.isActiveClosetItem
+                && currentResult.referencesClosetItem(clientItemID: item.id)
+        }?.imageURLStringForDisplay
+    }
+
+    private var activeReferenceItemForDisplay: UserFit? {
+        closetItems.first { item in
+            item.isActiveClosetItem
+                && currentResult.referencesClosetItem(clientItemID: item.id)
+        }
+    }
+
+    private func serverProductSizeID(
+        for presentationSize: ProductSize,
+        in batch: VNextComparisonBatchAnalysis
+    ) -> UUID? {
+        batch.authorizedCandidateProductSizeIDs.first { sizeID in
+            sizeID == presentationSize.id
+                || VNextHistoryProjectionIdentity.productSizeID(
+                    comparisonID: currentResult.id,
+                    productSizeID: sizeID
+                ) == presentationSize.id
+        }
+    }
+
+    /// The Result's visible size is a completed batch identity, not the
+    /// rendered label.  A historical Result without that retained batch has no
+    /// safe preferred identity and therefore intentionally returns nil.
+    private var displayedServerProductSizeID: UUID? {
+        if temporarySizeAnalysis != nil {
+            return temporaryDisplayedProductSizeID
+        }
+        return VNextComparisonSessionStore.shared.analysis(
+            for: currentResult.id
+        )?.recommended.productSizeID
     }
 
     private func fitMatchDescription(for score: Int) -> String {
@@ -672,7 +752,11 @@ struct RecommendationResultView: View {
             guard let item = analysis?.comparisonResult.comparedItems.first(where: { $0.kind == kind }) else {
                 return AlternativeSizeMeasurementSummary(
                     title: reportShortTitle(for: kind),
-                    message: "비교 정보 없음",
+                    message: analysis?.comparisonResult.exclusions
+                        .first(where: { $0.kind == kind }).map {
+                            $0.reason == .incompatibleMeasurementCode
+                                ? "측정 기준 다름" : $0.reason.userMessage
+                        } ?? "비교에 사용되지 않은 항목",
                     status: .unavailable
                 )
             }
@@ -739,15 +823,15 @@ struct RecommendationResultView: View {
     }
 
     private var persistedMeasurementUsages: [MeasurementComparisonUsage] {
-        comparisonResult?.comparedMeasurementUsages ?? resultComparedMeasurementUsages
+        resultComparedMeasurementUsages
     }
 
     private var persistedMeasurementExclusions: [MeasurementComparisonExclusion] {
-        comparisonResult?.measurementExclusions ?? resultMeasurementExclusions
+        resultMeasurementExclusions
     }
 
     private var persistedCalculationSnapshot: RecommendationCalculationSnapshot? {
-        comparisonResult?.calculationSnapshot ?? resultCalculationSnapshot
+        resultCalculationSnapshot
     }
 
     private func displayedMeasurementValues(
@@ -760,6 +844,78 @@ struct RecommendationResultView: View {
             displayedProductSize.measurements.value(for: kind),
             currentResult.userFit.measurements.value(for: kind)
         )
+    }
+
+    private var reportMeasurementPresentations: [ReportMeasurementPresentation] {
+        var result = comparedMeasurementKinds.map { kind in
+            let values = displayedMeasurementValues(for: kind)
+            let usage = displayedMeasurementUsages.first { $0.kind == kind }
+            return ReportMeasurementPresentation(
+                kind: kind,
+                title: reportMeasurementTitle(for: kind),
+                productValue: values.product,
+                referenceValue: values.reference,
+                difference: displayedMeasurementDifferences.value(for: kind),
+                inputMode: usage?.inputMode,
+                isSupplemental: false
+            )
+        }
+        result.append(contentsOf: supplementalMeasurementItems.map { item in
+            ReportMeasurementPresentation(
+                kind: item.kind,
+                title: item.displayTitle ?? item.kind.title,
+                productValue: item.productValue,
+                referenceValue: item.referenceValue,
+                difference: item.signedDifference,
+                inputMode: item.inputMode,
+                isSupplemental: true
+            )
+        })
+        return result
+    }
+
+    private var displayedComparisonBasisTitle: String {
+        let modes = Set(displayedMeasurementUsages.compactMap(\.inputMode))
+        guard !modes.isEmpty else {
+            return currentResult.comparisonMethod
+        }
+        if modes.contains(.verifiedConversion) {
+            return MeasurementComparisonBasis.includesVerifiedConversion.displayName
+        }
+        if modes == [.retailerExact] {
+            return MeasurementComparisonBasis.retailerExact.displayName
+        }
+        if modes == [.canonicalExact] {
+            return MeasurementComparisonBasis.canonicalExact.displayName
+        }
+        return MeasurementComparisonBasis.mixed.displayName
+    }
+
+    private var displayedVerifiedConversionCount: Int {
+        displayedMeasurementUsages.filter { $0.inputMode == .verifiedConversion }.count
+    }
+
+    /// The score remains limited to the immutable DB-authorized metrics. When
+    /// both garments use the same retailer format, another exactly compatible
+    /// source measurement can still be shown as read-only reference data.
+    private var supplementalMeasurementItems: [MeasurementComparisonItem] {
+        let referenceItem = activeReferenceItemForDisplay ?? currentResult.userFit
+        guard currentResult.comparisonMode == .actualMeasurements,
+              let productSource = currentResult.product.sourcePlatformCode?
+                .trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+              let referenceSource = referenceItem.sourcePlatformCode?
+                .trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+              !productSource.isEmpty,
+              productSource == referenceSource else {
+            return []
+        }
+        let authorizedKinds = Set(comparedMeasurementKinds)
+        return supplementalComparisonCache.comparison(
+            productSize: displayedProductSize,
+            referenceItem: referenceItem,
+            productCategory: currentResult.product.category,
+            productDetailCategory: currentResult.productDetailCategory
+        ).comparedItems.filter { !authorizedKinds.contains($0.kind) }
     }
 
     private var originalScorePenalty: Int {
@@ -801,17 +957,28 @@ struct RecommendationResultView: View {
 
     @MainActor
     private func prepareAlternativeSizeAnalyses() async {
-        let generation = alternativePreparationGeneration
-        let service = RecommendationService()
-        let scorePenalty = originalScorePenalty
-        let excludedKinds = persistedMeasurementExclusions
-            .filter { [.categoryPolicy, .sleeveLengthMismatch].contains($0.reason) }
-            .map(\.kind)
-        let excludedKindReasons = Dictionary(
-            uniqueKeysWithValues: persistedMeasurementExclusions.map { ($0.kind, $0.reason) }
+        let batch = VNextComparisonSessionStore.shared.analysis(
+            for: currentResult.id
         )
-        let excludedKindsSignature = excludedKinds.map(\.rawValue).sorted().joined(separator: "|")
+        guard RecommendationService().canPresentCurrentVNextAlternativeSizes(
+            for: currentResult,
+            batch: batch
+        ), let batch else {
+            // Historical/local results retain their original persisted score,
+            // but cannot run a fresh measurement comparison without a current
+            // evaluator-v4 authorization for the exact target/reference pair.
+            temporaryAnalysisCache = [:]
+            unavailableAlternativeSizeKeys = []
+            activeAlternativeAnalysisKeys = [:]
+            isPreparingAlternativeSizes = false
+            return
+        }
+        let generation = alternativePreparationGeneration
+        let bySizeID = Dictionary(
+            uniqueKeysWithValues: batch.analyses.map { ($0.productSizeID, $0) }
+        )
         var preparedAnalyses = temporaryAnalysisCache
+        var exactIDs = exactProductSizeIDByTemporaryAnalysisKey
         var unavailableKeys = unavailableAlternativeSizeKeys
         var activeKeys: [UUID: TemporarySizeAnalysisCacheKey] = [:]
 
@@ -826,25 +993,25 @@ struct RecommendationResultView: View {
                 referenceID: currentResult.userFit.id,
                 detailCategory: currentResult.productDetailCategory.rawValue,
                 comparisonMethod: currentResult.comparisonMethod,
-                excludedKindsSignature: excludedKindsSignature,
-                scorePenalty: scorePenalty
+                excludedKindsSignature: "vnext_begin_snapshot",
+                scorePenalty: 0
             )
             activeKeys[size.id] = key
             guard preparedAnalyses[key] == nil,
                   !unavailableKeys.contains(key) else {
                 continue
             }
-            if let analysis = service.analyzeSizeWithoutSaving(
-                size,
-                product: currentResult.product,
-                referenceItem: currentResult.userFit,
-                productDetailCategory: currentResult.productDetailCategory,
-                comparisonMethod: currentResult.comparisonMethod,
-                excludedKinds: excludedKinds,
-                excludedKindReasons: excludedKindReasons,
-                scorePenalty: scorePenalty
-            ) {
-                preparedAnalyses[key] = analysis
+            if let serverSizeID = serverProductSizeID(for: size, in: batch),
+               let authorized = bySizeID[serverSizeID] {
+                preparedAnalyses[key] = TemporarySizeAnalysis(
+                    productSize: size,
+                    comparisonResult: authorized.result,
+                    recommendationScore: authorized.result.score,
+                    comparisonSummary: nil
+                )
+                // Keep the batch's exact product_size_id next to the local
+                // presentation cache.  No size label participates here.
+                exactIDs[key] = authorized.productSizeID
             } else {
                 unavailableKeys.insert(key)
             }
@@ -854,6 +1021,7 @@ struct RecommendationResultView: View {
             return
         }
         temporaryAnalysisCache = preparedAnalyses
+        exactProductSizeIDByTemporaryAnalysisKey = exactIDs
         unavailableAlternativeSizeKeys = unavailableKeys
         activeAlternativeAnalysisKeys = activeKeys
         isPreparingAlternativeSizes = false
@@ -905,6 +1073,7 @@ struct RecommendationResultView: View {
             await Task.yield()
             if selectedAlternativeSize.id == currentResult.recommendedSize.id {
                 temporarySizeAnalysis = nil
+                temporaryDisplayedProductSizeID = nil
                 isAnalyzingAlternativeSize = false
                 isShowingAlternativeSizeComparison = false
                 return
@@ -914,7 +1083,13 @@ struct RecommendationResultView: View {
                 alternativeSizeErrorMessage = "선택한 사이즈는 비교 가능한 실측 정보가 부족합니다."
                 return
             }
+            guard let exactProductSizeID = exactProductSizeID(for: selectedAlternativeSize) else {
+                isAnalyzingAlternativeSize = false
+                alternativeSizeErrorMessage = "선택한 사이즈의 서버 식별자를 다시 확인해 주세요."
+                return
+            }
             temporarySizeAnalysis = analysis
+            temporaryDisplayedProductSizeID = exactProductSizeID
             isAnalyzingAlternativeSize = false
             isShowingAlternativeSizeComparison = false
         }
@@ -925,6 +1100,8 @@ struct RecommendationResultView: View {
         selectedAlternativeSizeID = nil
         temporarySizeAnalysis = nil
         temporaryAnalysisCache.removeAll()
+        exactProductSizeIDByTemporaryAnalysisKey.removeAll()
+        temporaryDisplayedProductSizeID = nil
         activeAlternativeAnalysisKeys.removeAll()
         unavailableAlternativeSizeKeys.removeAll()
         isAnalyzingAlternativeSize = false
@@ -962,205 +1139,6 @@ struct RecommendationResultView: View {
         }
     }
 
-    private var heroCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .center, spacing: 18) {
-                VStack(spacing: 6) {
-                    Text(recommendedSizeName)
-                        .font(.system(size: 42, weight: .black))
-                        .foregroundStyle(.black)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.65)
-                    Text("추천 사이즈")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.black.opacity(0.62))
-                }
-                .frame(width: 118, height: 118)
-                .background(.white, in: Circle())
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("사이즈 유사도")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.62))
-                    Text(comparedMeasurementKinds.isEmpty ? "정보 부족" : "\(displayedRecommendationScore)%")
-                        .font(.system(size: 34, weight: .black))
-                        .foregroundStyle(.white)
-                        .monospacedDigit()
-                    Text("추천 신뢰도 \(comparisonReliability.stars)")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.86))
-                    Text("\(comparisonReliability.title) · \(comparedMeasurementKinds.count)개 항목 비교")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.58))
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.black, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-
-    private var productInfoCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "상품 정보")
-
-                HStack(alignment: .top, spacing: 14) {
-                    productThumbnail
-
-                    VStack(alignment: .leading, spacing: 9) {
-                        Text(currentResult.product.name)
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        InfoRow(title: "브랜드", value: currentResult.product.brand?.name ?? "브랜드 미상")
-                        InfoRow(title: "출처", value: currentResult.product.sourceDisplayName)
-                        InfoRow(title: "쇼핑몰 카테고리", value: productSourceCategoryText)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    private var comparisonTargetsCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "비교 대상")
-
-                HStack(alignment: .top, spacing: 12) {
-                    ComparisonTargetColumn(
-                        title: "상품",
-                        imageURLString: currentResult.product.imageURLString,
-                        category: currentResult.product.category,
-                        brand: currentResult.product.brand?.name ?? "브랜드 미상",
-                        name: currentResult.product.name,
-                        meta: productComparisonCategoryText,
-                        badge: nil
-                    )
-
-                    ComparisonTargetColumn(
-                        title: "내 옷",
-                        imageURLString: currentResult.userFit.sourceProduct?.imageURLString,
-                        category: currentResult.userFit.category,
-                        brand: currentResult.userFit.brandName,
-                        name: currentResult.userFit.displayName,
-                        meta: "\(currentResult.userFit.detailCategory.rawValue) / \(currentResult.userFit.sizeName)",
-                        badge: referenceSelectionBadge
-                    )
-                }
-            }
-        }
-    }
-
-    private var comparisonBasisSummaryCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(title: "추천 근거")
-
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Text(usedMeasurementSummary)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                if let excludedMeasurementSummary {
-                    HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: "minus.circle.fill")
-                            .foregroundStyle(.secondary)
-                        Text(excludedMeasurementSummary)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-
-                Divider()
-
-                InfoRow(title: referenceSelectionTitle, value: currentResult.userFit.displayName)
-                InfoRow(title: "기준 사이즈", value: currentResult.userFit.sizeName)
-            }
-        }
-    }
-
-    private var comparisonDetailToggleCard: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.22)) {
-                isShowingComparisonDetails.toggle()
-            }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "list.bullet.clipboard")
-                    .font(.headline.weight(.bold))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(isShowingComparisonDetails ? "상세 비교 접기" : "상세 비교 보기")
-                        .font(.headline.weight(.bold))
-                    Text("실측 차이와 제외된 항목의 이유를 확인할 수 있어요.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: isShowingComparisonDetails ? "chevron.up" : "chevron.down")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(.secondary)
-            }
-            .foregroundStyle(.primary)
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var referenceFitCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "기준 옷")
-
-                VStack(spacing: 10) {
-                    InfoRow(title: "기준 옷", value: currentResult.userFit.displayName)
-                    InfoRow(title: "브랜드", value: currentResult.userFit.brandName)
-                    InfoRow(title: "사이즈", value: currentResult.userFit.sizeName)
-                    InfoRow(title: "카테고리", value: "\(currentResult.userFit.category.rawValue) / \(currentResult.userFit.detailCategory.rawValue)")
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    if currentResult.userFit.isRepresentative {
-                        ResultBadge(title: "기준 옷", systemImage: "heart.fill")
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    private var comparisonConditionCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "비교 근거")
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(comparisonSummaryTitle)
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(.primary)
-
-                    FlowLayout(spacing: 8, lineSpacing: 8) {
-                        ForEach(comparisonConditionRows) { row in
-                            ComparisonConditionChip(item: row)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private var standardSizeFallbackCard: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 12) {
@@ -1181,146 +1159,58 @@ struct RecommendationResultView: View {
         }
     }
 
-    private var fitMatchRankingCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "내 옷장 Fit Match 순위")
-
-                if fitMatchRanking.isEmpty {
-                    Text("비교할 수 있는 옷장 데이터가 부족합니다.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    VStack(spacing: 10) {
-                        ForEach(Array(fitMatchRanking.enumerated()), id: \.element.id) { index, candidate in
-                            FitMatchRankRow(
-                                rank: index + 1,
-                                candidate: candidate,
-                                recommendedSizeName: recommendedSizeName(for: candidate.userFit),
-                                isCurrent: candidate.userFit.id == currentResult.userFit.id
-                            )
+    private var resultBottomActionBar: some View {
+        VStack(spacing: 10) {
+            if onReselectClassification != nil || onClearClassification != nil {
+                HStack(spacing: 10) {
+                    if let onReselectClassification {
+                        Button(action: onReselectClassification) {
+                            Label("상품 종류 다시 확인", systemImage: "arrow.triangle.2.circlepath")
+                                .font(.subheadline.weight(.bold))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 42)
                         }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.primary)
+                        .background(
+                            Color(.secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
                     }
 
-                    if let betterCandidate {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("현재 상품은 ‘\(betterCandidate.userFit.displayName)’이 더 가까운 기준 옷으로 보입니다.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-
-                            SecondaryButton(title: "이번 비교에서 이 옷으로 보기", systemImage: "arrow.triangle.2.circlepath") {
-                                _ = compare(with: betterCandidate.userFit)
-                            }
+                    if let onClearClassification {
+                        Button(role: .destructive, action: onClearClassification) {
+                            Text("내 선택 초기화")
+                                .font(.subheadline.weight(.bold))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 42)
                         }
-                        .padding(14)
-                        .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.red)
+                        .background(
+                            Color(.secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
                     }
                 }
             }
-        }
-    }
 
-    private var reasonCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "추천 이유")
-
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(recommendationReasons, id: \.self) { reason in
-                        ReasonBullet(text: reason)
-                    }
+            Button {
+                guard !isPreparingClosetRegistration else { return }
+                Task { @MainActor in
+                    await prepareClosetRegistration()
                 }
-            }
-        }
-    }
-
-    private var measurementDifferenceCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(
-                    title: currentResult.comparisonMode == .standardSizeFallback ? "기준표 차이" : "실측 차이",
-                    subtitle: currentResult.comparisonMode == .standardSizeFallback
-                        ? "선택한 두 사이즈의 기준표 가슴둘레 차이입니다."
-                        : "상품 실측과 기준 옷의 차이입니다."
-                )
-
-                if currentResult.comparisonMode == .standardSizeFallback {
-                    InfoRow(title: "가슴", value: displayedTrueToSizeRecommendation)
-                } else {
-                    ProductMeasurementDifferenceGrid(
-                        measurements: displayedProductSize.measurements,
-                        referenceMeasurements: currentResult.userFit.measurements,
-                        differences: displayedMeasurementDifferences,
-                        kinds: comparedMeasurementKinds
+            } label: {
+                HStack(spacing: 8) {
+                    if isPreparingClosetRegistration {
+                        ProgressView()
+                            .tint(Color(.systemBackground))
+                    }
+                    Label(
+                        isPreparingClosetRegistration ? "등록 정보 확인 중" : "보유한 옷으로 등록",
+                        systemImage: "plus"
                     )
                 }
-            }
-        }
-    }
-
-    private var comparisonCoverageCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 10) {
-                Button {
-                    withAnimation(.easeOut(duration: 0.18)) {
-                        isComparisonCoverageExpanded.toggle()
-                    }
-                } label: {
-                    HStack {
-                        Text("비교 항목")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Text("\(comparedMeasurementKinds.count)개 사용")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.down")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.secondary)
-                            .rotationEffect(.degrees(isComparisonCoverageExpanded ? 180 : 0))
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-
-                if isComparisonCoverageExpanded {
-                    VStack(spacing: 8) {
-                        ForEach(v1MeasurementKinds, id: \.id) { kind in
-                            ComparisonCoverageRow(
-                                title: kind.title,
-                                isCompared: comparedMeasurementKinds.contains(kind),
-                                detail: comparisonCoverageDetail(for: kind)
-                            )
-                        }
-                    }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-            }
-        }
-    }
-
-    private var fitRecommendationCard: some View {
-        FitMatchCard {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "추천 기준")
-
-                FitRecommendationRow(
-                    title: "기준 옷과 가장 비슷한 사이즈",
-                    value: recommendedSizeName,
-                    detail: "선택한 기준 옷과 공통 실측이 가장 가까운 사이즈예요.",
-                    isPrimary: true
-                )
-            }
-        }
-    }
-
-    private var resultBottomActionBar: some View {
-        VStack(spacing: 0) {
-            Button {
-                presentActiveSheet(.addToCloset)
-            } label: {
-                Label("보유한 옷으로 등록", systemImage: "plus")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
@@ -1328,6 +1218,7 @@ struct RecommendationResultView: View {
                     .background(Color.black, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
             .buttonStyle(.plain)
+            .disabled(isPreparingClosetRegistration)
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -1343,9 +1234,46 @@ struct RecommendationResultView: View {
         }
     }
 
+    @MainActor
+    private func prepareClosetRegistration() async {
+        guard !isPreparingClosetRegistration else {
+            return
+        }
+
+        let resultSnapshot = currentResult
+        let displayedSizeSnapshot = displayedProductSize
+        let preferredProductSizeID = displayedServerProductSizeID
+        isPreparingClosetRegistration = true
+        defer { isPreparingClosetRegistration = false }
+
+        let outcome = await FitMatchResultClosetRegistrationPreparationAction.prepare(
+            historicalProduct: resultSnapshot.product,
+            productDetailCategory: resultSnapshot.productDetailCategory,
+            preferredProductSizeID: preferredProductSizeID,
+            legacyPreferredSize: displayedSizeSnapshot,
+            makeViewModel: { ShoppingProductViewModel() }
+        )
+
+        switch outcome {
+        case .prepared(let preparation):
+            closetRegistrationPreparation = preparation
+        case .blocked(let message):
+            closetRegistrationPreparationErrorMessage = message
+        case .cancelled:
+            break
+        }
+    }
+
+    private func exactProductSizeID(for size: ProductSize) -> UUID? {
+        guard let key = activeAlternativeAnalysisKeys[size.id] else {
+            return nil
+        }
+        return exactProductSizeIDByTemporaryAnalysisKey[key]
+    }
+
     private var productThumbnail: some View {
         ProductThumbnailView(
-            imageURLString: currentResult.product.imageURLString,
+            imageURLString: currentResult.product.imageURLStringForDisplay,
             category: currentResult.product.category,
             width: 90,
             height: 104,
@@ -1462,16 +1390,7 @@ struct RecommendationResultView: View {
     }
 
     private var comparisonReliability: ComparisonReliability {
-        ComparisonReliability(
-            comparedCount: comparedMeasurementKinds.count,
-            compatibilityLevel: currentResult.comparisonMethod.contains("확장 비교")
-                ? .extended
-                : .direct
-        )
-    }
-
-    private var confidenceStatus: ConfidenceStatus {
-        ConfidenceStatus(score: displayedRecommendationScore)
+        ComparisonReliability(comparedCount: comparedMeasurementKinds.count)
     }
 
     private var v1MeasurementKinds: [MeasurementKind] {
@@ -1522,14 +1441,6 @@ struct RecommendationResultView: View {
         v1MeasurementKinds.filter { !comparedMeasurementKinds.contains($0) }
     }
 
-    private var referenceSelectionBadge: String {
-        currentResult.comparisonMethod.contains("사용자 선택") ? "직접 선택" : "자동 선택"
-    }
-
-    private var referenceSelectionTitle: String {
-        currentResult.comparisonMethod.contains("사용자 선택") ? "직접 선택한 기준 옷" : "자동 선택된 기준 옷"
-    }
-
     private var usedMeasurementSummary: String {
         if currentResult.comparisonMode == .standardSizeFallback {
             return "기준표 가슴둘레 기준으로 비교했어요."
@@ -1558,12 +1469,15 @@ struct RecommendationResultView: View {
         if comparedMeasurementKinds.contains(kind) {
             return "동일한 측정 기준으로 추천에 사용"
         }
+        if supplementalMeasurementItems.contains(where: { $0.kind == kind }) {
+            return "같은 쇼핑몰의 동일한 측정 기준으로 참고 비교 (추천 점수에는 미반영)"
+        }
         if let exclusion = displayedMeasurementExclusions.first(where: { $0.kind == kind }) {
             return [exclusion.reason.userMessage, exclusion.definitionDetail]
                 .compactMap { $0 }
                 .joined(separator: "\n")
         }
-        return "상품 또는 기준 옷의 실측값이 없어 제외"
+        return "상품 또는 선택한 내 옷의 실측값이 없어 제외"
     }
 
     private var comparisonConditionRows: [ComparisonConditionItem] {
@@ -1605,8 +1519,8 @@ struct RecommendationResultView: View {
                 title: isSameSource ? "같은 출처" : "다른 출처"
             ),
             ComparisonConditionItem(
-                isMatched: currentResult.userFit.isRepresentative,
-                title: currentResult.userFit.isRepresentative ? "내 기준 옷" : "일반 옷"
+                isMatched: true,
+                title: "선택한 내 옷"
             ),
             ComparisonConditionItem(
                 isMatched: measurementCount >= 2,
@@ -1692,67 +1606,23 @@ struct RecommendationResultView: View {
         comparedMeasurementKinds
     }
 
-    private var fitMatchRanking: [FitMatchCandidate] {
-        let userFits = (try? modelContext.fetch(FetchDescriptor<UserFit>())) ?? []
-        let targetGroup = currentResult.product.category.serviceGroup
-        let sameCategoryFits = userFits.filter {
-            $0.category.serviceGroup == targetGroup
-        }
-
-        return Array(
-            RecommendationService()
-                .rankedFitMatches(
-                    product: currentResult.product,
-                    productDetailCategory: currentResult.productDetailCategory,
-                    userFits: sameCategoryFits
-                )
-                .prefix(3)
-        )
-    }
-
-    private var betterCandidate: FitMatchCandidate? {
-        guard currentResult.userFit.isRepresentative,
-              let first = fitMatchRanking.first,
-              first.userFit.id != currentResult.userFit.id else {
-            return nil
-        }
-
-        return first
-    }
-
     private func openShoppingMall() {
-        guard let urlString = currentResult.product.sourceURLString,
-              let url = URL(string: urlString) else {
+        guard let destination = FitMatchProductURLOpeningAction.destination(
+            for: currentResult.product
+        ) else {
             return
         }
 
-        if isMusinsaProduct,
-           let appURL = musinsaAppURL(for: url) {
+        switch destination {
+        case .musinsaApp(let appURL, let fallbackWebURL):
             openURL(appURL) { accepted in
                 if !accepted {
-                    openURL(url)
+                    openURL(fallbackWebURL)
                 }
             }
-            return
+        case .web(let url):
+            openURL(url)
         }
-
-        openURL(url)
-    }
-
-    private func musinsaAppURL(for webURL: URL) -> URL? {
-        var components = URLComponents()
-        components.scheme = "musinsaad"
-        components.host = "web"
-        components.queryItems = [
-            URLQueryItem(name: "link", value: webURL.absoluteString)
-        ]
-        return components.url
-    }
-
-    private var isMusinsaProduct: Bool {
-        currentResult.product.sourceDisplayName.localizedCaseInsensitiveContains("무신사")
-            || currentResult.product.sourceDisplayName.localizedCaseInsensitiveContains("musinsa")
-            || currentResult.product.sourceURLString?.localizedCaseInsensitiveContains("musinsa") == true
     }
 
     private func musinsaProductCode(from url: URL) -> String? {
@@ -1763,53 +1633,6 @@ struct RecommendationResultView: View {
         }
         let value = components[productsIndex + 1]
         return value.allSatisfy(\.isNumber) ? value : currentResult.product.productCode
-    }
-
-    private func compare(with item: UserFit) -> ResultReferenceComparisonOutcome {
-        #if DEBUG
-        print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 시작] 기존기준옷=\(currentResult.userFit.displayName), 선택기준옷=\(item.displayName)")
-        #endif
-
-        let existingHistories = (
-            try? modelContext.fetch(FetchDescriptor<RecommendationHistory>())
-        ) ?? []
-        let outcome = ResultReferenceComparisonPersistence.resolveAndSave(
-            product: currentResult.product,
-            selectedReferenceItem: item,
-            productDetailCategory: currentResult.productDetailCategory,
-            existingHistories: existingHistories,
-            modelContext: modelContext
-        )
-
-        switch outcome {
-        case .success(let history):
-            comparisonResult = history
-            onResultPersisted?(history)
-            #if DEBUG
-            print("[화면: 비교 결과][동작: 변경 결과 저장][상태: 성공] 상품=\(history.product.name), 기준옷=\(history.userFit.displayName), 추천사이즈=\(history.recommendedSize.name)")
-            print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 성공] 기준옷=\(history.userFit.displayName), 추천사이즈=\(history.recommendedSize.name), 신뢰도=\(history.recommendationScore)")
-            #endif
-        case .insufficient(let evidence):
-            #if DEBUG
-            print("[화면: 비교 결과][동작: 기준 옷 변경][상태: 근거 부족] 기준옷=\(item.displayName), 비교항목=\(evidence?.comparedKinds.map(\.title).joined(separator: ",") ?? "없음"), 제외항목=\(evidence?.missingKinds.map(\.title).joined(separator: ",") ?? "확인 불가")")
-            #endif
-        case .saveFailed(let message):
-            #if DEBUG
-            print("[화면: 비교 결과][동작: 변경 결과 저장][상태: 실패] 오류=\(message), 기준옷=\(item.displayName)")
-            #endif
-        }
-
-        return outcome
-    }
-
-    private func presentActiveSheet(_ sheet: RecommendationResultActiveSheet) {
-        #if DEBUG
-        print("[RecommendationResultView] activeSheet -> \(sheet.logName)")
-        #endif
-        activeSheet = nil
-        DispatchQueue.main.async {
-            activeSheet = sheet
-        }
     }
 
     private func logInitialPerformance() {
@@ -1834,13 +1657,6 @@ struct RecommendationResultView: View {
                 startedAt: diagnosticsStartedAt
             )
         }
-    }
-
-    private func dismissActiveSheet() {
-        #if DEBUG
-        print("[RecommendationResultView] activeSheet -> nil")
-        #endif
-        activeSheet = nil
     }
 
     private var comparisonIcon: String {
@@ -1951,6 +1767,7 @@ struct RecommendationResultView: View {
         }
     }
 
+    #if DEBUG
     private func recommendedSizeName(for userFit: UserFit) -> String {
         RecommendationService()
             .recommend(
@@ -1962,64 +1779,18 @@ struct RecommendationResultView: View {
             .name
             .displaySizeName ?? "-"
     }
-}
-
-private struct ConfidenceStatus {
-    let stars: String
-    let title: String
-
-    init(score: Int) {
-        switch score {
-        case 90...100:
-            stars = "★★★★★"
-            title = "매우 높은 신뢰도"
-        case 80..<90:
-            stars = "★★★★☆"
-            title = "높은 신뢰도"
-        case 70..<80:
-            stars = "★★★☆☆"
-            title = "보통"
-        case 60..<70:
-            stars = "★★☆☆☆"
-            title = "참고용"
-        case 1..<60:
-            stars = "★☆☆☆☆"
-            title = "참고만 권장"
-        default:
-            stars = "정보 부족"
-            title = "계산에 필요한 실측이 부족합니다"
-        }
-    }
+    #endif
 }
 
 private struct ComparisonReliability {
-    let stars: String
+    let comparedCount: Int
+    let displayValue: String
     let title: String
 
-    init(
-        comparedCount: Int,
-        compatibilityLevel: GarmentComparisonCompatibilityLevel
-    ) {
-        let baseStars: Int
-        switch comparedCount {
-        case 4...: baseStars = 5
-        case 3: baseStars = 4
-        case 2: baseStars = 3
-        case 1: baseStars = 2
-        default: baseStars = 1
-        }
-        let filledStars = max(1, baseStars - compatibilityLevel.reliabilityStarPenalty)
-        stars = String(repeating: "★", count: filledStars)
-            + String(repeating: "☆", count: 5 - filledStars)
-        let baseTitle: String
-        switch filledStars {
-        case 5: baseTitle = "매우 높음"
-        case 4: baseTitle = "높음"
-        case 3: baseTitle = "보통"
-        case 2: baseTitle = "낮음"
-        default: baseTitle = "매우 낮음"
-        }
-        title = compatibilityLevel == .extended ? "확장 비교 · \(baseTitle)" : baseTitle
+    init(comparedCount: Int) {
+        self.comparedCount = max(0, comparedCount)
+        self.displayValue = "실측 \(max(0, comparedCount))개"
+        self.title = "사용한 실측 항목"
     }
 }
 
@@ -2409,24 +2180,6 @@ private struct FlowLayout: Layout {
     }
 }
 
-private enum RecommendationResultActiveSheet: Identifiable {
-    case referencePicker
-    case addToCloset
-
-    var id: String {
-        switch self {
-        case .referencePicker:
-            return "referencePicker"
-        case .addToCloset:
-            return "addToCloset"
-        }
-    }
-
-    var logName: String {
-        id
-    }
-}
-
 private struct FitRecommendationRow: View {
     let title: String
     let value: String
@@ -2618,12 +2371,21 @@ private struct ReportMeasurementRow: View {
     let productValue: Double
     let referenceValue: Double
     let difference: Double
+    let inputMode: MeasurementComparisonInputMode?
+    let isSupplemental: Bool
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            Text(title)
-                .font(.subheadline.weight(.bold))
-                .frame(width: 66, alignment: .leading)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline.weight(.bold))
+                Text(inputModeBadgeTitle)
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .frame(width: 66, alignment: .leading)
 
             valueColumn(title: "상품", value: productValue, color: .blue)
             valueColumn(title: "내 옷", value: referenceValue, color: .primary)
@@ -2680,6 +2442,28 @@ private struct ReportMeasurementRow: View {
         }
     }
 
+    private var inputModeBadgeTitle: String {
+        if isSupplemental { return "참고" }
+        switch inputMode {
+        case .retailerExact: return "쇼핑몰 원본"
+        case .canonicalExact: return "FitMatch"
+        case .verifiedConversion: return "검증 환산"
+        case .none: return "측정 기준"
+        }
+    }
+
+}
+
+private struct ReportMeasurementPresentation: Identifiable {
+    let kind: MeasurementKind
+    let title: String
+    let productValue: Double
+    let referenceValue: Double
+    let difference: Double
+    let inputMode: MeasurementComparisonInputMode?
+    let isSupplemental: Bool
+
+    var id: MeasurementKind { kind }
 }
 
 enum MeasurementDifferenceReferenceText {
@@ -2835,13 +2619,6 @@ private struct FitMatchRankRow: View {
                         .padding(.vertical, 4)
                         .background(.primary.opacity(0.08), in: Capsule())
 
-                    if candidate.userFit.isRepresentative {
-                        Text("기준 옷")
-                            .font(.caption2.weight(.bold))
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 4)
-                            .background(.primary.opacity(0.08), in: Capsule())
-                    }
                     if isCurrent {
                         Text("현재 비교 중")
                             .font(.caption2.weight(.bold))
@@ -2881,7 +2658,191 @@ enum ResultReferenceComparisonOutcome {
     }
 }
 
+/// Shared result-reference orchestration.  The result picker and the final
+/// submission both use this exact server-authority action; it has no local
+/// comparison-policy fallback.
+@MainActor
+enum ResultReferenceComparisonAction {
+    enum AuthorizationOutcome {
+        case allowed(FitMatchServerReferenceAuthorization)
+        case rejected(String)
+        case unavailable(String)
+    }
+
+    enum DiscoveryOutcome {
+        case success([UUID: FitMatchServerReferenceSelectionCandidate])
+        case blocked(String)
+    }
+
+    static func authorize(
+        target: Product,
+        reference: UserFit,
+        coordinator: FitMatchServerAuthorityCoordinator
+    ) async -> AuthorizationOutcome {
+        guard let targetRequest = target.fitMatchDatabaseResolutionRequest(),
+              let targetObservation = target.fitMatchProductObservationRequest(),
+              let localReferenceSnapshot = reference.fitMatchServerReferenceSnapshot() else {
+            return .unavailable("서버에서 대상 상품 또는 선택한 내 옷을 확인할 수 없습니다.")
+        }
+
+        let usesExplicitUserAuthority =
+            reference.classificationAuthorityProvenance == .userExplicit
+        do {
+            let authorization = try await coordinator.authorizeReferenceCandidate(
+                referenceClientItemID: reference.id,
+                localReferenceSnapshot: localReferenceSnapshot,
+                targetRequest: targetRequest,
+                targetObservation: targetObservation,
+                referenceRequest: usesExplicitUserAuthority
+                    ? nil
+                    : reference.sourceProduct?.fitMatchDatabaseResolutionRequest(),
+                referenceObservation: usesExplicitUserAuthority
+                    ? nil
+                    : reference.sourceProduct?.fitMatchProductObservationRequest()
+            )
+            guard authorization.isAllowed else {
+                return .rejected(
+                    authorization.reason
+                        ?? "서버 비교 정책상 선택한 옷과 비교할 수 없습니다."
+                )
+            }
+            return .allowed(authorization)
+        } catch {
+            return .unavailable("서버 비교 가능 여부를 확인하지 못했습니다.")
+        }
+    }
+
+    /// Maps server-authorized client IDs to the currently active local Closet
+    /// items.  The local list is never treated as a comparison policy.
+    static func discoverSelectableReferences(
+        from localItems: [UserFit],
+        excluding currentReferenceID: UUID,
+        target: Product,
+        coordinator: FitMatchServerAuthorityCoordinator
+    ) async -> DiscoveryOutcome {
+        guard let targetRequest = target.fitMatchDatabaseResolutionRequest(),
+              let targetObservation = target.fitMatchProductObservationRequest() else {
+            return .blocked("서버에서 대상 상품을 확인할 수 없습니다.")
+        }
+
+        do {
+            let eligibleLocalClientItemIDs = Set(
+                localItems
+                    .filter {
+                        $0.isActiveClosetItem
+                            && $0.id != currentReferenceID
+                            && $0.fitMatchServerReferenceSnapshot() != nil
+                    }
+                    .map(\.id)
+            )
+            let plan = try await coordinator.referenceSelectionPlan(
+                targetRequest: targetRequest,
+                targetObservation: targetObservation
+            )
+            let selectable = plan.candidates.filter {
+                $0.isSelectable
+                    && eligibleLocalClientItemIDs.contains($0.clientItemID)
+            }
+            return .success(
+                Dictionary(uniqueKeysWithValues: selectable.map {
+                    ($0.clientItemID, $0)
+                })
+            )
+        } catch {
+            return .blocked("서버 비교 가능 여부를 확인하지 못했습니다.")
+        }
+    }
+}
+
+@MainActor
 enum ResultReferenceComparisonPersistence {
+    static func resolveAndSave(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        permit: FitMatchServerComparisonPermit,
+        existingHistories: [RecommendationHistory],
+        modelContext: ModelContext,
+        coordinator: FitMatchServerAuthorityCoordinator,
+        persistCompletedHistory: @MainActor (RecommendationHistory, [RecommendationHistory], ModelContext) throws -> Void = ResultReferenceComparisonPersistence.persistCompletedHistory
+    ) async -> ResultReferenceComparisonOutcome {
+        let service = RecommendationService()
+        let analysis: VNextComparisonBatchAnalysis
+        let completion: VNextCompleteComparisonDTO
+        do {
+            analysis = try service.analyzeVNextComparison(permit: permit)
+            completion = try await coordinator.completeAuthorizedComparison(
+                permit: permit,
+                analysis: analysis
+            )
+        } catch {
+            return .saveFailed(completionFailureMessage(for: error))
+        }
+        guard let history = service.makeCompletedVNextHistory(
+            product: product,
+            selectedReferenceItem: selectedReferenceItem,
+            productDetailCategory: productDetailCategory,
+            permit: permit,
+            analysis: analysis,
+            completion: completion
+        ) else {
+            return .insufficient(nil)
+        }
+
+        do {
+            try persistCompletedHistory(history, existingHistories, modelContext)
+            VNextComparisonSessionStore.shared.store(
+                analysis,
+                historyID: history.id
+            )
+            return .success(history)
+        } catch {
+            modelContext.rollback()
+            return .saveFailed("비교 결과를 저장하지 못했어요. 다시 시도해 주세요.")
+        }
+    }
+
+    private static func completionFailureMessage(for error: Error) -> String {
+        if error is URLError {
+            return FitMatchFailureCopy.transientNetwork
+        }
+        let nsError = error as NSError
+        if nsError.code == 401 {
+            return FitMatchFailureCopy.loginRequired
+        }
+        if nsError.code == 403 {
+            return FitMatchFailureCopy.authorizationInspection
+        }
+        if let authorityError = error as? FitMatchServerAuthorityError {
+            return authorityError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        if let contractError = error as? FitMatchVNextContractError {
+            return contractError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        if let resolverError = error as? FitMatchSupabaseProductResolverError {
+            return resolverError.errorDescription
+                ?? FitMatchFailureCopy.comparisonServiceInspection
+        }
+        return FitMatchFailureCopy.comparisonServiceInspection
+    }
+
+    private static func persistCompletedHistory(
+        _ history: RecommendationHistory,
+        _ histories: [RecommendationHistory],
+        _ context: ModelContext
+    ) throws {
+        try RecommendationHistoryStore.saveCompletedVNext(
+            history,
+            existing: histories,
+            modelContext: context
+        )
+    }
+
+    #if DEBUG
+    // Retained only in debug builds for isolated legacy/manual unit coverage.
+    // Release result-screen selection has no local pre-evaluator scoring API.
     static func resolveAndSave(
         product: Product,
         selectedReferenceItem: UserFit,
@@ -2908,11 +2869,13 @@ enum ResultReferenceComparisonPersistence {
             return .success(history)
         } catch {
             modelContext.rollback()
-            return .saveFailed(error.localizedDescription)
+            return .saveFailed("비교 결과를 저장하지 못했어요. 다시 시도해 주세요.")
         }
     }
+    #endif
 }
 
+#if DEBUG
 enum ResultReferenceComparisonResolver {
     static func resolve(
         product: Product,
@@ -2937,433 +2900,7 @@ enum ResultReferenceComparisonResolver {
         )
     }
 }
-
-private struct ResultReferencePickerView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
-    let currentUserFit: UserFit
-    let product: Product
-    let productDetailCategory: ClosetDetailCategory
-    let onSelect: (UserFit) -> ResultReferenceComparisonOutcome
-    @State private var selectedItemID: UUID?
-    @State private var insufficientEvidence: InsufficientComparisonEvidence?
-    @State private var isShowingInsufficientEvidence = false
-    @State private var isShowingReferenceComparison = false
-    @State private var saveErrorMessage: String?
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                if isShowingInsufficientEvidence {
-                    insufficientEvidenceContent
-                } else {
-                    pickerHeader
-
-                    if selectableFits.isEmpty {
-                        emptyStateCard
-                    } else {
-                        VStack(spacing: 12) {
-                            ForEach(selectableFits) { item in
-                                ResultReferencePickerCard(
-                                    item: item,
-                                    productDetailCategory: productDetailCategory,
-                                    compatibilityLevel: compatibilityLevel(for: item),
-                                    isSelected: selectedItemID == item.id
-                                ) {
-                                    selectedItemID = item.id
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(20)
-            .padding(.bottom, 112)
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom) {
-            if isShowingInsufficientEvidence {
-                insufficientActionBar
-            } else {
-                bottomActionBar
-            }
-        }
-    }
-
-    private var insufficientEvidenceContent: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            CardView(radius: 26, padding: 22) {
-                VStack(spacing: 14) {
-                    Image(systemName: "ruler")
-                        .font(.title2.weight(.semibold))
-                        .frame(width: 58, height: 58)
-                        .background(Color.orange.opacity(0.14), in: Circle())
-                        .foregroundStyle(.orange)
-
-                    Text(saveErrorMessage ?? "이 옷은 측정 방식이 달라 추천에 필요한 실측 정보가 부족해요")
-                        .font(.title3.weight(.black))
-                        .multilineTextAlignment(.center)
-
-                    Text(saveErrorMessage == nil ? "기존 추천 결과는 변경하지 않았어요." : "기존 결과와 저장 기록은 그대로 유지했어요.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-            }
-
-            if saveErrorMessage == nil {
-                CardView(radius: 24, padding: 20) {
-                    VStack(alignment: .leading, spacing: 13) {
-                        Text("확인된 비교 근거")
-                            .font(.headline.weight(.black))
-
-                        if let evidence = insufficientEvidence {
-                            Text("선택한 옷 · \(evidence.referenceItem.displayName) / \(evidence.referenceItem.sizeName)")
-                                .font(.subheadline.weight(.semibold))
-
-                            evidenceRows(evidence)
-                        } else {
-                            Text("같은 측정 기준으로 비교할 수 있는 실측 항목이 없어요.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
-
-            if isShowingReferenceComparison, let evidence = insufficientEvidence {
-                referenceComparisonCard(evidence)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func evidenceRows(_ evidence: InsufficientComparisonEvidence) -> some View {
-        if evidence.comparedKinds.isEmpty {
-            Text("비교 가능한 항목 · 없음")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        } else {
-            Text("비교 가능한 항목 · \(evidence.comparedKinds.map(\.title).joined(separator: " · "))")
-                .font(.subheadline.weight(.bold))
-        }
-
-        ForEach(evidence.comparisonResult.exclusions, id: \.kind) { exclusion in
-            VStack(alignment: .leading, spacing: 3) {
-                Text("\(exclusion.kind.title) · 비교 제외")
-                    .font(.subheadline.weight(.semibold))
-                Text(exclusion.reason.userMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private func referenceComparisonCard(_ evidence: InsufficientComparisonEvidence) -> some View {
-        CardView(radius: 24, padding: 20) {
-            VStack(alignment: .leading, spacing: 13) {
-                Text("참고용 비교")
-                    .font(.headline.weight(.black))
-                Text("추천 결과가 아니며, 비교 가능한 실측만 표시합니다.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                if evidence.comparisonResult.comparedItems.isEmpty {
-                    Text("수치로 참고할 수 있는 항목이 없습니다.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(evidence.comparisonResult.comparedItems, id: \.kind) { item in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(item.kind.title)
-                                    .font(.subheadline.weight(.semibold))
-                                Text("상품 \(item.productValue.cmText) · 내 옷 \(item.referenceValue.cmText)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text(item.signedDifference.signedCmText)
-                                .font(.subheadline.weight(.black))
-                                .monospacedDigit()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private var pickerHeader: some View {
-        CardView(radius: 26, padding: 20) {
-            HStack(alignment: .center, spacing: 16) {
-                Image(systemName: "tshirt")
-                    .font(.title3.weight(.black))
-                    .foregroundStyle(Color(.systemBackground))
-                    .frame(width: 48, height: 48)
-                    .background(Color.primary, in: Circle())
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("다른 옷과 비교")
-                        .font(.title2.weight(.black))
-                        .foregroundStyle(.primary)
-                    Text("\(product.category.serviceGroup.rawValue) 안에서 비교할 옷을 직접 선택해 주세요.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer(minLength: 0)
-            }
-        }
-    }
-
-    private var emptyStateCard: some View {
-        CardView(radius: 24, padding: 24) {
-            VStack(spacing: 14) {
-                Image(systemName: "tray")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 58, height: 58)
-                    .background(Color(.secondarySystemGroupedBackground), in: Circle())
-
-                Text(emptyReferenceTitle)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.primary)
-
-                Text(emptyReferenceMessage)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    private var emptyReferenceTitle: String {
-        if userFits.isEmpty { return "비교할 옷이 없어요" }
-        let target = product.productTargetGender
-        let hasChild = userFits.contains { [UserGender.kids, .baby].contains($0.gender) }
-        let hasAdult = userFits.contains { [UserGender.men, .women, .unisex].contains($0.gender) }
-        if [UserGender.kids, .baby].contains(target), !hasChild { return "비교할 아동복이 없어요" }
-        if [UserGender.men, .women, .unisex].contains(target), !hasAdult { return "비교할 성인 의류가 없어요" }
-        return "비교할 \(productDetailCategory.rawValue) 옷이 없어요"
-    }
-
-    private var emptyReferenceMessage: String {
-        if userFits.isEmpty {
-            return "내 옷장이 비어 있어요. 평소 잘 맞는 \(productDetailCategory.rawValue) 옷을 등록해 주세요."
-        }
-        let target = product.productTargetGender
-        let hasChild = userFits.contains { [UserGender.kids, .baby].contains($0.gender) }
-        let hasAdult = userFits.contains { [UserGender.men, .women, .unisex].contains($0.gender) }
-        if [UserGender.kids, .baby].contains(target), !hasChild {
-            return "현재 내 옷장에는 성인 의류만 있어요. 평소 잘 맞는 아동용 \(productDetailCategory.rawValue) 옷을 등록해 주세요."
-        }
-        if [UserGender.men, .women, .unisex].contains(target), !hasAdult {
-            return "현재 내 옷장에는 아동복만 있어요. 평소 잘 맞는 성인용 \(productDetailCategory.rawValue) 옷을 등록해 주세요."
-        }
-        return "현재 내 옷장에는 \(closetCategorySummary)이 있어요. 이 상품과 비교할 \(productDetailCategory.rawValue) 옷을 등록해 주세요."
-    }
-
-    private var closetCategorySummary: String {
-        let counts = Dictionary(grouping: userFits, by: { $0.category.serviceGroup.rawValue })
-            .mapValues(\.count)
-        let summaries = counts.keys.sorted().map { "\($0) \(counts[$0] ?? 0)벌" }
-        if summaries.count <= 3 { return summaries.joined(separator: " · ") }
-        return summaries.prefix(3).joined(separator: " · ") + " 외 \(summaries.count - 3)개 카테고리"
-    }
-
-    private var bottomActionBar: some View {
-        VStack(spacing: 10) {
-            if selectedItemID == nil, !selectableFits.isEmpty {
-                Label("비교할 옷을 선택해 주세요.", systemImage: "info.circle")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            Button {
-                guard let selectedItem else {
-                    return
-                }
-
-                switch onSelect(selectedItem) {
-                case .success:
-                    dismiss()
-                case .insufficient(let evidence):
-                    insufficientEvidence = evidence
-                    saveErrorMessage = nil
-                    isShowingReferenceComparison = false
-                    isShowingInsufficientEvidence = true
-                case .saveFailed:
-                    insufficientEvidence = nil
-                    saveErrorMessage = "변경 결과를 저장하지 못했어요. 다시 시도해 주세요."
-                    isShowingReferenceComparison = false
-                    isShowingInsufficientEvidence = true
-                }
-            } label: {
-                Text("선택한 옷으로 비교")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(selectedItem == nil ? .secondary : Color(.systemBackground))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(
-                        selectedItem == nil ? Color(.secondarySystemGroupedBackground) : Color.black,
-                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(selectedItem == nil)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 12)
-        .padding(.bottom, 10)
-        .background(.regularMaterial)
-    }
-
-    private var insufficientActionBar: some View {
-        VStack(spacing: 10) {
-            Button {
-                isShowingInsufficientEvidence = false
-                isShowingReferenceComparison = false
-                insufficientEvidence = nil
-                saveErrorMessage = nil
-                selectedItemID = nil
-            } label: {
-                Text("다른 옷 선택")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(Color(.systemBackground))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(Color.black, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            }
-            .buttonStyle(.plain)
-
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isShowingReferenceComparison.toggle()
-                }
-            } label: {
-                Text(isShowingReferenceComparison ? "참고용 비교 접기" : "참고용 비교")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-            }
-            .buttonStyle(.plain)
-            .disabled(insufficientEvidence == nil)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 12)
-        .padding(.bottom, 10)
-        .background(.regularMaterial)
-    }
-
-    private var selectedItem: UserFit? {
-        guard let selectedItemID else {
-            return nil
-        }
-
-        return selectableFits.first { $0.id == selectedItemID }
-    }
-
-    private var selectableFits: [UserFit] {
-        RecommendationService().temporaryComparisonCandidates(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits.filter { $0.id != currentUserFit.id }
-        )
-    }
-
-    private func compatibilityLevel(for item: UserFit) -> GarmentComparisonCompatibilityLevel {
-        RecommendationService().comparisonCompatibility(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            item: item
-        ).level
-    }
-}
-
-private struct ResultReferencePickerCard: View {
-    let item: UserFit
-    let productDetailCategory: ClosetDetailCategory
-    let compatibilityLevel: GarmentComparisonCompatibilityLevel
-    let isSelected: Bool
-    let onSelect: () -> Void
-
-    var body: some View {
-        Button(action: onSelect) {
-            CardView(
-                radius: 22,
-                padding: 14,
-                background: isSelected ? Color.black : Color(.systemBackground)
-            ) {
-                HStack(alignment: .center, spacing: 14) {
-                    thumbnail
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 7) {
-                            Text(item.brandName)
-                                .font(.caption.weight(.black))
-                                .foregroundStyle(isSelected ? Color(.systemBackground).opacity(0.72) : .secondary)
-                                .lineLimit(1)
-
-                            if item.isRepresentative {
-                                pickerBadge("기준 옷", isEmphasized: isSelected)
-                            }
-
-                            if item.detailCategory == productDetailCategory {
-                                pickerBadge("같은 종류", isEmphasized: isSelected)
-                            } else if compatibilityLevel == .extended {
-                                pickerBadge("확장 비교", isEmphasized: isSelected)
-                            }
-
-                            Spacer(minLength: 0)
-                        }
-
-                        Text(item.displayName)
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(isSelected ? Color(.systemBackground) : .primary)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-
-                        Text("\(item.category.rawValue) / \(item.detailCategory.rawValue) · \(item.sizeName)")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(isSelected ? Color(.systemBackground).opacity(0.72) : .secondary)
-                            .lineLimit(1)
-                    }
-
-                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(isSelected ? Color(.systemBackground) : .secondary)
-                }
-            }
-        }
-        .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private var thumbnail: some View {
-        ProductThumbnailView(
-            imageURLString: item.sourceProduct?.imageURLString,
-            category: item.category,
-            width: 68,
-            height: 82,
-            cornerRadius: 16
-        )
-    }
-
-    private func pickerBadge(_ title: String, isEmphasized: Bool) -> some View {
-        Text(title)
-            .font(.caption2.weight(.black))
-            .foregroundStyle(isEmphasized ? Color.primary : Color(.systemBackground))
-            .padding(.horizontal, 7)
-            .padding(.vertical, 4)
-            .background(isEmphasized ? Color(.systemBackground) : Color.primary, in: Capsule())
-    }
-}
+#endif
 
 private extension String {
     var displaySizeName: String {

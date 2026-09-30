@@ -8,6 +8,72 @@ struct FitMatchCandidate: Identifiable {
     let selectionReason: String
 }
 
+enum FitMatchClosetComparisonEvidenceState: String, Equatable, Hashable {
+    case comparable
+    case insufficientEvidence = "insufficient_evidence"
+    case unavailable
+}
+
+/// One Closet row in the group comparison summary. It contains only stable
+/// identities and frozen calculation output; views resolve the current Closet
+/// presentation by `closetItemID` instead of retaining another model object.
+struct FitMatchClosetComparisonSummary: Identifiable, Equatable {
+    var id: UUID { closetItemID }
+
+    let closetItemID: UUID
+    let comparisonGroup: FitMatchComparisonGroup?
+    let recommendedProductSizeID: UUID?
+    let recommendedSizeLabel: String?
+    let similarityPercent: Int?
+    let commonMeasurementCount: Int
+    let comparisonBasis: MeasurementComparisonBasis?
+    let conversionCount: Int
+    let evidenceState: FitMatchClosetComparisonEvidenceState
+    let reason: String?
+    var rank: Int?
+
+    init(
+        closetItemID: UUID,
+        comparisonGroup: FitMatchComparisonGroup?,
+        recommendedProductSizeID: UUID?,
+        recommendedSizeLabel: String?,
+        comparisonResult: MeasurementComparisonResult?,
+        reason: String? = nil,
+        rank: Int? = nil
+    ) {
+        self.closetItemID = closetItemID
+        self.comparisonGroup = comparisonGroup
+        self.recommendedProductSizeID = recommendedProductSizeID
+        self.recommendedSizeLabel = recommendedSizeLabel
+        self.commonMeasurementCount = comparisonResult?.comparedItems.count ?? 0
+        self.comparisonBasis = comparisonResult?.comparisonBasis
+        self.conversionCount = comparisonResult?.conversionCount ?? 0
+        self.reason = reason
+        self.rank = rank
+        switch comparisonResult?.status {
+        case .confirmed:
+            self.similarityPercent = comparisonResult?.score
+            self.evidenceState = .comparable
+        case .insufficientEvidence:
+            self.similarityPercent = nil
+            self.evidenceState = .insufficientEvidence
+        case .legacy, .none:
+            self.similarityPercent = nil
+            self.evidenceState = .unavailable
+        }
+    }
+}
+
+struct FitMatchClosetComparisonBatchSummary: Equatable {
+    let targetProductID: UUID
+    let comparisonGroup: FitMatchComparisonGroup?
+    let items: [FitMatchClosetComparisonSummary]
+
+    var comparableItems: [FitMatchClosetComparisonSummary] {
+        items.filter { $0.evidenceState == .comparable }
+    }
+}
+
 struct ReferenceSelectionPlan {
     let recommendedCandidates: [FitMatchCandidate]
     let automaticallySelectedCandidate: FitMatchCandidate?
@@ -37,14 +103,929 @@ struct TemporarySizeAnalysis {
     let recommendationScore: Int
     let comparisonSummary: String?
 
-    var calculationSnapshot: RecommendationCalculationSnapshot {
-        RecommendationCalculationSnapshot.make(comparison: comparisonResult)
+    let calculationSnapshot: RecommendationCalculationSnapshot
+
+    init(
+        productSize: ProductSize,
+        comparisonResult: MeasurementComparisonResult,
+        recommendationScore: Int,
+        comparisonSummary: String?
+    ) {
+        self.productSize = productSize
+        self.comparisonResult = comparisonResult
+        self.recommendationScore = recommendationScore
+        self.comparisonSummary = comparisonSummary
+        self.calculationSnapshot = RecommendationCalculationSnapshot.make(comparison: comparisonResult)
     }
 }
 
 struct RecommendationService {
     private let comparisonMatcher = ComparisonProfileMatcher()
     private let measurementComparisonEngine = MeasurementComparisonEngine()
+    private let authorizedScoreCache = VNextAuthorizedScoreCache()
+    private var vnextComparisonAdapter: VNextComparisonEngineAdapter {
+        VNextComparisonEngineAdapter(scoreCache: authorizedScoreCache)
+    }
+
+    /// Scores only evidence returned by the server's candidate query. This
+    /// never opens a comparison or creates History. The same evidence cache
+    /// is used after begin validates the selected pair.
+    func makeServerClosetComparisonBatchSummary(
+        targetProductID: UUID,
+        comparisonGroup: FitMatchComparisonGroup,
+        candidates: [FitMatchServerReferenceSelectionCandidate]
+    ) -> FitMatchClosetComparisonBatchSummary {
+        var summaries = candidates.filter(\.isSelectable).map { item in
+            var ranked: [(candidate: VNextAuthorizedCandidateDTO, result: MeasurementComparisonResult)] = []
+            if let preview = item.comparisonPreview,
+               preview.allowed,
+               preview.referenceClosetItemID == item.closetItemID,
+               preview.targetProductID == targetProductID,
+               !preview.authorizedCandidateProductSizeIDs.isEmpty,
+               Set(preview.authorizedCandidateProductSizeIDs)
+                    == Set(preview.candidates.map(\.productSizeID)),
+               Set(preview.candidates.map(\.productSizeID)).count == preview.candidates.count {
+                for candidate in preview.candidates {
+                    guard candidate.authorization.allowed,
+                          let minimum = candidate.authorization.minimumCommon,
+                          minimum > 0,
+                          Set(candidate.authorization.excludedMeasurementCodes)
+                            .isDisjoint(with: candidate.comparisonMeasurements.map(\.measurementCode)),
+                          let result = authorizedScoreCache.compare(
+                            candidate.comparisonMeasurements, minimum: minimum
+                          ) else {
+                        ranked.removeAll()
+                        break
+                    }
+                    ranked.append((candidate, result))
+                }
+            }
+            ranked.sort {
+                if $0.result.score != $1.result.score { return $0.result.score > $1.result.score }
+                if $0.result.averageDifference != $1.result.averageDifference {
+                    return $0.result.averageDifference < $1.result.averageDifference
+                }
+                return $0.candidate.productSizeID.uuidString < $1.candidate.productSizeID.uuidString
+            }
+            let best = ranked.first
+            return FitMatchClosetComparisonSummary(
+                closetItemID: item.clientItemID,
+                comparisonGroup: comparisonGroup,
+                recommendedProductSizeID: best?.candidate.productSizeID,
+                recommendedSizeLabel: best?.candidate.sizeLabel,
+                comparisonResult: best?.result,
+                reason: best == nil ? "목록 결과를 확인하지 못했어요. 옷을 선택하면 서버에서 비교해요." : nil
+            )
+        }
+        summaries.sort(by: Self.preferredClosetComparisonSummary)
+        var nextRank = 1
+        for index in summaries.indices where summaries[index].evidenceState == .comparable {
+            summaries[index].rank = nextRank
+            nextRank += 1
+        }
+        return FitMatchClosetComparisonBatchSummary(
+            targetProductID: targetProductID, comparisonGroup: comparisonGroup, items: summaries
+        )
+    }
+
+    /// Produces the read-only list preview for every server-approved Closet
+    /// item in the target comparison group. This does not create comparison
+    /// history or call completion RPCs; opening one row still uses the normal
+    /// server-authorized comparison flow.
+    func makeClosetComparisonBatchSummary(
+        product: Product,
+        productDetailCategory: ClosetDetailCategory,
+        comparisonGroup: FitMatchComparisonGroup,
+        candidates: [UserFit]
+    ) -> FitMatchClosetComparisonBatchSummary {
+        var seenIDs = Set<UUID>()
+        let groupCandidates = candidates.filter {
+            $0.isActiveClosetItem
+                && $0.comparisonGroup == comparisonGroup
+                && seenIDs.insert($0.id).inserted
+        }
+        let sizes = product.sizes.sorted {
+            if $0.displayOrder != $1.displayOrder {
+                return $0.displayOrder < $1.displayOrder
+            }
+            return $0.id.uuidString < $1.id.uuidString
+        }
+
+        var summaries = groupCandidates.map { item in
+            let analyses = sizes.map { size in
+                (
+                    size: size,
+                    result: measurementComparisonEngine.compare(
+                        productSize: size,
+                        referenceItem: item,
+                        productCategory: product.category,
+                        productDetailCategory: productDetailCategory
+                    )
+                )
+            }
+            let confirmed = analyses
+                .filter { $0.result.status == .confirmed }
+                .sorted(by: Self.preferredClosetPreviewAnalysis)
+                .first
+            let bestEvidence = confirmed ?? analyses
+                .sorted(by: Self.preferredClosetPreviewAnalysis)
+                .first
+            let result = bestEvidence?.result
+            let reason: String?
+            if let result, result.status == .insufficientEvidence {
+                // Embedded preview coverage is not the server's eligibility
+                // policy. Do not present its minimum as a comparison blocker.
+                reason = "예상 결과를 계산하지 못했어요. 옷을 선택하면 서버에서 확인한 실측으로 비교해요."
+            } else if result == nil {
+                reason = "비교할 상품 사이즈 정보가 없습니다."
+            } else {
+                reason = nil
+            }
+
+            return FitMatchClosetComparisonSummary(
+                closetItemID: item.id,
+                comparisonGroup: item.comparisonGroup,
+                recommendedProductSizeID: confirmed?.size.id,
+                recommendedSizeLabel: confirmed?.size.name,
+                comparisonResult: result,
+                reason: reason
+            )
+        }
+
+        summaries.sort(by: Self.preferredClosetComparisonSummary)
+        var nextRank = 1
+        for index in summaries.indices where summaries[index].evidenceState == .comparable {
+            summaries[index].rank = nextRank
+            nextRank += 1
+        }
+        return FitMatchClosetComparisonBatchSummary(
+            targetProductID: product.id,
+            comparisonGroup: comparisonGroup,
+            items: summaries
+        )
+    }
+
+    private static func preferredClosetPreviewAnalysis(
+        _ lhs: (size: ProductSize, result: MeasurementComparisonResult),
+        _ rhs: (size: ProductSize, result: MeasurementComparisonResult)
+    ) -> Bool {
+        if lhs.result.status != rhs.result.status {
+            return lhs.result.status == .confirmed
+        }
+        if lhs.result.score != rhs.result.score {
+            return lhs.result.score > rhs.result.score
+        }
+        if lhs.result.comparedItems.count != rhs.result.comparedItems.count {
+            return lhs.result.comparedItems.count > rhs.result.comparedItems.count
+        }
+        if lhs.result.averageDifference != rhs.result.averageDifference {
+            return lhs.result.averageDifference < rhs.result.averageDifference
+        }
+        if lhs.size.displayOrder != rhs.size.displayOrder {
+            return lhs.size.displayOrder < rhs.size.displayOrder
+        }
+        return lhs.size.id.uuidString < rhs.size.id.uuidString
+    }
+
+    private static func preferredClosetComparisonSummary(
+        _ lhs: FitMatchClosetComparisonSummary,
+        _ rhs: FitMatchClosetComparisonSummary
+    ) -> Bool {
+        let stateOrder: [FitMatchClosetComparisonEvidenceState: Int] = [
+            .comparable: 0,
+            .insufficientEvidence: 1,
+            .unavailable: 2
+        ]
+        if lhs.evidenceState != rhs.evidenceState {
+            return stateOrder[lhs.evidenceState, default: 3]
+                < stateOrder[rhs.evidenceState, default: 3]
+        }
+        if lhs.similarityPercent != rhs.similarityPercent {
+            return (lhs.similarityPercent ?? -1) > (rhs.similarityPercent ?? -1)
+        }
+        if lhs.commonMeasurementCount != rhs.commonMeasurementCount {
+            return lhs.commonMeasurementCount > rhs.commonMeasurementCount
+        }
+        return lhs.closetItemID.uuidString < rhs.closetItemID.uuidString
+    }
+
+    func analyzeVNextComparison(
+        permit: FitMatchServerComparisonPermit
+    ) throws -> VNextComparisonBatchAnalysis {
+        guard permit.isAllowed, let begin = permit.vnextBegin else {
+            throw VNextComparisonEngineAdapterError.authorizationDenied(
+                "begin_snapshot_missing"
+            )
+        }
+        return try vnextComparisonAdapter.analyze(begin)
+    }
+
+    /// Builds a detached, current server-authorized target presentation for a
+    /// replacement comparison. A completed Result may itself be a historical
+    /// projection, so mutating it would rewrite old Result/History meaning.
+    /// This maps the server-issued effective tuple as a whole; it never fills
+    /// an absent effective axis from the older displayed Product.
+    func makeServerAuthorizedComparisonTarget(
+        from displayedProduct: Product,
+        permit: FitMatchServerComparisonPermit
+    ) -> Product? {
+        guard permit.isAllowed,
+              let begin = permit.vnextBegin,
+              begin.comparisonID == permit.runID,
+              begin.snapshot.target.productID == permit.referenceAuthorization.target.productID,
+              let runtime = permit.referenceAuthorization.target.runtime.vnext,
+              let runtimeProduct = runtime.product else {
+            return nil
+        }
+
+        if permit.referenceAuthorization.requestedComparisonGroupCode != nil {
+            return makeSessionGroupAuthorizedComparisonTarget(
+                from: displayedProduct,
+                permit: permit,
+                begin: begin,
+                runtimeProduct: runtimeProduct
+            )
+        }
+
+        let tuple = VNextRuntimeClassificationTuple(
+            product: runtimeProduct,
+            effective: runtime.effectiveClassification
+        )
+        guard tuple.usesEffectiveClassification,
+              tuple.classificationStatus == "CONFIRMED",
+              let categoryCode = tuple.categoryCode,
+              let garmentCode = tuple.garmentTypeCode,
+              !categoryCode.isEmpty,
+              !garmentCode.isEmpty,
+              begin.snapshot.target.classificationStatus == "CONFIRMED",
+              Set(begin.snapshot.target.authorizedCandidateProductSizeIDs)
+                == Set(begin.authorizedCandidateProductSizeIDs),
+              !begin.snapshot.target.candidates.isEmpty else {
+            return nil
+        }
+
+        let authority: FitMatchClassificationAuthorityProvenance
+        switch tuple.effectiveSource {
+        case "GLOBAL_CONFIRMED", "CATEGORY_GROUP":
+            authority = .serverConfirmed
+        case "USER_EXPLICIT":
+            guard tuple.overrideRevision != nil,
+                  tuple.authorityFingerprint?.isEmpty == false else {
+                return nil
+            }
+            authority = .userExplicit
+        default:
+            return nil
+        }
+
+        let product = Product(
+            id: permit.referenceAuthorization.target.productID,
+            name: displayedProduct.name,
+            brand: displayedProduct.brand,
+            category: ClothingCategory.fromTaxonomyCode(categoryCode),
+            productCode: displayedProduct.productCode,
+            sourceURLString: displayedProduct.sourceURLString,
+            imageURLString: displayedProduct.imageURLString,
+            sourceType: displayedProduct.sourceType,
+            sourceName: displayedProduct.sourceName,
+            source: displayedProduct.source,
+            notes: displayedProduct.notes,
+            createdAt: displayedProduct.createdAt,
+            updatedAt: Date()
+        )
+        copyRetailerPresentation(from: displayedProduct, to: product)
+        product.categoryRawValue = ClothingCategory.fromTaxonomyCode(categoryCode).rawValue
+        product.categoryCode = categoryCode
+        product.normalizedProductTypeCode = garmentCode
+        product.garmentTypeRawValue = garmentCode
+        product.genderCodes = tuple.audienceCode
+        // These nil values are intentional server tuple values. Do not
+        // coalesce them with axes from the completed historical product.
+        product.sleeveTypeRawValue = tuple.sleeveLengthCode
+        product.constructionTypeRawValue = tuple.productStructureCode
+        product.canonicalPolicyVersion = tuple.contractVersion
+            ?? begin.snapshot.policy.policyVersion
+        product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
+            CanonicalComparisonProfile(
+                decision: .confirmed,
+                semanticCategoryCode: categoryCode,
+                semanticGarmentType: garmentCode,
+                comparisonFamily: tuple.comparisonPolicyCode,
+                appComparisonFamily: tuple.comparisonPolicyCode,
+                lengthAxes: CanonicalLengthAxes(
+                    sleeve: tuple.sleeveLengthCode ?? "not_applicable",
+                    pants: tuple.lowerLengthCode ?? "not_applicable",
+                    leggings: "not_applicable",
+                    skirt: "not_applicable",
+                    body: tuple.bodyLengthCode ?? "not_applicable"
+                ),
+                constructionType: tuple.productStructureCode,
+                eligibility: true,
+                requiredMeasurements: begin.snapshot.policy.metrics.compactMap(
+                    \.measurementCode
+                ),
+                optionalMeasurements: [],
+                excludedMeasurements: begin.snapshot.excludedMeasurementCodes,
+                policyVersion: tuple.contractVersion
+                    ?? begin.snapshot.policy.policyVersion
+                    ?? "fitmatch_vnext",
+                resolutionMethod: authority.rawValue,
+                sourceIdentity: tuple.authorityFingerprint
+            )
+        )
+        product.markClassificationAuthority(
+            authority,
+            sourceIdentity: tuple.authorityFingerprint
+        )
+
+        product.sizes = begin.snapshot.target.candidates.enumerated().map {
+            index,
+            candidate in
+            makeServerAuthorizedPresentationSize(
+                candidate,
+                displayOrder: index,
+                product: product
+            )
+        }
+        copyRetailerSizePresentation(from: displayedProduct, to: product)
+        return product
+    }
+
+    private func makeSessionGroupAuthorizedComparisonTarget(
+        from displayedProduct: Product,
+        permit: FitMatchServerComparisonPermit,
+        begin: VNextBeginComparisonDTO,
+        runtimeProduct: VNextRuntimeProductDTO
+    ) -> Product? {
+        let target = begin.snapshot.target
+        guard let requestedGroup = permit.referenceAuthorization
+                .requestedComparisonGroupCode,
+              target.classificationStatus == "CONFIRMED",
+              target.classificationSource == "SESSION_USER_SELECTED",
+              target.comparisonGroup?.groupCode == requestedGroup,
+              target.comparisonGroup?.source == "SESSION_USER_SELECTED",
+              let categoryCode = target.categoryCode,
+              let garmentCode = target.garmentTypeCode,
+              let audienceCode = target.audienceCode,
+              let policyCode = target.comparisonGroup?.comparisonPolicyCode,
+              policyCode == begin.snapshot.policy.policyCode,
+              target.comparisonGroup?.authorityFingerprint
+                == begin.effectiveAuthorityFingerprint,
+              Set(target.authorizedCandidateProductSizeIDs)
+                == Set(begin.authorizedCandidateProductSizeIDs),
+              !target.candidates.isEmpty else {
+            return nil
+        }
+
+        let product = Product(
+            id: permit.referenceAuthorization.target.productID,
+            name: displayedProduct.name,
+            brand: displayedProduct.brand,
+            category: ClothingCategory.fromTaxonomyCode(categoryCode),
+            productCode: displayedProduct.productCode,
+            sourceURLString: displayedProduct.sourceURLString,
+            imageURLString: displayedProduct.imageURLString,
+            sourceType: displayedProduct.sourceType,
+            sourceName: displayedProduct.sourceName,
+            source: displayedProduct.source,
+            notes: displayedProduct.notes,
+            createdAt: displayedProduct.createdAt,
+            updatedAt: Date()
+        )
+        copyRetailerPresentation(from: displayedProduct, to: product)
+        product.categoryRawValue = ClothingCategory.fromTaxonomyCode(categoryCode).rawValue
+        product.categoryCode = categoryCode
+        product.normalizedProductTypeCode = garmentCode
+        product.garmentTypeRawValue = garmentCode
+        product.genderCodes = audienceCode
+        product.constructionTypeRawValue = target.productStructureCode
+        product.canonicalPolicyVersion = target.comparisonGroup?.policyVersion
+            ?? begin.snapshot.policy.policyVersion
+        product.canonicalProfileSnapshotJSON = CanonicalProfileSnapshotCoder.encode(
+            CanonicalComparisonProfile(
+                decision: .confirmed,
+                semanticCategoryCode: categoryCode,
+                semanticGarmentType: garmentCode,
+                comparisonFamily: policyCode,
+                appComparisonFamily: policyCode,
+                lengthAxes: CanonicalLengthAxes(
+                    sleeve: target.sleeveLengthCode ?? "not_applicable",
+                    pants: target.lowerLengthCode ?? "not_applicable",
+                    leggings: "not_applicable",
+                    skirt: "not_applicable",
+                    body: target.bodyLengthCode ?? "not_applicable"
+                ),
+                constructionType: target.productStructureCode
+                    ?? runtimeProduct.productStructureCode,
+                eligibility: true,
+                requiredMeasurements: begin.snapshot.policy.metrics.compactMap(
+                    \.measurementCode
+                ),
+                optionalMeasurements: [],
+                excludedMeasurements: begin.snapshot.excludedMeasurementCodes,
+                policyVersion: target.comparisonGroup?.policyVersion
+                    ?? begin.snapshot.policy.policyVersion
+                    ?? "fitmatch_vnext",
+                resolutionMethod: FitMatchClassificationAuthorityProvenance
+                    .serverSessionComparison.rawValue,
+                sourceIdentity: begin.effectiveAuthorityFingerprint
+            )
+        )
+        product.markClassificationAuthority(
+            .serverSessionComparison,
+            sourceIdentity: begin.effectiveAuthorityFingerprint
+        )
+        product.sizes = target.candidates.enumerated().map { index, candidate in
+            makeServerAuthorizedPresentationSize(
+                candidate,
+                displayOrder: index,
+                product: product
+            )
+        }
+        copyRetailerSizePresentation(from: displayedProduct, to: product)
+        return product
+    }
+
+    /// Builds the local/offline cache only after the caller has received a
+    /// successful `complete_comparison` response for this exact batch.
+    func makeCompletedVNextHistory(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        permit: FitMatchServerComparisonPermit,
+        analysis: VNextComparisonBatchAnalysis,
+        completion: VNextCompleteComparisonDTO
+    ) -> RecommendationHistory? {
+        guard completedVNextHistoryIsServerBacked(
+            product: product,
+            selectedReferenceItem: selectedReferenceItem,
+            permit: permit,
+            analysis: analysis,
+            completion: completion
+        ), let size = product.sizes.first(where: {
+            $0.id == analysis.recommended.productSizeID
+        }) else {
+            return nil
+        }
+        let comparison = analysis.recommended.result
+        let history = RecommendationHistory(
+            id: permit.clientHistoryID,
+            product: product,
+            recommendedSize: size,
+            userFit: selectedReferenceItem,
+            totalDifference: comparison.averageDifference,
+            measurementDifferences: comparison.signedDifferences,
+            recommendationScore: comparison.score,
+            trueToSizeRecommendation: "선택한 내 옷과 서버 승인 실측이 가장 비슷한 \(size.name) 사이즈입니다.",
+            oversizedRecommendation: "",
+            comparisonMethod: permit.referenceAuthorization.decision == .manualSelection
+                ? "서버 승인 확장 비교" : "서버 승인 직접 비교",
+            fallbackReason: permit.referenceAuthorization.decision == .manualSelection
+                ? "서버 정책이 승인한 공통 실측만 사용했습니다." : "",
+            productDetailCategory: productDetailCategory,
+            comparisonResult: comparison,
+            serverApprovedReliability: analysis.completionPayload.reliability
+        )
+        return history
+    }
+
+    /// Alternative-size presentation is read-only. It can reuse only the
+    /// exact batch already produced by a completed server-backed run; it never
+    /// authorizes or invokes a fresh measurement comparison.
+    func canPresentCurrentVNextAlternativeSizes(
+        for history: RecommendationHistory,
+        batch: VNextComparisonBatchAnalysis?
+    ) -> Bool {
+        let expectedRecommendedSizeIDs = batch.map {
+            [
+                $0.recommended.productSizeID,
+                VNextHistoryProjectionIdentity.productSizeID(
+                    comparisonID: history.id,
+                    productSizeID: $0.recommended.productSizeID
+                )
+            ]
+        } ?? []
+        guard history.product.classificationAuthorityProvenance?
+                .isComparisonAuthority == true,
+              history.userFit.classificationAuthorityProvenance?
+                .isComparisonAuthority == true,
+              history.comparisonMethod.hasPrefix("서버 승인"),
+              let batch,
+              expectedRecommendedSizeIDs.contains(history.recommendedSize.id),
+              batch.completionPayload.recommendedProductSizeID
+                == batch.recommended.productSizeID,
+              batch.authorizedCandidateProductSizeIDs.contains(
+                batch.recommended.productSizeID
+              ) else {
+            return false
+        }
+        let authorized = batch.authorizedCandidateProductSizeIDs
+        let analysisIDs = batch.analyses.map(\.productSizeID)
+        return !authorized.isEmpty
+            && Set(authorized).count == authorized.count
+            && Set(analysisIDs) == Set(authorized)
+            && analysisIDs.count == authorized.count
+    }
+
+    /// A local completed-history cache is allowed only for the exact server
+    /// comparison that completed. In particular, `.userExplicit` alone is not
+    /// authority: it must be the current effective authority proven by the
+    /// server-created V4 begin snapshot.
+    private func completedVNextHistoryIsServerBacked(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        permit: FitMatchServerComparisonPermit,
+        analysis: VNextComparisonBatchAnalysis,
+        completion: VNextCompleteComparisonDTO
+    ) -> Bool {
+        guard permit.isAllowed,
+              permit.runID == analysis.comparisonID,
+              completion.completed,
+              completion.comparisonID == permit.runID,
+              completion.recommendedProductSizeID == analysis.recommended.productSizeID,
+              analysis.completionPayload.recommendedProductSizeID
+                == analysis.recommended.productSizeID,
+              let begin = permit.vnextBegin,
+              begin.comparisonID == permit.runID,
+              begin.resultStatus == "PENDING",
+              begin.snapshot.authorization.allowed,
+              begin.snapshot.target.classificationStatus == "CONFIRMED",
+              (permit.referenceAuthorization.target.status == .confirmed
+                || permit.referenceAuthorization.requestedComparisonGroupCode != nil),
+              permit.referenceAuthorization.target.productID == product.id,
+              begin.snapshot.target.productID == product.id,
+              let targetVariantID = permit.referenceAuthorization.targetVariantID,
+              begin.snapshot.target.variantID == targetVariantID,
+              let reference = permit.referenceAuthorization.reference,
+              reference.clientItemID == selectedReferenceItem.id,
+              permit.referenceAuthorization.referenceAuthority != nil,
+              snapshotUUID(
+                begin.snapshot.referenceSnapshot,
+                key: "closet_item_id"
+              ) == reference.closetItemID,
+              product.sizes.contains(where: {
+                $0.id == analysis.recommended.productSizeID
+              }) else {
+            return false
+        }
+
+        let authorizedIDs = begin.authorizedCandidateProductSizeIDs
+        let authorizedSet = Set(authorizedIDs)
+        let snapshotIDs = begin.snapshot.target.authorizedCandidateProductSizeIDs
+        let snapshotCandidateIDs = begin.snapshot.target.candidates.map(\.productSizeID)
+        let analysisIDs = analysis.authorizedCandidateProductSizeIDs
+        guard !authorizedIDs.isEmpty,
+              authorizedSet.count == authorizedIDs.count,
+              Set(snapshotIDs) == authorizedSet,
+              snapshotIDs.count == authorizedIDs.count,
+              Set(snapshotCandidateIDs) == authorizedSet,
+              snapshotCandidateIDs.count == authorizedIDs.count,
+              Set(analysisIDs) == authorizedSet,
+              analysisIDs.count == authorizedIDs.count,
+              authorizedSet.contains(analysis.recommended.productSizeID),
+              begin.snapshot.target.candidateAuthorityFingerprint
+                == begin.candidateAuthorityFingerprint,
+              let effectiveAuthorityFingerprint = begin.effectiveAuthorityFingerprint,
+              !effectiveAuthorityFingerprint.isEmpty,
+              snapshotString(
+                begin.snapshot.inputSnapshot,
+                key: "effective_authority_fingerprint"
+              ) == effectiveAuthorityFingerprint else {
+            return false
+        }
+
+        return currentServerAuthorityMatches(
+            product: product,
+            permit: permit,
+            begin: begin,
+            effectiveAuthorityFingerprint: effectiveAuthorityFingerprint
+        )
+    }
+
+    private func currentServerAuthorityMatches(
+        product: Product,
+        permit: FitMatchServerComparisonPermit,
+        begin: VNextBeginComparisonDTO,
+        effectiveAuthorityFingerprint: String
+    ) -> Bool {
+        if product.classificationAuthorityProvenance == .serverSessionComparison {
+            let target = begin.snapshot.target
+            guard let requestedGroup = permit.referenceAuthorization
+                    .requestedComparisonGroupCode,
+                  permit.referenceAuthorization.target.status == .reviewRequired,
+                  target.classificationSource == "SESSION_USER_SELECTED",
+                  target.comparisonGroup?.groupCode == requestedGroup,
+                  target.comparisonGroup?.source == "SESSION_USER_SELECTED",
+                  target.comparisonGroup?.authorityFingerprint
+                    == effectiveAuthorityFingerprint,
+                  snapshotString(
+                    begin.snapshot.inputSnapshot,
+                    key: "requested_comparison_group_code"
+                  ) == requestedGroup,
+                  let authority = begin.snapshot.authoritySnapshot.objectValue,
+                  authority["authority_fingerprint"]?.stringValue
+                    == effectiveAuthorityFingerprint,
+                  authority["comparison_group_at_begin"]?.objectValue?["group_code"]?
+                    .stringValue == requestedGroup else {
+                return false
+            }
+            return true
+        }
+
+        guard let effective = permit.referenceAuthorization.target.runtime.vnext?
+            .effectiveClassification,
+              effective.productID == product.id,
+              effective.classificationStatus == "CONFIRMED",
+              effective.effectiveAuthorityFingerprint == effectiveAuthorityFingerprint,
+              effectiveClassificationSnapshotMatches(
+                effective,
+                begin: begin
+              ) else {
+            return false
+        }
+        let runtimeAuthorityStatus = permit.referenceAuthorization.target
+            .classification.authorityStatus?.lowercased()
+
+        switch product.classificationAuthorityProvenance {
+        case .serverConfirmed:
+            return (
+                effective.effectiveSource == "GLOBAL_CONFIRMED"
+                    || effective.effectiveSource == "CATEGORY_GROUP"
+            )
+                && runtimeAuthorityStatus != "user_explicit"
+
+        case .userExplicit:
+            guard begin.snapshot.snapshotSchemaVersion == 4,
+                  effective.isPersonalComparisonAuthority,
+                  runtimeAuthorityStatus == "user_explicit",
+                  let revision = effective.overrideRevision,
+                  snapshotNumber(
+                    begin.snapshot.inputSnapshot,
+                    key: "personal_override_revision"
+                  ) == Double(revision),
+                  let authority = begin.snapshot.authoritySnapshot.objectValue,
+                  let effectiveAtBegin = authority[
+                    "effective_classification_at_begin"
+                  ]?.objectValue,
+                  effectiveAtBegin["source"]?.stringValue == "USER_EXPLICIT",
+                  effectiveAtBegin["effective_authority_fingerprint"]?.stringValue
+                    == effectiveAuthorityFingerprint,
+                  let beginProjection = authority[
+                    "personal_projection_at_begin"
+                  ]?.objectValue,
+                  let runtimeProjection = effective.personalProjection?.objectValue,
+                  personalProjectionIsActive(beginProjection),
+                  beginProjection["revision"]?.numberValue == Double(revision),
+                  runtimeProjection["revision"]?.numberValue == Double(revision),
+                  personalProjectionMatches(
+                    beginProjection,
+                    runtimeProjection
+                  ) else {
+                return false
+            }
+            return true
+
+        default:
+            return false
+        }
+    }
+
+    private func copyRetailerPresentation(from source: Product, to destination: Product) {
+        destination.brand = source.brand
+        destination.productCode = source.productCode
+        destination.sourceURLString = source.sourceURLString
+        destination.imageURLString = source.imageURLString
+        destination.styleNo = source.styleNo
+        destination.englishName = source.englishName
+        destination.brandCode = source.brandCode
+        destination.brandEnglishName = source.brandEnglishName
+        destination.brandLogoImageURLString = source.brandLogoImageURLString
+        destination.brandNationName = source.brandNationName
+        destination.sourceCategoryPath = source.sourceCategoryPath
+        destination.sourceCategoryDepth1 = source.sourceCategoryDepth1
+        destination.sourceCategoryDepth2 = source.sourceCategoryDepth2
+        destination.sourceCategoryDepth3 = source.sourceCategoryDepth3
+        destination.sourceCategoryDepth4 = source.sourceCategoryDepth4
+        destination.baseCategoryFullPath = source.baseCategoryFullPath
+        destination.categoryDepth1Code = source.categoryDepth1Code
+        destination.categoryDepth1Name = source.categoryDepth1Name
+        destination.categoryDepth2Code = source.categoryDepth2Code
+        destination.categoryDepth2Name = source.categoryDepth2Name
+        destination.categoryDepth3Code = source.categoryDepth3Code
+        destination.categoryDepth3Name = source.categoryDepth3Name
+        destination.categoryDepth4Code = source.categoryDepth4Code
+        destination.categoryDepth4Name = source.categoryDepth4Name
+        destination.sizeType = source.sizeType
+        destination.genderCodes = source.genderCodes
+        destination.labelNames = source.labelNames
+        destination.imageURLStrings = source.imageURLStrings
+        destination.normalPrice = source.normalPrice
+        destination.salePrice = source.salePrice
+        destination.finalPrice = source.finalPrice
+        destination.currencyCode = source.currencyCode
+        destination.discountRate = source.discountRate
+        destination.isSale = source.isSale
+        destination.isOutOfStock = source.isOutOfStock
+        destination.stockStatusRawValue = source.stockStatusRawValue
+        destination.isRestock = source.isRestock
+        destination.isSoonOutOfStock = source.isSoonOutOfStock
+        destination.isLimitedQuantity = source.isLimitedQuantity
+        destination.reviewCount = source.reviewCount
+        destination.reviewSatisfactionScore = source.reviewSatisfactionScore
+        destination.seasonYear = source.seasonYear
+        destination.season = source.season
+        destination.checkedColorName = source.checkedColorName
+        destination.checkedSizeName = source.checkedSizeName
+        destination.sourceTypeRawValue = source.sourceTypeRawValue
+        destination.sourceName = source.sourceName
+        destination.sourcePlatformCode = source.sourcePlatformCode
+        destination.sourceRawValue = source.sourceRawValue
+        destination.notes = source.notes
+    }
+
+    /// vNext scoring continues to use only the immutable measurements issued
+    /// by `begin_comparison`. This copy retains an exactly matched retailer
+    /// size row solely so the Result can display additional provider fields
+    /// (for example UNIQLO's 화장) without treating them as score authority.
+    private func copyRetailerSizePresentation(from source: Product, to destination: Product) {
+        let sourceSizesByKey = Dictionary(grouping: source.sizes) {
+            ParsedProductSizeNormalizer.normalizedSizeKey(for: $0.name)
+        }
+        for destinationSize in destination.sizes {
+            let key = ParsedProductSizeNormalizer.normalizedSizeKey(
+                for: destinationSize.name
+            )
+            guard !key.isEmpty,
+                  let matches = sourceSizesByKey[key],
+                  matches.count == 1,
+                  let sourceSize = matches.first else {
+                continue
+            }
+            destinationSize.measurementRecords = sourceSize.measurementRecords.map {
+                cloneRetailerMeasurementRecord($0, productSize: destinationSize)
+            }
+        }
+    }
+
+    private func cloneRetailerMeasurementRecord(
+        _ source: GarmentMeasurementRecord,
+        productSize: ProductSize
+    ) -> GarmentMeasurementRecord {
+        GarmentMeasurementRecord(
+            value: source.value,
+            unit: MeasurementUnit(rawValue: source.unitRawValue) ?? .centimeter,
+            unitRawValue: source.unitRawValue,
+            measurementCode: source.measurementCode,
+            measurementCodeRawValue: source.measurementCodeRawValue,
+            displayKind: source.displayKind ?? .unknown,
+            methodSource: source.methodSource,
+            methodProfile: source.methodProfile,
+            inputSource: MeasurementInputSource(rawValue: source.inputSourceRawValue)
+                ?? .importedSizeChart,
+            standardVersion: source.standardVersion,
+            mappingVersion: source.mappingVersion,
+            rawCode: source.rawCode,
+            rawLabel: source.rawLabel,
+            rawInfo: source.rawInfo,
+            rawValueText: source.rawValueText,
+            evidenceLevel: MeasurementEvidenceLevel(
+                rawValue: source.evidenceLevelRawValue
+            ) ?? .unknown,
+            semanticStatus: MeasurementSemanticStatus(
+                rawValue: source.semanticStatusRawValue
+            ) ?? .unknownDefinition,
+            productSize: productSize,
+            createdAt: source.createdAt,
+            updatedAt: source.updatedAt
+        )
+    }
+
+    private func makeServerAuthorizedPresentationSize(
+        _ candidate: VNextAuthorizedCandidateDTO,
+        displayOrder: Int,
+        product: Product
+    ) -> ProductSize {
+        var measurements = GarmentMeasurements(
+            shoulder: 0,
+            chest: 0,
+            totalLength: 0,
+            sleeveLength: 0
+        )
+        for measurement in candidate.comparisonMeasurements {
+            guard let code = MeasurementCode(rawValue: measurement.measurementCode),
+                  let kind = MeasurementComparisonEngine.measurementKind(for: code) else {
+                continue
+            }
+            switch kind {
+            case .shoulder: measurements.shoulder = measurement.targetValue
+            case .chest: measurements.chest = measurement.targetValue
+            case .totalLength: measurements.totalLength = measurement.targetValue
+            case .sleeveLength: measurements.sleeveLength = measurement.targetValue
+            case .upperAbdomen: measurements.upperAbdomen = measurement.targetValue
+            case .upperWaist: measurements.upperWaist = measurement.targetValue
+            case .waist: measurements.waist = measurement.targetValue
+            case .hip: measurements.hip = measurement.targetValue
+            case .thigh: measurements.thigh = measurement.targetValue
+            case .rise: measurements.rise = measurement.targetValue
+            case .hem: measurements.hem = measurement.targetValue
+            case .footLength: measurements.footLength = measurement.targetValue
+            case .underBust: measurements.underBust = measurement.targetValue
+            }
+        }
+        return ProductSize(
+            id: candidate.productSizeID,
+            name: candidate.sizeLabel,
+            measurements: measurements,
+            displayOrder: displayOrder,
+            product: product
+        )
+    }
+
+    private func personalProjectionMatches(
+        _ beginProjection: [String: FitMatchJSONValue],
+        _ runtimeProjection: [String: FitMatchJSONValue]
+    ) -> Bool {
+        let requiredKeys = [
+            "classification_source",
+            "selected_candidate_fingerprint",
+            "candidate_contract_version",
+            "candidate_set_hash",
+            "base_product_input_fingerprint",
+            "base_product_evidence_fingerprint",
+            "base_resolver_version"
+        ]
+        return requiredKeys.allSatisfy { key in
+            guard let beginValue = beginProjection[key],
+                  let runtimeValue = runtimeProjection[key] else {
+                return false
+            }
+            return beginValue == runtimeValue
+        }
+    }
+
+    private func personalProjectionIsActive(
+        _ projection: [String: FitMatchJSONValue]
+    ) -> Bool {
+        guard let clearedAt = projection["cleared_at"] else { return true }
+        return clearedAt == .null
+    }
+
+    /// The target tuple rendered locally must be the exact effective tuple that
+    /// the server snapshotted at begin. This keeps a current server-backed
+    /// personal projection distinct from a local `.userExplicit` label.
+    private func effectiveClassificationSnapshotMatches(
+        _ effective: VNextEffectiveTargetClassificationDTO,
+        begin: VNextBeginComparisonDTO
+    ) -> Bool {
+        guard let authority = begin.snapshot.authoritySnapshot.objectValue,
+              let snapshot = authority[
+                "effective_classification_at_begin"
+              ]?.objectValue else {
+            return false
+        }
+
+        return snapshot["source"]?.stringValue == effective.effectiveSource
+            && snapshot["state"]?.stringValue == effective.state
+            && snapshot["category_code"]?.stringValue == effective.categoryCode
+            && snapshot["garment_type_code"]?.stringValue
+                == effective.garmentTypeCode
+            && snapshot["audience_code"]?.stringValue == effective.audienceCode
+            && snapshot["sleeve_length_code"]?.stringValue
+                == effective.sleeveLengthCode
+            && snapshot["lower_length_code"]?.stringValue
+                == effective.lowerLengthCode
+            && snapshot["body_length_code"]?.stringValue
+                == effective.bodyLengthCode
+            && snapshot["comparison_policy_code"]?.stringValue
+                == effective.comparisonPolicyCode
+            && begin.snapshot.target.classificationStatus
+                == effective.classificationStatus
+            && begin.snapshot.target.garmentTypeCode == effective.garmentTypeCode
+            && begin.snapshot.target.sleeveLengthCode == effective.sleeveLengthCode
+            && begin.snapshot.target.lowerLengthCode == effective.lowerLengthCode
+            && begin.snapshot.target.bodyLengthCode == effective.bodyLengthCode
+    }
+
+    private func snapshotString(
+        _ snapshot: FitMatchJSONValue,
+        key: String
+    ) -> String? {
+        snapshot.objectValue?[key]?.stringValue
+    }
+
+    private func snapshotUUID(
+        _ snapshot: FitMatchJSONValue,
+        key: String
+    ) -> UUID? {
+        snapshotString(snapshot, key: key).flatMap(UUID.init(uuidString:))
+    }
+
+    private func snapshotNumber(
+        _ snapshot: FitMatchJSONValue,
+        key: String
+    ) -> Double? {
+        snapshot.objectValue?[key]?.numberValue
+    }
 
     func recommend(
         product: Product,
@@ -52,6 +1033,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory = .other,
         allowsGlobalFallback: Bool = true
     ) -> RecommendationHistory? {
+        guard product.canonicalEligibility != false else { return nil }
         let basis = selectBasis(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -81,6 +1063,10 @@ struct RecommendationService {
         excludedKindReasons: [MeasurementKind: MeasurementExclusionReason] = [:],
         scorePenalty: Int
     ) -> TemporarySizeAnalysis? {
+        guard product.canonicalEligibility != false,
+              referenceItem.canonicalEligibility != false else {
+            return nil
+        }
         if comparisonMethod == "기준표 가슴둘레 비교" {
             guard let productChest = StandardBodySizeChart.chestCircumferenceCm(for: size.name),
                   let referenceChest = StandardBodySizeChart.chestCircumferenceCm(for: referenceItem.sizeName) else {
@@ -147,6 +1133,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory = .other,
         allowsGlobalFallback: Bool = true
     ) -> InsufficientComparisonEvidence? {
+        guard product.canonicalEligibility != false else { return nil }
         let profileResult = comparisonMatcher.match(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -197,6 +1184,10 @@ struct RecommendationService {
         selectedReferenceItem: UserFit,
         productDetailCategory: ClosetDetailCategory
     ) -> RecommendationHistory? {
+        guard product.canonicalEligibility != false,
+              selectedReferenceItem.canonicalEligibility != false else {
+            return nil
+        }
         let compatibility = comparisonCompatibility(
             product: product,
             productDetailCategory: productDetailCategory,
@@ -209,7 +1200,7 @@ struct RecommendationService {
             selectedItem: selectedReferenceItem
         )
         let fallbackReason = mismatch.note
-            ?? "\(productDetailCategory.rawValue) 기준 옷이 없어 선택한 옷으로 임시 비교했습니다."
+            ?? "\(productDetailCategory.rawValue) 비교 후보가 없어 선택한 옷으로 임시 비교했습니다."
         return bestRecommendation(
             product: product,
             userFits: [selectedReferenceItem],
@@ -228,6 +1219,133 @@ struct RecommendationService {
                 excludedMeasurementReasons: exclusionReasons(for: mismatch.excludedKinds)
             )
         )
+    }
+
+    #if DEBUG
+    /// Debug-only compatibility seam for isolated scorer regressions. Runtime
+    /// call sites must first create a server comparison run and pass a permit.
+    func recommendAfterServerAuthorization(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        authorization: FitMatchServerReferenceAuthorization
+    ) -> RecommendationHistory? {
+        let compatibility = authorization.decision == .automatic
+            ? authorization.candidate?.automaticCompatibility
+            : authorization.candidate?.manualCompatibility
+        guard let compatibility else { return nil }
+        return authorizedRecommendation(
+            product: product,
+            selectedReferenceItem: selectedReferenceItem,
+            productDetailCategory: productDetailCategory,
+            authorization: authorization,
+            compatibility: compatibility,
+            clientHistoryID: nil
+        )
+    }
+    #endif
+
+    private func authorizedRecommendation(
+        product: Product,
+        selectedReferenceItem: UserFit,
+        productDetailCategory: ClosetDetailCategory,
+        authorization: FitMatchServerReferenceAuthorization,
+        compatibility: FitMatchDatabaseCompatibility,
+        clientHistoryID: UUID?
+    ) -> RecommendationHistory? {
+        guard authorization.isAllowed,
+              product.classificationAuthorityProvenance == .serverConfirmed,
+              selectedReferenceItem.classificationAuthorityProvenance?
+                .isComparisonAuthority == true else {
+            return nil
+        }
+
+        guard compatibility.allowed else { return nil }
+
+        let excludedKinds = serverExcludedMeasurementKinds(
+            compatibility.excludedMeasurements
+        )
+        let isExtended = compatibility.level == "extended"
+        let scorePenalty: Int
+        if authorization.decision == .manualSelection {
+            scorePenalty = manualComparisonScorePenalty(
+                product: product,
+                selectedReferenceItem: selectedReferenceItem
+            ) + (isExtended ? 10 : 0)
+        } else {
+            scorePenalty = 0
+        }
+
+        guard let history = bestRecommendation(
+            product: product,
+            userFits: [selectedReferenceItem],
+            productDetailCategory: productDetailCategory,
+            basis: RecommendationBasis(
+                userFits: [selectedReferenceItem],
+                methodText: isExtended
+                    ? "서버 승인 확장 비교"
+                    : "서버 승인 직접 비교",
+                scorePenalty: scorePenalty,
+                fallbackReason: isExtended
+                    ? "서버 비교 정책에서 허용한 공통 실측만 사용했습니다."
+                    : "",
+                excludedMeasurementKinds: excludedKinds,
+                excludedMeasurementReasons: exclusionReasons(for: excludedKinds)
+            )
+        ) else { return nil }
+        if let clientHistoryID {
+            history.id = clientHistoryID
+        }
+        return history
+    }
+
+    private func serverExcludedMeasurementKinds(
+        _ values: [String]
+    ) -> [MeasurementKind] {
+        var result: [MeasurementKind] = []
+        for rawValue in values {
+            let normalized = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            let kind: MeasurementKind?
+            switch normalized {
+            case "shoulder", "shoulder_width", "shoulder_width_seam_to_seam":
+                kind = .shoulder
+            case "chest", "chest_width", "chest_width_pit_to_pit",
+                 "chest_width_uniqlo_body_width", "chest_circumference_garment":
+                kind = .chest
+            case "total_length", "body_length", "body_length_back_neck_to_hem",
+                 "body_length_hps_to_hem_front", "pants_outseam_waist_to_hem",
+                 "pants_inseam_crotch_to_hem", "skirt_length_waist_to_hem":
+                kind = .totalLength
+            case "sleeve_length", "sleeve_shoulder_seam_to_cuff",
+                 "sleeve_center_back_to_cuff", "sleeve_raglan_neck_to_cuff":
+                kind = .sleeveLength
+            case "upper_abdomen", "upper_abdomen_width_edge_to_edge":
+                kind = .upperAbdomen
+            case "upper_waist", "upper_waist_width_edge_to_edge":
+                kind = .upperWaist
+            case "waist", "waist_width", "waist_width_edge_to_edge",
+                 "waist_circumference_garment":
+                kind = .waist
+            case "hip", "hip_width", "hip_width_at_widest":
+                kind = .hip
+            case "thigh", "thigh_width", "thigh_width_crotch_to_outer":
+                kind = .thigh
+            case "rise", "front_rise", "rise_crotch_to_waist_front",
+                 "rise_crotch_to_waist_back":
+                kind = .rise
+            case "hem", "hem_width", "hem_width_edge_to_edge":
+                kind = .hem
+            case "foot_length", "foot_length_heel_to_toe":
+                kind = .footLength
+            case "under_bust", "under_bust_width", "under_bust_width_edge_to_edge":
+                kind = .underBust
+            default:
+                kind = nil
+            }
+            if let kind, !result.contains(kind) { result.append(kind) }
+        }
+        return result
     }
 
     private func exclusionReasons(
@@ -287,6 +1405,10 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         item: UserFit
     ) -> GarmentComparisonCompatibility {
+        guard product.canonicalEligibility != false,
+              item.canonicalEligibility != false else {
+            return .blocked("분류 검증이 완료되지 않아 비교할 수 없어요.")
+        }
         if product.sizeType == StandardBodySizeChart.metadataMarker {
             guard item.category.serviceGroup == product.category.serviceGroup else {
                 return .blocked("착용 부위가 달라 비교할 수 없어요.")
@@ -324,7 +1446,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        userFits.contains { $0.detailCategory == productDetailCategory && $0.isRepresentative }
+        false
     }
 
     func temporaryComparisonCandidates(
@@ -368,14 +1490,9 @@ struct RecommendationService {
     ) -> ReferenceSelectionPlan {
         if product.sizeType == StandardBodySizeChart.metadataMarker {
             let candidates = standardSizeCandidates(product: product, userFits: userFits)
-            let representatives = candidates.filter {
-                $0.userFit.isRepresentative && $0.compatibleMeasurementCount > 0
-            }
             return ReferenceSelectionPlan(
                 recommendedCandidates: candidates,
-                automaticallySelectedCandidate: representatives.count == 1
-                    ? representatives.first
-                    : nil
+                automaticallySelectedCandidate: nil
             )
         }
         let compatible = comparisonMatcher.match(
@@ -383,41 +1500,19 @@ struct RecommendationService {
             productDetailCategory: productDetailCategory,
             userFits: userFits
         ).compatibleCandidates
-        let preferredRepresentativeIDs = Set(preferredRepresentatives(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).map(\.id))
         let candidates = Array(rankedReferenceCandidates(
             product: product,
             productDetailCategory: productDetailCategory,
             userFits: compatible
         ).prefix(3))
-        let automaticallySelected: FitMatchCandidate?
-        if preferredRepresentativeIDs.isEmpty {
-            automaticallySelected = nil
-        } else {
-            let preferredCandidates = candidates.filter {
-                preferredRepresentativeIDs.contains($0.id)
-            }
-            automaticallySelected = preferredCandidates.count == 1
-                ? preferredCandidates.first
-                : nil
-        }
-
         return ReferenceSelectionPlan(
             recommendedCandidates: candidates,
-            automaticallySelectedCandidate: automaticallySelected
+            automaticallySelectedCandidate: nil
         )
     }
 
     private func sortCandidates(_ userFits: [UserFit]) -> [UserFit] {
-        userFits.sorted { lhs, rhs in
-            if lhs.isRepresentative != rhs.isRepresentative {
-                return lhs.isRepresentative
-            }
-            return lhs.updatedAt > rhs.updatedAt
-        }
+        userFits.sorted { $0.updatedAt > $1.updatedAt }
     }
 
     private func bestRecommendation(
@@ -426,6 +1521,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         basis: RecommendationBasis
     ) -> RecommendationHistory? {
+        guard product.canonicalEligibility != false else { return nil }
         if usesStandardSizeFallback(product: product, userFits: userFits) {
             return standardSizeRecommendation(
                 product: product,
@@ -440,7 +1536,7 @@ struct RecommendationService {
         var bestAverageDifference = Double.greatestFiniteMagnitude
 
         for size in product.sizes.sorted(by: { $0.displayOrder < $1.displayOrder }) where !size.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            for userFit in userFits {
+            for userFit in userFits where userFit.canonicalEligibility != false {
                 let fitConfidence = measurementComparisonEngine.compare(
                     productSize: size,
                     referenceItem: userFit,
@@ -461,7 +1557,7 @@ struct RecommendationService {
                     totalDifference: fitConfidence.averageDifference,
                     measurementDifferences: signedDifferences,
                     recommendationScore: adjustedScore,
-                    trueToSizeRecommendation: "기준 옷과 실측이 가장 비슷한 \(size.name) 사이즈입니다.",
+                    trueToSizeRecommendation: "선택한 내 옷과 실측이 가장 비슷한 \(size.name) 사이즈입니다.",
                     oversizedRecommendation: "",
                     comparisonMethod: basis.methodText,
                     fallbackReason: basis.fallbackReason,
@@ -490,7 +1586,7 @@ struct RecommendationService {
             FitMatchDebugLogger.detail(
                 screen: "추천 계산",
                 action: "최종 후보 선택",
-                details: "기준옷=\(bestHistory.userFit.displayName), 방식=\(bestHistory.comparisonMethod), 추천사이즈=\(bestHistory.recommendedSize.name), 신뢰도=\(bestHistory.recommendationScore)"
+                details: "선택옷=\(bestHistory.userFit.displayName), 방식=\(bestHistory.comparisonMethod), 추천사이즈=\(bestHistory.recommendedSize.name), 신뢰도=\(bestHistory.recommendationScore)"
             )
             #endif
         }
@@ -509,13 +1605,14 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         basis: RecommendationBasis
     ) -> RecommendationHistory? {
+        guard product.canonicalEligibility != false else { return nil }
         let sizes = product.sizes.sorted { $0.displayOrder < $1.displayOrder }
         var bestHistory: RecommendationHistory?
         var bestDifference = Double.greatestFiniteMagnitude
 
         for size in sizes {
             guard let productChest = StandardBodySizeChart.chestCircumferenceCm(for: size.name) else { continue }
-            for userFit in userFits {
+            for userFit in userFits where userFit.canonicalEligibility != false {
                 guard let referenceChest = StandardBodySizeChart.chestCircumferenceCm(for: userFit.sizeName) else { continue }
                 let signedDifference = productChest - referenceChest
                 let absoluteDifference = abs(signedDifference)
@@ -592,11 +1689,12 @@ struct RecommendationService {
         excludedKinds: [MeasurementKind],
         excludedKindReasons: [MeasurementKind: MeasurementExclusionReason] = [:]
     ) -> InsufficientComparisonEvidence? {
+        guard product.canonicalEligibility != false else { return nil }
         var bestEvidence: InsufficientComparisonEvidence?
 
         for size in product.sizes.sorted(by: { $0.displayOrder < $1.displayOrder })
         where !size.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            for userFit in userFits {
+            for userFit in userFits where userFit.canonicalEligibility != false {
                 let result = measurementComparisonEngine.compare(
                     productSize: size,
                     referenceItem: userFit,
@@ -641,49 +1739,13 @@ struct RecommendationService {
         userFits: [UserFit],
         allowsGlobalFallback: Bool
     ) -> RecommendationBasis {
-        if product.sizeType == StandardBodySizeChart.metadataMarker {
-            let candidates = standardSizeCandidates(product: product, userFits: userFits)
-            let representatives = candidates.filter {
-                $0.userFit.isRepresentative && $0.compatibleMeasurementCount > 0
-            }
+        guard product.canonicalEligibility != false else {
             return RecommendationBasis(
-                userFits: representatives.count == 1
-                    ? representatives.map(\.userFit)
-                    : [],
-                methodText: "기준표 가슴둘레 비교",
-                scorePenalty: 18,
-                fallbackReason: "실측값이 아닌 한국 의류 기준표 기반 결과입니다."
-            )
-        }
-        let result = comparisonMatcher.match(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        )
-        let preferredRepresentativeIDs = Set(preferredRepresentatives(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).map(\.id))
-        let ranked = rankedReferenceCandidates(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: result.compatibleCandidates
-        )
-        let preferredCandidates = ranked.filter {
-            preferredRepresentativeIDs.contains($0.userFit.id)
-        }
-        let selected = preferredCandidates.count == 1
-            ? preferredCandidates.first?.userFit
-            : nil
-        if let selected {
-            return RecommendationBasis(
-                userFits: [selected],
-                methodText: "비교 프로필 호환 옷 비교",
+                userFits: [],
+                methodText: "분류 검증 필요",
                 scorePenalty: 0
             )
         }
-
         return RecommendationBasis(userFits: [], methodText: "사용자 선택 임시 비교", scorePenalty: 12)
     }
 
@@ -692,40 +1754,17 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> Bool {
-        if product.sizeType == StandardBodySizeChart.metadataMarker {
-            return standardSizeCandidates(product: product, userFits: userFits)
-                .filter { $0.userFit.isRepresentative && $0.compatibleMeasurementCount > 0 }
-                .count == 1
-        }
-        let profileCandidates = comparisonMatcher.match(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).compatibleCandidates
-        let ranked = rankedReferenceCandidates(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: profileCandidates
-        )
-        let preferredRepresentativeIDs = Set(preferredRepresentatives(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).map(\.id))
-        return ranked.filter {
-            preferredRepresentativeIDs.contains($0.userFit.id)
-        }.count == 1
+        false
     }
 
     private func standardSizeCandidates(product: Product, userFits: [UserFit]) -> [FitMatchCandidate] {
+        guard product.canonicalEligibility != false else { return [] }
         let sameCategory = userFits.filter {
-            $0.category.serviceGroup == product.category.serviceGroup
+            $0.canonicalEligibility != false
+                && $0.category.serviceGroup == product.category.serviceGroup
                 && StandardBodySizeChart.chestCircumferenceCm(for: $0.sizeName) != nil
         }
-        let sorted = sameCategory.sorted { lhs, rhs in
-            if lhs.isRepresentative != rhs.isRepresentative { return lhs.isRepresentative }
-            return lhs.updatedAt > rhs.updatedAt
-        }
+        let sorted = sameCategory.sorted { $0.updatedAt > $1.updatedAt }
         return sorted.map { item in
             return FitMatchCandidate(
                 userFit: item,
@@ -742,11 +1781,6 @@ struct RecommendationService {
         userFits: [UserFit]
     ) -> [FitMatchCandidate] {
         let incomingProfile = comparisonMatcher.profile(for: product, detailCategory: productDetailCategory)
-        let preferredRepresentativeIDs = Set(preferredRepresentatives(
-            product: product,
-            productDetailCategory: productDetailCategory,
-            userFits: userFits
-        ).map(\.id))
         return userFits
             .compactMap { item -> RankedReferenceCandidate? in
                 let compatibility = comparisonMatcher.comparisonCompatibility(
@@ -800,9 +1834,6 @@ struct RecommendationService {
                 )
             }
             .sorted { lhs, rhs in
-                let lhsPreferred = preferredRepresentativeIDs.contains(lhs.candidate.userFit.id)
-                let rhsPreferred = preferredRepresentativeIDs.contains(rhs.candidate.userFit.id)
-                if lhsPreferred != rhsPreferred { return lhsPreferred }
                 if lhs.compatibilityRank != rhs.compatibilityRank {
                     return lhs.compatibilityRank > rhs.compatibilityRank
                 }
@@ -829,22 +1860,7 @@ struct RecommendationService {
         productDetailCategory: ClosetDetailCategory,
         userFits: [UserFit]
     ) -> [UserFit] {
-        let exactDetailRepresentatives = userFits.filter {
-            $0.isRepresentative
-                && $0.detailCategory == productDetailCategory
-                && comparisonMatcher.comparisonCompatibility(
-                    product: product,
-                    productDetailCategory: productDetailCategory,
-                    item: $0
-                ).level == .direct
-        }
-        guard let selected = exactDetailRepresentatives.sorted(by: {
-            if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
-            return $0.id.uuidString < $1.id.uuidString
-        }).first else {
-            return []
-        }
-        return [selected]
+        []
     }
 
     private func rankedCandidateScore(
@@ -924,7 +1940,7 @@ struct RecommendationService {
         FitMatchDebugLogger.detail(
             screen: "추천 계산",
             action: "사이즈 후보 평가",
-            details: "기준옷=\(referenceItem.displayName), 사이즈=\(sizeName), 비교=\(comparedNames), 제외=\(ignoredNames), 어깨=\(signedDifferences.shoulder)/\(shoulderScore), 가슴=\(signedDifferences.chest)/\(chestScore), 총장=\(signedDifferences.totalLength)/\(totalLengthScore), 소매=\(signedDifferences.sleeveLength)/\(sleeveScore), 신뢰도=\(result.score), 근거=\(result.reliabilityTitle)"
+            details: "선택옷=\(referenceItem.displayName), 사이즈=\(sizeName), 비교=\(comparedNames), 제외=\(ignoredNames), 어깨=\(signedDifferences.shoulder)/\(shoulderScore), 가슴=\(signedDifferences.chest)/\(chestScore), 총장=\(signedDifferences.totalLength)/\(totalLengthScore), 소매=\(signedDifferences.sleeveLength)/\(sleeveScore), 신뢰도=\(result.score), 근거=\(result.reliabilityTitle)"
         )
         #endif
     }

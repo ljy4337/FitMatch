@@ -5,21 +5,25 @@ struct MyClosetView: View {
     var onLogout: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \UserFit.createdAt, order: .reverse) private var userFits: [UserFit]
+    @Environment(\.fitMatchClosetSyncCoordinator) private var closetSync
+    @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
+    @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.closetViewLayout") private var closetViewLayoutRaw = ContentListLayout.list.rawValue
     @State private var activeSheet: ClosetActiveSheet?
-    @State private var pendingBasisItem: UserFit?
-    @State private var existingBasisItem: UserFit?
-    @State private var isShowingBasisChangeAlert = false
-    @State private var selectedCategory: ClothingCategory?
+    @State private var selectedComparisonGroup: FitMatchComparisonGroup?
     @State private var selectedBrand: String?
-    @State private var sortOption: ClosetSortOption = .recent
+    @State private var sortOption: FitMatchClosetSortOption = .recent
     @State private var saveErrorMessage: String?
     @State private var isTopChromeVisible = true
     @State private var selectedClosetItemID: UUID?
     @State private var displayedItems: [UserFit] = []
     @State private var pendingDeleteItem: UserFit?
+    @State private var deletingItemID: UUID?
+
+    private var userFits: [UserFit] {
+        FitMatchClosetPresentation.activeItems(from: cachedUserFits)
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -61,16 +65,7 @@ struct MyClosetView: View {
                 .presentationDragIndicator(.visible)
             case .manualAdd:
                 NavigationStack {
-                    AddClosetItemView { item in
-                        modelContext.insert(item)
-                        do {
-                            try modelContext.save()
-                            return true
-                        } catch {
-                            modelContext.rollback()
-                            return false
-                        }
-                    }
+                    AddClosetItemView()
                 }
                 .presentationDragIndicator(.visible)
             case .linkRegistration:
@@ -81,19 +76,7 @@ struct MyClosetView: View {
                 .presentationDragIndicator(.visible)
             }
         }
-        .alert(basisAlertTitle, isPresented: $isShowingBasisChangeAlert) {
-            Button("취소", role: .cancel) {
-                clearPendingBasisChange()
-            }
-
-            Button(existingBasisItem == nil ? "설정" : "변경") {
-                isShowingBasisChangeAlert = false
-                applyPendingBasisChange()
-            }
-        } message: {
-            Text(basisAlertMessage)
-        }
-        .alert("저장 실패", isPresented: Binding(
+        .alert("요청을 완료하지 못했어요", isPresented: Binding(
             get: { saveErrorMessage != nil },
             set: { if !$0 { saveErrorMessage = nil } }
         )) {
@@ -119,12 +102,12 @@ struct MyClosetView: View {
                 deleteItem(item)
             }
         } message: {
-            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 함께 삭제돼요. 그래도 삭제할까요?")
+            Text("이 옷을 삭제하면 이 옷으로 비교한 기록도 목록에서 함께 삭제돼요. 그래도 삭제할까요?")
         }
         .onAppear {
             rebuildDisplayedItems()
         }
-        .onChange(of: selectedCategory) { _, _ in
+        .onChange(of: selectedComparisonGroup) { _, _ in
             rebuildDisplayedItems()
         }
         .onChange(of: selectedBrand) { _, _ in
@@ -133,7 +116,7 @@ struct MyClosetView: View {
         .onChange(of: sortOption) { _, _ in
             rebuildDisplayedItems()
         }
-        .onChange(of: userFits.count) { _, _ in
+        .onChange(of: closetItemsPresentationRevision) { _, _ in
             rebuildDisplayedItems()
         }
     }
@@ -181,22 +164,32 @@ struct MyClosetView: View {
                     Button {
                         selectedClosetItemID = item.id
                     } label: {
-                        ClosetItemCard(item: item) {
-                            toggleRepresentative(item)
-                        }
-                        .contentShape(Rectangle())
+                        ClosetItemCard(item: item)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .disabled(deletingItemID != nil)
+                    .overlay {
+                        if deletingItemID == item.id {
+                            ProgressView("삭제 중")
+                                .font(.subheadline)
+                                .padding(12)
+                                .background(.regularMaterial, in: Capsule())
+                        }
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        // Match History: keep the row visible until confirmation.
+                        Button {
+                            guard deletingItemID == nil else { return }
+                            pendingDeleteItem = item
+                        } label: {
+                            Label("삭제", systemImage: "trash")
+                        }
+                        .disabled(deletingItemID != nil)
+                        .tint(.red)
+                    }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                    // Temporarily disabled: restore these lines to re-enable
-                    // right-swipe reference-garment assignment/removal.
-//                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-//                        basisSwipeButton(for: item)
-//                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        deleteSwipeButton(for: item)
-                    }
                 }
 
                 if displayedItems.isEmpty {
@@ -259,30 +252,12 @@ struct MyClosetView: View {
     }
 
     private func rebuildDisplayedItems() {
-        let filtered = userFits.filter { item in
-            let matchesCategory = selectedCategory == nil || item.category == selectedCategory
-            let matchesBrand = selectedBrand == nil || item.brandName == selectedBrand
-
-            return matchesCategory && matchesBrand
-        }
-
-        switch sortOption {
-        case .recent:
-            displayedItems = filtered.sorted { $0.createdAt > $1.createdAt }
-        case .oldest:
-            displayedItems = filtered.sorted { $0.createdAt < $1.createdAt }
-        case .brand:
-            displayedItems = filtered.sorted { $0.brandName < $1.brandName }
-        case .category:
-            displayedItems = filtered.sorted { $0.category.rawValue < $1.category.rawValue }
-        case .basisFirst:
-            displayedItems = filtered.sorted {
-                if $0.isRepresentative != $1.isRepresentative {
-                    return $0.isRepresentative && !$1.isRepresentative
-                }
-                return $0.createdAt > $1.createdAt
-            }
-        }
+        displayedItems = FitMatchClosetPresentation.displayedItems(
+            from: cachedUserFits,
+            comparisonGroup: selectedComparisonGroup,
+            brand: selectedBrand,
+            sort: sortOption
+        )
     }
 
     private var closetLayout: ContentListLayout {
@@ -300,13 +275,17 @@ struct MyClosetView: View {
     private var closetFilterItems: [ContentFilterItem] {
         [
             ContentFilterItem(
-                id: "category",
-                selectedID: selectedCategory?.rawValue ?? "all",
-                selectedTitle: selectedCategory?.rawValue ?? "전체",
+                id: "comparison_group",
+                selectedID: selectedComparisonGroup?.rawValue ?? "all",
+                selectedTitle: selectedComparisonGroup?.displayName ?? "전체 그룹",
                 options: [ContentFilterOption(id: "all", title: "전체")]
-                    + availableCategories.map { ContentFilterOption(id: $0.rawValue, title: $0.rawValue) },
+                    + availableComparisonGroups.map {
+                        ContentFilterOption(id: $0.rawValue, title: $0.displayName)
+                    },
                 onSelect: { id in
-                    selectedCategory = id == "all" ? nil : ClothingCategory(rawValue: id)
+                    selectedComparisonGroup = id == "all"
+                        ? nil
+                        : FitMatchComparisonGroup(rawValue: id)
                 }
             ),
             ContentFilterItem(
@@ -323,9 +302,9 @@ struct MyClosetView: View {
                 id: "sort",
                 selectedID: sortOption.rawValue,
                 selectedTitle: sortOption.title,
-                options: ClosetSortOption.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
+                options: FitMatchClosetSortOption.allCases.map { ContentFilterOption(id: $0.rawValue, title: $0.title) },
                 onSelect: { id in
-                    sortOption = ClosetSortOption(rawValue: id) ?? .recent
+                    sortOption = FitMatchClosetSortOption(rawValue: id) ?? .recent
                 }
             )
         ]
@@ -338,12 +317,20 @@ struct MyClosetView: View {
         ]
     }
 
-    private var availableCategories: [ClothingCategory] {
-        Array(Set(userFits.map(\.category))).sorted { $0.rawValue < $1.rawValue }
+    private var availableComparisonGroups: [FitMatchComparisonGroup] {
+        FitMatchComparisonGroup.allCases.filter { group in
+            userFits.contains { $0.comparisonGroup == group }
+        }
     }
 
     private var availableBrands: [String] {
         Array(Set(userFits.map(\.brandName))).sorted()
+    }
+
+    private var closetItemsPresentationRevision: [String] {
+        userFits.map { item in
+            "\(item.id.uuidString)|\(item.comparisonGroupCode ?? "")|\(item.brandName)|\(item.updatedAt.timeIntervalSinceReferenceDate)"
+        }
     }
 
     private func presentActiveSheet(_ sheet: ClosetActiveSheet) {
@@ -363,154 +350,24 @@ struct MyClosetView: View {
         activeSheet = nil
     }
 
-    @ViewBuilder
-    private func basisSwipeButton(for item: UserFit) -> some View {
-        Button {
-            toggleRepresentative(item)
-        } label: {
-            Label(
-                item.isRepresentative ? "기준 옷 해제" : "기준 옷으로 설정",
-                systemImage: item.isRepresentative ? "tshirt" : "tshirt.fill"
-            )
-        }
-        .tint(item.isRepresentative ? .gray : .black)
-    }
-
-    private func toggleRepresentative(_ item: UserFit) {
-        if item.isRepresentative {
-            item.isRepresentative = false
-            item.updatedAt = Date()
-            do {
-                try modelContext.save()
-                rebuildDisplayedItems()
-            } catch {
-                modelContext.rollback()
-                rebuildDisplayedItems()
-                saveErrorMessage = "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요."
-            }
-            return
-        }
-
-        pendingBasisItem = item
-        existingBasisItem = userFits.first {
-            $0.id != item.id
-                && $0.isRepresentative
-                && ReferenceGarmentPolicy.conflicts($0, item)
-        }
-        isShowingBasisChangeAlert = true
-    }
-
-    private var basisAlertTitle: String {
-        guard let pendingBasisItem else {
-            return "기준 옷 설정"
-        }
-
-        if existingBasisItem == nil {
-            return "이 옷을 기준 옷으로 설정할까요?"
-        }
-
-        return "\(pendingBasisItem.detailCategory.rawValue) 기준 옷을 변경할까요?"
-    }
-
-    private var basisAlertMessage: String {
-        guard let pendingBasisItem else {
-            return ""
-        }
-
-        if let existingBasisItem {
-            return """
-            현재 기준 옷
-            \(existingBasisItem.displayName)
-
-            새 기준 옷
-            \(pendingBasisItem.displayName)
-
-            기준 옷은 같은 종류마다 1개만 설정할 수 있어요.
-            변경하면 기존 기준 옷은 자동으로 해제돼요.
-            """
-        }
-
-        return """
-        기준 옷은 같은 종류의 상품을 비교할 때 가장 먼저 사용됩니다.
-        기준 옷은 종류별로 1개만 설정할 수 있으며 언제든 변경할 수 있습니다.
-        """
-    }
-
-    private func applyPendingBasisChange() {
-        guard let pendingBasisItem else {
-            return
-        }
-
-        userFits
-            .filter {
-                $0.id != pendingBasisItem.id
-                    && $0.isRepresentative
-                    && ReferenceGarmentPolicy.conflicts($0, pendingBasisItem)
-            }
-            .forEach {
-                $0.isRepresentative = false
-                $0.updatedAt = Date()
-            }
-
-        pendingBasisItem.isRepresentative = true
-        pendingBasisItem.updatedAt = Date()
-        do {
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            rebuildDisplayedItems()
-            saveErrorMessage = "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요."
-            clearPendingBasisChange()
-            return
-        }
-
-        rebuildDisplayedItems()
-        clearPendingBasisChange()
-    }
-
-    private func clearPendingBasisChange() {
-        pendingBasisItem = nil
-        existingBasisItem = nil
-        isShowingBasisChangeAlert = false
-    }
-
     private func deleteItem(_ item: UserFit) {
-        deleteHistoriesReferencing(item)
-        modelContext.delete(item)
-        do {
-            try modelContext.save()
+        guard deletingItemID == nil else { return }
+        deletingItemID = item.id
+
+        Task { @MainActor in
+            defer { deletingItemID = nil }
+            let outcome = await FitMatchClosetDeletionAction.delete(
+                item: item,
+                histories: histories,
+                in: modelContext,
+                comparisonSync: comparisonSync,
+                closetSync: closetSync
+            )
             rebuildDisplayedItems()
-        } catch {
-            modelContext.rollback()
-            rebuildDisplayedItems()
-            saveErrorMessage = "옷을 삭제하지 못했어요. 다시 시도해 주세요."
+            saveErrorMessage = outcome.userVisibleMessage
         }
     }
 
-    @ViewBuilder
-    private func deleteSwipeButton(for item: UserFit) -> some View {
-        Button(role: .destructive) {
-            if historiesReferencing(item).isEmpty {
-                deleteItem(item)
-            } else {
-                pendingDeleteItem = item
-            }
-        } label: {
-            Label("삭제", systemImage: "trash")
-        }
-        .tint(.red)
-    }
-
-    private func deleteHistoriesReferencing(_ item: UserFit) {
-        historiesReferencing(item)
-            .forEach { history in
-                modelContext.delete(history)
-            }
-    }
-
-    private func historiesReferencing(_ item: UserFit) -> [RecommendationHistory] {
-        histories.filter { $0.userFit.id == item.id }
-    }
 }
 
 private extension String {
@@ -536,24 +393,6 @@ private enum ClosetActiveSheet: Identifiable {
             return "manualAdd"
         case .linkRegistration:
             return "linkRegistration"
-        }
-    }
-}
-
-private enum ClosetSortOption: String, CaseIterable {
-    case recent
-    case oldest
-    case brand
-    case category
-    case basisFirst
-
-    var title: String {
-        switch self {
-        case .recent: return "최근 등록"
-        case .oldest: return "오래된순"
-        case .brand: return "브랜드순"
-        case .category: return "카테고리순"
-        case .basisFirst: return "기준 옷 우선"
         }
     }
 }
@@ -727,14 +566,13 @@ private struct EmptyClosetView: View {
 
 private struct ClosetItemCard: View {
     let item: UserFit
-    let onToggleRepresentative: () -> Void
 
     var body: some View {
         FitMatchCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLString,
+                        imageURLString: item.imageURLStringForDisplay,
                         category: item.category,
                         width: 72,
                         height: 88,
@@ -753,23 +591,13 @@ private struct ClosetItemCard: View {
                             .lineLimit(2)
                             .truncationMode(.tail)
 
-                        Text("\(item.category.rawValue) · \(item.detailCategory.rawValue) / \(item.sizeName)")
+                        Text("\(item.comparisonGroup?.displayName ?? "미지정") / \(item.sizeName.fitMatchKoreanSizeDisplayName)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
 
                     Spacer(minLength: 4)
-
-                    Button(action: onToggleRepresentative) {
-                        Image(systemName: item.isRepresentative ? "tshirt.fill" : "tshirt")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(item.isRepresentative ? "기준 옷" : "기준 옷으로 설정")
                 }
 
                 ClosetMeasurementGrid(item: item)
@@ -800,7 +628,7 @@ private struct ClosetItemCard: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLString,
+                        imageURLString: item.imageURLStringForDisplay,
                         category: item.category,
                         width: 72,
                         height: 88,
@@ -827,19 +655,6 @@ private struct ClosetItemCard: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 8) {
-                        Button(action: onToggleRepresentative) {
-                            Image(systemName: item.isRepresentative ? "tshirt.fill" : "tshirt")
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(item.isRepresentative ? Color(.systemBackground) : .primary)
-                                .frame(width: 34, height: 34)
-                                .background(
-                                    item.isRepresentative ? Color.primary : Color(.secondarySystemGroupedBackground),
-                                    in: Circle()
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(item.isRepresentative ? "기준 옷" : "기준 옷으로 설정")
-
                         Text(item.fitPreference.rawValue)
                             .font(.caption.weight(.bold))
                             .padding(.horizontal, 8)
@@ -1000,7 +815,7 @@ private struct ClosetGridCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 ZStack(alignment: .topTrailing) {
                     ProductThumbnailView(
-                        imageURLString: item.sourceProduct?.imageURLString,
+                        imageURLString: item.imageURLStringForDisplay,
                         category: item.category,
                         width: 126,
                         height: 142,
@@ -1008,15 +823,6 @@ private struct ClosetGridCard: View {
                     )
                     .frame(maxWidth: .infinity)
 
-                    if item.isRepresentative {
-                        Text("기준")
-                            .font(.caption2.weight(.black))
-                            .foregroundStyle(Color(.systemBackground))
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 4)
-                            .background(Color.primary, in: Capsule())
-                            .padding(8)
-                    }
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -1031,7 +837,7 @@ private struct ClosetGridCard: View {
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("\(item.sizeName) · \(item.detailCategory.rawValue)")
+                    Text("\(item.sizeName.fitMatchKoreanSizeDisplayName) · \(item.comparisonGroup?.displayName ?? "미지정")")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)

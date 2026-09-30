@@ -6,17 +6,18 @@ struct LinkClosetRegistrationView: View {
     let prefersRepresentativeByDefault: Bool
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
     @Query(sort: \Brand.name) private var brands: [Brand]
 
     @State private var productURL = ""
     @State private var isLoading = false
+    @State private var loadingPhase: ProductAnalysisPhase = .loadingProductInfo
     @State private var errorMessage: String?
     @State private var parsedProduct: Product?
     @State private var partialProduct: Product?
     @State private var parsedDetailCategory: ClosetDetailCategory = .other
+    @State private var productMeasurementPresence: FitMatchProductMeasurementPresence = .unknown
+    @State private var registrationServerContext: FitMatchClosetRegistrationServerContext?
     @State private var isShowingAddToClosetSheet = false
-    @State private var isShowingManualAddSheet = false
     @State private var recoveryViewModel: ShoppingProductViewModel?
     @State private var isShowingSizeTableRecovery = false
     @State private var recoveredSelectedSizeID: UUID?
@@ -26,9 +27,8 @@ struct LinkClosetRegistrationView: View {
     @State private var isShowingEmptyPasteboardMessage = false
     @State private var emptyPasteboardShake = 0
     @State private var loadTask: Task<Void, Never>?
+    @State private var loadRequestID = UUID()
     @FocusState private var isURLFocused: Bool
-
-    private let parserService = ProductURLParserService()
 
     init(prefersRepresentativeByDefault: Bool = false, onSaved: (() -> Void)? = nil) {
         self.prefersRepresentativeByDefault = prefersRepresentativeByDefault
@@ -40,7 +40,40 @@ struct LinkClosetRegistrationView: View {
     }
 
     private var canLoadProduct: Bool {
-        ProductURLSupport.isSupportedProductURL(normalizedURLString) && !isLoading
+        FitMatchProductLinkInput.validate(normalizedURLString).canStartLoad && !isLoading
+    }
+
+    /// A recovered selection is valid only while the current runtime still
+    /// proves both measurement eligibility and its exact server UUID tuple.
+    /// A stale recovery ID must not turn a one-size sheet into an automatic
+    /// registration choice.
+    private var preferredRecoveredSize: ProductSize? {
+        guard let parsedProduct,
+              let registrationServerContext,
+              let recoveredSelectedSizeID else {
+            return nil
+        }
+        return parsedProduct.sizes.first {
+            $0.id == recoveredSelectedSizeID
+                && registrationServerContext.isRegisterable(displaySizeID: $0.id)
+                && registrationServerContext.identity(for: $0.id) != nil
+        }
+    }
+
+    private var registrationBlockMessage: String? {
+        LinkClosetRegistrationPreparation.registrationBlockMessage(
+            productMeasurementPresence: productMeasurementPresence,
+            serverRegistrationContext: registrationServerContext,
+            displaySizes: parsedProduct?.sizes ?? []
+        )
+    }
+
+    private var canOpenRegistration: Bool {
+        LinkClosetRegistrationPreparation.canOpenRegistration(
+            product: parsedProduct,
+            serverContext: registrationServerContext,
+            isLoading: isLoading
+        )
     }
 
     var body: some View {
@@ -61,20 +94,25 @@ struct LinkClosetRegistrationView: View {
         .navigationTitle("상품 링크로 추가")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isShowingAddToClosetSheet) {
-            if let parsedProduct {
+            if let parsedProduct, let registrationServerContext {
                 AddComparedProductToClosetSheet(
                     product: parsedProduct,
                     productDetailCategory: parsedDetailCategory,
-                    recommendedSize: recoveredSelectedSizeID.flatMap { selectedID in
-                        uniqueSizes(for: parsedProduct).first { $0.id == selectedID }
-                    } ?? uniqueSizes(for: parsedProduct).first,
-                    preselectedClassification: ParsedClosetClassification.resolve(
-                        product: parsedProduct,
-                        detailCategory: parsedDetailCategory
-                    ),
+                    // A fresh link registration never invents a size choice,
+                    // even when the server exposes a single registerable row.
+                    // Only a prior explicit SizeTableRecovery selection can
+                    // seed this form, and it must still be backed by the
+                    // exact runtime identity/measurement context.
+                    recommendedSize: preferredRecoveredSize,
+                    // The Sheet receives the server context and decides whether
+                    // a tuple is auto-selected. Passing a parser classification
+                    // here would make REVIEW_REQUIRED look user-confirmed.
+                    preselectedClassification: nil,
                     isParsedProductReadOnly: true,
+                    serverRegistrationContext: registrationServerContext,
                     startsAtRegistrationConfirmation: true,
-                    prefersRepresentativeByDefault: prefersRepresentativeByDefault
+                    prefersRepresentativeByDefault: prefersRepresentativeByDefault,
+                    requiresExplicitSizeSelection: preferredRecoveredSize == nil
                 ) { _ in
                     shouldCompleteAfterSheetDismissal = true
                 }
@@ -98,38 +136,7 @@ struct LinkClosetRegistrationView: View {
                 .presentationDragIndicator(.visible)
             }
         }
-        .sheet(isPresented: $isShowingManualAddSheet) {
-            if let partialProduct {
-                NavigationStack {
-                    AddClosetItemView(
-                        prefillCategory: partialProduct.category,
-                        prefillDetailCategory: parsedDetailCategory,
-                        prefillGender: partialProduct.productTargetGender,
-                        prefillSourceOption: closetSourceOption(for: partialProduct),
-                        prefillBrand: partialProduct.brand?.name,
-                        prefillProductName: partialProduct.name,
-                        prefersRepresentativeByDefault: prefersRepresentativeByDefault,
-                        productImageURLString: partialProduct.imageURLString,
-                        presentationContext: .linkedProduct
-                    ) { item in
-                        modelContext.insert(item)
-                        do {
-                            try modelContext.save()
-                            shouldCompleteAfterSheetDismissal = true
-                            return true
-                        } catch {
-                            modelContext.rollback()
-                            return false
-                        }
-                    }
-                }
-                .presentationDragIndicator(.visible)
-            }
-        }
         .onChange(of: isShowingAddToClosetSheet) { _, isPresented in
-            if !isPresented { completeSaveIfNeeded() }
-        }
-        .onChange(of: isShowingManualAddSheet) { _, isPresented in
             if !isPresented { completeSaveIfNeeded() }
         }
         .overlay(alignment: .top) {
@@ -139,7 +146,7 @@ struct LinkClosetRegistrationView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .alert("저장 실패", isPresented: Binding(
+        .alert("저장하지 못했어요", isPresented: Binding(
             get: { saveErrorMessage != nil },
             set: { if !$0 { saveErrorMessage = nil } }
         )) {
@@ -150,16 +157,27 @@ struct LinkClosetRegistrationView: View {
             Text(saveErrorMessage ?? "")
         }
         .onChange(of: productURL) { _, _ in
+            // A new URL invalidates both the retailer parser and the pending
+            // server authority result. The old task may complete later, but
+            // it is no longer allowed to publish its card or enable Next.
+            loadRequestID = UUID()
+            loadTask?.cancel()
+            loadTask = nil
+            isLoading = false
             parsedProduct = nil
             partialProduct = nil
+            registrationServerContext = nil
+            productMeasurementPresence = .unknown
             recoveryViewModel = nil
             recoveredSelectedSizeID = nil
             errorMessage = nil
-            if ProductURLSupport.isSupportedProductURL(productURL) {
+            if !normalizedURLString.isEmpty {
                 isShowingEmptyPasteboardMessage = false
             }
         }
         .onDisappear {
+            // Presenting the draft must not cancel its pending authority.
+            guard !isShowingAddToClosetSheet else { return }
             loadTask?.cancel()
             loadTask = nil
         }
@@ -169,36 +187,8 @@ struct LinkClosetRegistrationView: View {
         guard shouldCompleteAfterSheetDismissal else { return }
         shouldCompleteAfterSheetDismissal = false
         withAnimation { isShowingSavedToast = true }
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.2))
-            onSaved?()
-            dismiss()
-        }
-    }
-
-    private var loadingContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 7) {
-                Text("상품 정보를 불러오고 있어요")
-                    .font(.title2.weight(.black))
-                Text("잠시만 기다려 주세요.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            FitMatchCard {
-                VStack(alignment: .leading, spacing: 16) {
-                    FitMatchLoadingRow(title: "상품 정보 불러오는 중", state: .done)
-                    FitMatchLoadingRow(title: "사이즈표 확인 중", state: .loading)
-                    FitMatchLoadingRow(title: "내 옷장 추가 준비 중", state: .waiting)
-
-                    Text("평균 10~20초 소요됩니다.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 6)
-                }
-            }
-        }
+        onSaved?()
+        dismiss()
     }
 
     private var urlCard: some View {
@@ -242,8 +232,10 @@ struct LinkClosetRegistrationView: View {
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .contentShape(Rectangle())
                 .onTapGesture {
+                    guard !isLoading else { return }
                     isURLFocused = true
                 }
+                .disabled(isLoading)
 
                 if isShowingEmptyPasteboardMessage {
                     Text("복사된 상품 링크가 없어요. 링크를 복사한 후 다시 눌러 주세요.")
@@ -252,10 +244,15 @@ struct LinkClosetRegistrationView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .modifier(ClosetLinkPasteShakeEffect(animatableData: CGFloat(emptyPasteboardShake)))
                         .transition(.opacity)
+                } else if !normalizedURLString.isEmpty && !ProductURLSupport.isSupportedProductURL(normalizedURLString) {
+                    Text("지원하지 않는 상품 링크예요. 공식 상품 URL인지 확인해 주세요.")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 PrimaryButton(
-                    title: isLoading ? "불러오는 중" : "상품 정보 불러오기",
+                    title: isLoading ? loadingPhase.productLoadingTitle : "상품 정보 불러오기",
                     systemImage: "sparkles",
                     isLoading: isLoading
                 ) {
@@ -265,6 +262,39 @@ struct LinkClosetRegistrationView: View {
                 .disabled(!canLoadProduct)
             }
         }
+    }
+
+    private var loadingContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("상품을 불러오고 있어요")
+                    .font(.title2.weight(.black))
+                Text("잠시만 기다려 주세요.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            FitMatchCard {
+                VStack(alignment: .leading, spacing: 16) {
+                    FitMatchLoadingRow(
+                        title: "상품 정보 불러오는 중",
+                        state: loadingState(for: .loadingProductInfo)
+                    )
+                    FitMatchLoadingRow(
+                        title: "사이즈표 확인 중",
+                        state: loadingState(for: .loadingSizeChart)
+                    )
+                    FitMatchLoadingRow(
+                        title: "내 옷장 추가 준비 중",
+                        state: loadingState(for: .preparingComparison)
+                    )
+                }
+            }
+        }
+    }
+
+    private func loadingState(for phase: ProductAnalysisPhase) -> FitMatchLoadingState {
+        if loadingPhase == phase { return .loading }
+        return loadingPhase.rawValue > phase.rawValue ? .done : .waiting
     }
 
     @ViewBuilder
@@ -302,10 +332,25 @@ struct LinkClosetRegistrationView: View {
                         }
                     }
 
-                    PrimaryButton(title: "다음", systemImage: "chevron.right") {
+                    if let registrationBlockMessage {
+                        Label(
+                            registrationBlockMessage,
+                            systemImage: "ruler"
+                        )
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    PrimaryButton(
+                        title: "다음",
+                        systemImage: "chevron.right"
+                    ) {
+                        guard canOpenRegistration else { return }
                         isShowingAddToClosetSheet = true
                     }
                     .accessibilityIdentifier("closet.linkNext")
+                    .disabled(!canOpenRegistration)
                 }
             }
         }
@@ -322,15 +367,24 @@ struct LinkClosetRegistrationView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Label(
-                            partialProduct == nil ? errorMessage : "상품 정보를 불러왔어요.",
-                            systemImage: partialProduct == nil ? "exclamationmark.circle" : "checkmark.circle"
+                            (parsedProduct != nil || partialProduct != nil)
+                                ? "상품 정보를 불러왔어요."
+                                : errorMessage,
+                            systemImage: (parsedProduct != nil || partialProduct != nil)
+                                ? "checkmark.circle" : "exclamationmark.circle"
                         )
                         .font(.headline)
-                        .foregroundStyle(partialProduct == nil ? .red : .primary)
+                        .foregroundStyle((parsedProduct != nil || partialProduct != nil) ? Color.primary : Color.red)
+                    }
+
+                    if parsedProduct != nil, !isUnsupportedTopBottomSet {
+                        Text(errorMessage)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
 
                     if let partialProduct, !isUnsupportedTopBottomSet {
-                        Text("판매 페이지에 사이즈표가 있지만 제공 형식이나 이미지 구성 때문에 자동으로 읽지 못했어요. 사이즈표를 확인한 뒤 직접 입력해 주세요.")
+                        Text(errorMessage)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -356,23 +410,24 @@ struct LinkClosetRegistrationView: View {
                             }
                         }
 
-                        PrimaryButton(title: "사이즈표 이미지 분석", systemImage: "viewfinder") {
-                            isShowingSizeTableRecovery = true
+                        if productMeasurementPresence != .available {
+                            PrimaryButton(title: "사이즈표 이미지 분석", systemImage: "viewfinder") {
+                                isShowingSizeTableRecovery = true
+                            }
                         }
 
-                        SecondaryButton(title: "사이즈 직접 입력", systemImage: "square.and.pencil") {
-                            isShowingManualAddSheet = true
-                        }
+                        Text("링크 상품은 서버가 확인한 상품·옵션·사이즈 식별자가 있어야 저장할 수 있어요. 서버 사이즈 정보를 다시 확인한 뒤 등록해 주세요.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
         }
     }
 
-    private func loadProduct() async {
-        let trimmedURL = normalizedURLString
-        guard ProductURLSupport.isSupportedProductURL(trimmedURL), !isLoading else {
-            errorMessage = trimmedURL.isEmpty ? nil : "올바른 상품 URL을 입력해 주세요."
+    private func loadProduct(requestID: UUID) async {
+        guard !isLoading, requestID == loadRequestID else {
             return
         }
 
@@ -380,80 +435,71 @@ struct LinkClosetRegistrationView: View {
         errorMessage = nil
         parsedProduct = nil
         partialProduct = nil
+        registrationServerContext = nil
+        productMeasurementPresence = .unknown
+        loadingPhase = .loadingProductInfo
         isLoading = true
-        defer { isLoading = false }
-
-        do {
-            let parsedInfo = try await parserService.parse(urlString: trimmedURL)
-            guard !Task.isCancelled else { return }
-            let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
-
-            let sizes = ParsedProductSizeNormalizer.makeProductSizes(from: parsedInfo.sizes)
-
-            let product = Product(
-                name: parsedInfo.productName,
-                brand: brand,
-                category: parsedInfo.category,
-                productCode: parsedInfo.productID,
-                sourceURLString: parsedInfo.canonicalURLString ?? parsedInfo.sourceURL.absoluteString,
-                imageURLString: parsedInfo.imageURLString,
-                metadata: parsedInfo.productMetadata,
-                sourceType: parsedInfo.sourceType,
-                sourceName: parsedInfo.sourceName,
-                sizes: sizes
-            )
-
-            parsedDetailCategory = parsedInfo.detailCategory
-            if let canonical = ParsedClosetClassification.resolve(
-                product: product,
-                detailCategory: parsedInfo.detailCategory
-            ) {
-                product.categoryCode = canonical.categoryCode
-                product.normalizedProductTypeCode = canonical.normalizedProductTypeCode
-                product.garmentType = canonical.garmentFamily
-                product.sleeveType = canonical.lengthType
-                product.constructionType = canonical.constructionType
+        defer {
+            if loadRequestID == requestID {
+                isLoading = false
             }
-            parsedProduct = product
-        } catch let partialError as ProductURLParserPartialError {
-            guard !Task.isCancelled else { return }
-            let parsedInfo = partialError.productInfo
-            let brand = existingBrand(named: parsedInfo.brandName) ?? Brand(name: parsedInfo.brandName)
-            let product = Product(
-                name: parsedInfo.productName,
-                brand: brand,
-                category: parsedInfo.category,
-                productCode: parsedInfo.productID,
-                sourceURLString: parsedInfo.canonicalURLString ?? parsedInfo.sourceURL.absoluteString,
-                imageURLString: parsedInfo.imageURLString,
-                metadata: parsedInfo.productMetadata,
-                sourceType: parsedInfo.sourceType,
-                sourceName: parsedInfo.sourceName,
-                sizes: []
-            )
-            parsedDetailCategory = parsedInfo.detailCategory
-            partialProduct = product
-            let viewModel = ShoppingProductViewModel(initialURL: parsedInfo.sourceURL.absoluteString)
-            viewModel.apply(parsedInfo)
-            recoveryViewModel = viewModel
-            errorMessage = parsedInfo.parserNotice ?? partialError.errorDescription
-        } catch {
-            guard !Task.isCancelled else { return }
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? "상품 정보를 불러오지 못했습니다."
+        }
+
+        let outcome = await FitMatchLinkClosetRegistrationAction.load(
+            urlString: normalizedURLString,
+            makeViewModel: { ShoppingProductViewModel(initialURL: $0) },
+            existingBrand: existingBrand(named:),
+            onPhaseChange: { phase in
+                guard !Task.isCancelled, requestID == loadRequestID else { return }
+                loadingPhase = phase
+            },
+            onRetailerReady: { preparation in
+                guard !Task.isCancelled, requestID == loadRequestID else { return }
+                parsedProduct = preparation.parsedProduct
+                parsedDetailCategory = preparation.detailCategory
+                productMeasurementPresence = preparation.productMeasurementPresence
+                registrationServerContext = preparation.serverRegistrationContext
+            }
+        )
+        guard !Task.isCancelled, requestID == loadRequestID else { return }
+        switch outcome {
+        case .blocked(let validation):
+            errorMessage = validation.userMessage
+            return
+        case .cancelled:
+            return
+        case .loaded(let preparation):
+            // Keep the retailer draft visible if server preparation fails.
+            // Its unavailable context still prevents persistence.
+            parsedProduct = preparation.parsedProduct ?? parsedProduct
+            partialProduct = preparation.partialProduct
+            parsedDetailCategory = preparation.detailCategory
+            productMeasurementPresence = preparation.productMeasurementPresence
+            registrationServerContext = preparation.serverRegistrationContext
+            recoveryViewModel = preparation.recoveryViewModel
+            errorMessage = preparation.errorMessage
         }
     }
 
     private func startLoadingProduct() {
         guard loadTask == nil, !isLoading else { return }
+        let requestID = UUID()
+        loadRequestID = requestID
         loadTask = Task {
-            await loadProduct()
-            loadTask = nil
+            await loadProduct(requestID: requestID)
+            if loadRequestID == requestID {
+                loadTask = nil
+            }
         }
     }
 
     private func pasteProductURL() {
         guard let value = UIPasteboard.general.string,
               !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            if !normalizedURLString.isEmpty {
+                isShowingEmptyPasteboardMessage = false
+                return
+            }
             isShowingEmptyPasteboardMessage = true
             withAnimation(.linear(duration: 0.45)) {
                 emptyPasteboardShake += 1
@@ -481,14 +527,34 @@ struct LinkClosetRegistrationView: View {
     }
 
     private func completeRecoveredProduct(using viewModel: ShoppingProductViewModel) {
+        guard viewModel.productMeasurementPresence != .none else {
+            viewModel.recoveryErrorMessage =
+                "이 상품은 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
+            return
+        }
         let brand = existingBrand(named: viewModel.brand) ?? viewModel.makeBrand()
         guard let product = viewModel.makeProductForClosetRegistration(brand: brand) else {
             viewModel.recoveryErrorMessage = "선택한 사이즈 정보를 저장할 수 없습니다."
             return
         }
 
+        let serverContext = viewModel.closetRegistrationServerContext
+        // Recovery is the one link-flow exception to the no-auto-selection
+        // rule: only an exact size that the user explicitly picked in the
+        // recovery UI may seed the registration sheet.
+        guard let selectedSizeID = viewModel.recoverySelectedSizeID,
+              serverContext.isRegisterable(displaySizeID: selectedSizeID),
+              serverContext.identity(for: selectedSizeID) != nil else {
+            // A recovered display size without a server-issued UUID is useful
+            // parser evidence, but it cannot safely become a link-based
+            // Closet row. Do not send it through the old local-only form.
+            viewModel.recoveryErrorMessage = "서버 사이즈 정보를 다시 확인해 주세요."
+            return
+        }
+
         parsedProduct = product
         partialProduct = nil
+        registrationServerContext = serverContext
         errorMessage = nil
         recoveredSelectedSizeID = viewModel.recoverySelectedSizeID
         isShowingSizeTableRecovery = false
@@ -513,12 +579,160 @@ struct LinkClosetRegistrationView: View {
         return value.isEmpty ? "카테고리 정보 없음" : value
     }
 
-    private func closetSourceOption(for product: Product) -> ClosetProductSourceOption {
-        if product.sourceName == "무신사" { return .musinsa }
-        if product.sourceName.contains("유니클로") { return .uniqlo }
-        return .manual
+}
+
+/// Converts a parsed link into a Closet-registration input without creating a
+/// second local classification authority. The Product keeps exact server status
+/// and every source size; retailer measurement presence separately controls
+/// whether registration may begin. Measurement recovery is offered only when
+/// the server has already confirmed the canonical tuple.
+@MainActor
+struct LinkClosetRegistrationPreparation {
+    let parsedProduct: Product?
+    let partialProduct: Product?
+    let detailCategory: ClosetDetailCategory
+    let productMeasurementPresence: FitMatchProductMeasurementPresence
+    let serverRegistrationContext: FitMatchClosetRegistrationServerContext
+    let recoveryViewModel: ShoppingProductViewModel?
+    let errorMessage: String?
+
+    var registrationBlockMessage: String? {
+        Self.registrationBlockMessage(
+            productMeasurementPresence: productMeasurementPresence,
+            serverRegistrationContext: serverRegistrationContext,
+            displaySizes: parsedProduct?.sizes ?? []
+        )
     }
 
+    var canBeginRegistration: Bool {
+        registrationBlockMessage == nil
+    }
+
+    /// Draft navigation does not authorize persistence. Only a non-nil pending
+    /// server context may open early; failure never becomes manual registration.
+    static func canOpenRegistration(
+        product: Product?,
+        serverContext: FitMatchClosetRegistrationServerContext?,
+        isLoading: Bool
+    ) -> Bool {
+        guard let product, !product.sizes.isEmpty else { return false }
+        if isLoading, serverContext?.classificationState == .preparing { return true }
+        return !isLoading && registrationBlockMessage(
+            productMeasurementPresence: .unknown,
+            serverRegistrationContext: serverContext,
+            displaySizes: product.sizes
+        ) == nil
+    }
+
+    static func registrationBlockMessage(
+        productMeasurementPresence: FitMatchProductMeasurementPresence,
+        serverRegistrationContext: FitMatchClosetRegistrationServerContext?,
+        displaySizes: [ProductSize]
+    ) -> String? {
+        // Measurement presence is already projected into the registerable
+        // size set. Keep the result screen's decision to product/size
+        // availability and leave classification review to the next sheet.
+        _ = productMeasurementPresence
+        guard !displaySizes.isEmpty else {
+            return "등록할 사이즈 정보를 찾지 못했습니다."
+        }
+        guard let serverRegistrationContext else {
+            return FitMatchFailureCopy.productServiceInspection
+        }
+        if let authorityBlockMessage = serverRegistrationContext.registrationBlockMessage {
+            return authorityBlockMessage
+        }
+        let hasExactRegisterableSize = displaySizes.contains { size in
+            serverRegistrationContext.isRegisterable(displaySizeID: size.id)
+                && serverRegistrationContext.identity(for: size.id) != nil
+        }
+        return hasExactRegisterableSize
+            ? nil
+            : "등록 가능한 사이즈 정보를 찾지 못했습니다."
+    }
+
+    static func make(
+        from viewModel: ShoppingProductViewModel,
+        brand: Brand?
+    ) -> LinkClosetRegistrationPreparation {
+        if let product = viewModel.makeProductForClosetRegistration(brand: brand) {
+            return LinkClosetRegistrationPreparation(
+                parsedProduct: product,
+                partialProduct: nil,
+                detailCategory: viewModel.detailCategory,
+                productMeasurementPresence: viewModel.productMeasurementPresence,
+                serverRegistrationContext: viewModel.closetRegistrationServerContext,
+                recoveryViewModel: nil,
+                // The link-result screen reports only whether product facts
+                // and an exact registerable size were loaded. Classification
+                // review belongs to the following registration sheet.
+                errorMessage: nil
+            )
+        }
+
+        guard viewModel.hasLoadedProductInfo,
+              !viewModel.productName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return LinkClosetRegistrationPreparation(
+                parsedProduct: nil,
+                partialProduct: nil,
+                detailCategory: viewModel.detailCategory,
+                productMeasurementPresence: viewModel.productMeasurementPresence,
+                serverRegistrationContext: viewModel.closetRegistrationServerContext,
+                recoveryViewModel: nil,
+                errorMessage: viewModel.errorMessage
+                    ?? FitMatchFailureCopy.productServiceInspection
+            )
+        }
+
+        let partial = Product(
+            name: viewModel.productName,
+            brand: brand,
+            category: viewModel.category,
+            productCode: viewModel.productCode,
+            sourceURLString: viewModel.productCanonicalURLString ?? viewModel.productURL,
+            imageURLString: viewModel.productImageURLString,
+            metadata: viewModel.productMetadata,
+            sourceType: viewModel.sourceType,
+            sourceName: viewModel.sourceName,
+            sizes: []
+        )
+        switch viewModel.serverAuthorityState {
+        case .confirmed(let authority):
+            let classification = authority.classification
+            partial.categoryCode = classification.categoryCode
+            partial.normalizedProductTypeCode = classification.detailCode
+            // `familyCode` is comparison policy, not the garment identity.
+            partial.garmentTypeRawValue = classification.garmentTypeCode
+                ?? classification.detailCode
+            partial.sleeveTypeRawValue = classification.lengthCode
+            partial.canonicalPolicyVersion = classification.taxonomyPolicyVersion
+                ?? classification.decisionVersion
+            partial.markClassificationAuthority(
+                viewModel.hasActiveUserExplicitClassification ? .localHint : .serverConfirmed,
+                sourceIdentity: classification.classificationID?.uuidString
+                    ?? classification.method
+            )
+        case .reviewRequired:
+            partial.markClassificationAuthority(.serverReviewRequired)
+        case .notComparable:
+            partial.markClassificationAuthority(.serverNotComparable)
+        case .unavailable:
+            partial.markClassificationAuthority(.serverUnavailable)
+        case .idle, .resolving:
+            partial.markClassificationAuthority(.localHint)
+        }
+
+        return LinkClosetRegistrationPreparation(
+            parsedProduct: nil,
+            partialProduct: partial,
+            detailCategory: viewModel.detailCategory,
+            productMeasurementPresence: viewModel.productMeasurementPresence,
+            serverRegistrationContext: viewModel.closetRegistrationServerContext,
+            recoveryViewModel: viewModel,
+            errorMessage: viewModel.errorMessage
+                ?? FitMatchFailureCopy.productServiceInspection
+        )
+    }
 }
 
 private struct ClosetLinkPasteShakeEffect: GeometryEffect {

@@ -30,7 +30,9 @@ final class GarmentMeasurementRecord {
         id: UUID = UUID(),
         value: Double,
         unit: MeasurementUnit = .centimeter,
+        unitRawValue: String? = nil,
         measurementCode: MeasurementCode,
+        measurementCodeRawValue: String? = nil,
         displayKind: MeasurementDisplayKind,
         methodSource: String,
         methodProfile: String? = nil,
@@ -50,8 +52,11 @@ final class GarmentMeasurementRecord {
     ) {
         self.id = id
         self.value = value
-        self.unitRawValue = unit.rawValue
-        self.measurementCodeRawValue = measurementCode.rawValue
+        // Keep a server-origin unit identifier intact even when the current
+        // local enum does not yet know it. `unit` remains the local display
+        // projection; it must not rewrite the wire/source fact.
+        self.unitRawValue = unitRawValue ?? unit.rawValue
+        self.measurementCodeRawValue = measurementCodeRawValue ?? measurementCode.rawValue
         self.displayKindRawValue = displayKind.rawValue
         self.methodSource = methodSource
         self.methodProfile = methodProfile
@@ -71,7 +76,10 @@ final class GarmentMeasurementRecord {
     }
 
     var measurementCode: MeasurementCode {
-        MeasurementCode(rawValue: measurementCodeRawValue) ?? .unknown
+        MeasurementCode(rawValue: measurementCodeRawValue)
+            ?? FitMatchCanonicalMeasurementCode
+                .projection(for: measurementCodeRawValue)?.localCode
+            ?? .unknown
     }
 
     var displayKind: MeasurementDisplayKind? {

@@ -16,6 +16,22 @@ enum ProductAnalysisPhase: Int, Equatable {
     case loadingProductInfo
     case loadingSizeChart
     case preparingComparison
+
+    var productLoadingTitle: String {
+        switch self {
+        case .loadingProductInfo, .loadingSizeChart:
+            return "쇼핑몰 정보 불러오는 중"
+        case .preparingComparison:
+            return "상품 정보 확인 중"
+        }
+    }
+}
+
+/// A typed, user-recoverable parser state. This must never be inferred from
+/// retailer display copy or an error string in the comparison UI.
+enum ProductAnalysisRecoveryAction: String, Equatable {
+    case confirmCategoryBeforeMeasurements
+    case enterMeasurementsManually
 }
 
 enum StandardBodySizeChart {
@@ -89,6 +105,98 @@ struct ParsedProductInfo {
     var productMetadata: ProductMetadata = ProductMetadata()
     var measurementAvailability: ProductMeasurementAvailability = .actualMeasurements
     var sizeTableRecoveryContext: SizeTableRecoveryContext? = nil
+    var parserProvenance: ProductParserProvenance? = nil
+    var recoveryAction: ProductAnalysisRecoveryAction? = nil
+    /// Transient official API bytes and HTTP metadata for the current import.
+    /// This is deliberately not persisted into legacy Product metadata.
+    var retailerAPIEvidence: FitMatchRetailerAPIEvidence? = nil
+}
+
+/// Describes where the product facts came from without changing their runtime meaning.
+///
+/// Measurement-level provenance remains on `ParsedMeasurement`. This envelope records
+/// which retailer parser produced the product facts so backend observations can be
+/// audited without inferring a parser from display copy such as `sourceName`.
+struct ProductParserProvenance: Equatable {
+    static let contractVersion = "ios-parser-provenance-v1"
+
+    var parserCode: String
+    var parserVersion: String?
+    var fieldSources: [String: String]
+}
+
+extension ParsedProductInfo {
+    func recordingParserProvenance(
+        parserCode: String,
+        parserVersion: String? = nil
+    ) -> ParsedProductInfo {
+        var copy = self
+        var fieldSources: [String: String] = [
+            "source_url": "user_supplied_url",
+            "product_name": "retailer_parser",
+            "brand_name": "retailer_parser",
+            "category": "ios_parser_classification",
+            "detail_category": "ios_parser_classification"
+        ]
+        if productID?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+            fieldSources["product_id"] = "retailer_parser"
+        }
+        if sourceCategoryPath?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+            fieldSources["source_category_path"] = "retailer_parser"
+        }
+        let sourceCategoryCodes = [
+            productMetadata.categoryDepth1Code,
+            productMetadata.categoryDepth2Code,
+            productMetadata.categoryDepth3Code,
+            productMetadata.categoryDepth4Code
+        ].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+        if sourceCategoryCodes.contains(where: { !$0.isEmpty }) {
+            fieldSources["source_category_codes"] = "retailer_parser"
+        }
+        if productTargetGender != .unknown || !productMetadata.genderCodes.isEmpty {
+            fieldSources["audience"] = "retailer_parser"
+        }
+        if productMetadata.structuredFacts["product_structure"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty == false {
+            fieldSources["product_structure"] = "retailer_parser"
+            fieldSources["product_structure_source"] = "retailer_parser"
+            fieldSources["product_structure_evidence"] = "retailer_parser"
+        }
+        if productMetadata.structuredFacts["comparison_measurement_contract"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty == false {
+            fieldSources["comparison_measurement_contract"] = "retailer_parser"
+            fieldSources["comparison_measurement_contract_source"] = "retailer_parser"
+            fieldSources["comparison_measurement_contract_evidence"] = "retailer_parser"
+        }
+        if productMetadata.structuredFacts["source_category_path_completeness"] == "complete",
+           productMetadata.structuredFacts["source_category_path_source"] == "uniqlo_pdp_breadcrumbs" {
+            fieldSources["source_category_path_completeness"] = "retailer_parser"
+            fieldSources["source_category_path_source"] = "retailer_parser"
+        }
+        if !sizes.isEmpty {
+            fieldSources["sizes"] = "retailer_parser"
+        }
+        if sizes.contains(where: { !$0.measurementRecords.isEmpty }) {
+            fieldSources["measurements"] = "measurement_records.evidence"
+        }
+        if imageURLString?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+            fieldSources["image_url"] = "retailer_parser"
+        }
+        if price != nil {
+            fieldSources["price"] = "retailer_parser"
+        }
+        if canonicalURLString?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+            fieldSources["canonical_url"] = "retailer_parser"
+        }
+        copy.parserProvenance = ProductParserProvenance(
+            parserCode: parserCode,
+            parserVersion: parserVersion,
+            fieldSources: fieldSources
+        )
+        return copy
+    }
 }
 
 struct ParsedProductSize: Identifiable, Equatable {
@@ -97,11 +205,21 @@ struct ParsedProductSize: Identifiable, Equatable {
     var measurements: GarmentMeasurements
     var measurementRecords: [ParsedMeasurement] = []
     var standardBodyChestCircumferenceCm: Double? = nil
+    /// Retailer fact only. Parsers must leave this nil when the retailer did
+    /// not expose size-level stock evidence; nil is encoded as UNKNOWN.
+    var availabilityStatus: String? = nil
+    var availabilityObservedAt: Date? = nil
+    var availabilityValidUntil: Date? = nil
+    var availabilityEvidence: [String: String] = [:]
 }
 
 struct ParsedMeasurement: Equatable {
     var value: Double
     var unit: MeasurementUnit = .centimeter
+    /// Original server unit identifier when this fact came from a canonical
+    /// runtime/Closet response. The local enum is deliberately only a
+    /// presentation projection.
+    var unitRawValue: String? = nil
     var measurementCode: MeasurementCode
     var displayKind: MeasurementDisplayKind
     var methodSource: String
@@ -115,12 +233,17 @@ struct ParsedMeasurement: Equatable {
     var rawValueText: String? = nil
     var evidenceLevel: MeasurementEvidenceLevel
     var semanticStatus: MeasurementSemanticStatus
+    /// vNext runtime records retain the exact DB canonical identifier here.
+    /// The local enum remains a display/comparison projection only.
+    var canonicalMeasurementCode: String? = nil
 
     func makeRecord(productSize: ProductSize? = nil, userFit: UserFit? = nil) -> GarmentMeasurementRecord {
         GarmentMeasurementRecord(
             value: value,
             unit: unit,
+            unitRawValue: unitRawValue,
             measurementCode: measurementCode,
+            measurementCodeRawValue: canonicalMeasurementCode,
             displayKind: displayKind,
             methodSource: methodSource,
             methodProfile: methodProfile,
@@ -247,6 +370,16 @@ protocol ProductURLParsing {
     ) async throws -> ParsedProductInfo
 }
 
+@MainActor
+protocol ZARACategoryResumableParsing: ProductURLParsing {
+    func parse(
+        from url: URL,
+        confirmedCategory: ClothingCategory,
+        confirmedDetailCategory: ClosetDetailCategory,
+        onProgress: @escaping (ProductAnalysisPhase) -> Void
+    ) async throws -> ParsedProductInfo
+}
+
 extension ProductURLParsing {
     func parse(
         from url: URL,
@@ -266,9 +399,9 @@ enum ProductURLParserError: LocalizedError {
         case .invalidURL:
             return "올바른 상품 URL을 입력해 주세요."
         case .unsupportedURL:
-            return "아직 지원하지 않는 상품 링크예요. 현재는 무신사와 유니클로 상품 URL을 지원합니다."
+            return "현재는 무신사, 유니클로, ZARA 상품 링크를 지원합니다."
         case .automaticParsingUnavailable:
-            return "상품 정보를 불러오지 못했어요. 잠시 후 다시 시도하거나 지원하는 쇼핑몰의 상품 URL인지 확인해 주세요."
+            return FitMatchFailureCopy.productServiceInspection
         }
     }
 }
@@ -309,10 +442,19 @@ enum ProductURLSupport {
             return nil
         }
 
-        if isMusinsaURL(url) { return "무신사" }
-        if isUniqloURL(url) { return "유니클로" }
-
-        return nil
+        switch FitMatchProductURLRouting.provider(
+            for: url,
+            zaraEnabled: ZARAIntegrationAvailability.isEnabled
+        ) {
+        case .musinsa:
+            return "무신사"
+        case .uniqlo:
+            return "유니클로"
+        case .zara:
+            return "ZARA"
+        case nil:
+            return nil
+        }
     }
 
     static func isSupportedProductURL(_ urlString: String) -> Bool {
@@ -330,12 +472,22 @@ enum ProductURLSupport {
         return matches(host: host, domain: "uniqlo.com")
     }
 
+    static func isCOSURL(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        return matches(host: host, domain: "cos.com")
+    }
+
+    static func isZARAURL(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        return matches(host: host, domain: "zara.com")
+    }
+
     private static func matches(host: String, domain: String) -> Bool {
         host == domain || host.hasSuffix(".\(domain)")
     }
 
     static func extractedURLString(from text: String) -> String? {
-        let pattern = #"(https?://)?[^\s]*(musinsa|uniqlo)[^\s]*"#
+        let pattern = #"(https?://)?[^\s]*(musinsa|uniqlo|zara|cos)[^\s]*"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..<text.endIndex, in: text)),
               let range = Range(match.range, in: text) else {
@@ -351,13 +503,16 @@ enum ProductURLSupport {
 struct ProductURLParserService {
     private let musinsaParser: ProductURLParsing
     private let uniqloParser: ProductURLParsing
+    private let zaraParser: ProductURLParsing
 
     init(
         musinsaParser: ProductURLParsing? = nil,
-        uniqloParser: ProductURLParsing? = nil
+        uniqloParser: ProductURLParsing? = nil,
+        zaraParser: ProductURLParsing? = nil
     ) {
         self.musinsaParser = musinsaParser ?? MusinsaParser()
         self.uniqloParser = uniqloParser ?? UniqloParser()
+        self.zaraParser = zaraParser ?? ZARAParser()
     }
 
     func parse(
@@ -366,6 +521,9 @@ struct ProductURLParserService {
     ) async throws -> ParsedProductInfo {
         guard let url = ProductURLSupport.normalizedURL(from: urlString) else {
             throw ProductURLParserError.invalidURL
+        }
+        guard ProductURLSupport.isSupportedProductURL(url.absoluteString) else {
+            throw ProductURLParserError.unsupportedURL
         }
         onProgress(.loadingProductInfo)
 
@@ -380,7 +538,8 @@ struct ProductURLParserService {
 
         let isMusinsaURL = ProductURLSupport.isMusinsaURL(url)
         let isUniqloURL = uniqloParser.canParse(url)
-        let detectedProvider = isMusinsaURL ? "musinsa" : (isUniqloURL ? "uniqlo" : "generic")
+        let isZARAURL = zaraParser.canParse(url)
+        let detectedProvider = isMusinsaURL ? "musinsa" : (isUniqloURL ? "uniqlo" : (isZARAURL ? "zara" : "generic"))
         #if DEBUG
         FitMatchDebugLogger.detail(screen: "상품 분석", action: "파서 선택", details: "파서=\(detectedProvider)")
         #endif
@@ -389,14 +548,19 @@ struct ProductURLParserService {
             do {
                 return logParsedProductInfo((
                     try await musinsaParser.parse(from: url, onProgress: onProgress)
-                ).normalizedSizes())
+                ).normalizedSizes().recordingParserProvenance(parserCode: "musinsa"))
             } catch let partialError as ProductURLParserPartialError {
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
                 #endif
-                throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
+                throw ProductURLParserPartialError(
+                    productInfo: partialError.productInfo
+                        .normalizedSizes()
+                        .recordingParserProvenance(parserCode: "musinsa")
+                )
             } catch {
                 if Task.isCancelled { throw CancellationError() }
+                if Self.isTransientTransportError(error) { throw error }
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "무신사 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
                 #endif
@@ -408,14 +572,19 @@ struct ProductURLParserService {
             do {
                 return logParsedProductInfo((
                     try await uniqloParser.parse(from: url, onProgress: onProgress)
-                ).normalizedSizes())
+                ).normalizedSizes().recordingParserProvenance(parserCode: "uniqlo_kr"))
             } catch let partialError as ProductURLParserPartialError {
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
                 #endif
-                throw ProductURLParserPartialError(productInfo: partialError.productInfo.normalizedSizes())
+                throw ProductURLParserPartialError(
+                    productInfo: partialError.productInfo
+                        .normalizedSizes()
+                        .recordingParserProvenance(parserCode: "uniqlo_kr")
+                )
             } catch {
                 if Task.isCancelled { throw CancellationError() }
+                if Self.isTransientTransportError(error) { throw error }
                 #if DEBUG
                 FitMatchDebugLogger.event(screen: "상품 분석", action: "유니클로 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
                 #endif
@@ -423,7 +592,88 @@ struct ProductURLParserService {
             }
         }
 
+        if isZARAURL {
+            guard ZARAIntegrationAvailability.isEnabled else {
+                throw ProductURLParserError.unsupportedURL
+            }
+            do {
+                return logParsedProductInfo((
+                    try await zaraParser.parse(from: url, onProgress: onProgress)
+                ).normalizedSizes().recordingParserProvenance(parserCode: "zara_kr"))
+            } catch let partialError as ProductURLParserPartialError {
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "ZARA 파싱", state: "일부 성공", details: "오류=\(partialError.localizedDescription)")
+                #endif
+                throw ProductURLParserPartialError(
+                    productInfo: partialError.productInfo
+                        .normalizedSizes()
+                        .recordingParserProvenance(parserCode: "zara_kr")
+                )
+            } catch {
+                if Task.isCancelled { throw CancellationError() }
+                if Self.isTransientTransportError(error) { throw error }
+                #if DEBUG
+                FitMatchDebugLogger.event(screen: "상품 분석", action: "ZARA 파싱", state: "실패", details: "오류=\(error.localizedDescription)")
+                #endif
+                throw ProductURLParserError.automaticParsingUnavailable
+            }
+        }
+
         throw ProductURLParserError.unsupportedURL
+    }
+
+    private static func isTransientTransportError(_ error: Error) -> Bool {
+        if error is URLError {
+            return true
+        }
+        if let retailerError = error as? FitMatchRetailerAPIResponseError {
+            return retailerError.isTransient
+        }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return true
+        }
+        return (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain
+            == NSURLErrorDomain
+    }
+
+    /// Continues a fail-closed ZARA import after the user explicitly chooses
+    /// the garment category. Other retailers and generic parsers cannot enter
+    /// this retailer-specific recovery capability by accident.
+    func resumeZARAParsing(
+        urlString: String,
+        confirmedCategory: ClothingCategory,
+        confirmedDetailCategory: ClosetDetailCategory,
+        onProgress: @escaping (ProductAnalysisPhase) -> Void = { _ in }
+    ) async throws -> ParsedProductInfo {
+        guard let url = ProductURLSupport.normalizedURL(from: urlString),
+              ProductURLSupport.isZARAURL(url),
+              confirmedCategory != .other,
+              confirmedDetailCategory != .other,
+              let parser = zaraParser as? any ZARACategoryResumableParsing else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        // The release gate is enforced on the initial URL parse. This method
+        // is only reachable from the typed recovery state produced by that
+        // parse, and keeping it independently testable prevents a string- or
+        // retailer-name-based UI workaround.
+
+        do {
+            return logParsedProductInfo((
+                try await parser.parse(
+                    from: url,
+                    confirmedCategory: confirmedCategory,
+                    confirmedDetailCategory: confirmedDetailCategory,
+                    onProgress: onProgress
+                )
+            ).normalizedSizes().recordingParserProvenance(parserCode: "zara_kr"))
+        } catch let partialError as ProductURLParserPartialError {
+            throw ProductURLParserPartialError(
+                productInfo: partialError.productInfo
+                    .normalizedSizes()
+                    .recordingParserProvenance(parserCode: "zara_kr")
+            )
+        }
     }
 
     #if DEBUG
@@ -520,7 +770,7 @@ struct ProductURLParserService {
             sourceType: isMusinsa ? .marketplace : .officialStore,
             sourceName: isMusinsa ? "무신사" : "유니클로 공식몰",
             brandName: isMusinsa ? "온보딩 무신사 브랜드" : "유니클로",
-            productName: isMusinsa ? "온보딩 무신사 기준옷" : "온보딩 유니클로 기준옷",
+            productName: isMusinsa ? "온보딩 무신사 상의" : "온보딩 유니클로 상의",
             category: .top,
             detailCategory: .shortSleeve,
             sizes: [size],
@@ -547,6 +797,22 @@ extension ParsedProductInfo {
     func normalizedSizes() -> ParsedProductInfo {
         var copy = self
         copy.sizes = ParsedProductSizeNormalizer.uniqueSizes(sizes)
+        let isSupportedRetailer = copy.sourceName.localizedCaseInsensitiveContains("유니클로")
+            || copy.sourceName.localizedCaseInsensitiveContains("uniqlo")
+            || copy.sourceName.localizedCaseInsensitiveContains("무신사")
+            || copy.sourceName.localizedCaseInsensitiveContains("musinsa")
+            || copy.sourceName.localizedCaseInsensitiveContains("자라")
+            || copy.sourceName.localizedCaseInsensitiveContains("zara")
+        if isSupportedRetailer,
+           copy.productMetadata.structuredFacts["comparison_measurement_contract"] == nil {
+            let structure = copy.productMetadata.structuredFacts["product_structure"]
+                .flatMap { RetailerProductStructure(rawValue: $0.lowercased()) }
+            let fact = RetailerComparisonMeasurementContractFact.retailerSizeTable(
+                sizes: copy.sizes,
+                productStructure: structure
+            )
+            copy.productMetadata.structuredFacts.merge(fact.structuredFacts) { current, _ in current }
+        }
         let shouldInferLengthDetail = copy.detailCategory == .other
         if shouldInferLengthDetail {
             let length = GarmentLengthInferencePolicy.infer(

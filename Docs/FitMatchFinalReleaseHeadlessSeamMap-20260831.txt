@@ -1,0 +1,35 @@
+# FitMatch final headless seam map — 2026-09-01
+
+All listed actions are production-used. A View calls the same action a
+headless test calls. Tests inject only a true side-effect boundary; no
+test-side business implementation decides classification, reference policy,
+manual-cross eligibility, size eligibility, or score.
+
+| Feature | Previous view-owned/private work | Production seam | View caller | Headless caller | Boundary | Duplicated logic | Semantic change |
+|---|---|---|---|---|---|---|---|
+| Direct Closet register | form validation, direct UserFit construction, save | FitMatchClosetFormAction; FitMatchClosetManualRegistrationAction; FitMatchClosetRegistrationPersistence | AddClosetItemView | final headless acceptance tests | SwiftData save/failure | NO | NO |
+| Closet edit/reference | sourced/direct edit policy, reference set/replace/unset | FitMatchClosetItemEditAction; FitMatchClosetReferenceMutation | ClosetItemDetailView | final acceptance + Closet sync tests | SwiftData/remote mutation | NO | NO |
+| Compared product → Closet | shopping authority crossing into sourced Closet registration | FitMatchComparedProductClosetRegistration; FitMatchComparedProductClosetSubmissionAction | AddComparedProductToClosetSheet | final acceptance tests | persistence | NO | YES — CR-017 intent boundary |
+| Link registration | URL validation, parser/authority preparation, owned size save | FitMatchProductLinkInput; FitMatchLinkClosetRegistrationAction | LinkClosetRegistrationView | provider snapshot + acceptance tests | parser/authority transport | NO | NO |
+| Closet display/delete | active filtering, durable hide order, legacy-local delete | FitMatchClosetPresentation; FitMatchClosetDeletionAction; FitMatchHistoryVisibilityAction | MyClosetView; ClosetItemDetailView; RecommendationHistoryView | sync/history tests | ModelContext/hide RPC | NO | YES — durable user hide |
+| Account cache | ownership preparation, stale remote completion discard, same-owner follow-up pass | FitMatchClosetSyncCoordinator; FitMatchComparisonSyncCoordinator; FitMatchAuthenticatedRootPresentationAction | ContentView; MyPageView | coordinator race tests | auth/remote/ModelContext | NO | YES — CM-015 transient isolation |
+| Product entry / direct URL | supported URL routing and current blocked explanation | FitMatchProductEntryRouting; FitMatchProductURLRouting; FitMatchProductLinkInput | ContentView; HomeView; CompareFlowSheet | acceptance tests | URL/open boundary | NO | YES — meaningful invalid/COS block |
+| Shared URL handoff | extension/app payload format, TTL, acknowledge | FitMatchSharedURLHandoff; FitMatchSharedURLHandoffStore; SharedURLStore | ShareViewController; ContentView | Share routing/TTL/CAS tests | App Group file/clock | NO | YES — EN-004 cross-process-safe contract |
+| Startup | ModelContainer and legacy backfill failure/retry | FitMatchStartupAction | FitMatchApp; ContentView | final scenario tests | container/backfill injection | NO | NO |
+| Comparison submit | duplicate task ownership and result submission | FitMatchComparisonSubmissionAction | CompareFlowSheet | headless journey/race tests | remote scheduling | NO | YES — duplicate submit gate |
+| Result/recompare | new comparison construction while old Result is displayed | RecommendationService.makeServerAuthorizedComparisonTarget; ResultReferenceComparisonPersistence | RecommendationResultView | headless journey tests | current session/URL open | NO | YES — immutable recompare |
+| Authority/history projection | server effective tuple consumption and completed historical reconstruction | VNextRuntimeClassificationTuple; VNextHistoryCacheHydrator; RecommendationHistoryStore | resolver/ViewModel/sync/history view | acceptance/P0/sync tests | DTO/ModelContext | NO | YES — CP-031, HI-002/003 |
+| History presentation | visible filter/search/sort/favorite and recent identity | FitMatchHistoryPresentation | RecommendationHistoryView; HomeView | P0 remediation tests | local presentation | NO | YES — distinct comparison rows |
+
+## Physical-only boundary retained
+
+No seam was added merely to impersonate Apple/system UI. CR-019, EN-002,
+EN-007, and EN-012 retain only physical presentation/gesture/system-Share
+validation. Their production data/state/routing actions are headless-callable
+and already tested.
+
+## Integrity statement
+
+The seams are small action/coordinator extractions, not a second app state
+machine. Views and tests share them; scorer invocation remains behind the
+production server-authorized begin sequence.

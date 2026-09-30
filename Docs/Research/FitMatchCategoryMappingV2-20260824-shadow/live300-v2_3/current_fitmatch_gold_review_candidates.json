@@ -1,0 +1,1018 @@
+[
+  {
+    "categoryCode" : "dresses",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "one_piece",
+    "productID" : "E464785-000",
+    "productName" : "울트라스트레치AIRism원피스(슬리브리스)",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E464785-000/00?colorDisplayCode=01",
+    "providerCategory" : "원피스",
+    "providerDetail" : "스커트",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 원피스 & 스커트 > 원피스 > AIRism 원피스",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "tops",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "polo_shirt",
+    "productID" : "E465196-000",
+    "productName" : "AIRism코튼피케폴로셔츠(반팔)",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E465196-000/00?colorDisplayCode=00",
+    "providerCategory" : "상의",
+    "providerDetail" : "반팔",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "MEN > 셔츠 > 폴로셔츠 (카라티) > 에어리즘 코튼",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "dresses",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "one_piece",
+    "productID" : "E488722-000",
+    "productName" : "워셔블립니트원피스(슬리브리스)",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E488722-000/00?colorDisplayCode=08",
+    "providerCategory" : "원피스",
+    "providerDetail" : "니트",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 원피스 & 스커트 > 원피스 > 니트 원피스",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "dresses",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "one_piece",
+    "productID" : "E487630-000",
+    "productName" : "셔츠원피스",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E487630-000/00?colorDisplayCode=34",
+    "providerCategory" : "원피스",
+    "providerDetail" : "스커트",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 원피스 & 스커트 > 원피스 > 긴팔원피스",
+    "strictComparisonEligible" : false
+  },
+  {
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "productID" : "E489159-000",
+    "productName" : "Andy Warhol UT(그래픽T)C",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E489159-000/00?colorDisplayCode=00",
+    "providerCategory" : "상의",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "MEN > 티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Andy Warhol Transformation",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "underwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "underwear",
+    "productID" : "E469682-000",
+    "productName" : "shaper쇼츠(넌라인·서포트)",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E469682-000/00?colorDisplayCode=09",
+    "providerCategory" : "속옷",
+    "providerDetail" : "반바지",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 이너웨어 > 언더웨어 > 바디 쉐이퍼",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "blouson",
+    "productID" : "E479603-000",
+    "productName" : "드라이스웨트풀집후디",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E479603-000/00?colorDisplayCode=09",
+    "providerCategory" : "아우터",
+    "providerDetail" : "스웨트",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 아우터 > 파카 & 블루종 > 울트라 스트레치(액티브)",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "tops",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "shirt",
+    "productID" : "E467509-000",
+    "productName" : "드라이논아이론저지셔츠(반팔)스트라이프B",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E467509-000/00?colorDisplayCode=63",
+    "providerCategory" : "상의",
+    "providerDetail" : "반팔",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "MEN > 셔츠 > 정장셔츠 (와이셔츠) > 논 아이론 저지(반팔)",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "dresses",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "one_piece",
+    "productID" : "E489216-001",
+    "productName" : "보타이원피스(반팔)프린트",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E489216-001/00?colorDisplayCode=34",
+    "providerCategory" : "원피스",
+    "providerDetail" : "스커트",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 원피스 & 스커트 > 원피스 > 반팔원피스",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "dresses",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "one_piece",
+    "productID" : "E482983-000",
+    "productName" : "콤비네이션원피스(슬리브리스)",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E482983-000/00?colorDisplayCode=00",
+    "providerCategory" : "원피스",
+    "providerDetail" : "스커트",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 원피스 & 스커트 > 원피스 > 슬리브리스 원피스",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "tops",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "shirt",
+    "productID" : "E470202-000",
+    "productName" : "슈퍼논아이론저지셔츠(긴팔·버튼다운칼라)",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E470202-000/00?colorDisplayCode=00",
+    "providerCategory" : "상의",
+    "providerDetail" : "긴팔",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "MEN > 셔츠 > 정장셔츠 (와이셔츠) > 슈퍼 논 아이론 저지",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "underwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "underwear",
+    "productID" : "E469765-000",
+    "productName" : "히트텍캐시미어블렌드크루넥T(긴팔)엑스트라웜",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E469765-000/00?colorDisplayCode=03",
+    "providerCategory" : "속옷",
+    "providerDetail" : "긴팔",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 이너웨어 > 히트텍 > 히트텍 캐시미어 블렌드",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "tops",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "shirt",
+    "productID" : "E475754-000",
+    "productName" : "코튼쇼트셔츠(반팔)프린트",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E475754-000/00?colorDisplayCode=01",
+    "providerCategory" : "상의",
+    "providerDetail" : "반팔",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 박시 크롭",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "underwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "women_bra",
+    "productID" : "E489180-000",
+    "productName" : "워셔블니트브라탑",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E489180-000/00?colorDisplayCode=09",
+    "providerCategory" : "상의",
+    "providerDetail" : "니트",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 티셔츠 & UT > 브라탑 > 디자인",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "dresses",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "one_piece",
+    "productID" : "E479684-000",
+    "productName" : "니트미니원피스",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E479684-000/00?colorDisplayCode=09",
+    "providerCategory" : "원피스",
+    "providerDetail" : "니트",
+    "shadowStatus" : "review_required",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 원피스 & 스커트 > 원피스 > 긴팔원피스",
+    "strictComparisonEligible" : false
+  },
+  {
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "productID" : "E484463-000",
+    "productName" : "Disney UT(그래픽T)2F",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E484463-000/00?colorDisplayCode=61",
+    "providerCategory" : "상의",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 티셔츠 & UT > 그래픽티셔츠 > Disney",
+    "strictComparisonEligible" : false
+  },
+  {
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "productID" : "E488045-000",
+    "productName" : "Disney/PIXAR미니UT(그래픽T)C",
+    "productURL" : "https://www.uniqlo.com/kr/ko/products/E488045-000/00?colorDisplayCode=10",
+    "providerCategory" : "상의",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "UNIQLO",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "WOMEN > 티셔츠 & UT > 그래픽티셔츠 > Disney/PIXAR",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "jumper",
+    "productID" : "6896379",
+    "productName" : "닉켈 26 크로스 플로랄 후드집업",
+    "productURL" : "https://www.musinsa.com/products/6896379",
+    "providerCategory" : "아우터",
+    "providerDetail" : "후드",
+    "shadowStatus" : "review_required",
+    "source" : "MUSINSA",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "아우터 > 후드 집업",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "bottoms",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "other_bottoms",
+    "productID" : "4973728",
+    "productName" : "여름 뷔스티에 와이드 점프수트 롱 원피스 / HF119",
+    "productURL" : "https://www.musinsa.com/products/4973728",
+    "providerCategory" : "하의",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "MUSINSA",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "바지 > 점프 슈트/오버올",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "tops",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "garment_family"
+    ],
+    "detailCode" : "long_sleeve",
+    "productID" : "5328890",
+    "productName" : "자수 골지 세미크롭 사이드 버튼 후드 롱 슬림 긴팔 티셔츠 _ 3COLOR",
+    "productURL" : "https://www.musinsa.com/products/5328890",
+    "providerCategory" : "셔츠",
+    "providerDetail" : "후드",
+    "shadowStatus" : "review_required",
+    "source" : "MUSINSA",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "상의 > 후드 티셔츠",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "jumper",
+    "productID" : "6323497",
+    "productName" : "[NEW 컬러 출시] 우먼즈 볼륨 크롭 후디드 스웨트 집업 [더스티 블루]",
+    "productURL" : "https://www.musinsa.com/products/6323497",
+    "providerCategory" : "아우터",
+    "providerDetail" : "후드",
+    "shadowStatus" : "review_required",
+    "source" : "MUSINSA",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "아우터 > 후드 집업",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "vest",
+    "productID" : "6726017",
+    "productName" : "우먼즈 홀터 니트 베스트 [미디엄 그레이]",
+    "productURL" : "https://www.musinsa.com/products/6726017",
+    "providerCategory" : "아우터",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "MUSINSA",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "아우터 > 베스트",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "jacket",
+    "productID" : "6806967",
+    "productName" : "1911 니트트랙 집업 멜란지",
+    "productURL" : "https://www.musinsa.com/products/6806967",
+    "providerCategory" : "아우터",
+    "providerDetail" : "재킷",
+    "shadowStatus" : "review_required",
+    "source" : "MUSINSA",
+    "sourceAuthority" : "current_parser_mapping_from_archived_source_facts",
+    "sourcePath" : "아우터 > 트레이닝 재킷",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_07761593",
+    "productName" : "플랫 프론트 버뮤다 팬츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%91%E1%85%B3%E1%86%AF%E1%84%85%E1%85%A2%E1%86%BA-%E1%84%91%E1%85%B3%E1%84%85%E1%85%A9%E1%86%AB%E1%84%90%E1%85%B3-%E1%84%87%E1%85%A5%E1%84%86%E1%85%B2%E1%84%83%E1%85%A1-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p07761593.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_MAN_00722302",
+    "productName" : "푸카스 서프 X ZARA 릴렉스핏 스웨트셔츠",
+    "productURL" : "https://www.zara.com/kr/ko/pukas-surf-x-zara-%E1%84%85%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%A8%E1%84%89%E1%85%B3%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B0%E1%84%90%E1%85%B3%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p00722302.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "남성 > 슈즈 | 액세서리 > 스윔웨어 > 모두 보기 > 남성 > 컬렉션 > 맨투맨 | 후디 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "classificationValid" : false,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "productID" : "ZARA_KR_WOMAN_07820136",
+    "productName" : "스트라이프 크로스 재킷",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%8F%E1%85%B3%E1%84%85%E1%85%A9%E1%84%89%E1%85%B3-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p07820136.html",
+    "providerCategory" : "상의",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 셔츠 > 모두 보기 > 여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "underwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "underwear",
+    "productID" : "ZARA_KR_WOMAN_02051148",
+    "productName" : "카라멜 런던 X 자라 버뮤다 팬츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%8F%E1%85%A1%E1%84%85%E1%85%A1%E1%84%86%E1%85%A6%E1%86%AF-%E1%84%85%E1%85%A5%E1%86%AB%E1%84%83%E1%85%A5%E1%86%AB-x-%E1%84%8C%E1%85%A1%E1%84%85%E1%85%A1-%E1%84%87%E1%85%A5%E1%84%86%E1%85%B2%E1%84%83%E1%85%A1-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p02051148.html",
+    "providerCategory" : "속옷",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 란제리 > 모두 보기 > 여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_00167208",
+    "productName" : "하트 비즈 비키니 탑",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%92%E1%85%A1%E1%84%90%E1%85%B3-%E1%84%87%E1%85%B5%E1%84%8C%E1%85%B3-%E1%84%87%E1%85%B5%E1%84%8F%E1%85%B5%E1%84%82%E1%85%B5-%E1%84%90%E1%85%A1%E1%86%B8-p00167208.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "productID" : "ZARA_KR_WOMAN_01067701",
+    "productName" : "레이스 바디수트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%89%E1%85%B3-%E1%84%87%E1%85%A1%E1%84%83%E1%85%B5%E1%84%89%E1%85%AE%E1%84%90%E1%85%B3-p01067701.html",
+    "providerCategory" : "상의",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 란제리 > 모두 보기 > 여성 > 컬렉션 > 탑 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_05427700",
+    "productName" : "셔링 지퍼 탑",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%8C%E1%85%B5%E1%84%91%E1%85%A5-%E1%84%89%E1%85%A7%E1%84%85%E1%85%B5%E1%86%BC-%E1%84%90%E1%85%A1%E1%86%B8-p05427700.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_02910215",
+    "productName" : "새틴 링 스윔수트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%89%E1%85%A2%E1%84%90%E1%85%B5%E1%86%AB-%E1%84%85%E1%85%B5%E1%86%BC-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B1%E1%86%B7%E1%84%89%E1%85%AE%E1%84%90%E1%85%B3-p02910215.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_07018304",
+    "productName" : "ZW 컬렉션 재킷",
+    "productURL" : "https://www.zara.com/kr/ko/zw-%E1%84%8F%E1%85%A5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%A8%E1%84%89%E1%85%A7%E1%86%AB-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p07018304.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_MAN_00495309",
+    "productName" : "크랩 패턴 스윔팬츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%8F%E1%85%B3%E1%84%85%E1%85%A2%E1%86%B8-%E1%84%91%E1%85%A2%E1%84%90%E1%85%A5%E1%86%AB-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B1%E1%86%B7%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p00495309.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "남성 > 슈즈 | 액세서리 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "cardigan",
+    "productID" : "ZARA_KR_MAN_09598372",
+    "productName" : "오픈 릴렉스 핏 가디건",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A9%E1%84%91%E1%85%B3%E1%86%AB-%E1%84%85%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%A8%E1%84%89%E1%85%B3-%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%80%E1%85%A1%E1%84%83%E1%85%B5%E1%84%80%E1%85%A5%E1%86%AB-p09598372.html",
+    "providerCategory" : "상의",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "남성 > 신상품 > THE NEW > 컬렉션 > 남성 > 컬렉션 > 니트 | 여름 니트 > 모두 보기 > 남성 > 컬렉션 > 베스트셀러 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_05039451",
+    "productName" : "루즈핏 세미 시스루 바디수트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%89%E1%85%A6%E1%84%86%E1%85%B5-%E1%84%89%E1%85%B5%E1%84%89%E1%85%B3%E1%84%85%E1%85%AE-%E1%84%85%E1%85%AE%E1%84%8C%E1%85%B3-%E1%84%87%E1%85%A1%E1%84%83%E1%85%B5%E1%84%89%E1%85%AE%E1%84%90%E1%85%B3-p05039451.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_04758052",
+    "productName" : "팜트리 패턴 파레오",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%91%E1%85%A1%E1%86%B7%E1%84%90%E1%85%B3%E1%84%85%E1%85%B5-%E1%84%91%E1%85%A2%E1%84%90%E1%85%A5%E1%86%AB-%E1%84%91%E1%85%A1%E1%84%85%E1%85%A6%E1%84%8B%E1%85%A9-p04758052.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_05644811",
+    "productName" : "레이어드 재킷 탑",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%A5%E1%84%83%E1%85%B3-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-%E1%84%90%E1%85%A1%E1%86%B8-p05644811.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_02910040",
+    "productName" : "솔리드 커튼 비키니 탑",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%89%E1%85%A9%E1%86%AF%E1%84%85%E1%85%B5%E1%84%83%E1%85%B3-%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB-%E1%84%87%E1%85%B5%E1%84%8F%E1%85%B5%E1%84%82%E1%85%B5-%E1%84%90%E1%85%A1%E1%86%B8-p02910040.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "underwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "underwear",
+    "productID" : "ZARA_KR_WOMAN_09052807",
+    "productName" : "레이스 스트라이프 셔츠 점프수트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%89%E1%85%B3-%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%91%E1%85%A2%E1%84%90%E1%85%A5%E1%86%AB-%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-%E1%84%8C%E1%85%A5%E1%86%B7%E1%84%91%E1%85%B3%E1%84%89%E1%85%AE%E1%84%90%E1%85%B3-p09052807.html",
+    "providerCategory" : "속옷",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 란제리 > 모두 보기 > 여성 > 컬렉션 > 셔츠 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_08024704",
+    "productName" : "펀칭 자수 홀터넥 탑",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%91%E1%85%A5%E1%86%AB%E1%84%8E%E1%85%B5%E1%86%BC-%E1%84%8C%E1%85%A1%E1%84%89%E1%85%AE-%E1%84%92%E1%85%A9%E1%86%AF%E1%84%90%E1%85%A5%E1%84%82%E1%85%A6%E1%86%A8-%E1%84%90%E1%85%A1%E1%86%B8-p08024704.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_00167218",
+    "productName" : "플레인 링 스윔수트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%91%E1%85%B3%E1%86%AF%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%86%AB-%E1%84%85%E1%85%B5%E1%86%BC-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B1%E1%86%B7%E1%84%89%E1%85%AE%E1%84%90%E1%85%B3-p00167218.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "vest",
+    "productID" : "ZARA_KR_MAN_01063502",
+    "productName" : "릴렉스핏 포켓 오버셔츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%85%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%A8%E1%84%89%E1%85%B3%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%91%E1%85%A9%E1%84%8F%E1%85%A6%E1%86%BA-%E1%84%8B%E1%85%A9%E1%84%87%E1%85%A5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p01063502.html",
+    "providerCategory" : "아우터",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "남성 > 컬렉션 > 베스트셀러 > 모두 보기 > 남성 > 컬렉션 > 셔츠 > 오버셔츠",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_06929160",
+    "productName" : "스트라이프 스트링 코르셋",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%89%E1%85%B3%E1%84%8B%E1%85%A5%E1%86%B8-%E1%84%8F%E1%85%A9%E1%84%85%E1%85%B3%E1%84%89%E1%85%A6%E1%86%BA-p06929160.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_MAN_01078404",
+    "productName" : "콘트라스트 체크 롱 스윔팬츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%8F%E1%85%A9%E1%86%AB%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3-%E1%84%8E%E1%85%A6%E1%84%8F%E1%85%B3-%E1%84%85%E1%85%A9%E1%86%BC-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B1%E1%86%B7%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p01078404.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "남성 > 슈즈 | 액세서리 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "trench_coat",
+    "productID" : "ZARA_KR_MAN_06103357",
+    "productName" : "릴렉스핏 체크 지퍼 셔츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%8E%E1%85%A6%E1%84%8F%E1%85%B3-%E1%84%8C%E1%85%B5%E1%84%91%E1%85%A5-%E1%84%85%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%A8%E1%84%89%E1%85%B3%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p06103357.html",
+    "providerCategory" : "아우터",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "남성 > 컬렉션 > 재킷 | 트렌치 코트 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_05107250",
+    "productName" : "ZW 컬렉션 자수 레이스 셔츠",
+    "productURL" : "https://www.zara.com/kr/ko/zw-%E1%84%8F%E1%85%A5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%A8%E1%84%89%E1%85%A7%E1%86%AB-%E1%84%8C%E1%85%A1%E1%84%89%E1%85%AE-%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%89%E1%85%B3-%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p05107250.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_02910045",
+    "productName" : "리버서블 스트라이프 비키니 탑",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%85%E1%85%B5%E1%84%87%E1%85%A5%E1%84%89%E1%85%A5%E1%84%87%E1%85%B3%E1%86%AF-%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%87%E1%85%B5%E1%84%8F%E1%85%B5%E1%84%82%E1%85%B5-%E1%84%90%E1%85%A1%E1%86%B8-p02910045.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_08912741",
+    "productName" : "미니 매듭 스커트 팬츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%86%E1%85%A2%E1%84%83%E1%85%B3%E1%86%B8-%E1%84%86%E1%85%B5%E1%84%82%E1%85%B5-%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p08912741.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_02910223",
+    "productName" : "스트라이프 패턴 스윔수트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%91%E1%85%A2%E1%84%90%E1%85%A5%E1%86%AB-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B1%E1%86%B7%E1%84%89%E1%85%AE%E1%84%90%E1%85%B3-p02910223.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "outerwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "trench_coat",
+    "productID" : "ZARA_KR_MAN_07484355",
+    "productName" : "코튼-린넨 스트라이프 후드 오버셔츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%8F%E1%85%A9%E1%84%90%E1%85%B3%E1%86%AB-%E1%84%85%E1%85%B5%E1%86%AB%E1%84%82%E1%85%A6%E1%86%AB-%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%92%E1%85%AE%E1%84%83%E1%85%B3-%E1%84%8B%E1%85%A9%E1%84%87%E1%85%A5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p07484355.html",
+    "providerCategory" : "아우터",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "남성 > 컬렉션 > 셔츠 > 오버셔츠 > 남성 > 컬렉션 > 재킷 | 트렌치 코트 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_05039852",
+    "productName" : "애니멀 프린트 리본 미디 스커트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A2%E1%84%82%E1%85%B5%E1%84%86%E1%85%A5%E1%86%AF-%E1%84%91%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%90%E1%85%B3-%E1%84%85%E1%85%B5%E1%84%87%E1%85%A9%E1%86%AB-%E1%84%86%E1%85%B5%E1%84%83%E1%85%B5-%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3-p05039852.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_MAN_00495312",
+    "productName" : "피쉬 패턴 롱 스윔팬츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%91%E1%85%B5%E1%84%89%E1%85%B1-%E1%84%91%E1%85%A2%E1%84%90%E1%85%A5%E1%86%AB-%E1%84%85%E1%85%A9%E1%86%BC-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B1%E1%86%B7%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p00495312.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "남성 > 슈즈 | 액세서리 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "underwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "underwear",
+    "productID" : "ZARA_KR_WOMAN_01223107",
+    "productName" : "미니 안감 스커트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%86%E1%85%B5%E1%84%82%E1%85%B5-%E1%84%85%E1%85%A9%E1%84%8B%E1%85%AE%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%8C%E1%85%B3-%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3-p01223107.html",
+    "providerCategory" : "속옷",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 란제리 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_02488114",
+    "productName" : "더블 레이어 니트 미디 스커트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%83%E1%85%A5%E1%84%87%E1%85%B3%E1%86%AF-%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%A5-%E1%84%82%E1%85%B5%E1%84%90%E1%85%B3-%E1%84%86%E1%85%B5%E1%84%83%E1%85%B5-%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3-p02488114.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_06501202",
+    "productName" : "페이크 메탈 비키니 팬티",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%91%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%8F%E1%85%B3-%E1%84%86%E1%85%A6%E1%84%90%E1%85%A1%E1%86%AF%E1%84%85%E1%85%B5%E1%86%A8-%E1%84%87%E1%85%B5%E1%84%8F%E1%85%B5%E1%84%82%E1%85%B5-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%90%E1%85%B5-p06501202.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 스윔웨어 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "underwear",
+    "classificationValid" : true,
+    "conflictDimensions" : [
+      "category"
+    ],
+    "detailCode" : "underwear",
+    "productID" : "ZARA_KR_WOMAN_01067115",
+    "productName" : "세미 시스루 링클 페이크 티셔츠",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%89%E1%85%A6%E1%84%86%E1%85%B5-%E1%84%89%E1%85%B5%E1%84%89%E1%85%B3%E1%84%85%E1%85%AE-%E1%84%85%E1%85%B5%E1%86%BC%E1%84%8F%E1%85%B3%E1%86%AF-%E1%84%91%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%8F%E1%85%B3-%E1%84%90%E1%85%B5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p01067115.html",
+    "providerCategory" : "속옷",
+    "providerDetail" : "기타",
+    "shadowStatus" : "review_required",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 란제리 > 모두 보기 > 여성 > 컬렉션 > 티셔츠 > 모두 보기",
+    "strictComparisonEligible" : false
+  },
+  {
+    "categoryCode" : "other",
+    "classificationValid" : false,
+    "conflictDimensions" : [
+
+    ],
+    "detailCode" : "other",
+    "productID" : "ZARA_KR_WOMAN_03210401",
+    "productName" : "스팽글 미니 스커트",
+    "productURL" : "https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%91%E1%85%A2%E1%86%BC%E1%84%80%E1%85%B3%E1%86%AF-%E1%84%86%E1%85%B5%E1%84%82%E1%85%B5-%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3-p03210401.html",
+    "providerCategory" : "기타",
+    "providerDetail" : "기타",
+    "shadowStatus" : "unclassified",
+    "source" : "ZARA",
+    "sourceAuthority" : "archive_source_candidate_not_gold",
+    "sourcePath" : "여성 > 컬렉션 > 토탈 룩 > 모두 보기",
+    "strictComparisonEligible" : false
+  }
+]

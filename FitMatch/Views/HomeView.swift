@@ -6,14 +6,19 @@ struct HomeView: View {
     let onStartCompare: () -> Void
     let onOpenHistory: () -> Void
     let onOpenCloset: () -> Void
-    let onRecompare: (String) -> Void
+    let onRecompare: (FitMatchHistoryRecompareAction.StartRequest) -> Void
     var onLogout: (() -> Void)?
 
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
     @State private var isTopChromeVisible = true
+    @State private var recompareErrorMessage: String?
     private let favoriteStore = FavoriteProductStore()
+
+    private var userFits: [UserFit] {
+        cachedUserFits.filter(\.isActiveClosetItem)
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -41,6 +46,16 @@ struct HomeView: View {
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
+        .alert("다시 비교할 수 없습니다", isPresented: Binding(
+            get: { recompareErrorMessage != nil },
+            set: { if !$0 { recompareErrorMessage = nil } }
+        )) {
+            Button("확인", role: .cancel) {
+                recompareErrorMessage = nil
+            }
+        } message: {
+            Text(recompareErrorMessage ?? "")
+        }
     }
 
     private var closetDashboardSection: some View {
@@ -70,7 +85,7 @@ struct HomeView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 12) {
                         ForEach(items) { item in
-                            HomeClosetPreviewCard(item: item, allUserFits: userFits)
+                            HomeClosetPreviewCard(item: item)
                                 .frame(width: 204)
                         }
                     }
@@ -146,8 +161,11 @@ struct HomeView: View {
                                 layout: .carousel,
                                 onToggleFavorite: { toggleFavorite(history) },
                                 onRecompare: {
-                                    if let urlString = history.product.sourceURLString {
-                                        onRecompare(urlString)
+                                    switch FitMatchHistoryRecompareAction.outcome(for: history) {
+                                    case .openCompare(let request):
+                                        onRecompare(request)
+                                    case .unavailable(let message):
+                                        recompareErrorMessage = message
                                     }
                                 }
                             )
@@ -194,19 +212,7 @@ struct HomeView: View {
     }
 
     private var recentHistories: [RecommendationHistory] {
-        var seenKeys = Set<String>()
-        var result: [RecommendationHistory] = []
-
-        for history in histories {
-            let key = history.product.sourceURLString ?? history.product.displayName
-            guard seenKeys.insert(key).inserted else { continue }
-            result.append(history)
-            if result.count == 5 {
-                break
-            }
-        }
-
-        return result
+        FitMatchHistoryPresentation.recentHistories(from: histories)
     }
 
     private func isFavorite(_ history: RecommendationHistory) -> Bool {
@@ -235,13 +241,7 @@ struct HomeView: View {
 }
 
 private struct HomeClosetPreviewCard: View {
-    @Environment(\.modelContext) private var modelContext
-
     let item: UserFit
-    let allUserFits: [UserFit]
-    @State private var isShowingReferenceConfirmation = false
-    @State private var existingReferenceItem: UserFit?
-    @State private var saveErrorMessage: String?
 
     var body: some View {
         CardView(radius: 20, padding: 14, background: Color(.secondarySystemGroupedBackground)) {
@@ -259,7 +259,7 @@ private struct HomeClosetPreviewCard: View {
                         .background(Color(.systemBackground).opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                         ProductThumbnailView(
-                            imageURLString: item.sourceProduct?.imageURLString,
+                            imageURLString: item.imageURLStringForDisplay,
                             category: item.category,
                             width: 168,
                             height: 78,
@@ -281,118 +281,25 @@ private struct HomeClosetPreviewCard: View {
                 }
                 .buttonStyle(.plain)
 
-                HStack(spacing: 8) {
-                    Button(action: toggleReference) {
-                        Label("기준", systemImage: item.isRepresentative ? "tshirt.fill" : "tshirt")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(item.isRepresentative ? .red : .secondary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 32)
-                            .background(item.isRepresentative ? Color.red.opacity(0.06) : Color.clear, in: Capsule())
-                            .overlay {
-                                Capsule()
-                                    .stroke(
-                                        item.isRepresentative ? Color.red.opacity(0.16) : Color.primary.opacity(0.12),
-                                        lineWidth: 1
-                                    )
-                            }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(item.isRepresentative ? "기준 옷 해제" : "기준 옷 지정")
-
-                    NavigationLink {
-                        ClosetItemDetailView(item: item)
-                    } label: {
-                        Text("수정")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(Color(.systemBackground))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 32)
-                            .background(.primary, in: Capsule())
-                    }
-                    .buttonStyle(.plain)
+                NavigationLink {
+                    ClosetItemDetailView(item: item)
+                } label: {
+                    Text("수정")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color(.systemBackground))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 32)
+                        .background(.primary, in: Capsule())
                 }
+                .buttonStyle(.plain)
             }
-        }
-        .confirmationDialog(
-            existingReferenceItem == nil ? "이 옷을 기준 옷으로 설정할까요?" : "기준 옷을 변경할까요?",
-            isPresented: $isShowingReferenceConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button(existingReferenceItem == nil ? "기준 옷으로 설정" : "기준 옷 변경") {
-                applyReferenceChange()
-            }
-            Button("취소", role: .cancel) {}
-        } message: {
-            if let existingReferenceItem {
-                Text("기존 기준 옷 ‘\(existingReferenceItem.displayName)’은 자동으로 해제돼요.")
-            } else {
-                Text("같은 종류의 상품을 비교할 때 이 옷을 우선 기준으로 사용해요.")
-            }
-        }
-        .alert("저장할 수 없습니다", isPresented: saveErrorBinding) {
-            Button("확인", role: .cancel) {}
-        } message: {
-            Text(saveErrorMessage ?? "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요.")
-        }
-    }
-
-    private var saveErrorBinding: Binding<Bool> {
-        Binding(
-            get: { saveErrorMessage != nil },
-            set: { if !$0 { saveErrorMessage = nil } }
-        )
-    }
-
-    private func toggleReference() {
-        if item.isRepresentative {
-            item.isRepresentative = false
-            item.updatedAt = Date()
-            saveReferenceChange()
-            return
-        }
-
-        existingReferenceItem = allUserFits.first {
-            $0.id != item.id
-                && $0.isRepresentative
-                && ReferenceGarmentPolicy.conflicts($0, item)
-        }
-        if existingReferenceItem == nil {
-            item.isRepresentative = true
-            item.updatedAt = Date()
-            saveReferenceChange()
-        } else {
-            isShowingReferenceConfirmation = true
-        }
-    }
-
-    private func applyReferenceChange() {
-        allUserFits
-            .filter {
-                $0.id != item.id
-                    && $0.isRepresentative
-                    && ReferenceGarmentPolicy.conflicts($0, item)
-            }
-            .forEach {
-                $0.isRepresentative = false
-                $0.updatedAt = Date()
-            }
-
-        item.isRepresentative = true
-        item.updatedAt = Date()
-        saveReferenceChange()
-    }
-
-    private func saveReferenceChange() {
-        do {
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            saveErrorMessage = "기준 옷 설정을 저장하지 못했어요. 다시 시도해 주세요."
         }
     }
 
     private var detailCategoryName: String {
+        if let group = item.comparisonGroup {
+            return group.displayName
+        }
         guard let categoryCode = item.resolvedCategoryCode,
               let detailCode = item.resolvedDetailCategoryCode else {
             return item.detailCategory.rawValue
@@ -462,6 +369,7 @@ struct CompareStartSheet: View {
     let onStartCompareWithURL: (String) -> Void
     let onDismiss: () -> Void
     @State private var productURL = ""
+    @State private var productURLErrorMessage: String?
 
     private let platformItems: [(title: String, systemImage: String)] = [
         ("무신사", "m.circle"),
@@ -483,6 +391,16 @@ struct CompareStartSheet: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("상품 비교 시작")
             .navigationBarTitleDisplayMode(.inline)
+            .alert("상품 링크를 확인해 주세요", isPresented: Binding(
+                get: { productURLErrorMessage != nil },
+                set: { if !$0 { productURLErrorMessage = nil } }
+            )) {
+                Button("확인", role: .cancel) {
+                    productURLErrorMessage = nil
+                }
+            } message: {
+                Text(productURLErrorMessage ?? "")
+            }
         }
     }
 
@@ -552,27 +470,23 @@ struct CompareStartSheet: View {
             Button(action: submitURL) {
                 Label("비교하기", systemImage: "sparkles")
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(canSubmitURL ? Color.white : Color.secondary)
+                    .foregroundStyle(Color.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(canSubmitURL ? Color.black : Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(Color.black, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .buttonStyle(.plain)
-            .disabled(!canSubmitURL)
         }
-    }
-
-    private var canSubmitURL: Bool {
-        ProductURLSupport.isSupportedProductURL(productURL)
     }
 
     private func submitURL() {
-        let trimmedURL = productURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard ProductURLSupport.isSupportedProductURL(trimmedURL) else {
-            return
+        switch FitMatchProductLinkInput.entryOutcome(for: productURL) {
+        case .begin(let url):
+            productURLErrorMessage = nil
+            onStartCompareWithURL(url.absoluteString)
+        case .blocked(let message):
+            productURLErrorMessage = message
         }
-
-        onStartCompareWithURL(trimmedURL)
     }
 
     private func openMusinsa() {
@@ -704,7 +618,7 @@ struct RecentProductPreviewCard: View {
             resultSummary
 
             ProductThumbnailView(
-                imageURLString: history.product.imageURLString,
+                imageURLString: history.product.imageURLStringForDisplay,
                 category: history.product.category,
                 width: 168,
                 height: 78,
@@ -718,7 +632,7 @@ struct RecentProductPreviewCard: View {
     private var compactContent: some View {
         HStack(alignment: .top, spacing: 14) {
             ProductThumbnailView(
-                imageURLString: history.product.imageURLString,
+                imageURLString: history.product.imageURLStringForDisplay,
                 category: history.product.category,
                 width: 86,
                 height: 108,

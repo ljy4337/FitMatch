@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-08-24",
+  "mode": "shadow_only",
+  "inputCount": 300,
+  "uniqueCount": 300,
+  "independentGoldLabelCount": 0,
+  "statusCounts": {
+    "confirmed": 243,
+    "review_required": 29,
+    "unclassified": 28
+  },
+  "sourceStatusCounts": {
+    "MUSINSA": {
+      "confirmed": 94,
+      "review_required": 6,
+      "unclassified": 0
+    },
+    "UNIQLO": {
+      "confirmed": 83,
+      "review_required": 14,
+      "unclassified": 3
+    },
+    "ZARA": {
+      "confirmed": 66,
+      "review_required": 9,
+      "unclassified": 25
+    }
+  },
+  "goldReviewCandidateCount": 57,
+  "silentConflictConfirmationCount": 0,
+  "strictComparisonConflictLeakCount": 0,
+  "zaraRuntimeParserVerifiedCount": 0,
+  "interpretation": "This is an anomaly audit, not an accuracy score. The 57 review candidates require human labels before any Gold promotion.",
+  "zaraLimitation": "The archive has no current PDP HTML or verified catentryId. ZARA uses the archive source candidate only to exercise fail-closed classifier safety and cannot approve runtime classification."
+}

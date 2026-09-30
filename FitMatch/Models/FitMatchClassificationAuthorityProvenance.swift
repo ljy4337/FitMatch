@@ -1,0 +1,244 @@
+import Foundation
+
+/// Identifies who supplied the classification currently stored on a local model.
+///
+/// This intentionally reuses `canonicalResolutionMethod` so the server-authority
+/// integration does not require a SwiftData schema migration.
+enum FitMatchClassificationAuthorityProvenance: String, Codable, Sendable {
+    case serverConfirmed = "server_confirmed"
+    case serverSessionComparison = "server_session_comparison"
+    case userExplicit = "user_explicit"
+    case localHint = "local_hint"
+    case serverReviewRequired = "server_review_required"
+    case serverNotComparable = "server_not_comparable"
+    case serverUnavailable = "server_unavailable"
+
+    var isComparisonAuthority: Bool {
+        self == .serverConfirmed || self == .serverSessionComparison
+            || self == .userExplicit
+    }
+
+    static func storedValue(_ value: String?) -> Self? {
+        guard let value else { return nil }
+        if let exact = Self(rawValue: value) { return exact }
+
+        // Existing server rows already use this value for a user-authored
+        // classification override. Preserve that provenance during lazy sync.
+        if value == "manual_override" || value == "user_confirmed_closet_classification" {
+            return .userExplicit
+        }
+        return nil
+    }
+}
+
+/// Keeps a sourced item's fail-closed server state from becoming a user
+/// override merely because an editable picker was shown.
+enum FitMatchClosetClassificationEditPolicy {
+    enum Scope: Sendable {
+        /// A new sourced Closet registration has not yet received a separate
+        /// Closet-classification decision from the user.
+        case newSourcedRegistration
+        /// An existing Closet row may retain a prior explicit Closet choice
+        /// during a size-only or other non-classification edit.
+        case existingClosetItem
+    }
+
+    static func resultingAuthority(
+        current: FitMatchClassificationAuthorityProvenance?,
+        isSourced: Bool,
+        isExplicitSet: Bool,
+        didExplicitlyChangeClassification: Bool,
+        scope: Scope = .newSourcedRegistration
+    ) -> FitMatchClassificationAuthorityProvenance {
+        // A composite garment set is never a comparison authority, regardless
+        // of whether it came from a retailer import or the manual Closet form.
+        if isExplicitSet {
+            switch current {
+            case .serverReviewRequired, .serverNotComparable, .serverUnavailable:
+                return current ?? .localHint
+            default:
+                break
+            }
+            return .localHint
+        }
+
+        if isSourced {
+            switch current {
+            case .serverSessionComparison:
+                return didExplicitlyChangeClassification
+                    ? .userExplicit
+                    : .serverReviewRequired
+            case .serverReviewRequired:
+                // REVIEW_REQUIRED means the server could not establish a
+                // global classification. A distinct Closet picker edit is an
+                // owned, personal classification decision and may therefore
+                // become USER_EXPLICIT without rewriting server authority.
+                return didExplicitlyChangeClassification
+                    ? .userExplicit
+                    : .serverReviewRequired
+            case .serverNotComparable:
+                return .serverNotComparable
+            case .serverUnavailable:
+                return .serverUnavailable
+            case .userExplicit where !didExplicitlyChangeClassification:
+                // A shopping Recovery choice is product-scoped. It cannot
+                // become an owned Closet override simply by selecting a size
+                // or saving the sourced item. Existing Closet overrides are
+                // retained only for an existing row whose prior explicit
+                // Closet intent is already established.
+                return scope == .existingClosetItem ? .userExplicit : .localHint
+            default:
+                break
+            }
+        }
+
+        if didExplicitlyChangeClassification {
+            return .userExplicit
+        }
+        return current ?? .localHint
+    }
+
+    static func isSourced(_ product: Product) -> Bool {
+        product.sourceType != .manual
+    }
+
+    static func isSourced(_ item: UserFit) -> Bool {
+        item.sourceType != .manual || item.sourceProduct != nil
+    }
+
+    static func isExplicitSet(_ product: Product) -> Bool {
+        let structure = FitMatchStoredRetailerFacts.decode(product.labelNames)
+            .structuredFacts["product_structure"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return structure == "set"
+            || ParsedClosetClassification.isExplicitCompositeGarmentSet(product.name)
+    }
+
+    static func isExplicitSet(_ item: UserFit) -> Bool {
+        if let product = item.sourceProduct, isExplicitSet(product) {
+            return true
+        }
+        return ParsedClosetClassification.isExplicitCompositeGarmentSet(item.productName)
+    }
+}
+
+extension Product {
+    var classificationAuthorityProvenance: FitMatchClassificationAuthorityProvenance? {
+        FitMatchClassificationAuthorityProvenance.storedValue(canonicalResolutionMethod)
+    }
+
+    func markClassificationAuthority(
+        _ provenance: FitMatchClassificationAuthorityProvenance,
+        sourceIdentity: String? = nil
+    ) {
+        canonicalResolutionMethod = provenance.rawValue
+        if let sourceIdentity {
+            canonicalSourceIdentity = sourceIdentity
+        }
+        canonicalEligibility = provenance.isComparisonAuthority
+    }
+}
+
+extension UserFit {
+    var classificationAuthorityProvenance: FitMatchClassificationAuthorityProvenance? {
+        FitMatchClassificationAuthorityProvenance.storedValue(canonicalResolutionMethod)
+    }
+
+    func markClassificationAuthority(
+        _ provenance: FitMatchClassificationAuthorityProvenance,
+        sourceIdentity: String? = nil
+    ) {
+        canonicalResolutionMethod = provenance.rawValue
+        if let sourceIdentity {
+            canonicalSourceIdentity = sourceIdentity
+        }
+        canonicalEligibility = provenance.isComparisonAuthority
+        if !provenance.isComparisonAuthority {
+            isRepresentative = false
+        }
+    }
+
+    func fitMatchServerReferenceSnapshot() -> FitMatchLocalReferenceSnapshot? {
+        let preservesAuthoritativeTuple = classificationAuthorityProvenance?
+            .isComparisonAuthority == true
+        let referenceFamily = preservesAuthoritativeTuple
+            ? garmentTypeRawValue
+            : (garmentTypeRawValue ?? sourceProduct?.garmentTypeRawValue)
+        guard isActiveClosetItem,
+              !FitMatchClosetClassificationEditPolicy.isExplicitSet(self),
+              let categoryCode = resolvedCategoryCode,
+              let detailCode = resolvedDetailCategoryCode,
+              let familyCode = referenceFamily?
+                .trimmingCharacters(
+                in: .whitespacesAndNewlines
+              ),
+              !familyCode.isEmpty,
+              familyCode != "unknown" else {
+            return nil
+        }
+
+        var values: [String: Double] = [:]
+        for record in measurementRecords where record.value.isFinite && record.value > 0 {
+            // This snapshot checks freshness, not scoring eligibility. Preserve
+            // exact server canonical keys even when the local display/scoring
+            // vocabulary does not know them. Retailer facts lack this provenance.
+            if record.methodSource == "fitmatch_vnext_snapshot",
+               !record.measurementCodeRawValue.isEmpty {
+                values[record.measurementCodeRawValue] = record.value
+                continue
+            }
+            // The server reference snapshot contains only its canonical
+            // comparison vocabulary. Retailer-only/raw measurements remain
+            // on the Closet item for display, but must not make an otherwise
+            // current server snapshot look stale.
+            guard let canonicalCode = FitMatchCanonicalMeasurementCode
+                .canonicalCode(forTransportRawCode: record.measurementCodeRawValue) else {
+                continue
+            }
+            values[canonicalCode] = record.value
+        }
+        if values.isEmpty {
+            let legacyValues: [(String, Double)] = [
+                ("shoulder_width", shoulder),
+                ("chest_width", chest),
+                ("body_length", totalLength),
+                ("sleeve_length", sleeveLength),
+                ("waist_width", waist),
+                ("hip_width", hip),
+                ("thigh_width", thigh),
+                ("rise", rise),
+                ("hem_width", hem),
+                ("foot_length", footLength),
+                ("under_bust_width", underBust)
+            ]
+            for (key, value) in legacyValues where value.isFinite && value > 0 {
+                values[key] = value
+            }
+        }
+
+        // A missing axis in the owned server tuple is intentional; another
+        // Product tuple must not fill it and make the reference appear stale.
+        let sourceProfile = preservesAuthoritativeTuple
+            ? canonicalProfileSnapshot
+            : (canonicalProfileSnapshot ?? sourceProduct?.canonicalProfileSnapshot)
+        let bodyLength = sourceProfile?.lengthAxes.body
+        let referenceLength = preservesAuthoritativeTuple
+            ? sleeveTypeRawValue
+            : (sleeveTypeRawValue ?? sourceProduct?.sleeveTypeRawValue)
+        let lengthCode = referenceLength?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return FitMatchLocalReferenceSnapshot(
+            productName: productName,
+            sizeName: sizeName.trimmingCharacters(in: .whitespacesAndNewlines),
+            categoryCode: categoryCode,
+            detailCode: detailCode,
+            familyCode: familyCode,
+            lengthCode: lengthCode,
+            bodyLengthCode: bodyLength == "unknown" || bodyLength == "not_applicable"
+                ? nil
+                : bodyLength,
+            measurements: values
+        )
+    }
+}

@@ -2,9 +2,11 @@ import Foundation
 
 enum MeasurementResolver {
     struct SourceDisplayRow: Identifiable {
-        let id: UUID
+        let id: String
         let title: String
+        let value: Double
         let valueText: String
+        let isCanonical: Bool
     }
 
     struct GarmentSnapshot {
@@ -58,41 +60,128 @@ enum MeasurementResolver {
     }
 
     static func sourceDisplayRows(
-        records: [GarmentMeasurementRecord]
+        records: [GarmentMeasurementRecord],
+        includeAllRecords: Bool = false
     ) -> [SourceDisplayRow] {
-        let imported = records.filter {
+        let eligibleRecords = includeAllRecords ? records : records.filter {
             $0.inputSourceRawValue == MeasurementInputSource.importedSizeChart.rawValue
                 || $0.inputSourceRawValue == MeasurementInputSource.transcribedSizeChart.rawValue
         }
-        return imported
-            .sorted {
-                let lhsOrder = displayOrder($0.displayKind)
-                let rhsOrder = displayOrder($1.displayKind)
-                if lhsOrder != rhsOrder { return lhsOrder < rhsOrder }
-                return ($0.rawLabel, $0.id.uuidString) < ($1.rawLabel, $1.id.uuidString)
-            }
+        // Canonical snapshots are a separate projection, not extra retailer
+        // measurements. Preserve legacy canonical-only presentation when no
+        // source facts exist, but never display both as retailer originals.
+        let sourceRecords = eligibleRecords.filter { $0.methodSource != "fitmatch_vnext_snapshot" }
+        let displayRecords = sourceRecords.isEmpty ? eligibleRecords : sourceRecords
+        return displayRecords
             .map {
                 SourceDisplayRow(
-                    id: $0.id,
-                    title: $0.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        ? ($0.displayKind?.rawValue ?? "실측")
-                        : $0.rawLabel,
-                    valueText: sourceValueText(for: $0)
+                    id: $0.id.uuidString,
+                    title: sourceDisplayTitle(
+                        rawLabel: $0.rawLabel,
+                        rawCode: $0.rawCode,
+                        methodSource: $0.methodSource,
+                        fallbackCode: $0.measurementCodeRawValue
+                    ),
+                    value: $0.value,
+                    valueText: sourceValueText(
+                        rawValueText: $0.rawValueText,
+                        value: $0.value,
+                        rawUnit: $0.unitRawValue
+                    ),
+                    isCanonical: $0.isComparable
                 )
             }
     }
 
-    private static func sourceValueText(for record: GarmentMeasurementRecord) -> String {
-        let raw = record.rawValueText?
+    /// Raw retailer facts are displayed independently from canonical
+    /// projections.  This overload is used by linked-product registration,
+    /// before a record is persisted as a Closet snapshot.
+    static func sourceDisplayRows(
+        records: [ParsedMeasurement]
+    ) -> [SourceDisplayRow] {
+        records.enumerated().map { index, record in
+            let rawCode = record.rawCode?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let identity = rawCode?.isEmpty == false
+                ? rawCode!
+                : record.measurementCode.rawValue
+            return SourceDisplayRow(
+                id: "parsed-\(index)-\(identity)",
+                title: sourceDisplayTitle(
+                    rawLabel: record.rawLabel,
+                    rawCode: rawCode,
+                    methodSource: record.methodSource,
+                    fallbackCode: record.measurementCode.rawValue
+                ),
+                value: record.value,
+                valueText: sourceValueText(
+                    rawValueText: record.rawValueText,
+                    value: record.value,
+                    rawUnit: record.unitRawValue ?? record.unit.rawValue
+                ),
+                isCanonical: record.value.isFinite && record.value > 0
+                    && record.measurementCode != .unknown
+                    && record.measurementCode != .legacyUnknown
+                    && record.semanticStatus == .mapped
+            )
+        }
+    }
+
+    private static func sourceDisplayTitle(
+        rawLabel: String,
+        rawCode: String?,
+        methodSource: String,
+        fallbackCode: String
+    ) -> String {
+        let rawLabel = rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isProviderMachineCode = rawLabel == rawCode
+            || rawLabel.hasPrefix("musinsa.")
+            || rawLabel.hasPrefix("uniqlo.")
+            || rawLabel.hasPrefix("zara.")
+        if !rawLabel.isEmpty, !isProviderMachineCode {
+            return rawLabel
+        }
+        if let rawCode,
+           let providerTitle = providerDisplayTitle(
+               rawCode: rawCode,
+               methodSource: methodSource
+           ) {
+            return providerTitle
+        }
+        if !rawLabel.isEmpty { return rawLabel }
+        if let rawCode, !rawCode.isEmpty { return rawCode }
+        if !fallbackCode.isEmpty { return fallbackCode }
+        return "실측"
+    }
+
+    private static func providerDisplayTitle(
+        rawCode: String,
+        methodSource: String
+    ) -> String? {
+        guard methodSource.localizedCaseInsensitiveContains("zara") else {
+            return nil
+        }
+        return ZARAMeasurementPresentation.title(for: rawCode)
+    }
+
+    private static func sourceValueText(
+        rawValueText: String?,
+        value: Double,
+        rawUnit: String?
+    ) -> String {
+        let raw = rawValueText?
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        let unit = rawUnit?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if let raw, !raw.isEmpty {
             let lower = raw.lowercased()
             if lower.contains("cm") || lower.contains("mm") || lower.contains("inch") || lower.contains("인치") {
                 return raw
             }
-            return "\(raw) \(record.unitRawValue)"
+            return unit.isEmpty ? raw : "\(raw) \(unit)"
         }
-        return "\(record.value.cmText)"
+        let numeric = value.isFinite ? String(value) : "값 확인 필요"
+        return unit.isEmpty ? numeric : "\(numeric) \(unit)"
     }
 
     private static func displayOrder(_ kind: MeasurementDisplayKind?) -> Int {
@@ -190,6 +279,22 @@ enum MeasurementResolver {
             return "화장"
         default:
             return kind.title
+        }
+    }
+}
+
+/// Retailer presentation labels stay outside canonical MeasurementCode
+/// vocabulary.  They make official ZARA codes readable without granting a
+/// mapping or comparison eligibility.
+enum ZARAMeasurementPresentation {
+    static func title(for rawCode: String) -> String? {
+        switch rawCode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "zone-name-chest": return "가슴 둘레"
+        case "zone-name-front-length": return "앞면 길이"
+        case "zone-name-sleeve-length": return "소매 길이"
+        case "zone-name-back-width": return "등 너비"
+        case "zone-name-arm-width": return "팔 너비"
+        default: return nil
         }
     }
 }

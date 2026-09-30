@@ -1,0 +1,548 @@
+import Foundation
+import Testing
+@testable import FitMatch
+
+struct FitMatchVNextContractTests {
+    @Test func completedReplayReliabilityAcceptsOnlyDocumentedFormulas() {
+        // Includes all current DB distributions and historical threshold boundaries.
+        for (count, coverage, legacy) in [(1, 0.16667, 2), (2, 0.25, 3),
+            (3, 0.49999, 3), (3, 0.5, 4), (4, 0.36364, 3),
+            (4, 0.5, 4), (4, 0.74999, 4), (4, 0.75, 5)] {
+            let current = min(5, count)
+            for reliability in 0...6 {
+                #expect(VNextCompletedReplayPolicy.acceptsReliability(
+                    reliability, engineVersion: "fitmatch-ios-vnext-snapshot-v1",
+                    evidenceCount: count, coverage: coverage
+                ) == (reliability == legacy || reliability == current))
+                #expect(VNextCompletedReplayPolicy.acceptsReliability(
+                    reliability, engineVersion: "fitmatch-ios-vnext-snapshot-v2",
+                    evidenceCount: count, coverage: coverage
+                ) == (reliability == current))
+            }
+        }
+        #expect(!VNextCompletedReplayPolicy.acceptsReliability(
+            1, engineVersion: "unknown", evidenceCount: 1, coverage: 1))
+        #expect(VNextComparisonEngineAdapter.engineVersion == "fitmatch-ios-vnext-snapshot-v2")
+    }
+
+    @Test func retailerExactV2ContractRequiresExactUnscoredSemanticIdentity() throws {
+        let evidence = VNextRetailerExactEvidenceV2DTO(
+            evidenceVersion: "retailer-exact-evidence-v2",
+            mode: .retailerExact,
+            referenceClosetItemID: UUID(),
+            targetProductSizeID: UUID(),
+            sourceCode: "uniqlo",
+            parserCode: "size_chart",
+            rawMeasurementKey: "body-width",
+            rawCode: "body-width",
+            referenceValue: 54,
+            targetValue: 56,
+            unitCode: "cm",
+            sourceSchemaVersion: "uniqlo-size-chart-v1",
+            basisCode: "pit_to_pit",
+            representationCode: "flat_width",
+            componentCode: "shell",
+            scoreIncluded: false
+        )
+
+        try FitMatchVNextContractValidator.validateRetailerExactEvidenceV2(evidence)
+
+        let invalidScore = VNextRetailerExactEvidenceV2DTO(
+            evidenceVersion: evidence.evidenceVersion,
+            mode: evidence.mode,
+            referenceClosetItemID: evidence.referenceClosetItemID,
+            targetProductSizeID: evidence.targetProductSizeID,
+            sourceCode: evidence.sourceCode,
+            parserCode: evidence.parserCode,
+            rawMeasurementKey: evidence.rawMeasurementKey,
+            rawCode: evidence.rawCode,
+            referenceValue: evidence.referenceValue,
+            targetValue: evidence.targetValue,
+            unitCode: evidence.unitCode,
+            sourceSchemaVersion: evidence.sourceSchemaVersion,
+            basisCode: evidence.basisCode,
+            representationCode: evidence.representationCode,
+            componentCode: evidence.componentCode,
+            scoreIncluded: true
+        )
+        #expect(throws: FitMatchVNextContractError.conflictingProof(
+            "retailer_exact_score_gate"
+        )) {
+            try FitMatchVNextContractValidator.validateRetailerExactEvidenceV2(invalidScore)
+        }
+    }
+
+    @Test func runtimeDTOSeparatesGarmentAndAllLengthAxes() throws {
+        let productID = UUID()
+        let variantID = UUID()
+        let sizeID = UUID()
+        let runtime: VNextProductRuntimeDTO = try decode(
+            """
+            {
+              "found":true,
+              "product":{
+                "id":"\(productID)","source_code":"uniqlo",
+                "source_product_key":"E500010","product_name":"테스트 팬츠",
+                "brand_name":"UNIQLO","canonical_url":null,"image_url":null,
+                "classification_status":"CONFIRMED","product_structure_code":"SINGLE",
+                "audience_code":"UNISEX","category_code":"bottoms",
+                "garment_type_code":"pants","comparison_policy_code":"pants",
+                "sleeve_length_code":null,"lower_length_code":"ANKLE",
+                "body_length_code":null,"resolver_version":"vnext-v1",
+                "input_fingerprint":"input-v1","latest_ingestion_fingerprint":"ingest-v1"
+              },
+              "readiness":{"status":"READY","reason":null,
+                "ready_size_count":1,"policy_metric_count":2},
+              "variants":[{
+                "id":"\(variantID)","source_variant_key":"09",
+                "variant_label":"BLACK","color_name":"BLACK",
+                "sizes":[{
+                  "id":"\(sizeID)","source_size_key":"M","size_label":"M",
+                  "availability":{"status":"AVAILABLE","observed_at":"2026-08-29T00:00:00Z",
+                    "valid_until":"2026-08-30T00:00:00Z","evidence_fingerprint":"stock-v1"},
+                  "canonical_measurements":{"semantic_conflict_count":0,"measurements":[{
+                    "fitmatch_measurement_code":"waist_width_edge_to_edge",
+                    "value":39,"unit_code":"CM","basis_code":"WIDTH",
+                    "source_measurement_code":"waist"
+                  }]}
+                }]
+              }]
+            }
+            """
+        )
+
+        #expect(runtime.product?.garmentTypeCode == "pants")
+        #expect(runtime.product?.sleeveLengthCode == nil)
+        #expect(runtime.product?.lowerLengthCode == "ANKLE")
+        #expect(runtime.product?.bodyLengthCode == nil)
+        #expect(runtime.variants.first?.id == variantID)
+        #expect(runtime.variants.first?.sizes.first?.id == sizeID)
+        #expect(runtime.variants.first?.sizes.first?.availability.status == "AVAILABLE")
+    }
+
+    @Test func observationSizePreservesRetailerAvailabilityEvidence() throws {
+        let size = FitMatchProductObservationSize(
+            sizeIdentity: "004",
+            sizeLabel: "M",
+            normalizedSizeLabel: "M",
+            displayOrder: 0,
+            stockStatus: "AVAILABLE",
+            availabilityObservedAt: "2026-08-29T00:00:00Z",
+            availabilityValidUntil: "2026-08-30T00:00:00Z",
+            availabilityEvidence: ["retailer_stock": "in_stock"],
+            measurements: []
+        )
+        let data = try JSONEncoder().encode(size)
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        #expect(json["stock_status"] as? String == "AVAILABLE")
+        #expect(json["observed_at"] as? String == "2026-08-29T00:00:00Z")
+        #expect(json["valid_until"] as? String == "2026-08-30T00:00:00Z")
+        #expect(json["availability_observed_at"] == nil)
+        #expect(json["availability_valid_until"] == nil)
+    }
+
+    @Test func engineScoresOnlyExactAuthorizedCandidateSetAndRanksDeterministically() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let result = try VNextComparisonEngineAdapter().analyze(begin)
+
+        #expect(result.comparisonID == fixture.comparisonID)
+        #expect(result.analyses.map(\.productSizeID) == [fixture.sizeA, fixture.sizeB])
+        #expect(result.analyses.map(\.rank) == [1, 2])
+        #expect(result.recommended.productSizeID == fixture.sizeA)
+        #expect(result.completionPayload.candidateSizeRanking.count == 2)
+        #expect(Set(result.completionPayload.metricEvidence.map(\.productSizeID))
+            == Set([fixture.sizeA, fixture.sizeB]))
+    }
+
+    @Test func serverListPreviewMatchesDetailAndNeverUsesWrongTargetEvidence() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let root = try #require(JSONSerialization.jsonObject(with: Data(fixture.json().utf8)) as? [String: Any])
+        let snapshot = try #require(root["snapshot"] as? [String: Any])
+        let target = try #require(snapshot["target_snapshot"] as? [String: Any])
+        let closetID = UUID()
+        let previewJSON: [String: Any] = [
+            "allowed": true, "decision": "MANUAL_EXTENDED", "mode": "MANUAL_EXTENDED",
+            "manual_explicit": true, "reference_closet_item_id": closetID.uuidString,
+            "target_product_id": fixture.productID.uuidString,
+            "target_variant_id": fixture.variantID.uuidString,
+            "authorized_candidate_product_size_ids": [fixture.sizeA.uuidString, fixture.sizeB.uuidString],
+            "candidates": try #require(target["candidates"])
+        ]
+        let preview = try JSONDecoder().decode(VNextEligibleCandidateSizesDTO.self,
+            from: JSONSerialization.data(withJSONObject: previewJSON))
+        let candidate = FitMatchServerReferenceSelectionCandidate(
+            comparisonPreview: preview, clientItemID: UUID(), closetItemID: closetID,
+            comparisonGroupCode: "A", decision: .manualSelection, allowed: true,
+            reasonCode: nil, reason: nil, commonMeasurementCount: 1
+        )
+        let service = RecommendationService()
+        let group = try #require(FitMatchComparisonGroup(rawValue: "A"))
+        let batch = service.makeServerClosetComparisonBatchSummary(
+            targetProductID: fixture.productID, comparisonGroup: group, candidates: [candidate])
+        let summary = try #require(batch.items.first)
+        let detail = try VNextComparisonEngineAdapter().analyze(begin)
+        #expect(summary.recommendedProductSizeID == detail.recommended.productSizeID)
+        #expect(summary.similarityPercent == detail.recommended.result.score)
+        #expect(summary.commonMeasurementCount == detail.recommended.result.comparedItems.count)
+        let mismatched = service.makeServerClosetComparisonBatchSummary(
+            targetProductID: UUID(), comparisonGroup: group, candidates: [candidate])
+        #expect(mismatched.items.first?.similarityPercent == nil)
+    }
+
+    @Test func detailReusesPreviewArithmeticButStillRejectsDeniedBegin() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let cache = VNextAuthorizedScoreCache()
+        for candidate in begin.snapshot.target.candidates {
+            _ = try #require(cache.compare(candidate.comparisonMeasurements, minimum: 1))
+        }
+        let computations = cache.computationCount
+        let adapter = VNextComparisonEngineAdapter(scoreCache: cache)
+        let result = try adapter.analyze(begin)
+        #expect(result.recommended.productSizeID == fixture.sizeA)
+        #expect(cache.computationCount == computations)
+        let denied: VNextBeginComparisonDTO = try decode(fixture.json(allowed: false))
+        #expect(throws: (any Error).self) { try adapter.analyze(denied) }
+        #expect(cache.computationCount == computations)
+    }
+
+    @Test func scoreCacheInvalidatesChangedEvidenceWeightsAndMinimum() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let measurements = try #require(begin.snapshot.target.candidates.first).comparisonMeasurements
+        let cache = VNextAuthorizedScoreCache()
+        let baseline = try #require(cache.compare(measurements, minimum: 1))
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        #expect(cache.computationCount == 1)
+        let data = try JSONEncoder().encode(measurements)
+        let original = try #require(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        var weighted = original
+        weighted[0]["weight"] = 2.0
+        let weightedInput = try JSONDecoder().decode([VNextAuthorizedMeasurementDTO].self,
+            from: JSONSerialization.data(withJSONObject: weighted))
+        _ = try #require(cache.compare(weightedInput, minimum: 1))
+        #expect(cache.computationCount == 2)
+        var changed = original
+        changed[0]["target_value"] = 54.0
+        changed[0]["difference"] = 4.0
+        changed[0]["absolute_difference"] = 4.0
+        let changedInput = try JSONDecoder().decode([VNextAuthorizedMeasurementDTO].self,
+            from: JSONSerialization.data(withJSONObject: changed))
+        let revised = try #require(cache.compare(changedInput, minimum: 1))
+        #expect(revised.score != baseline.score)
+        #expect(cache.computationCount == 3)
+        #expect(cache.compare(measurements, minimum: 2) == nil)
+    }
+
+    @Test func engineUsesOneServerAuthorizedCanonicalMetricWithCountBasedReliability() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json())
+        let result = try VNextComparisonEngineAdapter().analyze(begin)
+
+        #expect(result.recommended.result.comparedItems.count == 1)
+        #expect(result.completionPayload.reliability == 1)
+        #expect(result.completionPayload.coverage == 1)
+        #expect(result.completionPayload.engineVersion
+            == VNextComparisonEngineAdapter.engineVersion)
+        #expect(result.completionPayload.metricEvidence.filter {
+            $0.productSizeID == result.recommended.productSizeID
+        }.map(\.measurementCode) == ["chest_width"])
+    }
+
+    @Test func availabilityAndExpiryNeverChangeAuthorizedCandidateScoring() throws {
+        let fixture = ComparisonBeginFixture()
+        let adapter = VNextComparisonEngineAdapter()
+        let baseline = try adapter.analyze(decode(fixture.json()))
+
+        for status in ["SOLD_OUT", "UNKNOWN"] {
+            let unavailableOrUnknown = try adapter.analyze(
+                decode(
+                    fixture.json(
+                        availabilityStatus: status,
+                        availabilityValidUntil: "2020-01-01T00:00:00Z"
+                    )
+                )
+            )
+
+            #expect(unavailableOrUnknown.recommended.productSizeID == baseline.recommended.productSizeID)
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            #expect(unavailableOrUnknown.completionPayload == baseline.completionPayload)
+            #expect(unavailableOrUnknown.analyses.map(\.availability.status)
+                == [status, status])
+        }
+
+        let noObservation = try adapter.analyze(
+            decode(
+                fixture.json(
+                    availabilityStatus: "UNKNOWN",
+                    availabilityObservedAt: nil,
+                    availabilityValidUntil: nil
+                )
+            )
+        )
+        #expect(noObservation.recommended.productSizeID == baseline.recommended.productSizeID)
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        #expect(noObservation.completionPayload == baseline.completionPayload)
+        #expect(noObservation.analyses.map(\.availability.status) == ["UNKNOWN", "UNKNOWN"])
+    }
+
+    @Test func engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence() throws {
+        let fixture = ComparisonBeginFixture()
+        let authorizationWithExclusion = """
+        "excluded_measurement_codes":["sleeve_length"],
+        "excluded_measurement_reasons":[{
+          "measurement_code":"sleeve_length",
+          "reason_code":"DESIGN_AXIS_DIFFERENCE"
+        }]
+        """
+        let json = fixture.json().replacingOccurrences(
+            of: "\"excluded_measurement_codes\":[]",
+            with: authorizationWithExclusion
+        )
+        let begin: VNextBeginComparisonDTO = try decode(json)
+        let result = try VNextComparisonEngineAdapter().analyze(begin)
+
+        #expect(result.recommended.result.exclusions == [
+            MeasurementComparisonExclusion(
+                kind: .sleeveLength,
+                reason: .designAxisDifference,
+                productCode: .sleeveShoulderSeamToCuff,
+                referenceCode: .sleeveShoulderSeamToCuff
+            )
+        ])
+    }
+
+    @Test func differentSleeveBasisAddsExplanationWithoutChangingScoresOrEvidence() throws {
+        let fixture = ComparisonBeginFixture()
+        let baseline: VNextBeginComparisonDTO = try decode(fixture.json())
+        let expected = try VNextComparisonEngineAdapter().analyze(baseline)
+        var json = try #require(JSONSerialization.jsonObject(with: Data(fixture.json().utf8)) as? [String: Any])
+        var snapshot = try #require(json["snapshot"] as? [String: Any])
+        var target = try #require(snapshot["target_snapshot"] as? [String: Any])
+        var candidates = try #require(target["candidates"] as? [[String: Any]])
+        for index in candidates.indices {
+            candidates[index]["canonical_measurements"] = [
+                "semantic_conflict_count": 0,
+                "measurements": [["fitmatch_measurement_code": "sleeve_center_back_length",
+                                  "value": 71, "unit_code": "cm",
+                                  "basis_code": "sleeve_center_back_to_cuff"]]
+            ]
+        }
+        target["candidates"] = candidates
+        snapshot["target_snapshot"] = target
+        snapshot["reference_snapshot"] = ["measurements": [[
+            "fitmatch_measurement_code": "sleeve_length", "value": 59, "unit_code": "cm",
+            "raw_label_snapshot": "musinsa.sleeve_length.sleeve_shoulder_seam_to_cuff"
+        ]]]
+        json["snapshot"] = snapshot
+        let begin = try JSONDecoder().decode(VNextBeginComparisonDTO.self, from: JSONSerialization.data(withJSONObject: json))
+        let actual = try VNextComparisonEngineAdapter().analyze(begin)
+        #expect(actual.completionPayload == expected.completionPayload)
+        #expect(actual.analyses.map(\.productSizeID) == expected.analyses.map(\.productSizeID))
+        #expect(actual.analyses.allSatisfy { $0.result.exclusions.contains {
+            $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode
+                && $0.productCode == .sleeveCenterBackToCuff
+                && $0.referenceCode == .sleeveShoulderSeamToCuff
+        } })
+        let candidate = try #require(begin.snapshot.target.candidates.first)
+        #expect(VNextComparisonEngineAdapter.sleevePresentationExclusions(
+            candidate: candidate, referenceSnapshot: .object([:]),
+            alreadyExplained: [], comparedKinds: []
+        ).isEmpty)
+        #expect(VNextComparisonEngineAdapter.sleevePresentationExclusions(
+            candidate: candidate, referenceSnapshot: begin.snapshot.referenceSnapshot,
+            alreadyExplained: [], comparedKinds: [.sleeveLength]
+        ).isEmpty)
+    }
+
+    @Test func eligibleCandidateDTOKeepsStableBlockedReasonCode() throws {
+        let response: VNextEligibleCandidateSizesDTO = try decode(
+            """
+            {
+              "allowed":false,"decision":"BLOCKED","mode":"NONE",
+              "reason_code":"INCOMPATIBLE_BODY_REGION",
+              "reason":"Upper-body and lower-body measurements are not comparable",
+              "authorized_candidate_product_size_ids":[],"candidates":[]
+            }
+            """
+        )
+
+        #expect(response.reasonCode == "INCOMPATIBLE_BODY_REGION")
+        #expect(response.allowed == false)
+    }
+
+    @Test func engineAcceptsEveryActiveServerCanonicalMetricCode() {
+        let expected: [(String, MeasurementKind)] = [
+            ("back_length", .totalLength),
+            ("chest_circumference", .chest),
+            ("chest_width", .chest),
+            ("front_rise", .rise),
+            ("hem_circumference", .hem),
+            ("hem_width", .hem),
+            ("hip_circumference", .hip),
+            ("hip_width", .hip),
+            ("outseam", .totalLength),
+            ("shoulder_width", .shoulder),
+            ("sleeve_length", .sleeveLength),
+            ("thigh_circumference", .thigh),
+            ("thigh_width", .thigh),
+            ("total_length", .totalLength),
+            ("under_bust_circumference", .underBust),
+            ("under_bust_width", .underBust),
+            ("waist_circumference", .waist),
+            ("waist_width", .waist),
+            ("sleeve_center_back_length", .sleeveLength),
+            ("sleeve_raglan_length", .sleeveLength)
+        ]
+
+        for (code, kind) in expected {
+            #expect(MeasurementComparisonEngine.authorizedMeasurementIdentity(
+                for: code
+            )?.kind == kind)
+        }
+        #expect(MeasurementComparisonEngine.authorizedMeasurementIdentity(
+            for: "not_a_server_metric"
+        )?.kind == nil)
+    }
+
+    @Test func engineRejectsSnapshotCandidateSetMismatchBeforeScoring() throws {
+        let fixture = ComparisonBeginFixture()
+        let decoded: VNextBeginComparisonDTO = try decode(fixture.json())
+        // The network decoder now rejects conflicting duplicated proof. Keep
+        // the adapter seam test by constructing the deliberately inconsistent
+        // in-memory DTO that a decoder-bypassing caller could still provide.
+        let begin = VNextBeginComparisonDTO(
+            comparisonID: decoded.comparisonID,
+            created: false,
+            idempotent: true,
+            resultStatus: "PENDING",
+            authorization: decoded.authorization,
+            authorizedCandidateProductSizeIDs: [fixture.sizeA],
+            candidateAuthorityFingerprint: decoded.candidateAuthorityFingerprint,
+            effectiveAuthorityFingerprint: decoded.effectiveAuthorityFingerprint,
+            snapshotSchemaVersion: decoded.snapshotSchemaVersion,
+            snapshot: decoded.snapshot
+        )
+
+        #expect(throws: VNextComparisonEngineAdapterError.candidateSetMismatch) {
+            try VNextComparisonEngineAdapter().analyze(begin)
+        }
+    }
+
+    @Test func engineRejectsBlockedAuthorizationBeforeScoring() throws {
+        let fixture = ComparisonBeginFixture()
+        let begin: VNextBeginComparisonDTO = try decode(fixture.json(allowed: false))
+
+        #expect(throws: VNextComparisonEngineAdapterError.authorizationDenied("blocked")) {
+            try VNextComparisonEngineAdapter().analyze(begin)
+        }
+    }
+
+    private func decode<T: Decodable>(_ json: String) throws -> T {
+        try JSONDecoder().decode(T.self, from: Data(json.utf8))
+    }
+}
+
+private struct ComparisonBeginFixture {
+    let comparisonID = UUID()
+    let productID = UUID()
+    let variantID = UUID()
+    let sizeA = UUID()
+    let sizeB = UUID()
+
+    func json(
+        topLevelAuthorizedIDs: [UUID]? = nil,
+        allowed: Bool = true,
+        availabilityStatus: String = "AVAILABLE",
+        availabilityObservedAt: String? = "2026-08-29T00:00:00Z",
+        availabilityValidUntil: String? = "2026-08-30T00:00:00Z"
+    ) -> String {
+        let ids = topLevelAuthorizedIDs ?? [sizeA, sizeB]
+        let encodedIDs = ids.map { "\"\($0)\"" }.joined(separator: ",")
+        let reason = allowed ? "null" : "\"blocked\""
+        return """
+        {
+          "comparison_id":"\(comparisonID)","created":true,"idempotent":false,
+          "result_status":"PENDING",
+          "authorization":{
+            "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
+            "reason":\(reason),"excluded_measurement_codes":[],
+            "required_measurement_codes":["chest_width"],
+            "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
+            "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
+          },
+          "authorized_candidate_product_size_ids":[\(encodedIDs)],
+          "candidate_authority_fingerprint":"candidate-v1",
+          "snapshot":{
+            "snapshot_schema_version":3,
+            "reference_snapshot":{},"authority_snapshot":{},"input_snapshot":{},
+            "excluded_measurement_codes":[],
+            "policy_snapshot":{
+              "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1",
+              "metrics":[{
+                "metric_mode":"CANONICAL","fitmatch_measurement_code":"chest_width",
+                "weight":1,"requirement_mode":"REQUIRED_ANY","priority":1,"is_active":true
+              }]
+            },
+            "authorization_snapshot":{
+              "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
+              "reason":\(reason),"excluded_measurement_codes":[],
+              "required_measurement_codes":["chest_width"],
+              "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
+              "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
+            },
+            "target_snapshot":{
+              "product_id":"\(productID)","variant_id":"\(variantID)",
+              "authorized_candidate_product_size_ids":["\(sizeA)","\(sizeB)"],
+              "candidate_authority_fingerprint":"candidate-v1",
+              "classification_status":"CONFIRMED","garment_type_code":"tshirt",
+              "sleeve_length_code":"short_sleeve","lower_length_code":null,
+              "body_length_code":null,
+              "candidates":[
+                \(candidate(id: sizeA, label: "M", target: 51, difference: 1, allowed: allowed, availabilityStatus: availabilityStatus, availabilityObservedAt: availabilityObservedAt, availabilityValidUntil: availabilityValidUntil)),
+                \(candidate(id: sizeB, label: "L", target: 53, difference: 3, allowed: allowed, availabilityStatus: availabilityStatus, availabilityObservedAt: availabilityObservedAt, availabilityValidUntil: availabilityValidUntil))
+              ]
+            }
+          }
+        }
+        """
+    }
+
+    private func candidate(
+        id: UUID,
+        label: String,
+        target: Int,
+        difference: Int,
+        allowed: Bool,
+        availabilityStatus: String,
+        availabilityObservedAt: String?,
+        availabilityValidUntil: String?
+    ) -> String {
+        let reason = allowed ? "null" : "\"blocked\""
+        let observedAt = availabilityObservedAt.map { "\"\($0)\"" } ?? "null"
+        let validUntil = availabilityValidUntil.map { "\"\($0)\"" } ?? "null"
+        return """
+        {
+          "product_size_id":"\(id)","size_label":"\(label)",
+          "availability":{"status":"\(availabilityStatus)","observed_at":\(observedAt),
+            "valid_until":\(validUntil),"evidence_fingerprint":"stock-\(label)"},
+          "comparison_measurements":[{
+            "measurement_code":"chest_width","reference_value":50,
+            "target_value":\(target),"difference":\(difference),
+            "absolute_difference":\(difference),"unit_code":"CM","basis_code":"WIDTH",
+            "weight":1,"requirement_mode":"REQUIRED_ANY","priority":1
+          }],
+          "authorization":{
+            "decision":"AUTOMATIC","allowed":\(allowed),"mode":"AUTOMATIC",
+            "reason":\(reason),"excluded_measurement_codes":[],
+            "required_measurement_codes":["chest_width"],
+            "minimum_common":1,"common_measurement_count":1,"required_any_count":1,
+            "policy_code":"tshirt","policy_version":"v1","policy_checksum":"policy-v1"
+          }
+        }
+        """
+    }
+}

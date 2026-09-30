@@ -1,0 +1,670 @@
+FitMatch — CODEX ULTRA INDEPENDENT PRE-E2E PRODUCTION AUDIT
+Audit date: 2026-08-30 (Asia/Seoul)
+Repository: ljy4337/FitMatch
+Branch: connectDB
+Production Supabase: hnkplvyegonlhumlejst
+Primary schema: fitmatch_vnext
+Mode: STRICT INDEPENDENT AUDIT / READ-ONLY
+
+======================================================================
+A. EXECUTIVE VERDICT
+======================================================================
+
+Verdict: PRE-E2E GO
+Readiness score: 93 / 100
+P0: 0
+P1: 9
+P2: 6
+
+가장 중요한 근거:
+
+1. Production 최종 READ-ONLY SQL audit를 2026-08-30 07:08:30 KST에 다시 실행했다.
+   결과는 score=100, p0_count=0, Products=1,608, classification
+   203 CONFIRMED / 1,308 REVIEW_REQUIRED / 97 NOT_APPLICABLE,
+   CONFIRMED invalid=0, replay mismatch=0, duplicate/orphan=0,
+   Golden READY=3/3이었다.
+2. 배포된 product-observation은 ACTIVE v5, verify_jwt=true다. 배포 source와
+   local source는 정확히 3,334 bytes, SHA-256
+   93ea79a8cffc064d1886d2f0d7be723af594cf5ba0097e432adba8a56afffeb3로
+   일치한다. legacy submit/process 호출은 0이고 vNext service-only bridge를 사용한다.
+3. 이전 Ultra 감사의 Swift P0 3개를 현재 release path에서 독립 재검수했다.
+   exact completed-history UUID, deleted historical-reference isolation,
+   exact multi-reference delta가 모두 구현되어 있고 새 critical regression을 포함한
+   focused suite가 86 PASS / 0 FAIL / 0 SKIP이다.
+4. App build와 test-target build가 모두 실제 Xcode에서 PASS했다.
+5. scorer는 server authorization과 immutable begin snapshot 뒤에만 실행된다.
+   unauthorized size, excluded metric, BLOCKED, REVIEW_REQUIRED,
+   NOT_APPLICABLE scoring path는 발견되지 않았다.
+
+Physical signed-in iPhone E2E는 이 감사에서 실행하지 않았다. 이는 사용자가 명시한
+PRE-E2E 다음 단계의 검증 대상이며, 그 미실행 자체는 이번 GO를 차단하지 않는다.
+
+Production write: 0
+Migration apply: 0
+Edge deploy: 0
+Swift/source fix: 0
+Test expectation change: 0
+Commit/push: 0
+
+======================================================================
+B. VERIFIED ENVIRONMENT
+======================================================================
+
+Repository:
+
+- branch: connectDB
+- HEAD: 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+- origin/connectDB: 같은 commit
+- dirty working tree: 보존됨
+- git diff --check: PASS
+- reset/restore/stash/clean: 0
+
+Protected repository checks:
+
+- FitMatch/Components/TabBarScrollVisibilityModifier.swift diff: 0
+- hidesBottomTabBarOnScroll / tracksTabBarVisibilityOnScroll /
+  hidesTopChromeOnScroll call-site diff: 0
+- FitMatchSchemaV1 stored-model diff: 0
+- UserFit 변경은 static/computed/helper뿐이며 persisted field 추가 0
+- navigation structure redesign diff: 0
+- FitMatchShareExtension diff: 0
+
+Production DB:
+
+- project: hnkplvyegonlhumlejst
+- schema: fitmatch_vnext
+- audit SQL: supabase/sql/122_vnext_final_read_only_audit.sql
+- audited_at: 2026-08-29T22:08:30.700693Z
+- mode reported by SQL: READ_ONLY
+
+Deployed Edge:
+
+- slug: product-observation
+- version: 5
+- status: ACTIVE
+- verify_jwt: true
+- bundle SHA-256: 4d99d44634bd9bebd15a87e1fbdfb5ecea8a27eea972019c88d706c40280fce9
+- deployed/local index.ts SHA-256:
+  93ea79a8cffc064d1886d2f0d7be723af594cf5ba0097e432adba8a56afffeb3
+- deployed/local source bytes: 3,334
+
+Xcode:
+
+- Xcode 26.3 (17C529)
+- macOS 15.7.7
+- scheme: FitMatch
+- destination: iPhone 17 Pro, iOS 26.3.1, x86_64
+- simulator UDID: 03BAF093-552E-4E53-ABFB-7DE0653BE676
+- fresh DerivedData: /tmp/FitMatchUltraPreE2E-20260830-DerivedData
+
+======================================================================
+C. UI/UX FLOW AUDIT
+======================================================================
+
+1. 링크 기반 Closet 추가 — PASS (static + focused tests)
+
+LinkClosetRegistrationView
+→ ShoppingProductViewModel retailer facts / Edge observation
+→ FitMatchServerAuthorityCoordinator / vNext runtime
+→ AddComparedProductToClosetSheet exact Product/Variant/Size selection
+→ vNext closet upsert
+→ SwiftData presentation cache
+→ MyCloset.
+
+Local parsed category is preselection only. Sourced server-confirmed authority가 존재하면
+local heuristic은 global classification을 덮어쓰지 않는다.
+
+2. 직접 입력 Closet 추가 — PASS
+
+AddClosetItemView
+→ AddClosetItemViewModel explicit user tuple/measurements
+→ vNext user-owned closet upsert
+→ SwiftData cache
+→ MyCloset.
+
+이 경로는 USER_EXPLICIT personal authority이며 global Product를 수정하지 않는다.
+
+3. Closet edit / satisfaction / soft delete — PASS (same-device contract)
+
+ClosetItemDetailView
+→ FitMatchClosetSyncCoordinator
+→ exact owned-row update/delete RPC
+→ authoritative list refresh
+→ SwiftData cache.
+
+Delete는 exact client item pending-delete ID를 사용하고 server soft-delete 뒤 active list에서
+제외된다. 다른 기기 tombstone을 local active cache에 반영하는 별도 delta는 없어 P1이다.
+
+4. 기준 옷 set/unset — PASS
+
+Local [clientItemID: isReference]
+↔ remote [clientItemID: isReference] exact delta
+→ changed item만 set/unset
+→ server same-tuple atomic replacement
+→ authoritative refresh.
+
+Remote A=true/B=true, local A=false/B=true에서 A unset 1회, B mutation 0이며,
+first-login empty cache는 remote-only A/B를 unset하지 않는다.
+
+5. Personal override — SET PASS / clear UI P1
+
+실제 picker 변경만 USER_EXPLICIT로 승격되고 user closet override RPC를 호출한다.
+Global Product tuple은 불변이다. Clear RPC와 sync branch는 있으나 release UI에
+“서버 분류로 복원” action이 없다.
+
+6. 자동/수동 비교 — PASS
+
+READY target
+→ find_reference_candidates
+→ automatic/manual selection
+→ authorize_comparison
+→ eligible_candidate_sizes
+→ begin_comparison immutable snapshot
+→ MeasurementComparisonEngine adapter
+→ complete_comparison
+→ exact completed local cache
+→ Result.
+
+7. 다른 옷과 비교 — PASS
+
+Result
+→ current target/context 유지
+→ vNext reference candidates
+→ selected reference authorization
+→ eligible sizes
+→ NEW begin
+→ score
+→ complete
+→ distinct new history/result.
+
+Target parser 재실행, target recreation, BLOCKED force, 기존 history overwrite는 0이다.
+
+8. 다른 사이즈와 비교 — PASS for current session / restart recovery P1
+
+현재 comparison의 in-memory immutable batch에 있는 exact authorized ProductSize UUID만
+presentation 분석에 사용한다. 새 authorization/begin/comparison/history는 0이며 rank-1
+추천을 덮어쓰지 않는다. 앱 재실행 뒤 session store를 복원하지 않아 UI가 비는 것은
+fail-closed P1이지 unauthorized scoring P0가 아니다.
+
+9. Result / History / recompare — PASS, delete UX P1
+
+Server completion 성공 뒤에만 local completed cache를 만든다. Pending recovery는 server
+immutable begin snapshot에서만 실행되며 local history를 server authority로 승격하지 않는다.
+Local swipe delete는 immutable server row를 삭제하지 않아 다음 sync에서 다시 나타난다.
+
+10. Share → Compare — PASS static / physical runtime NOT RUN
+
+Share Extension은 URL 추출, App Group 저장, fitmatch://compare open만 수행한다.
+Extension 내부 parser/DB/engine은 0이다. 실제 device handoff는 다음 iPhone E2E 대상이다.
+
+11. Offline Closet/History — PASS static / cold-device runtime NOT RUN
+
+SwiftData는 cached presentation을 제공하고 sync failure가 cache를 purge하지 않는다.
+Cached global classification은 server authority보다 우선하지 않고, manual pending item은
+server authorize/begin 전 sourced comparison authority가 될 수 없다.
+
+======================================================================
+D. AUTHORITY AUDIT
+======================================================================
+
+- Product identity: fitmatch_vnext exact UUID — PASS
+- Global classification: fitmatch_vnext — PASS
+- garment/sleeve/lower/body axes: vNext exact DTO — PASS
+- Availability: retailer evidence → vNext; absent evidence UNKNOWN — PASS
+- Canonical measurements: vNext resolver — PASS
+- Closet state/reference: vNext user-owned contract — PASS
+- Reference candidates: vNext — PASS
+- Candidate-size set: vNext exact UUID set — PASS
+- Comparison authorization: vNext — PASS
+- Begin snapshot: vNext immutable — PASS
+- Score/rank: existing MeasurementComparisonEngine over server snapshot evidence — PASS
+- Completion validation: vNext — PASS
+- History provenance: immutable vNext comparison — PASS
+- Personal override: user closet only — PASS
+- Offline presentation: SwiftData cache only — PASS
+
+Competing writable sourced authority는 발견되지 않았다.
+
+Exact history identity:
+
+- saveCompletedVNext는 history/Product/ProductSize UUID만 사용한다.
+- URL, product code, name, size label fallback은 vNext path에서 0이다.
+- same target의 reference A/B histories는 distinct comparison IDs로 함께 남는다.
+- legacy/manual saveUnique는 별도 branch로 유지된다.
+
+Deleted history reference:
+
+- missing historical reference는 reserved existing-field marker로 history-only UserFit가 된다.
+- active Closet/picker/sync/task revision에서 전부 제외된다.
+- immutable evidence는 읽을 수 있고 server reference mutation snapshot은 만들 수 없다.
+
+======================================================================
+E. LEGACY AUTHORITY AUDIT
+======================================================================
+
+Release Swift + deployed/local Edge exact search:
+
+- fitmatch_submit_product_observation sourced calls: 0
+- fitmatch_process_product_observation sourced calls: 0
+- fitmatch_resolve_product sourced calls: 0
+- fitmatch_get_product_runtime sourced calls: 0
+- Edge legacy observation RPC calls: 0
+
+남아 있는 local symbols의 분류:
+
+A. sourced production authority: 0
+B. manual personal authority: manual Closet input, explicit personal override
+C. cached/presentation support: parser hints, UI 설명, legacy offline history
+D. DEBUG/test: local scorer/debug resolver/legacy fixtures
+
+ParsedClosetClassification, GarmentLengthInferencePolicy, ComparisonProfileMatcher 및
+product-name heuristics는 parser/preselection/manual/presentation/DEBUG 영역에 남아 있으나,
+server-confirmed sourced release authority를 overwrite하는 call path는 발견되지 않았다.
+
+Supabase Auth/auth.users는 공통 infrastructure로서 legacy FitMatch business authority로
+분류하지 않았다.
+
+======================================================================
+F. PRODUCTION DB READ-ONLY AUDIT
+======================================================================
+
+Final audit result:
+
+- score: 100 / 100
+- DB p0_count: 0
+- verdict field: VNext PRE-E2E READY
+- Products: 1,608
+- duplicate Product identity groups: 0
+- catalog identity loss / vNext-only extra: 0 / 0
+- variant / size / measurement orphan: 0 / 0 / 0
+- Classification: 203 CONFIRMED / 1,308 REVIEW_REQUIRED / 97 NOT_APPLICABLE
+- CONFIRMED invalid: 0
+- required sleeve/lower/body axis missing: 0 / 0 / 0
+- CONFIRMED non-SINGLE: 0
+- inactive garment/provenance/unverified mapping issues: 0 / 0 / 0
+- top-priority conflicts / invalid direct mappings: 0 / 0
+- deterministic replay count: 1,608
+- repeated input mismatch / stored result mismatch: 0 / 0
+- current raw measurements: 28,514
+- measurement replay mismatch: 0
+- usable semantic conflict / alias top conflict / representation error: 0 / 0 / 0
+- readiness: READY 3 / NO_AVAILABLE_SIZE 198 / NO_MEASUREMENT_DATA 2 /
+  CLASSIFICATION_REQUIRED 1,308 / NOT_APPLICABLE 97
+- false READY / false non-READY: 0 / 0
+- expired/unbounded AVAILABLE: 0
+- Golden READY: MUSINSA / UNIQLO / ZARA = 3/3
+- policy boundary: 19/19 PASS
+- missing runtime functions: 0
+- selected legacy business references: 0
+- broad protected-table authenticated writes: 0
+- insecure SECURITY DEFINER search_path: 0
+- fixture Product pollution: 0
+- ingestion receipts: 0
+
+Production user-contract parity:
+
+- approved repo SQL bytes: 32,195
+- repo SHA-256: ad23bad212999c882b114c50b95ad7df7b95f275e0aadf8b0a7a7f37daa0dbd6
+- Production stored statement bytes/SHA: exact match
+- user-contract functions: 24/24 present
+- security mode mismatch: 0
+- fixed search_path missing: 0
+- anon execute across these 24: 0
+- intended authenticated/service_role function grants: complete
+- target function global Product DML references: 0
+- closet_items RLS: enabled
+- satisfaction: nullable smallint with 1...5 CHECK
+- authenticated direct Product/classification/mapping DML: 0
+- authenticated INSERT/UPDATE on profiles is an own-profile RLS boundary, not global Product authority
+
+Mutating cross-user runtime probes were NOT RUN in this turn because Production writes were
+explicitly forbidden. Ownership denial was independently proven from deployed function definitions,
+auth.uid() exact checks, RLS, grants, and the exact repo/ledger SQL hash.
+
+======================================================================
+G. SECURITY AUDIT
+======================================================================
+
+Edge:
+
+- verify_jwt=true — PASS
+- POST-only — PASS
+- missing Authorization → HTTP 401 — PASS
+- malformed JWT → HTTP 401 — PASS
+- auth.getUser session validation — PASS
+- actor_id from authData.user.id, not payload — PASS
+- service-role key remains function-local — PASS
+- secret in response/log — 0
+- vNext public bridge call — PASS
+- legacy submit/process — 0
+
+DB:
+
+- public ingestion bridge: SECURITY DEFINER, fixed search_path — PASS
+- ingestion anon/authenticated EXECUTE: false/false — PASS
+- ingestion service_role EXECUTE: true — PASS
+- internal ingestion service-only — PASS
+- closet row ownership guards use auth.uid() — PASS (structural)
+- cross-user mutation path — blocked by exact owner predicates (structural)
+- broad authenticated protected-table write grant — 0
+- global Product user mutation — 0
+
+Advisor evidence:
+
+- security ERROR: 0
+- security WARN: 14 pre-existing warnings
+- fitmatch_vnext core has no ERROR/WARN correctness blocker
+- performance ERROR/WARN: 0; INFO-only findings remain
+
+The 13 legacy authenticated SECURITY DEFINER callable warnings remain P1 attack-surface debt even
+though current sourced release code does not call them. Leaked-password protection is P2 because
+the current app uses an OAuth-oriented flow; it should still be enabled before password auth expands.
+
+======================================================================
+H. COMPARISON SEQUENCING AUDIT
+======================================================================
+
+Required order is present:
+
+runtime READY
+→ find_reference_candidates
+→ reference selection
+→ authorize_comparison
+→ eligible_candidate_sizes
+→ begin_comparison
+→ immutable begin snapshot
+→ MeasurementComparisonEngine
+→ complete_comparison
+→ server immutable history
+→ local cache
+→ Result.
+
+Verified invariants:
+
+- scorer-before-authorization: 0
+- scorer-before-begin: 0
+- unauthorized candidate/size scoring: 0
+- excluded metric scoring/evidence: 0
+- BLOCKED scoring: 0
+- REVIEW_REQUIRED scoring: 0
+- NOT_APPLICABLE scoring: 0
+- candidate-set mismatch: throws/fail-closed
+- non-AVAILABLE candidate: throws/fail-closed
+- complete-before-history violation: 0
+- complete reject local completed cache: 0 by release source order; dynamic failure test debt is P2
+- local-history-first server promotion: 0
+- pending recovery without immutable begin: 0
+- current-session Other Size outside exact authorized set: 0
+
+The adapter validates PENDING, allowed authorization, CONFIRMED target, exact three-way UUID set,
+active policy metrics, exclusions, AVAILABLE evidence, and per-candidate authorization before calling
+the measurement engine.
+
+======================================================================
+I. XCODE / BUILD / TEST RESULTS
+======================================================================
+
+Build:
+
+- App target build: PASS (91.4s)
+- Test target build-for-testing: PASS (95.7s)
+- compile errors: 0
+- non-fatal warnings: 4 in existing live/audit tests
+
+Critical focused tests:
+
+- result: PASS
+- total: 86
+- passed: 86
+- failed: 0
+- skipped: 0
+
+Suites:
+
+- FitMatchP0RemediationRegressionTests: 4/4
+- FitMatchVNextContractTests: 5/5
+- FitMatchComparisonSyncCoordinatorTests: 4/4
+- FitMatchComparisonPermitSequencingTests: 4/4
+- FitMatchClosetSyncCoordinatorTests: 24/24
+- FitMatchServerAuthorityIntegrationTests: 23/23
+- FitMatchSupabaseProductResolverTests: 22/22
+
+Full FitMatchTests:
+
+- total: 540
+- passed: 502
+- failed: 1
+- skipped: 37
+- only failure:
+  DBLogicReliabilityAuditTests/testDBLogicAdjudicationMatchesProductionClassifier()
+- first reported mismatch:
+  MUSINSA 5049615, actual sleeveless vs old expected blouse
+- the old 207-row/local parser corpus has 64 equality mismatches
+- expected values were not changed
+- new P0/focused failures: 0
+
+UI target best-effort:
+
+- total: 20
+- passed: 4
+- failed: 10
+- skipped: 6
+- failures reproduce stale onboarding/copy, pre-vNext authority expectation, and cache-owner harness
+  debt; no new P0-specific UI regression was found
+- tests stopped at brittle early assertions, so their downstream physical UI steps remain NOT VERIFIED
+
+xcresult summaries were independently re-read after the agent run and match these counts.
+
+======================================================================
+J. MIGRATION LEDGER MISMATCH ASSESSMENT
+======================================================================
+
+Repository filename:
+
+20260829050000_vnext_swift_user_contract.sql
+
+Production ledger:
+
+20260829110853 / vnext_swift_user_contract
+
+Independent evidence:
+
+- name count: exactly 1
+- stored statement count: 1
+- stored SQL bytes: 32,195
+- stored SQL SHA-256:
+  ad23bad212999c882b114c50b95ad7df7b95f275e0aadf8b0a7a7f37daa0dbd6
+- repository SQL bytes/SHA: exact match
+- duplicate apply: 0
+- schema/function/security/data postflight: PASS
+
+Impact:
+
+- current iPhone E2E correctness: no impact observed
+- current security/data correctness: no impact observed
+- future tooling: real risk that filename version 20260829050000 is considered pending and retried
+- reproducibility: operator must know that execution-time ledger version differs from repository prefix
+
+Classification: P1, not P0.
+
+Recommended operational handling:
+
+- Do not run blind supabase db push while this mismatch is unresolved.
+- Before the next DB deployment, choose and document one migration-history reconciliation strategy
+  under explicit owner approval.
+- Do not fake-mark, UPDATE ledger, or reapply this migration from this audit.
+
+Repair performed: NO.
+
+======================================================================
+K. P0
+======================================================================
+
+P0 count: 0
+
+The three prior Swift P0s are independently closed:
+
+1. Completed vNext history exact identity — CLOSED
+2. Deleted history reference active-Closet resurrection — CLOSED
+3. Multi-type exact reference unset delta — CLOSED
+
+No functional/security/data defect meeting the user's P0 definition remains in the audited
+repository/Production path.
+
+======================================================================
+L. P1
+======================================================================
+
+P1-1. Migration ledger version mismatch
+
+Actual impact: future migration tooling/reapply risk; current runtime impact 0.
+Handling: explicit history reconciliation before next DB push; no repair in this audit.
+
+P1-2. Repository publishing drift
+
+All 23 local vNext migration files are present but currently untracked; tracked-vNext migration
+count is 0. Local/deployed Edge v5 source matches, but origin/connectDB contains an older Edge source
+(origin SHA-256 ca96632699db45bafd5edb7644c341a34713c242daca5811ebad07c93134df87).
+Current working tree is reproducible; the published branch is not.
+
+P1-3. Legacy callable security surface
+
+Current sourced release calls are 0, but project security advisor still reports 13 authenticated
+SECURITY DEFINER legacy public functions. Review/revoke only after confirming no supported legacy
+client requires them.
+
+P1-4. Personal override clear UI missing
+
+DB/transport clear exists, but release UI has no explicit “restore server classification” action.
+This cannot corrupt global Product authority but leaves an incomplete user workflow.
+
+P1-5. Other Size restart recovery missing
+
+Authorized batch is memory-only. Restart/history hydration yields no alternate-size presentation;
+it fails closed and performs no unauthorized scoring.
+
+P1-6. Immutable History delete semantics
+
+Swipe delete removes local cache only; next sync rehydrates the immutable server row. Provenance is
+safe, but user-visible hide/delete intent is not persistent.
+
+P1-7. Cross-device soft-delete visibility
+
+Active-only server list has no tombstone delta. A second device with a stale local row cannot
+successfully resurrect the deleted server row under the current idempotency/ownership contract, but
+the stale local item is not automatically removed and can remain visible until local reconciliation.
+
+P1-8. Legacy adjudication unit-test debt
+
+Full unit run remains red at one legacy/local-parser audit with 64 expected mismatches. The sourced
+vNext release path and all 86 critical tests pass, so this is not a current recommendation P0.
+
+P1-9. UI automation harness debt
+
+Ten UI tests fail at stale copy, obsolete local-authority expectations, or cache-owner harness setup.
+They leave downstream UI checkpoints unautomated and reduce regression observability.
+
+======================================================================
+M. P2
+======================================================================
+
+P2-1. Unknown readiness vocabulary maps to measurements_required. comparisonReady remains false,
+so behavior is fail-closed but diagnostics are less precise.
+
+P2-2. Auth leaked-password protection is not enabled. Current OAuth-first app impact is limited;
+enable before expanding password authentication.
+
+P2-3. Performance advisor INFO findings remain for unindexed foreign keys/unused indexes. No current
+correctness or measured performance blocker was shown.
+
+P2-4. Completion-rejection cache absence is covered by release source-order/static tests but lacks
+an injected dynamic complete failure regression.
+
+P2-5. Duplicate completed-history UUID replay is a no-op without payload-equivalence comparison.
+Server immutable UUID ownership makes current corruption unlikely; defense-in-depth remains.
+
+P2-6. Pre-DB observation external size key may use a normalized label. All post-ingestion closet,
+candidate, begin, completion, and history paths use exact DB UUID; monitor provider label drift.
+
+======================================================================
+N. NO CHANGE
+======================================================================
+
+Do not change as part of this audit:
+
+- fitmatch_vnext classification/mapping/taxonomy/measurement/readiness
+- Product/Variant/Size global identity
+- Edge v5 ingestion boundary
+- DB authorization/eligible/begin/complete protocol
+- MeasurementComparisonEngine score/reliability formula
+- exact completed-history identity branch
+- history-only reference representation
+- exact reference delta and first-login protection
+- SwiftData schema
+- TabBar/navigation/Share Extension
+- migration ledger by manual UPDATE/fake/reapply
+
+These areas either passed or require a separately approved operational/UX decision. Broad remediation
+would add more risk than the documented P1/P2 issues warrant before physical E2E.
+
+======================================================================
+O. PRE-E2E ACCEPTANCE CHECKLIST
+======================================================================
+
+[PASS] DB correctness P0 = 0
+[PASS] sourced legacy authority = 0
+[PASS] scorer before authorization = 0
+[PASS] scorer before begin = 0
+[PASS] unauthorized candidate score = 0
+[PASS] excluded metric score = 0
+[PASS] BLOCKED / REVIEW_REQUIRED / NOT_APPLICABLE score = 0
+[PASS] Closet user contract exists and matches Swift DTO/signatures
+[PASS] cross-user mutation structurally blocked by auth.uid/ownership/RLS
+[NOT RUN] fresh mutating Production cross-user runtime fixture (write prohibition)
+[PASS] Other Item contract
+[PASS] Other Size current-session contract
+[PASS] complete before local history
+[PASS] immutable server history hydration / no local promotion
+[PASS] Share regression = 0 (static)
+[PASS] SwiftData destructive regression = 0
+[PASS] App build
+[PASS] Test-target build
+[PASS] critical focused tests 86/86
+[PASS] unresolved functional/security/data P0 = 0
+[NOT RUN] physical signed-in provider/iPhone E2E — next stage by design
+
+First physical iPhone E2E checkpoints:
+
+1. real signed-in JWT
+2. product-observation Edge v5 positive path
+3. vNext runtime
+4. link Closet add
+5. reference set
+6. automatic comparison
+7. Other Item
+8. Other Size
+9. Result
+10. History
+11. Share → Compare
+12. app relaunch cache/history consistency
+
+======================================================================
+P. FINAL VERDICT
+======================================================================
+
+FITMATCH PRE-E2E GO
+
+Readiness: 93 / 100
+P0: 0
+P1: 9
+P2: 6
+
+The Production DB contract, Edge v5 boundary, Swift authority sequencing, prior three-P0
+remediations, App build, test-target build, and 86 critical regressions satisfy the PRE-E2E gate.
+Known P1/P2 items are explicitly retained and must not be misreported as fixed, but none currently
+permits wrong/unauthorized scoring, global Product corruption, cross-user authority, or immutable
+history corruption.
+
+Next stage: Physical iPhone E2E
+
+No new DB or Swift remediation phase was started.

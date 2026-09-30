@@ -1,0 +1,233 @@
+FITMATCH INDEPENDENT FROZEN-137 SCENARIO RECONCILIATION
+Date: 2026-09-01
+
+FORMAT
+ID | classification | evidence profile | fixture/terminal/reason
+
+EVIDENCE PROFILES
+H-CR: XCTest calls the production Closet form/registration/authority action
+with a distinguishing fixture and asserts the action's terminal value. Symbols
+include FitMatchClosetFormAction, FitMatchClosetManualRegistrationAction,
+FitMatchClosetRegistrationPersistence, and/or
+FitMatchComparedProductClosetRegistration. Evidence: independent XCTest run and
+static call-chain confirmation.
+
+H-CM: XCTest calls a production Closet presentation/edit/reference/deletion or
+sync action with distinct persisted state and asserts the mutation/presentation
+terminal. Symbols include FitMatchClosetPresentation,
+FitMatchClosetItemEditAction, FitMatchClosetReferenceMutation,
+FitMatchClosetDeletionAction, and sync coordinators.
+
+H-CP: XCTest changes authority/reference/measurement/size state and reaches the
+production resolution/comparison gate under review. Symbols include
+FitMatchSupabaseProductResolver, ShoppingProductViewModel,
+FitMatchServerAuthorityCoordinator, FitMatchComparisonSubmissionAction, and
+RecommendationService as applicable. Terminal allow/block state is asserted.
+
+H-RS: XCTest reaches the production Result/service action with a distinct
+authorized or blocked session fixture and asserts Result/presentation terminal.
+Symbols include RecommendationService, RecommendationResultView production
+helpers, and result persistence actions.
+
+H-HI: XCTest reaches production history hydration/visibility/deletion/sync with
+distinct comparison/tombstone state and asserts visible/persisted terminal.
+Symbols include VNextHistoryCacheHydrator, RecommendationHistoryStore,
+FitMatchHistoryVisibilityAction, and comparison sync.
+
+H-EN: XCTest reaches production entry URL/deep-link/storage routing with a
+distinct payload and asserts accepted/rejected/consumed terminal. Symbols
+include FitMatchProductEntryRouting, FitMatchProductURLRouting, and
+SharedURLStore.
+
+H-RX: XCTest uses a deterministic production coordinator gate or idempotency
+key, observes the race/retry terminal, and does not compute the business answer
+in test code.
+
+S-ROUTE: Direct source/contract inspection is sufficient because the scenario
+only asks whether a non-calculating route/filter/shell exists. No persistence,
+authority mutation, business calculation, or async lifecycle is claimed.
+
+N-CR/N-CM/N-CP/N-RS/N-HI/N-EN/N-RX: Required distinguishing state or intended
+production orchestration is not reached. Existing evidence is a grouped label,
+generic fixture, source-string assertion, sequential substitute for a race, or
+only a partial helper gate. Terminal whole-scenario behavior is therefore
+NOT_EXECUTED.
+
+F-CP12: Later Global authority/recompare can persist or present through the
+previous mutable Product. Static product call-chain nonconformance.
+F-RS-RECOMPARE: Result recompare mutates current Product/reference before new
+completion and hardcodes serverConfirmed; strict USER_EXPLICIT completion can
+then lose local Result/History. Static confirmed production path.
+F-HI-AUDIENCE: V4 hydration reads historical audience but creates UNISEX
+Product projection; exact begin-time authority is lost. Static confirmed.
+F-HI-MUTABLE: Same-target histories can reuse one mutable Product projection;
+old rows can observe later authority/reference meaning. Static confirmed.
+F-HI-SEARCH: Required History search interaction does not exist. Static
+confirmed.
+F-HI-HOME: Home deduplicates histories by URL/display name, collapsing distinct
+comparison identities. Static confirmed.
+F-EN-REASON: Home URL entry rejects invalid/unsupported/COS input without the
+required meaningful explanation. Static confirmed.
+
+MY CLOSET — REGISTER (22)
+CR-001 | HEADLESS_PASS | H-CR | distinct valid direct adult-upper form; saved terminal asserted
+CR-002 | HEADLESS_PASS | H-CR | distinct adult-lower classification/measurement state; saved terminal asserted
+CR-003 | HEADLESS_PASS | H-CR | kids/baby taxonomy fixture; production validation terminal asserted
+CR-004 | HEADLESS_PASS | H-CR | missing brand fixture; validation block asserted
+CR-005 | HEADLESS_PASS | H-CR | missing product name fixture; validation block asserted
+CR-006 | HEADLESS_PASS | H-CR | category/detail selection fixture; production result asserted
+CR-007 | HEADLESS_PASS | H-CR | valid measurement-source fixture; registration terminal asserted
+CR-008 | HEADLESS_PASS | H-CR | minimum-storable measurement fixture; production validation asserted
+CR-009 | HEADLESS_PASS | H-CR | optional measurement absent; valid terminal asserted
+CR-010 | HEADLESS_PASS | H-CR | invalid numeric/range fixture; production validation block asserted
+CR-011 | NOT_EXECUTED | N-CR | required source-metadata failure/recovery path not fully reached
+CR-012 | NOT_EXECUTED | N-CR | memo/preference persistence is not exercised end to end
+CR-013 | NOT_EXECUTED | N-CR | save failure and real retry terminal are not both reached
+CR-014 | NOT_EXECUTED | N-CR | reference-at-registration conflict/replacement whole path not reached
+CR-015 | NOT_EXECUTED | N-CR | composite/set protection uses generic/static evidence only
+CR-016 | NOT_EXECUTED | N-CR | duplicate behavior fixture/side effects not independently executed
+CR-017 | HEADLESS_PASS | H-CR | shopping USER_EXPLICIT fixture; Closet override remains absent unless explicit Closet intent
+CR-018 | NOT_EXECUTED | N-CR | link registration provider-specific/load/save path is only partially exercised
+CR-019 | NOT_EXECUTED | N-CR | nonphysical onboarding→registration→auth transition incomplete; Apple sheet alone is physical
+CR-020 | NOT_EXECUTED | N-CR | size-table recovery/manual fallback whole production flow not reached
+CR-021 | NOT_EXECUTED | N-CR | linked duplicate/error retry side effects not fully reached
+CR-022 | NOT_EXECUTED | N-CR | provider-specific save/sync failure and recovery not fully reached
+
+MY CLOSET — MANAGE (19)
+CM-001 | NOT_EXECUTED | N-CM | empty/one/multiple shell assertion does not execute required state transitions
+CM-002 | HEADLESS_PASS | H-CM | active-item detail projection fixture; terminal presentation asserted
+CM-003 | HEADLESS_PASS | H-CM | direct-item edit fixture; production edit result asserted
+CM-004 | NOT_EXECUTED | N-CM | imported-item policy/save path not fully exercised
+CM-005 | NOT_EXECUTED | N-CM | size-only edit persistence and authority preservation incomplete
+CM-006 | NOT_EXECUTED | N-CM | classification-picker intent/save lifecycle incomplete
+CM-007 | NOT_EXECUTED | N-CM | measurement edit plus later comparison behavior incomplete
+CM-008 | HEADLESS_PASS | H-CM | fit memo/preference mutation fixture; production edit terminal asserted
+CM-009 | NOT_EXECUTED | N-CM | set/replace/remove reference lifecycle not fully reached
+CM-010 | HEADLESS_PASS | H-CM | independent category-reference state; production reference terminal asserted
+CM-011 | NOT_EXECUTED | N-CM | reference measurement change and future comparison not end-to-end
+CM-012 | NOT_EXECUTED | N-CM | delete non-reference/reference consequences incompletely executed
+CM-013 | NOT_EXECUTED | N-CM | duplicate/inactive filtering required subfixtures are missing
+CM-014 | NOT_EXECUTED | N-CM | save/sync failure and deterministic retry incomplete
+CM-015 | NOT_EXECUTED | N-CM | A→B observable pre-sync cache isolation is not executed through root session orchestration
+CM-016 | NOT_EXECUTED | N-CM | account-delete server/local failure outcomes incomplete
+CM-017 | NOT_EXECUTED | N-CM | purge of favorites/parser-private state is not fully observed
+CM-018 | NOT_EXECUTED | N-CM | list/grid/sort user contract reduced to source/static checks
+CM-019 | HEADLESS_PASS | H-CM | inactive/deleted fixture excluded by production presentation/action terminal
+
+PRODUCT COMPARE (39)
+CP-001 | NOT_EXECUTED | N-CP | approved-provider entry does not exercise real provider-specific resolver/parser path
+CP-002 | NOT_EXECUTED | N-CP | repeated-product identity/dedupe lifecycle not reached
+CP-003 | NOT_EXECUTED | N-CP | current URL variants/canonical identity use generic parser DTO
+CP-004 | NOT_EXECUTED | N-CP | unavailable/deleted provider product path not independently constructed
+CP-005 | HEADLESS_PASS | H-CP | resolver failure fixture reaches production fail-closed terminal
+CP-006 | NOT_EXECUTED | N-CP | missing/partial provider measurements use generic fixture only
+CP-007 | NOT_EXECUTED | N-CP | no usable size-table provider fallback not end-to-end
+CP-008 | HEADLESS_PASS | H-CP | Global CONFIRMED authority fixture reaches production authority terminal
+CP-009 | NOT_EXECUTED | N-CP | one-candidate Recovery lifecycle only partially represented
+CP-010 | HEADLESS_PASS | H-CP | bounded multi-candidate Recovery selection reaches production effective-authority terminal
+CP-011 | NOT_EXECUTED | N-CP | three-candidate distinguishing candidate set not independently executed
+CP-012 | FAIL | F-CP12 | later Global authority can contaminate mutable prior Product/history projection
+CP-013 | NOT_EXECUTED | N-CP | zero-candidate full user terminal/reason not independently reached
+CP-014 | HEADLESS_PASS | H-CP | NOT_APPLICABLE fixture blocks production comparison/scorer path
+CP-015 | NOT_EXECUTED | N-CP | UNKNOWN/unrecoverable full terminal/reason incomplete
+CP-016 | NOT_EXECUTED | N-CP | active USER_EXPLICIT full sourced comparison not independently proven here
+CP-017 | NOT_EXECUTED | N-CP | Recovery reselect newest-contract journey incomplete
+CP-018 | NOT_EXECUTED | N-CP | clear→no silent resume journey incomplete
+CP-019 | NOT_EXECUTED | N-CP | tshirt↔polo policy answer injected by fake boundary; server rule not executed
+CP-020 | NOT_EXECUTED | N-CP | sweatshirt↔hoodie/knit pairs and both directions not all policy-executed
+CP-021 | NOT_EXECUTED | N-CP | sleeve mismatch all protected pairs/directions incomplete
+CP-022 | NOT_EXECUTED | N-CP | measurement-specific manual-cross block not production end-to-end
+CP-023 | NOT_EXECUTED | N-CP | stale selected cross-reference revalidation incomplete
+CP-024 | NOT_EXECUTED | N-CP | empty/no-reference user terminal and explanation incomplete
+CP-025 | NOT_EXECUTED | N-CP | server candidate versus stale local candidate full flow incomplete
+CP-026 | NOT_EXECUTED | N-CP | automatic direct designation/selection production chain incomplete
+CP-027 | NOT_EXECUTED | N-CP | explicit manual reference user intent chain incomplete
+CP-028 | NOT_EXECUTED | N-CP | adult/child incompatibility fixture not production-authorized end-to-end
+CP-029 | NOT_EXECUTED | N-CP | upper/lower/no-common measurement subfixtures incomplete
+CP-030 | HEADLESS_PASS | H-CP | required evidence/eligible gate fixture safely blocks production continuation
+CP-031 | HEADLESS_PASS | H-CP | personal effective tuple with conflicting Global axis remains atomic
+CP-032 | NOT_EXECUTED | N-CP | partial size coverage/one usable/all removed required subfixtures incomplete
+CP-033 | NOT_EXECUTED | N-CP | stale authority/reference/fingerprint set not all independently constructed
+CP-034 | NOT_EXECUTED | N-CP | authority change between eligible/begin full race not deterministically executed
+CP-035 | NOT_EXECUTED | N-CP | same-sleeve insufficient-measurement explanation across pairs incomplete
+CP-036 | NOT_EXECUTED | N-CP | all three manual-cross pairs × both directions incomplete
+CP-037 | NOT_EXECUTED | N-CP | availability variants and provider-specific stale state incomplete
+CP-038 | NOT_EXECUTED | N-CP | unusual labels/duplicate identities eligibility chain incomplete
+CP-039 | NOT_EXECUTED | N-CP | provider state isolation uses generic snapshots rather than required paths
+
+RESULT (13)
+RS-001 | NOT_EXECUTED | N-RS | complete Global Result evidence/difference/history chain incomplete
+RS-002 | HEADLESS_PASS | H-RS | strict server-backed USER_EXPLICIT completion proof produces local result/history
+RS-003 | NOT_EXECUTED | N-RS | insufficient-evidence user presentation not executed through whole Result path
+RS-004 | HEADLESS_PASS | H-RS | authorized current-session alternate-size batch terminal asserted
+RS-005 | FAIL | F-RS-RECOMPARE | recompare mutates old target/reference before new completion
+RS-006 | FAIL | F-RS-RECOMPARE | USER_EXPLICIT is overwritten as serverConfirmed and strict completion may discard local result/history
+RS-007 | HEADLESS_PASS | H-RS | cold/no-authorized-batch guard blocks fresh local scoring
+RS-008 | NOT_EXECUTED | N-RS | "다른 옷과 비교" full server reference journey not executed
+RS-009 | HEADLESS_PASS | H-RS | unsupported/stale alternate-size session safely blocks
+RS-010 | NOT_EXECUTED | N-RS | old Result immutability/new Result identity not proven end-to-end
+RS-011 | HEADLESS_PASS | H-RS | production outbound URL chooser/fallback terminal asserted
+RS-012 | HEADLESS_PASS | H-RS | Result→Closet does not promote shopping USER_EXPLICIT to Closet override
+RS-013 | NOT_EXECUTED | N-RS | persistence failure then retry/no duplicate history incomplete
+
+HISTORY (17)
+HI-001 | FAIL | F-HI-AUDIENCE | historical audience is flattened to UNISEX during V4 projection
+HI-002 | FAIL | F-HI-AUDIENCE | distinct USER_EXPLICIT revisions do not retain every exact begin-time authority axis
+HI-003 | FAIL | F-HI-MUTABLE | same-target revision projections can share mutable Product meaning
+HI-004 | FAIL | F-HI-MUTABLE | later Global authority can alter presentation of prior completed history
+HI-005 | FAIL | F-HI-MUTABLE | later reference/Closet mutation can contaminate historical projection
+HI-006 | HEADLESS_PASS | H-HI | durable user hide/tombstone removes visible row and retains remote comparison evidence
+HI-007 | HEADLESS_PASS | H-HI | duplicate hide is idempotent at production visibility action/contract
+HI-008 | NOT_EXECUTED | N-HI | hide failure→UI retry lifecycle is only partially exercised
+HI-009 | HEADLESS_PASS | H-HI | fresh hydration filters hidden comparison identity
+HI-010 | HEADLESS_PASS | H-HI | reconstructed session observes persisted suppression state
+HI-011 | FAIL | F-HI-SEARCH | required History search interaction is absent
+HI-012 | FAIL | F-HI-HOME | Home collapses distinct same-target histories by URL/name
+HI-013 | FAIL | F-HI-MUTABLE | same target with different reference revision can reuse mutable target projection
+HI-014 | HEADLESS_PASS | H-HI | History→Closet boundary does not fabricate Closet personal authority
+HI-015 | HEADLESS_PASS | H-HI | legacy/local history uses local-safe path without server tombstone fabrication
+HI-016 | HEADLESS_PASS | H-HI | associated Closet deletion orders hide before local deletion and retains remote evidence
+HI-017 | HEADLESS_PASS | H-HI | orphan/pending remote history fails closed during hydration
+
+ENTRY / SHARE / DEEP LINK (12)
+EN-001 | NOT_EXECUTED | N-EN | direct URL full provider entry/business routing is generic/partial
+EN-002 | NOT_EXECUTED | N-EN | helper selection tested; actual NSItemProvider iteration/callback not reached
+EN-003 | HEADLESS_PASS | H-EN | malformed/custom deep-link production router rejects safely
+EN-004 | NOT_EXECUTED | N-EN | TTL helper passes, but real extension writes a separate non-atomic multi-key path
+EN-005 | HEADLESS_PASS | H-EN | fresh supported pending payload is accepted/consumed by production store
+EN-006 | FAIL | F-EN-REASON | Home unsupported URL path provides no required meaningful reason
+EN-007 | NOT_EXECUTED | N-EN | Apple success/cancel/error/logout/relogin session transitions incomplete
+EN-008 | HEADLESS_PASS | H-EN | invalid route does not consume a valid pending payload in production router/store
+EN-009 | NOT_EXECUTED | N-EN | startup container/backfill failure and recovery not fully exercised
+EN-010 | STATIC_PASS | S-ROUTE | Global-search route and declared filter identities exist; no business mutation claimed
+EN-011 | STATIC_PASS | S-ROUTE | non-calculating shell routes exist; no runtime business result claimed
+EN-012 | NOT_EXECUTED | N-EN | helper coverage does not reach extension/App Group/cold-foreground lifecycle
+
+RETRY / RACE / STALE (15)
+RX-001 | HEADLESS_PASS | H-RX | duplicate compare submission production gate prevents duplicate active run
+RX-002 | NOT_EXECUTED | N-RX | duplicate linked save full persistence/idempotency path incomplete
+RX-003 | NOT_EXECUTED | N-RX | duplicate Recovery submit production task ownership incomplete
+RX-004 | HEADLESS_PASS | H-RX | select→clear ordering reaches newest production authority terminal
+RX-005 | NOT_EXECUTED | N-RX | same client-ID begin replay not validated through actual server/disposable contract chain
+RX-006 | NOT_EXECUTED | N-RX | delayed A→B Recovery response not a fully deterministic production race
+RX-007 | NOT_EXECUTED | N-RX | reference mutation/auth delay is sequential rather than true out-of-order execution
+RX-008 | NOT_EXECUTED | N-RX | resolve/authority/reference retry stages not all fail then retry
+RX-009 | NOT_EXECUTED | N-RX | eligible/begin mutation subfixtures not independently production-executed
+RX-010 | NOT_EXECUTED | N-RX | complete failure/delay/retry whole Result/History chain incomplete
+RX-011 | NOT_EXECUTED | N-RX | cancellation/re-entry stale-result suppression incomplete
+RX-012 | NOT_EXECUTED | N-RX | provider switch uses generic fixture; real provider-state isolation incomplete
+RX-013 | NOT_EXECUTED | N-RX | sync needsAnotherPass overlapping schedule not fully asserted as user terminal
+RX-014 | NOT_EXECUTED | N-RX | single-process CAS passes; extension/app cross-process atomic handoff unproven
+RX-015 | NOT_EXECUTED | N-RX | account switch only checks helper/list calls, not every observable root state
+
+RECONCILIATION TOTALS
+HEADLESS_PASS: 41
+STATIC_PASS: 2
+PHYSICAL_SMOKE_PENDING: 0
+FAIL: 12
+NOT_EXECUTED: 82
+TOTAL: 137
+
+Terra disagreement: reported 123 / 10 / 4 / 0 / 0. Independent evidence does
+not support that classification. See FitMatchIndependent137Acceptance-20260901.txt.
+

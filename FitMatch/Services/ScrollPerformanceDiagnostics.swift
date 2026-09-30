@@ -6,6 +6,7 @@ import Combine
 @MainActor
 final class ScrollPerformanceMonitor: NSObject, ObservableObject {
     private let screen: String
+    private let verbose = ProcessInfo.processInfo.environment["FITMATCH_VERBOSE_SCROLL_DIAGNOSTICS"] == "1"
     private var displayLink: CADisplayLink?
     private var startedAt = ProcessInfo.processInfo.systemUptime
     private var lastFrameTimestamp: CFTimeInterval?
@@ -81,7 +82,7 @@ final class ScrollPerformanceMonitor: NSObject, ObservableObject {
         self.lastOffset = offset
         self.lastOffsetTimestamp = now
 
-        guard now - lastSampleTimestamp >= 0.25 else { return }
+        guard verbose, now - lastSampleTimestamp >= 0.25 else { return }
         lastSampleTimestamp = now
         log(
             "scroll_sample",
@@ -99,7 +100,7 @@ final class ScrollPerformanceMonitor: NSObject, ObservableObject {
     func recordPhase(from oldPhase: String, to newPhase: String) {
         guard displayLink != nil else { return }
         activeUntil = ProcessInfo.processInfo.systemUptime + 0.25
-        log("phase", "from=\(oldPhase) to=\(newPhase)")
+        if verbose { log("phase", "from=\(oldPhase) to=\(newPhase)") }
     }
 
     @objc private func frameTick(_ link: CADisplayLink) {
@@ -116,10 +117,10 @@ final class ScrollPerformanceMonitor: NSObject, ObservableObject {
 
         if frameMilliseconds >= 40 {
             severeFrameCount += 1
-            log("severe_frame", String(format: "frame_ms=%.1f estimated_60hz_frames=%.1f", frameMilliseconds, frameMilliseconds / 16.67))
+            if verbose { log("severe_frame", String(format: "frame_ms=%.1f estimated_60hz_frames=%.1f", frameMilliseconds, frameMilliseconds / 16.67)) }
         } else if frameMilliseconds >= 24 {
             longFrameCount += 1
-            log("long_frame", String(format: "frame_ms=%.1f estimated_60hz_frames=%.1f", frameMilliseconds, frameMilliseconds / 16.67))
+            if verbose { log("long_frame", String(format: "frame_ms=%.1f estimated_60hz_frames=%.1f", frameMilliseconds, frameMilliseconds / 16.67)) }
         }
     }
 

@@ -2,7 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct GlobalSearchView: View {
-    @Query(sort: \UserFit.updatedAt, order: .reverse) private var userFits: [UserFit]
+    @Query(sort: \UserFit.updatedAt, order: .reverse) private var cachedUserFits: [UserFit]
+
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @State private var searchText = ""
     @State private var favoriteURLs = FavoriteProductStore().favoriteURLs()
@@ -81,33 +82,18 @@ struct GlobalSearchView: View {
     }
 
     private var closetResults: [UserFit] {
-        guard !normalizedSearchText.isEmpty else {
-            return Array(userFits.prefix(8))
-        }
-
-        return userFits.filter { item in
-            item.brandName.lowercased().contains(normalizedSearchText)
-                || item.productName.lowercased().contains(normalizedSearchText)
-                || item.category.rawValue.lowercased().contains(normalizedSearchText)
-                || item.detailCategory.rawValue.lowercased().contains(normalizedSearchText)
-                || item.sizeName.lowercased().contains(normalizedSearchText)
-        }
+        FitMatchGlobalSearchPresentation.closetResults(
+            from: cachedUserFits,
+            searchText: searchText
+        )
     }
 
     private var historyResults: [RecommendationHistory] {
-        guard !normalizedSearchText.isEmpty else {
-            return Array(histories.prefix(8))
-        }
-
-        return histories.filter { history in
-            let product = history.product
-            return product.displayName.lowercased().contains(normalizedSearchText)
-                || (product.brand?.name.lowercased().contains(normalizedSearchText) ?? false)
-                || product.category.rawValue.lowercased().contains(normalizedSearchText)
-                || history.productDetailCategory.rawValue.lowercased().contains(normalizedSearchText)
-                || product.sourceDisplayName.lowercased().contains(normalizedSearchText)
-                || (isFavorite(history) && "관심상품".contains(normalizedSearchText))
-        }
+        FitMatchGlobalSearchPresentation.historyResults(
+            from: histories,
+            searchText: searchText,
+            favoriteURLs: favoriteURLs
+        )
     }
 
     private var emptyClosetMessage: String {
@@ -119,12 +105,10 @@ struct GlobalSearchView: View {
     }
 
     private func isFavorite(_ history: RecommendationHistory) -> Bool {
-        guard let urlString = history.product.sourceURLString else {
-            return false
-        }
-
-        return favoriteURLs.contains(urlString)
+        guard let url = history.product.sourceURLString else { return false }
+        return favoriteURLs.contains(url)
     }
+
 }
 
 private struct SearchIntroCard: View {
@@ -224,15 +208,6 @@ private struct SearchClosetResultRow: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
 
-                        if item.isRepresentative {
-                            Text("기준 옷")
-                                .font(.caption2.weight(.black))
-                                .foregroundStyle(Color(.systemBackground))
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 4)
-                                .background(Color.primary, in: Capsule())
-                        }
-
                         Spacer(minLength: 0)
                     }
 
@@ -258,7 +233,7 @@ private struct SearchClosetResultRow: View {
     @ViewBuilder
     private var thumbnail: some View {
         ProductThumbnailView(
-            imageURLString: item.sourceProduct?.imageURLString,
+            imageURLString: item.imageURLStringForDisplay,
             category: item.category,
             width: 76,
             height: 92,
@@ -285,7 +260,7 @@ private struct SearchHistoryResultRow: View {
         CardView(radius: 22, padding: 14) {
             HStack(spacing: 14) {
                 ProductThumbnailView(
-                    imageURLString: history.product.imageURLString,
+                    imageURLString: history.product.imageURLStringForDisplay,
                     category: history.product.category,
                     width: 76,
                     height: 92,

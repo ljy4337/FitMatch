@@ -1,0 +1,2 @@
+create index garment_length_rules_short_result_idx on public.garment_length_classification_rules(short_result_category_id);
+create index garment_length_rules_long_result_idx on public.garment_length_classification_rules(long_result_category_id);;

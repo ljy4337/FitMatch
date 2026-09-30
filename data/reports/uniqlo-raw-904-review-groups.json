@@ -1,0 +1,339 @@
+{
+  "group_count": 23,
+  "groups": [
+    {
+      "category_path": null,
+      "count": 8,
+      "proposed_decision": "review_needed",
+      "proposed_rule": "missing_api_category_evidence",
+      "representative_product": {
+        "product_id": "E482181",
+        "product_name": null
+      },
+      "product_ids": [
+        "E482181",
+        "E485318",
+        "E485398",
+        "E485808",
+        "E486074",
+        "E488171",
+        "E488923",
+        "E489682"
+      ]
+    },
+    {
+      "category_path": "baby > newborn > one pieces > longsleeves",
+      "count": 3,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_clear_clothing_leaf_category",
+      "representative_product": {
+        "product_id": "E486335",
+        "product_name": "BN립커버올(긴팔)"
+      },
+      "product_ids": [
+        "E486335",
+        "E486336",
+        "E487950"
+      ]
+    },
+    {
+      "category_path": "baby > newborn > one pieces > others",
+      "count": 3,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E488902",
+        "product_name": "BN퀼팅커버올(긴팔)칼라"
+      },
+      "product_ids": [
+        "E488902",
+        "E488903",
+        "E489247"
+      ]
+    },
+    {
+      "category_path": "baby > toddler > ut graphic tees > sanrio characters",
+      "count": 3,
+      "proposed_decision": "review_needed",
+      "proposed_rule": "manual_review_unresolved_category_leaf",
+      "representative_product": {
+        "product_id": "E484425",
+        "product_name": "BT Sanrio드라이파자마(반팔)A"
+      },
+      "product_ids": [
+        "E484425",
+        "E484992",
+        "E484993"
+      ]
+    },
+    {
+      "category_path": "baby > toddler > ut graphic tees > studio ghibli",
+      "count": 1,
+      "proposed_decision": "review_needed",
+      "proposed_rule": "manual_review_unresolved_category_leaf",
+      "representative_product": {
+        "product_id": "E473559",
+        "product_name": "BT STUDIO GHIBLI UT(그래픽T·반팔)B"
+      },
+      "product_ids": [
+        "E473559"
+      ]
+    },
+    {
+      "category_path": "baby > toddler > ut graphic tees > the picture book collection 26ss",
+      "count": 4,
+      "proposed_decision": "review_needed",
+      "proposed_rule": "manual_review_unresolved_category_leaf",
+      "representative_product": {
+        "product_id": "E481808",
+        "product_name": "BT Picture Book드라이파자마(반팔)미피"
+      },
+      "product_ids": [
+        "E481808",
+        "E481809",
+        "E483128",
+        "E483129"
+      ]
+    },
+    {
+      "category_path": "kids > airism > bras and bra tops > others",
+      "count": 1,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E482006",
+        "product_name": "GIRLS AIRism퍼스트브라"
+      },
+      "product_ids": [
+        "E482006"
+      ]
+    },
+    {
+      "category_path": "men > airism > inner tops > crew neck",
+      "count": 1,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E482514",
+        "product_name": "AIRism크루넥T"
+      },
+      "product_ids": [
+        "E482514"
+      ]
+    },
+    {
+      "category_path": "men > special collaboration > the roger federer collection > polo",
+      "count": 2,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_clear_clothing_leaf_category",
+      "representative_product": {
+        "product_id": "E482306",
+        "product_name": "DRY-EX하프집폴로셔츠"
+      },
+      "product_ids": [
+        "E482306",
+        "E485782"
+      ]
+    },
+    {
+      "category_path": "men > special collaboration > uniqlo and jw anderson > t-shirts",
+      "count": 1,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_clear_clothing_leaf_category",
+      "representative_product": {
+        "product_id": "E485454",
+        "product_name": "바이컬러T"
+      },
+      "product_ids": [
+        "E485454"
+      ]
+    },
+    {
+      "category_path": "women > lounge and underwear collection > effortless charm > bikini",
+      "count": 2,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_clear_clothing_leaf_category",
+      "representative_product": {
+        "product_id": "E487042",
+        "product_name": "코튼저지쇼츠(미들웨이스트)스트라이프"
+      },
+      "product_ids": [
+        "E487042",
+        "E487050"
+      ]
+    },
+    {
+      "category_path": "women > lounge and underwear collection > effortless charm > hiphugger",
+      "count": 1,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_clear_clothing_leaf_category",
+      "representative_product": {
+        "product_id": "E487064",
+        "product_name": "코튼저지쇼츠(힙허거)플라워A"
+      },
+      "product_ids": [
+        "E487064"
+      ]
+    },
+    {
+      "category_path": "women > lounge and underwear collection > effortless charm > just waist",
+      "count": 2,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E487032",
+        "product_name": "코튼저지쇼츠(저스트웨이스트)플라워C"
+      },
+      "product_ids": [
+        "E487032",
+        "E487034"
+      ]
+    },
+    {
+      "category_path": "women > loungewear and homeware > loungewear and pajamas > gu",
+      "count": 1,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E486718",
+        "product_name": "GU코튼컬러라운지세트"
+      },
+      "product_ids": [
+        "E486718"
+      ]
+    },
+    {
+      "category_path": "women > loungewear and homeware > loungewear and pajamas > others",
+      "count": 2,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E461767",
+        "product_name": "룸슈즈"
+      },
+      "product_ids": [
+        "E461767",
+        "E488014"
+      ]
+    },
+    {
+      "category_path": "women > shirts and blouses > shirts and blouses > cotton",
+      "count": 2,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E483880",
+        "product_name": "코튼오버사이즈셔츠"
+      },
+      "product_ids": [
+        "E483880",
+        "E492900"
+      ]
+    },
+    {
+      "category_path": "women > shirts and blouses > shirts and blouses > gu",
+      "count": 3,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E486696",
+        "product_name": "GU캐미솔튜닉"
+      },
+      "product_ids": [
+        "E486696",
+        "E486697",
+        "E486701"
+      ]
+    },
+    {
+      "category_path": "women > shirts and blouses > shirts and blouses > linen",
+      "count": 6,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E475647",
+        "product_name": "프리미엄리넨셔츠"
+      },
+      "product_ids": [
+        "E475647",
+        "E475649",
+        "E483869",
+        "E483872",
+        "E483890",
+        "E484256"
+      ]
+    },
+    {
+      "category_path": "women > shirts and blouses > shirts and blouses > rayon",
+      "count": 6,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E479071",
+        "product_name": "레이온블라우스"
+      },
+      "product_ids": [
+        "E479071",
+        "E482825",
+        "E484240",
+        "E487528",
+        "E489229",
+        "E489230"
+      ]
+    },
+    {
+      "category_path": "women > shirts and blouses > shirts and blouses > sleeveles",
+      "count": 2,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_clear_clothing_leaf_category",
+      "representative_product": {
+        "product_id": "E485584",
+        "product_name": "라이트코튼핀턱블라우스(슬리브리스)"
+      },
+      "product_ids": [
+        "E485584",
+        "E487989"
+      ]
+    },
+    {
+      "category_path": "women > shirts and blouses > shirts and blouses > three quarter sleeve",
+      "count": 1,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E479073",
+        "product_name": "레이온스키퍼칼라블라우스(7부)"
+      },
+      "product_ids": [
+        "E479073"
+      ]
+    },
+    {
+      "category_path": "women > shirts and blouses > shirts and blouses > uniqlo and jw anderson",
+      "count": 2,
+      "proposed_decision": "clothing",
+      "proposed_rule": "proposed_specific_clothing_category",
+      "representative_product": {
+        "product_id": "E484928",
+        "product_name": "옥스포드박시셔츠"
+      },
+      "product_ids": [
+        "E484928",
+        "E485265"
+      ]
+    },
+    {
+      "category_path": "women > special collaboration > uniqlo c > pre launch",
+      "count": 1,
+      "proposed_decision": "review_needed",
+      "proposed_rule": "manual_review_unresolved_category_leaf",
+      "representative_product": {
+        "product_id": "E491119",
+        "product_name": "스웨트하프집풀오버"
+      },
+      "product_ids": [
+        "E491119"
+      ]
+    }
+  ]
+}

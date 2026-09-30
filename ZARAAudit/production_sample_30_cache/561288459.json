@@ -1,0 +1,462 @@
+{
+  "captured_at": "2026-08-21T07:56:47.463Z",
+  "request_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/561288459/size-measure-guide?locale=ko_KR",
+  "http_status": 200,
+  "challenge_detected": false,
+  "response_hash": "5c46fec2f5db6381d36298e2ee5de5a9577da8ab0ce3b169f48efa93b35d829f",
+  "response": {
+    "sizeGuideInfo": null,
+    "measureGuideInfo": {
+      "id": "4adcb3bc-5571-488e-9a5b-603ec270b990",
+      "name": "AARON LEVINE X ZARA 플리츠 치노 팬츠",
+      "sizes": [
+        {
+          "id": "38",
+          "name": "EU 38 (KR 30)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "EU 38 (KR 30)"
+            },
+            {
+              "units": "in",
+              "value": "EU 38 (KR 30)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "40.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "15.7"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist",
+              "descriptionZone": "zone-name-waist-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "49.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "19.5"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "100.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "39.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-lower",
+              "descriptionZone": "zone-name-front-length-lower-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "33.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "13.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-rise",
+              "descriptionZone": "zone-name-front-rise-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "36.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "14.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-rise",
+              "descriptionZone": "zone-name-back-rise-description"
+            }
+          ]
+        },
+        {
+          "id": "40",
+          "name": "EU 40 (KR 31)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "EU 40 (KR 31)"
+            },
+            {
+              "units": "in",
+              "value": "EU 40 (KR 31)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "42.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "16.5"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist",
+              "descriptionZone": "zone-name-waist-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "51.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "20.3"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "101.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "40.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-lower",
+              "descriptionZone": "zone-name-front-length-lower-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "33.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "13.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-rise",
+              "descriptionZone": "zone-name-front-rise-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "36.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "14.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-rise",
+              "descriptionZone": "zone-name-back-rise-description"
+            }
+          ]
+        },
+        {
+          "id": "42",
+          "name": "EU 42 (KR 32)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "EU 42 (KR 32)"
+            },
+            {
+              "units": "in",
+              "value": "EU 42 (KR 32)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "44.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "17.3"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist",
+              "descriptionZone": "zone-name-waist-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "53.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "21.1"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "102.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "40.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-lower",
+              "descriptionZone": "zone-name-front-length-lower-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "34.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "13.4"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-rise",
+              "descriptionZone": "zone-name-front-rise-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "37.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "14.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-rise",
+              "descriptionZone": "zone-name-back-rise-description"
+            }
+          ]
+        },
+        {
+          "id": "44",
+          "name": "EU 44 (KR 34)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "EU 44 (KR 34)"
+            },
+            {
+              "units": "in",
+              "value": "EU 44 (KR 34)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "46.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "18.1"
+                }
+              ],
+              "tableTitleZone": "zone-name-waist",
+              "descriptionZone": "zone-name-waist-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "55.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "21.9"
+                }
+              ],
+              "tableTitleZone": "zone-name-hips",
+              "descriptionZone": "zone-name-hips-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "103.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "40.7"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length-lower",
+              "descriptionZone": "zone-name-front-length-lower-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "34.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "13.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-rise",
+              "descriptionZone": "zone-name-front-rise-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "37.5"
+                },
+                {
+                  "unitId": "in",
+                  "value": "14.8"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-rise",
+              "descriptionZone": "zone-name-back-rise-description"
+            }
+          ]
+        }
+      ],
+      "image": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "image",
+            "path": "../../../assets/public/6f7b/f19d/ccae428ab4d3/3cd2b9799e3b/",
+            "name": "../../fcd475ccc381",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": null
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "cm",
+          "type": "measure",
+          "name": "cm",
+          "default": true
+        },
+        {
+          "id": "in",
+          "type": "measure",
+          "name": "in",
+          "default": false
+        }
+      ],
+      "comments": [],
+      "defaultSize": "EU 38 (KR 30)",
+      "cleanImage": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "image",
+            "path": "../../assets/public/b152/c748/92194a47a9cc/cc02b9ed9406",
+            "name": "../../CroPantalon",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": null
+          }
+        ]
+      },
+      "section": {
+        "id": "2",
+        "name": "MAN"
+      },
+      "productImages": [
+        {
+          "xmedia": [
+            {
+              "datatype": "xmedia",
+              "set": 2,
+              "type": "image",
+              "kind": "image",
+              "path": "../../../assets/public/4e92/e37a/088a4a8e997c/39452e006b49/06861011800-e1/",
+              "name": "../../06861011800-e1",
+              "width": 2048,
+              "height": 3072,
+              "timestamp": "1585094400000",
+              "allowedScreens": [
+                "small",
+                "large"
+              ],
+              "isArrowsImage": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

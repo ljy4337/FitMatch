@@ -1,0 +1,456 @@
+FitMatch — Phase 1E XCTest Recovery Final Audit
+작성일: 2026-09-05
+최종 판정: CANDIDATE_READY_FULL_SUITE_UNPROVEN
+
+A. Baseline
+
+branch:
+connectDB
+
+HEAD:
+bf0a25f7a7077fb51635b9efa6934ba4518295b6
+
+Pre-Phase 1E baseline:
+9d888077a4eedb2258f74bb4e487ae46777b168d
+
+시작 working tree 후보:
+1. FitMatch/Services/FitMatchComparedProductClosetRegistration.swift
+2. FitMatch/Views/LinkClosetRegistrationView.swift
+3. FitMatchTests/FitMatchP0ProductionPathTests.swift
+4. FitMatchTests/FitMatchServerAuthorityIntegrationTests.swift
+5. Docs/CodexSessionHandoff.md
+
+감사 중 stale test fixture 수정 4개가 추가되어 최종 commit 후보는 9개다.
+
+git status --short와 git diff --check는 iCloud File Provider I/O에서 종료하지 않아 PASS로 기록하지 않았다.
+reset, stash, clean, commit, push는 실행하지 않았다.
+
+
+B. Candidate 5-file audit
+
+1. FitMatch/Services/FitMatchComparedProductClosetRegistration.swift
+
+분류:
+compile-only
+
+기존:
+measurement record로 Dictionary를 생성할 때 generic key/value 타입을 compiler가 추론하도록 두었다.
+
+수정:
+Dictionary 타입을 [String: Double]로 명시하고 compactMap 반환 타입을 (String, Double)?로 명시했다.
+
+컴파일 오류:
+generic parameter 'Key' could not be inferred
+generic parameter 'Value' could not be inferred
+
+runtime semantic 영향:
+없음.
+finite 및 value > 0 조건, measurement key/value, scalar fallback, selected-size eligibility는 변경하지 않았다.
+
+
+2. FitMatch/Views/LinkClosetRegistrationView.swift
+
+분류:
+compile-only
+
+기존:
+foregroundStyle 삼항식에서 .primary와 .red를 사용했다.
+
+수정:
+같은 조건식에 Color.primary와 Color.red를 명시했다.
+
+컴파일 오류:
+SwiftUI ShapeStyle 조건식 타입 불일치.
+
+runtime semantic 영향:
+없음.
+조건, 색상, measurement .none gate, 다음 버튼, sheet 진입 조건은 변경하지 않았다.
+
+
+3. FitMatchTests/FitMatchP0ProductionPathTests.swift
+
+분류:
+test-only fixture compile compatibility
+
+수정:
+GarmentMeasurements(chest: 50)을 현재 four-scalar initializer에 맞게 shoulder/chest/totalLength/sleeveLength로 명시했다.
+
+expected result 변경:
+없음.
+
+
+4. FitMatchTests/FitMatchServerAuthorityIntegrationTests.swift
+
+분류:
+STALE_LEGACY_TEST 교체
+
+기존:
+삭제된 local ResultReferenceComparisonAction.fullActiveReferences API를 기대했다.
+
+수정:
+현재 server-authority discoverSelectableReferences 계약을 검증한다.
+
+검증 내용:
+- server가 승인한 candidate만 selectable
+- server가 BLOCKED로 반환한 candidate 제외
+- local isRepresentative가 true여도 server 승인 없이 선택하지 않음
+- candidate RPC가 각 local item에 대해 실행됨
+
+assertion 약화:
+없음.
+
+
+5. Docs/CodexSessionHandoff.md
+
+분류:
+docs-only
+
+수정:
+XCTest 복구, headless 원인, baseline 비교, test 결과, 최종 상태를 기록했다.
+
+runtime semantic 영향:
+없음.
+
+
+C. Exact failing test inventory
+
+전체 실행 로그에 기록된 실패는 19개다.
+
+ZARAParserPhase1_5Tests 8개:
+
+1. ZARAParserPhase1_5Tests/shadowCorpusStructuredCategoriesNeverCrossGarmentDomain
+assertion 위치: ZARAParserPhase1_5Tests.swift:522
+actual: zara_products.jsonl 없음, NSCocoaErrorDomain Code=260
+
+2. ZARAParserPhase1_5Tests/currentOfficialZARALive300RemainsShadowOnlyAndFailClosed
+assertion 위치: ZARAParserPhase1_5Tests.swift:597
+actual: zara_live_300.jsonl 없음, NSCocoaErrorDomain Code=260
+
+3. ZARAParserPhase1_5Tests/challengeHTMLFailsBeforeIdentityOrSizeRequest
+assertion 위치: ZARAParserPhase1_5Tests.swift:791
+actual: zara_challenge_sanitized.html 없음, NSCocoaErrorDomain Code=260
+
+4. ZARAParserPhase1_5Tests/malformedAndEmptyGuideFailClosed
+assertion 위치: ZARAParserPhase1_5Tests.swift:1126
+actual: zara_malformed_synthetic.json 없음, NSCocoaErrorDomain Code=260
+
+5. ZARAParserPhase1_5Tests/unknownMixedAndExcludedCategoriesDoNotBecomeShortSleeveTops
+assertion 위치: ZARAParserPhase1_5Tests.swift:1150
+actual: zara_unknown_category_synthetic.html 없음, NSCocoaErrorDomain Code=260
+
+6. ZARAParserPhase1_5Tests/userConfirmedBottomResumesVerifiedZARAMeasurements
+assertion 위치: ZARAParserPhase1_5Tests.swift:1191
+actual: zara_unknown_category_synthetic.html 없음, NSCocoaErrorDomain Code=260
+
+7. ZARAParserPhase1_5Tests/userConfirmedTopWithoutVerifiedUpperFieldsStillRequestsManualEntry
+assertion 위치: ZARAParserPhase1_5Tests.swift:1223
+actual: zara_unknown_category_synthetic.html 없음, NSCocoaErrorDomain Code=260
+
+8. ZARAParserPhase1_5Tests/cp032RealZARAParserCategoryConfirmationResumesTheSameProductFlow
+assertion 위치: ZARAParserPhase1_5Tests.swift:1339
+actual: zara_unknown_category_synthetic.html 없음, NSCocoaErrorDomain Code=260
+
+FitMatchOnboardingUITests 8개:
+
+1. test01NewUserReachesGarmentRegistrationGuideWithoutBodySetup
+2. test02MusinsaLinkRegistrationCreatesClosetItemAndFinishesOnboarding
+3. test03UniqloLinkRegistrationCreatesClosetItemAndFinishesOnboarding
+4. test04ManualGarmentMeasurementRegistrationCreatesClosetItem
+5. test05LaterPersistsOnboardingCompletionAcrossRelaunch
+6. test06ExistingUserKeepsClosetReferenceAndHistoryAcrossRelaunch
+7. test07RapidSaveTapCreatesOneClosetItemAndShowsToast
+8. test08SignedOutOnboardingLinkRegistrationRoutesToLogin
+
+actual:
+초기 onboarding/root 또는 후속 화면 label 대기 XCTAssertTrue 실패.
+test01/02/03/04/05/07은 공통 launchFreshOnboardingApp root assertion line 212에서 실패했다.
+test06은 line 97, test08은 line 182에서 실패했다.
+
+FitMatchUITests 3개:
+
+1. testAmbiguousCategoryChoiceIsReusedForTheExactProduct
+assertion 위치: FitMatchUITests.swift:115
+expected: 첫 분석에서 상품 종류 확인 화면 표시
+actual: 해당 화면 없음
+
+2. testPrimaryTabsOpenExpectedEmptyStates
+assertion 위치: FitMatchUITests.swift:42
+expected: 내 옷장 빈 상태 표시
+actual: 해당 label 없음
+
+3. testPrivacyPolicyAndSupportAreReachableFromMyPage
+assertion 위치: FitMatchUITests.swift:240
+expected: 기기에 저장하는 정보 표시
+actual: 해당 label 없음
+
+
+D. Failure classification
+
+PHASE1E_EXPECTED_POLICY_CHANGE:
+해당 없음.
+
+STALE_LEGACY_TEST:
+- 삭제된 local fullActiveReferences API 기대
+- 현재 server reference plan/authorization RPC envelope 수를 반영하지 못한 headless fixture
+- Recovery v6 complete-tuple contract 및 unknown_fields fixture 불일치
+- remote fixture timestamp가 local edit보다 미래여서 update가 막힌 closet sync test
+- server completion의 exact product_size_id를 반환하지 않던 SOLD_OUT fixture
+
+REAL_PRODUCTION_REGRESSION:
+0건.
+
+ENVIRONMENT_OR_TIMEOUT:
+- ZARA 8개: 임시 code mirror의 test corpus/fixture materialization 누락
+- UI 11개: test runtime/setup 문제. 대표 onboarding test가 9d88807 baseline에서도 동일 실패
+- 전체 suite 도구 응답 제한 300초
+
+
+E. Root cause
+
+1. Production compile blocker
+
+Swift compiler가 measurement dictionary generic 타입을 추론하지 못했다.
+조건과 값은 변경하지 않고 타입만 명시해 해결했다.
+
+2. SwiftUI compile blocker
+
+foregroundStyle 삼항식 양쪽 ShapeStyle 타입을 하나로 추론하지 못했다.
+같은 조건과 같은 색상을 concrete Color로 명시했다.
+
+3. Server authority test failure
+
+테스트가 제거된 local reference selection authority를 기대했다.
+production local fallback은 부활시키지 않고 현재 server discovery 계약으로 테스트를 교체했다.
+
+4. Headless fixture failure
+
+현재 비교 flow는 load 후 server reference plan과 authorization에서 추가 resolve/runtime/candidate RPC를 수행한다.
+strict test remote가 필요한 응답 envelope를 충분히 제공하지 못해 fail-closed 됐다.
+production의 fail-closed 동작은 유지하고 test fixture만 현재 계약에 맞췄다.
+
+5. ZARA full-run failure
+
+첫 temporary code mirror에 test가 요구하는 Docs/Research 및 ZARAAudit fixture 파일이 없었다.
+parser assertion까지 도달하기 전에 file-not-found가 발생했다.
+
+증거:
+- complete current-candidate mirror ZARA class: 41 PASS / 0 FAIL / 3 SKIP
+- 직전 실패 8개 개별 실행: 8/8 PASS
+- exact 9d88807 detached baseline ZARA class: 41 PASS / 0 FAIL / 3 SKIP
+
+6. UI failure
+
+대표 test01이 Phase 1E 이전 9d88807 baseline에서도 초기 onboarding root wait에서 동일 실패했다.
+Phase 1E measurement gate 또는 link registration path에 도달하기 전 실패이므로 이번 candidate의 production regression이 아니다.
+
+
+F. 수정 내용
+
+Production files:
+
+1. FitMatch/Services/FitMatchComparedProductClosetRegistration.swift
+- [String: Double] 및 (String, Double)? 타입 명시
+
+2. FitMatch/Views/LinkClosetRegistrationView.swift
+- Color.primary / Color.red 명시
+
+Test files:
+
+3. FitMatchTests/FitMatchP0ProductionPathTests.swift
+- GarmentMeasurements initializer fixture 호환
+
+4. FitMatchTests/FitMatchServerAuthorityIntegrationTests.swift
+- local selector 기대 제거
+- server discoverSelectableReferences 검증
+
+5. FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests.swift
+- 현재 server reference plan/authorization 호출 수에 맞는 response fixture
+
+6. FitMatchTests/FitMatchHeadlessUserJourneyTests.swift
+- current server envelopes
+- Recovery v6 complete tuple
+- server candidate block/selection expectation
+- exact completion size UUID
+
+7. FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests.swift
+- 현재 resolve/runtime/candidate envelope 수 반영
+
+8. FitMatchTests/FitMatchClosetSyncCoordinatorTests.swift
+- local edit가 remote fixture보다 최신이 되도록 timestamp 정정
+- remote exact IDs 및 atomic override라는 원래 테스트 목적 유지
+
+Docs:
+
+9. Docs/CodexSessionHandoff.md
+- 감사 결과 및 실행 근거 기록
+
+
+G. Production behavior change
+
+없음.
+
+변경하지 않은 조건:
+- measurement eligibility
+- usable measurement >= 1
+- product-wide measurement presence
+- exact product/variant/size UUID
+- server-first 순서
+- nested override 생성 조건
+- reference 처리
+- comparison authorization/readiness/scoring
+- UI measurement .none gate 및 sheet routing
+
+
+H. Phase 1E regression audit
+
+유지 확인:
+
+- 상품 전체 실측 size 0개일 때 Closet/Compare early gate
+- S0 M0 L1 XL0에서 상품 gate 통과 및 L만 선택 가능
+- size 원본/runtime identity 보존
+- REVIEW_REQUIRED raw measurement가 canonical empty만으로 none이 되지 않음
+- SOLD_OUT/UNKNOWN inventory가 measurement presence와 comparison scoring을 차단하지 않음
+- measurement presence와 comparison readiness 분리
+- DB comparison policy가 최종 readiness authority
+- selected size exact UUID 유지
+- server-first persistence 유지
+
+이번 candidate는 위 조건문을 수정하지 않았다.
+
+
+I. Server authority regression audit
+
+FitMatchServerAuthorityIntegrationTests + FitMatchP0ProductionPathTests:
+68/68 PASS
+
+유지 확인:
+
+- DB/server candidate order 소비
+- selectable/non-selectable candidate 구분
+- local isRepresentative 자동 authority 금지
+- server 결과 없을 때 local 임의 선택 금지
+- exact product_id/variant_id/product_size_id 유지
+- nested closet_classification_override 유지
+- create/update 뒤 post-upsert setOverride 호출 없음
+- server-first local persistence 순서 유지
+
+보호 파일 diff:
+
+- FitMatch/Services/VNextComparisonEngineAdapter.swift: 변경 없음
+- FitMatch/Services/FitMatchServerAuthorityCoordinator.swift: 변경 없음
+- FitMatch/Services/FitMatchClosetSyncCoordinator.swift: 변경 없음
+- FitMatch/Services/RecommendationService.swift: 변경 없음
+- FitMatch/Components/TabBarScrollVisibilityModifier.swift: 변경 없음
+
+
+J. Test results
+
+FitMatchSupabaseProductResolverTests:
+32/32 PASS
+
+FitMatchServerAuthorityIntegrationTests + FitMatchP0ProductionPathTests:
+68/68 PASS
+
+FitMatchHeadlessUserJourneyTests:
+39/39 PASS
+
+FitMatchFinalReleaseScenarioExecutionTests:
+36/36 PASS
+
+FitMatchFinalReleaseHeadlessAcceptanceTests:
+37/37 PASS
+
+FitMatchFinalReleaseProviderSnapshotTests:
+12/12 PASS
+
+FitMatchClosetSyncCoordinatorTests:
+33/33 PASS
+
+CategoryLive300ShadowAuditTests:
+1/1 PASS
+
+ZARAParserPhase1_5Tests current candidate:
+41 PASS / 0 FAIL / 3 SKIP
+
+직전 ZARA 실패 8개 개별 실행:
+8/8 PASS
+
+ZARAParserPhase1_5Tests exact 9d88807 baseline:
+41 PASS / 0 FAIL / 3 SKIP
+
+normal simulator build:
+PASS
+
+변경 Swift xcrun swiftc -parse:
+PASS
+
+git diff --check:
+NOT RUN — iCloud File Provider I/O stall로 terminal result 없음
+
+full FitMatchTests:
+FAIL / FULL SUITE GREEN 아님
+
+세부사항:
+도구는 300초 응답 제한에 도달했다.
+Xcode log는 309.483초 뒤 실행 종료를 기록했지만 incomplete temporary mirror의 ZARA fixture 누락 8건과 UI setup assertion 11건을 포함했다.
+현재 candidate의 관련 headless/targeted regression은 별도 실행에서 모두 PASS했다.
+
+
+K. DB write
+
+Production DB write:
+0
+
+Production SQL:
+0
+
+Migration 작성/적용:
+0
+
+RPC 변경:
+0
+
+Supabase Auth/Edge mutation:
+0
+
+
+L. Final status
+
+CANDIDATE_READY_FULL_SUITE_UNPROVEN
+
+판정 근거:
+
+- production compile fixes semantic-neutral 확인
+- resolver 32/32 PASS
+- server authority/P0 68/68 PASS
+- 직전 headless failures class 단위 PASS
+- ZARA 직전 실패 8/8 개별 PASS
+- actual Phase 1E production regression 0 unresolved
+- Phase 1E measurement policy 유지
+- server authority 및 exact UUID 유지
+- inventory-independent comparison 유지
+- DB write 0
+- protected production files 변경 0
+
+READY가 아닌 이유:
+
+- full suite가 complete green이 아님
+- UI test-runtime/setup 실패가 별도 미해결
+- direct checkout git diff --check가 File Provider 환경에서 terminal result를 내지 못함
+
+
+M. Commit candidate files
+
+1. FitMatch/Services/FitMatchComparedProductClosetRegistration.swift
+2. FitMatch/Views/LinkClosetRegistrationView.swift
+3. FitMatchTests/FitMatchP0ProductionPathTests.swift
+4. FitMatchTests/FitMatchServerAuthorityIntegrationTests.swift
+5. FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests.swift
+6. FitMatchTests/FitMatchHeadlessUserJourneyTests.swift
+7. FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests.swift
+8. FitMatchTests/FitMatchClosetSyncCoordinatorTests.swift
+9. Docs/CodexSessionHandoff.md
+10. Docs/FitMatchPhase1EXCTestRecoveryFinalAudit-20260905.txt
+
+이 보고서 작성까지 포함한 최종 working-tree 후보는 10개 파일이다.
+commit/push는 실행하지 않았다.

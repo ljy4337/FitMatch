@@ -57,7 +57,8 @@ nonisolated struct MusinsaFallbackSizeParser {
         #endif
         let explicitImages = images.filter(\.isExplicitSizeImage)
         for image in explicitImages.prefix(6) {
-            if let sizes = await MusinsaFallbackImageOCR.parse(url: image.url, family: family, requiresTableRectangle: false),
+            guard !Task.isCancelled else { return [] }
+            if let sizes = await MusinsaFallbackImageOCR.parse(url: image.url, family: family, requiresTableRectangle: image.isEmbeddedFitChart),
                !sizes.isEmpty {
                 logStandardization(sizes, source: image.url.absoluteString)
                 return sizes
@@ -71,6 +72,7 @@ nonisolated struct MusinsaFallbackSizeParser {
             }
             .prefix(12)
         for image in longImages {
+            guard !Task.isCancelled else { return [] }
             if let sizes = await MusinsaFallbackImageOCR.parse(url: image.url, family: family, requiresTableRectangle: true),
                !sizes.isEmpty {
                 logStandardization(sizes, source: image.url.absoluteString)
@@ -115,8 +117,17 @@ nonisolated struct MusinsaFallbackImage {
     let declaredWidth: Double?
     let declaredHeight: Double?
 
+    var isEmbeddedFitChart: Bool {
+        guard let host = url.host else { return false }
+        return (host == "cre.ma" || host.hasSuffix(".cre.ma"))
+            && url.lastPathComponent == "combined_fit_product.jpg"
+    }
+
     var isExplicitSizeImage: Bool {
         let normalized = sourceText.lowercased()
+        // Combined charts include a long care-label footer. Read bounded table
+        // regions so footer text cannot contaminate the size column.
+        if isEmbeddedFitChart { return true }
         let pattern = #"(^|[/_.\-\s])(actual[\-_]?size|size[\-_]?(guide|chart|spec|info)?|spec|실측|사이즈|치수)([/_.\-\s]|$)"#
         return normalized.range(of: pattern, options: .regularExpression) != nil
             && !normalized.contains("modelspec")
@@ -485,8 +496,9 @@ nonisolated enum MusinsaFallbackTableParser {
         allowsSingleNamedSize: Bool
     ) -> [ParsedProductSize]? {
         guard let sizeIndex = headers.firstIndex(where: { isSizeHeader($0.normalizedSizeHeader) }) else { return nil }
-        let mappedColumns = headers.enumerated().compactMap { index, header in
-            column(for: header.normalizedSizeHeader, family: family).map { (index, $0, header) }
+        let mappedColumns = headers.enumerated().compactMap { index, header -> (Int, FallbackColumn, String)? in
+            guard index != sizeIndex, !header.trimmedCell.isEmpty else { return nil }
+            return (index, column(for: header.normalizedSizeHeader, family: family) ?? .rawOnly, header)
         }
         guard requiredColumns(mappedColumns.map(\.1), family: family) else { return nil }
 
@@ -660,6 +672,7 @@ nonisolated enum MusinsaFallbackTableParser {
         case "뒷기장", "뒷길이": return family == .upper ? .backLength : nil
         case "총장", "총기장", "총길이", "기장", "옷길이", "상의길이", "옷길이아웃심", "length", "bodylength", "outseam":
             return family == .lower ? .outseam : .length
+        case "팔둘레", "상완둘레", "armcircumference", "upperarmcircumference": return .rawOnly
         case "소매", "소매길이", "소매장", "sleeve", "sleevelength": return .sleeve
         case "화장", "목중심부터소매끝", "목중심소매길이": return family == .upper ? .centerBackSleeve : nil
         case "허리단면", "허리너비", "waistwidth": return .waistWidth
@@ -682,7 +695,7 @@ nonisolated enum MusinsaFallbackTableParser {
 
 nonisolated private enum FallbackColumn: Equatable {
     case chestWidth, chestCircumference, shoulder, length, frontLength, backLength, sleeve, centerBackSleeve
-    case outseam
+    case outseam, rawOnly
     case waistWidth, waistCircumference, hip, hipCircumference
     case thigh, thighCircumference, rise, backRise, hemWidth, hemCircumference, inseam, footLength
 
@@ -719,6 +732,7 @@ nonisolated private enum FallbackColumn: Equatable {
         let kind: MeasurementDisplayKind
         let multiplier: Double
         switch self {
+        case .rawOnly: (code, kind, multiplier) = (.unknown, .unknown, 1)
         case .chestWidth: (code, kind, multiplier) = (.chestWidthPitToPit, .chest, 1)
         case .chestCircumference: (code, kind, multiplier) = (.chestCircumferenceGarment, .chest, 1)
         case .shoulder: (code, kind, multiplier) = (.shoulderWidthSeamToSeam, .shoulder, 1)
@@ -767,7 +781,7 @@ nonisolated private enum FallbackColumn: Equatable {
             rawInfo: transformations.isEmpty ? nil : transformations.joined(separator: ";"),
             rawValueText: rawValue,
             evidenceLevel: .officialText,
-            semanticStatus: .mapped
+            semanticStatus: self == .rawOnly ? .unknownDefinition : .mapped
         )
     }
 }
@@ -830,7 +844,7 @@ nonisolated enum MusinsaFallbackImageOCR {
     ) -> [ParsedProductSize]? {
         let regions: [CGRect]
         if requiresTableRectangle {
-            guard image.height >= image.width * 3 else { return nil }
+            guard image.height >= image.width else { return nil }
             regions = candidateRegions(in: image)
         } else {
             regions = [CGRect(x: 0, y: 0, width: 1, height: 1)]
@@ -861,6 +875,7 @@ nonisolated enum MusinsaFallbackImageOCR {
         var candidateGrids: [[[String]]] = []
         var candidateContexts: [String] = []
         for (index, region) in ocrRegions.prefix(12).enumerated() {
+            guard !Task.isCancelled else { return nil }
             let isBoundedTopCandidate = region.maxY >= 0.96 && region.height > 0.12
             var confidenceAttempts: [VNConfidence] = [isBoundedTopCandidate ? 0.35 : 0.8]
             var attemptIndex = 0
@@ -1020,7 +1035,7 @@ nonisolated enum MusinsaFallbackImageOCR {
         return bestSizes
     }
 
-    private static func preferredSizes(
+    static func preferredSizes(
         _ lhs: [ParsedProductSize]?,
         _ rhs: [ParsedProductSize]?
     ) -> [ParsedProductSize]? {
@@ -1400,7 +1415,7 @@ nonisolated enum MusinsaFallbackImageOCR {
         text.uppercased()
             .replacingOccurrences(of: " ", with: "")
             .range(
-                of: #"^(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)$"#,
+                of: #"^(?:XXS|XS|S|M|L|XL|XXL|XXXL|[2-5]XL|WM)(?:\(\d{2,3}\))?$"#,
                 options: .regularExpression
             ) != nil
     }

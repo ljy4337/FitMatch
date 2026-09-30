@@ -40,7 +40,7 @@ final class FitMatchUITests: XCTestCase {
 
         app.buttons["내 옷장"].tap()
         XCTAssertTrue(
-            app.staticTexts["옷장이 비었습니다."].waitForExistence(timeout: 3),
+            app.staticTexts["아직 등록된 옷이 없어요."].waitForExistence(timeout: 3),
             "내 옷장 탭의 빈 상태가 표시되어야 합니다."
         )
 
@@ -99,106 +99,17 @@ final class FitMatchUITests: XCTestCase {
     }
 
     @MainActor
-    func testAmbiguousCategoryChoiceIsReusedForTheExactProduct() throws {
+    func testLocalCategoryFixtureCannotBypassServerAuthority() throws {
         app.terminate()
-        app.launchArguments = [
-            "-fitmatchUITesting",
-            "-FitMatch.hasCompletedOnboarding", "YES",
-            "-fitmatchUITestSeedExistingData",
-            "-fitmatchAmbiguousCategoryFixture",
-            "-fitmatchResetCategoryMappings"
-        ]
+        app.launchArguments = ["-fitmatchUITesting", "-FitMatch.hasCompletedOnboarding", "YES",
+                               "-fitmatchAmbiguousCategoryFixture", "-fitmatchResetCategoryMappings"]
         app.launch()
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 8))
-
         openAmbiguousCategoryFixture()
-        XCTAssertTrue(
-            app.staticTexts["상품 종류 확인"].waitForExistence(timeout: 8),
-            "첫 분석에서는 모호한 세부 카테고리를 사용자에게 물어야 합니다."
-        )
-        app.buttons["대분류 선택"].tap()
-        app.buttons["상의"].tap()
-        app.buttons["세부 카테고리 선택"].tap()
-        app.buttons["반팔"].tap()
-        app.buttons["비교하기"].tap()
-        let referenceSelection = app.staticTexts["기준 옷 직접 선택"]
-        if referenceSelection.waitForExistence(timeout: 3) {
-            app.buttons.matching(NSPredicate(
-                format: "label CONTAINS %@ AND label CONTAINS %@",
-                "기존 기준옷",
-                "직접 비교"
-            )).firstMatch.tap()
-        }
-        XCTAssertTrue(
-            waitForAny([
-                app.navigationBars["비교 결과"],
-                app.staticTexts["추천하기에 실측 정보가 부족해요"]
-            ], timeout: 10),
-            "사용자 분류로 추천 결과 또는 명시적인 실측 부족 단계까지 진행되어야 합니다."
-        )
-
-        // Relaunch with a fresh in-memory closet but the same local defaults.
-        // The exact-product answer must survive and bypass category selection.
-        app.terminate()
-        app.launchArguments = [
-            "-fitmatchUITesting",
-            "-FitMatch.hasCompletedOnboarding", "YES",
-            "-fitmatchUITestSeedExistingData",
-            "-fitmatchAmbiguousCategoryFixture"
-        ]
-        app.launch()
-        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 8))
-
-        openAmbiguousCategoryFixture()
-        XCTAssertTrue(
-            waitForAny([
-                app.navigationBars["비교 결과"],
-                app.staticTexts["기준 옷 직접 선택"],
-                app.staticTexts["추천하기에 실측 정보가 부족해요"]
-            ], timeout: 10),
-            "동일 상품 재분석은 분류 선택 없이 비교 단계로 진행되어야 합니다."
-        )
-        XCTAssertFalse(
-            app.staticTexts["상품 종류 확인"].exists,
-            "동일 상품에는 분류 선택을 다시 요구하면 안 됩니다."
-        )
-
-        // A sibling product from the exact same provider path must not inherit
-        // the answer stored for the first product.
-        app.terminate()
-        app.launchArguments = [
-            "-fitmatchUITesting",
-            "-FitMatch.hasCompletedOnboarding", "YES",
-            "-fitmatchUITestSeedExistingData",
-            "-fitmatchAmbiguousCategoryFixture"
-        ]
-        app.launch()
-        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 8))
-
-        openAmbiguousCategoryFixture(productSuffix: "sibling")
-        XCTAssertTrue(
-            app.staticTexts["상품 종류 확인"].waitForExistence(timeout: 8),
-            "같은 공급사 경로라도 다른 상품에는 첫 상품의 선택을 전파하면 안 됩니다."
-        )
-
-        // Clearing the local mapping store must make the original product ask
-        // again, proving that the prior bypass came from persisted state.
-        app.terminate()
-        app.launchArguments = [
-            "-fitmatchUITesting",
-            "-FitMatch.hasCompletedOnboarding", "YES",
-            "-fitmatchUITestSeedExistingData",
-            "-fitmatchAmbiguousCategoryFixture",
-            "-fitmatchResetCategoryMappings"
-        ]
-        app.launch()
-        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 8))
-
-        openAmbiguousCategoryFixture()
-        XCTAssertTrue(
-            app.staticTexts["상품 종류 확인"].waitForExistence(timeout: 8),
-            "분류 매핑을 초기화하면 원래 상품도 다시 사용자에게 물어야 합니다."
-        )
+        XCTAssertTrue(app.buttons["다시 시도"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.staticTexts["상품 종류 확인"].exists)
+        XCTAssertFalse(app.navigationBars["비교 결과"].exists)
+        XCTAssertFalse(app.buttons["세부 카테고리 선택"].exists)
     }
 
     private func openAmbiguousCategoryFixture(productSuffix: String? = nil) {
@@ -238,7 +149,7 @@ final class FitMatchUITests: XCTestCase {
         )
         privacyButton.tap()
         XCTAssertTrue(
-            app.staticTexts["기기에 저장하는 정보"].waitForExistence(timeout: 3),
+            app.staticTexts["기기와 서버에 저장하는 정보"].waitForExistence(timeout: 3),
             "앱의 실제 데이터 처리 내용이 표시되어야 합니다."
         )
 

@@ -28,7 +28,7 @@ struct FitMatchApp: App {
         }
         #endif
 
-        do {
+        switch FitMatchStartupAction.makeContainer({
             let schema = Schema(FitMatchSchemaV1.models)
             let container: ModelContainer
             #if DEBUG
@@ -81,9 +81,12 @@ struct FitMatchApp: App {
                 UserDefaults.standard.set(true, forKey: "FitMatch.hasCompletedOnboarding")
             }
             #endif
+            return container
+        }) {
+        case .ready(let container):
             modelContainer = container
             modelContainerError = nil
-        } catch {
+        case .failed(let error):
             modelContainer = nil
             modelContainerError = error
             #if DEBUG
@@ -126,7 +129,7 @@ struct FitMatchApp: App {
             sourceName: "직접 입력",
             brandName: "기존 브랜드",
             gender: .unisex,
-            productName: "기존 기준옷",
+            productName: "기존 상의",
             category: .top,
             detailCategory: .shortSleeve,
             sizeName: "M",
@@ -161,8 +164,18 @@ struct FitMatchApp: App {
     var body: some Scene {
         WindowGroup {
             if let modelContainer {
+                #if DEBUG
+                if let zaraAuditURL = ZARAWebViewAuditFeature.requestedURL {
+                    ZARAWebViewAuditScreen(requestedURL: zaraAuditURL)
+                        .modelContainer(modelContainer)
+                } else {
+                    ContentView()
+                        .modelContainer(modelContainer)
+                }
+                #else
                 ContentView()
                     .modelContainer(modelContainer)
+                #endif
             } else {
                 ModelContainerRecoveryView(error: modelContainerError)
             }

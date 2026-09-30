@@ -59,9 +59,17 @@ struct BundledFitMatchTaxonomyRepository: FitMatchTaxonomyProviding {
     let bundle: Bundle
     let decoder: JSONDecoder
 
-    init(bundle: Bundle = .main, decoder: JSONDecoder = JSONDecoder()) {
+    init(bundle: Bundle = Self.defaultBundle, decoder: JSONDecoder = JSONDecoder()) {
         self.bundle = bundle
         self.decoder = decoder
+    }
+
+    private static var defaultBundle: Bundle {
+#if SWIFT_PACKAGE
+        .module
+#else
+        .main
+#endif
     }
 
     func loadTaxonomy() throws -> FitMatchTaxonomy {
@@ -157,6 +165,8 @@ final class FitMatchTaxonomyProvider {
         let value = "\(sourceName) \(sourceURLString ?? "")".lowercased()
         if value.contains("musinsa") || value.contains("무신사") { return "musinsa" }
         if value.contains("uniqlo") || value.contains("유니클로") { return "uniqlo" }
+        if value.contains("zara") || value.contains("자라") { return "zara" }
+        if value.contains("cos") { return "cos" }
         return nil
     }
 

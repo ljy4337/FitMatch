@@ -27,6 +27,22 @@ nonisolated enum SizeTokenNormalizer {
         return candidate
     }
 
+    /// Korean presentation only. Keep `displayName` unchanged because it is
+    /// also used for source-size matching and persisted identities.
+    static func koreanDisplayName(for rawValue: String) -> String {
+        let value = displayName(for: rawValue)
+        let koreanNames = [
+            "XXS": "더블 엑스스몰", "XS": "엑스스몰", "S": "스몰", "M": "미디움",
+            "L": "라지", "XL": "엑스라지", "XXL": "더블 엑스라지",
+            "XXXL": "트리플 엑스라지", "2XL": "투 엑스라지", "3XL": "트리플 엑스라지",
+            "4XL": "포 엑스라지", "5XL": "파이브 엑스라지", "WM": "여성 미디움",
+            "FREE": "프리", "ONE": "원사이즈", "ONE SIZE": "원사이즈",
+            "SMALL": "스몰", "MEDIUM": "미디움", "LARGE": "라지",
+            "EXTRA SMALL": "엑스스몰", "EXTRA LARGE": "엑스라지"
+        ]
+        return koreanNames[value.uppercased()] ?? value
+    }
+
     static func isValid(_ rawValue: String) -> Bool {
         let value = normalizedKey(for: rawValue)
         return isValidNormalizedKey(value)

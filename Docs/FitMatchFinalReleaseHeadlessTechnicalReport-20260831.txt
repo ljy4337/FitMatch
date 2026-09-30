@@ -1,0 +1,200 @@
+# FitMatch Final Release Headless Technical Report — 2026-09-01
+
+## Candidate and scope
+
+- Published Git / local base: 8855874a7ff372ef9b0e6159740c6faee4750985
+- Branch: connectDB
+- Candidate: current uncommitted working tree
+- Frozen catalog: Docs/FitMatchFinalReleaseUserScenarioCatalog-20260831.txt
+- Production writes, Auth mutation, Production migration apply, commit, and push: **0**
+
+This report describes headless business-logic evidence. It does not claim
+physical iPhone, Apple system UI, actual Share Sheet, Keychain, radio, or
+foreground-rendering verification.
+
+## Reconciled frozen accounting
+
+| Execution class | Count | IDs |
+|---|---:|---|
+| HEADLESS_PASS | 133 | All frozen rows except the two static and two physical-system rows |
+| STATIC_CONTRACT_PASS | 2 | EN-010, EN-011 |
+| PHYSICAL_SMOKE_PENDING | 2 | EN-002, EN-012 |
+| FAIL | 0 | — |
+| NOT_EXECUTED | 0 | — |
+| OWNER_SCOPE_DECISION_REQUIRED | 0 | — |
+| **TOTAL** | **137** | Frozen ID set unchanged |
+
+| Feature | Headless | Static | Physical pending | Fail | Not executed |
+|---|---:|---:|---:|---:|---:|
+| Closet Register (CR) | 22 | 0 | 0 | 0 | 0 |
+| Closet Manage (CM) | 19 | 0 | 0 | 0 | 0 |
+| Product Compare (CP) | 39 | 0 | 0 | 0 | 0 |
+| Result (RS) | 13 | 0 | 0 | 0 | 0 |
+| History (HI) | 17 | 0 | 0 | 0 | 0 |
+| Entry / Share / Deep Link (EN) | 8 | 2 | 2 | 0 | 0 |
+| Retry / Race / Stale (RX) | 15 | 0 | 0 | 0 | 0 |
+
+The machine report contains one populated JSON object per frozen ID and is the
+per-scenario index:
+Docs/FitMatchFinalReleaseHeadlessScenarioResults-20260831.jsonl.
+
+## Execution evidence by feature
+
+| Frozen scope | Distinguishing production-path evidence |
+|---|---|
+| CR-001…CR-009 | FitMatchClosetFormAction, FitMatchClosetManualRegistrationAction, FitMatchClosetRegistrationPersistence, and FitMatchClosetReferenceMutation through the direct registration/action tests. Required field, numeric range, adult/child, composite, preference, save failure/retry, and reference replacement subfixtures are constructed separately. |
+| CR-010…CR-022 | ProductURLSupport, FitMatchProductLinkInput, FitMatchLinkClosetRegistrationAction, FitMatchComparedProductClosetRegistration, parser dispatch, authority preparation, owned-size save, duplicate submit, and signed-out state actions. UNIQLO, MUSINSA, and ZARA use their own captured repository parser inputs. |
+| CM-001…CM-019 | FitMatchClosetPresentation, FitMatchClosetItemEditAction, FitMatchClosetReferenceMutation, FitMatchClosetDeletionAction, Closet/History sync coordinators, and active-owner filtering. Account A→B is gated before, during, and after remote sync. |
+| CP-001…CP-039 | ShoppingProductViewModel and FitMatchServerAuthorityCoordinator drive authority, Recovery, reference discovery, authorization, eligible size, begin, production adapter, engine, complete, Result, and History. Negative gates assert engine count zero. Recovery candidate counts 1/2/3, all three manual-cross pairs in both directions, provider fixtures, stale contracts, and real out-of-order responses are distinct subfixtures. |
+| RS-001…RS-013 | RecommendationService, RecommendationResultView actions, current-session batch guard, ResultReferenceComparisonPersistence, and FitMatchProductURLOpeningAction. Recompare uses a detached server-authorized comparison context; old Result/History snapshots remain unchanged. |
+| HI-001…HI-017 | RecommendationHistoryStore, VNextHistoryCacheHydrator, FitMatchHistoryPresentation, FitMatchHistoryVisibilityAction, FitMatchComparisonSyncCoordinator, and Closet-associated hide order. Exact V4 per-comparison target/reference projections survive fresh containers. |
+| EN-001…EN-012 | FitMatchProductEntryRouting, FitMatchProductURLRouting, FitMatchSharedURLHandoffStore, SharedURLStore, FitMatchShareAttachmentLoading, FitMatchAuthSessionStore, and FitMatchStartupAction. Static only: global search route EN-010 and shell route EN-011. |
+| RX-001…RX-015 | FitMatchComparisonSubmissionAction, Recovery task ownership, gated transport, eligible/begin exactness, completion retry, SharedURLStore generation acknowledgement, and both sync coordinators. Each race schedules an old request, newer action, then late old response. |
+
+## Closure evidence replacement
+
+The 54 rows that were previously classified as evidence gaps are no longer
+promoted by grouped labels or source-text checks. Each frozen JSONL row records
+its production symbols, fixture provenance, remote call sequence, terminal
+state, and visible reason where relevant. The final additions exercise the
+previously missing Result evidence/reselect-clear, captured provider entry,
+startup retry, offline reconnect, exact retry gates, Recovery reconstruction,
+and a deterministic begin-in-flight reference mutation. The latter waits at
+the real begin transport boundary, performs the production Closet reference
+mutation, releases the old response, and verifies no Result/History is created.
+
+CR-019 and EN-007 moved from physical-pending to HEADLESS_PASS only after their
+nonphysical production state routes were actually executed: signed-out
+registration waits for current-owner cache preparation, and auth success/cancel/
+error/logout/relogin proves A→B cache isolation before, during, and after sync.
+EN-002 and EN-012 remain physical-pending solely for the system Share Sheet
+invocation and rendering; their attachment, payload, TTL/CAS, and app routing
+logic is headlessly executed.
+
+## Production logic integrity
+
+- Tests do **not** construct MeasurementComparisonEngine directly. Sourced
+  positive comparisons reach it only through the current production
+  authority → reference → authorization → eligible → begin sequence.
+- The test target has no classifier, scorer, score weight/ranking,
+  reference-selector, manual-cross evaluator, measurement/size eligibility
+  evaluator, or effective-authority resolver.
+- Fakes are only transport/auth/clock/storage/persistence failure/deterministic
+  scheduling boundaries. The app actions and business services consume their
+  schema-valid responses.
+- Generic legacy scenario suites are supplemental regression evidence, not the
+  sole execution proof for a frozen row. The final headless acceptance,
+  provider-snapshot, focused Recovery/recompare, sync/hydration, and
+  race/action tests provide the row-level evidence.
+
+## Confirmed product corrections retained
+
+### Result recompare immutability
+
+RecommendationResultView begins a new comparison from a detached,
+server-authorized target/reference context. It does not write to the displayed
+completed Product/reference while a recompare is pending. Global and valid
+server-backed USER_EXPLICIT paths create a new Result/History after completion;
+new comparison failure leaves the old Result/History untouched.
+
+### Exact historical V4 projection
+
+VNextHistoryCacheHydrator and RecommendationHistoryStore use a unique immutable
+projection for each completed comparison. Historical audience, tuple,
+USER_EXPLICIT provenance/revision, target identity, and reference identity do
+not flatten to current Global state or share mutable Product meaning.
+
+### Atomic effective tuple
+
+VNextRuntimeClassificationTuple consumes a present server effective tuple as
+issued. A nullable/not-applicable personal axis is never coalesced from a
+conflicting Global field.
+
+### Entry and Share safety
+
+Home/Compare invalid, malformed, unsupported, and COS links return the current
+meaningful blocked state without parser/server work. COS is not advertised.
+Shared/FitMatchSharedURLHandoff.swift is the single app/extension handoff
+contract: atomic Codable payload, fixed 15-minute TTL, malformed fail-closed,
+and generation-aware acknowledgement so A cannot clear newer B.
+
+### History visibility and Home identity
+
+History hide is a durable user-owned visibility layer; it never mutates
+completed comparison evidence. Home recent history preserves different
+completed comparison identities even when product URL/name match. History
+search/filter/sort/favorite is approved existing flow authority, not a newly
+invented feature: Docs/flows/README.md, Docs/flows/00_UserActionIndex.md
+ACT-HISTORY-003, and Docs/flows/14_HistoryFlow.md.
+
+### Account cache isolation
+
+Both sync coordinators bind pending work to the active owner. An old A response
+is discarded after B is prepared; a newer same-owner request gets the required
+follow-up pass. ContentView gates presentation/sync until local ownership
+preparation completes.
+
+## Regression and repeatability
+
+| Evidence | Result |
+|---|---|
+| Full current non-UI FitMatchTests | **649 PASS / 0 FAIL / 37 SKIP** — current local XCTest result |
+| Final 137 regression execution | **36 PASS × 2 fresh processes** |
+| Final scenario/provider/Closet sync/ZARA evidence | **118 PASS / 0 FAIL / 3 SKIP** |
+| Headless User Journey full class | **39 PASS / 0 FAIL / 0 SKIP** |
+| Headless/History/Share/account/sync repeat group | **113 PASS × 5 fresh processes** |
+| Debug app/test build-for-testing | PASS |
+
+The prior full-suite SwiftData invalidation failure did not recur in the full
+non-UI suite or in ten clean class-level delete/hydration repetitions.
+
+## Manual-cross and begin replay contract
+
+No test-side manual-cross rule is used as authority. A clean disposable local
+PostgreSQL instance applied the current Recovery/manual-cross fixture,
+20260830003812, 20260830003907, 20260830090000, and 20260830091000.
+
+- Recovery validation: RECOVERY_VALIDATION_PASS and ROLLBACK_PASS
+  (/tmp/FitMatchFinalManualCross-recovery-validation.log)
+- Manual-cross validation: MANUAL_CROSS_CONTRACT_PASS
+  (/tmp/FitMatchFinalManualCross-manual-validation.log)
+
+The contract verifies every protected pair in both directions: automatic block,
+explicit same-sleeve MANUAL_EXTENDED path, sleeve-mismatch block,
+measurement-specific block, zero available size block, and stale-reference
+block. It also verifies same-client-ID begin replay returns the same immutable
+comparison snapshot without a duplicate run. This local database was stopped;
+Production was not contacted or changed.
+
+## DBLogic 5049615 audit
+
+The legacy test formerly compared local parser/Closet classification to a
+historical expected global Product tuple. That equality is architecturally
+invalid under the current vNext authority contract: parsers collect retailer
+facts; server runtime/effective authority owns sourced global classification.
+The corpus remains a 207-row parser-fact/attachment audit in
+DBLogicReliabilityAuditTests and does not redefine server authority locally.
+Atomic effective-tuple and server-authority integration tests cover the correct
+consumption layer. No Product logic, parser facts, Production data, or expected
+server classification was changed to make the corpus green.
+
+## Remaining non-headless boundary
+
+Only EN-002 and EN-012 need physical Share Sheet system UI smoke:
+multi-attachment UI and cold/foreground rendering. CR-019 signed-out
+registration routing and EN-007 auth success/cancel/error/logout/relogin plus
+A→B owner isolation now execute headlessly through the production actions.
+Their data, support gating, route, handoff, TTL, and CAS behavior are already
+headlessly exercised.
+
+## Production and deployment state
+
+- Production writes: **0**
+- History visibility migration
+  20260831010000_vnext_comparison_history_visibility.sql: disposable/local
+  validation only; **NOT DEPLOYED**
+- No commit/push
+- No task-induced diff to FitMatch/Components/TabBarScrollVisibilityModifier.swift
+
+The appropriate next authority is a second independent Sol Ultra acceptance
+against this unchanged catalog and working tree.

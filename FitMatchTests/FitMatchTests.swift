@@ -13,7 +13,16 @@ import SwiftData
 
 private final class FitMatchCorpusBundleToken {}
 
+private let runsLongImageAudit =
+    ProcessInfo.processInfo.arguments.contains("-fitmatchRunLongImageAudit")
+    || ProcessInfo.processInfo.environment["FITMATCH_RUN_LONG_IMAGE_AUDIT"] == "1"
+
+private let runsFitPairCorpusAudit =
+    ProcessInfo.processInfo.arguments.contains("-fitmatchRunFitPairCorpusAudit")
+    || ProcessInfo.processInfo.environment["FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT"] == "1"
+
 @MainActor
+@Suite(.serialized)
 struct FitMatchTests {
     @Test func comparisonLengthDisplayUsesGarmentContext() {
         #expect(ComparisonLengthType.long.displayName(for: .pants) == "긴바지")
@@ -97,7 +106,10 @@ struct FitMatchTests {
         let service = ProductURLParserService(musinsaParser: parser, uniqloParser: parser)
         let viewModel = ShoppingProductViewModel(
             initialURL: "https://www.musinsa.com/products/first",
-            parserService: service
+            parserService: service,
+            serverAuthorityCoordinator: FitMatchServerAuthorityCoordinator(
+                remote: FitMatchEchoServerAuthorityRemote()
+            )
         )
 
         let firstTask = Task { await viewModel.loadProductInfoFromURL() }
@@ -420,7 +432,7 @@ struct FitMatchTests {
         #expect(parser.mapCategory(from: "하의 > 아노락 팬츠") == .bottom)
     }
 
-    @Test func singleExactRepresentativeForUserResolvedCategoryIsAutomaticallySelected() {
+    @Test func singleExactRepresentativeForUserResolvedCategoryRequiresUserSelection() {
         let productSize = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
@@ -490,7 +502,8 @@ struct FitMatchTests {
         )
 
         #expect(plan.recommendedCandidates.map(\.id) == [reference.id])
-        #expect(plan.automaticallySelectedCandidate?.id == reference.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
     @Test func musinsaSweatshirtNamesDoNotBecomeShirtsBySubstring() throws {
@@ -690,6 +703,44 @@ struct FitMatchTests {
             let profile = matcher.profile(for: product, detailCategory: detail)
             #expect(profile.garmentFamily == expectedFamily, "\(category.rawValue)/\(detail.rawValue)")
         }
+    }
+
+    @Test func typedBlouseDetailOverridesBroadTShirtSourceFamily() {
+        let product = Product(
+            name: "레이온블라우스",
+            category: .top,
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E489227-000",
+            metadata: ProductMetadata(
+                sourceCategoryPath: "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔"
+            ),
+            sourceName: "유니클로",
+            sizes: []
+        )
+        product.normalizedProductTypeCode = "tops.tshirt"
+
+        let profile = ComparisonProfileMatcher().profile(for: product, detailCategory: .blouse)
+
+        #expect(profile.garmentFamily == .shirt)
+
+        let closetItem = UserFit(
+            sourceType: .officialStore,
+            sourceName: "유니클로",
+            sourceCategoryPath: "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+            brandName: "유니클로",
+            gender: .women,
+            productName: "레이온블라우스",
+            category: .top,
+            detailCategory: .blouse,
+            sizeName: "M",
+            measurements: GarmentMeasurements(
+                shoulder: 0, chest: 0, totalLength: 0, sleeveLength: 0
+            ),
+            fitMemo: "fixture",
+            satisfaction: 3
+        )
+        closetItem.normalizedProductTypeCode = "tops.tshirt"
+
+        #expect(ComparisonProfileMatcher().profile(for: closetItem).garmentFamily == .shirt)
     }
 
     @Test func intermediateSleeveAndPantsLengthsDoNotCrossMatch() {
@@ -1474,6 +1525,72 @@ struct FitMatchTests {
         #expect(resolved.productMetadata.imageURLStrings == [selected])
     }
 
+    @Test func uniqloGenericColorUsesOfficialSizeAPIRepresentativeImage() {
+        let generatedGeneric = "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/422992/item/krgoods_00_422992_3x4.jpg"
+        let officialRepresentative = "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/422992/item/krgoods_11_422992_3x4.jpg"
+        var metadata = UniqloProductMetadata(
+            sourceURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E422992-000/00")!,
+            productID: "E422992",
+            goodsID: "422992",
+            colorCode: "00",
+            brandName: "유니클로",
+            productName: "크루넥T",
+            category: .top,
+            detailCategory: .shortSleeve,
+            imageURLString: generatedGeneric
+        )
+        metadata.productMetadata.imageURLStrings = [generatedGeneric]
+
+        let resolved = metadata.withPreferredImageURL(
+            officialRepresentative,
+            selectedColorCode: "00",
+            goodsID: "422992"
+        )
+
+        #expect(resolved.imageURLString == officialRepresentative)
+        #expect(resolved.productMetadata.imageURLStrings == [officialRepresentative])
+    }
+
+    @Test func uniqloThumbnailCandidatesRetainSelectedColorThenDefaultColor() throws {
+        let selected = try #require(URL(
+            string: "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_03_465185_3x4.jpg?width=400"
+        ))
+        let candidates = UniqloImageURLPolicy.candidateURLs(primaryURL: selected)
+
+        #expect(candidates.map(\.absoluteString) == [
+            selected.absoluteString,
+            "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/465185/item/krgoods_00_465185_3x4.jpg?width=400"
+        ])
+    }
+
+    @Test func legacyUniqloProductWithoutImageDerivesDefaultThumbnail() {
+        let product = Product(
+            name: "크루넥T",
+            category: .top,
+            productCode: "E422992",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E422992-000/00",
+            imageURLString: nil,
+            sourceType: .officialStore,
+            sourceName: "유니클로"
+        )
+
+        #expect(product.imageURLStringForDisplay ==
+            "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/422992/item/krgoods_00_422992_3x4.jpg?width=400")
+    }
+
+    @Test func nonUniqloSixDigitProductDoesNotDeriveUniqloThumbnail() {
+        let product = Product(
+            name: "무신사 테스트 상품",
+            category: .top,
+            productCode: "422992",
+            imageURLString: nil,
+            sourceType: .marketplace,
+            sourceName: "무신사"
+        )
+
+        #expect(product.imageURLStringForDisplay == nil)
+    }
+
     @Test func musinsaURLResolverPrefersExplicitVariantProductID() {
         let resolver = MusinsaURLResolver()
         let url = URL(string: "https://www.musinsa.com/products/1234567?goodsNo=7654321")!
@@ -1699,13 +1816,17 @@ struct FitMatchTests {
         )
         let valid = ParsedSizeValidator.validSizes(result.sizes, category: .shirt)
 
-        #expect(result.sizes.map(\.name) == ["S(옥스포드)", "M(White)"])
+        #expect(result.sizes.map(\.name) == ["S(린넨)", "S(옥스포드)", "M(White)"])
+        let zeroSize = try #require(result.sizes.first)
+        #expect(zeroSize.measurementRecords.count == 4)
+        #expect(zeroSize.measurementRecords.allSatisfy { $0.value == 0 })
+        #expect(!ParsedSizeValidator.hasUsableMeasurements([zeroSize], category: .shirt))
         #expect(valid.map(\.name) == ["S(옥스포드)", "M(White)"])
         #expect(valid.first?.measurements.chest == 66)
         #expect(valid.first?.measurements.totalLength == 75)
     }
 
-    @Test func uniqloBottomCircumferencesBecomeWidthsAndPreserveRawValues() throws {
+    @Test func uniqloBottomCircumferencesRemainCircumferencesAndPreserveRawValues() throws {
         let json = """
         {
           "result": {
@@ -1733,14 +1854,15 @@ struct FitMatchTests {
         let waist = records.first { $0.rawCode == "waist-product-size" }
         let hip = records.first { $0.rawCode == "hip-product-size" }
 
-        #expect(size.measurements.waist == 35)
-        #expect(size.measurements.hip == 52)
-        #expect(waist?.value == 35)
+        #expect(size.measurements.waist == 70)
+        #expect(size.measurements.hip == 104)
+        #expect(waist?.value == 70)
         #expect(waist?.rawValueText == "70")
-        #expect(waist?.measurementCode == .waistWidthEdgeToEdge)
-        #expect(hip?.value == 52)
+        #expect(waist?.measurementCode == .waistCircumferenceGarment)
+        #expect(hip?.value == 104)
         #expect(hip?.rawValueText == "104")
-        #expect(hip?.measurementCode == .hipWidthAtWidest)
+        #expect(hip?.measurementCode == .unknown)
+        #expect(hip?.semanticStatus == .unknownDefinition)
         #expect(records.first { $0.rawCode == "thigh" }?.measurementCode == .thighWidthCrotchToOuter)
         let rise = records.first { $0.rawCode == "rising-length" }
         #expect(rise?.measurementCode == .riseCrotchToWaistFront)
@@ -1960,10 +2082,10 @@ struct FitMatchTests {
         #expect(verifiedUniqloLengths == [
             .bodyLengthBackNeckToHem,
             .bodyLengthBackNeckToHem,
-            .bodyLengthBackNeckToHem
+            .bodyLengthUniqloKnitFront
         ])
         #expect(Set(verifiedMusinsaLengths) == [.bodyLengthBackNeckToHem])
-        #expect(Set(verifiedUniqloLengths) == [.bodyLengthBackNeckToHem])
+        #expect(Set(verifiedUniqloLengths) == [.bodyLengthBackNeckToHem, .bodyLengthUniqloKnitFront])
     }
 
     @Test func musinsaOfficialUpperTypesMapExactTotalLengthLabel() {
@@ -2064,11 +2186,17 @@ struct FitMatchTests {
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "sleeve-length-cb")?.code == .sleeveCenterBackToCuff)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "skirt-length")?.code == .skirtLengthWaistToHem)
         let bottomsWaist = MeasurementSourceMappingPolicy.uniqlo(rawCode: "waist-product-size-bottoms")
-        #expect(bottomsWaist?.code == .waistWidthEdgeToEdge)
-        #expect(bottomsWaist?.valueMultiplier == 0.5)
+        #expect(bottomsWaist?.code == .waistCircumferenceGarment)
+        #expect(bottomsWaist?.valueMultiplier == 1)
         #expect(bottomsWaist?.mappingVersion == MeasurementSourceMappingPolicy.uniqloVersion)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "body-width-gather-and-tack") == nil)
         #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "neck-circumference") == nil)
+        #expect(MeasurementSourceMappingPolicy.uniqlo(rawCode: "hip-product-size") == nil)
+        #expect(MeasurementSourceMappingPolicy.musinsa(
+            typeNumber: 5,
+            displayKind: .sleeveLength,
+            rawLabel: "소매부리단면"
+        ) == nil)
     }
 
     @Test func comparisonUsesMatchedRecordValuesInsteadOfScalarMeasurements() {
@@ -2105,7 +2233,7 @@ struct FitMatchTests {
         #expect(result.comparedItems.first { $0.kind == .totalLength }?.signedDifference == 1)
     }
 
-    @Test func samePlatformAndFormatUsesMatchingSourceFieldsDirectly() {
+    @Test func matchingRawLabelsNeverOverrideConflictingCanonicalCodes() {
         let size = ProductSize(
             name: "L",
             measurements: GarmentMeasurements(shoulder: 48, chest: 54, totalLength: 0, sleeveLength: 0)
@@ -2143,9 +2271,8 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(result.status == .confirmed)
-        #expect(result.comparedItems.first { $0.kind == .shoulder }?.signedDifference == 1)
-        #expect(result.comparedItems.first { $0.kind == .chest }?.signedDifference == 1)
+        #expect(result.status == .insufficientEvidence)
+        #expect(result.comparedItems.isEmpty)
     }
 
     @Test func comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat() throws {
@@ -2165,7 +2292,7 @@ struct FitMatchTests {
             )
             size.measurementRecords = [
                 comparisonRecord(
-                    value: waistValue, code: .waistWidthEdgeToEdge, kind: .waist,
+                    value: waistValue, code: rawLabel == "허리둘레" ? .waistCircumferenceGarment : .waistWidthEdgeToEdge, kind: .waist,
                     methodSource: source, methodProfile: profile,
                     rawCode: "waist-product-size", rawLabel: rawLabel,
                     rawValueText: rawValue, productSize: size
@@ -2186,7 +2313,7 @@ struct FitMatchTests {
             )
             item.measurementRecords = [
                 comparisonRecord(
-                    value: waistValue, code: .waistWidthEdgeToEdge, kind: .waist,
+                    value: waistValue, code: rawLabel == "허리둘레" ? .waistCircumferenceGarment : .waistWidthEdgeToEdge, kind: .waist,
                     methodSource: source, methodProfile: profile,
                     rawCode: "waist-product-size", rawLabel: rawLabel,
                     rawValueText: rawValue, userFit: item
@@ -2207,11 +2334,11 @@ struct FitMatchTests {
         let uniqloToUniqlo = try waistItem(
             product(
                 source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
-                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+                waistValue: 80, rawLabel: "허리둘레", rawValue: "80"
             ),
             reference(
                 source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
-                waistValue: 39, rawLabel: "허리둘레", rawValue: "78"
+                waistValue: 78, rawLabel: "허리둘레", rawValue: "78"
             )
         )
         #expect(uniqloToUniqlo.displayTitle == "허리둘레")
@@ -2222,7 +2349,7 @@ struct FitMatchTests {
         let circumferenceToWidth = try waistItem(
             product(
                 source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
-                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+                waistValue: 80, rawLabel: "허리둘레", rawValue: "80"
             ),
             reference(
                 source: "musinsa", profile: "musinsa_type_6",
@@ -2237,11 +2364,11 @@ struct FitMatchTests {
         let differentBrandCircumferences = try waistItem(
             product(
                 source: "uniqlo_kr", profile: "uniqlo_bottom_v1",
-                waistValue: 40, rawLabel: "허리둘레", rawValue: "80"
+                waistValue: 80, rawLabel: "허리둘레", rawValue: "80"
             ),
             reference(
                 source: "other_shop", profile: "brand_chart",
-                waistValue: 39, rawLabel: "허리둘레", rawValue: "78"
+                waistValue: 78, rawLabel: "허리둘레", rawValue: "78"
             )
         )
         #expect(differentBrandCircumferences.displayTitle == "허리둘레")
@@ -2825,7 +2952,7 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(result.status == .insufficientEvidence)
+        #expect(result.status == .confirmed)
         #expect(result.comparedKinds == [.shoulder])
         #expect(result.exclusions.contains {
             $0.kind == .sleeveLength
@@ -2837,7 +2964,7 @@ struct FitMatchTests {
         })
     }
 
-    @Test func bottomComparisonRequiresTwoCoreWidthMeasurements() {
+    @Test func bottomComparisonUsesAvailablePolicyMeasurements() {
         let size = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
@@ -2887,12 +3014,12 @@ struct FitMatchTests {
 
         #expect(result.status == .confirmed)
         #expect(result.comparedKinds == [.waist, .hip, .totalLength])
-        #expect(result.minimumComparableCount == 2)
+        #expect(result.minimumComparableCount == 1)
         #expect(result.requiredKinds == [.waist, .hip, .thigh])
-        #expect(result.minimumRequiredKindCount == 2)
+        #expect(result.minimumRequiredKindCount == 0)
     }
 
-    @Test func bottomWidthAndLengthAloneDoNotConfirmRecommendation() {
+    @Test func bottomWidthAndLengthAllowComparison() {
         let size = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
@@ -2937,10 +3064,10 @@ struct FitMatchTests {
         )
 
         #expect(result.comparedKinds == [.waist, .totalLength])
-        #expect(result.status == .insufficientEvidence)
+        #expect(result.status == .confirmed)
     }
 
-    @Test func outerComparisonRequiresChestAndOneAdditionalMeasurement() {
+    @Test func outerComparisonUsesAvailablePolicyMeasurements() {
         let size = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
@@ -2988,10 +3115,10 @@ struct FitMatchTests {
 
         #expect(result.status == .confirmed)
         #expect(result.comparedKinds == [.chest, .totalLength, .hem])
-        #expect(result.requiredAllKinds == [.chest])
+        #expect(result.requiredAllKinds.isEmpty)
     }
 
-    @Test func outerShoulderAndSleeveWithoutChestAreInsufficient() {
+    @Test func outerShoulderAndSleeveWithoutChestRemainComparable() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 64,
@@ -3013,8 +3140,8 @@ struct FitMatchTests {
         )
 
         #expect(result.comparedKinds == [.shoulder, .sleeveLength])
-        #expect(result.status == .insufficientEvidence)
-        #expect(result.requiredAllKinds == [.chest])
+        #expect(result.status == .confirmed)
+        #expect(result.requiredAllKinds.isEmpty)
     }
 
     @Test func recommendationIsBlockedWhenCompatibleEvidenceIsInsufficient() {
@@ -3028,7 +3155,7 @@ struct FitMatchTests {
         let item = comparisonItem(
             shoulder: 48,
             sleeve: 23,
-            shoulderCode: .shoulderWidthSeamToSeam,
+            shoulderCode: .unknown,
             sleeveCode: .sleeveShoulderSeamToCuff
         )
 
@@ -3052,7 +3179,7 @@ struct FitMatchTests {
         let item = comparisonItem(
             shoulder: 48,
             sleeve: 23,
-            shoulderCode: .shoulderWidthSeamToSeam,
+            shoulderCode: .unknown,
             sleeveCode: .sleeveShoulderSeamToCuff
         )
 
@@ -3070,8 +3197,8 @@ struct FitMatchTests {
 
         #expect(history == nil)
         #expect(evidence?.comparisonResult.status == .insufficientEvidence)
-        #expect(evidence?.comparedKinds == [.shoulder])
-        #expect(evidence?.comparisonResult.minimumComparableCount == 2)
+        #expect(evidence?.comparedKinds.isEmpty == true)
+        #expect(evidence?.comparisonResult.minimumComparableCount == 1)
         #expect(evidence?.comparisonResult.exclusions.contains {
             $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode
         } == true)
@@ -3120,7 +3247,7 @@ struct FitMatchTests {
         let selectedItem = comparisonItem(
             shoulder: 48,
             sleeve: 23,
-            shoulderCode: .shoulderWidthSeamToSeam,
+            shoulderCode: .unknown,
             sleeveCode: .sleeveShoulderSeamToCuff
         )
 
@@ -3136,11 +3263,11 @@ struct FitMatchTests {
         }
         #expect(!outcome.shouldDismissPicker)
         #expect(evidence?.comparisonResult.status == .insufficientEvidence)
-        #expect(evidence?.comparedKinds == [.shoulder])
+        #expect(evidence?.comparedKinds.isEmpty == true)
         #expect(evidence?.missingKinds.contains(.sleeveLength) == true)
     }
 
-    @Test func automaticFlowKeepsProfileCompatibleItemForInsufficientEvidenceScreen() {
+    @Test func automaticFlowRetainsCandidateWithoutCreatingResultOrEvidence() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 47,
@@ -3177,8 +3304,11 @@ struct FitMatchTests {
         #expect(match.state == .compatible)
         #expect(match.compatibleCandidates.map(\.id) == [item.id])
         #expect(history == nil)
-        #expect(evidence?.referenceItem.id == item.id)
-        #expect(evidence?.comparisonResult.status == .insufficientEvidence)
+        #expect(evidence == nil)
+        let plan = service.referenceSelectionPlan(product: product, productDetailCategory: .shortSleeve, userFits: [item])
+        #expect(plan.recommendedCandidates.map(\.id) == [item.id])
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
     @Test func recommendationStoresUsedCodesAndExclusionReasons() {
@@ -3242,7 +3372,7 @@ struct FitMatchTests {
         #expect(result.compatibleCandidates.map(\.id) == [setIn.id])
     }
 
-    @Test func compatibleRepresentativeOutranksRicherMeasurementEvidence() {
+    @Test func retiredRepresentativeDoesNotOutrankRicherMeasurementEvidence() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -3272,18 +3402,18 @@ struct FitMatchTests {
             userFits: [representative, richerEvidence]
         )
 
-        #expect(ranked.first?.userFit.id == representative.id)
-        #expect(ranked.first?.compatibleMeasurementCount == 2)
+        #expect(ranked.first?.userFit.id == richerEvidence.id)
+        #expect(ranked.first?.compatibleMeasurementCount == 3)
         let plan = RecommendationService().referenceSelectionPlan(
             product: product,
             productDetailCategory: .shortSleeve,
             userFits: [representative, richerEvidence]
         )
-        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
-        #expect(!plan.requiresUserSelection)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
-    @Test func compatibleRepresentativeOutranksHigherSimilarity() {
+    @Test func retiredRepresentativeDoesNotAutoSelectAgainstHigherSimilarity() {
         let size = comparisonSize(
             shoulder: 50, sleeve: 24,
             shoulderCode: .shoulderWidthSeamToSeam,
@@ -3308,10 +3438,12 @@ struct FitMatchTests {
             userFits: [closer, representative]
         )
 
-        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
+        #expect(plan.recommendedCandidates.count == 2)
     }
 
-    @Test func compatibleRepresentativeOutranksSameBrandCandidate() {
+    @Test func retiredRepresentativeDoesNotAutoSelectAgainstSameBrandCandidate() {
         let size = comparisonSize(
             shoulder: 50, sleeve: 24,
             shoulderCode: .shoulderWidthSeamToSeam,
@@ -3343,10 +3475,12 @@ struct FitMatchTests {
             userFits: [sameBrand, representative]
         )
 
-        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
+        #expect(plan.recommendedCandidates.count == 2)
     }
 
-    @Test func multipleCompatibleRepresentativesSelectDeterministically() {
+    @Test func multipleCompatibleRepresentativesRemainUserSelectable() {
         let size = comparisonSize(
             shoulder: 50, sleeve: 24,
             shoulderCode: .shoulderWidthSeamToSeam,
@@ -3380,8 +3514,11 @@ struct FitMatchTests {
             userFits: [newer, older]
         )
 
-        #expect(first.automaticallySelectedCandidate?.id == newer.id)
-        #expect(second.automaticallySelectedCandidate?.id == newer.id)
+        #expect(first.automaticallySelectedCandidate == nil)
+        #expect(second.automaticallySelectedCandidate == nil)
+        #expect(Set(first.recommendedCandidates.map(\.id)) == Set([older.id, newer.id]))
+        #expect(Set(second.recommendedCandidates.map(\.id)) == Set([older.id, newer.id]))
+        #expect(first.requiresUserSelection && second.requiresUserSelection)
     }
 
     @Test func insufficientRepresentativeEvidenceBlocksAutomaticSelection() {
@@ -3514,7 +3651,7 @@ struct FitMatchTests {
         #expect(after.comparisonStatus == before.comparisonStatus)
     }
 
-    @Test func poloUsesTshirtFamilyAndAutomaticallyMatchesSameLengthTshirt() throws {
+    @Test func poloUsesTshirtFamilyAndManuallyMatchesSameLengthTshirt() throws {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -3558,8 +3695,8 @@ struct FitMatchTests {
         #expect(automatic.compatibleCandidates.map(\.id) == [polo.id])
         #expect(automatic.incomingProfile.garmentFamily == .tshirt)
         #expect(ComparisonProfileMatcher().profile(for: polo).garmentFamily == .tshirt)
-        #expect(plan.automaticallySelectedCandidate?.id == polo.id)
-        #expect(!plan.requiresUserSelection)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
         #expect(manual.userFit.id == polo.id)
         #expect(manual.comparisonStatus == .confirmed)
     }
@@ -3727,7 +3864,7 @@ struct FitMatchTests {
         #expect(note?.contains("다른 반팔 상의 구조") == true)
     }
 
-    @Test func representativeOutranksSimilarityWhenEvidenceIsEqual() {
+    @Test func retiredRepresentativeCannotCreateAnUnselectedComparison() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -3755,7 +3892,7 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(history?.userFit.id == representative.id)
+        #expect(history == nil)
     }
 
     @Test func sameBrandIsOnlyATieBreakerAfterSimilarity() {
@@ -4223,7 +4360,7 @@ struct FitMatchTests {
         } == true)
     }
 
-    @Test func compatibleOtherBrandOutranksSameBrandWithDifferentMeasurementMethod() {
+    @Test func oneMatchingAxisRetainsCandidateDespiteDifferentSleeveMethod() {
         let brand = Brand(name: "브랜드A")
         let size = comparisonSize(
             shoulder: 50,
@@ -4264,9 +4401,12 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(match.compatibleCandidates.map(\.id) == [compatibleOtherBrand.id])
+        #expect(Set(match.compatibleCandidates.map(\.id)) == Set([compatibleOtherBrand.id, incompatibleSameBrand.id]))
         #expect(history == nil)
         #expect(manuallySelected?.userFit.id == compatibleOtherBrand.id)
+        let partial = MeasurementComparisonEngine().compare(productSize: size, referenceItem: incompatibleSameBrand, productCategory: .top, productDetailCategory: .shortSleeve)
+        #expect(partial.comparedKinds == [.shoulder])
+        #expect(partial.exclusions.contains { $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode })
     }
 
     @Test func changingReferenceItemRecalculatesRecommendedSize() {
@@ -4318,10 +4458,10 @@ struct FitMatchTests {
     }
 
     @Test func sharedURLStoreConsumesPendingURLOnlyOnce() {
-        let suiteName = "FitMatchTests.SharedURLStore.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let store = SharedURLStore(defaults: defaults)
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FitMatchTests.SharedURLStore.\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let store = SharedURLStore(fileURL: fileURL)
         let url = URL(string: "https://www.musinsa.com/products/4668060")!
 
         store.savePendingProductURL(url)
@@ -4332,10 +4472,10 @@ struct FitMatchTests {
     }
 
     @Test func sharedURLStoreClearsOnlyThePresentedURL() {
-        let suiteName = "FitMatchTests.SharedURLStore.Presented.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let store = SharedURLStore(defaults: defaults)
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FitMatchTests.SharedURLStore.Presented.\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let store = SharedURLStore(fileURL: fileURL)
         let pendingURL = URL(string: "https://www.musinsa.com/products/4668060")!
 
         store.savePendingProductURL(pendingURL)
@@ -4350,10 +4490,129 @@ struct FitMatchTests {
         #expect(ProductURLSupport.supportedProviderName(for: "https://www.musinsa.com/products/4668060") == "무신사")
         #expect(ProductURLSupport.supportedProviderName(for: "https://musinsa.onelink.me/PvkC/example") == "무신사")
         #expect(ProductURLSupport.supportedProviderName(for: "https://www.uniqlo.com/kr/ko/products/E123456") == "유니클로")
+        #expect(ProductURLSupport.isZARAURL(URL(string: "https://www.zara.com/kr/ko/example-p01165305.html")!))
+        #expect(ProductURLSupport.supportedProviderName(for: "https://www.zara.com/kr/ko/example-p01165305.html") == "ZARA")
+        let sharedZARAURL = "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%AA%E1%84%91%E1%85%B3%E1%86%AF-p05372320.html?v1=549582583&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil"
+        #expect(ProductURLSupport.supportedProviderName(for: sharedZARAURL) == "ZARA")
+        #expect(ProductURLSupport.isSupportedProductURL(sharedZARAURL))
+        #expect(ProductURLSupport.supportedProviderName(for: "https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html") == nil)
+        #expect(!ProductURLSupport.isSupportedProductURL("https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html"))
 
         #expect(ProductURLSupport.supportedProviderName(for: "https://musinsa.example.com/products/4668060") == nil)
         #expect(ProductURLSupport.supportedProviderName(for: "https://example.com/?next=musinsa") == nil)
         #expect(ProductURLSupport.supportedProviderName(for: "https://uniqlo.com.example.com/products/E123456") == nil)
+        #expect(ProductURLSupport.supportedProviderName(for: "https://zara.com.example.com/kr/ko/example-p01165305.html") == nil)
+        #expect(ProductURLSupport.supportedProviderName(for: "https://cos.com.example.com/product.1229297007.html") == nil)
+    }
+
+    @Test func officialProductURLParserRejectsCOSBeforeAnyProviderParserRuns() async {
+        let service = ProductURLParserService()
+        let cosURL = "https://www.cos.com/ko-kr/men/t-shirts/product.example.1229297007.html"
+
+        do {
+            _ = try await service.parse(urlString: cosURL)
+            Issue.record("공식 COS URL이 지원되지 않는 링크로 차단되지 않았습니다.")
+        } catch let error as ProductURLParserError {
+            guard case .unsupportedURL = error else {
+                Issue.record("COS URL이 unsupportedURL이 아닌 오류로 처리됐습니다: \(error)")
+                return
+            }
+            #expect(error.errorDescription?.contains("COS") == false)
+        } catch {
+            Issue.record("예상하지 못한 COS URL 오류: \(error)")
+        }
+    }
+
+    @Test func zaraParserMapsOnlyVerifiedUpperGarmentBasis() async {
+        let url = URL(string: "https://www.zara.com/kr/ko/heart-stamping-t-shirt-p06224446.html?v1=498706001")!
+        let html = """
+        <html><head>
+        <script type="application/ld+json">{"@type":"ProductGroup","name":"하트 스탬핑 티셔츠","image":["https://static.zara.net/example.jpg"],"offers":{"price":"49900"}}</script>
+        <script>zara.analyticsData = {"productId":498702922,"productRef":"06224446-000","catentryId":498706001,"section":"MAN","family":"티셔츠","subfamily":"F. Camiseta"};</script>
+        </head><body></body></html>
+        """
+        let guide = """
+        {"sizeGuideInfo":{"name":"신체 사이즈표"},"measureGuideInfo":{"name":"하트 스탬핑 티셔츠","sizes":[
+          {"id":"2","name":"S (KR 90)","measures":[
+            {"zoneId":"A","tableTitleZone":"zone-name-chest","descriptionZone":"zone-name-chest-description","dimensions":[{"unitId":"cm","value":"48.5"}]},
+            {"zoneId":"B","tableTitleZone":"zone-name-front-length","descriptionZone":"zone-name-front-length-description","dimensions":[{"unitId":"cm","value":"62.5"}]},
+            {"zoneId":"C","tableTitleZone":"zone-name-sleeve-length","descriptionZone":"zone-name-sleeve-length-description","dimensions":[{"unitId":"cm","value":"15.0"}]},
+            {"zoneId":"D","tableTitleZone":"zone-name-back-width","descriptionZone":"zone-name-back-width-description","dimensions":[{"unitId":"cm","value":"42.5"}]}
+          ]}
+        ]}}
+        """.data(using: .utf8)!
+        let parser = ZARAParser(
+            pageLoader: ZARAProductPageLoaderSpy(page: ZARAProductPage(url: url, statusCode: 200, html: html)),
+            sizeGuideLoader: ZARASizeGuideLoaderSpy(data: guide)
+        )
+
+        do {
+            let info = try await parser.parse(from: url)
+            #expect(info.productID == "498702922")
+            #expect(info.productMetadata.styleNo == "06224446")
+            #expect(info.sourceName == "ZARA 공식몰")
+            #expect(info.productTargetGender == .men)
+            #expect(info.category == .top)
+            #expect(info.detailCategory == .shortSleeve)
+            #expect(info.productMetadata.structuredFacts["section"] == "MAN")
+            #expect(info.productMetadata.structuredFacts["family"] == "티셔츠")
+            #expect(info.productMetadata.structuredFacts["subfamily"] == "F. Camiseta")
+            #expect(
+                info.fitMatchDatabaseResolutionRequest()?.structuredFacts["family"]
+                    == "티셔츠"
+            )
+            #expect(info.measurementAvailability == .actualMeasurements)
+            #expect(info.sizes.map(\.name) == ["S (KR 90)"])
+            #expect(info.sizes[0].measurements.chest == 48.5)
+            #expect(info.sizes[0].measurements.totalLength == 0)
+            #expect(info.sizes[0].measurements.sleeveLength == 15.0)
+            #expect(info.sizes[0].measurements.shoulder == 0) // Back width is retained separately, not promoted to shoulder.
+            #expect(info.sizes[0].measurementRecords.count == 4)
+            let chestCandidate = info.sizes[0].measurementRecords.first {
+                $0.rawCode == "zone-name-chest"
+            }
+            #expect(chestCandidate?.measurementCode == .chestWidthPitToPit)
+            #expect(chestCandidate?.semanticStatus == .mapped)
+            #expect(chestCandidate?.evidenceLevel == .officialText)
+            #expect(chestCandidate?.rawValueText == "48.5")
+            #expect(chestCandidate?.rawInfo?.contains("raw_zone_id=A") == true)
+            let frontLengthCandidate = info.sizes[0].measurementRecords.first {
+                $0.rawCode == "zone-name-front-length"
+            }
+            #expect(frontLengthCandidate?.measurementCode == .unknown)
+            #expect(frontLengthCandidate?.semanticStatus == .unknownDefinition)
+            #expect(frontLengthCandidate?.evidenceLevel == .unknown)
+        } catch {
+            Issue.record("예상하지 못한 ZARA 파서 오류: \(error)")
+        }
+    }
+
+    @Test func zaraParserFailsClosedWhenOnlyBodySizeGuideExists() async {
+        let url = URL(string: "https://www.zara.com/kr/ko/striped-t-shirt-p01165305.html?v1=557391091")!
+        let html = """
+        <html><head>
+        <script type="application/ld+json">{"@type":"ProductGroup","name":"스트라이프 티셔츠"}</script>
+        <script>zara.analyticsData = {"productId":557391090,"productRef":"01165305-000","catentryId":557391091,"section":"MAN","family":"티셔츠"};</script>
+        </head><body></body></html>
+        """
+        let bodyGuideOnly = """
+        {"sizeGuideInfo":{"name":"신체 사이즈표","sizes":[{"name":"M (KR 95-100)"}]},"measureGuideInfo":null}
+        """.data(using: .utf8)!
+        let parser = ZARAParser(
+            pageLoader: ZARAProductPageLoaderSpy(page: ZARAProductPage(url: url, statusCode: 200, html: html)),
+            sizeGuideLoader: ZARASizeGuideLoaderSpy(data: bodyGuideOnly)
+        )
+
+        do {
+            _ = try await parser.parse(from: url)
+            Issue.record("ZARA 신체 사이즈표를 의류 실측으로 처리했습니다.")
+        } catch let error as ProductURLParserPartialError {
+            #expect(error.productInfo.productID == "557391090")
+            #expect(error.productInfo.measurementAvailability == .unavailable)
+            #expect(error.productInfo.sizes.isEmpty)
+        } catch {
+            Issue.record("예상하지 못한 ZARA 파서 오류: \(error)")
+        }
     }
 
     @Test func manualClosetItemAndMeasurementRecordsPersistTogether() throws {
@@ -4690,7 +4949,7 @@ struct FitMatchTests {
         let incompatibleReference = comparisonItem(
             shoulder: 49,
             sleeve: 63,
-            shoulderCode: .shoulderWidthSeamToSeam,
+            shoulderCode: .unknown,
             sleeveCode: .sleeveShoulderSeamToCuff
         )
         context.insert(originalReference)
@@ -4890,6 +5149,17 @@ struct FitMatchTests {
         #expect(viewModel.skipsMeasurementSourceSelection)
     }
 
+    @Test func zaraClosetSourcePreservesRetailerIdentityWithoutClaimingAnUnverifiedChart() {
+        let viewModel = AddClosetItemViewModel(prefillSourceOption: .zara)
+
+        #expect(viewModel.sourceType == .officialStore)
+        #expect(viewModel.sourceName == "ZARA 공식몰")
+        #expect(viewModel.brand == "ZARA")
+        #expect(viewModel.productSourceOption == .zara)
+        #expect(viewModel.measurementEntrySource == .fitmatchMeasured)
+        #expect(viewModel.measurementEntrySourceOptions == [.fitmatchMeasured])
+    }
+
     @Test func manualClosetSourceStoresFitMatchStandardVersion() throws {
         let viewModel = AddClosetItemViewModel()
         viewModel.selectProductSource(.manual)
@@ -4958,7 +5228,12 @@ struct FitMatchTests {
         viewModel.brand = "테스트"
         viewModel.productName = "기준 바지"
         viewModel.category = .bottom
-        viewModel.detailCategory = .slacks
+        viewModel.categoryCode = ClothingCategory.bottom.taxonomyCode
+        // The shipped picker maps a current bottom selection to this active
+        // taxonomy detail; the legacy `.slacks` display value is not an
+        // active service-taxonomy detail.
+        viewModel.detailCategory = .longPants
+        viewModel.detailCategoryCode = "long_pants"
         viewModel.measurementEntrySource = .fitmatchMeasured
         viewModel.totalLength = "100"
         viewModel.waist = "38"
@@ -4993,7 +5268,9 @@ struct FitMatchTests {
         viewModel.brand = "테스트"
         viewModel.productName = "기준 재킷"
         viewModel.category = .outer
+        viewModel.categoryCode = ClothingCategory.outer.taxonomyCode
         viewModel.detailCategory = .jacket
+        viewModel.detailCategoryCode = "jacket"
         viewModel.measurementEntrySource = .fitmatchMeasured
         viewModel.totalLength = "72"
         viewModel.shoulder = "48"
@@ -5187,6 +5464,234 @@ struct FitMatchTests {
         #expect(metadata.productMetadata.categoryDepth2Name == "니트")
         #expect(metadata.productMetadata.categoryDepth3Name == "가디건")
         #expect(metadata.productMetadata.genderCodes == ["WOMEN"])
+    }
+
+    @Test func uniqloEmbeddedBreadcrumbRestoresOfficialLeafAndCategoryCodes() throws {
+        let html = """
+        <script type="application/ld+json">
+        [{"@type":"BreadcrumbList","itemListElement":[
+          {"position":1,"name":"MEN"},
+          {"position":2,"name":"Special Collaborations"},
+          {"position":3,"name":"UNIQLO and JW ANDERSON"},
+          {"position":4,"name":"바이컬러T"}
+        ]},{"@type":"Product","name":"바이컬러T"}]
+        </script>
+        <script>
+        window.__PRELOADED_STATE__ = {
+          "entity": {
+            "pdpEntity": {
+              "E485454-000-00": {
+                "product": {
+                  "breadcrumbs": {
+                    "gender": {"id":"57893","level":1,"name":"men","locale":"MEN"},
+                    "class": {"id":"107543","level":2,"name":"special collaboration","locale":"Special Collaborations"},
+                    "category": {"id":"107552","level":3,"name":"uniqlo and jw anderson","locale":"UNIQLO and JW ANDERSON"},
+                    "subcategory": {"id":"107621","level":4,"name":"t-shirts","locale":"Cut & Sewn"}
+                  }
+                }
+              }
+            }
+          }
+        };
+        </script>
+        """
+        let resolved = ResolvedUniqloURL(
+            originalURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E485454-000/00?colorDisplayCode=65&sizeDisplayCode=004")!,
+            resolvedURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E485454-000/00")!,
+            productID: "E485454",
+            goodsID: "485454",
+            apiColorCode: "065",
+            imageColorCode: "65",
+            productIDWithColorCode: "E485454-065",
+            html: html
+        )
+
+        let metadata = UniqloProductMetadataParser().parse(resolved: resolved)
+        let canonical = try #require(ParsedClosetClassification.resolve(
+            category: metadata.category,
+            detailCategory: metadata.detailCategory,
+            sourceDepths: [
+                metadata.productMetadata.sourceCategoryDepth1,
+                metadata.productMetadata.sourceCategoryDepth2,
+                metadata.productMetadata.sourceCategoryDepth3,
+                metadata.productMetadata.sourceCategoryDepth4
+            ],
+            sourcePath: metadata.productMetadata.sourceCategoryPath,
+            productName: metadata.productName
+        ))
+
+        #expect(metadata.productMetadata.sourceCategoryPath == "Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn")
+        #expect(metadata.productMetadata.categoryDepth1Code == "107543")
+        #expect(metadata.productMetadata.categoryDepth2Code == "107552")
+        #expect(metadata.productMetadata.categoryDepth3Code == "107621")
+        #expect(metadata.imageURLString == "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/485454/item/krgoods_65_485454_3x4.jpg?width=400")
+        #expect(metadata.category == .top)
+        #expect(metadata.detailCategory == .shortSleeve)
+        #expect(canonical.categoryCode == "tops")
+        #expect(canonical.detailCode == "short_sleeve")
+        #expect(canonical.garmentFamily == .tshirt)
+        #expect(canonical.isValid)
+    }
+
+    @Test func uniqloHydrationProductTypeKrIsForwardedVerbatimAsStructuredFact() throws {
+        let fixtures = [
+            (productID: "E478307", variantID: "E478307-000", value: "캡/모자"),
+            (productID: "E485008", variantID: "E485008-001", value: "선글라스"),
+            (productID: "E482815", variantID: "E482815-000", value: "슈즈/신발")
+        ]
+
+        for fixture in fixtures {
+            let html = """
+            <script>
+            window.__PRELOADED_STATE__ = {
+              "entity": {
+                "pdpEntity": {
+                  "\(fixture.variantID)-00": {
+                    "product": {
+                      "productId": "\(fixture.variantID)",
+                      "productTypeKr": "\(fixture.value)",
+                      "breadcrumbs": {
+                        "gender": {"id":"57893","level":1,"name":"men","locale":"MEN"},
+                        "class": {"id":"57972","level":2,"name":"accessories","locale":"액세서리"},
+                        "category": {"id":"58071","level":3,"name":"headwear","locale":"모자"},
+                        "subcategory": {"id":"58558","level":4,"name":"caps","locale":"캡"}
+                      }
+                    }
+                  }
+                }
+              }
+            };
+            </script>
+            """
+            let resolved = ResolvedUniqloURL(
+                originalURL: try #require(URL(string: "https://www.uniqlo.com/kr/ko/products/\(fixture.variantID)")),
+                resolvedURL: try #require(URL(string: "https://www.uniqlo.com/kr/ko/products/\(fixture.variantID)")),
+                productID: fixture.productID,
+                goodsID: String(fixture.productID.dropFirst()),
+                apiColorCode: String(fixture.variantID.suffix(3)),
+                imageColorCode: String(fixture.variantID.suffix(2)),
+                productIDWithColorCode: fixture.variantID,
+                html: html
+            )
+
+            let metadata = UniqloProductMetadataParser().parse(resolved: resolved)
+            let request = try #require(
+                metadata.parsedProductInfo(sizes: []).fitMatchDatabaseResolutionRequest()
+            )
+
+            let expectedFacts = [
+                "product_type_kr": fixture.value,
+                "source_category_path_completeness": "complete",
+                "source_category_path_source": "uniqlo_pdp_breadcrumbs"
+            ]
+            #expect(metadata.productMetadata.structuredFacts == expectedFacts)
+            #expect(request.structuredFacts == expectedFacts)
+        }
+    }
+
+    @Test func uniqloHydrationProductTypeKrOmitsMissingOrAmbiguousEvidence() throws {
+        func parsedFacts(pdpEntityJSON: String) -> [String: String] {
+            let html = """
+            <script>
+            window.__PRELOADED_STATE__ = {
+              "entity": {"pdpEntity": {\(pdpEntityJSON)}}
+            };
+            </script>
+            """
+            let resolved = ResolvedUniqloURL(
+                originalURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E478307-000")!,
+                resolvedURL: URL(string: "https://www.uniqlo.com/kr/ko/products/E478307-000")!,
+                productID: "E478307",
+                goodsID: "478307",
+                apiColorCode: "000",
+                imageColorCode: "00",
+                productIDWithColorCode: "E478307-000",
+                html: html
+            )
+            return UniqloProductMetadataParser()
+                .parse(resolved: resolved)
+                .productMetadata
+                .structuredFacts
+        }
+
+        let missing = parsedFacts(pdpEntityJSON: """
+        "E478307-000-00": {
+          "product": {"productId":"E478307-000","breadcrumbs":{}}
+        }
+        """)
+        let ambiguous = parsedFacts(pdpEntityJSON: """
+        "E478307-001-00": {
+          "product": {"productId":"E478307-001","productTypeKr":"캡/모자","breadcrumbs":{}}
+        },
+        "E478307-002-00": {
+          "product": {"productId":"E478307-002","productTypeKr":"선글라스","breadcrumbs":{}}
+        }
+        """)
+        let malformed = parsedFacts(pdpEntityJSON: """
+        "E478307-000-00": {
+          "product": {"productId":"E478307-000","productTypeKr":123,"breadcrumbs":{}}
+        }
+        """)
+
+        #expect(missing["product_type_kr"] == nil)
+        #expect(ambiguous["product_type_kr"] == nil)
+        #expect(malformed["product_type_kr"] == nil)
+    }
+
+    @Test func persistedProductReceivesNewRetailerThumbnailWithoutLosingItLater() {
+        let stored = Product(
+            name: "바이컬러T",
+            category: .top,
+            productCode: "E485454",
+            imageURLString: nil
+        )
+        let incoming = Product(
+            name: "바이컬러T",
+            category: .top,
+            productCode: "E485454",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E485454",
+            imageURLString: "https://image.uniqlo.com/example.jpg",
+            metadata: ProductMetadata(imageURLStrings: ["https://image.uniqlo.com/example.jpg"])
+        )
+
+        stored.refreshExternalPresentation(from: incoming)
+
+        #expect(stored.imageURLString == "https://image.uniqlo.com/example.jpg")
+        #expect(stored.imageURLStrings == "https://image.uniqlo.com/example.jpg")
+        #expect(stored.sourceURLString == "https://www.uniqlo.com/kr/ko/products/E485454")
+
+        stored.refreshExternalPresentation(from: Product(name: "바이컬러T", category: .top))
+        #expect(stored.imageURLString == "https://image.uniqlo.com/example.jpg")
+    }
+
+    @Test func closetSaveMatchesStoredProductBeforeMatchingSize() {
+        let stored = Product(
+            name: "크루넥T",
+            category: .top,
+            productCode: "E485454",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E485454-000/00",
+            sourceType: .officialStore,
+            sourceName: "유니클로"
+        )
+        let sameProductFromNewFetch = Product(
+            name: "크루넥T",
+            category: .top,
+            productCode: "E485454",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E485454-000/00/",
+            sourceType: .officialStore,
+            sourceName: "유니클로"
+        )
+        let differentProductWithSameSizeLabel = Product(
+            name: "에어리즘T",
+            category: .top,
+            productCode: "E465185",
+            sourceURLString: "https://www.uniqlo.com/kr/ko/products/E465185-000/00",
+            sourceType: .officialStore,
+            sourceName: "유니클로"
+        )
+
+        #expect(AddComparedProductToClosetSheet.isSameRetailerProduct(stored, sameProductFromNewFetch))
+        #expect(!AddComparedProductToClosetSheet.isSameRetailerProduct(stored, differentProductWithSameSizeLabel))
     }
 
     @Test func uniqloExplicitUnisexAudienceOverridesFemaleCategoryTarget() {
@@ -5417,9 +5922,8 @@ struct FitMatchTests {
         )
 
         #expect(sizeRecords.first?.measurementCode == .chestWidthPitToPit)
-        #expect(sizeRecords.dropFirst().dropLast().allSatisfy {
-            $0.measurementCode == .bodyLengthBackNeckToHem
-        })
+        #expect(sizeRecords[1...5].allSatisfy { $0.measurementCode == .bodyLengthBackNeckToHem })
+        #expect(sizeRecords[6].measurementCode == .bodyLengthUniqloKnitFront) // Front and back endpoints stay distinct.
         #expect(sizeRecords.last?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect(itemChest.measurementCode == .chestWidthPitToPit)
         #expect(itemLength.measurementCode == .bodyLengthBackNeckToHem)
@@ -5476,7 +5980,7 @@ struct FitMatchTests {
         #expect(size.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
     }
 
-    @Test func migrationVersionSevenHalvesUniqloCircumferencesExactlyOnce() throws {
+    @Test func migrationPreservesUniqloCircumferencesAcrossRepeatedRuns() throws {
         let container = try inMemoryModelContainer()
         let context = ModelContext(container)
         let size = ProductSize(
@@ -5524,18 +6028,18 @@ struct FitMatchTests {
         try context.save()
 
         try MeasurementLegacyBackfillService.run(modelContext: context, products: [product], userFits: [])
-        #expect(waist.value == 35)
-        #expect(hip.value == 52)
-        #expect(size.measurements.waist == 35)
-        #expect(size.measurements.hip == 52)
+        #expect(waist.value == 70)
+        #expect(hip.value == 104)
+        #expect(size.measurements.waist == 70)
+        #expect(size.measurements.hip == 104)
         #expect(waist.rawValueText == "70")
         #expect(hip.rawValueText == "104")
 
         try MeasurementLegacyBackfillService.run(modelContext: context, products: [product], userFits: [])
-        #expect(waist.value == 35)
-        #expect(hip.value == 52)
-        #expect(size.measurements.waist == 35)
-        #expect(size.measurements.hip == 52)
+        #expect(waist.value == 70)
+        #expect(hip.value == 104)
+        #expect(size.measurements.waist == 70)
+        #expect(size.measurements.hip == 104)
         #expect(size.measurementMigrationVersion == MeasurementLegacyBackfillService.migrationVersion)
     }
 
@@ -5563,7 +6067,7 @@ struct FitMatchTests {
         let setInSleeve = MeasurementLegacyBackfillFactory.records(for: setInSize, product: setInProduct)
             .first { $0.displayKind == .sleeveLength }
 
-        #expect(raglanSleeve?.measurementCode == .sleeveRaglanNeckToCuff)
+        #expect(raglanSleeve?.measurementCode == .legacyUnknown) // Type number alone does not establish raglan endpoints.
         #expect(setInSleeve?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect(raglanSleeve?.measurementCode != setInSleeve?.measurementCode)
     }
@@ -6014,6 +6518,14 @@ struct FitMatchTests {
             !SizeTokenNormalizer.isValid($0)
         })
         #expect(SizeTokenNormalizer.normalizedKey(for: "85 / XS") == "85/XS")
+    }
+
+    @Test func koreanSizePresentationDoesNotChangeStoredSizeTokens() {
+        #expect(SizeTokenNormalizer.displayName(for: "M") == "M")
+        #expect(SizeTokenNormalizer.koreanDisplayName(for: "M") == "미디움")
+        #expect(SizeTokenNormalizer.koreanDisplayName(for: "Large") == "라지")
+        #expect("85 / XS".fitMatchKoreanSizeDisplayName == "엑스스몰")
+        #expect("100".fitMatchKoreanSizeDisplayName == "100")
     }
 
     @Test func musinsaPipelineFixturesParseDeterministically() throws {
@@ -6633,7 +7145,11 @@ struct FitMatchTests {
         ) == nil)
     }
 
-    @Test func musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage() throws {
+    @Test(.enabled(
+        if: runsLongImageAudit,
+        "Vision 긴이미지 스트레스 검증은 독립 프로세스로 실행합니다."
+    ))
+    func musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage() throws {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         format.opaque = true
@@ -8208,7 +8724,11 @@ struct FitMatchTests {
         print("FITMATCH_2560_UNCLASSIFIED_PATH \(unclassifiedURL.path)")
     }
 
-    @Test func storedMusinsaCorpusBuildsActualMeasurementFitPairs() throws {
+    @Test(.enabled(
+        if: runsFitPairCorpusAudit,
+        "1,037건 Musinsa corpus 검증은 독립 프로세스로 실행합니다."
+    ))
+    func storedMusinsaCorpusBuildsActualMeasurementFitPairs() throws {
         struct Specimen {
             let productID: String
             let productName: String
@@ -8518,7 +9038,8 @@ struct FitMatchTests {
             if rawSizes.isEmpty {
                 stage = "official_size_rows_missing"
                 reasons.append("official_response_has_no_size_rows")
-            } else if parsed.sizes.isEmpty {
+            } else if rawPositiveMeasurementCount == 0 || parsed.sizes.isEmpty {
+                // Retained raw zero rows are evidence, not usable measurements.
                 stage = "official_measurement_values_missing"
                 reasons.append(rawPositiveMeasurementCount == 0
                     ? "official_rows_have_no_positive_measurements"
@@ -8581,7 +9102,11 @@ struct FitMatchTests {
         try encoded.write(to: outputURL, options: .atomic)
     }
 
-    @Test func storedUniqloCorpusBuildsActualMeasurementFitPairs() throws {
+    @Test(.enabled(
+        if: runsFitPairCorpusAudit,
+        "243건 Uniqlo corpus 검증은 독립 프로세스로 실행합니다."
+    ))
+    func storedUniqloCorpusBuildsActualMeasurementFitPairs() throws {
         struct Specimen {
             let productID: String
             let productName: String
@@ -8822,6 +9347,26 @@ struct FitMatchTests {
                     + "reason=\(diagnostic["stage"] ?? "") name=\(diagnostic["product_name"] ?? "")"
             )
         }
+        // Persist the diagnostic artifacts before enforcing the frozen totals so
+        // a legitimate safety-policy change can be compared with the previous
+        // corpus result instead of hiding the changed pair behind a count error.
+        let diagnosticsData = try JSONSerialization.data(
+            withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]
+        )
+        let pairData = try JSONSerialization.data(
+            withJSONObject: pairResults, options: [.prettyPrinted, .sortedKeys]
+        )
+        let documents = try #require(
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        )
+        try diagnosticsData.write(
+            to: documents.appendingPathComponent("fitmatch-uniqlo-size-diagnostics.json"),
+            options: .atomic
+        )
+        try pairData.write(
+            to: documents.appendingPathComponent("fitmatch-uniqlo-actual-measurement-pairs.json"),
+            options: .atomic
+        )
         try #require(inputs.count == 243)
         try #require(specimens.count == 238)
         try #require(parsedSizeRows == 1_574)
@@ -8855,23 +9400,6 @@ struct FitMatchTests {
                     && ($0["comparison_body_length_type"] as? String)
                         == ($0["reference_body_length_type"] as? String))
         })
-        let diagnosticsData = try JSONSerialization.data(
-            withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]
-        )
-        let pairData = try JSONSerialization.data(
-            withJSONObject: pairResults, options: [.prettyPrinted, .sortedKeys]
-        )
-        let documents = try #require(
-            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-        )
-        try diagnosticsData.write(
-            to: documents.appendingPathComponent("fitmatch-uniqlo-size-diagnostics.json"),
-            options: .atomic
-        )
-        try pairData.write(
-            to: documents.appendingPathComponent("fitmatch-uniqlo-actual-measurement-pairs.json"),
-            options: .atomic
-        )
     }
 
     @Test func musinsaSourceDepthPriorityKeepsUmbrellaFamiliesOutOfGenericBottoms() {
@@ -9176,6 +9704,22 @@ private enum ParserSpyError: Error {
     case failed
 }
 
+private struct ZARAProductPageLoaderSpy: ZARAProductPageLoading {
+    let page: ZARAProductPage
+
+    func load(url: URL) async throws -> ZARAProductPage {
+        page
+    }
+}
+
+private struct ZARASizeGuideLoaderSpy: ZARASizeGuideLoading {
+    let data: Data
+
+    func load(productID: String) async throws -> Data {
+        data
+    }
+}
+
 @MainActor
 private final class DelayedProductURLParserSpy: ProductURLParsing {
     let delays: [String: UInt64]
@@ -9211,7 +9755,8 @@ private final class DelayedProductURLParserSpy: ProductURLParsing {
                         sleeveLength: 22
                     )
                 )
-            ]
+            ],
+            productID: productName
         )
     }
 
@@ -9267,10 +9812,77 @@ private func comparisonUserFit(
 @MainActor
 final class FitPairCorpusXCTests: XCTestCase {
     func testMusinsa1037OfficialMeasurementCorpus() throws {
+        try XCTSkipUnless(
+            runsFitPairCorpusAudit,
+            "1,037건 Musinsa corpus 검증은 FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT=1로 독립 실행합니다."
+        )
         try FitMatchTests().storedMusinsaCorpusBuildsActualMeasurementFitPairs()
     }
 
     func testUniqlo243OfficialMeasurementCorpus() throws {
+        try XCTSkipUnless(
+            runsFitPairCorpusAudit,
+            "243건 Uniqlo corpus 검증은 FITMATCH_RUN_FIT_PAIR_CORPUS_AUDIT=1로 독립 실행합니다."
+        )
         try FitMatchTests().storedUniqloCorpusBuildsActualMeasurementFitPairs()
+    }
+}
+
+/// Focused XCTest bridge for manual-Closet form regressions. The project test
+/// runner does not execute filtered Swift Testing members directly.
+@MainActor
+final class ManualClosetCategoryXCTests: XCTestCase {
+    func testCategoryOnlyEntryUsesSelectedComparisonGroupWithoutBrandOrProductName() async throws {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.selectManualCategory(.pants)
+        viewModel.measurementEntrySource = .fitmatchMeasured
+        viewModel.totalLength = "100"
+        viewModel.waist = "38"
+
+        XCTAssertTrue(viewModel.canSave)
+        XCTAssertNil(FitMatchClosetFormValidation.message(for: viewModel))
+
+        let item = try XCTUnwrap(viewModel.makeUserFit())
+        XCTAssertTrue(item.brandName.isEmpty)
+        XCTAssertTrue(item.productName.isEmpty)
+        XCTAssertEqual(item.categoryCode, "bottoms")
+        XCTAssertEqual(item.detailCategoryCode, "short_pants")
+        await Task.yield()
+    }
+
+    func testCategoryMenuUsesTheSevenLinkedRegistrationGroups() async {
+        let viewModel = AddClosetItemViewModel()
+        let expectedCodes: [FitMatchComparisonGroup: String] = [
+            .tops: "tops",
+            .outerwear: "outerwear",
+            .pants: "bottoms",
+            .skirts: "skirts",
+            .onePiece: "dresses",
+            .innerwear: "underwear",
+            .homewear: "homewear"
+        ]
+
+        for group in FitMatchComparisonGroup.allCases {
+            viewModel.selectManualCategory(group)
+            XCTAssertEqual(viewModel.selectedManualCategory, group)
+            XCTAssertEqual(viewModel.categoryCode, expectedCodes[group])
+            XCTAssertTrue(viewModel.hasValidTaxonomySelection)
+        }
+        await Task.yield()
+    }
+
+    func testEntryStillRequiresMeasurementSource() async {
+        let viewModel = AddClosetItemViewModel()
+        viewModel.brand = "테스트"
+        viewModel.productName = "반팔 티셔츠"
+        viewModel.shoulder = "48"
+        viewModel.measurementEntrySource = nil
+
+        XCTAssertFalse(viewModel.canSave)
+
+        viewModel.measurementEntrySource = .fitmatchMeasured
+
+        XCTAssertTrue(viewModel.canSave)
+        await Task.yield()
     }
 }

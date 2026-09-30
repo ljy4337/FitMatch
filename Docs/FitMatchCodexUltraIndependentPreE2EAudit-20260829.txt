@@ -1,0 +1,779 @@
+FitMatch — CODEX ULTRA INDEPENDENT PRE-E2E PRODUCTION AUDIT
+Date: 2026-08-29 (Asia/Seoul)
+Repository: ljy4337/FitMatch
+Branch: connectDB
+Production Supabase: hnkplvyegonlhumlejst
+Primary schema: fitmatch_vnext
+Mode: STRICT INDEPENDENT AUDIT / READ-ONLY
+
+======================================================================
+A. EXECUTIVE VERDICT
+======================================================================
+
+FITMATCH PRE-E2E NO-GO
+
+Readiness score: 82 / 100
+Overall findings: P0 3 / P1 8 / P2 3
+Production DB sub-audit: 100 / 100, DB P0 0
+
+가장 중요한 결론:
+
+1. Production DB의 분류·readiness·identity·security baseline은 독립
+   READ-ONLY 재실행에서도 정상이다.
+2. deployed product-observation Edge v5는 repository source와 일치하고,
+   legacy observation RPC가 아니라 vNext ingestion bridge만 호출한다.
+3. App build, test-target build, critical focused tests 76/76은 PASS했다.
+4. 그러나 실제 Swift release path에서 아래 세 가지 functional P0가 존재한다.
+   - completed vNext history의 exact Product/ProductSize identity와 distinct
+     comparison cache가 legacy dedupe에 의해 바뀌거나 삭제될 수 있다.
+   - soft-deleted reference가 immutable history hydration으로 일반 active
+     UserFit으로 재생성되어 Closet에 다시 나타난다.
+   - 서로 다른 종류의 reference가 둘 이상이면 한 항목만 해제하는 변경이
+     server에 전달되지 않고 authoritative refresh에서 다시 켜진다.
+
+점수 82는 DB 점수가 아니다. 독립 PRE-E2E readiness 점수이며, 세 P0의
+core-history/closet/reference 영향 16점과 repository/ledger 운영 위험 2점을
+감점한 보수적 판정이다. 숫자를 PASS 결과에 맞추기 위해 조정하지 않았다.
+
+감사 중 Production DB write, migration apply, Edge deploy, Swift 수정,
+test expectation 수정, git commit/push는 모두 0이다.
+
+======================================================================
+B. VERIFIED ENVIRONMENT
+======================================================================
+
+Repository
+- branch: connectDB
+- HEAD: 6246aede16d22ae8b08189a7ef9dd22a68bfbaf6
+- origin/connectDB: 같은 HEAD
+- working tree: 기존 dirty tree 그대로 보존
+- git diff --check: PASS
+- reset/restore/stash/clean/commit/push: 0
+
+Protected areas
+- FitMatch/Components/TabBarScrollVisibilityModifier.swift diff: 0
+- hidesBottomTabBarOnScroll / tracksTabBarVisibilityOnScroll /
+  hidesTopChromeOnScroll call-site diff: 0
+- SwiftData schema/model-container destructive diff: 0
+- navigation structure diff: 0
+- Share Extension diff: 0
+
+Production
+- project status: ACTIVE_HEALTHY
+- region: Seoul
+- PostgreSQL: 17.6
+- READ-ONLY SQL only
+- Production DB write/DDL/migration: 0
+
+Edge
+- function: product-observation
+- deployed status/version: ACTIVE / v5
+- verify_jwt: true
+- deployed index.ts vs local repository index.ts: byte-for-byte match
+- no Authorization header probe: HTTP 401, UNAUTHORIZED_NO_AUTH_HEADER
+- malformed/invalid JWT probe: HTTP 401, UNAUTHORIZED_INVALID_JWT_FORMAT
+- ordinary authenticated-user positive call: NOT RUN
+  Reason: no valid audit user JWT was available in this execution boundary.
+  This is an explicit first physical-iPhone E2E checkpoint, not a claimed PASS.
+
+Xcode
+- Xcode: 26.3 (17C529)
+- destination: iPhone 17 Pro simulator, iOS 26.3.1, x86_64
+- simulator UDID: 03BAF093-552E-4E53-ABFB-7DE0653BE676
+- project/scheme: FitMatch.xcodeproj / FitMatch
+
+======================================================================
+C. UI / UX FLOW AUDIT
+======================================================================
+
+Flow                                      Verdict
+----------------------------------------  ------------------------------
+Link-based Closet add                     PASS (static release path)
+Manual Closet add                         PASS (static release path)
+Closet edit / satisfaction                PASS
+Closet delete                             FAIL — P0-2
+Reference set                             PASS
+Individual reference unset               FAIL when multiple types — P0-3
+Personal override set                     PASS
+Personal override clear                   NOT IMPLEMENTED in release UI — P1
+Automatic/manual comparison               PASS sequencing
+Other Item                                PASS server sequence; P0-1 cache risk
+Other Size                                PASS current session; P0-1 identity risk
+Result                                    PASS only after server completion
+History / recompare                       FAIL local integrity — P0-1/P0-2
+Share Extension → Compare                 PASS static path
+Offline Closet/history                    PARTIAL; P0-1/P0-2 affect integrity
+
+Verified path summaries
+
+Link Closet:
+ContentView
+→ LinkClosetRegistrationView
+→ ShoppingProductViewModel
+→ AddComparedProductToClosetSheet
+→ SwiftData cache
+→ FitMatchClosetSyncCoordinator
+→ vNext closet RPC
+→ authoritative list/hydration.
+
+Manual Closet:
+ContentView
+→ AddClosetItemView
+→ AddClosetItemViewModel
+→ SwiftData
+→ FitMatchClosetSyncCoordinator
+→ vNext upsert/list.
+
+Sourced comparison:
+runtime READY
+→ reference selection
+→ authorize_comparison
+→ eligible_candidate_sizes
+→ begin_comparison immutable snapshot
+→ MeasurementComparisonEngine adapter
+→ complete_comparison
+→ server immutable history
+→ local cache
+→ Result.
+
+Other Item:
+current target/context is preserved; the chosen reference goes through a new
+authorization, eligible-size, begin, engine, and complete sequence. Target parser
+rerun and forced BLOCKED comparison were not found. P0-1 can nevertheless delete
+or rewrite the local completed-history graph after successful completion.
+
+Other Size:
+in the current in-memory session, presentation is limited to the stored DB-
+authorized candidate-size batch. It creates no new comparison/history. After app
+restart, the batch is not reconstructed by history hydration (P1), and P0-1 can
+also make exact authorized IDs no longer intersect the locally retained sizes.
+
+Share:
+the extension only stores/hands off URL or plain text and opens the app deep link.
+No parser, DB authority, classifier, or scorer was added inside the extension.
+
+======================================================================
+D. AUTHORITY AUDIT
+======================================================================
+
+Authority                                      Result
+---------------------------------------------  --------------------------
+Product identity                               vNext DB
+Global classification                          vNext DB
+Garment and three length axes                  vNext DB
+Availability                                   retailer evidence → vNext
+Canonical measurements                        vNext DB
+Closet state                                   vNext; local cache P0-2
+Reference                                      vNext; sync delta P0-3
+Reference candidate authorization              vNext DB
+Candidate-size authorization                   vNext DB
+Comparison authorization                       vNext DB
+Begin snapshot                                 vNext immutable snapshot
+Score/ranking/reliability                      MeasurementComparisonEngine
+Completion validation                          vNext DB
+History provenance                             vNext server; local cache P0-1
+Personal override                              user closet only
+Offline cache/presentation                     SwiftData
+
+Normal sourced comparison cannot reach the scorer before server authorization or
+before begin. The adapter consumes the exact AVAILABLE authorized IDs and the
+snapshot’s active/excluded metrics and DB weights. REVIEW_REQUIRED,
+NOT_APPLICABLE, BLOCKED, missing-begin, or unauthorized-size states fail closed.
+
+Competing writable authority found:
+RecommendationHistoryStore.saveUnique is a legacy local dedupe authority applied
+after successful vNext completion. It may replace exact server UUID identities and
+delete other distinct completed comparison caches. This is P0-1.
+
+======================================================================
+E. LEGACY AUTHORITY AUDIT
+======================================================================
+
+Release Swift + deployed/local Edge sourced call-site search:
+- fitmatch_submit_product_observation: 0 release ingress calls
+- fitmatch_process_product_observation: 0 release ingress calls
+- fitmatch_resolve_product: 0 release Swift calls
+- fitmatch_get_product_runtime: 0 release Swift calls
+- product-observation calls public.fitmatch_vnext_ingest_product_observation
+
+ParsedClosetClassification.resolve, GarmentLengthInferencePolicy,
+ComparisonProfileMatcher, product-name matching, and older category helpers remain
+in parser/manual/presentation/DEBUG/test code. No sourced release path was found
+that uses them to override a server-confirmed tuple or to bypass vNext comparison
+authorization.
+
+Exception:
+RecommendationHistoryStore is sourced release code and still applies legacy URL /
+product-code / name / size-label identity merging to completed vNext history. It is
+therefore a remaining legacy local authority over history identity, classified P0.
+
+Production still exposes legacy authenticated SECURITY DEFINER functions reported
+by the Supabase advisor. Current release Swift/Edge references to the legacy
+observation and classification authorities are 0, and the reviewed legacy
+functions do not become vNext core authority. Their remaining callable surface is
+P1 defense-in-depth/decommission debt, not current DB data corruption.
+
+======================================================================
+F. PRODUCTION DB READ-ONLY AUDIT
+======================================================================
+
+Repository audit SQL executed read-only:
+supabase/sql/122_vnext_final_read_only_audit.sql
+Audit timestamp: 2026-08-29T12:19:56.872017Z
+
+DB-only result
+- score: 100 / 100
+- p0_count: 0
+- products: 1,608
+- classification:
+  - CONFIRMED 203
+  - REVIEW_REQUIRED 1,308
+  - NOT_APPLICABLE 97
+- CONFIRMED invalid tuple: 0
+- required sleeve/lower/body axis missing: 0 / 0 / 0
+- CONFIRMED non-SINGLE: 0
+- confirmed provenance/mapping/fingerprint missing: 0 / 0 / 0
+- deterministic replay: 1,608
+- replay/stored mismatch: 0 / 0
+- top-priority mapping conflicts: 0
+- invalid direct mappings: 0
+- duplicate product identity: 0
+- variant/size/measurement orphan: 0 / 0 / 0
+- catalog ↔ vNext identity parity loss: 0
+- raw measurements: 28,514
+- measurement replay mismatch/semantic conflict: 0 / 0
+- fixture pollution: 0
+
+Readiness
+- READY 3
+- NO_AVAILABLE_SIZE 198
+- NO_MEASUREMENT_DATA 2
+- CLASSIFICATION_REQUIRED 1,308
+- NOT_APPLICABLE 97
+- false READY / false not-ready: 0 / 0
+- expired or unbounded AVAILABLE evidence: 0
+- policy-boundary checks: 19 / 19 PASS
+
+Golden
+- MUSINSA 6805433 / XS: CONFIRMED, READY, 4 resolved metrics
+- UNIQLO E482856 / 28: CONFIRMED, READY, 5 resolved metrics
+- ZARA 561264931 / EU 38 (KR 30): CONFIRMED, READY, 3 resolved metrics
+- Golden READY: 3 / 3
+
+User-contract schema
+- closet_items.satisfaction: smallint nullable, validated 1...5 CHECK
+- expected public Swift bridges: 15 / 15
+- expected new internal functions: 9 / 9
+- reviewed SECURITY DEFINER search_path defects: 0
+- public bridges: SECURITY INVOKER
+- internal user mutation functions: SECURITY DEFINER with auth.uid ownership
+- protected-table anon/auth broad write grants: 0
+- vNext ingestion bridge EXECUTE: service_role yes; anon/auth no
+
+Current user-data counts observed read-only
+- closet_items total/active/deleted: 6 / 0 / 6
+- comparisons: 0
+- ingestion receipts: 0
+
+No Production mutation/negative fixture was executed in this audit. Cross-user
+ownership denial is structurally verified from deployed function definitions,
+grants, RLS, and fixed auth.uid checks. A fresh runtime cross-user mutation probe is
+NOT RUN because this audit forbids Production writes.
+
+======================================================================
+G. SECURITY AUDIT
+======================================================================
+
+PASS / verified
+- Edge verify_jwt=true
+- missing/invalid JWT returns 401 before ingestion
+- actor_id comes from auth.getUser().user.id, not request payload
+- service-role client/key remains inside the Edge function
+- no token/service key logging or response exposure found
+- deployed Edge calls the service-only vNext bridge
+- authenticated/anon direct global ingestion EXECUTE denied
+- global Product tables have no authenticated broad write grant
+- user-owned internal mutations perform exact ownership checks using auth.uid()
+- SECURITY DEFINER functions reviewed for fixed search_path
+- target RLS enabled with own-row read boundaries
+- comparison candidate/completion authority remains server-side
+
+NOT RUN
+- valid ordinary authenticated-user positive Edge v5 call
+- fresh Production cross-user mutation transaction
+- tampered completion-evidence Production mutation probe
+
+These are not reported as PASS. They remain physical-E2E/runtime checkpoints.
+
+Advisors
+- security: 51 INFO / 14 WARN
+  - 13 legacy public authenticated SECURITY DEFINER endpoint warnings
+  - Auth leaked-password protection disabled
+- performance: 115 INFO
+  - 58 unindexed foreign keys, 57 unused indexes
+- findings related to the new user-contract bridges: 0
+
+Reference: https://supabase.com/docs/guides/database/database-linter
+
+======================================================================
+H. COMPARISON SEQUENCING AUDIT
+======================================================================
+
+Critical invariants
+- sourced scorer before authorization: 0
+- sourced scorer before begin: 0
+- unauthorized candidate/size score: 0
+- excluded metric score/evidence: 0
+- BLOCKED score: 0
+- REVIEW_REQUIRED score: 0
+- NOT_APPLICABLE score: 0
+- complete before final local history: enforced
+- completion rejection before cache creation: enforced by release sequence
+- local history promoted to server authority: 0
+
+Candidate-size authority
+- engine input is the DB-authorized AVAILABLE set from begin snapshot.
+- no release path scoring Product.sizes wholesale was found.
+- NO_OBSERVATION, SOLD_OUT, expired, insufficient-measurement, or semantic-
+  conflict candidates cannot enter the authorized scorer batch.
+
+Engine adapter
+- exact product_size_id is used before P0-1 cache persistence.
+- canonical snapshot measurements, active metrics, exclusions, and DB weights feed
+  the existing MeasurementComparisonEngine.
+- no second sourced compatibility/weight/minimum authority was found in Swift.
+
+Completion/history
+- engine → complete → DB success → local cache order is correct.
+- server completed history remains immutable and is hydrated without live Product
+  or current-policy recomputation.
+- local cache persistence/hydration then violates exact identity/delete lifecycle
+  through P0-1 and P0-2.
+
+======================================================================
+I. XCODE / BUILD / TEST RESULTS
+======================================================================
+
+App build
+- executed: yes
+- result: PASS
+- duration: 84.7s
+
+Test target build-for-testing
+- executed: yes
+- result: PASS
+- errors: 0
+- warnings: 4 test-source warnings
+- duration: 91.4s
+
+Critical focused tests
+- executed: yes
+- total: 76
+- passed: 76
+- failed: 0
+- skipped: 0
+- duration: 65.4s
+
+Suite results
+- FitMatchVNextContractTests: 5 / 5 PASS
+- FitMatchComparisonSyncCoordinatorTests: 3 / 3 PASS
+- FitMatchComparisonPermitSequencingTests: 4 / 4 PASS
+- FitMatchClosetSyncCoordinatorTests: 19 / 19 PASS
+- FitMatchServerAuthorityIntegrationTests: 23 / 23 PASS
+- FitMatchSupabaseProductResolverTests: 22 / 22 PASS
+
+Full FitMatchTests target
+- executed: yes
+- passed: 492
+- failed: 1
+- skipped: 37
+- total: 530
+- failure:
+  DBLogicReliabilityAuditTests/
+  testDBLogicAdjudicationMatchesProductionClassifier()
+  at FitMatchTests/DBLogicReliabilityAuditTests.swift:159-162
+  The test reports the known 64 legacy/local parser adjudication assertion
+  mismatches. It does not execute the sourced vNext server authority. Expectations
+  were not modified. This is recorded as P1 non-green test debt, not a newly
+  demonstrated vNext scoring P0.
+
+Scheme-wide run
+- MCP transport timed out at 300s, but the underlying xcodebuild completed and
+  produced a valid xcresult.
+- total: 550
+- passed: 496
+- failed: 11
+- skipped: 43
+- failures: the unit failure above + 10 UI failures
+
+UI failures independently inspected
+- production UX regression proven: 0
+- stale exact-copy assertions: 8
+- obsolete pre-vNext local-authority expectation: 1
+- unstable UI-test random-user/cache-owner fixture: 1
+- post-assertion UI steps: NOT VERIFIED because continueAfterFailure=false
+
+Examples:
+- onboarding tests expect old copy while the complete screen/buttons are present.
+- My Closet and privacy tests open the correct screens but expect old text.
+- ambiguous-category test disables Supabase yet expects the former local authority;
+  current app correctly fails closed without a vNext server response.
+- existing-user relaunch test generates a fresh random test UUID per launch, which
+  intentionally triggers cross-account cache purge.
+
+The UI suite remains red and is one P1 test-harness/reproducibility finding. It is
+not hidden or reported as PASS. No production-code fix is supported by these ten
+failures; stable accessibility selectors, deterministic test identity, and vNext
+remote stubs are the minimal future test-only corrections.
+
+Xcode generated repository changes: 0
+
+======================================================================
+J. MIGRATION LEDGER MISMATCH ASSESSMENT
+======================================================================
+
+Repository file/version:
+20260829050000_vnext_swift_user_contract.sql
+
+Production ledger:
+20260829110853 / vnext_swift_user_contract
+
+Independent comparison:
+- Production stored SQL size: 32,195 bytes
+- Production stored SQL SHA-256:
+  ad23bad212999c882b114c50b95ad7df7b95f275e0aadf8b0a7a7f37daa0dbd6
+- repository SQL size/hash: exact match
+- migration name occurrences: 1
+- duplicate schema/function application evidence: 0
+- current schema/security/runtime correctness impact: none found
+- current iPhone E2E functional impact: none
+
+Actual risk:
+Supabase CLI migration workflows compare local migration versions with the remote
+schema_migrations ledger. Since the local version is absent from the Production
+ledger, a future db push/list workflow can report the file as pending or attempt a
+reapply depending on command/options. This is a real deployment/reproducibility
+risk but not current DB/Swift runtime corruption.
+
+Classification: P1
+
+Operational handling:
+- do not UPDATE/fake-mark/reapply/repair during this audit;
+- before the next migration deployment, run a credentialed migration-list and
+  dry-run workflow and choose a reviewed reconciliation procedure;
+- preserve proof that the exact SQL hash is already applied once.
+
+The Supabase CLI is not installed/configured in this repository, so actual
+`supabase migration list` and `supabase db push --dry-run` were NOT RUN.
+
+Official references:
+- https://supabase.com/docs/guides/local-development/cli-workflows
+- https://supabase.com/docs/reference/cli/supabase-db-push
+- https://supabase.com/docs/reference/cli/supabase-migration-repair
+
+No ledger repair was performed.
+
+======================================================================
+K. P0 FINDINGS
+======================================================================
+
+P0-1 — COMPLETED VNEXT HISTORY EXACT IDENTITY/PROVENANCE IS REWRITTEN
+
+Symptom
+After successful server completion, the local history store can replace the exact
+vNext Product/ProductSize UUIDs with an older pre-vNext cached Product/size having
+the same URL/code/name/size label. It also deletes other local histories for the
+same Product.
+
+Execution path
+RecommendationService.makeCompletedVNextHistory
+→ exact authorized product_size_id selected
+→ CompareFlowSheet or RecommendationResultView completes server comparison
+→ RecommendationHistoryStore.saveUnique
+→ legacy URL/code/name product match
+→ exact-ID miss falls back to normalized size label
+→ incoming exact graph replaced/deleted
+→ all same-product histories deleted.
+
+Evidence
+- FitMatch/Services/RecommendationHistoryStore.swift:13-26
+- FitMatch/Services/RecommendationHistoryStore.swift:34-57
+- FitMatch/Services/RecommendationService.swift:63-97
+- FitMatch/Views/CompareFlowSheet.swift:1612-1643
+- FitMatch/Views/RecommendationResultView.swift:2990-3031
+
+Root cause
+A legacy one-history-per-product and size-label dedupe policy is still used for a
+server-authorized immutable vNext comparison whose identity contract is UUID-based.
+
+Actual impact
+- exact product_id/product_size_id provenance can be lost;
+- the same label can bind to another variant/measurement graph;
+- Other Size’s authorized-ID intersection can become empty;
+- distinct server comparisons for the same target but different references are
+  removed from immediate/offline local history;
+- current Result/offline cache cannot be trusted as an exact server projection.
+
+Minimal fix
+Split server-completed vNext history persistence from legacy/manual dedupe. In the
+vNext branch, reuse Product/ProductSize only by exact UUID, never by label, and
+dedupe only by the exact immutable comparison/client-history ID. Preserve legacy
+manual behavior separately. No DB architecture or SwiftData schema redesign is
+required for this P0.
+
+Regression risk
+Changing the shared legacy store indiscriminately could duplicate old manual
+histories. The vNext-only branch must be explicit.
+
+Required tests
+1. Pre-vNext same URL/code + same label + different UUID must retain server UUIDs.
+2. Same target + two references must retain two completed histories.
+3. Other Size authorized UUID intersection must remain exact after persistence.
+4. Server completion rejection must create no local cache.
+
+---------------------------------------------------------------------
+P0-2 — DELETED REFERENCE REAPPEARS AS AN ACTIVE CLOSET ITEM
+
+Symptom
+Deleting a reference removes the local UserFit and requests a server soft-delete,
+but a later immutable history sync recreates the missing reference as a normal
+UserFit. My Closet displays it as active.
+
+Execution path
+Closet delete
+→ local history/UserFit delete + server soft-delete
+→ immutable server comparison remains
+→ comparison_history returns the soft-deleted reference_client_item_id
+→ VNextHistoryCacheHydrator.makeReference creates a normal UserFit
+→ MyClosetView’s unfiltered @Query displays it
+→ userFits task identity schedules another closet sync.
+
+Evidence
+- FitMatch/Views/MyClosetView.swift:478-515
+- FitMatch/Views/ClosetItemDetailView.swift:524-540
+- supabase/migrations/20260829050000_vnext_swift_user_contract.sql:827-859
+- FitMatch/Services/VNextHistoryCacheHydrator.swift:41-75
+- FitMatch/Services/VNextHistoryCacheHydrator.swift:206-266
+- FitMatch/Views/MyClosetView.swift:7-10,125-139,262-285
+- FitMatch/ContentView.swift:56-70,173-190
+
+Root cause
+The cache model has no history-only/deleted/tombstone distinction. Hydration
+represents an immutable historical reference by inserting the same active UserFit
+entity consumed by My Closet and closet sync.
+
+Actual impact
+The explicit delete lifecycle cannot persist: the deleted garment and history are
+visibly recreated, normally near the top because makeReference uses Date(). The
+server closet row was not proven to reactivate; this P0 is the deterministic local
+active-Closet resurrection and resulting delete UX failure.
+
+Minimal fix
+Represent history-only reference snapshots separately, or add an explicit
+cache-only/tombstone contract excluded from active Closet queries, reference
+pickers, and closet sync. If product UX says deletion hides historical entries,
+skip rehydrating hidden/deleted client IDs. Preserve immutable server evidence.
+
+Regression risk
+Dropping the snapshot entirely could make historical Result unreadable. The fix
+must separate historical presentation from active closet authority.
+
+Required tests
+1. Complete comparison with reference A.
+2. Soft-delete A and delete local cache.
+3. Run closet sync → history sync → task-triggered closet sync twice.
+4. A active UserFit count = 0, active picker count = 0, remote deleted_at retained,
+   A mutation RPC count = 0, immutable history still follows the selected UX rule.
+5. Cover USER_EXPLICIT, USER_EDITED, and RETAILER_SNAPSHOT references.
+
+---------------------------------------------------------------------
+P0-3 — MULTI-TYPE REFERENCE UNSET IS NEVER SENT
+
+Symptom
+When two references of different garment tuples are active, unsetting only one is
+reversed after sync.
+
+Execution path
+server A=true / B=true
+→ local user changes A=false / B=true
+→ synchronizeReferenceAuthority sorts all local true references
+→ sends set(true) only for requested.first (B)
+→ never sends unset(false) for A
+→ authoritative list still returns A=true
+→ local A is reapplied true.
+
+Evidence
+- FitMatch/Services/FitMatchClosetSyncCoordinator.swift:276-297
+- FitMatch/Services/FitMatchClosetSyncCoordinator.swift:233-258,663-695
+- FitMatch/Views/MyClosetView.swift:380-470
+- FitMatch/Services/ReferenceGarmentPolicy.swift:3-11
+- supabase/migrations/20260829012836_vnext_closet_reference_api.sql:221-250
+
+Root cause
+The UI and DB support one reference per compatible garment tuple, but Swift sync
+reduces all reference state to one globally selected item. It only sends unset when
+there are no local references at all.
+
+Actual impact
+Reference unset is non-functional for an item whenever another type remains a
+reference. The server remains stale and can continue selecting the unwanted basis
+garment for automatic comparison.
+
+Minimal fix
+Diff local vs authoritative remote reference state by exact clientItemID and send
+set/unset for every changed item. Preserve the DB’s same-tuple atomic replacement
+behavior; do not choose a single global reference.
+
+Regression risk
+An unguarded initial empty cache must not clear remote references. Retain the
+existing first-login/cache-owner protection while adding exact deltas.
+
+Required tests
+1. Remote A=true/B=true different tuples, local A=false/B=true.
+2. Assert exact A unset once and no unnecessary B mutation.
+3. Refresh must return A=false/B=true.
+4. Cover inverse set, same-tuple replacement, and first-login empty-cache safety.
+
+======================================================================
+L. P1 FINDINGS
+======================================================================
+
+P1-1 Migration ledger version mismatch
+- Exact SQL is applied once and current correctness is intact.
+- Future CLI tooling can misclassify the local file as pending.
+- No repair performed.
+
+P1-2 Repository publishing/reproducibility drift
+- origin/connectDB points to the same commit but current vNext migration files
+  20260829011935 through 20260829050000 are untracked and absent from origin.
+- origin’s product-observation source is legacy, while the local/deployed source is
+  v5/vNext. The current deployed function matches local, not the remote branch.
+- This does not alter current Production runtime, but a clean checkout cannot
+  reproduce it until the owner publishes the preserved working-tree files.
+
+P1-3 Personal override clear has no release UI action
+- set and DB/RPC clear contracts exist.
+- the current edit UI can only create/update userExplicit; choosing the server tuple
+  remains another override, and ordinary save keeps userExplicit.
+- clear RPC is reachable only from a sync state the release UI cannot create.
+
+P1-4 Other Size recovery after app restart
+- VNextComparisonSessionStore is memory-only.
+- immutable history hydration does not restore the authorized comparison batch.
+- after restart/history-only navigation, Other Size is disabled rather than unsafe.
+
+P1-5 Presentation/cache contract gaps
+- reference pickers initially display local UserFit rows instead of only the DB
+  find_reference_candidates set; final server authorization still blocks unsafe
+  scoring.
+- local history swipe-delete is immediately rehydrated from immutable server
+  history because no user hide/tombstone contract exists.
+
+P1-6 Legacy callable security surface
+- Supabase advisor reports 13 legacy authenticated SECURITY DEFINER functions.
+- current release core refs are 0, but decommission/revoke review remains prudent.
+
+P1-7 Full test target remains non-green
+- 492 PASS / 1 FAIL / 37 SKIP.
+- the failed legacy adjudication test reports 64 manual-expected mismatches and is
+  not current sourced vNext runtime authority.
+- expected values were not changed.
+
+P1-8 UI test harness remains non-green
+- 10 UI failures are stale copy/pre-vNext contract/random test-user issues, not
+  proven production regressions.
+- because assertions stop early, later UI steps remain NOT VERIFIED by that run.
+
+======================================================================
+M. P2 FINDINGS
+======================================================================
+
+P2-1 Unknown readiness vocabulary is coerced to MEASUREMENTS_REQUIRED
+- classification and candidate/begin unknown states reject strictly, so no current
+  unsafe score was found.
+- future readiness vocabulary drift can be hidden; strict rejection is safer.
+
+P2-2 Supabase Auth leaked-password protection is disabled
+- advisor warning; independent of current vNext authority correctness.
+
+P2-3 Performance advisor hygiene
+- 58 unindexed foreign keys and 57 unused indexes are INFO-only.
+- no measured PRE-E2E correctness regression and no change is authorized here.
+
+======================================================================
+N. NO CHANGE
+======================================================================
+
+Do not change as part of the three P0 fixes:
+- fitmatch_vnext classification, mappings, taxonomy, measurement/readiness policy
+- Product/Variant/Size global identity data
+- Edge v5 ingress architecture or service-role bridge
+- scorer formulas, DB authorization, begin/complete protocol
+- protected TabBar behavior/call sites
+- navigation structure
+- Share Extension
+- SwiftData schema unless a narrowly reviewed history-only marker is chosen for
+  P0-2; prefer a minimal representation contract first
+- legacy adjudication expected values merely to make the red test green
+- Production migration ledger without a separate reviewed operational decision
+
+======================================================================
+O. PRE-E2E ACCEPTANCE CHECKLIST
+======================================================================
+
+[x] Production DB correctness P0 = 0
+[ ] Overall unresolved functional/security/data P0 = 0 (actual: 3)
+[ ] Sourced competing legacy authority = 0 (history cache identity P0 remains)
+[x] scorer-before-authorization = 0
+[x] scorer-before-begin = 0
+[x] unauthorized candidate score = 0
+[x] excluded metric score = 0
+[x] fail-closed state score = 0
+[ ] Closet user contract functional (delete/reference-unset P0s)
+[~] cross-user mutation blocked structurally; fresh runtime mutation NOT RUN
+[ ] Other Item contract fully correct (local history identity/retention P0)
+[ ] Other Size contract fully correct (exact identity persistence P0)
+[x] complete-before-history sequencing
+[~] immutable server history PASS; local projection integrity FAIL
+[x] Share regression = 0
+[x] SwiftData destructive regression = 0
+[x] App build PASS
+[x] Test target build PASS
+[x] Critical focused tests 76/76 PASS
+[ ] Full unit/UI scheme PASS
+
+Physical signed-in iPhone E2E remains NOT RUN. Per the audit rules, that fact by
+itself is not the NO-GO reason. The three independently proven Swift release-path
+P0s are the NO-GO reason.
+
+======================================================================
+P. FINAL VERDICT
+======================================================================
+
+FITMATCH PRE-E2E NO-GO
+
+Production DB remediation remains complete at the database/data/security level,
+but FitMatch is not yet safe to enter physical iPhone E2E because local completed-
+history identity, deleted-reference lifecycle, and multi-type reference-unset
+contracts can produce untrustworthy or impossible core UX.
+
+Only the three P0 roots in Section K should be changed, followed by their exact
+targeted regression tests, the same 76 critical suites, and this PRE-E2E audit.
+Do not reopen old DB phases, redesign vNext, alter Production classification data,
+or change test expectations to current output.
+
+After P0=0, the next stage is Physical iPhone E2E with these first checkpoints:
+1. real signed-in JWT
+2. product-observation Edge v5 positive path
+3. vNext runtime
+4. link Closet add
+5. reference set/unset across multiple garment types
+6. automatic comparison
+7. Other Item
+8. Other Size
+9. Result
+10. History and delete/relaunch consistency
+11. Share → Compare
+12. app relaunch cache/history consistency
+
+No implementation or Production action was performed by this audit.

@@ -4,6 +4,7 @@ import Combine
 enum ClosetProductSourceOption: String, CaseIterable, Hashable, Identifiable {
     case uniqlo
     case musinsa
+    case zara
     case manual
 
     var id: String { rawValue }
@@ -12,6 +13,7 @@ enum ClosetProductSourceOption: String, CaseIterable, Hashable, Identifiable {
         switch self {
         case .uniqlo: return "유니클로 공식몰"
         case .musinsa: return "무신사"
+        case .zara: return "ZARA 공식몰"
         case .manual: return "직접 등록"
         }
     }
@@ -59,12 +61,12 @@ final class AddClosetItemViewModel: ObservableObject {
         prefillSourceOption: ClosetProductSourceOption? = nil,
         prefillBrand: String? = nil,
         prefillProductName: String? = nil,
-        prefersRepresentativeByDefault: Bool = false
+        prefersRepresentativeByDefault _: Bool = false
     ) {
         isEditingExistingItem = item != nil
         guard let item else {
             measurementEntrySource = .fitmatchMeasured
-            isRepresentative = prefersRepresentativeByDefault
+            isRepresentative = false
             if let prefillSourceOption {
                 selectProductSource(prefillSourceOption)
             }
@@ -90,6 +92,15 @@ final class AddClosetItemViewModel: ObservableObject {
             if let prefillProductName, !prefillProductName.trimmed.isEmpty {
                 productName = prefillProductName.trimmed
             }
+            // A new manual form starts with the same active taxonomy tuple
+            // that the View's picker normalizes on appearance.  Keeping the
+            // initial model valid avoids a headless/non-rendered caller
+            // persisting the legacy display code (for example
+            // `short_sleeve`) instead of the current taxonomy detail code.
+            detailCategoryCode = FitMatchTaxonomyProvider.shared.detailCode(
+                for: detailCategory.rawValue,
+                categoryCode: categoryCode
+            ) ?? detailCategoryCode
             return
         }
 
@@ -134,7 +145,7 @@ final class AddClosetItemViewModel: ObservableObject {
         fitMemo = item.fitMemo
         fitPreference = item.fitPreference
         satisfaction = item.satisfaction
-        isRepresentative = item.isRepresentative
+        isRepresentative = false
     }
 
     var productSourceOption: ClosetProductSourceOption? {
@@ -143,6 +154,9 @@ final class AddClosetItemViewModel: ObservableObject {
             return .uniqlo
         case .marketplace where resolvedSourceName.localizedCaseInsensitiveContains("무신사"):
             return .musinsa
+        case .officialStore where resolvedSourceName.localizedCaseInsensitiveContains("zara")
+            || resolvedSourceName.localizedCaseInsensitiveContains("자라"):
+            return .zara
         case .manual:
             return .manual
         default:
@@ -160,6 +174,8 @@ final class AddClosetItemViewModel: ObservableObject {
             return [.uniqloSizeChart, .fitmatchMeasured]
         case .musinsa:
             return [.musinsaSizeChart, .fitmatchMeasured]
+        case .zara:
+            return [.fitmatchMeasured]
         case .manual, nil:
             return [.fitmatchMeasured]
         }
@@ -185,6 +201,12 @@ final class AddClosetItemViewModel: ObservableObject {
             }
             usesCustomBrand = true
             measurementEntrySource = .musinsaSizeChart
+        case .zara:
+            sourceType = .officialStore
+            sourceName = "ZARA 공식몰"
+            brand = "ZARA"
+            usesCustomBrand = false
+            measurementEntrySource = .fitmatchMeasured
         case .manual:
             sourceType = .manual
             sourceName = "직접 입력"
@@ -198,13 +220,61 @@ final class AddClosetItemViewModel: ObservableObject {
 
     var canSave: Bool {
         gender != .unknown
-            && !brand.trimmed.isEmpty
-            && !productName.trimmed.isEmpty
+            && (!isEditingExistingItem || (!brand.trimmed.isEmpty && !productName.trimmed.isEmpty))
+            && hasValidTaxonomySelection
             && measurements != nil
             && (measurementKinds.isEmpty || measurementEntrySource != nil)
             && (measurementEntrySource != .otherSizeChart || !measurementSourceName.trimmed.isEmpty)
             && (measurementEntrySource != .otherSizeChart || hasAllRequiredSourceLabels)
             && directMeasurementValidationMessage == nil
+    }
+
+    /// The manual form presents the same seven category groups used by linked
+    /// registration. The existing taxonomy tuple stays internal so the
+    /// established measurement and persistence contracts remain unchanged.
+    func selectManualCategory(_ group: FitMatchComparisonGroup) {
+        let categoryCode = Self.taxonomyCategoryCode(for: group)
+        let details = FitMatchTaxonomyProvider.shared.activeDetails(categoryCode: categoryCode)
+        guard FitMatchTaxonomyProvider.shared.isActiveCategory(categoryCode),
+              let detail = details.first(where: { $0.code == detailCategoryCode }) ?? details.first else {
+            return
+        }
+
+        self.categoryCode = categoryCode
+        category = ClothingCategory.fromTaxonomyCode(categoryCode)
+        detailCategoryCode = detail.code
+        detailCategory = ClosetDetailCategory.fromTaxonomyCode(detail.code)
+    }
+
+    var selectedManualCategory: FitMatchComparisonGroup? {
+        switch categoryCode {
+        case "tops": return .tops
+        case "outerwear": return .outerwear
+        case "bottoms": return .pants
+        case "skirts": return .skirts
+        case "dresses": return .onePiece
+        case "underwear": return .innerwear
+        case "homewear": return .homewear
+        default: return nil
+        }
+    }
+
+    /// Picker-driven UI normally keeps this tuple valid, but linked recovery
+    /// and any future non-visual caller must not persist a mismatched taxonomy
+    /// code/value pair. The same current taxonomy contract is used by the
+    /// compared-product registration path.
+    var hasValidTaxonomySelection: Bool {
+        FitMatchTaxonomyProvider.shared.isActiveCategory(categoryCode)
+            && FitMatchTaxonomyProvider.shared.isValidDetail(
+                detailCategoryCode,
+                for: categoryCode
+            )
+            && ParsedClosetClassification.isConsistent(
+                category: category,
+                detailCategory: detailCategory,
+                categoryCode: categoryCode,
+                detailCode: detailCategoryCode
+            )
     }
 
     var measurements: GarmentMeasurements? {
@@ -228,17 +298,17 @@ final class AddClosetItemViewModel: ObservableObject {
         }
 
         return GarmentMeasurements(
-            shoulder: Double(shoulder) ?? 0,
-            chest: Double(chest) ?? 0,
-            totalLength: Double(totalLength) ?? 0,
-            sleeveLength: Double(sleeveLength) ?? 0,
-            waist: Double(waist) ?? 0,
-            hip: Double(hip) ?? 0,
-            thigh: Double(thigh) ?? 0,
-            rise: Double(rise) ?? 0,
-            hem: Double(hem) ?? 0,
-            footLength: Double(footLength) ?? 0,
-            underBust: Double(underBust) ?? 0
+            shoulder: Double(shoulder.trimmed) ?? 0,
+            chest: Double(chest.trimmed) ?? 0,
+            totalLength: Double(totalLength.trimmed) ?? 0,
+            sleeveLength: Double(sleeveLength.trimmed) ?? 0,
+            waist: Double(waist.trimmed) ?? 0,
+            hip: Double(hip.trimmed) ?? 0,
+            thigh: Double(thigh.trimmed) ?? 0,
+            rise: Double(rise.trimmed) ?? 0,
+            hem: Double(hem.trimmed) ?? 0,
+            footLength: Double(footLength.trimmed) ?? 0,
+            underBust: Double(underBust.trimmed) ?? 0
         )
     }
 
@@ -278,7 +348,13 @@ final class AddClosetItemViewModel: ObservableObject {
     }
 
     func makeUserFit() -> UserFit? {
-        guard let measurements, directMeasurementValidationMessage == nil else {
+        // The View disables its save button when this is false, but the model
+        // is also used by linked-registration recovery and headless callers.
+        // Keep the same required-field/source gate at the construction
+        // boundary so no caller can persist a form the user could not save.
+        guard canSave,
+              let measurements,
+              directMeasurementValidationMessage == nil else {
             return nil
         }
 
@@ -295,7 +371,7 @@ final class AddClosetItemViewModel: ObservableObject {
             fitMemo: fitMemo.trimmed,
             fitPreference: fitPreference,
             satisfaction: satisfaction,
-            isRepresentative: isRepresentative
+            isRepresentative: false
         )
         item.genderCode = genderCode
         item.categoryCode = categoryCode
@@ -340,6 +416,15 @@ final class AddClosetItemViewModel: ObservableObject {
         )
         CanonicalComparisonProfileResolver().apply(canonicalProfile, to: item)
         _ = ComparisonProfileMatcher().profile(for: item)
+        // The form records an explicit user selection for a single garment,
+        // but the existing composite-set safety gate always wins. A manual set
+        // may remain in Closet; it cannot become a reference or comparison
+        // authority without a server not-comparable result.
+        if ParsedClosetClassification.isExplicitCompositeGarmentSet(item.productName) {
+            item.markClassificationAuthority(.localHint)
+        } else {
+            item.markClassificationAuthority(.userExplicit)
+        }
         return item
     }
 
@@ -355,6 +440,18 @@ final class AddClosetItemViewModel: ObservableObject {
     private var hasAllRequiredSourceLabels: Bool {
         measurementKinds.allSatisfy { kind in
             value(for: kind).trimmed.isEmpty || !(measurementSourceLabels[kind]?.trimmed.isEmpty ?? true)
+        }
+    }
+
+    private static func taxonomyCategoryCode(for group: FitMatchComparisonGroup) -> String {
+        switch group {
+        case .tops: return "tops"
+        case .outerwear: return "outerwear"
+        case .pants: return "bottoms"
+        case .skirts: return "skirts"
+        case .onePiece: return "dresses"
+        case .innerwear: return "underwear"
+        case .homewear: return "homewear"
         }
     }
 

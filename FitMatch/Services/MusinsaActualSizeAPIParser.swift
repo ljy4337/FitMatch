@@ -3,6 +3,17 @@ import Foundation
 struct MusinsaActualSizeAPIParser: ProductURLParsing {
     private let urlResolver = MusinsaURLResolver()
     private let metadataParser = MusinsaProductMetadataParser()
+    private let responseLoader: @MainActor (URL) async throws
+        -> FitMatchRetailerAPIResponseCapture
+
+    init(
+        responseLoader: @escaping @MainActor (URL) async throws
+            -> FitMatchRetailerAPIResponseCapture = { url in
+                try await Self.fetchLiveResponse(from: url)
+            }
+    ) {
+        self.responseLoader = responseLoader
+    }
 
     func canParse(_ url: URL) -> Bool {
         url.absoluteString.lowercased().contains("musinsa")
@@ -10,7 +21,10 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
 
     func parse(from url: URL) async throws -> ParsedProductInfo {
         let resolvedProduct = try await urlResolver.resolve(url)
-        var metadata = await metadataParser.parse(productID: resolvedProduct.productID, sourceURL: resolvedProduct.resolvedURL)
+        var metadata = try await metadataParser.parse(
+            productID: resolvedProduct.productID,
+            sourceURL: resolvedProduct.resolvedURL
+        )
         let actualSize = try await parseActualSize(
             productID: resolvedProduct.productID,
             isTopCategory: metadata.category.isMusinsaUpperBodyCategory
@@ -18,11 +32,18 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         let sizes = actualSize.sizes
         metadata.applyActualSizeProfile(typeNumber: actualSize.typeNumber, typeName: actualSize.typeName)
 
+        let evidence = metadata.retailerAPIEvidence(
+            measurements: actualSize.responseCapture
+        )
         guard !sizes.isEmpty else {
-            throw ProductURLParserPartialError(productInfo: metadata.parsedProductInfo(sizes: []))
+            throw ProductURLParserPartialError(
+                productInfo: metadata.parsedProductInfo(sizes: [])
+                    .withRetailerAPIEvidence(evidence)
+            )
         }
 
         return metadata.parsedProductInfo(sizes: sizes)
+            .withRetailerAPIEvidence(evidence)
     }
 
     func parseSizes(productID: String) async throws -> [ParsedProductSize] {
@@ -30,12 +51,52 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     }
 
     func parseActualSize(productID: String, isTopCategory: Bool = false) async throws -> MusinsaActualSizeResult {
+        let capture = try await fetchActualSizeResponse(productID: productID)
+        return try parseActualSize(
+            responseCapture: capture,
+            isTopCategory: isTopCategory
+        )
+    }
+
+    /// Receives the exact official actual-size response without assigning
+    /// clothing semantics. Callers that already know the product identity can
+    /// overlap this I/O with metadata loading, then decode it using the
+    /// metadata-derived category.
+    func fetchActualSizeResponse(
+        productID: String
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
         guard let apiURL = URL(string: "https://goods-detail.musinsa.com/api2/goods/\(productID)/actual-size") else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
 
-        let data = try await fetchData(from: apiURL)
-        return try parseActualSize(from: data, isTopCategory: isTopCategory)
+        return try await fetchResponse(from: apiURL)
+    }
+
+    func parseActualSize(
+        responseCapture capture: FitMatchRetailerAPIResponseCapture,
+        isTopCategory: Bool = false
+    ) throws -> MusinsaActualSizeResult {
+        guard (200..<300).contains(capture.httpStatus) else {
+            throw FitMatchRetailerAPIResponseError(
+                capture: capture,
+                reason: "unexpected_http_status"
+            )
+        }
+        let parsed: MusinsaActualSizeResult
+        do {
+            parsed = try parseActualSize(
+                from: capture.body,
+                isTopCategory: isTopCategory
+            )
+        } catch {
+            throw FitMatchRetailerAPIResponseError(
+                capture: capture,
+                reason: "invalid_response_body"
+            )
+        }
+        var result = parsed
+        result.responseCapture = capture
+        return result
     }
 
     func parseStandardSizeOptions(productID: String) async throws -> [ParsedProductSize] {
@@ -95,6 +156,32 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
     }
 
     private func fetchData(from apiURL: URL) async throws -> Data {
+        let response = try await fetchResponse(from: apiURL)
+        guard (200..<300).contains(response.httpStatus) else {
+            throw ProductURLParserError.automaticParsingUnavailable
+        }
+        return response.body
+    }
+
+    private func fetchResponse(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+        try await responseLoader(apiURL)
+    }
+
+    private static func fetchLiveResponse(
+        from apiURL: URL
+    ) async throws -> FitMatchRetailerAPIResponseCapture {
+#if DEBUG
+        let startedAt = Date()
+        defer {
+            FitMatchDebugLogger.duration(
+                stage: "MUSINSA 실측 HTTP",
+                startedAt: startedAt,
+                state: "종료"
+            )
+        }
+#endif
         var request = URLRequest(url: apiURL)
         request.httpMethod = "GET"
         request.timeoutInterval = MusinsaNetworkPolicy.requestTimeout
@@ -106,12 +193,14 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
         )
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode) else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw ProductURLParserError.automaticParsingUnavailable
         }
-
-        return data
+        return FitMatchRetailerAPIResponseCapture(
+            requestURL: response.url ?? apiURL,
+            httpStatus: httpResponse.statusCode,
+            body: data
+        )
     }
 
     private func makeParsedSize(
@@ -128,7 +217,7 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
 
         let measurementRecords = size.items.compactMap { item -> ParsedMeasurement? in
             let rawValue = item.value.stringValue
-            guard let value = firstNumber(in: rawValue), value.isFinite, value > 0 else { return nil }
+            guard let value = firstNumber(in: rawValue), value.isFinite, value >= 0 else { return nil }
             let column = MusinsaActualSizeColumn.column(
                 for: item.name.normalizedMeasurementName,
                 isTopCategory: isTopCategory
@@ -140,7 +229,11 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
                 isTopCategory: isTopCategory
             )
             let normalizedValue = value * (mapping?.valueMultiplier ?? 1)
-            valuesByName[item.name.normalizedMeasurementName] = String(normalizedValue)
+            // Keep zero as an original retailer fact, but never project it
+            // into the positive scalar measurements used by comparison.
+            if value > 0 {
+                valuesByName[item.name.normalizedMeasurementName] = String(normalizedValue)
+            }
             return ParsedMeasurement(
                 value: normalizedValue,
                 measurementCode: mapping?.code ?? .unknown,
@@ -217,6 +310,7 @@ struct MusinsaActualSizeResult {
     let webImage: String?
     let mobileImage: String?
     let sizes: [ParsedProductSize]
+    var responseCapture: FitMatchRetailerAPIResponseCapture? = nil
 }
 
 private struct MusinsaActualSizeResponse: Decodable {
@@ -303,10 +397,14 @@ private enum MusinsaActualSizeColumn {
     case rise
     case inseam
     case hem
+    case sleeveOpening
+    case armhole
 
     static func column(for name: String, isTopCategory: Bool = false) -> MusinsaActualSizeColumn? {
         if isTopCategory, name == "복부단면" { return .upperAbdomen }
         if isTopCategory, name == "허리단면" { return .upperWaist }
+        if name == "소매부리단면" { return .sleeveOpening }
+        if name == "암홀" { return .armhole }
         let searchOrder: [MusinsaActualSizeColumn] = [
             .shoulder, .chest, .sleeveLength, .waist, .hip, .thigh, .rise, .inseam, .hem, .totalLength
         ]
@@ -326,6 +424,7 @@ private enum MusinsaActualSizeColumn {
         case .thigh: return .thigh
         case .rise: return .rise
         case .hem: return .hem
+        case .sleeveOpening, .armhole: return .unknown
         }
     }
 
@@ -359,6 +458,10 @@ private enum MusinsaActualSizeColumn {
             return ["인심", "밑단기장", "inseam"]
         case .hem:
             return ["밑단", "hem"]
+        case .sleeveOpening:
+            return ["소매부리단면"]
+        case .armhole:
+            return ["암홀"]
         }
     }
 }

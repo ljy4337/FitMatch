@@ -36,16 +36,20 @@ struct FitMatchPrivacyPolicyView: View {
                 FitMatchReleaseIntroCard(
                     systemImage: "lock.shield.fill",
                     title: "개인정보처리방침",
-                    description: "FitMatch 1.0 (빌드 4)의 현재 데이터 처리 방식을 안내합니다."
+                    description: "FitMatch의 현재 계정 및 데이터 처리 방식을 안내합니다."
                 )
 
                 FitMatchReleaseSection(
-                    title: "기기에 저장하는 정보",
-                    content: "등록한 옷과 실측, 기준 옷 설정, 비교 상품과 결과 기록, 개인 식별 정보가 없는 품질 집계값을 사용자의 기기에 저장합니다."
+                    title: "계정 정보",
+                    content: "로그인과 계정 식별을 위해 Apple 로그인에서 제공하는 식별자와 사용자가 공개에 동의한 이메일 정보를 Supabase 인증 서비스에서 처리합니다. 추후 다른 로그인 수단을 추가하면 이 방침과 로그인 화면에 반영합니다."
+                )
+                FitMatchReleaseSection(
+                    title: "기기와 서버에 저장하는 정보",
+                    content: "등록한 옷, 선택한 사이즈와 실측, 비교 그룹, 상품 링크·카테고리, 비교 상품과 결과 기록을 기기와 FitMatch 서버에 저장합니다. 공용 쇼핑몰 상품 정보는 다른 사용자에게도 쓰이는 상품 카탈로그로 보관될 수 있습니다."
                 )
                 FitMatchReleaseSection(
                     title: "상품 정보 요청",
-                    content: "사용자가 입력하거나 공유한 무신사·유니클로 상품 링크를 분석하기 위해 해당 쇼핑몰의 공식 웹·API 주소로 네트워크 요청을 보냅니다. 이 과정에서 쇼핑몰에는 일반적인 네트워크 요청 정보가 전달될 수 있습니다."
+                    content: "사용자가 입력하거나 공유한 무신사·유니클로·ZARA 상품 링크를 분석하기 위해 해당 쇼핑몰의 공식 웹·API 주소로 네트워크 요청을 보냅니다. 이 과정에서 쇼핑몰에는 일반적인 네트워크 요청 정보가 전달될 수 있습니다."
                 )
                 FitMatchReleaseSection(
                     title: "이미지와 실측 분석",
@@ -53,11 +57,11 @@ struct FitMatchPrivacyPolicyView: View {
                 )
                 FitMatchReleaseSection(
                     title: "외부 전송과 추적",
-                    content: "현재 FitMatch는 옷장, 비교 결과, 상품 URL, 품질 집계값을 FitMatch 운영 서버로 자동 전송하지 않습니다. 광고 SDK, 제3자 분석 SDK 및 사용자 추적 기능을 사용하지 않습니다. 사용자가 문의 화면에서 품질 진단 내보내기를 직접 선택한 경우에만 개인 식별 정보가 없는 집계값을 시스템 공유 기능으로 전달합니다."
+                    content: "계정·옷장·비교 데이터의 저장과 동기화에는 Supabase를 사용합니다. 상품 분석을 위해 무신사·유니클로·ZARA의 공식 웹·API로 요청할 수 있습니다. 광고 SDK와 사용자 추적 기능은 사용하지 않으며, 품질 진단 정보는 사용자가 공유를 직접 선택한 경우에만 전달됩니다."
                 )
                 FitMatchReleaseSection(
                     title: "삭제와 보관",
-                    content: "옷장 항목과 비교 기록은 앱 안에서 삭제할 수 있습니다. 앱을 삭제하면 기기에 저장된 FitMatch 데이터도 함께 삭제될 수 있으므로 필요한 기록을 먼저 확인해 주세요."
+                    content: "옷장 항목과 비교 기록은 앱 안에서 삭제할 수 있습니다. My 화면의 회원 탈퇴를 실행하면 계정과 사용자 소유 서버 데이터, 기기 내 옷장·비교 기록을 영구 삭제합니다. 공용 상품 카탈로그와 법령상 보관 의무가 있는 비식별 기록은 사용자 계정과 분리해 유지될 수 있습니다. Apple 로그인 권한은 iPhone 설정의 Apple로 로그인 메뉴에서도 해제할 수 있습니다."
                 )
                 FitMatchReleaseSection(
                     title: "정책 변경",
@@ -75,7 +79,7 @@ struct FitMatchPrivacyPolicyView: View {
                     .accessibilityIdentifier("privacyPolicyWebLink")
                 }
 
-                Text("시행일: 2026년 8월 6일")
+                Text("시행일: 2026년 8월 20일")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -109,7 +113,7 @@ struct FitMatchSupportView: View {
 
                 FitMatchReleaseSection(
                     title: "상품을 불러오지 못할 때",
-                    content: "무신사 또는 유니클로의 실제 상품 페이지 링크인지 확인하고 다시 시도해 주세요. 쇼핑몰의 페이지나 사이즈표 형식이 변경되면 일시적으로 분석하지 못할 수 있습니다."
+                    content: "무신사·유니클로·ZARA의 실제 상품 페이지 링크인지 확인하고 다시 시도해 주세요. 쇼핑몰의 페이지나 사이즈표 형식이 변경되면 일시적으로 분석하지 못할 수 있습니다."
                 )
                 FitMatchReleaseSection(
                     title: "저장 오류가 표시될 때",
@@ -122,7 +126,7 @@ struct FitMatchSupportView: View {
 
                 FitMatchReleaseSection(
                     title: "품질 진단 정보",
-                    content: "상품명·URL·상품 ID·실측값·사용자 식별자를 포함하지 않는 누적 성공·실패 횟수만 내보냅니다. 공유할 앱과 대상은 사용자가 직접 선택합니다."
+                    content: "앱·OS 버전, 누적 처리 횟수와 최근 20개 처리 단계·시각을 내보냅니다. 상품명·URL·실측값·사용자 식별자는 포함하지 않으며 자동 전송하지 않습니다. 공유할 앱과 대상은 직접 선택해 주세요."
                 )
 
                 ShareLink(
