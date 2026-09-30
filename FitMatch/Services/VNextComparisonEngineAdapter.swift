@@ -55,7 +55,7 @@ struct VNextComparisonBatchAnalysis: Equatable, @unchecked Sendable {
 }
 
 struct VNextComparisonEngineAdapter {
-    static let engineVersion = "fitmatch-ios-vnext-snapshot-v1"
+    static let engineVersion = VNextCompletedReplayPolicy.currentVersion
 
     private let scoreCache: VNextAuthorizedScoreCache
 

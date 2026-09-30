@@ -4,6 +4,42 @@ import Testing
 
 @MainActor
 struct MusinsaParserConcurrencyTests {
+    @Test func actualSizePreservesZeroRawRowsWithoutMakingThemComparable() throws {
+        for chest in ["54", "0"] {
+            let unknown = chest == "54" ? "7" : "0"
+            let body = Data("""
+            {"data":{"typeNumber":5,"sizes":[{"name":"M","items":[
+            {"name":"가슴단면","value":"\(chest)"},
+            {"name":"소매길이","value":"0.0"},
+            {"name":"미래항목","value":"\(unknown)"}
+            ]}]}}
+            """.utf8)
+            let capture = MusinsaHTTPFixture.capture(url: MusinsaHTTPFixture.productURL, body: body)
+            let parsed = try MusinsaActualSizeAPIParser().parseActualSize(
+                responseCapture: capture, isTopCategory: true)
+            let size = try #require(parsed.sizes.first)
+            #expect(size.measurementRecords.count == 3)
+            #expect(size.measurementRecords.map(\.rawValueText) == [chest, "0.0", unknown])
+            #expect(size.measurements.sleeveLength == 0)
+            let rows = MeasurementResolver.sourceDisplayRows(records: size.measurementRecords)
+            #expect(rows.count == 3)
+            #expect(rows.filter(\.isCanonical).count == (chest == "54" ? 1 : 0))
+            let records = size.measurementRecords.map { $0.makeRecord() }
+            #expect(records.filter(\.isComparable).count == (chest == "54" ? 1 : 0))
+            #expect(ParsedSizeValidator.hasUsableMeasurements([size], category: .top) == (chest == "54"))
+            let product = ParsedProductInfo(sourceURL: MusinsaHTTPFixture.productURL,
+                sourceType: .marketplace, sourceName: "무신사", brandName: "Fixture",
+                productName: "Raw fixture", category: .top, detailCategory: .shortSleeve,
+                sizes: [size], productID: "123456", sourceCategoryPath: "상의",
+                productMetadata: ProductMetadata(categoryDepth1Code: "001"))
+            let observation = try #require(product.fitMatchProductObservationRequest())
+            let transported = try #require(observation.payload.variants.first?.sizes.first?.measurements)
+            #expect(transported.count == rows.count)
+            #expect(transported.map(\.rawValueText) == [chest, "0.0", unknown])
+            #expect(transported.map(\.rawValue) == [Double(chest)!, 0, Double(unknown)!])
+        }
+    }
+
     @Test func actualSizeAndMetadataReceiveInParallelWithoutChangingCategoryBasedParsing() async throws {
         let actualFirst = try await parseWithArrivalOrder([.actualSize, .metadata])
         let metadataFirst = try await parseWithArrivalOrder([.metadata, .actualSize])

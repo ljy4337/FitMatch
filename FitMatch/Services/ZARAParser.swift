@@ -1133,7 +1133,8 @@ private enum ZARASizeGuideParser {
                     measurementCode: mapping?.code ?? .unknown,
                     displayKind: mapping?.displayKind ?? .unknown,
                     methodSource: "zara",
-                    methodProfile: "zara_kr_measure_guide",
+                    methodProfile: guide.id.map { "zara_kr_measure_guide:\($0)" }
+                        ?? "zara_kr_measure_guide",
                     inputSource: .importedSizeChart,
                     mappingVersion: mappingVersion,
                     // `zoneId` (A/B/C...) changes meaning by garment family.
@@ -1214,6 +1215,7 @@ private enum ZARASizeGuideParser {
     }
 
     private struct Guide: Decodable {
+        let id: String?
         let sizes: [Size]
     }
 

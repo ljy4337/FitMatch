@@ -161,18 +161,32 @@ struct MyClosetView: View {
                 .listRowInsets(EdgeInsets(top: 36, leading: 20, bottom: 24, trailing: 20))
             } else {
                 ForEach(displayedItems) { item in
-                    MyClosetSwipeDeleteRow(
-                        isDeletionDisabled: deletingItemID == item.id,
-                        onDeleteButtonTap: { pendingDeleteItem = item },
-                        onFullSwipeDelete: { deleteItem(item) }
-                    ) {
-                        Button {
-                            selectedClosetItemID = item.id
-                        } label: {
-                            ClosetItemCard(item: item)
-                                .contentShape(Rectangle())
+                    Button {
+                        selectedClosetItemID = item.id
+                    } label: {
+                        ClosetItemCard(item: item)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(deletingItemID != nil)
+                    .overlay {
+                        if deletingItemID == item.id {
+                            ProgressView("삭제 중")
+                                .font(.subheadline)
+                                .padding(12)
+                                .background(.regularMaterial, in: Capsule())
                         }
-                        .buttonStyle(.plain)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        // Match History: keep the row visible until confirmation.
+                        Button {
+                            guard deletingItemID == nil else { return }
+                            pendingDeleteItem = item
+                        } label: {
+                            Label("삭제", systemImage: "trash")
+                        }
+                        .disabled(deletingItemID != nil)
+                        .tint(.red)
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
@@ -354,92 +368,6 @@ struct MyClosetView: View {
         }
     }
 
-}
-
-/// Native swipe actions invoke the same callback for button taps and full swipes.
-private struct MyClosetSwipeDeleteRow<Content: View>: View {
-    private let isDeletionDisabled: Bool
-    private let onDeleteButtonTap: () -> Void
-    private let onFullSwipeDelete: () -> Void
-    private let content: Content
-
-    @State private var contentOffset: CGFloat = 0
-    private let revealedOffset: CGFloat = -96
-    private let revealThreshold: CGFloat = -44
-    private let fullSwipeThreshold: CGFloat = -180
-
-    init(
-        isDeletionDisabled: Bool,
-        onDeleteButtonTap: @escaping () -> Void,
-        onFullSwipeDelete: @escaping () -> Void,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.isDeletionDisabled = isDeletionDisabled
-        self.onDeleteButtonTap = onDeleteButtonTap
-        self.onFullSwipeDelete = onFullSwipeDelete
-        self.content = content()
-    }
-
-    var body: some View {
-        ZStack(alignment: .trailing) {
-            Button(role: .destructive) {
-                reset()
-                onDeleteButtonTap()
-            } label: {
-                Label("삭제", systemImage: "trash")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(width: abs(revealedOffset))
-                    .frame(maxHeight: .infinity)
-                    .background(.red)
-            }
-            .buttonStyle(.plain)
-            .disabled(isDeletionDisabled)
-
-            content
-                .offset(x: contentOffset)
-                .simultaneousGesture(swipeGesture)
-        }
-        .clipShape(Rectangle())
-        .accessibilityAction(named: "삭제") {
-            onDeleteButtonTap()
-        }
-    }
-
-    private var swipeGesture: some Gesture {
-        DragGesture(minimumDistance: 12)
-            .onChanged { value in
-                guard isHorizontal(value) else { return }
-                contentOffset = min(0, max(fullSwipeThreshold, value.translation.width))
-            }
-            .onEnded { value in
-                guard isHorizontal(value) else {
-                    reset()
-                    return
-                }
-                if value.translation.width <= fullSwipeThreshold {
-                    reset()
-                    guard !isDeletionDisabled else { return }
-                    onFullSwipeDelete()
-                } else if value.translation.width <= revealThreshold {
-                    withAnimation(.easeOut(duration: 0.16)) {
-                        contentOffset = revealedOffset
-                    }
-                } else {
-                    reset()
-                }
-            }
-    }
-
-    private func isHorizontal(_ value: DragGesture.Value) -> Bool {
-        abs(value.translation.width) > abs(value.translation.height)
-    }
-
-    private func reset() {
-        withAnimation(.easeOut(duration: 0.16)) {
-            contentOffset = 0
-        }
-    }
 }
 
 private extension String {

@@ -133,8 +133,10 @@ struct VNextHistoryCacheHydrator {
                   let effective = authorityRoot[
                     "effective_classification_at_begin"
                   ]?.objectValue,
-                  let source = effective["source"]?.stringValue?.uppercased(),
                   let state = effective["state"]?.stringValue?.uppercased(),
+                  let source = effective["source"]?.stringValue?.uppercased()
+                    ?? (state == "SESSION_GROUP_CONFIRMED"
+                        ? effective["effective_source"]?.stringValue?.uppercased() : nil),
                   let garment = effective["garment_type_code"]?.stringValue,
                   !garment.isEmpty else {
                 throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
@@ -156,6 +158,31 @@ struct VNextHistoryCacheHydrator {
                 provenance = .userExplicit
                 revision = Int(numericRevision)
                 candidateFingerprint = fingerprint
+            case "SESSION_USER_SELECTED":
+                guard state == "SESSION_GROUP_CONFIRMED",
+                      effective["effective_source"]?.stringValue == "SESSION_USER_SELECTED",
+                      let group = effective["comparison_group_code"]?.stringValue,
+                      ["A", "B", "C", "D", "E", "F", "G"].contains(group),
+                      effective["requested_comparison_group_code"]?.stringValue == group,
+                      let groupSnapshot = authorityRoot["comparison_group_at_begin"]?.objectValue,
+                      groupSnapshot["source"]?.stringValue == "SESSION_USER_SELECTED",
+                      groupSnapshot["group_code"]?.stringValue == group,
+                      let fingerprint = effective["effective_authority_fingerprint"]?.stringValue,
+                      !fingerprint.isEmpty,
+                      groupSnapshot["authority_fingerprint"]?.stringValue == fingerprint else {
+                    throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
+                }
+                // A session choice is never a global mapping or personal override.
+                provenance = .serverSessionComparison
+                revision = nil
+                candidateFingerprint = nil
+            case "CATEGORY_GROUP":
+                guard state == "CATEGORY_GROUP_CONFIRMED" else {
+                    throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
+                }
+                provenance = .serverConfirmed
+                revision = nil
+                candidateFingerprint = nil
             case "GLOBAL_CONFIRMED", "GLOBAL":
                 guard state == "GLOBAL_CONFIRMED" || state == "CONFIRMED" else {
                     throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
@@ -287,6 +314,27 @@ struct VNextHistoryCacheHydrator {
             currentHistoryIDByTarget[row.targetProductID] = row.clientComparisonID
             currentRows.append(row)
         }
+        // Validate every replacement before deleting any existing local result.
+        // A rejected snapshot must leave the current cache untouched.
+        var prepared: [UUID: (analysis: VNextComparisonBatchAnalysis,
+                               projection: HistoricalTargetProjection)] = [:]
+        for row in currentRows where !existingHistoryIDs.contains(row.clientComparisonID) {
+            guard let begin = row.snapshotBegin,
+                  let recommendedID = row.recommendedProductSizeID else {
+                throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
+            }
+            let analysis = try adapter.analyze(begin)
+            guard analysis.recommended.productSizeID == recommendedID,
+                  completionMatches(row, analysis: analysis) else {
+                throw VNextHistoryCacheHydrationError.completionMismatch(row.id)
+            }
+            guard row.referenceClientItemID != nil else {
+                throw VNextHistoryCacheHydrationError.missingReferenceIdentity(row.id)
+            }
+            prepared[row.clientComparisonID] = (
+                analysis, try HistoricalTargetProjection(row: row)
+            )
+        }
         for history in persistedHistories
         where history.comparisonMethod.hasPrefix("서버 승인") {
             guard let targetProductID = RecommendationHistoryStore.targetProductID(
@@ -307,17 +355,12 @@ struct VNextHistoryCacheHydrator {
                   !hydrated.contains(row.clientComparisonID) else {
                 continue
             }
-            guard let begin = row.snapshotBegin,
+            guard let ready = prepared[row.clientComparisonID],
                   let recommendedID = row.recommendedProductSizeID else {
                 throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
             }
-            let analysis = try adapter.analyze(begin)
-            guard analysis.recommended.productSizeID == recommendedID,
-                  completionMatches(row, analysis: analysis) else {
-                throw VNextHistoryCacheHydrationError.completionMismatch(row.id)
-            }
-
-            let projection = try HistoricalTargetProjection(row: row)
+            let analysis = ready.analysis
+            let projection = ready.projection
             let product = productByID[projection.localProductID]
                 ?? makeProduct(
                     from: row,
@@ -397,18 +440,21 @@ struct VNextHistoryCacheHydrator {
         _ row: VNextComparisonHistoryDTO,
         analysis: VNextComparisonBatchAnalysis
     ) -> Bool {
-        guard row.engineVersion
-                == FitMatchVNextContractValidator.completedReplayEngineVersion,
+        guard VNextCompletedReplayPolicy.supportedVersions.contains(row.engineVersion),
               let evidence = row.resultEvidence,
-              evidence.engineVersion
-                == FitMatchVNextContractValidator.completedReplayEngineVersion,
               row.engineVersion == evidence.engineVersion else {
             return false
         }
+        let evidenceCount = analysis.completionPayload.metricEvidence.filter {
+            $0.productSizeID == analysis.recommended.productSizeID
+        }.count
         let tolerance = 0.000_001
         return evidence.recommendedProductSizeID == analysis.recommended.productSizeID
             && abs(evidence.score - analysis.completionPayload.score) < tolerance
-            && evidence.reliability == analysis.completionPayload.reliability
+            && VNextCompletedReplayPolicy.acceptsReliability(
+                evidence.reliability, engineVersion: row.engineVersion,
+                evidenceCount: evidenceCount, coverage: analysis.completionPayload.coverage
+            )
             && abs(evidence.coverage - analysis.completionPayload.coverage) < tolerance
             && evidence.candidateSizeRanking == analysis.completionPayload.candidateSizeRanking
             && evidence.metricEvidence == analysis.completionPayload.metricEvidence
@@ -608,7 +654,8 @@ struct VNextHistoryCacheHydrator {
             sleeveLength: 0
         )
         for (rawCode, value) in values {
-            guard let code = MeasurementCode(rawValue: rawCode),
+            guard let code = MeasurementCode(rawValue: rawCode)
+                    ?? FitMatchCanonicalMeasurementCode.projection(for: rawCode)?.localCode,
                   let kind = MeasurementComparisonEngine.measurementKind(for: code) else {
                 continue
             }
@@ -637,22 +684,23 @@ struct VNextHistoryCacheHydrator {
         productSize: ProductSize? = nil,
         userFit: UserFit? = nil
     ) -> [GarmentMeasurementRecord] {
-        values.sorted(by: { $0.key < $1.key }).compactMap { rawCode, value in
-            guard let code = MeasurementCode(rawValue: rawCode),
-                  let kind = MeasurementComparisonEngine.measurementKind(for: code) else {
-                return nil
-            }
+        values.sorted(by: { $0.key < $1.key }).map { rawCode, value in
+            let projection = FitMatchCanonicalMeasurementCode.projection(for: rawCode)
+            let code = MeasurementCode(rawValue: rawCode) ?? projection?.localCode ?? .unknown
+            let kind = MeasurementComparisonEngine.measurementKind(for: code)
             return GarmentMeasurementRecord(
                 value: value,
                 measurementCode: code,
-                displayKind: kind.displayKind,
-                methodSource: valueSource,
+                measurementCodeRawValue: rawCode,
+                displayKind: projection?.displayKind ?? kind?.displayKind ?? .unknown,
+                methodSource: "fitmatch_vnext_snapshot",
+                methodProfile: valueSource,
                 inputSource: .importedSizeChart,
                 mappingVersion: "fitmatch-vnext-history-v1",
                 rawCode: rawCode,
-                rawLabel: kind.title,
+                rawLabel: kind?.title ?? rawCode,
                 evidenceLevel: .fitmatchDefined,
-                semanticStatus: .mapped,
+                semanticStatus: projection != nil || kind != nil ? .mapped : .unknownDefinition,
                 productSize: productSize,
                 userFit: userFit
             )

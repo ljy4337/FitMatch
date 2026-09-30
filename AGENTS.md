@@ -27,6 +27,13 @@ Verification status must be PASS, FAIL, NOT RUN, or BLOCKED. Never describe skip
 - Preserve unrelated dirty working-tree changes.
 - Think before editing. Stop only when ambiguity materially affects correctness, data integrity, architecture, authorization, irreversible behavior, or a consequential product decision.
 
+## UI Changes Require Explicit User Request
+
+- Never change UI unless the user explicitly requests that UI change. Limit changes to the requested scope.
+- This includes layout, colors, typography, icons, visible text, loading/progress presentation, navigation, gestures, and user interactions.
+- General debugging, bug-fix, performance, or review requests do not authorize UI changes. Inspect and report UI issues; if a fix requires a UI change, obtain explicit user approval before changing it. Continue independent non-UI work when possible.
+- Editing a View file is allowed when necessary for an authorized non-UI fix only if the existing UI and interactions remain unchanged.
+
 ## Sources of Authority
 
 - `AGENTS.md`: stable operating, architecture-boundary, safety, Git, and verification rules.

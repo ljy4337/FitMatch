@@ -637,7 +637,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             category: nil,
             brand: nil,
             sort: .basisFirst
-        ).map(\.id) == [representativeTop.id, newestBottom.id, oldestTop.id])
+        ).map(\.id) == [newestBottom.id, representativeTop.id, oldestTop.id])
     }
 
     @Test func closetDetailEditActionsKeepSourcedAuthoritySeparateFromExplicitPickerIntent() throws {
@@ -1441,7 +1441,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             return
         }
         #expect(savedGlobalItem.classificationAuthorityProvenance == .serverConfirmed)
-        #expect(savedGlobalItem.isRepresentative)
+        #expect(!savedGlobalItem.isRepresentative)
     }
 
     /// CR-018/RX-007: two real submit tasks target the same storage request.
@@ -1751,7 +1751,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(expired.pendingProductURL() == nil)
     }
 
-    @Test func v4PersonalHistoryHydrationKeepsEachImmutableAuthorityProjection() throws {
+    @Test func v4PersonalHistoryHydrationReplacesHeadWithoutChangingItsAuthority() throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
         let productID = UUID()
@@ -1779,36 +1779,27 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             audience: "KIDS"
         )
 
-        _ = try VNextHistoryCacheHydrator().hydrateCompleted(
-            [first, second, third],
-            existingHistories: [],
-            existingProducts: [],
-            existingClosetItems: [],
-            modelContext: context
-        )
-        let histories = try context.fetch(
-            FetchDescriptor<RecommendationHistory>(
-                sortBy: [SortDescriptor(\.createdAt)]
-            )
-        )
-
-        #expect(histories.count == 3)
-        #expect(histories[0].product.classificationAuthorityProvenance == .userExplicit)
-        #expect(histories[0].product.garmentTypeRawValue == "polo_shirt")
-        #expect(histories[0].product.genderCodes == "MEN")
-        #expect(histories[0].product.productTargetGender == .men)
-        #expect(histories[1].product.classificationAuthorityProvenance == .userExplicit)
-        #expect(histories[1].product.garmentTypeRawValue == "tshirt")
-        #expect(histories[1].product.genderCodes == "WOMEN")
-        #expect(histories[1].product.productTargetGender == .women)
-        #expect(histories[2].product.classificationAuthorityProvenance == .userExplicit)
-        #expect(histories[2].product.garmentTypeRawValue == "hoodie")
-        #expect(histories[2].product.genderCodes == "KIDS")
-        #expect(histories[2].product.productTargetGender == .kids)
-        #expect(histories[0].product !== histories[1].product)
-        #expect(histories[1].product !== histories[2].product)
-        #expect(histories[0].userFit.id != histories[1].userFit.id)
-        #expect(histories[0].userFit !== histories[1].userFit)
+        // Same target: each newly returned authoritative head replaces the prior
+        // visible projection. Its own begin-time tuple must remain exact.
+        for (row, garment, gender, audience) in [
+            (first, "polo_shirt", UserGender.men, "MEN"),
+            (second, "tshirt", UserGender.women, "WOMEN"),
+            (third, "hoodie", UserGender.kids, "KIDS")
+        ] {
+            _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+                [row], existingHistories: [], existingProducts: [],
+                existingClosetItems: [], modelContext: context)
+            let histories = try context.fetch(FetchDescriptor<RecommendationHistory>())
+            try #require(histories.count == 1)
+            let current = try #require(histories.first)
+            #expect(current.id == row.clientComparisonID)
+            #expect(current.product.classificationAuthorityProvenance == .userExplicit)
+            #expect(current.product.garmentTypeRawValue == garment)
+            #expect(current.product.genderCodes == audience)
+            #expect(current.product.productTargetGender == gender)
+            #expect(current.product.id == VNextHistoryProjectionIdentity.productID(comparisonID: row.clientComparisonID))
+            #expect(current.serverApprovedVNextReliability == 2)
+        }
     }
 
     @Test func v4PersonalHistoryProjectionSurvivesFreshContainerWithoutTupleSharing() throws {
@@ -1842,46 +1833,32 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
             let container = try ModelContainer(for: schema, configurations: [configuration])
             let context = ModelContext(container)
             _ = try VNextHistoryCacheHydrator().hydrateCompleted(
-                [first, second],
+                [first],
                 existingHistories: [],
                 existingProducts: [],
                 existingClosetItems: [],
                 modelContext: context
             )
+            _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+                [second], existingHistories: [], existingProducts: [],
+                existingClosetItems: [], modelContext: context)
         }
 
         let reloadConfiguration = ModelConfiguration(schema: schema, url: storeURL)
         let reloadContainer = try ModelContainer(for: schema, configurations: [reloadConfiguration])
         let reloadContext = ModelContext(reloadContainer)
         let histories = try reloadContext.fetch(FetchDescriptor<RecommendationHistory>())
-        let menHistory = try #require(histories.first { $0.id == first.clientComparisonID })
-        let womenHistory = try #require(histories.first { $0.id == second.clientComparisonID })
-
-        // HI-001...HI-005: two completed comparisons of the same remote target
-        // retain their independent begin-time tuple after rehydration.
-        #expect(menHistory.product.id == VNextHistoryProjectionIdentity.productID(
-            comparisonID: first.clientComparisonID
-        ))
-        #expect(womenHistory.product.id == VNextHistoryProjectionIdentity.productID(
-            comparisonID: second.clientComparisonID
-        ))
-        #expect(menHistory.product !== womenHistory.product)
-        #expect(menHistory.product.productTargetGender == .men)
-        #expect(womenHistory.product.productTargetGender == .women)
-        #expect(menHistory.product.sourceURLString == "https://www.uniqlo.com/kr/ko/products/E450259")
-        #expect(womenHistory.product.sourceURLString == "https://www.uniqlo.com/kr/ko/products/E450259")
-        #expect(menHistory.product.garmentTypeRawValue == "polo_shirt")
-        #expect(womenHistory.product.garmentTypeRawValue == "tshirt")
-        #expect(menHistory.product.classificationAuthorityProvenance == .userExplicit)
-        #expect(womenHistory.product.classificationAuthorityProvenance == .userExplicit)
-        #expect(menHistory.product.canonicalSourceIdentity?.contains("revision=1") == true)
-        #expect(womenHistory.product.canonicalSourceIdentity?.contains("revision=2") == true)
-        #expect(menHistory.product.canonicalSourceIdentity?.contains(
-            "target=\(targetID.uuidString.lowercased())"
-        ) == true)
-        #expect(womenHistory.product.canonicalSourceIdentity?.contains(
-            "target=\(targetID.uuidString.lowercased())"
-        ) == true)
+        #expect(histories.count == 1)
+        #expect(!histories.contains { $0.id == first.clientComparisonID })
+        let current = try #require(histories.first { $0.id == second.clientComparisonID })
+        #expect(current.product.id == VNextHistoryProjectionIdentity.productID(comparisonID: second.clientComparisonID))
+        #expect(current.product.productTargetGender == .women)
+        #expect(current.product.sourceURLString == "https://www.uniqlo.com/kr/ko/products/E450259")
+        #expect(current.product.garmentTypeRawValue == "tshirt")
+        #expect(current.product.classificationAuthorityProvenance == .userExplicit)
+        #expect(current.product.canonicalSourceIdentity?.contains("revision=2") == true)
+        #expect(current.product.canonicalSourceIdentity?.contains("target=\(targetID.uuidString.lowercased())") == true)
+        #expect(current.serverApprovedVNextReliability == 2)
     }
 
     /// HI-005 / HI-013: an immutable hydrated History projection carries the
@@ -2345,7 +2322,7 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(context.hasChanges)
     }
 
-    @Test func referenceRejectionKeepsServerCreatedClosetItemAndLocalReferenceFalse() async throws {
+    @Test func retiredReferenceRequestNeverCallsRemoteReferenceMutation() async throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
         let clientItemID = UUID()
@@ -2369,14 +2346,14 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
 
         let outcome = await action.submitServerFirst(submission, in: context)
 
-        guard case .completed(.savedWithoutReference(let item, _)) = outcome else {
-            Issue.record("Expected partial success after server reference rejection")
+        guard case .completed(.saved(let item)) = outcome else {
+            Issue.record("Expected saved Closet item without a retired reference mutation")
             return
         }
         #expect(item.id == clientItemID)
         #expect(!item.isRepresentative)
         #expect(await remote.hasAccepted(clientItemID: clientItemID))
-        #expect(await remote.referenceCallCount() == 1)
+        #expect(await remote.referenceCallCount() == 0)
         let persisted = try #require(
             try context.fetch(FetchDescriptor<UserFit>()).first { $0.id == clientItemID }
         )

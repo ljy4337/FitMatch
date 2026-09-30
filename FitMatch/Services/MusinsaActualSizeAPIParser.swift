@@ -217,7 +217,7 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
 
         let measurementRecords = size.items.compactMap { item -> ParsedMeasurement? in
             let rawValue = item.value.stringValue
-            guard let value = firstNumber(in: rawValue), value.isFinite, value > 0 else { return nil }
+            guard let value = firstNumber(in: rawValue), value.isFinite, value >= 0 else { return nil }
             let column = MusinsaActualSizeColumn.column(
                 for: item.name.normalizedMeasurementName,
                 isTopCategory: isTopCategory
@@ -229,7 +229,11 @@ struct MusinsaActualSizeAPIParser: ProductURLParsing {
                 isTopCategory: isTopCategory
             )
             let normalizedValue = value * (mapping?.valueMultiplier ?? 1)
-            valuesByName[item.name.normalizedMeasurementName] = String(normalizedValue)
+            // Keep zero as an original retailer fact, but never project it
+            // into the positive scalar measurements used by comparison.
+            if value > 0 {
+                valuesByName[item.name.normalizedMeasurementName] = String(normalizedValue)
+            }
             return ParsedMeasurement(
                 value: normalizedValue,
                 measurementCode: mapping?.code ?? .unknown,

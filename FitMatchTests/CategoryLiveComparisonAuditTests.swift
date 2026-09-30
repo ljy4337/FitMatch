@@ -1093,16 +1093,39 @@ final class ReferenceClosetSetupXCTests: XCTestCase {
         )
     }
 
-    func testComparisonClassificationBoundaryPolicy() throws {
-        let tests = FitMatchTests()
-        tests.singleExactRepresentativeForUserResolvedCategoryIsAutomaticallySelected()
-        tests.multipleCompatibleRepresentativesSelectDeterministically()
-        tests.singleCompatibleNonReferenceStillRequiresUserSelection()
-        tests.similarReferenceCandidatesRequireUserSelection()
-        tests.differentShortTopStructureShowsManualExpansionNotice()
-        tests.userCategoryChoiceIsReusedForTheExactProviderProductOnly()
-        try tests.poloUsesTshirtFamilyAndAutomaticallyMatchesSameLengthTshirt()
-        tests.poloDoesNotAutomaticallyCompareWithWovenShirt()
+    func testComparisonClassificationBoundaryPolicy() async throws {
+        // Exercise the production owner in an async XCTest context, rather than
+        // invoking Swift Testing test functions from a synchronous XCTest runner.
+        let size = ProductSize(name: "M", measurements: .init(
+            shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24))
+        let product = Product(name: "Boundary fixture", category: .top, sizes: [size])
+        let candidates = [true, false].map { legacyFlag in
+            UserFit(brandName: "Fixture", productName: "Top", category: .top,
+                detailCategory: .shortSleeve, sizeName: "M", measurements: .init(
+                    shoulder: 48, chest: 54, totalLength: 70, sleeveLength: 24),
+                fitMemo: "", satisfaction: 3, isRepresentative: legacyFlag)
+        }
+        func chestRecord() -> GarmentMeasurementRecord {
+            GarmentMeasurementRecord(value: 54, measurementCode: .chestWidthPitToPit,
+                displayKind: .chest, methodSource: "fitmatch_manual",
+                inputSource: .userMeasured, mappingVersion: "fixture", rawLabel: "가슴단면",
+                evidenceLevel: .officialText, semanticStatus: .mapped)
+        }
+        size.measurementRecords = [chestRecord()]
+        for candidate in candidates { candidate.measurementRecords = [chestRecord()] }
+        let service = RecommendationService()
+        let plan = service.referenceSelectionPlan(product: product,
+            productDetailCategory: .shortSleeve, userFits: candidates)
+        XCTAssertEqual(Set(plan.recommendedCandidates.map(\.id)), Set(candidates.map(\.id)))
+        XCTAssertNil(plan.automaticallySelectedCandidate)
+        XCTAssertTrue(plan.requiresUserSelection)
+        XCTAssertNil(service.recommend(product: product, userFits: candidates,
+            productDetailCategory: .shortSleeve))
+        let selected = try XCTUnwrap(candidates.last)
+        let result = try XCTUnwrap(service.recommend(product: product,
+            selectedReferenceItem: selected, productDetailCategory: .shortSleeve))
+        XCTAssertEqual(result.userFit.id, selected.id)
+        XCTAssertEqual(result.comparisonStatus, .confirmed)
     }
 
     func testUniqloReferenceCrossPlatformComparison() async throws {

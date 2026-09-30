@@ -52,11 +52,11 @@ struct BodyShapeRemovalTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(try #require(result.comparedItems.first { $0.kind == .shoulder }).weight == 1.2)
-        #expect(try #require(result.comparedItems.first { $0.kind == .chest }).weight == 1.4)
+        #expect(try #require(result.comparedItems.first { $0.kind == .shoulder }).weight == 1.5)
+        #expect(try #require(result.comparedItems.first { $0.kind == .chest }).weight == 2.0)
         #expect(try #require(result.comparedItems.first { $0.kind == .totalLength }).weight == 1.0)
-        #expect(try #require(result.comparedItems.first { $0.kind == .sleeveLength }).weight == 0.2)
-        #expect(result.expectedWeightSum == 3.8)
+        #expect(try #require(result.comparedItems.first { $0.kind == .sleeveLength }).weight == 1.0)
+        #expect(result.expectedWeightSum == 5.5)
     }
 
     @Test func formerBodyShapeOnlyMeasurementsDoNotEnterTopRecommendation() {

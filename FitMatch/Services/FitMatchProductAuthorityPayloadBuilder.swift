@@ -23,6 +23,13 @@ extension Product {
     }
 
     private func fitMatchParsedRetailerFacts() -> ParsedProductInfo? {
+        // A restored comparison contains approved comparison evidence, not
+        // the retailer's original variant/size/measurement observation.
+        // Require a fresh link import instead of submitting that projection
+        // as retailer facts (including a fabricated default variant).
+        guard canonicalSourceIdentity?.hasPrefix("fitmatch_vnext_history") != true else {
+            return nil
+        }
         guard let externalProductID = productCode?
             .trimmingCharacters(in: .whitespacesAndNewlines),
               !externalProductID.isEmpty else { return nil }

@@ -327,7 +327,13 @@ struct AddClosetItemView: View {
                     deleteCurrentItem()
                 }
             } label: {
-                Text("삭제")
+                HStack(spacing: 8) {
+                    if isDeleting {
+                        ProgressView("삭제 중")
+                    } else {
+                        Text("삭제")
+                    }
+                }
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(.red)
                     .frame(maxWidth: .infinity)

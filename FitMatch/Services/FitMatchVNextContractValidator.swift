@@ -52,7 +52,6 @@ nonisolated enum VNextReadinessState: String, CaseIterable, Sendable {
 /// and are never coalesced here.
 nonisolated enum FitMatchVNextContractValidator {
     static let supportedSnapshotSchemaVersions: Set<Int> = [3, 4]
-    static let completedReplayEngineVersion = "fitmatch-ios-vnext-snapshot-v1"
     static let pendingEngineVersion = "pending"
 
     /// Do not let duplicate server identities trap in Dictionary construction
@@ -180,7 +179,7 @@ nonisolated enum FitMatchVNextContractValidator {
             )
         }
         try validateSupportedSnapshotVersion(row.snapshotSchemaVersion)
-        guard row.engineVersion == completedReplayEngineVersion else {
+        guard VNextCompletedReplayPolicy.supportedVersions.contains(row.engineVersion) else {
             throw FitMatchVNextContractError.unsupportedEngineVersion(
                 row.engineVersion
             )
@@ -190,7 +189,7 @@ nonisolated enum FitMatchVNextContractValidator {
                 "result_evidence"
             )
         }
-        guard evidence.engineVersion == completedReplayEngineVersion else {
+        guard VNextCompletedReplayPolicy.supportedVersions.contains(evidence.engineVersion) else {
             throw FitMatchVNextContractError.unsupportedEngineVersion(
                 evidence.engineVersion
             )

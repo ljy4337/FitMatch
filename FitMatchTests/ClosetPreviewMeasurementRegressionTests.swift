@@ -7,8 +7,8 @@ import SwiftData
 struct ClosetPreviewMeasurementRegressionTests {
     // Regression: the production adapter previously discarded all canonical
     // records whenever even one immutable raw snapshot was present.
-    @Test(arguments: ["uniqlo", "musinsa", "zara"])
-    func rawSnapshotsDoNotReplaceComparisonEvidence(source: String) throws {
+    @Test(arguments: ["uniqlo", "musinsa", "zara"], [0.0, 7.0])
+    func rawSnapshotsDoNotReplaceComparisonEvidence(source: String, rawValue: Double) throws {
         let json = """
         {"id":"\(UUID())","client_item_id":"\(UUID())","product_id":"\(UUID())",
          "item_name":"Fixture","size_label":"XL","audience_code":"UNISEX",
@@ -20,7 +20,7 @@ struct ClosetPreviewMeasurementRegressionTests {
           "parser_code":"fixture","raw_code":"raw-chest","raw_label":"공식 원본","raw_value":59,
           "raw_value_text":"59.0","raw_unit_code":"cm","resolution_status":"RESOLVED"},
           {"raw_measurement_key":"raw-2","source_code":"\(source)","parser_code":"fixture",
-          "raw_code":"future-field","raw_label":"새 항목","raw_value":7,"raw_value_text":"7",
+          "raw_code":"future-field","raw_label":"새 항목","raw_value":\(rawValue),"raw_value_text":"\(rawValue)",
           "raw_unit_code":"cm","resolution_status":"UNMAPPED"}]}
         """
         let dto = try JSONDecoder().decode(VNextClosetItemDTO.self, from: Data(json.utf8))
@@ -29,7 +29,7 @@ struct ClosetPreviewMeasurementRegressionTests {
         #expect(mapped.measurementRecords.filter { $0.semanticStatus == "mapped" }.count == 1)
         let raw = mapped.measurementRecords.filter { $0.methodSource != "fitmatch_vnext_snapshot" }
         #expect(raw.count == 2)
-        #expect(raw.map(\.rawValueText) == ["59.0", "7"])
+        #expect(raw.map(\.rawValueText) == ["59.0", String(rawValue)])
         #expect(raw.allSatisfy { $0.semanticStatus == "unknown_definition" })
 
         // Exercise the real persisted Closet hydration owner, then the same
@@ -64,10 +64,10 @@ struct ClosetPreviewMeasurementRegressionTests {
         let summary = try #require(RecommendationService().makeClosetComparisonBatchSummary(
             product: product, productDetailCategory: .shirt, comparisonGroup: group,
             candidates: [restored]).items.first)
-        // Preview's old two-metric threshold is not a server rejection.
-        #expect(summary.similarityPercent == nil)
-        #expect(summary.reason?.contains("최소") == false)
-        #expect(summary.reason?.contains("선택") == true)
+        // One approved canonical metric is enough; unknown raw rows stay unscored.
+        #expect(summary.similarityPercent == 100)
+        #expect(result.status == .confirmed)
+        #expect(summary.reason == nil)
     }
 
     @Test func rawPresentationDoesNotDuplicateCanonicalProjection() {

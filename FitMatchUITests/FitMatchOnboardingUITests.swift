@@ -68,7 +68,9 @@ final class FitMatchOnboardingUITests: XCTestCase {
         var app = launchFreshOnboardingApp()
         advanceToRegistrationGuide(in: app)
 
-        app.buttons["onboarding.later"].tap()
+        XCTAssertFalse(app.buttons["onboarding.later.top"].exists)
+        let laterButton = app.buttons["onboarding.later"]
+        laterButton.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["아직 등록된 옷이 없어요"].exists)
 

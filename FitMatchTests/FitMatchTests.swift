@@ -432,7 +432,7 @@ struct FitMatchTests {
         #expect(parser.mapCategory(from: "하의 > 아노락 팬츠") == .bottom)
     }
 
-    @Test func singleExactRepresentativeForUserResolvedCategoryIsAutomaticallySelected() {
+    @Test func singleExactRepresentativeForUserResolvedCategoryRequiresUserSelection() {
         let productSize = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
@@ -502,7 +502,8 @@ struct FitMatchTests {
         )
 
         #expect(plan.recommendedCandidates.map(\.id) == [reference.id])
-        #expect(plan.automaticallySelectedCandidate?.id == reference.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
     @Test func musinsaSweatshirtNamesDoNotBecomeShirtsBySubstring() throws {
@@ -1815,7 +1816,11 @@ struct FitMatchTests {
         )
         let valid = ParsedSizeValidator.validSizes(result.sizes, category: .shirt)
 
-        #expect(result.sizes.map(\.name) == ["S(옥스포드)", "M(White)"])
+        #expect(result.sizes.map(\.name) == ["S(린넨)", "S(옥스포드)", "M(White)"])
+        let zeroSize = try #require(result.sizes.first)
+        #expect(zeroSize.measurementRecords.count == 4)
+        #expect(zeroSize.measurementRecords.allSatisfy { $0.value == 0 })
+        #expect(!ParsedSizeValidator.hasUsableMeasurements([zeroSize], category: .shirt))
         #expect(valid.map(\.name) == ["S(옥스포드)", "M(White)"])
         #expect(valid.first?.measurements.chest == 66)
         #expect(valid.first?.measurements.totalLength == 75)
@@ -2947,7 +2952,7 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(result.status == .insufficientEvidence)
+        #expect(result.status == .confirmed)
         #expect(result.comparedKinds == [.shoulder])
         #expect(result.exclusions.contains {
             $0.kind == .sleeveLength
@@ -2959,7 +2964,7 @@ struct FitMatchTests {
         })
     }
 
-    @Test func bottomComparisonRequiresTwoCoreWidthMeasurements() {
+    @Test func bottomComparisonUsesAvailablePolicyMeasurements() {
         let size = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
@@ -3009,12 +3014,12 @@ struct FitMatchTests {
 
         #expect(result.status == .confirmed)
         #expect(result.comparedKinds == [.waist, .hip, .totalLength])
-        #expect(result.minimumComparableCount == 2)
+        #expect(result.minimumComparableCount == 1)
         #expect(result.requiredKinds == [.waist, .hip, .thigh])
-        #expect(result.minimumRequiredKindCount == 2)
+        #expect(result.minimumRequiredKindCount == 0)
     }
 
-    @Test func bottomWidthAndLengthAloneDoNotConfirmRecommendation() {
+    @Test func bottomWidthAndLengthAllowComparison() {
         let size = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
@@ -3059,10 +3064,10 @@ struct FitMatchTests {
         )
 
         #expect(result.comparedKinds == [.waist, .totalLength])
-        #expect(result.status == .insufficientEvidence)
+        #expect(result.status == .confirmed)
     }
 
-    @Test func outerComparisonRequiresChestAndOneAdditionalMeasurement() {
+    @Test func outerComparisonUsesAvailablePolicyMeasurements() {
         let size = ProductSize(
             name: "M",
             measurements: GarmentMeasurements(
@@ -3110,10 +3115,10 @@ struct FitMatchTests {
 
         #expect(result.status == .confirmed)
         #expect(result.comparedKinds == [.chest, .totalLength, .hem])
-        #expect(result.requiredAllKinds == [.chest])
+        #expect(result.requiredAllKinds.isEmpty)
     }
 
-    @Test func outerShoulderAndSleeveWithoutChestAreInsufficient() {
+    @Test func outerShoulderAndSleeveWithoutChestRemainComparable() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 64,
@@ -3135,8 +3140,8 @@ struct FitMatchTests {
         )
 
         #expect(result.comparedKinds == [.shoulder, .sleeveLength])
-        #expect(result.status == .insufficientEvidence)
-        #expect(result.requiredAllKinds == [.chest])
+        #expect(result.status == .confirmed)
+        #expect(result.requiredAllKinds.isEmpty)
     }
 
     @Test func recommendationIsBlockedWhenCompatibleEvidenceIsInsufficient() {
@@ -3150,7 +3155,7 @@ struct FitMatchTests {
         let item = comparisonItem(
             shoulder: 48,
             sleeve: 23,
-            shoulderCode: .shoulderWidthSeamToSeam,
+            shoulderCode: .unknown,
             sleeveCode: .sleeveShoulderSeamToCuff
         )
 
@@ -3174,7 +3179,7 @@ struct FitMatchTests {
         let item = comparisonItem(
             shoulder: 48,
             sleeve: 23,
-            shoulderCode: .shoulderWidthSeamToSeam,
+            shoulderCode: .unknown,
             sleeveCode: .sleeveShoulderSeamToCuff
         )
 
@@ -3192,8 +3197,8 @@ struct FitMatchTests {
 
         #expect(history == nil)
         #expect(evidence?.comparisonResult.status == .insufficientEvidence)
-        #expect(evidence?.comparedKinds == [.shoulder])
-        #expect(evidence?.comparisonResult.minimumComparableCount == 2)
+        #expect(evidence?.comparedKinds.isEmpty == true)
+        #expect(evidence?.comparisonResult.minimumComparableCount == 1)
         #expect(evidence?.comparisonResult.exclusions.contains {
             $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode
         } == true)
@@ -3242,7 +3247,7 @@ struct FitMatchTests {
         let selectedItem = comparisonItem(
             shoulder: 48,
             sleeve: 23,
-            shoulderCode: .shoulderWidthSeamToSeam,
+            shoulderCode: .unknown,
             sleeveCode: .sleeveShoulderSeamToCuff
         )
 
@@ -3258,11 +3263,11 @@ struct FitMatchTests {
         }
         #expect(!outcome.shouldDismissPicker)
         #expect(evidence?.comparisonResult.status == .insufficientEvidence)
-        #expect(evidence?.comparedKinds == [.shoulder])
+        #expect(evidence?.comparedKinds.isEmpty == true)
         #expect(evidence?.missingKinds.contains(.sleeveLength) == true)
     }
 
-    @Test func automaticFlowKeepsProfileCompatibleItemForInsufficientEvidenceScreen() {
+    @Test func automaticFlowRetainsCandidateWithoutCreatingResultOrEvidence() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 47,
@@ -3299,8 +3304,11 @@ struct FitMatchTests {
         #expect(match.state == .compatible)
         #expect(match.compatibleCandidates.map(\.id) == [item.id])
         #expect(history == nil)
-        #expect(evidence?.referenceItem.id == item.id)
-        #expect(evidence?.comparisonResult.status == .insufficientEvidence)
+        #expect(evidence == nil)
+        let plan = service.referenceSelectionPlan(product: product, productDetailCategory: .shortSleeve, userFits: [item])
+        #expect(plan.recommendedCandidates.map(\.id) == [item.id])
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
     @Test func recommendationStoresUsedCodesAndExclusionReasons() {
@@ -3364,7 +3372,7 @@ struct FitMatchTests {
         #expect(result.compatibleCandidates.map(\.id) == [setIn.id])
     }
 
-    @Test func compatibleRepresentativeOutranksRicherMeasurementEvidence() {
+    @Test func retiredRepresentativeDoesNotOutrankRicherMeasurementEvidence() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -3394,18 +3402,18 @@ struct FitMatchTests {
             userFits: [representative, richerEvidence]
         )
 
-        #expect(ranked.first?.userFit.id == representative.id)
-        #expect(ranked.first?.compatibleMeasurementCount == 2)
+        #expect(ranked.first?.userFit.id == richerEvidence.id)
+        #expect(ranked.first?.compatibleMeasurementCount == 3)
         let plan = RecommendationService().referenceSelectionPlan(
             product: product,
             productDetailCategory: .shortSleeve,
             userFits: [representative, richerEvidence]
         )
-        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
-        #expect(!plan.requiresUserSelection)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
     }
 
-    @Test func compatibleRepresentativeOutranksHigherSimilarity() {
+    @Test func retiredRepresentativeDoesNotAutoSelectAgainstHigherSimilarity() {
         let size = comparisonSize(
             shoulder: 50, sleeve: 24,
             shoulderCode: .shoulderWidthSeamToSeam,
@@ -3430,10 +3438,12 @@ struct FitMatchTests {
             userFits: [closer, representative]
         )
 
-        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
+        #expect(plan.recommendedCandidates.count == 2)
     }
 
-    @Test func compatibleRepresentativeOutranksSameBrandCandidate() {
+    @Test func retiredRepresentativeDoesNotAutoSelectAgainstSameBrandCandidate() {
         let size = comparisonSize(
             shoulder: 50, sleeve: 24,
             shoulderCode: .shoulderWidthSeamToSeam,
@@ -3465,10 +3475,12 @@ struct FitMatchTests {
             userFits: [sameBrand, representative]
         )
 
-        #expect(plan.automaticallySelectedCandidate?.id == representative.id)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
+        #expect(plan.recommendedCandidates.count == 2)
     }
 
-    @Test func multipleCompatibleRepresentativesSelectDeterministically() {
+    @Test func multipleCompatibleRepresentativesRemainUserSelectable() {
         let size = comparisonSize(
             shoulder: 50, sleeve: 24,
             shoulderCode: .shoulderWidthSeamToSeam,
@@ -3502,8 +3514,11 @@ struct FitMatchTests {
             userFits: [newer, older]
         )
 
-        #expect(first.automaticallySelectedCandidate?.id == newer.id)
-        #expect(second.automaticallySelectedCandidate?.id == newer.id)
+        #expect(first.automaticallySelectedCandidate == nil)
+        #expect(second.automaticallySelectedCandidate == nil)
+        #expect(Set(first.recommendedCandidates.map(\.id)) == Set([older.id, newer.id]))
+        #expect(Set(second.recommendedCandidates.map(\.id)) == Set([older.id, newer.id]))
+        #expect(first.requiresUserSelection && second.requiresUserSelection)
     }
 
     @Test func insufficientRepresentativeEvidenceBlocksAutomaticSelection() {
@@ -3636,7 +3651,7 @@ struct FitMatchTests {
         #expect(after.comparisonStatus == before.comparisonStatus)
     }
 
-    @Test func poloUsesTshirtFamilyAndAutomaticallyMatchesSameLengthTshirt() throws {
+    @Test func poloUsesTshirtFamilyAndManuallyMatchesSameLengthTshirt() throws {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -3680,8 +3695,8 @@ struct FitMatchTests {
         #expect(automatic.compatibleCandidates.map(\.id) == [polo.id])
         #expect(automatic.incomingProfile.garmentFamily == .tshirt)
         #expect(ComparisonProfileMatcher().profile(for: polo).garmentFamily == .tshirt)
-        #expect(plan.automaticallySelectedCandidate?.id == polo.id)
-        #expect(!plan.requiresUserSelection)
+        #expect(plan.automaticallySelectedCandidate == nil)
+        #expect(plan.requiresUserSelection)
         #expect(manual.userFit.id == polo.id)
         #expect(manual.comparisonStatus == .confirmed)
     }
@@ -3849,7 +3864,7 @@ struct FitMatchTests {
         #expect(note?.contains("다른 반팔 상의 구조") == true)
     }
 
-    @Test func representativeOutranksSimilarityWhenEvidenceIsEqual() {
+    @Test func retiredRepresentativeCannotCreateAnUnselectedComparison() {
         let size = comparisonSize(
             shoulder: 50,
             sleeve: 24,
@@ -3877,7 +3892,7 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(history?.userFit.id == representative.id)
+        #expect(history == nil)
     }
 
     @Test func sameBrandIsOnlyATieBreakerAfterSimilarity() {
@@ -4345,7 +4360,7 @@ struct FitMatchTests {
         } == true)
     }
 
-    @Test func compatibleOtherBrandOutranksSameBrandWithDifferentMeasurementMethod() {
+    @Test func oneMatchingAxisRetainsCandidateDespiteDifferentSleeveMethod() {
         let brand = Brand(name: "브랜드A")
         let size = comparisonSize(
             shoulder: 50,
@@ -4386,9 +4401,12 @@ struct FitMatchTests {
             productDetailCategory: .shortSleeve
         )
 
-        #expect(match.compatibleCandidates.map(\.id) == [compatibleOtherBrand.id])
+        #expect(Set(match.compatibleCandidates.map(\.id)) == Set([compatibleOtherBrand.id, incompatibleSameBrand.id]))
         #expect(history == nil)
         #expect(manuallySelected?.userFit.id == compatibleOtherBrand.id)
+        let partial = MeasurementComparisonEngine().compare(productSize: size, referenceItem: incompatibleSameBrand, productCategory: .top, productDetailCategory: .shortSleeve)
+        #expect(partial.comparedKinds == [.shoulder])
+        #expect(partial.exclusions.contains { $0.kind == .sleeveLength && $0.reason == .incompatibleMeasurementCode })
     }
 
     @Test func changingReferenceItemRecalculatesRecommendedSize() {
@@ -4931,7 +4949,7 @@ struct FitMatchTests {
         let incompatibleReference = comparisonItem(
             shoulder: 49,
             sleeve: 63,
-            shoulderCode: .shoulderWidthSeamToSeam,
+            shoulderCode: .unknown,
             sleeveCode: .sleeveShoulderSeamToCuff
         )
         context.insert(originalReference)
@@ -9020,7 +9038,8 @@ struct FitMatchTests {
             if rawSizes.isEmpty {
                 stage = "official_size_rows_missing"
                 reasons.append("official_response_has_no_size_rows")
-            } else if parsed.sizes.isEmpty {
+            } else if rawPositiveMeasurementCount == 0 || parsed.sizes.isEmpty {
+                // Retained raw zero rows are evidence, not usable measurements.
                 stage = "official_measurement_values_missing"
                 reasons.append(rawPositiveMeasurementCount == 0
                     ? "official_rows_have_no_positive_measurements"

@@ -2,12 +2,14 @@
 
 set -u
 
-if [[ $# -ne 1 ]]; then
-    echo "usage: $0 /path/to/FitMatch.xcarchive" >&2
+if [[ $# -ne 3 || -z "${2:-}" || -z "${3:-}" ]]; then
+    echo "usage: $0 /path/to/FitMatch.xcarchive expected-version expected-build" >&2
     exit 2
 fi
 
 archive_path=$1
+expected_version=$2
+expected_build=$3
 app_path="$archive_path/Products/Applications/FitMatch.app"
 extension_path="$app_path/PlugIns/FitMatchShareExtension.appex"
 app_plist="$app_path/Info.plist"
@@ -76,8 +78,8 @@ require_path "$extension_plist" "share extension Info.plist exists"
 
 if [[ -f "$app_plist" ]]; then
     require_plist_value "$app_plist" CFBundleIdentifier "com.ljy4337.fitmatch" "app bundle identifier"
-    require_plist_value "$app_plist" CFBundleShortVersionString "1.0" "app marketing version"
-    require_plist_value "$app_plist" CFBundleVersion "4" "app build number"
+    require_plist_value "$app_plist" CFBundleShortVersionString "$expected_version" "app marketing version"
+    require_plist_value "$app_plist" CFBundleVersion "$expected_build" "app build number"
     require_plist_value "$app_plist" CFBundleURLTypes:0:CFBundleURLName "com.ljy4337.fitmatch" "URL type identifier"
     require_plist_value "$app_plist" CFBundleURLTypes:0:CFBundleURLSchemes:0 "fitmatch" "URL scheme"
 
@@ -98,8 +100,8 @@ fi
 
 if [[ -f "$extension_plist" ]]; then
     require_plist_value "$extension_plist" CFBundleIdentifier "com.ljy4337.fitmatch.shareextension" "share extension bundle identifier"
-    require_plist_value "$extension_plist" CFBundleShortVersionString "1.0" "share extension marketing version"
-    require_plist_value "$extension_plist" CFBundleVersion "4" "share extension build number"
+    require_plist_value "$extension_plist" CFBundleShortVersionString "$expected_version" "share extension marketing version"
+    require_plist_value "$extension_plist" CFBundleVersion "$expected_build" "share extension build number"
 fi
 
 require_path "$app_path/PrivacyInfo.xcprivacy" "app Privacy Manifest"

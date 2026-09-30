@@ -836,7 +836,7 @@ struct ZARAParserPhase1_5Tests {
             subfamily: "F. Camiseta"
         )
         let data = Data("""
-        {"measureGuideInfo":{"sizes":[{"name":"S","measures":[
+        {"measureGuideInfo":{"id":"guide-1","sizes":[{"name":"S","measures":[
           {"zoneId":"A","tableTitleZone":"zone-name-chest","dimensions":[{"unitId":"cm","value":"48.5"}]},
           {"zoneId":"B","tableTitleZone":"zone-name-front-length","dimensions":[{"unitId":"cm","value":"62.5"}]},
           {"zoneId":"C","tableTitleZone":"zone-name-sleeve-length","dimensions":[{"unitId":"cm","value":"17.0"}]},
@@ -857,6 +857,7 @@ struct ZARAParserPhase1_5Tests {
         #expect(!info.sizes.isEmpty)
         let records = info.sizes.flatMap(\.measurementRecords)
         #expect(records.first { $0.rawCode == "zone-name-chest" }?.measurementCode == .chestWidthPitToPit)
+        #expect(records.allSatisfy { $0.methodProfile == "zara_kr_measure_guide:guide-1" })
         #expect(records.first { $0.rawCode == "zone-name-back-width" }?.semanticStatus == .unknownDefinition)
         #expect(records.first { $0.rawCode == "zone-name-sleeve-length" }?.measurementCode == .sleeveShoulderSeamToCuff)
         #expect(records.first { $0.rawCode == "zone-name-front-length" }?.semanticStatus == .unknownDefinition)

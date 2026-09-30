@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import Supabase
 
 nonisolated struct FitMatchProductResolutionRequest: Codable, Equatable, Sendable {
@@ -3423,6 +3424,10 @@ extension ParsedProductInfo {
         let observationSizes = sizes.enumerated().compactMap { index, size -> FitMatchProductObservationSize? in
             let label = size.name.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !label.isEmpty else { return nil }
+            let sourceSchemaVersion = Self.observedMeasurementTableVersion(
+                sourceCode: resolution.source,
+                records: size.measurementRecords
+            )
             let measurements = size.measurementRecords.enumerated().compactMap {
                 measurementIndex,
                 measurement -> FitMatchProductObservationMeasurement? in
@@ -3477,7 +3482,9 @@ extension ParsedProductInfo {
                         "evidence_level": measurement.evidenceLevel.rawValue,
                         "semantic_status": measurement.semanticStatus.rawValue,
                         "raw_value_text": measurement.rawValueText ?? ""
-                    ]
+                    ].merging(sourceSchemaVersion.map { ["source_schema_version": $0] } ?? [:]) {
+                        current, _ in current
+                    }
                 )
             }
             let normalizedStatus: String = {
@@ -3614,5 +3621,41 @@ extension ParsedProductInfo {
             let value = methodSource.trimmingCharacters(in: .whitespacesAndNewlines)
             return value.isEmpty ? "legacy_unknown" : value
         }
+    }
+
+    nonisolated private static func observedMeasurementTableVersion(
+        sourceCode: String,
+        records: [ParsedMeasurement]
+    ) -> String? {
+        guard !records.isEmpty else { return nil }
+        let profiles = Set(records.compactMap { record -> String? in
+            guard let profile = record.methodProfile?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+                !profile.isEmpty else { return nil }
+            return profile
+        })
+        let mappingVersions = Set(records.map(\.mappingVersion))
+        guard profiles.count == 1,
+              let profile = profiles.first,
+              records.allSatisfy({ $0.methodProfile == profile }),
+              mappingVersions.count == 1,
+              let mappingVersion = mappingVersions.first,
+              !mappingVersion.isEmpty else { return nil }
+        if sourceCode.lowercased() == "zara",
+           !profile.hasPrefix("zara_kr_measure_guide:") {
+            return nil
+        }
+        let keys = records.map { record in
+            let rawCode = record.rawCode?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let label = record.rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+            return (rawCode?.isEmpty == false ? rawCode! : label).lowercased()
+        }
+        guard keys.allSatisfy({ !$0.isEmpty }),
+              Set(keys).count == keys.count else { return nil }
+        let source = ([sourceCode.lowercased(), profile, mappingVersion] + keys.sorted())
+            .joined(separator: "|")
+        let digest = SHA256.hash(data: Data(source.utf8))
+            .map { String(format: "%02x", $0) }.joined()
+        return "fitmatch-observed-table-v1:\(digest)"
     }
 }

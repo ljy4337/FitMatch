@@ -3,6 +3,28 @@ import Testing
 @testable import FitMatch
 
 struct FitMatchVNextContractTests {
+    @Test func completedReplayReliabilityAcceptsOnlyDocumentedFormulas() {
+        // Includes all current DB distributions and historical threshold boundaries.
+        for (count, coverage, legacy) in [(1, 0.16667, 2), (2, 0.25, 3),
+            (3, 0.49999, 3), (3, 0.5, 4), (4, 0.36364, 3),
+            (4, 0.5, 4), (4, 0.74999, 4), (4, 0.75, 5)] {
+            let current = min(5, count)
+            for reliability in 0...6 {
+                #expect(VNextCompletedReplayPolicy.acceptsReliability(
+                    reliability, engineVersion: "fitmatch-ios-vnext-snapshot-v1",
+                    evidenceCount: count, coverage: coverage
+                ) == (reliability == legacy || reliability == current))
+                #expect(VNextCompletedReplayPolicy.acceptsReliability(
+                    reliability, engineVersion: "fitmatch-ios-vnext-snapshot-v2",
+                    evidenceCount: count, coverage: coverage
+                ) == (reliability == current))
+            }
+        }
+        #expect(!VNextCompletedReplayPolicy.acceptsReliability(
+            1, engineVersion: "unknown", evidenceCount: 1, coverage: 1))
+        #expect(VNextComparisonEngineAdapter.engineVersion == "fitmatch-ios-vnext-snapshot-v2")
+    }
+
     @Test func retailerExactV2ContractRequiresExactUnscoredSemanticIdentity() throws {
         let evidence = VNextRetailerExactEvidenceV2DTO(
             evidenceVersion: "retailer-exact-evidence-v2",

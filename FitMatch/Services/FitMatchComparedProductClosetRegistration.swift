@@ -796,11 +796,21 @@ enum FitMatchComparedProductClosetRegistration {
         for size: ProductSize,
         records: [FitMatchClosetMeasurementRecordPayload]
     ) -> [String: Double] {
-        let recordValues: [String: Double] = Dictionary(uniqueKeysWithValues: records.compactMap { record -> (String, Double)? in
-            guard record.value.isFinite, record.value > 0 else { return nil }
-            return (record.measurementCode, record.value)
-        })
-        if !recordValues.isEmpty { return recordValues }
+        if !records.isEmpty {
+            // Raw records remain intact in measurementRecords. A local code
+            // (especially unknown) is not a unique source-measurement identity.
+            // Ambiguous codes cannot be represented by a scalar dictionary;
+            // never select a first/last value or resurrect stale size scalars.
+            let grouped = Dictionary(grouping: records, by: \.measurementCode)
+            return grouped.reduce(into: [:]) { values, entry in
+                guard entry.value.count == 1,
+                      entry.key != MeasurementCode.unknown.rawValue,
+                      entry.key != MeasurementCode.legacyUnknown.rawValue,
+                      let record = entry.value.first,
+                      record.value.isFinite, record.value > 0 else { return }
+                values[entry.key] = record.value
+            }
+        }
 
         let values: [(String, Double)] = [
             ("shoulder_width", size.shoulder),

@@ -180,6 +180,14 @@ extension UserFit {
 
         var values: [String: Double] = [:]
         for record in measurementRecords where record.value.isFinite && record.value > 0 {
+            // This snapshot checks freshness, not scoring eligibility. Preserve
+            // exact server canonical keys even when the local display/scoring
+            // vocabulary does not know them. Retailer facts lack this provenance.
+            if record.methodSource == "fitmatch_vnext_snapshot",
+               !record.measurementCodeRawValue.isEmpty {
+                values[record.measurementCodeRawValue] = record.value
+                continue
+            }
             // The server reference snapshot contains only its canonical
             // comparison vocabulary. Retailer-only/raw measurements remain
             // on the Closet item for display, but must not make an otherwise

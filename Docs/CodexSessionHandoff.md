@@ -1,3 +1,169 @@
+## 2026-09-30 TestFlight 업로드 시도 — Xcode 계정 토큰 누락
+
+- 현재 로컬 `connectDB`의 기존 미커밋 소스를 포함해 Archive `/tmp/FitMatchBuild9LocalConnectDB.xcarchive` 생성 성공. 앱/Share Extension Build Number를 8에서 9로 올렸고 Archive 내부에서 `1.1 (9)`, arm64, Team 서명을 확인했다.
+- App Store Connect 업로드는 `exportArchive Failed to Use Accounts` / keychain의 Xcode 계정 `Xcode-Token` 누락으로 실패했다. Apple 서버 접수나 TestFlight Processing은 확인되지 않았다.
+- 사용자 변경 파일은 커밋/푸시/정리하지 않았다. 현재 미커밋 변경과 Build Number 9 수정은 로컬에 유지된다. Xcode Settings → Accounts에서 Apple 계정을 다시 인증한 뒤 같은 Archive 업로드를 재시도할 수 있다.
+- Archive 생성은 PASS, App Store Connect upload는 BLOCKED. 이번 요청에서 별도 테스트는 실행하지 않았다.
+
+## 2026-09-30 내 옷장 기본 스와이프 전환 — 최신 사용자 결정
+
+- 사용자가 기본 UI 우선(1번)을 선택하여 이전의 긴 스와이프 즉시 삭제 정책을 대체했다. MyClosetView는 기록 화면과 동일한 native trailing swipeActions/빨간 Label 삭제 버튼을 사용한다. 긴 스와이프와 버튼 터치 모두 pendingDeleteItem 확인창으로 진입하고, 확인 후에만 기존 server-first 삭제를 실행한다.
+- 커스텀 row/좌표 helper 제거. 삭제 중 모든 목록 row 잠금과 해당 row 진행 표시 유지. History, 상세 편집 화면, DB, 삭제 service, 보호 스크롤은 이번 작업에서 수정하지 않음. Behavior Map과 기존 스와이프 회귀 테스트를 새 승인 정책에 맞춤.
+- 검증: xcodebuild test, scheme FitMatch, iPhone 17 Pro simulator 03BAF093-552E-4E53-ABFB-7DE0653BE676, MyClosetSwipeDeletionInteractionTests + FitMatchClosetDeletionTransactionTests **15 tests / 18 runs PASS, 0 FAIL, 0 skip**, exit 0. 결과 /tmp/FitMatchNativeDeleteRetry20260930.xcresult, 로그 /tmp/FitMatchNativeDeleteRetry20260930.log. Debug 앱/테스트 빌드 PASS, 기존 warning 잔존. 최초 sandbox 실행은 SwiftPM cache 권한으로 BLOCKED(exit74), 권한 허용 후 위 재실행 PASS.
+- UI 연결 검사는 소스 검사이며 실제 터치/애니메이션 E2E는 NOT RUN. 사용자 데이터 삭제/DB write/commit/push 없음. 기존 dirty 변경 보존.
+
+## 2026-09-30 내 옷장 삭제 UI 보완 완료
+
+- 아래삭제UI감사의busy무반응/진행표시/재스와이프위치문제수정. MyClosetView:삭제중모든row삭제진입점과탭잠금,현재row ProgressView,접근성/gesture guard,기존offset기준drag. 기존짧은확인/긴스와이프180pt즉시요청정책유지. 서버삭제/service/DB미변경.
+- ClosetItemDetailView의링크옷편집과AddClosetItemView의수동옷편집삭제버튼도삭제중표시. 기존dirty아이콘상하배치/systemRed보존. 기록은native swipeActions,옷장은customrow로모양/애니메이션차이확인. 디자인통일은하지않음.
+- RED sourcewiring검사2FAIL/기존2PASS /tmp/FitMatchDeleteUIRed20260930.xcresult. GREEN삭제2suite17tests20runs PASS0FAIL0skip exit0 /tmp/FitMatchDeleteUIGreen20260930.xcresult. 실제production좌표helper5경계검사포함. DebugbuildPASS,기존actor/테스트warning잔존. 실제터치/시각UI/VoiceOver E2E NOT RUN;source문자열검사를UI자동화로확대금지.
+- BehaviorMap 갱신,관련소스3파일/테스트1파일수정. 보호스크롤/diffcheckPASS. 사용자데이터삭제/DBwrite/commit/push없음. 서버저장/비교/점수로직미변경.
+
+## 2026-09-30 내 옷장 삭제 UI 소스 감사
+
+- MyClosetView/ClosetItemDetailView→FitMatchClosetDeletionAction→server-first transaction 확인. 실제 사용자옷 삭제/DBwrite/앱코드수정없음.
+- 확인한 UX문제: MyClosetView165는현재삭제row만disabled,340은전역삭제중요청을silent return. 따라서A삭제중B버튼/긴스와이프는활성이나B요청무시가능. 삭제진행표시도목록/상세에없음. 권장: 다른삭제진입점도동일busy기준으로막고현재row에진행표시.
+- 스와이프위치불연속: 이미열린offset-96에서다시drag하면417행은기존offset없이translation만대입(-12일때-12로점프). 위치계산은소스확인,실제제스처/스크롤충돌UI재현은NOT RUN. 드래그시작offset기준보완후UI확인필요.
+- 짧은스와이프삭제확인/긴스와이프즉시삭제는기존승인정책,오류로분류안함. 서버성공후local반영/실패안내유지. MyClosetSwipeDeletionInteractionTests+FitMatchClosetDeletionTransactionTests 14tests17runs PASS,0FAIL/skip,exit0 /tmp/FitMatchClosetDeleteUIAudit20260930.xcresult. 소스문자열연결검사를실제터치테스트로보고하지않음. protected-scroll/diffcheck PASS. 수정은별도요청전까지미진행.
+
+## 2026-09-30 사용자 제공 186링크 실제 파서 감사
+
+- 신규상품 API 읽기 + 기존raw/History 회귀. connectDB/db190a9+dirty보존, production/DB 수정없음. Superpowers systematic-debugging 적용.
+- URL중복제거186: UNIQLO148/MUSINSA31/ZARA7. 실측수집184, E486627부분결과1(공식details error25/내부404,sizeChart없음), 자라조각붙은무신사URL실패1. live suite는마지막입력으로FAIL/exit65, 이를PASS로변경하지않음.
+- 파서1138size/raw5360→전송5360; label/value/unit/선택색상/v1/중복identity 대조1329 PASS. API전체원문행대조나DB저장성공은아님. 기존유니클로113상품/정확숫자3388행 raw보존 신규검사+파서/등록/History 24tests34runs PASS exit0,DebugbuildPASS. 전체suite/물리기기/신규186개인증mutation NOT RUN.
+- DBread-only: 기존product23건group중4UNMAPPED(정상사용자선택정책), active verified aliases223/mapping대조. 무신사2상품가슴둘레/팔둘레alias없지만raw전송유지;최종비교승인미실행으로새결함단정안함. 무신사OCR복구2상품37.6/42.1초관측,해결아님.
+- 새로확정한crash/identity오염/파서후raw손실없음. Docs/QA/SuppliedLinksAudit-20260930/Report.md와원문/결과/명령참조. 신규 SuppliedLinkRawPreservationAuditTests.swift 로컬전용. commit/push/DBwrite없음.
+
+## 2026-09-30 사용자 선택 그룹 History 복원 수정 완료
+
+- 아래 추가감사의 SESSION_GROUP 미해결은 이번수정으로 대체. 기존실제 완료1건으로 incompleteSnapshot RED 재현 후수정. production owner는 VNextHistoryCacheHydrator.HistoricalTargetProjection. 세션에서만 effective_source를 읽고 그룹/요청그룹/fingerprint를 저장근거와 대조하며 serverSessionComparison출처유지.
+- 최종 offline **878tests/904runs PASS,0FAIL,10skip**, exit0 `/tmp/FitMatchSessionHistoryGreen.xcresult`. 기존 자동그룹3상품 및 개인/구형authority회귀 포함. 실제session복원+상태/source/group/fingerprint거절4case추가. 첫개별필터0tests는검증에서제외, RED2에서실패확인.
+- Debug buildPASS; Release/물리기기 재설치E2E NOT RUN. 기존 warning유지. 신규API/DBwrite/migration/commit/push없음. 기존dirty보존. 테스트/fixture/QA/지도/체크리스트갱신. diff/protected-scrollPASS.
+- 기존한계: 원본없는 복원History의 즉시옷장등록/재비교는 원본링크 재입력이필요. 이번에 이경로를 구현했다고 보고하지 않음.
+
+## 2026-09-30 추가 로직 감사 — 사용자 선택 그룹 History 복원 미해결
+
+- READ ONLY 배포 comparison_target_context/begin_comparison 정의 및 기존 COMPLETED row 확인. 신규API/DBwrite/production수정/테스트실행 없음.
+- CONFIRMED 계약 불일치: SESSION_GROUP_CONFIRMED는 effective_source=SESSION_USER_SELECTED를 저장하고 source키가 없음. HistoricalTargetProjection.init의 effective["source"] 필수guard가 거절하며, source를 읽더라도 session source switch분기 없음. 직전CATEGORY_GROUP수정은 자동그룹만해결했고 이분기를 놓침.
+- 기존무신사기록 c4c1b9c1-29e8-4942-bdae-f8263f4fa1f2: schema4/COMPLETED/v1/visible/current_head 확인. 빈캐시에 이기록복원 불가. 실제UI E2E재실행 또는 테스트재현 PASS/FAIL로 보고하지 않음; 배포정의+실제row+필수guard로정적확정.
+- 수정대상 VNextHistoryCacheHydrator.HistoricalTargetProjection: session권한을 영구USER_EXPLICIT/GLOBAL로꾸미지않고 정확히 소비. 자동그룹/개인override/구형GLOBAL 및 unknown failclosed 유지회귀필요. 앞선876PASS에 이실제session기록이 포함되지 않았음.
+- diff/protected-scroll PASS. 이번에는 감사와문서만, commit/push없음.
+
+## 2026-09-30 History 복원 수정 완료 — 기존 데이터 회귀 PASS
+
+- 아래 “History 복원 결함 미해결” 감사 결과는 이번 수정으로 대체. connectDB/db190a9 + 기존dirty 보존. VNextHistoryCacheHydrator: CATEGORY_GROUP_CONFIRMED 정확한 조합 지원, canonical code/value 보존, 전체 replacement 검증 후 local교체. 최초state실패→후속실측0실패→거절시기존삭제실패를 각각 재현후수정.
+- FitMatchProductAuthorityPayloadBuilder: restored History source marker의 canonical projection을 retailer원문으로 재전송 금지. 기록표시는 복원되지만 원본없는 기록의 옷장추가/재비교는 링크재입력 필요. exact원본/variant 재취득 경로 완성으로 보고하지 않음.
+- 최종 offline suite PASS exit0:876tests/899runs PASS,0FAIL,10skip. `/tmp/FitMatchHistoryRepairVerified.xcresult`. 신규4tests/10runs에 실제3상품점수/복원/실측값/disk reopen/실패보존/원문경계 포함. Debug buildPASS, Release/물리기기/두기기E2E NOT RUN. 기존 actor warning남음.
+- 신규 retailer API/DB write/migration 없음. git diff/protected-scroll PASS. commit/push없음. 상세 Docs/QA/HistoryRestoreRepair-20260930.md. 기존 테스트데이터 fixture는 변경없이 재사용.
+
+## 2026-09-30 자라 등록 crash·비교 false-stale 수정 및 실제 재검증
+
+## 2026-09-30 기존 데이터 핵심 로직 재감사 — History 복원 결함 미해결
+
+- 신규 retailer API 수집/DB write 없이 기존 fixture + 앞서 실제 저장한 MUSINSA5328103, UNIQLOE484080, ZARA564222870 완료기록3건을 read-only export해 production engine/hydrator 실행. connectDB/db190a9 + 기존dirty 기준.
+- 기존 offline 회귀872PASS/0FAIL/10skip(device889PASS), exit0. 신규 실제자료 감사는 최종2tests/6runs 중3PASS/3FAIL, exit65: 추천ID·점수3/3PASS, empty-cache History복원3/3FAIL.
+- 확정원인: VNextHistoryCacheHydrator.HistoricalTargetProjection이 현재 서버의 CATEGORY_GROUP / CATEGORY_GROUP_CONFIRMED를 거절. 실제3건 모두 visible/current head/schema4. 기존 local ID는 skip하므로 앞선 재실행 성공이 이 복원을 증명하지 않음.
+- 앱/DB 수정하지 않음. 신규 실패 회귀테스트를 숨기지 않고 로컬에 남김. 같은owner canonical code 변환 누락과 교체실패 rollback은 정적 추가 점검 지점, 사용자 데이터파손 재현으로 보고하지 않음.
+- 보고서 Docs/QA/FirstReleaseFrozenDataLogicAudit-20260930.md. 테스트 FitMatchTests/FrozenReleaseHistoryAuditTests.swift 및 Fixtures/ReleaseAuditPreviouslyCompleted20260930.json 신규. 최종 /tmp/FitMatchFrozenActualReplay20260930c.xcresult. Release/기기E2E NOT RUN. diff/protected-scroll PASS. commit/push 없음.
+
+
+- 최신 상태: 아래 최초 자라 실패는 해결됨. connectDB/db190a9 + 기존 dirty 유지, production 수정2파일: FitMatchComparedProductClosetRegistration.swift(중복/unknown scalar 요약 제외, raw전체유지), FitMatchClassificationAuthorityProvenance.swift(서버 snapshot의 정확한 canonical code를 freshness 대조에 보존). 점수/정책/DB 계약 변경 없음.
+- 신규 ClosetRegistrationDuplicateRawTests: 등록 crash RED→GREEN, 추가 실제 비교에서 발견된 false STALE_REFERENCE RED→GREEN. 최종5 suites 172tests/175runs PASS,0FAIL/0skip, exit0 `/tmp/FitMatchRawFinalGreen.xcresult`. Debug test build PASS, Release NOT RUN. 기존 actor-isolation warning은 남음.
+- 수정앱 실제 Simulator+live API+인증 Supabase: 자라M등록 raw5 보존 → M100% 비교(가슴/소매2항목) → 재실행 후 옷/결과/원본5표시 PASS. DB read-only로 동일product/variant/size snapshot 및 COMPLETED 확인. 승인총3옷 범위 충족, 기존 데이터 수정삭제 없음. 상세 Docs/QA/LiveReleaseProof-20260930/Report.md / ZaraFixUIEvidence.json.
+- 물리iPhone/공유확장/다른기기/전체상품 검증 아님. 무신사/유니클로는 아래 앞선 live 성공 기록이며 이번에 재실행하지 않음. DB migration/deploy/commit/push 없음. 신규 테스트/증거는 로컬 파일.
+
+## 2026-09-30 실제 사용자 경로 검증 — 자라 등록 crash 확인 (위 수정으로 해결)
+
+- 사용자 테스트데이터 최대3개 생성 승인 후 실제 로그인 Simulator UI로 수행. 무신사5328103 M등록(raw6)→M100%비교→L93%임시분석→재실행 PASS. 유니클로E484080/07 M등록(raw4)→M100%비교(소매포함)→재실행 PASS. DB bounded SELECT로 옷2개/COMPLETED2건 확인. 기존 데이터 수정/삭제 없음.
+- **출시 차단:** 자라 원래 공유URL p03443415/v1=564228855는4사이즈/20실측/관측저장까지 정상, M등록 시 Duplicate values for key: unknown crash. FitMatchComparedProductClosetRegistration.measurementValues line799에서 raw의 복수unknown을 Dictionary uniqueKeys로 변환. crash ips002043 및 runtime trace 확보. 실제 신체기기 crash 주장 아님; 앱 production 저장 코드에서 Simulator 실제 API 재현. production 수정 미진행.
+- 기존881PASS/ReleasePASS를 전체실사용 정상으로 확대 금지. 세쇼핑몰 전체 정상 판정 FAIL. 상세 Docs/QA/LiveReleaseProof-20260930/Report.md. 신규 live opt-in 테스트만 추가. DDL/commit/push 없음.
+
+## 2026-09-29 출시 체크리스트 완료 표시 정리
+
+- 사용자 요청으로 FirstReleaseChecklist 상단 완료 현황 11개 체크 및 C02/P08/D01/D02/D04/A02 하위 완료 범위를 표시. 전체 기능 E2E/출시 승인을 뜻하지 않으며 혼합 항목의 부모 체크는 미완료 유지.
+- 1~3단계 실제 기록만 반영. 새 테스트·build·DB 조회/수정 없이 문서만 변경. 서명없는 Release PASS와 제출gate4FAIL, 전체881PASS/42NOT RUN 경계 유지.
+
+## 2026-09-29 3단계 — 도구/초안 완료, 공개설정·서명 보류
+
+- scripts/audit-app-store-archive.sh의1.0(4)고정값 제거. archive/expected-version/expected-build 필수 입력, 앱/확장 모두 검사. 서명·manifest·dSYM·URL gate 유지. 신규 scripts/tests/test-audit-app-store-archive.sh RED exit1→GREEN6case exit0. 합성 archive를 성공 처리하지 않음.
+- 개인정보/Readiness/ReleaseNote 구형 안내 정렬. 수집없음 결론 철회, History 숨김과 영구삭제 구분, 기준옷 표현 제거. 실제 공개 운영자/연락처/URL/시행일/보관정책 미확정으로 초안 유지. Swift/Info.plist/DB 수정 없음. 앱 내 시행일·삭제안내는 정책 확정 후 정렬 필요.
+- unsigned Release archive PASS exit0: /tmp/FitMatchPhase3-20260929.xcarchive, 앱/확장1.1(8). 실제 제출검사 FAIL exit1: 공개URL2개·서명2개, 합4건. 그 외 script검사 PASS. 서명된archive·업로드·실기기 NOT RUN. 기존 업로드번호로 재업로드하지 않음.
+- 상세 명령/로그/남은항목 Docs/QA/Phase3ReleasePreparation-20260929.md. 독립 read-only review material defect 없음. shell syntax/diff/protected-scroll PASS. 기존dirty 보존; 신규test/report 로컬미추적. commit/push/DB write 없음. 3단계 전체 완료 또는 출시가능 판정 아님.
+
+## 2026-09-29 2단계 완료 — 전체 자동 회귀 PASS
+
+- connectDB/db190a9 + 1단계/사용자 dirty 보존. 앱 변경은 MusinsaActualSizeAPIParser.makeParsedSize의 유한0 raw행 보존만. 양수 scalar/comparison gate와 기존 병렬화/비교정책은 유지. 0-only 사이즈는 usable/비교 가능으로 승격하지 않음.
+- 구형 자동대표·최소2개·가중치·같은상품 복수History 기대를 현 정책으로 정렬. 동일target의 최신head 순차교체/디스크재실행 검증 유지. XCTest 동기 wrapper의 SwiftTesting 직접호출을 async production-owner 검사로 바꾸고, History 배열수량 require 후 접근. 본체 cache/actor 변경 없음. 테스트 삭제/skip추가 없음.
+- 최종 전체 FitMatchTests PASS, xcodebuild exit0: 923개 중881PASS/0FAIL/42skip(동적parameter device runs는897PASS/42skip). Debug 앱·테스트 컴파일/실행 PASS. `/tmp/FitMatchPhase2Final20260929.xcresult`. 과거 전체FAIL 기록은 위 최종결과로 대체하되 이력은 유지. 기존 actor-isolation warning 잔존.
+- 무신사 저장응답 corpus1037건의 eligible914/no-positive10/size없음113 기준 유지. 실시간API 검사가 아님. 격리 PostgreSQL17 raw snapshot Apply/Verify/Rollback 회귀 exit0 LOCAL_REGRESSION_PASS, 서버 종료. 일부 upstream은 fixture이므로 실제 연결DB E2E 증거가 아님. 연결Supabase 접근/write/migration 없음.
+- 상세 명령/실패분류/변경목록: `Docs/QA/Phase2RepairVerification-20260929.md`. 독립 정적리뷰 차단 지적 없음. commit/push 없음; 신규 QA문서 로컬 미추적. 실기기·인증mutation·Release archive NOT RUN. 3단계 제출설정은 미진행.
+
+## 2026-09-29 1단계 History replay 호환성 수정 완료
+
+- 기준 connectDB/db190a9 + 기존 dirty 보존. VNextCompletedReplayPolicy 신규, VNextComparisonEngineAdapter 신규 완료 engine v2, FitMatchVNextContractValidator v1/v2 계약, VNextHistoryCacheHydrator 버전별 reliability 검증. 과거 v1의 두 실제 공식만 허용하고 저장 reliability 유지. score/ranking/coverage/metric/identity 검증 불변. v2는 현재 count 공식만 허용하며 RETAILER_EXACT 활성화가 아님.
+- 배포 public complete wrapper와 내부 complete 정의 READ ONLY 확인: 버전 whitelist 없음(nonempty/128자 이하). 실제 v1 완료34건 count/coverage/reliability는 구/현재 공식으로 모두 설명됨. DB write/migration/사용자row 변경 없음. 이는 34건 전체 hydration/E2E 통과 증명이 아님.
+- RED: 직전 단독 History18건 중11FAIL. GREEN: 최종 3개 suite(Contract, ComparisonSync, FinalReleaseScenario) **73/73 PASS, skip0, xcodebuild exit0**. 신규 old/current-v1/new-v2 저장신뢰도 보존, 버전/identity/score/coverage/rank/weight/difference 변조거절, count/coverage 경계 회귀 포함. 기존 fixture reliability2 유지. 앱/테스트 Debug build 및 실행 PASS.
+- 첫 확대4 suite는117건112PASS/5FAIL. Headless의 기존 reference 정책1, Closet 테스트 crash2, 같은상품 복수기록 기대2가 남음. 기존 동일상품 fixture를 다른상품으로 바꾸는 편집은 자동 승인 검토에서 테스트 약화 위험으로 거절되어 적용하지 않음. 기존 Headless/Scenario 파일 수정 없음. 전체 suite PASS라고 주장하지 않으며 해당 계약 정비/크래시 원인분석은2단계로 유지.
+- 결과: /tmp/FitMatchPhase1Final20260929.xcresult, /tmp/fitmatch-phase1-final.log, /tmp/fitmatch-phase1-final-summary.json. 확대 실패: /tmp/FitMatchPhase1Repair20260929.xcresult. 상세 실행명령은 FirstReleaseAudit-20260929.md 추가절.
+- 독립 정적리뷰: 새 결함 지적 없음(실행 검증과 별도). diff/protected scroll PASS. 신규 policy/QA문서 로컬 미추적, commit/push 없음. 실기기 로그인·재실행·두기기 E2E 및 Release/archive NOT RUN. 이전 앱은 새v2 기록을 지원하지 않으므로 새 앱 설치 전후를 혼동하지 말 것.
+
+## 2026-09-29 출시 결함 수정 계획 확정 — 구현 전
+
+- 사용자 요청으로 `Docs/QA/FirstReleaseRepairPlan-20260929.md` 작성. 1 History replay 버전/호환성, 2 구형테스트/abort 정비 및 별도raw0 보존, 3 archive도구/출시설정 순서. production·test owner와 완료조건 명시.
+- v1 안의 여러 신뢰도 공식은 실제 Git/저장 evidence로 증명된 경우만 호환. 신규v2는 reliability 계약 구분이며 RETAILER_EXACT 활성화가 아님. 서버 허용계약 확인 전 단독 배포금지. 과거row 재작성/검증무시 금지.
+- 새 운영DB 전환·전체raw직접비교·실제공개URL은 별도 결정/환경 준비 대상으로 분리. 이번에는 문서만 작성, 앱/테스트/DB 수정·검증실행·commit/push 없음.
+
+## 2026-09-29 출시 순차 검수 — 전체 회귀 FAIL / History replay 결함 확인
+
+- 사용자 승인한 정책→배포 DB→자동검사 수행. HEAD db190a9+기존dirty 보존. 앱/테스트/SQL 수정, DB write, commit/push 없음. 상세 `Docs/QA/FirstReleaseAudit-20260929.md`, 체크리스트 결과 연결.
+- 현재 canonical+제한 native fallback과 전체 RETAILER_EXACT 보류 구분. MUSINSA actual-size value>0 필터가 정책의0값 raw행 보존과 불일치(원문 body 보존과 별개). 현재 연결 hnkplvyegonlhumlejst 공개 update의 실제 우회 경로, detail snapshot, tombstone, result_heads, preview/selected 계약과 migration 이력 확인. public RPC8개 authenticated 허용/anon 차단, 사용자 table6개 RLS 활성 확인. 이 범위는 전체 보안/E2E PASS가 아님.
+- 별도 ACTIVE FitMatch_PROD aqhrupgjpmrtnystottx에서 확인 대상 핵심 함수5종0개. 현재 앱 endpoint는 기존 hnk...이며 새DB 전환 준비 확인 필요.
+- 전체 xcodebuild test exit65: xcresult test 단위918=834PASS/42FAIL/42skip; parameter 포함device runs931=845PASS/44FAIL/42skip. `/tmp/FitMatchReleaseChecklist20260929.xcresult`. 앱/테스트compile 및 실행 완료, 별도 Release archive NOT RUN.
+- **확인된 HIGH 결함**: 신뢰도 count 공식 변경 후 engineVersion은 v1 그대로, VNextHistoryCacheHydrator.completionMatches가 과거 stored reliability를 새 공식과 비교해 completionMismatch. History suite 단독도18=7PASS/11FAIL exit65 `/tmp/FitMatchReleaseHistoryOnly20260929.xcresult`. DB 정규화UUID 집계: 완료34건 중 신뢰도 충돌18건, 삭제되지 않은 current head1건. 최초 UUID 대소문자 미정규화 집계34건충돌은 폐기. 과거불변 결과 replay 버전/호환 계약을 고쳐야 하며 과거row 일괄재계산이나 검증삭제 금지.
+- 다수 테스트는 폐기된 자동기준옷/최소2개/옛가중치 기대. 전체42개를 모두 구형이라 판단하지 않음. ReferenceClosetSetupXCTests.testComparisonClassificationBoundaryPolicy는 단독도abrt. XCTest에서 옛 Swift Testing 함수 직접호출; 앱사용자 크래시 증거 아님, 정확한abort stack 추가확인 필요.
+- 공개URL 공란, archive감사 script의1.0(4)고정값(현재1.1(8))도 준비항목. 실기기/실제API/인증mutation E2E 미실행. 최종diff/protected-scroll PASS.
+
+## 2026-09-29 출시 체크리스트 실행 담당 구분
+
+- `Docs/QA/FirstReleaseChecklist-20260929.md`에 AI 즉시 검증/환경·승인 조건부/사용자 결정·실기기 담당을 추가했다. 정책→DB 계약→기존 자동검사→출시 빌드 순서를 권장한다.
+- xcodebuild/swift 경로, 관련 테스트/SQL 자료 존재 확인만 수행. 테스트·build·DB 조회/변경·배포는 실행하지 않았다. 문서는 로컬 Git 미추적이며 commit/push하지 않았다. 기존 dirty 소스는 변경하지 않았다.
+
+## 2026-09-29 1차 출시 체크리스트 작성 — 검증 실행 아님
+
+- AGENTS/실측 정책/Behavior Map/Swift 소유자 지도/최신 인수인계 및 기존 출시·개인정보 문서를 대조해 `Docs/QA/FirstReleaseChecklist-20260929.md` 작성. 현재 HEAD db190a9 + dirty 상태 기준, 기존 변경 보존.
+- 정책 범위 결정, 핵심 옷장·비교·History, 계정/실기기, DB 계약/복구, 심사/무료 운영으로 분리. 원본 직접 비교 전체 미완료를 제한된 native canonical fallback과 구분하고, 구형 개인정보 ‘수집하지 않음’ 답변 및 기준옷 QA를 현재 증거로 재사용하지 않도록 명시.
+- Info.plist 개인정보/지원 URL 공란 확인(archive override는 미확인). Apple 공식 심사·계정 삭제·개인정보 안내 검색 확인. 앱/DB 변경·테스트 실행·실기기·배포·commit/push 없음. 체크리스트는 출시 검증 PASS 판정이 아니다.
+
+## 2026-09-29 내 옷장 삭제 스와이프 표시 정렬
+
+- 기록 화면과 다르게 보이던 내 옷장 커스텀 삭제 버튼을 시스템 스와이프 스타일에 가깝게 아이콘 위/문구 아래, systemRed로 조정했다. 짧게 밀어 버튼 탭은 확인 alert, 끝까지 밀기는 즉시 서버 우선 삭제라는 기존 두 동작은 유지했다. SwiftUI 기본 swipeActions는 두 제스처를 같은 callback으로 보내므로 실제 native UI와 픽셀 단위 동일함은 주장하지 않는다. 관련 `MyClosetSwipeDeletionInteractionTests` xcodebuild test exit 0 PASS. 실기기 시각 검증은 NOT RUN.
+
+## 2026-09-29 검증된 유니클로 소매 비교 근거 보완 — Production 적용
+
+- 사용자 승인에 따라 `hnkplvyegonlhumlejst` Production에 `verified_native_canonical_fallback` migration을 적용했다(원격 version `20260929055658`). 배포 `fitmatch_vnext.comparison_evidence_20260908` 정의 해시 `07ed0bf33f34ee2f6a0d2d8404bb7045`를 읽기 전용으로 확인했고, 함수 권한은 기존대로 유지됐다. 상품/Closet/과거 비교 결과 행은 변경하지 않았다.
+- 같은 쇼핑몰의 양쪽 실측이 동일한 검증된 원본 코드로 1:1 canonical 매핑되고 단위·기준·표현이 일치할 때만, 기존 canonical 정책의 해당 측정축에 증거가 없는 경우 보충한다. 서버의 candidate/eligible/authorization/begin 기존 호출 경로가 동일 근거 함수를 사용한다. 원본 전체 직접 비교(`RETAILER_EXACT`)가 구현됐다고 주장하지 않는다.
+- 격리 PostgreSQL 회귀: 유니클로 소매 추가 2→3항목 PASS, 다른 쇼핑몰/기준 불일치/원본 코드 불일치 차단 PASS, rollback 왕복 PASS. 인증 사용자 candidate→begin→complete 및 실기기 화면은 NOT RUN. 기존 완료 결과는 소급 재계산되지 않는다. 복구/읽기 전용 검증 SQL은 `supabase/sql/verified_native_canonical_fallback_Rollback.sql`, `supabase/sql/verified_native_canonical_fallback_Verify.sql`.
+
+## 2026-09-29 원본 직접 비교 활성화 — 구조 근거 수집 1단계
+
+- 사용자가 소스와 `hnkplvyegonlhumlejst` Production DB 수정을 요청하고 Production 적용을 명시 승인했다. 앱 observation에 신규 수집 실측표의 구조 fingerprint를 추가하고, ZARA guide ID를 parser method profile에 보존했다. 구조 fingerprint는 source/method profile/mapping version/전체 원본 항목 key로 계산하며, 빈 값·중복 key·ZARA guide ID 부재는 키를 내지 않는다. 이 키만으로 점수 권한을 만들지 않는다. 이 단계 이후의 Production 함수 변경은 위 항목 참조.
+- READ ONLY 확인: 배포 `comparison_evidence_20260908`은 CANONICAL metric만 선택한다. `eligible_candidate_sizes`와 `authorize_comparison_with_context_v1`이 이를 사용하며, `retailer_exact_evidence_v2` 및 `retailer_exact_semantic_contract_v2`는 연결 DB에 없다. 저장소의 v2 preflight는 `score_included=false`이고 활성 경로에 연결되지 않는다.
+- 현재 상품 원본 실측 421 MUSINSA / 1,653 UNIQLO / 454 ZARA행에서 v2가 요구하는 `source_schema_version` 보유 수는 모두 0이다. Closet 원본 snapshot은 MUSINSA 10 / UNIQLO 19행이며 역시 schema version이 없다. ZARA 원본의 `raw_representation`에는 zone 설명 문자열이 들어가므로 representation semantic으로 신뢰할 수 없다. 기존 행에 값을 추정해 채우거나 raw-label 일치만으로 승인하면 잘못된 점수 근거가 된다.
+- 남은 수정: 원본 semantics의 basis/representation/component를 서버가 검증한 계약으로 저장하고, 서버 승인 raw exact evidence를 candidate/eligible/authorization/begin/complete의 같은 snapshot에 연결한 뒤 Swift DTO/validator/engine/History와 UI를 정렬한다. 동일 측정축 중복 점수화 금지, 기존 canonical cross-retailer 경로 보존, 기존 결과 snapshot 소급 변경 금지. 변경 전 격리 SQL 및 인증 비교 E2E 검증 필요. PASS: Debug Simulator 앱 build exit 0, `ZARAParserPhase1_5Tests` focused xcodebuild test exit 0. 인증 DB/실기기 비교 E2E는 NOT RUN. 이 단락의 Production 미적용 상태는 위 항목의 제한된 fallback 적용으로 대체됨.
+
+## 2026-09-29 온보딩 종료 버튼·유니클로 소매 참고 표시 점검
+
+- 온보딩 4페이지의 우상단 중복 `나중에 등록하기`를 제거하고, 하단 글자를 기본 강조색(밝은 모드 검정)으로 바꿨다. 버튼 프레임/배경을 label 안으로 옮겨 넓은 영역 전체가 탭을 받도록 했다. 다른 페이지 우상단 `건너뛰기`는 유지한다. UI 회귀 테스트는 하단 버튼 왼쪽 가장자리 한 번 탭 후 홈 진입과 재시작 지속성을 검사하도록 변경했다.
+- 연결 DB `hnkplvyegonlhumlejst` READ ONLY: E484610/38 XXL과 E487688/31 XXL의 원본 `sleeve-length-cb`는 각각 92/91cm로 정상 저장. 해당 완료 comparison의 점수 81, reliability 2, 승인 metric은 총장 69/76과 가슴 72/70뿐. 소매는 target canonical `sleeve_center_back_length` 92와 reference snapshot 동일 code 91이 있으나 배포 `comparison_evidence_20260908`은 `metric_mode='CANONICAL'`만 선택하고 현재 outerwear 정책의 canonical sleeve metric은 일반 `sleeve_length`다. `SOURCE_NATIVE_OVERRIDE` policy 행은 존재하지만 현 활성 evidence 함수가 사용하지 않는다. Swift Result는 같은 쇼핑몰 소매를 read-only supplemental row로 더해 3행을 보여주고 신뢰도는 승인 2개만 센다. DB 데이터 오기보다 현재 비교 정책/구현 간 공백이다. 서버 policy/SQL, 점수, 과거 snapshot은 변경하지 않았다.
+- UI 테스트 첫 실행은 새 DerivedData의 GitHub package DNS 실패로 BLOCKED. 기존 패키지 캐시 재시도는 CoreSimulatorService 연결 실패로 151초 동안 진전이 없어 해당 xcodebuild만 종료했으며 테스트 PASS가 아니다. 변경 Swift 2개 `swiftc -parse`, `git diff --check`, protected-scroll 검사는 PASS. TestFlight 실기기 버튼 체감 및 같은 상품 새 비교 E2E는 NOT RUN.
+
+## 2026-09-28 동일 상품 비교 결과 migration 적용
+
+- 사용자 요청으로 Supabase 프로젝트 `hnkplvyegonlhumlejst`(FitMatch 연결 DB)에 `latest_comparison_result_per_product`를 적용했다. 원격 migration version은 `20260928135134`다. 비교 실행 원본 행은 삭제하지 않고 상품별 최신 완료 결과 포인터와 History 조회 투영만 변경했다.
+- 적용 전 배포 DB를 읽기 전용 확인한 결과 `user_comparison_history_visibility` 테이블이 없고, History 삭제는 `comparisons.deleted_at`을 사용했다. 준비된 migration/rollback의 잘못된 visibility 테이블 참조를 제거해 배포 계약에 맞춘 뒤 적용했다.
+- 적용 후 읽기 전용 점검: 완료된 user+target 상품 13개, head 13개, 잘못된 head 0개, 활성 completion trigger 1개. 배포 `comparison_history()`는 head 필터와 기존 `deleted_at is null` 필터를 모두 포함하고, 없는 visibility 테이블 참조는 0개다.
+- 인증 사용자로 비교를 새로 완료해 다른 기기의 기록 표시까지 확인하는 E2E는 NOT RUN. SQL 적용과 read-only postflight는 PASS. Git commit/push는 수행하지 않았다.
+
 ## 2026-09-28 내 옷장 스와이프·편집 사이즈 표시/조회
 
 - 앞서 확정한 옷장 스와이프 정책을 복구했다: 짧게 밀어 삭제 버튼 탭은 확인 alert, 끝까지 밀기는 바로 `FitMatchClosetDeletionAction`의 서버 우선 삭제를 실행한다. 기록 화면 스와이프는 변경하지 않았다.

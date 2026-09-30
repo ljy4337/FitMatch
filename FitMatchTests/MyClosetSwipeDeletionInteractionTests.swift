@@ -4,18 +4,32 @@ import SwiftData
 @testable import FitMatch
 
 struct MyClosetSwipeDeletionInteractionTests {
-    @Test func closetShortSwipeConfirmsAndFullSwipeDeletesImmediately() throws {
+    @Test func pendingDeletionDisablesRowsAndShowsProgress() throws {
+        let source = try myClosetViewSource()
+        #expect(source.contains(".disabled(deletingItemID != nil)"))
+        #expect(source.contains("if deletingItemID == item.id"))
+        #expect(source.contains("ProgressView(\"삭제 중\")"))
+        #expect(try closetItemDetailViewSource().contains("ProgressView(\"삭제 중\")"))
+    }
+
+    @Test func nativeSwipeUsesConfirmationForBothEntryPoints() throws {
         let source = try myClosetViewSource()
         let history = try sourceFile(named: "RecommendationHistoryView.swift")
-
-        #expect(source.contains("MyClosetSwipeDeleteRow"))
-        #expect(source.contains("onDeleteButtonTap: { pendingDeleteItem = item }"))
-        #expect(source.contains("onFullSwipeDelete: { deleteItem(item) }"))
-        #expect(source.contains("value.translation.width <= fullSwipeThreshold"))
+        let nativeSwipe = ".swipeActions(edge: .trailing, allowsFullSwipe: true)"
+        #expect(source.contains(nativeSwipe))
+        #expect(history.contains(nativeSwipe))
+        let swipe = try #require(source.components(separatedBy: nativeSwipe).last)
+            .components(separatedBy: ".listRowSeparator")[0]
+        #expect(swipe.contains("guard deletingItemID == nil else { return }"))
+        #expect(swipe.contains("pendingDeleteItem = item"))
+        #expect(swipe.contains("Label(\"삭제\", systemImage: \"trash\")"))
+        #expect(swipe.contains(".tint(.red)"))
+        #expect(!swipe.contains("deleteItem(item)"))
+        #expect(!swipe.contains("role: .destructive"))
         #expect(source.contains("guard let item = pendingDeleteItem else { return }"))
-        #expect(history.contains(".swipeActions(edge: .trailing, allowsFullSwipe: true)"))
-        #expect(history.contains("pendingDeleteHistory = history"))
-        #expect(history.contains("guard let history = pendingDeleteHistory else { return }"))
+        #expect(source.contains("deleteItem(item)"))
+        #expect(!source.contains("MyClosetSwipeDeleteRow"))
+        #expect(!source.contains("DragGesture"))
     }
 
     @Test @MainActor func editDeletionCannotRemoveGarmentWithoutServerAuthority() async throws {

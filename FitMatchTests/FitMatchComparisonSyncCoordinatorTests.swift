@@ -5,6 +5,78 @@ import Testing
 
 @MainActor
 struct FitMatchComparisonSyncCoordinatorTests {
+    @Test func completedReplayPreservesBothV1PoliciesAndNewV2() throws {
+        for (version, reliability) in [("v1", 2), ("v1", 1), ("v2", 1)] {
+            let fixture = try ComparisonHistoryFixture(completedJSONTransform: { json in
+                json.replacingOccurrences(of: "snapshot-v1", with: "snapshot-" + version)
+                    .replacingOccurrences(of: "\"reliability\":2", with: "\"reliability\":\(reliability)")
+                    .replacingOccurrences(of: "\"reliability_level\":2", with: "\"reliability_level\":\(reliability)")
+            })
+            let container = try inMemoryContainer()
+            let context = ModelContext(container)
+            _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+                [fixture.completed], existingHistories: [], existingProducts: [],
+                existingClosetItems: [], modelContext: context)
+            let history = try #require(context.fetch(FetchDescriptor<RecommendationHistory>()).first)
+            #expect(history.serverApprovedVNextReliability == reliability)
+            #expect(history.recommendationScore == 95)
+            #expect(history.recommendedSize.id == fixture.productSizeID)
+        }
+    }
+
+    @Test func replayCompatibilityNeverAcceptsCorruptedCompletionEvidence() throws {
+        let mutations: [(String, String)] = [
+            ("snapshot-v1", "snapshot-v2"), // v2 must reject legacy reliability 2 for one metric
+            ("snapshot-v1", "snapshot-unknown"),
+            ("\"reliability\":2", "\"reliability\":5"),
+            ("\"score\":95", "\"score\":94"),
+            ("\"coverage\":1", "\"coverage\":0.5"),
+            ("\"weight\":1", "\"weight\":2"),
+            ("\"difference\":1", "\"difference\":2"),
+            ("\"rank\":1", "\"rank\":2")
+        ]
+        for (from, to) in mutations {
+            let fixture = try ComparisonHistoryFixture(completedJSONTransform: { json in
+                // Only mutate result evidence, never the authoritative begin snapshot.
+                guard let end = json.range(of: "\"snapshot_schema_version\"") else { return json }
+                return String(json[..<end.lowerBound]).replacingOccurrences(of: from, with: to)
+                    + String(json[end.lowerBound...])
+            })
+            let container = try inMemoryContainer()
+            let context = ModelContext(container)
+            #expect(throws: (any Error).self) {
+                _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+                    [fixture.completed], existingHistories: [], existingProducts: [],
+                    existingClosetItems: [], modelContext: context)
+            }
+            #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+        }
+    }
+
+    @Test func completedReplayRejectsMixedVersionsAndWrongRecommendedIdentity() throws {
+        for changesVersion in [true, false] {
+            let fixture = try ComparisonHistoryFixture(completedJSONTransform: { json in
+                var object = try! JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any]
+                var evidence = object["result_evidence"] as! [String: Any]
+                if changesVersion {
+                    evidence["engine_version"] = "fitmatch-ios-vnext-snapshot-v2"
+                } else {
+                    evidence["recommended_product_size_id"] = UUID().uuidString
+                }
+                object["result_evidence"] = evidence
+                return String(data: try! JSONSerialization.data(withJSONObject: object), encoding: .utf8)!
+            })
+            let container = try inMemoryContainer()
+            let context = ModelContext(container)
+            #expect(throws: (any Error).self) {
+                _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+                    [fixture.completed], existingHistories: [], existingProducts: [],
+                    existingClosetItems: [], modelContext: context)
+            }
+            #expect(try context.fetchCount(FetchDescriptor<RecommendationHistory>()) == 0)
+        }
+    }
+
     @Test func pendingServerSnapshotRecoversThenHydratesExactlyOnce() async throws {
         let fixture = try ComparisonHistoryFixture()
         let remote = ComparisonHistoryRemoteStub(
@@ -777,7 +849,8 @@ private struct ComparisonHistoryFixture: Sendable {
 
     init(
         classificationSource: String = "manual_override",
-        snapshotSchemaVersion: Int = 3
+        snapshotSchemaVersion: Int = 3,
+        completedJSONTransform: (String) -> String = { $0 }
     ) throws {
         let identifiers = (
             comparisonID: comparisonID,
@@ -796,12 +869,12 @@ private struct ComparisonHistoryFixture: Sendable {
             )
         )
         completed = try Self.decode(
-            Self.json(
+            completedJSONTransform(Self.json(
                 status: "COMPLETED",
                 ids: identifiers,
                 classificationSource: classificationSource,
                 snapshotSchemaVersion: snapshotSchemaVersion
-            )
+            ))
         )
     }
 

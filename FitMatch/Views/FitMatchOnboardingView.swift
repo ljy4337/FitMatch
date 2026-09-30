@@ -50,12 +50,14 @@ struct FitMatchOnboardingView: View {
         VStack(spacing: 0) {
             HStack {
                 Spacer()
-                Button(isRegistrationPage ? "나중에 등록하기" : "건너뛰기") {
-                    onFinish()
+                if !isRegistrationPage {
+                    Button("건너뛰기") {
+                        onFinish()
+                    }
+                    .accessibilityIdentifier("onboarding.skip")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
                 }
-                .accessibilityIdentifier(isRegistrationPage ? "onboarding.later.top" : "onboarding.skip")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 24)
             .padding(.top, 18)
@@ -86,15 +88,18 @@ struct FitMatchOnboardingView: View {
             .layoutPriority(1)
 
             if isRegistrationPage {
-                Button("나중에 등록하기") {
+                Button {
                     onFinish()
+                } label: {
+                    Text("나중에 등록하기")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
                 .accessibilityIdentifier("onboarding.later")
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .buttonStyle(.plain)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 18)
