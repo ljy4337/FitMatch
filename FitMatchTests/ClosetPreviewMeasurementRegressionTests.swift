@@ -49,7 +49,7 @@ struct ClosetPreviewMeasurementRegressionTests {
         let restored = try coordinator.projectAuthoritativeRegistration(mapped, expected: request,
             acceptedClosetItemID: mapped.closetItemID, modelContext: context)
         #expect(restored.measurementRecords.filter(\.isComparable).count == 1)
-        #expect(MeasurementResolver.sourceDisplayRows(records: restored.measurementRecords).count == 2)
+        #expect(MeasurementResolver.sourceDisplayRows(records: restored.measurementRecords).count == (rawValue > 0 ? 2 : 1))
         let size = ProductSize(name: "XL", measurements: empty)
         size.measurementRecords = [record(code: .chestWidthPitToPit,
             source: "fitmatch_vnext_snapshot", label: "chest_width")]

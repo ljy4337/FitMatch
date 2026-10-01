@@ -73,6 +73,7 @@ enum MeasurementResolver {
         let sourceRecords = eligibleRecords.filter { $0.methodSource != "fitmatch_vnext_snapshot" }
         let displayRecords = sourceRecords.isEmpty ? eligibleRecords : sourceRecords
         return displayRecords
+            .filter { shouldShowSourceValue($0.value, methodSource: $0.methodSource) }
             .map {
                 SourceDisplayRow(
                     id: $0.id.uuidString,
@@ -86,7 +87,8 @@ enum MeasurementResolver {
                     valueText: sourceValueText(
                         rawValueText: $0.rawValueText,
                         value: $0.value,
-                        rawUnit: $0.unitRawValue
+                        rawUnit: $0.unitRawValue,
+                        methodSource: $0.methodSource
                     ),
                     isCanonical: $0.isComparable
                 )
@@ -99,7 +101,9 @@ enum MeasurementResolver {
     static func sourceDisplayRows(
         records: [ParsedMeasurement]
     ) -> [SourceDisplayRow] {
-        records.enumerated().map { index, record in
+        records.enumerated().filter {
+            shouldShowSourceValue($0.element.value, methodSource: $0.element.methodSource)
+        }.map { index, record in
             let rawCode = record.rawCode?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             let identity = rawCode?.isEmpty == false
@@ -117,7 +121,8 @@ enum MeasurementResolver {
                 valueText: sourceValueText(
                     rawValueText: record.rawValueText,
                     value: record.value,
-                    rawUnit: record.unitRawValue ?? record.unit.rawValue
+                    rawUnit: record.unitRawValue ?? record.unit.rawValue,
+                    methodSource: record.methodSource
                 ),
                 isCanonical: record.value.isFinite && record.value > 0
                     && record.measurementCode != .unknown
@@ -164,11 +169,17 @@ enum MeasurementResolver {
         return ZARAMeasurementPresentation.title(for: rawCode)
     }
 
+    private static func shouldShowSourceValue(_ value: Double, methodSource: String) -> Bool {
+        value.isFinite && (value > 0 || (methodSource == "musinsa" && value == 0))
+    }
+
     private static func sourceValueText(
         rawValueText: String?,
         value: Double,
-        rawUnit: String?
+        rawUnit: String?,
+        methodSource: String
     ) -> String {
+        if methodSource == "musinsa" && value == 0 { return "-" }
         let raw = rawValueText?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let unit = rawUnit?

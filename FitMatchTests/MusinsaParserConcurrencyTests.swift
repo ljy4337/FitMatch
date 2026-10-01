@@ -23,8 +23,12 @@ struct MusinsaParserConcurrencyTests {
             #expect(size.measurements.sleeveLength == 0)
             let rows = MeasurementResolver.sourceDisplayRows(records: size.measurementRecords)
             #expect(rows.count == 3)
+            let expectedValues = [chest, "0", unknown].map { $0 == "0" ? "-" : $0 + " cm" }
+            #expect(rows.map(\.valueText) == expectedValues)
             #expect(rows.filter(\.isCanonical).count == (chest == "54" ? 1 : 0))
             let records = size.measurementRecords.map { $0.makeRecord() }
+            #expect(MeasurementResolver.sourceDisplayRows(records: records).map(\.valueText)
+                == expectedValues)
             #expect(records.filter(\.isComparable).count == (chest == "54" ? 1 : 0))
             #expect(ParsedSizeValidator.hasUsableMeasurements([size], category: .top) == (chest == "54"))
             let product = ParsedProductInfo(sourceURL: MusinsaHTTPFixture.productURL,
@@ -34,7 +38,7 @@ struct MusinsaParserConcurrencyTests {
                 productMetadata: ProductMetadata(categoryDepth1Code: "001"))
             let observation = try #require(product.fitMatchProductObservationRequest())
             let transported = try #require(observation.payload.variants.first?.sizes.first?.measurements)
-            #expect(transported.count == rows.count)
+            #expect(transported.count == 3)
             #expect(transported.map(\.rawValueText) == [chest, "0.0", unknown])
             #expect(transported.map(\.rawValue) == [Double(chest)!, 0, Double(unknown)!])
         }
